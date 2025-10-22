@@ -3,7 +3,8 @@
 MBASIC 5.21 Interpreter
 
 Usage:
-    python3 mbasic.py program.bas
+    python3 mbasic.py             # Interactive mode
+    python3 mbasic.py program.bas # Execute program
 """
 
 import sys
@@ -16,15 +17,11 @@ from lexer import tokenize
 from parser import Parser
 from runtime import Runtime
 from interpreter import Interpreter
+from interactive import InteractiveMode
 
 
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python3 mbasic.py program.bas", file=sys.stderr)
-        sys.exit(1)
-
-    program_path = sys.argv[1]
-
+def run_file(program_path):
+    """Execute a BASIC program from file"""
     try:
         # Read source code
         with open(program_path, 'r') as f:
@@ -52,6 +49,17 @@ def main():
         import traceback
         traceback.print_exc()
         sys.exit(1)
+
+
+def main():
+    if len(sys.argv) < 2:
+        # No file specified - enter interactive mode
+        interactive = InteractiveMode()
+        interactive.start()
+    else:
+        # File specified - execute it
+        program_path = sys.argv[1]
+        run_file(program_path)
 
 
 if __name__ == '__main__':

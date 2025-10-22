@@ -41,7 +41,9 @@
       "Bash(for f in handplot krakinst)",
       "Bash(for f in qubic rbbmin27 rc5 speech trade)",
       "Bash(for f in qsolist rbsutl31 sleuth sdir)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(./test_interactive.sh)",
+      "Bash(timeout 2 python3:*)"
     ],
     "deny": [],
     "ask": []

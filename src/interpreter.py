@@ -247,9 +247,11 @@ class Interpreter:
 
         # Check if loop should continue
         if (step > 0 and new_value <= loop_info['end']) or (step < 0 and new_value >= loop_info['end']):
-            # Continue loop
+            # Continue loop - update variable and jump to statement AFTER the FOR
             self.runtime.set_variable(var_name.rstrip('$%!#'), var_name[-1] if var_name[-1] in '$%!#' else None, new_value)
             self.runtime.next_line = loop_info['return_line']
+            # Resume at the statement AFTER the FOR statement
+            self.runtime.next_stmt_index = loop_info['return_stmt'] + 1
         else:
             # Loop finished
             self.runtime.pop_for_loop(var_name)
