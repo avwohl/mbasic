@@ -167,7 +167,7 @@ class Parser:
         Syntax: DEFINT A-Z or DEFINT A,B,C or DEFINT A-C,X-Z
         """
         def_token = self.advance()
-        var_type = TypeInfo.from_def_statement(def_token.type.name)
+        var_type = TypeInfo.from_def_statement(def_token.type)
 
         # Parse letter ranges
         while not self.at_end_of_line():
@@ -2123,7 +2123,7 @@ class Parser:
         This just creates the AST node for documentation purposes.
         """
         token = self.advance()
-        var_type = TypeInfo.from_def_statement(token.type.name)
+        var_type = TypeInfo.from_def_statement(token.type)
 
         letter_ranges: List[Tuple[str, str]] = []
 

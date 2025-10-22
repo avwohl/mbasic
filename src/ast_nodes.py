@@ -4,6 +4,7 @@ Abstract Syntax Tree (AST) node definitions for MBASIC 5.21
 
 from typing import List, Optional, Any
 from dataclasses import dataclass
+from enum import Enum
 from tokens import TokenType
 
 
@@ -242,9 +243,13 @@ class ArrayDeclNode:
 
 @dataclass
 class DefTypeStatementNode:
-    """DEFINT/DEFSNG/DEFDBL/DEFSTR statement"""
-    var_type: str  # 'INT', 'SNG', 'DBL', 'STR'
-    letter_ranges: List[tuple]  # List of (start_letter, end_letter) tuples
+    """DEFINT/DEFSNG/DEFDBL/DEFSTR statement
+
+    Defines default types for variables based on their first letter.
+    Example: DEFINT I-K makes all variables starting with I, J, K default to INTEGER.
+    """
+    var_type: VarType  # Variable type (VarType.INTEGER, SINGLE, DOUBLE, or STRING)
+    letter_ranges: List[tuple]  # List of (start_letter, end_letter) tuples (lowercase)
     line_num: int = 0
     column: int = 0
 
@@ -811,37 +816,67 @@ class FunctionCallNode:
 # Type System Support
 # ============================================================================
 
+class VarType(Enum):
+    """Variable type enumeration for BASIC variables"""
+    INTEGER = 'INTEGER'  # % suffix or DEFINT
+    SINGLE = 'SINGLE'    # ! suffix or DEFSNG (default)
+    DOUBLE = 'DOUBLE'    # # suffix or DEFDBL
+    STRING = 'STRING'    # $ suffix or DEFSTR
+
+
 class TypeInfo:
-    """Type information for variables"""
-    INTEGER = 'INTEGER'
-    SINGLE = 'SINGLE'
-    DOUBLE = 'DOUBLE'
-    STRING = 'STRING'
+    """Type information utilities for variables
+
+    Note: This class provides convenience methods for working with VarType enum.
+    Kept for backwards compatibility but could be refactored away.
+    """
+    # Expose enum values as class attributes for compatibility
+    INTEGER = VarType.INTEGER
+    SINGLE = VarType.SINGLE
+    DOUBLE = VarType.DOUBLE
+    STRING = VarType.STRING
 
     @staticmethod
-    def from_suffix(suffix: Optional[str]) -> str:
-        """Get type from variable suffix"""
+    def from_suffix(suffix: Optional[str]) -> VarType:
+        """Get type from variable suffix
+
+        Args:
+            suffix: Type suffix character (%, !, #, $, or None)
+
+        Returns:
+            VarType enum value
+        """
         if suffix == '%':
-            return TypeInfo.INTEGER
+            return VarType.INTEGER
         elif suffix == '!':
-            return TypeInfo.SINGLE
+            return VarType.SINGLE
         elif suffix == '#':
-            return TypeInfo.DOUBLE
+            return VarType.DOUBLE
         elif suffix == '$':
-            return TypeInfo.STRING
+            return VarType.STRING
         else:
-            return TypeInfo.SINGLE  # Default type in MBASIC
+            return VarType.SINGLE  # Default type in MBASIC
 
     @staticmethod
-    def from_def_statement(keyword: str) -> str:
-        """Get type from DEF statement keyword"""
-        if keyword == 'DEFINT':
-            return TypeInfo.INTEGER
-        elif keyword == 'DEFSNG':
-            return TypeInfo.SINGLE
-        elif keyword == 'DEFDBL':
-            return TypeInfo.DOUBLE
-        elif keyword == 'DEFSTR':
-            return TypeInfo.STRING
+    def from_def_statement(token_type) -> VarType:
+        """Get type from DEF statement token type
+
+        Args:
+            token_type: TokenType enum (DEFINT, DEFSNG, DEFDBL, DEFSTR)
+
+        Returns:
+            VarType enum value
+        """
+        # Import here to avoid circular dependency
+        from tokens import TokenType
+
+        if token_type == TokenType.DEFINT:
+            return VarType.INTEGER
+        elif token_type == TokenType.DEFSNG:
+            return VarType.SINGLE
+        elif token_type == TokenType.DEFDBL:
+            return VarType.DOUBLE
+        elif token_type == TokenType.DEFSTR:
+            return VarType.STRING
         else:
-            raise ValueError(f"Unknown DEF statement: {keyword}")
+            raise ValueError(f"Unknown DEF statement token type: {token_type}")
