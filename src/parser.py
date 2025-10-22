@@ -453,6 +453,10 @@ class Parser:
             return self.parse_files()
         elif token.type == TokenType.LIST:
             return self.parse_list()
+        elif token.type == TokenType.STOP:
+            return self.parse_stop()
+        elif token.type == TokenType.CONT:
+            return self.parse_cont()
         elif token.type == TokenType.RANDOMIZE:
             return self.parse_randomize()
         elif token.type == TokenType.SWAP:
@@ -1571,6 +1575,33 @@ class Parser:
             start=start,
             end=end,
             single_line=single_line,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_stop(self) -> StopStatementNode:
+        """Parse STOP statement
+
+        Syntax: STOP
+
+        STOP halts program execution and returns to interactive mode,
+        preserving all state (variables, call stack, loop stack).
+        """
+        token = self.advance()
+        return StopStatementNode(
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_cont(self) -> ContStatementNode:
+        """Parse CONT statement
+
+        Syntax: CONT
+
+        CONT resumes execution after a STOP or Break (Ctrl+C).
+        """
+        token = self.advance()
+        return ContStatementNode(
             line_num=token.line,
             column=token.column
         )

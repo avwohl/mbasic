@@ -46,9 +46,8 @@ class Runtime:
         # User-defined functions
         self.user_functions = {}      # fn_name -> DefFnStatementNode
 
-        # Type defaults (DEFINT, DEFSNG, etc.)
-        self.type_defaults = {}       # letter -> type ('INTEGER', 'SINGLE', 'DOUBLE', 'STRING')
-        self._init_type_defaults()
+        # Note: Type defaults (DEFINT, DEFSNG, etc.) are handled by Parser.def_type_map
+        # at parse time, not at runtime
 
         # File I/O
         self.files = {}               # file_number -> file_handle
@@ -61,10 +60,10 @@ class Runtime:
         # Random number seed
         self.rnd_last = 0.5
 
-    def _init_type_defaults(self):
-        """Initialize default variable types (all start as SINGLE)"""
-        for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
-            self.type_defaults[letter] = 'SINGLE'
+        # STOP/CONT state preservation
+        self.stopped = False              # True if program stopped via STOP or Break
+        self.stop_line = None             # Line where STOP occurred
+        self.stop_stmt_index = None       # Statement index where STOP occurred
 
     def setup(self):
         """

@@ -23,8 +23,36 @@ class Interpreter:
         # Setup runtime tables
         self.runtime.setup()
 
+        # Execute from the beginning
+        self._run_loop(start_index=0)
+
+    def run_from_current(self):
+        """Resume execution from current position (for CONT after STOP)
+
+        Does NOT call setup() - preserves all state.
+        Starts from runtime.current_line instead of from beginning.
+        """
+        # Find the current line's index
+        if self.runtime.current_line is None:
+            raise RuntimeError("No current line to continue from")
+
+        line_number = self.runtime.current_line.line_number
+        try:
+            line_index = self.runtime.line_order.index(line_number)
+        except ValueError:
+            raise RuntimeError(f"Current line {line_number} not found in program")
+
+        # Execute from current position
+        self._run_loop(start_index=line_index)
+
+    def _run_loop(self, start_index=0):
+        """Internal: Execute the main interpreter loop
+
+        Args:
+            start_index: Line index to start from (0 for RUN, current for CONT)
+        """
         # Execute lines in sequential order
-        line_index = 0
+        line_index = start_index
         while line_index < len(self.runtime.line_order) and not self.runtime.halted:
             line_number = self.runtime.line_order[line_index]
             line_node = self.runtime.line_table[line_number]
@@ -32,9 +60,13 @@ class Interpreter:
             self.runtime.current_line = line_node
 
             # Check if we're returning from GOSUB with a specific statement index
+            # OR if we're continuing from STOP at a specific statement index
             if self.runtime.next_stmt_index is not None:
                 self.runtime.current_stmt_index = self.runtime.next_stmt_index
                 self.runtime.next_stmt_index = None
+            elif line_index == start_index and self.runtime.current_stmt_index > 0:
+                # Continuing from STOP - use saved statement index
+                pass
             else:
                 self.runtime.current_stmt_index = 0
 
@@ -567,6 +599,48 @@ class Interpreter:
             self.interactive_mode.cmd_list(args)
         else:
             raise RuntimeError("LIST not available in this context")
+
+    def execute_stop(self, stmt):
+        """Execute STOP statement
+
+        STOP pauses program execution and returns to interactive mode.
+        All state is preserved:
+        - Variables and arrays
+        - GOSUB return stack
+        - FOR loop stack
+        - Current execution position
+
+        User can examine/modify variables, edit lines, then use CONT to resume.
+        """
+        # Save the current execution position
+        # We need to resume from the NEXT statement after STOP
+        self.runtime.stopped = True
+        self.runtime.stop_line = self.runtime.current_line
+        self.runtime.stop_stmt_index = self.runtime.current_stmt_index + 1
+
+        # Print "Break in <line>" message
+        if self.runtime.current_line:
+            print(f"Break in {self.runtime.current_line.line_number}")
+        else:
+            print("Break")
+
+        # Halt execution (returns to interactive mode)
+        self.runtime.halted = True
+
+    def execute_cont(self, stmt):
+        """Execute CONT statement
+
+        CONT resumes execution after a STOP or Break (Ctrl+C).
+        Only works in interactive mode.
+        """
+        if not hasattr(self, 'interactive_mode') or not self.interactive_mode:
+            raise RuntimeError("CONT only available in interactive mode")
+
+        if not self.runtime.stopped:
+            raise RuntimeError("Can't continue - no program stopped")
+
+        # Resume execution from where we stopped
+        self.interactive_mode.cmd_cont()
 
     # ========================================================================
     # Expression Evaluation

@@ -25,6 +25,8 @@ class InteractiveMode:
         self.current_file = None
         self.runtime = None  # Persistent runtime for immediate mode
         self.interpreter = None  # Persistent interpreter
+        self.program_runtime = None  # Runtime for RUN (preserved for CONT)
+        self.program_interpreter = None  # Interpreter for RUN (preserved for CONT)
 
     def start(self):
         """Start interactive mode"""
@@ -120,7 +122,35 @@ class InteractiveMode:
             interpreter = Interpreter(runtime)
             # Pass reference to interactive mode so statements like LIST can access the line editor
             interpreter.interactive_mode = self
+
+            # Save runtime for CONT
+            self.program_runtime = runtime
+            self.program_interpreter = interpreter
+
             interpreter.run()
+
+        except Exception as e:
+            print(f"?{type(e).__name__}: {e}")
+
+    def cmd_cont(self):
+        """CONT - Continue execution after STOP or Break"""
+        if not self.program_runtime or not self.program_runtime.stopped:
+            print("?Can't continue")
+            return
+
+        try:
+            # Clear stopped flag
+            self.program_runtime.stopped = False
+
+            # Restore execution position
+            self.program_runtime.current_line = self.program_runtime.stop_line
+            self.program_runtime.current_stmt_index = self.program_runtime.stop_stmt_index
+            self.program_runtime.halted = False
+
+            # Resume execution - we need to continue from where we stopped,
+            # not restart from the beginning. We'll use run_from_current()
+            # which doesn't call setup() and continues from current position.
+            self.program_interpreter.run_from_current()
 
         except Exception as e:
             print(f"?{type(e).__name__}: {e}")
@@ -526,6 +556,8 @@ class InteractiveMode:
         """Execute a statement in immediate mode (no line number)
 
         Uses persistent runtime so variables persist between statements.
+        If a program has been run (or stopped), use the program runtime
+        so immediate mode can examine/modify program variables.
         """
         # Build a minimal program with line 0
         program_text = "0 " + statement
@@ -535,24 +567,40 @@ class InteractiveMode:
             parser = Parser(tokens)
             ast = parser.parse()
 
-            # Initialize runtime if needed (first immediate statement)
-            if self.runtime is None:
-                self.runtime = Runtime(ast)
-                self.runtime.setup()
-                self.interpreter = Interpreter(self.runtime)
-                # Pass reference to interactive mode for commands like LOAD/SAVE
-                self.interpreter.interactive_mode = self
+            # Choose which runtime to use:
+            # - If program has been run (especially if stopped), use program runtime
+            # - Otherwise use immediate mode runtime
+            if self.program_runtime is not None:
+                # Use program runtime so we can access program variables
+                runtime = self.program_runtime
+                interpreter = self.program_interpreter
+            else:
+                # Initialize immediate mode runtime if needed
+                if self.runtime is None:
+                    self.runtime = Runtime(ast)
+                    self.runtime.setup()
+                    self.interpreter = Interpreter(self.runtime)
+                    # Pass reference to interactive mode for commands like LOAD/SAVE
+                    self.interpreter.interactive_mode = self
+                runtime = self.runtime
+                interpreter = self.interpreter
 
             # Execute just the statement at line 0
             if ast.lines and len(ast.lines) > 0:
                 line_node = ast.lines[0]
                 # Update runtime's current line
-                self.runtime.current_line = line_node
-                self.runtime.current_stmt_index = 0
+                old_line = runtime.current_line
+                old_index = runtime.current_stmt_index
+                runtime.current_line = line_node
+                runtime.current_stmt_index = 0
 
                 # Execute each statement on line 0
                 for stmt in line_node.statements:
-                    self.interpreter.execute_statement(stmt)
+                    interpreter.execute_statement(stmt)
+
+                # Restore previous line/index (important for stopped programs)
+                runtime.current_line = old_line
+                runtime.current_stmt_index = old_index
 
         except Exception as e:
             print(f"?{type(e).__name__}: {e}")

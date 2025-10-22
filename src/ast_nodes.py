@@ -550,6 +550,29 @@ class ListStatementNode:
 
 
 @dataclass
+class StopStatementNode:
+    """STOP statement - pause program execution
+
+    STOP pauses the program and returns to interactive mode.
+    Variables, the program counter, and the call stack are preserved.
+    Use CONT to resume execution from the statement after STOP.
+    """
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class ContStatementNode:
+    """CONT statement - continue execution after STOP
+
+    CONT resumes execution from where the program was stopped.
+    This can only be used after a STOP or after Ctrl+C (Break).
+    """
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
 class RandomizeStatementNode:
     """RANDOMIZE statement - initialize random number generator
 
