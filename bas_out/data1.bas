@@ -1,0 +1,12 @@
+1 A$="the quick brown fox"
+2 B=7000
+3 C=1.615
+8730  \b![FE][0xFF][22]DEF\a DEFSNG2 LIST\a2d
+2-&O166462&O105062\a!
+1932 ![80]
+8459 z
+"x
+![E4]
+"L&O3052
+15882 0x032 LOAD\a!SPC(^" LLIST
+:NOT^WRITE PUT ERL^

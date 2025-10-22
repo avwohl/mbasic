@@ -1,0 +1,103 @@
+10 :REMARK  AIRCRAFT.BAS\tNAVPROGseven Aircraft Performance Entry    28-Dec-81
+20 :REMARK 
+30 :REMARK  Developed by\tAlan Bose   (AOPA 642188)
+40 :REMARK \t\t\tVice President, Taildragger Flyers
+50 :REMARK \t\t\tRoss Field, Benton Harbor, MI
+60 :REMARK 
+70 CLEAR 3000:ON ERROR GOTO 990:WIDTH 255
+80 BL$=CHR$(7):E$=CHR$(27):ER$=E$+"E":PG$=E$+"p":QG$=E$+"q":Y$=E$+"Y": \n   L$=E$+"l":J$=E$+"j":K$=E$+"k":J1$=E$+"J"
+90 DEF FN C$(C1,C2)=Y$+CHR$(C1+31)+CHR$(C2+31)
+100 HD$="A I R C R A F T   P E R F O R M A N C E"
+110 PRINT FNC$(25,1);ER$;E$+"H";ER$;PG$
+120 PRINT TAB(40-(LEN(HD$)/2));HD$;TAB(79);QG$
+130 PRINT FN C$(5,1);"Aircraft identification?  <MENU>  N";J$;STRING$(7,95); \n    K$;:LINE INPUT AI$:PRINT J1$
+140 IF AI$="" THEN 950
+150 F$="N"+AI$
+160 OPEN "I",2,"SY1:"+F$
+170 PRINT"Found aircraft performance data for ";F$;" ";
+180 LINE INPUT #2,AT$
+190 PRINT AT$
+200 INPUT #2,RU
+210 INPUT #2,T9
+220 INPUT #2,G9
+230 INPUT #2,D9
+240 INPUT #2,NA
+250 INPUT #2,NS
+260 INPUT #2,NF
+270 INPUT #2,NB
+280 INPUT #2,PH
+290 CLOSE:GOTO 310
+300 PRINT FN C$(7,1);J1$;"No data on file for ";F$
+310 PRINT FNC$(11,1);"Enter `E' to EXIT"
+320 PRINT FNC$(12,1);"Enter `D' to DELETE"
+330 PRINT FNC$(10,1);"Enter aircraft type  ";J$;STRING$(30,95);K$;: \n    LINE INPUT X$
+340 IF X$="E" OR X$="e" THEN 110
+350 IF X$="D" OR X$="d" THEN KILL"SY1:"+F$:GOTO 110
+360 IF LEN(X$)=1 THEN PRINT BL$:GOTO 310
+370 PRINT K$;AT$:PRINT J1$;
+380 IF X$<>"" THEN AT$=X$
+390 PRINT "Fuel used for start-up, taxi & run-up?  ";
+400 IF RU>0 THEN PRINT"<";RU;">  ";
+410 PRINT J$;STRING$(4,95);" gallons";K$;
+420 LINE INPUT RU$
+430 IF RU$<>"" THEN RU=VAL(RU$)
+440 PRINT"Enter normal cruising altitude  ";
+450 IF NA>0 THEN PRINT"<";NA;">  ";
+460 PRINT J$;STRING$(5,95);" ft";K$;
+470 LINE INPUT X$:IF X$<>"" THEN NA=VAL(X$)
+480 IF NA=0 THEN PRINT BL$:GOTO440
+490 PRINT"Enter time required to climb to";NA;"feet  ";
+500 IF T9>0 THEN PRINT"<";T9;">  ";
+510 PRINT J$;STRING$(3,95);" minutes";K$;
+520 LINE INPUT X$:IF X$<>"" THEN T9=VAL(X$)
+530 IF T9=0 THEN PRINT BL$:GOTO490
+540 PRINT"Enter fuel required to climb to";NA;"feet  ";
+550 IF G9>0 THEN PRINT"<";G9;">  ";
+560 PRINT J$;STRING$(3,95);" gallons";K$;
+570 LINE INPUT X$:IF X$<>"" THEN G9=VAL(X$)
+580 IF G9=0 THEN PRINT BL$:GOTO540
+590 PRINT"Enter distance required to climb to";NA;"feet  ";
+600 IF D9>0 THEN PRINT"<";D9;">  ";
+610 PRINT J$;STRING$(3,95);" nm";K$;
+620 LINE INPUT X$:IF X$<>"" THEN D9=VAL(X$)
+630 IF D9=0 THEN PRINT BL$:GOTO590
+640 PRINT"Enter normal cruise true airspeed at";NA;"feet  ";
+650 IF NS>0 THEN PRINT"<";NS;">  ";
+660 PRINT J$;STRING$(3,95);" kts";K$;
+670 LINE INPUT X$:IF X$<>"" THEN NS=VAL(X$)
+680 IF NS<40 THEN PRINT BL$:GOTO640
+690 PRINT"Enter normal fuel consumption at";NA;"feet  ";
+700 IF NF>0 THEN PRINT"<";NF;">  ";
+710 PRINT J$;STRING$(4,95);" gal/hr";K$;
+720 LINE INPUT X$:IF X$<>"" THEN NF=VAL(X$)
+730 IF NF<6 THEN PRINT BL$:GOTO690
+740 PRINT"Enter normal fuel on board  ";
+750 IF NB>0 THEN PRINT"<";NB;">  ";
+760 PRINT J$;STRING$(4,95);" gal";K$;
+770 LINE INPUT X$:IF X$<>"" THEN NB=VAL(X$)
+780 IF NB<10 THEN PRINT BL$:GOTO740
+790 PRINT"Enter cost per hour  ";
+800 IF PH>0 THEN PRINT"<";PH;">  ";
+810 PRINT"$";J$;STRING$(4,95);K$;
+820 LINE INPUT X$:IF X$<>"" THEN PH=VAL(X$)
+830 IF PH<15 THEN PRINT BL$:GOTO790
+840 OPEN "O",2,"SY1:"+F$
+850 PRINT #2,AT$
+860 PRINT #2,RU
+870 PRINT #2,T9
+880 PRINT #2,G9
+890 PRINT #2,D9
+900 PRINT #2,NA
+910 PRINT #2,NS
+920 PRINT #2,NF
+930 PRINT #2,NB
+940 PRINT #2,PH
+950 CLOSE
+960 OPEN"I",1,"SY1:FLIGHT.SEQ":CLOSE
+970 PRINT ER$;"Standby one...":LOAD"NAVPROG7",R
+980 LOAD"MENU",R
+990 :REMARK error trap
+1000 IF ERR=53 AND ERL=160 THEN RESUME 300
+1010 IF ERR=53 AND ERL=960 THEN RESUME 980
+1020 IF ERR=53 AND ERL=350 THEN RESUME 110
+1030 ON ERROR GOTO 0

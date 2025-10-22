@@ -1,0 +1,305 @@
+10 REM *************************************************************
+20 REM *               MXPLOT.BAS  AWT 12/26/83                    *
+30 REM *               VERSION 1.0                                 *
+40 REM *               FOR MX-100 OR SIMILAR PRINTER               *
+50 REM *               MAKES DIFFERENT PLOT SIZES                  *
+60 REM *               BE BRAVE, RUN FIRST                         *
+70 REM *               BASED ON BREGOLI'S PROGRAM                  *
+80 REM *************************************************************
+90 REM GET FILE VECTORS TO PLOT
+100 DIM Y(101),X(101):REM         
+110 REM !MACHINE DEPENDENCE!----------------------------------------
+120 MAXWIDTH=233:WIDTH LPRINT MAXWIDTH 'SET MX100 COMPRESSED WIDTH
+130 XTIC=4 :YTIC=2 :XDIV=25:YDIV=50 ' DEFAULT GRAPH SIZE
+140 REM ------------------------------------------------------------
+150 XSPAN=XTIC*XDIV
+160 YSPAN=YTIC*YDIV
+170 INPUT "DO YOU WISH TO CHANGE THE GRAPH SIZE ? (Y/N) ",A$
+180 PRINT
+190 IF NOT A$="Y" THEN GOTO 310
+200    PRINT "CURRENT MAJOR DIVISIONS X AXIS=",XTIC
+210    PRINT "CURRENT MINOR DIVISIONS X AXIS=",XDIV
+220    INPUT "NUMBER OF MAJOR DIVISIONS ON X AXIS? ",XTIC
+230    INPUT "NUMBER OF MINOR DIVISIONS PER MAJOR DIVISION? ",XDIV
+240    XSPAN=XTIC*XDIV:IF XSPAN>MAXWIDTH THEN PRINT "ERROR- EXCEEDED WIDTH":GOTO 220
+250    PRINT "CURRENT MAJOR DIVISIONS Y AXIS=",YTIC
+260    PRINT "CURRENT MINOR DIVISIONS Y AXIS=",YDIV
+270    INPUT "NUMBER OF MAJOR DIVISIONS ON Y AXIS? ",YTIC
+280    INPUT "NUMBER OF MINOR DIVISIONS PER MAJOR DIVISION? ",YDIV
+290 YSPAN=YTIC*YDIV
+300 PRINT
+310 PRINT "SELECT FORM OF DATA INPUT"
+320 PRINT "0. EXIT PROGRAM RETURN TO BASIC"
+330 PRINT "1. FROM EXTERNAL FILE"
+340 PRINT "2. FROM EQUATIONS EMBEDDED IN THE CODE (OR DEMO)"
+350 PRINT "3. FROM TYPED IN DATA SET"
+360 PRINT "4. DATA PREVIOUSLY PLOTTED THIS RUN"
+370 INPUT "SELECTION IS (NUMBER):",SN
+380 IF SN=0 THEN GOTO 410
+390 ON SN GOSUB 420,670,520,830
+400 GOTO 170
+410 END
+420 PRINT:INPUT "ENTER THE DATAFILE (NAME5678.TYP)",A$
+430 OPEN #1,"I",A$
+440 I=0
+450 WHILE NOT EOF
+460   INPUT #1,X(I),Y(I):I=I+1
+470 WEND
+480 NPTS=I
+490 CLOSE #1
+500 GOSUB 830 'PLOT IT
+510 RETURN
+520 PRINT:INPUT "HOW MANY DATA PAIRS ";NPTS
+530 FOR I=0 TO  NPTS-1
+540  INPUT "ENTER X,Y PAIR ",X(I),Y(I)
+550 NEXT I
+560 GOTO 500 ' ARE NOT GOTO'S TERRIBLE
+570 REM **************************************************************
+580 REM *            PLOT PROGRAM FOR MX-80                          *
+590 REM *                      BY                                    *
+600 REM *              LAWRENCE J. BREGOLI                           *
+610 REM *      AS MODIFIED FROM BYTE MAG. MAR '82                    *
+620 REM **************************************************************
+630 REM 
+640 REM **************************************************************
+650 REM *     USE THE FOLLOWING SPACE TO CALCULATE A 101 BY 101      *
+660 REM *     DATA ARRAY IN X(I) AND Y(I).                           *
+670 REM *     ENTER PROGRAM BELOW THIS SECTION IF ARRAY EXISTS       *
+680 REM **************************************************************
+690 REM
+700 REM
+710 REM                             SAMPLE ARRAY->CONCENTRIC CIRCLES
+720 REM
+730 REM DIM Y(101),X(101):REM          MOVE DIM TO MAIN PROGRAM
+740 PI=3.1415928#
+750 FOR I=0 TO 50
+760 X(I)=SIN(I*2*PI/50):Y(I)=COS(I*2*PI/50)
+770 NEXT I
+780 FOR I=51 TO 100
+790 J=I-50
+800 X(I)=.5*SIN(J*6.282/50):Y(I)=.5*COS(J*6.282/50)
+810 NEXT I
+820 NPTS=101  ' NUMBER OF DATA POINTS
+830 REM
+840 REM **************************************************************
+850 REM *     ENTER TITLE OF PLOT AND AXIS LEGENDS                   *
+860 REM **************************************************************
+870 REM
+880 YTITLE$=SPACE$(YSPAN/2+1):XTITLE$=SPACE$(XSPAN+1):PTITLE$=SPACE$(XSPAN/2+1)
+890 LINE INPUT "ENTER TITLE OF PLOT  ";T$
+900 ST=LEN(PTITLE$)-LEN(T$):IF ST<0 THEN PRINT "TOO LONG! BY ";ABS(ST):GOTO 890
+910 LINE INPUT "ENTER Y AXIS TITLE  ";Y$
+920 SY=LEN(YTITLE$)-LEN(Y$):IF SY<0 THEN PRINT "TOO LONG! BY ";ABS(SY):GOTO 910
+930 LINE INPUT "ENTER X AXIS TITLE  ";X$
+940 SX=LEN(XTITLE$)-LEN(X$):IF SX<0 THEN PRINT "TOO LONG! BY ";ABS(SX):GOTO 930
+950 MID$(YTITLE$,SY/2+1)=Y$
+960 MID$(XTITLE$,SX/2+1)=X$
+970 MID$(PTITLE$,ST/2+1)=T$
+980 AUTOFLG=0 'NO AUTOSCALING
+990 INPUT "DO YOU WANT (A)UTO OR (M)ANUAL SCALING ";Y$
+1000 IF Y$="M" THEN 1030
+1010 IF Y$="A" THEN AUTOFLG=-1 ELSE 990
+1020 GOTO  1170
+1030 INPUT "ENTER MAXIMUM VALUE OF Y AXIS";YMAX
+1040 INPUT "ENTER MINIMUM VALUE OF Y AXIS";YMIN
+1050 INPUT "ENTER MAXIMUM VALUE OF X AXIS";XMAX
+1060 INPUT "ENTER MINIMUM VALUE OF X AXIS";XMIN
+1070 REM
+1080 REM **************************************************************
+1090 REM *     MAIN BODY OF PROGRAM STARTS HERE                       *
+1100 REM **************************************************************
+1110 REM
+1120 REM
+1130 REM **************************************************************
+1140 REM *    SPEED UP MODIFICATIONS USING SORT ROUTINE               *
+1150 REM **************************************************************
+1160 REM
+1170 PRINT "*** GOING TO WORK ***":LPRINT:LPRINT:LPRINT TAB(13);PTITLE$'PLOT TITLE
+1180 NM1=NPTS-1   'ARRAY STARTS AT ZERO
+1190 XC$="-":YC$="|"
+1200 TOP=NM1:TEMPTOP=NM1 'POINTER TO TOP OF DATA ARRAYS
+1210 GOSUB 2730:REM                                 SORT DATA
+1220 IF AUTOFLG THEN GOSUB 2400 ' AUTOSCALE
+1230 LPRINT:LPRINT
+1240 GOSUB 1590:REM                       SET COMPRESSED CHAR MODE
+1250 LSPACE=2:GOSUB 1560:REM              SET LINE SPACING
+1260 RSTOP=20:CHAR$=YC$:GOSUB 1630:REM    FORCE CARRIAGE LEFT
+1270 YD=ABS((YMAX-YMIN)/YSPAN):REM           VALUE OF EACH LINE
+1280 XD=ABS((XMAX-XMIN)/XSPAN)
+1290 FOR LNNO=YSPAN TO 0 STEP -1            
+1300 YN=YMAX-(((YMAX-YMIN)/YSPAN)*(YSPAN-LNNO)):REM  NORMALIZED Y VALUE
+1310 GOSUB 2050:REM                       PRINT VERTICAL TITLE
+1320 IF LNNO/2-FIX(LNNO/2)=O THEN GOSUB 1690:REM  PLOT VERTICAL LINES
+1330 GOSUB 1800:REM                       PLOT DATA
+1340 GOSUB 1940:REM                       PRINT HORIZONTAL LINE
+1350 LPRINT
+1360 RSTOP=20:CHAR$=YC$:GOSUB 1630:REM    FORCE CARRIAGE LEFT
+1370 LPRINT
+1380 NEXT LNNO
+1390 GOSUB 2150:REM                       PRINT X SCALE
+1400 GOSUB 2300"REM                       PRINT X AXIS TITLE
+1410 LSPACE=12:GOSUB 1560:REM             SET NORMAL LINE SPACING
+1420 GOSUB 1610:REM                       SET NORMAL CHAR WIDTH
+1430 LPRINT CHR$(12) ' TOP OF NEXT FORM
+1440 PRINT "***** COMPLETE ****";CHR$(7);CHR$(7)
+1450 RETURN
+1460 REM
+1470 REM **************************************************************
+1480 REM *    PLOT  SUPPORT    SUBROUTINES START HERE                 *
+1490 REM **************************************************************
+1500 REM
+1510 REM
+1520 REM **************************************************************
+1530 REM *    PRINTER CONTROL SUBROUTINES !MACHINE DEPENDENCE!       *
+1540 REM **************************************************************
+1550 REM
+1560 LPRINT CHR$(27)"A"CHR$(LSPACE):REM EDIT WITH GRAFTRAX OPTION
+1570 RETURN:REM                                    SET LINE SPACING
+1580 REM
+1590 LPRINT CHR$(15):RETURN:REM                   SET COMPRESSED MODE
+1600 REM
+1610 LPRINT CHR$(18):RETURN:REM                    SET NORMAL MODE
+1620 REM
+1630 LPRINT SPC(RSTOP);CHAR$;:RETURN:REM          PRINT CHAR AT RSTOP
+1640 REM
+1650 REM **************************************************************
+1660 REM *    PLOT VERTICAL LINE SUBROUTINE                           *
+1670 REM **************************************************************
+1680 REM
+1690 CHAR$=YC$:RSTOP=20:LPRINT CHR$(13);:GOSUB 1630
+1700 RSTOP=XDIV-1
+1710 FOR I=1 TO XTIC
+1720 GOSUB 1630
+1730 NEXT I
+1740 RETURN
+1750 REM
+1760 REM **************************************************************
+1770 REM *    PLOT SORTED DATA SUBROUTINE                             *
+1780 REM **************************************************************
+1790 REM
+1800 CHAR$="0"
+1810 FOR I=TOP TO 0 STEP -1
+1820 IF Y(I)>YN+.5*YD THEN 1880
+1830 IF Y(I)<=YN-.5*YD THEN I=0:GOTO 1880
+1840 TEMPTOP=I
+1850 XP=FIX((X(I)-XMIN+.5*XD)*XSPAN/(XMAX-XMIN))
+1860 IF XP<0 OR XP>XSPAN THEN 1880
+1870 LPRINT CHR$(13);:RSTOP=XP+20:GOSUB 1630
+1880 NEXT I:TOP=TEMPTOP:RETURN
+1890 REM
+1900 REM **************************************************************
+1910 REM *       PLOT Y SCALE AND HORIZONTAL LINE SUBROUTINE          *
+1920 REM **************************************************************
+1930 REM
+1940 IF LNNO/YDIV-FIX(LNNO/YDIV)<>0 THEN RETURN
+1950 LPRINT CHR$(13);:RSTOP=10:CHAR$="":GOSUB 1630
+1960 LPRINT USING "######.##";(YMAX-YMIN)*LNNO/YSPAN+YMIN;
+1970 LPRINT CHR$(13);:RSTOP=20:CHAR$=XC$:GOSUB 1630
+1980 LPRINT STRING$(XSPAN,XC$);
+1990 RETURN
+2000 REM
+2010 REM **************************************************************
+2020 REM *      PRINT YAXIS TITLE                                     *
+2030 REM **************************************************************
+2040 REM
+2050 IF LNNO/2-FIX(LNNO/2)<>0 THEN RETURN
+2060 LPRINT CHR$(13);:RSTOP=7
+2070 CHAR$=MID$(YTITLE$,FIX(((YSPAN-LNNO)/2)+1),1)
+2080 GOSUB 1630
+2090 RETURN
+2100 REM
+2110 REM **************************************************************
+2120 REM *      PRINT X SCALE SUBROUTINE                              *
+2130 REM **************************************************************
+2140 REM
+2150 LPRINT:LPRINT
+2160 F$="#######.##"
+2170 F$=RIGHT$(F$,XDIV) ' YOU MIGHT LIKE LEFT$
+2180 RSTOP=20-INSTR(F$,".")+1+(INSTR(F$,".")=0)*LEN(F$):CHAR$="":GOSUB 1630
+2190 FOR I=0 TO XTIC-1
+2200 LPRINT USING F$;(XMAX-XMIN)*I/XTIC+XMIN;
+2210 LPRINT SPC(XDIV-LEN(F$));
+2220 NEXT I
+2230 LPRINT USING F$;(XMAX-XMIN)*I/XTIC+XMIN;
+2240 RETURN
+2250 REM
+2260 REM **************************************************************
+2270 REM *      PRINT X AXIS TITLE                                    *
+2280 REM **************************************************************
+2290 REM
+2300 LPRINT:LPRINT:LPRINT
+2310 LPRINT:LPRINT:LPRINT
+2320 RSTOP=20:CHAR$=XTITLE$:GOSUB 1630
+2330 RETURN
+2340 REM
+2350 REM **************************************************************
+2360 REM *      AUTO SCALING SUBROUTINES                              *
+2370 REM **************************************************************
+2380 REM NOTE THESE SCALING ROUTINES FAIL UNDER CERTAIN CONDITIONS
+2390 REM DUE TO ROUND OFF ERROR (USE MANUAL)
+2400 YMAX=Y(0):XMAX=X(0):YMIN=Y(0):XMIN=X(0)
+2410 PRINT "***** WORKING *****"
+2420 FOR I=1 TO NM1:REM                            FIND XMAX & YMAX
+2430 IF Y(I)>YMAX THEN YMAX=Y(I)
+2440 IF Y(I)<YMIN THEN YMIN=Y(I)
+2450 IF X(I) > XMAX THEN XMAX=X(I)
+2460 IF X(I)<XMIN THEN XMIN=X(I)
+2470 NEXT I
+2480 RESTORE 2670:REM--------------------------------------------------
+2490 MSD=(YMAX-YMIN)/YTIC:REM                 SCALE THE Y AXIS
+2500 YD=(YMAX-YMIN)/YSPAN
+2510 FOR I=-2 TO 4
+2520 FOR K=1 TO 3:READ J
+2530 IF MSD<=J*10^(I)+.5*YD/YTIC THEN MSD=J*10^(I):GOTO 2550 
+2540 NEXT K:RESTORE 2670:NEXT I
+2550 YMAX=SGN(YMAX)*CINT(ABS(YMAX/MSD))*MSD
+2560 YMIN=YMAX-YTIC*MSD
+2570 RESTORE 2670:REM--------------------------------------------------
+2580 MSD=(XMAX-XMIN)/XTIC:REM                        SCALE THE X AXIS
+2590 XD=(XMAX-XMIN)/XSPAN
+2600 FOR I=-2 TO 4
+2610 FOR K=1 TO 3:READ J
+2620 IF MSD<=J*10^(I)+.5*XD/XTIC THEN MSD=J*10^(I):GOTO 2640
+2630 NEXT K:RESTORE 2670:NEXT I
+2640 XMAX=SGN(XMAX)*CINT(ABS(XMAX/MSD))*MSD
+2650 XMIN=XMAX-XTIC*MSD
+2660 RETURN
+2670 DATA 1,2,5
+2680 REM
+2690 REM **************************************************************
+2700 REM *      SHELL SORT OF DATA                                    *
+2710 REM **************************************************************
+2720 REM
+2730 M=NM1
+2740 REM    X(I)         X AXIS DATA ARRAY
+2750 M=INT(M/2):IF M=0 THEN RETURN
+2760 J=0:K=NM1-M
+2770 I=J
+2780 L=I+M:IF Y(I)<Y(L) THEN 2810
+2790 T=Y(I):T1=X(I):Y(I)=Y(L):X(I)=X(L):Y(L)=T:X(L)=T1:I=I-M
+2800 IF I<0 THEN 2810 ELSE 2780
+2810 J=J+1:IF J<=K THEN 2770 ELSE 2750
+2820 REM
+2830 REM    YD           DELTA VALUE FOR EACH Y AXIS LINE          
+2840 REM    XP           CHARACTER POSITION ON X AXIS              
+2850 REM    MSD          MINIMUM SCALE DELTA (MAJOR DIVISION)                     
+2860 REM    K            INDEX COUNTER                              
+2870 REM    I            INDEX COUNTER                              
+2880 REM    T$           PLOT TITLE                                
+2890 REM    PTITLE$      PLOT TITLE CENTERED IN 50 SPACES     
+2900 REM    Y$           Y AXIS TITLE                              
+2910 REM    YTITLE$      Y AXIS TITLE CENTERED IN 50 SPACES   
+2920 REM    X$           X AXIS TITLE                              
+2930 REM    XTITLE$      X AXIS TITLE CENTERED IN 50 SPACES   
+2940 REM    CHAR$        STRING PRINTED AT RSTOP                
+2950 REM    XTIC         X AXIS MAJOR DIVISIONS	
+2960 REM    YTIC         Y AXIS MAJOR DIVISIONS
+2970 REM    XDIV         X AXIS MINOR DIVISIONS PER MAJOR
+2980 REM    YDIV         Y AXIS MINOR DIVISIONS PER MAJOR
+2990 REM    NPTS          NUMBER OF DATA POINTS
+3000 REM    NM1           NUMBER OF POINTS -1
+3010 REM    AWT          ALLAN W. TOMALESKY
+3020 REM                 32 MARY LYNN LANE 
+3030 REM                 SOMERVILLE,NJ 08876
+   AWT          ALLAN W. TOMALESKY
+3020 REM                 32 MARY LYNN LANE

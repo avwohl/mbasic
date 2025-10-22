@@ -1,0 +1,247 @@
+Testing: 50/235...
+Testing: 100/235...
+Testing: 150/235...
+Testing: 200/235...
+====================================================================================================
+COMPREHENSIVE TEST: 235 BASIC FILES
+====================================================================================================
+
+
+====================================================================================================
+DETAILED RESULTS BY CATEGORY
+====================================================================================================
+
+1. SUCCESSFULLY PARSED: 41 files (17.4%)
+2. LEXER ERRORS: 0 files (0.0%)
+3. LEXER EXCEPTIONS: 0 files (0.0%)
+4. PARSER ERRORS: 194 files (82.6%)
+5. PARSER EXCEPTIONS: 0 files (0.0%)
+6. FILE ERRORS: 0 files (0.0%)
+
+====================================================================================================
+SUCCESSFULLY PARSED FILES (41 files)
+====================================================================================================
+
+Filename                       Size     Lines  Stmts  Tokens  Stmt Types
+----------------------------------------------------------------------------------------------------
+nim.bas                           9192    233    453    3550         15
+BATTLE.bas                       10222    332    384    2739         20
+cpm-pert.bas                     10011    277    372    2597         14
+blkjk.bas                         5523    237    260    1665         10
+testbc2.bas                       5247    128    233    1062         10
+astrnmy2.bas                      5461    171    195    1068          6
+HANOI.bas                         3179     99    173    1307         16
+hanoi.bas                         3199     99    173    1307         16
+bacarrat.bas                      3654    142    150    1251         12
+brutef.bas                        3491     93    104     737         11
+benchmk.bas                       1863     90     90     750         11
+test.bas                          1395     56     89     510         10
+rotate.bas                        2264     49     88     614         11
+555-ic.bas                        1726     66     69     463         12
+rbsclock.bas                      2372     60     67     481          8
+charfreq.bas                      1256     63     64     454         10
+log10k.bas                        1354     54     54     215          7
+567-ic.bas                        1102     50     51     354         12
+fills.bas                          697     26     49     235          7
+interest.bas                       882     39     39     362          6
+unprotct.bas                      1188     35     36     147         10
+command.bas                        885     34     34     134          6
+prime2.bas                         809     29     29     178         10
+maptest.bas                        336     13     13      72          6
+fprime.bas                         245     12     12      86          4
+qsoedit.bas                       2604     11     11     883          2
+pattern1.bas                       650     10     10      31          1
+xextract.bas                      1205     10     10     428          4
+xscan.bas                         1200     10     10     431          3
+pattern.bas                        586      9      9      29          1
+pokehi.bas                         148      8      9      61          8
+qsofind.bas                        673      6      6     189          4
+ucase.bas                          221      6      6      60          5
+findctl.bas                        688      2      4     275          2
+xlabels.bas                        893      4      4     359          4
+xtel.bas                           622      4      4     159          1
+sample.bas                         127      1      1       5          1
+clock-cb.bas                      7557      0      0    1079          0
+convert.bas                       4552      0      0    1070          0
+grabcom.bas                        226      0      0      99          0
+rocket.bas                           0      0      0       1          0
+----------------------------------------------------------------------------------------------------
+TOTALS                           99505   2568   3365   27497
+AVERAGES                          2426     62     82     670
+
+====================================================================================================
+STATEMENT TYPE DISTRIBUTION (across all successful parses)
+====================================================================================================
+
+Statement Type                           Count    % of Total
+----------------------------------------------------------------------------------------------------
+PrintStatementNode                           847      25.2%
+LetStatementNode                             787      23.4%
+RemarkStatementNode                          454      13.5%
+IfStatementNode                              293       8.7%
+GosubStatementNode                           213       6.3%
+ForStatementNode                             176       5.2%
+NextStatementNode                            171       5.1%
+GotoStatementNode                            135       4.0%
+InputStatementNode                            73       2.2%
+ReturnStatementNode                           68       2.0%
+EndStatementNode                              29       0.9%
+DataStatementNode                             23       0.7%
+DimStatementNode                              20       0.6%
+ReadStatementNode                             13       0.4%
+DefFnStatementNode                            10       0.3%
+OutStatementNode                               9       0.3%
+DefTypeStatementNode                           6       0.2%
+OnGosubStatementNode                           6       0.2%
+ClearStatementNode                             5       0.1%
+StopStatementNode                              5       0.1%
+PokeStatementNode                              5       0.1%
+OnGotoStatementNode                            4       0.1%
+OnErrorStatementNode                           4       0.1%
+CallStatementNode                              3       0.1%
+LineInputStatementNode                         2       0.1%
+WidthStatementNode                             2       0.1%
+RandomizeStatementNode                         2       0.1%
+
+====================================================================================================
+PARSER ERRORS (194 files)
+====================================================================================================
+
+Error Type                                                        Count 
+----------------------------------------------------------------------------------------------------
+or newline, got APOSTROPHE                                           22
+HASH                                                                 16
+Expected LPAREN, got COLON                                           14
+or newline, got IDENTIFIER                                           13
+RUN                                                                  11
+BACKSLASH                                                            10
+Expected EQUAL, got IDENTIFIER                                       10
+Expected EQUAL, got NEWLINE                                          10
+Expected EQUAL, got NUMBER                                            7
+NEWLINE                                                               6
+Expected IDENTIFIER, got HASH                                         5
+NUMBER                                                                5
+Expected EQUAL, got COLON                                             4
+GREATER_THAN                                                          3
+  → ACEY.bas
+  → acey.bas
+  → rose.bas
+Expected EQUAL, got STRING                                            3
+  → OTHELLO.bas
+  → tic.bas
+  → tictac.bas
+HEX                                                                   3
+  → disasmb.bas
+  → rsj.bas
+  → xref.bas
+or newline, got LPAREN                                                3
+  → search.bas
+  → tab8085.bas
+  → tabintel.bas
+Expected line number after GOTO                                       2
+  → DIVISION.bas
+  → division.bas
+Expected EQUAL, got PRINT                                             2
+  → ONECHECK.bas
+  → onecheck.bas
+Expected THEN or GOTO after IF condition                              2
+  → batnum.bas
+  → fndtble.bas
+Expected EQUAL, got REM                                               2
+  → bibbld.bas
+  → vocbld.bas
+MID                                                                   2
+  → clock-m.bas
+  → tanks.bas
+EOF_FUNC                                                              2
+  → direct.bas
+  → scatpad.bas
+Expected EQUAL, got MINUS                                             2
+  → doodle.bas
+  → scenecar.bas
+Expected IDENTIFIER, got LINE_INPUT                                   2
+  → dow.bas
+  → sleuth.bas
+Expected LPAREN, got NEWLINE                                          2
+  → e-sketch.bas
+  → unigrid2.bas
+or newline, got NUMBER                                                2
+  → hex2data.bas
+  → mbasedit.bas
+DEF function name must start with FN                                  2
+  → ibmmdm.bas
+  → surround.bas
+LPRINT                                                                2
+  → pcat.bas
+  → xref19.bas
+APOSTROPHE                                                            2
+  → prime1.bas
+  → wordpuzl.bas
+ERASE                                                                 2
+  → qubic.bas
+  → stackalc.bas
+Expected EQUAL, got IF                                                1
+  → bibsr2.bas
+Expected IDENTIFIER, got HEX                                          1
+  → binhex.bas
+Expected IDENTIFIER, got BACKSLASH                                    1
+  → blast.bas
+Expected IDENTIFIER, got SEMICOLON                                    1
+  → cpkhex.bas
+EQUAL                                                                 1
+  → deprec.bas
+Expected COMMA, got IDENTIFIER                                        1
+  → directio.bas
+Expected GOTO or GOSUB after ON expression                            1
+  → el-e.bas
+or newline, got THEN                                                  1
+  → finance.bas
+or newline, got RPAREN                                                1
+  → ic-timer.bas
+SAVE                                                                  1
+  → krakinst.bas
+LPAREN                                                                1
+  → lanes.bas
+Expected EQUAL, got LESS_THAN                                         1
+  → lifscore.bas
+Expected LPAREN, got COMMA                                            1
+  → mxref.bas
+Expected COMMA, got AS                                                1
+  → pckget.bas
+COMMA                                                                 1
+  → proset.bas
+or newline, got COMMA                                                 1
+  → sdir.bas
+Expected RPAREN, got IDENTIFIER                                       1
+  → speech.bas
+or newline, got REM                                                   1
+  → survival.bas
+Expected EQUAL, got GOTO                                              1
+  → tricks.bas
+PRINT                                                                 1
+  → tvigammo.bas
+Expected EQUAL, got PLUS                                              1
+  → winning.bas
+
+====================================================================================================
+WRITING DETAILED RESULTS TO FILES
+====================================================================================================
+✓ Wrote test_results_success.txt (41 files)
+✓ Wrote test_results_lexer_fail.txt (0 files)
+✓ Wrote test_results_parser_fail.txt (194 files)
+
+====================================================================================================
+FINAL SUMMARY
+====================================================================================================
+
+Total files tested: 235
+Successfully parsed: 41 (17.4%)
+Lexer failures: 0 (0.0%)
+Parser failures: 194 (82.6%)
+
+Successfully parsed programs contain:
+  - 2,568 lines of code
+  - 3,365 statements
+  - 27,497 tokens
+
+====================================================================================================

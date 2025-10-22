@@ -1,0 +1,110 @@
+1 '	signon subsystem -- bye command 
+2 MODNAME$="BYECMD"	'NOTE: FINISH.BAS updates users's record
+4 VERSION$="1.4 {10/14/82}"	'not in 1.0
+7 '	by dick lieber
+13 '
+28 '
+49 PWDFILE$="pwds"	'subsystem configuration file
+50 COMMENTFILE$="COMMENTS"
+56 LASTCALRFILE$="LASTCALR"
+80 '
+81 '	function definition
+82 '
+83 '	add deliminators to time or date
+84 DEF FNADDSEP$(DS$,DELIM$)=
+	LEFT$(DS$,2)+DELIM$+MID$(DS$,3,2)+DELIM$+RIGHT$(DS$,2)
+85 '	remove date or time deliminators
+86 DEF FNKILLSEP$(DS$)=LEFT$(DS$,2)+MID$(DS$,4,2)+RIGHT$(DS$,2)
+88 DEF FNHOURS$(TIME)=STR$(INT(TIME/60))+":"+
+	RIGHT$("00"+MID$(STR$(TIME-(INT(TIME/60)*60)),2),2)
+90 DEF FNEROR$(SERRNUMB$)="System Error ("+SERRNUMB$+")."
+94 '	constants:
+96 CRLF$=CHR$(&HD)+CHR$(&HA)
+97 BSTRING$=CHR$(8)+" "+CHR$(8)
+98 DEFDRIVE$="A:"
+99 DIM ACLARRAY%(5,11)
+100 DIM FLAGS%(14)
+103 '
+106 '
+109 '
+112 ON ERROR GOTO 1000
+115 GOTO 10000	' main program begins after sub routines
+118 '
+121 ' routines used by signon
+124 '
+300 '
+302 '	set user number
+304 '
+306 USERMD=TESTADDRESS+9
+312 CALL USERMD(SETUSERNUMBER%)
+345 RETURN
+400 %include 400500.SSB
+700 '
+710 '	get string into ANSWER$ then CRLF
+720 '
+730 GOSUB 500: PRINT: RETURN
+800 %include 800.SSB
+1000 '
+1004 '	Error handler
+1008 '
+1010 IF ERR=53 THEN NOFILE%=1: RESUME NEXT
+1012 A$="Error Trap":CR%=2: GOSUB 400
+1020 PRINT "ERR = ";ERR, "ERL = ";ERL
+1028 END
+1100 %include 1100.SSB
+1600 %include 1600.SSB
+1900 '
+1905 '	get date into sdate$ (sdate$ looks nice to print)
+1910 '
+1915 SDATE$=LEFT$(LDATE$,2)+"/"+MID$(LDATE$,3,2)+"/"+RIGHT$(LDATE$,2)
+1920 RETURN
+2100 %include 2100.SSB
+3300 %include 3300.SSB
+8000 %include 8000.SSB
+9000 '
+9005 '	get lastcal info
+9010 '1.1
+9012 SETUSERNUMBER%=0: GOSUB 300
+9013 NOFILE%=0
+9015 OPEN "I", #1, DEFDRIVE$+LASTCALRFILE$
+9017 IF NOFILE%<>0 THEN
+	A$=FNEROR$("E-2"):
+	CR%=2: GOSUB 400:
+	CLOSE #1:
+	COMMENT$=A$: GOSUB 8000:
+	RETURN
+9025 INPUT #1, FRNAME$, LNAME$, ACLVL%, LDATE$, LTIME$
+9035 CLOSE #1
+9045 RETURN
+9100 %include 9100.SSB
+10000 '
+10010 '	main program
+10020 '1.4	#
+10030 GOSUB 1100
+10050 IF NOFILE%<>0 THEN SETUSERNUMBER%=0: GOSUB 300: GOTO 10000
+10055 NOTATION$="exiting"
+10060 GOSUB 9000	'get user
+10070 IF NOCLOCK%=0 THEN GETDAY%=1: GOSUB 1600
+10080 A$= CRLF$+FNADDSEP$(TIME$,":")
+	+" "+DAY$+" "+FNADDSEP$(DATE$,"/"):
+	CR%=2: GOSUB 400
+10085 PRINT
+10087 STIME$=TIME$
+10100 IF NOCLOCK%=0 THEN GOSUB 9100:
+      A$=FRNAME$+" "+LNAME$+" was on the system for"+FNHOURS$(ELAPMINUTES)+" (hr:mn).":
+	GOSUB 400
+10240 NOCTLK%=1: DRIVE$=DEFDRIVE$: FIL$=EXITFILE$: GOSUB 800
+10245 ASKFORCOM%=1: GOSUB 2100
+10250 A$=CRLF$+"Goodbye..."+CRLF$: GOSUB 400
+10300 SETUSERNUMBER%=0: GOSUB 300
+10450 POKE 4,0		'tell ccp (just in case)
+10453 OUT MODEMPORT%,DISCONNECT%
+10460 for i%=1 to 20
+10470 	PRINT "Waiting for disconnect..............................."
+10480 next i%
+10485 PRINT "10085 FINISHFILE$=";finishfile$
+10490 FIL$= DEFDRIVE$+FINISHFILE$
+10500 comment$="Couldn't find "+FIL$+".COM"
+10550 PRINT COMMENT$
+10600 GOSUB 8000
+20000 END

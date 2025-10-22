@@ -1,0 +1,137 @@
+        REM GNMENU.BAS    * PROGRAM                              *
+        REM               *
+        REM 02 09 82      * J.BUTLER
+
+%CHAIN 1000,10000,100,2000
+ 
+        REM COMMONS GO HERE
+        COMMON CLEAR$,NAME$,LINE$,DEMO$,CRSR$,FOCUS$,HIGH$,LOW$,PASSWORD$, \
+	       DATE$,EOL$,CLRFORE$,ROWOFF,COLOFF,SCRPARA,CONT
+ 
+        REM DIMENSIONS GO HERE
+        DIM MONTHS$(12),MASK$(10)
+ 
+        MONTHS$(1)="JANUARY":MONTHS$(2)="FEBRUARY":MONTHS$(3)="MARCH"
+        MONTHS$(4)="APRIL":MONTHS$(5)="MAY":MONTHS$(6)="JUNE"
+        MONTHS$(7)="JULY":MONTHS$(8)="AUGUST":MONTHS$(9)="SEPTEMBER"
+        MONTHS$(10)="OCTOBER":MONTHS$(11)="NOVEMBER":MONTHS$(12)="DECEMBER"
+ 
+        BLANK$="                              ":SCNO$="":ERR=1
+ 
+        IF END #1 THEN 9992
+        OPEN "SCREEN.FIL" RECL 18 AS 1
+        IF END #2 THEN 9992
+        OPEN "COMPANY.DA" RECL 160 AS 2
+        REV$="1.0"
+ 
+        REM  ** GET SCREEN PARAMETERS FROM SCREEN.FIL **
+        READ #1,1;A$,B$,C$
+        CLEAR$=CHR$(VAL(A$))+CHR$(VAL(B$))
+        READ #1,2;A$,B$,C$
+        CRSR$=CHR$(VAL(A$))+CHR$(VAL(B$))
+        READ #1,3;A$,B$,C$
+        EOS$=CHR$(VAL(A$))+CHR$(VAL(B$))
+        READ #1,4;A$,B$,C$
+        EOL$=CHR$(VAL(A$))+CHR$(VAL(B$))
+        READ #1,5;A$,B$,C$
+        CLRFORE$=CHR$(VAL(A$))+CHR$(VAL(B$))
+        READ #1,6;A$,B$,C$
+        CLRBACK$=CHR$(VAL(A$))+CHR$(VAL(B$))
+        READ #1,7;A$,B$,C$
+        HIGH$=CHR$(VAL(A$))+CHR$(VAL(B$))+CHR$(VAL(C$))
+        READ #1,8;A$,B$,C$
+        LOW$=CHR$(VAL(A$))+CHR$(VAL(B$))+CHR$(VAL(C$))
+        READ #1,9;A$,B$,C$
+        HOME$=CHR$(VAL(A$))+CHR$(VAL(B$))
+        READ #1,13;A$,B$,C$
+        ROWOFF=VAL(A$):COLOFF=VAL(B$):SCRPARA=VAL(C$)
+        CLOSE 1
+ 
+        REM MASK INITIALIZATION GOES HERE
+ 
+        REM PASSWORD ROUTINE GOES HERE
+ 
+5       REM PASSWORD INPUT ROUTINE
+
+7       GOTO 11
+ 
+8       REM VERTICAL CURSOR POSITIONING ROUTINE
+        FOR ZZ=1 TO VV:PRINT:NEXT ZZ:RETURN
+ 
+9       REM DATE FORMATTING ROUTINE
+        DATE$=MID$(P$,1,2)+"-"+MID$(P$,3,2)+"-"+MID$(P$,5,2)
+        RETURN
+ 
+10      REM CURSOR ADDRESS
+        IF SCRPARA=1 THEN \
+           PRINT CRSR$;CHR$(ROW+ROWOFF);CHR$(COLUMN+COLOFF);:RETURN
+        PRINT CRSR$;CHR$(COLUMN+COLOFF);CHR$(ROW+ROWOFF);:RETURN
+
+11      REM GET DATE HERE
+        READ #2,1;A2$,B2$,C2$,D2$,E2$,F2$,G2$,H2$,I2$,J2$
+        IF VAL(G2$)=0 THEN GOSUB 15:GOTO 93
+        P$=G2$:GOSUB 9:G2$=DATE$:GOTO 150
+ 
+15      REM COMPANY INFO HERE
+        LINE$="":COMPANY$=B2$:CONO$=I2$:ORG$=J2$
+        FOR X=1 TO LEN(COMPANY$):LINE$=LINE$+"*":NEXT X:RETURN
+ 
+93      REM  ** GET DATE AND ID AND TIME FROM OPERATOR **
+        PRINT CLEAR$:VV=8:GOSUB 8
+        PRINT TAB(20);"WHAT IS THE DATE (MMDDYY) : ";:INPUT "";LINE P$
+        L=LEN(P$):GOSUB 9:G2$=DATE$
+        IF L=6 AND ABS((18-VAL(MID$(P$,1,2)))-(18-VAL(MID$(ORG$,1,2))))=6 \
+        THEN GOSUB 2900:GOTO 95
+        IF L=6 AND ABS((18-VAL(MID$(P$,1,2)))-(18-VAL(MID$(ORG$,1,2))))<>6  \
+        THEN NOGO$="X":GOTO 95
+        GOTO 93
+ 
+95      REM ** IF SIX MONTHS HAVE PASSED THEN PRINT MESSAGE **
+        PRINT CLEAR$:VV=8:GOSUB 8
+        IF NOGO$="X" THEN GOSUB 4000
+        GOTO 150
+ 
+101     CHAIN ""
+102     CHAIN ""
+ 
+150     PRINT CLEAR$
+        PRINT TAB(40-LEN(COMPANY$)/2);COMPANY$
+        PRINT TAB (62);"DATE:";DATE$
+        PRINT TAB(31);"MENU":PRINT
+        PRINT TAB (18);"1. "
+        PRINT TAB (18);"2. "
+        FOR X=1 TO 6:PRINT:NEXT X
+        PRINT TAB(20);"TYPE THE NUMBER OF YOUR REQUEST : ";:INPUT "";LINE INP$
+        PRINT CLEAR$
+        IF INP$="" THEN 1000
+        Y=VAL(INP$)
+        IF Y<1 OR Y>2 THEN 150
+        ON Y GOTO 101,102
+ 
+1000    READ #2,1;A2$,B2$,C2$,D2$,E2$,F2$,G2$,H2$,I2$,J2$
+        PRINT #2,1;"",B2$,C2$,D2$,E2$,F2$,"",H2$,I2$,J2$
+        CLOSE 2:GOTO 9999
+ 
+1500    REM FILE I/O HERE
+ 
+1503    RETURN
+  
+2503    RETURN
+ 
+2900    PRINT CLEAR$:VV=7:GOSUB 8
+        RETURN
+ 
+4000    REM  ** ENTRY SCREEN **
+        RETURN
+ 
+9990    CLOSE 2:PRINT LOW$;CLEAR$:STOP 
+
+9992    FOR X=1 TO 24:PRINT:NEXT X
+        PRINT TAB(20);"ACCESS NOT PERMITTED! SEE YOUR SYSTEM SUPERVISOR..";ERR;
+        Y%=CONCHAR%
+        IF Y%=5EH THEN 9999
+        GOTO 9992
+ 
+9999    PRINT LOW$;CLEAR$
+        STOP
+

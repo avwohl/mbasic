@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:www.bitsavers.org)",
+      "WebFetch(domain:archive.org)",
+      "WebFetch(domain:ia800609.us.archive.org)",
+      "WebFetch(domain:alchemy-os.sourceforge.net)",
+      "WebFetch(domain:gopherproxy.meulie.net)",
+      "Bash(while IFS=: read file line rest)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(sed:*)",
+      "Bash(done)",
+      "Bash(python3:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

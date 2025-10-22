@@ -1,0 +1,549 @@
+Parser Failures (182)
+================================================================================
+
+ACEY.bas
+  Parse error at line 107, column 13: Unexpected token in expression: GREATER_THAN
+
+ADD.bas
+  Parse error at line 44, column 83: Unexpected token in statement: BACKSLASH
+
+ADDITION.bas
+  Parse error at line 24, column 32: Expected EQUAL, got IDENTIFIER
+
+AIRCRAFT.bas
+  Parse error at line 8, column 72: Unexpected token in statement: BACKSLASH
+
+BACKGAMM.bas
+  Parse error at line 6, column 13: Expected EQUAL, got COLON
+
+DIVISION.bas
+  Parse error at line 28, column 25: Expected line number after GOTO
+
+DOODLE.bas
+  Parse error at line 29, column 11: Unexpected token in expression: HASH
+
+MENU.bas
+  Parse error at line 8, column 59: Expected EQUAL, got NEWLINE
+
+MULTIPLI.bas
+  Parse error at line 26, column 64: Unexpected token in statement: BACKSLASH
+
+NUMBER.bas
+  Parse error at line 10, column 41: Unexpected token in statement: RUN
+
+OLDROUTE.bas
+  Parse error at line 8, column 72: Unexpected token in statement: BACKSLASH
+
+ONECHECK.bas
+  Parse error at line 17, column 41: Expected EQUAL, got PRINT
+
+OTHELLO.bas
+  Parse error at line 67, column 24: Expected EQUAL, got STRING
+
+POKER.bas
+  Parse error at line 52, column 83: Expected EQUAL, got NEWLINE
+
+RATIO.bas
+  Parse error at line 28, column 36: Unexpected token in statement: RUN
+
+SCENECAR.bas
+  Parse error at line 56, column 78: Unexpected token in statement: BACKSLASH
+
+SPELLING.bas
+  Parse error at line 16, column 47: Unexpected token in statement: BACKSLASH
+
+acey.bas
+  Parse error at line 107, column 13: Unexpected token in expression: GREATER_THAN
+
+add.bas
+  Parse error at line 47, column 49: Unexpected token in statement: RUN
+
+addition.bas
+  Parse error at line 25, column 33: Expected EQUAL, got IDENTIFIER
+
+aircraft.bas
+  Parse error at line 22, column 11: Expected IDENTIFIER, got HASH
+
+airmiles.bas
+  Parse error at line 55, column 81: Expected : or newline, got IDENTIFIER
+
+amodem42.bas
+  Parse error at line 3, column 11: Expected EQUAL, got NUMBER
+
+asciiart.bas
+  Parse error at line 20, column 11: Expected EQUAL, got NEWLINE
+
+asm2mac.bas
+  Parse error at line 8, column 9: Expected EQUAL, got COLON
+
+aut850.bas
+  Parse error at line 4, column 9: Unexpected token in expression: HASH
+
+auto850.bas
+  Parse error at line 4, column 9: Unexpected token in expression: HASH
+
+backgamm.bas
+  Parse error at line 8, column 13: Expected EQUAL, got COLON
+
+batnum.bas
+  Parse error at line 24, column 10: Expected THEN or GOTO after IF condition
+
+battle.bas
+  Parse error at line 5, column 17: Expected EQUAL, got IDENTIFIER
+
+bearing.bas
+  Parse error at line 18, column 29: Expected : or newline, got IDENTIFIER
+
+bibbld.bas
+  Parse error at line 30, column 9: Expected EQUAL, got REM
+
+bibsr2.bas
+  Parse error at line 39, column 9: Expected EQUAL, got IF
+
+bigcal2.bas
+  Parse error at line 134, column 30: Expected : or newline, got IDENTIFIER
+
+bigtime.bas
+  Parse error at line 318, column 22: Expected THEN or GOTO after IF condition
+
+binhex.bas
+  Parse error at line 16, column 31: Expected IDENTIFIER, got HEX
+
+birthday.bas
+  Parse error at line 81, column 10: Unexpected token in expression: GREATER_THAN
+
+blackbox.bas
+  Parse error at line 73, column 61: Expected EQUAL, got NUMBER
+
+blast.bas
+  Parse error at line 12, column 65: Expected IDENTIFIER, got BACKSLASH
+
+bmodem.bas
+  Parse error at line 8, column 29: Expected : or newline, got IDENTIFIER
+
+bmodem1.bas
+  Parse error at line 13, column 29: Expected : or newline, got IDENTIFIER
+
+budget.bas
+  Parse error at line 100, column 26: Expected : or newline, got IDENTIFIER
+
+buildsub.bas
+  Parse error at line 10, column 11: Unexpected token in expression: HASH
+
+calendar.bas
+  Parse error at line 14, column 28: Expected : or newline, got IDENTIFIER
+
+calendr5.bas
+  Parse error at line 155, column 12: Expected EQUAL, got NEWLINE
+
+cbasedit.bas
+  Parse error at line 79, column 3: Unexpected token in statement: NUMBER
+
+checkers.bas
+  Parse error at line 16, column 7: Unexpected token in expression: BACKSLASH
+
+clock-m.bas
+  Parse error at line 71, column 7: Unexpected token in statement: MID
+
+cmprbib.bas
+  Parse error at line 28, column 2: Unexpected token in statement: NUMBER
+
+commo1.bas
+  Parse error at line 94, column 3: Unexpected token in statement: NUMBER
+
+correct.bas
+  Parse error at line 18, column 47: Unexpected token in statement: BACKSLASH
+
+cpkhex.bas
+  Parse error at line 11, column 11: Expected IDENTIFIER, got SEMICOLON
+
+cpmprt51.bas
+  Parse error at line 37, column 37: Expected : or newline, got IDENTIFIER
+
+deprec.bas
+  Parse error at line 17, column 12: Unexpected token in expression: EQUAL
+
+diary.bas
+  Parse error at line 200, column 15: Unexpected token in expression: HASH
+
+digiklok.bas
+  Parse error at line 111, column 8: Expected EQUAL, got EOF
+
+direct.bas
+  Parse error at line 4, column 8: Unexpected token in expression: EOF_FUNC
+
+directio.bas
+  Parse error at line 11, column 11: Expected COMMA, got IDENTIFIER
+
+directry.bas
+  Parse error at line 1, column 8: Expected EQUAL, got NEWLINE
+
+disasmb.bas
+  Parse error at line 18, column 32: Unexpected token in expression: HEX
+
+division.bas
+  Parse error at line 28, column 27: Expected line number after GOTO
+
+dlabel.bas
+  Parse error at line 51, column 39: Expected : or newline, got IDENTIFIER
+
+doodle.bas
+  Parse error at line 2, column 23: Expected EQUAL, got MINUS
+
+dow.bas
+  Parse error at line 10, column 43: Expected IDENTIFIER, got LINE_INPUT
+
+e-sketch.bas
+  Parse error at line 39, column 12: Unexpected token in expression: HASH
+
+el-e.bas
+  Parse error at line 29, column 17: Expected GOTO or GOSUB after ON expression
+
+entrbbs.bas
+  Parse error at line 143, column 12: Expected EQUAL, got APOSTROPHE
+
+exitbbs1.bas
+  Parse error at line 22, column 35: Expected IDENTIFIER, got HASH
+
+exitrbbs.bas
+  Parse error at line 46, column 22: Unexpected token in statement: NEWLINE
+
+finance.bas
+  Parse error at line 28, column 59: Expected : or newline, got THEN
+
+fndtble.bas
+  Parse error at line 24, column 42: Expected THEN or GOTO after IF condition
+
+fprod.bas
+  Parse error at line 101, column 42: Unexpected token in statement: NEWLINE
+
+fprod1.bas
+  Parse error at line 94, column 43: Unexpected token in statement: NEWLINE
+
+fxparms.bas
+  Parse error at line 5, column 8: Expected EQUAL, got COLON
+
+gammonb.bas
+  Parse error at line 50, column 11: Unexpected token in expression: HASH
+
+genielst.bas
+  Parse error at line 15, column 15: Unexpected token in expression: EOF_FUNC
+
+goldmine.bas
+  Parse error at line 132, column 24: Expected : or newline, got IDENTIFIER
+
+graph.bas
+  Parse error at line 75, column 11: Unexpected token in expression: HASH
+
+handplot.bas
+  Parse error at line 76, column 11: Unexpected token in expression: HASH
+
+hangman.bas
+  Parse error at line 40, column 21: Unexpected token in statement: RUN
+
+header6.bas
+  Parse error at line 23, column 36: Expected : or newline, got IDENTIFIER
+
+hex2data.bas
+  Parse error at line 34, column 16: Expected : or newline, got NUMBER
+
+hexbin11.bas
+  Parse error at line 16, column 9: Expected EQUAL, got NUMBER
+
+holtwint.bas
+  Parse error at line 73, column 43: Expected : or newline, got IDENTIFIER
+
+ibmftp.bas
+  Parse error at line 23, column 24: Expected EQUAL, got NUMBER
+
+ibmmdm.bas
+  Parse error at line 21, column 9: DEF function name must start with FN
+
+ic-timer.bas
+  Parse error at line 29, column 25: Expected : or newline, got RPAREN
+
+journal.bas
+  Parse error at line 221, column 4: Unexpected token in statement: NUMBER
+
+kpro2-sw.bas
+  Parse error at line 170, column 23: Expected EQUAL, got NEWLINE
+
+krak.bas
+  Parse error at line 34, column 11: Expected IDENTIFIER, got HASH
+
+krakinst.bas
+  Parse error at line 31, column 5: Unexpected token in statement: SAVE
+
+lanes.bas
+  Parse error at line 165, column 7: Unexpected token in statement: LPAREN
+
+lifscore.bas
+  Parse error at line 538, column 10: Expected EQUAL, got LESS_THAN
+
+lst8085.bas
+  Parse error at line 123, column 12: Unexpected token in expression: HASH
+
+lstintel.bas
+  Parse error at line 123, column 12: Unexpected token in expression: HASH
+
+lsttdl.bas
+  Parse error at line 182, column 12: Unexpected token in expression: HASH
+
+m100lf.bas
+  Parse error at line 6, column 9: Expected EQUAL, got NEWLINE
+
+mbasedit.bas
+  Parse error at line 50, column 50: Unexpected token in expression: NEWLINE
+
+menu.bas
+  Parse error at line 8, column 60: Expected EQUAL, got NEWLINE
+
+mfil.bas
+  Parse error at line 30, column 41: Unexpected token in statement: NEWLINE
+
+million.bas
+  Parse error at line 1, column 94: Expected : or newline, got IDENTIFIER
+
+minirbbs.bas
+  Parse error at line 221, column 18: Unexpected token in statement: NEWLINE
+
+mooncalc.bas
+  Parse error at line 154, column 64: Expected : or newline, got IDENTIFIER
+
+mortgage.bas
+  Parse error at line 52, column 6: Unexpected token in statement: RUN
+
+multipli.bas
+  Parse error at line 35, column 59: Unexpected token in statement: RUN
+
+multiply.bas
+  Parse error at line 40, column 15: Unexpected token in statement: RUN
+
+mxref.bas
+  Parse error at line 51, column 36: Expected : or newline, got IDENTIFIER
+
+number.bas
+  Parse error at line 10, column 44: Unexpected token in statement: RUN
+
+oldroute.bas
+  Parse error at line 18, column 11: Expected IDENTIFIER, got HASH
+
+onecheck.bas
+  Parse error at line 17, column 44: Expected EQUAL, got PRINT
+
+othello.bas
+  Parse error at line 2, column 17: Expected EQUAL, got IDENTIFIER
+
+ozdot.bas
+  Parse error at line 26, column 53: Unexpected token in statement: ERASE
+
+parms.bas
+  Parse error at line 23, column 15: Unexpected token in expression: BACKSLASH
+
+pcat.bas
+  Parse error at line 2, column 11: Unexpected token in expression: LPRINT
+
+pckexe.bas
+  Parse error at line 11, column 17: Unexpected token in expression: HASH
+
+pckget.bas
+  Parse error at line 6, column 27: Expected COMMA, got AS
+
+poker.bas
+  Parse error at line 130, column 17: Expected THEN or GOTO after IF condition
+
+proset.bas
+  Parse error at line 10, column 12: Unexpected token in expression: COMMA
+
+qsolist.bas
+  Parse error at line 5, column 11: Expected EQUAL, got IDENTIFIER
+
+qsomerge.bas
+  Parse error at line 58, column 12: Unexpected token in expression: HASH
+
+qsoscan.bas
+  Parse error at line 89, column 63: Unexpected token in expression: BACKSLASH
+
+qubic.bas
+  Parse error at line 60, column 5: Unexpected token in statement: ERASE
+
+rantest.bas
+  Parse error at line 5, column 15: Unexpected token in expression: HASH
+
+ratio.bas
+  Parse error at line 28, column 35: Unexpected token in statement: RUN
+
+rbbent27.bas
+  Parse error at line 95, column 28: Unexpected token in expression: EOF_FUNC
+
+rbbmin27.bas
+  Parse error at line 81, column 35: Expected IDENTIFIER, got HASH
+
+rbspurge.bas
+  Parse error at line 39, column 11: Expected EQUAL, got NUMBER
+
+rbsutl31.bas
+  Parse error at line 52, column 8: Unexpected token in expression: EOF_FUNC
+
+rc5%.bas
+  Parse error at line 17, column 25: Expected : or newline, got IDENTIFIER
+
+rc5.bas
+  Parse error at line 17, column 25: Expected : or newline, got IDENTIFIER
+
+rock.bas
+  Parse error at line 51, column 31: Expected : or newline, got IDENTIFIER
+
+rose.bas
+  Parse error at line 42, column 36: Unexpected token in expression: GREATER_THAN
+
+roulette.bas
+  Parse error at line 240, column 12: Expected EQUAL, got NEWLINE
+
+rsj.bas
+  Parse error at line 79, column 70: Unexpected token in expression: HEX
+
+satelite.bas
+  Parse error at line 19, column 62: Expected : or newline, got IDENTIFIER
+
+scatpad.bas
+  Parse error at line 63, column 9: Unexpected token in expression: EOF_FUNC
+
+scenecar.bas
+  Parse error at line 3, column 23: Expected EQUAL, got MINUS
+
+sdir.bas
+  Parse error at line 2, column 18: Expected : or newline, got COMMA
+
+search.bas
+  Parse error at line 41, column 23: Expected : or newline, got LPAREN
+
+sfamove.bas
+  Parse error at line 3, column 10: Expected EQUAL, got NUMBER
+
+sfaobdes.bas
+  Parse error at line 2, column 33: Expected EQUAL, got NUMBER
+
+sfavoc.bas
+  Parse error at line 2, column 34: Expected EQUAL, got NUMBER
+
+simcvt.bas
+  Parse error at line 5, column 10: Unexpected token in expression: HASH
+
+simcvt2.bas
+  Parse error at line 6, column 12: Expected EQUAL, got NEWLINE
+
+simpexp.bas
+  Parse error at line 120, column 58: Expected : or newline, got IDENTIFIER
+
+sink.bas
+  Parse error at line 21, column 32: Expected EQUAL, got IDENTIFIER
+
+sleuth.bas
+  Parse error at line 50, column 47: Expected IDENTIFIER, got LINE_INPUT
+
+sortuser.bas
+  Parse error at line 11, column 10: Expected EQUAL, got NUMBER
+
+spacewar.bas
+  Parse error at line 188, column 23: Expected EQUAL, got NEWLINE
+
+speech.bas
+  Parse error at line 26, column 17: Expected RPAREN, got IDENTIFIER
+
+spelling.bas
+  Parse error at line 28, column 72: Unexpected token in statement: RUN
+
+stackalc.bas
+  Parse error at line 1, column 4: Unexpected token in statement: ERASE
+
+star.bas
+  Parse error at line 26, column 11: Expected IDENTIFIER, got HASH
+
+surround.bas
+  Parse error at line 31, column 9: DEF function name must start with FN
+
+survival.bas
+  Parse error at line 526, column 37: Expected : or newline, got REM
+
+tab8085.bas
+  Parse error at line 327, column 21: Expected : or newline, got LPAREN
+
+tabintel.bas
+  Parse error at line 327, column 21: Expected : or newline, got LPAREN
+
+tabtdl.bas
+  Parse error at line 335, column 11: Expected EQUAL, got IDENTIFIER
+
+tabzilog.bas
+  Parse error at line 338, column 11: Expected EQUAL, got IDENTIFIER
+
+tankie.bas
+  Parse error at line 146, column 31: Unexpected token in statement: RUN
+
+tanks.bas
+  Parse error at line 31, column 5: Unexpected token in statement: MID
+
+tic.bas
+  Parse error at line 7, column 11: Expected EQUAL, got STRING
+
+tictac.bas
+  Parse error at line 8, column 11: Expected EQUAL, got STRING
+
+timeout.bas
+  Parse error at line 40, column 24: Unexpected token in statement: NEWLINE
+
+trade.bas
+  Parse error at line 29, column 52: Expected EQUAL, got IDENTIFIER
+
+tricks.bas
+  Parse error at line 53, column 80: Expected EQUAL, got GOTO
+
+tvigammo.bas
+  Parse error at line 310, column 36: Unexpected token in expression: PRINT
+
+un-prot.bas
+  Parse error at line 45, column 42: Unexpected token in statement: NEWLINE
+
+unigrid2.bas
+  Parse error at line 109, column 12: Unexpected token in expression: GREATER_THAN
+
+unpro2.bas
+  Parse error at line 67, column 26: Expected : or newline, got IDENTIFIER
+
+upload.bas
+  Parse error at line 75, column 11: Unexpected token in expression: HASH
+
+uudecode.bas
+  Parse error at line 50, column 13: Expected EQUAL, got IDENTIFIER
+
+vocbld.bas
+  Parse error at line 32, column 9: Expected EQUAL, got REM
+
+voclst.bas
+  Parse error at line 28, column 2: Unexpected token in statement: NUMBER
+
+windchil.bas
+  Parse error at line 21, column 23: Expected : or newline, got IDENTIFIER
+
+winning.bas
+  Parse error at line 14, column 12: Expected EQUAL, got PLUS
+
+word.bas
+  Parse error at line 29, column 15: Unexpected token in statement: RUN
+
+wordpuzl.bas
+  Parse error at line 3, column 21: Expected : or newline, got IDENTIFIER
+
+xfer13.bas
+  Parse error at line 57, column 27: Expected : or newline, got IDENTIFIER
+
+xformer.bas
+  Parse error at line 31, column 11: Expected EQUAL, got NEWLINE
+
+xref.bas
+  Parse error at line 45, column 33: Unexpected token in expression: HEX
+
+xref19.bas
+  Parse error at line 60, column 36: Expected : or newline, got IDENTIFIER
+

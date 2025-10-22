@@ -1,0 +1,55 @@
+1 :REMARKThis program entered into the public domain on 11 February 1984 by
+2 :REMARKW. vanRiper.  Its purpose is instructional and as such is COPYRIGHTED.
+3 :REMARKPlease respect this.  This program is intended for use on the Osborne
+4 :REMARKEXECUTIVE but will work on any terminal that uses control sequences
+5 :REMARKof the type PRINT CHR$(X)+CHR$(Y)+ etc.  You can delete the direct
+6 :REMARKcursor addressing business if your terminal doesn't support this...
+7 :REMARKFixes and bugs to VANRYPER c/o MBINEX - 617-423-6985
+8 :REMARK
+9 :REMARK
+10 WIDTH 255
+20 DEF  FNP$(X,Y)=CHR$(27)+"="+CHR$(Y+32)+CHR$(X+32)::REMARKdirect cursor business
+25 :REMARK
+26 :REMARKmain controls...
+27 :REMARK
+30 PRINT  CHR$(26)::REMARKclears the screen, of course
+40 PRINT  FNP$(10,3);"ENTER ONE OF THE FOLLOWING DEFINED FUNCTIONS: ";
+45 GOSUB 200
+50 INPUT "FIRST FUNCTION: ",A
+60 INPUT"  2nd FUNCTION: ",B
+70 INPUT"  3rd FUNCTION: ",C
+75 INPUT"  4th FUNCTION: ",D
+80 PRINT
+90 PRINT  TAB(10);"HIT ANY KEY TO TEST, <ESC> TO END: ";
+100 X$=INKEY$:IF X$=""  THEN 100
+105 IF  ASC(X$)=27  THEN  PRINT  CHR$(26):WIDTH 80:FILES:END
+110 PRINT  CHR$(A)+CHR$(B)+CHR$(C)+CHR$(D)
+115 GOSUB 400
+120 GOTO 30
+150 :REMARK
+160 :REMARKjust the menu stuff..
+170 :REMARK
+200 PRINT:PRINT
+210 PRINT "27 41 STARTS DIM MODE"
+220 PRINT "27 40 ENDS DIM MODE"
+230 PRINT "27 94,113 STARTS, ENDS BLINK"
+240 PRINT "27 98,107 STARTS, ENDS INVERSE"
+250 PRINT "27 97,65 STARTS, ENDS ALTERNATE CHARACTERS"
+260 PRINT "27 101,102 KEY TRANSLATE ENABLE, DISABLE"
+270 PRINT "27  46,0-4 CURSOR (INVISIBLE,BLINKING BLOCK,STEADY UNDER,BLINKING UNDER"
+280 PRINT "27 120,0-9,58-63  DEFINE BACKGROUND"
+295 PRINT:PRINT:PRINT  TAB(10);"Or enter a sequence of your own..."
+297 PRINT:PRINT
+300 RETURN
+350 :REMARK
+355 :REMARKjust to give you an idea of what you just did...
+360 :REMARK
+400 PRINT  CHR$(26)
+410 PRINT  FNP$(15,10);"TESTING......";
+420 PRINT  FNP$(15,22);"HIT ANY KEY TO CONTINUE...";
+430 X$=INKEY$:IF X$=""  THEN 430
+440 RETURN
+6682 
+400 PRINT  CHR$(26)
+410 PRINT  FNP$(15,10);"TESTING......";
+420 PRINT  FNP$(15,22);"HIT ANY KE
