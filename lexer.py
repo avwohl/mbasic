@@ -54,12 +54,12 @@ class Lexer:
         return char
 
     def skip_whitespace(self, skip_newlines: bool = False):
-        """Skip spaces and tabs (and optionally newlines)"""
+        """Skip spaces and tabs (and optionally newlines/carriage returns)"""
         while self.current_char() is not None:
             char = self.current_char()
             if char == ' ' or char == '\t':
                 self.advance()
-            elif skip_newlines and char == '\n':
+            elif skip_newlines and (char == '\n' or char == '\r'):
                 self.advance()
             else:
                 break
@@ -186,6 +186,10 @@ class Lexer:
         Read an identifier or keyword
         Identifiers can contain letters, digits, and end with type suffix $ % ! #
         In MBASIC, $ % ! # are considered part of the identifier
+
+        Special handling: In old BASIC, keywords can run together with identifiers
+        without spaces. E.g., "NEXTI" should be parsed as "NEXT" + "I".
+        This method checks for statement keywords at the start of identifiers.
         """
         start_line = self.line
         start_column = self.column
@@ -213,6 +217,33 @@ class Lexer:
         ident_upper = ident.upper()
         if ident_upper in KEYWORDS:
             return Token(KEYWORDS[ident_upper], ident_upper, start_line, start_column)
+
+        # Check if identifier starts with a statement keyword (MBASIC compatibility)
+        # In old BASIC, keywords could run together: "NEXTI" = "NEXT I", "FORI" = "FOR I"
+        # We check for common statement keywords that might be concatenated
+        # Note: Only include keywords that can START a statement or commonly appear before identifiers
+        # Exclude TO and STEP as they're clause keywords, not statement starters
+        STATEMENT_KEYWORDS = ['NEXT', 'FOR', 'IF', 'THEN', 'ELSE', 'GOTO', 'GOSUB',
+                             'PRINT', 'INPUT', 'LET', 'DIM', 'READ', 'DATA', 'END',
+                             'STOP', 'RETURN', 'ON']
+
+        for keyword in STATEMENT_KEYWORDS:
+            if ident_upper.startswith(keyword) and len(ident_upper) > len(keyword):
+                # Check if character after keyword is valid identifier start (must be LETTER)
+                # Don't split if followed by digit (e.g., STEP1 should stay as STEP1)
+                next_char = ident_upper[len(keyword)]
+                if next_char.isalpha():  # Only split if next char is a letter
+                    # Split: return keyword token, put rest back in buffer
+                    keyword_part = ident[:len(keyword)]
+                    rest_part = ident[len(keyword):]
+
+                    # Put the rest back into the source
+                    for i in range(len(rest_part) - 1, -1, -1):
+                        self.pos -= 1
+                        self.column -= 1
+
+                    # Return the keyword token
+                    return Token(KEYWORDS[keyword], keyword, start_line, start_column)
 
         # Otherwise it's an identifier
         return Token(TokenType.IDENTIFIER, ident, start_line, start_column)
@@ -258,10 +289,23 @@ class Lexer:
                 at_line_start = False
                 continue
 
-            # Newline
+            # Newline (both \n and \r)
+            # In CP/M BASIC, \r (carriage return) can be used as statement separator
             if char == '\n':
                 self.tokens.append(Token(TokenType.NEWLINE, '\n', start_line, start_column))
                 self.advance()
+                # Skip following \r if present (handles \n\r sequences)
+                if self.current_char() == '\r':
+                    self.advance()
+                at_line_start = True
+                continue
+
+            if char == '\r':
+                self.tokens.append(Token(TokenType.NEWLINE, '\r', start_line, start_column))
+                self.advance()
+                # Skip following \n if present (handles \r\n sequences)
+                if self.current_char() == '\n':
+                    self.advance()
                 at_line_start = True
                 continue
 

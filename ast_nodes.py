@@ -49,27 +49,46 @@ class StatementNode:
 
 @dataclass
 class PrintStatementNode:
-    """PRINT statement - output to screen"""
+    """PRINT statement - output to screen or file
+
+    Syntax:
+        PRINT expr1, expr2          - Print to screen
+        PRINT #filenum, expr1       - Print to file
+    """
     expressions: List['ExpressionNode']
     separators: List[str]  # ";" or "," or None for newline
+    file_number: Optional['ExpressionNode'] = None  # For PRINT #n, ...
     line_num: int = 0
     column: int = 0
 
 
 @dataclass
 class LprintStatementNode:
-    """LPRINT statement - output to line printer"""
+    """LPRINT statement - output to line printer
+
+    Syntax:
+        LPRINT expr1, expr2         - Print to printer
+        LPRINT #filenum, expr1      - Print to file (rare but valid)
+    """
     expressions: List['ExpressionNode']
     separators: List[str]  # ";" or "," or None for newline
+    file_number: Optional['ExpressionNode'] = None  # For LPRINT #n, ...
     line_num: int = 0
     column: int = 0
 
 
 @dataclass
 class InputStatementNode:
-    """INPUT statement - read from keyboard"""
+    """INPUT statement - read from keyboard or file
+
+    Syntax:
+        INPUT var1, var2           - Read from keyboard
+        INPUT "prompt"; var1       - Read with prompt
+        INPUT #filenum, var1       - Read from file
+    """
     prompt: Optional['ExpressionNode']
     variables: List['VariableNode']
+    file_number: Optional['ExpressionNode'] = None  # For INPUT #n, ...
     line_num: int = 0
     column: int = 0
 
@@ -179,6 +198,40 @@ class DimStatementNode:
 
 
 @dataclass
+class EraseStatementNode:
+    """ERASE statement - delete array(s) to reclaim memory
+
+    Syntax:
+        ERASE array1, array2, ...
+
+    Example:
+        ERASE A, B$, C
+    """
+    array_names: List[str]  # Just the array names, not full variable nodes
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class MidAssignmentStatementNode:
+    """MID$ statement - assign to substring of string variable
+
+    Syntax:
+        MID$(string_var, start, length) = value
+
+    Example:
+        MID$(A$, 3, 5) = "HELLO"
+        MID$(P$(I), J, 1) = " "
+    """
+    string_var: 'ExpressionNode'  # String variable (can be array element)
+    start: 'ExpressionNode'  # Starting position (1-based)
+    length: 'ExpressionNode'  # Number of characters to replace
+    value: 'ExpressionNode'  # Value to assign
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
 class ArrayDeclNode:
     """Array declaration in DIM statement"""
     name: str
@@ -249,6 +302,20 @@ class EndStatementNode:
 @dataclass
 class StopStatementNode:
     """STOP statement - halt execution (for debugging)"""
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class RunStatementNode:
+    """RUN statement - execute program or line
+
+    Syntax:
+        RUN                - Restart current program from beginning
+        RUN line_number    - Start execution at specific line number
+        RUN "filename"     - Load and run another program file
+    """
+    target: Optional['ExpressionNode']  # Filename (string) or line number, None = restart
     line_num: int = 0
     column: int = 0
 

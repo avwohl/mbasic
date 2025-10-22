@@ -43,6 +43,7 @@ class TokenType(Enum):
     # Keywords - Control Flow
     CALL = auto()
     CHAIN = auto()
+    ELSE = auto()
     END = auto()
     FOR = auto()
     GOSUB = auto()
@@ -219,6 +220,7 @@ KEYWORDS = {
     # Control flow
     'CALL': TokenType.CALL,
     'CHAIN': TokenType.CHAIN,
+    'ELSE': TokenType.ELSE,
     'END': TokenType.END,
     'FOR': TokenType.FOR,
     'GOSUB': TokenType.GOSUB,

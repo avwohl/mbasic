@@ -380,6 +380,8 @@ class Parser:
         # Variable declarations
         elif token.type == TokenType.DIM:
             return self.parse_dim()
+        elif token.type == TokenType.ERASE:
+            return self.parse_erase()
         elif token.type in (TokenType.DEFINT, TokenType.DEFSNG, TokenType.DEFDBL, TokenType.DEFSTR):
             return self.parse_deftype()
         elif token.type == TokenType.DEF:
@@ -406,6 +408,8 @@ class Parser:
             return self.parse_end()
         elif token.type == TokenType.STOP:
             return self.parse_stop()
+        elif token.type == TokenType.RUN:
+            return self.parse_run()
         elif token.type == TokenType.RANDOMIZE:
             return self.parse_randomize()
         elif token.type == TokenType.SWAP:
@@ -427,6 +431,39 @@ class Parser:
             raise ParseError(f"Unexpected ERROR keyword (use ON ERROR GOTO)", token)
         elif token.type == TokenType.RESUME:
             return self.parse_resume()
+
+        # MID$ statement (substring assignment)
+        # Detect MID$ used as statement: MID$(var, start, len) = value
+        elif token.type == TokenType.MID:
+            # Look ahead to distinguish MID$ statement from MID$ function
+            # MID$ statement has pattern: MID$ ( ... ) =
+            # MID$ is tokenized as single MID token ($ is part of the keyword)
+            # We need to peek past the parentheses to see if there's an =
+            saved_pos = self.position
+            try:
+                self.advance()  # Skip MID
+                # MID$ is a single token, no need to check for DOLLAR separately
+                if self.match(TokenType.LPAREN):
+                    # Try to find matching RPAREN followed by EQUAL
+                    paren_depth = 1
+                    self.advance()  # Skip opening (
+                    while not self.at_end_of_line() and paren_depth > 0:
+                        if self.match(TokenType.LPAREN):
+                            paren_depth += 1
+                        elif self.match(TokenType.RPAREN):
+                            paren_depth -= 1
+                        self.advance()
+                    # Now check if next token is EQUAL
+                    if self.match(TokenType.EQUAL):
+                        # This is MID$ statement!
+                        self.position = saved_pos  # Restore position
+                        return self.parse_mid_assignment()
+            except:
+                pass
+            # Not a MID$ statement, restore and fall through to error
+            self.position = saved_pos
+            # If we get here, MID$ is being used in an unsupported way
+            raise ParseError(f"MID$ must be used as function or assignment statement", token)
 
         # Assignment (implicit LET)
         elif token.type == TokenType.IDENTIFIER:
@@ -879,8 +916,23 @@ class Parser:
         )
 
     def parse_print(self) -> PrintStatementNode:
-        """Parse PRINT or ? statement"""
+        """Parse PRINT or ? statement
+
+        Syntax:
+            PRINT expr1, expr2          - Print to screen
+            PRINT #filenum, expr1       - Print to file
+        """
         token = self.advance()
+
+        # Check for file number: PRINT #n, ...
+        file_number = None
+        if self.match(TokenType.HASH):
+            self.advance()  # Skip #
+            file_number = self.parse_expression()
+            # Expect comma after file number
+            if self.match(TokenType.COMMA):
+                self.advance()
+            # Note: Some dialects allow semicolon, but MBASIC uses comma
 
         expressions: List[ExpressionNode] = []
         separators: List[str] = []
@@ -913,6 +965,7 @@ class Parser:
         return PrintStatementNode(
             expressions=expressions,
             separators=separators,
+            file_number=file_number,
             line_num=token.line,
             column=token.column
         )
@@ -920,11 +973,20 @@ class Parser:
     def parse_lprint(self) -> LprintStatementNode:
         """Parse LPRINT statement - print to line printer
 
-        Syntax: LPRINT [expression [; | ,] ...]
-
-        Same syntax as PRINT but outputs to printer instead of screen
+        Syntax:
+            LPRINT expr1, expr2         - Print to printer
+            LPRINT #filenum, expr1      - Print to file
         """
         token = self.advance()
+
+        # Check for file number: LPRINT #n, ...
+        file_number = None
+        if self.match(TokenType.HASH):
+            self.advance()  # Skip #
+            file_number = self.parse_expression()
+            # Expect comma after file number
+            if self.match(TokenType.COMMA):
+                self.advance()
 
         expressions: List[ExpressionNode] = []
         separators: List[str] = []
@@ -957,17 +1019,33 @@ class Parser:
         return LprintStatementNode(
             expressions=expressions,
             separators=separators,
+            file_number=file_number,
             line_num=token.line,
             column=token.column
         )
 
     def parse_input(self) -> InputStatementNode:
-        """Parse INPUT statement"""
+        """Parse INPUT statement
+
+        Syntax:
+            INPUT var1, var2           - Read from keyboard
+            INPUT "prompt"; var1       - Read with prompt
+            INPUT #filenum, var1       - Read from file
+        """
         token = self.advance()
 
-        # Optional prompt string
+        # Check for file number: INPUT #n, ...
+        file_number = None
+        if self.match(TokenType.HASH):
+            self.advance()  # Skip #
+            file_number = self.parse_expression()
+            # Expect comma after file number
+            if self.match(TokenType.COMMA):
+                self.advance()
+
+        # Optional prompt string (only for keyboard input, not file input)
         prompt = None
-        if self.match(TokenType.STRING):
+        if file_number is None and self.match(TokenType.STRING):
             prompt = StringNode(
                 value=self.advance().value,
                 line_num=token.line,
@@ -1015,6 +1093,7 @@ class Parser:
         return InputStatementNode(
             prompt=prompt,
             variables=variables,
+            file_number=file_number,
             line_num=token.line,
             column=token.column
         )
@@ -1113,6 +1192,29 @@ class Parser:
             column=token.column
         )
 
+    def parse_run(self) -> RunStatementNode:
+        """Parse RUN statement
+
+        Syntax:
+            RUN                - Restart current program from beginning
+            RUN line_number    - Start execution at specific line number
+            RUN "filename"     - Load and run another program file
+        """
+        token = self.advance()
+
+        target = None
+
+        # Check if there's a target (filename or line number)
+        if not self.at_end_of_line() and not self.match(TokenType.COLON):
+            # Parse target expression (could be string filename or line number)
+            target = self.parse_expression()
+
+        return RunStatementNode(
+            target=target,
+            line_num=token.line,
+            column=token.column
+        )
+
     def parse_randomize(self) -> RandomizeStatementNode:
         """
         Parse RANDOMIZE statement
@@ -1149,6 +1251,7 @@ class Parser:
         Syntax variations:
         - IF condition THEN statement
         - IF condition THEN line_number
+        - IF condition THEN line_number :ELSE line_number
         - IF condition THEN statement : statement
         - IF condition THEN statement ELSE statement
         - IF condition GOTO line_number
@@ -1170,26 +1273,83 @@ class Parser:
             # Check if THEN is followed by line number
             if self.match(TokenType.LINE_NUMBER, TokenType.NUMBER):
                 then_line_number = int(self.advance().value)
+
+                # Check for ELSE after THEN line_number
+                # Can be either :ELSE or just ELSE (without colon)
+                if self.match(TokenType.COLON):
+                    # Peek ahead to see if ELSE follows the colon
+                    saved_pos = self.position
+                    self.advance()  # Temporarily skip colon
+                    if self.match(TokenType.ELSE):
+                        # Yes, this is :ELSE syntax - consume both
+                        self.advance()  # Skip ELSE
+                        # Check if ELSE is followed by line number or statement
+                        if self.match(TokenType.LINE_NUMBER, TokenType.NUMBER):
+                            else_line_number = int(self.advance().value)
+                        else:
+                            # Parse else statement(s)
+                            else_statements = []
+                            stmt = self.parse_statement()
+                            if stmt:
+                                else_statements.append(stmt)
+                    else:
+                        # Not :ELSE, restore position to before colon
+                        self.position = saved_pos
+                elif self.match(TokenType.ELSE):
+                    # ELSE without colon: IF...THEN line ELSE ...
+                    self.advance()  # Skip ELSE
+                    # Check if ELSE is followed by line number or statement
+                    if self.match(TokenType.LINE_NUMBER, TokenType.NUMBER):
+                        else_line_number = int(self.advance().value)
+                    else:
+                        # Parse else statement(s)
+                        else_statements = []
+                        stmt = self.parse_statement()
+                        if stmt:
+                            else_statements.append(stmt)
             else:
-                # Parse statements until end of line or colon
-                # Note: MBASIC doesn't have ELSE as a separate token - just parse one statement
+                # Parse statements until end of line or colon or ELSE
                 stmt = self.parse_statement()
                 if stmt:
                     then_statements.append(stmt)
 
+                # Check for ELSE clause after statement
+                if self.match(TokenType.ELSE):
+                    self.advance()  # Skip ELSE
+                    # Check if ELSE is followed by line number or statement
+                    if self.match(TokenType.LINE_NUMBER, TokenType.NUMBER):
+                        else_line_number = int(self.advance().value)
+                    else:
+                        # Parse else statement(s)
+                        else_statements = []
+                        stmt = self.parse_statement()
+                        if stmt:
+                            else_statements.append(stmt)
+
         elif self.match(TokenType.GOTO):
-            # IF condition GOTO line_number (alternate syntax)
+            # IF condition GOTO line_number [ELSE ...] (alternate syntax)
             self.advance()
             line_token = self.current()
             if line_token and line_token.type in (TokenType.NUMBER, TokenType.LINE_NUMBER):
                 then_line_number = int(self.advance().value)
+
+                # Check for ELSE clause after GOTO line_number
+                if self.match(TokenType.ELSE):
+                    self.advance()  # Skip ELSE
+                    # Check if ELSE is followed by line number or statement
+                    if self.match(TokenType.LINE_NUMBER, TokenType.NUMBER):
+                        else_line_number = int(self.advance().value)
+                    else:
+                        # Parse else statement(s)
+                        else_statements = []
+                        stmt = self.parse_statement()
+                        if stmt:
+                            else_statements.append(stmt)
             else:
                 raise ParseError("Expected line number after GOTO", line_token)
 
         else:
             raise ParseError(f"Expected THEN or GOTO after IF condition", self.current())
-
-        # Note: MBASIC doesn't support ELSE clause in single-line IF statements
 
         return IfStatementNode(
             condition=condition,
@@ -1468,6 +1628,88 @@ class Parser:
 
         return DimStatementNode(
             arrays=arrays,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_erase(self) -> EraseStatementNode:
+        """Parse ERASE statement
+
+        Syntax:
+            ERASE array1, array2, ...
+
+        Example:
+            ERASE A, B$, C
+            ERASE M:DIM M(64)
+        """
+        token = self.advance()
+
+        array_names: List[str] = []
+
+        while not self.at_end_of_line() and not self.match(TokenType.COLON):
+            # Parse array name (just identifier, no subscripts)
+            name_token = self.expect(TokenType.IDENTIFIER)
+            array_names.append(name_token.value)
+
+            # Check for comma (more arrays)
+            if self.match(TokenType.COMMA):
+                self.advance()
+            else:
+                break
+
+        return EraseStatementNode(
+            array_names=array_names,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_mid_assignment(self) -> MidAssignmentStatementNode:
+        """Parse MID$ assignment statement
+
+        Syntax:
+            MID$(string_var, start, length) = value
+
+        Example:
+            MID$(A$, 3, 5) = "HELLO"
+            MID$(P$(I), J, 1) = " "
+
+        Note: MID$ is tokenized as a single MID token
+        """
+        token = self.current()  # MID token
+        self.advance()  # Skip MID (which includes the $)
+
+        # Expect opening parenthesis
+        self.expect(TokenType.LPAREN)
+
+        # Parse string variable (can be array element)
+        string_var = self.parse_expression()
+
+        # Expect comma
+        self.expect(TokenType.COMMA)
+
+        # Parse start position
+        start = self.parse_expression()
+
+        # Expect comma
+        self.expect(TokenType.COMMA)
+
+        # Parse length
+        length = self.parse_expression()
+
+        # Expect closing parenthesis
+        self.expect(TokenType.RPAREN)
+
+        # Expect equals sign
+        self.expect(TokenType.EQUAL)
+
+        # Parse value expression
+        value = self.parse_expression()
+
+        return MidAssignmentStatementNode(
+            string_var=string_var,
+            start=start,
+            length=length,
+            value=value,
             line_num=token.line,
             column=token.column
         )
