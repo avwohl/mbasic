@@ -12,7 +12,13 @@
       "Bash(sed:*)",
       "Bash(done)",
       "Bash(python3:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(for file in MENU.bas ONECHECK.bas POKER.bas)",
+      "Bash(do)",
+      "Bash(tee:*)",
+      "Bash(for file in graph.bas stackalc.bas hexbin11.bas amodem42.bas exitbbs1.bas)",
+      "Bash(for f in rbbmin27.bas rbspurge.bas rbsutl31.bas sfamove.bas sfaobdes.bas sfavoc.bas sortuser.bas xformer.bas)",
+      "Bash(do echo \"=== $f ===\" grep \"^$f\" test_results_parser_fail.txt)"
     ],
     "deny": [],
     "ask": []
