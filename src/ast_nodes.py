@@ -8,6 +8,22 @@ from enum import Enum
 from tokens import TokenType
 
 
+# ============================================================================
+# Type System
+# ============================================================================
+
+class VarType(Enum):
+    """Variable type enumeration for BASIC variables"""
+    INTEGER = 'INTEGER'  # % suffix or DEFINT
+    SINGLE = 'SINGLE'    # ! suffix or DEFSNG (default)
+    DOUBLE = 'DOUBLE'    # # suffix or DEFDBL
+    STRING = 'STRING'    # $ suffix or DEFSTR
+
+
+# ============================================================================
+# Base Classes
+# ============================================================================
+
 class Node:
     """Base class for all AST nodes"""
     def __init__(self, line_num: int = 0, column: int = 0):
@@ -815,14 +831,6 @@ class FunctionCallNode:
 # ============================================================================
 # Type System Support
 # ============================================================================
-
-class VarType(Enum):
-    """Variable type enumeration for BASIC variables"""
-    INTEGER = 'INTEGER'  # % suffix or DEFINT
-    SINGLE = 'SINGLE'    # ! suffix or DEFSNG (default)
-    DOUBLE = 'DOUBLE'    # # suffix or DEFDBL
-    STRING = 'STRING'    # $ suffix or DEFSTR
-
 
 class TypeInfo:
     """Type information utilities for variables
