@@ -396,6 +396,8 @@ class Parser:
             return self.parse_open()
         elif token.type == TokenType.CLOSE:
             return self.parse_close()
+        elif token.type == TokenType.RESET:
+            return self.parse_reset()
         elif token.type == TokenType.KILL:
             return self.parse_kill()
         elif token.type == TokenType.NAME:
@@ -1077,6 +1079,13 @@ class Parser:
             # Expect semicolon or comma after prompt
             if self.match(TokenType.SEMICOLON, TokenType.COMMA):
                 self.advance()
+
+        # Check for LINE modifier after semicolon: INPUT "prompt";LINE var$
+        # LINE allows input of entire line including commas
+        line_mode = False
+        if self.match(TokenType.LINE_INPUT):
+            line_mode = True
+            self.advance()
 
         # Parse variable list
         variables: List[VariableNode] = []
@@ -2132,6 +2141,21 @@ class Parser:
 
         return CloseStatementNode(
             file_numbers=file_numbers,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_reset(self) -> ResetStatementNode:
+        """
+        Parse RESET statement
+
+        Syntax: RESET
+
+        RESET closes all open files. No parameters.
+        """
+        token = self.advance()
+
+        return ResetStatementNode(
             line_num=token.line,
             column=token.column
         )

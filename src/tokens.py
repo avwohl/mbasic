@@ -42,6 +42,7 @@ class TokenType(Enum):
     OPEN = auto()
     OUTPUT = auto()          # OUTPUT (used in OPEN FOR OUTPUT)
     PUT = auto()
+    RESET = auto()           # RESET (close all files)
     RSET = auto()
 
     # Keywords - Control Flow
@@ -224,6 +225,7 @@ KEYWORDS = {
     'OPEN': TokenType.OPEN,
     'OUTPUT': TokenType.OUTPUT,
     'PUT': TokenType.PUT,
+    'RESET': TokenType.RESET,
     'RSET': TokenType.RSET,
 
     # Control flow

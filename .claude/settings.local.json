@@ -18,7 +18,13 @@
       "Bash(tee:*)",
       "Bash(for file in graph.bas stackalc.bas hexbin11.bas amodem42.bas exitbbs1.bas)",
       "Bash(for f in rbbmin27.bas rbspurge.bas rbsutl31.bas sfamove.bas sfaobdes.bas sfavoc.bas sortuser.bas xformer.bas)",
-      "Bash(do echo \"=== $f ===\" grep \"^$f\" test_results_parser_fail.txt)"
+      "Bash(do echo \"=== $f ===\" grep \"^$f\" test_results_parser_fail.txt)",
+      "Bash(for f in asm2mac fxparms)",
+      "Bash(do grep -q \"^$f.bas\" test_results_success.txt)",
+      "Bash(echo:*)",
+      "Bash(for f in dow sleuth scatpad)",
+      "Bash(for f in sfamove sfaobdes sfavoc)",
+      "Bash(for f in asm2mac backgamm fxparms satelite)"
     ],
     "deny": [],
     "ask": []

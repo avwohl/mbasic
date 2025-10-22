@@ -293,6 +293,20 @@ class CloseStatementNode:
 
 
 @dataclass
+class ResetStatementNode:
+    """RESET statement - close all open files
+
+    Syntax:
+        RESET
+
+    Example:
+        RESET
+    """
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
 class KillStatementNode:
     """KILL statement - delete file
 
