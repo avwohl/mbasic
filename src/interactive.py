@@ -94,6 +94,8 @@ class InteractiveMode:
             self.cmd_save(args)
         elif command == "LOAD":
             self.cmd_load(args)
+        elif command == "MERGE":
+            self.cmd_merge(args)
         elif command == "AUTO":
             self.cmd_auto(args)
         elif command == "FILES":
@@ -242,6 +244,61 @@ class InteractiveMode:
 
             self.current_file = filename
             print(f"Loaded from {filename}")
+            print("Ready")
+
+        except FileNotFoundError:
+            print(f"?File not found: {filename}")
+        except Exception as e:
+            print(f"?{type(e).__name__}: {e}")
+
+    def cmd_merge(self, filename):
+        """MERGE "filename" - Merge program from file into current program
+
+        MERGE adds or replaces lines from a file without clearing existing lines.
+        - Lines with matching line numbers are replaced
+        - New line numbers are added
+        - Existing lines not in the file are kept
+        """
+        if not filename:
+            print("?Syntax error")
+            return
+
+        # Remove quotes if present
+        filename = filename.strip().strip('"').strip("'")
+
+        if not filename:
+            print("?Syntax error")
+            return
+
+        try:
+            # Add .bas extension if not present
+            if not filename.endswith('.bas'):
+                filename += '.bas'
+
+            with open(filename, 'r') as f:
+                program_text = f.read()
+
+            # Don't clear current program - that's the difference from LOAD
+            # Parse and merge lines
+            lines_added = 0
+            lines_replaced = 0
+
+            for line in program_text.split('\n'):
+                line = line.strip()
+                if not line:
+                    continue
+
+                match = re.match(r'^(\d+)\s', line)
+                if match:
+                    line_num = int(match.group(1))
+                    if line_num in self.lines:
+                        lines_replaced += 1
+                    else:
+                        lines_added += 1
+                    self.lines[line_num] = line
+
+            print(f"Merged from {filename}")
+            print(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
             print("Ready")
 
         except FileNotFoundError:
