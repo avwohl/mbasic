@@ -36,7 +36,11 @@
       "Bash(then)",
       "Bash(else)",
       "Bash(fi)",
-      "Bash(do echo \"=== $f.bas ===\" grep -E \"^\\s*[0-9]+\\s+LOCATE|:\\s*LOCATE\\s+[0-9]\" basic/bas_tests1/$f.bas)"
+      "Bash(do echo \"=== $f.bas ===\" grep -E \"^\\s*[0-9]+\\s+LOCATE|:\\s*LOCATE\\s+[0-9]\" basic/bas_tests1/$f.bas)",
+      "Bash(for f in ic-timer lanes othello)",
+      "Bash(for f in handplot krakinst)",
+      "Bash(for f in qubic rbbmin27 rc5 speech trade)",
+      "Bash(for f in qsolist rbsutl31 sleuth sdir)"
     ],
     "deny": [],
     "ask": []
