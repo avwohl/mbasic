@@ -96,6 +96,8 @@ class InteractiveMode:
             self.cmd_load(args)
         elif command == "AUTO":
             self.cmd_auto(args)
+        elif command == "FILES":
+            self.cmd_files(args)
         elif command == "SYSTEM" or command == "BYE":
             self.cmd_system()
         elif command == "DELETE":
@@ -428,6 +430,53 @@ class InteractiveMode:
         """SYSTEM - Exit to operating system"""
         print("Goodbye")
         sys.exit(0)
+
+    def cmd_files(self, filespec):
+        """FILES [filespec] - Display directory listing
+
+        FILES - List all .bas files in current directory
+        FILES "*.BAS" - List files matching pattern
+        FILES "A:*.*" - List files on drive A (not supported, lists current dir)
+        """
+        import glob
+        import os
+
+        # Default pattern if no argument
+        if not filespec:
+            pattern = "*.bas"
+        else:
+            # Remove quotes if present
+            pattern = filespec.strip().strip('"').strip("'")
+
+            # If pattern is empty after stripping, use default
+            if not pattern:
+                pattern = "*.bas"
+
+        # In MBASIC, FILES shows disk directory. We'll list matching files in current directory
+        # Get matching files
+        try:
+            files = sorted(glob.glob(pattern))
+
+            if not files:
+                print(f"No files matching: {pattern}")
+                return
+
+            # Display files (MBASIC shows them in columns)
+            # Simple format: one per line with size
+            for filename in files:
+                try:
+                    size = os.path.getsize(filename)
+                    # MBASIC shows file sizes in bytes or blocks
+                    # We'll show bytes
+                    print(f"{filename:<20} {size:>8} bytes")
+                except OSError:
+                    print(f"{filename:<20}        ? bytes")
+
+            # Show count
+            print(f"\n{len(files)} File(s)")
+
+        except Exception as e:
+            print(f"?{type(e).__name__}: {e}")
 
     def execute_immediate(self, statement):
         """Execute a statement in immediate mode (no line number)"""

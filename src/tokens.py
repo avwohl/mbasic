@@ -20,6 +20,7 @@ class TokenType(Enum):
     CONT = auto()
     DELETE = auto()
     EDIT = auto()
+    FILES = auto()
     LIST = auto()
     LLIST = auto()
     LOAD = auto()
@@ -203,6 +204,7 @@ KEYWORDS = {
     'cont': TokenType.CONT,
     'delete': TokenType.DELETE,
     'edit': TokenType.EDIT,
+    'files': TokenType.FILES,
     'list': TokenType.LIST,
     'llist': TokenType.LLIST,
     'load': TokenType.LOAD,
