@@ -374,6 +374,200 @@ class Interpreter:
             else:
                 self.runtime.set_variable(var_node.name, var_node.type_suffix, value)
 
+    def execute_load(self, stmt):
+        """Execute LOAD statement"""
+        # Evaluate filename expression
+        filename = self.evaluate_expression(stmt.filename)
+        if not isinstance(filename, str):
+            raise RuntimeError("LOAD requires string filename")
+
+        # Delegate to interactive mode if available
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_load(filename)
+        else:
+            raise RuntimeError("LOAD not available in this context")
+
+    def execute_save(self, stmt):
+        """Execute SAVE statement"""
+        # Evaluate filename expression
+        filename = self.evaluate_expression(stmt.filename)
+        if not isinstance(filename, str):
+            raise RuntimeError("SAVE requires string filename")
+
+        # Delegate to interactive mode if available
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_save(filename)
+        else:
+            raise RuntimeError("SAVE not available in this context")
+
+    def execute_run(self, stmt):
+        """Execute RUN statement"""
+        # RUN can optionally specify a line number or filename
+        if hasattr(stmt, 'line_number') and stmt.line_number:
+            # RUN line_number - start at specific line
+            self.runtime.next_line = stmt.line_number
+        elif hasattr(stmt, 'filename') and stmt.filename:
+            # RUN "filename" - load and run file
+            filename = self.evaluate_expression(stmt.filename)
+            if hasattr(self, 'interactive_mode') and self.interactive_mode:
+                self.interactive_mode.cmd_load(filename)
+                self.interactive_mode.cmd_run()
+            else:
+                raise RuntimeError("RUN filename not available in this context")
+        else:
+            # RUN without arguments - restart from beginning
+            if hasattr(self, 'interactive_mode') and self.interactive_mode:
+                self.interactive_mode.cmd_run()
+            else:
+                # In non-interactive context, just restart
+                self.runtime.halted = True
+
+    def execute_system(self, stmt):
+        """Execute SYSTEM statement - exit to OS"""
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_system()
+        else:
+            # In non-interactive context, just halt
+            print("Goodbye")
+            sys.exit(0)
+
+    def execute_merge(self, stmt):
+        """Execute MERGE statement"""
+        # Evaluate filename expression
+        filename = self.evaluate_expression(stmt.filename)
+        if not isinstance(filename, str):
+            raise RuntimeError("MERGE requires string filename")
+
+        # Delegate to interactive mode if available
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_merge(filename)
+        else:
+            raise RuntimeError("MERGE not available in this context")
+
+    def execute_new(self, stmt):
+        """Execute NEW statement"""
+        # Delegate to interactive mode if available
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_new()
+        else:
+            # In non-interactive context, just clear variables
+            self.runtime.variables.clear()
+            self.runtime.arrays.clear()
+
+    def execute_delete(self, stmt):
+        """Execute DELETE statement"""
+        # Evaluate start and end expressions
+        if stmt.start:
+            start = int(self.evaluate_expression(stmt.start))
+        else:
+            start = None
+
+        if stmt.end:
+            end = int(self.evaluate_expression(stmt.end))
+        else:
+            end = None
+
+        # Delegate to interactive mode if available
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            # Build args string for cmd_delete
+            if start and end:
+                args = f"{start}-{end}"
+            elif start:
+                args = f"{start}-"
+            elif end:
+                args = f"-{end}"
+            else:
+                args = "-"
+            self.interactive_mode.cmd_delete(args)
+        else:
+            raise RuntimeError("DELETE not available in this context")
+
+    def execute_renum(self, stmt):
+        """Execute RENUM statement"""
+        # Evaluate new_start and increment expressions
+        new_start = 10
+        increment = 10
+
+        if stmt.new_start:
+            new_start = int(self.evaluate_expression(stmt.new_start))
+
+        if stmt.increment:
+            increment = int(self.evaluate_expression(stmt.increment))
+
+        # Delegate to interactive mode if available
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            # Build args string for cmd_renum
+            if stmt.new_start and stmt.increment:
+                args = f"{new_start},{increment}"
+            elif stmt.new_start:
+                args = str(new_start)
+            else:
+                args = ""
+            self.interactive_mode.cmd_renum(args)
+        else:
+            raise RuntimeError("RENUM not available in this context")
+
+    def execute_files(self, stmt):
+        """Execute FILES statement"""
+        # Evaluate filespec expression
+        filespec = ""
+        if stmt.filespec:
+            filespec = self.evaluate_expression(stmt.filespec)
+            if not isinstance(filespec, str):
+                raise RuntimeError("FILES requires string filespec")
+
+        # Delegate to interactive mode if available
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_files(filespec)
+        else:
+            # In non-interactive context, just list files
+            import glob
+            import os
+            pattern = filespec if filespec else "*.bas"
+            files = sorted(glob.glob(pattern))
+            if files:
+                for filename in files:
+                    size = os.path.getsize(filename)
+                    print(f"{filename:<20} {size:>8} bytes")
+                print(f"\n{len(files)} File(s)")
+            else:
+                print(f"No files matching: {pattern}")
+
+    def execute_list(self, stmt):
+        """Execute LIST statement"""
+        # Evaluate start and end expressions
+        start = None
+        end = None
+
+        if stmt.start:
+            start = int(self.evaluate_expression(stmt.start))
+
+        if stmt.end:
+            end = int(self.evaluate_expression(stmt.end))
+
+        # Build args string for cmd_list
+        args = ""
+        if start is not None and end is not None:
+            if stmt.single_line:
+                # Single line: LIST 100
+                args = str(start)
+            else:
+                # Range: LIST 10-50
+                args = f"{start}-{end}"
+        elif start is not None:
+            # From start to end: LIST 10-
+            args = f"{start}-"
+        elif end is not None:
+            # From beginning to end: LIST -50
+            args = f"-{end}"
+        # else: LIST with no args lists all
+
+        # Delegate to interactive mode if available
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_list(args)
+        else:
+            raise RuntimeError("LIST not available in this context")
+
     # ========================================================================
     # Expression Evaluation
     # ========================================================================

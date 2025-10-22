@@ -82,18 +82,25 @@ class InteractiveMode:
 
         # Parse command and arguments (preserve case for arguments)
         parts = cmd_stripped.split(None, 1)
-        command = parts[0].upper() if parts else ""
+        commanfd = parts[0].upper() if parts else ""
         args = parts[1] if len(parts) > 1 else ""
 
         # Meta-commands (editor commands that manipulate program source)
-        # Only AUTO is a true meta-command that can't be parsed
-        # Everything else (LIST, DELETE, RENUM, FILES, LOAD, SAVE, etc.) goes through parser
-        if command == "AUTO":
+        # These are NOT parsed as BASIC statements
+        if command == "LIST":
+            self.cmd_list(args)
+        elif command == "AUTO":
             self.cmd_auto(args)
+        elif command == "DELETE":
+            self.cmd_delete(args)
+        elif command == "RENUM":
+            self.cmd_renum(args)
+        elif command == "FILES":
+            self.cmd_files(args)
         elif command == "":
             pass  # Empty command
         else:
-            # Everything else (including LIST, DELETE, RENUM, FILES, RUN, LOAD, SAVE, MERGE, SYSTEM, NEW, PRINT, etc.)
+            # Everything else (including RUN, LOAD, SAVE, MERGE, SYSTEM, NEW, PRINT, etc.)
             # goes through the real parser as immediate mode statements
             try:
                 self.execute_immediate(cmd)
@@ -118,8 +125,6 @@ class InteractiveMode:
             # Execute
             runtime = Runtime(ast)
             interpreter = Interpreter(runtime)
-            # Pass reference to interactive mode so statements like LIST can access the line editor
-            interpreter.interactive_mode = self
             interpreter.run()
 
         except Exception as e:

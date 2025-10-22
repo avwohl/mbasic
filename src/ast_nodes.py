@@ -466,6 +466,90 @@ class SaveStatementNode:
 
 
 @dataclass
+class MergeStatementNode:
+    """MERGE statement - merge program from disk into current program
+
+    Syntax:
+        MERGE "filename"   - Merge program file
+    """
+    filename: 'ExpressionNode'  # String expression with filename
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class NewStatementNode:
+    """NEW statement - clear program and variables
+
+    Syntax:
+        NEW    - Clear everything and start fresh
+    """
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class DeleteStatementNode:
+    """DELETE statement - delete range of program lines
+
+    Syntax:
+        DELETE start-end   - Delete lines from start to end
+        DELETE -end        - Delete from beginning to end
+        DELETE start-      - Delete from start to end of program
+    """
+    start: 'ExpressionNode'  # Start line number (or None for beginning)
+    end: 'ExpressionNode'    # End line number (or None for end)
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class RenumStatementNode:
+    """RENUM statement - renumber program lines
+
+    Syntax:
+        RENUM                     - Renumber starting at 10, increment 10
+        RENUM new_start           - Renumber starting at new_start, increment 10
+        RENUM new_start,increment - Renumber starting at new_start with increment
+    """
+    new_start: 'ExpressionNode' = None  # New starting line number (default 10)
+    increment: 'ExpressionNode' = None  # Increment (default 10)
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class FilesStatementNode:
+    """FILES statement - display directory listing
+
+    Syntax:
+        FILES            - List all .bas files
+        FILES filespec   - List files matching pattern
+    """
+    filespec: 'ExpressionNode' = None  # File pattern (default "*.bas")
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class ListStatementNode:
+    """LIST statement - list program lines
+
+    Syntax:
+        LIST             - List all lines
+        LIST line        - List single line
+        LIST start-end   - List range of lines
+        LIST -end        - List from beginning to end
+        LIST start-      - List from start to end
+    """
+    start: 'ExpressionNode' = None  # Start line number (None = beginning)
+    end: 'ExpressionNode' = None    # End line number (None = end of program)
+    single_line: bool = False       # True if listing single line (no dash)
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
 class RandomizeStatementNode:
     """RANDOMIZE statement - initialize random number generator
 

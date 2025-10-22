@@ -441,6 +441,18 @@ class Parser:
             return self.parse_load()
         elif token.type == TokenType.SAVE:
             return self.parse_save()
+        elif token.type == TokenType.MERGE:
+            return self.parse_merge()
+        elif token.type == TokenType.NEW:
+            return self.parse_new()
+        elif token.type == TokenType.DELETE:
+            return self.parse_delete()
+        elif token.type == TokenType.RENUM:
+            return self.parse_renum()
+        elif token.type == TokenType.FILES:
+            return self.parse_files()
+        elif token.type == TokenType.LIST:
+            return self.parse_list()
         elif token.type == TokenType.RANDOMIZE:
             return self.parse_randomize()
         elif token.type == TokenType.SWAP:
@@ -1353,6 +1365,36 @@ class Parser:
             column=token.column
         )
 
+    def parse_merge(self) -> MergeStatementNode:
+        """Parse MERGE statement
+
+        Syntax:
+            MERGE "filename"   - Merge program from file
+        """
+        token = self.advance()
+
+        # Parse filename expression (must be string)
+        filename = self.parse_expression()
+
+        return MergeStatementNode(
+            filename=filename,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_new(self) -> NewStatementNode:
+        """Parse NEW statement
+
+        Syntax:
+            NEW    - Clear program and variables
+        """
+        token = self.advance()
+
+        return NewStatementNode(
+            line_num=token.line,
+            column=token.column
+        )
+
     def parse_randomize(self) -> RandomizeStatementNode:
         """
         Parse RANDOMIZE statement
@@ -1373,6 +1415,162 @@ class Parser:
 
         return RandomizeStatementNode(
             seed=seed,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_delete(self) -> DeleteStatementNode:
+        """Parse DELETE statement
+
+        Syntax:
+            DELETE start-end   - Delete lines from start to end
+            DELETE -end        - Delete from beginning to end
+            DELETE start-      - Delete from start to end of program
+        """
+        token = self.advance()
+
+        # Parse the range: start-end, -end, or start-
+        # We need to parse this specially because minus is used as separator, not operator
+        start = None
+        end = None
+
+        # Check if starts with minus (DELETE -end)
+        if self.match(TokenType.MINUS):
+            self.advance()
+            # Parse just a number (not full expression to avoid operator precedence issues)
+            if self.match(TokenType.NUMBER):
+                end_token = self.advance()
+                end = NumberNode(value=end_token.value, literal=str(end_token.value), line_num=end_token.line, column=end_token.column)
+        else:
+            # Parse start as a number
+            if self.match(TokenType.NUMBER):
+                start_token = self.advance()
+                start = NumberNode(value=start_token.value, literal=str(start_token.value), line_num=start_token.line, column=start_token.column)
+
+                # Expect minus
+                if self.match(TokenType.MINUS):
+                    self.advance()
+                    # Check if there's an end value
+                    if self.match(TokenType.NUMBER):
+                        end_token = self.advance()
+                        end = NumberNode(value=end_token.value, literal=str(end_token.value), line_num=end_token.line, column=end_token.column)
+
+        return DeleteStatementNode(
+            start=start,
+            end=end,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_renum(self) -> RenumStatementNode:
+        """Parse RENUM statement
+
+        Syntax:
+            RENUM                     - Renumber starting at 10, increment 10
+            RENUM new_start           - Renumber starting at new_start, increment 10
+            RENUM new_start,increment - Renumber starting at new_start with increment
+        """
+        token = self.advance()
+
+        new_start = None
+        increment = None
+
+        # Check if there are arguments
+        if not self.at_end_of_line() and not self.match(TokenType.COLON):
+            # Parse new_start
+            new_start = self.parse_expression()
+
+            # Check for comma and increment
+            if self.match(TokenType.COMMA):
+                self.advance()
+                if not self.at_end_of_line() and not self.match(TokenType.COLON):
+                    increment = self.parse_expression()
+
+        return RenumStatementNode(
+            new_start=new_start,
+            increment=increment,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_files(self) -> FilesStatementNode:
+        """Parse FILES statement
+
+        Syntax:
+            FILES            - List all .bas files
+            FILES filespec   - List files matching pattern
+        """
+        token = self.advance()
+
+        filespec = None
+
+        # Check if there's a filespec argument
+        if not self.at_end_of_line() and not self.match(TokenType.COLON):
+            filespec = self.parse_expression()
+
+        return FilesStatementNode(
+            filespec=filespec,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_list(self) -> ListStatementNode:
+        """Parse LIST statement
+
+        Syntax:
+            LIST             - List all lines
+            LIST line        - List single line
+            LIST start-end   - List range of lines
+            LIST -end        - List from beginning to end
+            LIST start-      - List from start to end
+        """
+        token = self.advance()
+
+        # Parse the range similar to DELETE
+        start = None
+        end = None
+        single_line = False
+
+        # Check if there are any arguments
+        if self.at_end_of_line() or self.match(TokenType.COLON):
+            # LIST with no arguments - list all
+            return ListStatementNode(
+                start=None,
+                end=None,
+                single_line=False,
+                line_num=token.line,
+                column=token.column
+            )
+
+        # Check if starts with minus (LIST -end)
+        if self.match(TokenType.MINUS):
+            self.advance()
+            if self.match(TokenType.NUMBER):
+                end_token = self.advance()
+                end = NumberNode(value=end_token.value, literal=str(end_token.value), line_num=end_token.line, column=end_token.column)
+        else:
+            # Parse start as a number
+            if self.match(TokenType.NUMBER):
+                start_token = self.advance()
+                start = NumberNode(value=start_token.value, literal=str(start_token.value), line_num=start_token.line, column=start_token.column)
+
+                # Check for minus (range)
+                if self.match(TokenType.MINUS):
+                    self.advance()
+                    # Check if there's an end value
+                    if self.match(TokenType.NUMBER):
+                        end_token = self.advance()
+                        end = NumberNode(value=end_token.value, literal=str(end_token.value), line_num=end_token.line, column=end_token.column)
+                    # If no end after dash, it means "start to end of program"
+                else:
+                    # No dash means single line
+                    single_line = True
+                    end = start
+
+        return ListStatementNode(
+            start=start,
+            end=end,
+            single_line=single_line,
             line_num=token.line,
             column=token.column
         )
