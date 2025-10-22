@@ -213,48 +213,48 @@ class Lexer:
             else:
                 break
 
-        # Check if it's a keyword (case-insensitive)
-        ident_upper = ident.upper()
-        if ident_upper in KEYWORDS:
-            return Token(KEYWORDS[ident_upper], ident_upper, start_line, start_column)
+        # Check if it's a keyword (case-insensitive, normalize to lowercase)
+        ident_lower = ident.lower()
+        if ident_lower in KEYWORDS:
+            return Token(KEYWORDS[ident_lower], ident_lower, start_line, start_column)
 
         # Special handling for file I/O statements with # (file number follows)
         # In MBASIC, "PRINT#1,A" should be tokenized as PRINT + # + 1
         # But our lexer reads "PRINT#" as identifier because # is a type suffix
-        # We need to split these specifically
+        # We need to split these specifically (use lowercase)
         FILE_IO_KEYWORDS = {
-            'PRINT#': TokenType.PRINT,
-            'LPRINT#': TokenType.LPRINT,
-            'INPUT#': TokenType.INPUT,
-            'WRITE#': TokenType.WRITE,
-            'FIELD#': TokenType.FIELD,
-            'GET#': TokenType.GET,
-            'PUT#': TokenType.PUT,
-            'CLOSE#': TokenType.CLOSE,
+            'print#': TokenType.PRINT,
+            'lprint#': TokenType.LPRINT,
+            'input#': TokenType.INPUT,
+            'write#': TokenType.WRITE,
+            'field#': TokenType.FIELD,
+            'get#': TokenType.GET,
+            'put#': TokenType.PUT,
+            'close#': TokenType.CLOSE,
         }
 
-        if ident_upper in FILE_IO_KEYWORDS:
+        if ident_lower in FILE_IO_KEYWORDS:
             # Put the # back into the source
             self.pos -= 1
             self.column -= 1
             # Return the keyword token without the #
-            keyword = ident_upper[:-1]  # Remove the #
-            return Token(FILE_IO_KEYWORDS[ident_upper], keyword, start_line, start_column)
+            keyword = ident_lower[:-1]  # Remove the #
+            return Token(FILE_IO_KEYWORDS[ident_lower], keyword, start_line, start_column)
 
         # Check if identifier starts with a statement keyword (MBASIC compatibility)
         # In old BASIC, keywords could run together: "NEXTI" = "NEXT I", "FORI" = "FOR I"
         # We check for common statement keywords that might be concatenated
         # Note: Only include keywords that can START a statement or commonly appear before identifiers
-        # Exclude TO and STEP as they're clause keywords, not statement starters
-        STATEMENT_KEYWORDS = ['NEXT', 'FOR', 'IF', 'THEN', 'ELSE', 'GOTO', 'GOSUB',
-                             'PRINT', 'INPUT', 'LET', 'DIM', 'READ', 'DATA', 'END',
-                             'STOP', 'RETURN', 'ON']
+        # Exclude TO and STEP as they're clause keywords, not statement starters (use lowercase)
+        STATEMENT_KEYWORDS = ['next', 'for', 'if', 'then', 'else', 'goto', 'gosub',
+                             'print', 'input', 'let', 'dim', 'read', 'data', 'end',
+                             'stop', 'return', 'on']
 
         for keyword in STATEMENT_KEYWORDS:
-            if ident_upper.startswith(keyword) and len(ident_upper) > len(keyword):
+            if ident_lower.startswith(keyword) and len(ident_lower) > len(keyword):
                 # Check if character after keyword is valid identifier start (must be LETTER)
                 # Don't split if followed by digit (e.g., STEP1 should stay as STEP1)
-                next_char = ident_upper[len(keyword)]
+                next_char = ident_lower[len(keyword)]
                 if next_char.isalpha():  # Only split if next char is a letter
                     # Split: return keyword token, put rest back in buffer
                     keyword_part = ident[:len(keyword)]

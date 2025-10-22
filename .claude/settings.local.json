@@ -47,7 +47,12 @@
       "Bash(./test_auto.sh:*)",
       "Bash(./test_auto_simple.sh:*)",
       "Bash(git checkout:*)",
-      "Bash(./test_renum_interactive.sh:*)"
+      "Bash(./test_renum_interactive.sh:*)",
+      "Bash(for f in basic/bas_tests1/*.bas)",
+      "Bash(do if python3 mbasic.py \"$f\")",
+      "Bash(/dev/null)",
+      "Bash(then echo \"SUCCESS: $f\")",
+      "Bash(break)"
     ],
     "deny": [],
     "ask": []
