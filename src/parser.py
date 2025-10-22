@@ -1050,6 +1050,13 @@ class Parser:
         """
         token = self.advance()
 
+        # Check for semicolon immediately after INPUT (suppresses ? prompt)
+        # Syntax: INPUT;"prompt"; var  or  INPUT; var
+        suppress_question = False
+        if self.match(TokenType.SEMICOLON):
+            suppress_question = True
+            self.advance()
+
         # Check for file number: INPUT #n, ...
         file_number = None
         if self.match(TokenType.HASH):
