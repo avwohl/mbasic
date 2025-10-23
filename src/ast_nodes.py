@@ -718,8 +718,16 @@ class ClearStatementNode:
 
 @dataclass
 class CommonStatementNode:
-    """COMMON statement - declare shared variables"""
-    variables: List['VariableNode']
+    """COMMON statement - declare shared variables for CHAIN
+
+    Syntax:
+        COMMON var1, var2, array1(), ...
+
+    Variables listed in COMMON are passed to CHAINed programs
+    (unless ALL option is used, which passes all variables).
+    Variable order and type matter, not names.
+    """
+    variables: List[str]  # List of variable names
     line_num: int = 0
     column: int = 0
 

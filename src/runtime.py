@@ -34,6 +34,7 @@ class Runtime:
         # Variable storage
         self.variables = {}           # name -> value
         self.arrays = {}              # name -> {'dims': [...], 'data': [...]}
+        self.common_vars = []         # List of variable names declared in COMMON (order matters!)
 
         # Execution control
         self.current_line = None      # Currently executing LineNode

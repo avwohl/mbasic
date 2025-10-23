@@ -516,13 +516,21 @@ class InteractiveMode:
             with open(filename, 'r') as f:
                 program_text = f.read()
 
-            # Save variables if ALL flag is set OR if doing MERGE
-            # MERGE always preserves variables (it's an overlay)
-            # ALL explicitly passes variables to a new program
+            # Save variables based on CHAIN options:
+            # - MERGE: always preserves all variables (it's an overlay)
+            # - ALL: passes all variables to new program
+            # - Neither: only pass COMMON variables
             saved_variables = None
-            if (all_flag or merge) and self.program_runtime:
-                # Save all variables from current runtime
-                saved_variables = dict(self.program_runtime.variables)
+            if self.program_runtime:
+                if all_flag or merge:
+                    # Save all variables
+                    saved_variables = dict(self.program_runtime.variables)
+                elif self.program_runtime.common_vars:
+                    # Save only COMMON variables (in order)
+                    saved_variables = {}
+                    for var_name in self.program_runtime.common_vars:
+                        if var_name in self.program_runtime.variables:
+                            saved_variables[var_name] = self.program_runtime.variables[var_name]
 
             # Load or merge program
             if merge:
@@ -586,9 +594,13 @@ class InteractiveMode:
             interpreter = Interpreter(runtime)
             interpreter.interactive_mode = self
 
-            # Restore variables if ALL flag was set
-            if all_flag and saved_variables:
+            # Restore variables if saved
+            if saved_variables:
                 runtime.variables.update(saved_variables)
+
+            # Preserve COMMON variable list from previous runtime
+            if self.program_runtime and self.program_runtime.common_vars:
+                runtime.common_vars = list(self.program_runtime.common_vars)
 
             # Save runtime for CONT
             self.program_runtime = runtime

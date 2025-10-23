@@ -517,6 +517,20 @@ class Interpreter:
                 # In non-interactive context, just restart
                 self.runtime.halted = True
 
+    def execute_common(self, stmt):
+        """Execute COMMON statement
+
+        COMMON variable1, variable2, array1(), ...
+
+        Declares variables to be shared across CHAIN operations.
+        Variable order and type matter, not names.
+        """
+        # Add variable names to common_vars list in order
+        for var_name in stmt.variables:
+            # Note: We store the variable name as-is
+            if var_name not in self.runtime.common_vars:
+                self.runtime.common_vars.append(var_name)
+
     def execute_chain(self, stmt):
         """Execute CHAIN statement
 

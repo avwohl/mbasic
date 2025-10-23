@@ -2277,7 +2277,51 @@ class Parser:
         )
 
     def parse_common(self) -> CommonStatementNode:
-        raise NotImplementedError("COMMON parsing not yet implemented")
+        """Parse COMMON statement
+
+        Syntax:
+            COMMON variable1, variable2, array1(), string$, ...
+
+        Examples:
+            COMMON A, B, C
+            COMMON X, Y(), NAME$
+        """
+        token = self.advance()
+
+        variables = []
+
+        # Parse comma-separated list of variables
+        while True:
+            var_token = self.current()
+            if not var_token or var_token.type != TokenType.IDENTIFIER:
+                raise ParseError("Expected variable name in COMMON", var_token)
+
+            var_name = var_token.value
+            self.advance()
+
+            # Check for array indicator ()
+            # (we don't need to do anything special with arrays in COMMON,
+            # just note the variable name)
+            if self.match(TokenType.LPAREN):
+                self.advance()
+                if not self.match(TokenType.RPAREN):
+                    raise ParseError("Expected ) after ( in COMMON array", self.current())
+                self.advance()
+
+            # Just store the variable name as a string
+            variables.append(var_name)
+
+            # Check for more variables
+            if self.match(TokenType.COMMA):
+                self.advance()
+            else:
+                break
+
+        return CommonStatementNode(
+            variables=variables,
+            line_num=token.line,
+            column=token.column
+        )
 
     def parse_open(self) -> OpenStatementNode:
         """
