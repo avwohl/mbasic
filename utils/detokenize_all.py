@@ -11,7 +11,7 @@ def detokenize_file(input_path, output_path):
     """Detokenize a single file"""
     try:
         result = subprocess.run(
-            ['python3', 'bin/detokenizer.py', str(input_path)],
+            ['python3', 'utils/detokenizer.py', str(input_path)],
             capture_output=True,
             text=True,
             timeout=10

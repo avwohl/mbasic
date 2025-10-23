@@ -168,7 +168,7 @@ These files are beyond repair and should be excluded from tests.
 
 ## Code Changes Summary
 
-### File: `bin/detokenizer.py`
+### File: `utils/detokenizer.py`
 
 **Changes Made**:
 
