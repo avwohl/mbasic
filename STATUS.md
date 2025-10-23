@@ -138,11 +138,6 @@ This document provides a comprehensive overview of what is and is not yet implem
 **Status:** Parsed but not executed
 **Impact:** Cannot control display width or print to printer
 
-### 3. Graphics and Sound
-**Priority:** Very Low (Not Planned)
-
-Graphics commands (SCREEN, LINE, CIRCLE, PSET, etc.) and sound commands (SOUND, BEEP, PLAY) are not part of MBASIC 5.21 core specification and are not planned for implementation.
-
 ## Testing Status
 
 ### Parser Tests
@@ -220,8 +215,6 @@ Programs that require:
 - Debugging features
 
 ### Not Planned
-- Graphics commands (hardware-specific)
-- Sound commands (hardware-specific)
 - Printer support (LPRINT)
 - Direct hardware access (PEEK, POKE, INP, OUT)
 
