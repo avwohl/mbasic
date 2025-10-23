@@ -625,13 +625,13 @@ class Interpreter:
         self.runtime.set_variable_raw('err%', 0)
 
         # Determine where to resume
-        if stmt.line_number is None:
-            # RESUME - return to the statement that caused the error
+        if stmt.line_number is None or stmt.line_number == 0:
+            # RESUME or RESUME 0 - retry the statement that caused the error
             if self.runtime.error_line is None:
                 raise RuntimeError("No error line to resume to")
             self.runtime.next_line = self.runtime.error_line
             self.runtime.next_stmt_index = self.runtime.error_stmt_index
-        elif stmt.line_number == 0:
+        elif stmt.line_number == -1:
             # RESUME NEXT - continue at statement after the error
             if self.runtime.error_line is None:
                 raise RuntimeError("No error line to resume from")

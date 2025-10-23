@@ -65,9 +65,10 @@ This document provides a comprehensive overview of what is and is not yet implem
 - ✓ ON ERROR GOTO line - Set error trap (GOTO)
 - ✓ ON ERROR GOSUB line - Set error trap (GOSUB)
 - ✓ ON ERROR GOTO 0 - Disable error trapping
-- ✓ RESUME - Resume at error statement
-- ✓ RESUME NEXT - Resume at next statement
-- ✓ RESUME line - Resume at specific line
+- ✓ RESUME - Retry the statement that caused the error
+- ✓ RESUME 0 - Same as RESUME (retry error statement)
+- ✓ RESUME NEXT - Continue at next statement after error
+- ✓ RESUME line - Resume at specific line number
 - ✓ ERR% - Error code variable
 - ✓ ERL% - Error line number variable
 

@@ -3300,7 +3300,7 @@ class Parser:
         line_number = None
         if self.match(TokenType.NEXT):
             self.advance()
-            line_number = 0  # 0 means RESUME NEXT
+            line_number = -1  # -1 means RESUME NEXT (0 is a valid line number)
         elif self.match(TokenType.LINE_NUMBER, TokenType.NUMBER):
             line_number = int(self.advance().value)
 
