@@ -12,6 +12,11 @@ from tokens import TokenType
 import ast_nodes
 
 
+class BreakException(Exception):
+    """Raised when user presses Ctrl+C to break execution"""
+    pass
+
+
 class Interpreter:
     """Execute MBASIC AST"""
 
@@ -135,6 +140,13 @@ class Interpreter:
                     if os.environ.get('DEBUG'):
                         print(f"DEBUG: Executing line {line_node.line_number} stmt {self.runtime.current_stmt_index}: {type(stmt).__name__}")
                     self.execute_statement(stmt)
+                except BreakException:
+                    # User pressed Ctrl+C during INPUT - handle like break
+                    self.runtime.stopped = True
+                    self.runtime.stop_line = self.runtime.current_line
+                    self.runtime.stop_stmt_index = self.runtime.current_stmt_index
+                    print(f"Break in {self.runtime.current_line.line_number if self.runtime.current_line else '?'}")
+                    return
                 except Exception as e:
                     # Check if we have an error handler
                     if self.runtime.error_handler is not None and not self.runtime.in_error_handler:
@@ -1017,7 +1029,12 @@ class Interpreter:
                 print("? ", end='')
 
             # Read input
-            line = input()
+            try:
+                line = input()
+            except KeyboardInterrupt:
+                # User pressed Ctrl+C during input - break to command mode
+                print()  # Newline after ^C
+                raise BreakException()
 
         # Parse comma-separated values
         values = [v.strip() for v in line.split(',')]
@@ -1104,7 +1121,12 @@ class Interpreter:
                 prompt_value = self.evaluate_expression(stmt.prompt)
                 print(prompt_value, end='')
 
-            line = input()
+            try:
+                line = input()
+            except KeyboardInterrupt:
+                # User pressed Ctrl+C during input - break to command mode
+                print()  # Newline after ^C
+                raise BreakException()
 
         # Assign entire line to variable (no parsing)
         var_node = stmt.variable
