@@ -105,7 +105,7 @@ Thumbs.db
 ## Final Structure
 
 ```
-mb1/
+mbasic/
 ├── src/                # Compiler source (4 files)
 ├── utils/              # Utilities (6 files)
 ├── tests/              # Tests (40+ files)

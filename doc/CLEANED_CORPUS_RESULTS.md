@@ -322,7 +322,7 @@ Keep `bas_tests1/` and `bas_tests1_other/` separate:
 ### Directory Structure
 
 ```
-/home/wohl/cl/mb1/
+/home/wohl/cl/mbasic/
 ├── bas_tests1/           # 235 MBASIC-compatible files
 ├── bas_tests1_other/     # 138 non-MBASIC dialect files
 ├── bas/                  # 209 files (older set)

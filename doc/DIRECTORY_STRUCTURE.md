@@ -6,7 +6,7 @@ This document describes the organization of the MBASIC 5.21 compiler project.
 ## Directory Structure
 
 ```
-mb1/
+mbasic/
 ├── basic/              # BASIC source files and test corpus
 │   ├── bas_tests1/     # Main test corpus (215 MBASIC 5.21 files) ⭐
 │   ├── bad_not521/     # Non-MBASIC 5.21 dialect files (20 files)

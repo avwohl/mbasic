@@ -26,11 +26,11 @@ A virtual environment keeps this project's dependencies separate from your syste
 
 ```bash
 # Clone the repository (if using git)
-git clone <repository-url>
-cd mb1
+git clone https://github.com/avwohl/mbasic.git
+cd mbasic
 
 # OR download and extract the ZIP file, then:
-cd mb1
+cd mbasic
 ```
 
 #### Step 2: Create a virtual environment
@@ -100,7 +100,7 @@ If you don't want to use a virtual environment, you can run the interpreter dire
 
 ```bash
 # Navigate to the project directory
-cd mb1
+cd mbasic
 
 # Run the interpreter
 python3 mbasic.py
@@ -113,7 +113,7 @@ This method works fine since the project has no external dependencies.
 For system-wide installation:
 
 ```bash
-cd mb1
+cd mbasic
 pip install -e .
 ```
 
@@ -192,7 +192,7 @@ Then try activating again.
 
 ### "Module not found" errors
 
-Make sure you're in the correct directory (the `mb1` folder containing `mbasic.py`).
+Make sure you're in the correct directory (the `mbasic` folder containing `mbasic.py`).
 
 ## Important Limitations
 

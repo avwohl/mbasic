@@ -39,10 +39,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/mb1"  # TODO: Update
-Repository = "https://github.com/yourusername/mb1.git"  # TODO: Update
-Issues = "https://github.com/yourusername/mb1/issues"  # TODO: Update
-Documentation = "https://github.com/yourusername/mb1/blob/main/README.md"  # TODO: Update
+Homepage = "https://github.com/avwohl/mbasic"
+Repository = "https://github.com/avwohl/mbasic.git"
+Issues = "https://github.com/avwohl/mbasic/issues"
+Documentation = "https://github.com/avwohl/mbasic/blob/main/README.md"
 
 [project.scripts]
 mbasic = "mbasic:main"

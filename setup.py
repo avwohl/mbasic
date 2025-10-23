@@ -18,7 +18,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Your Name",  # TODO: Update with your information
     author_email="your.email@example.com",  # TODO: Update with your information
-    url="https://github.com/yourusername/mb1",  # TODO: Update with your repository URL
+    url="https://github.com/avwohl/mbasic",
     license="MIT",  # TODO: Update if you choose a different license
 
     packages=find_packages(exclude=["tests", "basic", "doc", "utils", "bin"]),
@@ -75,8 +75,8 @@ setup(
 
     # Project URLs
     project_urls={
-        "Bug Reports": "https://github.com/yourusername/mb1/issues",  # TODO: Update
-        "Source": "https://github.com/yourusername/mb1",  # TODO: Update
-        "Documentation": "https://github.com/yourusername/mb1/blob/main/README.md",  # TODO: Update
+        "Bug Reports": "https://github.com/avwohl/mbasic/issues",
+        "Source": "https://github.com/avwohl/mbasic",
+        "Documentation": "https://github.com/avwohl/mbasic/blob/main/README.md",
     },
 )

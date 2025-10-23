@@ -7,8 +7,8 @@ Thank you for your interest in contributing to the MBASIC 5.21 Interpreter proje
 1. Fork the repository
 2. Clone your fork:
    ```bash
-   git clone https://github.com/yourusername/mb1.git
-   cd mb1
+   git clone https://github.com/yourusername/mbasic.git
+   cd mbasic
    ```
 3. Create a virtual environment:
    ```bash
@@ -95,7 +95,7 @@ python3 mbasic.py basic/tests_with_results/test_operator_precedence.bas
 ## Code Organization
 
 ```
-mb1/
+mbasic/
 ├── mbasic.py              # Main entry point
 ├── src/
 │   ├── lexer.py           # Tokenizer - converts text to tokens

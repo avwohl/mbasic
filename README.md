@@ -13,8 +13,8 @@ For detailed installation instructions including virtual environment setup, see 
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd mb1
+git clone https://github.com/avwohl/mbasic.git
+cd mbasic
 
 # Create and activate a virtual environment (recommended)
 python3 -m venv venv
@@ -85,7 +85,7 @@ SAVE "hello.bas"
 ## Project Structure
 
 ```
-mb1/
+mbasic/
 ├── mbasic.py              # Main entry point
 ├── src/
 │   ├── lexer.py           # Tokenizer
