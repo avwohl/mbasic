@@ -133,10 +133,12 @@ class InteractiveMode:
         args = parts[1] if len(parts) > 1 else ""
 
         # Meta-commands (editor commands that manipulate program source)
-        # Only AUTO is a true meta-command that can't be parsed
+        # Only AUTO and EDIT are true meta-commands that can't be parsed
         # Everything else (LIST, DELETE, RENUM, FILES, LOAD, SAVE, etc.) goes through parser
         if command == "AUTO":
             self.cmd_auto(args)
+        elif command == "EDIT":
+            self.cmd_edit(args)
         elif command == "":
             pass  # Empty command
         else:
@@ -707,6 +709,195 @@ class InteractiveMode:
         else:
             return "?"
 
+    def cmd_edit(self, args):
+        """EDIT line_number - Character-by-character line editor
+
+        EDIT 100 - Edit line 100 using edit subcommands
+
+        Edit mode subcommands:
+        - Space: Move cursor right, printing characters
+        - [n]D: Delete n characters
+        - I<text>$: Insert text ($ = Escape)
+        - X: Extend line (go to end and insert)
+        - H: Delete to end and insert
+        - [n]S<ch>: Search for nth occurrence of ch
+        - [n]K<ch>: Kill (delete) up to nth occurrence of ch
+        - [n]C: Change next n characters
+        - L: List rest of line, go to start
+        - E: End and save (don't print rest)
+        - Q: Quit without saving
+        - A: Abort and restart
+        - <CR>: End and save
+        """
+        if not args or not args.strip():
+            print("?Syntax error - specify line number")
+            return
+
+        try:
+            line_num = int(args.strip())
+        except ValueError:
+            print("?Syntax error - invalid line number")
+            return
+
+        # Check if line exists
+        if line_num not in self.lines:
+            print(f"?Undefined line number: {line_num}")
+            return
+
+        # Get the current line text (without line number prefix)
+        current_line = self.lines[line_num]
+        import re
+        match = re.match(r'^\d+\s*', current_line)
+        if match:
+            original_text = current_line[match.end():]
+        else:
+            original_text = current_line
+
+        # Edit state
+        text = original_text
+        cursor = 0
+        new_text = ""
+
+        # Display line number prompt
+        print(f"{line_num}", end='', flush=True)
+
+        try:
+            while True:
+                # Read one character at a time
+                ch = self._read_char()
+
+                if ch is None:  # EOF
+                    print()
+                    return
+
+                # Handle edit commands
+                if ch == '\r' or ch == '\n':
+                    # CR: Save changes and exit
+                    # Print rest of line
+                    print(text[cursor:])
+                    new_text += text[cursor:]
+                    break
+
+                elif ch == ' ':
+                    # Space: Move cursor right and print character
+                    if cursor < len(text):
+                        print(text[cursor], end='', flush=True)
+                        new_text += text[cursor]
+                        cursor += 1
+
+                elif ch.upper() == 'D':
+                    # Delete: Delete character at cursor
+                    if cursor < len(text):
+                        print(f"\\{text[cursor]}\\", end='', flush=True)
+                        cursor += 1
+
+                elif ch.upper() == 'I':
+                    # Insert: Insert text at cursor
+                    insert_text = self._read_until_escape()
+                    print(insert_text, end='', flush=True)
+                    new_text += insert_text
+
+                elif ch.upper() == 'X':
+                    # Extend: Go to end and insert
+                    new_text += text[cursor:]
+                    cursor = len(text)
+                    insert_text = self._read_until_escape()
+                    print(insert_text, end='', flush=True)
+                    new_text += insert_text
+
+                elif ch.upper() == 'H':
+                    # H: Delete to end and insert
+                    cursor = len(text)
+                    insert_text = self._read_until_escape()
+                    print(insert_text, end='', flush=True)
+                    new_text += insert_text
+
+                elif ch.upper() == 'E':
+                    # E: End without printing rest
+                    print()
+                    break
+
+                elif ch.upper() == 'Q':
+                    # Q: Quit without saving
+                    print()
+                    return
+
+                elif ch.upper() == 'L':
+                    # L: List rest and go to start
+                    print(text[cursor:])
+                    cursor = 0
+                    new_text = ""
+                    print(f"{line_num}", end='', flush=True)
+
+                elif ch.upper() == 'A':
+                    # A: Abort and restart
+                    print()
+                    text = original_text
+                    cursor = 0
+                    new_text = ""
+                    print(f"{line_num}", end='', flush=True)
+
+                elif ch.upper() == 'C':
+                    # C: Change next character
+                    if cursor < len(text):
+                        replacement = self._read_char()
+                        if replacement:
+                            print(replacement, end='', flush=True)
+                            new_text += replacement
+                            cursor += 1
+
+            # Update the line with new text
+            full_line = str(line_num) + " " + new_text
+            self.lines[line_num] = full_line
+
+            # Parse and update AST
+            line_ast = self.parse_single_line(full_line)
+            if line_ast:
+                self.line_asts[line_num] = line_ast
+                # Update runtime's line_table if program is running
+                if self.program_runtime:
+                    self.program_runtime.line_table[line_num] = line_ast
+
+        except KeyboardInterrupt:
+            # Ctrl+C cancels edit
+            print()
+            return
+
+    def _read_char(self):
+        """Read a single character from stdin"""
+        import sys
+        import tty
+        import termios
+
+        try:
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            try:
+                tty.setraw(fd)
+                ch = sys.stdin.read(1)
+                return ch if ch else None
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        except:
+            # Fallback for non-TTY (piped input)
+            ch = sys.stdin.read(1)
+            return ch if ch else None
+
+    def _read_until_escape(self):
+        """Read characters until Escape ($) is pressed"""
+        result = ""
+        while True:
+            ch = self._read_char()
+            if ch is None or ch == '\x1b' or ch == '$':  # ESC or $
+                break
+            elif ch == '\x7f' or ch == '\x08':  # DEL or Backspace
+                if result:
+                    result = result[:-1]
+                    print('\b \b', end='', flush=True)
+            else:
+                result += ch
+        return result
+
     def cmd_auto(self, args):
         """AUTO [start][,increment] - Automatic line numbering mode
 
@@ -764,6 +955,17 @@ class InteractiveMode:
                 # Add the line with its number
                 full_line = str(current_line) + " " + line_text.strip()
                 self.lines[current_line] = full_line
+
+                # Parse and store AST
+                line_ast = self.parse_single_line(full_line)
+                if line_ast:
+                    self.line_asts[current_line] = line_ast
+                    # Update runtime's line_table if program is running
+                    if self.program_runtime:
+                        self.program_runtime.line_table[current_line] = line_ast
+                        if current_line not in self.program_runtime.line_order:
+                            import bisect
+                            bisect.insort(self.program_runtime.line_order, current_line)
 
                 # Move to next line number
                 current_line += increment
