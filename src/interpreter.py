@@ -81,6 +81,7 @@ class Interpreter:
         """
         # Execute lines in sequential order
         line_index = start_index
+        is_first_line = True  # Track if this is the first line (for CONT)
         while line_index < len(self.runtime.line_order) and not self.runtime.halted:
             # Check for Ctrl+C break
             if self.runtime.break_requested:
@@ -103,11 +104,15 @@ class Interpreter:
             if self.runtime.next_stmt_index is not None:
                 self.runtime.current_stmt_index = self.runtime.next_stmt_index
                 self.runtime.next_stmt_index = None
-            elif line_index == start_index and self.runtime.current_stmt_index > 0:
-                # Continuing from STOP - use saved statement index
+            elif is_first_line and line_index == start_index and self.runtime.current_stmt_index > 0:
+                # Continuing from STOP - use saved statement index (only on first iteration)
                 pass
             else:
                 self.runtime.current_stmt_index = 0
+
+            # Clear first line flag after handling
+            if is_first_line:
+                is_first_line = False
 
             # Execute all statements on this line
             while self.runtime.current_stmt_index < len(line_node.statements):
@@ -375,10 +380,6 @@ class Interpreter:
 
     def execute_end(self, stmt):
         """Execute END statement"""
-        self.runtime.halted = True
-
-    def execute_stop(self, stmt):
-        """Execute STOP statement"""
         self.runtime.halted = True
 
     def execute_remark(self, stmt):
