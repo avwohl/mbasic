@@ -122,6 +122,17 @@ This document provides a comprehensive overview of what is and is not yet implem
 
 Currently, all major MBASIC 5.21 features are implemented. See "❌ Will Not Be Implemented" below for features that are intentionally not supported due to obsolescence or incompatibility with modern systems.
 
+## ✓ Implemented for Compatibility
+
+These features are implemented and accepted by the parser/interpreter for compatibility with existing BASIC programs, but they perform no action or have limited functionality in a modern environment. Programs using these features will run without errors, but the features may not have visible effects.
+
+### Screen Control
+
+- **CLS** - Clear screen
+  - Status: ✓ Implemented as no-op
+  - Why: Terminal control sequences vary widely across platforms. Modern terminals provide their own clear commands. Programs can use CLS for compatibility, but it won't actually clear the screen.
+  - Note: If screen clearing is needed, use your terminal's native clear command (e.g., `clear` on Unix/Linux, `cls` on Windows) before running the program.
+
 ## ❌ Will Not Be Implemented
 
 These features are obsolete, hardware-specific, or incompatible with modern computing environments. They are parsed for compatibility but will never have functional implementations.

@@ -1869,6 +1869,16 @@ class Interpreter:
         """Execute TROFF statement - disable execution trace"""
         self.runtime.trace_on = False
 
+    def execute_cls(self, stmt):
+        """Execute CLS statement - clear screen (no-op)
+
+        CLS is accepted for compatibility with programs that use it,
+        but does not perform any action. Terminal clearing varies widely
+        across platforms and would require complex terminal control logic.
+        """
+        # No-op - do nothing
+        pass
+
     def execute_cont(self, stmt):
         """Execute CONT statement
 

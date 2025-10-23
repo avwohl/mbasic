@@ -84,6 +84,7 @@ class InteractiveMode:
         except Exception as e:
             if basic_line_num is not None:
                 print(f"?Syntax error in {basic_line_num}: {e}")
+                print(f"  {line_text}")
             else:
                 print(f"?Syntax error: {e}")
             return None
