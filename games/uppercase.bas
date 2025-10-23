@@ -1,8 +1,0 @@
-9300 ZZ$="abc"
-9450 FOR I=1 TO LEN(ZZ$)
-9460 C=ASC(MID$(ZZ$,I,1))
-9470 IF C>=97 AND C<=122 THEN C=C-32
-9480 ZZ0$=ZZ0$+CHR$(C)
-9490 NEXT I
-9495 print "in ='";ZZ$;"' out='";ZZ0$;"'"
-
