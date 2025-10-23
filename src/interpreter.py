@@ -350,6 +350,54 @@ class Interpreter:
                 value
             )
 
+    def execute_swap(self, stmt):
+        """Execute SWAP statement - exchange values of two variables"""
+        # Get values of both variables
+        if stmt.var1.subscripts:
+            # Array element
+            subscripts1 = [int(self.evaluate_expression(sub)) for sub in stmt.var1.subscripts]
+            value1 = self.runtime.get_array_element(stmt.var1.name, stmt.var1.type_suffix, subscripts1)
+        else:
+            # Simple variable
+            value1 = self.runtime.get_variable(stmt.var1.name, stmt.var1.type_suffix)
+
+        if stmt.var2.subscripts:
+            # Array element
+            subscripts2 = [int(self.evaluate_expression(sub)) for sub in stmt.var2.subscripts]
+            value2 = self.runtime.get_array_element(stmt.var2.name, stmt.var2.type_suffix, subscripts2)
+        else:
+            # Simple variable
+            value2 = self.runtime.get_variable(stmt.var2.name, stmt.var2.type_suffix)
+
+        # Swap the values
+        if stmt.var1.subscripts:
+            self.runtime.set_array_element(
+                stmt.var1.name,
+                stmt.var1.type_suffix,
+                subscripts1,
+                value2
+            )
+        else:
+            self.runtime.set_variable(
+                stmt.var1.name,
+                stmt.var1.type_suffix,
+                value2
+            )
+
+        if stmt.var2.subscripts:
+            self.runtime.set_array_element(
+                stmt.var2.name,
+                stmt.var2.type_suffix,
+                subscripts2,
+                value1
+            )
+        else:
+            self.runtime.set_variable(
+                stmt.var2.name,
+                stmt.var2.type_suffix,
+                value1
+            )
+
     def execute_print(self, stmt):
         """Execute PRINT statement - print to screen or file"""
         # Check if printing to file

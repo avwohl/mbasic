@@ -5,7 +5,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 ## Summary
 
 **Parser Coverage:** 100% - All MBASIC 5.21 syntax is parsed correctly
-**Runtime Implementation:** ~98% - Core features, file I/O, string manipulation, and formatted output complete
+**Runtime Implementation:** ~99% - All major features complete; only obsolete/incompatible features remain unimplemented
 
 ## ✓ Fully Implemented
 
@@ -32,6 +32,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 
 ### Data Management
 - ✓ LET (assignment)
+- ✓ SWAP (exchange values of two variables)
 - ✓ DATA/READ/RESTORE
 - ✓ INPUT (console input)
 - ✓ PRINT (console output with zones and separators)
@@ -119,14 +120,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 
 ## ✗ Not Yet Implemented
 
-### 1. Variable Operations (Low Priority)
-**Priority:** Low - Minor convenience features
-
-- ✗ **SWAP var1, var2** - Exchange values of two variables
-
-**Status:** Parsed but not executed
-**Impact:** Minor convenience feature
-**Workaround:** Use temp variable (e.g., `T=A: A=B: B=T`)
+Currently, all major MBASIC 5.21 features are implemented. See "❌ Will Not Be Implemented" below for features that are intentionally not supported due to obsolescence or incompatibility with modern systems.
 
 ## ❌ Will Not Be Implemented
 
@@ -230,6 +224,7 @@ These features are obsolete, hardware-specific, or incompatible with modern comp
 - **MID$ assignment:** Fully tested (replace substring in-place, simple vars and arrays)
 - **TRON/TROFF:** Fully tested (execution trace for debugging)
 - **PRINT USING:** Fully tested (string formats: !, \\ \\, &; numeric formats: #, +, -, ., ,, **, $$, **$, ^^^^, overflow)
+- **SWAP:** Fully tested (simple variables, array elements, mixed types)
 
 ## Compatibility Notes
 
@@ -238,6 +233,7 @@ Programs that use:
 - Mathematical calculations
 - String processing (including MID$ assignment for in-place modification)
 - Arrays and data structures
+- Variable operations (LET, SWAP)
 - Control flow (IF, FOR, WHILE/WEND, GOSUB, ON GOTO/GOSUB)
 - Error handling (ON ERROR GOTO/GOSUB, RESUME)
 - Debugging (TRON/TROFF execution trace)
