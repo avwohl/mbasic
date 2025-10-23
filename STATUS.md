@@ -61,6 +61,11 @@ This document provides a comprehensive overview of what is and is not yet implem
 - ✓ CLEAR (clear all variables)
 - ✓ Immediate mode (evaluate expressions directly)
 
+### File System Operations
+- ✓ KILL "filename" - Delete file
+- ✓ NAME "old" AS "new" - Rename file
+- ✓ RESET - Close all open files (no-op until file I/O implemented)
+
 ### Error Handling
 - ✓ ON ERROR GOTO line - Set error trap (GOTO)
 - ✓ ON ERROR GOSUB line - Set error trap (GOSUB)
@@ -120,17 +125,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 **Status:** Parsed but not executed
 **Impact:** Cannot access random-access database files
 
-### 3. File System Operations
-**Priority:** Medium
-
-- ✗ **KILL "filename"** - Delete file
-- ✗ **NAME "old" AS "new"** - Rename file
-- ✗ **RESET** - Close all open files
-
-**Status:** Parsed but not executed
-**Impact:** Cannot manage files from within BASIC programs
-
-### 4. Computed Jumps
+### 3. Computed Jumps
 **Priority:** Medium
 
 - ✗ **ON expression GOTO line1, line2, ...** - Computed GOTO
@@ -140,7 +135,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 **Impact:** Cannot do multi-way branching
 **Workaround:** Use IF/THEN/ELSE chains
 
-### 5. String Manipulation
+### 4. String Manipulation
 **Priority:** Low
 
 - ✗ **MID$(var$, start, len) = value$** - Replace substring in-place
@@ -149,7 +144,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 **Impact:** Cannot modify strings in-place
 **Workaround:** Use LEFT$, MID$, RIGHT$ to rebuild strings
 
-### 6. Variable Operations
+### 5. Variable Operations
 **Priority:** Low
 
 - ✗ **SWAP var1, var2** - Exchange values of two variables
@@ -158,7 +153,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 **Impact:** Minor convenience feature
 **Workaround:** Use temp variable
 
-### 7. Output Control
+### 6. Output Control
 **Priority:** Low
 
 - ✗ **WIDTH [#filenum,] width** - Set output width
@@ -167,7 +162,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 **Status:** Parsed but not executed
 **Impact:** Cannot control display width or print to printer
 
-### 8. Graphics and Sound
+### 7. Graphics and Sound
 **Priority:** Very Low (Not Planned)
 
 Graphics commands (SCREEN, LINE, CIRCLE, PSET, etc.) and sound commands (SOUND, BEEP, PLAY) are not part of MBASIC 5.21 core specification and are not planned for implementation.
@@ -199,6 +194,7 @@ Programs that use:
 - Error handling (ON ERROR GOTO/GOSUB, RESUME)
 - User input/output
 - Non-blocking keyboard input (INKEY$)
+- File system operations (KILL, NAME AS, RESET)
 - DATA statements
 - User-defined functions
 
@@ -244,10 +240,9 @@ Programs that require:
 
 ## Known Limitations
 
-1. **No file I/O** - Cannot read or write data files
+1. **No sequential/random file I/O** - Cannot read or write data files (but can manage files with KILL, NAME, RESET)
 2. **No computed jumps** - Use IF/THEN chains instead
-3. **No random files** - Cannot access binary data files
-4. **Integer division precision** - May differ slightly from original MBASIC due to Python float handling
+3. **Integer division precision** - May differ slightly from original MBASIC due to Python float handling
 
 ## Testing Your Program
 
@@ -273,9 +268,9 @@ To check if your MBASIC program will work:
 ## Contributing
 
 Contributions welcome! Priority areas:
-1. Sequential file I/O implementation
+1. Sequential file I/O implementation (OPEN, CLOSE, PRINT#, INPUT#)
 2. ON GOTO/GOSUB computed jumps
-3. Random file I/O implementation
+3. Random file I/O implementation (FIELD, GET, PUT)
 4. Additional test cases
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.

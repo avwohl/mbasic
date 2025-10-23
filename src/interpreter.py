@@ -1056,6 +1056,67 @@ class Interpreter:
             else:
                 print(f"No files matching: {pattern}")
 
+    def execute_kill(self, stmt):
+        """Execute KILL statement - delete file
+
+        Syntax: KILL filename$
+        Example: KILL "TEMP.DAT"
+        """
+        import os
+
+        # Evaluate filename expression
+        filename = self.evaluate_expression(stmt.filename)
+        if not isinstance(filename, str):
+            raise RuntimeError("KILL requires string filename")
+
+        # Delete the file
+        try:
+            if os.path.exists(filename):
+                os.remove(filename)
+            else:
+                raise RuntimeError(f"File not found: {filename}")
+        except OSError as e:
+            raise RuntimeError(f"Cannot delete {filename}: {e.strerror}")
+
+    def execute_name(self, stmt):
+        """Execute NAME statement - rename file
+
+        Syntax: NAME oldfile$ AS newfile$
+        Example: NAME "TEMP.DAT" AS "FINAL.DAT"
+        """
+        import os
+
+        # Evaluate old and new filename expressions
+        old_filename = self.evaluate_expression(stmt.old_filename)
+        new_filename = self.evaluate_expression(stmt.new_filename)
+
+        if not isinstance(old_filename, str):
+            raise RuntimeError("NAME requires string for old filename")
+        if not isinstance(new_filename, str):
+            raise RuntimeError("NAME requires string for new filename")
+
+        # Rename the file
+        try:
+            if not os.path.exists(old_filename):
+                raise RuntimeError(f"File not found: {old_filename}")
+            if os.path.exists(new_filename):
+                raise RuntimeError(f"File already exists: {new_filename}")
+            os.rename(old_filename, new_filename)
+        except OSError as e:
+            raise RuntimeError(f"Cannot rename {old_filename} to {new_filename}: {e.strerror}")
+
+    def execute_reset(self, stmt):
+        """Execute RESET statement - close all open files
+
+        Syntax: RESET
+
+        Note: Currently a no-op since file I/O is not yet implemented.
+        When file I/O is implemented, this will close all open file handles.
+        """
+        # TODO: When file I/O is implemented, close all open files here
+        # For now, this is a no-op
+        pass
+
     def execute_list(self, stmt):
         """Execute LIST statement"""
         # Evaluate start and end expressions
