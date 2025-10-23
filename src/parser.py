@@ -882,6 +882,15 @@ class Parser:
         func_token = self.advance()
         func_name = func_token.type.name
 
+        # Map token names to actual function names
+        # (Some tokens have _FUNC suffix to avoid conflicts)
+        name_map = {
+            'EOF_FUNC': 'EOF',
+            'INPUT_FUNC': 'INPUT$',
+            'STRING_FUNC': 'STRING$',
+        }
+        func_name = name_map.get(func_name, func_name)
+
         # RND can be called without parentheses (RND returns random in [0,1))
         # RND(n) where n>0 returns same sequence, n<0 reseeds, n=0 repeats last
         if func_token.type == TokenType.RND and not self.match(TokenType.LPAREN):

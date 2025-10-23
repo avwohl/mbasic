@@ -347,7 +347,19 @@ class Interpreter:
             )
 
     def execute_print(self, stmt):
-        """Execute PRINT statement"""
+        """Execute PRINT statement - print to screen or file"""
+        # Check if printing to file
+        if stmt.file_number is not None:
+            file_num = int(self.evaluate_expression(stmt.file_number))
+            if file_num not in self.runtime.files:
+                raise RuntimeError(f"File #{file_num} not open")
+            file_info = self.runtime.files[file_num]
+            if file_info['mode'] not in ['O', 'A']:
+                raise RuntimeError(f"File #{file_num} not open for output")
+            file_handle = file_info['handle']
+        else:
+            file_handle = None
+
         output_parts = []
 
         for i, expr in enumerate(stmt.expressions):
@@ -387,11 +399,20 @@ class Interpreter:
                     # Newline
                     output += '\n'
 
-        # Print output (don't add newline if last separator was ; or , or \n)
-        if stmt.separators and stmt.separators[-1] in [';', ',', '\n']:
-            print(output, end='')
+        # Output to file or screen
+        if file_handle:
+            # Print to file (don't add newline if last separator was ; or ,)
+            if stmt.separators and stmt.separators[-1] in [';', ',', '\n']:
+                file_handle.write(output)
+            else:
+                file_handle.write(output + '\n')
+            file_handle.flush()  # Ensure data is written
         else:
-            print(output)
+            # Print to screen (don't add newline if last separator was ; or , or \n)
+            if stmt.separators and stmt.separators[-1] in [';', ',', '\n']:
+                print(output, end='')
+            else:
+                print(output)
 
     def execute_if(self, stmt):
         """Execute IF statement"""
@@ -864,15 +885,31 @@ class Interpreter:
         raise RuntimeError(f"ERROR {error_code}")
 
     def execute_input(self, stmt):
-        """Execute INPUT statement"""
-        # Show prompt if any
-        if stmt.prompt:
-            print(stmt.prompt, end='')
-        else:
-            print("? ", end='')
+        """Execute INPUT statement - read from keyboard or file"""
+        # Check if reading from file
+        if stmt.file_number is not None:
+            file_num = int(self.evaluate_expression(stmt.file_number))
+            if file_num not in self.runtime.files:
+                raise RuntimeError(f"File #{file_num} not open")
+            file_info = self.runtime.files[file_num]
+            if file_info['mode'] != 'I':
+                raise RuntimeError(f"File #{file_num} not open for input")
 
-        # Read input
-        line = input()
+            # Read from file
+            line = self._read_line_from_file(file_num)
+            if line is None:
+                raise RuntimeError("Input past end of file")
+        else:
+            # Read from keyboard
+            # Show prompt if any
+            if stmt.prompt:
+                prompt_value = self.evaluate_expression(stmt.prompt)
+                print(prompt_value, end='')
+            else:
+                print("? ", end='')
+
+            # Read input
+            line = input()
 
         # Parse comma-separated values
         values = [v.strip() for v in line.split(',')]
@@ -899,6 +936,121 @@ class Interpreter:
                 self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value)
             else:
                 self.runtime.set_variable(var_node.name, var_node.type_suffix, value)
+
+    def _read_line_from_file(self, file_num):
+        """Read a line from file, respecting ^Z as EOF (CP/M style)
+
+        Returns: line string or None if EOF
+        """
+        file_info = self.runtime.files[file_num]
+        file_handle = file_info['handle']
+
+        if file_info['eof']:
+            return None
+
+        # Read bytes until newline or ^Z
+        line_bytes = bytearray()
+        while True:
+            byte = file_handle.read(1)
+            if not byte:
+                # End of file
+                file_info['eof'] = True
+                if line_bytes:
+                    # Return partial line
+                    return line_bytes.decode('latin-1', errors='replace').rstrip('\r\n')
+                return None
+
+            b = byte[0]
+            if b == 26:  # ^Z (EOF marker in CP/M)
+                file_info['eof'] = True
+                if line_bytes:
+                    return line_bytes.decode('latin-1', errors='replace').rstrip('\r\n')
+                return None
+            elif b == 10:  # LF
+                # End of line
+                return line_bytes.decode('latin-1', errors='replace').rstrip('\r\n')
+            elif b == 13:  # CR
+                # Skip CR (will handle CRLF properly)
+                continue
+            else:
+                line_bytes.append(b)
+
+    def execute_lineinput(self, stmt):
+        """Execute LINE INPUT statement - read entire line"""
+        # Check if reading from file
+        if stmt.file_number is not None:
+            file_num = int(self.evaluate_expression(stmt.file_number))
+            if file_num not in self.runtime.files:
+                raise RuntimeError(f"File #{file_num} not open")
+            file_info = self.runtime.files[file_num]
+            if file_info['mode'] != 'I':
+                raise RuntimeError(f"File #{file_num} not open for input")
+
+            # Read from file
+            line = self._read_line_from_file(file_num)
+            if line is None:
+                raise RuntimeError("Input past end of file")
+        else:
+            # Read from keyboard
+            if stmt.prompt:
+                prompt_value = self.evaluate_expression(stmt.prompt)
+                print(prompt_value, end='')
+
+            line = input()
+
+        # Assign entire line to variable (no parsing)
+        var_node = stmt.variable
+        if var_node.subscripts:
+            subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
+            self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, line)
+        else:
+            self.runtime.set_variable(var_node.name, var_node.type_suffix, line)
+
+    def execute_write(self, stmt):
+        """Execute WRITE statement - output comma-delimited data
+
+        WRITE outputs values separated by commas, with strings quoted.
+        Syntax:
+            WRITE expr1, expr2    - Write to screen
+            WRITE #n, expr1       - Write to file
+        """
+        # Check if writing to file
+        if stmt.file_number is not None:
+            file_num = int(self.evaluate_expression(stmt.file_number))
+            if file_num not in self.runtime.files:
+                raise RuntimeError(f"File #{file_num} not open")
+            file_info = self.runtime.files[file_num]
+            if file_info['mode'] not in ['O', 'A']:
+                raise RuntimeError(f"File #{file_num} not open for output")
+            file_handle = file_info['handle']
+        else:
+            file_handle = None
+
+        # Format values
+        output_parts = []
+        for expr in stmt.expressions:
+            value = self.evaluate_expression(expr)
+
+            if isinstance(value, str):
+                # Quote strings
+                output_parts.append(f'"{value}"')
+            elif isinstance(value, float):
+                # Numbers without spaces
+                if value == int(value):
+                    output_parts.append(str(int(value)))
+                else:
+                    output_parts.append(str(value))
+            else:
+                output_parts.append(str(value))
+
+        output = ','.join(output_parts)
+
+        # Output to file or screen
+        if file_handle:
+            file_handle.write(output + '\n')
+            file_handle.flush()
+        else:
+            print(output)
 
     def execute_load(self, stmt):
         """Execute LOAD statement"""
@@ -1155,17 +1307,92 @@ class Interpreter:
         except OSError as e:
             raise RuntimeError(f"Cannot rename {old_filename} to {new_filename}: {e.strerror}")
 
+    def execute_open(self, stmt):
+        """Execute OPEN statement - open file for I/O
+
+        Syntax:
+            OPEN "I", #1, "filename"        - Open for input
+            OPEN "O", #2, "filename"        - Open for output
+            OPEN "A", #3, "filename"        - Open for append
+            OPEN "R", #4, "filename", 128   - Open for random access (not fully supported)
+
+        Note: CP/M files used ^Z (ASCII 26) as EOF marker. We respect this on input.
+        """
+        # Evaluate mode, file number, and filename
+        mode = stmt.mode.upper()  # "I", "O", "A", "R"
+        file_num = int(self.evaluate_expression(stmt.file_number))
+        filename = self.evaluate_expression(stmt.filename)
+
+        if not isinstance(filename, str):
+            raise RuntimeError("OPEN requires string filename")
+
+        # Check if file number is already open
+        if file_num in self.runtime.files:
+            raise RuntimeError(f"File #{file_num} already open")
+
+        # Open file with appropriate mode
+        try:
+            if mode == "I":
+                # Open for input - binary mode so we can detect ^Z
+                file_handle = open(filename, "rb")
+            elif mode == "O":
+                # Open for output
+                file_handle = open(filename, "w")
+            elif mode == "A":
+                # Open for append
+                file_handle = open(filename, "a")
+            elif mode == "R":
+                # Random access - open for both read and write
+                # Create file if it doesn't exist
+                try:
+                    file_handle = open(filename, "r+b")
+                except FileNotFoundError:
+                    file_handle = open(filename, "w+b")
+            else:
+                raise RuntimeError(f"Invalid OPEN mode: {mode}")
+
+            # Store file handle and mode
+            self.runtime.files[file_num] = {
+                'handle': file_handle,
+                'mode': mode,
+                'filename': filename,
+                'eof': False
+            }
+
+        except (OSError, IOError) as e:
+            raise RuntimeError(f"Cannot open {filename}: {e.strerror}")
+
+    def execute_close(self, stmt):
+        """Execute CLOSE statement - close file(s)
+
+        Syntax:
+            CLOSE #1        - Close file 1
+            CLOSE #1, #2    - Close files 1 and 2
+            CLOSE           - Close all files
+        """
+        if not stmt.file_numbers:
+            # CLOSE with no arguments - close all files
+            for file_num in list(self.runtime.files.keys()):
+                self.runtime.files[file_num]['handle'].close()
+                del self.runtime.files[file_num]
+        else:
+            # Close specific file numbers
+            for file_num_expr in stmt.file_numbers:
+                file_num = int(self.evaluate_expression(file_num_expr))
+                if file_num in self.runtime.files:
+                    self.runtime.files[file_num]['handle'].close()
+                    del self.runtime.files[file_num]
+                # Silently ignore closing unopened files (like MBASIC)
+
     def execute_reset(self, stmt):
         """Execute RESET statement - close all open files
 
         Syntax: RESET
-
-        Note: Currently a no-op since file I/O is not yet implemented.
-        When file I/O is implemented, this will close all open file handles.
         """
-        # TODO: When file I/O is implemented, close all open files here
-        # For now, this is a no-op
-        pass
+        # Close all open files
+        for file_num in list(self.runtime.files.keys()):
+            self.runtime.files[file_num]['handle'].close()
+            del self.runtime.files[file_num]
 
     def execute_list(self, stmt):
         """Execute LIST statement"""

@@ -5,7 +5,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 ## Summary
 
 **Parser Coverage:** 100% - All MBASIC 5.21 syntax is parsed correctly
-**Runtime Implementation:** ~80% - Core features complete, file I/O pending
+**Runtime Implementation:** ~95% - Core features and file I/O complete
 
 ## ✓ Fully Implemented
 
@@ -41,6 +41,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 - ✓ String: ASC, CHR$, INSTR, LEFT$, LEN, MID$, RIGHT$, SPACE$, STR$, STRING$, VAL
 - ✓ Conversion: CDBL, CINT, CSNG
 - ✓ Input: INKEY$ (non-blocking keyboard input)
+- ✓ File I/O: EOF() (end of file test)
 - ✓ Other: FIX, HEX$, OCT$, TAB, POS
 
 ### User-Defined Features
@@ -66,7 +67,16 @@ This document provides a comprehensive overview of what is and is not yet implem
 ### File System Operations
 - ✓ KILL "filename" - Delete file
 - ✓ NAME "old" AS "new" - Rename file
-- ✓ RESET - Close all open files (no-op until file I/O implemented)
+- ✓ RESET - Close all open files
+
+### Sequential File I/O
+- ✓ OPEN "I"/"O"/"A", #n, "file" - Open file for input/output/append
+- ✓ CLOSE [#n] - Close file(s)
+- ✓ PRINT #n, data - Write to file
+- ✓ INPUT #n, var1, var2 - Read comma-separated values
+- ✓ LINE INPUT #n, var$ - Read entire line
+- ✓ WRITE #n, data - Write comma-delimited data with quoted strings
+- ✓ EOF(n) - Test for end of file (respects ^Z as CP/M EOF marker)
 
 ### Error Handling
 - ✓ ON ERROR GOTO line - Set error trap (GOTO)
@@ -97,22 +107,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 
 ## ✗ Not Yet Implemented
 
-### 1. Sequential File I/O
-**Priority:** High
-
-- ✗ **OPEN "filename" FOR INPUT/OUTPUT/APPEND AS #n** - Open file
-- ✗ **CLOSE #n** - Close file
-- ✗ **PRINT #n, ...** - Write to file
-- ✗ **INPUT #n, var1, var2, ...** - Read from file
-- ✗ **LINE INPUT #n, var$** - Read line from file
-- ✗ **WRITE #n, ...** - Write comma-delimited data
-- ✗ **EOF(n)** - Test for end of file
-
-**Status:** Parsed but not executed
-**Impact:** Cannot read from or write to text files
-**Workaround:** Use SAVE/LOAD for program files only
-
-### 2. Random Access File I/O
+### 1. Random Access File I/O
 **Priority:** Medium
 
 - ✗ **OPEN "filename" AS #n LEN=reclen** - Open random file
@@ -175,7 +170,7 @@ Graphics commands (SCREEN, LINE, CIRCLE, PSET, etc.) and sound commands (SOUND, 
 - **INKEY$:** Tested with cross-platform support
 - **ON GOTO/GOSUB:** Tested with multiple values, out-of-range, expressions
 - **File system ops:** Tested (KILL, NAME AS, RESET)
-- **File I/O:** Not tested (not implemented)
+- **Sequential file I/O:** Fully tested (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF with ^Z support)
 
 ## Compatibility Notes
 
@@ -188,13 +183,14 @@ Programs that use:
 - Error handling (ON ERROR GOTO/GOSUB, RESUME)
 - User input/output
 - Non-blocking keyboard input (INKEY$)
+- Sequential file I/O (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF)
 - File system operations (KILL, NAME AS, RESET)
 - DATA statements
 - User-defined functions
 
 ### What Doesn't Work
 Programs that require:
-- File I/O (reading/writing data files)
+- Random access file I/O (FIELD, GET, PUT, LSET, RSET)
 - Hardware access (PEEK, POKE, ports)
 
 ## Roadmap
@@ -212,10 +208,12 @@ Programs that require:
 - ✓ Computed jumps (ON GOTO/GOSUB)
 - ✓ File system operations (KILL, NAME AS, RESET)
 
-### Phase 3 (In Progress) - File I/O
-- ⚠ Sequential file I/O (OPEN, CLOSE, PRINT#, INPUT#)
-- ⚠ EOF() function
-- ⚠ LINE INPUT # statement
+### Phase 3 (Completed) - Sequential File I/O ✓
+- ✓ OPEN for INPUT/OUTPUT/APPEND
+- ✓ CLOSE statement
+- ✓ PRINT#, INPUT#, LINE INPUT# statements
+- ✓ WRITE# statement
+- ✓ EOF() function with ^Z support
 
 ### Phase 4 (Planned) - Extended Features
 - ⚠ Random file I/O (FIELD, GET, PUT, LSET, RSET)
@@ -234,7 +232,7 @@ Programs that require:
 
 ## Known Limitations
 
-1. **No sequential/random file I/O** - Cannot read or write data files (but can manage files with KILL, NAME, RESET)
+1. **No random access file I/O** - Cannot use FIELD, GET, PUT for binary file access
 2. **Integer division precision** - May differ slightly from original MBASIC due to Python float handling
 
 ## Testing Your Program
@@ -261,8 +259,8 @@ To check if your MBASIC program will work:
 ## Contributing
 
 Contributions welcome! Priority areas:
-1. Sequential file I/O implementation (OPEN, CLOSE, PRINT#, INPUT#)
-2. Random file I/O implementation (FIELD, GET, PUT)
-3. Additional test cases
+1. Random file I/O implementation (FIELD, GET, PUT)
+2. Additional test cases
+3. Performance optimization
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.

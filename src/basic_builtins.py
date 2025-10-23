@@ -301,20 +301,41 @@ class BuiltinFunctions:
         Test for end of file.
 
         Returns -1 if at EOF, 0 otherwise
+        Note: For input files, respects ^Z (ASCII 26) as EOF marker (CP/M style)
         """
         file_num = int(file_num)
         if file_num not in self.runtime.files:
             raise ValueError(f"File #{file_num} not open")
 
-        file_handle = self.runtime.files[file_num]
+        file_info = self.runtime.files[file_num]
 
-        # Check if at EOF
-        current_pos = file_handle.tell()
-        file_handle.seek(0, 2)  # Seek to end
-        end_pos = file_handle.tell()
-        file_handle.seek(current_pos)  # Restore position
+        # Check EOF flag (set by input operations or ^Z detection)
+        if file_info['eof']:
+            return -1
 
-        return -1 if current_pos >= end_pos else 0
+        # For input files opened in binary mode, check for EOF or ^Z
+        if file_info['mode'] == 'I':
+            file_handle = file_info['handle']
+            current_pos = file_handle.tell()
+
+            # Peek at next byte to check for ^Z or EOF
+            next_byte = file_handle.read(1)
+            if not next_byte:
+                # Physical EOF
+                file_info['eof'] = True
+                return -1
+            elif next_byte[0] == 26:  # ^Z
+                # CP/M EOF marker
+                file_info['eof'] = True
+                file_handle.seek(current_pos)  # Restore position
+                return -1
+            else:
+                # Not at EOF, restore position
+                file_handle.seek(current_pos)
+                return 0
+
+        # For output/append files, never at EOF
+        return 0
 
     def USR(self, x):
         """
