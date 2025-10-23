@@ -2901,6 +2901,21 @@ class Parser:
             # Extract type suffix and strip from name
             var_name, type_suffix = self.split_name_and_suffix(var_token.value)
 
+            # If no explicit suffix, check DEF type map
+            if not type_suffix:
+                first_letter = var_name[0].lower()
+                if first_letter in self.def_type_map:
+                    var_type = self.def_type_map[first_letter]
+                    # Determine suffix based on DEF type
+                    if var_type == TypeInfo.STRING:
+                        type_suffix = '$'
+                    elif var_type == TypeInfo.INTEGER:
+                        type_suffix = '%'
+                    elif var_type == TypeInfo.DOUBLE:
+                        type_suffix = '#'
+                    elif var_type == TypeInfo.SINGLE:
+                        type_suffix = '!'
+
             variables.append(VariableNode(
                 name=var_name,
                 type_suffix=type_suffix,

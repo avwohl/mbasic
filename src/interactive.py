@@ -120,6 +120,10 @@ class InteractiveMode:
         # Use emacs-style keybindings (default, but be explicit)
         readline.parse_and_bind('set editing-mode emacs')
 
+        # Bind Ctrl+A to insert itself (so we can detect it in input)
+        # This overrides the default Ctrl+A (beginning-of-line) for MBASIC compatibility
+        readline.parse_and_bind('Control-a: self-insert')
+
     def _completer(self, text, state):
         """Tab completion for BASIC keywords and commands"""
         # BASIC keywords and common commands
@@ -158,6 +162,8 @@ class InteractiveMode:
         print("MBASIC 5.21 Interpreter")
         if not READLINE_AVAILABLE:
             print("(Note: readline not available - line editing limited)")
+        else:
+            print("(Tip: Press Ctrl+A to edit last line, or Ctrl+A followed by line number)")
         print("Ready")
 
         while True:
@@ -167,6 +173,25 @@ class InteractiveMode:
 
                 # Reset Ctrl+C counter on successful input
                 self.ctrl_c_count = 0
+
+                # Check for Ctrl+A (edit mode) - character code 0x01
+                if line and line[0] == '\x01':
+                    # Ctrl+A pressed - enter edit mode
+                    # If rest of line has a number, edit that line
+                    # Otherwise edit the last line
+                    rest = line[1:].strip()
+                    if rest and rest.isdigit():
+                        line_num = int(rest)
+                    else:
+                        # Edit last line entered
+                        if self.lines:
+                            line_num = max(self.lines.keys())
+                        else:
+                            print("?No lines to edit")
+                            continue
+
+                    self.cmd_edit(str(line_num))
+                    continue
 
                 # Process line
                 if not line.strip():

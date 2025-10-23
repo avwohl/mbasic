@@ -57,7 +57,10 @@
       "Bash(DEBUG=1 python3:*)",
       "WebFetch(domain:bitsavers.org)",
       "Bash(/tmp/test_interactive_def.sh)",
-      "Bash(/tmp/test_interactive_all_def.sh)"
+      "Bash(/tmp/test_interactive_all_def.sh)",
+      "Bash(/tmp/test_ctrl_a3.sh)",
+      "Bash(/tmp/test_ctrl_a4.sh:*)",
+      "Bash(/tmp/test_ctrl_a_comprehensive.sh)"
     ],
     "deny": [],
     "ask": []
