@@ -32,6 +32,7 @@ def run_file(program_path):
             code = f.read()
 
         # Parse and store lines
+        parse_errors = False
         for line in code.split('\n'):
             line = line.strip()
             if not line:
@@ -41,9 +42,15 @@ def run_file(program_path):
             if match:
                 line_num = int(match.group(1))
                 interactive.lines[line_num] = line
-                line_ast = interactive.parse_single_line(line)
+                line_ast = interactive.parse_single_line(line, basic_line_num=line_num)
                 if line_ast:
                     interactive.line_asts[line_num] = line_ast
+                else:
+                    parse_errors = True
+
+        # Don't run if there were parse errors
+        if parse_errors:
+            sys.exit(1)
 
         # Run the program
         interactive.cmd_run()

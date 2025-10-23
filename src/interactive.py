@@ -67,8 +67,12 @@ class InteractiveMode:
         for letter in 'abcdefghijklmnopqrstuvwxyz':
             self.def_type_map[letter] = TypeInfo.SINGLE
 
-    def parse_single_line(self, line_text):
+    def parse_single_line(self, line_text, basic_line_num=None):
         """Parse a single line into a LineNode AST.
+
+        Args:
+            line_text: The text of the line to parse
+            basic_line_num: Optional BASIC line number for error reporting
 
         Returns: LineNode or None if parse fails
         """
@@ -78,7 +82,10 @@ class InteractiveMode:
             line_node = parser.parse_line()
             return line_node
         except Exception as e:
-            print(f"?Syntax error: {e}")
+            if basic_line_num is not None:
+                print(f"?Syntax error in {basic_line_num}: {e}")
+            else:
+                print(f"?Syntax error: {e}")
             return None
 
     def clear_execution_state(self):

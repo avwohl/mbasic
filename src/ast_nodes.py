@@ -114,13 +114,16 @@ class InputStatementNode:
     """INPUT statement - read from keyboard or file
 
     Syntax:
-        INPUT var1, var2           - Read from keyboard
-        INPUT "prompt"; var1       - Read with prompt
+        INPUT var1, var2           - Read from keyboard (shows "? ")
+        INPUT "prompt", var1       - Read with prompt (shows "prompt? ")
+        INPUT "prompt"; var1       - Read with prompt (shows "prompt" - no ?)
+        INPUT; var1                - Read without prompt (no "?")
         INPUT #filenum, var1       - Read from file
     """
     prompt: Optional['ExpressionNode']
     variables: List['VariableNode']
     file_number: Optional['ExpressionNode'] = None  # For INPUT #n, ...
+    suppress_question: bool = False  # True if semicolon used instead of comma after prompt
     line_num: int = 0
     column: int = 0
 

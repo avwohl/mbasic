@@ -1224,14 +1224,20 @@ class Parser:
 
         # Optional prompt string (only for keyboard input, not file input)
         prompt = None
+        prompt_separator = None
         if file_number is None and self.match(TokenType.STRING):
             prompt = StringNode(
                 value=self.advance().value,
                 line_num=token.line,
                 column=token.column
             )
-            # Expect semicolon or comma after prompt
-            if self.match(TokenType.SEMICOLON, TokenType.COMMA):
+            # Check separator after prompt: semicolon suppresses "?", comma shows "?"
+            if self.match(TokenType.SEMICOLON):
+                prompt_separator = ';'
+                suppress_question = True
+                self.advance()
+            elif self.match(TokenType.COMMA):
+                prompt_separator = ','
                 self.advance()
 
         # Check for LINE modifier after semicolon: INPUT "prompt";LINE var$
@@ -1283,6 +1289,7 @@ class Parser:
             prompt=prompt,
             variables=variables,
             file_number=file_number,
+            suppress_question=suppress_question,
             line_num=token.line,
             column=token.column
         )
