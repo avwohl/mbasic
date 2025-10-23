@@ -1,0 +1,6 @@
+10 PRINT "Test 1"
+20 PRINT 1;2;3
+30 PRINT 1,2,3
+40 PRINT "A";"B";"C"
+50 PRINT "A","B","C"
+60 END

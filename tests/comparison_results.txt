@@ -1,0 +1,107 @@
+================================================================================
+RANDOM FILE I/O COMPARISON: Our MBASIC vs Real MBASIC 5.21
+================================================================================
+
+TEST 1: LOC() and LOF() Functions
+================================================================================
+
+Our MBASIC:
+-----------
+After OPEN: LOC(1)=0 LOF(1)=0
+After PUT #1,1: LOC(1)=1 LOF(1)=20   <-- LOF updates after PUT
+After PUT #1,2: LOC(1)=2 LOF(1)=40   <-- LOF updates after PUT
+After PUT #1,3: LOC(1)=3 LOF(1)=60   <-- LOF updates after PUT
+
+Real MBASIC:
+------------
+After OPEN: LOC(1)= 0  LOF(1)= 0
+After PUT #1,1: LOC(1)= 1  LOF(1)= 0   <-- LOF stays 0!
+After PUT #1,2: LOC(1)= 2  LOF(1)= 0   <-- LOF stays 0!
+After PUT #1,3: LOC(1)= 3  LOF(1)= 0   <-- LOF stays 0!
+
+*** BUG FOUND: LOF() Implementation Difference ***
+---------------------------------------------------
+Real MBASIC 5.21 returns LOF() = 0 for random files!
+Our implementation updates LOF() to show file size in bytes.
+
+This is a significant difference. LOF() in real MBASIC appears to:
+- Always return 0 for random access files
+- Only work properly for sequential files
+
+Our implementation incorrectly assumes LOF() should return the file size.
+
+
+TEST 2: LOC() Function After GET/PUT
+================================================================================
+
+Both implementations agree on LOC() behavior:
+- LOC() returns the current record number after GET or PUT
+- Sequential GET (without record number) advances to next record
+- Sequential PUT (without record number) uses current LOC value
+
+Our MBASIC:
+After GET #1,1: LOC(1)=1
+After GET #1,3: LOC(1)=3
+After GET #1,2: LOC(1)=2
+
+Real MBASIC:
+After GET #1,1: LOC(1)= 1
+After GET #1,3: LOC(1)= 3
+After GET #1,2: LOC(1)= 2
+
+✓ LOC() behavior matches correctly
+
+
+TEST 3: FIELD, LSET, RSET
+================================================================================
+
+Both implementations handle FIELD, LSET, and RSET identically:
+
+Our MBASIC:
+  Record 1: John       Age:25    Job:Engineer
+  Record 2: Jane       Age:30    Job:Manager
+  Record 3: Bob        Age:45    Job:Director
+  RSET N$ = 'Al': [        Al]
+
+Real MBASIC:
+  Record 1: John       Age:25    Job:Engineer
+  Record 2: Jane       Age:30    Job:Manager
+  Record 3: Bob        Age:45    Job:Director
+  RSET N$ = 'Al': [        Al]
+
+✓ FIELD, LSET, RSET all work correctly
+
+
+TEST 4: Sequential GET and PUT (without record number)
+================================================================================
+
+Both implementations:
+First GET #1,1: LOC(1)=1
+Then GET #1: LOC(1)=2 A$=[REC2-A    ]
+Then GET #1: LOC(1)=3 A$=[REC4-A    ]
+
+✓ Sequential operations work correctly
+
+
+SUMMARY OF DIFFERENCES
+================================================================================
+
+CRITICAL BUG:
+1. LOF() returns 0 in real MBASIC for random files
+   - Our implementation: Returns file size in bytes (WRONG)
+   - Real MBASIC: Always returns 0 (CORRECT)
+
+MATCHING BEHAVIOR:
+✓ LOC() - Returns current record number
+✓ FIELD - Defines field structure
+✓ LSET - Left-justifies into field
+✓ RSET - Right-justifies into field
+✓ PUT with record number - Writes to specific record
+✓ PUT without record number - Writes to current LOC
+✓ GET with record number - Reads specific record
+✓ GET without record number - Reads next sequential record
+
+FIX NEEDED IN src/interpreter.py:
+================================================================================
+The do_lof() function for random files should return 0, not the file size.
+Line ~4890 in interpreter.py needs to be fixed.
