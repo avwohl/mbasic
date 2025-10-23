@@ -37,10 +37,6 @@ class Runtime:
         self.common_vars = []         # List of variable names declared in COMMON (order matters!)
         self.array_base = 0           # Array index base (0 or 1, set by OPTION BASE)
 
-        # Compatibility properties (deprecated - will show warning)
-        self.variables = self._variables  # TODO: Remove after refactoring all direct access
-        self.arrays = self._arrays        # TODO: Remove after refactoring all direct access
-
         # Execution control
         self.current_line = None      # Currently executing LineNode
         self.current_stmt_index = 0   # Index of current statement in line
