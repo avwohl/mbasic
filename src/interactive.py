@@ -557,7 +557,7 @@ class InteractiveMode:
             if self.program_runtime:
                 if all_flag or merge:
                     # Save all variables
-                    saved_variables = dict(self.program_runtime.variables)
+                    saved_variables = self.program_runtime.get_all_variables()
                 elif self.program_runtime.common_vars:
                     # Save only COMMON variables (in order)
                     # Note: common_vars stores base names (e.g., "i"), but actual variables
@@ -569,8 +569,8 @@ class InteractiveMode:
                         found = False
                         for suffix in ['%', '$', '!', '#', '']:
                             full_name = var_name + suffix
-                            if full_name in self.program_runtime.variables:
-                                saved_variables[full_name] = self.program_runtime.variables[full_name]
+                            if self.program_runtime.variable_exists(full_name):
+                                saved_variables[full_name] = self.program_runtime.get_variable_raw(full_name)
                                 found = True
                                 break
                         # If not found with any suffix, the variable might not have been initialized
@@ -640,7 +640,7 @@ class InteractiveMode:
 
             # Restore variables if saved
             if saved_variables:
-                runtime.variables.update(saved_variables)
+                runtime.update_variables(saved_variables)
 
             # Preserve COMMON variable list from previous runtime
             if self.program_runtime and self.program_runtime.common_vars:

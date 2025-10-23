@@ -31,11 +31,15 @@ class Runtime:
             self.ast = ast_or_line_table
             self.line_table_dict = None
 
-        # Variable storage
-        self.variables = {}           # name -> value
-        self.arrays = {}              # name -> {'dims': [...], 'data': [...]}
+        # Variable storage (PRIVATE - use get_variable/set_variable methods)
+        self._variables = {}          # name_with_suffix -> value
+        self._arrays = {}             # name_with_suffix -> {'dims': [...], 'data': [...]}
         self.common_vars = []         # List of variable names declared in COMMON (order matters!)
         self.array_base = 0           # Array index base (0 or 1, set by OPTION BASE)
+
+        # Compatibility properties (deprecated - will show warning)
+        self.variables = self._variables  # TODO: Remove after refactoring all direct access
+        self.arrays = self._arrays        # TODO: Remove after refactoring all direct access
 
         # Execution control
         self.current_line = None      # Currently executing LineNode
@@ -73,8 +77,8 @@ class Runtime:
 
         # ERR and ERL are system variables (integer type), not functions
         # Initialize them in the variable table with % suffix (lowercase)
-        self.variables['err%'] = 0
-        self.variables['erl%'] = 0
+        self._variables['err%'] = 0
+        self._variables['erl%'] = 0
 
         # Random number seed
         self.rnd_last = 0.5
@@ -127,33 +131,81 @@ class Runtime:
 
         return self
 
-    def get_variable(self, name, type_suffix=None):
+    @staticmethod
+    def _resolve_variable_name(name, type_suffix, def_type_map=None):
+        """
+        Resolve the full variable name with type suffix.
+
+        This is the ONLY correct way to determine the storage key for a variable.
+
+        Args:
+            name: Variable base name (e.g., 'x', 'foo')
+            type_suffix: Explicit type suffix ($, %, !, #) or None/empty string
+            def_type_map: Optional dict mapping first letter to default TypeInfo
+
+        Returns:
+            tuple: (full_name, type_suffix) where full_name is lowercase name with suffix
+
+        Examples:
+            ('x', '%', None) -> ('x%', '%')
+            ('x', None, {'x': TypeInfo.SINGLE}) -> ('x!', '!')
+            ('x', '', {'x': TypeInfo.INTEGER}) -> ('x%', '%')
+        """
+        # Name should already be lowercase, but ensure it
+        name = name.lower()
+
+        # If explicit suffix provided, use it
+        if type_suffix:
+            return (name + type_suffix, type_suffix)
+
+        # No explicit suffix - check DEF type map
+        if def_type_map:
+            first_letter = name[0]
+            if first_letter in def_type_map:
+                from parser import TypeInfo
+                var_type = def_type_map[first_letter]
+                if var_type == TypeInfo.STRING:
+                    type_suffix = '$'
+                elif var_type == TypeInfo.INTEGER:
+                    type_suffix = '%'
+                elif var_type == TypeInfo.DOUBLE:
+                    type_suffix = '#'
+                elif var_type == TypeInfo.SINGLE:
+                    type_suffix = '!'
+                else:
+                    # Default to single if unknown
+                    type_suffix = '!'
+                return (name + type_suffix, type_suffix)
+
+        # No DEF type map or not found - default to single precision
+        return (name + '!', '!')
+
+    def get_variable(self, name, type_suffix=None, def_type_map=None):
         """
         Get variable value, returning default if not set.
 
         Args:
-            name: Variable name (e.g., 'X', 'A')
+            name: Variable name (e.g., 'x', 'foo')
             type_suffix: Type suffix ($, %, !, #) or None
+            def_type_map: Optional DEF type mapping
 
         Returns:
             Variable value (default 0 for numeric, "" for string)
         """
-        # Determine full variable name with suffix
-        full_name = name
-        if type_suffix:
-            full_name = name + type_suffix
+        # Resolve full variable name
+        full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
 
         # Return existing value or default
-        if full_name in self.variables:
-            return self.variables[full_name]
+        if full_name in self._variables:
+            return self._variables[full_name]
 
         # Default values
-        if type_suffix == '$':
+        if resolved_suffix == '$':
             return ""
         else:
             return 0
 
-    def set_variable(self, name, type_suffix, value):
+    def set_variable(self, name, type_suffix, value, def_type_map=None):
         """
         Set variable value.
 
@@ -161,14 +213,109 @@ class Runtime:
             name: Variable name
             type_suffix: Type suffix or None
             value: New value
+            def_type_map: Optional DEF type mapping
         """
-        full_name = name
-        if type_suffix:
-            full_name = name + type_suffix
+        # Resolve full variable name
+        full_name, _ = self._resolve_variable_name(name, type_suffix, def_type_map)
+        self._variables[full_name] = value
 
-        self.variables[full_name] = value
+    def get_variable_raw(self, full_name):
+        """
+        Get variable by full name (e.g., 'err%', 'erl%').
 
-    def get_array_element(self, name, type_suffix, subscripts):
+        Use this only for special cases like system variables.
+        For normal variables, use get_variable() instead.
+
+        Args:
+            full_name: Full variable name with suffix (lowercase)
+
+        Returns:
+            Variable value or None if not found
+        """
+        return self._variables.get(full_name)
+
+    def set_variable_raw(self, full_name, value):
+        """
+        Set variable by full name (e.g., 'err%', 'erl%').
+
+        Use this only for special cases like system variables.
+        For normal variables, use set_variable() instead.
+
+        Args:
+            full_name: Full variable name with suffix (lowercase)
+            value: Value to set
+        """
+        self._variables[full_name] = value
+
+    def clear_variables(self):
+        """Clear all variables."""
+        self._variables.clear()
+
+    def clear_arrays(self):
+        """Clear all arrays."""
+        self._arrays.clear()
+
+    def get_all_variables(self):
+        """
+        Get a copy of all variables.
+
+        Returns:
+            dict: Copy of variable table
+        """
+        return dict(self._variables)
+
+    def get_all_arrays(self):
+        """
+        Get a copy of all arrays.
+
+        Returns:
+            dict: Copy of array table
+        """
+        return dict(self._arrays)
+
+    def update_variables(self, variables):
+        """
+        Bulk update variables.
+
+        Args:
+            variables: dict of variable_name -> value
+        """
+        self._variables.update(variables)
+
+    def update_arrays(self, arrays):
+        """
+        Bulk update arrays.
+
+        Args:
+            arrays: dict of array_name -> array_info
+        """
+        self._arrays.update(arrays)
+
+    def variable_exists(self, full_name):
+        """
+        Check if a variable exists.
+
+        Args:
+            full_name: Full variable name with suffix (lowercase)
+
+        Returns:
+            bool: True if variable exists
+        """
+        return full_name in self._variables
+
+    def array_exists(self, full_name):
+        """
+        Check if an array exists.
+
+        Args:
+            full_name: Full array name with suffix (lowercase)
+
+        Returns:
+            bool: True if array exists
+        """
+        return full_name in self._arrays
+
+    def get_array_element(self, name, type_suffix, subscripts, def_type_map=None):
         """
         Get array element value.
 
@@ -176,18 +323,18 @@ class Runtime:
             name: Array name
             type_suffix: Type suffix or None
             subscripts: List of subscript values
+            def_type_map: Optional DEF type mapping
 
         Returns:
             Array element value
         """
-        full_name = name
-        if type_suffix:
-            full_name = name + type_suffix
+        # Resolve full array name
+        full_name, _ = self._resolve_variable_name(name, type_suffix, def_type_map)
 
-        if full_name not in self.arrays:
+        if full_name not in self._arrays:
             raise RuntimeError(f"Array {full_name} not dimensioned")
 
-        array_info = self.arrays[full_name]
+        array_info = self._arrays[full_name]
         dims = array_info['dims']
         data = array_info['data']
         base = array_info.get('base', 0)  # Get stored base, default to 0 for old arrays
@@ -201,16 +348,24 @@ class Runtime:
 
         return data[index]
 
-    def set_array_element(self, name, type_suffix, subscripts, value):
-        """Set array element value"""
-        full_name = name
-        if type_suffix:
-            full_name = name + type_suffix
+    def set_array_element(self, name, type_suffix, subscripts, value, def_type_map=None):
+        """
+        Set array element value.
 
-        if full_name not in self.arrays:
+        Args:
+            name: Array name
+            type_suffix: Type suffix or None
+            subscripts: List of subscript values
+            value: Value to set
+            def_type_map: Optional DEF type mapping
+        """
+        # Resolve full array name
+        full_name, _ = self._resolve_variable_name(name, type_suffix, def_type_map)
+
+        if full_name not in self._arrays:
             raise RuntimeError(f"Array {full_name} not dimensioned")
 
-        array_info = self.arrays[full_name]
+        array_info = self._arrays[full_name]
         dims = array_info['dims']
         data = array_info['data']
         base = array_info.get('base', 0)  # Get stored base, default to 0 for old arrays
@@ -253,7 +408,7 @@ class Runtime:
 
         return index
 
-    def dimension_array(self, name, type_suffix, dimensions):
+    def dimension_array(self, name, type_suffix, dimensions, def_type_map=None):
         """
         Create/dimension an array.
 
@@ -261,10 +416,10 @@ class Runtime:
             name: Array name
             type_suffix: Type suffix or None
             dimensions: List of dimension sizes
+            def_type_map: Optional DEF type mapping
         """
-        full_name = name
-        if type_suffix:
-            full_name = name + type_suffix
+        # Resolve full array name
+        full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
 
         # Calculate total size based on array_base
         # If base is 0: DIM A(10) creates indices 0-10 (11 elements)
@@ -277,17 +432,44 @@ class Runtime:
                 total_size *= dim  # 1-based: 1 to dim inclusive
 
         # Default value based on type
-        if type_suffix == '$':
+        if resolved_suffix == '$':
             default_value = ""
         else:
             default_value = 0
 
         # Create array
-        self.arrays[full_name] = {
+        self._arrays[full_name] = {
             'dims': dimensions,
             'data': [default_value] * total_size,
             'base': self.array_base  # Store base for later access validation
         }
+
+    def delete_array(self, name, type_suffix=None, def_type_map=None):
+        """
+        Delete an array (for ERASE statement).
+
+        Args:
+            name: Array name
+            type_suffix: Type suffix or None
+            def_type_map: Optional DEF type mapping
+        """
+        # Resolve full array name
+        full_name, _ = self._resolve_variable_name(name, type_suffix, def_type_map)
+
+        if full_name in self._arrays:
+            del self._arrays[full_name]
+
+    def delete_array_raw(self, full_name):
+        """
+        Delete an array by full name.
+
+        Use this when you already have the full name with suffix.
+
+        Args:
+            full_name: Full array name with suffix (lowercase)
+        """
+        if full_name in self._arrays:
+            del self._arrays[full_name]
 
     def read_data(self):
         """

@@ -452,9 +452,8 @@ class Interpreter:
         """
         for array_name in stmt.array_names:
             # Array name already includes type suffix from parser
-            # Just remove it from runtime if it exists
-            if array_name in self.runtime.arrays:
-                del self.runtime.arrays[array_name]
+            # Delete using raw method (already have full name)
+            self.runtime.delete_array_raw(array_name)
 
     def execute_clear(self, stmt):
         """Execute CLEAR statement
@@ -472,10 +471,10 @@ class Interpreter:
         - String space and stack space parameters are ignored (as requested)
         """
         # Clear all variables
-        self.runtime.variables.clear()
+        self.runtime.clear_variables()
 
         # Clear all arrays
-        self.runtime.arrays.clear()
+        self.runtime.clear_arrays()
 
         # Close all open files
         for file_num in list(self.runtime.files.keys()):
@@ -512,11 +511,11 @@ class Interpreter:
         error_code = int(self.evaluate_expression(stmt.error_code))
 
         # Set error information in variable table (integer variables, lowercase)
-        self.runtime.variables['err%'] = error_code
+        self.runtime.set_variable_raw('err%', error_code)
         if self.runtime.current_line:
-            self.runtime.variables['erl%'] = self.runtime.current_line.line_number
+            self.runtime.set_variable_raw('erl%', self.runtime.current_line.line_number)
         else:
-            self.runtime.variables['erl%'] = 0
+            self.runtime.set_variable_raw('erl%', 0)
 
         # Raise the error
         raise RuntimeError(f"ERROR {error_code}")
@@ -682,8 +681,8 @@ class Interpreter:
             self.interactive_mode.cmd_new()
         else:
             # In non-interactive context, just clear variables
-            self.runtime.variables.clear()
-            self.runtime.arrays.clear()
+            self.runtime.clear_variables()
+            self.runtime.clear_arrays()
 
     def execute_delete(self, stmt):
         """Execute DELETE statement"""
