@@ -2,7 +2,7 @@
 Abstract Syntax Tree (AST) node definitions for MBASIC 5.21
 """
 
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Set
 from dataclasses import dataclass
 from enum import Enum
 from tokens import TokenType
@@ -286,7 +286,7 @@ class DefTypeStatementNode:
     Example: DEFINT I-K makes all variables starting with I, J, K default to INTEGER.
     """
     var_type: VarType  # Variable type (VarType.INTEGER, SINGLE, DOUBLE, or STRING)
-    letter_ranges: List[tuple]  # List of (start_letter, end_letter) tuples (lowercase)
+    letters: Set[str]  # Set of lowercase letters affected by this declaration
     line_num: int = 0
     column: int = 0
 

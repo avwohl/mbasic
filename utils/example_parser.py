@@ -73,8 +73,8 @@ def print_ast(node, indent=0):
         print(f"{prefix}DIM {arrays}")
 
     elif isinstance(node, DefTypeStatementNode):
-        ranges = ", ".join(f"{r[0]}-{r[1]}" if r[0] != r[1] else r[0] for r in node.letter_ranges)
-        print(f"{prefix}DEF{node.var_type[:3]} {ranges}")
+        letters = ", ".join(sorted(node.letters))
+        print(f"{prefix}DEF{node.var_type[:3]} {letters}")
 
     elif isinstance(node, ReadStatementNode):
         print(f"{prefix}READ {len(node.variables)} variable(s)")

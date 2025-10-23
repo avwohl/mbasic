@@ -2419,7 +2419,7 @@ class Parser:
         token = self.advance()
         var_type = TypeInfo.from_def_statement(token.type)
 
-        letter_ranges: List[Tuple[str, str]] = []
+        letters: set = set()
 
         # Parse letter ranges
         while not self.at_end_of_line() and not self.match(TokenType.COLON):
@@ -2434,17 +2434,17 @@ class Parser:
                 last_letter_token = self.expect(TokenType.IDENTIFIER)
                 last_letter = last_letter_token.value[0].upper()
                 last_letter_lower = last_letter.lower()
-                letter_ranges.append((first_letter, last_letter))
 
-                # Update def_type_map for range (use lowercase)
+                # Update def_type_map and letters set for range (use lowercase)
                 for letter in range(ord(first_letter_lower), ord(last_letter_lower) + 1):
-                    self.def_type_map[chr(letter)] = var_type
+                    letter_char = chr(letter)
+                    self.def_type_map[letter_char] = var_type
+                    letters.add(letter_char)
             else:
                 # Single letter
-                letter_ranges.append((first_letter, first_letter))
-
-                # Update def_type_map for single letter (use lowercase)
+                # Update def_type_map and letters set for single letter (use lowercase)
                 self.def_type_map[first_letter_lower] = var_type
+                letters.add(first_letter_lower)
 
             # Check for comma (more letters)
             if self.match(TokenType.COMMA):
@@ -2452,7 +2452,7 @@ class Parser:
 
         return DefTypeStatementNode(
             var_type=var_type,
-            letter_ranges=letter_ranges,
+            letters=letters,
             line_num=token.line,
             column=token.column
         )
