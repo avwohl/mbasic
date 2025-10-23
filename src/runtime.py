@@ -77,8 +77,8 @@ class Runtime:
 
         # ERR and ERL are system variables (integer type), not functions
         # Initialize them in the variable table with % suffix (lowercase)
-        self._variables['err%'] = 0
-        self._variables['erl%'] = 0
+        # Note: Must do this after _variables is created but before methods are called
+        # We'll initialize these after other attributes are set up
 
         # Random number seed
         self.rnd_last = 0.5
@@ -90,6 +90,10 @@ class Runtime:
 
         # Break handling (Ctrl+C)
         self.break_requested = False      # True when Ctrl+C pressed during execution
+
+        # Initialize system variables (ERR% and ERL%)
+        self.set_variable_raw('err%', 0)
+        self.set_variable_raw('erl%', 0)
 
     def setup(self):
         """
