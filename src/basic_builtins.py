@@ -7,6 +7,9 @@ All BASIC built-in functions (SIN, CHR$, INT, etc.)
 import math
 import random
 import sys
+import select
+import tty
+import termios
 
 
 class BuiltinFunctions:
@@ -328,14 +331,54 @@ class BuiltinFunctions:
 
     def INKEY(self):
         """
-        Read keyboard without waiting (not fully implemented).
+        Read keyboard without waiting (non-blocking input).
 
-        Returns empty string for now.
-        TODO: Implement non-blocking keyboard input
+        Returns a single character if a key is pressed, or empty string if not.
+        This is the MBASIC INKEY$ function.
         """
-        # Would need platform-specific non-blocking input
-        # For now, return empty string
-        return ""
+        # Platform-specific implementation
+        if sys.platform == 'win32':
+            # Windows implementation
+            try:
+                import msvcrt
+                if msvcrt.kbhit():
+                    char = msvcrt.getch()
+                    # Handle bytes on Python 3
+                    if isinstance(char, bytes):
+                        return char.decode('utf-8', errors='ignore')
+                    return char
+                return ""
+            except ImportError:
+                # msvcrt not available, return empty string
+                return ""
+        else:
+            # Unix/Linux/Mac implementation using select
+            # Check if stdin is a TTY first
+            if not sys.stdin.isatty():
+                # Not a TTY (probably piped input or file), can't do non-blocking read
+                return ""
+
+            try:
+                # Check if stdin has data available without blocking
+                readable, _, _ = select.select([sys.stdin], [], [], 0)
+
+                if readable:
+                    # There's input available - read one character
+                    # We need to set terminal to raw mode temporarily
+                    fd = sys.stdin.fileno()
+                    old_settings = termios.tcgetattr(fd)
+                    try:
+                        tty.setraw(fd)
+                        char = sys.stdin.read(1)
+                        return char
+                    finally:
+                        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+                else:
+                    # No input available
+                    return ""
+            except (OSError, IOError):
+                # If anything goes wrong with terminal operations, return empty string
+                return ""
 
     def INPUT_STR(self, num, file_num=None):
         """

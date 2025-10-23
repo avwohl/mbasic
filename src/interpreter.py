@@ -1064,7 +1064,14 @@ class Interpreter:
 
     def evaluate_functioncall(self, expr):
         """Evaluate function call (built-in or user-defined)"""
-        # Get user-defined function definition
+        # First, check if it's a built-in function
+        func = getattr(self.builtins, expr.name, None)
+        if func:
+            # It's a builtin function
+            args = [self.evaluate_expression(arg) for arg in expr.arguments]
+            return func(*args)
+
+        # Not a builtin, check for user-defined function
         func_def = self.runtime.user_functions.get(expr.name)
         if not func_def:
             raise RuntimeError(f"Undefined function: {expr.name}")
