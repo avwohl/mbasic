@@ -57,6 +57,7 @@ class InteractiveMode:
         self.interpreter = None  # Persistent interpreter
         self.program_runtime = None  # Runtime for RUN (preserved for CONT)
         self.program_interpreter = None  # Interpreter for RUN (preserved for CONT)
+        self.ctrl_c_count = 0  # Track consecutive Ctrl+C presses
 
     def parse_single_line(self, line_text):
         """Parse a single line into a LineNode AST.
@@ -156,6 +157,9 @@ class InteractiveMode:
                 # Read input
                 line = input()
 
+                # Reset Ctrl+C counter on successful input
+                self.ctrl_c_count = 0
+
                 # Process line
                 if not line.strip():
                     continue
@@ -167,12 +171,25 @@ class InteractiveMode:
                 print()
                 break
             except KeyboardInterrupt:
-                # Ctrl+C
+                # Ctrl+C - track consecutive presses
                 print()
-                print("Break")
+                self.ctrl_c_count += 1
+
+                if self.ctrl_c_count >= 3:
+                    # Three Ctrl+C in a row - quit
+                    print("Exiting...")
+                    break
+                elif self.ctrl_c_count == 2:
+                    # Two Ctrl+C in a row - show hint
+                    print("Press Ctrl+C again to exit, or type SYSTEM to return to OS")
+                else:
+                    # First Ctrl+C - just show "Break"
+                    print("Break")
                 continue
             except Exception as e:
                 print_error(e)
+                # Reset Ctrl+C counter on other exceptions
+                self.ctrl_c_count = 0
 
     def process_line(self, line):
         """Process a line of input (numbered line or direct command)"""
