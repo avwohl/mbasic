@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """
 MBASIC 5.21 Interpreter
 
