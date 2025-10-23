@@ -535,10 +535,21 @@ class InteractiveMode:
                     saved_variables = dict(self.program_runtime.variables)
                 elif self.program_runtime.common_vars:
                     # Save only COMMON variables (in order)
+                    # Note: common_vars stores base names (e.g., "i"), but actual variables
+                    # may have type suffixes (e.g., "i%", "i$") based on DEF statements
                     saved_variables = {}
                     for var_name in self.program_runtime.common_vars:
-                        if var_name in self.program_runtime.variables:
-                            saved_variables[var_name] = self.program_runtime.variables[var_name]
+                        # Try to find the variable with type suffix
+                        # Check all possible type suffixes: %, $, !, #
+                        found = False
+                        for suffix in ['%', '$', '!', '#', '']:
+                            full_name = var_name + suffix
+                            if full_name in self.program_runtime.variables:
+                                saved_variables[full_name] = self.program_runtime.variables[full_name]
+                                found = True
+                                break
+                        # If not found with any suffix, the variable might not have been initialized
+                        # That's okay - we just skip it
 
             # Load or merge program
             if merge:
