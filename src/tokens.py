@@ -139,6 +139,9 @@ class TokenType(Enum):
     CINT = auto()
     COS = auto()
     CSNG = auto()
+    CVD = auto()             # CVD (convert string to double)
+    CVI = auto()             # CVI (convert string to integer)
+    CVS = auto()             # CVS (convert string to single)
     EXP = auto()
     FIX = auto()
     INT = auto()
@@ -159,6 +162,9 @@ class TokenType(Enum):
     LEFT = auto()            # LEFT$
     LEN = auto()
     MID = auto()             # MID$
+    MKD = auto()             # MKD$ (convert double to string)
+    MKI = auto()             # MKI$ (convert integer to string)
+    MKS = auto()             # MKS$ (convert single to string)
     OCT = auto()             # OCT$
     RIGHT = auto()           # RIGHT$
     SPACE = auto()           # SPACE$
@@ -313,6 +319,9 @@ KEYWORDS = {
     'cint': TokenType.CINT,
     'cos': TokenType.COS,
     'csng': TokenType.CSNG,
+    'cvd': TokenType.CVD,
+    'cvi': TokenType.CVI,
+    'cvs': TokenType.CVS,
     'exp': TokenType.EXP,
     'fix': TokenType.FIX,
     'int': TokenType.INT,
@@ -333,6 +342,9 @@ KEYWORDS = {
     'left$': TokenType.LEFT,
     'len': TokenType.LEN,
     'mid$': TokenType.MID,
+    'mkd$': TokenType.MKD,
+    'mki$': TokenType.MKI,
+    'mks$': TokenType.MKS,
     'oct$': TokenType.OCT,
     'right$': TokenType.RIGHT,
     'space$': TokenType.SPACE,

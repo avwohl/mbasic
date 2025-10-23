@@ -116,6 +116,99 @@ class BuiltinFunctions:
         return float(x)
 
     # ========================================================================
+    # Binary Conversion Functions
+    # ========================================================================
+
+    def CVI(self, s):
+        """Convert 2-byte string to integer (little-endian)
+
+        Used for reading binary integer data from random files.
+        The string must be exactly 2 bytes long.
+        """
+        if not isinstance(s, str):
+            s = str(s)
+        if len(s) != 2:
+            raise ValueError(f"Illegal function call: CVI requires 2-byte string, got {len(s)} bytes")
+
+        # Convert string to bytes and unpack as signed 16-bit integer (little-endian)
+        import struct
+        byte_data = s.encode('latin-1')
+        return struct.unpack('<h', byte_data)[0]
+
+    def CVS(self, s):
+        """Convert 4-byte string to single-precision float (little-endian)
+
+        Used for reading binary single-precision data from random files.
+        The string must be exactly 4 bytes long.
+        """
+        if not isinstance(s, str):
+            s = str(s)
+        if len(s) != 4:
+            raise ValueError(f"Illegal function call: CVS requires 4-byte string, got {len(s)} bytes")
+
+        # Convert string to bytes and unpack as single-precision float (little-endian)
+        import struct
+        byte_data = s.encode('latin-1')
+        return struct.unpack('<f', byte_data)[0]
+
+    def CVD(self, s):
+        """Convert 8-byte string to double-precision float (little-endian)
+
+        Used for reading binary double-precision data from random files.
+        The string must be exactly 8 bytes long.
+        """
+        if not isinstance(s, str):
+            s = str(s)
+        if len(s) != 8:
+            raise ValueError(f"Illegal function call: CVD requires 8-byte string, got {len(s)} bytes")
+
+        # Convert string to bytes and unpack as double-precision float (little-endian)
+        import struct
+        byte_data = s.encode('latin-1')
+        return struct.unpack('<d', byte_data)[0]
+
+    def MKI(self, x):
+        """Convert integer to 2-byte string (little-endian)
+
+        Used for writing binary integer data to random files.
+        Returns a 2-byte string representation.
+        """
+        import struct
+        # Convert to integer and pack as signed 16-bit (little-endian)
+        value = int(x)
+        # Clamp to 16-bit signed range
+        if value < -32768:
+            value = -32768
+        elif value > 32767:
+            value = 32767
+        byte_data = struct.pack('<h', value)
+        return byte_data.decode('latin-1')
+
+    def MKS(self, x):
+        """Convert single-precision float to 4-byte string (little-endian)
+
+        Used for writing binary single-precision data to random files.
+        Returns a 4-byte string representation.
+        """
+        import struct
+        # Convert to float and pack as single-precision (little-endian)
+        value = float(x)
+        byte_data = struct.pack('<f', value)
+        return byte_data.decode('latin-1')
+
+    def MKD(self, x):
+        """Convert double-precision float to 8-byte string (little-endian)
+
+        Used for writing binary double-precision data to random files.
+        Returns an 8-byte string representation.
+        """
+        import struct
+        # Convert to float and pack as double-precision (little-endian)
+        value = float(x)
+        byte_data = struct.pack('<d', value)
+        return byte_data.decode('latin-1')
+
+    # ========================================================================
     # String Functions
     # ========================================================================
 

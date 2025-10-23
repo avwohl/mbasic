@@ -36,10 +36,11 @@ This document provides a comprehensive overview of what is and is not yet implem
 - ✓ INPUT (console input)
 - ✓ PRINT (console output with zones and separators)
 
-### Built-in Functions (35+)
+### Built-in Functions (45+)
 - ✓ Math: ABS, ATN, COS, EXP, INT, LOG, RND, SGN, SIN, SQR, TAN
 - ✓ String: ASC, CHR$, INSTR, LEFT$, LEN, MID$, RIGHT$, SPACE$, STR$, STRING$, VAL
 - ✓ Conversion: CDBL, CINT, CSNG
+- ✓ Binary I/O: CVI, CVS, CVD (convert string to int/single/double), MKI$, MKS$, MKD$ (convert int/single/double to string)
 - ✓ Input: INKEY$ (non-blocking keyboard input)
 - ✓ File I/O: EOF() (end of file test), LOC() (record position), LOF() (file length)
 - ✓ Other: FIX, HEX$, OCT$, TAB, POS
@@ -135,17 +136,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 **Impact:** Cannot format numbers/strings for display or tabulate output
 **Workaround:** Manual string formatting with SPACE$ and STR$
 
-### 2. Binary File I/O Functions (Medium Priority)
-**Priority:** Medium - Needed for binary random file operations
-
-- ✗ **CVI/CVS/CVD** - Convert 2/4/8 byte string to integer/single/double
-- ✗ **MKI$/MKS$/MKD$** - Convert integer/single/double to 2/4/8 byte string
-
-**Status:** Not implemented
-**Impact:** Cannot read/write binary numeric data in random files
-**Workaround:** Use text representation with STR$ and VAL
-
-### 3. Debugging and System Functions (Low Priority)
+### 2. Debugging and System Functions (Low Priority)
 **Priority:** Low - Useful but not critical
 
 - ✗ **FRE(n)** - Return free memory available
@@ -155,7 +146,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 **Impact:** Less memory introspection
 **Workaround:** Not critical for most programs
 
-### 4. Variable and Terminal Operations (Low Priority)
+### 3. Variable and Terminal Operations (Low Priority)
 **Priority:** Low - Minor convenience features
 
 - ✗ **SWAP var1, var2** - Exchange values of two variables
@@ -166,7 +157,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 **Impact:** Minor convenience features
 **Workaround:** Use temp variable for SWAP; not needed for NULL/WIDTH on modern terminals
 
-### 5. Printer Support (Not Planned)
+### 4. Printer Support (Not Planned)
 **Priority:** Very Low - Obsolete hardware
 
 - ✗ **LPRINT/LPRINT USING** - Print to printer
@@ -195,6 +186,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 - **File system ops:** Tested (KILL, NAME AS, RESET)
 - **Sequential file I/O:** Fully tested (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF with ^Z support)
 - **Random file I/O:** Fully tested (FIELD, GET, PUT, LSET, RSET, LOC, LOF)
+- **Binary conversions:** Fully tested (CVI/CVS/CVD, MKI$/MKS$/MKD$ for binary file I/O)
 - **MID$ assignment:** Fully tested (replace substring in-place, simple vars and arrays)
 - **TRON/TROFF:** Fully tested (execution trace for debugging)
 
@@ -212,6 +204,7 @@ Programs that use:
 - Non-blocking keyboard input (INKEY$)
 - Sequential file I/O (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF)
 - Random access file I/O (FIELD, GET, PUT, LSET, RSET, LOC, LOF)
+- Binary file I/O (CVI/CVS/CVD, MKI$/MKS$/MKD$ for reading/writing numeric data)
 - File system operations (KILL, NAME AS, RESET)
 - DATA statements
 - User-defined functions

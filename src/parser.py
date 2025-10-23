@@ -878,6 +878,9 @@ class Parser:
             TokenType.INSTR, TokenType.HEX, TokenType.OCT,
             # Type conversion
             TokenType.CINT, TokenType.CSNG, TokenType.CDBL,
+            # Binary conversion
+            TokenType.CVI, TokenType.CVS, TokenType.CVD,
+            TokenType.MKI, TokenType.MKS, TokenType.MKD,
         }
         # Note: ERR and ERL are not functions, they are system variables
         return token_type in builtin_functions
