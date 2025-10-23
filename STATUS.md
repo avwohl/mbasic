@@ -56,7 +56,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 - ✓ TRON/TROFF - Trace program execution (shows line numbers as they execute)
 
 ### User-Defined Features
-- ✓ DEF FN (user-defined functions)
+- ✓ DEF FN (user-defined functions) - single-line functions with parameters
 - ✓ DEFINT/DEFSNG/DEFDBL/DEFSTR (type declarations)
 
 ### Interactive Mode
@@ -133,16 +133,19 @@ These features are implemented and accepted by the parser/interpreter for compat
   - Why: Terminal control sequences vary widely across platforms. Modern terminals provide their own clear commands. Programs can use CLS for compatibility, but it won't actually clear the screen.
   - Note: If screen clearing is needed, use your terminal's native clear command (e.g., `clear` on Unix/Linux, `cls` on Windows) before running the program.
 
+### Hardware Access
+
+- **PEEK(addr)** - Read byte from memory address
+  - Status: ✓ Implemented - returns random value 0-255
+  - Why: Direct memory access is not possible in modern Python/OS environments. Most vintage BASIC programs use PEEK to seed random number generators (e.g., `RANDOMIZE PEEK(0)`), so returning a random value provides reasonable compatibility for this common use case.
+  - Note: Programs that rely on reading specific memory addresses will not work correctly.
+
 ## ❌ Will Not Be Implemented
 
 These features are obsolete, hardware-specific, or incompatible with modern computing environments. They are parsed for compatibility but will never have functional implementations.
 
 ### 1. Hardware Access (CP/M-Specific)
 **Reason:** Requires direct hardware/memory access not available in modern operating systems
-
-- **PEEK(addr)** - Read byte from memory address
-  - Status: Returns 0 (placeholder)
-  - Why: Direct memory access is not possible or safe in modern Python/OS environments
 
 - **POKE addr, value** - Write byte to memory address
   - Status: Parsed but does nothing

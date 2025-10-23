@@ -846,25 +846,45 @@ class Parser:
 
             self.expect(TokenType.RPAREN)
 
-            # Determine if it's a function or array
-            # For now, treat it as a variable with subscripts
-            # (function calls are handled separately for built-in functions)
-            return VariableNode(
-                name=name,
-                type_suffix=type_suffix,
-                subscripts=args,
-                line_num=token.line,
-                column=token.column
-            )
+            # Determine if it's a user-defined function or array
+            # User-defined functions start with "fn" (e.g., fna, fnd, fntest)
+            if name.startswith('fn'):
+                # It's a user-defined function call
+                return FunctionCallNode(
+                    name=name,
+                    arguments=args,
+                    line_num=token.line,
+                    column=token.column
+                )
+            else:
+                # It's an array with subscripts
+                return VariableNode(
+                    name=name,
+                    type_suffix=type_suffix,
+                    subscripts=args,
+                    line_num=token.line,
+                    column=token.column
+                )
         else:
-            # Simple variable
-            return VariableNode(
-                name=name,
-                type_suffix=type_suffix,
-                subscripts=None,
-                line_num=token.line,
-                column=token.column
-            )
+            # Simple variable or parameterless function
+            # Check if it's a user-defined function (starts with "fn")
+            if name.startswith('fn'):
+                # It's a parameterless user-defined function call
+                return FunctionCallNode(
+                    name=name,
+                    arguments=[],
+                    line_num=token.line,
+                    column=token.column
+                )
+            else:
+                # Simple variable
+                return VariableNode(
+                    name=name,
+                    type_suffix=type_suffix,
+                    subscripts=None,
+                    line_num=token.line,
+                    column=token.column
+                )
 
     def is_builtin_function(self, token_type: TokenType) -> bool:
         """Check if token type is a built-in function"""

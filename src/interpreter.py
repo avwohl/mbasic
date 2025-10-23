@@ -872,6 +872,19 @@ class Interpreter:
         # At runtime, they do nothing
         pass
 
+    def execute_deffn(self, stmt):
+        """Execute DEF FN statement - define user function
+
+        Syntax: DEF FNname[(param1, param2, ...)] = expression
+
+        Example:
+            DEF FND(X) = X * 2 + 1
+            PRINT FND(5)  -> 11
+        """
+        # Store function definition in runtime
+        # The function name is already normalized to lowercase
+        self.runtime.user_functions[stmt.name] = stmt
+
     def execute_data(self, stmt):
         """Execute DATA statement (do nothing, data already indexed)"""
         pass

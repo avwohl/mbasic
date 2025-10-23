@@ -762,12 +762,13 @@ class BuiltinFunctions:
 
     def PEEK(self, addr):
         """
-        Peek memory (not implemented in interpreter).
+        Peek memory (compatibility implementation).
 
-        Returns 0 as safe default.
+        Returns random value 0-255. Most programs use PEEK to seed
+        random number generators, so this provides reasonable compatibility.
         """
-        # Can't actually peek memory in Python interpreter
-        return 0
+        import random
+        return random.randint(0, 255)
 
     def INP(self, port):
         """
