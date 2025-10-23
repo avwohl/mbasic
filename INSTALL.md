@@ -194,42 +194,38 @@ Then try activating again.
 
 Make sure you're in the correct directory (the `mbasic` folder containing `mbasic.py`).
 
-## Important Limitations
+## Feature Status
 
-This interpreter is a work in progress. Before using it, be aware of these limitations:
+This is a complete implementation of MBASIC 5.21. All core language features are implemented and tested.
 
 ### What Works
 - ✓ Mathematical calculations and expressions
 - ✓ String processing and manipulation
 - ✓ Arrays and data structures
-- ✓ Control flow (IF/THEN/ELSE, FOR/NEXT, WHILE/WEND, GOTO, GOSUB)
-- ✓ Console input/output (INPUT, PRINT)
+- ✓ Control flow (IF/THEN/ELSE, FOR/NEXT, WHILE/WEND, GOTO, GOSUB, ON GOTO/GOSUB)
+- ✓ Console input/output (INPUT, PRINT, PRINT USING)
 - ✓ DATA/READ/RESTORE statements
 - ✓ User-defined functions (DEF FN)
-- ✓ Interactive mode commands (RUN, LIST, SAVE, LOAD, etc.)
+- ✓ Interactive mode commands (RUN, LIST, SAVE, LOAD, EDIT, DELETE, RENUM, CONT)
+- ✓ Sequential file I/O (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF)
+- ✓ Random file I/O (FIELD, GET, PUT, LSET, RSET, LOC, LOF)
+- ✓ Binary file I/O (MKI$/MKS$/MKD$, CVI/CVS/CVD)
+- ✓ Error handling (ON ERROR GOTO/GOSUB, RESUME, ERL, ERR)
+- ✓ File system operations (KILL, NAME AS, RESET)
+- ✓ Non-blocking keyboard input (INKEY$)
+- ✓ Execution tracing (TRON/TROFF)
+- ✓ SWAP statement and MID$ assignment
 
-### What Does NOT Work Yet
-- ✗ **File I/O** - Cannot read or write data files (OPEN, CLOSE, PRINT#, INPUT#)
-- ✗ **Error handling** - Cannot trap errors (ON ERROR GOTO, RESUME)
-- ✗ **Computed jumps** - ON GOTO and ON GOSUB not implemented (use IF/THEN chains)
+### What Doesn't Work
 
-### What Programs Will Work
+These are hardware-specific features that cannot work in a modern environment:
+- ✗ **Hardware access** - PEEK/POKE for hardware memory access (PEEK returns random values for compatibility)
+- ✗ **I/O ports** - INP/OUT for hardware ports
+- ✗ **Line printer** - LPRINT, LLIST (dedicated printer output)
 
-Programs that:
-- Do math calculations
-- Process strings
-- Use arrays and variables
-- Accept user input and display results
-- Use FOR/NEXT or WHILE/WEND loops and IF/THEN logic
+These limitations are inherent to running vintage BASIC in a modern environment and do not affect most programs.
 
-### What Programs Will NOT Work
-
-Programs that:
-- Read or write data files
-- Need error trapping
-- Use ON GOTO or ON GOSUB
-
-**For complete implementation status, see [STATUS.md](STATUS.md)**
+**For complete implementation status and compatibility notes, see [STATUS.md](STATUS.md)**
 
 ## Next Steps
 

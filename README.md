@@ -2,7 +2,7 @@
 
 An interpreter for MBASIC 5.21 (Microsoft BASIC-80 for CP/M) written in Python.
 
-**Status:** Core language features complete (~65%). File I/O and error handling not yet implemented.
+**Status:** Full MBASIC 5.21 implementation complete. All core features, file I/O, and error handling implemented.
 See [STATUS.md](STATUS.md) for detailed implementation status.
 
 ## Installation
@@ -29,22 +29,30 @@ python3 mbasic.py
 
 ## Features
 
-✓ **MBASIC 5.21 core features**
+✓ **Complete MBASIC 5.21 implementation**
 - 100% parser coverage for valid MBASIC programs
-- Core language features implemented (math, strings, arrays, control flow)
+- All core language features (math, strings, arrays, control flow)
+- Sequential and random file I/O (OPEN, CLOSE, FIELD, GET, PUT, etc.)
+- Error handling (ON ERROR GOTO/GOSUB, RESUME)
 - Interactive command mode (REPL)
 - File execution mode
-- **Note:** File I/O and error handling not yet implemented
 
 ✓ **Complete language support**
 - Variables with type suffixes ($, %, !, #)
 - Arrays with DIM
-- Control flow (IF/THEN/ELSE, FOR/NEXT, WHILE/WEND, GOSUB/RETURN, GOTO)
+- Control flow (IF/THEN/ELSE, FOR/NEXT, WHILE/WEND, GOSUB/RETURN, GOTO, ON GOTO/GOSUB)
 - All arithmetic, relational, and logical operators
-- 35+ built-in functions (SIN, COS, CHR$, LEFT$, etc.)
+- 50+ built-in functions (SIN, COS, CHR$, LEFT$, MKI$/CVI, etc.)
 - User-defined functions (DEF FN)
 - DATA/READ/RESTORE
-- INPUT and PRINT with formatting
+- INPUT and PRINT with formatting (including PRINT USING)
+- Sequential file I/O (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF)
+- Random file I/O (FIELD, GET, PUT, LSET, RSET, LOC, LOF)
+- Binary file I/O (MKI$/MKS$/MKD$, CVI/CVS/CVD)
+- Error handling (ON ERROR GOTO/GOSUB, RESUME, ERL, ERR)
+- File system operations (KILL, NAME AS, RESET)
+- Non-blocking keyboard input (INKEY$)
+- Execution tracing (TRON/TROFF)
 
 ✓ **Interactive mode**
 - Line-by-line program entry
@@ -142,11 +150,22 @@ Result: All 20 tests PASS
 - ✓ GOSUB/RETURN stack
 - ✓ FOR/NEXT loops
 - ✓ WHILE/WEND loops
+- ✓ ON GOTO/ON GOSUB (computed jumps)
 - ✓ DATA/READ/RESTORE
 - ✓ Expression evaluation
 - ✓ All operators
-- ✓ 35+ built-in functions
+- ✓ 50+ built-in functions
 - ✓ User-defined functions (DEF FN)
+- ✓ Sequential file I/O (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF)
+- ✓ Random file I/O (FIELD, GET, PUT, LSET, RSET, LOC, LOF)
+- ✓ Binary file I/O (MKI$/MKS$/MKD$, CVI/CVS/CVD)
+- ✓ Error handling (ON ERROR GOTO/GOSUB, RESUME, ERL, ERR)
+- ✓ File system operations (KILL, NAME AS, RESET)
+- ✓ Non-blocking input (INKEY$)
+- ✓ Execution tracing (TRON/TROFF)
+- ✓ PRINT USING with all format types
+- ✓ SWAP statement
+- ✓ MID$ assignment
 
 ### Interactive Mode (✓ Complete)
 
@@ -159,21 +178,21 @@ Result: All 20 tests PASS
 - ✓ RENUM command
 - ✓ Immediate mode
 - ✓ Error recovery
+- ✓ CONT (continue after STOP or Ctrl+C)
+- ✓ EDIT command (line editor)
 
-### Not Yet Implemented
+### Implementation Complete
 
-**Critical features missing:**
-- ✗ Sequential file I/O (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF)
-- ✗ Random file I/O (FIELD, GET, PUT, LSET, RSET, LOC, LOF)
-- ✗ Error handling (ON ERROR GOTO, RESUME)
-- ✗ Computed jumps (ON GOTO, ON GOSUB)
+All core MBASIC 5.21 features are implemented and tested.
 
 **See [STATUS.md](STATUS.md) for complete implementation status.**
 
-**What this means:**
-- Programs using file I/O will not work
-- Programs cannot trap and handle errors
-- Graphics/sound commands are not part of MBASIC 5.21 core spec
+**What doesn't work:**
+- Hardware-specific features (PEEK/POKE for hardware access, INP/OUT ports)
+- Line printer output (LPRINT, LLIST)
+- Graphics/sound (not part of MBASIC 5.21 core spec)
+
+These limitations are inherent to running vintage BASIC in a modern environment and do not affect most programs. See STATUS.md for details on compatibility features.
 
 ## Example Programs
 

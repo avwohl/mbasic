@@ -73,24 +73,22 @@ python3 mbasic.py basic/tests_with_results/test_operator_precedence.bas
 
 ### High Priority
 
-- **File I/O**: Implement OPEN, CLOSE, PRINT#, INPUT#, etc.
-- **Error Handling**: Implement ON ERROR GOTO
-- **WHILE/WEND**: Complete implementation
-- **ON GOTO/GOSUB**: Implement computed jumps
-- **More Tests**: Add test cases for edge cases
+- **More Tests**: Add test cases for edge cases and real-world programs
+- **Bug Fixes**: Test existing features and report/fix bugs
+- **Documentation**: Improve inline documentation and add more examples
+- **Performance**: Optimize interpreter performance
 
 ### Medium Priority
 
-- **Performance**: Optimize interpreter performance
-- **Documentation**: Improve inline documentation
-- **Examples**: Add more example BASIC programs
+- **Platform Testing**: Test on different operating systems (Windows, macOS, Linux)
+- **Examples**: Add more example BASIC programs to the corpus
 - **Debugging**: Add better error messages and debugging support
+- **Compatibility**: Test with more vintage BASIC programs
 
 ### Low Priority
 
-- **Graphics**: Implement graphics commands (if feasible)
-- **Sound**: Implement sound commands (if feasible)
-- **Additional Features**: Extended BASIC features beyond MBASIC 5.21
+- **Extended Features**: Optional features beyond MBASIC 5.21 spec (with compatibility flag)
+- **Tools**: Program analysis or conversion utilities
 
 ## Code Organization
 
