@@ -517,6 +517,39 @@ class Interpreter:
                 # In non-interactive context, just restart
                 self.runtime.halted = True
 
+    def execute_chain(self, stmt):
+        """Execute CHAIN statement
+
+        CHAIN [MERGE] filename$ [, [line_number] [, ALL] [, DELETE range]]
+
+        Loads and executes another BASIC program, optionally:
+        - MERGE: Merges program as overlay instead of replacing
+        - line_number: Starts execution at specified line
+        - ALL: Passes all variables to the new program
+        - DELETE range: Deletes line range after merge
+        """
+        # Evaluate filename
+        filename = self.evaluate_expression(stmt.filename)
+        if not isinstance(filename, str):
+            raise RuntimeError("CHAIN requires string filename")
+
+        # Evaluate starting line if provided
+        start_line = None
+        if stmt.start_line:
+            start_line = int(self.evaluate_expression(stmt.start_line))
+
+        # Delegate to interactive mode if available
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_chain(
+                filename,
+                start_line=start_line,
+                merge=stmt.merge,
+                all_flag=stmt.all_flag,
+                delete_range=stmt.delete_range
+            )
+        else:
+            raise RuntimeError("CHAIN not available in this context")
+
     def execute_system(self, stmt):
         """Execute SYSTEM statement - exit to OS"""
         if hasattr(self, 'interactive_mode') and self.interactive_mode:

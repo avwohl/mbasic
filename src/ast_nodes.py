@@ -348,13 +348,20 @@ class ChainStatementNode:
     """CHAIN statement - chain to another BASIC program
 
     Syntax:
-        CHAIN filename$
+        CHAIN [MERGE] filename$ [, [line_number] [, ALL] [, DELETE range]]
 
-    Example:
-        CHAIN "MENU"
-        CHAIN FIL$
+    Examples:
+        CHAIN "MENU"                    # Load and run MENU
+        CHAIN "PROG", 1000              # Start at line 1000
+        CHAIN "PROG", , ALL             # Pass all variables
+        CHAIN MERGE "OVERLAY"           # Merge as overlay
+        CHAIN MERGE "SUB", 1000, ALL, DELETE 100-200  # Full syntax
     """
     filename: 'ExpressionNode'  # String expression with filename
+    start_line: 'ExpressionNode' = None  # Optional starting line number
+    merge: bool = False  # True if MERGE option specified
+    all_flag: bool = False  # True if ALL option specified (pass all variables)
+    delete_range: tuple = None  # (start, end) for DELETE option, or None
     line_num: int = 0
     column: int = 0
 

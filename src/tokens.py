@@ -47,6 +47,7 @@ class TokenType(Enum):
     RSET = auto()
 
     # Keywords - Control Flow
+    ALL = auto()             # ALL (used in CHAIN)
     CALL = auto()
     CHAIN = auto()
     ELSE = auto()
@@ -231,6 +232,7 @@ KEYWORDS = {
     'rset': TokenType.RSET,
 
     # Control flow
+    'all': TokenType.ALL,
     'call': TokenType.CALL,
     'chain': TokenType.CHAIN,
     'else': TokenType.ELSE,

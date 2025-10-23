@@ -54,7 +54,8 @@
       "Bash(then echo \"SUCCESS: $f\")",
       "Bash(break)",
       "Bash(printf:*)",
-      "Bash(DEBUG=1 python3:*)"
+      "Bash(DEBUG=1 python3:*)",
+      "WebFetch(domain:bitsavers.org)"
     ],
     "deny": [],
     "ask": []

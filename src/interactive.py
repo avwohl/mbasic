@@ -488,6 +488,124 @@ class InteractiveMode:
         except Exception as e:
             print(f"?{type(e).__name__}: {e}")
 
+    def cmd_chain(self, filename, start_line=None, merge=False, all_flag=False, delete_range=None):
+        """CHAIN [MERGE] filename$ [, [line_number] [, ALL] [, DELETE range]]
+
+        Chain to another program, optionally:
+        - MERGE: Merge as overlay instead of replacing
+        - start_line: Begin execution at specified line
+        - all_flag: Pass all variables to chained program (ALL option)
+        - delete_range: Delete line range after merge (DELETE option)
+        """
+        if not filename:
+            print("?Syntax error")
+            return
+
+        # Remove quotes if present
+        filename = filename.strip().strip('"').strip("'")
+
+        if not filename:
+            print("?Syntax error")
+            return
+
+        try:
+            # Add .bas extension if not present
+            if not filename.endswith('.bas'):
+                filename += '.bas'
+
+            with open(filename, 'r') as f:
+                program_text = f.read()
+
+            # Save variables if ALL flag is set OR if doing MERGE
+            # MERGE always preserves variables (it's an overlay)
+            # ALL explicitly passes variables to a new program
+            saved_variables = None
+            if (all_flag or merge) and self.program_runtime:
+                # Save all variables from current runtime
+                saved_variables = dict(self.program_runtime.variables)
+
+            # Load or merge program
+            if merge:
+                # MERGE mode - keep existing lines
+                for line in program_text.split('\n'):
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    match = re.match(r'^(\d+)\s', line)
+                    if match:
+                        line_num = int(match.group(1))
+                        self.lines[line_num] = line
+                        line_ast = self.parse_single_line(line)
+                        if line_ast:
+                            self.line_asts[line_num] = line_ast
+            else:
+                # Normal mode - clear and load
+                self.lines.clear()
+                self.line_asts.clear()
+
+                for line in program_text.split('\n'):
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    match = re.match(r'^(\d+)\s', line)
+                    if match:
+                        line_num = int(match.group(1))
+                        self.lines[line_num] = line
+                        line_ast = self.parse_single_line(line)
+                        if line_ast:
+                            self.line_asts[line_num] = line_ast
+
+            # Handle DELETE range if specified
+            if delete_range and merge:
+                # delete_range is a tuple of (start_expr, end_expr)
+                # We need to evaluate them if they're expressions
+                start_expr, end_expr = delete_range
+                # For now, assume they're NumberNodes - full implementation would evaluate
+                if hasattr(start_expr, 'value'):
+                    start_line_del = int(start_expr.value)
+                else:
+                    start_line_del = int(start_expr)
+
+                if hasattr(end_expr, 'value'):
+                    end_line_del = int(end_expr.value)
+                else:
+                    end_line_del = int(end_expr)
+
+                # Delete lines in range
+                lines_to_delete = [ln for ln in self.lines.keys()
+                                   if start_line_del <= ln <= end_line_del]
+                for ln in lines_to_delete:
+                    del self.lines[ln]
+                    if ln in self.line_asts:
+                        del self.line_asts[ln]
+
+            # Run the program
+            runtime = Runtime(self.line_asts)
+            interpreter = Interpreter(runtime)
+            interpreter.interactive_mode = self
+
+            # Restore variables if ALL flag was set
+            if all_flag and saved_variables:
+                runtime.variables.update(saved_variables)
+
+            # Save runtime for CONT
+            self.program_runtime = runtime
+            self.program_interpreter = interpreter
+
+            # Set starting line if specified
+            if start_line:
+                runtime.next_line = start_line
+
+            # Run the program
+            interpreter.run()
+
+        except FileNotFoundError:
+            print(f"?File not found: {filename}")
+        except Exception as e:
+            print_error(e, self.program_runtime if hasattr(self, 'program_runtime') else None)
+
     def cmd_delete(self, args):
         """DELETE start-end - Delete range of lines"""
         if not args or '-' not in args:

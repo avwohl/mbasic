@@ -1273,15 +1273,59 @@ class Parser:
         """Parse CHAIN statement
 
         Syntax:
-            CHAIN filename$
+            CHAIN [MERGE] filename$ [, [line_number] [, ALL] [, DELETE range]]
         """
         token = self.advance()
+
+        # Check for MERGE option
+        merge = False
+        if self.match(TokenType.MERGE):
+            merge = True
+            self.advance()
 
         # Parse filename expression (must be string)
         filename = self.parse_expression()
 
+        # Optional: starting line number
+        start_line = None
+        all_flag = False
+        delete_range = None
+
+        if self.match(TokenType.COMMA):
+            self.advance()
+
+            # Check for line number (optional - can be empty)
+            if not self.match(TokenType.COMMA) and not self.match(TokenType.ALL) and not self.match(TokenType.DELETE):
+                start_line = self.parse_expression()
+
+            # Check for ALL option
+            if self.match(TokenType.COMMA):
+                self.advance()
+
+            if self.match(TokenType.ALL):
+                all_flag = True
+                self.advance()
+
+            # Check for DELETE option
+            if self.match(TokenType.COMMA):
+                self.advance()
+
+            if self.match(TokenType.DELETE):
+                self.advance()
+                # Parse range: start_line-end_line
+                delete_start = self.parse_expression()
+                if self.match(TokenType.MINUS):
+                    self.advance()
+                    delete_end = self.parse_expression()
+                    # Evaluate to get numbers
+                    delete_range = (delete_start, delete_end)
+
         return ChainStatementNode(
             filename=filename,
+            start_line=start_line,
+            merge=merge,
+            all_flag=all_flag,
+            delete_range=delete_range,
             line_num=token.line,
             column=token.column
         )

@@ -24,38 +24,40 @@ from interactive import InteractiveMode
 def run_file(program_path):
     """Execute a BASIC program from file"""
     try:
-        # Read source code
+        # Use InteractiveMode to support CHAIN command
+        interactive = InteractiveMode()
+
+        # Load the program
         with open(program_path, 'r') as f:
             code = f.read()
 
-        # Tokenize
-        tokens = list(tokenize(code))
+        # Parse and store lines
+        for line in code.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
 
-        # Parse
-        parser = Parser(tokens)
-        ast = parser.parse()
+            match = __import__('re').match(r'^(\d+)\s', line)
+            if match:
+                line_num = int(match.group(1))
+                interactive.lines[line_num] = line
+                line_ast = interactive.parse_single_line(line)
+                if line_ast:
+                    interactive.line_asts[line_num] = line_ast
 
-        # Setup runtime
-        runtime = Runtime(ast)
-
-        # Execute
-        interpreter = Interpreter(runtime)
-        interpreter.run()
+        # Run the program
+        interactive.cmd_run()
 
     except FileNotFoundError:
         print(f"Error: File not found: {program_path}", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
-        # Report line number if available
-        if runtime.current_line:
-            print(f"Error in {runtime.current_line.line_number}: {e}", file=sys.stderr)
-        else:
-            print(f"Error: {e}", file=sys.stderr)
-
         # Print traceback only in DEBUG mode
         if os.environ.get('DEBUG'):
             import traceback
             traceback.print_exc()
+        else:
+            print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
 
