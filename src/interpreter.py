@@ -97,6 +97,10 @@ class Interpreter:
             line_number = self.runtime.line_order[line_index]
             line_node = self.runtime.line_table[line_number]
 
+            import os
+            if os.environ.get('DEBUG'):
+                print(f"DEBUG: Outer loop: line_index={line_index}, line_number={line_number}")
+
             self.runtime.current_line = line_node
 
             # Check if we're returning from GOSUB with a specific statement index
@@ -120,26 +124,130 @@ class Interpreter:
                     break
 
                 stmt = line_node.statements[self.runtime.current_stmt_index]
-                self.execute_statement(stmt)
+
+                # Execute statement with error handling
+                try:
+                    import os
+                    if os.environ.get('DEBUG'):
+                        print(f"DEBUG: Executing line {line_node.line_number} stmt {self.runtime.current_stmt_index}: {type(stmt).__name__}")
+                    self.execute_statement(stmt)
+                except Exception as e:
+                    # Check if we have an error handler
+                    if self.runtime.error_handler is not None and not self.runtime.in_error_handler:
+                        # Handle the error
+                        import os
+                        error_code = self._map_exception_to_error_code(e)
+                        if os.environ.get('DEBUG'):
+                            print(f"DEBUG: Caught error: {e}, handler={self.runtime.error_handler}, error_code={error_code}")
+                        self._invoke_error_handler(error_code, line_node.line_number, self.runtime.current_stmt_index)
+
+                        # Break out of statement loop - we're jumping to error handler
+                        if os.environ.get('DEBUG'):
+                            print(f"DEBUG: Breaking to jump to error handler line {self.runtime.error_handler}")
+                        break
+                    else:
+                        # No error handler or we're already in error handler - re-raise
+                        if os.environ.get('DEBUG'):
+                            print(f"DEBUG: Re-raising error: {e}, handler={self.runtime.error_handler}, in_handler={self.runtime.in_error_handler}, line={line_node.line_number}")
+                            import traceback
+                            traceback.print_exc()
+                        raise
 
                 # Check if we need to jump
                 if self.runtime.next_line is not None:
-                    target_line = self.runtime.next_line
-                    self.runtime.next_line = None
-
-                    # Find target line index
-                    try:
-                        line_index = self.runtime.line_order.index(target_line)
-                    except ValueError:
-                        raise RuntimeError(f"Undefined line number: {target_line}")
-
-                    # Break to jump to new line (next_stmt_index will be handled at top of outer loop)
+                    # Break to jump to new line (will be handled by after-loop code)
+                    import os
+                    if os.environ.get('DEBUG'):
+                        print(f"DEBUG: In-loop detected jump to line {self.runtime.next_line}, breaking to after-loop handler")
                     break
 
                 self.runtime.current_stmt_index += 1
+
+            # After executing all statements on the line, check if we need to jump
+            # This handles jumps from error handlers
+            import os
+            if os.environ.get('DEBUG'):
+                print(f"DEBUG: After-loop check, next_line={self.runtime.next_line}, halted={self.runtime.halted}")
+            if self.runtime.next_line is not None:
+                target_line = self.runtime.next_line
+                self.runtime.next_line = None
+
+                # Find target line index
+                try:
+                    line_index = self.runtime.line_order.index(target_line)
+                    import os
+                    if os.environ.get('DEBUG'):
+                        print(f"DEBUG: After-loop jump to line {target_line}, index {line_index}")
+                except ValueError:
+                    raise RuntimeError(f"Undefined line number: {target_line}")
             else:
                 # No jump, proceed to next line
                 line_index += 1
+
+    def _map_exception_to_error_code(self, exception):
+        """Map Python exception to MBASIC error code"""
+        error_msg = str(exception).lower()
+
+        # Division by zero
+        if isinstance(exception, ZeroDivisionError) or "division by zero" in error_msg:
+            return 11  # Division by zero
+
+        # Type mismatch
+        if isinstance(exception, (TypeError, ValueError)):
+            # Check for specific type mismatch messages
+            if "type mismatch" in error_msg or "invalid literal" in error_msg:
+                return 13  # Type mismatch
+            return 5  # Illegal function call
+
+        # Out of range
+        if isinstance(exception, IndexError) or "subscript out of range" in error_msg:
+            return 9  # Subscript out of range
+
+        # Key errors (undefined variable/function)
+        if isinstance(exception, KeyError) or "undefined" in error_msg:
+            if "function" in error_msg:
+                return 18  # Undefined user function
+            return 8  # Undefined line number
+
+        # Out of data
+        if "out of data" in error_msg:
+            return 4  # Out of DATA
+
+        # NEXT without FOR
+        if "next without for" in error_msg:
+            return 1  # NEXT without FOR
+
+        # RETURN without GOSUB
+        if "return without gosub" in error_msg:
+            return 3  # RETURN without GOSUB
+
+        # Overflow
+        if isinstance(exception, OverflowError):
+            return 6  # Overflow
+
+        # Default to illegal function call
+        return 5  # Illegal function call
+
+    def _invoke_error_handler(self, error_code, error_line, error_stmt_index):
+        """Invoke the error handler"""
+        # Set error state
+        self.runtime.error_occurred = True
+        self.runtime.error_line = error_line
+        self.runtime.error_stmt_index = error_stmt_index
+        self.runtime.in_error_handler = True
+
+        # Set ERR% and ERL% system variables
+        self.runtime.set_variable_raw('err%', error_code)
+        self.runtime.set_variable_raw('erl%', error_line)
+
+        # Jump to error handler
+        if self.runtime.error_handler_is_gosub:
+            # ON ERROR GOSUB - push return address
+            self.runtime.push_gosub(error_line, error_stmt_index + 1)
+
+        # Jump to error handler line
+        self.runtime.next_line = self.runtime.error_handler
+        self.runtime.next_stmt_index = 0
 
     def find_matching_wend(self, start_line, start_stmt):
         """Find the matching WEND for a WHILE statement
@@ -315,6 +423,10 @@ class Interpreter:
 
     def execute_goto(self, stmt):
         """Execute GOTO statement"""
+        # If we're in an error handler and GOTOing out, clear the error state
+        if self.runtime.in_error_handler:
+            self.runtime.in_error_handler = False
+            self.runtime.error_occurred = False
         self.runtime.next_line = stmt.line_number
 
     def execute_gosub(self, stmt):
@@ -332,6 +444,11 @@ class Interpreter:
         """Execute RETURN statement"""
         # Pop return address
         return_line, return_stmt = self.runtime.pop_gosub()
+
+        # If returning from error handler, clear error state
+        if self.runtime.in_error_handler:
+            self.runtime.in_error_handler = False
+            self.runtime.error_occurred = False
 
         # Validate that the return address still exists
         if return_line not in self.runtime.line_table:
@@ -485,6 +602,74 @@ class Interpreter:
         # Remove the loop from the stack since we're jumping back to WHILE
         # which will re-push if the condition is still true
         self.runtime.pop_while_loop()
+
+    def execute_onerror(self, stmt):
+        """Execute ON ERROR GOTO/GOSUB statement"""
+        # Set error handler
+        # Line number 0 means disable error handling (ON ERROR GOTO 0)
+        if stmt.line_number == 0:
+            self.runtime.error_handler = None
+            self.runtime.error_handler_is_gosub = False
+        else:
+            self.runtime.error_handler = stmt.line_number
+            self.runtime.error_handler_is_gosub = stmt.is_gosub
+
+    def execute_resume(self, stmt):
+        """Execute RESUME statement"""
+        if not self.runtime.error_occurred:
+            raise RuntimeError("RESUME without error")
+
+        # Clear error state
+        self.runtime.error_occurred = False
+        self.runtime.in_error_handler = False
+        self.runtime.set_variable_raw('err%', 0)
+
+        # Determine where to resume
+        if stmt.line_number is None:
+            # RESUME - return to the statement that caused the error
+            if self.runtime.error_line is None:
+                raise RuntimeError("No error line to resume to")
+            self.runtime.next_line = self.runtime.error_line
+            self.runtime.next_stmt_index = self.runtime.error_stmt_index
+        elif stmt.line_number == 0:
+            # RESUME NEXT - continue at statement after the error
+            if self.runtime.error_line is None:
+                raise RuntimeError("No error line to resume from")
+
+            # Check if there's another statement on the same line
+            error_line = self.runtime.line_table[self.runtime.error_line]
+            import os
+            if os.environ.get('DEBUG'):
+                print(f"DEBUG: RESUME NEXT from error_line={self.runtime.error_line}, error_stmt_index={self.runtime.error_stmt_index}, line has {len(error_line.statements)} statements")
+            if self.runtime.error_stmt_index + 1 < len(error_line.statements):
+                # There's another statement on the same line
+                self.runtime.next_line = self.runtime.error_line
+                self.runtime.next_stmt_index = self.runtime.error_stmt_index + 1
+                if os.environ.get('DEBUG'):
+                    print(f"DEBUG: RESUME NEXT to line {self.runtime.next_line} stmt {self.runtime.next_stmt_index}")
+            else:
+                # No more statements on this line, go to next line
+                try:
+                    error_line_index = self.runtime.line_order.index(self.runtime.error_line)
+                    if os.environ.get('DEBUG'):
+                        print(f"DEBUG: error_line_index={error_line_index}, len(line_order)={len(self.runtime.line_order)}, line_order={self.runtime.line_order}")
+                    if error_line_index + 1 < len(self.runtime.line_order):
+                        next_line_num = self.runtime.line_order[error_line_index + 1]
+                        self.runtime.next_line = next_line_num
+                        self.runtime.next_stmt_index = 0
+                        if os.environ.get('DEBUG'):
+                            print(f"DEBUG: RESUME NEXT to next line {self.runtime.next_line}")
+                    else:
+                        # No next line, program ends
+                        self.runtime.halted = True
+                        if os.environ.get('DEBUG'):
+                            print(f"DEBUG: RESUME NEXT - no next line, halting")
+                except ValueError:
+                    raise RuntimeError(f"Error line {self.runtime.error_line} not found")
+        else:
+            # RESUME line_number - jump to specific line
+            self.runtime.next_line = stmt.line_number
+            self.runtime.next_stmt_index = 0
 
     def execute_end(self, stmt):
         """Execute END statement"""

@@ -646,8 +646,9 @@ class ErrorStatementNode:
 
 @dataclass
 class OnErrorStatementNode:
-    """ON ERROR GOTO statement - error handling"""
+    """ON ERROR GOTO/GOSUB statement - error handling"""
     line_number: int
+    is_gosub: bool = False  # True for ON ERROR GOSUB, False for ON ERROR GOTO
     line_num: int = 0
     column: int = 0
 

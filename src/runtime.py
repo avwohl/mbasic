@@ -69,8 +69,12 @@ class Runtime:
         self.field_buffers = {}       # file_number -> buffer_dict
 
         # Error handling
-        self.error_handler = None     # Line number for ON ERROR GOTO
+        self.error_handler = None     # Line number for ON ERROR GOTO/GOSUB
+        self.error_handler_is_gosub = False  # True if ON ERROR GOSUB, False if ON ERROR GOTO
         self.error_occurred = False
+        self.error_line = None        # Line number where error occurred (for ERL and RESUME)
+        self.error_stmt_index = None  # Statement index where error occurred (for RESUME)
+        self.in_error_handler = False # True if currently executing error handler
 
         # ERR and ERL are system variables (integer type), not functions
         # Initialize them in the variable table with % suffix (lowercase)

@@ -2055,17 +2055,30 @@ class Parser:
         # Check for ON ERROR
         if self.match(TokenType.ERROR):
             self.advance()
-            self.expect(TokenType.GOTO)
+
+            # Check for GOTO or GOSUB
+            is_gosub = False
+            if self.match(TokenType.GOTO):
+                self.advance()
+                is_gosub = False
+            elif self.match(TokenType.GOSUB):
+                self.advance()
+                is_gosub = True
+            else:
+                raise ParseError("Expected GOTO or GOSUB after ON ERROR", self.current())
+
+            # Parse line number (0 means disable error handling)
             line_num_token = self.current()
             if line_num_token and line_num_token.type in (TokenType.NUMBER, TokenType.LINE_NUMBER):
                 self.advance()
                 return OnErrorStatementNode(
                     line_number=int(line_num_token.value),
+                    is_gosub=is_gosub,
                     line_num=token.line,
                     column=token.column
                 )
             else:
-                raise ParseError("Expected line number after ON ERROR GOTO", line_num_token)
+                raise ParseError("Expected line number after ON ERROR GOTO/GOSUB", line_num_token)
 
         # Parse expression
         expr = self.parse_expression()
