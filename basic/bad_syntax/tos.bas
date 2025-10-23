@@ -1,0 +1,84 @@
+1 '	signon subsystem -- time on system
+4 VERSION$="1.4 {10/14/82}"	'1.00 was initial release
+7 '	by dick lieber
+12 MODNAME$="TOS"
+22 '
+27 PWDFILE$="pwds"	'subsystem configuration file
+32 LASTCALRFILE$="LASTCALR. "+CHR$(&HA0)+" "
+37 COMMENTFILE$="COMMENTS"
+42 CRLF$=CHR$(&HD)+CHR$(&HA)
+47 BSTRING$=CHR$(8)+" "+CHR$(8)
+52 DEFDRIVE$="A:"
+57 DIM ACLARRAY%(5,11)
+88 DEF FNHOURS$(TIME)=STR$(INT(TIME/60))+":"+
+	RIGHT$("00"+MID$(STR$(TIME-(INT(TIME/60)*60)),2),2)
+100 '
+101 '	function definition
+102 '
+103 '	add deliminators to time or date
+104 DEF FNADDSEP$(DS$,DELIM$)=
+	LEFT$(DS$,2)+DELIM$+MID$(DS$,3,2)+DELIM$+RIGHT$(DS$,2)
+105 '	remove date or time deliminators
+106 DEF FNKILLSEP$(DS$)=LEFT$(DS$,2)+MID$(DS$,4,2)+RIGHT$(DS$,2)
+107 DEF FNLINES$(NLINES%)=STRING$(NLINES%,CRLF$)
+112 ON ERROR GOTO 1000
+115 GOTO 10000	' main program begins after sub routines
+118 '
+121 ' routines used by signon
+124 '
+300 '
+302 '	set user number
+304 '
+306 USERMD=TESTADDRESS+9
+312 CALL USERMD(SETUSERNUMBER%)
+345 RETURN
+400 %INCLUDE 400500.SSB
+1000 '
+1004 '	Error handler
+1008 '1.1
+1012 A$="Error Trap":CR%=2: GOSUB 400
+1020 PRINT "ERR = ";ERR, "ERL = ";ERL
+1023 IF ERR=53 THEN NOFILE%=1
+1024 IF ERR = 53 THEN RESUME NEXT	' file not found
+1028 END
+1100 %INCLUDE 1100.SSB
+1600 %INCLUDE 1600.SSB
+2100 %include 2100.SSB
+8000 %include 8000.SSB
+9000 '
+9005 '	get lastcal info
+9010 '
+9012 SETUSERNUMBER%=0: GOSUB 300
+9015 OPEN "I", #1, DEFDRIVE$+LASTCALRFILE$
+9025	INPUT #1, FRNAME$, LNAME$, ACLVL%, LDATE$, LTIME$
+9035 CLOSE #1
+9045 RETURN
+9100 %INCLUDE 9100.SSB
+10000 '
+10010 '	main program
+10020 '1.1
+10025 NOFILE%=0
+10030 GOSUB 1100
+10031 ' WARNING - the next line won't work in interp. 
+10032 IF NOFILE%<>0 THEN SETUSERNUMBER%=0:GOSUB 300: GOSUB 10025
+10035 PRINT
+10040 IF NOCLOCK% <> 0 THEN 
+	A$="Sorry, the system clock is not available.":
+	CR%=2: GOSUB 400:
+	GOTO 10120
+10050 GETDAY%=1
+10060 GOSUB 1600
+10065 STIME$=TIME$
+10070 A$=FNADDSEP$(TIME$,":")+" "+DAY$+" "+FNADDSEP$(DATE$,"/"):
+	CR%=2: GOSUB 400
+10080 GOSUB 9000	'get user name etc
+10085 IF LEFT$(FRNAME$,1)="~" THEN
+	A$="No one is signed on!": CR%=2: GOSUB 400: GOTO 10120
+10090 GOSUB 9100	'calc elapsed time
+10100 A$="You've been on for"+FNHOURS$(ELAPMINUTES)+" (hr:mn).":
+	CR%=2: GOSUB 400
+10120 ASKFORCOM%=1
+10130 NOTATION$="via TOS"
+10140 GOSUB 2100	'comment
+10145 SETUSERNUMBER%=0: GOSUB 300	'makes testing easier
+10150 END

@@ -1,0 +1,153 @@
+100 REM          *** CATALOG PRINT/DISPLAY PROGRAM ***
+105 WIDTH LPRINT 255
+110 SP27$=SPACE$(27)
+120 ESC$=CHR$(27)
+130 TAB$=CHR$(9)
+140 CTRLC$=CHR$(3)
+200 ON ERROR GOTO 10000
+250 OPEN "INPUT",1,"MAST.CAT"
+290 DIM IGNORE$(50)
+300 DIM ENTRY$(330)
+400 PRINT CHR$(12);"                CATALOG DISPLAY UTILITY"
+410 PRINT: PRINT "Which files would you like to see <ALL> ";
+412 FS$=""
+415 FK$=INPUT$(1) : PRINT FK$;
+417 IF FK$=CHR$(13) THEN 420
+418 FS$=FS$+FK$ : GOTO 415
+420 IF FS$="" THEN FS$="*.*"
+430 N%=INSTR(FS$,".")
+435 IF N%>0 THEN 450
+440 IF N% = 0 THEN FS$=FS$+".*":GOTO 430
+450 IF N%=1 THEN FS$="*"+FS$ : N%=2
+455 REM IF N% > 9 THEN 480
+457 F%=LEN(FS$)-N%
+460 REM IF F% > 3 THEN 480
+465 FS1$=LEFT$(FS$,N%-1) :  FS2$=RIGHT$(FS$,LEN(FS$)-N%+1)
+470 PRINT : PRINT : PRINT SPACE$(10)+"OK, I will look for '";FS$;"'" : GOTO 500
+480 PRINT:PRINT : PRINT "No, please enter a valid CP/M filename."
+482 PRINT "For example:   PIP.COM   or   *.BAS   or   FRED.*"
+483 PRINT "If you enter (say) ABC I will assume ABC.*"
+484 PRINT "If you enter (say) .ABC I will assume *.ABC"
+485 PRINT "Please try again."
+486 GOTO 410
+500 PRINT : PRINT "Which disks would you like me to inspect <ALL> ";
+502 DK$=""
+505 D1$=INPUT$(1) : IF D1$=CHR$(13) THEN 510
+507 PRINT D1$; : DK$=DK$+D1$ : GOTO 505
+510 IF DK$="" THEN DK$="*.*"
+520 N%=INSTR(DK$,".")
+530 IF N% > 0 THEN 550
+540 IF N% = 0 THEN DK$=DK$+".*" : GOTO 520
+550 IF N%=1 THEN DK$="*"+DK$ : N%=2
+560 REM IF N%>8 THEN 580
+570 D9%=LEN(DK$)-N%
+572 REM IF D9%>3% THEN 580
+575 DK1$=LEFT$(DK$,N%-1) : DK2$=RIGHT$(DK$,D9%+1)
+577 PRINT:PRINT:PRINT SPACE$(10);"OK, I will look at '";DK$;"'" : GOTO 590
+580 PRINT:PRINT: PRINT "No, please enter a valid disk name."
+582 PRINT "A disk name can be no more than 7 chars."
+584 PRINT "Optionally you may enter a '.' and a disk number."
+586 PRINT "For example, BASIC.312  or  BASIC  or  .312"
+588 PRINT "Please try again." : GOTO 500
+590 PRINT
+595 PRINT "Would you like a Screen display or a Printed listing <S> ";
+600 DEVICE$=INPUT$(1) : PRINT DEVICE$
+700 IF DEVICE$=CHR$(13) THEN DEVICE$="S"
+800 DEVICE$=LEFT$(DEVICE$,1)
+900 IF DEVICE$ = "P" OR DEVICE$ = "S" THEN GOTO 1000
+910 PRINT :PRINT "No,  I would like you to enter an S or a P."
+920 PRINT "(If you just press RETURN I will assume an S.)" 
+930 PRINT "Please try again."; : GOTO 590
+1000 IF DEVICE$="S" THEN ACROSS%=2 : DOWN%=27 : GOTO 2000
+1100 PRINT : PRINT "How many items would you like to print across the page <4> ";
+1110 ACROSS$=INPUT$(1) : PRINT ACROSS$
+1200 IF ACROSS$=CHR$(13) THEN ACROSS$="4"
+1300 IF ACROSS$ > "0" AND ACROSS$ < "7" THEN 1400
+1350 PRINT : PRINT "No, I would like you to enter a number between 1 and 6."
+1360 PRINT "(If you just press RETURN I will assume 4)."
+1370 PRINT "Please try again." : GOTO 1100
+1400 ACROSS%=VAL(ACROSS$) : DOWN%=55
+1410 IF ACROSS% < 5 THEN 1500
+1415 REM The LA34 printer can handle smaller chars to get more aoss the page
+1420 IF ACROSS% = 5 THEN LPRINT ESC$+"[3w";
+1430 IF ACROSS% = 6 THEN LPRINT ESC$+"[4w";
+1500 PRINT: PRINT "Would you like a heading on each page <N> ";
+1510 DAT$=INPUT$(1) : PRINT DAT$
+1520 IF DAT$=CHR$(13) THEN DAT$="N"
+1530 IF DAT$="N" THEN 2000
+1540 IF DAT$="Y" THEN 1550
+1545 PRINT :PRINT "No, just reply Y or N." 
+1547 PRINT "(If you just press RETURN I will assume N)." 
+1549 GOTO 1500
+1550 PRINT : PRINT "Please enter the heading :"
+1560 INPUT HEADING$
+2000 MAX%=ACROSS% * DOWN%
+2050 PRINT : PRINT : PRINT
+2100 PRINT "                  ~ Please stand by ~"
+2200 HEADING$=CHR$(12)+"Catalog of "+FS$+"   on   "+DK$+" "+HEADING$
+2210 IG%=0
+2220 INPUT #1,F$
+2230 IF LEFT$(F$,1)="(" THEN 2240
+2235 CLOSE 1 : OPEN "I",1,"MAST.CAT"
+2237 PRINT : PRINT "There were no files specified in MAST.CAT to be omitted" : GOTO 2300
+2240 F$=RIGHT$(F$,LEN(F$)-1)
+2245 IG%=IG%+1
+2250 N%=INSTR(F$,")") : IF N%=0 THEN 2260
+2255 F$=LEFT$(F$,N%-1) : IGNORE$(IG%)=F$ : GOTO 2300
+2260 IGNORE$(IG%)=F$
+2270 INPUT #1,F$
+2280 GOTO 2245
+2300 FOR CT% = 1 TO MAX%
+2400 INPUT #1,F$ : INPUT #1,D$
+2401 IF EOF(1) THEN MAX%=CT%-1 : ENDSW%=1 : GOTO 3100
+2405 IF INKEY$=CTRLC$ THEN GOTO 5000
+2410 FOR I%=1 TO IG%
+2420 IF F$=IGNORE$(I%) THEN 2400
+2430 NEXT I%
+2500 N%=INSTR(F$,".")-1
+2550 F1$=LEFT$(F$,N%): F2$=RIGHT$(F$,LEN(F$)-N%)
+2560 IF LEN(F2$)<4 THEN F2$=F2$+" " : GOTO 2560
+2570 IF FS1$ <> "*" AND FS1$ <> F1$ THEN 2400
+2575 IF FS1$<>"*" AND FS1$ < F1$ THEN MAX%=CT%-1 : ENDSW%=1 : GOTO 3100
+2580 IF FS2$ <> ".*" AND FS2$ <> F2$ THEN 2400
+2600 F$=F1$+SPACE$(8-N%)+F2$
+2750 N%=INSTR(D$,".")-1
+2800 D1$=LEFT$(D$,N%):D2$=RIGHT$(D$,LEN(D$)-N%)
+2810 IF LEN(D2$)<4 THEN D2$=D2$+" " : GOTO 2810
+2850 IF DK1$<>"*" AND DK1$ <> D1$ THEN 2400
+2870 IF DK2$<>".*" AND DK2$ <> D2$ THEN 2400
+2890 D$=D1$+SPACE$(8-N%)+D2$
+2900 ENTRY$(CT%)=F$+"  "+D$
+3000 NEXT CT%
+3100 IF DEVICE$="P" THEN  LPRINT HEADING$ : LPRINT : GOTO 3150
+3110 PRINT HEADING$
+3150 DWN%=INT(MAX%/ACROSS%+.75)
+3200 FOR DCT% = 0 TO DWN%-1
+3300 FOR ACT% = 1 TO MAX% STEP DWN%
+3400 ELEMENT%=DCT%+ACT%
+3500 IF DEVICE$="P" THEN LPRINT ENTRY$(ELEMENT%); : GOTO 3600
+3550 PRINT ENTRY$(ELEMENT%);
+3600 ENTRY$(ELEMENT%)=SP27$
+3610 NUMBER%=NUMBER%+1
+3650 A%=A%+1 : IF A% = ACROSS% THEN 3700
+3660 IF DEVICE$="S" THEN PRINT "    "+CHR$(162)+"    "; : GOTO 3680
+3670 LPRINT "   |    ";
+3680 IF INKEY$=CTRLC$ THEN GOTO 5000
+3700 NEXT ACT%
+3800 IF DEVICE$="S" THEN PRINT ELSE LPRINT
+3850 A%=0
+3900 NEXT DCT%
+3950 IF ENDSW%=1 THEN 5000
+4000 IF DEVICE$="P" THEN 2300
+4050 PRINT:PRINT "                 Press any key to continue";
+4055 MORE$=INPUT$(1)
+4060 IF MORE$=CHR$(3) THEN END
+4070 PRINT MORE$;
+4100 GOTO 2300
+5000 ENDING$=CHR$(10)+TAB$+TAB$+TAB$+STR$(NUMBER%)+" files listed"
+5100 IF DEVICE$="P" THEN LPRINT ENDING$+CHR$(12)+ESC$+"c";
+5200 PRINT ENDING$
+6000 END
+10000 IF ERR=53 THEN PRINT : PRINT " I am sorry, but I can't find MAST.CAT" : END
+11000 PRINT "*** ERROR *** ERR=";ERR;"ERL=";ERL
+11100 END
