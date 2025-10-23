@@ -48,12 +48,13 @@ def run_file(program_path):
                 else:
                     parse_errors = True
 
-        # Don't run if there were parse errors
-        if parse_errors:
-            sys.exit(1)
+        # Don't run if there were parse errors, but still enter interactive mode
+        if not parse_errors:
+            # Only auto-run if no parse errors
+            interactive.cmd_run()
 
-        # Run the program
-        interactive.cmd_run()
+        # Enter interactive mode (whether there were parse errors or not)
+        interactive.start()
 
     except FileNotFoundError:
         print(f"Error: File not found: {program_path}", file=sys.stderr)
