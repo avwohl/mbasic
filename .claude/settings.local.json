@@ -62,7 +62,8 @@
       "Bash(/tmp/test_ctrl_a4.sh:*)",
       "Bash(/tmp/test_ctrl_a_comprehensive.sh)",
       "Bash(/tmp/test_clear_interactive.sh:*)",
-      "Bash(/tmp/test_renum_erl_interactive.sh:*)"
+      "Bash(/tmp/test_renum_erl_interactive.sh:*)",
+      "Bash(pdftotext:*)"
     ],
     "deny": [],
     "ask": []
