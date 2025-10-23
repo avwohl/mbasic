@@ -1,0 +1,148 @@
+================================================================================
+SEQUENTIAL FILE I/O COMPARISON: Our MBASIC vs Real MBASIC 5.21
+================================================================================
+
+TEST 1: LOF() Function for Sequential Files
+================================================================================
+
+Our MBASIC:
+-----------
+After OPEN O: LOC(1)=0 LOF(1)=0
+After PRINT#: LOC(1)=0 LOF(1)=7      <-- LOF updates with file size!
+After 2nd PRINT#: LOC(1)=0 LOF(1)=14  <-- LOF updates with file size!
+
+Real MBASIC:
+------------
+After OPEN O: LOC(1)= 0  LOF(1)= 0
+After PRINT#: LOC(1)= 0  LOF(1)= 0   <-- LOF stays 0!
+After 2nd PRINT#: LOC(1)= 0  LOF(1)= 0  <-- LOF stays 0!
+
+*** BUG FOUND #1: LOF() for Output Files ***
+----------------------------------------------
+Real MBASIC 5.21 returns LOF() = 0 for sequential OUTPUT files!
+Our implementation updates LOF() to show file size (WRONG).
+
+This matches the behavior we found with random files.
+
+
+TEST 2: LOC() Function for Sequential Input Files
+================================================================================
+
+Our MBASIC:
+-----------
+After OPEN I: LOC(1)=0 LOF(1)=14
+After 1st read: LOC(1)=0 LOF(1)=14   <-- LOC stays 0
+After 2nd read: LOC(1)=0 LOF(1)=14   <-- LOC stays 0
+
+Real MBASIC:
+------------
+After OPEN I: LOC(1)= 1  LOF(1)= 0   <-- LOC is 1 after OPEN!
+After 1st read: LOC(1)= 1  LOF(1)= 0  <-- LOC stays 1
+After 2nd read: LOC(1)= 1  LOF(1)= 0  <-- LOC stays 1
+
+*** BUG FOUND #2: LOC() for Input Files ***
+--------------------------------------------
+Real MBASIC 5.21:
+- LOC() = 1 after OPEN "I" and stays 1
+- LOC() represents the "sector" being read (128-byte CP/M sectors)
+- LOC() does NOT track line number or record number
+
+Our implementation:
+- LOC() = 0 and stays 0 (WRONG)
+- Should be 1 for sequential files
+
+
+TEST 3: LOF() for Sequential Input Files
+================================================================================
+
+Our MBASIC:
+-----------
+After OPEN I: LOC(1)=0 LOF(1)=14   <-- LOF shows file size
+
+Real MBASIC:
+------------
+After OPEN I: LOC(1)= 1  LOF(1)= 0  <-- LOF is 0!
+
+*** BUG FOUND #3: LOF() for Input Files ***
+--------------------------------------------
+Real MBASIC 5.21 returns LOF() = 0 for sequential INPUT files too!
+Our implementation shows file size (WRONG).
+
+Pattern: LOF() always returns 0 in MBASIC 5.21 for ALL file types
+(random, sequential input, sequential output, append).
+
+
+TEST 4: OPEN "A" for Append Mode
+================================================================================
+
+Our MBASIC:
+-----------
+After OPEN A: LOC(1)=0 LOF(1)=14
+After append: LOC(1)=0 LOF(1)=21
+(Works fine - appends to file)
+
+Real MBASIC:
+------------
+Bad file mode in 260
+(Line 260 was: OPEN "A", 1, "OUT.DAT")
+
+*** BUG FOUND #4: OPEN "A" Not Supported ***
+---------------------------------------------
+Real MBASIC 5.21 does NOT support OPEN "A" for append mode!
+Our implementation supports it (this is an ENHANCEMENT, not a bug).
+
+MBASIC only supports: OPEN "I", OPEN "O", OPEN "R"
+Append mode "A" was likely added in later BASIC versions (GW-BASIC, etc.)
+
+
+TEST 5: Data Written and Read Correctly
+================================================================================
+
+Both implementations correctly:
+✓ Write data with PRINT#
+✓ Read data with INPUT# and LINE INPUT#
+✓ Handle comma and semicolon separators identically
+✓ Detect EOF() properly (returns -1 when at end)
+✓ Read/write empty lines
+✓ Preserve spacing in comma-separated output
+
+
+SUMMARY OF DIFFERENCES
+================================================================================
+
+CRITICAL BUGS (Must Fix):
+1. LOF() returns 0 in real MBASIC for ALL file types (random, sequential I, O)
+   - Our implementation: Returns file size in bytes (WRONG)
+   - Real MBASIC: Always returns 0 (CORRECT for MBASIC 5.21)
+
+2. LOC() for sequential files should be sector-based, not 0
+   - Our implementation: Returns 0 (WRONG)
+   - Real MBASIC: Returns 1+ (sector number in 128-byte units)
+
+ENHANCEMENT (Not a bug):
+3. OPEN "A" append mode
+   - Our implementation: Supports it (ENHANCEMENT)
+   - Real MBASIC: Not supported ("Bad file mode" error)
+   - This is OK to keep as an enhancement
+
+MATCHING BEHAVIOR:
+✓ PRINT# - Writes to sequential files
+✓ INPUT# - Reads from sequential files
+✓ LINE INPUT# - Reads entire lines
+✓ EOF() - Detects end of file correctly
+✓ Comma/semicolon separators in PRINT#
+✓ File open/close operations
+
+
+FIX NEEDED IN src/interpreter.py:
+================================================================================
+1. do_lof() function (~line 4890):
+   - Should ALWAYS return 0 (not file size)
+   - This applies to ALL file types in MBASIC 5.21
+
+2. do_loc() function (~line 4876):
+   - For sequential files, should return sector number (bytes read / 128 + 1)
+   - Currently returns 0, should track bytes read and compute sector
+
+NOTE: LOF() may have been enhanced in later BASIC versions (GW-BASIC, QuickBASIC)
+to actually return file size. MBASIC 5.21 simply doesn't implement this.

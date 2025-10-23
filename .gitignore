@@ -35,3 +35,4 @@ test_latest*.txt
 # OS
 .DS_Store
 Thumbs.db
+tests/data/
