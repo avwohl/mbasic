@@ -5,7 +5,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 ## Summary
 
 **Parser Coverage:** 100% - All MBASIC 5.21 syntax is parsed correctly
-**Runtime Implementation:** ~96% - Core features, file I/O, and string manipulation complete
+**Runtime Implementation:** ~98% - Core features, file I/O, string manipulation, and formatted output complete
 
 ## ✓ Fully Implemented
 
@@ -127,17 +127,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 
 ## ✗ Not Yet Implemented
 
-### 1. Formatted Output (High Priority)
-**Priority:** High - Commonly used features
-
-- ✗ **PRINT USING** - Format output with format strings (e.g., "###.##" for numbers)
-- ✗ **PRINT# USING** - Format file output with format strings
-
-**Status:** Not implemented
-**Impact:** Cannot format numbers/strings with format templates
-**Workaround:** Manual string formatting with SPACE$, STR$, TAB(), and SPC()
-
-### 2. Debugging and System Functions (Low Priority)
+### 1. Debugging and System Functions (Low Priority)
 **Priority:** Low - Useful but not critical
 
 - ✗ **FRE(n)** - Return free memory available
@@ -190,6 +180,7 @@ This document provides a comprehensive overview of what is and is not yet implem
 - **Binary conversions:** Fully tested (CVI/CVS/CVD, MKI$/MKS$/MKD$ for binary file I/O)
 - **MID$ assignment:** Fully tested (replace substring in-place, simple vars and arrays)
 - **TRON/TROFF:** Fully tested (execution trace for debugging)
+- **PRINT USING:** Fully tested (string formats: !, \\ \\, &; numeric formats: #, +, -, ., ,, **, $$, **$, ^^^^, overflow)
 
 ## Compatibility Notes
 
@@ -202,6 +193,7 @@ Programs that use:
 - Error handling (ON ERROR GOTO/GOSUB, RESUME)
 - Debugging (TRON/TROFF execution trace)
 - User input/output
+- Formatted output (PRINT USING, PRINT# USING with all format types)
 - Non-blocking keyboard input (INKEY$)
 - Sequential file I/O (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF)
 - Random access file I/O (FIELD, GET, PUT, LSET, RSET, LOC, LOF)
