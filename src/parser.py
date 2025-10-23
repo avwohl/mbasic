@@ -928,6 +928,22 @@ class Parser:
             return name[-1]
         return None
 
+    def split_name_and_suffix(self, name: str) -> tuple[str, Optional[str]]:
+        """Split variable name into base name and type suffix
+
+        Returns:
+            (base_name, type_suffix) tuple
+            If no suffix, returns (name, None)
+
+        Example:
+            "A$" -> ("A", "$")
+            "X" -> ("X", None)
+        """
+        type_suffix = self.get_type_suffix(name)
+        if type_suffix:
+            return (name[:-1], type_suffix)
+        return (name, None)
+
     def get_variable_type(self, name: str) -> str:
         """
         Determine variable type based on suffix or DEF statement
@@ -1150,9 +1166,12 @@ class Parser:
 
                 self.expect(TokenType.RPAREN)
 
+            # Extract type suffix and strip from name
+            var_name, type_suffix = self.split_name_and_suffix(var_token.value)
+
             variables.append(VariableNode(
-                name=var_token.value,
-                type_suffix=self.get_type_suffix(var_token.value),
+                name=var_name,
+                type_suffix=type_suffix,
                 subscripts=subscripts,
                 line_num=var_token.line,
                 column=var_token.column
@@ -1833,9 +1852,11 @@ class Parser:
         var_token = self.current()
         if var_token and var_token.type == TokenType.IDENTIFIER:
             self.advance()
+            # Extract type suffix and strip from name
+            var_name, type_suffix = self.split_name_and_suffix(var_token.value)
             variable = VariableNode(
-                name=var_token.value,
-                type_suffix=self.get_type_suffix(var_token.value),
+                name=var_name,
+                type_suffix=type_suffix,
                 subscripts=None,
                 line_num=var_token.line,
                 column=var_token.column
@@ -1902,9 +1923,11 @@ class Parser:
         while not self.at_end_of_line() and not self.match(TokenType.COLON):
             if self.match(TokenType.IDENTIFIER):
                 var_token = self.advance()
+                # Extract type suffix and strip from name
+                var_name, type_suffix = self.split_name_and_suffix(var_token.value)
                 variables.append(VariableNode(
-                    name=var_token.value,
-                    type_suffix=self.get_type_suffix(var_token.value),
+                    name=var_name,
+                    type_suffix=type_suffix,
                     subscripts=None,
                     line_num=var_token.line,
                     column=var_token.column
@@ -2741,9 +2764,11 @@ class Parser:
 
         # Parse variable
         var_token = self.expect(TokenType.IDENTIFIER)
+        # Extract type suffix and strip from name
+        var_name, type_suffix = self.split_name_and_suffix(var_token.value)
         variable = VariableNode(
-            name=var_token.value,
-            type_suffix=self.get_type_suffix(var_token.value),
+            name=var_name,
+            type_suffix=type_suffix,
             subscripts=None,
             line_num=var_token.line,
             column=var_token.column
@@ -2828,9 +2853,12 @@ class Parser:
 
                 self.expect(TokenType.RPAREN)
 
+            # Extract type suffix and strip from name
+            var_name, type_suffix = self.split_name_and_suffix(var_token.value)
+
             variables.append(VariableNode(
-                name=var_token.value,
-                type_suffix=self.get_type_suffix(var_token.value),
+                name=var_name,
+                type_suffix=type_suffix,
                 subscripts=subscripts,
                 line_num=var_token.line,
                 column=var_token.column
