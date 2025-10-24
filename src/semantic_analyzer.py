@@ -379,6 +379,18 @@ class StringConcatInLoop:
 
 
 @dataclass
+class IntegerInferenceAnalysis:
+    """Information about inferred variable types (INTEGER vs DOUBLE)"""
+    variable: str  # Variable name
+    inferred_type: str  # "INTEGER", "DOUBLE", "SINGLE", "STRING" (or explicit type suffix)
+    confidence: str  # "HIGH", "MEDIUM", "LOW"
+    reasons: List[str] = field(default_factory=list)  # Why this type was inferred
+    assignment_lines: List[int] = field(default_factory=list)  # Lines where variable is assigned
+    usage_lines: List[int] = field(default_factory=list)  # Lines where variable is used
+    performance_impact: str = ""  # Estimated performance impact of this inference
+
+
+@dataclass
 class InductionVariable:
     """Information about an induction variable in a loop"""
     variable: str  # Variable name (e.g., "I")
