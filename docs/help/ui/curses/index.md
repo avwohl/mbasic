@@ -15,7 +15,7 @@ Full-screen terminal interface for MBASIC.
 
 ### Essential Commands
 
-- **?** - Open help
+- **ESC ESC** - Open help (press ESC twice)
 - **Ctrl+R** - Run program
 - **Ctrl+S** - Save program
 - **Ctrl+O** - Load program

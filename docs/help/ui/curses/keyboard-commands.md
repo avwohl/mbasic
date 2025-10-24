@@ -6,7 +6,7 @@ All keyboard shortcuts for the curses text interface.
 
 | Key | Action |
 |-----|--------|
-| **?** | Open help system |
+| **ESC ESC** | Open help system (press ESC twice) |
 | **Ctrl+R** | Run program |
 | **Ctrl+L** | List program to output window |
 | **Ctrl+S** | Save program (prompts for filename) |
@@ -64,8 +64,8 @@ When viewing help (like you are now):
 ## Tips
 
 - The cursor shows where you're typing
-- Press **ESC** anytime to clear error messages
-- **?** opens help system
+- Press **ESC** once to clear error messages
+- Press **ESC** twice (ESC ESC) to open help system
 - Lines are saved when you press **Enter**
 - Line numbers auto-increment by 10
 

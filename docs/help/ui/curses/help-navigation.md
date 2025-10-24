@@ -4,7 +4,7 @@ How to navigate MBASIC help.
 
 ## Opening Help
 
-Press **?** anytime to open help.
+Press **ESC** twice (ESC ESC) anytime to open help.
 
 ## Navigation Keys
 
@@ -65,7 +65,7 @@ Sample programs to learn from.
 
 ## Tips
 
-- Press **?** anytime for help
+- Press **ESC ESC** anytime for help
 - Links are highlighted
 - **U** goes back
 - **Q** exits help
