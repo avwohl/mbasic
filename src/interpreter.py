@@ -20,9 +20,15 @@ class BreakException(Exception):
 class Interpreter:
     """Execute MBASIC AST"""
 
-    def __init__(self, runtime):
+    def __init__(self, runtime, io_handler=None):
         self.runtime = runtime
         self.builtins = BuiltinFunctions(runtime)
+
+        # I/O handler (defaults to console if not provided)
+        if io_handler is None:
+            from io import ConsoleIOHandler
+            io_handler = ConsoleIOHandler(debug_enabled=False)
+        self.io = io_handler
 
     def _setup_break_handler(self):
         """Setup Ctrl+C handler to set break flag"""
@@ -95,8 +101,8 @@ class Interpreter:
                 self.runtime.stopped = True
                 self.runtime.stop_line = self.runtime.current_line
                 self.runtime.stop_stmt_index = self.runtime.current_stmt_index
-                print()  # Newline after ^C
-                print(f"Break in {self.runtime.current_line.line_number if self.runtime.current_line else '?'}")
+                self.io.output("")  # Newline after ^C
+                self.io.output(f"Break in {self.runtime.current_line.line_number if self.runtime.current_line else '?'}")
                 return
 
             line_number = self.runtime.line_order[line_index]
@@ -104,13 +110,13 @@ class Interpreter:
 
             import os
             if os.environ.get('DEBUG'):
-                print(f"DEBUG: Outer loop: line_index={line_index}, line_number={line_number}")
+                self.io.debug(f"Outer loop: line_index={line_index}, line_number={line_number}")
 
             self.runtime.current_line = line_node
 
             # Print trace output if TRON is enabled
             if self.runtime.trace_on:
-                print(f"[{line_number}]")
+                self.io.output(f"[{line_number}]")
 
             # Check if we're returning from GOSUB with a specific statement index
             # OR if we're continuing from STOP at a specific statement index
@@ -138,14 +144,14 @@ class Interpreter:
                 try:
                     import os
                     if os.environ.get('DEBUG'):
-                        print(f"DEBUG: Executing line {line_node.line_number} stmt {self.runtime.current_stmt_index}: {type(stmt).__name__}")
+                        self.io.debug(f"Executing line {line_node.line_number} stmt {self.runtime.current_stmt_index}: {type(stmt).__name__}")
                     self.execute_statement(stmt)
                 except BreakException:
                     # User pressed Ctrl+C during INPUT - handle like break
                     self.runtime.stopped = True
                     self.runtime.stop_line = self.runtime.current_line
                     self.runtime.stop_stmt_index = self.runtime.current_stmt_index
-                    print(f"Break in {self.runtime.current_line.line_number if self.runtime.current_line else '?'}")
+                    self.io.output(f"Break in {self.runtime.current_line.line_number if self.runtime.current_line else '?'}")
                     return
                 except Exception as e:
                     # Check if we have an error handler
@@ -154,17 +160,17 @@ class Interpreter:
                         import os
                         error_code = self._map_exception_to_error_code(e)
                         if os.environ.get('DEBUG'):
-                            print(f"DEBUG: Caught error: {e}, handler={self.runtime.error_handler}, error_code={error_code}")
+                            self.io.debug(f"Caught error: {e}, handler={self.runtime.error_handler}, error_code={error_code}")
                         self._invoke_error_handler(error_code, line_node.line_number, self.runtime.current_stmt_index)
 
                         # Break out of statement loop - we're jumping to error handler
                         if os.environ.get('DEBUG'):
-                            print(f"DEBUG: Breaking to jump to error handler line {self.runtime.error_handler}")
+                            self.io.debug(f"Breaking to jump to error handler line {self.runtime.error_handler}")
                         break
                     else:
                         # No error handler or we're already in error handler - re-raise
                         if os.environ.get('DEBUG'):
-                            print(f"DEBUG: Re-raising error: {e}, handler={self.runtime.error_handler}, in_handler={self.runtime.in_error_handler}, line={line_node.line_number}")
+                            self.io.debug(f"Re-raising error: {e}, handler={self.runtime.error_handler}, in_handler={self.runtime.in_error_handler}, line={line_node.line_number}")
                             import traceback
                             traceback.print_exc()
                         raise
@@ -174,7 +180,7 @@ class Interpreter:
                     # Break to jump to new line (will be handled by after-loop code)
                     import os
                     if os.environ.get('DEBUG'):
-                        print(f"DEBUG: In-loop detected jump to line {self.runtime.next_line}, breaking to after-loop handler")
+                        self.io.debug(f"In-loop detected jump to line {self.runtime.next_line}, breaking to after-loop handler")
                     break
 
                 self.runtime.current_stmt_index += 1
@@ -183,7 +189,7 @@ class Interpreter:
             # This handles jumps from error handlers
             import os
             if os.environ.get('DEBUG'):
-                print(f"DEBUG: After-loop check, next_line={self.runtime.next_line}, halted={self.runtime.halted}")
+                self.io.debug(f"After-loop check, next_line={self.runtime.next_line}, halted={self.runtime.halted}")
             if self.runtime.next_line is not None:
                 target_line = self.runtime.next_line
                 self.runtime.next_line = None
@@ -193,7 +199,7 @@ class Interpreter:
                     line_index = self.runtime.line_order.index(target_line)
                     import os
                     if os.environ.get('DEBUG'):
-                        print(f"DEBUG: After-loop jump to line {target_line}, index {line_index}")
+                        self.io.debug(f"After-loop jump to line {target_line}, index {line_index}")
                 except ValueError:
                     raise RuntimeError(f"Undefined line number: {target_line}")
             else:
@@ -492,9 +498,9 @@ class Interpreter:
         else:
             # Print to screen (don't add newline if last separator was ; or , or \n)
             if stmt.separators and stmt.separators[-1] in [';', ',', '\n']:
-                print(output, end='')
+                self.io.output(output, end='')
             else:
-                print(output)
+                self.io.output(output)
 
     def execute_printusing(self, stmt):
         """Execute PRINT USING statement - formatted print to screen or file"""
@@ -532,7 +538,7 @@ class Interpreter:
             file_handle.write(output + '\n')
             file_handle.flush()
         else:
-            print(output)
+            self.io.output(output)
 
     def execute_if(self, stmt):
         """Execute IF statement"""
@@ -831,30 +837,30 @@ class Interpreter:
             error_line = self.runtime.line_table[self.runtime.error_line]
             import os
             if os.environ.get('DEBUG'):
-                print(f"DEBUG: RESUME NEXT from error_line={self.runtime.error_line}, error_stmt_index={self.runtime.error_stmt_index}, line has {len(error_line.statements)} statements")
+                self.io.debug(f"RESUME NEXT from error_line={self.runtime.error_line}, error_stmt_index={self.runtime.error_stmt_index}, line has {len(error_line.statements)} statements")
             if self.runtime.error_stmt_index + 1 < len(error_line.statements):
                 # There's another statement on the same line
                 self.runtime.next_line = self.runtime.error_line
                 self.runtime.next_stmt_index = self.runtime.error_stmt_index + 1
                 if os.environ.get('DEBUG'):
-                    print(f"DEBUG: RESUME NEXT to line {self.runtime.next_line} stmt {self.runtime.next_stmt_index}")
+                    self.io.debug(f"RESUME NEXT to line {self.runtime.next_line} stmt {self.runtime.next_stmt_index}")
             else:
                 # No more statements on this line, go to next line
                 try:
                     error_line_index = self.runtime.line_order.index(self.runtime.error_line)
                     if os.environ.get('DEBUG'):
-                        print(f"DEBUG: error_line_index={error_line_index}, len(line_order)={len(self.runtime.line_order)}, line_order={self.runtime.line_order}")
+                        self.io.debug(f"error_line_index={error_line_index}, len(line_order)={len(self.runtime.line_order)}, line_order={self.runtime.line_order}")
                     if error_line_index + 1 < len(self.runtime.line_order):
                         next_line_num = self.runtime.line_order[error_line_index + 1]
                         self.runtime.next_line = next_line_num
                         self.runtime.next_stmt_index = 0
                         if os.environ.get('DEBUG'):
-                            print(f"DEBUG: RESUME NEXT to next line {self.runtime.next_line}")
+                            self.io.debug(f"RESUME NEXT to next line {self.runtime.next_line}")
                     else:
                         # No next line, program ends
                         self.runtime.halted = True
                         if os.environ.get('DEBUG'):
-                            print(f"DEBUG: RESUME NEXT - no next line, halting")
+                            self.io.debug(f"RESUME NEXT - no next line, halting")
                 except ValueError:
                     raise RuntimeError(f"Error line {self.runtime.error_line} not found")
         else:
@@ -1037,21 +1043,21 @@ class Interpreter:
             # Show prompt if any
             if stmt.prompt:
                 prompt_value = self.evaluate_expression(stmt.prompt)
-                print(prompt_value, end='')
+                self.io.output(prompt_value, end='')
                 # Always add "? " after prompt
-                print("? ", end='')
+                self.io.output("? ", end='')
             else:
                 # No prompt, always show "?"
-                print("? ", end='')
+                self.io.output("? ", end='')
 
             # Read input
             # Temporarily restore default signal handler so Ctrl+C can interrupt input()
             signal.signal(signal.SIGINT, self.old_signal_handler if hasattr(self, 'old_signal_handler') else signal.default_int_handler)
             try:
-                line = input()
+                line = self.io.input()
             except KeyboardInterrupt:
                 # User pressed Ctrl+C during input - break to command mode
-                print()  # Newline after ^C
+                self.io.output("")  # Newline after ^C
                 # Re-install our signal handler
                 self._setup_break_handler()
                 raise BreakException()
@@ -1142,15 +1148,15 @@ class Interpreter:
             # Read from keyboard
             if stmt.prompt:
                 prompt_value = self.evaluate_expression(stmt.prompt)
-                print(prompt_value, end='')
+                self.io.output(prompt_value, end='')
 
             # Temporarily restore default signal handler so Ctrl+C can interrupt input()
             signal.signal(signal.SIGINT, self.old_signal_handler if hasattr(self, 'old_signal_handler') else signal.default_int_handler)
             try:
-                line = input()
+                line = self.io.input()
             except KeyboardInterrupt:
                 # User pressed Ctrl+C during input - break to command mode
-                print()  # Newline after ^C
+                self.io.output("")  # Newline after ^C
                 # Re-install our signal handler
                 self._setup_break_handler()
                 raise BreakException()
@@ -1210,7 +1216,7 @@ class Interpreter:
             file_handle.write(output + '\n')
             file_handle.flush()
         else:
-            print(output)
+            self.io.output(output)
 
     def execute_load(self, stmt):
         """Execute LOAD statement"""
@@ -1313,7 +1319,7 @@ class Interpreter:
             self.interactive_mode.cmd_system()
         else:
             # In non-interactive context, just halt
-            print("Goodbye")
+            self.io.output("Goodbye")
             sys.exit(0)
 
     def execute_merge(self, stmt):
@@ -1413,10 +1419,10 @@ class Interpreter:
             if files:
                 for filename in files:
                     size = os.path.getsize(filename)
-                    print(f"{filename:<20} {size:>8} bytes")
-                print(f"\n{len(files)} File(s)")
+                    self.io.output(f"{filename:<20} {size:>8} bytes")
+                self.io.output(f"\n{len(files)} File(s)")
             else:
-                print(f"No files matching: {pattern}")
+                self.io.output(f"No files matching: {pattern}")
 
     def execute_kill(self, stmt):
         """Execute KILL statement - delete file
@@ -1880,9 +1886,9 @@ class Interpreter:
 
         # Print "Break in <line>" message
         if self.runtime.current_line:
-            print(f"Break in {self.runtime.current_line.line_number}")
+            self.io.output(f"Break in {self.runtime.current_line.line_number}")
         else:
-            print("Break")
+            self.io.output("Break")
 
         # Halt execution (returns to interactive mode)
         self.runtime.halted = True
