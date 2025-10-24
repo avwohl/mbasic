@@ -87,6 +87,17 @@ class CommonSubexpression:
     temp_var_name: Optional[str] = None  # Suggested temporary variable name
 
 
+@dataclass
+class SubroutineInfo:
+    """Information about a subroutine"""
+    start_line: int  # Line number where subroutine starts
+    end_line: Optional[int] = None  # Line number of RETURN statement
+    variables_modified: Set[str] = field(default_factory=set)  # Variables written in subroutine
+    variables_read: Set[str] = field(default_factory=set)  # Variables read in subroutine
+    calls_other_subs: Set[int] = field(default_factory=set)  # Other subroutines called (GOSUB targets)
+    analyzed: bool = False  # Whether we've analyzed this subroutine
+
+
 class CompilerFlags:
     """Flags for features requiring compilation switches"""
     def __init__(self):
@@ -448,6 +459,10 @@ class SemanticAnalyzer:
         self.available_expressions: Dict[str, Any] = {}  # hash -> expression node (currently available)
         self.cse_counter = 0  # For generating unique temporary variable names
 
+        # Subroutine tracking (for GOSUB analysis)
+        self.subroutines: Dict[int, SubroutineInfo] = {}  # line_number -> SubroutineInfo
+        self.gosub_targets: Set[int] = set()  # All line numbers that are GOSUB targets
+
     def analyze(self, program: ProgramNode) -> bool:
         """
         Analyze a program AST.
@@ -457,13 +472,16 @@ class SemanticAnalyzer:
         self.warnings.clear()
 
         try:
-            # First pass: collect all line numbers and DEF statements
+            # First pass: collect all line numbers, DEF statements, and GOSUB targets
             self._collect_symbols(program)
 
-            # Second pass: validate statements and build complete symbol table
+            # Second pass: analyze subroutines to determine what they modify
+            self._analyze_subroutines(program)
+
+            # Third pass: validate statements and build complete symbol table
             self._analyze_statements(program)
 
-            # Third pass: validate all line number references
+            # Fourth pass: validate all line number references
             self._validate_line_references(program)
 
             # Generate warnings for required compilation switches
@@ -475,15 +493,18 @@ class SemanticAnalyzer:
         return len(self.errors) == 0
 
     def _collect_symbols(self, program: ProgramNode):
-        """First pass: collect line numbers and DEF FN definitions"""
+        """First pass: collect line numbers, DEF FN definitions, and GOSUB targets"""
         for line in program.lines:
             if line.line_number is not None:
                 self.symbols.line_numbers.add(line.line_number)
 
-            # Look for DEF FN statements
+            # Look for DEF FN statements and GOSUB targets
             for stmt in line.statements:
                 if isinstance(stmt, DefFnStatementNode):
                     self._register_function(stmt, line.line_number)
+                elif isinstance(stmt, GosubStatementNode):
+                    # Record this as a GOSUB target (potential subroutine)
+                    self.gosub_targets.add(stmt.line_number)
 
     def _register_function(self, stmt: DefFnStatementNode, line_num: Optional[int]):
         """Register a DEF FN function"""
@@ -508,6 +529,88 @@ class SemanticAnalyzer:
             definition_line=line_num or 0,
             body_expr=stmt.expression
         )
+
+    def _analyze_subroutines(self, program: ProgramNode):
+        """
+        Second pass: analyze subroutines to determine what variables they modify.
+
+        For each GOSUB target, we analyze from that line until we hit a RETURN,
+        tracking which variables are modified.
+        """
+        # Build a map of line numbers to statements for quick lookup
+        line_map = {}
+        for line in program.lines:
+            if line.line_number is not None:
+                line_map[line.line_number] = line
+
+        # Analyze each GOSUB target as a potential subroutine
+        for target_line in self.gosub_targets:
+            if target_line not in line_map:
+                continue  # Will be caught as error in validation pass
+
+            # Initialize subroutine info
+            sub_info = SubroutineInfo(start_line=target_line)
+            self.subroutines[target_line] = sub_info
+
+            # Analyze statements from target until RETURN
+            current_line_num = target_line
+            in_subroutine = True
+
+            while in_subroutine and current_line_num in line_map:
+                line = line_map[current_line_num]
+
+                for stmt in line.statements:
+                    # Check if this is a RETURN
+                    if isinstance(stmt, ReturnStatementNode):
+                        sub_info.end_line = current_line_num
+                        in_subroutine = False
+                        break
+
+                    # Track variable modifications
+                    if isinstance(stmt, LetStatementNode):
+                        var_name = stmt.variable.name.upper()
+                        sub_info.variables_modified.add(var_name)
+
+                    # Track FOR loops (modify loop variable)
+                    elif isinstance(stmt, ForStatementNode):
+                        var_name = stmt.variable.name.upper()
+                        sub_info.variables_modified.add(var_name)
+
+                    # Track INPUT/READ (modify variables)
+                    elif isinstance(stmt, InputStatementNode):
+                        for var in stmt.variables:
+                            sub_info.variables_modified.add(var.name.upper())
+
+                    elif isinstance(stmt, ReadStatementNode):
+                        for var in stmt.variables:
+                            sub_info.variables_modified.add(var.name.upper())
+
+                    elif isinstance(stmt, LineInputStatementNode):
+                        if hasattr(stmt, 'variable'):
+                            sub_info.variables_modified.add(stmt.variable.name.upper())
+                        elif hasattr(stmt, 'variables'):
+                            for var in stmt.variables:
+                                sub_info.variables_modified.add(var.name.upper())
+
+                    # Track nested GOSUB calls
+                    elif isinstance(stmt, GosubStatementNode):
+                        sub_info.calls_other_subs.add(stmt.line_number)
+
+                # Move to next line
+                # Find the next line number in sequence
+                next_line_num = None
+                for line_num in sorted(line_map.keys()):
+                    if line_num > current_line_num:
+                        next_line_num = line_num
+                        break
+
+                if next_line_num is None:
+                    # No more lines
+                    break
+
+                current_line_num = next_line_num
+
+            sub_info.analyzed = True
 
     def _analyze_statements(self, program: ProgramNode):
         """Second pass: analyze all statements"""
@@ -613,9 +716,72 @@ class SemanticAnalyzer:
                     self._invalidate_expressions(var.name)
                     self.evaluator.clear_constant(var.name)
 
+        # GOSUB - subroutine call (conservative: invalidate all state)
+        elif isinstance(stmt, GosubStatementNode):
+            self._analyze_gosub(stmt)
+
         # Check for variable references in expressions
         if hasattr(stmt, 'expression'):
             self._analyze_expression(stmt.expression)
+
+    def _analyze_gosub(self, stmt: GosubStatementNode):
+        """
+        Analyze GOSUB statement.
+
+        Uses subroutine analysis to determine what variables the subroutine modifies,
+        then invalidates only those variables (and expressions using them).
+        """
+        target_line = stmt.line_number
+
+        # Get subroutine info if available
+        if target_line in self.subroutines:
+            sub_info = self.subroutines[target_line]
+
+            # Get all variables modified by this subroutine (including transitive calls)
+            modified_vars = self._get_all_modified_variables(target_line)
+
+            # Invalidate runtime constants for modified variables
+            for var_name in modified_vars:
+                if var_name in self.evaluator.runtime_constants:
+                    del self.evaluator.runtime_constants[var_name]
+
+            # Invalidate available expressions that use modified variables
+            for var_name in modified_vars:
+                self._invalidate_expressions(var_name)
+
+        else:
+            # Subroutine not analyzed (shouldn't happen, but be conservative)
+            self.evaluator.runtime_constants.clear()
+            self._clear_all_available_expressions()
+
+    def _get_all_modified_variables(self, sub_line: int, visited: Optional[Set[int]] = None) -> Set[str]:
+        """
+        Get all variables modified by a subroutine, including transitively
+        through nested GOSUB calls.
+        """
+        if visited is None:
+            visited = set()
+
+        # Avoid infinite recursion
+        if sub_line in visited:
+            return set()
+
+        visited.add(sub_line)
+
+        if sub_line not in self.subroutines:
+            # Unknown subroutine - conservatively assume it modifies everything
+            # Return all known variables
+            return set(self.symbols.variables.keys())
+
+        sub_info = self.subroutines[sub_line]
+        modified = sub_info.variables_modified.copy()
+
+        # Add variables modified by nested subroutine calls
+        for nested_sub in sub_info.calls_other_subs:
+            nested_modified = self._get_all_modified_variables(nested_sub, visited)
+            modified.update(nested_modified)
+
+        return modified
 
     def _analyze_if(self, stmt: IfStatementNode):
         """Analyze IF statement - handle compile-time evaluation when possible"""

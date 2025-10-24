@@ -333,6 +333,93 @@ After analyzing both branches of an IF statement, the analyzer merges available 
 2. An expression is available after the IF if it was computed in BOTH branches (even if new)
 3. Expressions computed in only one branch are NOT available after (conservative approach)
 
+### 7. GOSUB/Subroutine Analysis
+
+**Major Enhancement**: The semantic analyzer performs multi-pass analysis to track subroutine effects on constants and available expressions.
+
+**The Challenge**:
+
+GOSUB creates a challenge for optimization because we need to know what variables a subroutine modifies before we can safely propagate constants or CSEs across the call.
+
+**The Solution - Multi-Pass Analysis**:
+
+1. **Pass 1**: Identify all GOSUB targets
+2. **Pass 2**: Analyze each subroutine to determine what variables it modifies
+3. **Pass 3**: Use subroutine information during main program analysis
+4. **Pass 4**: Validation
+
+**Subroutine Analysis**:
+
+For each GOSUB target, the analyzer:
+- Scans from the target line until RETURN
+- Tracks all variable modifications (assignments, FOR loops, INPUT, READ, etc.)
+- Tracks nested GOSUB calls
+- Computes transitive closure of modifications (if sub A calls sub B, A inherits B's modifications)
+
+**Examples**:
+
+```basic
+' Example 1: CSE preserved across GOSUB
+10 INPUT A, B
+20 X = A + B        ' First computation
+30 GOSUB 1000       ' Subroutine doesn't modify A or B
+40 Y = A + B        ' CSE: can reuse from line 20
+
+1000 PRINT "Hello"  ' Doesn't modify A or B
+1010 RETURN
+
+' CSE Analysis: A + B detected at lines 20, 40
+```
+
+```basic
+' Example 2: CSE invalidated by GOSUB
+10 INPUT A, B
+20 X = A + B        ' First computation
+30 GOSUB 2000       ' Subroutine modifies B
+40 Y = A + B        ' NOT a CSE (B may have changed)
+
+2000 B = B + 1      ' Modifies B
+2010 RETURN
+
+' CSE Analysis: A + B NOT detected as CSE across GOSUB
+```
+
+```basic
+' Example 3: Transitive modification
+10 INPUT C
+20 X = C * 2        ' First computation
+30 GOSUB 3000       ' Calls 4000, which modifies C
+40 Y = C * 2        ' NOT a CSE (C modified transitively)
+
+3000 GOSUB 4000     ' Calls another subroutine
+3010 RETURN
+
+4000 C = C + 1      ' Modifies C
+4010 RETURN
+
+' Subroutine Analysis:
+'   Sub 4000 modifies: C
+'   Sub 3000 modifies: C (transitively through 4000)
+```
+
+**Benefits**:
+
+1. **Accurate optimization**: Only invalidates what's actually modified
+2. **Preserves opportunities**: CSEs and constants survive across "safe" GOSUBs
+3. **Handles complexity**: Correctly tracks transitive modifications through nested calls
+4. **Safe**: Conservative fallback if subroutine can't be analyzed
+
+**Subroutine Information Tracked**:
+
+```python
+@dataclass
+class SubroutineInfo:
+    start_line: int                      # Where subroutine begins
+    end_line: int                        # RETURN statement line
+    variables_modified: Set[str]         # Variables written by this sub
+    calls_other_subs: Set[int]          # Nested GOSUB targets
+```
+
 **Types of Expressions Tracked**:
 - Arithmetic expressions: `A + B`, `X * Y`, etc.
 - Function calls: `SQR(X)`, `SIN(Y)`, etc.
