@@ -706,7 +706,9 @@ class CursesBackend(UIBackend):
         if self.help_browser:
             # Show help starting at curses UI index
             self.help_browser.show_help("ui/curses/index.md")
-            # After help exits, redraw everything
+            # After help exits, clear screen and redraw everything
+            self.stdscr.clear()
+            self.stdscr.noutrefresh()
             self._create_windows()
             self._refresh_all()
 
