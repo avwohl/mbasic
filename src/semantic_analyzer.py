@@ -980,12 +980,13 @@ class SemanticAnalyzer:
 
         # For LET/assignment statements, also analyze the LHS variable's subscripts
         if isinstance(stmt, LetStatementNode) and stmt.variable.subscripts:
-            for subscript in stmt.variable.subscripts:
-                self._analyze_expression(subscript, "array subscript", track_folding=False, track_cse=True)
-            # Check for IV strength reduction in LHS array subscripts
+            # Check for IV strength reduction BEFORE analyzing (which transforms expressions)
             if self.current_loop:
                 for subscript in stmt.variable.subscripts:
                     self._detect_iv_strength_reduction(stmt.variable.name.upper(), subscript)
+            # Now analyze and transform the subscripts
+            for subscript in stmt.variable.subscripts:
+                self._analyze_expression(subscript, "array subscript", track_folding=False, track_cse=True)
 
     def _analyze_gosub(self, stmt: GosubStatementNode):
         """
@@ -1229,54 +1230,61 @@ class SemanticAnalyzer:
         if not self.current_loop:
             return
 
-        primary_iv_name = self.current_loop.control_variable
-        primary_iv = self.active_ivs.get(primary_iv_name) if primary_iv_name else None
+        # First, recursively check sub-expressions (e.g., for "I*10 + J", check "I*10" and "J")
+        if isinstance(subscript_expr, BinaryOpNode):
+            self._detect_iv_strength_reduction(array_name, subscript_expr.left)
+            self._detect_iv_strength_reduction(array_name, subscript_expr.right)
 
-        if not primary_iv or not primary_iv.is_primary:
-            return
-
-        # Check for pattern: I * constant or constant * I
+        # Check for pattern: I * constant or constant * I for ANY active IV, not just current loop
         if isinstance(subscript_expr, BinaryOpNode) and subscript_expr.operator == TokenType.MULTIPLY:
-            left_is_primary = (isinstance(subscript_expr.left, VariableNode) and
-                              subscript_expr.left.subscripts is None and
-                              subscript_expr.left.name.upper() == primary_iv_name)
-            right_is_primary = (isinstance(subscript_expr.right, VariableNode) and
-                               subscript_expr.right.subscripts is None and
-                               subscript_expr.right.name.upper() == primary_iv_name)
+            # Check all active IVs (including outer loop IVs in nested loops)
+            for iv_name, iv_info in self.active_ivs.items():
+                if not iv_info.is_primary:
+                    continue
 
-            if left_is_primary:
-                # I * constant
-                const_val = self.evaluator.evaluate(subscript_expr.right)
-                if const_val is not None:
-                    expr_desc = f"{array_name}({primary_iv_name} * {const_val})"
-                    optimized_desc = f"Use pointer increment by {const_val} instead of multiply"
-                    primary_iv.related_expressions.append((self.current_line, expr_desc, optimized_desc))
-                    primary_iv.strength_reduction_opportunities += 1
-                    return  # Added return to prevent fall-through
-            elif right_is_primary:
-                # constant * I
-                const_val = self.evaluator.evaluate(subscript_expr.left)
-                if const_val is not None:
-                    expr_desc = f"{array_name}({const_val} * {primary_iv_name})"
-                    optimized_desc = f"Use pointer increment by {const_val} instead of multiply"
-                    primary_iv.related_expressions.append((self.current_line, expr_desc, optimized_desc))
-                    primary_iv.strength_reduction_opportunities += 1
-                    return  # Added return to prevent fall-through
+                left_is_iv = (isinstance(subscript_expr.left, VariableNode) and
+                             subscript_expr.left.subscripts is None and
+                             subscript_expr.left.name.upper() == iv_name)
+                right_is_iv = (isinstance(subscript_expr.right, VariableNode) and
+                              subscript_expr.right.subscripts is None and
+                              subscript_expr.right.name.upper() == iv_name)
+
+                if left_is_iv:
+                    # IV * constant
+                    const_val = self.evaluator.evaluate(subscript_expr.right)
+                    if const_val is not None:
+                        expr_desc = f"{array_name}({iv_name} * {const_val})"
+                        optimized_desc = f"Use pointer increment by {const_val} instead of multiply"
+                        iv_info.related_expressions.append((self.current_line, expr_desc, optimized_desc))
+                        iv_info.strength_reduction_opportunities += 1
+                        return  # Found match, stop checking
+                elif right_is_iv:
+                    # constant * IV
+                    const_val = self.evaluator.evaluate(subscript_expr.left)
+                    if const_val is not None:
+                        expr_desc = f"{array_name}({const_val} * {iv_name})"
+                        optimized_desc = f"Use pointer increment by {const_val} instead of multiply"
+                        iv_info.related_expressions.append((self.current_line, expr_desc, optimized_desc))
+                        iv_info.strength_reduction_opportunities += 1
+                        return  # Found match, stop checking
 
         # Check for pattern using derived IV: J where J = I * constant
         elif isinstance(subscript_expr, VariableNode) and subscript_expr.subscripts is None:
             derived_var = subscript_expr.name.upper()
             derived_iv = self.active_ivs.get(derived_var)
 
-            if derived_iv and not derived_iv.is_primary and derived_iv.base_var == primary_iv_name:
+            if derived_iv and not derived_iv.is_primary:
                 # Using a derived IV in array subscript
-                expr_desc = f"{array_name}({derived_var})"
-                if derived_iv.coefficient != 1:
-                    optimized_desc = f"Derived IV: increment {derived_var} by {derived_iv.coefficient} instead of computing from {primary_iv_name}"
-                else:
-                    optimized_desc = f"Derived IV: use {derived_var} directly (tracks {primary_iv_name})"
-                primary_iv.related_expressions.append((self.current_line, expr_desc, optimized_desc))
-                primary_iv.strength_reduction_opportunities += 1
+                # Find the base IV
+                base_iv = self.active_ivs.get(derived_iv.base_var)
+                if base_iv and base_iv.is_primary:
+                    expr_desc = f"{array_name}({derived_var})"
+                    if derived_iv.coefficient != 1:
+                        optimized_desc = f"Derived IV: increment {derived_var} by {derived_iv.coefficient} instead of computing from {derived_iv.base_var}"
+                    else:
+                        optimized_desc = f"Derived IV: use {derived_var} directly (tracks {derived_iv.base_var})"
+                    base_iv.related_expressions.append((self.current_line, expr_desc, optimized_desc))
+                    base_iv.strength_reduction_opportunities += 1
 
     def _analyze_if(self, stmt: IfStatementNode):
         """Analyze IF statement - handle compile-time evaluation when possible"""
@@ -1939,14 +1947,14 @@ class SemanticAnalyzer:
 
             # Analyze and flatten subscripts if present
             if expr.subscripts:
-                # First analyze each subscript expression
-                for subscript in expr.subscripts:
-                    self._analyze_expression(subscript, "array subscript", track_folding=False, track_cse=True)
-
-                # Check for induction variable optimization opportunities in subscripts
+                # Check for IV strength reduction BEFORE analyzing (which transforms expressions)
                 if self.current_loop:
                     for subscript in expr.subscripts:
                         self._detect_iv_strength_reduction(var_name, subscript)
+
+                # Now analyze each subscript expression
+                for subscript in expr.subscripts:
+                    self._analyze_expression(subscript, "array subscript", track_folding=False, track_cse=True)
 
                 # If multi-dimensional, flatten the subscripts
                 if len(expr.subscripts) > 1:
@@ -2125,9 +2133,11 @@ class SemanticAnalyzer:
         if not self._is_cse_candidate(expr):
             return
 
-        # Skip expressions that evaluate to constants (already folded)
-        if self.evaluator.evaluate(expr) is not None:
-            return
+        # Note: We DO track expressions even if they can be constant-folded,
+        # because:
+        # 1. They represent repeated computations in the source code
+        # 2. Constant folding might not be possible in all contexts
+        # 3. It's useful to show programmers where they're repeating expressions
 
         expr_hash = self._hash_expression(expr)
         expr_desc = self._describe_expression(expr)
