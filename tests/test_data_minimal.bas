@@ -1,0 +1,15 @@
+10 PRINT "Test 1: Read 3 numbers"
+20 READ A, B, C
+30 PRINT "A="; A; " B="; B; " C="; C
+40 DATA 10, 20, 30
+50 PRINT
+60 PRINT "Test 2: Read 2 more"
+70 READ D, E
+80 PRINT "D="; D; " E="; E
+90 DATA 40, 50
+100 PRINT
+110 PRINT "Test 3: RESTORE"
+120 RESTORE
+130 READ X, Y
+140 PRINT "X="; X; " Y="; Y
+150 END

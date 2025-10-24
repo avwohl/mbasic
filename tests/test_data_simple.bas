@@ -1,0 +1,51 @@
+10 REM Simple DATA/READ/RESTORE test
+20 PRINT "=== Simple DATA/READ/RESTORE Test ==="
+30 PRINT
+40 PRINT "Test 1: Basic READ"
+50 READ A, B, C
+60 PRINT "A="; A; " B="; B; " C="; C
+70 DATA 10, 20, 30
+80 PRINT
+90 PRINT "Test 2: READ more values"
+100 READ D, E
+110 PRINT "D="; D; " E="; E
+120 DATA 40, 50
+130 PRINT
+140 PRINT "Test 3: RESTORE"
+150 RESTORE
+160 READ X, Y, Z
+170 PRINT "After RESTORE: X="; X; " Y="; Y; " Z="; Z
+180 PRINT
+190 PRINT "Test 4: READ strings (unquoted)"
+200 READ N$, C$
+210 PRINT "N$="; N$; " C$="; C$
+220 DATA ALICE, NYC
+230 PRINT
+240 PRINT "Test 5: Mixed DATA lines"
+250 READ F, G, H
+260 PRINT "F="; F; " G="; G; " H="; H
+270 DATA 1, 2
+280 DATA 3
+290 PRINT
+300 PRINT "Test 6: RESTORE again"
+310 RESTORE
+320 READ P1, P2
+330 PRINT "P1="; P1; " P2="; P2
+340 PRINT
+350 PRINT "Test 7: Decimals"
+360 READ R1, R2
+370 PRINT "R1="; R1; " R2="; R2
+380 DATA 1.5, 2.75
+390 PRINT
+400 PRINT "Test 8: Negatives"
+410 READ S1, S2
+420 PRINT "S1="; S1; " S2="; S2
+430 DATA -10, -20
+440 PRINT
+450 PRINT "Test 9: Scientific notation"
+460 READ T1, T2
+470 PRINT "T1="; T1; " T2="; T2
+480 DATA 1E2, 2.5E-1
+490 PRINT
+500 PRINT "=== Test complete ==="
+510 END
