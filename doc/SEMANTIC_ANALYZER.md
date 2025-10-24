@@ -34,8 +34,11 @@ The semantic analyzer maintains a **runtime constant table** that tracks which v
 
 1. **Assignment tracking**: When `N% = 10` is encountered, N% is marked as constant with value 10
 2. **Expression evaluation**: When `M% = N% * 2` is encountered, the expression is evaluated using N%'s known value, and M% becomes constant = 20
-3. **DIM validation**: When `DIM A(N%)` is encountered, N%'s value (10) is used
-4. **Invalidation**: Variables lose their constant status when:
+3. **Conditional evaluation**: When `IF DEBUG% = 1 THEN N% = 10 ELSE N% = 5` is encountered:
+   - If DEBUG% has a known value, the condition is evaluated at compile time and only the taken branch is analyzed
+   - If DEBUG% is unknown, both branches are analyzed and constants are merged (only kept if same in both)
+4. **DIM validation**: When `DIM A(N%)` is encountered, N%'s value (10) is used
+5. **Invalidation**: Variables lose their constant status when:
    - Reassigned to a non-constant expression
    - Used as a FOR loop variable
    - Read via INPUT or READ statements
@@ -46,6 +49,7 @@ Evaluates expressions at compile time when all operands are constants or known-c
 
 **Supported Operations**:
 - Arithmetic: `+`, `-`, `*`, `/`, `\` (integer division), `^`, `MOD`
+- Relational: `=`, `<>`, `<`, `>`, `<=`, `>=` (return -1 for true, 0 for false)
 - Logical: `AND`, `OR`, `XOR`, `EQV`, `IMP`
 - Unary: `-`, `+`, `NOT`
 
@@ -58,7 +62,50 @@ N% = 5
 DIM D(N%*4)            ' Evaluates to D(20)
 ```
 
-### 3. Symbol Tables
+### 3. Compile-Time IF/THEN/ELSE Evaluation
+
+The semantic analyzer can evaluate IF conditions at compile time when all operands are known constants.
+
+**How It Works**:
+
+**Case 1: Condition is compile-time constant (evaluates to known value)**
+- Only the taken branch is analyzed for constant tracking
+- The other branch is completely ignored
+- Maximum optimization - dead code elimination
+
+**Example**:
+```basic
+10 DEBUG% = 1
+20 IF DEBUG% = 1 THEN N% = 10 ELSE N% = 5
+30 DIM A(N%)                    ' A(10) - only THEN branch taken
+```
+
+**Case 2: Condition cannot be evaluated (contains unknown variables)**
+- Both branches are analyzed separately
+- Constants are merged after the IF
+- A variable is only constant after IF if it has the **same value in both branches**
+
+**Example - Merged to constant**:
+```basic
+10 INPUT X%
+20 IF X% > 5 THEN N% = 10 ELSE N% = 10
+30 DIM A(N%)                    ' A(10) - both branches set N% = 10
+```
+
+**Example - Not constant**:
+```basic
+10 INPUT X%
+20 IF X% > 5 THEN N% = 10 ELSE N% = 5
+30 DIM A(N%)                    ' ERROR - N% has different values in branches
+```
+
+**Benefits**:
+- Enables configuration-based array sizing
+- Supports compile-time switches (like C's `#ifdef`)
+- Dead code elimination for unused branches
+- More flexible than original compiler
+
+### 4. Symbol Tables
 
 Tracks all program symbols with detailed information:
 
@@ -77,7 +124,7 @@ Tracks all program symbols with detailed information:
 - All line numbers in the program
 - Used for validating GOTO/GOSUB targets
 
-### 4. Compiler-Specific Validations
+### 5. Compiler-Specific Validations
 
 #### Unsupported Commands
 Detects commands that don't work in compiled programs:
@@ -105,7 +152,7 @@ Validates that FOR/NEXT and WHILE/WEND loops are properly nested:
 - Validates subscripts are constant expressions
 - Checks for negative subscripts
 
-### 5. Compilation Switch Detection
+### 6. Compilation Switch Detection
 
 Automatically detects when special compilation switches are needed:
 
@@ -113,7 +160,7 @@ Automatically detects when special compilation switches are needed:
 - **/X** - Required if program uses `RESUME`, `RESUME NEXT`, or `RESUME 0`
 - **/D** - Required if program uses `TRON` or `TROFF`
 
-### 6. Line Number Validation
+### 7. Line Number Validation
 
 Validates all GOTO/GOSUB/ON...GOTO targets exist:
 ```basic
@@ -308,14 +355,44 @@ The evaluator recursively evaluates expressions:
 - Unary ops → evaluate operand, apply operation
 - Cannot evaluate → return None
 
+### Example 7: Compile-Time Configuration
+
+```basic
+10 REM Compile-time configuration
+20 COMPILE% = 1
+30 DEBUG% = 0
+40 VERSION% = 3
+50 REM Conditional sizing
+60 IF COMPILE% = 1 THEN BUFSIZE% = 1024 ELSE BUFSIZE% = 256
+70 IF DEBUG% = 1 THEN LOGSIZE% = 100 ELSE LOGSIZE% = 10
+80 REM Version-specific multiplier
+90 IF VERSION% = 1 THEN MULT% = 1
+100 IF VERSION% = 2 THEN MULT% = 2
+110 IF VERSION% = 3 THEN MULT% = 3
+120 TABLESIZE% = BUFSIZE% * MULT%
+130 REM Arrays with compile-time evaluated sizes
+140 DIM BUFFER(BUFSIZE%), LOGTABLE(LOGSIZE%), WORKTABLE(TABLESIZE%)
+```
+
+**Analysis**:
+- Line 60: COMPILE% = 1 → BUFSIZE% = 1024 (THEN branch)
+- Line 70: DEBUG% = 0 → LOGSIZE% = 10 (ELSE branch)
+- Line 110: VERSION% = 3 → MULT% = 3
+- Line 120: TABLESIZE% = 1024 * 3 = 3072
+- Line 140: Creates BUFFER(1024), LOGTABLE(10), WORKTABLE(3072)
+
+This enables compile-time configuration similar to C preprocessor directives!
+
 ## Future Enhancements
 
 Potential improvements:
-1. **Flow analysis**: Track constants through branches (IF/THEN/ELSE)
+1. ~~**Flow analysis**: Track constants through branches (IF/THEN/ELSE)~~ ✓ **IMPLEMENTED**
 2. **Type checking**: Detect type mismatches at compile time
 3. **Dead code detection**: Identify unreachable code
 4. **Optimization hints**: Suggest integer variables for performance
 5. **Array bounds tracking**: Validate array accesses at compile time
+6. **GOTO/GOSUB flow analysis**: Track constants across line jumps
+7. **Multi-line IF/THEN/ELSE**: Support structured IF blocks
 
 ## References
 

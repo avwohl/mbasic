@@ -153,6 +153,12 @@ class ConstantEvaluator:
                 TokenType.BACKSLASH: '\\',
                 TokenType.POWER: '^',
                 TokenType.MOD: 'MOD',
+                TokenType.EQUAL: '=',
+                TokenType.NOT_EQUAL: '<>',
+                TokenType.LESS_THAN: '<',
+                TokenType.GREATER_THAN: '>',
+                TokenType.LESS_EQUAL: '<=',
+                TokenType.GREATER_EQUAL: '>=',
                 TokenType.AND: 'AND',
                 TokenType.OR: 'OR',
                 TokenType.XOR: 'XOR',
@@ -162,6 +168,7 @@ class ConstantEvaluator:
             op_str = op_map.get(expr.operator, str(expr.operator))
             op = op_str.upper() if isinstance(op_str, str) else str(op_str)
             try:
+                # Arithmetic operators
                 if op == '+':
                     return left + right
                 elif op == '-':
@@ -176,6 +183,20 @@ class ConstantEvaluator:
                     return int(left) % int(right)
                 elif op == '^':
                     return left ** right
+                # Relational operators (return -1 for true, 0 for false in BASIC)
+                elif op == '=' or 'EQUAL' in str(expr.operator):
+                    return -1 if left == right else 0
+                elif op == '<>' or 'NOT_EQUAL' in str(expr.operator):
+                    return -1 if left != right else 0
+                elif op == '<' or 'LESS_THAN' in str(expr.operator):
+                    return -1 if left < right else 0
+                elif op == '>' or 'GREATER_THAN' in str(expr.operator):
+                    return -1 if left > right else 0
+                elif op == '<=' or 'LESS_EQUAL' in str(expr.operator):
+                    return -1 if left <= right else 0
+                elif op == '>=' or 'GREATER_EQUAL' in str(expr.operator):
+                    return -1 if left >= right else 0
+                # Logical operators
                 elif op == 'AND':
                     return int(left) & int(right)
                 elif op == 'OR':
@@ -335,8 +356,12 @@ class SemanticAnalyzer:
                 self.current_line
             )
 
+        # IF statement - handle compile-time evaluation
+        if isinstance(stmt, IfStatementNode):
+            self._analyze_if(stmt)
+
         # DIM statement - validate and evaluate subscripts
-        if isinstance(stmt, DimStatementNode):
+        elif isinstance(stmt, DimStatementNode):
             self._analyze_dim(stmt)
 
         # Assignment - track variable types
@@ -410,6 +435,78 @@ class SemanticAnalyzer:
         # Check for variable references in expressions
         if hasattr(stmt, 'expression'):
             self._analyze_expression(stmt.expression)
+
+    def _analyze_if(self, stmt: IfStatementNode):
+        """Analyze IF statement - handle compile-time evaluation when possible"""
+
+        # Try to evaluate the condition at compile time
+        condition_value = self.evaluator.evaluate(stmt.condition)
+
+        if condition_value is not None:
+            # Condition can be evaluated at compile time!
+            # In BASIC, 0 is false, non-zero is true
+            is_true = (condition_value != 0)
+
+            if is_true:
+                # THEN branch will be taken
+                if stmt.then_statements:
+                    for then_stmt in stmt.then_statements:
+                        self._analyze_statement(then_stmt)
+                # Don't analyze ELSE branch - it won't execute
+            else:
+                # ELSE branch will be taken (or nothing if no ELSE)
+                if stmt.else_statements:
+                    for else_stmt in stmt.else_statements:
+                        self._analyze_statement(else_stmt)
+                # Don't analyze THEN branch - it won't execute
+        else:
+            # Cannot evaluate condition at compile time
+            # Need to analyze both branches and merge constant states
+
+            # Save current constant state
+            constants_before = self.evaluator.runtime_constants.copy()
+
+            # Analyze THEN branch
+            then_constants = None
+            if stmt.then_statements:
+                for then_stmt in stmt.then_statements:
+                    self._analyze_statement(then_stmt)
+                then_constants = self.evaluator.runtime_constants.copy()
+
+            # Restore state and analyze ELSE branch
+            self.evaluator.runtime_constants = constants_before.copy()
+            else_constants = None
+            if stmt.else_statements:
+                for else_stmt in stmt.else_statements:
+                    self._analyze_statement(else_stmt)
+                else_constants = self.evaluator.runtime_constants.copy()
+
+            # Merge: a variable is only constant after the IF if it has the same
+            # constant value in both branches (or only one branch exists)
+            if then_constants is not None and else_constants is not None:
+                # Both branches exist - keep only constants that are the same in both
+                merged = {}
+                for var_name in then_constants:
+                    if var_name in else_constants:
+                        if then_constants[var_name] == else_constants[var_name]:
+                            merged[var_name] = then_constants[var_name]
+                # Also keep constants that weren't modified in either branch
+                for var_name in constants_before:
+                    if var_name not in then_constants and var_name not in else_constants:
+                        merged[var_name] = constants_before[var_name]
+                self.evaluator.runtime_constants = merged
+            elif then_constants is not None:
+                # Only THEN branch exists
+                self.evaluator.runtime_constants = then_constants
+            elif else_constants is not None:
+                # Only ELSE branch exists
+                self.evaluator.runtime_constants = else_constants
+            else:
+                # No branches - restore original state
+                self.evaluator.runtime_constants = constants_before
+
+        # Analyze the condition expression itself for variable references
+        self._analyze_expression(stmt.condition)
 
     def _analyze_dim(self, stmt: DimStatementNode):
         """Analyze DIM statement - evaluate subscripts as constants"""
