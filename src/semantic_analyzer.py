@@ -76,6 +76,17 @@ class SymbolTable:
     labels: Dict[str, int] = field(default_factory=dict)  # For future named labels
 
 
+@dataclass
+class CommonSubexpression:
+    """Information about a common subexpression"""
+    expression_hash: str  # Canonical representation for equivalence checking
+    expression_desc: str  # Human-readable description
+    first_line: int  # Line where first encountered
+    occurrences: List[int] = field(default_factory=list)  # Lines where it appears
+    variables_used: Set[str] = field(default_factory=set)  # Variables referenced in expression
+    temp_var_name: Optional[str] = None  # Suggested temporary variable name
+
+
 class CompilerFlags:
     """Flags for features requiring compilation switches"""
     def __init__(self):
@@ -432,6 +443,11 @@ class SemanticAnalyzer:
         # Constant folding optimization tracking
         self.folded_expressions: List[Tuple[int, str, Any]] = []  # (line, expr_desc, value)
 
+        # Common Subexpression Elimination (CSE) tracking
+        self.common_subexpressions: Dict[str, CommonSubexpression] = {}  # hash -> CSE info
+        self.available_expressions: Dict[str, Any] = {}  # hash -> expression node (currently available)
+        self.cse_counter = 0  # For generating unique temporary variable names
+
     def analyze(self, program: ProgramNode) -> bool:
         """
         Analyze a program AST.
@@ -578,19 +594,23 @@ class SemanticAnalyzer:
         # INPUT - variables are no longer constants after being read
         elif isinstance(stmt, InputStatementNode):
             for var in stmt.variables:
+                self._invalidate_expressions(var.name)
                 self.evaluator.clear_constant(var.name)
 
         # READ - variables are no longer constants after being read
         elif isinstance(stmt, ReadStatementNode):
             for var in stmt.variables:
+                self._invalidate_expressions(var.name)
                 self.evaluator.clear_constant(var.name)
 
         # LINE INPUT - variables are no longer constants
         elif isinstance(stmt, LineInputStatementNode):
             if hasattr(stmt, 'variable'):
+                self._invalidate_expressions(stmt.variable.name)
                 self.evaluator.clear_constant(stmt.variable.name)
             elif hasattr(stmt, 'variables'):
                 for var in stmt.variables:
+                    self._invalidate_expressions(var.name)
                     self.evaluator.clear_constant(var.name)
 
         # Check for variable references in expressions
@@ -623,6 +643,9 @@ class SemanticAnalyzer:
         else:
             # Cannot evaluate condition at compile time
             # Need to analyze both branches and merge constant states
+
+            # Clear available expressions - control flow uncertainty
+            self._clear_all_available_expressions()
 
             # Save current constant state
             constants_before = self.evaluator.runtime_constants.copy()
@@ -756,6 +779,9 @@ class SemanticAnalyzer:
 
         # Note: Expression analysis is handled by the generic check in _analyze_statement
 
+        # Invalidate CSE: any expression using this variable is no longer available
+        self._invalidate_expressions(var_name)
+
         # Track runtime constants: if this is a simple variable (not array) assignment
         # and the expression evaluates to a constant, track it
         if stmt.variable.subscripts is None:
@@ -795,7 +821,8 @@ class SemanticAnalyzer:
         if stmt.step_expr:
             self._analyze_expression(stmt.step_expr)
 
-        # FOR loop variable is modified, so it's no longer a constant
+        # FOR loop variable is modified, so invalidate CSE and clear constant
+        self._invalidate_expressions(var_name)
         self.evaluator.clear_constant(var_name)
 
     def _analyze_next(self, stmt: NextStatementNode):
@@ -857,14 +884,15 @@ class SemanticAnalyzer:
 
         self.loop_stack.pop()
 
-    def _analyze_expression(self, expr, context: str = "expression", track_folding: bool = True):
+    def _analyze_expression(self, expr, context: str = "expression", track_folding: bool = True, track_cse: bool = True):
         """
-        Analyze an expression - track variable usage and perform constant folding.
+        Analyze an expression - track variable usage, perform constant folding, and track CSE.
 
         Args:
             expr: The expression node to analyze
             context: Description of where this expression appears (for reporting)
             track_folding: Whether to track this expression in folding optimizations
+            track_cse: Whether to track this expression for CSE
         """
         if expr is None:
             return
@@ -879,6 +907,10 @@ class SemanticAnalyzer:
             # (but skip if it's already a literal)
             expr_desc = self._describe_expression(expr)
             self.folded_expressions.append((self.current_line, expr_desc, folded_value))
+
+        # Track for common subexpression elimination (only for top-level expressions)
+        if track_cse:
+            self._track_expression_for_cse(expr)
 
         if isinstance(expr, VariableNode):
             var_name = expr.name.upper()
@@ -896,14 +928,14 @@ class SemanticAnalyzer:
             # Analyze subscripts if present
             if expr.subscripts:
                 for subscript in expr.subscripts:
-                    self._analyze_expression(subscript, "array subscript", track_folding=False)
+                    self._analyze_expression(subscript, "array subscript", track_folding=False, track_cse=True)
 
         elif isinstance(expr, BinaryOpNode):
-            self._analyze_expression(expr.left, "binary operation", track_folding=False)
-            self._analyze_expression(expr.right, "binary operation", track_folding=False)
+            self._analyze_expression(expr.left, "binary operation", track_folding=False, track_cse=True)
+            self._analyze_expression(expr.right, "binary operation", track_folding=False, track_cse=True)
 
         elif isinstance(expr, UnaryOpNode):
-            self._analyze_expression(expr.operand, "unary operation", track_folding=False)
+            self._analyze_expression(expr.operand, "unary operation", track_folding=False, track_cse=True)
 
         elif isinstance(expr, FunctionCallNode):
             # Check if it's a DEF FN function
@@ -918,7 +950,175 @@ class SemanticAnalyzer:
             # Analyze arguments
             if expr.arguments:
                 for arg in expr.arguments:
-                    self._analyze_expression(arg, f"function argument", track_folding=False)
+                    self._analyze_expression(arg, f"function argument", track_folding=False, track_cse=True)
+
+    def _hash_expression(self, expr) -> str:
+        """
+        Generate a canonical hash/representation for expression equivalence checking.
+        Two expressions with the same hash are considered equivalent.
+        """
+        if expr is None:
+            return "NULL"
+
+        if isinstance(expr, NumberNode):
+            return f"NUM:{expr.value}"
+
+        if isinstance(expr, StringNode):
+            return f"STR:{expr.value}"
+
+        if isinstance(expr, VariableNode):
+            var_name = expr.name.upper()
+            if expr.subscripts:
+                # Array access - include subscript hashes
+                subscript_hashes = ",".join(self._hash_expression(sub) for sub in expr.subscripts)
+                return f"ARRAY:{var_name}[{subscript_hashes}]"
+            return f"VAR:{var_name}"
+
+        if isinstance(expr, BinaryOpNode):
+            # Use operator type name for consistency
+            op_str = str(expr.operator)
+            left_hash = self._hash_expression(expr.left)
+            right_hash = self._hash_expression(expr.right)
+            return f"BIN:{op_str}({left_hash},{right_hash})"
+
+        if isinstance(expr, UnaryOpNode):
+            op_str = str(expr.operator)
+            operand_hash = self._hash_expression(expr.operand)
+            return f"UNARY:{op_str}({operand_hash})"
+
+        if isinstance(expr, FunctionCallNode):
+            func_name = expr.name.upper()
+            if expr.arguments:
+                arg_hashes = ",".join(self._hash_expression(arg) for arg in expr.arguments)
+                return f"FUNC:{func_name}({arg_hashes})"
+            return f"FUNC:{func_name}()"
+
+        # Unknown expression type
+        return f"UNKNOWN:{type(expr).__name__}"
+
+    def _get_expression_variables(self, expr) -> Set[str]:
+        """
+        Get all variables referenced in an expression.
+        Used to determine when a CSE becomes invalid (variable modified).
+        """
+        variables = set()
+
+        if isinstance(expr, VariableNode):
+            variables.add(expr.name.upper())
+            # Also check array subscripts
+            if expr.subscripts:
+                for subscript in expr.subscripts:
+                    variables.update(self._get_expression_variables(subscript))
+
+        elif isinstance(expr, BinaryOpNode):
+            variables.update(self._get_expression_variables(expr.left))
+            variables.update(self._get_expression_variables(expr.right))
+
+        elif isinstance(expr, UnaryOpNode):
+            variables.update(self._get_expression_variables(expr.operand))
+
+        elif isinstance(expr, FunctionCallNode):
+            if expr.arguments:
+                for arg in expr.arguments:
+                    variables.update(self._get_expression_variables(arg))
+
+        return variables
+
+    def _is_cse_candidate(self, expr) -> bool:
+        """
+        Determine if an expression is a candidate for CSE.
+
+        Criteria:
+        - Not a simple literal (number/string)
+        - Not a simple variable reference (no subscripts)
+        - Contains computation that could be expensive
+        """
+        # Literals are not CSE candidates
+        if isinstance(expr, (NumberNode, StringNode)):
+            return False
+
+        # Simple variable references are not CSE candidates
+        if isinstance(expr, VariableNode) and expr.subscripts is None:
+            return False
+
+        # Everything else is a candidate:
+        # - Array accesses (subscript evaluation)
+        # - Binary/unary operations
+        # - Function calls
+        return True
+
+    def _track_expression_for_cse(self, expr):
+        """
+        Track an expression for common subexpression elimination.
+        If this expression has been seen before and is still available,
+        record it as a common subexpression.
+        """
+        if not self._is_cse_candidate(expr):
+            return
+
+        # Skip expressions that evaluate to constants (already folded)
+        if self.evaluator.evaluate(expr) is not None:
+            return
+
+        expr_hash = self._hash_expression(expr)
+        expr_desc = self._describe_expression(expr)
+        expr_vars = self._get_expression_variables(expr)
+
+        if expr_hash in self.available_expressions:
+            # This expression has been seen before and is still available!
+            if expr_hash in self.common_subexpressions:
+                # Already tracking this CSE - add another occurrence
+                self.common_subexpressions[expr_hash].occurrences.append(self.current_line)
+            else:
+                # First time seeing this expression again - create CSE record
+                cse = CommonSubexpression(
+                    expression_hash=expr_hash,
+                    expression_desc=expr_desc,
+                    first_line=self.available_expressions[expr_hash],
+                    occurrences=[self.current_line],
+                    variables_used=expr_vars
+                )
+                # Generate a suggested temporary variable name
+                self.cse_counter += 1
+                cse.temp_var_name = f"T{self.cse_counter}#"
+                self.common_subexpressions[expr_hash] = cse
+        else:
+            # First time seeing this expression - mark it as available
+            self.available_expressions[expr_hash] = self.current_line
+
+    def _invalidate_expressions(self, var_name: str):
+        """
+        Invalidate all available expressions that reference a variable.
+        Called when a variable is modified (assignment, INPUT, READ, FOR loop, etc.)
+        """
+        var_name_upper = var_name.upper()
+        to_remove = []
+
+        for expr_hash in list(self.available_expressions.keys()):
+            # Check if this expression uses the variable
+            # For CSEs, we have the variables stored
+            if expr_hash in self.common_subexpressions:
+                cse = self.common_subexpressions[expr_hash]
+                if var_name_upper in cse.variables_used:
+                    to_remove.append(expr_hash)
+            else:
+                # For non-CSE available expressions, we need to check by re-parsing the hash
+                # The hash contains variable names, so we can do a simple check
+                if f"VAR:{var_name_upper}" in expr_hash or f"ARRAY:{var_name_upper}" in expr_hash:
+                    to_remove.append(expr_hash)
+
+        # Remove invalidated expressions
+        for expr_hash in to_remove:
+            if expr_hash in self.available_expressions:
+                del self.available_expressions[expr_hash]
+
+    def _clear_all_available_expressions(self):
+        """
+        Clear all available expressions.
+        Called at control flow boundaries (IF, GOTO, etc.) where we can't
+        guarantee expression availability.
+        """
+        self.available_expressions.clear()
 
     def _describe_expression(self, expr) -> str:
         """Generate a human-readable description of an expression"""
@@ -1057,6 +1257,26 @@ class SemanticAnalyzer:
                 else:
                     value_str = str(value)
                 lines.append(f"  Line {line_num}: {expr_desc} → {value_str}")
+
+        # Common Subexpression Elimination (CSE)
+        if self.common_subexpressions:
+            lines.append(f"\nCommon Subexpression Elimination (CSE):")
+            lines.append(f"  Found {len(self.common_subexpressions)} common subexpression(s)")
+            lines.append("")
+
+            # Sort by first occurrence line number
+            sorted_cses = sorted(self.common_subexpressions.values(),
+                               key=lambda cse: cse.first_line)
+
+            for cse in sorted_cses:
+                lines.append(f"  Expression: {cse.expression_desc}")
+                lines.append(f"    Computed {len(cse.occurrences) + 1} times total")
+                lines.append(f"    First at line {cse.first_line}")
+                lines.append(f"    Recomputed at lines: {', '.join(map(str, cse.occurrences))}")
+                if cse.variables_used:
+                    lines.append(f"    Variables used: {', '.join(sorted(cse.variables_used))}")
+                lines.append(f"    Suggested temp variable: {cse.temp_var_name}")
+                lines.append("")
 
         # Compilation flags
         switches = self.flags.get_required_switches()

@@ -247,6 +247,84 @@ Constant folding is the process of evaluating expressions at compile time when a
 
 The semantic analyzer tracks all constant folding optimizations and reports them in the analysis output. This helps developers understand what optimizations are being applied.
 
+### 6. Common Subexpression Elimination (CSE)
+
+**Major Enhancement**: The semantic analyzer identifies expressions that are computed multiple times with the same values and suggests opportunities to compute them once and reuse the result.
+
+**What is Common Subexpression Elimination?**
+
+CSE is an optimization that identifies expressions appearing multiple times in a program where the values haven't changed between uses. Instead of recomputing the expression each time, it can be computed once, stored in a temporary variable, and reused.
+
+**Examples of CSE**:
+
+```basic
+10 X = A + B          ' First computation of A + B
+20 Y = A + B          ' Same expression - can reuse!
+30 Z = A + B          ' Same expression again
+
+' Optimized version:
+10 T1# = A + B        ' Compute once
+20 X = T1#            ' Reuse
+30 Y = T1#            ' Reuse
+40 Z = T1#            ' Reuse
+```
+
+**CSE with Subexpressions**:
+
+```basic
+10 RESULT = SQR(X) + SQR(X) + SQR(X)  ' SQR(X) computed 3 times
+20 Y = SQR(X) * 2                      ' SQR(X) computed again
+
+' CSE detects SQR(X) is computed 4 times total
+```
+
+**Safety Analysis**:
+
+The CSE implementation performs sophisticated safety analysis to ensure correctness:
+
+1. **Variable Modification Tracking**: Expressions are invalidated when any of their variables are modified
+   ```basic
+   10 X = A * 2       ' A * 2 is available
+   20 Y = A * 2       ' CSE: reuse A * 2
+   30 A = 10          ' A is modified - invalidate A * 2
+   40 Z = A * 2       ' NEW computation, not a CSE
+   ```
+
+2. **Control Flow Analysis**: Available expressions are cleared at control flow boundaries
+   ```basic
+   10 X = A + B
+   20 IF C THEN Y = A + B  ' Different control flow - clear available expressions
+   ```
+
+3. **INPUT/READ Invalidation**: Expressions are invalidated when variables are read
+   ```basic
+   10 X = N * 2       ' N * 2 is available
+   20 INPUT N         ' N is modified - invalidate N * 2
+   30 Y = N * 2       ' NEW computation, not a CSE
+   ```
+
+**Types of Expressions Tracked**:
+- Arithmetic expressions: `A + B`, `X * Y`, etc.
+- Function calls: `SQR(X)`, `SIN(Y)`, etc.
+- Array accesses: `ARR(I + J)`
+- Complex nested expressions: `(A + B) * (C - D)`
+- User-defined functions: `FN CALC(X, Y)`
+
+**Benefits**:
+1. **Performance**: Eliminates redundant computations
+2. **Optimization visibility**: Shows developers where code can be optimized
+3. **Suggested variable names**: Provides temporary variable names (T1#, T2#, etc.)
+4. **Safety**: Conservative analysis ensures correctness
+
+**CSE Report Format**:
+
+For each common subexpression, the report shows:
+- The expression being recomputed
+- Total number of computations
+- Line numbers where it appears
+- Variables used (for understanding invalidation)
+- Suggested temporary variable name
+
 ## Output Example
 
 ```
@@ -278,6 +356,23 @@ Constant Folding Optimizations:
   Line 70: (n + m) → 30
   Line 160: SQR(16.0) → 4
   Line 200: (((2.0 + 3.0) * 4.0) - 1.0) → 19
+
+Common Subexpression Elimination (CSE):
+  Found 2 common subexpression(s)
+
+  Expression: (a + b)
+    Computed 3 times total
+    First at line 20
+    Recomputed at lines: 30, 40
+    Variables used: A, B
+    Suggested temp variable: T1#
+
+  Expression: SQR(x)
+    Computed 3 times total
+    First at line 50
+    Recomputed at lines: 60, 70
+    Variables used: X
+    Suggested temp variable: T2#
 
 Required Compilation Switches:
   /E
