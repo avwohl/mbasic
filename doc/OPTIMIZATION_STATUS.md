@@ -551,6 +551,184 @@ This document tracks all optimizations implemented, planned, and possible for th
 
 ---
 
+### 22. Built-in Function Purity Analysis
+**Status:** ✅ Complete (Detection)
+**Location:** `src/semantic_analyzer.py` - `_is_pure_builtin_function()`, `_analyze_function_purity()`
+**What it does:**
+- Classifies all built-in functions as pure or impure
+- Tracks all function calls throughout the program
+- Identifies optimization opportunities based on purity
+- Warns about impure functions that limit optimizations
+
+**Pure Functions (can be optimized):**
+- **Math**: ABS, SIN, COS, TAN, ATN, EXP, LOG, SQR, INT, FIX, SGN
+- **Type conversion**: CINT, CSNG, CDBL
+- **String**: LEN, ASC, VAL, INSTR, CHR, STR, SPACE, STRING, HEX, OCT, LEFT, RIGHT, MID
+- **Binary conversion**: CVI, CVS, CVD, MKI, MKS, MKD
+
+**Impure Functions (cannot be optimized):**
+- **Random**: RND - non-deterministic, maintains state
+- **I/O**: EOF, LOC, LOF - file operations, stateful
+- **Input**: INKEY, INPUT - reads user input, non-deterministic
+- **Hardware**: INP, PEEK, USR - I/O ports, memory, machine code
+- **Screen**: POS - cursor position, stateful
+
+**Algorithm:**
+- Maintains comprehensive classification of all MBASIC built-in functions
+- Recursively analyzes all statements and expressions for function calls
+- Tracks call locations for each function
+- Reports optimization impact for pure vs impure calls
+
+**Examples:**
+```basic
+10 X = SIN(1.0) + COS(2.0)  ' Pure: can CSE, constant fold
+20 Y = RND * 100             ' Impure: cannot optimize
+30 Z = ABS(X)                ' Pure: can optimize
+40 IF RND > 0.5 THEN...      ' Impure: limits branch optimization
+```
+
+**Benefits:**
+- Enables more aggressive CSE for pure function calls
+- Allows constant folding of pure functions with constant arguments
+- Permits moving pure functions out of loops (if arguments loop-invariant)
+- Warns programmers about optimization limitations
+- Documents function behavior (deterministic vs non-deterministic)
+
+**Note:**
+- DEF FN user-defined functions are **always pure** (single expression, no side effects)
+- This optimization focuses on built-in functions only
+
+**TODO:** Actually leverage purity for more aggressive CSE and loop hoisting (needs code generation phase)
+
+---
+
+### 23. Array Bounds Analysis
+**Status:** ✅ Complete (Detection/Warning)
+**Location:** `src/semantic_analyzer.py` - `_analyze_array_bounds()`, `_check_array_access()`
+**What it does:**
+- Detects out-of-bounds array accesses with constant indices at compile time
+- Checks both read and write accesses
+- Validates against declared array dimensions
+- Respects OPTION BASE setting (0 or 1)
+- Works with multi-dimensional arrays
+
+**Algorithm:**
+- Recursively analyzes all statements and expressions
+- For each array access, attempts to evaluate subscript as constant
+- If constant, compares against declared bounds (lower and upper)
+- Reports violations with detailed error information
+
+**Detects:**
+- Indices below lower bound (0 or 1 depending on OPTION BASE)
+- Indices above declared upper bound
+- Violations in all contexts: assignments, expressions, INPUT, READ, IF conditions
+- Multi-dimensional array bounds violations (checks each dimension)
+
+**Examples:**
+```basic
+10 DIM A(10)
+20 LET A(11) = 100        ' ERROR: Index 11 > upper bound 10
+30 X = A(-1)              ' ERROR: Index -1 < lower bound 0
+40 LET A(5 + 6) = 50      ' ERROR: 5+6=11 > upper bound 10
+
+10 OPTION BASE 1
+20 DIM B(10)
+30 LET B(0) = 5           ' ERROR: Index 0 < lower bound 1
+
+10 DIM C(5, 10)
+20 LET C(6, 5) = 1        ' ERROR: First dimension 6 > bound 5
+30 LET C(3, 11) = 2       ' ERROR: Second dimension 11 > bound 10
+```
+
+**Benefits:**
+- Catches common programming errors at compile time
+- Prevents "Subscript out of range" runtime errors
+- Documents array access patterns
+- Helps programmers identify logic errors
+- Works with constant propagation to detect more errors
+
+**Limitations:**
+- Only detects violations with constant indices
+- Variable indices cannot be checked at compile time (unless constant-propagated)
+- Runtime bounds checking still needed for variable indices
+
+**Note:**
+- Works seamlessly with constant propagation and expression evaluation
+- If `I = 15` and array bound is 10, `A(I)` will be detected as out of bounds
+
+---
+
+### 24. Alias Analysis
+**Status:** ✅ Complete (Detection)
+**Location:** `src/semantic_analyzer.py` - `_analyze_aliases()`, `AliasInfo`
+**What it does:**
+- Detects potential aliasing between array elements and variables
+- Classifies aliases as "definite", "possible", or "none"
+- Tracks array access patterns throughout the program
+- Identifies when optimizations might be unsafe due to aliasing
+
+**Algorithm:**
+- Recursively analyzes all array accesses in statements and expressions
+- Creates pattern-based representations of array subscripts
+- Compares patterns to detect potential aliasing:
+  - **Definite alias**: Same constant index (e.g., A(5) and A(5))
+  - **Definite alias**: Same variable index (e.g., A(I) and A(I))
+  - **Possible alias**: Different variables that might equal (e.g., A(I) and A(J))
+  - **No alias**: Provably different constants (e.g., A(1) and A(2))
+- Reports impact on Common Subexpression Elimination and other optimizations
+
+**Examples:**
+```basic
+10 DIM A(10)
+20 LET A(5) = 10
+30 X = A(5)           ' Definite alias: A(5) and A(5)
+40 END
+
+10 DIM A(10)
+20 INPUT I
+30 LET A(I) = 10
+40 X = A(I) + 5       ' Definite alias: A(I) and A(I) (same variable)
+50 END
+
+10 DIM A(10)
+20 INPUT I, J
+30 LET A(I) = 10
+40 LET A(J) = 20      ' Possible alias: I and J might be equal
+50 END
+
+10 DIM A(10)
+20 LET A(1) = 10
+30 LET A(2) = 20      ' No alias: different constants
+40 END
+
+10 DIM B(5, 10)
+20 LET B(2, 3) = 100
+30 X = B(2, 3)        ' Definite alias: multi-dimensional array
+40 END
+```
+
+**Benefits:**
+- Identifies when CSE is safe (definite alias = can reuse, possible alias = cannot)
+- Warns about potential optimization barriers
+- Documents array access patterns
+- Helps understand data dependencies
+- Conservative analysis ensures correctness
+
+**Limitations:**
+- Pattern-based matching (doesn't solve subscript expressions algebraically)
+- Complex expressions like A(I+1) and A(J+1) may not be recognized as aliases
+- Treats different arrays as non-aliasing (correct for BASIC)
+- Conservative: "possible" aliasing prevents optimization even if unlikely
+
+**Note:**
+- Works with constant propagation to recognize more definite aliases
+- If `I = 5` and code accesses A(I) and A(5), both become A(5) via propagation
+- BASIC doesn't have pointers, so aliasing is simpler than C/C++
+
+**TODO:** Use alias information to enable/disable CSE more precisely (needs code generation phase)
+
+---
+
 ## 📋 READY TO IMPLEMENT NOW (Semantic Analysis Phase)
 
 These optimizations can be implemented in the semantic analyzer without requiring code generation:
@@ -669,37 +847,23 @@ These require actual code generation/transformation, not just analysis:
 
 ### Analysis Phase
 
-1. **Alias Analysis**
-   - Track which variables/arrays might refer to same memory
-   - BASIC doesn't have pointers, so limited applicability
-   - Mainly for array optimizations
-
-2. **Available Expression Analysis**
+1. **Available Expression Analysis**
    - More sophisticated than our current CSE
    - Track which expressions are computed on all paths
    - We do this partially but could be more comprehensive
 
-3. **Function Call Analysis**
-   - Detect pure functions (no side effects)
-   - Enable more aggressive CSE across function calls
-   - We handle DEF FN but could be more thorough
-
-4. **String Concatenation in Loops**
+2. **String Concatenation in Loops**
    - Detect string concatenation in loops
    - Eliminate temporary string allocations
    - Note: String constant pooling is already done
 
 ### Detection/Warning Phase
 
-5. **Array Bounds Analysis**
-   - Detect out-of-bounds array accesses at compile time
-   - We have dimensions; could check constant indices
-
-6. **Type-Based Optimizations**
+3. **Type-Based Optimizations**
    - BASIC has weak typing but could detect mismatches
    - Suggest INTEGER for loop counters (performance)
 
-7. **Memory Access Pattern Analysis**
+4. **Memory Access Pattern Analysis**
    - Detect non-sequential array access
    - Could suggest array layout changes
 
@@ -744,11 +908,14 @@ These require actual code generation/transformation, not just analysis:
 6. ✅ **Range Analysis** - DONE (Tracks value ranges, enables constant propagation)
 7. ✅ **Live Variable Analysis** - DONE (Detects dead writes, foundational for register allocation)
 8. ✅ **String Constant Pooling** - DONE (Detects duplicate strings, suggests pooling)
+9. ✅ **Built-in Function Purity Analysis** - DONE (Classifies pure vs impure, enables optimization)
+10. ✅ **Array Bounds Analysis** - DONE (Detects out-of-bounds access at compile time)
+11. ✅ **Alias Analysis** - DONE (Detects potential aliasing between array elements)
 
 ### Long Term (Code Generation Required)
-9. **Peephole Optimization** - Foundation for codegen
-10. **Register Allocation** - Core of codegen
-11. **Actual Code Motion** - Apply loop-invariant transformation
+12. **Peephole Optimization** - Foundation for codegen
+13. **Register Allocation** - Core of codegen
+14. **Actual Code Motion** - Apply loop-invariant transformation
 
 ---
 
@@ -773,13 +940,15 @@ These require actual code generation/transformation, not just analysis:
 - ✅ Range analysis - **Standard** (value range propagation)
 - ✅ Live variable analysis - **Standard** (backward dataflow, dead write detection)
 - ✅ String constant pooling - **Standard** (duplicate string detection, memory optimization)
+- ✅ Function purity analysis - **Standard** (pure/impure classification, optimization enabling)
+- ✅ Array bounds checking - **Standard** (compile-time bounds violation detection)
+- ✅ Alias analysis - **Standard** (array aliasing detection, optimization safety)
 
 ### What We're Missing (that modern compilers have)
 - ❌ SSA form - Not needed for BASIC's simplicity
 - ❌ Vectorization - Overkill for vintage target
 - ❌ Profile-guided optimization - No runtime feedback
 - ❌ Link-time optimization - Single-file programs
-- ❌ Alias analysis - Limited value (no pointers)
 
 ### What We Do Better (for BASIC)
 - ✅ Runtime constant propagation - More flexible than 1980 compiler
@@ -796,7 +965,7 @@ We've implemented a **strong foundation** of compiler optimizations that are:
 3. **Complete for analysis** - Detection and transformation done
 4. **Modern-quality analysis** - Comparable to modern compilers' semantic phase
 
-**Current Status: 21 optimizations implemented!**
+**Current Status: 24 optimizations implemented!**
 
 **Semantic analysis phase:** ✅ COMPLETE
 

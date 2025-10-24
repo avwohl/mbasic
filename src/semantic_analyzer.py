@@ -325,6 +325,36 @@ class StringConstantPool:
 
 
 @dataclass
+class BuiltinFunctionPurity:
+    """Information about built-in function purity for optimization"""
+    function_name: str
+    is_pure: bool  # True if function has no side effects and same inputs -> same outputs
+    reason: str  # Why it's pure or impure
+
+
+@dataclass
+class ArrayBoundsViolation:
+    """Information about a detected array bounds violation"""
+    line: int
+    array_name: str
+    dimension_index: int  # Which dimension (0-based)
+    subscript_value: Union[int, float]
+    lower_bound: int  # Valid lower bound
+    upper_bound: int  # Valid upper bound
+    access_type: str  # "read" or "write"
+
+
+@dataclass
+class AliasInfo:
+    """Information about potential aliasing between variables/arrays"""
+    var1: str
+    var2: str
+    alias_type: str  # "definite", "possible", "none"
+    reason: str  # Why they might alias
+    impact: str  # Impact on optimizations
+
+
+@dataclass
 class InductionVariable:
     """Information about an induction variable in a loop"""
     variable: str  # Variable name (e.g., "I")
@@ -758,6 +788,17 @@ class SemanticAnalyzer:
         self.string_pool: Dict[str, StringConstantPool] = {}  # string_value -> pool info
         self.string_pool_counter = 0  # For generating unique pool IDs
 
+        # Built-in function purity tracking
+        self.builtin_function_calls: Dict[str, List[int]] = {}  # func_name -> [line1, line2, ...]
+        self.impure_function_calls: List[Tuple[int, str, str]] = []  # (line, func_name, reason)
+
+        # Array bounds checking tracking
+        self.array_bounds_violations: List[ArrayBoundsViolation] = []
+
+        # Alias analysis tracking
+        self.alias_info: List[AliasInfo] = []
+        self.array_element_accesses: Dict[str, List[Tuple[int, str]]] = {}  # array_name -> [(line, access_pattern)]
+
     def analyze(self, program: ProgramNode) -> bool:
         """
         Analyze a program AST.
@@ -793,6 +834,15 @@ class SemanticAnalyzer:
 
             # Ninth pass: string constant pooling
             self._analyze_string_constants(program)
+
+            # Tenth pass: built-in function purity analysis
+            self._analyze_function_purity(program)
+
+            # Eleventh pass: array bounds checking
+            self._analyze_array_bounds(program)
+
+            # Twelfth pass: alias analysis
+            self._analyze_aliases(program)
 
             # Generate warnings for required compilation switches
             self._check_compilation_switches()
@@ -3773,6 +3823,470 @@ class SemanticAnalyzer:
                 for subscript in expr.subscripts:
                     self._collect_strings_from_expr(subscript, line_num, string_occurrences)
 
+    def _is_pure_builtin_function(self, func_name: str) -> Tuple[bool, str]:
+        """
+        Determine if a built-in function is pure (no side effects, deterministic).
+
+        Returns: (is_pure, reason)
+        """
+        # Normalize function name to uppercase
+        func_name = func_name.upper()
+
+        # IMPURE functions (have side effects or non-deterministic)
+        impure_functions = {
+            'RND': 'Random number generator - non-deterministic, maintains state',
+            'INKEY': 'Reads keyboard input - I/O operation, non-deterministic',
+            'INPUT': 'Reads user input - I/O operation, non-deterministic',
+            'EOF': 'Checks file status - I/O operation, stateful',
+            'LOC': 'Returns file position - I/O operation, stateful',
+            'LOF': 'Returns file length - I/O operation, stateful',
+            'INP': 'Reads from I/O port - I/O operation, side effects',
+            'PEEK': 'Reads memory - can have side effects (memory-mapped I/O)',
+            'USR': 'Calls machine language - unknown side effects',
+            'POS': 'Returns cursor position - stateful (depends on previous output)',
+        }
+
+        if func_name in impure_functions:
+            return False, impure_functions[func_name]
+
+        # PURE functions (deterministic, no side effects)
+        pure_functions = {
+            # Math functions
+            'ABS': 'Absolute value - pure mathematical function',
+            'SIN': 'Sine - pure mathematical function',
+            'COS': 'Cosine - pure mathematical function',
+            'TAN': 'Tangent - pure mathematical function',
+            'ATN': 'Arctangent - pure mathematical function',
+            'EXP': 'Exponential - pure mathematical function',
+            'LOG': 'Natural logarithm - pure mathematical function',
+            'SQR': 'Square root - pure mathematical function',
+            'INT': 'Integer truncation - pure mathematical function',
+            'FIX': 'Fix (truncate towards zero) - pure mathematical function',
+            'SGN': 'Sign function - pure mathematical function',
+            'CINT': 'Convert to integer - pure mathematical function',
+            'CSNG': 'Convert to single - pure type conversion',
+            'CDBL': 'Convert to double - pure type conversion',
+
+            # String functions
+            'ASC': 'ASCII value of character - pure function',
+            'VAL': 'String to number conversion - pure function',
+            'LEN': 'String length - pure function',
+            'LEFT': 'Left substring - pure function',
+            'RIGHT': 'Right substring - pure function',
+            'MID': 'Middle substring - pure function',
+            'CHR': 'Character from ASCII - pure function',
+            'STR': 'Number to string - pure function',
+            'SPACE': 'Generate spaces - pure function',
+            'STRING': 'Replicate character - pure function',
+            'INSTR': 'Find substring - pure function',
+            'HEX': 'Hexadecimal conversion - pure function',
+            'OCT': 'Octal conversion - pure function',
+
+            # Binary conversion functions
+            'CVI': 'Convert bytes to integer - pure function',
+            'CVS': 'Convert bytes to single - pure function',
+            'CVD': 'Convert bytes to double - pure function',
+            'MKI': 'Convert integer to bytes - pure function',
+            'MKS': 'Convert single to bytes - pure function',
+            'MKD': 'Convert double to bytes - pure function',
+        }
+
+        if func_name in pure_functions:
+            return True, pure_functions[func_name]
+
+        # Unknown function - assume impure to be safe
+        return False, 'Unknown function - assumed impure for safety'
+
+    def _analyze_function_purity(self, program: ProgramNode):
+        """Analyze all built-in function calls and track purity information"""
+        self.builtin_function_calls.clear()
+        self.impure_function_calls.clear()
+
+        # Walk through all lines and collect function calls
+        for line in program.lines:
+            for stmt in line.statements:
+                self._collect_function_calls_from_statement(stmt, line.line_number)
+
+    def _collect_function_calls_from_statement(self, stmt, line_num: int):
+        """Recursively collect function calls from a statement"""
+        if stmt is None:
+            return
+
+        from parser import (LetStatementNode, IfStatementNode, PrintStatementNode,
+                          ForStatementNode, InputStatementNode, DataStatementNode)
+
+        if isinstance(stmt, LetStatementNode):
+            self._collect_function_calls_from_expr(stmt.expression, line_num)
+
+        elif isinstance(stmt, IfStatementNode):
+            self._collect_function_calls_from_expr(stmt.condition, line_num)
+            # Process inline statements
+            if stmt.then_statements:
+                for then_stmt in stmt.then_statements:
+                    self._collect_function_calls_from_statement(then_stmt, line_num)
+            if stmt.else_statements:
+                for else_stmt in stmt.else_statements:
+                    self._collect_function_calls_from_statement(else_stmt, line_num)
+
+        elif isinstance(stmt, PrintStatementNode):
+            for expr in stmt.expressions:
+                if expr is not None:
+                    self._collect_function_calls_from_expr(expr, line_num)
+
+        elif isinstance(stmt, ForStatementNode):
+            self._collect_function_calls_from_expr(stmt.start_expr, line_num)
+            self._collect_function_calls_from_expr(stmt.end_expr, line_num)
+            if stmt.step_expr:
+                self._collect_function_calls_from_expr(stmt.step_expr, line_num)
+
+        elif isinstance(stmt, InputStatementNode):
+            if stmt.prompt:
+                self._collect_function_calls_from_expr(stmt.prompt, line_num)
+
+        elif isinstance(stmt, DataStatementNode):
+            for value_expr in stmt.values:
+                self._collect_function_calls_from_expr(value_expr, line_num)
+
+    def _collect_function_calls_from_expr(self, expr, line_num: int):
+        """Recursively collect function calls from an expression"""
+        if expr is None:
+            return
+
+        from parser import FunctionCallNode, BinaryOpNode, UnaryOpNode, VariableNode
+
+        if isinstance(expr, FunctionCallNode):
+            func_name = expr.name.upper()
+
+            # Track this function call
+            if func_name not in self.builtin_function_calls:
+                self.builtin_function_calls[func_name] = []
+            self.builtin_function_calls[func_name].append(line_num)
+
+            # Check purity
+            is_pure, reason = self._is_pure_builtin_function(func_name)
+            if not is_pure:
+                self.impure_function_calls.append((line_num, func_name, reason))
+
+            # Recursively check arguments
+            for arg in expr.arguments:
+                self._collect_function_calls_from_expr(arg, line_num)
+
+        elif isinstance(expr, BinaryOpNode):
+            self._collect_function_calls_from_expr(expr.left, line_num)
+            self._collect_function_calls_from_expr(expr.right, line_num)
+
+        elif isinstance(expr, UnaryOpNode):
+            self._collect_function_calls_from_expr(expr.operand, line_num)
+
+        elif isinstance(expr, VariableNode):
+            # Check subscripts
+            if expr.subscripts:
+                for subscript in expr.subscripts:
+                    self._collect_function_calls_from_expr(subscript, line_num)
+
+    def _analyze_array_bounds(self, program: ProgramNode):
+        """
+        Analyze array accesses and detect out-of-bounds accesses with constant indices.
+        """
+        self.array_bounds_violations.clear()
+
+        # Walk through all lines and check array accesses
+        for line in program.lines:
+            for stmt in line.statements:
+                self._check_array_bounds_in_statement(stmt, line.line_number)
+
+    def _check_array_bounds_in_statement(self, stmt, line_num: int):
+        """Recursively check array bounds in a statement"""
+        if stmt is None:
+            return
+
+        from parser import (LetStatementNode, IfStatementNode, PrintStatementNode,
+                          ForStatementNode, InputStatementNode, DataStatementNode,
+                          ReadStatementNode, DimStatementNode)
+
+        if isinstance(stmt, LetStatementNode):
+            # Check LHS (if it's an array write)
+            if isinstance(stmt.variable, VariableNode) and stmt.variable.subscripts:
+                self._check_array_access(stmt.variable, line_num, "write")
+            # Check RHS
+            self._check_array_bounds_in_expr(stmt.expression, line_num)
+
+        elif isinstance(stmt, IfStatementNode):
+            self._check_array_bounds_in_expr(stmt.condition, line_num)
+            # Process inline statements
+            if stmt.then_statements:
+                for then_stmt in stmt.then_statements:
+                    self._check_array_bounds_in_statement(then_stmt, line_num)
+            if stmt.else_statements:
+                for else_stmt in stmt.else_statements:
+                    self._check_array_bounds_in_statement(else_stmt, line_num)
+
+        elif isinstance(stmt, PrintStatementNode):
+            for expr in stmt.expressions:
+                if expr is not None:
+                    self._check_array_bounds_in_expr(expr, line_num)
+
+        elif isinstance(stmt, ForStatementNode):
+            self._check_array_bounds_in_expr(stmt.start_expr, line_num)
+            self._check_array_bounds_in_expr(stmt.end_expr, line_num)
+            if stmt.step_expr:
+                self._check_array_bounds_in_expr(stmt.step_expr, line_num)
+
+        elif isinstance(stmt, InputStatementNode):
+            # Check array variables being assigned by INPUT
+            for var in stmt.variables:
+                if isinstance(var, VariableNode) and var.subscripts:
+                    self._check_array_access(var, line_num, "write")
+
+        elif isinstance(stmt, ReadStatementNode):
+            # Check array variables being assigned by READ
+            for var in stmt.variables:
+                if isinstance(var, VariableNode) and var.subscripts:
+                    self._check_array_access(var, line_num, "write")
+
+        elif isinstance(stmt, DataStatementNode):
+            for value_expr in stmt.values:
+                self._check_array_bounds_in_expr(value_expr, line_num)
+
+    def _check_array_bounds_in_expr(self, expr, line_num: int):
+        """Recursively check array bounds in an expression"""
+        if expr is None:
+            return
+
+        from parser import FunctionCallNode, BinaryOpNode, UnaryOpNode, VariableNode
+
+        if isinstance(expr, VariableNode):
+            if expr.subscripts:
+                self._check_array_access(expr, line_num, "read")
+                # Also check subscript expressions themselves
+                for subscript in expr.subscripts:
+                    self._check_array_bounds_in_expr(subscript, line_num)
+
+        elif isinstance(expr, FunctionCallNode):
+            for arg in expr.arguments:
+                self._check_array_bounds_in_expr(arg, line_num)
+
+        elif isinstance(expr, BinaryOpNode):
+            self._check_array_bounds_in_expr(expr.left, line_num)
+            self._check_array_bounds_in_expr(expr.right, line_num)
+
+        elif isinstance(expr, UnaryOpNode):
+            self._check_array_bounds_in_expr(expr.operand, line_num)
+
+    def _check_array_access(self, var_node, line_num: int, access_type: str):
+        """Check if an array access with constant indices is within bounds"""
+        from parser import VariableNode
+
+        if not isinstance(var_node, VariableNode) or not var_node.subscripts:
+            return
+
+        array_name = var_node.name.upper()
+
+        # Check if this is a declared array
+        if array_name not in self.symbols.variables:
+            return
+
+        var_info = self.symbols.variables[array_name]
+        if not var_info.dimensions:
+            return  # Not an array
+
+        # Check each subscript
+        for dim_idx, subscript_expr in enumerate(var_node.subscripts):
+            # Try to evaluate the subscript as a constant
+            subscript_value = self.evaluator.evaluate(subscript_expr)
+
+            if subscript_value is not None:
+                # We have a constant subscript - check bounds
+                if dim_idx < len(var_info.dimensions):
+                    upper_bound = var_info.dimensions[dim_idx]
+                    lower_bound = self.array_base
+
+                    # Check if out of bounds
+                    if subscript_value < lower_bound or subscript_value > upper_bound:
+                        violation = ArrayBoundsViolation(
+                            line=line_num,
+                            array_name=array_name,
+                            dimension_index=dim_idx,
+                            subscript_value=subscript_value,
+                            lower_bound=lower_bound,
+                            upper_bound=upper_bound,
+                            access_type=access_type
+                        )
+                        self.array_bounds_violations.append(violation)
+
+    def _analyze_aliases(self, program: ProgramNode):
+        """
+        Analyze potential aliasing between variables and array elements.
+
+        In BASIC, aliasing is limited since there are no pointers, but we can detect:
+        1. Array elements that might refer to the same memory (A(I) and A(J))
+        2. Overlapping array accesses that prevent optimization
+        3. DEF FN parameter shadowing
+        """
+        self.alias_info.clear()
+        self.array_element_accesses.clear()
+
+        # Collect all array element accesses
+        for line in program.lines:
+            for stmt in line.statements:
+                self._collect_array_accesses_from_statement(stmt, line.line_number)
+
+        # Analyze potential aliasing in array accesses
+        for array_name, accesses in self.array_element_accesses.items():
+            if len(accesses) < 2:
+                continue  # Need at least 2 accesses to have aliasing
+
+            # Check for potential overlapping accesses
+            for i in range(len(accesses)):
+                for j in range(i + 1, len(accesses)):
+                    line1, pattern1 = accesses[i]
+                    line2, pattern2 = accesses[j]
+
+                    # Determine if they might alias
+                    alias_type, reason = self._check_array_alias(array_name, pattern1, pattern2)
+
+                    if alias_type != "none":
+                        impact = self._get_alias_impact(alias_type)
+                        alias = AliasInfo(
+                            var1=f"{array_name}{pattern1}",
+                            var2=f"{array_name}{pattern2}",
+                            alias_type=alias_type,
+                            reason=reason,
+                            impact=impact
+                        )
+                        self.alias_info.append(alias)
+
+    def _collect_array_accesses_from_statement(self, stmt, line_num: int):
+        """Collect array access patterns from a statement"""
+        if stmt is None:
+            return
+
+        from parser import (LetStatementNode, IfStatementNode, PrintStatementNode,
+                          ForStatementNode)
+
+        if isinstance(stmt, LetStatementNode):
+            # Check LHS
+            if isinstance(stmt.variable, VariableNode) and stmt.variable.subscripts:
+                self._record_array_access(stmt.variable, line_num)
+            # Check RHS
+            self._collect_array_accesses_from_expr(stmt.expression, line_num)
+
+        elif isinstance(stmt, IfStatementNode):
+            self._collect_array_accesses_from_expr(stmt.condition, line_num)
+            if stmt.then_statements:
+                for then_stmt in stmt.then_statements:
+                    self._collect_array_accesses_from_statement(then_stmt, line_num)
+            if stmt.else_statements:
+                for else_stmt in stmt.else_statements:
+                    self._collect_array_accesses_from_statement(else_stmt, line_num)
+
+        elif isinstance(stmt, PrintStatementNode):
+            for expr in stmt.expressions:
+                if expr is not None:
+                    self._collect_array_accesses_from_expr(expr, line_num)
+
+        elif isinstance(stmt, ForStatementNode):
+            self._collect_array_accesses_from_expr(stmt.start_expr, line_num)
+            self._collect_array_accesses_from_expr(stmt.end_expr, line_num)
+            if stmt.step_expr:
+                self._collect_array_accesses_from_expr(stmt.step_expr, line_num)
+
+    def _collect_array_accesses_from_expr(self, expr, line_num: int):
+        """Collect array accesses from an expression"""
+        if expr is None:
+            return
+
+        from parser import FunctionCallNode, BinaryOpNode, UnaryOpNode, VariableNode
+
+        if isinstance(expr, VariableNode):
+            if expr.subscripts:
+                self._record_array_access(expr, line_num)
+                # Also check subscript expressions
+                for subscript in expr.subscripts:
+                    self._collect_array_accesses_from_expr(subscript, line_num)
+
+        elif isinstance(expr, FunctionCallNode):
+            for arg in expr.arguments:
+                self._collect_array_accesses_from_expr(arg, line_num)
+
+        elif isinstance(expr, BinaryOpNode):
+            self._collect_array_accesses_from_expr(expr.left, line_num)
+            self._collect_array_accesses_from_expr(expr.right, line_num)
+
+        elif isinstance(expr, UnaryOpNode):
+            self._collect_array_accesses_from_expr(expr.operand, line_num)
+
+    def _record_array_access(self, var_node, line_num: int):
+        """Record an array access pattern"""
+        from parser import VariableNode
+
+        if not isinstance(var_node, VariableNode) or not var_node.subscripts:
+            return
+
+        array_name = var_node.name.upper()
+
+        # Build access pattern string
+        subscript_strs = []
+        for subscript in var_node.subscripts:
+            # Try to get a meaningful pattern
+            val = self.evaluator.evaluate(subscript)
+            if val is not None:
+                subscript_strs.append(str(int(val)))
+            elif isinstance(subscript, VariableNode):
+                subscript_strs.append(subscript.name.upper())
+            else:
+                subscript_strs.append("?")
+
+        pattern = f"({', '.join(subscript_strs)})"
+
+        if array_name not in self.array_element_accesses:
+            self.array_element_accesses[array_name] = []
+        self.array_element_accesses[array_name].append((line_num, pattern))
+
+    def _check_array_alias(self, array_name: str, pattern1: str, pattern2: str) -> Tuple[str, str]:
+        """
+        Check if two array access patterns might alias.
+        Returns: (alias_type, reason)
+        """
+        # Same pattern = definite alias
+        if pattern1 == pattern2:
+            return ("definite", f"Same subscript pattern: {pattern1}")
+
+        # Extract subscripts from patterns
+        sub1 = pattern1.strip("()").split(", ")
+        sub2 = pattern2.strip("()").split(", ")
+
+        if len(sub1) != len(sub2):
+            return ("none", "Different number of dimensions")
+
+        # Check each dimension
+        for i, (s1, s2) in enumerate(zip(sub1, sub2)):
+            # Both are constants
+            if s1.lstrip('-').isdigit() and s2.lstrip('-').isdigit():
+                if s1 != s2:
+                    return ("none", f"Different constant indices in dimension {i+1}: {s1} vs {s2}")
+            # At least one is variable
+            elif not s1.lstrip('-').isdigit() or not s2.lstrip('-').isdigit():
+                # Variable indices - might alias
+                if s1 == s2:
+                    # Same variable
+                    return ("definite", f"Same variable in subscript: {s1}")
+                else:
+                    # Different variables - might still alias
+                    return ("possible", f"Different variables in dimension {i+1}: {s1} vs {s2} (could have same value)")
+
+        # All constant dimensions matched
+        return ("definite", "All subscripts are identical")
+
+    def _get_alias_impact(self, alias_type: str) -> str:
+        """Determine the impact of aliasing on optimizations"""
+        if alias_type == "definite":
+            return "Cannot CSE across writes to this location; must reload values"
+        elif alias_type == "possible":
+            return "Conservative: must assume aliasing; limits CSE and loop optimizations"
+        else:
+            return "No impact"
+
     def _check_compilation_switches(self):
         """Generate warnings for required compilation switches"""
         switches = self.flags.get_required_switches()
@@ -4211,6 +4725,120 @@ class SemanticAnalyzer:
             lines.append(f"\nRequired Compilation Switches:")
             for switch in switches:
                 lines.append(f"  {switch}")
+
+        # Built-in Function Purity Analysis
+        if self.builtin_function_calls or self.impure_function_calls:
+            lines.append(f"\nBuilt-in Function Purity Analysis:")
+
+            # Summary
+            total_calls = sum(len(calls) for calls in self.builtin_function_calls.values())
+            pure_calls = total_calls - len(self.impure_function_calls)
+            lines.append(f"  Total built-in function calls: {total_calls}")
+            lines.append(f"  Pure function calls: {pure_calls}")
+            lines.append(f"  Impure function calls: {len(self.impure_function_calls)}")
+            lines.append("")
+
+            # List all function calls
+            if self.builtin_function_calls:
+                lines.append("  Functions used:")
+                sorted_funcs = sorted(self.builtin_function_calls.items())
+                for func_name, call_lines in sorted_funcs:
+                    is_pure, reason = self._is_pure_builtin_function(func_name)
+                    purity_str = "PURE" if is_pure else "IMPURE"
+                    lines.append(f"    {func_name}: {purity_str} - {len(call_lines)} call(s)")
+                    if not is_pure:
+                        lines.append(f"      Reason: {reason}")
+                        lines.append(f"      Lines: {', '.join(map(str, call_lines))}")
+                lines.append("")
+
+            # Impure function warnings
+            if self.impure_function_calls:
+                lines.append("  ⚠ Impure Function Calls Detected:")
+                lines.append("  These functions have side effects or are non-deterministic,")
+                lines.append("  which limits optimization opportunities (CSE, constant folding).")
+                lines.append("")
+
+                # Group by function name
+                impure_by_func: Dict[str, List[int]] = {}
+                for line_num, func_name, reason in self.impure_function_calls:
+                    if func_name not in impure_by_func:
+                        impure_by_func[func_name] = []
+                    impure_by_func[func_name].append(line_num)
+
+                for func_name in sorted(impure_by_func.keys()):
+                    call_lines = impure_by_func[func_name]
+                    is_pure, reason = self._is_pure_builtin_function(func_name)
+                    lines.append(f"    {func_name}:")
+                    lines.append(f"      Reason: {reason}")
+                    lines.append(f"      Called at lines: {', '.join(map(str, sorted(call_lines)))}")
+                    lines.append(f"      Impact: Cannot CSE or constant-fold expressions containing {func_name}()")
+                    lines.append("")
+
+            # Optimization impact
+            if pure_calls > 0:
+                lines.append("  ✓ Optimization Opportunities:")
+                lines.append(f"    • {pure_calls} pure function call(s) can be:")
+                lines.append(f"      - Common subexpression eliminated (if called with same arguments)")
+                lines.append(f"      - Constant folded (if all arguments are constants)")
+                lines.append(f"      - Moved out of loops (if arguments don't change in loop)")
+                lines.append("")
+
+        # Alias Analysis
+        if self.alias_info:
+            lines.append(f"\nAlias Analysis:")
+            lines.append(f"  Found {len(self.alias_info)} potential alias(es)")
+            lines.append("")
+
+            # Group by alias type
+            definite_aliases = [a for a in self.alias_info if a.alias_type == "definite"]
+            possible_aliases = [a for a in self.alias_info if a.alias_type == "possible"]
+
+            if definite_aliases:
+                lines.append(f"  Definite Aliases ({len(definite_aliases)}):")
+                for alias in definite_aliases:
+                    lines.append(f"    {alias.var1} and {alias.var2}")
+                    lines.append(f"      Reason: {alias.reason}")
+                    lines.append(f"      Impact: {alias.impact}")
+                    lines.append("")
+
+            if possible_aliases:
+                lines.append(f"  Possible Aliases ({len(possible_aliases)}):")
+                for alias in possible_aliases:
+                    lines.append(f"    {alias.var1} and {alias.var2}")
+                    lines.append(f"      Reason: {alias.reason}")
+                    lines.append(f"      Impact: {alias.impact}")
+                    lines.append("")
+
+            # Summary of impact
+            if self.alias_info:
+                lines.append("  Optimization Impact:")
+                lines.append(f"    • {len(definite_aliases)} definite alias(es) require conservative handling")
+                lines.append(f"    • {len(possible_aliases)} possible alias(es) require worst-case assumptions")
+                lines.append("    • Aliasing prevents aggressive CSE and loop optimizations")
+                lines.append("    • Use distinct variables or constant indices to avoid aliasing")
+                lines.append("")
+
+        # Array Bounds Violations
+        if self.array_bounds_violations:
+            lines.append(f"\nArray Bounds Analysis:")
+            lines.append(f"  Found {len(self.array_bounds_violations)} bounds violation(s)")
+            lines.append("")
+
+            # Group by severity and type
+            for violation in sorted(self.array_bounds_violations, key=lambda v: v.line):
+                dim_suffix = "" if violation.dimension_index == 0 else f" (dimension {violation.dimension_index + 1})"
+                lines.append(f"  ⚠ Line {violation.line}: {violation.array_name}{dim_suffix}")
+                lines.append(f"      Access type: {violation.access_type}")
+                lines.append(f"      Index value: {violation.subscript_value}")
+                lines.append(f"      Valid range: [{violation.lower_bound}, {violation.upper_bound}]")
+
+                if violation.subscript_value < violation.lower_bound:
+                    lines.append(f"      Error: Index {violation.subscript_value} is below lower bound {violation.lower_bound}")
+                else:
+                    lines.append(f"      Error: Index {violation.subscript_value} exceeds upper bound {violation.upper_bound}")
+
+                lines.append(f"      Impact: Will cause runtime error (Subscript out of range)")
+                lines.append("")
 
         # Warnings
         if self.warnings:
