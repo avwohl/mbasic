@@ -68,6 +68,7 @@ class CursesBackend(UIBackend):
 
         # Menu system
         self.menu_active = False
+        self.menu_dropdown_open = False  # Whether dropdown is showing
         self.current_menu = 0  # Which menu is selected (File=0, Edit=1, Run=2, Help=3)
         self.current_menu_item = 0  # Which item in current menu
         self.menus = [
@@ -166,32 +167,43 @@ class CursesBackend(UIBackend):
                 if self.menu_active:
                     # Exit menu mode
                     self.menu_active = False
+                    self.menu_dropdown_open = False
                     self.status_message = "Ready"
                 else:
                     # Enter menu mode
                     self.menu_active = True
+                    self.menu_dropdown_open = False
                     self.current_menu = 0
                     self.current_menu_item = 0
             # Menu navigation
             elif self.menu_active and key == curses.KEY_LEFT:
-                # Previous menu
+                # Previous menu - close dropdown
+                self.menu_dropdown_open = False
                 self.current_menu = (self.current_menu - 1) % len(self.menus)
                 self.current_menu_item = 0
             elif self.menu_active and key == curses.KEY_RIGHT:
-                # Next menu
+                # Next menu - close dropdown
+                self.menu_dropdown_open = False
                 self.current_menu = (self.current_menu + 1) % len(self.menus)
                 self.current_menu_item = 0
             elif self.menu_active and key == curses.KEY_UP:
-                # Previous menu item
-                num_items = len(self.menus[self.current_menu]['items'])
-                self.current_menu_item = (self.current_menu_item - 1) % num_items
+                if self.menu_dropdown_open:
+                    # Previous menu item
+                    num_items = len(self.menus[self.current_menu]['items'])
+                    self.current_menu_item = (self.current_menu_item - 1) % num_items
             elif self.menu_active and key == curses.KEY_DOWN:
-                # Next menu item
-                num_items = len(self.menus[self.current_menu]['items'])
-                self.current_menu_item = (self.current_menu_item + 1) % num_items
+                if self.menu_dropdown_open:
+                    # Next menu item
+                    num_items = len(self.menus[self.current_menu]['items'])
+                    self.current_menu_item = (self.current_menu_item + 1) % num_items
+                else:
+                    # Open dropdown on first down press
+                    self.menu_dropdown_open = True
+                    self.current_menu_item = 0
             elif self.menu_active and (key == ord('\n') or key == curses.KEY_ENTER or key == 10):
-                # Execute menu item
-                self._execute_menu_item()
+                # Execute menu item (only if dropdown is open)
+                if self.menu_dropdown_open:
+                    self._execute_menu_item()
             # Help: Ctrl+P
             elif key == 16:  # Ctrl+P
                 self._show_help()
@@ -338,8 +350,8 @@ class CursesBackend(UIBackend):
 
             x += len(title) + 1
 
-        # If menu is active and dropped down, draw menu items
-        if self.menu_active:
+        # If menu dropdown is open, draw menu items
+        if self.menu_active and self.menu_dropdown_open:
             self._draw_menu_dropdown()
 
     def _draw_menu_dropdown(self):
@@ -388,8 +400,10 @@ class CursesBackend(UIBackend):
         # If there's an error or long message, show ESC hint
         if "error" in self.status_message.lower() or len(self.status_message) > 40:
             status_text = f" MBASIC | {self.status_message} | [ESC to clear]"
+        elif self.menu_active and self.menu_dropdown_open:
+            status_text = f" MBASIC | Menu: ↑/↓ select item  Enter=execute  ESC=cancel"
         elif self.menu_active:
-            status_text = f" MBASIC | Menu: ←/→ select  ↑/↓ navigate  Enter=execute  ESC=cancel"
+            status_text = f" MBASIC | Menu: ←/→ select menu  ↓=open  ESC=cancel"
         else:
             status_text = f" MBASIC | {self.status_message} | ESC=Menu ^P=Help ^R=Run ^S=Save ^O=Load Q=Quit"
 
@@ -718,6 +732,7 @@ class CursesBackend(UIBackend):
 
         # Exit menu mode
         self.menu_active = False
+        self.menu_dropdown_open = False
 
         # Handle special cases
         if item_name == 'Quit':
