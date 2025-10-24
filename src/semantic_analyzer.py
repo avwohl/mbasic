@@ -231,12 +231,50 @@ class ConstantEvaluator:
             elif op == 'NOT':
                 return ~int(operand)
 
-        # Try to evaluate function calls (for deterministic math functions)
+        # Try to evaluate function calls (for deterministic math functions and DEF FN)
         if isinstance(expr, FunctionCallNode):
             return self._evaluate_function(expr)
 
         # Cannot evaluate - contains variables or unknown expressions
         return None
+
+    def _evaluate_def_fn(self, func_name: str, args: List[Union[int, float, str]]) -> Optional[Union[int, float, str]]:
+        """
+        Evaluate a user-defined DEF FN function at compile time.
+
+        Args:
+            func_name: The function name (e.g., "FNDOUBLE")
+            args: List of evaluated argument values
+
+        Returns:
+            The evaluated result, or None if it cannot be evaluated
+        """
+        # Look up the function in the symbol table
+        if func_name not in self.symbols.functions:
+            return None
+
+        func_info = self.symbols.functions[func_name]
+
+        # Check that we have the right number of arguments
+        if len(args) != len(func_info.parameters):
+            return None
+
+        # Save the current runtime constants state
+        saved_constants = self.runtime_constants.copy()
+
+        try:
+            # Bind the arguments to the parameters
+            for param_name, arg_value in zip(func_info.parameters, args):
+                self.runtime_constants[param_name] = arg_value
+
+            # Evaluate the function body expression
+            result = self.evaluate(func_info.body_expr)
+
+            return result
+
+        finally:
+            # Restore the original runtime constants state
+            self.runtime_constants = saved_constants
 
     def _evaluate_function(self, func_call: FunctionCallNode) -> Optional[Union[int, float, str]]:
         """
@@ -264,6 +302,20 @@ class ConstantEvaluator:
         import math
 
         func_name = func_call.name.upper()
+
+        # Check if it's a user-defined DEF FN function
+        if func_name.startswith('FN'):
+            # Evaluate all arguments first
+            args = []
+            if func_call.arguments:
+                for arg in func_call.arguments:
+                    arg_val = self.evaluate(arg)
+                    if arg_val is None:
+                        return None  # Cannot evaluate if any argument is non-constant
+                    args.append(arg_val)
+
+            # Try to evaluate the DEF FN function
+            return self._evaluate_def_fn(func_name, args)
 
         # Non-deterministic functions - cannot evaluate at compile time
         # Random/Time functions

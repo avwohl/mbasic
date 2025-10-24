@@ -53,10 +53,14 @@ Evaluates expressions at compile time when all operands are constants or known-c
 - Logical: `AND`, `OR`, `XOR`, `EQV`, `IMP`
 - Unary: `-`, `+`, `NOT`
 - **Math Functions**: `ABS`, `SQR`, `SIN`, `COS`, `TAN`, `ATN`, `EXP`, `LOG`, `INT`, `FIX`, `SGN`, `CINT`, `CSNG`, `CDBL`
-  - **Excluded (non-deterministic)**:
-    - Random/Time: `RND`, `TIMER`
-    - File I/O: `EOF`, `LOC`, `LOF`, `INPUT$`, `INKEY$`
-    - System: `PEEK`, `INP`, `FRE`, `POS`, `CSRLIN`, `VARPTR`
+- **User-Defined Functions**: `DEF FN` functions can be evaluated if all arguments are constants
+  - Supports nested function calls
+  - Can use built-in math functions in the body
+  - Parameters are bound to constant values during evaluation
+- **Excluded (non-deterministic)**:
+  - Random/Time: `RND`, `TIMER`
+  - File I/O: `EOF`, `LOC`, `LOF`, `INPUT$`, `INKEY$`
+  - System: `PEEK`, `INP`, `FRE`, `POS`, `CSRLIN`, `VARPTR`
 
 **Examples**:
 ```basic
@@ -67,6 +71,9 @@ N% = 5
 DIM D(N%*4)            ' Evaluates to D(20)
 DIM E(INT(SQR(100)))   ' Evaluates to E(10)
 DIM F(ABS(-25))        ' Evaluates to F(25)
+
+DEF FN DOUBLE(X) = X * 2
+DIM G(FN DOUBLE(5))    ' Evaluates to G(10)
 ```
 
 ### 3. Compile-Time IF/THEN/ELSE Evaluation
@@ -409,7 +416,45 @@ These functions are excluded because their values:
 - May change during program execution (timer, file position)
 - Depend on external state (files, hardware ports, system memory)
 
-### Example 8: Compile-Time Configuration
+### Example 8: User-Defined Function Evaluation
+
+```basic
+10 REM User-defined functions with compile-time evaluation
+20 DEF FN DOUBLE(X) = X * 2
+30 DEF FN SQUARE(Y) = Y * Y
+40 DEF FN AREA(R) = INT(3.14159 * R * R)
+50 DEF FN HYPOTENUSE(A, B) = INT(SQR(A*A + B*B))
+60 DEF FN COMBO(Z) = FN DOUBLE(Z) + FN SQUARE(Z)
+70 REM Use functions with constants
+80 SIZE1 = FN DOUBLE(10)
+90 SIZE2 = FN AREA(5)
+100 SIZE3 = FN HYPOTENUSE(3, 4)
+110 SIZE4 = FN COMBO(6)
+120 DIM A(SIZE1), B(SIZE2), C(SIZE3), D(SIZE4)
+```
+
+**Analysis**:
+- Line 80: `FN DOUBLE(10)` = 20
+- Line 90: `FN AREA(5)` = INT(3.14159 * 5 * 5) = 78
+- Line 100: `FN HYPOTENUSE(3, 4)` = INT(SQR(9 + 16)) = 5
+- Line 110: `FN COMBO(6)` = FN DOUBLE(6) + FN SQUARE(6) = 12 + 36 = 48
+- Line 120: Creates `A(20)`, `B(78)`, `C(5)`, `D(48)`
+
+**Key Features**:
+- DEF FN functions are evaluated if all arguments are constant
+- Nested function calls work (COMBO calls DOUBLE and SQUARE)
+- Can use built-in math functions (SQR, INT)
+- Parameters are substituted with constant values during evaluation
+
+**Limitations**:
+```basic
+10 DEF FN BADSUM(X) = X + GLOBAL
+20 INPUT N
+30 SIZE = FN BADSUM(N)
+40 DIM A(SIZE)          ' ERROR - N is not constant (from INPUT)
+```
+
+### Example 9: Compile-Time Configuration
 
 ```basic
 10 REM Compile-time configuration
