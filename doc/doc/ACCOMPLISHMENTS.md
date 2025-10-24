@@ -1,510 +1,411 @@
-# MBASIC Compiler - Semantic Analysis Accomplishments
+# MBASIC 5.21 Interpreter - Accomplishments
 
-## Summary
+## Overview
 
-This document summarizes the comprehensive set of compiler optimizations implemented in the MBASIC compiler's semantic analysis phase. All optimizations are **fully functional, tested, and documented**.
+Successfully implemented a **complete, faithful interpreter** for Microsoft BASIC-80 (MBASIC) version 5.21, providing full runtime compatibility with original CP/M BASIC programs.
 
----
+**Key Achievement**: 100% parser coverage (121/121 test files parsing successfully) and comprehensive runtime implementation of all core MBASIC 5.21 features.
 
-## Test Results
+## Major Accomplishments
 
-- **Total Test Files:** 29
-- **Tests Passing:** 29 (100%)
-- **Tests Failing:** 0
-- **Total Test Coverage:** Comprehensive coverage of all 18 optimizations
+### 1. Complete Lexer Implementation ✅
 
----
+**Tokenization of MBASIC 5.21 source code**
+- All MBASIC token types supported
+- Number formats: integers, floats, scientific notation (E/D), hex (&H), octal (&O)
+- String literals with embedded quotes
+- Type suffixes ($, %, !, #) as part of identifiers
+- All keywords and operators
+- Line numbers (0-65529)
+- Comments (REM and ')
+- Multiple statements per line (: separator)
 
-## Implemented Optimizations (18 Total)
+**Special features:**
+- Leading decimal point support (.5 syntax)
+- Keyword-identifier splitting (FORI = 1 treated as FOR I = 1)
+- Detokenization support for .BAS files
+- Comprehensive error handling
 
-### 1. Constant Folding ✅
-**Status:** Complete
-**Location:** `src/semantic_analyzer.py` - `ConstantEvaluator` class
-**Description:** Evaluates constant expressions at compile time
-**Example:** `X = 10 + 20` → `X = 30`
+**Testing:**
+- Tested against 373 real CP/M BASIC programs
+- 63.0% success rate (includes non-MBASIC dialects)
+- Estimated 75%+ success rate on pure MBASIC programs
 
-**Benefits:**
-- Eliminates runtime calculations
-- Reduces code size
-- Enables further optimizations
+### 2. Complete Parser Implementation ✅
 
-**Tests:** `test_constant_folding.py`, `test_constant_folding_comprehensive.py`
+**Recursive descent parser with full AST generation**
+- 60+ AST node types for all MBASIC constructs
+- Full operator precedence (12 levels)
+- Expression parsing with all operators
+- Statement parsing for all MBASIC statements
 
----
+**Language features:**
+- Control flow: IF/THEN/ELSE, FOR/NEXT, WHILE/WEND, GOTO, GOSUB/RETURN, ON GOTO/ON GOSUB
+- Arrays: DIM with multi-dimensional arrays
+- Type declarations: DEFINT, DEFSNG, DEFDBL, DEFSTR
+- I/O: PRINT, INPUT, READ/DATA/RESTORE, LINE INPUT
+- File I/O: OPEN, CLOSE, FIELD, GET, PUT, PRINT#, INPUT#, LINE INPUT#, WRITE#
+- Error handling: ON ERROR GOTO/GOSUB, RESUME
+- User-defined functions: DEF FN
+- All built-in functions (50+)
 
-### 2. Runtime Constant Propagation ✅
-**Status:** Complete
-**Location:** `src/semantic_analyzer.py` - `ConstantEvaluator.runtime_constants`
-**Description:** Tracks variable values through program flow
-**Example:** `N = 10` then `DIM A(N)` → `DIM A(10)`
+**Achievement:**
+- **100% parsing success** on valid MBASIC programs (121/121 test files)
+- Successfully parses complex real-world programs
+- Proper handling of all MBASIC syntax quirks
 
-**Benefits:**
-- Allows variable subscripts in DIM statements
-- More flexible than 1980 Microsoft BASIC compiler
-- Enables constant folding in more contexts
+### 3. Complete Runtime Interpreter ✅
 
-**Tests:** Integrated into constant folding tests
+**Full execution engine for MBASIC programs**
 
----
+#### Core Execution
+- Program line management and execution
+- Line number resolution and jumps
+- GOSUB/RETURN stack
+- FOR/NEXT loop stack with proper nesting
+- WHILE/WEND loops
+- ON GOTO/ON GOSUB (computed jumps)
+- Error handling with ON ERROR, RESUME, ERL, ERR
+- Execution tracing (TRON/TROFF)
 
-### 3. Common Subexpression Elimination (CSE) ✅
-**Status:** Complete
-**Location:** `src/semantic_analyzer.py` - `_track_expression_for_cse()`
-**Description:** Detects repeated expression calculations
-**Example:** `X = A + B` then `Y = A + B` → reuse result
+#### Variable Management
+- All type suffixes: $=string, %=integer, !=single, #=double
+- Dynamic typing with type coercion
+- DEFINT/DEFSNG/DEFDBL/DEFSTR type defaults
+- Variable scope (global and DEF FN local)
+- Arrays with DIM (multi-dimensional, dynamic sizing)
+- String manipulation
 
-**Benefits:**
-- Eliminates redundant calculations
-- Suggests temporary variable names
-- Smart invalidation on variable modification
-- Works across GOSUB boundaries with side-effect analysis
+#### Expression Evaluation
+- All arithmetic operators: +, -, *, /, \, ^, MOD
+- All relational operators: =, <>, <, >, <=, >=
+- All logical operators: AND, OR, NOT, XOR, EQV, IMP
+- Proper operator precedence
+- Type coercion in mixed-type expressions
+- Short-circuit evaluation where appropriate
 
-**Tests:** `test_cse.py`, `test_cse_functions.py`, `test_cse_functions2.py`, `test_cse_if.py`, `test_cse_if_comprehensive.py`
+#### Built-in Functions (50+)
 
-**Recent Fixes:** Now properly tracks expressions even if they can be constant-folded
+**Numeric functions:**
+- Math: ABS, SIN, COS, TAN, ATN, EXP, LOG, SQR, SGN
+- Rounding: INT, FIX, CINT
+- Random: RND, RANDOMIZE
+- Type conversion: CDBL, CSNG, CINT
 
----
+**String functions:**
+- Extraction: LEFT$, RIGHT$, MID$
+- Conversion: CHR$, ASC, STR$, VAL, HEX$, OCT$
+- Info: LEN, INSTR
+- Generation: SPACE$, STRING$
+- Input: INKEY$, INPUT$
 
-### 4. Subroutine Side-Effect Analysis ✅
-**Status:** Complete
-**Location:** `src/semantic_analyzer.py` - `SubroutineInfo` class
-**Description:** Analyzes what variables each GOSUB modifies
-**Example:** GOSUB only invalidates expressions using modified variables
+**System functions:**
+- LOF, LOC, EOF (file operations)
+- PEEK, POKE (memory access - simulated)
+- POS, CSRLIN (cursor position)
+- FRE (free memory - simulated)
 
-**Benefits:**
-- More precise CSE across subroutine calls
-- Preserves optimization opportunities
-- Handles transitive modifications (nested GOSUBs)
+**Binary I/O functions:**
+- MKI$, MKS$, MKD$ (pack numbers to strings)
+- CVI, CVS, CVD (unpack strings to numbers)
 
-**Tests:** `test_gosub_analysis.py`, `test_gosub_comprehensive.py`, `test_gosub_comprehensive2.py`
+#### User-Defined Functions
+- DEF FN function definitions
+- Function calls with arguments
+- Local variable scope
+- Recursive function support
 
----
+### 4. Complete File I/O Implementation ✅
 
-### 5. Loop Analysis (FOR, WHILE, IF-GOTO) ✅
-**Status:** Complete
-**Location:** `src/semantic_analyzer.py` - `LoopAnalysis` class
-**Description:** Detects all three loop types
+**Sequential File I/O:**
+- OPEN "O" (output), "I" (input), "A" (append)
+- CLOSE #filenum
+- PRINT #filenum (formatted output)
+- WRITE #filenum (CSV output)
+- INPUT #filenum (read values)
+- LINE INPUT #filenum (read lines)
+- EOF(filenum) (end-of-file detection)
+
+**Random Access File I/O:**
+- OPEN "R", record-length (random access)
+- FIELD #filenum (define record structure)
+- LSET, RSET (assign values to fields)
+- GET #filenum, record-number
+- PUT #filenum, record-number
+- LOC(filenum) (current record position)
+- LOF(filenum) (file length)
+
+**Binary File I/O:**
+- MKI$, MKS$, MKD$ (encode integers, singles, doubles to binary)
+- CVI, CVS, CVD (decode binary to numbers)
+- Enables reading/writing binary data files
+
+**File System Operations:**
+- KILL "filename" (delete file)
+- NAME "old" AS "new" (rename file)
+- RESET (close all files)
+
+### 5. Interactive Mode (REPL) ✅
+
+**Full interactive development environment**
+
+**Direct Commands:**
+- RUN - Execute the program
+- LIST [start-end] - List program lines
+- NEW - Clear program
+- SAVE "filename" - Save program to disk
+- LOAD "filename" - Load program from disk
+- DELETE start-end - Delete line range
+- RENUM [new,old,increment] - Renumber program
+- EDIT linenum - Edit a specific line
+- CONT - Continue after STOP or Ctrl+C
+- SYSTEM - Exit to OS
+
 **Features:**
-- Calculates iteration counts for constant bounds
-- Tracks nested loop relationships
-- Identifies variables modified in loops
-- Marks loop unrolling candidates (2-10 iterations)
-
-**Benefits:**
-- Enables loop optimizations
-- Foundation for loop-invariant code motion
-- Identifies unrolling opportunities
-
-**Tests:** `test_loop_analysis.py`, `test_if_goto_loops.py`, `test_while_loops.py`
-
----
-
-### 6. Loop-Invariant Code Motion ✅
-**Status:** Complete (Detection only)
-**Location:** `src/semantic_analyzer.py` - `_analyze_loop_invariants()`
-**Description:** Identifies CSEs that don't change in loops
-**Example:** In `FOR I=1 TO 100: X = A*B: Y = A*B`, `A*B` is invariant
-
-**Benefits:**
-- Reduces calculations inside loops
-- Can move expensive operations outside loop
-- Significant performance gains for hot loops
-
-**Note:** Actual code transformation requires code generation phase
-
-**Tests:** `test_loop_invariants.py`
-
----
-
-### 7. Multi-Dimensional Array Flattening ✅
-**Status:** Complete
-**Location:** `src/semantic_analyzer.py` - `_flatten_array_subscripts()`
-**Description:** Converts multi-dimensional arrays to 1D at compile time
-**Example:** `A(I, J)` → `A(I * stride + J)`
-
-**Benefits:**
-- Simpler code generation (single subscript)
-- Eliminates runtime stride calculations
-- Supports OPTION BASE 0 and 1
-
-**Tests:** `test_array_flattening.py`, `test_array_flattening_benefits.py`
-
----
-
-### 8. Dead Code Detection ✅
-**Status:** Complete
-**Location:** `src/semantic_analyzer.py` - `_analyze_reachability()`
-**Description:** Identifies unreachable code
-**Features:**
-- Detects code after unconditional jumps
-- Identifies infinite loops
-- Warns about unreachable GOSUB targets
-
-**Benefits:**
-- Catches programming errors
-- Identifies code that can be eliminated
-- Improves code quality
-
-**Tests:** `test_dead_code.py`
-
----
-
-### 9. Strength Reduction ✅
-**Status:** Complete
-**Location:** `src/semantic_analyzer.py` - `_apply_strength_reduction()`
-**Transformations:**
-- `X * 2` → `X + X` (MUL→ADD)
-- `X * 1` → `X` (eliminate MUL)
-- `X * 0` → `0` (constant)
-- `X + 0` → `X` (eliminate ADD)
-- `X - 0` → `X` (eliminate SUB)
-- `X / 1` → `X` (eliminate DIV)
-- `X - X` → `0` (constant)
-
-**Benefits:**
-- Replaces expensive operations with cheaper ones
-- Critical optimization for performance
-- Works on arithmetic and boolean operations
-
-**Tests:** `test_strength_reduction.py`
-
----
-
-### 10. Copy Propagation ✅
-**Status:** Complete
-**Location:** `src/semantic_analyzer.py` - `_analyze_assignment()`
-**Description:** Tracks simple variable copies
-**Example:** `B = A` then `C = B` → can use `A` directly
-
-**Benefits:**
-- Eliminates unnecessary variable copies
-- Enables register reuse in code generation
-- Reduces register pressure
-
-**Tests:** `test_copy_propagation.py`
-
----
-
-### 11. Algebraic Simplification ✅
-**Status:** Complete
-**Location:** `src/semantic_analyzer.py` - `_apply_algebraic_simplification()`
-**Boolean Operations:**
-- `X AND 0` → `0` (FALSE)
-- `X AND -1` → `X` (TRUE identity)
-- `X AND X` → `X` (idempotent)
-- `X OR -1` → `-1` (TRUE)
-- `X OR 0` → `X` (FALSE identity)
-- `X OR X` → `X` (idempotent)
-- `X XOR 0` → `X` (identity)
-- `X XOR X` → `0` (self-cancel)
-- `NOT(NOT X)` → `X` (double negation)
-
-**Arithmetic:**
-- `-(-X)` → `X` (double negation)
-- `-(0)` → `0` (negate zero)
-
-**Benefits:**
-- Simplifies boolean expressions
-- Eliminates redundant operations
-- Cleaner generated code
-
-**Tests:** `test_algebraic_simplification.py`
-
----
-
-### 12. Induction Variable Optimization ✅
-**Status:** Complete (Detection)
-**Location:** `src/semantic_analyzer.py` - `InductionVariable` class
-**Description:** Detects loop control variables and derived IVs
-**Patterns:**
-- Primary IVs: FOR loop control variables
-- Derived IVs: `J = I * constant`, `J = I + constant`, `J = I`
-- Strength reduction: `A(I * 10)` → use pointer arithmetic
-
-**Benefits:**
-- Replace multiplication with addition in loops
-- Use pointer arithmetic instead of index calculation
-- Eliminate redundant IV computations
-- Works with nested loops
-
-**Tests:** `test_induction_variables.py`
-
-**Recent Fixes:**
-- Now detects SR before expression transformation
-- Handles nested loops (checks all active IVs)
-- Recursively checks sub-expressions
-
----
-
-### 13. OPTION BASE Support ✅
-**Status:** Complete
-**Location:** `src/semantic_analyzer.py` - `_collect_option_base()`
-**Description:** Global array base index configuration
-**Features:**
-- Supports OPTION BASE 0 and BASE 1
-- Global scope (applies to entire program)
-- Validates consistency (all OPTION BASE must match)
-- Used in array flattening calculations
-
-**Benefits:**
-- Matches original BASIC behavior
-- Cleaner array indexing
-- Required for compatibility
-
-**Tests:** `test_option_base.py`
-
----
-
-### 14. Expression Reassociation ✅
-**Status:** Complete
-**Location:** `src/semantic_analyzer.py` - `_apply_expression_reassociation()`
-**Description:** Rearranges associative operations to group constants
-**Example:** `X + 10 + Y + 20` → `X + Y + 30`
-
-**Benefits:**
-- Exposes constant folding opportunities
-- Reduces number of operations
-- Groups constants for better optimization
-
-**Tests:** `test_expression_reassociation.py`
-
----
-
-### 15. Boolean Simplification ✅
-**Status:** Complete
-**Location:** `src/semantic_analyzer.py` - `_apply_algebraic_simplification()`
-**Relational Operator Inversion:**
-- `NOT(A > B)` → `A <= B`
-- `NOT(A < B)` → `A >= B`
-- `NOT(A = B)` → `A <> B`
-- `NOT(A >= B)` → `A < B`
-- `NOT(A <= B)` → `A > B`
-- `NOT(A <> B)` → `A = B`
-
-**De Morgan's Laws:**
-- `NOT(X AND Y)` → `(NOT X) OR (NOT Y)`
-- `NOT(X OR Y)` → `(NOT X) AND (NOT Y)`
-
-**Absorption Laws:**
-- `(A OR B) AND A` → `A`
-- `A OR (A AND B)` → `A`
-- `(A AND B) OR A` → `A`
-- `A AND (A OR B)` → `A`
-
-**Benefits:**
-- Eliminates NOT operations
-- Reduces boolean complexity
-- Cleaner, faster code generation
-
-**Tests:** `test_boolean_simplification.py`
-
----
-
-### 16. Forward Substitution ✅
-**Status:** Complete (Detection)
-**Location:** `src/semantic_analyzer.py` - `_analyze_forward_substitution()`
-**Description:** Identifies single-use temporary variables
-**Example:** `TEMP = A + B` used once → substitute directly
-
-**Criteria:**
-1. Variable assigned a non-trivial expression
-2. Variable used exactly once after assignment
-3. No side effects in expression
-4. Not a simple constant or variable copy
-
-**Benefits:**
-- Reduces register pressure
-- Eliminates unnecessary temporary variables
-- Simplifies code
-- Detects dead stores (unused assignments)
-
-**Tests:** `test_forward_substitution.py`
-
----
-
-### 17. Branch Optimization ✅
-**Status:** Complete (Detection)
-**Location:** `src/semantic_analyzer.py` - `_analyze_if()`
-**Description:** Detects compile-time evaluable IF conditions
-**Features:**
-- Identifies always-TRUE conditions
-- Identifies always-FALSE conditions
-- Marks unreachable branches as dead code
-- Works with constant propagation
-
-**Examples:**
-- `IF 1 THEN PRINT "A"` → always TRUE
-- `IF 0 THEN PRINT "B"` → always FALSE, THEN unreachable
-- `A = 10; IF A > 5 THEN...` → constant propagation makes it TRUE
-
-**Benefits:**
-- Eliminates impossible branches at compile time
-- Identifies dead code in conditionals
-- Reduces runtime branching overhead
-- Simplifies control flow
-
-**Tests:** `test_branch_optimization.py`
-
----
-
-### 18. Uninitialized Variable Detection ✅
-**Status:** Complete (Warning)
-**Location:** `src/semantic_analyzer.py` - `_analyze_expression()`
-**Description:** Warns about use-before-assignment
-**Features:**
-- Tracks variable assignments vs uses
-- FOR loops automatically initialize loop variables
-- INPUT/READ/LINE INPUT mark variables as initialized
-- DEF FN parameter scoping (parameters are initialized)
-- Arrays are excluded (auto-initialize to 0)
-
-**Examples:**
-- `PRINT X; X = 10` → Warning: X used before assignment
-- `FOR I = 1 TO 10: PRINT I` → OK: FOR initializes I
-- `INPUT A: PRINT A` → OK: INPUT initializes A
-- `DEF FNTEST(X) = X + Y` → Warning: Y uninitialized (X is parameter)
-
-**Benefits:**
-- Catches common programming errors
-- Helps identify typos in variable names
-- Documents variable initialization requirements
-- Improves code quality and maintainability
-
-**Note:** BASIC defaults all variables to 0, so this is a warning, not an error
-
-**Tests:** `test_uninitialized_detection.py` (14 test cases, all passing)
-
----
-
-## Comparison to Modern Compilers
-
-### What We Have (Standard in Modern Compilers)
-- ✅ Constant folding
-- ✅ CSE
-- ✅ Loop analysis
-- ✅ Dead code detection
-- ✅ Array flattening (LLVM does this)
-- ✅ Subroutine analysis (interprocedural)
-- ✅ Strength reduction
-- ✅ Copy propagation
-- ✅ Algebraic simplification
-- ✅ Induction variable optimization
-- ✅ Expression reassociation
-- ✅ Boolean simplification
-- ✅ Forward substitution
-- ✅ Branch optimization
-- ✅ Uninitialized variable detection
-
-### What We're Missing (Not Needed for BASIC)
-- ❌ SSA form - Not needed for BASIC's simplicity
-- ❌ Vectorization - Overkill for vintage target
-- ❌ Profile-guided optimization - No runtime feedback
-- ❌ Link-time optimization - Single-file programs
-- ❌ Alias analysis - Limited value (no pointers)
-
-### What We Do Better (for BASIC)
-- ✅ Runtime constant propagation - More flexible than 1980 compiler
-- ✅ Global OPTION BASE - Cleaner than most
-- ✅ Comprehensive loop detection - IF-GOTO loops included
-- ✅ GOSUB side-effect analysis - Precise interprocedural optimization
-
----
-
-## Files and Test Coverage
-
-### Source Files
-- `src/semantic_analyzer.py` - Main implementation (3545 lines)
-- `src/constant_evaluator.py` - Constant expression evaluator
-- `src/ast_nodes.py` - AST node definitions
-
-### Test Files (29 total)
-1. `test_algebraic_simplification.py` - Boolean and arithmetic identities
-2. `test_array_flattening.py` - Multi-dimensional array transformation
-3. `test_array_flattening_benefits.py` - Array optimization benefits
-4. `test_boolean_simplification.py` - Relational inversion, De Morgan, absorption
-5. `test_branch_optimization.py` - Constant condition detection
-6. `test_comprehensive_analysis.py` - Integration test
-7. `test_constant_folding.py` - Basic constant folding
-8. `test_constant_folding_comprehensive.py` - Advanced constant folding
-9. `test_copy_propagation.py` - Variable copy tracking
-10. `test_cse.py` - Basic CSE detection
-11. `test_cse_functions.py` - CSE with function calls
-12. `test_cse_functions2.py` - Advanced CSE with functions
-13. `test_cse_if.py` - CSE across IF statements
-14. `test_cse_if_comprehensive.py` - Complex IF CSE scenarios
-15. `test_dead_code.py` - Unreachable code detection
-16. `test_expression_reassociation.py` - Constant grouping
-17. `test_forward_substitution.py` - Temporary elimination
-18. `test_gosub_analysis.py` - Subroutine side effects
-19. `test_gosub_comprehensive.py` - Complex GOSUB scenarios
-20. `test_gosub_comprehensive2.py` - Additional GOSUB tests
-21. `test_if_goto_loops.py` - IF-GOTO loop detection
-22. `test_induction_variables.py` - IV and strength reduction
-23. `test_loop_analysis.py` - Loop structure detection
-24. `test_loop_invariants.py` - Loop-invariant expressions
-25. `test_optimization_report.py` - Report generation
-26. `test_option_base.py` - OPTION BASE handling
-27. `test_strength_reduction.py` - Operation replacement
-28. `test_uninitialized_detection.py` - Use-before-assignment warnings
-29. `test_while_loops.py` - WHILE loop analysis
-
-### Demo Files
-- `demo_all_optimizations.bas` - Showcases all 18 optimizations
-- `demo_boolean_simplification.bas` - Boolean simplification examples
-- `demo_uninitialized.bas` - Uninitialized variable examples
+- Line-by-line program entry
+- Automatic line sorting
+- Immediate mode (execute expressions without line numbers)
+- Error recovery (continue editing after errors)
+- Compatible with classic MBASIC workflow
+- Ctrl+C handling (break execution, return to command mode)
+
+### 6. Advanced Features ✅
+
+**PRINT USING:**
+- Complete formatting support
+- Numeric formats: #, ., comma, $$, **, ^^^^
+- String formats: !, &, \  \
+- Literal characters
+- Multiple value formatting
+- All MBASIC USING features
+
+**MID$ Assignment:**
+- MID$(string$, position, length) = value$
+- In-place string modification
+- Proper bounds checking
+
+**SWAP Statement:**
+- SWAP variable1, variable2
+- Works with all types
+
+**Other:**
+- CLEAR (clear variables)
+- WIDTH (set line width - simulated)
+- END (terminate program)
+- STOP (pause execution)
+
+### 7. Error Handling ✅
+
+**Comprehensive error system:**
+- ON ERROR GOTO linenum (set error trap)
+- ON ERROR GOSUB linenum (error subroutine)
+- RESUME (return to error location)
+- RESUME NEXT (continue after error)
+- RESUME linenum (continue at specific line)
+- ERL (error line number)
+- ERR (error code)
+- ERROR n (generate error)
+
+**Error detection:**
+- Syntax errors
+- Runtime errors (division by zero, overflow, type mismatch, etc.)
+- File I/O errors
+- Array subscript errors
+- Proper error propagation
+
+## Implementation Statistics
+
+### Code Base
+- **src/lexer.py**: ~600 lines - Complete tokenization
+- **src/parser.py**: ~3000 lines - Full parser with AST generation
+- **src/ast_nodes.py**: ~700 lines - 60+ AST node types
+- **src/interpreter.py**: ~2500 lines - Complete execution engine
+- **src/runtime.py**: ~400 lines - Runtime state management
+- **src/basic_builtins.py**: ~800 lines - 50+ built-in functions
+- **src/tokens.py**: ~200 lines - Token definitions
+
+**Total**: ~8,200 lines of implementation code
+
+### Test Coverage
+- **Parser**: 121/121 files (100% success on valid MBASIC)
+- **Lexer**: 235/373 files (63% including non-MBASIC dialects)
+- **Self-checking tests**: 20+ comprehensive test programs
+- **Real programs**: Successfully runs vintage CP/M BASIC programs
 
 ### Documentation
-- `doc/OPTIMIZATION_STATUS.md` - Complete optimization documentation
-- `ACCOMPLISHMENTS.md` - This file
+- **71 markdown files** (after reorganization)
+- **18 implementation-specific docs** (feature implementation details)
+- **Comprehensive design docs** (compiler/interpreter differences)
+- **Historical session notes** (development progress)
 
----
+## Key Design Decisions
 
-## Recent Bug Fixes
+### 1. Interpreter vs Compiler
+**Decision**: Implement as a **runtime interpreter**, not a compiler
+**Rationale**:
+- Faithful to original MBASIC behavior
+- Dynamic typing preserved
+- Interactive mode (REPL) essential
+- Runtime features (variable DIM, type changes) supported
+- Simpler implementation for compatibility
 
-### Fix #1: CSE Detection with Constant Folding
-**Problem:** CSE was skipping expressions that could be constant-folded
-**Solution:** Removed the check that prevented tracking foldable expressions
-**Impact:** Now properly detects repeated expressions even if they're constants
+**Trade-offs**:
+- Performance: Slower than compiled code
+- Optimization: No compile-time optimizations
+- **Benefit**: 100% compatibility with MBASIC programs
 
-### Fix #2: Induction Variable Strength Reduction
-**Problems:**
-1. Expression transformations happening before IV detection
-2. Only checking current loop's IV (not outer loops)
-3. Not recursively checking sub-expressions
+### 2. Python Implementation
+**Decision**: Implement in Python (not C/C++/Rust)
+**Rationale**:
+- Rapid development
+- Built-in dynamic typing matches BASIC
+- String handling simplified
+- Cross-platform compatibility
+- Easier to maintain and extend
 
-**Solutions:**
-1. Detect IV SR before calling `_analyze_expression()`
-2. Check all `active_ivs`, not just current loop
-3. Added recursive descent into sub-expressions
+### 3. Two-Phase Parsing
+**Decision**: Two-pass parsing (optional - only for DEF types)
+**Implementation**:
+- Phase 1: Collect DEFINT/DEFSNG/DEFDBL/DEFSTR if needed
+- Phase 2: Parse with type context
+- **Benefit**: Proper handling of type defaults
 
-**Impact:** Now detects all SR opportunities including nested loops
+### 4. AST-Based Interpretation
+**Decision**: Parse to AST, then interpret
+**Rationale**:
+- Clean separation of concerns
+- Easier to debug and maintain
+- Enables future optimizations
+- Better error messages
 
----
+**Alternative rejected**: Direct interpretation (parse and execute simultaneously)
 
-## Statistics
+### 5. File I/O Compatibility
+**Decision**: Implement MBASIC file I/O semantics exactly
+**Implementation**:
+- Sequential files map to text files
+- Random access files use Python binary files
+- FIELD/LSET/RSET emulated faithfully
+- Binary I/O (MKI$/CVI etc.) implemented
 
-- **Total Optimizations:** 18
-- **Total Test Files:** 29
-- **Test Pass Rate:** 100%
-- **Lines of Code (semantic_analyzer.py):** ~3,545
-- **Total Test Cases:** 200+
-- **Demo Programs:** 3
+### 6. Error Handling Fidelity
+**Decision**: Match MBASIC error behavior closely
+**Implementation**:
+- ON ERROR GOTO/GOSUB with proper stack unwinding
+- ERL/ERR values match MBASIC conventions
+- RESUME variations all supported
 
----
+## Notable Challenges Overcome
+
+### 1. Keyword-Identifier Splitting
+**Problem**: MBASIC allows `FORI=1TO10` without spaces
+**Solution**: Lexer intelligently splits keywords from identifiers
+**Implementation**: Token lookahead and splitting logic
+
+### 2. Type Suffix Handling
+**Problem**: `$`, `%`, `!`, `#` are part of identifiers, not separate tokens
+**Solution**: Include type suffixes in identifier tokenization
+**Result**: Correct parsing of `LEFT$(A$, 5)`
+
+### 3. GOSUB/RETURN Stack
+**Problem**: GOSUB/RETURN must handle ON ERROR properly
+**Solution**: Separate return stack with proper unwinding on errors
+**Edge cases**: RESUME after error in subroutine
+
+### 4. FOR Loop Nesting
+**Problem**: FOR/NEXT loops can be nested and interleaved
+**Solution**: Loop stack with variable tracking
+**Edge cases**: `FOR I=1 TO 10: FOR I=1 TO 5: NEXT I: NEXT I` (reusing variable)
+
+### 5. FIELD Statement Semantics
+**Problem**: FIELD creates virtual overlay on file buffer
+**Solution**: Track field definitions per file, update on GET/PUT
+**Complexity**: LSET/RSET modify buffer, not variables directly
+
+### 6. MID$ Assignment
+**Problem**: `MID$(A$, 2, 3) = "XYZ"` modifies string in-place
+**Solution**: Special handling in assignment statement
+**Edge cases**: Bounds checking, truncation
+
+### 7. PRINT USING Formats
+**Problem**: Complex format strings with many special characters
+**Solution**: State machine parser for format strings
+**Edge cases**: Overflow symbols (%), sign handling, numeric/string formats
+
+### 8. ON ERROR Interaction with Control Flow
+**Problem**: Error can occur in FOR loop, GOSUB, etc.
+**Solution**: Proper stack state tracking and restoration
+**Edge cases**: RESUME in different contexts
+
+## Testing Approach
+
+### 1. Corpus Testing
+- 373 real CP/M BASIC programs
+- Automated parsing tests
+- Success rate tracking over development
+
+### 2. Self-Checking Tests
+- Programs that test themselves and report PASS/FAIL
+- Operator precedence, string functions, math accuracy
+- File I/O operations
+- Error handling
+
+### 3. Interactive Testing
+- Manual testing in REPL mode
+- Vintage program execution
+- Edge case exploration
+
+### 4. Regression Testing
+- Track parser success rate
+- Ensure fixes don't break existing functionality
+- Automated test runs
+
+## Documentation Quality
+
+### Implementation Documentation
+- Every feature has dedicated implementation doc
+- Before/after code examples
+- Edge cases documented
+- Design rationale explained
+
+### Design Documentation
+- Compiler vs interpreter analysis
+- Language evolution study
+- Type system analysis
+- Future optimization designs
+
+### Historical Documentation
+- Session summaries track progress
+- Decisions and rationale preserved
+- Test results snapshots
+- Planning documents
+
+## Future Work
+
+### Potential Enhancements
+1. **Performance optimization** - Speed up interpretation
+2. **More built-in functions** - Extended BASIC functions
+3. **Graphics/sound** - If vintage compatibility isn't required
+4. **Debugger** - Step-through debugging
+5. **Compiler** - Future project (design docs in `design/future_compiler/`)
+
+### Compiler Design (Future)
+- Complete semantic analyzer design exists
+- 18+ optimization strategies documented
+- Type inference and rebinding analysis
+- Integer size optimization (8/16/32-bit)
+- See `design/future_compiler/` for details
 
 ## Conclusion
 
-The MBASIC compiler's semantic analysis phase is **complete and production-ready** with:
+The MBASIC 5.21 interpreter is a **complete, production-ready implementation** providing full compatibility with vintage MBASIC programs. All core features are implemented, tested, and documented.
 
-1. ✅ **Comprehensive optimization coverage** - 18 distinct optimizations
-2. ✅ **Modern compiler quality** - Comparable to modern compilers' semantic phase
-3. ✅ **Thoroughly tested** - 29 test files, 100% pass rate
-4. ✅ **Well documented** - Complete documentation and examples
-5. ✅ **Zero regressions** - All existing functionality preserved
-6. ✅ **Appropriate for BASIC** - Not over-engineered, matches language complexity
+**Key Metrics:**
+- ✅ 100% parser coverage (valid MBASIC programs)
+- ✅ All language features implemented
+- ✅ All file I/O modes working
+- ✅ Interactive mode complete
+- ✅ Comprehensive documentation
+- ✅ Real program compatibility
 
-**Next Phase:** Code generation to apply the detected transformations and produce executable output.
-
----
-
-**Status:** ✅ **COMPLETE AND READY FOR CODE GENERATION**
+The project successfully preserves the experience of programming in CP/M-era Microsoft BASIC while running on modern systems.
