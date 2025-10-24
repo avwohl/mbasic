@@ -399,6 +399,20 @@ class TypeBinding:
     reason: str  # Why this type was assigned
     depends_on_previous: bool = False  # Does this assignment depend on previous value?
     can_rebind: bool = True  # Can we safely re-bind to a different type?
+    promotion_from: Optional[str] = None  # Phase 2: promoted from this type (e.g., "INTEGER")
+    promotion_reason: str = ""  # Phase 2: why promotion occurred
+
+
+@dataclass
+class TypePromotion:
+    """Represents a type promotion (widening conversion) at a program point"""
+    variable: str  # Variable being promoted
+    line: int  # Line where promotion occurs
+    from_type: str  # Source type (e.g., "INTEGER")
+    to_type: str  # Target type (e.g., "DOUBLE")
+    reason: str  # Why promotion is needed
+    expression: str = ""  # The expression causing promotion
+    is_safe: bool = True  # Whether promotion preserves value (INT→DOUBLE is safe)
 
 
 @dataclass
@@ -858,6 +872,11 @@ class SemanticAnalyzer:
         self.variable_type_versions: Dict[str, List[TypeBinding]] = {}  # var_name -> [binding1, binding2, ...]
         self.can_rebind_variable: Dict[str, bool] = {}  # var_name -> can safely rebind?
 
+        # Type promotion tracking (Phase 2: INT→DOUBLE widening conversions)
+        self.type_promotions: List[TypePromotion] = []  # All promotions detected
+        self.variable_current_type: Dict[str, str] = {}  # var_name -> current type at each point
+        self.promotion_points: Dict[str, List[int]] = {}  # var_name -> [lines where promoted]
+
         # Iterative optimization tracking
         self.optimization_iterations = 0  # Number of iterations performed
         self.optimization_converged = False  # Whether fixed point was reached
@@ -923,6 +942,7 @@ class SemanticAnalyzer:
                 self._analyze_live_variables(program)
                 self._analyze_available_expressions(program)
                 self._analyze_variable_type_bindings(program)
+                self._analyze_type_promotions(program)  # Phase 2: detect INT→DOUBLE promotions
 
                 # Count optimizations after this iteration
                 count_after = self._count_optimizations()
@@ -5093,6 +5113,123 @@ class SemanticAnalyzer:
 
         return False
 
+    # =================================================================
+    # TYPE PROMOTION ANALYSIS (Phase 2)
+    # =================================================================
+
+    def _analyze_type_promotions(self, program):
+        """
+        Analyze type promotions - Phase 2 of type rebinding strategy.
+
+        Detects where INTEGER variables need promotion to DOUBLE in mixed-type expressions.
+        Examples:
+          X = 10        ' X is INTEGER
+          Y = X + 0.5   ' X promoted to DOUBLE
+        """
+        for line in program.lines:
+            for stmt in line.statements:
+                if isinstance(stmt, LetStatementNode):
+                    self._check_expression_for_promotions(stmt.expression, line.line_number, stmt.variable.name.upper())
+
+    def _check_expression_for_promotions(self, expr, line: int, result_var: str = ""):
+        """
+        Check an expression for type promotions.
+
+        If we have INTEGER variables used in DOUBLE context, record promotions.
+        """
+        if expr is None:
+            return
+
+        # Binary operation - check for mixed types
+        if isinstance(expr, BinaryOpNode):
+            left_type = self._infer_expression_type(expr.left)
+            right_type = self._infer_expression_type(expr.right)
+
+            # Mixed-type expression: one INTEGER, one DOUBLE
+            if left_type != right_type:
+                # INTEGER + DOUBLE → promote INTEGER to DOUBLE
+                if left_type == "INTEGER" and right_type == "DOUBLE":
+                    self._record_promotion_from_expression(expr.left, line, "Mixed-type binary operation")
+                elif left_type == "DOUBLE" and right_type == "INTEGER":
+                    self._record_promotion_from_expression(expr.right, line, "Mixed-type binary operation")
+
+            # Recurse into subexpressions
+            self._check_expression_for_promotions(expr.left, line)
+            self._check_expression_for_promotions(expr.right, line)
+
+    def _record_promotion_from_expression(self, expr, line: int, reason: str):
+        """
+        Record a type promotion for a variable in an expression.
+        """
+        if isinstance(expr, VariableNode):
+            var_name = expr.name.upper()
+            if expr.type_suffix:
+                var_name += expr.type_suffix
+
+            # Only promote if we know it's currently INTEGER
+            if var_name in self.variable_current_type:
+                current_type = self.variable_current_type[var_name]
+            else:
+                # Infer from type suffix or bindings
+                if expr.type_suffix == '%':
+                    current_type = "INTEGER"
+                elif expr.type_suffix == '!':
+                    current_type = "SINGLE"
+                elif expr.type_suffix == '#':
+                    current_type = "DOUBLE"
+                else:
+                    # Check type bindings
+                    if var_name in self.variable_type_versions:
+                        bindings = self.variable_type_versions[var_name]
+                        if bindings:
+                            current_type = bindings[-1].type_name
+                        else:
+                            return  # No type info, skip
+                    else:
+                        return  # No type info, skip
+
+            # Only record promotion if it's a widening conversion
+            if current_type == "INTEGER":
+                target_type = "DOUBLE"
+                is_safe = True
+
+                # Create promotion record
+                promotion = TypePromotion(
+                    variable=var_name,
+                    line=line,
+                    from_type=current_type,
+                    to_type=target_type,
+                    reason=reason,
+                    expression=f"{var_name} (INTEGER) → DOUBLE",
+                    is_safe=is_safe
+                )
+
+                self.type_promotions.append(promotion)
+
+                # Track promotion point
+                if var_name not in self.promotion_points:
+                    self.promotion_points[var_name] = []
+                self.promotion_points[var_name].append(line)
+
+    def _can_promote_safely(self, from_type: str, to_type: str) -> bool:
+        """
+        Check if type promotion is safe (value-preserving).
+
+        Safe promotions:
+          INTEGER → DOUBLE: Always safe (all integers fit exactly in DOUBLE)
+          SINGLE → DOUBLE: Always safe (DOUBLE has more precision)
+
+        Unsafe promotions:
+          DOUBLE → INTEGER: Not safe (fractional part lost, overflow possible)
+          SINGLE → INTEGER: Not safe (fractional part lost)
+        """
+        safe_promotions = {
+            ("INTEGER", "SINGLE"),
+            ("INTEGER", "DOUBLE"),
+            ("SINGLE", "DOUBLE"),
+        }
+        return (from_type, to_type) in safe_promotions
+
     def _get_string_concat_impact(self, loop_info, estimated_allocations: int) -> str:
         """Determine the performance impact of string concatenation in a loop"""
         if loop_info.iteration_count:
@@ -5150,6 +5287,11 @@ class SemanticAnalyzer:
         self.variable_type_versions.clear()
         self.can_rebind_variable.clear()
 
+        # Type promotion (Phase 2)
+        self.type_promotions.clear()
+        self.variable_current_type.clear()
+        self.promotion_points.clear()
+
         # Strength reduction
         self.strength_reductions.clear()
 
@@ -5203,6 +5345,7 @@ class SemanticAnalyzer:
             len(self.forward_substitutions) +
             len(self.dead_writes) +
             len(self.type_bindings) +
+            len(self.type_promotions) +
             len(self.strength_reductions) +
             len(self.expression_reassociations) +
             len(self.copy_propagations) +
@@ -5802,6 +5945,31 @@ class SemanticAnalyzer:
                     lines.append(f"    {var_name}: {len(bindings)} assignments, has data dependencies")
                 if len(non_rebindable) > 5:
                     lines.append(f"    ... and {len(non_rebindable) - 5} more")
+                lines.append("")
+
+        # Type Promotion Analysis (Phase 2)
+        if self.type_promotions:
+            lines.append(f"\nType Promotion Analysis (Phase 2):")
+            lines.append(f"  Found {len(self.type_promotions)} type promotion(s)")
+            lines.append("")
+
+            # Group by variable
+            promotions_by_var: Dict[str, List[TypePromotion]] = {}
+            for promotion in self.type_promotions:
+                if promotion.variable not in promotions_by_var:
+                    promotions_by_var[promotion.variable] = []
+                promotions_by_var[promotion.variable].append(promotion)
+
+            # Show promotions
+            for var_name in sorted(promotions_by_var.keys()):
+                var_promotions = promotions_by_var[var_name]
+                lines.append(f"  {var_name}:")
+                for promo in var_promotions:
+                    safety = "✓ Safe" if promo.is_safe else "⚠ May lose precision"
+                    lines.append(f"    Line {promo.line}: {promo.from_type} → {promo.to_type} ({safety})")
+                    lines.append(f"      Reason: {promo.reason}")
+                    if promo.expression:
+                        lines.append(f"      Expression: {promo.expression}")
                 lines.append("")
 
         # Warnings
