@@ -68,12 +68,21 @@ Test case that FAILS in real MBASIC:
 Error from real MBASIC:
   Syntax error in 220
 
-Conclusion: String DATA must either be:
-1. Quoted: DATA "ALICE", "NYC" (but this also causes syntax error in real MBASIC!)
-2. Or strings might not be supported in DATA at all in MBASIC 5.21
+Our MBASIC output for same line:
+  N$=40.0 C$=50.0
+  (incorrectly treating unquoted identifiers as numeric values)
 
-Note: Further testing needed to determine if string DATA is supported in
-MBASIC 5.21. The original games use DATA extensively but mostly with numbers.
+Conclusion:
+1. Real MBASIC 5.21 does NOT support unquoted string DATA
+2. Our implementation also fails, but differently (treats as numbers)
+3. String DATA may require quoted strings: DATA "ALICE", "NYC"
+4. Or string DATA may not be supported at all in MBASIC 5.21
+
+Impact: LOW - The original games use DATA extensively but mostly with numbers.
+Only a few games use string DATA, and they likely use quoted strings or
+numeric encoding.
+
+Further testing needed with quoted strings to determine proper syntax.
 
 
 SUMMARY:
