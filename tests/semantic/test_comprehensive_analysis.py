@@ -10,7 +10,8 @@ Comprehensive test demonstrating all semantic analysis features:
 """
 
 import sys
-sys.path.insert(0, 'src')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src'))
 
 from lexer import tokenize
 from parser import Parser

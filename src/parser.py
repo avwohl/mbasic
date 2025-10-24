@@ -539,7 +539,7 @@ class Parser:
                     comment_text += " " + str(self.current().value)
                     self.advance()
                 # Return a REM statement node
-                from src.ast_nodes import RemarkStatementNode
+                from ast_nodes import RemarkStatementNode
                 return RemarkStatementNode(comment_text, token.line, token.column)
 
         # Unknown statement
