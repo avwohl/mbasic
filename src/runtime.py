@@ -615,3 +615,79 @@ class Runtime:
         except ValueError:
             pass
         return None
+
+    # ========================================================================
+    # Debugging and Inspection Interface
+    # ========================================================================
+
+    def get_all_variables(self):
+        """Export all variables with their current values.
+
+        Returns a dictionary mapping variable names (with type suffixes) to their values.
+        This is used by visual debuggers to display the variable table.
+
+        Returns:
+            dict: Variable name (with suffix) -> value
+                 Examples: {'A': 42, 'B$': 'HELLO', 'C#': 3.14, 'D(': [...]}
+
+        Note: Array variables are returned with '(' suffix to distinguish from scalars.
+        """
+        result = {}
+
+        # Export scalar variables
+        result.update(self.variables)
+
+        # Export array variables (add '(' suffix to name)
+        for array_name, array_data in self.arrays.items():
+            result[array_name] = array_data['data']
+
+        # Export user-defined functions (add 'FN_' prefix)
+        for fn_name, fn_def in self.user_functions.items():
+            result[fn_name] = f"<DEF FN {fn_name}>"
+
+        return result
+
+    def get_gosub_stack(self):
+        """Export GOSUB call stack.
+
+        Returns a list of line numbers representing GOSUB return points,
+        ordered from oldest to newest (bottom to top of stack).
+
+        Returns:
+            list: Line numbers where GOSUB was called
+                 Example: [100, 500, 1000]  # Called GOSUB at lines 100, 500, 1000
+
+        Note: The first element is the oldest GOSUB, the last is the most recent.
+        """
+        # Extract just the line numbers from the stack
+        return [line_num for line_num, stmt_idx in self.gosub_stack]
+
+    def get_for_loop_stack(self):
+        """Export FOR loop stack.
+
+        Returns information about all active FOR loops, including the loop
+        variable, current value, end value, step, and line number.
+
+        Returns:
+            list: List of dictionaries with FOR loop information
+                 Example: [
+                     {'var': 'I', 'current': 5, 'end': 10, 'step': 1, 'line': 100},
+                     {'var': 'J', 'current': 2, 'end': 5, 'step': 1, 'line': 150}
+                 ]
+
+        Note: The order may not reflect nesting level - use return_line to determine nesting.
+        """
+        result = []
+        for var_name, loop_info in self.for_loops.items():
+            # Get current value of loop variable
+            current_value = self.variables.get(var_name, 0)
+
+            result.append({
+                'var': var_name,
+                'current': current_value,
+                'end': loop_info.get('end', 0),
+                'step': loop_info.get('step', 1),
+                'line': loop_info.get('return_line', 0)
+            })
+
+        return result
