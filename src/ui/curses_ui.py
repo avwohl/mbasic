@@ -123,20 +123,20 @@ class CursesBackend(UIBackend):
             # ESC: Clear error message and return to Ready
             elif key == 27:  # ESC
                 self.status_message = "Ready"
-            # Help: F1
-            elif key == curses.KEY_F1:
+            # Help: Ctrl+H (note: conflicts with backspace on some terminals, also handled below)
+            elif key == ord('?'):  # ? key for help
                 self._show_help()
-            # Run: F2 or Ctrl+R
-            elif key == curses.KEY_F2 or key == 18:  # Ctrl+R
+            # Run: Ctrl+R
+            elif key == 18:  # Ctrl+R
                 self._run_program()
-            # List: F3 or Ctrl+L
-            elif key == curses.KEY_F3 or key == 12:  # Ctrl+L
+            # List: Ctrl+L
+            elif key == 12:  # Ctrl+L
                 self._list_program()
-            # Save: F5 or Ctrl+S
-            elif key == curses.KEY_F5 or key == 19:  # Ctrl+S
+            # Save: Ctrl+S
+            elif key == 19:  # Ctrl+S
                 self._save_program()
-            # Load: F9 or Ctrl+O
-            elif key == curses.KEY_F9 or key == 15:  # Ctrl+O
+            # Load: Ctrl+O
+            elif key == 15:  # Ctrl+O
                 self._load_program()
             # New: Ctrl+N
             elif key == 14:  # Ctrl+N
@@ -242,7 +242,7 @@ class CursesBackend(UIBackend):
         if "error" in self.status_message.lower() or len(self.status_message) > 40:
             status_text = f" MBASIC | {self.status_message} | [ESC to clear]"
         else:
-            status_text = f" MBASIC | {self.status_message} | F1=Help ^R=Run ^L=List ^S=Save ^O=Load Q=Quit"
+            status_text = f" MBASIC | {self.status_message} | ?=Help ^R=Run ^L=List ^S=Save ^O=Load ^N=New Q=Quit"
 
         height, width = self.status_win.getmaxyx()
         self.status_win.addstr(0, 0, status_text[:width-1])

@@ -4,18 +4,18 @@ All keyboard shortcuts for the curses text interface.
 
 ## Program Commands
 
-| Key | Alternative | Action |
-|-----|-------------|--------|
-| **F2** | **Ctrl+R** | Run program |
-| **F3** | **Ctrl+L** | List program to output window |
-| **F5** | **Ctrl+S** | Save program (prompts for filename) |
-| **F9** | **Ctrl+O** | Load program (prompts for filename) |
-| | **Ctrl+N** | New program (clear all lines) |
-| **F1** | | Open help system |
-| **ESC** | | Clear error message, return to Ready |
-| **Q** | | Quit the IDE |
+| Key | Action |
+|-----|--------|
+| **?** | Open help system |
+| **Ctrl+R** | Run program |
+| **Ctrl+L** | List program to output window |
+| **Ctrl+S** | Save program (prompts for filename) |
+| **Ctrl+O** | Load program (prompts for filename) |
+| **Ctrl+N** | New program (clear all lines) |
+| **ESC** | Clear error message, return to Ready |
+| **Q** | Quit the IDE |
 
-**Note:** If you don't have function keys (F2, F5, etc.), use the Ctrl alternatives!
+**Note:** No function keys required! All commands use Ctrl or regular keys.
 
 ## Editing Commands
 
@@ -65,7 +65,7 @@ When viewing help (like you are now):
 
 - The cursor shows where you're typing
 - Press **ESC** anytime to clear error messages
-- **F1** opens help system
+- **?** opens help system
 - Lines are saved when you press **Enter**
 - Line numbers auto-increment by 10
 

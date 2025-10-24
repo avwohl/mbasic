@@ -35,7 +35,7 @@ Let's write a simple program:
 
 6. Press **Enter**
 
-7. Press **F2** (or **Ctrl+R**) to run
+7. Press **Ctrl+R** to run
 
 8. Output appears in the bottom window!
 
@@ -43,11 +43,11 @@ Let's write a simple program:
 
 You don't need to memorize everything. The status line shows common commands:
 
-- **F2** or **Ctrl+R** - Run program
-- **F1** - Help (you're here now!)
+- **?** - Help (you're here now!)
+- **Ctrl+R** - Run program
 - **Q** - Quit
 
-If you don't have function keys, use the **Ctrl** alternatives shown.
+No function keys needed!
 
 ## Navigation
 
@@ -73,5 +73,5 @@ Or jump to the BASIC language:
 
 - Press **ESC** to clear error messages
 - Status line shows available commands
-- Help is always available with **F1**
+- Help is always available with **?**
 - Lines auto-increment by 10 for easy editing

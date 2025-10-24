@@ -15,10 +15,11 @@ Full-screen terminal interface for MBASIC.
 
 ### Essential Commands
 
-- **F2** or **Ctrl+R** - Run program
-- **F5** or **Ctrl+S** - Save program
-- **F9** or **Ctrl+O** - Load program
-- **F1** - Open help
+- **?** - Open help
+- **Ctrl+R** - Run program
+- **Ctrl+S** - Save program
+- **Ctrl+O** - Load program
+- **Ctrl+N** - New program
 - **ESC** - Clear errors
 - **Q** - Quit
 

@@ -4,9 +4,7 @@ How to navigate MBASIC help.
 
 ## Opening Help
 
-Press **F1** anytime to open help.
-
-**Note:** If you don't have function keys, you can access help by looking in the `docs/help/` directory.
+Press **?** anytime to open help.
 
 ## Navigation Keys
 
@@ -67,7 +65,7 @@ Sample programs to learn from.
 
 ## Tips
 
-- Press **F1/H** anytime for help
+- Press **?** anytime for help
 - Links are highlighted
 - **U** goes back
 - **Q** exits help
