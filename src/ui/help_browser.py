@@ -50,8 +50,16 @@ class HelpBrowser:
         Args:
             relative_path: Path relative to help_root (e.g., "index.md")
         """
+        import curses
+
+        # Hide cursor while in help
+        curses.curs_set(0)
+
         self._load_topic(relative_path)
         self._navigation_loop()
+
+        # Restore cursor when exiting help
+        curses.curs_set(1)
 
     def _load_topic(self, relative_path: str) -> bool:
         """Load and render a help topic."""
@@ -119,7 +127,9 @@ class HelpBrowser:
 
     def _draw(self) -> None:
         """Draw the help content."""
-        self.stdscr.clear()
+        import curses
+
+        self.stdscr.erase()
 
         # Draw title bar
         title = f" MBASIC Help: {self.current_path or 'index'} "
@@ -160,7 +170,9 @@ class HelpBrowser:
         except curses.error:
             pass
 
-        self.stdscr.refresh()
+        # Use noutrefresh/doupdate pattern to avoid flicker
+        self.stdscr.noutrefresh()
+        curses.doupdate()
 
     def _scroll_down(self) -> None:
         """Scroll down one line and move to next link."""
