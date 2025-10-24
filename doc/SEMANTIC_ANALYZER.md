@@ -750,6 +750,69 @@ Potential improvements:
 6. **GOTO/GOSUB flow analysis**: Track constants across line jumps
 7. **Multi-line IF/THEN/ELSE**: Support structured IF blocks
 
+## Advanced Optimizations
+
+### Loop Analysis
+
+The semantic analyzer performs comprehensive analysis of all loop types:
+- **FOR loops**: Tracks iteration counts, control variables, and unrolling potential
+- **WHILE loops**: Analyzes loop structure and nesting
+- **IF-GOTO loops**: Detects backward jumps that form loops
+
+**Loop-Invariant Code Motion**: Identifies expressions that are computed multiple times within a loop but don't depend on loop variables. These can be hoisted out of the loop for better performance.
+
+Example:
+```basic
+10 INPUT A, B
+20 FOR I = 1 TO 100
+30   X = A * B    ' Loop-invariant!
+40   Y = A * B    ' Can be hoisted
+50   Z = I * 2    ' Not invariant (uses I)
+60 NEXT I
+```
+
+The analyzer will report that `A * B` can be hoisted out of the loop, while `I * 2` cannot.
+
+**Loop Unrolling Candidates**: Identifies small loops (2-10 iterations) with constant bounds that are good candidates for unrolling.
+
+### Subroutine Side-Effect Analysis
+
+The analyzer tracks which variables are modified by each GOSUB subroutine, including:
+- Direct modifications within the subroutine
+- Transitive modifications through nested GOSUB calls
+
+This enables:
+- **Smart CSE invalidation**: Only invalidate expressions that use variables actually modified by the subroutine
+- **Cross-subroutine optimization**: Preserve constant values and CSEs across GOSUB calls when safe
+
+Example:
+```basic
+10 A = 10: B = 20
+20 X = A + B       ' X = 30
+30 GOSUB 1000      ' Subroutine doesn't modify A or B
+40 Y = A + B       ' CSE! Same as line 20
+50 GOSUB 2000      ' Subroutine modifies B
+60 Z = A + B       ' NOT CSE (B changed)
+70 END
+
+1000 PRINT A + B   ' Read-only subroutine
+1010 RETURN
+
+2000 B = B + 1     ' Modifies B
+2010 RETURN
+```
+
+### Optimization Report
+
+The `get_report()` method generates a comprehensive optimization report including:
+- Constant folding opportunities
+- Common subexpressions with suggested temp variables
+- Loop analysis with hoisting opportunities
+- Loop unrolling candidates
+- Subroutine side-effect analysis
+
+Run any test with report generation to see detailed optimization opportunities.
+
 ## References
 
 - [Compiler vs Interpreter Differences](COMPILER_VS_INTERPRETER_DIFFERENCES.md)

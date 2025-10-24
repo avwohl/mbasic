@@ -98,6 +98,55 @@ class SubroutineInfo:
     analyzed: bool = False  # Whether we've analyzed this subroutine
 
 
+class LoopType(Enum):
+    """Types of loops"""
+    FOR = "FOR"
+    WHILE = "WHILE"
+    IF_GOTO = "IF-GOTO"  # Loop using IF...THEN GOTO
+
+
+@dataclass
+class LoopInvariant:
+    """Information about a loop-invariant expression"""
+    expression_hash: str  # Hash of the invariant expression
+    expression_desc: str  # Human-readable description
+    first_line: int  # First occurrence in loop
+    occurrences: List[int] = field(default_factory=list)  # All occurrences in loop
+    can_hoist: bool = True  # Whether it's safe to hoist out of loop
+    reason_no_hoist: Optional[str] = None  # Why it can't be hoisted
+
+
+@dataclass
+class LoopAnalysis:
+    """Comprehensive loop analysis information"""
+    loop_type: LoopType
+    start_line: int  # Line where loop begins
+    end_line: Optional[int] = None  # Line where loop ends
+
+    # Loop control
+    control_variable: Optional[str] = None  # FOR loop variable or WHILE condition variable
+    start_value: Optional[Any] = None  # FOR loop start (if constant)
+    end_value: Optional[Any] = None  # FOR loop end (if constant)
+    step_value: Optional[Any] = None  # FOR loop step (if constant)
+    iteration_count: Optional[int] = None  # Number of iterations (if determinable)
+
+    # Variables modified in loop body
+    variables_modified: Set[str] = field(default_factory=set)
+    variables_read: Set[str] = field(default_factory=set)
+
+    # Loop-invariant expressions (CSEs that can be hoisted)
+    invariants: Dict[str, LoopInvariant] = field(default_factory=dict)  # hash -> invariant
+
+    # Nested loops
+    contains_loops: List[int] = field(default_factory=list)  # Start lines of nested loops
+    nested_in: Optional[int] = None  # Start line of parent loop (if nested)
+
+    # Optimization potential
+    can_unroll: bool = False  # Whether loop can be unrolled
+    unroll_factor: Optional[int] = None  # Suggested unroll factor
+    has_side_effects: bool = False  # Contains I/O, GOSUB, etc.
+
+
 class CompilerFlags:
     """Flags for features requiring compilation switches"""
     def __init__(self):
@@ -463,6 +512,11 @@ class SemanticAnalyzer:
         self.subroutines: Dict[int, SubroutineInfo] = {}  # line_number -> SubroutineInfo
         self.gosub_targets: Set[int] = set()  # All line numbers that are GOSUB targets
 
+        # Loop analysis tracking
+        self.loops: Dict[int, LoopAnalysis] = {}  # start_line -> LoopAnalysis
+        self.loop_analysis_stack: List[LoopAnalysis] = []  # Stack for nested loop analysis
+        self.current_loop: Optional[LoopAnalysis] = None  # Currently analyzing loop
+
     def analyze(self, program: ProgramNode) -> bool:
         """
         Analyze a program AST.
@@ -481,7 +535,10 @@ class SemanticAnalyzer:
             # Third pass: validate statements and build complete symbol table
             self._analyze_statements(program)
 
-            # Fourth pass: validate all line number references
+            # Fourth pass: identify loop-invariant expressions
+            self._analyze_loop_invariants()
+
+            # Fifth pass: validate all line number references
             self._validate_line_references(program)
 
             # Generate warnings for required compilation switches
@@ -783,8 +840,74 @@ class SemanticAnalyzer:
 
         return modified
 
+    def _analyze_loop_invariants(self):
+        """
+        Identify loop-invariant expressions that can be hoisted out of loops.
+
+        An expression is loop-invariant if:
+        1. It appears multiple times within the loop
+        2. None of its variables are modified within the loop
+        3. It has no side effects (I/O, function calls with side effects)
+        """
+        for loop_start, loop in self.loops.items():
+            if loop.end_line is None:
+                continue  # Loop not properly closed
+
+            # Check each CSE to see if it occurs in this loop and is invariant
+            for cse_hash, cse in self.common_subexpressions.items():
+                # Check if CSE occurs within loop bounds
+                all_cse_lines = [cse.first_line] + cse.occurrences
+                cse_in_loop = [line for line in all_cse_lines
+                              if loop.start_line <= line <= loop.end_line]
+
+                if len(cse_in_loop) >= 2:  # CSE occurs multiple times in loop
+                    # Check if invariant: no variables used by CSE are modified in loop
+                    is_invariant = not (cse.variables_used & loop.variables_modified)
+
+                    if is_invariant:
+                        invariant = LoopInvariant(
+                            expression_hash=cse_hash,
+                            expression_desc=cse.expression_desc,
+                            first_line=min(cse_in_loop),
+                            occurrences=[l for l in cse_in_loop if l != min(cse_in_loop)],
+                            can_hoist=True
+                        )
+                        loop.invariants[cse_hash] = invariant
+                    else:
+                        # Expression uses loop-modified variables, not invariant
+                        reason = f"Uses loop variables: {', '.join(sorted(cse.variables_used & loop.variables_modified))}"
+                        invariant = LoopInvariant(
+                            expression_hash=cse_hash,
+                            expression_desc=cse.expression_desc,
+                            first_line=min(cse_in_loop),
+                            occurrences=[l for l in cse_in_loop if l != min(cse_in_loop)],
+                            can_hoist=False,
+                            reason_no_hoist=reason
+                        )
+                        loop.invariants[cse_hash] = invariant
+
     def _analyze_if(self, stmt: IfStatementNode):
         """Analyze IF statement - handle compile-time evaluation when possible"""
+
+        # Detect IF-GOTO loops (backward jumps)
+        if stmt.then_line_number is not None and self.current_line is not None:
+            if stmt.then_line_number < self.current_line:
+                # This is a backward jump - potential loop!
+                # Check if we've already registered this as a loop
+                if stmt.then_line_number not in self.loops:
+                    # Create a new IF-GOTO loop
+                    loop = LoopAnalysis(
+                        loop_type=LoopType.IF_GOTO,
+                        start_line=stmt.then_line_number,
+                        end_line=self.current_line,
+                    )
+                    self.loops[stmt.then_line_number] = loop
+                else:
+                    # Update the end line if this is a later backward jump to the same target
+                    existing_loop = self.loops[stmt.then_line_number]
+                    if existing_loop.loop_type == LoopType.IF_GOTO:
+                        if existing_loop.end_line is None or self.current_line > existing_loop.end_line:
+                            existing_loop.end_line = self.current_line
 
         # Try to evaluate the condition at compile time
         condition_value = self.evaluator.evaluate(stmt.condition)
@@ -980,6 +1103,10 @@ class SemanticAnalyzer:
 
         # Note: Expression analysis is handled by the generic check in _analyze_statement
 
+        # Track variable modification in current loop
+        if self.current_loop:
+            self.current_loop.variables_modified.add(var_name)
+
         # Invalidate CSE: any expression using this variable is no longer available
         self._invalidate_expressions(var_name)
 
@@ -995,7 +1122,7 @@ class SemanticAnalyzer:
                 self.evaluator.clear_constant(var_name)
 
     def _analyze_for(self, stmt: ForStatementNode):
-        """Analyze FOR statement - track for loop nesting"""
+        """Analyze FOR statement - comprehensive loop analysis"""
         # stmt.variable is a VariableNode
         var_name = stmt.variable.name.upper()
 
@@ -1009,7 +1136,55 @@ class SemanticAnalyzer:
                 first_use_line=self.current_line
             )
 
-        # Push onto loop stack
+        # Create loop analysis structure
+        loop_analysis = LoopAnalysis(
+            loop_type=LoopType.FOR,
+            start_line=self.current_line or 0,
+            control_variable=var_name
+        )
+
+        # Try to determine loop bounds (for iteration count and unrolling)
+        start_val = self.evaluator.evaluate(stmt.start_expr)
+        end_val = self.evaluator.evaluate(stmt.end_expr)
+        step_val = self.evaluator.evaluate(stmt.step_expr) if stmt.step_expr else 1
+
+        if start_val is not None:
+            loop_analysis.start_value = start_val
+        if end_val is not None:
+            loop_analysis.end_value = end_val
+        if step_val is not None:
+            loop_analysis.step_value = step_val
+
+        # Calculate iteration count if all bounds are constant
+        if start_val is not None and end_val is not None and step_val is not None and step_val != 0:
+            try:
+                iterations = int((end_val - start_val) / step_val) + 1
+                if iterations > 0:
+                    loop_analysis.iteration_count = iterations
+                    # Consider unrolling small loops
+                    if 2 <= iterations <= 10:
+                        loop_analysis.can_unroll = True
+                        loop_analysis.unroll_factor = iterations
+            except (ValueError, ZeroDivisionError):
+                pass
+
+        # Track that this variable is modified by the loop
+        loop_analysis.variables_modified.add(var_name)
+
+        # Set up for nested loop tracking
+        if self.current_loop:
+            # We're inside another loop - track nesting
+            loop_analysis.nested_in = self.current_loop.start_line
+            self.current_loop.contains_loops.append(loop_analysis.start_line)
+
+        # Save current loop context and push new loop
+        self.loop_analysis_stack.append(self.current_loop)
+        self.current_loop = loop_analysis
+
+        # Store loop analysis
+        self.loops[loop_analysis.start_line] = loop_analysis
+
+        # Push onto old loop stack for validation
         self.loop_stack.append(LoopInfo(
             loop_type="FOR",
             variable=var_name,
@@ -1027,7 +1202,7 @@ class SemanticAnalyzer:
         self.evaluator.clear_constant(var_name)
 
     def _analyze_next(self, stmt: NextStatementNode):
-        """Analyze NEXT statement - validate loop nesting"""
+        """Analyze NEXT statement - validate loop nesting and close loop"""
         if not self.loop_stack:
             raise SemanticError(
                 "NEXT without FOR",
@@ -1055,9 +1230,23 @@ class SemanticAnalyzer:
                     )
                 # Pop the loop
                 self.loop_stack.pop()
+
+                # Close loop analysis
+                if self.current_loop and self.current_loop.control_variable == var_name:
+                    self.current_loop.end_line = self.current_line
+                    # Restore previous loop context
+                    if self.loop_analysis_stack:
+                        self.current_loop = self.loop_analysis_stack.pop()
         else:
             # NEXT without variable - matches innermost FOR
             self.loop_stack.pop()
+
+            # Close loop analysis
+            if self.current_loop:
+                self.current_loop.end_line = self.current_line
+                # Restore previous loop context
+                if self.loop_analysis_stack:
+                    self.current_loop = self.loop_analysis_stack.pop()
 
     def _analyze_while(self, stmt: WhileStatementNode):
         """Analyze WHILE statement"""
@@ -1067,6 +1256,24 @@ class SemanticAnalyzer:
             start_line=self.current_line or 0
         ))
         self._analyze_expression(stmt.condition)
+
+        # Create loop analysis structure
+        loop = LoopAnalysis(
+            loop_type=LoopType.WHILE,
+            start_line=self.current_line or 0,
+            control_variable=None,  # WHILE loops don't have a single control variable
+        )
+
+        # Track nesting
+        if self.current_loop:
+            loop.nested_in = self.current_loop.start_line
+            self.current_loop.contains_loops.append(loop.start_line)
+
+        # Push current loop to stack and set as current
+        if self.current_loop:
+            self.loop_analysis_stack.append(self.current_loop)
+        self.current_loop = loop
+        self.loops[loop.start_line] = loop
 
     def _analyze_wend(self, stmt: WendStatementNode):
         """Analyze WEND statement - validate loop nesting"""
@@ -1084,6 +1291,15 @@ class SemanticAnalyzer:
             )
 
         self.loop_stack.pop()
+
+        # Close loop analysis
+        if self.current_loop and self.current_loop.loop_type == LoopType.WHILE:
+            self.current_loop.end_line = self.current_line
+            # Restore previous loop context
+            if self.loop_analysis_stack:
+                self.current_loop = self.loop_analysis_stack.pop()
+            else:
+                self.current_loop = None
 
     def _analyze_expression(self, expr, context: str = "expression", track_folding: bool = True, track_cse: bool = True):
         """
@@ -1477,6 +1693,78 @@ class SemanticAnalyzer:
                 if cse.variables_used:
                     lines.append(f"    Variables used: {', '.join(sorted(cse.variables_used))}")
                 lines.append(f"    Suggested temp variable: {cse.temp_var_name}")
+                lines.append("")
+
+        # Loop Analysis and Optimizations
+        if self.loops:
+            lines.append(f"\nLoop Analysis:")
+            lines.append(f"  Found {len(self.loops)} loop(s)")
+            lines.append("")
+
+            # Sort loops by start line
+            sorted_loops = sorted(self.loops.items(), key=lambda x: x[0])
+
+            for start_line, loop in sorted_loops:
+                lines.append(f"  Loop at line {start_line} ({loop.loop_type.value}):")
+                lines.append(f"    End line: {loop.end_line}")
+
+                if loop.control_variable:
+                    lines.append(f"    Control variable: {loop.control_variable}")
+
+                if loop.iteration_count is not None:
+                    lines.append(f"    Iteration count: {loop.iteration_count}")
+
+                if loop.can_unroll:
+                    lines.append(f"    ✓ Can be unrolled (factor: {loop.unroll_factor})")
+
+                if loop.nested_in:
+                    lines.append(f"    Nested in loop at line {loop.nested_in}")
+
+                if loop.contains_loops:
+                    lines.append(f"    Contains nested loops at: {', '.join(map(str, loop.contains_loops))}")
+
+                if loop.variables_modified:
+                    lines.append(f"    Modifies variables: {', '.join(sorted(loop.variables_modified))}")
+
+                # Loop-invariant code motion opportunities
+                if loop.invariants:
+                    hoistable = [inv for inv in loop.invariants.values() if inv.can_hoist]
+                    non_hoistable = [inv for inv in loop.invariants.values() if not inv.can_hoist]
+
+                    if hoistable:
+                        lines.append(f"    ✓ Loop-invariant expressions that can be hoisted:")
+                        for inv in sorted(hoistable, key=lambda x: x.first_line):
+                            lines.append(f"      • {inv.expression_desc}")
+                            lines.append(f"        Computed {len(inv.occurrences) + 1} times at lines: {inv.first_line}, {', '.join(map(str, inv.occurrences))}")
+
+                    if non_hoistable:
+                        lines.append(f"    Note: Non-hoistable expressions:")
+                        for inv in sorted(non_hoistable, key=lambda x: x.first_line):
+                            lines.append(f"      • {inv.expression_desc} - {inv.reason_no_hoist}")
+
+                lines.append("")
+
+        # Subroutine Analysis
+        if self.subroutines:
+            lines.append(f"\nSubroutine Analysis:")
+            lines.append(f"  Found {len(self.subroutines)} subroutine(s)")
+            lines.append("")
+
+            sorted_subs = sorted(self.subroutines.items(), key=lambda x: x[0])
+
+            for line_num, sub_info in sorted_subs:
+                lines.append(f"  Subroutine at line {line_num}:")
+                if sub_info.end_line:
+                    lines.append(f"    End line: {sub_info.end_line}")
+
+                if sub_info.variables_modified:
+                    lines.append(f"    Modifies: {', '.join(sorted(sub_info.variables_modified))}")
+                else:
+                    lines.append(f"    Modifies: (none - read-only)")
+
+                if sub_info.calls_other_subs:
+                    lines.append(f"    Calls subroutines at: {', '.join(map(str, sorted(sub_info.calls_other_subs)))}")
+
                 lines.append("")
 
         # Compilation flags
