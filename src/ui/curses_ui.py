@@ -110,7 +110,9 @@ class CursesBackend(UIBackend):
         # Load program into editor
         self._load_program_to_editor()
 
-        # Draw initial UI
+        # Clear screen and draw initial UI
+        self.stdscr.clear()
+        self.stdscr.refresh()
         self._refresh_all()
 
         # Main event loop
@@ -219,15 +221,18 @@ class CursesBackend(UIBackend):
 
     def _refresh_all(self):
         """Refresh all windows."""
+        import curses
+
         self._draw_status()
         self._draw_output()
         self._draw_editor()  # Draw editor last to keep cursor there
 
-        # Refresh in order, editor last so cursor stays there
-        self.status_win.refresh()
-        self.output_win.refresh()
-        self.stdscr.refresh()
-        self.editor_win.refresh()  # Refresh editor last to position cursor
+        # Use noutrefresh/doupdate for proper refresh ordering
+        self.status_win.noutrefresh()
+        self.output_win.noutrefresh()
+        self.stdscr.noutrefresh()
+        self.editor_win.noutrefresh()  # Editor last to position cursor
+        curses.doupdate()  # Do actual screen update
 
     def _draw_status(self):
         """Draw status line."""
