@@ -54,9 +54,22 @@ class InteractiveMode:
     """MBASIC 5.21 interactive command mode"""
 
     def __init__(self, io_handler=None):
-        self.lines = {}  # line_number -> line_text (for SAVE/LIST)
-        self.line_asts = {}  # line_number -> LineNode (parsed AST)
-        self.current_file = None
+        # Initialize DEF type map (like Parser does)
+        # Import TypeInfo here to avoid circular dependency
+        from parser import TypeInfo
+        self.def_type_map = {}
+        # Default type is SINGLE for all letters (use lowercase)
+        for letter in 'abcdefghijklmnopqrstuvwxyz':
+            self.def_type_map[letter] = TypeInfo.SINGLE
+
+        # Program manager for line/AST storage
+        from editing import ProgramManager
+        self.program = ProgramManager(self.def_type_map)
+
+        # For backward compatibility, provide direct access to lines/line_asts
+        # (These are now properties that delegate to program manager)
+        self.current_file = None  # Maintained for compatibility
+
         self.runtime = None  # Persistent runtime for immediate mode
         self.interpreter = None  # Persistent interpreter
         self.program_runtime = None  # Runtime for RUN (preserved for CONT)
@@ -69,13 +82,16 @@ class InteractiveMode:
             io_handler = ConsoleIOHandler(debug_enabled=False)
         self.io = io_handler
 
-        # Initialize DEF type map (like Parser does)
-        # Import TypeInfo here to avoid circular dependency
-        from parser import TypeInfo
-        self.def_type_map = {}
-        # Default type is SINGLE for all letters (use lowercase)
-        for letter in 'abcdefghijklmnopqrstuvwxyz':
-            self.def_type_map[letter] = TypeInfo.SINGLE
+    # Properties for backward compatibility
+    @property
+    def lines(self):
+        """Access program lines (backward compatibility)."""
+        return self.program.lines
+
+    @property
+    def line_asts(self):
+        """Access program ASTs (backward compatibility)."""
+        return self.program.line_asts
 
     def parse_single_line(self, line_text, basic_line_num=None):
         """Parse a single line into a LineNode AST.
@@ -86,24 +102,15 @@ class InteractiveMode:
 
         Returns: LineNode or None if parse fails
         """
-        try:
-            tokens = list(tokenize(line_text))
-            parser = Parser(tokens, self.def_type_map)
-            line_node = parser.parse_line()
-            return line_node
-        except Exception as e:
-            # Strip "Parse error at line X, " from parser error messages
-            error_msg = str(e)
-            # Remove "Parse error at line N, " prefix since we show the BASIC line number
-            import re
-            error_msg = re.sub(r'^Parse error at line \d+, ', '', error_msg)
+        line_node, error = self.program.parse_single_line(line_text, basic_line_num)
 
+        if error:
+            # Print error message
+            print(error)
             if basic_line_num is not None:
-                print(f"?Syntax error in {basic_line_num}: {error_msg}")
                 print(f"  {line_text}")
-            else:
-                print(f"?Syntax error: {error_msg}")
-            return None
+
+        return line_node
 
     def clear_execution_state(self):
         """Clear GOSUB/RETURN and FOR/NEXT stacks when program is edited.
@@ -396,8 +403,7 @@ class InteractiveMode:
 
     def cmd_new(self):
         """NEW - Clear program"""
-        self.lines.clear()
-        self.line_asts.clear()
+        self.program.clear()
         self.current_file = None
         # Clear execution state when program is cleared
         self.clear_execution_state()
@@ -421,11 +427,7 @@ class InteractiveMode:
             if not filename.endswith('.bas'):
                 filename += '.bas'
 
-            program_text = self.get_program_text()
-
-            with open(filename, 'w') as f:
-                f.write(program_text)
-
+            self.program.save_to_file(filename)
             self.current_file = filename
             print(f"Saved to {filename}")
 
@@ -450,31 +452,19 @@ class InteractiveMode:
             if not filename.endswith('.bas'):
                 filename += '.bas'
 
-            with open(filename, 'r') as f:
-                program_text = f.read()
+            success, errors = self.program.load_from_file(filename)
 
-            # Clear current program
-            self.lines.clear()
-            self.line_asts.clear()
+            if errors:
+                # Print parse errors
+                for line_num, error in errors:
+                    print(error)
 
-            # Parse and load lines
-            for line in program_text.split('\n'):
-                line = line.strip()
-                if not line:
-                    continue
-
-                match = re.match(r'^(\d+)\s', line)
-                if match:
-                    line_num = int(match.group(1))
-                    self.lines[line_num] = line
-                    # Parse line into AST
-                    line_ast = self.parse_single_line(line)
-                    if line_ast:
-                        self.line_asts[line_num] = line_ast
-
-            self.current_file = filename
-            print(f"Loaded from {filename}")
-            print("Ready")
+            if success:
+                self.current_file = filename
+                print(f"Loaded from {filename}")
+                print("Ready")
+            else:
+                print("?No lines loaded")
 
         except FileNotFoundError:
             print(f"?File not found: {filename}")
