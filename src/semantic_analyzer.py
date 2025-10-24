@@ -170,6 +170,16 @@ class StrengthReduction:
 
 
 @dataclass
+class ExpressionReassociation:
+    """Information about an expression reassociation optimization"""
+    line: int  # Line number where reassociation was applied
+    original_expr: str  # Original expression (e.g., "(A + 1) + 2")
+    reassociated_expr: str  # Reassociated expression (e.g., "A + 3")
+    operation: str  # Type of operation (e.g., "addition chain", "multiplication chain")
+    savings: str  # Description of savings (e.g., "Fold 2 constants into 1")
+
+
+@dataclass
 class CopyPropagation:
     """Information about a copy propagation opportunity"""
     line: int  # Line number where copy was detected
@@ -576,6 +586,9 @@ class SemanticAnalyzer:
 
         # Strength reduction tracking
         self.strength_reductions: List[StrengthReduction] = []
+
+        # Expression reassociation tracking
+        self.expression_reassociations: List[ExpressionReassociation] = []
 
         # Copy propagation tracking
         self.copy_propagations: List[CopyPropagation] = []
@@ -1822,6 +1835,18 @@ class SemanticAnalyzer:
             self._analyze_expression(expr.left, "binary operation", track_folding=False, track_cse=True)
             self._analyze_expression(expr.right, "binary operation", track_folding=False, track_cse=True)
 
+            # Apply expression reassociation first (groups constants together)
+            reassociated = self._apply_expression_reassociation(expr)
+            if reassociated is not None:
+                # Replace the expression node's internals with the reassociated version
+                if isinstance(reassociated, BinaryOpNode):
+                    expr.left = reassociated.left
+                    expr.operator = reassociated.operator
+                    expr.right = reassociated.right
+                elif isinstance(reassociated, NumberNode):
+                    # The whole expression became a constant
+                    pass
+
             # Apply strength reduction if possible
             reduced = self._apply_strength_reduction(expr)
             if reduced is not None:
@@ -2425,6 +2450,136 @@ class SemanticAnalyzer:
 
         return new_expr
 
+    def _apply_expression_reassociation(self, expr) -> Optional[Any]:
+        """
+        Apply expression reassociation to rearrange associative operations
+        and expose constant folding opportunities.
+
+        Reassociates chains of associative operations (+ and *) to group constants together.
+
+        Examples:
+        - (A + 1) + 2 → A + 3
+        - (A * 2) * 3 → A * 6
+        - 2 + (A + 3) → A + 5
+        - (A * B) * 2 * 3 → (A * B) * 6
+
+        Returns the transformed expression node, or None if no reassociation applies.
+        """
+        if not isinstance(expr, BinaryOpNode):
+            return None
+
+        from tokens import TokenType
+
+        # Only handle associative operations
+        if expr.operator not in (TokenType.PLUS, TokenType.MULTIPLY):
+            return None
+
+        # Collect all terms/factors in the chain
+        terms = []
+        self._collect_associative_chain(expr, expr.operator, terms)
+
+        # Need at least 2 terms to reassociate
+        if len(terms) < 2:
+            return None
+
+        # Separate constants from non-constants
+        constants = []
+        non_constants = []
+
+        for term in terms:
+            val = self.evaluator.evaluate(term)
+            if val is not None:
+                constants.append((term, val))
+            else:
+                non_constants.append(term)
+
+        # Need at least 2 constants to benefit from reassociation
+        if len(constants) < 2:
+            return None
+
+        # Fold all constants together
+        if expr.operator == TokenType.PLUS:
+            folded_value = sum(val for _, val in constants)
+            operation = "addition chain"
+        else:  # MULTIPLY
+            folded_value = 1.0
+            for _, val in constants:
+                folded_value *= val
+            operation = "multiplication chain"
+
+        # Create the folded constant node
+        if isinstance(folded_value, float) and folded_value.is_integer():
+            folded_node = NumberNode(value=folded_value, literal=str(int(folded_value)))
+        else:
+            folded_node = NumberNode(value=folded_value, literal=str(folded_value))
+
+        # Build the new expression: non_constants op folded_constant
+        if len(non_constants) == 0:
+            # All constants - just return the folded value
+            new_expr = folded_node
+        elif len(non_constants) == 1:
+            # One non-constant and the folded constant
+            # For addition: A + 5 or 5 + A (prefer A + 5)
+            # For multiplication: A * 6 or 6 * A (prefer A * 6)
+            new_expr = BinaryOpNode(
+                left=non_constants[0],
+                operator=expr.operator,
+                right=folded_node
+            )
+        else:
+            # Multiple non-constants: build left-associative chain
+            # (A * B) * C * ... * folded_constant
+            new_expr = non_constants[0]
+            for term in non_constants[1:]:
+                new_expr = BinaryOpNode(
+                    left=new_expr,
+                    operator=expr.operator,
+                    right=term
+                )
+            # Add the folded constant at the end
+            new_expr = BinaryOpNode(
+                left=new_expr,
+                operator=expr.operator,
+                right=folded_node
+            )
+
+        # Record the reassociation
+        original_desc = self._describe_expression(expr)
+        reassociated_desc = self._describe_expression(new_expr)
+
+        # Only record if the expression actually changed
+        if original_desc != reassociated_desc:
+            self.expression_reassociations.append(ExpressionReassociation(
+                line=self.current_line,
+                original_expr=original_desc,
+                reassociated_expr=reassociated_desc,
+                operation=operation,
+                savings=f"Fold {len(constants)} constants into 1"
+            ))
+            return new_expr
+
+        return None
+
+    def _collect_associative_chain(self, expr, operator: TokenType, terms: List):
+        """
+        Recursively collect all terms/factors in an associative chain.
+
+        For example, given (A + B) + (C + 1):
+        - Collects [A, B, C, 1] for operator PLUS
+
+        Args:
+            expr: Current expression node
+            operator: The associative operator (PLUS or MULTIPLY)
+            terms: List to accumulate terms into
+        """
+        if isinstance(expr, BinaryOpNode) and expr.operator == operator:
+            # Recursively collect from left and right
+            self._collect_associative_chain(expr.left, operator, terms)
+            self._collect_associative_chain(expr.right, operator, terms)
+        else:
+            # Base case: not the same operator, add as a term
+            terms.append(expr)
+
     def _validate_line_references(self, program: ProgramNode):
         """Validate all GOTO/GOSUB/ON...GOTO references"""
         for line in program.lines:
@@ -2657,6 +2812,17 @@ class SemanticAnalyzer:
                 lines.append(f"  Line {sr.line}: {sr.original_expr} → {sr.reduced_expr}")
                 lines.append(f"    Type: {sr.reduction_type}")
                 lines.append(f"    Savings: {sr.savings}")
+                lines.append("")
+
+        # Expression Reassociation Optimizations
+        if self.expression_reassociations:
+            lines.append(f"\nExpression Reassociation Optimizations:")
+            lines.append(f"  Found {len(self.expression_reassociations)} reassociation(s)")
+            lines.append("")
+            for er in self.expression_reassociations:
+                lines.append(f"  Line {er.line}: {er.original_expr} → {er.reassociated_expr}")
+                lines.append(f"    Operation: {er.operation}")
+                lines.append(f"    Savings: {er.savings}")
                 lines.append("")
 
         # Copy Propagation Optimizations

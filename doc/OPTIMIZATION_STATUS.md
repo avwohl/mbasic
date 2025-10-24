@@ -238,24 +238,36 @@ This document tracks all optimizations implemented, planned, and possible for th
 
 **TODO:** Actual code transformation (needs code generation phase)
 
+### 14. Expression Reassociation
+**Status:** ✅ Complete
+**Location:** `src/semantic_analyzer.py` - `_apply_expression_reassociation()`, `_collect_associative_chain()`
+**What it does:**
+- Rearranges associative operations (+ and *) to group constants together
+- Collects all terms/factors in associative chains
+- Separates constants from non-constants
+- Folds all constants into a single value
+- Rebuilds expression with optimal grouping
+
+**Examples:**
+```basic
+10 X = (A + 1) + 2    ' → A + 3
+20 Y = (A * 2) * 3    ' → A * 6
+30 Z = 2 + (A + 3)    ' → A + 5
+40 W = 2 * A * 3 * 4  ' → A * 24
+```
+
+**Benefits:**
+- Exposes constant folding opportunities
+- Reduces number of runtime operations
+- Works with any length of associative chain
+- Handles both addition and multiplication
+- Enables further optimizations downstream
+
 ---
 
 ## 📋 READY TO IMPLEMENT NOW (Semantic Analysis Phase)
 
 These optimizations can be implemented in the semantic analyzer without requiring code generation:
-
-### 5. Expression Reassociation
-**Complexity:** Medium
-**What it does:**
-- Rearrange expressions for better optimization
-- `(A + 1) + 2` → `A + 3`
-- `(A * 2) * 3` → `A * 6`
-- Can expose constant folding opportunities
-
-**Implementation:**
-- Add during expression parsing or analysis
-- Respect operator precedence
-- Watch for overflow issues
 
 ### 6. Boolean Simplification
 **Complexity:** Medium
@@ -463,6 +475,7 @@ These require actual code generation/transformation, not just analysis:
 3. ✅ Strength Reduction - DONE
 4. ✅ Copy Propagation - DONE
 5. ✅ Algebraic Simplification - DONE (Boolean + arithmetic identities)
+6. ✅ Expression Reassociation - DONE
 
 ### High Value, High Effort
 1. ✅ Loop-Invariant Detection - DONE (transformation needs codegen)
@@ -484,9 +497,9 @@ These require actual code generation/transformation, not just analysis:
 ## 🎯 RECOMMENDED NEXT STEPS
 
 ### Immediate (Semantic Analysis)
-1. **Range Analysis** - Improves dead code detection
-2. **Forward Substitution** - Eliminate single-use temporaries
-3. **Expression Reassociation** - Exposes constant folding
+1. ✅ **Expression Reassociation** - DONE (Exposes constant folding)
+2. **Range Analysis** - Improves dead code detection
+3. **Forward Substitution** - Eliminate single-use temporaries
 
 ### Short Term (Still Semantic)
 5. **Live Variable Analysis** - Completes the analysis suite
@@ -513,6 +526,7 @@ These require actual code generation/transformation, not just analysis:
 - ✅ Copy propagation - **Standard** (dataflow analysis)
 - ✅ Algebraic simplification - **Standard** (Boolean + arithmetic)
 - ✅ Induction variable optimization - **Standard** (IV detection and SR opportunities)
+- ✅ Expression reassociation - **Standard** (enables constant folding)
 
 ### What We're Missing (that modern compilers have)
 - ❌ SSA form - Not needed for BASIC's simplicity
@@ -536,13 +550,13 @@ We've implemented a **strong foundation** of compiler optimizations that are:
 3. **Complete for analysis** - Detection and transformation done
 4. **Modern-quality analysis** - Comparable to modern compilers' semantic phase
 
-**Current Status: 13 optimizations implemented!**
+**Current Status: 14 optimizations implemented!**
 
 **What's left for semantic analysis:**
 - Range analysis
-- Expression reassociation
 - Forward substitution
 - Live variable analysis
+- Boolean simplification (NOT(A > B) → A <= B, etc.)
 
 **What needs code generation:**
 - Peephole optimization
