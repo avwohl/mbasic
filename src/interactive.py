@@ -53,7 +53,7 @@ def print_error(e, runtime=None):
 class InteractiveMode:
     """MBASIC 5.21 interactive command mode"""
 
-    def __init__(self):
+    def __init__(self, io_handler=None):
         self.lines = {}  # line_number -> line_text (for SAVE/LIST)
         self.line_asts = {}  # line_number -> LineNode (parsed AST)
         self.current_file = None
@@ -62,6 +62,12 @@ class InteractiveMode:
         self.program_runtime = None  # Runtime for RUN (preserved for CONT)
         self.program_interpreter = None  # Interpreter for RUN (preserved for CONT)
         self.ctrl_c_count = 0  # Track consecutive Ctrl+C presses
+
+        # I/O handler (defaults to console if not provided)
+        if io_handler is None:
+            from io import ConsoleIOHandler
+            io_handler = ConsoleIOHandler(debug_enabled=False)
+        self.io = io_handler
 
         # Initialize DEF type map (like Parser does)
         # Import TypeInfo here to avoid circular dependency
@@ -318,7 +324,7 @@ class InteractiveMode:
             # Runtime will reference self.line_asts which is mutable
             # Pass line text map for better error messages
             runtime = Runtime(self.line_asts, self.lines)
-            interpreter = Interpreter(runtime)
+            interpreter = Interpreter(runtime, self.io)
             # Pass reference to interactive mode so statements like LIST can access the line editor
             interpreter.interactive_mode = self
 
@@ -654,7 +660,7 @@ class InteractiveMode:
 
             # Run the program
             runtime = Runtime(self.line_asts)
-            interpreter = Interpreter(runtime)
+            interpreter = Interpreter(runtime, self.io)
             interpreter.interactive_mode = self
 
             # Restore variables if saved
@@ -1427,7 +1433,7 @@ class InteractiveMode:
                 if self.runtime is None:
                     self.runtime = Runtime(ast)
                     self.runtime.setup()
-                    self.interpreter = Interpreter(self.runtime)
+                    self.interpreter = Interpreter(self.runtime, self.io)
                     # Pass reference to interactive mode for commands like LOAD/SAVE
                     self.interpreter.interactive_mode = self
                 runtime = self.runtime
