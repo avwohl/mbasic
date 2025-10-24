@@ -50,6 +50,7 @@ class CursesBackend(UIBackend):
         # Curses state
         self.stdscr = None
         self.menu_win = None
+        self.dropdown_win = None  # Dropdown menu window
         self.editor_win = None
         self.output_win = None
         self.status_win = None
@@ -151,6 +152,7 @@ class CursesBackend(UIBackend):
 
         # Clear screen and draw initial UI
         self.stdscr.clear()
+        self.stdscr.noutrefresh()
         self._refresh_all()
 
         # Main event loop
@@ -369,22 +371,27 @@ class CursesBackend(UIBackend):
         # Find longest item for menu width
         max_width = max(len(item[0]) for item in items) + 4
 
-        # Create a pad for the dropdown (temporary window)
+        # Create dropdown window (keep as instance variable so it persists)
         menu_height = len(items) + 2  # +2 for borders
         try:
-            dropdown = curses.newwin(menu_height, max_width, 1, x)
-            dropdown.box()
+            # Delete old dropdown if it exists
+            if self.dropdown_win:
+                del self.dropdown_win
+                self.dropdown_win = None
+
+            self.dropdown_win = curses.newwin(menu_height, max_width, 1, x)
+            self.dropdown_win.box()
 
             # Draw each menu item
             for i, (name, _) in enumerate(items):
                 y = i + 1
                 text = f" {name} "
                 if i == self.current_menu_item:
-                    dropdown.addstr(y, 1, text, curses.A_REVERSE)
+                    self.dropdown_win.addstr(y, 1, text, curses.A_REVERSE)
                 else:
-                    dropdown.addstr(y, 1, text)
+                    self.dropdown_win.addstr(y, 1, text)
 
-            dropdown.noutrefresh()
+            self.dropdown_win.noutrefresh()
         except curses.error:
             pass  # Menu might not fit on screen
 
