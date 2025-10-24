@@ -34,6 +34,9 @@ This directory contains tests for the semantic analyzer's advanced optimization 
 ### Dead Code Detection
 - **test_dead_code.py** - Reachability analysis and dead code detection (8 tests)
 
+### Strength Reduction
+- **test_strength_reduction.py** - Strength reduction optimizations (10 tests)
+
 ### Comprehensive Tests
 - **test_optimization_report.py** - Full optimization report generation
 - **test_comprehensive_analysis.py** - All features together
@@ -78,6 +81,13 @@ done
     - Identifies orphaned code
     - Finds uncalled subroutines
     - Generates warnings for unreachable code
+12. **Strength Reduction** - Replace expensive operations with cheaper ones:
+    - `X * 2` → `X + X` (MUL to ADD)
+    - `X ^ 2` → `X * X` (POW to MUL)
+    - `X ^ 3/4` → repeated MUL
+    - Algebraic identities (`X * 1` → `X`, `X + 0` → `X`, etc.)
+    - Power-of-2 detection for shift optimization
+    - Tracks savings and reduction types
 
 ## Expected Results
 
