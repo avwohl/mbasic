@@ -5,5 +5,7 @@ UI types (CLI, GUI, web, mobile, etc.).
 """
 
 from .base import UIBackend
+from .cli import CLIBackend
+from .visual import VisualBackend
 
-__all__ = ['UIBackend']
+__all__ = ['UIBackend', 'CLIBackend', 'VisualBackend']
