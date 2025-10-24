@@ -907,13 +907,16 @@ class SemanticAnalyzer:
         self.optimization_iterations = 0  # Number of iterations performed
         self.optimization_converged = False  # Whether fixed point was reached
 
-    def analyze(self, program: ProgramNode, max_iterations: int = 5) -> bool:
+    def analyze(self, program: ProgramNode, max_iterations: int = 5,
+                enable_integer_size_inference: bool = True) -> bool:
         """
         Analyze a program AST with iterative optimization.
 
         Args:
             program: The AST to analyze
             max_iterations: Maximum optimization iterations (default 5)
+            enable_integer_size_inference: Enable 8/16/32-bit integer optimization (default True)
+                If False, all integers use 32-bit signed math (smaller code size)
 
         Returns:
             True if analysis succeeds, False if errors found
@@ -922,6 +925,11 @@ class SemanticAnalyzer:
         1. Structural analysis (once): symbols, subroutines, statements, line references
         2. Iterative optimization (until convergence): analyses that can cascade
         3. Final reporting (once): warnings and statistics
+
+        Note on integer size inference:
+        - When enabled: Analyzes 8/16/32-bit opportunities (10-20x faster on 8080!)
+        - When disabled: Uses 32-bit signed for all integers (smaller generated code)
+        - Trade-off: Speed vs code size. Enable for performance, disable if code size matters.
         """
         self.errors.clear()
         self.warnings.clear()
@@ -969,7 +977,10 @@ class SemanticAnalyzer:
                 self._analyze_available_expressions(program)
                 self._analyze_variable_type_bindings(program)
                 self._analyze_type_promotions(program)  # Phase 2: detect INT→DOUBLE promotions
-                self._analyze_integer_sizes(program)  # Integer size inference (8/16/32-bit)
+
+                # Integer size inference (optional - controlled by flag)
+                if enable_integer_size_inference:
+                    self._analyze_integer_sizes(program)  # 8/16/32-bit optimization
 
                 # Count optimizations after this iteration
                 count_after = self._count_optimizations()
