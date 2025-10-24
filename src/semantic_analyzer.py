@@ -858,59 +858,106 @@ class SemanticAnalyzer:
         self.variable_type_versions: Dict[str, List[TypeBinding]] = {}  # var_name -> [binding1, binding2, ...]
         self.can_rebind_variable: Dict[str, bool] = {}  # var_name -> can safely rebind?
 
-    def analyze(self, program: ProgramNode) -> bool:
+        # Iterative optimization tracking
+        self.optimization_iterations = 0  # Number of iterations performed
+        self.optimization_converged = False  # Whether fixed point was reached
+
+    def analyze(self, program: ProgramNode, max_iterations: int = 5) -> bool:
         """
-        Analyze a program AST.
-        Returns True if analysis succeeds, False if errors found.
+        Analyze a program AST with iterative optimization.
+
+        Args:
+            program: The AST to analyze
+            max_iterations: Maximum optimization iterations (default 5)
+
+        Returns:
+            True if analysis succeeds, False if errors found
+
+        The analysis runs in three phases:
+        1. Structural analysis (once): symbols, subroutines, statements, line references
+        2. Iterative optimization (until convergence): analyses that can cascade
+        3. Final reporting (once): warnings and statistics
         """
         self.errors.clear()
         self.warnings.clear()
+        self.optimization_iterations = 0
+        self.optimization_converged = False
 
         try:
-            # First pass: collect all line numbers, DEF statements, and GOSUB targets
+            # ============================================================
+            # PHASE 1: STRUCTURAL ANALYSIS (Run Once)
+            # ============================================================
+            # These establish program structure and don't benefit from iteration
+
+            # Collect all symbols, DEF statements, and GOSUB targets
             self._collect_symbols(program)
 
-            # Second pass: analyze subroutines to determine what they modify
+            # Analyze subroutines to determine what they modify
             self._analyze_subroutines(program)
 
-            # Third pass: validate statements and build complete symbol table
+            # Validate statements and build complete symbol table
             self._analyze_statements(program)
 
-            # Fourth pass: identify loop-invariant expressions
-            self._analyze_loop_invariants()
-
-            # Fifth pass: validate all line number references
+            # Validate all line number references
             self._validate_line_references(program)
 
-            # Sixth pass: perform reachability analysis and detect dead code
-            self._analyze_reachability(program)
+            # ============================================================
+            # PHASE 2: ITERATIVE OPTIMIZATION (Until Convergence)
+            # ============================================================
+            # These analyses can cascade - run until fixed point reached
 
-            # Seventh pass: analyze forward substitution opportunities
-            self._analyze_forward_substitution(program)
+            for iteration in range(1, max_iterations + 1):
+                self.optimization_iterations = iteration
 
-            # Eighth pass: live variable analysis (backward dataflow)
-            self._analyze_live_variables(program)
+                # Count optimizations BEFORE clearing (to detect if iteration changed anything)
+                count_before = self._count_optimizations() if iteration > 1 else 0
 
-            # Ninth pass: string constant pooling
+                # Clear stale optimization state from previous iteration
+                if iteration > 1:
+                    self._clear_iterative_state()
+
+                # Run analyses that can benefit from cascading
+                self._analyze_loop_invariants()
+                self._analyze_reachability(program)
+                self._analyze_forward_substitution(program)
+                self._analyze_live_variables(program)
+                self._analyze_available_expressions(program)
+                self._analyze_variable_type_bindings(program)
+
+                # Count optimizations after this iteration
+                count_after = self._count_optimizations()
+
+                # Check for convergence (same count as before we cleared and re-ran)
+                if iteration > 1 and count_after == count_before:
+                    self.optimization_converged = True
+                    break
+
+            # Warn if we hit the iteration limit
+            if not self.optimization_converged:
+                self.warnings.append(
+                    f"Optimization iteration limit reached ({max_iterations}). "
+                    f"Some optimization opportunities may have been missed."
+                )
+
+            # ============================================================
+            # PHASE 3: FINAL REPORTING (Run Once)
+            # ============================================================
+            # These are for warnings/reports and don't affect other optimizations
+
+            # String constant pooling
             self._analyze_string_constants(program)
 
-            # Tenth pass: built-in function purity analysis
+            # Built-in function purity analysis
             self._analyze_function_purity(program)
 
-            # Eleventh pass: array bounds checking
+            # Array bounds checking
             self._analyze_array_bounds(program)
 
-            # Twelfth pass: alias analysis
+            # Alias analysis
             self._analyze_aliases(program)
 
-            # Thirteenth pass: available expression analysis
-            self._analyze_available_expressions(program)
-
-            # Fourteenth pass: string concatenation in loops
+            # String concatenation in loops
             self._analyze_string_concat_in_loops(program)
-
-            # Fifteenth pass: variable type rebinding analysis
-            self._analyze_variable_type_bindings(program)
 
             # Generate warnings for required compilation switches
             self._check_compilation_switches()
@@ -5066,6 +5113,106 @@ class SemanticAnalyzer:
                 f"Required compilation switches: {' '.join(switches)}"
             )
 
+    def _clear_iterative_state(self):
+        """
+        Clear optimization state that can become stale between iterations.
+
+        This includes all analyses that depend on other optimizations:
+        - CSE (affected by forward substitution)
+        - Reachability (affected by constant folding, boolean simplification)
+        - Forward substitution (affected by dead code elimination)
+        - Live variables (affected by forward substitution, dead code)
+        - Type rebinding (affected by constant folding)
+        - Strength reduction, etc.
+
+        Structural data (symbols, subroutines, loops) is NOT cleared.
+        """
+        # CSE
+        self.common_subexpressions.clear()
+        self.available_expressions.clear()
+        # Don't reset cse_counter - we want unique temp names across iterations
+
+        # Reachability
+        self.reachability = ReachabilityInfo()
+
+        # Forward substitution
+        self.forward_substitutions.clear()
+        self.variable_assignments.clear()
+        self.variable_usage_count.clear()
+        self.variable_usage_lines.clear()
+
+        # Live variables
+        self.live_var_info.clear()
+        self.dead_writes.clear()
+
+        # Type rebinding
+        self.type_bindings.clear()
+        self.variable_type_versions.clear()
+        self.can_rebind_variable.clear()
+
+        # Strength reduction
+        self.strength_reductions.clear()
+
+        # Expression reassociation
+        self.expression_reassociations.clear()
+
+        # Copy propagation
+        self.copy_propagations.clear()
+        self.active_copies.clear()
+
+        # Branch optimization
+        self.branch_optimizations.clear()
+
+        # Uninitialized variable warnings
+        self.uninitialized_warnings.clear()
+        self.initialized_variables.clear()
+
+        # Induction variables
+        self.induction_variables.clear()
+        self.active_ivs.clear()
+
+        # Range analysis - NOTE: range_info is structural (based on FOR loop bounds)
+        # and is populated during _analyze_statements(), so we DON'T clear it.
+        # However, active_ranges (runtime tracking) should be cleared.
+        # self.range_info.clear()  # DO NOT CLEAR - structural data
+        self.active_ranges.clear()
+
+        # Available expression analysis
+        self.available_expr_analysis.clear()
+
+        # Reset constant evaluator runtime constants
+        # (these are derived and may change with optimizations)
+        self.evaluator.runtime_constants.clear()
+
+        # Note: We DON'T clear:
+        # - self.symbols (structural)
+        # - self.subroutines (structural)
+        # - self.gosub_targets (structural)
+        # - self.loops (structural)
+        # - self.folded_expressions (accumulates, deduplicated)
+        # - Reporting-only data (recalculated once at end)
+
+    def _count_optimizations(self) -> int:
+        """
+        Count total optimizations found.
+        Used to detect convergence - if count doesn't change, we've reached fixed point.
+        """
+        return (
+            len(self.common_subexpressions) +
+            len(self.reachability.unreachable_lines) +
+            len(self.forward_substitutions) +
+            len(self.dead_writes) +
+            len(self.type_bindings) +
+            len(self.strength_reductions) +
+            len(self.expression_reassociations) +
+            len(self.copy_propagations) +
+            len(self.branch_optimizations) +
+            len(self.uninitialized_warnings) +
+            len(self.induction_variables) +
+            len(self.range_info) +
+            len(self.available_expr_analysis)
+        )
+
     def _get_type_from_name(self, name: str) -> VarType:
         """Determine variable type from name suffix"""
         if name.endswith('%'):
@@ -5086,6 +5233,14 @@ class SemanticAnalyzer:
         lines.append("=" * 70)
         lines.append("SEMANTIC ANALYSIS REPORT")
         lines.append("=" * 70)
+
+        # Optimization iteration statistics
+        if self.optimization_iterations > 0:
+            lines.append(f"\nOptimization Iterations: {self.optimization_iterations}")
+            if self.optimization_converged:
+                lines.append(f"  ✓ Converged to fixed point (no more improvements found)")
+            else:
+                lines.append(f"  ⚠ Iteration limit reached - some optimizations may have been missed")
 
         # Symbol table summary
         lines.append(f"\nSymbol Table Summary:")
