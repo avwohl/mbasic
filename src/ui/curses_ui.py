@@ -64,7 +64,6 @@ class CursesBackend(UIBackend):
 
         # Help system
         self.help_browser = None
-        self.esc_pressed = False  # Track ESC for double-ESC help
 
     def start(self) -> None:
         """Start the curses UI.
@@ -123,68 +122,49 @@ class CursesBackend(UIBackend):
             if key == ord('q') or key == ord('Q'):
                 # Quit
                 break
-            # ESC: Clear error message, or if pressed twice, show help
+            # ESC: Clear error message and return to Ready
             elif key == 27:  # ESC
-                if self.esc_pressed:
-                    # Double ESC - show help
-                    self.esc_pressed = False
-                    self._show_help()
-                else:
-                    # First ESC - clear status, mark ESC pressed
-                    self.status_message = "Ready (press ESC again for help)"
-                    self.esc_pressed = True
+                self.status_message = "Ready"
+            # Help: Ctrl+P
+            elif key == 16:  # Ctrl+P
+                self._show_help()
             # Run: Ctrl+R
             elif key == 18:  # Ctrl+R
-                self.esc_pressed = False
                 self._run_program()
             # List: Ctrl+L
             elif key == 12:  # Ctrl+L
-                self.esc_pressed = False
                 self._list_program()
             # Save: Ctrl+S
             elif key == 19:  # Ctrl+S
-                self.esc_pressed = False
                 self._save_program()
             # Load: Ctrl+O
             elif key == 15:  # Ctrl+O
-                self.esc_pressed = False
                 self._load_program()
             # New: Ctrl+N
             elif key == 14:  # Ctrl+N
-                self.esc_pressed = False
                 self.cmd_new()
             # Navigation
             elif key == curses.KEY_UP:
-                self.esc_pressed = False
                 self._move_line_up()
             elif key == curses.KEY_DOWN:
-                self.esc_pressed = False
                 self._move_line_down()
             elif key == curses.KEY_LEFT:
-                self.esc_pressed = False
                 self._move_cursor_left()
             elif key == curses.KEY_RIGHT:
-                self.esc_pressed = False
                 self._move_cursor_right()
             elif key == curses.KEY_HOME or key == 1:  # Home or Ctrl+A
-                self.esc_pressed = False
                 self.cursor_x = 0
             elif key == curses.KEY_END or key == 5:  # End or Ctrl+E
-                self.esc_pressed = False
                 self.cursor_x = len(self.current_line_text)
             # Line editing
             elif key == ord('\n') or key == curses.KEY_ENTER or key == 10:
-                self.esc_pressed = False
                 self._handle_enter()
             elif key == curses.KEY_BACKSPACE or key == 127 or key == 8:
-                self.esc_pressed = False
                 self._handle_backspace()
             elif key == curses.KEY_DC:  # Delete key
-                self.esc_pressed = False
                 self._handle_delete()
             elif key >= 32 and key < 127:
                 # Printable character (including ?)
-                self.esc_pressed = False
                 self._insert_char(chr(key))
 
             self._refresh_all()
@@ -267,7 +247,7 @@ class CursesBackend(UIBackend):
         if "error" in self.status_message.lower() or len(self.status_message) > 40:
             status_text = f" MBASIC | {self.status_message} | [ESC to clear]"
         else:
-            status_text = f" MBASIC | {self.status_message} | ESC ESC=Help ^R=Run ^L=List ^S=Save ^O=Load Q=Quit"
+            status_text = f" MBASIC | {self.status_message} | ^P=Help ^R=Run ^L=List ^S=Save ^O=Load ^N=New Q=Quit"
 
         height, width = self.status_win.getmaxyx()
         self.status_win.addstr(0, 0, status_text[:width-1])

@@ -43,7 +43,7 @@ Let's write a simple program:
 
 You don't need to memorize everything. The status line shows common commands:
 
-- **ESC ESC** - Help (press ESC twice - you're here now!)
+- **Ctrl+P** - Help (you're here now!)
 - **Ctrl+R** - Run program
 - **Q** - Quit
 
@@ -71,7 +71,7 @@ Or jump to the BASIC language:
 
 ## Tips
 
-- Press **ESC** once to clear error messages
-- Press **ESC** twice to open help
+- Press **ESC** to clear error messages
+- Press **Ctrl+P** to open help
 - Status line shows available commands
 - Lines auto-increment by 10 for easy editing
