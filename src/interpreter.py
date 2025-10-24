@@ -26,7 +26,7 @@ class Interpreter:
 
         # I/O handler (defaults to console if not provided)
         if io_handler is None:
-            from io import ConsoleIOHandler
+            from iohandler.console import ConsoleIOHandler
             io_handler = ConsoleIOHandler(debug_enabled=False)
         self.io = io_handler
 
