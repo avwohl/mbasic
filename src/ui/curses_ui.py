@@ -204,14 +204,15 @@ class CursesBackend(UIBackend):
 
     def _refresh_all(self):
         """Refresh all windows."""
-        self._draw_editor()
-        self._draw_output()
         self._draw_status()
+        self._draw_output()
+        self._draw_editor()  # Draw editor last to keep cursor there
 
-        self.stdscr.refresh()
-        self.editor_win.refresh()
-        self.output_win.refresh()
+        # Refresh in order, editor last so cursor stays there
         self.status_win.refresh()
+        self.output_win.refresh()
+        self.stdscr.refresh()
+        self.editor_win.refresh()  # Refresh editor last to position cursor
 
     def _draw_status(self):
         """Draw status line."""
@@ -252,26 +253,36 @@ class CursesBackend(UIBackend):
         elif current_idx >= self.editor_scroll_offset + height - 1:
             self.editor_scroll_offset = current_idx - height + 2
 
-        # Draw lines
+        # Draw lines and find cursor position
         row = 0
+        cursor_row = 0
         for i in range(self.editor_scroll_offset, len(line_numbers)):
             if row >= height - 1:
                 break
             line_num = line_numbers[i]
-            line_text = self.editor_lines[line_num]
-            self.editor_win.addstr(row, 0, line_text[:width-1])
+
+            # Check if this is the current line being edited
+            if line_num == self.current_line_num:
+                # Draw current line text (being edited)
+                self.editor_win.addstr(row, 0, self.current_line_text[:width-1])
+                cursor_row = row
+            else:
+                # Draw saved line
+                line_text = self.editor_lines[line_num]
+                self.editor_win.addstr(row, 0, line_text[:width-1])
             row += 1
 
-        # Draw current line being edited (if not already in program)
-        if self.current_line_num not in self.editor_lines or row < height:
-            # Show current line at bottom of visible area or at cursor position
+        # If current line is not in editor_lines yet, draw it at the end
+        if self.current_line_num not in self.editor_lines:
             if current_idx >= self.editor_scroll_offset:
                 edit_row = current_idx - self.editor_scroll_offset
                 if edit_row < height:
                     self.editor_win.addstr(edit_row, 0, self.current_line_text[:width-1])
-                    # Position cursor
-                    cursor_col = min(self.cursor_x, width - 1)
-                    self.editor_win.move(edit_row, cursor_col)
+                    cursor_row = edit_row
+
+        # Always position cursor at current editing position
+        cursor_col = min(self.cursor_x, width - 1)
+        self.editor_win.move(cursor_row, cursor_col)
 
     def _draw_output(self):
         """Draw output window."""
