@@ -175,12 +175,14 @@ class CursesBackend(UIBackend):
                     self.menu_active = False
                     self.menu_dropdown_open = False
                     self.status_message = "Ready"
+                    curses.curs_set(1)  # Show cursor when back in editor
                 else:
                     # Enter menu mode and open first dropdown
                     self.menu_active = True
                     self.menu_dropdown_open = True
                     self.current_menu = 0
                     self.current_menu_item = 0
+                    curses.curs_set(0)  # Hide cursor in menu mode
             # Menu navigation
             elif self.menu_active and key == curses.KEY_LEFT:
                 # Previous menu - open its dropdown (old one erased in _draw_menu_dropdown)
@@ -739,12 +741,15 @@ class CursesBackend(UIBackend):
 
     def _execute_menu_item(self):
         """Execute the currently selected menu item."""
+        import curses
+
         menu = self.menus[self.current_menu]
         item_name, item_func = menu['items'][self.current_menu_item]
 
         # Exit menu mode
         self.menu_active = False
         self.menu_dropdown_open = False
+        curses.curs_set(1)  # Show cursor when returning to editor
 
         # Handle special cases
         if item_name == 'Quit':
