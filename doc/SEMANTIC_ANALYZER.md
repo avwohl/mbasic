@@ -208,6 +208,45 @@ else:
         print(f"  {error}")
 ```
 
+### 5. Constant Folding Optimization
+
+**Enhancement**: The semantic analyzer identifies and evaluates all constant subexpressions at compile time, enabling significant optimization opportunities.
+
+**What is Constant Folding?**
+
+Constant folding is the process of evaluating expressions at compile time when all operands are constants. This eliminates runtime computation for constant expressions.
+
+**Examples of Constant Folding**:
+
+```basic
+10 X = 2 + 3           ' Folded to: X = 5
+20 Y = (5 * 6) - 1     ' Folded to: Y = 29
+30 Z = SQR(64)         ' Folded to: Z = 8
+40 W = SIN(0)          ' Folded to: W = 0
+50 N% = 10
+60 M% = N% * 2         ' Folded to: M% = 20 (using runtime constant)
+70 DEF FN DOUBLE(X) = X * 2
+80 A = FN DOUBLE(5)    ' Folded to: A = 10
+```
+
+**Types of Expressions Folded**:
+- Arithmetic expressions: `(2 + 3) * 4`
+- Math function calls: `SQR(16)`, `INT(3.7)`, `SIN(0)`
+- Relational operations: `5 = 5`, `10 > 5`
+- Logical operations: `-1 AND -1`, `NOT 0`
+- User-defined functions: `FN SQUARE(5)` where `DEF FN SQUARE(X) = X * X`
+- Runtime constant expressions: `N% + M%` where both have known values
+
+**Benefits**:
+1. **Reduced code size**: Constant expressions become single values
+2. **Faster execution**: No runtime computation needed
+3. **Better optimization**: Enables further optimizations (e.g., dead code elimination)
+4. **Analysis visibility**: Report shows all folded expressions for review
+
+**Tracking and Reporting**:
+
+The semantic analyzer tracks all constant folding optimizations and reports them in the analysis output. This helps developers understand what optimizations are being applied.
+
 ## Output Example
 
 ```
@@ -233,6 +272,12 @@ Variables:
 
 Functions:
   FNDOUBLE(X) : SINGLE (line 100)
+
+Constant Folding Optimizations:
+  Line 40: (n * 2.0) → 20
+  Line 70: (n + m) → 30
+  Line 160: SQR(16.0) → 4
+  Line 200: (((2.0 + 3.0) * 4.0) - 1.0) → 19
 
 Required Compilation Switches:
   /E

@@ -412,6 +412,7 @@ class SemanticAnalyzer:
     - Constant expression evaluation
     - Control flow validation
     - Compiler feature detection
+    - Constant folding optimization
     """
 
     def __init__(self):
@@ -427,6 +428,9 @@ class SemanticAnalyzer:
 
         # Track what features are used
         self.unsupported_commands: List[Tuple[str, int]] = []
+
+        # Constant folding optimization tracking
+        self.folded_expressions: List[Tuple[int, str, Any]] = []  # (line, expr_desc, value)
 
     def analyze(self, program: ProgramNode) -> bool:
         """
@@ -663,7 +667,8 @@ class SemanticAnalyzer:
                 self.evaluator.runtime_constants = constants_before
 
         # Analyze the condition expression itself for variable references
-        self._analyze_expression(stmt.condition)
+        # Don't track folding since we already evaluated it above
+        self._analyze_expression(stmt.condition, track_folding=False)
 
     def _analyze_dim(self, stmt: DimStatementNode):
         """Analyze DIM statement - evaluate subscripts as constants"""
@@ -749,8 +754,7 @@ class SemanticAnalyzer:
                     f"Line {self.current_line}: Array {var_name} used without explicit DIM (will default to 10)"
                 )
 
-        # Analyze the expression
-        self._analyze_expression(stmt.expression)
+        # Note: Expression analysis is handled by the generic check in _analyze_statement
 
         # Track runtime constants: if this is a simple variable (not array) assignment
         # and the expression evaluates to a constant, track it
@@ -853,10 +857,28 @@ class SemanticAnalyzer:
 
         self.loop_stack.pop()
 
-    def _analyze_expression(self, expr):
-        """Analyze an expression - track variable usage"""
+    def _analyze_expression(self, expr, context: str = "expression", track_folding: bool = True):
+        """
+        Analyze an expression - track variable usage and perform constant folding.
+
+        Args:
+            expr: The expression node to analyze
+            context: Description of where this expression appears (for reporting)
+            track_folding: Whether to track this expression in folding optimizations
+        """
         if expr is None:
             return
+
+        # Try to fold this expression to a constant
+        # Only track top-level expressions, not subexpressions
+        folded_value = self.evaluator.evaluate(expr)
+        if (folded_value is not None and
+            not isinstance(expr, (NumberNode, StringNode)) and
+            track_folding):
+            # This is a constant expression that can be folded
+            # (but skip if it's already a literal)
+            expr_desc = self._describe_expression(expr)
+            self.folded_expressions.append((self.current_line, expr_desc, folded_value))
 
         if isinstance(expr, VariableNode):
             var_name = expr.name.upper()
@@ -874,14 +896,14 @@ class SemanticAnalyzer:
             # Analyze subscripts if present
             if expr.subscripts:
                 for subscript in expr.subscripts:
-                    self._analyze_expression(subscript)
+                    self._analyze_expression(subscript, "array subscript", track_folding=False)
 
         elif isinstance(expr, BinaryOpNode):
-            self._analyze_expression(expr.left)
-            self._analyze_expression(expr.right)
+            self._analyze_expression(expr.left, "binary operation", track_folding=False)
+            self._analyze_expression(expr.right, "binary operation", track_folding=False)
 
         elif isinstance(expr, UnaryOpNode):
-            self._analyze_expression(expr.operand)
+            self._analyze_expression(expr.operand, "unary operation", track_folding=False)
 
         elif isinstance(expr, FunctionCallNode):
             # Check if it's a DEF FN function
@@ -896,7 +918,47 @@ class SemanticAnalyzer:
             # Analyze arguments
             if expr.arguments:
                 for arg in expr.arguments:
-                    self._analyze_expression(arg)
+                    self._analyze_expression(arg, f"function argument", track_folding=False)
+
+    def _describe_expression(self, expr) -> str:
+        """Generate a human-readable description of an expression"""
+        if isinstance(expr, NumberNode):
+            return str(expr.value)
+        elif isinstance(expr, StringNode):
+            return f'"{expr.value}"'
+        elif isinstance(expr, VariableNode):
+            if expr.subscripts:
+                return f"{expr.name}(...)"
+            return expr.name
+        elif isinstance(expr, BinaryOpNode):
+            from tokens import TokenType
+            op_map = {
+                TokenType.PLUS: '+', TokenType.MINUS: '-',
+                TokenType.MULTIPLY: '*', TokenType.DIVIDE: '/',
+                TokenType.BACKSLASH: '\\', TokenType.POWER: '^',
+                TokenType.MOD: 'MOD',
+                TokenType.EQUAL: '=', TokenType.NOT_EQUAL: '<>',
+                TokenType.LESS_THAN: '<', TokenType.GREATER_THAN: '>',
+                TokenType.LESS_EQUAL: '<=', TokenType.GREATER_EQUAL: '>=',
+                TokenType.AND: 'AND', TokenType.OR: 'OR',
+                TokenType.XOR: 'XOR', TokenType.EQV: 'EQV',
+                TokenType.IMP: 'IMP',
+            }
+            op = op_map.get(expr.operator, str(expr.operator))
+            return f"({self._describe_expression(expr.left)} {op} {self._describe_expression(expr.right)})"
+        elif isinstance(expr, UnaryOpNode):
+            from tokens import TokenType
+            if expr.operator == TokenType.NOT:
+                return f"NOT {self._describe_expression(expr.operand)}"
+            elif expr.operator == TokenType.MINUS:
+                return f"-{self._describe_expression(expr.operand)}"
+            else:
+                return f"+{self._describe_expression(expr.operand)}"
+        elif isinstance(expr, FunctionCallNode):
+            args = ", ".join(self._describe_expression(arg) for arg in (expr.arguments or []))
+            return f"{expr.name}({args})"
+        else:
+            return "expression"
 
     def _validate_line_references(self, program: ProgramNode):
         """Validate all GOTO/GOSUB/ON...GOTO references"""
@@ -984,6 +1046,17 @@ class SemanticAnalyzer:
             for func_name, func_info in sorted(self.symbols.functions.items()):
                 params = ', '.join(func_info.parameters) if func_info.parameters else ''
                 lines.append(f"  {func_name}({params}) : {func_info.return_type.name} (line {func_info.definition_line})")
+
+        # Constant Folding Optimizations
+        if self.folded_expressions:
+            lines.append(f"\nConstant Folding Optimizations:")
+            for line_num, expr_desc, value in self.folded_expressions:
+                # Format the value nicely
+                if isinstance(value, float):
+                    value_str = f"{value:.6g}"  # Compact float formatting
+                else:
+                    value_str = str(value)
+                lines.append(f"  Line {line_num}: {expr_desc} → {value_str}")
 
         # Compilation flags
         switches = self.flags.get_required_switches()
