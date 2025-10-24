@@ -158,6 +158,32 @@ This document tracks all optimizations implemented, planned, and possible for th
 - Eliminates unnecessary operations
 - Detects opportunities for bit shifts (on modern hardware)
 
+### 11. Copy Propagation
+**Status:** ✅ Complete
+**Location:** `src/semantic_analyzer.py` - `active_copies`, `_analyze_assignment()`
+**What it does:**
+- Detects simple copy assignments (`Y = X`)
+- Tracks where copies can be propagated
+- Suggests replacing `Y` with `X` to eliminate copy
+- Invalidates copies when source or copy is modified
+- Handles INPUT, READ, GOSUB invalidation
+- Detects dead copies (never used)
+
+**Example:**
+```basic
+10 X = 100
+20 Y = X      ' Copy detected
+30 Z = Y + 10 ' Can replace Y with X
+40 X = 200    ' Invalidates the copy
+50 W = Y      ' Y is now independent
+```
+
+**Benefits:**
+- Reduces register pressure
+- Eliminates unnecessary copy instructions
+- Enables further optimizations
+- Identifies dead code (unused copies)
+
 ---
 
 ## 📋 READY TO IMPLEMENT NOW (Semantic Analysis Phase)
@@ -180,19 +206,7 @@ These optimizations can be implemented in the semantic analyzer without requirin
 - ✅ `X - X` → `0`
 - ✅ `X / 1` → `X`
 
-### 2. Copy Propagation
-**Complexity:** Medium
-**What it does:**
-- Track simple assignments like `Y = X`
-- Replace uses of `Y` with `X` where possible
-- Eliminates unnecessary copies
-
-**Implementation:**
-- Extend runtime constants tracking
-- Track assignment chains
-- Invalidate on modification
-
-### 4. Induction Variable Optimization
+### 2. Induction Variable Optimization
 **Complexity:** Medium-Hard
 **What it does:**
 - Detect induction variables in loops (e.g., `I = I + 1`)
@@ -421,8 +435,8 @@ These require actual code generation/transformation, not just analysis:
 1. ✅ Constant Folding - DONE
 2. ✅ CSE - DONE
 3. ✅ Strength Reduction - DONE (includes most algebraic simplification)
-4. Boolean Simplification - Easy pattern matching
-5. Copy Propagation - Medium effort, enables other opts
+4. ✅ Copy Propagation - DONE
+5. Boolean Simplification - Easy pattern matching
 
 ### High Value, High Effort
 1. ✅ Loop-Invariant Detection - DONE (transformation needs codegen)
@@ -445,9 +459,9 @@ These require actual code generation/transformation, not just analysis:
 
 ### Immediate (Semantic Analysis)
 1. **Boolean Simplification** - Complete algebraic simplification
-2. **Copy Propagation** - Enables other optimizations
-3. **Range Analysis** - Improves dead code detection
-4. **Induction Variable Optimization** - Critical for array loops
+2. **Range Analysis** - Improves dead code detection
+3. **Induction Variable Optimization** - Critical for array loops
+4. **Forward Substitution** - Eliminate single-use temporaries
 
 ### Short Term (Still Semantic)
 5. **Expression Reassociation** - Exposes constant folding
@@ -471,6 +485,7 @@ These require actual code generation/transformation, not just analysis:
 - ✅ Array flattening - **Standard** (LLVM does this)
 - ✅ Subroutine analysis - **Standard** (interprocedural)
 - ✅ Strength reduction - **Standard** (critical optimization)
+- ✅ Copy propagation - **Standard** (dataflow analysis)
 
 ### What We're Missing (that modern compilers have)
 - ❌ SSA form - Not needed for BASIC's simplicity
@@ -494,14 +509,14 @@ We've implemented a **strong foundation** of compiler optimizations that are:
 3. **Complete for analysis** - Detection and transformation done
 4. **Modern-quality analysis** - Comparable to modern compilers' semantic phase
 
-**Current Status: 10 optimizations implemented!**
+**Current Status: 11 optimizations implemented!**
 
 **What's left for semantic analysis:**
 - Boolean simplification (complete algebraic simplification)
-- Copy propagation
 - Range analysis
 - Induction variable optimization
 - Expression reassociation
+- Forward substitution
 
 **What needs code generation:**
 - Peephole optimization

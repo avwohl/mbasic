@@ -169,6 +169,16 @@ class StrengthReduction:
     savings: str  # Description of savings (e.g., "Replace MUL with ADD")
 
 
+@dataclass
+class CopyPropagation:
+    """Information about a copy propagation opportunity"""
+    line: int  # Line number where copy was detected
+    copy_var: str  # Variable being assigned (the copy)
+    source_var: str  # Variable being copied from (the source)
+    propagation_count: int = 0  # Number of times this copy could be propagated
+    propagated_lines: List[int] = field(default_factory=list)  # Lines where propagation occurred
+
+
 class CompilerFlags:
     """Flags for features requiring compilation switches"""
     def __init__(self):
@@ -547,6 +557,10 @@ class SemanticAnalyzer:
 
         # Strength reduction tracking
         self.strength_reductions: List[StrengthReduction] = []
+
+        # Copy propagation tracking
+        self.copy_propagations: List[CopyPropagation] = []
+        self.active_copies: Dict[str, str] = {}  # copy_var -> source_var (currently active copies)
 
     def analyze(self, program: ProgramNode) -> bool:
         """
@@ -1291,6 +1305,29 @@ class SemanticAnalyzer:
                 # Variable assigned a non-constant expression, clear it if it was constant
                 self.evaluator.clear_constant(var_name)
 
+            # Copy propagation: Check if this is a simple copy (Y = X)
+            # Only for simple variables (not arrays) assigned from simple variables
+            if isinstance(stmt.expression, VariableNode) and stmt.expression.subscripts is None:
+                source_var = stmt.expression.name.upper()
+                # Don't track self-assignment (X = X)
+                if source_var != var_name:
+                    # Record this as an active copy
+                    self.active_copies[var_name] = source_var
+                    # Create a copy propagation record
+                    self.copy_propagations.append(CopyPropagation(
+                        line=self.current_line,
+                        copy_var=var_name,
+                        source_var=source_var
+                    ))
+            else:
+                # Not a simple copy, invalidate if it was one
+                if var_name in self.active_copies:
+                    del self.active_copies[var_name]
+        else:
+            # Array assignment, invalidate copy if it was one
+            if var_name in self.active_copies:
+                del self.active_copies[var_name]
+
     def _analyze_for(self, stmt: ForStatementNode):
         """Analyze FOR statement - comprehensive loop analysis"""
         # stmt.variable is a VariableNode
@@ -1512,6 +1549,16 @@ class SemanticAnalyzer:
                     first_use_line=self.current_line
                 )
 
+            # Track copy propagation opportunities:
+            # If this variable is a copy of another variable, record a propagation opportunity
+            if expr.subscripts is None and var_name in self.active_copies:
+                # Find the copy record for this variable
+                for copy_rec in self.copy_propagations:
+                    if copy_rec.copy_var == var_name:
+                        copy_rec.propagation_count += 1
+                        copy_rec.propagated_lines.append(self.current_line)
+                        break
+
             # Analyze and flatten subscripts if present
             if expr.subscripts:
                 # First analyze each subscript expression
@@ -1704,6 +1751,7 @@ class SemanticAnalyzer:
         """
         Invalidate all available expressions that reference a variable.
         Called when a variable is modified (assignment, INPUT, READ, FOR loop, etc.)
+        Also invalidates copy propagation for this variable.
         """
         var_name_upper = var_name.upper()
         to_remove = []
@@ -1725,6 +1773,20 @@ class SemanticAnalyzer:
         for expr_hash in to_remove:
             if expr_hash in self.available_expressions:
                 del self.available_expressions[expr_hash]
+
+        # Invalidate copy propagation:
+        # 1. If this variable is a copy, it's no longer valid
+        if var_name_upper in self.active_copies:
+            del self.active_copies[var_name_upper]
+
+        # 2. If this variable is the source of other copies, invalidate those too
+        copies_to_remove = []
+        for copy_var, source_var in self.active_copies.items():
+            if source_var == var_name_upper:
+                copies_to_remove.append(copy_var)
+
+        for copy_var in copies_to_remove:
+            del self.active_copies[copy_var]
 
     def _clear_all_available_expressions(self):
         """
@@ -2198,6 +2260,31 @@ class SemanticAnalyzer:
                 lines.append(f"  Line {sr.line}: {sr.original_expr} → {sr.reduced_expr}")
                 lines.append(f"    Type: {sr.reduction_type}")
                 lines.append(f"    Savings: {sr.savings}")
+                lines.append("")
+
+        # Copy Propagation Optimizations
+        if self.copy_propagations:
+            lines.append(f"\nCopy Propagation Optimizations:")
+            lines.append(f"  Found {len(self.copy_propagations)} copy assignment(s)")
+            lines.append("")
+
+            # Show copies with propagation opportunities
+            propagatable = [cp for cp in self.copy_propagations if cp.propagation_count > 0]
+            non_propagatable = [cp for cp in self.copy_propagations if cp.propagation_count == 0]
+
+            if propagatable:
+                lines.append(f"  Copies with propagation opportunities:")
+                for cp in propagatable:
+                    lines.append(f"    Line {cp.line}: {cp.copy_var} = {cp.source_var}")
+                    lines.append(f"      Can propagate {cp.propagation_count} time(s)")
+                    lines.append(f"      At lines: {', '.join(map(str, cp.propagated_lines))}")
+                    lines.append(f"      Suggestion: Replace {cp.copy_var} with {cp.source_var}")
+                    lines.append("")
+
+            if non_propagatable:
+                lines.append(f"  Copies with no propagation opportunities:")
+                for cp in non_propagatable:
+                    lines.append(f"    Line {cp.line}: {cp.copy_var} = {cp.source_var} (not used)")
                 lines.append("")
 
         # Common Subexpression Elimination (CSE)

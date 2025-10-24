@@ -37,6 +37,9 @@ This directory contains tests for the semantic analyzer's advanced optimization 
 ### Strength Reduction
 - **test_strength_reduction.py** - Strength reduction optimizations (10 tests)
 
+### Copy Propagation
+- **test_copy_propagation.py** - Copy propagation detection and tracking (10 tests)
+
 ### Comprehensive Tests
 - **test_optimization_report.py** - Full optimization report generation
 - **test_comprehensive_analysis.py** - All features together
@@ -88,6 +91,12 @@ done
     - Algebraic identities (`X * 1` → `X`, `X + 0` → `X`, etc.)
     - Power-of-2 detection for shift optimization
     - Tracks savings and reduction types
+13. **Copy Propagation** - Detect and track simple copy assignments:
+    - Identifies `Y = X` copy patterns
+    - Tracks propagation opportunities (where Y can be replaced with X)
+    - Smart invalidation on modification
+    - Detects dead copies (never used)
+    - Suggests optimization opportunities
 
 ## Expected Results
 
