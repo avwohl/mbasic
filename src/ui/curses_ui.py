@@ -178,12 +178,18 @@ class CursesBackend(UIBackend):
                     self.current_menu_item = 0
             # Menu navigation
             elif self.menu_active and key == curses.KEY_LEFT:
-                # Previous menu - open its dropdown
+                # Previous menu - close old dropdown and open new one
+                if self.dropdown_win:
+                    del self.dropdown_win
+                    self.dropdown_win = None
                 self.current_menu = (self.current_menu - 1) % len(self.menus)
                 self.current_menu_item = 0
                 self.menu_dropdown_open = True
             elif self.menu_active and key == curses.KEY_RIGHT:
-                # Next menu - open its dropdown
+                # Next menu - close old dropdown and open new one
+                if self.dropdown_win:
+                    del self.dropdown_win
+                    self.dropdown_win = None
                 self.current_menu = (self.current_menu + 1) % len(self.menus)
                 self.current_menu_item = 0
                 self.menu_dropdown_open = True
@@ -306,6 +312,10 @@ class CursesBackend(UIBackend):
     def _refresh_all(self):
         """Refresh all windows."""
         import curses
+
+        # Force editor and output to redraw (clears old dropdown)
+        self.editor_win.touchwin()
+        self.output_win.touchwin()
 
         self._draw_menu()
         self._draw_status()
