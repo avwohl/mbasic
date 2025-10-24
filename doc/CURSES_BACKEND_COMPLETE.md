@@ -63,20 +63,23 @@ python3 mbasic.py --backend curses tests/test_curses_hello.bas
 
 ### Keyboard Commands
 
-| Key | Action |
-|-----|--------|
-| **F2** | Run program |
-| **F3** | List program to output |
-| **F5** | Save program (prompts for filename) |
-| **F9** | Load program (prompts for filename) |
-| **Q** | Quit IDE |
-| **Up/Down** | Navigate between lines |
-| **Left/Right** | Move cursor within line |
-| **Home** | Move to start of line |
-| **End** | Move to end of line |
-| **Enter** | Save line and advance to next |
-| **Backspace** | Delete character before cursor |
-| **Delete** | Delete character at cursor |
+| Key | Alternative | Action |
+|-----|-------------|--------|
+| **F2** | **Ctrl+R** | Run program |
+| **F3** | **Ctrl+L** | List program to output |
+| **F5** | **Ctrl+S** | Save program (prompts for filename) |
+| **F9** | **Ctrl+O** | Load program (prompts for filename) |
+| | **Ctrl+N** | New program (clear) |
+| **Q** | | Quit IDE |
+| **Up/Down** | | Navigate between lines |
+| **Left/Right** | | Move cursor within line |
+| **Home** | **Ctrl+A** | Move to start of line |
+| **End** | **Ctrl+E** | Move to end of line |
+| **Enter** | | Save line and advance to next |
+| **Backspace** | | Delete character before cursor |
+| **Delete** | | Delete character at cursor |
+
+**Note:** If you don't have function keys, use the Ctrl key alternatives!
 
 ### Editing Programs
 
@@ -344,16 +347,17 @@ Enjoy programming BASIC in the terminal! 🚀
 ┌─────────────────────────────────────────────────────────┐
 │                   MBASIC Curses IDE                     │
 ├─────────────────────────────────────────────────────────┤
-│ COMMANDS:                                               │
-│  F2  = Run Program      F3  = List Program             │
-│  F5  = Save to File     F9  = Load from File           │
-│  Q   = Quit IDE                                         │
+│ COMMANDS: (Ctrl+key if no function keys)               │
+│  F2 / ^R = Run Program     F3 / ^L = List Program      │
+│  F5 / ^S = Save to File    F9 / ^O = Load from File    │
+│       ^N = New Program     Q      = Quit IDE            │
 │                                                         │
 │ EDITING:                                                │
 │  Enter      = Save line and advance                     │
 │  Up/Down    = Navigate lines                            │
 │  Left/Right = Move cursor                               │
-│  Home/End   = Start/End of line                         │
+│  Home / ^A  = Start of line                             │
+│  End  / ^E  = End of line                               │
 │  Backspace  = Delete before cursor                      │
 │  Delete     = Delete at cursor                          │
 │                                                         │
@@ -362,6 +366,6 @@ Enjoy programming BASIC in the terminal! 🚀
 │  2. Type BASIC statement (e.g., "PRINT \"Hi\"")         │
 │  3. Press Enter to save line                            │
 │  4. Repeat for more lines                               │
-│  5. Press F2 to run                                     │
+│  5. Press F2 or Ctrl+R to run                           │
 └─────────────────────────────────────────────────────────┘
 ```

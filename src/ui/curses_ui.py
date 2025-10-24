@@ -111,18 +111,22 @@ class CursesBackend(UIBackend):
             if key == ord('q') or key == ord('Q'):
                 # Quit
                 break
-            elif key == curses.KEY_F2:
-                # F2 = Run
+            # Run: F2 or Ctrl+R
+            elif key == curses.KEY_F2 or key == 18:  # Ctrl+R
                 self._run_program()
-            elif key == curses.KEY_F3:
-                # F3 = List
+            # List: F3 or Ctrl+L
+            elif key == curses.KEY_F3 or key == 12:  # Ctrl+L
                 self._list_program()
-            elif key == curses.KEY_F5:
-                # F5 = Save
+            # Save: F5 or Ctrl+S
+            elif key == curses.KEY_F5 or key == 19:  # Ctrl+S
                 self._save_program()
-            elif key == curses.KEY_F9:
-                # F9 = Load
+            # Load: F9 or Ctrl+O
+            elif key == curses.KEY_F9 or key == 15:  # Ctrl+O
                 self._load_program()
+            # New: Ctrl+N
+            elif key == 14:  # Ctrl+N
+                self.cmd_new()
+            # Navigation
             elif key == curses.KEY_UP:
                 self._move_line_up()
             elif key == curses.KEY_DOWN:
@@ -131,10 +135,11 @@ class CursesBackend(UIBackend):
                 self._move_cursor_left()
             elif key == curses.KEY_RIGHT:
                 self._move_cursor_right()
-            elif key == curses.KEY_HOME:
+            elif key == curses.KEY_HOME or key == 1:  # Home or Ctrl+A
                 self.cursor_x = 0
-            elif key == curses.KEY_END:
+            elif key == curses.KEY_END or key == 5:  # End or Ctrl+E
                 self.cursor_x = len(self.current_line_text)
+            # Line editing
             elif key == ord('\n') or key == curses.KEY_ENTER or key == 10:
                 self._handle_enter()
             elif key == curses.KEY_BACKSPACE or key == 127 or key == 8:
@@ -217,7 +222,7 @@ class CursesBackend(UIBackend):
         if curses.has_colors():
             self.status_win.bkgd(' ', curses.color_pair(1))
 
-        status_text = f" MBASIC | {self.status_message} | F2=Run F3=List F5=Save F9=Load Q=Quit"
+        status_text = f" MBASIC | {self.status_message} | ^R=Run ^L=List ^S=Save ^O=Load ^N=New Q=Quit"
         height, width = self.status_win.getmaxyx()
         self.status_win.addstr(0, 0, status_text[:width-1])
 
