@@ -203,6 +203,20 @@ class ForwardSubstitution:
 
 
 @dataclass
+class BranchOptimization:
+    """Information about a branch optimization opportunity"""
+    line: int  # Line number of the IF statement
+    condition: str  # The condition expression (for display)
+    is_constant: bool  # Whether the condition is a constant
+    constant_value: Optional[Any] = None  # The constant value (if constant)
+    always_true: bool = False  # Branch always taken
+    always_false: bool = False  # Branch never taken
+    then_target: Optional[int] = None  # Line number of THEN branch
+    else_target: Optional[int] = None  # Line number of ELSE branch
+    unreachable_branch: Optional[str] = None  # "THEN" or "ELSE" if unreachable
+
+
+@dataclass
 class InductionVariable:
     """Information about an induction variable in a loop"""
     variable: str  # Variable name (e.g., "I")
@@ -612,6 +626,9 @@ class SemanticAnalyzer:
         self.variable_assignments: Dict[str, Tuple[int, Any, str]] = {}  # var_name -> (line, expr_node, expr_desc)
         self.variable_usage_count: Dict[str, int] = {}  # var_name -> count
         self.variable_usage_lines: Dict[str, List[int]] = {}  # var_name -> [line1, line2, ...]
+
+        # Branch optimization tracking
+        self.branch_optimizations: List[BranchOptimization] = []
 
         # Induction variable tracking
         self.induction_variables: List[InductionVariable] = []  # All detected induction variables
@@ -1248,10 +1265,35 @@ class SemanticAnalyzer:
         # Try to evaluate the condition at compile time
         condition_value = self.evaluator.evaluate(stmt.condition)
 
+        # Track branch optimization opportunity
+        condition_desc = self._describe_expression(stmt.condition)
+        branch_opt = BranchOptimization(
+            line=self.current_line or 0,
+            condition=condition_desc,
+            is_constant=(condition_value is not None),
+            constant_value=condition_value,
+            then_target=stmt.then_line_number,
+            else_target=stmt.else_line_number
+        )
+
         if condition_value is not None:
             # Condition can be evaluated at compile time!
             # In BASIC, 0 is false, non-zero is true
             is_true = (condition_value != 0)
+
+            branch_opt.always_true = is_true
+            branch_opt.always_false = not is_true
+
+            if is_true:
+                # THEN branch always taken, ELSE is unreachable
+                if stmt.else_statements or stmt.else_line_number:
+                    branch_opt.unreachable_branch = "ELSE"
+            else:
+                # ELSE branch always taken (or nothing), THEN is unreachable
+                if stmt.then_statements or stmt.then_line_number:
+                    branch_opt.unreachable_branch = "THEN"
+
+            self.branch_optimizations.append(branch_opt)
 
             if is_true:
                 # THEN branch will be taken
@@ -3157,6 +3199,46 @@ class SemanticAnalyzer:
                 if len(multi_use) > 5:
                     lines.append(f"    ... and {len(multi_use) - 5} more")
                 lines.append("")
+
+        # Branch Optimization
+        if self.branch_optimizations:
+            lines.append(f"\nBranch Optimization:")
+
+            constant_branches = [bo for bo in self.branch_optimizations if bo.is_constant]
+
+            if constant_branches:
+                lines.append(f"  Found {len(constant_branches)} constant condition(s)")
+                lines.append("")
+
+                always_true = [bo for bo in constant_branches if bo.always_true]
+                always_false = [bo for bo in constant_branches if bo.always_false]
+
+                if always_true:
+                    lines.append(f"  Conditions that are always TRUE:")
+                    for bo in always_true:
+                        lines.append(f"    Line {bo.line}: IF {bo.condition}")
+                        lines.append(f"      Evaluates to: {bo.constant_value} (always TRUE)")
+                        if bo.unreachable_branch:
+                            lines.append(f"      Unreachable branch: {bo.unreachable_branch}")
+                            if bo.unreachable_branch == "ELSE" and bo.else_target:
+                                lines.append(f"        Dead code: GOTO {bo.else_target}")
+                        lines.append(f"      Suggestion: Remove IF, keep THEN branch")
+                        lines.append("")
+
+                if always_false:
+                    lines.append(f"  Conditions that are always FALSE:")
+                    for bo in always_false:
+                        lines.append(f"    Line {bo.line}: IF {bo.condition}")
+                        lines.append(f"      Evaluates to: {bo.constant_value} (always FALSE)")
+                        if bo.unreachable_branch:
+                            lines.append(f"      Unreachable branch: {bo.unreachable_branch}")
+                            if bo.unreachable_branch == "THEN" and bo.then_target:
+                                lines.append(f"        Dead code: GOTO {bo.then_target}")
+                        if bo.else_target:
+                            lines.append(f"      Suggestion: Remove IF, keep ELSE branch (GOTO {bo.else_target})")
+                        else:
+                            lines.append(f"      Suggestion: Remove IF statement entirely")
+                        lines.append("")
 
         # Common Subexpression Elimination (CSE)
         if self.common_subexpressions:

@@ -325,6 +325,34 @@ This document tracks all optimizations implemented, planned, and possible for th
 
 **TODO:** Actual code transformation (needs code generation phase)
 
+### 17. Branch Optimization
+**Status:** ✅ Complete (Detection)
+**Location:** `src/semantic_analyzer.py` - `_analyze_if()`
+**What it does:**
+- Detects IF conditions that can be evaluated at compile time
+- Identifies always-TRUE conditions (THEN branch always taken)
+- Identifies always-FALSE conditions (ELSE branch or fall-through)
+- Marks unreachable branches as dead code
+- Works with constant propagation to evaluate complex expressions
+
+**Examples:**
+```basic
+10 IF 1 THEN PRINT "A"              ' Always TRUE
+20 IF 0 THEN PRINT "B"              ' Always FALSE - THEN unreachable
+30 A = 10
+40 IF A > 5 THEN PRINT "C"          ' Constant propagation → always TRUE
+50 IF (A + 5) < 10 THEN PRINT "D"   ' Complex expression → always FALSE
+```
+
+**Benefits:**
+- Eliminates impossible branches at compile time
+- Identifies dead code in conditional branches
+- Reduces runtime branching overhead
+- Works with constant propagation
+- Simplifies control flow
+
+**TODO:** Actual branch elimination (needs code generation phase)
+
 ---
 
 ## 📋 READY TO IMPLEMENT NOW (Semantic Analysis Phase)
@@ -551,11 +579,11 @@ These require actual code generation/transformation, not just analysis:
 1. ✅ **Expression Reassociation** - DONE (Exposes constant folding)
 2. ✅ **Boolean Simplification** - DONE (NOT inversion, De Morgan, absorption)
 3. ✅ **Forward Substitution** - DONE (Detects single-use temporaries and dead stores)
-4. **Range Analysis** - Improves dead code detection
+4. ✅ **Branch Optimization** - DONE (Constant condition detection, unreachable branch identification)
+5. **Range Analysis** - Improves dead code detection
 
 ### Short Term (Still Semantic)
-5. **Live Variable Analysis** - Completes the analysis suite
-6. **Branch Optimization** - Constant condition detection
+6. **Live Variable Analysis** - Completes the analysis suite
 7. **String Optimization** - String constant pooling
 
 ### Long Term (Code Generation Required)
@@ -581,6 +609,7 @@ These require actual code generation/transformation, not just analysis:
 - ✅ Expression reassociation - **Standard** (enables constant folding)
 - ✅ Boolean simplification - **Standard** (relational inversion, De Morgan, absorption)
 - ✅ Forward substitution - **Standard** (temporary elimination, dead store detection)
+- ✅ Branch optimization - **Standard** (constant condition evaluation, unreachable code)
 
 ### What We're Missing (that modern compilers have)
 - ❌ SSA form - Not needed for BASIC's simplicity
@@ -604,12 +633,11 @@ We've implemented a **strong foundation** of compiler optimizations that are:
 3. **Complete for analysis** - Detection and transformation done
 4. **Modern-quality analysis** - Comparable to modern compilers' semantic phase
 
-**Current Status: 16 optimizations implemented!**
+**Current Status: 17 optimizations implemented!**
 
 **What's left for semantic analysis:**
 - Range analysis
 - Live variable analysis
-- Branch optimization (constant condition detection)
 
 **What needs code generation:**
 - Peephole optimization
