@@ -75,7 +75,12 @@ class HelpBrowser:
         self.current_lines, self.current_links = self.renderer.render(markdown)
         self.current_path = relative_path
         self.scroll_pos = 0
-        self.cursor_line = 0
+
+        # Set cursor to first link, or line 0 if no links
+        if self.current_links:
+            self.cursor_line = self.current_links[0][0]  # First link's line number
+        else:
+            self.cursor_line = 0
 
         return True
 
@@ -158,18 +163,48 @@ class HelpBrowser:
         self.stdscr.refresh()
 
     def _scroll_down(self) -> None:
-        """Scroll down one line."""
-        max_scroll = max(0, len(self.current_lines) - (self.height - 3))
-        if self.scroll_pos < max_scroll:
-            self.scroll_pos += 1
-            # Move cursor to stay on a link if possible
-            self._adjust_cursor()
+        """Scroll down one line and move to next link."""
+        # Find next link after current cursor
+        next_link = None
+        for link_line, _, _ in self.current_links:
+            if link_line > self.cursor_line:
+                next_link = link_line
+                break
+
+        if next_link is not None:
+            # Move cursor to next link
+            self.cursor_line = next_link
+            # Scroll to make it visible if needed
+            visible_end = self.scroll_pos + (self.height - 3)
+            if self.cursor_line >= visible_end:
+                self.scroll_pos = self.cursor_line - (self.height - 4)
+        else:
+            # No more links, just scroll
+            max_scroll = max(0, len(self.current_lines) - (self.height - 3))
+            if self.scroll_pos < max_scroll:
+                self.scroll_pos += 1
+                self.cursor_line = self.scroll_pos
 
     def _scroll_up(self) -> None:
-        """Scroll up one line."""
-        if self.scroll_pos > 0:
-            self.scroll_pos -= 1
-            self._adjust_cursor()
+        """Scroll up one line and move to previous link."""
+        # Find previous link before current cursor
+        prev_link = None
+        for link_line, _, _ in reversed(self.current_links):
+            if link_line < self.cursor_line:
+                prev_link = link_line
+                break
+
+        if prev_link is not None:
+            # Move cursor to previous link
+            self.cursor_line = prev_link
+            # Scroll to make it visible if needed
+            if self.cursor_line < self.scroll_pos:
+                self.scroll_pos = self.cursor_line
+        else:
+            # No more links, just scroll
+            if self.scroll_pos > 0:
+                self.scroll_pos -= 1
+                self.cursor_line = self.scroll_pos
 
     def _page_down(self) -> None:
         """Scroll down one page."""
