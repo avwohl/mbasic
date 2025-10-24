@@ -49,6 +49,7 @@ class CursesBackend(UIBackend):
 
         # Curses state
         self.stdscr = None
+        self.menu_win = None
         self.editor_win = None
         self.output_win = None
         self.status_win = None
@@ -64,6 +65,43 @@ class CursesBackend(UIBackend):
 
         # Help system
         self.help_browser = None
+
+        # Menu system
+        self.menu_active = False
+        self.current_menu = 0  # Which menu is selected (File=0, Edit=1, Run=2, Help=3)
+        self.current_menu_item = 0  # Which item in current menu
+        self.menus = [
+            {
+                'title': 'File',
+                'items': [
+                    ('New', self.cmd_new),
+                    ('Load...', lambda: self._load_program()),
+                    ('Save...', lambda: self._save_program()),
+                    ('Quit', lambda: None)  # Special handled
+                ]
+            },
+            {
+                'title': 'Edit',
+                'items': [
+                    ('Clear Line', lambda: self._clear_current_line()),
+                    ('List', lambda: self._list_program())
+                ]
+            },
+            {
+                'title': 'Run',
+                'items': [
+                    ('Run Program', lambda: self._run_program()),
+                    ('List', lambda: self._list_program())
+                ]
+            },
+            {
+                'title': 'Help',
+                'items': [
+                    ('Show Help', lambda: self._show_help()),
+                    ('About', lambda: self._show_about())
+                ]
+            }
+        ]
 
     def start(self) -> None:
         """Start the curses UI.
@@ -121,10 +159,39 @@ class CursesBackend(UIBackend):
 
             if key == ord('q') or key == ord('Q'):
                 # Quit
-                break
-            # ESC: Clear error message and return to Ready
+                if not self.menu_active:
+                    break
+            # ESC: Toggle menu or clear error
             elif key == 27:  # ESC
-                self.status_message = "Ready"
+                if self.menu_active:
+                    # Exit menu mode
+                    self.menu_active = False
+                    self.status_message = "Ready"
+                else:
+                    # Enter menu mode
+                    self.menu_active = True
+                    self.current_menu = 0
+                    self.current_menu_item = 0
+            # Menu navigation
+            elif self.menu_active and key == curses.KEY_LEFT:
+                # Previous menu
+                self.current_menu = (self.current_menu - 1) % len(self.menus)
+                self.current_menu_item = 0
+            elif self.menu_active and key == curses.KEY_RIGHT:
+                # Next menu
+                self.current_menu = (self.current_menu + 1) % len(self.menus)
+                self.current_menu_item = 0
+            elif self.menu_active and key == curses.KEY_UP:
+                # Previous menu item
+                num_items = len(self.menus[self.current_menu]['items'])
+                self.current_menu_item = (self.current_menu_item - 1) % num_items
+            elif self.menu_active and key == curses.KEY_DOWN:
+                # Next menu item
+                num_items = len(self.menus[self.current_menu]['items'])
+                self.current_menu_item = (self.current_menu_item + 1) % num_items
+            elif self.menu_active and (key == ord('\n') or key == curses.KEY_ENTER or key == 10):
+                # Execute menu item
+                self._execute_menu_item()
             # Help: Ctrl+P
             elif key == 16:  # Ctrl+P
                 self._show_help()
@@ -143,27 +210,27 @@ class CursesBackend(UIBackend):
             # New: Ctrl+N
             elif key == 14:  # Ctrl+N
                 self.cmd_new()
-            # Navigation
-            elif key == curses.KEY_UP:
+            # Navigation (only when menu not active)
+            elif not self.menu_active and key == curses.KEY_UP:
                 self._move_line_up()
-            elif key == curses.KEY_DOWN:
+            elif not self.menu_active and key == curses.KEY_DOWN:
                 self._move_line_down()
-            elif key == curses.KEY_LEFT:
+            elif not self.menu_active and key == curses.KEY_LEFT:
                 self._move_cursor_left()
-            elif key == curses.KEY_RIGHT:
+            elif not self.menu_active and key == curses.KEY_RIGHT:
                 self._move_cursor_right()
-            elif key == curses.KEY_HOME or key == 1:  # Home or Ctrl+A
+            elif not self.menu_active and (key == curses.KEY_HOME or key == 1):  # Home or Ctrl+A
                 self.cursor_x = 0
-            elif key == curses.KEY_END or key == 5:  # End or Ctrl+E
+            elif not self.menu_active and (key == curses.KEY_END or key == 5):  # End or Ctrl+E
                 self.cursor_x = len(self.current_line_text)
-            # Line editing
-            elif key == ord('\n') or key == curses.KEY_ENTER or key == 10:
+            # Line editing (only when menu not active)
+            elif not self.menu_active and (key == ord('\n') or key == curses.KEY_ENTER or key == 10):
                 self._handle_enter()
-            elif key == curses.KEY_BACKSPACE or key == 127 or key == 8:
+            elif not self.menu_active and (key == curses.KEY_BACKSPACE or key == 127 or key == 8):
                 self._handle_backspace()
-            elif key == curses.KEY_DC:  # Delete key
+            elif not self.menu_active and key == curses.KEY_DC:  # Delete key
                 self._handle_delete()
-            elif key >= 32 and key < 127:
+            elif not self.menu_active and key >= 32 and key < 127:
                 # Printable character (including ?)
                 self._insert_char(chr(key))
 
@@ -175,16 +242,20 @@ class CursesBackend(UIBackend):
 
         height, width = self.stdscr.getmaxyx()
 
+        # Menu bar at top (1 line)
+        self.menu_win = curses.newwin(1, width, 0, 0)
+
         # Status line at bottom (1 line)
         self.status_win = curses.newwin(1, width, height - 1, 0)
 
-        # Editor window (top 2/3)
-        editor_height = (height - 1) * 2 // 3
-        self.editor_win = curses.newwin(editor_height, width, 0, 0)
+        # Editor window (top 2/3 of remaining space)
+        available_height = height - 2  # Minus menu and status
+        editor_height = available_height * 2 // 3
+        self.editor_win = curses.newwin(editor_height, width, 1, 0)
 
-        # Output window (bottom 1/3, minus status line)
-        output_height = (height - 1) - editor_height
-        self.output_win = curses.newwin(output_height, width, editor_height, 0)
+        # Output window (bottom 1/3, minus menu and status line)
+        output_height = available_height - editor_height
+        self.output_win = curses.newwin(output_height, width, 1 + editor_height, 0)
 
         # Enable scrolling for output window
         self.output_win.scrollok(True)
@@ -223,16 +294,87 @@ class CursesBackend(UIBackend):
         """Refresh all windows."""
         import curses
 
+        self._draw_menu()
         self._draw_status()
         self._draw_output()
         self._draw_editor()  # Draw editor last to keep cursor there
 
         # Use noutrefresh/doupdate for proper refresh ordering
+        self.menu_win.noutrefresh()
         self.status_win.noutrefresh()
         self.output_win.noutrefresh()
         self.stdscr.noutrefresh()
-        self.editor_win.noutrefresh()  # Editor last to position cursor
+
+        if self.menu_active:
+            # If menu is active, cursor goes to menu
+            self.menu_win.noutrefresh()
+        else:
+            # Otherwise cursor in editor
+            self.editor_win.noutrefresh()
+
         curses.doupdate()  # Do actual screen update
+
+    def _draw_menu(self):
+        """Draw menu bar."""
+        import curses
+
+        self.menu_win.clear()
+
+        if curses.has_colors():
+            self.menu_win.bkgd(' ', curses.color_pair(1))
+
+        height, width = self.menu_win.getmaxyx()
+
+        # Draw menu titles
+        x = 1
+        for i, menu in enumerate(self.menus):
+            title = f" {menu['title']} "
+
+            if self.menu_active and i == self.current_menu:
+                # Highlight current menu
+                self.menu_win.addstr(0, x, title, curses.A_REVERSE)
+            else:
+                self.menu_win.addstr(0, x, title)
+
+            x += len(title) + 1
+
+        # If menu is active and dropped down, draw menu items
+        if self.menu_active:
+            self._draw_menu_dropdown()
+
+    def _draw_menu_dropdown(self):
+        """Draw the dropdown menu for the currently selected menu."""
+        import curses
+
+        menu = self.menus[self.current_menu]
+        items = menu['items']
+
+        # Calculate menu position (below the menu title)
+        x = 1
+        for i in range(self.current_menu):
+            x += len(f" {self.menus[i]['title']} ") + 1
+
+        # Find longest item for menu width
+        max_width = max(len(item[0]) for item in items) + 4
+
+        # Create a pad for the dropdown (temporary window)
+        menu_height = len(items) + 2  # +2 for borders
+        try:
+            dropdown = curses.newwin(menu_height, max_width, 1, x)
+            dropdown.box()
+
+            # Draw each menu item
+            for i, (name, _) in enumerate(items):
+                y = i + 1
+                text = f" {name} "
+                if i == self.current_menu_item:
+                    dropdown.addstr(y, 1, text, curses.A_REVERSE)
+                else:
+                    dropdown.addstr(y, 1, text)
+
+            dropdown.noutrefresh()
+        except curses.error:
+            pass  # Menu might not fit on screen
 
     def _draw_status(self):
         """Draw status line."""
@@ -246,8 +388,10 @@ class CursesBackend(UIBackend):
         # If there's an error or long message, show ESC hint
         if "error" in self.status_message.lower() or len(self.status_message) > 40:
             status_text = f" MBASIC | {self.status_message} | [ESC to clear]"
+        elif self.menu_active:
+            status_text = f" MBASIC | Menu: ←/→ select  ↑/↓ navigate  Enter=execute  ESC=cancel"
         else:
-            status_text = f" MBASIC | {self.status_message} | ^P=Help ^R=Run ^L=List ^S=Save ^O=Load ^N=New Q=Quit"
+            status_text = f" MBASIC | {self.status_message} | ESC=Menu ^P=Help ^R=Run ^S=Save ^O=Load Q=Quit"
 
         height, width = self.status_win.getmaxyx()
         self.status_win.addstr(0, 0, status_text[:width-1])
@@ -566,3 +710,34 @@ class CursesBackend(UIBackend):
         """Execute CONT command - continue after STOP."""
         # TODO: Implement
         pass
+
+    def _execute_menu_item(self):
+        """Execute the currently selected menu item."""
+        menu = self.menus[self.current_menu]
+        item_name, item_func = menu['items'][self.current_menu_item]
+
+        # Exit menu mode
+        self.menu_active = False
+
+        # Handle special cases
+        if item_name == 'Quit':
+            # Confirm quit
+            self.status_message = "Really quit? Press Q again to confirm"
+            # Will be handled by main loop
+            return
+
+        # Execute the menu item function
+        try:
+            item_func()
+        except Exception as e:
+            self.status_message = f"Error: {e}"
+
+    def _clear_current_line(self):
+        """Clear the current line being edited."""
+        self.current_line_text = f"{self.current_line_num} "
+        self.cursor_x = len(self.current_line_text)
+        self.status_message = "Line cleared"
+
+    def _show_about(self):
+        """Show about dialog."""
+        self.status_message = "MBASIC 5.21 Interpreter - Compatible with Microsoft BASIC from the 1980s"
