@@ -149,6 +149,16 @@ class LoopAnalysis:
     has_side_effects: bool = False  # Contains I/O, GOSUB, etc.
 
 
+@dataclass
+class ReachabilityInfo:
+    """Information about code reachability for dead code detection"""
+    reachable_lines: Set[int] = field(default_factory=set)  # Lines that can be reached
+    unreachable_lines: Set[int] = field(default_factory=set)  # Dead code
+    goto_targets: Set[int] = field(default_factory=set)  # All GOTO/GOSUB targets
+    # Track control flow terminating statements
+    terminating_lines: Set[int] = field(default_factory=set)  # Lines with END, STOP, etc.
+
+
 class CompilerFlags:
     """Flags for features requiring compilation switches"""
     def __init__(self):
@@ -522,6 +532,9 @@ class SemanticAnalyzer:
         # Array handling
         self.array_base: int = 0  # 0 or 1, set by OPTION BASE statement
 
+        # Reachability analysis
+        self.reachability = ReachabilityInfo()
+
     def analyze(self, program: ProgramNode) -> bool:
         """
         Analyze a program AST.
@@ -545,6 +558,9 @@ class SemanticAnalyzer:
 
             # Fifth pass: validate all line number references
             self._validate_line_references(program)
+
+            # Sixth pass: perform reachability analysis and detect dead code
+            self._analyze_reachability(program)
 
             # Generate warnings for required compilation switches
             self._check_compilation_switches()
@@ -1737,6 +1753,131 @@ class SemanticAnalyzer:
                         f"Undefined line {stmt.then_line_number}",
                         self.current_line
                     )
+
+    def _analyze_reachability(self, program: ProgramNode):
+        """
+        Analyze code reachability and detect dead code.
+
+        Algorithm:
+        1. Mark all GOTO/GOSUB/IF-THEN line number targets
+        2. Start from first line, mark as reachable
+        3. Follow control flow (sequential, GOTO, GOSUB, IF, loops)
+        4. Stop at END, STOP, RETURN (without active GOSUB context)
+        5. Any line not marked reachable is dead code
+        """
+        if not program.lines:
+            return
+
+        # Collect all GOTO/GOSUB targets
+        for line in program.lines:
+            for stmt in line.statements:
+                self._collect_goto_targets(stmt)
+
+        # Mark the first line as reachable (program entry point)
+        if program.lines[0].line_number is not None:
+            self.reachability.reachable_lines.add(program.lines[0].line_number)
+
+        # Build a map of line numbers to their index in the program
+        line_map = {}
+        for idx, line in enumerate(program.lines):
+            if line.line_number is not None:
+                line_map[line.line_number] = idx
+
+        # Perform reachability analysis using worklist algorithm
+        worklist = [program.lines[0].line_number] if program.lines[0].line_number else []
+
+        while worklist:
+            current_line_num = worklist.pop(0)
+
+            if current_line_num not in line_map:
+                continue
+
+            line_idx = line_map[current_line_num]
+            line = program.lines[line_idx]
+
+            # Analyze control flow from this line's statements
+            continues_to_next = True  # Whether control flows to next line
+
+            for stmt in line.statements:
+                # Check if this statement terminates control flow
+                if isinstance(stmt, (EndStatementNode, StopStatementNode, ReturnStatementNode)):
+                    self.reachability.terminating_lines.add(current_line_num)
+                    continues_to_next = False
+                    break
+
+                # GOTO transfers control
+                elif isinstance(stmt, GotoStatementNode):
+                    if stmt.line_number not in self.reachability.reachable_lines:
+                        self.reachability.reachable_lines.add(stmt.line_number)
+                        worklist.append(stmt.line_number)
+                    continues_to_next = False  # GOTO doesn't fall through
+                    break
+
+                # GOSUB transfers control but returns
+                elif isinstance(stmt, GosubStatementNode):
+                    if stmt.line_number not in self.reachability.reachable_lines:
+                        self.reachability.reachable_lines.add(stmt.line_number)
+                        worklist.append(stmt.line_number)
+                    # GOSUB continues to next line after RETURN
+
+                # IF-THEN with line number
+                elif isinstance(stmt, IfStatementNode):
+                    if stmt.then_line_number is not None:
+                        # Conditional GOTO
+                        if stmt.then_line_number not in self.reachability.reachable_lines:
+                            self.reachability.reachable_lines.add(stmt.then_line_number)
+                            worklist.append(stmt.then_line_number)
+                        # Falls through if condition is false
+                    if stmt.else_line_number is not None:
+                        if stmt.else_line_number not in self.reachability.reachable_lines:
+                            self.reachability.reachable_lines.add(stmt.else_line_number)
+                            worklist.append(stmt.else_line_number)
+
+                # ON...GOTO
+                elif isinstance(stmt, OnGotoStatementNode):
+                    for target in stmt.line_numbers:
+                        if target not in self.reachability.reachable_lines:
+                            self.reachability.reachable_lines.add(target)
+                            worklist.append(target)
+                    # Falls through if value is out of range
+
+            # If control continues to next line
+            if continues_to_next and line_idx + 1 < len(program.lines):
+                next_line = program.lines[line_idx + 1]
+                if next_line.line_number is not None:
+                    if next_line.line_number not in self.reachability.reachable_lines:
+                        self.reachability.reachable_lines.add(next_line.line_number)
+                        worklist.append(next_line.line_number)
+
+        # Determine unreachable lines
+        for line in program.lines:
+            if line.line_number is not None:
+                if line.line_number not in self.reachability.reachable_lines:
+                    # Skip lines that are just REM or empty
+                    has_real_code = False
+                    for stmt in line.statements:
+                        if not isinstance(stmt, (RemarkStatementNode, type(None))):
+                            has_real_code = True
+                            break
+
+                    if has_real_code:
+                        self.reachability.unreachable_lines.add(line.line_number)
+                        self.warnings.append(
+                            f"Line {line.line_number}: Unreachable code (dead code)"
+                        )
+
+    def _collect_goto_targets(self, stmt):
+        """Collect all GOTO/GOSUB target line numbers"""
+        if isinstance(stmt, (GotoStatementNode, GosubStatementNode)):
+            self.reachability.goto_targets.add(stmt.line_number)
+        elif isinstance(stmt, OnGotoStatementNode):
+            for target in stmt.line_numbers:
+                self.reachability.goto_targets.add(target)
+        elif isinstance(stmt, IfStatementNode):
+            if stmt.then_line_number is not None:
+                self.reachability.goto_targets.add(stmt.then_line_number)
+            if stmt.else_line_number is not None:
+                self.reachability.goto_targets.add(stmt.else_line_number)
 
     def _check_compilation_switches(self):
         """Generate warnings for required compilation switches"""

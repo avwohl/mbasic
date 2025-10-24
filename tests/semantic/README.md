@@ -30,6 +30,9 @@ This directory contains tests for the semantic analyzer's advanced optimization 
 - **test_array_flattening.py** - Multi-dimensional array flattening (4 tests)
 - **test_array_flattening_benefits.py** - Demonstration of optimization benefits
 
+### Dead Code Detection
+- **test_dead_code.py** - Reachability analysis and dead code detection (8 tests)
+
 ### Comprehensive Tests
 - **test_optimization_report.py** - Full optimization report generation
 - **test_comprehensive_analysis.py** - All features together
@@ -68,6 +71,12 @@ done
     - OPTION BASE 0/1 support
     - Index calculations become CSE candidates
     - Enables better code generation
+11. **Dead Code Detection** - Reachability analysis and elimination:
+    - Control flow graph analysis
+    - Detects code after GOTO/END/STOP/RETURN
+    - Identifies orphaned code
+    - Finds uncalled subroutines
+    - Generates warnings for unreachable code
 
 ## Expected Results
 
