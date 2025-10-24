@@ -151,7 +151,6 @@ class CursesBackend(UIBackend):
 
         # Clear screen and draw initial UI
         self.stdscr.clear()
-        self.stdscr.refresh()
         self._refresh_all()
 
         # Main event loop
@@ -315,7 +314,6 @@ class CursesBackend(UIBackend):
         self.menu_win.noutrefresh()
         self.status_win.noutrefresh()
         self.output_win.noutrefresh()
-        self.stdscr.noutrefresh()
 
         if self.menu_active:
             # If menu is active, cursor goes to menu
