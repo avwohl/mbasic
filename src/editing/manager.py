@@ -274,7 +274,7 @@ class ProgramManager:
         line_numbers = sorted(self.line_asts.keys())
         lines = [self.line_asts[ln] for ln in line_numbers]
 
-        return ProgramNode(lines=lines)
+        return ProgramNode(lines=lines, def_type_statements=self.def_type_map)
 
     def parse_single_line(self, line_text: str, basic_line_num: Optional[int] = None) -> Tuple[Optional['LineNode'], Optional[str]]:
         """Parse a single line into a LineNode AST.
