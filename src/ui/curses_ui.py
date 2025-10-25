@@ -168,13 +168,33 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     self.edit_widget.set_edit_pos(new_cursor_pos)
                     return None
 
-                # At column 6 (separator): move to column 5 but don't delete separator
+                # At column 6 (separator): delete rightmost digit of line number
                 elif col_in_line == 6:
+                    # Ensure line is at least 7 characters
+                    if len(line) < 7:
+                        line = line + ' ' * (7 - len(line))
+
+                    status = line[0]
+                    linenum_field = line[1:6]
+                    rest = line[6:]
+
+                    # Replace rightmost digit (position 4) with space
+                    linenum_list = list(linenum_field)
+                    linenum_list[4] = ' '
+                    linenum_field = ''.join(linenum_list)
+
+                    # Rebuild line
+                    new_line = status + linenum_field + rest
+                    lines[line_num] = new_line
+                    new_text = '\n'.join(lines)
+                    self.edit_widget.set_edit_text(new_text)
+
+                    # Move cursor to column 5 (where the deleted digit was)
                     new_cursor_pos = line_start + 5
                     self.edit_widget.set_edit_pos(new_cursor_pos)
                     return None
 
-                # At columns 1-5 (line number): replace with space
+                # At columns 1-5 (line number): replace digit at cursor with space
                 elif 1 <= col_in_line <= 5:
                     # Ensure line is at least 7 characters
                     if len(line) < 7:
@@ -184,23 +204,23 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     linenum_field = line[1:6]
                     rest = line[6:]
 
-                    # Replace character before cursor with space
+                    # Replace character at cursor position with space
                     linenum_list = list(linenum_field)
                     pos_in_field = col_in_line - 1
-                    if pos_in_field > 0:
-                        linenum_list[pos_in_field - 1] = ' '
-                        linenum_field = ''.join(linenum_list)
+                    linenum_list[pos_in_field] = ' '
+                    linenum_field = ''.join(linenum_list)
 
-                        # Rebuild line
-                        new_line = status + linenum_field + rest
-                        lines[line_num] = new_line
-                        new_text = '\n'.join(lines)
-                        self.edit_widget.set_edit_text(new_text)
+                    # Rebuild line
+                    new_line = status + linenum_field + rest
+                    lines[line_num] = new_line
+                    new_text = '\n'.join(lines)
+                    self.edit_widget.set_edit_text(new_text)
 
-                        # Move cursor left
+                    # Move cursor left (but stay in line number field)
+                    if col_in_line > 1:
                         new_cursor_pos = line_start + col_in_line - 1
                         self.edit_widget.set_edit_pos(new_cursor_pos)
-                        return None
+                    return None
 
         # Prevent typing in status column (column 0)
         if col_in_line < 1 and len(key) == 1 and key.isprintable():
