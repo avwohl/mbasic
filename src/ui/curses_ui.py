@@ -219,39 +219,63 @@ Examples:
                     self.status_bar.set_text("Parse error - Press Ctrl+H for help")
                     return
 
-            # Create a capturing IO handler with output support
-            output_lines = []
-            parent_ui = self
-
+            # Create a capturing IO handler that just buffers output
             class CapturingIOHandler:
-                """IO handler that captures output."""
-                def __init__(self, output_list, ui):
-                    self.output_list = output_list
-                    self.ui = ui
+                """IO handler that captures output to a buffer.
+
+                Output is collected during tick execution and then
+                picked up by the UI after the tick returns.
+                """
+                def __init__(self):
+                    self.output_buffer = []
                     self.debug_enabled = False
 
                 def output(self, text, end='\n'):
-                    """Capture output."""
+                    """Capture output to buffer."""
                     if end == '\n':
-                        self.output_list.append(str(text))
+                        self.output_buffer.append(str(text))
                     else:
                         # For same-line output, append to last line or create new
-                        if self.output_list:
-                            self.output_list[-1] += str(text) + end
+                        if self.output_buffer:
+                            self.output_buffer[-1] += str(text) + end
                         else:
-                            self.output_list.append(str(text) + end)
-                    # Update display in real-time
-                    self.ui._update_output_with_lines(self.output_list)
-                    # Screen updates happen automatically via urwid event loop
+                            self.output_buffer.append(str(text) + end)
+
+                def get_and_clear_output(self):
+                    """Get buffered output and clear the buffer."""
+                    output = self.output_buffer[:]
+                    self.output_buffer.clear()
+                    return output
 
                 def set_debug(self, enabled):
                     self.debug_enabled = enabled
 
+                # Stub methods required by IOHandler interface
+                def input(self, prompt=''):
+                    return ""
+
+                def input_line(self, prompt=''):
+                    return ""
+
+                def input_char(self, blocking=True):
+                    return ""
+
+                def clear_screen(self):
+                    pass
+
+                def error(self, message):
+                    self.output(f"Error: {message}")
+
+                def debug(self, message):
+                    if self.debug_enabled:
+                        self.output(f"Debug: {message}")
+
             # Create runtime and interpreter
-            io_handler = CapturingIOHandler(output_lines, parent_ui)
+            io_handler = CapturingIOHandler()
             runtime = Runtime(self.program.line_asts, self.program.lines)
             self.interpreter = Interpreter(runtime, io_handler)
             self.runtime = runtime
+            self.io_handler = io_handler  # Keep reference to get output later
 
             # Start execution
             state = self.interpreter.start()
@@ -276,9 +300,16 @@ Examples:
     def _execute_tick(self):
         """Execute one tick of the interpreter and schedule next tick."""
         try:
+            # Execute one tick
             state = self.interpreter.tick(mode='run', max_statements=100)
 
-            # Update status
+            # Collect any output produced during the tick
+            new_output = self.io_handler.get_and_clear_output()
+            if new_output:
+                self.output_buffer.extend(new_output)
+                self._update_output()
+
+            # Handle state transitions
             if state.status == 'running':
                 # Schedule next tick
                 self.loop.set_alarm_in(0.01, lambda loop, user_data: self._execute_tick())
@@ -289,13 +320,19 @@ Examples:
                 self._get_input_for_interpreter(prompt)
 
             elif state.status == 'done':
-                # Program completed
+                # Program completed - show final output if any
+                final_output = self.io_handler.get_and_clear_output()
+                if final_output:
+                    self.output_buffer.extend(final_output)
                 self.output_buffer.append("Ok")
                 self._update_output()
                 self.status_bar.set_text("Ready - Press Ctrl+H for help")
 
             elif state.status == 'error':
-                # Error occurred
+                # Error occurred - show any output before error
+                error_output = self.io_handler.get_and_clear_output()
+                if error_output:
+                    self.output_buffer.extend(error_output)
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
                 line_num = state.error_info.error_line if state.error_info else "?"
                 self.output_buffer.append(f"Error in {line_num}: {error_msg}")
