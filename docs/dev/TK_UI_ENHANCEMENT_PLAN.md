@@ -35,13 +35,13 @@
 - ❌ Auto-numbering with calculator-style digit entry
 - ❌ Syntax error detection with ? markers
 - ❌ Current line highlighting during execution
-- ❌ Help dialog (Ctrl+H)
+- ❌ Help dialog (Ctrl+A)
 - ❌ Delete line command (Ctrl+D)
 - ❌ Renumber command (Ctrl+E)
 
 **Keyboard Shortcut Gaps:**
 - Current: Ctrl+N, Ctrl+O, Ctrl+S, F5
-- Missing: Ctrl+R, Ctrl+T, Ctrl+G, Ctrl+X, Ctrl+B, Ctrl+W, Ctrl+K, Ctrl+D, Ctrl+E, Ctrl+H, Ctrl+M
+- Missing: Ctrl+R, Ctrl+T, Ctrl+G, Ctrl+X, Ctrl+B, Ctrl+W, Ctrl+K, Ctrl+D, Ctrl+E, Ctrl+A, Ctrl+U
 
 ## Enhancement Plan
 
@@ -72,7 +72,7 @@
 │ 2                                           │ (30% height)
 │ 3                                           │
 ├─────────────────────────────────────────────┤
-│ Ready - Press Ctrl+H for help               │ Status Bar
+│ Ready - Press Ctrl+A for help               │ Status Bar
 └─────────────────────────────────────────────┘
 ```
 
@@ -488,7 +488,7 @@ def _delete_current_line(self):
 - Dialog asking for start and increment
 - Renumber all lines in editor
 
-**Help Dialog (Ctrl+H):**
+**Help Dialog (Ctrl+A):**
 - Show help text in dialog box
 
 **Automatic Line Sorting:**

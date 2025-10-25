@@ -32,9 +32,9 @@ def test_curses_basic():
         print("\n=== Initial screen ===")
         print(child.before if child.before else "(no output yet)")
 
-        # Send Ctrl+H for help
-        print("\n=== Sending Ctrl+H (help) ===")
-        child.send('\x08')  # Ctrl+H
+        # Send Ctrl+A for help
+        print("\n=== Sending Ctrl+A (help) ===")
+        child.send('\x01')  # Ctrl+A
         time.sleep(0.5)
 
         # Send Ctrl+Q to quit

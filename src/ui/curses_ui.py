@@ -1358,7 +1358,7 @@ class CursesBackend(UIBackend):
         self.stack_walker = urwid.SimpleFocusListWalker([])
         self.stack_window = urwid.ListBox(self.stack_walker)
 
-        self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+M for menu, Ctrl+W for variables, Ctrl+K for stack, Ctrl+Q to quit")
+        self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+A for help, Ctrl+U for menu, Ctrl+W for variables, Ctrl+K for stack, Ctrl+Q to quit")
 
         # Create editor frame with top/left border only (no bottom/right space reserved)
         self.editor_frame = TopLeftBox(
@@ -1440,14 +1440,14 @@ class CursesBackend(UIBackend):
             else:
                 # Switch back to editor
                 pile.focus_position = 1
-                self.status_bar.set_text("Editor - Press Ctrl+H for help")
+                self.status_bar.set_text("Editor - Press Ctrl+A for help")
             return None
 
-        elif key == 'ctrl m':
+        elif key == 'ctrl u':
             # Show menu
             self._show_menu()
 
-        elif key == 'ctrl h':
+        elif key == 'ctrl a':
             # Show help
             self._show_help()
 
@@ -1824,8 +1824,8 @@ MBASIC 5.21 - Keyboard Shortcuts
 
 Global Commands:
   Ctrl+Q / Ctrl+C  - Quit
-  Ctrl+M  - Show menu
-  Ctrl+H  - This help
+  Ctrl+U  - Show menu
+  Ctrl+A  - This help
   Ctrl+W  - Toggle variables watch window
   Ctrl+K  - Toggle execution stack window
   Ctrl+R  - Run program

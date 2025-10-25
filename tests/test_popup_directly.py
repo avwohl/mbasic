@@ -13,12 +13,12 @@ class TestApp(npyscreen.NPSAppManaged):
 
 class TestForm(npyscreen.Form):
     def create(self):
-        self.add(npyscreen.TitleText, name='Press Ctrl+H to test help popup')
+        self.add(npyscreen.TitleText, name='Press Ctrl+A to test help popup')
 
     def set_up_handlers(self):
         super().set_up_handlers()
         self.handlers.update({
-            ord('\x08'): self.test_help  # Ctrl+H
+            ord('\x01'): self.test_help  # Ctrl+A
         })
 
     def test_help(self, *args):

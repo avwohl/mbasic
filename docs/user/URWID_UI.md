@@ -43,7 +43,7 @@ python3 mbasic.py --backend curses program.bas
 - **Output window** - Displays program execution results (scrollable with Tab key)
 - **Status bar** - Shows current state and keyboard shortcuts
 - **Program execution** - Run BASIC programs and see output
-- **Help system** - Built-in help dialog (press Ctrl+H)
+- **Help system** - Built-in help dialog (press Ctrl+A)
 - **File operations** - Save and load programs (Ctrl+S, Ctrl+O)
 - **Configuration** - Configurable settings via .mbasic.conf
 - **Optimized paste** - High-performance paste with automatic line number parsing
@@ -52,7 +52,7 @@ python3 mbasic.py --backend curses program.bas
 - **Watch window** - View all variables and their values during debugging (Ctrl+W)
 - **Stack viewer** - View call stack and active loops in nesting order (Ctrl+K)
 - **Statement highlighting** - Visual cyan highlight for active statement in multi-statement lines
-- **Menu system** - Ctrl+M shows all commands organized by category
+- **Menu system** - Ctrl+U shows all commands organized by category
 
 ### Keyboard Shortcuts
 
@@ -61,8 +61,8 @@ python3 mbasic.py --backend curses program.bas
 | Key | Action |
 |-----|--------|
 | `Ctrl+Q` / `Ctrl+C` | Quit the program |
-| `Ctrl+M` | Show menu with all commands and shortcuts |
-| `Ctrl+H` | Show help dialog |
+| `Ctrl+U` | Show menu with all commands and shortcuts |
+| `Ctrl+A` | Show help dialog |
 | `Ctrl+W` | Toggle variables watch window |
 | `Ctrl+K` | Toggle execution stack window |
 | `Ctrl+R` | Run the current program |
@@ -115,7 +115,7 @@ python3 mbasic.py --backend curses program.bas
 │ 1                                                   │
 │ 2                                                   │
 ├─────────────────────────────────────────────────────┤
-│ Status: Ready - Press Ctrl+M for menu, Ctrl+H help │
+│ Status: Ready - Press Ctrl+U for menu, Ctrl+A help │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -156,7 +156,7 @@ The UI includes a menu bar at the top showing the main command categories: **Fil
 
 #### Accessing the Menu
 
-Press `Ctrl+M` to show a popup menu with all available commands organized by category.
+Press `Ctrl+U` to show a popup menu with all available commands organized by category.
 
 **Menu Layout:**
 ```
@@ -175,7 +175,7 @@ File                          Edit
 
 Run                           Help
 ────────────────────          ────────────────────
-  Run             Ctrl+R        Show Help       Ctrl+H
+  Run             Ctrl+R        Show Help       Ctrl+A
   Step            Ctrl+T
   Continue        Ctrl+G
   Stop            Ctrl+X
@@ -226,7 +226,7 @@ Press `Ctrl+N` to clear the editor and start a new program.
 
 ### 5. Get Help
 
-Press `Ctrl+H` anytime to see the help dialog with all keyboard shortcuts.
+Press `Ctrl+A` anytime to see the help dialog with all keyboard shortcuts.
 
 ## Line Number Editing
 
@@ -1041,7 +1041,7 @@ The urwid-based curses UI provides a modern, full-featured terminal interface:
 - ✅ **INPUT statements** - Interactive user input via dialog
 - ✅ **File operations** - Save and Load programs (Ctrl+S, Ctrl+O)
 - ✅ **Program listing** - View program lines (Ctrl+L)
-- ✅ **Help system** - Built-in help dialog (Ctrl+H)
+- ✅ **Help system** - Built-in help dialog (Ctrl+A)
 
 ### Not Yet Implemented
 
@@ -1108,7 +1108,7 @@ Errors will appear in the output window with full tracebacks.
 - [x] Add breakpoint support (toggle with Ctrl+B)
 - [x] Implement Step/Continue/Stop debugger (Ctrl+T/Ctrl+G/Ctrl+X)
 - [x] Visual stepping through colon-separated statements (cyan highlighting shows active statement)
-- [x] Create menu system (Ctrl+M shows all commands with shortcuts)
+- [x] Create menu system (Ctrl+U shows all commands with shortcuts)
 
 ### Long Term (v2.0)
 

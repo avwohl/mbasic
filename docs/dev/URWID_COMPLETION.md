@@ -58,7 +58,7 @@ All shortcuts use control characters (no function keys):
 | Shortcut | Function |
 |----------|----------|
 | Ctrl+Q   | Quit |
-| Ctrl+H   | Help |
+| Ctrl+A   | Help |
 | Ctrl+R   | Run program |
 | Ctrl+L   | List program |
 | Ctrl+N   | New program |

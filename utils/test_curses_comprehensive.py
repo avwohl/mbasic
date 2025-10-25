@@ -94,12 +94,12 @@ class CursesUITester:
             # Test various input handlers
             handlers_tested = []
 
-            # Ctrl+H (help) - should not raise
+            # Ctrl+A (help) - should not raise
             try:
-                backend._handle_input('ctrl h')
-                handlers_tested.append('ctrl h')
+                backend._handle_input('ctrl a')
+                handlers_tested.append('ctrl a')
             except Exception as e:
-                raise Exception(f"Ctrl+H failed: {e}")
+                raise Exception(f"Ctrl+A failed: {e}")
 
             # Ctrl+L (list)
             try:

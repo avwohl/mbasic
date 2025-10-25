@@ -73,7 +73,7 @@ The new urwid-based UI provides:
   - `Ctrl+R` - Run program
   - `Ctrl+L` - List program
   - `Ctrl+N` - New program
-  - `Ctrl+H` - Help
+  - `Ctrl+A` - Help
 
 ### Planned Features
 
@@ -137,7 +137,7 @@ class CursesBackend(UIBackend):
 │ │                                 │ │
 │ └─────────────────────────────────┘ │
 ├─────────────────────────────────────┤
-│ Status: Ready - Press Ctrl+H for help  │
+│ Status: Ready - Press Ctrl+A for help  │
 └─────────────────────────────────────┘
 ```
 

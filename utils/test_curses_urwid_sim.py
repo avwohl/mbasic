@@ -110,14 +110,14 @@ def test_curses_input_simulation():
         backend._create_ui()
 
         # Simulate key press
-        print("Simulating Ctrl+H (help)...")
+        print("Simulating Ctrl+A (help)...")
 
         # Process the unhandled input handler directly
         try:
-            backend._handle_input('ctrl h')
-            print("Ctrl+H processed successfully")
+            backend._handle_input('ctrl a')
+            print("Ctrl+A processed successfully")
         except Exception as e:
-            print(f"Error processing Ctrl+H: {e}")
+            print(f"Error processing Ctrl+A: {e}")
             import traceback
             traceback.print_exc()
 

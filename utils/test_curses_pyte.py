@@ -102,13 +102,13 @@ def test_curses_with_pyte():
         print(screen_text)
         print("="*80)
 
-        # Send Ctrl+H for help
-        print("\nSending Ctrl+H (help)...")
-        term.send_input('\x08')
+        # Send Ctrl+A for help
+        print("\nSending Ctrl+A (help)...")
+        term.send_input('\x01')
         time.sleep(0.5)
         term.read_output(timeout=0.5)
 
-        print("\n=== After Ctrl+H ===")
+        print("\n=== After Ctrl+A ===")
         print(term.get_screen_text())
         print("="*80)
 
