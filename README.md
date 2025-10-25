@@ -68,10 +68,33 @@ python3 mbasic.py
 python3 mbasic.py myprogram.bas
 ```
 
-### Start interactive mode
+### Start interactive mode (Curses Screen Editor)
 
 ```bash
 python3 mbasic.py
+```
+
+The **curses screen editor** (default) provides a full-screen terminal interface:
+- Visual line editor with auto-numbering
+- Status indicators for breakpoints and errors
+- Calculator-style line number editing
+- Automatic line sorting
+- Split-screen output window
+
+**Features:**
+- `Ctrl+R` - Run program
+- `Ctrl+S` - Save program
+- `Ctrl+O` - Open program
+- `Ctrl+H` - Help
+- Arrow keys, Page Up/Down for navigation
+- Auto-numbering with smart collision avoidance
+
+See **[Curses Editor Documentation](docs/user/URWID_UI.md)** for complete guide.
+
+### CLI Mode (Line-by-line REPL)
+
+```bash
+python3 mbasic.py --backend cli
 ```
 
 Then enter your program:
@@ -113,12 +136,16 @@ mbasic/
 
 ## Documentation
 
-- **[Parser Implementation](doc/PARSER_REFACTORING_2025-10-22.md)** - How the parser works
-- **[Interpreter Architecture](doc/INTERPRETER_COMPILER_ARCHITECTURE_2025-10-22.md)** - Design overview
-- **[Interpreter Implementation](doc/INTERPRETER_IMPLEMENTATION_2025-10-22.md)** - Implementation details
-- **[Interactive Mode](doc/INTERACTIVE_MODE_2025-10-22.md)** - REPL documentation
-- **[Token Analysis](doc/TOKEN_USAGE_SUMMARY_2025-10-22.md)** - Token usage statistics
-- **[Parse Tree Structure](doc/PARSE_TREE_STRUCTURE_2025-10-22.md)** - AST documentation
+### User Documentation
+- **[Curses Screen Editor](docs/user/URWID_UI.md)** - Full-screen terminal editor (default UI)
+- **[Quick Reference](docs/user/QUICK_REFERENCE.md)** - Command reference
+
+### Developer Documentation
+- **[Parser Implementation](docs/dev/)** - How the parser works
+- **[Interpreter Architecture](docs/dev/)** - Design overview
+- **[Interpreter Implementation](docs/dev/)** - Implementation details
+
+See the **[docs/](docs/)** directory for complete documentation.
 
 ## Testing
 

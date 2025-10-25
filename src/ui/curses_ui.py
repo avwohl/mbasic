@@ -899,18 +899,41 @@ class CursesBackend(UIBackend):
         help_text = """
 MBASIC 5.21 - Keyboard Shortcuts
 
-Ctrl+Q / Ctrl+C  - Quit
-Ctrl+H  - This help
-Ctrl+R  - Run program
-Ctrl+L  - List program
-Ctrl+N  - New program
-Ctrl+S  - Save program
-Ctrl+O  - Open/Load program
+Global Commands:
+  Ctrl+Q / Ctrl+C  - Quit
+  Ctrl+H  - This help
+  Ctrl+R  - Run program
+  Ctrl+L  - List program
+  Ctrl+N  - New program
+  Ctrl+S  - Save program
+  Ctrl+O  - Open/Load program
 
-Editor:
-- Type line numbers followed by BASIC code
-- Press Enter to add/modify lines
-- Empty line number deletes that line
+Screen Editor:
+  Column Layout:
+    [0]   Status: ● breakpoint, ? error, space normal
+    [1-5] Line number (5 digits, right-aligned)
+    [6]   Separator space
+    [7+]  BASIC code
+
+  Line Number Editing:
+    - Type digits in columns 1-5 (calculator-style)
+    - Numbers auto right-justify when leaving column
+    - Leftmost digit drops when typing at rightmost position
+    - Backspace deletes rightmost digit and right-justifies
+
+  Navigation:
+    Up/Down       - Move between lines (sorts if in number area)
+    Left/Right    - Move within line (no auto-sort)
+    Page Up/Down  - Scroll pages (triggers sort)
+    Home/End      - Jump to start/end (triggers sort)
+    Tab/Enter     - Move to code area / new line (triggers sort)
+
+  Auto-Numbering:
+    - First line starts at 10 (configurable)
+    - Press Enter for next line (auto-increments by 10)
+    - Uses current line number + increment
+    - Avoids collisions with existing lines
+    - Configure in .mbasic.conf
 
 Examples:
   10 PRINT "Hello, World!"

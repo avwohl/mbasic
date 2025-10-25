@@ -17,10 +17,14 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-# Start with new urwid UI
+# Start with new urwid UI (default)
+python3 mbasic.py
+
+# Or explicitly specify curses backend
 python3 mbasic.py --backend curses
 
 # Load a program file
+python3 mbasic.py program.bas
 python3 mbasic.py --backend curses program.bas
 ```
 
@@ -28,18 +32,27 @@ python3 mbasic.py --backend curses program.bas
 
 ### Current Implementation
 
-- **Full-screen editor** - Multi-line text editor for BASIC programs
+- **Full-screen editor** - Multi-line text editor for BASIC programs with column-based layout
+- **Status indicators** - Visual breakpoint (●) and error (?) markers
+- **Line number editing** - Calculator-style digit entry with auto right-justification
+- **Auto-numbering** - Smart line numbering with configurable increment
+- **Automatic sorting** - Lines sort by number when navigating
+- **Protected columns** - Status and separator columns prevent accidental edits
+- **Navigation keys** - Up/down/left/right, Page Up/Down, Home/End
 - **Output window** - Displays program execution results
 - **Status bar** - Shows current state and keyboard shortcuts
 - **Program execution** - Run BASIC programs and see output
 - **Help system** - Built-in help dialog (press Ctrl+H)
-- **Line-based editing** - Traditional BASIC line number editing
+- **File operations** - Save and load programs (Ctrl+S, Ctrl+O)
+- **Configuration** - Configurable settings via .mbasic.conf
 
 ### Keyboard Shortcuts
 
+#### Global Commands
+
 | Key | Action |
 |-----|--------|
-| `Ctrl+Q` | Quit the program |
+| `Ctrl+Q` / `Ctrl+C` | Quit the program |
 | `Ctrl+H` | Show help dialog |
 | `Ctrl+R` | Run the current program |
 | `Ctrl+L` | List program lines |
@@ -47,28 +60,65 @@ python3 mbasic.py --backend curses program.bas
 | `Ctrl+S` | Save program to file |
 | `Ctrl+O` | Open/Load program from file |
 
+#### Navigation Keys
+
+| Key | Behavior | Auto-Sort? |
+|-----|----------|------------|
+| `Up` / `Down` | Move between lines | Yes (if in line number area) |
+| `Left` / `Right` | Move within current line | No |
+| `Page Up` / `Page Down` | Scroll by page | Yes |
+| `Home` / `End` | Jump to start/end | Yes |
+| `Tab` | Move to next field | Yes |
+| `Enter` | New line with auto-number | Yes |
+
+**Auto-Sort Behavior:**
+- When editing in the line number area (columns 1-5):
+  - **Up/Down arrows**: Sort line into position before moving
+  - **Left/Right arrows**: Move freely without sorting (for editing)
+  - **Page Up/Down, Home, End**: Sort before navigating
+  - **Control keys**: Sort before executing command
+
 ### UI Layout
 
 ```
-┌─────────────────────────────────────────────┐
-│ Editor (70% of screen)                      │
-│ ┌─────────────────────────────────────────┐ │
-│ │ 10 PRINT "Hello, World!"                │ │
-│ │ 20 PRINT "2 + 2 = "; 2 + 2              │ │
-│ │ 30 END                                  │ │
-│ │                                         │ │
-│ │                                         │ │
-│ └─────────────────────────────────────────┘ │
-├─────────────────────────────────────────────┤
-│ Output (30% of screen)                      │
-│ ┌─────────────────────────────────────────┐ │
-│ │ Hello, World!                           │ │
-│ │ 2 + 2 =  4                              │ │
-│ │ Program completed                       │ │
-│ └─────────────────────────────────────────┘ │
-├─────────────────────────────────────────────┤
-│ Status: Ready - Press Ctrl+H for help          │
-└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│ MBASIC 5.21 Screen Editor                          │
+├─────────────────────────────────────────────────────┤
+│●   10 PRINT "Hello, World!"                         │
+│    20 FOR I = 1 TO 10                               │
+│?   30 PRINT I                                       │
+│    40 NEXT I                                        │
+│    50 END                                           │
+│                                                     │
+├─────────────────────────────────────────────────────┤
+│ Output Window                                       │
+│ Hello, World!                                       │
+│ 1                                                   │
+│ 2                                                   │
+├─────────────────────────────────────────────────────┤
+│ Status: Ready - Press Ctrl+H for help              │
+└─────────────────────────────────────────────────────┘
+```
+
+#### Column Layout
+
+Each line has a fixed column structure:
+
+| Columns | Purpose | Description |
+|---------|---------|-------------|
+| [0] | Status | `●` = breakpoint, `?` = error, ` ` = normal |
+| [1-5] | Line Number | 5 digits, right-aligned (e.g., "   10") |
+| [6] | Separator | Always a space character |
+| [7+] | Code | BASIC program code |
+
+**Example line format:**
+```
+●   10 PRINT "Hello"
+^   ^^ ^
+│   │  │
+│   │  └─ Separator (column 6)
+│   └──── Line number (columns 1-5)
+└──────── Status (column 0)
 ```
 
 ## How to Use
@@ -100,6 +150,138 @@ Press `Ctrl+N` to clear the editor and start a new program.
 ### 5. Get Help
 
 Press `Ctrl+H` anytime to see the help dialog with all keyboard shortcuts.
+
+## Line Number Editing
+
+### Calculator-Style Digit Entry
+
+Line numbers work like a 5-digit calculator display:
+
+```
+Initial:     10
+Type '5':   105
+Type '0':  1050
+Type '0': 10500  (next digit would drop leftmost '1')
+```
+
+**Features:**
+- **Overwrite mode** in columns 1-5
+- **Right-justified** automatically when leaving the area
+- **Leftmost digit drops** when typing at rightmost position (column 5)
+- **Backspace** deletes rightmost digit and right-justifies
+
+**Example editing session:**
+```
+Line:    10 PRINT "Hello"
+         ^^
+
+Edit to '101':
+1. Move cursor to line number area (columns 1-5)
+2. Type '1' → '110'
+3. Backspace → '11 '
+4. Left arrow (move to column 4)
+5. Type '0' → '101'
+6. Down arrow → line sorts into position
+```
+
+### Protected Areas
+
+- **Status column (0)**: Read-only, cursor moves to line number area
+- **Separator (6)**: Protected from deletion/editing
+- **Code area (7+)**: Normal text editing
+
+### Backspace Behavior
+
+| Cursor Position | Backspace Action |
+|-----------------|------------------|
+| Column 1-5 (line number) | Delete rightmost digit, right-justify |
+| Column 6 (separator) | Delete rightmost digit of line number |
+| Column 7 (code start) | Move to column 6 (protect separator) |
+| Column 8+ (code area) | Normal backspace |
+
+## Auto-Numbering
+
+### Default Behavior
+
+When you press Enter on a line, the next line automatically gets a line number:
+
+```
+  10 PRINT "Hello"
+[Press Enter]
+  20 ← Auto-numbered
+```
+
+### Configuration
+
+Auto-numbering can be configured in `.mbasic.conf`:
+
+```ini
+[editor]
+# Starting line number for new programs
+auto_number_start = 10
+
+# Increment between auto-numbered lines
+auto_number_increment = 10
+
+# Enable/disable auto-numbering
+auto_number_enabled = true
+```
+
+Configuration file search order:
+1. `.mbasic.conf` in current directory
+2. `.mbasic.conf` in home directory (`~/.mbasic.conf`)
+
+### Smart Line Numbering
+
+Auto-numbering intelligently avoids collisions:
+
+```
+Existing lines: 10, 20, 30, 100, 200
+
+Current line: 20
+Press Enter → Next line: 30 (would collide!)
+              Actual: 21 (first available after 20)
+
+Current line: 30
+Press Enter → Next line: 40
+              Actual: 40 (no collision, uses increment)
+
+Current line: 100
+Press Enter → Next line: 110
+              Actual: 110 (no collision)
+```
+
+**Algorithm:**
+1. Calculate: `next = current_line + increment`
+2. Check if `next` would collide with existing line
+3. If collision: use `current_line + 1` (or next available)
+4. If above next line in sequence: use next available slot
+
+## Automatic Line Sorting
+
+Lines are automatically sorted by line number when:
+
+1. **Moving to a different line** (up/down arrows) while in line number area
+2. **Navigating with Page Up/Down, Home, End**
+3. **Executing any control command** (Ctrl+R, Ctrl+S, etc.)
+4. **Pressing Enter** to create a new line
+
+**Example workflow:**
+```
+1. Start with:    10 PRINT "A"
+                  20 PRINT "B"
+                  30 PRINT "C"
+
+2. Go to line 10, edit number to '25':
+                  25 PRINT "A"    ← edited, not sorted yet
+                  20 PRINT "B"
+                  30 PRINT "C"
+
+3. Press Down arrow → Automatic sort:
+                  20 PRINT "B"
+                  25 PRINT "A"    ← sorted into position
+                  30 PRINT "C"
+```
 
 ## Implementation Details
 
