@@ -90,6 +90,8 @@ The **curses screen editor** (default) provides a full-screen terminal interface
 - `Ctrl+S` - Save program
 - `Ctrl+O` - Open program
 - `Ctrl+B` - Toggle breakpoint on current line
+- `Ctrl+D` - Delete current line
+- `Ctrl+E` - Renumber all lines (RENUM)
 - `Ctrl+H` - Help
 - `Tab` - Switch between editor and output
 - Arrow keys, Page Up/Down for navigation

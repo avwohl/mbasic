@@ -63,6 +63,8 @@ python3 mbasic.py --backend curses program.bas
 | `Ctrl+S` | Save program to file |
 | `Ctrl+O` | Open/Load program from file |
 | `Ctrl+B` | Toggle breakpoint on current line |
+| `Ctrl+D` | Delete current line |
+| `Ctrl+E` | Renumber all lines (RENUM) |
 | `Tab` | Switch between editor and output window |
 
 #### Navigation Keys
@@ -473,6 +475,69 @@ Breakpoints can be toggled on any line using `Ctrl+B`. The status column shows:
 
 **Priority system:** When a line has both an error and a breakpoint, the error (`?`) is shown. After fixing the error, the breakpoint indicator (`●`) becomes visible.
 
+### Line Editing Commands
+
+#### Delete Line (Ctrl+D)
+
+Quickly delete the current line where the cursor is positioned.
+
+**Usage:**
+1. Position cursor on any line
+2. Press `Ctrl+D`
+3. Line is immediately removed
+4. Status bar shows "Deleted line X"
+5. Cursor moves to next line (or previous if at end)
+
+**What gets deleted:**
+- The line from the display
+- The line from the program
+- Any breakpoint on that line
+- Any syntax error for that line
+
+**Example:**
+```
+Before:                After Ctrl+D:
+●   10 PRINT "A"      ●   10 PRINT "A"
+    20 PRINT "B"  ←       30 PRINT "C"
+    30 PRINT "C"
+```
+
+#### Renumber Lines (Ctrl+E)
+
+Renumber all program lines with custom start and increment values.
+
+**Usage:**
+1. Press `Ctrl+E`
+2. Enter start line number (default: 10)
+3. Enter increment (default: 10)
+4. All lines are renumbered
+5. Status bar shows "Renumbered N lines from X by Y"
+
+**What gets updated:**
+- All line numbers in sequence
+- Breakpoints move to new line numbers
+- Syntax errors move to new line numbers
+- Status indicators preserved
+
+**Example:**
+```
+Before:                After RENUM 100, 5:
+    15 PRINT "A"           100 PRINT "A"
+●   27 PRINT "B"       ●   105 PRINT "B"
+?   38 PRINT "C"       ?   110 PRINT "C"
+    49 END                 115 END
+```
+
+**Dialog prompts:**
+- "RENUM - Start line number (default 10):" - Press Enter for default or type number
+- "RENUM - Increment (default 10):" - Press Enter for default or type number
+
+**Notes:**
+- Empty input uses default values (10, 10)
+- Only renumbers lines with valid line numbers
+- Preserves all breakpoints and error markers
+- Does NOT update GOTO/GOSUB references (use CLI RENUM for that)
+
 ## Automatic Line Sorting
 
 Lines are automatically sorted by line number when:
@@ -636,9 +701,9 @@ Errors will appear in the output window with full tracebacks.
 
 ### Short Term (v1.0)
 
-- [ ] Add INPUT statement support
-- [ ] Implement Save/Load from UI
-- [ ] Add line editing commands
+- [x] Add INPUT statement support (dialog prompts work)
+- [x] Implement Save/Load from UI (Ctrl+S, Ctrl+O)
+- [x] Add line editing commands (Ctrl+D delete, Ctrl+E renumber)
 - [ ] Improve error messages
 
 ### Medium Term (v1.5)

@@ -1350,6 +1350,169 @@ class CursesBackend(UIBackend):
             # Toggle breakpoint on current line
             self._toggle_breakpoint_current_line()
 
+        elif key == 'ctrl d':
+            # Delete current line
+            self._delete_current_line()
+
+        elif key == 'ctrl e':
+            # Renumber all lines
+            self._renumber_lines()
+
+    def _delete_current_line(self):
+        """Delete the current line where the cursor is."""
+        # Get current cursor position
+        cursor_pos = self.editor.edit_widget.edit_pos
+        current_text = self.editor.edit_widget.get_edit_text()
+
+        # Find which line we're on
+        text_before_cursor = current_text[:cursor_pos]
+        line_index = text_before_cursor.count('\n')
+
+        # Get the lines
+        lines = current_text.split('\n')
+        if line_index >= len(lines):
+            return
+
+        line = lines[line_index]
+
+        # Extract line number from columns 1-5
+        if len(line) < 6:
+            return
+
+        line_number_str = line[1:6].strip()
+        if not line_number_str or not line_number_str.isdigit():
+            self.status_bar.set_text("No line number to delete")
+            return
+
+        line_number = int(line_number_str)
+
+        # Remove the line from the display
+        del lines[line_index]
+
+        # Update editor.lines dict
+        if line_number in self.editor.lines:
+            del self.editor.lines[line_number]
+
+        # Remove from breakpoints and errors if present
+        if line_number in self.editor.breakpoints:
+            self.editor.breakpoints.remove(line_number)
+        if line_number in self.editor.syntax_errors:
+            del self.editor.syntax_errors[line_number]
+
+        # Update display
+        new_text = '\n'.join(lines)
+        self.editor.edit_widget.set_edit_text(new_text)
+
+        # Position cursor at beginning of next line (or previous if at end)
+        if line_index < len(lines):
+            # Position at start of line that moved up
+            if line_index > 0:
+                new_cursor_pos = sum(len(lines[i]) + 1 for i in range(line_index))
+            else:
+                new_cursor_pos = 0
+        else:
+            # Was last line, position at end of previous line
+            if lines:
+                new_cursor_pos = sum(len(lines[i]) + 1 for i in range(len(lines) - 1)) + len(lines[-1])
+            else:
+                new_cursor_pos = 0
+
+        self.editor.edit_widget.set_edit_pos(new_cursor_pos)
+
+        # Update status bar
+        self.status_bar.set_text(f"Deleted line {line_number}")
+
+        # Force screen redraw
+        if self.loop:
+            self.loop.draw_screen()
+
+    def _renumber_lines(self):
+        """Renumber all lines with a dialog for start and increment."""
+        # Get current parameters
+        current_text = self.editor.edit_widget.get_edit_text()
+        lines = current_text.split('\n')
+
+        # Count valid program lines
+        valid_lines = []
+        for line in lines:
+            if len(line) >= 7:
+                line_number_str = line[1:6].strip()
+                if line_number_str and line_number_str.isdigit():
+                    line_number = int(line_number_str)
+                    code = line[7:]
+                    valid_lines.append((line_number, code, line[0]))  # (line_num, code, status)
+
+        if not valid_lines:
+            self.status_bar.set_text("No lines to renumber")
+            return
+
+        # Get renumber parameters from user
+        start_str = self._get_input_dialog("RENUM - Start line number (default 10): ")
+        if start_str is None or start_str == '':
+            start = 10
+        else:
+            try:
+                start = int(start_str)
+            except:
+                self.status_bar.set_text("Invalid start number")
+                return
+
+        increment_str = self._get_input_dialog("RENUM - Increment (default 10): ")
+        if increment_str is None or increment_str == '':
+            increment = 10
+        else:
+            try:
+                increment = int(increment_str)
+            except:
+                self.status_bar.set_text("Invalid increment")
+                return
+
+        # Build new lines with renumbered line numbers
+        new_lines = []
+        new_line_num = start
+        old_to_new = {}  # Map old line numbers to new
+
+        for old_line_num, code, status in valid_lines:
+            old_to_new[old_line_num] = new_line_num
+
+            # Update editor.lines dict
+            self.editor.lines[new_line_num] = code
+            if old_line_num != new_line_num and old_line_num in self.editor.lines:
+                del self.editor.lines[old_line_num]
+
+            # Update breakpoints
+            if old_line_num in self.editor.breakpoints:
+                self.editor.breakpoints.remove(old_line_num)
+                self.editor.breakpoints.add(new_line_num)
+
+            # Update syntax errors
+            if old_line_num in self.editor.syntax_errors:
+                error_msg = self.editor.syntax_errors[old_line_num]
+                del self.editor.syntax_errors[old_line_num]
+                self.editor.syntax_errors[new_line_num] = error_msg
+
+            # Recalculate status for new line number
+            has_syntax_error = new_line_num in self.editor.syntax_errors
+            new_status = self.editor._get_status_char(new_line_num, has_syntax_error)
+
+            # Format new line
+            formatted_line = f"{new_status}{new_line_num:5d} {code}"
+            new_lines.append(formatted_line)
+
+            new_line_num += increment
+
+        # Update display
+        new_text = '\n'.join(new_lines)
+        self.editor.edit_widget.set_edit_text(new_text)
+        self.editor.edit_widget.set_edit_pos(0)
+
+        # Update status bar
+        self.status_bar.set_text(f"Renumbered {len(valid_lines)} lines from {start} by {increment}")
+
+        # Force screen redraw
+        if self.loop:
+            self.loop.draw_screen()
+
     def _toggle_breakpoint_current_line(self):
         """Toggle breakpoint on the current line where the cursor is."""
         # Get current cursor position
@@ -1421,6 +1584,8 @@ Global Commands:
   Ctrl+S  - Save program
   Ctrl+O  - Open/Load program
   Ctrl+B  - Toggle breakpoint on current line
+  Ctrl+D  - Delete current line
+  Ctrl+E  - Renumber all lines (RENUM)
 
 Screen Editor:
   Column Layout:
