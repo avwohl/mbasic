@@ -73,30 +73,30 @@ def test_identifiers():
     """Test identifiers with type suffixes"""
     print("Testing identifiers...")
 
-    # Simple identifier
+    # Simple identifier (lexer normalizes to lowercase)
     tokens = tokenize("COUNT")
     assert tokens[0].type == TokenType.IDENTIFIER
-    assert tokens[0].value == "COUNT"
+    assert tokens[0].value == "count"
 
     # String variable
     tokens = tokenize("NAME$")
     assert tokens[0].type == TokenType.IDENTIFIER
-    assert tokens[0].value == "NAME$"
+    assert tokens[0].value == "name$"
 
     # Integer variable
     tokens = tokenize("INDEX%")
     assert tokens[0].type == TokenType.IDENTIFIER
-    assert tokens[0].value == "INDEX%"
+    assert tokens[0].value == "index%"
 
     # Single precision variable
     tokens = tokenize("VALUE!")
     assert tokens[0].type == TokenType.IDENTIFIER
-    assert tokens[0].value == "VALUE!"
+    assert tokens[0].value == "value!"
 
     # Double precision variable
     tokens = tokenize("TOTAL#")
     assert tokens[0].type == TokenType.IDENTIFIER
-    assert tokens[0].value == "TOTAL#"
+    assert tokens[0].value == "total#"
 
     print("  ✓ Identifier tests passed")
 
@@ -129,27 +129,27 @@ def test_string_functions():
 
     tokens = tokenize("LEFT$")
     assert tokens[0].type == TokenType.LEFT
-    assert tokens[0].value == "LEFT$"
+    assert tokens[0].value == "left$"
 
     tokens = tokenize("RIGHT$")
     assert tokens[0].type == TokenType.RIGHT
-    assert tokens[0].value == "RIGHT$"
+    assert tokens[0].value == "right$"
 
     tokens = tokenize("MID$")
     assert tokens[0].type == TokenType.MID
-    assert tokens[0].value == "MID$"
+    assert tokens[0].value == "mid$"
 
     tokens = tokenize("CHR$")
     assert tokens[0].type == TokenType.CHR
-    assert tokens[0].value == "CHR$"
+    assert tokens[0].value == "chr$"
 
     tokens = tokenize("STR$")
     assert tokens[0].type == TokenType.STR
-    assert tokens[0].value == "STR$"
+    assert tokens[0].value == "str$"
 
     tokens = tokenize("INKEY$")
     assert tokens[0].type == TokenType.INKEY
-    assert tokens[0].value == "INKEY$"
+    assert tokens[0].value == "inkey$"
 
     print("  ✓ String function tests passed")
 
@@ -234,7 +234,7 @@ def test_complete_statement():
     assert tokens[0].value == 10
     assert tokens[1].type == TokenType.FOR
     assert tokens[2].type == TokenType.IDENTIFIER
-    assert tokens[2].value == "I%"
+    assert tokens[2].value == "i%"
     assert tokens[3].type == TokenType.EQUAL
     assert tokens[4].type == TokenType.NUMBER
     assert tokens[4].value == 1
@@ -244,11 +244,11 @@ def test_complete_statement():
     assert tokens[7].type == TokenType.COLON
     assert tokens[8].type == TokenType.PRINT
     assert tokens[9].type == TokenType.IDENTIFIER
-    assert tokens[9].value == "I%"
+    assert tokens[9].value == "i%"
     assert tokens[10].type == TokenType.COLON
     assert tokens[11].type == TokenType.NEXT
     assert tokens[12].type == TokenType.IDENTIFIER
-    assert tokens[12].value == "I%"
+    assert tokens[12].value == "i%"
 
     print("  ✓ Complete statement test passed")
 
