@@ -64,6 +64,61 @@ class TopLeftBox(urwid.WidgetWrap):
         super().__init__(pile)
 
 
+class OutputLineWidget(urwid.WidgetWrap):
+    """Selectable text widget for output lines with cursor indicator on first char."""
+
+    def __init__(self, text):
+        """Initialize output line widget.
+
+        Args:
+            text: The line text to display
+        """
+        self.text = text
+        self._text_widget = urwid.Text("")
+        super().__init__(self._text_widget)
+        self._update_display(False)
+
+    def selectable(self):
+        """Make this widget selectable for focus."""
+        return True
+
+    def keypress(self, size, key):
+        """Handle keypresses - just return them to allow navigation."""
+        return key
+
+    def _update_display(self, has_focus):
+        """Update display based on focus state.
+
+        Args:
+            has_focus: True if this widget has focus
+        """
+        if has_focus and self.text:
+            # Show green background on first character only
+            if len(self.text) > 0:
+                first_char = self.text[0]
+                rest = self.text[1:] if len(self.text) > 1 else ""
+                markup = [('output_focus', first_char), rest]
+                self._text_widget.set_text(markup)
+            else:
+                self._text_widget.set_text(self.text)
+        else:
+            # No focus, show plain text
+            self._text_widget.set_text(self.text)
+
+    def render(self, size, focus=False):
+        """Render with focus highlighting on first character.
+
+        Args:
+            size: Rendering size
+            focus: True if this widget has focus
+
+        Returns:
+            Canvas for rendering
+        """
+        self._update_display(focus)
+        return super().render(size, focus)
+
+
 class ProgramEditorWidget(urwid.WidgetWrap):
     """3-column program editor widget for BASIC programs.
 
@@ -899,6 +954,18 @@ class CursesBackend(UIBackend):
             # Quit (Ctrl+Q or Ctrl+C)
             raise urwid.ExitMainLoop()
 
+        elif key == 'tab':
+            # Toggle between editor (position 0) and output (position 1)
+            # Get the pile widget from the main widget
+            pile = self.loop.widget.base_widget
+            if pile.focus_position == 0:
+                # Switch to output
+                pile.focus_position = 1
+            else:
+                # Switch back to editor
+                pile.focus_position = 0
+            return None
+
         elif key == 'ctrl h':
             # Show help
             self._show_help()
@@ -936,6 +1003,7 @@ Global Commands:
   Ctrl+N  - New program
   Ctrl+S  - Save program
   Ctrl+O  - Open/Load program
+  Tab             - Toggle between Editor and Output
 
 Screen Editor:
   Column Layout:
@@ -963,6 +1031,12 @@ Screen Editor:
     - Uses current line number + increment
     - Avoids collisions with existing lines
     - Configure in .mbasic.conf
+
+Output Area:
+  Tab            - Switch to output area
+  Up/Down        - Scroll through output
+  Green cursor   - First character shows current line
+  Tab            - Return to editor
 
 Examples:
   10 PRINT "Hello, World!"
@@ -1223,12 +1297,10 @@ Examples:
         # Clear existing content
         self.output_walker[:] = []
 
-        # Add all lines from buffer with focus highlighting
+        # Add all lines from buffer with focus highlighting on first char
         for line in self.output_buffer:
-            text_widget = urwid.Text(line)
-            # Wrap in AttrMap to show focus with green background
-            attr_widget = urwid.AttrMap(text_widget, 'output', 'output_focus')
-            self.output_walker.append(attr_widget)
+            line_widget = OutputLineWidget(line)
+            self.output_walker.append(line_widget)
 
         # Scroll to the bottom (last line)
         if len(self.output_walker) > 0:
@@ -1239,12 +1311,10 @@ Examples:
         # Clear existing content
         self.output_walker[:] = []
 
-        # Add all lines with focus highlighting
+        # Add all lines with focus highlighting on first char
         for line in lines:
-            text_widget = urwid.Text(line)
-            # Wrap in AttrMap to show focus with green background
-            attr_widget = urwid.AttrMap(text_widget, 'output', 'output_focus')
-            self.output_walker.append(attr_widget)
+            line_widget = OutputLineWidget(line)
+            self.output_walker.append(line_widget)
 
         # Scroll to the bottom (last line)
         if len(self.output_walker) > 0:
