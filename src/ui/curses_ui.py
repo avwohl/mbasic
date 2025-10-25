@@ -762,27 +762,24 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 # (It's never legal for BASIC code to start with a digit)
                 code_stripped = code_area.lstrip()
                 if code_stripped and code_stripped[0].isdigit():
-                    # Found a duplicate number in code area - remove it
+                    # Found a number in code area - use it as the line number
 
                     # Extract the number from code area
+                    num_str = ""
                     j = 0
                     while j < len(code_stripped) and code_stripped[j].isdigit():
+                        num_str += code_stripped[j]
                         j += 1
 
-                    # Get rest of line (skip spaces after number)
+                    # Get rest of line (skip ALL spaces after number)
                     while j < len(code_stripped) and code_stripped[j] == ' ':
                         j += 1
                     rest = code_stripped[j:]
 
-                    # Check if line number column is empty (all spaces)
-                    if linenum_col.strip():
-                        # Line number column has a number - keep it, just remove duplicate from code
-                        new_line = f"{status}{linenum_col} {rest}"
-                    else:
-                        # Line number column is empty - use the number from code area
-                        num_str = code_stripped[:code_stripped.find(' ') if ' ' in code_stripped else len(code_stripped)]
-                        line_num_formatted = f"{num_str:>5}"
-                        new_line = f"{status}{line_num_formatted} {rest}"
+                    # ALWAYS use the number from code area (replaces auto-number or fills empty)
+                    # This preserves user's pasted line numbers like 210, 220, 230
+                    line_num_formatted = f"{num_str:>5}"
+                    new_line = f"{status}{line_num_formatted} {rest}"
 
                     lines[i] = new_line
                     changed = True
