@@ -1,35 +1,40 @@
-# Curses Text UI Help
+# MBASIC Curses UI Help
 
-Full-screen terminal interface for MBASIC.
+Welcome to the MBASIC curses text interface help system.
 
-## Topics
+## Getting Started
 
-- [Getting Started](getting-started.md) - First time using curses UI
-- [Keyboard Commands](keyboard-commands.md) - All keyboard shortcuts
-- [Editing Programs](editing.md) - How to write programs
-- [Running Programs](running.md) - Execute your code
-- [File Operations](files.md) - Save and load programs
-- [Help System](help-navigation.md) - Using this help browser
+- [Quick Reference](quick-reference.md) - All keyboard shortcuts in one place
+- [Getting Started](getting-started.md) - First time using the curses UI
 
-## Quick Reference
+## Using the Editor
 
-### Essential Commands
+- [Keyboard Commands](keyboard-commands.md) - Complete keyboard reference
+- [Editing Programs](editing.md) - How to write and edit programs
+- [File Operations](files.md) - Save and load your programs
 
-- **Ctrl+P** - Open help
-- **Ctrl+R** - Run program
-- **Ctrl+S** - Save program
-- **Ctrl+O** - Load program
-- **Ctrl+N** - New program
-- **ESC** - Clear errors
-- **Q** - Quit
+## Running Programs
 
-### Navigation
+- [Running Programs](running.md) - Execute and debug your code
+- [Debugger](debugging.md) - Breakpoints, stepping, and variables
 
-- **Up/Down** - Move between lines
-- **Left/Right** - Move cursor
-- **Home/End** or **Ctrl+A/E** - Start/end of line
+## Help Navigation
+
+Use these keys while viewing help:
+
+| Key | Action |
+|-----|--------|
+| **↑/↓** | Scroll through current page |
+| **Tab** | Move to next link |
+| **Enter** | Follow the highlighted link |
+| **U** | Go back to previous page |
+| **ESC** or **Q** | Close help and return to editor |
+
+## Language Reference
+
+- [BASIC Language](../../common/language.md) - Complete BASIC language reference
+- [Examples](../../common/examples.md) - Sample programs
 
 ## See Also
 
-- [BASIC Language Reference](../../language/statements/index.md) - Learn BASIC
-- [Examples](../../examples/hello-world.md) - Sample programs
+- [Common Help](../../common/index.md) - Help shared across all UIs

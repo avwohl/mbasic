@@ -17,7 +17,7 @@ from .markdown_renderer import MarkdownRenderer
 class HelpWidget(urwid.WidgetWrap):
     """Urwid widget for browsing help documentation."""
 
-    def __init__(self, help_root: str, initial_topic: str = "ui/curses/quick-reference.md"):
+    def __init__(self, help_root: str, initial_topic: str = "ui/curses/index.md"):
         """
         Initialize help browser widget.
 
