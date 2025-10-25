@@ -89,5 +89,30 @@ def test_syntax_checking():
     print(f"  Expected: Lines 10 and 30 marked with '?', line 20 unmarked")
     print()
 
+    print("Test 6: Priority system - breakpoint preserved when error fixed")
+    # Set breakpoint on line 20
+    editor.breakpoints.add(20)
+
+    # Create lines with error and breakpoint
+    line1 = " " + "   10" + " " + "PRINT \"ok\""  # Valid, no breakpoint
+    line2 = " " + "   20" + " " + "foo"           # Error + breakpoint
+    text = line1 + "\n" + line2
+
+    # First check - should show error
+    new_text = editor._update_syntax_errors(text)
+    lines = new_text.split('\n')
+    print(f"  Line 20 with error + breakpoint: status='{lines[1][0]}' (expected '?' - error has priority)")
+
+    # Fix the error
+    line1 = " " + "   10" + " " + "PRINT \"ok\""
+    line2 = "?" + "   20" + " " + "PRINT \"fixed\""  # Fixed code, had error status
+    text = line1 + "\n" + line2
+
+    # Second check - should show breakpoint
+    new_text = editor._update_syntax_errors(text)
+    lines = new_text.split('\n')
+    print(f"  Line 20 after fix: status='{lines[1][0]}' (expected '●' - breakpoint shown)")
+    print()
+
 if __name__ == '__main__':
     test_syntax_checking()

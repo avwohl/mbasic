@@ -787,6 +787,28 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 error_msg = error_msg.split(":", 1)[1].strip()
             return (False, error_msg)
 
+    def _get_status_char(self, line_number, has_syntax_error):
+        """Get the status character for a line based on priority.
+
+        Priority order (highest to lowest):
+        1. Syntax error (?) - highest priority
+        2. Breakpoint (●) - medium priority
+        3. Normal ( ) - default
+
+        Args:
+            line_number: The line number to check
+            has_syntax_error: Whether the line has a syntax error
+
+        Returns:
+            Single character status indicator
+        """
+        if has_syntax_error:
+            return '?'
+        elif line_number in self.breakpoints:
+            return '●'
+        else:
+            return ' '
+
     def _update_syntax_errors(self, text):
         """Update status indicators for lines with syntax errors.
 
@@ -820,27 +842,30 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
             # Skip empty code lines
             if not code_area.strip():
-                # Clear error status for empty lines
-                if status == '?':
-                    lines[i] = ' ' + line[1:]
-                    changed = True
+                # Clear error status for empty lines, but preserve breakpoints
+                if line_number > 0:
+                    new_status = self._get_status_char(line_number, has_syntax_error=False)
+                    if status != new_status:
+                        lines[i] = new_status + line[1:]
+                        changed = True
                 continue
 
             # Check syntax
             is_valid, error_msg = self._check_line_syntax(code_area)
 
-            if not is_valid:
-                # Mark as error and store error message
-                if status != '?':
-                    lines[i] = '?' + line[1:]
+            # Determine correct status based on priority
+            if line_number > 0:
+                new_status = self._get_status_char(line_number, has_syntax_error=not is_valid)
+
+                # Update status if it changed
+                if status != new_status:
+                    lines[i] = new_status + line[1:]
                     changed = True
-                # Store error message
-                if line_number > 0 and error_msg:
+
+                # Store or clear error message
+                if not is_valid and error_msg:
                     self.syntax_errors[line_number] = error_msg
-            elif is_valid and status == '?':
-                # Clear error marker (only if it was an error, preserve breakpoints)
-                lines[i] = ' ' + line[1:]
-                changed = True
+                # Note: syntax_errors cleared at start, so valid lines won't have errors
 
         # Update output window with errors
         self._display_syntax_errors()
@@ -1337,10 +1362,15 @@ Global Commands:
 
 Screen Editor:
   Column Layout:
-    [0]   Status: ● breakpoint, ? error, space normal
+    [0]   Status: ? error (highest), ● breakpoint, space normal
     [1-5] Line number (5 digits, right-aligned)
     [6]   Separator space
     [7+]  BASIC code
+
+  Status Priority (when line has multiple states):
+    1. Error (?) - highest, shown when syntax error exists
+    2. Breakpoint (●) - shown when no error but breakpoint set
+    3. Normal ( ) - default
 
   Line Number Editing:
     - Type digits in columns 1-5 (calculator-style)

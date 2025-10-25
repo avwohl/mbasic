@@ -110,10 +110,20 @@ Each line has a fixed column structure:
 
 | Columns | Purpose | Description |
 |---------|---------|-------------|
-| [0] | Status | `●` = breakpoint, `?` = error, ` ` = normal |
+| [0] | Status | `?` = error (highest), `●` = breakpoint, ` ` = normal |
 | [1-5] | Line Number | 5 digits, right-aligned (e.g., "   10") |
 | [6] | Separator | Always a space character |
 | [7+] | Code | BASIC program code |
+
+**Status Priority:**
+When a line has multiple states (error + breakpoint), the status character shows the highest priority:
+1. **Error (`?`)** - Highest priority, always shown when syntax error exists
+2. **Breakpoint (`●`)** - Shown when no error but breakpoint is set
+3. **Normal (` `)** - Default when neither error nor breakpoint
+
+**Example:** If line 10 has both an error and a breakpoint:
+- While error exists: `?   10 foo` (shows error)
+- After fixing error: `●   10 PRINT "ok"` (shows breakpoint)
 
 **Example line format:**
 ```
