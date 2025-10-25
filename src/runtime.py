@@ -920,19 +920,25 @@ class Runtime:
         return [line_num for line_num, stmt_idx in self.gosub_stack]
 
     def get_for_loop_stack(self):
-        """Export FOR loop stack.
+        """Export FOR loop stack in nesting order.
 
         Returns information about all active FOR loops, including the loop
         variable, current value, end value, step, and line number.
 
         Returns:
-            list: List of dictionaries with FOR loop information
+            list: List of dictionaries with FOR loop information in nesting order.
+                 The first entry is the outermost loop (entered first),
+                 and the last entry is the innermost loop (entered most recently).
+
                  Example: [
                      {'var': 'I', 'current': 5, 'end': 10, 'step': 1, 'line': 100},
                      {'var': 'J', 'current': 2, 'end': 5, 'step': 1, 'line': 150}
                  ]
+                 In this example, I is the outer loop and J is the inner loop.
 
-        Note: The order may not reflect nesting level - use return_line to determine nesting.
+        Note: The order reflects nesting level based on execution order (when each
+              FOR was entered), not source line order. This is correct for BASIC
+              where GOTOs can cause FOR loops to be entered in any line order.
         """
         result = []
         for var_name, loop_info in self.for_loops.items():
