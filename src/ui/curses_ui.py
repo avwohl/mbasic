@@ -215,6 +215,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Empty program - start with first line number ready
             # Format: "S NNNNN " where S=status (1), space (1), NNNNN=line# (5), space (1)
             display_text = f"  {self.next_auto_line_num:5d} "
+            # Increment counter since we've used this number for display
+            self.next_auto_line_num += self.auto_number_increment
         else:
             # Format all lines
             formatted_lines = []
