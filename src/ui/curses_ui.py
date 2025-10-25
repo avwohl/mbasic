@@ -213,7 +213,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         """Update the text display with all program lines."""
         if not self.lines:
             # Empty program - start with first line number ready
-            display_text = f"     {self.next_auto_line_num:5d} "
+            # Format: "S NNNNN " where S=status (1), space (1), NNNNN=line# (5), space (1)
+            display_text = f"  {self.next_auto_line_num:5d} "
         else:
             # Format all lines
             formatted_lines = []
