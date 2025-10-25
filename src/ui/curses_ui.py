@@ -82,10 +82,14 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Errors: {line_num: error_message}
         self.errors = {}
 
-        # Auto-numbering settings
+        # Auto-numbering settings (defaults)
         self.auto_number_start = 10
         self.auto_number_increment = 10
         self.auto_number_enabled = True
+
+        # Load config file if it exists
+        self._load_config()
+
         self.next_auto_line_num = self.auto_number_start
 
         # Current line being edited
@@ -349,19 +353,15 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     self.edit_widget.set_edit_pos(new_cursor_pos)
                     return None
                 else:
-                    # Non-digit at column 6: move to code area (column 7) and insert
-                    lines[line_num] = line
-                    current_text = '\n'.join(lines)
-                    self.edit_widget.set_edit_text(current_text)
-                    # Move cursor to column 7
-                    new_cursor_pos = line_start + 7
-                    self.edit_widget.set_edit_pos(new_cursor_pos)
+                    # Non-digit at column 6: moving to code area - sort lines first
+                    self._sort_and_position_line(lines, line_num)
                     # Now let the key be processed at the new position
                     return super().keypress(size, key)
 
         # Handle Enter key - commits line and moves to next with auto-numbering
         if key == 'enter' and self.auto_number_enabled:
             # Right-justify current line number before committing
+            current_line_number = None
             if line_num < len(lines) and len(lines[line_num]) >= 6:
                 line = lines[line_num]
                 status = line[0] if len(line) > 0 else ' '
@@ -369,6 +369,12 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 rest_of_line = line[6:] if len(line) > 6 else ''
 
                 if line_num_text:
+                    # Parse current line number
+                    try:
+                        current_line_number = int(line_num_text)
+                    except:
+                        pass
+
                     line_num_formatted = f"{line_num_text:>5}"
                     lines[line_num] = f"{status}{line_num_formatted}{rest_of_line}"
                     current_text = '\n'.join(lines)
@@ -380,12 +386,42 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 line_end = line_start + len(lines[line_num])
                 self.edit_widget.set_edit_pos(line_end)
 
-            # Add a new line with auto-number
-            while self.next_auto_line_num in self.lines:
-                self.next_auto_line_num += self.auto_number_increment
+            # Calculate next auto-number based on current line + increment
+            if current_line_number is not None:
+                next_num = current_line_number + self.auto_number_increment
+            else:
+                next_num = self.next_auto_line_num
+
+            # Get all existing line numbers from display
+            existing_line_nums = set()
+            for display_line in lines:
+                if len(display_line) >= 6:
+                    try:
+                        existing_line_nums.add(int(display_line[1:6].strip()))
+                    except:
+                        pass
+
+            # Find next available number that doesn't collide
+            # Also check it's not above the next line in sequence
+            sorted_line_nums = sorted(existing_line_nums)
+            if current_line_number in sorted_line_nums:
+                idx = sorted_line_nums.index(current_line_number)
+                if idx + 1 < len(sorted_line_nums):
+                    max_allowed = sorted_line_nums[idx + 1]
+                else:
+                    max_allowed = 99999
+            else:
+                max_allowed = 99999
+
+            # Find next valid number
+            while next_num in existing_line_nums or next_num >= max_allowed:
+                next_num += self.auto_number_increment
+                if next_num >= 99999:  # Avoid overflow
+                    next_num = current_line_number + 1 if current_line_number else 10
+                    break
 
             # Format new line: " NNNNN "
-            new_line_prefix = f"\n {self.next_auto_line_num:5d} "
+            new_line_prefix = f"\n {next_num:5d} "
 
             # Insert newline and prefix at end of current line
             current_text = self.edit_widget.get_edit_text()
@@ -394,8 +430,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             self.edit_widget.set_edit_text(new_text)
             self.edit_widget.set_edit_pos(cursor_pos + len(new_line_prefix))
 
-            # Increment for next line
-            self.next_auto_line_num += self.auto_number_increment
+            # Update next_auto_line_num for next time
+            self.next_auto_line_num = next_num + self.auto_number_increment
 
             return None
 
@@ -557,6 +593,88 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         """
         self.errors[line_num] = error_msg
         self._update_display()
+
+    def _load_config(self):
+        """Load configuration from .mbasic.conf file."""
+        import configparser
+        import os
+        from pathlib import Path
+
+        # Look for config in current directory, then home directory
+        config_paths = [
+            Path('.mbasic.conf'),
+            Path('.') / '.mbasic.conf',
+            Path.home() / '.mbasic.conf',
+        ]
+
+        for config_path in config_paths:
+            if config_path.exists():
+                try:
+                    config = configparser.ConfigParser()
+                    config.read(config_path)
+
+                    # Load editor settings
+                    if 'editor' in config:
+                        editor = config['editor']
+
+                        if 'auto_number_increment' in editor:
+                            self.auto_number_increment = int(editor['auto_number_increment'])
+
+                        if 'auto_number_start' in editor:
+                            self.auto_number_start = int(editor['auto_number_start'])
+
+                        if 'auto_number_enabled' in editor:
+                            self.auto_number_enabled = editor.getboolean('auto_number_enabled')
+
+                    return  # Stop after first config found
+                except Exception as e:
+                    # Silently ignore config errors and use defaults
+                    pass
+
+    def _sort_and_position_line(self, lines, current_line_index):
+        """Sort lines by line number and position cursor at the moved line.
+
+        Args:
+            lines: List of text lines
+            current_line_index: Index of line that triggered the sort
+        """
+        if current_line_index >= len(lines):
+            return
+
+        # Parse all lines into (line_number, full_text) tuples
+        parsed_lines = []
+        current_line_text = lines[current_line_index]
+
+        for idx, line in enumerate(lines):
+            if len(line) >= 6:
+                try:
+                    line_num = int(line[1:6].strip())
+                    parsed_lines.append((line_num, line))
+                except:
+                    # If can't parse line number, keep it in original position
+                    parsed_lines.append((999999 + idx, line))
+            else:
+                # Short line, keep in original position
+                parsed_lines.append((999999 + idx, line))
+
+        # Sort by line number
+        parsed_lines.sort(key=lambda x: x[0])
+
+        # Rebuild text
+        sorted_lines = [line_text for _, line_text in parsed_lines]
+        new_text = '\n'.join(sorted_lines)
+        self.edit_widget.set_edit_text(new_text)
+
+        # Find where the current line ended up
+        try:
+            new_index = sorted_lines.index(current_line_text)
+            # Calculate position at start of code area (column 7)
+            line_start = sum(len(sorted_lines[i]) + 1 for i in range(new_index))
+            new_cursor_pos = line_start + 7
+            self.edit_widget.set_edit_pos(new_cursor_pos)
+        except ValueError:
+            # Line not found, position at end
+            self.edit_widget.set_edit_pos(len(new_text))
 
 
 # Keep old EditorWidget for compatibility
