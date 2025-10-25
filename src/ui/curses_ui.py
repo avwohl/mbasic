@@ -206,13 +206,18 @@ Examples:
 
             # Update status
             self.status_bar.set_text("Running program...")
-            self.loop.draw_screen()
+            # Screen will update automatically when loop is running
 
             # Load program lines into program manager
             self.program.clear()
             for line_num in sorted(self.editor_lines.keys()):
                 line_text = f"{line_num} {self.editor_lines[line_num]}"
-                self.program.add_or_update_line(line_text)
+                success, error = self.program.add_line(line_num, line_text)
+                if not success:
+                    self.output_buffer.append(f"Error at line {line_num}: {error}")
+                    self._update_output()
+                    self.status_bar.set_text("Parse error - Press Ctrl+H for help")
+                    return
 
             # Create a capturing IO handler with output support
             output_lines = []
@@ -237,15 +242,15 @@ Examples:
                             self.output_list.append(str(text) + end)
                     # Update display in real-time
                     self.ui._update_output_with_lines(self.output_list)
-                    self.ui.loop.draw_screen()
+                    # Screen updates happen automatically via urwid event loop
 
                 def set_debug(self, enabled):
                     self.debug_enabled = enabled
 
             # Create runtime and interpreter
             io_handler = CapturingIOHandler(output_lines, parent_ui)
-            runtime = Runtime(io_handler, self.program)
-            self.interpreter = Interpreter(runtime)
+            runtime = Runtime(self.program.line_asts, self.program.lines)
+            self.interpreter = Interpreter(runtime, io_handler)
             self.runtime = runtime
 
             # Start execution
