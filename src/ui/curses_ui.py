@@ -625,12 +625,17 @@ class CursesBackend(UIBackend):
         # Register signal handler
         signal.signal(signal.SIGINT, handle_sigint)
 
-        # Set up a callback to make cursor visible after screen starts
+        # Set up a callback to make cursor more visible after screen starts
         def setup_cursor():
             try:
-                import curses
-                # Set cursor to very visible (block cursor)
-                curses.curs_set(2)  # 2 = very visible (block), 1 = normal, 0 = invisible
+                # Access the terminal file descriptor and write escape sequences
+                if hasattr(self.loop.screen, '_term_output_file'):
+                    fd = self.loop.screen._term_output_file.fileno()
+                    import os
+                    # Set cursor color to bright green (works on xterm-compatible terminals)
+                    os.write(fd, b'\033]12;#00FF00\007')  # OSC sequence for cursor color
+                    # Set cursor to steady block for better visibility
+                    os.write(fd, b'\033[2 q')
             except:
                 pass
 
@@ -649,6 +654,16 @@ class CursesBackend(UIBackend):
 
     def _cleanup(self):
         """Clean up resources before exit."""
+        # Restore default cursor color
+        try:
+            if hasattr(self, 'loop') and hasattr(self.loop.screen, '_term_output_file'):
+                fd = self.loop.screen._term_output_file.fileno()
+                import os
+                # Restore default cursor color (works on xterm-compatible terminals)
+                os.write(fd, b'\033]112\007')  # Reset cursor color to default
+        except:
+            pass
+
         # Stop any running interpreter
         if hasattr(self, 'interpreter') and self.interpreter:
             try:
@@ -712,7 +727,8 @@ class CursesBackend(UIBackend):
             ('body', 'white', 'black'),
             ('header', 'white,bold', 'dark blue'),
             ('footer', 'white', 'dark blue'),
-            ('focus', 'black', 'yellow'),
+            # Use bright yellow for focus - this affects cursor visibility
+            ('focus', 'black', 'yellow', 'standout'),
             ('error', 'light red', 'black'),
         ]
 
