@@ -89,11 +89,22 @@ def make_output_line(text):
     Returns:
         Widget with focus highlighting
     """
-    # DEBUG: Highlight entire line when focused to see if focus is changing
-    widget = SelectableText(text if text else " ")
+    if text and len(text) > 0:
+        # Create markup with first character using 'output_cursor' attribute
+        first_char = text[0]
+        rest = text[1:] if len(text) > 1 else ""
 
-    # Wrap in AttrMap: normal = white on black, focused = black on light green
-    attr_widget = urwid.AttrMap(widget, 'output', 'output_focus')
+        # Mark first char with special attribute so we can target it with focus_map
+        markup = [('output_cursor', first_char), ('output', rest)]
+        widget = SelectableText(markup)
+    else:
+        # Empty line
+        markup = [('output_cursor', ' ')]
+        widget = SelectableText(markup)
+
+    # Wrap in AttrMap: when focused, 'output_cursor' becomes 'output_focus'
+    # Other attributes (like 'output') stay unchanged
+    attr_widget = urwid.AttrMap(widget, None, {'output_cursor': 'output_focus'})
 
     return attr_widget
 
@@ -162,6 +173,20 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         - Column 6: Space
         - Columns 7+: Code - editable
         """
+        # PERFORMANCE OPTIMIZATION for paste and fast typing:
+        # If it's a normal printable character (not special key), skip expensive processing
+        # and let urwid handle it directly
+        is_special_key = (
+            key.startswith('ctrl ') or
+            key in ['tab', 'enter', 'esc', 'up', 'down', 'left', 'right',
+                    'page up', 'page down', 'home', 'end', 'backspace', 'delete']
+        )
+
+        if not is_special_key and len(key) == 1:
+            # Normal typing - just pass through without expensive text parsing
+            # This makes paste operations MUCH faster
+            return super().keypress(size, key)
+
         # Get current cursor position
         current_text = self.edit_widget.get_edit_text()
         cursor_pos = self.edit_widget.edit_pos
@@ -924,7 +949,8 @@ class CursesBackend(UIBackend):
             ('error', 'light red', 'black'),
             # Output area styles
             ('output', 'white', 'black'),
-            ('output_focus', 'black', 'light green', 'standout'),
+            ('output_cursor', 'white', 'black'),  # Cursor position (normal state)
+            ('output_focus', 'black', 'light green', 'standout'),  # Cursor when focused
         ]
 
     def _handle_input(self, key):
