@@ -95,19 +95,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         self.text_widget = urwid.Text("", wrap='clip')
         self.edit_widget = urwid.Edit("", "", multiline=True, wrap='clip')
 
-        # Create a scrollbar indicator
-        self.scrollbar = urwid.Text("▓", align='right')
-
-        # Combine edit widget with scrollbar
-        columns = urwid.Columns([
-            self.edit_widget,
-            ('fixed', 1, self.scrollbar)
-        ], dividechars=0)
-
-        columns.focus_position = 0  # Focus on edit widget, not scrollbar
-
         # Use a pile to allow switching between display and edit modes
-        self.pile = urwid.Pile([columns])
+        self.pile = urwid.Pile([self.edit_widget])
 
         # Set focus to the edit widget
         self.pile.focus_position = 0
