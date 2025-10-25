@@ -876,7 +876,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             return text
 
     def _display_syntax_errors(self):
-        """Display syntax error messages in the output window."""
+        """Display syntax error messages in the output window with context."""
         # Check if output walker is available (use 'is None' instead of 'not' to avoid false positive on empty walker)
         if self._output_walker is None:
             # Output window not available yet
@@ -894,13 +894,26 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         self._showing_syntax_errors = True
 
         # Add error header
-        self._output_walker.append(make_output_line("=== Syntax Errors ==="))
-        self._output_walker.append(make_output_line(""))
+        self._output_walker.append(make_output_line("┌─ Syntax Errors ──────────────────────────────────┐"))
+        self._output_walker.append(make_output_line("│"))
 
-        # Add each error
+        # Add each error with code context
         for line_number in sorted(self.syntax_errors.keys()):
             error_msg = self.syntax_errors[line_number]
-            self._output_walker.append(make_output_line(f"Line {line_number}: {error_msg}"))
+
+            # Get the code for this line if available
+            code = self.lines.get(line_number, "")
+
+            # Format error with context
+            self._output_walker.append(make_output_line(f"│ Line {line_number}:"))
+            if code:
+                # Show the actual code
+                self._output_walker.append(make_output_line(f"│   {code}"))
+                self._output_walker.append(make_output_line(f"│   ^^^^"))
+            self._output_walker.append(make_output_line(f"│ Error: {error_msg}"))
+            self._output_walker.append(make_output_line("│"))
+
+        self._output_walker.append(make_output_line("└──────────────────────────────────────────────────┘"))
 
         # Auto-scroll to bottom to show errors
         if len(self._output_walker) > 0:
@@ -1669,9 +1682,20 @@ Examples:
                 line_text = f"{line_num} {self.editor_lines[line_num]}"
                 success, error = self.program.add_line(line_num, line_text)
                 if not success:
-                    self.output_buffer.append(f"Error at line {line_num}: {error}")
+                    # Format parse error with context
+                    self.output_buffer.append("")
+                    self.output_buffer.append("┌─ Parse Error ────────────────────────────────────┐")
+                    self.output_buffer.append(f"│ Line {line_num}:")
+                    if line_num in self.editor_lines:
+                        code = self.editor_lines[line_num]
+                        self.output_buffer.append(f"│   {code}")
+                        self.output_buffer.append(f"│   ^^^^")
+                    self.output_buffer.append(f"│ Error: {error}")
+                    self.output_buffer.append("│")
+                    self.output_buffer.append("│ Fix the syntax error and try running again.")
+                    self.output_buffer.append("└──────────────────────────────────────────────────┘")
                     self._update_output()
-                    self.status_bar.set_text("Parse error - Press Ctrl+H for help")
+                    self.status_bar.set_text("Parse error - Fix and try again")
                     return
 
             # Create a capturing IO handler that just buffers output
@@ -1737,9 +1761,12 @@ Examples:
 
             if state.status == 'error':
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
-                self.output_buffer.append(f"Error: {error_msg}")
+                self.output_buffer.append("")
+                self.output_buffer.append("┌─ Startup Error ──────────────────────────────────┐")
+                self.output_buffer.append(f"│ Error: {error_msg}")
+                self.output_buffer.append("└──────────────────────────────────────────────────┘")
                 self._update_output()
-                self.status_bar.set_text("Error - Press Ctrl+H for help")
+                self.status_bar.set_text("Startup error - Check program")
                 return
 
             # Set up tick-based execution using urwid's alarm
@@ -1747,10 +1774,19 @@ Examples:
 
         except Exception as e:
             import traceback
-            self.output_buffer.append(f"Runtime error: {e}")
-            self.output_buffer.append(traceback.format_exc())
+            # Format unexpected error with box
+            self.output_buffer.append("")
+            self.output_buffer.append("┌─ Unexpected Error ───────────────────────────────┐")
+            self.output_buffer.append(f"│ {type(e).__name__}: {e}")
+            self.output_buffer.append("│")
+            self.output_buffer.append("│ This is an internal error. Details below:")
+            self.output_buffer.append("└──────────────────────────────────────────────────┘")
+            self.output_buffer.append("")
+            # Add traceback for debugging
+            for line in traceback.format_exc().split('\n'):
+                self.output_buffer.append(line)
             self._update_output()
-            self.status_bar.set_text("Error - Press Ctrl+H for help")
+            self.status_bar.set_text("Internal error - See output")
 
     def _execute_tick(self):
         """Execute one tick of the interpreter and schedule next tick."""
@@ -1788,9 +1824,29 @@ Examples:
                 error_output = self.io_handler.get_and_clear_output()
                 if error_output:
                     self.output_buffer.extend(error_output)
+
+                # Format error with context
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
                 line_num = state.error_info.error_line if state.error_info else "?"
-                self.output_buffer.append(f"Error in {line_num}: {error_msg}")
+
+                # Build error display with box and context
+                self.output_buffer.append("")
+                self.output_buffer.append("┌─ Runtime Error ──────────────────────────────────┐")
+
+                # Try to get the code for the error line
+                if line_num != "?" and isinstance(line_num, int):
+                    self.output_buffer.append(f"│ Line {line_num}:")
+                    # Get code from editor_lines
+                    if line_num in self.editor_lines:
+                        code = self.editor_lines[line_num]
+                        self.output_buffer.append(f"│   {code}")
+                        self.output_buffer.append(f"│   ^^^^")
+                else:
+                    self.output_buffer.append(f"│ Line {line_num}:")
+
+                self.output_buffer.append(f"│ Error: {error_msg}")
+                self.output_buffer.append("└──────────────────────────────────────────────────┘")
+
                 self._update_output()
                 self.status_bar.set_text("Error - Press Ctrl+H for help")
 
@@ -1802,10 +1858,19 @@ Examples:
 
         except Exception as e:
             import traceback
-            self.output_buffer.append(f"Runtime error: {e}")
-            self.output_buffer.append(traceback.format_exc())
+            # Format unexpected tick error with box
+            self.output_buffer.append("")
+            self.output_buffer.append("┌─ Execution Error ────────────────────────────────┐")
+            self.output_buffer.append(f"│ {type(e).__name__}: {e}")
+            self.output_buffer.append("│")
+            self.output_buffer.append("│ An error occurred during program execution.")
+            self.output_buffer.append("└──────────────────────────────────────────────────┘")
+            self.output_buffer.append("")
+            # Add traceback for debugging
+            for line in traceback.format_exc().split('\n'):
+                self.output_buffer.append(line)
             self._update_output()
-            self.status_bar.set_text("Error - Press Ctrl+H for help")
+            self.status_bar.set_text("Execution error - See output")
 
     def _get_input_for_interpreter(self, prompt):
         """Show input dialog and provide input to interpreter."""

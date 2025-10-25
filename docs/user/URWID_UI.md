@@ -538,6 +538,64 @@ Before:                After RENUM 100, 5:
 - Preserves all breakpoints and error markers
 - Does NOT update GOTO/GOSUB references (use CLI RENUM for that)
 
+### Error Messages
+
+The curses UI provides enhanced error messages with context and helpful formatting.
+
+#### Error Types
+
+**1. Syntax Errors (shown while editing):**
+```
+┌─ Syntax Errors ──────────────────────────────────┐
+│
+│ Line 10:
+│   foo
+│   ^^^^
+│ Error: Invalid statement: 'foo' is not a BASIC keyword
+│
+└──────────────────────────────────────────────────┘
+```
+
+**2. Parse Errors (when running program):**
+```
+┌─ Parse Error ────────────────────────────────────┐
+│ Line 20:
+│   FOR I = 1 TO
+│   ^^^^
+│ Error: Expected expression after TO
+│
+│ Fix the syntax error and try running again.
+└──────────────────────────────────────────────────┘
+```
+
+**3. Runtime Errors (during execution):**
+```
+┌─ Runtime Error ──────────────────────────────────┐
+│ Line 30:
+│   PRINT 1/0
+│   ^^^^
+│ Error: Division by zero
+└──────────────────────────────────────────────────┘
+```
+
+**4. Execution Errors (unexpected errors):**
+```
+┌─ Execution Error ────────────────────────────────┐
+│ TypeError: unsupported operand type(s)
+│
+│ An error occurred during program execution.
+└──────────────────────────────────────────────────┘
+```
+
+#### Error Message Features
+
+- **Boxed formatting** - Clear visual separation from output
+- **Code context** - Shows the actual line of code that failed
+- **Line numbers** - Easy to locate the problem
+- **Error indicators** - `^^^^` points to the problematic code
+- **Helpful hints** - Suggestions for fixing common errors
+- **Status bar updates** - Quick error type indication
+
 ## Automatic Line Sorting
 
 Lines are automatically sorted by line number when:
@@ -704,7 +762,7 @@ Errors will appear in the output window with full tracebacks.
 - [x] Add INPUT statement support (dialog prompts work)
 - [x] Implement Save/Load from UI (Ctrl+S, Ctrl+O)
 - [x] Add line editing commands (Ctrl+D delete, Ctrl+E renumber)
-- [ ] Improve error messages
+- [x] Improve error messages (context, boxes, helpful hints)
 
 ### Medium Term (v1.5)
 
