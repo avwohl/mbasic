@@ -159,9 +159,9 @@ KEYBINDINGS_BY_CATEGORY = {
 }
 
 # Quick reference for status bar
-STATUS_BAR_SHORTCUTS = f"MBASIC 5.21 - Press {HELP_DISPLAY} for help, {MENU_DISPLAY} for menu, {VARIABLES_DISPLAY} for variables, {STACK_DISPLAY} for stack, {QUIT_DISPLAY} to quit"
-EDITOR_STATUS = f"Editor - Press {HELP_DISPLAY} for help"
-OUTPUT_STATUS = f"Output - Use Up/Down to scroll, {TAB_DISPLAY} to return to editor"
+STATUS_BAR_SHORTCUTS = f"MBASIC - {HELP_DISPLAY} help, {MENU_DISPLAY} menu, {VARIABLES_DISPLAY} vars, {STACK_DISPLAY} stack, {QUIT_DISPLAY} quit"
+EDITOR_STATUS = f"Editor - {HELP_DISPLAY} help"
+OUTPUT_STATUS = f"Output - Up/Down scroll, {TAB_DISPLAY} editor"
 
 # =============================================================================
 # Character Code Reference (for testing and documentation)
