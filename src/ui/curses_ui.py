@@ -833,14 +833,24 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
     def _display_syntax_errors(self):
         """Display syntax error messages in the output window."""
+        import sys
+
+        print(f"DEBUG: _display_syntax_errors called", file=sys.stderr)
+        print(f"DEBUG: _output_walker={self._output_walker}", file=sys.stderr)
+        print(f"DEBUG: syntax_errors={self.syntax_errors}", file=sys.stderr)
+
         if not self._output_walker:
             # Output window not available yet
+            print(f"DEBUG: No output walker, returning", file=sys.stderr)
             return
 
         if not self.syntax_errors:
             # No errors - clear output if it only has error messages
             # (don't clear if there's program output)
+            print(f"DEBUG: No syntax errors, returning", file=sys.stderr)
             return
+
+        print(f"DEBUG: Clearing and displaying {len(self.syntax_errors)} errors", file=sys.stderr)
 
         # Clear output window
         self._output_walker.clear()
@@ -852,7 +862,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Add each error
         for line_number in sorted(self.syntax_errors.keys()):
             error_msg = self.syntax_errors[line_number]
+            print(f"DEBUG: Adding error for line {line_number}: {error_msg}", file=sys.stderr)
             self._output_walker.append(make_output_line(f"Line {line_number}: {error_msg}"))
+
+        print(f"DEBUG: Output walker now has {len(self._output_walker)} items", file=sys.stderr)
 
         # Auto-scroll to bottom to show errors
         if len(self._output_walker) > 0:
