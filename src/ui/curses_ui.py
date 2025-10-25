@@ -704,6 +704,86 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     # Silently ignore config errors and use defaults
                     pass
 
+    def _check_line_syntax(self, code_text):
+        """Check if a line of BASIC code has valid syntax.
+
+        Args:
+            code_text: The BASIC code (without line number)
+
+        Returns:
+            True if syntax is valid, False if there's a parse error
+        """
+        if not code_text or not code_text.strip():
+            # Empty lines are valid
+            return True
+
+        try:
+            # Import here to avoid circular dependencies
+            from lexer import Lexer
+            from parser import Parser
+
+            # Tokenize the code
+            lexer = Lexer(code_text)
+            tokens = lexer.tokenize()
+
+            # Parse the statement
+            # Create a new parser with empty def_type_map to avoid affecting existing state
+            parser = Parser(tokens, def_type_map={})
+            parser.parse_statement()
+
+            # If we get here, parsing succeeded
+            return True
+
+        except Exception as e:
+            # Any error (lexer or parser) means invalid syntax
+            return False
+
+    def _update_syntax_errors(self, text):
+        """Update status indicators for lines with syntax errors.
+
+        Args:
+            text: Current editor text
+
+        Returns:
+            Updated text with '?' status for lines with parse errors
+        """
+        lines = text.split('\n')
+        changed = False
+
+        for i, line in enumerate(lines):
+            if not line or len(line) < 7:
+                continue
+
+            # Extract parts
+            status = line[0]
+            linenum_col = line[1:6]
+            code_area = line[7:] if len(line) > 7 else ""
+
+            # Skip empty code lines
+            if not code_area.strip():
+                # Clear error status for empty lines
+                if status == '?':
+                    lines[i] = ' ' + line[1:]
+                    changed = True
+                continue
+
+            # Check syntax
+            is_valid = self._check_line_syntax(code_area)
+
+            if not is_valid and status != '?':
+                # Mark as error
+                lines[i] = '?' + line[1:]
+                changed = True
+            elif is_valid and status == '?':
+                # Clear error marker (only if it was an error, preserve breakpoints)
+                lines[i] = ' ' + line[1:]
+                changed = True
+
+        if changed:
+            return '\n'.join(lines)
+        else:
+            return text
+
     def _parse_line_numbers(self, text):
         """Parse and reformat lines that start with numbers.
 
@@ -845,7 +925,18 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 self.edit_widget.set_edit_pos(cursor_pos)
             current_text = new_text
 
-        # Step 2: Perform deferred sorting if needed
+        # Step 2: Check syntax and mark errors
+        # (This sets '?' status for lines with parse errors)
+        new_text = self._update_syntax_errors(current_text)
+        if new_text != current_text:
+            # Text was updated with error markers - update the editor
+            self.edit_widget.set_edit_text(new_text)
+            # Try to maintain cursor position
+            if cursor_pos <= len(new_text):
+                self.edit_widget.set_edit_pos(cursor_pos)
+            current_text = new_text
+
+        # Step 3: Perform deferred sorting if needed
         if self._needs_sort:
             lines = current_text.split('\n')
 
