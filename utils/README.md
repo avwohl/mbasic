@@ -88,6 +88,34 @@ Runs BASIC test files that have expected output.
 - Reports PASS/FAIL for each test
 - Useful for regression testing
 
+### Curses UI Testing
+
+**`test_curses_comprehensive.py` (Recommended)**
+Comprehensive test suite for the curses UI backend.
+- Tests UI creation, input handlers, program execution
+- Uses both direct method testing and pexpect integration
+- Catches errors before they reach users
+- Exit code 0 = pass, 1 = fail
+- See `docs/dev/CURSES_UI_TESTING.md` for details
+
+**`test_curses_pexpect.py`**
+Tests curses UI using pexpect for process control.
+- Spawns real curses UI process
+- Sends keyboard input via PTY
+- Good for integration testing
+
+**`test_curses_pyte.py`**
+Tests curses UI using pyte terminal emulator (experimental).
+- Creates virtual terminal
+- Captures screen state
+- Currently produces blank screens with urwid
+
+**`test_curses_urwid_sim.py`**
+Tests curses UI using urwid simulation.
+- Direct method testing
+- Can render UI without running loop
+- Good for unit tests
+
 ## Debugging Tools
 
 ### `debug_test.py`
@@ -158,6 +186,9 @@ python3 utils/show_parse_tree.py myprogram.bas
 ```bash
 # Run self-checking tests
 python3 utils/run_tests_with_results.py
+
+# Test curses UI (comprehensive)
+python3 utils/test_curses_comprehensive.py
 ```
 
 ## Notes
