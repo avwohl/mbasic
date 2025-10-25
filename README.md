@@ -98,6 +98,11 @@ The **curses screen editor** (default) provides a full-screen terminal interface
 - Auto-numbering with smart collision avoidance
 - Fast paste operations with automatic formatting
 
+**Debugger:**
+- `Ctrl+G` - Continue execution (from breakpoint)
+- `Ctrl+T` - Step (execute one line)
+- `Ctrl+X` - Stop execution
+
 See **[Curses Editor Documentation](docs/user/URWID_UI.md)** for complete guide.
 
 ### CLI Mode (Line-by-line REPL)

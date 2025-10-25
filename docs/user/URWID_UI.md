@@ -65,6 +65,9 @@ python3 mbasic.py --backend curses program.bas
 | `Ctrl+B` | Toggle breakpoint on current line |
 | `Ctrl+D` | Delete current line |
 | `Ctrl+E` | Renumber all lines (RENUM) |
+| `Ctrl+G` | Continue execution (from breakpoint) |
+| `Ctrl+T` | Step - execute one line |
+| `Ctrl+X` | Stop execution |
 | `Tab` | Switch between editor and output window |
 
 #### Navigation Keys
@@ -475,6 +478,115 @@ Breakpoints can be toggled on any line using `Ctrl+B`. The status column shows:
 
 **Priority system:** When a line has both an error and a breakpoint, the error (`?`) is shown. After fixing the error, the breakpoint indicator (`●`) becomes visible.
 
+### Debugger Commands
+
+The curses UI includes a full-featured debugger for step-by-step execution and debugging.
+
+#### Setting Breakpoints
+
+1. Position cursor on the line where you want to pause
+2. Press `Ctrl+B` to toggle breakpoint
+3. Status column shows `●` for lines with breakpoints
+4. Run program with `Ctrl+R`
+
+#### Debugger Commands
+
+| Command | Key | Description |
+|---------|-----|-------------|
+| **Step** | `Ctrl+T` | Execute one line and pause |
+| **Continue** | `Ctrl+G` | Continue execution until next breakpoint or end |
+| **Stop** | `Ctrl+X` | Stop program execution immediately |
+
+#### Debugging Workflow
+
+**Basic debugging:**
+```
+1. Set breakpoint on line 20:
+   ●   20 FOR I = 1 TO 10
+
+2. Run program (Ctrl+R)
+   → Program runs and pauses at line 20
+   Output: "● Breakpoint hit at line 20"
+   Status: "Paused at line 20 - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop"
+
+3. Step through (Ctrl+T)
+   → Executes line 20, pauses at line 30
+   Output: "→ Paused at line 30"
+
+4. Continue (Ctrl+G)
+   → Runs until next breakpoint or program end
+
+5. Stop (Ctrl+X)
+   → Stops execution immediately
+   Output: "Program stopped by user"
+```
+
+**Stepping through code:**
+```
+Program:
+●   10 X = 0
+    20 FOR I = 1 TO 3
+    30   X = X + I
+    40   PRINT X
+    50 NEXT I
+
+Workflow:
+1. Ctrl+R → Runs and hits breakpoint at line 10
+2. Ctrl+T → Executes line 10, pauses at line 20
+3. Ctrl+T → Executes line 20, pauses at line 30
+4. Ctrl+T → Executes line 30, pauses at line 40
+5. Ctrl+T → Executes line 40 (prints "1"), pauses at line 50
+6. Ctrl+G → Continues to end of program
+```
+
+**Multiple breakpoints:**
+```
+●   10 PRINT "Start"
+    20 FOR I = 1 TO 5
+●   30   PRINT I
+    40 NEXT I
+●   50 PRINT "Done"
+
+Workflow:
+1. Ctrl+R → Pauses at line 10
+2. Ctrl+G → Runs lines 10-20, pauses at line 30
+3. Ctrl+G → Prints "1", continues loop, pauses at line 30 again
+4. Ctrl+G → Prints "2", continues loop, pauses at line 30 again
+   (Repeats for each loop iteration)
+5. Ctrl+G → After loop ends, pauses at line 50
+6. Ctrl+G → Prints "Done", program ends
+```
+
+#### Debugger Messages
+
+**Breakpoint hit:**
+```
+● Breakpoint hit at line 20
+```
+
+**Stepping:**
+```
+→ Paused at line 30
+```
+
+**Program status:**
+- Status bar shows: "Paused at line X - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop"
+- Clear indication of available commands
+- Current line number displayed
+
+**Stopping:**
+```
+Program stopped by user
+```
+
+#### Tips
+
+- **Set multiple breakpoints** - Pause at different points in your code
+- **Step through loops** - Use Ctrl+T to see each iteration
+- **Continue past breakpoints** - Use Ctrl+G to skip to next interesting point
+- **Stop anytime** - Press Ctrl+X if program is stuck or running too long
+- **Combine with output** - Watch output window to see results of each step
+
 ### Line Editing Commands
 
 #### Delete Line (Ctrl+D)
@@ -767,7 +879,7 @@ Errors will appear in the output window with full tracebacks.
 ### Medium Term (v1.5)
 
 - [x] Add breakpoint support (toggle with Ctrl+B)
-- [ ] Implement Step/Continue/End (use breakpoints to pause execution)
+- [x] Implement Step/Continue/Stop debugger (Ctrl+T/Ctrl+G/Ctrl+X)
 - [ ] Add syntax highlighting
 - [ ] Create menu system
 

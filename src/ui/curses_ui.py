@@ -1371,6 +1371,96 @@ class CursesBackend(UIBackend):
             # Renumber all lines
             self._renumber_lines()
 
+        elif key == 'ctrl g':
+            # Continue execution (from breakpoint/pause)
+            self._debug_continue()
+
+        elif key == 'ctrl t':
+            # Step - execute one line
+            self._debug_step()
+
+        elif key == 'ctrl x':
+            # Stop execution
+            self._debug_stop()
+
+    def _debug_continue(self):
+        """Continue execution from paused/breakpoint state."""
+        if not self.interpreter:
+            self.status_bar.set_text("No program running")
+            return
+
+        try:
+            state = self.interpreter.get_state()
+            if state.status in ('paused', 'at_breakpoint'):
+                # Continue from breakpoint
+                self.status_bar.set_text("Continuing execution...")
+                self.interpreter.cont()
+                # Schedule next tick
+                self.loop.set_alarm_in(0.01, lambda loop, user_data: self._execute_tick())
+            else:
+                self.status_bar.set_text(f"Not paused (status: {state.status})")
+        except Exception as e:
+            self.status_bar.set_text(f"Continue error: {e}")
+
+    def _debug_step(self):
+        """Execute one line and pause (single-step debugging)."""
+        if not self.interpreter:
+            self.status_bar.set_text("No program running")
+            return
+
+        try:
+            state = self.interpreter.get_state()
+            if state.status in ('paused', 'at_breakpoint', 'running'):
+                # Execute one statement
+                self.status_bar.set_text("Stepping...")
+                state = self.interpreter.tick(mode='step', max_statements=1)
+
+                # Collect any output
+                new_output = self.io_handler.get_and_clear_output()
+                if new_output:
+                    self.output_buffer.extend(new_output)
+                    self._update_output()
+
+                # Show where we paused
+                if state.status in ('paused', 'at_breakpoint'):
+                    self.output_buffer.append(f"→ Paused at line {state.current_line}")
+                    self._update_output()
+                    self.status_bar.set_text(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                elif state.status == 'done':
+                    self.output_buffer.append("Program completed")
+                    self._update_output()
+                    self.status_bar.set_text("Program completed")
+                elif state.status == 'error':
+                    error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                    line_num = state.error_info.error_line if state.error_info else "?"
+                    self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
+                    self._update_output()
+                    self.status_bar.set_text("Error during step")
+            else:
+                self.status_bar.set_text(f"Cannot step (status: {state.status})")
+        except Exception as e:
+            import traceback
+            self.output_buffer.append(f"Step error: {e}")
+            self.output_buffer.append(traceback.format_exc())
+            self._update_output()
+            self.status_bar.set_text(f"Step error: {e}")
+
+    def _debug_stop(self):
+        """Stop program execution."""
+        if not self.interpreter:
+            self.status_bar.set_text("No program running")
+            return
+
+        try:
+            # Stop the interpreter
+            self.interpreter = None
+            self.runtime = None
+            self.output_buffer.append("Program stopped by user")
+            self._update_output()
+            self.status_bar.set_text("Program stopped - Ready")
+        except Exception as e:
+            self.status_bar.set_text(f"Stop error: {e}")
+
     def _delete_current_line(self):
         """Delete the current line where the cursor is."""
         # Get current cursor position
@@ -1600,6 +1690,11 @@ Global Commands:
   Ctrl+D  - Delete current line
   Ctrl+E  - Renumber all lines (RENUM)
 
+Debugger Commands (when program running):
+  Ctrl+G  - Continue execution (Go)
+  Ctrl+T  - Step - execute one line (sTep)
+  Ctrl+X  - Stop execution (eXit)
+
 Screen Editor:
   Column Layout:
     [0]   Status: ? error (highest), ● breakpoint, space normal
@@ -1756,6 +1851,10 @@ Examples:
             self.runtime = runtime
             self.io_handler = io_handler  # Keep reference to get output later
 
+            # Set breakpoints from editor
+            for line_num in self.editor.breakpoints:
+                self.interpreter.set_breakpoint(line_num)
+
             # Start execution
             state = self.interpreter.start()
 
@@ -1851,10 +1950,13 @@ Examples:
                 self.status_bar.set_text("Error - Press Ctrl+H for help")
 
             elif state.status == 'paused' or state.status == 'at_breakpoint':
-                # Paused execution
-                self.output_buffer.append(f"Paused at line {state.current_line}")
+                # Paused execution (breakpoint hit or stepping)
+                if state.status == 'at_breakpoint':
+                    self.output_buffer.append(f"● Breakpoint hit at line {state.current_line}")
+                else:
+                    self.output_buffer.append(f"→ Paused at line {state.current_line}")
                 self._update_output()
-                self.status_bar.set_text("Paused - Press Ctrl+C to continue")
+                self.status_bar.set_text(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
 
         except Exception as e:
             import traceback

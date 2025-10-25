@@ -57,6 +57,12 @@ All documentation belongs in the `docs/` directory:
 - Include docstrings for functions
 - Add comments explaining complex logic
 
+## UI/UX Rules
+- **NO FUNCTION KEYS** - User cannot use F1-F12 keys
+- Use Ctrl+letter combinations instead (Ctrl+G, Ctrl+T, etc.)
+- All keyboard shortcuts must be Ctrl, Alt, or plain keys
+- Document all keyboard shortcuts clearly
+
 ## Testing
 
 ### Testing with Python Implementation
