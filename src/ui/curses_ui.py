@@ -77,16 +77,20 @@ class CursesBackend(UIBackend):
         self.output = urwid.Text("")
         self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+Q to quit")
 
-        # Create editor frame
+        # Create editor frame with custom border (no bottom/right lines)
         editor_frame = urwid.LineBox(
             urwid.Filler(self.editor, valign='top'),
-            title="Editor"
+            title="Editor",
+            tlcorner='┌', tline='─', lline='│', trcorner='─',
+            blcorner='└', rline=' ', bline=' ', brcorner=' '
         )
 
-        # Create output frame
+        # Create output frame with custom border (no bottom/right lines)
         output_frame = urwid.LineBox(
             urwid.Filler(self.output, valign='top'),
-            title="Output"
+            title="Output",
+            tlcorner='┌', tline='─', lline='│', trcorner='─',
+            blcorner='└', rline=' ', bline=' ', brcorner=' '
         )
 
         # Create layout - editor on top (70%), output on bottom (30%)
