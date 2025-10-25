@@ -1908,7 +1908,7 @@ Examples:
         # Create help dialog
         text = urwid.Text(help_text.strip())
         fill = urwid.Filler(text, valign='top')
-        box = urwid.LineBox(fill, title="Help - Press any key to close")
+        box = urwid.LineBox(fill, title="Help - Press ESC to close")
         overlay = urwid.Overlay(
             urwid.AttrMap(box, 'body'),
             self.loop.widget,
@@ -1957,7 +1957,7 @@ Run                           Help
 
 ══════════════════════════════════════════════════════════════
 
-                  Press any key to close
+                  Press ESC to close
 
 ══════════════════════════════════════════════════════════════
 """
