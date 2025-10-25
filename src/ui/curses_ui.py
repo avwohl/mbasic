@@ -12,6 +12,52 @@ from lexer import Lexer
 from parser import Parser
 
 
+class TopLeftBox(urwid.WidgetWrap):
+    """Custom box widget that only draws top and left borders.
+
+    Unlike LineBox, this doesn't reserve space for bottom/right borders,
+    allowing content to use the full available space.
+    """
+
+    def __init__(self, original_widget, title=''):
+        """Create a box with only top and left borders.
+
+        Args:
+            original_widget: The widget to wrap
+            title: Title to display in top border
+        """
+        self.title = title
+        self.original_widget = original_widget
+
+        # Create the top border line with title
+        if title:
+            # Title in the top border: "┌─ Title ────────"
+            title_text = urwid.Text(f'┌─ {title} ', wrap='clip')
+            fill_text = urwid.Text('─' * 200, wrap='clip')
+            top_border = urwid.Columns([
+                ('pack', title_text),
+                fill_text
+            ], dividechars=0)
+        else:
+            top_border = urwid.Text('┌' + '─' * 200, wrap='clip')
+
+        # Use SolidFill with │ for the left border (fills all vertical space)
+        left_border = urwid.SolidFill('│')
+
+        content_with_border = urwid.Columns([
+            ('fixed', 1, left_border),
+            original_widget
+        ], dividechars=0)
+
+        # Stack top border and content
+        pile = urwid.Pile([
+            ('pack', top_border),
+            content_with_border
+        ])
+
+        super().__init__(pile)
+
+
 class EditorWidget(urwid.Edit):
     """Multi-line editor widget for BASIC programs."""
 
@@ -77,20 +123,16 @@ class CursesBackend(UIBackend):
         self.output = urwid.Text("")
         self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+Q to quit")
 
-        # Create editor frame with custom border (no bottom/right lines)
-        editor_frame = urwid.LineBox(
+        # Create editor frame with top/left border only (no bottom/right space reserved)
+        editor_frame = TopLeftBox(
             urwid.Filler(self.editor, valign='top'),
-            title="Editor",
-            tlcorner='┌', tline='─', lline='│', trcorner='─',
-            blcorner='└', rline=' ', bline=' ', brcorner=' '
+            title="Editor"
         )
 
-        # Create output frame with custom border (no bottom/right lines)
-        output_frame = urwid.LineBox(
+        # Create output frame with top/left border only (no bottom/right space reserved)
+        output_frame = TopLeftBox(
             urwid.Filler(self.output, valign='top'),
-            title="Output",
-            tlcorner='┌', tline='─', lline='│', trcorner='─',
-            blcorner='└', rline=' ', bline=' ', brcorner=' '
+            title="Output"
         )
 
         # Create layout - editor on top (70%), output on bottom (30%)
