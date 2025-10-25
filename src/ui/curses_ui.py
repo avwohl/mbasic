@@ -136,10 +136,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Check if pressing a control key or navigation key
         is_control_key = key.startswith('ctrl ') or key in ['tab', 'enter', 'esc']
-        is_nav_key = key in ['up', 'down', 'left', 'right', 'page up', 'page down', 'home', 'end']
+        is_arrow_key = key in ['up', 'down', 'left', 'right']
+        is_other_nav_key = key in ['page up', 'page down', 'home', 'end']
 
-        # If control key or leaving line number area, right-justify line number
-        if is_control_key or is_nav_key or (col_in_line == 6 and len(key) == 1):
+        # If control key or other nav key or leaving line number area, right-justify line number
+        if is_control_key or is_arrow_key or is_other_nav_key or (col_in_line == 6 and len(key) == 1):
             # Right-justify the line number on the current line
             if line_num < len(lines) and len(lines[line_num]) >= 6:
                 line = lines[line_num]
@@ -161,10 +162,12 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                         self.edit_widget.set_edit_text(new_text)
                         self.edit_widget.set_edit_pos(old_cursor)
 
-        # If using navigation keys while in line number area, sort lines first
-        if is_nav_key and 1 <= col_in_line <= 6:
+        # Sort lines if leaving line number area with non-arrow keys
+        # Arrow keys (up/down/left/right) should move freely without sorting
+        # Other keys (page up/down, home, end, control keys) should sort first
+        if 1 <= col_in_line <= 6 and (is_control_key or is_other_nav_key):
             self._sort_and_position_line(lines, line_num, target_column=col_in_line)
-            # After sorting, let the navigation key work normally
+            # After sorting, let the key work normally
             return super().keypress(size, key)
 
         # Handle backspace key specially to protect separator space
