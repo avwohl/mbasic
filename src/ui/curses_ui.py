@@ -156,6 +156,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             allow_tab=False
         )
 
+        # For debouncing rapid input (paste operations)
+        self._pending_update_alarm = None
+
         # Use a pile to allow switching between display and edit modes
         self.pile = urwid.Pile([self.edit_widget])
 
@@ -176,23 +179,6 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         - Column 6: Space
         - Columns 7+: Code - editable
         """
-        # PERFORMANCE: Check if we're in code area first (cheap check)
-        # Only do expensive column detection if we might need special handling
-        cursor_pos = self.edit_widget.edit_pos
-
-        # Quick heuristic: if cursor is far from start of line, likely in code area
-        # This avoids expensive text parsing for most typing
-        is_special_key = (
-            key.startswith('ctrl ') or
-            key in ['tab', 'enter', 'esc', 'up', 'down', 'left', 'right',
-                    'page up', 'page down', 'home', 'end', 'backspace', 'delete']
-        )
-
-        # For normal typing (not special keys), do minimal processing
-        if not is_special_key and len(key) == 1:
-            # Fast path: just let urwid handle it
-            return super().keypress(size, key)
-
         # Get current cursor position
         current_text = self.edit_widget.get_edit_text()
         cursor_pos = self.edit_widget.edit_pos
