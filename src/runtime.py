@@ -945,3 +945,34 @@ class Runtime:
             })
 
         return result
+
+    def get_while_loop_stack(self):
+        """Export WHILE loop stack in nesting order.
+
+        Returns information about all active WHILE loops, including the
+        line number where the WHILE statement is located.
+
+        Returns:
+            list: List of dictionaries with WHILE loop information in nesting order.
+                 The first entry is the outermost loop (entered first),
+                 and the last entry is the innermost loop (entered most recently).
+
+                 Example: [
+                     {'line': 100},
+                     {'line': 150}
+                 ]
+                 In this example, the WHILE at line 100 is the outer loop
+                 and the WHILE at line 150 is the inner loop.
+
+        Note: The order reflects nesting level based on execution order (when each
+              WHILE was entered), not source line order. This is correct for BASIC
+              where GOTOs can cause WHILE loops to be entered in any line order.
+              The list maintains the stack order from bottom to top.
+        """
+        result = []
+        for loop_info in self.while_loops:
+            result.append({
+                'line': loop_info.get('while_line', 0)
+            })
+
+        return result
