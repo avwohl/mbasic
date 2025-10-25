@@ -152,26 +152,21 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         - Column 6: Space
         - Columns 7+: Code - editable
         """
-        # CRITICAL: Check if we have pending updates from paste
-        # If so, process them NOW before handling this key
-        if self._needs_refresh or self._needs_sort:
-            self._perform_deferred_refresh()
-
         # CRITICAL PERFORMANCE: For paste, skip ALL processing for normal typing
         # Check if it's a single printable character (not a special key)
         if len(key) == 1 and key >= ' ' and key <= '~':
             # Fast path: normal printable ASCII - just pass through
             # This avoids expensive text parsing on every pasted character
 
-            # Mark that we need to parse/refresh after paste completes
-            self._needs_refresh = True
+            # Schedule deferred refresh - will happen 0.1s after typing stops
+            self._schedule_deferred_refresh()
 
-            result = super().keypress(size, key)
+            return super().keypress(size, key)
 
-            # Force screen invalidation so urwid redraws
-            self._invalidate()
-
-            return result
+        # NON-PRINTABLE KEY: Check if we have pending updates from paste
+        # If so, process them NOW before handling this key
+        if self._needs_refresh or self._needs_sort:
+            self._perform_deferred_refresh()
 
         # Get current cursor position (only for special keys)
         current_text = self.edit_widget.get_edit_text()
@@ -873,6 +868,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Clear refresh flag
         self._needs_refresh = False
+
+        # Force screen redraw if loop is available
+        if self._loop:
+            self._loop.draw_screen()
 
     def _sort_and_position_line(self, lines, current_line_index, target_column=7):
         """Sort lines by line number and position cursor at the moved line.
