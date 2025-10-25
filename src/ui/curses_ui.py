@@ -98,17 +98,69 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         self._update_display()
 
     def keypress(self, size, key):
-        """Handle key presses for auto-numbering and editing."""
+        """Handle key presses for column-aware editing and auto-numbering.
+
+        Format: "S NNNNN CODE"
+        - Column 0: Status (●, ?, space) - read-only
+        - Column 1: Space - read-only
+        - Columns 2-6: Line number (5 chars) - editable
+        - Column 7: Space
+        - Columns 8+: Code - editable
+        """
+        # Get current cursor position
+        current_text = self.edit_widget.get_edit_text()
+        cursor_pos = self.edit_widget.edit_pos
+
+        # Find which line we're on and position within that line
+        text_before_cursor = current_text[:cursor_pos]
+        line_num = text_before_cursor.count('\n')
+        lines = current_text.split('\n')
+
+        if line_num < len(lines):
+            line_start_pos = sum(len(lines[i]) + 1 for i in range(line_num))  # +1 for \n
+            col_in_line = cursor_pos - line_start_pos
+        else:
+            col_in_line = 0
+
+        # Check if pressing a control key
+        is_control_key = key.startswith('ctrl ') or key in ['tab', 'enter', 'esc']
+
+        # If control key or leaving line number area, right-justify line number
+        if is_control_key or (col_in_line == 7 and len(key) == 1):
+            # Right-justify the line number on the current line
+            if line_num < len(lines) and len(lines[line_num]) >= 7:
+                line = lines[line_num]
+                # Extract line number area (columns 2-6)
+                if len(line) >= 7:
+                    status = line[0] if len(line) > 0 else ' '
+                    line_num_text = line[2:7].strip()
+                    rest_of_line = line[7:] if len(line) > 7 else ''
+
+                    # Right-justify the line number
+                    if line_num_text:
+                        line_num_formatted = f"{line_num_text:>5}"
+                        new_line = f"{status} {line_num_formatted}{rest_of_line}"
+
+                        # Replace the line
+                        lines[line_num] = new_line
+                        new_text = '\n'.join(lines)
+                        old_cursor = cursor_pos
+                        self.edit_widget.set_edit_text(new_text)
+                        self.edit_widget.set_edit_pos(old_cursor)
+
+        # Prevent typing in status column (columns 0-1)
+        if col_in_line < 2 and len(key) == 1 and key.isprintable():
+            # Move cursor to line number column (column 2)
+            new_cursor_pos = cursor_pos + (2 - col_in_line)
+            self.edit_widget.set_edit_pos(new_cursor_pos)
+            # Process the key at new position
+            cursor_pos = new_cursor_pos
+            col_in_line = 2
+
         # Handle Enter key for auto-numbering
         if key == 'enter' and self.auto_number_enabled:
-            # Get current text
-            current_text = self.edit_widget.get_edit_text()
-            cursor_pos = self.edit_widget.get_cursor_coords(size)[0]
-
-            # Check if we're on the last line and it's empty or just whitespace
-            lines_list = current_text.split('\n')
-            if cursor_pos >= len(current_text) or (cursor_pos < len(current_text) and current_text[cursor_pos] == '\n'):
-                # At end of a line or on an empty line
+            # Check if we're at end of line or on an empty line
+            if cursor_pos >= len(current_text) or current_text[cursor_pos] == '\n':
                 # Add a new line with auto-number
                 while self.next_auto_line_num in self.lines:
                     self.next_auto_line_num += self.auto_number_increment
