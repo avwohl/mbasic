@@ -56,6 +56,11 @@ class TkBackend(UIBackend):
         self.variables_tree = None
         self.variables_visible = False
 
+        # Execution stack window state
+        self.stack_window = None
+        self.stack_tree = None
+        self.stack_visible = False
+
         # Tkinter widgets (created in start())
         self.root = None
         self.editor_text = None
@@ -121,6 +126,9 @@ class TkBackend(UIBackend):
         # Create variables watch window (initially hidden)
         self._create_variables_window()
 
+        # Create execution stack window (initially hidden)
+        self._create_stack_window()
+
         # Load program into editor if already loaded
         self._refresh_editor()
 
@@ -169,6 +177,7 @@ class TkBackend(UIBackend):
         view_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="View", menu=view_menu)
         view_menu.add_command(label="Variables", command=self._toggle_variables, accelerator="Ctrl+W")
+        view_menu.add_command(label="Execution Stack", command=self._toggle_stack, accelerator="Ctrl+K")
 
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -184,6 +193,7 @@ class TkBackend(UIBackend):
         self.root.bind("<Control-g>", lambda e: self._menu_continue())
         self.root.bind("<Control-b>", lambda e: self._toggle_breakpoint())
         self.root.bind("<Control-w>", lambda e: self._toggle_variables())
+        self.root.bind("<Control-k>", lambda e: self._toggle_stack())
         # Note: Ctrl+X conflicts with Cut, so we'll check in the handler
         self.root.bind("<F5>", lambda e: self._menu_run())
 
@@ -292,8 +302,9 @@ class TkBackend(UIBackend):
                 self._add_output(f"\n--- Error at line {line_num}: {error_msg} ---\n")
                 self._set_status("Error")
 
-            # Update variables window if visible
+            # Update variables and stack windows if visible
             self._update_variables()
+            self._update_stack()
 
         except Exception as e:
             self._add_output(f"Step error: {e}\n")
@@ -433,6 +444,73 @@ class TkBackend(UIBackend):
 
             self.variables_tree.insert('', 'end', text=name,
                                       values=(type_name, value))
+
+    def _create_stack_window(self):
+        """Create execution stack window (Toplevel)."""
+        import tkinter as tk
+        from tkinter import ttk
+
+        # Create window
+        self.stack_window = tk.Toplevel(self.root)
+        self.stack_window.title("Execution Stack")
+        self.stack_window.geometry("400x300")
+        self.stack_window.protocol("WM_DELETE_WINDOW", lambda: self._toggle_stack())
+        self.stack_window.withdraw()  # Hidden initially
+
+        # Create Treeview
+        tree = ttk.Treeview(self.stack_window, columns=('Details',), show='tree headings')
+        tree.heading('#0', text='Type')
+        tree.heading('Details', text='Details')
+        tree.column('#0', width=100)
+        tree.column('Details', width=300)
+        tree.pack(fill=tk.BOTH, expand=True)
+
+        self.stack_tree = tree
+
+    def _toggle_stack(self):
+        """Toggle execution stack window visibility (Ctrl+K)."""
+        if self.stack_visible:
+            self.stack_window.withdraw()
+            self.stack_visible = False
+        else:
+            self.stack_window.deiconify()
+            self.stack_visible = True
+            self._update_stack()
+
+    def _update_stack(self):
+        """Update execution stack window from runtime."""
+        if not self.stack_visible or not self.runtime:
+            return
+
+        # Clear tree
+        for item in self.stack_tree.get_children():
+            self.stack_tree.delete(item)
+
+        # Get stack from runtime
+        stack = self.runtime.get_execution_stack()
+
+        # Add to tree with indentation for nesting
+        for i, entry in enumerate(stack):
+            indent = "  " * i
+
+            if entry['type'] == 'GOSUB':
+                text = f"{indent}GOSUB"
+                details = f"from line {entry['from_line']}"
+            elif entry['type'] == 'FOR':
+                text = f"{indent}FOR"
+                var = entry['var']
+                current = entry['current']
+                end = entry['end']
+                step = entry.get('step', 1)
+                details = f"{var} = {current} TO {end} STEP {step}"
+            elif entry['type'] == 'WHILE':
+                text = f"{indent}WHILE"
+                details = f"at line {entry['line']}"
+            else:
+                text = f"{indent}{entry['type']}"
+                details = ""
+
+            self.stack_tree.insert('', 'end', text=text, values=(details,))
 
     def _menu_clear_output(self):
         """Run > Clear Output"""
