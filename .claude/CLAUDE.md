@@ -27,8 +27,29 @@
 - `in/` - Input files for testing and unsqueezing
 
 ### Documentation
-- `README.md` - Main project documentation (root)
-- Other docs in root directory
+**NEVER create documentation files in the root directory!**
+All documentation belongs in the `docs/` directory:
+
+- `README.md` - Main project README (root, only exception)
+- `docs/` - **ALL documentation goes here**
+  - `docs/dev/` - Current development notes and implementation guides
+    - Use for: feature implementations, fixes, current status, work-in-progress
+    - Examples: `*_IMPLEMENTATION.md`, `*_FIX.md`, `STATUS.md`
+  - `docs/help/` - In-UI help system documentation
+    - `docs/help/common/` - General help shared across all UIs (language, statements)
+    - `docs/help/ui/{backend}/` - UI-specific help (cli, curses, tk, visual)
+  - `docs/user/` - External user-facing documentation
+    - Use for: quick references, installation guides, tutorials
+  - `docs/history/` - Historical/archived development documentation
+    - Use for: session logs, completed milestones (move from dev/ when done)
+  - `docs/design/` - Architecture and design documents
+  - `docs/external/` - External references (PDFs, specifications)
+
+**When creating new documentation:**
+- Development notes → `docs/dev/`
+- Help content → `docs/help/common/` or `docs/help/ui/{backend}/`
+- User guides → `docs/user/`
+- Completed sessions → `docs/history/`
 
 ## Code Style
 - Python 3 with type hints where appropriate
