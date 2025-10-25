@@ -45,6 +45,12 @@ class TkBackend(UIBackend):
         self.runtime = None
         self.interpreter = None
 
+        # Tick-based execution state
+        self.running = False
+        self.paused_at_breakpoint = False
+        self.breakpoints = set()  # Set of line numbers with breakpoints
+        self.tick_timer_id = None  # ID of pending after() call
+
         # Tkinter widgets (created in start())
         self.root = None
         self.editor_text = None
@@ -140,7 +146,11 @@ class TkBackend(UIBackend):
         # Run menu
         run_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Run", menu=run_menu)
-        run_menu.add_command(label="Run Program", command=self._menu_run, accelerator="F5")
+        run_menu.add_command(label="Run Program", command=self._menu_run, accelerator="Ctrl+R")
+        run_menu.add_command(label="Step", command=self._menu_step, accelerator="Ctrl+T")
+        run_menu.add_command(label="Continue", command=self._menu_continue, accelerator="Ctrl+G")
+        run_menu.add_command(label="Stop", command=self._menu_stop, accelerator="Ctrl+X")
+        run_menu.add_separator()
         run_menu.add_command(label="List Program", command=self._menu_list)
         run_menu.add_separator()
         run_menu.add_command(label="Clear Output", command=self._menu_clear_output)
@@ -154,6 +164,10 @@ class TkBackend(UIBackend):
         self.root.bind("<Control-n>", lambda e: self._menu_new())
         self.root.bind("<Control-o>", lambda e: self._menu_open())
         self.root.bind("<Control-s>", lambda e: self._menu_save())
+        self.root.bind("<Control-r>", lambda e: self._menu_run())
+        self.root.bind("<Control-t>", lambda e: self._menu_step())
+        self.root.bind("<Control-g>", lambda e: self._menu_continue())
+        # Note: Ctrl+X conflicts with Cut, so we'll check in the handler
         self.root.bind("<F5>", lambda e: self._menu_run())
 
     def _create_toolbar(self):
@@ -238,6 +252,75 @@ class TkBackend(UIBackend):
         """Run > List Program"""
         self.cmd_list()
 
+    def _menu_step(self):
+        """Run > Step (execute one statement)"""
+        if not self.interpreter:
+            self._set_status("No program running")
+            return
+
+        try:
+            state = self.interpreter.tick(mode='step', max_statements=1)
+
+            # Handle state
+            if state.status == 'paused' or state.status == 'at_breakpoint':
+                stmt_info = f" statement {state.current_statement_index + 1}" if state.current_statement_index > 0 else ""
+                self._add_output(f"→ Paused at line {state.current_line}{stmt_info}\n")
+                self._set_status(f"Paused at line {state.current_line}{stmt_info}")
+            elif state.status == 'done':
+                self._add_output("\n--- Program finished ---\n")
+                self._set_status("Ready")
+            elif state.status == 'error':
+                error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                line_num = state.error_info.error_line if state.error_info else "?"
+                self._add_output(f"\n--- Error at line {line_num}: {error_msg} ---\n")
+                self._set_status("Error")
+
+        except Exception as e:
+            self._add_output(f"Step error: {e}\n")
+            self._set_status("Error")
+
+    def _menu_continue(self):
+        """Run > Continue (from breakpoint)"""
+        if not self.interpreter or not self.paused_at_breakpoint:
+            self._set_status("Not paused")
+            return
+
+        try:
+            # Resume execution
+            self.running = True
+            self.paused_at_breakpoint = False
+            self._set_status("Continuing...")
+
+            # Schedule next tick
+            self.tick_timer_id = self.root.after(10, self._execute_tick)
+
+        except Exception as e:
+            self._add_output(f"Continue error: {e}\n")
+            self._set_status("Error")
+
+    def _menu_stop(self):
+        """Run > Stop"""
+        if not self.interpreter:
+            self._set_status("No program running")
+            return
+
+        try:
+            # Cancel pending tick
+            if self.tick_timer_id:
+                self.root.after_cancel(self.tick_timer_id)
+                self.tick_timer_id = None
+
+            # Stop execution
+            self.running = False
+            self.paused_at_breakpoint = False
+
+            self._add_output("\n--- Program stopped by user ---\n")
+            self._set_status("Stopped")
+
+        except Exception as e:
+            self._add_output(f"Stop error: {e}\n")
+            self._set_status("Error")
+
     def _menu_clear_output(self):
         """Run > Clear Output"""
         import tkinter as tk
@@ -303,6 +386,55 @@ class TkBackend(UIBackend):
         """Set status bar text."""
         self.status_label.config(text=text)
 
+    def _execute_tick(self):
+        """Execute one tick of the interpreter and schedule next tick if needed."""
+        if not self.running or not self.interpreter:
+            return
+
+        try:
+            # Execute one quantum of work
+            state = self.interpreter.tick(mode='run', max_statements=100)
+
+            # Collect any output from io_handler
+            # Note: For Tk, we should use a capturing IOHandler
+            # For now, output goes to console
+
+            # Handle different states
+            if state.status == 'done':
+                self.running = False
+                self._add_output("\n--- Program finished ---\n")
+                self._set_status("Ready")
+
+            elif state.status == 'error':
+                self.running = False
+                error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                line_num = state.error_info.error_line if state.error_info else "?"
+                self._add_output(f"\n--- Runtime error at line {line_num}: {error_msg} ---\n")
+                self._set_status("Error")
+
+            elif state.status == 'at_breakpoint':
+                self.running = False
+                self.paused_at_breakpoint = True
+                self._add_output(f"\n● Breakpoint hit at line {state.current_line}\n")
+                self._set_status(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+
+            elif state.status == 'paused':
+                self.running = False
+                self.paused_at_breakpoint = True
+                self._add_output(f"\n→ Paused at line {state.current_line}\n")
+                self._set_status(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+
+            elif state.status == 'running':
+                # Schedule next tick
+                self.tick_timer_id = self.root.after(10, self._execute_tick)
+
+        except Exception as e:
+            import traceback
+            self.running = False
+            self._add_output(f"\n--- Execution error: {e} ---\n")
+            self._add_output(traceback.format_exc())
+            self._set_status("Error")
+
     # UIBackend interface methods
 
     def cmd_run(self) -> None:
@@ -319,15 +451,28 @@ class TkBackend(UIBackend):
             self.runtime = Runtime(self.program.line_asts, self.program.lines)
             self.interpreter = Interpreter(self.runtime, self.io)
 
-            # Run the program
-            # TODO: Redirect output to Tk output widget
-            self.interpreter.run()
+            # Start tick-based execution
+            state = self.interpreter.start()
+            if state.status == 'error':
+                self._add_output(f"\n--- Setup error: {state.error_info.error_message if state.error_info else 'Unknown'} ---\n")
+                self._set_status("Error")
+                return
 
-            self._add_output("\n--- Program finished ---\n")
-            self._set_status("Ready")
+            # Set breakpoints if any
+            if self.breakpoints:
+                self.interpreter.state.breakpoints = self.breakpoints.copy()
+
+            # Start running
+            self.running = True
+            self.paused_at_breakpoint = False
+
+            # Schedule first tick
+            self.tick_timer_id = self.root.after(10, self._execute_tick)
 
         except Exception as e:
+            import traceback
             self._add_output(f"\n--- Runtime error: {e} ---\n")
+            self._add_output(traceback.format_exc())
             self._set_status("Error")
 
     def cmd_list(self, args: str = "") -> None:
