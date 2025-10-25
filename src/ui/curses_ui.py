@@ -1918,16 +1918,16 @@ Examples:
             height=('relative', 80)
         )
 
-        # Show overlay and wait for key
-        self.loop.widget = overlay
+        # Store original widget BEFORE replacing it
+        main_widget = self.loop.widget
 
         # Set up a one-time keypress handler to close the dialog
         def close_help(key):
             self.loop.widget = main_widget
             self.loop.unhandled_input = self._handle_input
 
-        # Store original widget
-        main_widget = self.loop.widget.base_widget
+        # Show overlay and set handler
+        self.loop.widget = overlay
         self.loop.unhandled_input = close_help
 
     def _show_menu(self):
@@ -1974,16 +1974,16 @@ Run                           Help
             height=('relative', 70)
         )
 
-        # Show overlay and wait for key
-        self.loop.widget = overlay
+        # Store original widget BEFORE replacing it
+        main_widget = self.loop.widget
 
         # Set up a one-time keypress handler to close the dialog
         def close_menu(key):
             self.loop.widget = main_widget
             self.loop.unhandled_input = self._handle_input
 
-        # Store original widget
-        main_widget = self.loop.widget.base_widget
+        # Show overlay and set handler
+        self.loop.widget = overlay
         self.loop.unhandled_input = close_menu
 
     def _toggle_variables_window(self):
