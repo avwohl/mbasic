@@ -7,7 +7,10 @@ Spawns the curses UI in a subprocess and interacts with it.
 
 import pexpect
 import sys
+import os
+sys.path.insert(0, 'src')
 import time
+from src.ui.keybindings import HELP_CHAR, QUIT_CHAR
 
 def test_curses_basic():
     """Test basic curses UI startup and interaction."""
@@ -32,14 +35,14 @@ def test_curses_basic():
         print("\n=== Initial screen ===")
         print(child.before if child.before else "(no output yet)")
 
-        # Send Ctrl+A for help
-        print("\n=== Sending Ctrl+A (help) ===")
-        child.send('\x01')  # Ctrl+A
+        # Send help key
+        print(f"\n=== Sending {HELP_CHAR!r} (help) ===")
+        child.send(HELP_CHAR)
         time.sleep(0.5)
 
-        # Send Ctrl+Q to quit
-        print("\n=== Sending Ctrl+Q (quit) ===")
-        child.send('\x11')  # Ctrl+Q
+        # Send quit key
+        print(f"\n=== Sending {QUIT_CHAR!r} (quit) ===")
+        child.send(QUIT_CHAR)
         time.sleep(0.5)
 
         # Check if it exited

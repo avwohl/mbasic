@@ -6,6 +6,7 @@ sys.path.insert(0, 'src')
 
 from ui.curses_ui import notify_confirm_ctrl_c
 import npyscreen
+from src.ui.keybindings import HELP_CHAR
 
 class TestApp(npyscreen.NPSAppManaged):
     def onStart(self):
@@ -13,12 +14,12 @@ class TestApp(npyscreen.NPSAppManaged):
 
 class TestForm(npyscreen.Form):
     def create(self):
-        self.add(npyscreen.TitleText, name='Press Ctrl+A to test help popup')
+        self.add(npyscreen.TitleText, name=f'Press {HELP_CHAR!r} to test help popup')
 
     def set_up_handlers(self):
         super().set_up_handlers()
         self.handlers.update({
-            ord('\x01'): self.test_help  # Ctrl+A
+            ord(HELP_CHAR): self.test_help  # Help key
         })
 
     def test_help(self, *args):

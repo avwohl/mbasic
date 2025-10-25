@@ -16,6 +16,9 @@ import pexpect
 import time
 import traceback as tb
 from io import StringIO
+from src.ui.keybindings import (
+    HELP_KEY, LIST_KEY, NEW_KEY, RUN_KEY
+)
 
 class TestResult:
     """Store test results."""
@@ -94,26 +97,26 @@ class CursesUITester:
             # Test various input handlers
             handlers_tested = []
 
-            # Ctrl+A (help) - should not raise
+            # Help key - should not raise
             try:
-                backend._handle_input('ctrl a')
-                handlers_tested.append('ctrl a')
+                backend._handle_input(HELP_KEY)
+                handlers_tested.append(HELP_KEY)
             except Exception as e:
-                raise Exception(f"Ctrl+A failed: {e}")
+                raise Exception(f"{HELP_KEY} failed: {e}")
 
-            # Ctrl+L (list)
+            # List key
             try:
-                backend._handle_input('ctrl l')
-                handlers_tested.append('ctrl l')
+                backend._handle_input(LIST_KEY)
+                handlers_tested.append(LIST_KEY)
             except Exception as e:
-                raise Exception(f"Ctrl+L failed: {e}")
+                raise Exception(f"{LIST_KEY} failed: {e}")
 
-            # Ctrl+N (new)
+            # New key
             try:
-                backend._handle_input('ctrl n')
-                handlers_tested.append('ctrl n')
+                backend._handle_input(NEW_KEY)
+                handlers_tested.append(NEW_KEY)
             except Exception as e:
-                raise Exception(f"Ctrl+N failed: {e}")
+                raise Exception(f"{NEW_KEY} failed: {e}")
 
             result.success(f"Tested: {', '.join(handlers_tested)}")
 

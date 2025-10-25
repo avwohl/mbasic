@@ -6,6 +6,14 @@ It provides an editor, output window, and menu system.
 
 import urwid
 from .base import UIBackend
+from .keybindings import (
+    HELP_KEY, MENU_KEY, QUIT_KEY, QUIT_ALT_KEY,
+    VARIABLES_KEY, STACK_KEY, RUN_KEY, LIST_KEY, NEW_KEY, SAVE_KEY, OPEN_KEY,
+    BREAKPOINT_KEY, DELETE_LINE_KEY, RENUMBER_KEY,
+    CONTINUE_KEY, STEP_KEY, STOP_KEY, TAB_KEY,
+    STATUS_BAR_SHORTCUTS, EDITOR_STATUS, OUTPUT_STATUS,
+    KEYBINDINGS_BY_CATEGORY
+)
 from runtime import Runtime
 from interpreter import Interpreter
 from lexer import Lexer
@@ -1358,7 +1366,7 @@ class CursesBackend(UIBackend):
         self.stack_walker = urwid.SimpleFocusListWalker([])
         self.stack_window = urwid.ListBox(self.stack_walker)
 
-        self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+A for help, Ctrl+U for menu, Ctrl+W for variables, Ctrl+K for stack, Ctrl+Q to quit")
+        self.status_bar = urwid.Text(STATUS_BAR_SHORTCUTS)
 
         # Create editor frame with top/left border only (no bottom/right space reserved)
         self.editor_frame = TopLeftBox(
@@ -1426,80 +1434,80 @@ class CursesBackend(UIBackend):
 
     def _handle_input(self, key):
         """Handle global keyboard shortcuts."""
-        if key == 'ctrl q' or key == 'ctrl c':
-            # Quit (Ctrl+Q or Ctrl+C)
+        if key == QUIT_KEY or key == QUIT_ALT_KEY:
+            # Quit
             raise urwid.ExitMainLoop()
 
-        elif key == 'tab':
+        elif key == TAB_KEY:
             # Toggle between editor (position 1) and output (position 2)
             pile = self.loop.widget.base_widget
             if pile.focus_position == 1:
                 # Switch to output for scrolling
                 pile.focus_position = 2
-                self.status_bar.set_text("Output - Use Up/Down to scroll, Tab to return to editor")
+                self.status_bar.set_text(OUTPUT_STATUS)
             else:
                 # Switch back to editor
                 pile.focus_position = 1
-                self.status_bar.set_text("Editor - Press Ctrl+A for help")
+                self.status_bar.set_text(EDITOR_STATUS)
             return None
 
-        elif key == 'ctrl u':
+        elif key == MENU_KEY:
             # Show menu
             self._show_menu()
 
-        elif key == 'ctrl a':
+        elif key == HELP_KEY:
             # Show help
             self._show_help()
 
-        elif key == 'ctrl r':
+        elif key == RUN_KEY:
             # Run program
             self._run_program()
 
-        elif key == 'ctrl l':
+        elif key == LIST_KEY:
             # List program
             self._list_program()
 
-        elif key == 'ctrl n':
+        elif key == NEW_KEY:
             # New program
             self._new_program()
 
-        elif key == 'ctrl s':
+        elif key == SAVE_KEY:
             # Save program
             self._save_program()
 
-        elif key == 'ctrl o':
+        elif key == OPEN_KEY:
             # Open/Load program
             self._load_program()
 
-        elif key == 'ctrl b':
+        elif key == BREAKPOINT_KEY:
             # Toggle breakpoint on current line
             self._toggle_breakpoint_current_line()
 
-        elif key == 'ctrl w':
+        elif key == VARIABLES_KEY:
             # Toggle variables window
             self._toggle_variables_window()
 
-        elif key == 'ctrl k':
+        elif key == STACK_KEY:
             # Toggle execution stack window
             self._toggle_stack_window()
 
-        elif key == 'ctrl d':
+        elif key == DELETE_LINE_KEY:
             # Delete current line
             self._delete_current_line()
 
-        elif key == 'ctrl e':
+        elif key == RENUMBER_KEY:
             # Renumber all lines
             self._renumber_lines()
 
-        elif key == 'ctrl g':
+        elif key == CONTINUE_KEY:
             # Continue execution (from breakpoint/pause)
             self._debug_continue()
 
-        elif key == 'ctrl t':
+        elif key == STEP_KEY:
             # Step - execute one line
             self._debug_step()
 
-        elif key == 'ctrl x':
+        elif key == STOP_KEY:
             # Stop execution
             self._debug_stop()
 
@@ -1819,30 +1827,47 @@ class CursesBackend(UIBackend):
 
     def _show_help(self):
         """Show help dialog."""
-        help_text = """
-MBASIC 5.21 - Keyboard Shortcuts
+        # Build help text from keybindings module
+        help_lines = ["MBASIC 5.21 - Keyboard Shortcuts", ""]
 
-Global Commands:
-  Ctrl+Q / Ctrl+C  - Quit
-  Ctrl+U  - Show menu
-  Ctrl+A  - This help
-  Ctrl+W  - Toggle variables watch window
-  Ctrl+K  - Toggle execution stack window
-  Ctrl+R  - Run program
-  Ctrl+L  - List program
-  Ctrl+N  - New program
-  Ctrl+S  - Save program
-  Ctrl+O  - Open/Load program
-  Ctrl+B  - Toggle breakpoint on current line
-  Ctrl+D  - Delete current line
-  Ctrl+E  - Renumber all lines (RENUM)
+        for category, bindings in KEYBINDINGS_BY_CATEGORY.items():
+            help_lines.append(f"{category}:")
+            for key_display, description in bindings:
+                help_lines.append(f"  {key_display:20} - {description}")
+            help_lines.append("")
 
-Debugger Commands (when program running):
-  Ctrl+G  - Continue execution (Go)
-  Ctrl+T  - Step - execute one line (sTep)
-  Ctrl+X  - Stop execution (eXit)
-  Ctrl+W  - Show/hide variables window
-  Ctrl+K  - Show/hide execution stack window
+        help_text = "\n".join(help_lines) + """
+Screen Editor:
+  Column Layout:
+    [0]   Status: ? error (highest), ● breakpoint, space normal
+    [1-5] Line number (5 digits, right-aligned)
+    [6]   Separator space
+    [7+]  BASIC code
+
+  Status Priority (when line has multiple states):
+    1. Error (?) - highest, shown when syntax error exists
+    2. Breakpoint (●) - shown when no error but breakpoint set
+    3. Normal ( ) - default
+
+  Line Number Editing:
+    - Type digits in columns 1-5 (calculator-style)
+    - Numbers auto right-justify when leaving column
+    - Leftmost digit drops when typing at rightmost position
+    - Backspace deletes rightmost digit and right-justifies
+
+  Navigation:
+    Up/Down       - Move between lines (sorts if in number area)
+    Left/Right    - Move within line (no auto-sort)
+    Page Up/Down  - Scroll pages (triggers sort)
+    Home/End      - Jump to start/end (triggers sort)
+    Tab/Enter     - Move to code area / new line (triggers sort)
+
+  Auto-Numbering:
+    - First line starts at 10 (configurable)
+    - Press Enter for next line (auto-increments by 10)
+    - Uses current line number + increment
+    - Avoids collisions with existing lines
+    - Configure in .mbasic.conf
 
 Screen Editor:
   Column Layout:

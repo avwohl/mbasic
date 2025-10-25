@@ -10,6 +10,7 @@ import os
 sys.path.insert(0, 'src')
 
 import urwid
+from src.ui.keybindings import HELP_KEY, LIST_KEY
 
 def test_curses_with_urwid_simulation():
     """Test the curses UI using urwid's simulation screen."""
@@ -110,24 +111,24 @@ def test_curses_input_simulation():
         backend._create_ui()
 
         # Simulate key press
-        print("Simulating Ctrl+A (help)...")
+        print(f"Simulating {HELP_KEY} (help)...")
 
         # Process the unhandled input handler directly
         try:
-            backend._handle_input('ctrl a')
-            print("Ctrl+A processed successfully")
+            backend._handle_input(HELP_KEY)
+            print(f"{HELP_KEY} processed successfully")
         except Exception as e:
-            print(f"Error processing Ctrl+A: {e}")
+            print(f"Error processing {HELP_KEY}: {e}")
             import traceback
             traceback.print_exc()
 
-        # Try Ctrl+L (list)
-        print("\nSimulating Ctrl+L (list)...")
+        # Try list key
+        print(f"\nSimulating {LIST_KEY} (list)...")
         try:
-            backend._handle_input('ctrl l')
-            print("Ctrl+L processed successfully")
+            backend._handle_input(LIST_KEY)
+            print(f"{LIST_KEY} processed successfully")
         except Exception as e:
-            print(f"Error processing Ctrl+L: {e}")
+            print(f"Error processing {LIST_KEY}: {e}")
 
         print("\nInput simulation test completed!")
         return True

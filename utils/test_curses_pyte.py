@@ -9,9 +9,11 @@ import pyte
 import subprocess
 import sys
 import os
+sys.path.insert(0, 'src')
 import time
 import select
 from threading import Thread
+from src.ui.keybindings import HELP_CHAR
 
 class TerminalEmulator:
     """Terminal emulator for testing curses applications."""
@@ -102,13 +104,13 @@ def test_curses_with_pyte():
         print(screen_text)
         print("="*80)
 
-        # Send Ctrl+A for help
-        print("\nSending Ctrl+A (help)...")
-        term.send_input('\x01')
+        # Send help key
+        print(f"\nSending {HELP_CHAR!r} (help)...")
+        term.send_input(HELP_CHAR)
         time.sleep(0.5)
         term.read_output(timeout=0.5)
 
-        print("\n=== After Ctrl+A ===")
+        print(f"\n=== After {HELP_CHAR!r} ===")
         print(term.get_screen_text())
         print("="*80)
 
