@@ -89,26 +89,13 @@ def make_output_line(text):
     Returns:
         Widget with focus highlighting
     """
-    if text and len(text) > 0:
-        # Create markup: first char can be highlighted, rest is normal
-        first_char = text[0]
-        rest = text[1:] if len(text) > 1 else ""
+    # DEBUG: Highlight entire line when focused to see if focus is changing
+    widget = SelectableText(text if text else " ")
 
-        # Create text widget with markup
-        # When focused, first char will use output_focus style
-        markup = [('output', first_char), rest]
-        widget = SelectableText(markup)
+    # Wrap in AttrMap: normal = white on black, focused = black on light green
+    attr_widget = urwid.AttrMap(widget, 'output', 'output_focus')
 
-        # Wrap in AttrMap to apply focus highlighting to first char
-        # When focused, anything with 'output' becomes 'output_focus'
-        attr_widget = urwid.AttrMap(widget, None, {'output': 'output_focus'})
-
-        return attr_widget
-    else:
-        # Empty line - show space with potential focus
-        widget = SelectableText([('output', ' ')])
-        attr_widget = urwid.AttrMap(widget, None, {'output': 'output_focus'})
-        return attr_widget
+    return attr_widget
 
 
 class ProgramEditorWidget(urwid.WidgetWrap):
