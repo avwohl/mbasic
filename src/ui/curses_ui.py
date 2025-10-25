@@ -177,6 +177,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 self.edit_widget.set_edit_text(new_text)
                 self.edit_widget.set_edit_pos(cursor_pos + len(new_line_prefix))
 
+                # Increment for next line
+                self.next_auto_line_num += self.auto_number_increment
+
                 return None
 
         # Let parent handle the key
@@ -209,8 +212,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
     def _update_display(self):
         """Update the text display with all program lines."""
         if not self.lines:
-            # Empty program
-            display_text = ""
+            # Empty program - start with first line number ready
+            display_text = f"     {self.next_auto_line_num:5d} "
         else:
             # Format all lines
             formatted_lines = []
@@ -221,6 +224,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Update the edit widget
         self.edit_widget.set_edit_text(display_text)
+
+        # If empty program, position cursor at code column (after line number)
+        if not self.lines:
+            self.edit_widget.set_edit_pos(8)  # Position 8 is start of code area
 
     def get_program_text(self):
         """Get the program as line-numbered text.
