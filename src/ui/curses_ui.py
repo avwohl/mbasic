@@ -13,14 +13,13 @@ from parser import Parser
 
 
 class TopLeftBox(urwid.WidgetWrap):
-    """Custom box widget that only draws top and left borders.
+    """Custom box widget that only draws top border (no left/bottom/right).
 
-    Unlike LineBox, this doesn't reserve space for bottom/right borders,
-    allowing content to use the full available space.
+    This allows edge-to-edge content that doesn't interfere with copying text.
     """
 
     def __init__(self, original_widget, title=''):
-        """Create a box with only top and left borders.
+        """Create a box with only top border.
 
         Args:
             original_widget: The widget to wrap
@@ -31,31 +30,20 @@ class TopLeftBox(urwid.WidgetWrap):
 
         # Create the top border line with title
         if title:
-            # Title in the top border: "┌─ Title ────────"
-            title_text = urwid.Text(f'┌─ {title} ', wrap='clip')
+            # Title in the top border: "── Title ────────"
+            title_text = urwid.Text(f'── {title} ', wrap='clip')
             fill_text = urwid.Text('─' * 200, wrap='clip')
             top_border = urwid.Columns([
                 ('pack', title_text),
                 fill_text
             ], dividechars=0)
         else:
-            top_border = urwid.Text('┌' + '─' * 200, wrap='clip')
+            top_border = urwid.Text('─' * 200, wrap='clip')
 
-        # Use SolidFill with │ for the left border (fills all vertical space)
-        left_border = urwid.SolidFill('│')
-
-        content_with_border = urwid.Columns([
-            ('fixed', 1, left_border),
-            original_widget
-        ], dividechars=0)
-
-        # Set focus to the content (column 1, not the border)
-        content_with_border.focus_position = 1
-
-        # Stack top border and content
+        # Stack top border and content (no left border)
         pile = urwid.Pile([
             ('pack', top_border),
-            content_with_border
+            original_widget
         ])
 
         # Set focus to the content area (not the top border)
