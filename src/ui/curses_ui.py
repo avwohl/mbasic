@@ -92,15 +92,17 @@ class OutputLineWidget(urwid.WidgetWrap):
         Args:
             has_focus: True if this widget has focus
         """
-        if has_focus and self.text:
+        if has_focus:
             # Show green background on first character only
-            if len(self.text) > 0:
+            if self.text and len(self.text) > 0:
                 first_char = self.text[0]
                 rest = self.text[1:] if len(self.text) > 1 else ""
                 markup = [('output_focus', first_char), rest]
                 self._text_widget.set_text(markup)
             else:
-                self._text_widget.set_text(self.text)
+                # Empty line - show a visible cursor character
+                markup = [('output_focus', ' ')]
+                self._text_widget.set_text(markup)
         else:
             # No focus, show plain text
             self._text_widget.set_text(self.text)
@@ -945,7 +947,7 @@ class CursesBackend(UIBackend):
             ('error', 'light red', 'black'),
             # Output area styles
             ('output', 'white', 'black'),
-            ('output_focus', 'black', 'dark green', 'standout'),
+            ('output_focus', 'black', 'light green', 'standout'),
         ]
 
     def _handle_input(self, key):
@@ -1294,6 +1296,14 @@ Examples:
 
     def _update_output(self):
         """Update the output window with buffered content."""
+        # Remember current focus position if output area is active
+        old_focus = None
+        try:
+            if len(self.output_walker) > 0:
+                old_focus = self.output_walker.focus
+        except:
+            pass
+
         # Clear existing content
         self.output_walker[:] = []
 
@@ -1302,9 +1312,16 @@ Examples:
             line_widget = OutputLineWidget(line)
             self.output_walker.append(line_widget)
 
-        # Scroll to the bottom (last line)
+        # Set focus to bottom (latest output)
         if len(self.output_walker) > 0:
-            self.output.set_focus(len(self.output_walker) - 1)
+            # Set focus on the walker (not the ListBox)
+            self.output_walker.set_focus(len(self.output_walker) - 1)
+            # Force ListBox to scroll to make focused widget visible
+            # This ensures the cursor is always visible after output update
+            try:
+                self.output.set_focus_valign('bottom')
+            except:
+                pass
 
     def _update_output_with_lines(self, lines):
         """Update output window with specific lines."""
@@ -1318,7 +1335,13 @@ Examples:
 
         # Scroll to the bottom (last line)
         if len(self.output_walker) > 0:
-            self.output.set_focus(len(self.output_walker) - 1)
+            # Set focus on the walker
+            self.output_walker.set_focus(len(self.output_walker) - 1)
+            # Force ListBox to scroll to make focused widget visible
+            try:
+                self.output.set_focus_valign('bottom')
+            except:
+                pass
 
     def _get_input_dialog(self, prompt):
         """Show input dialog and get user response."""
