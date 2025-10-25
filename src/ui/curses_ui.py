@@ -135,8 +135,14 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             allow_tab=False
         )
 
-        # For debouncing rapid input (paste operations)
-        self._pending_update_alarm = None
+        # For debouncing sorting during rapid input (paste operations)
+        self._needs_sort = False  # Flag: lines need sorting when navigation happens
+
+        # For deferred screen refresh during rapid input (paste operations)
+        self._needs_refresh = False  # Flag: screen needs refresh when input stops
+        self._pending_refresh_alarm = None  # Handle for pending refresh alarm
+        self._loop = None  # Will be set by CursesBackend after loop creation
+        self._idle_delay = 0.1  # Seconds to wait after last keystroke before refresh
 
         # Use a pile to allow switching between display and edit modes
         self.pile = urwid.Pile([self.edit_widget])
@@ -163,6 +169,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         if len(key) == 1 and key >= ' ' and key <= '~':
             # Fast path: normal printable ASCII - just pass through
             # This avoids expensive text parsing on every pasted character
+
+            # Schedule deferred refresh - will happen after input stops
+            self._schedule_deferred_refresh()
+
             return super().keypress(size, key)
 
         # Get current cursor position (only for special keys)
@@ -187,17 +197,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         is_arrow_key = is_updown_arrow or is_leftright_arrow
         is_other_nav_key = key in ['page up', 'page down', 'home', 'end']
 
-        # Only right-justify when actually leaving line number area or on control/nav keys
-        # Don't do expensive operations on left/right arrows or regular typing
+        # PERFORMANCE: Skip right-justification during rapid typing/paste
+        # Only do it when navigating (which is when user expects formatting)
         should_right_justify = False
         if is_control_key or is_updown_arrow or is_other_nav_key:
-            # Control keys, up/down, page up/down, home/end: always right-justify
-            should_right_justify = True
-        elif is_leftright_arrow and 1 <= col_in_line <= 6:
-            # Left/right arrows IN line number area: don't right-justify (performance)
-            should_right_justify = False
-        elif col_in_line == 6 and len(key) == 1 and key.isprintable():
-            # Typing at separator column: right-justify before moving to code area
+            # About to navigate - right-justify now
             should_right_justify = True
 
         if should_right_justify:
@@ -222,14 +226,19 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                         self.edit_widget.set_edit_text(new_text)
                         self.edit_widget.set_edit_pos(old_cursor)
 
-        # Sort lines if leaving line number area
-        # Up/down arrows: sort (move to different line)
-        # Left/right arrows: don't sort (stay on same line)
-        # Other keys (page up/down, home, end, control keys): sort
-        if 1 <= col_in_line <= 6 and (is_control_key or is_other_nav_key or is_updown_arrow):
-            self._sort_and_position_line(lines, line_num, target_column=col_in_line)
-            # After sorting, let the key work normally
-            return super().keypress(size, key)
+        # Mark that sorting is needed when editing line numbers
+        if 1 <= col_in_line <= 6 and len(key) == 1 and key.isdigit():
+            # Typing digits in line number area - will need sorting later
+            self._needs_sort = True
+
+        # Sort lines only when navigating away (not on every keystroke)
+        # This makes paste much faster - only sort once at the end
+        if (is_control_key or is_other_nav_key or is_updown_arrow) and self._needs_sort:
+            # About to navigate - sort now if needed
+            if 1 <= col_in_line <= 6:
+                self._sort_and_position_line(lines, line_num, target_column=col_in_line)
+                self._needs_sort = False
+                return super().keypress(size, key)
 
         # Handle backspace key specially to protect separator space
         if key == 'backspace':
@@ -702,6 +711,71 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     # Silently ignore config errors and use defaults
                     pass
 
+    def _schedule_deferred_refresh(self):
+        """Schedule a deferred screen refresh after idle delay.
+
+        Cancels any existing pending refresh and schedules a new one.
+        This batches updates during rapid input (paste operations).
+        """
+        if not self._loop:
+            # Loop not available yet, skip scheduling
+            return
+
+        # Cancel existing alarm if any
+        if self._pending_refresh_alarm:
+            self._loop.remove_alarm(self._pending_refresh_alarm)
+            self._pending_refresh_alarm = None
+
+        # Schedule new alarm
+        self._pending_refresh_alarm = self._loop.set_alarm_in(
+            self._idle_delay,
+            self._perform_deferred_refresh
+        )
+
+        # Mark that a refresh is pending
+        self._needs_refresh = True
+
+    def _perform_deferred_refresh(self, loop=None, user_data=None):
+        """Perform deferred screen refresh (alarm callback).
+
+        Called when input has been idle for the delay period.
+        Performs any pending sorting and screen updates.
+
+        Args:
+            loop: urwid MainLoop (passed by alarm callback)
+            user_data: User data (passed by alarm callback, unused)
+        """
+        # Clear the alarm handle
+        self._pending_refresh_alarm = None
+
+        # Check if refresh is actually needed
+        if not self._needs_refresh and not self._needs_sort:
+            return
+
+        # Perform deferred sorting if needed
+        if self._needs_sort:
+            # Get current state
+            current_text = self.edit_widget.get_edit_text()
+            cursor_pos = self.edit_widget.edit_pos
+            lines = current_text.split('\n')
+
+            # Find current line
+            text_before_cursor = current_text[:cursor_pos]
+            line_num = text_before_cursor.count('\n')
+
+            # Sort if we're in the line number area
+            if line_num < len(lines):
+                line_start_pos = sum(len(lines[i]) + 1 for i in range(line_num))
+                col_in_line = cursor_pos - line_start_pos
+
+                if 1 <= col_in_line <= 6:
+                    self._sort_and_position_line(lines, line_num, target_column=col_in_line)
+
+            self._needs_sort = False
+
+        # Clear refresh flag
+        self._needs_refresh = False
+
     def _sort_and_position_line(self, lines, current_line_index, target_column=7):
         """Sort lines by line number and position cursor at the moved line.
 
@@ -915,6 +989,9 @@ class CursesBackend(UIBackend):
             unhandled_input=self._handle_input,
             handle_mouse=False
         )
+
+        # Pass loop reference to editor for deferred refresh mechanism
+        self.editor._loop = self.loop
 
     def _get_palette(self):
         """Get the color palette for the UI."""
