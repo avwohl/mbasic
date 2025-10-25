@@ -817,7 +817,11 @@ class CursesBackend(UIBackend):
         """Create the urwid UI layout."""
         # Create widgets
         self.editor = ProgramEditorWidget()
-        self.output = urwid.Text("")
+
+        # Create scrollable output window using ListBox
+        self.output_walker = urwid.SimpleFocusListWalker([])
+        self.output = urwid.ListBox(self.output_walker)
+
         self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+Q or Ctrl+C to quit")
 
         # Create editor frame with top/left border only (no bottom/right space reserved)
@@ -827,8 +831,9 @@ class CursesBackend(UIBackend):
         )
 
         # Create output frame with top/left border only (no bottom/right space reserved)
+        # ListBox doesn't need Filler since it handles its own scrolling
         output_frame = TopLeftBox(
-            urwid.Filler(self.output, valign='top'),
+            self.output,
             title="Output"
         )
 
@@ -1168,14 +1173,29 @@ Examples:
 
     def _update_output(self):
         """Update the output window with buffered content."""
-        # Show last 20 lines
-        visible_lines = self.output_buffer[-20:]
-        self.output.set_text('\n'.join(visible_lines))
+        # Clear existing content
+        self.output_walker[:] = []
+
+        # Add all lines from buffer
+        for line in self.output_buffer:
+            self.output_walker.append(urwid.Text(line))
+
+        # Scroll to the bottom (last line)
+        if len(self.output_walker) > 0:
+            self.output.set_focus(len(self.output_walker) - 1)
 
     def _update_output_with_lines(self, lines):
         """Update output window with specific lines."""
-        visible_lines = lines[-20:]
-        self.output.set_text('\n'.join(visible_lines))
+        # Clear existing content
+        self.output_walker[:] = []
+
+        # Add all lines
+        for line in lines:
+            self.output_walker.append(urwid.Text(line))
+
+        # Scroll to the bottom (last line)
+        if len(self.output_walker) > 0:
+            self.output.set_focus(len(self.output_walker) - 1)
 
     def _get_input_dialog(self, prompt):
         """Show input dialog and get user response."""
