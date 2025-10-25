@@ -156,6 +156,52 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                         self.edit_widget.set_edit_text(new_text)
                         self.edit_widget.set_edit_pos(old_cursor)
 
+        # Handle backspace key specially to protect separator space
+        if key == 'backspace':
+            if line_num < len(lines):
+                line = lines[line_num]
+                line_start = sum(len(lines[i]) + 1 for i in range(line_num))
+
+                # At column 7 (code start): move to column 6 but don't delete separator
+                if col_in_line == 7:
+                    new_cursor_pos = line_start + 6
+                    self.edit_widget.set_edit_pos(new_cursor_pos)
+                    return None
+
+                # At column 6 (separator): move to column 5 but don't delete separator
+                elif col_in_line == 6:
+                    new_cursor_pos = line_start + 5
+                    self.edit_widget.set_edit_pos(new_cursor_pos)
+                    return None
+
+                # At columns 1-5 (line number): replace with space
+                elif 1 <= col_in_line <= 5:
+                    # Ensure line is at least 7 characters
+                    if len(line) < 7:
+                        line = line + ' ' * (7 - len(line))
+
+                    status = line[0]
+                    linenum_field = line[1:6]
+                    rest = line[6:]
+
+                    # Replace character before cursor with space
+                    linenum_list = list(linenum_field)
+                    pos_in_field = col_in_line - 1
+                    if pos_in_field > 0:
+                        linenum_list[pos_in_field - 1] = ' '
+                        linenum_field = ''.join(linenum_list)
+
+                        # Rebuild line
+                        new_line = status + linenum_field + rest
+                        lines[line_num] = new_line
+                        new_text = '\n'.join(lines)
+                        self.edit_widget.set_edit_text(new_text)
+
+                        # Move cursor left
+                        new_cursor_pos = line_start + col_in_line - 1
+                        self.edit_widget.set_edit_pos(new_cursor_pos)
+                        return None
+
         # Prevent typing in status column (column 0)
         if col_in_line < 1 and len(key) == 1 and key.isprintable():
             # Move cursor to line number column (column 1)
