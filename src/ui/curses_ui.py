@@ -736,34 +736,34 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         changed = False
 
         for i, line in enumerate(lines):
-            if not line or not line[0:1].strip():
-                # Empty line or starts with only whitespace, skip
-                # (unless it's raw pasted BASIC code)
-                if line and line.lstrip() and line.lstrip()[0].isdigit():
-                    # Raw pasted line like "10 PRINT" - reformat it
-                    stripped = line.lstrip()
-
-                    # Extract number
-                    num_str = ""
-                    j = 0
-                    while j < len(stripped) and stripped[j].isdigit():
-                        num_str += stripped[j]
-                        j += 1
-
-                    # Get rest of line (skip spaces after number)
-                    while j < len(stripped) and stripped[j] == ' ':
-                        j += 1
-                    rest = stripped[j:]
-
-                    # Reformat with column structure
-                    if num_str:
-                        line_num_formatted = f"{num_str:>5}"
-                        new_line = f" {line_num_formatted} {rest}"
-                        lines[i] = new_line
-                        changed = True
+            if not line:
                 continue
 
-            # Check lines with column structure
+            # FIRST: Check if line starts with a digit (raw pasted BASIC)
+            # Since BASIC code can never legally start with a digit, this must be a line number
+            if line[0].isdigit():
+                # Raw pasted line like "10 PRINT" - reformat it
+                # Extract number
+                num_str = ""
+                j = 0
+                while j < len(line) and line[j].isdigit():
+                    num_str += line[j]
+                    j += 1
+
+                # Get rest of line (skip spaces after number)
+                while j < len(line) and line[j] == ' ':
+                    j += 1
+                rest = line[j:]
+
+                # Reformat with column structure
+                if num_str:
+                    line_num_formatted = f"{num_str:>5}"
+                    new_line = f" {line_num_formatted} {rest}"
+                    lines[i] = new_line
+                    changed = True
+                continue
+
+            # SECOND: Check lines with column structure
             if len(line) >= 7:
                 # Extract status and code area
                 status = line[0]
