@@ -71,8 +71,11 @@ class Runtime:
 
         # Control flow stacks
         self.gosub_stack = []         # [(return_line, return_stmt_index), ...]
-        self.for_loops = {}           # var_name -> {'end': val, 'step': val, 'return_line': line, 'return_stmt': idx}
-        self.while_loops = []         # [{'while_line': line, 'while_stmt': idx}, ...] - stack of active WHILE loops
+        # Unified loop stack - tracks all active loops (FOR and WHILE) in nesting order
+        # Each entry: {'type': 'FOR'|'WHILE', ...type-specific fields...}
+        self.loop_stack = []
+        # Quick lookup: var_name -> index in loop_stack (for FOR loops)
+        self.for_loop_vars = {}
 
         # Line number resolution
         self.line_table = {}          # line_number -> LineNode
@@ -743,40 +746,75 @@ class Runtime:
         return self.gosub_stack.pop()
 
     def push_for_loop(self, var_name, end_value, step_value, return_line, return_stmt_index):
-        """Register a FOR loop"""
-        self.for_loops[var_name] = {
+        """Register a FOR loop on the unified loop stack"""
+        loop_entry = {
+            'type': 'FOR',
+            'var': var_name,
             'end': end_value,
             'step': step_value,
             'return_line': return_line,
             'return_stmt': return_stmt_index
         }
+        self.loop_stack.append(loop_entry)
+        # Track index for quick lookup by variable name
+        self.for_loop_vars[var_name] = len(self.loop_stack) - 1
 
     def pop_for_loop(self, var_name):
-        """Remove a FOR loop"""
-        if var_name in self.for_loops:
-            del self.for_loops[var_name]
+        """Remove a FOR loop - verifies it's on top of stack"""
+        if var_name not in self.for_loop_vars:
+            return  # No loop for this variable
+
+        # Get the index of this FOR loop
+        loop_index = self.for_loop_vars[var_name]
+
+        # Verify this FOR loop is on top of the stack
+        if loop_index != len(self.loop_stack) - 1:
+            # Error: trying to exit a FOR loop that isn't the innermost loop
+            # This means there's improper nesting (e.g., FOR I / WHILE / NEXT I / WEND)
+            raise RuntimeError(f"NEXT {var_name} without matching FOR - improper loop nesting")
+
+        # Remove from stack
+        self.loop_stack.pop()
+        del self.for_loop_vars[var_name]
 
     def get_for_loop(self, var_name):
         """Get FOR loop info or None"""
-        return self.for_loops.get(var_name)
+        if var_name not in self.for_loop_vars:
+            return None
+        loop_index = self.for_loop_vars[var_name]
+        return self.loop_stack[loop_index]
 
     def push_while_loop(self, while_line, while_stmt_index):
-        """Register a WHILE loop"""
-        self.while_loops.append({
+        """Register a WHILE loop on the unified loop stack"""
+        loop_entry = {
+            'type': 'WHILE',
             'while_line': while_line,
             'while_stmt': while_stmt_index
-        })
+        }
+        self.loop_stack.append(loop_entry)
 
     def pop_while_loop(self):
-        """Remove most recent WHILE loop"""
-        if self.while_loops:
-            return self.while_loops.pop()
-        return None
+        """Remove most recent WHILE loop - verifies it's actually a WHILE"""
+        if not self.loop_stack:
+            return None
+
+        # Verify the top of stack is a WHILE loop
+        if self.loop_stack[-1]['type'] != 'WHILE':
+            # Error: trying to WEND but top of stack is a FOR loop
+            loop_type = self.loop_stack[-1]['type']
+            if loop_type == 'FOR':
+                var_name = self.loop_stack[-1]['var']
+                raise RuntimeError(f"WEND without WHILE - found FOR {var_name} loop instead")
+            raise RuntimeError("WEND without WHILE - improper loop nesting")
+
+        return self.loop_stack.pop()
 
     def peek_while_loop(self):
         """Get most recent WHILE loop info without removing it"""
-        if self.while_loops:
-            return self.while_loops[-1]
+        # Find the most recent WHILE loop on the stack
+        for i in range(len(self.loop_stack) - 1, -1, -1):
+            if self.loop_stack[i]['type'] == 'WHILE':
+                return self.loop_stack[i]
         return None
 
     def find_line(self, line_number):
@@ -910,69 +948,67 @@ class Runtime:
         # Extract just the line numbers from the stack
         return [line_num for line_num, stmt_idx in self.gosub_stack]
 
-    def get_for_loop_stack(self):
-        """Export FOR loop stack in nesting order.
+    def get_loop_stack(self):
+        """Export unified loop stack in nesting order.
 
-        Returns information about all active FOR loops, including the loop
-        variable, current value, end value, step, and line number.
+        Returns information about all active loops (FOR and WHILE), properly
+        interleaved in the order they were entered. This allows detection of
+        improper nesting like FOR...WHILE...NEXT...WEND.
 
         Returns:
-            list: List of dictionaries with FOR loop information in nesting order.
+            list: List of dictionaries with loop information in nesting order.
                  The first entry is the outermost loop (entered first),
                  and the last entry is the innermost loop (entered most recently).
 
-                 Example: [
-                     {'var': 'I', 'current': 5, 'end': 10, 'step': 1, 'line': 100},
-                     {'var': 'J', 'current': 2, 'end': 5, 'step': 1, 'line': 150}
+                 For FOR loops:
+                 {
+                     'type': 'FOR',
+                     'var': 'I',
+                     'current': 5,
+                     'end': 10,
+                     'step': 1,
+                     'line': 100
+                 }
+
+                 For WHILE loops:
+                 {
+                     'type': 'WHILE',
+                     'line': 150
+                 }
+
+                 Example with nested loops:
+                 [
+                     {'type': 'FOR', 'var': 'I', 'current': 1, 'end': 10, 'step': 1, 'line': 100},
+                     {'type': 'WHILE', 'line': 150},
+                     {'type': 'FOR', 'var': 'J', 'current': 3, 'end': 5, 'step': 1, 'line': 200}
                  ]
-                 In this example, I is the outer loop and J is the inner loop.
+
+                 This shows: FOR I at 100, then WHILE at 150, then FOR J at 200 (innermost).
+                 Proper unwinding would be: NEXT J, WEND, NEXT I.
 
         Note: The order reflects nesting level based on execution order (when each
-              FOR was entered), not source line order. This is correct for BASIC
-              where GOTOs can cause FOR loops to be entered in any line order.
+              loop was entered), not source line order. This is correct for BASIC
+              where GOTOs can cause loops to be entered in any line order.
         """
         result = []
-        for var_name, loop_info in self.for_loops.items():
-            # Get current value of loop variable
-            current_value = self.variables.get(var_name, 0)
+        for loop_info in self.loop_stack:
+            if loop_info['type'] == 'FOR':
+                # Get current value of loop variable
+                var_name = loop_info['var']
+                current_value = self.variables.get(var_name, 0)
 
-            result.append({
-                'var': var_name,
-                'current': current_value,
-                'end': loop_info.get('end', 0),
-                'step': loop_info.get('step', 1),
-                'line': loop_info.get('return_line', 0)
-            })
-
-        return result
-
-    def get_while_loop_stack(self):
-        """Export WHILE loop stack in nesting order.
-
-        Returns information about all active WHILE loops, including the
-        line number where the WHILE statement is located.
-
-        Returns:
-            list: List of dictionaries with WHILE loop information in nesting order.
-                 The first entry is the outermost loop (entered first),
-                 and the last entry is the innermost loop (entered most recently).
-
-                 Example: [
-                     {'line': 100},
-                     {'line': 150}
-                 ]
-                 In this example, the WHILE at line 100 is the outer loop
-                 and the WHILE at line 150 is the inner loop.
-
-        Note: The order reflects nesting level based on execution order (when each
-              WHILE was entered), not source line order. This is correct for BASIC
-              where GOTOs can cause WHILE loops to be entered in any line order.
-              The list maintains the stack order from bottom to top.
-        """
-        result = []
-        for loop_info in self.while_loops:
-            result.append({
-                'line': loop_info.get('while_line', 0)
-            })
+                result.append({
+                    'type': 'FOR',
+                    'var': var_name,
+                    'current': current_value,
+                    'end': loop_info.get('end', 0),
+                    'step': loop_info.get('step', 1),
+                    'line': loop_info.get('return_line', 0)
+                })
+            elif loop_info['type'] == 'WHILE':
+                result.append({
+                    'type': 'WHILE',
+                    'line': loop_info.get('while_line', 0)
+                })
 
         return result
