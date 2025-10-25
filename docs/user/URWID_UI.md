@@ -979,12 +979,17 @@ Errors will appear in the output window with full tracebacks.
 
 ### Long Term (v2.0)
 
-- [ ] Mouse support for all operations
-- [ ] Watch window for variables (pause and ask before implementing)
-- [ ] Call stack and loop nesting viewer (pause and ask before implementing)
+- [ ] Watch window for variables
+- [ ] Call stack and loop nesting viewer
   - Shows GOSUB/RETURN stack
   - Shows active FOR/WHILE loops
   - Combined because they must nest properly together
+
+### Possible Future Features
+
+Features that may be added in the future, but are not currently prioritized:
+
+- Mouse support for all operations (click to set breakpoints, position cursor, etc.)
 
 ## Resources
 
