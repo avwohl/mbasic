@@ -177,7 +177,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     # Now let the key be processed at the new position
                     return super().keypress(size, key)
             else:
-                # Typing a digit in line number area - keep within 5-character field
+                # Typing a digit in line number area - overwrite mode
                 if line_num < len(lines):
                     line_start = sum(len(lines[i]) + 1 for i in range(line_num))
                     line = lines[line_num]
@@ -195,12 +195,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     # Find position within linenum_field (0-4)
                     pos_in_field = col_in_line - 2
 
-                    # Insert digit at position and keep only 5 chars
+                    # Replace character at position (overwrite mode)
                     linenum_list = list(linenum_field)
-                    linenum_list.insert(pos_in_field, key)
-
-                    # Keep only rightmost 5 characters (shift left if overflow)
-                    linenum_list = linenum_list[-5:]
+                    if pos_in_field < len(linenum_list):
+                        linenum_list[pos_in_field] = key
                     linenum_field = ''.join(linenum_list)
 
                     # Rebuild line
@@ -211,31 +209,55 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     # Update text
                     self.edit_widget.set_edit_text(new_text)
 
-                    # Position cursor after inserted digit (but stay in field)
+                    # Position cursor after typed digit (move right, stay in field)
                     new_col = min(col_in_line + 1, 6)
                     new_cursor_pos = line_start + new_col
                     self.edit_widget.set_edit_pos(new_cursor_pos)
 
                     return None
 
-        # Handle input at column 7 (separator space) - move to code area
+        # Handle input at column 7 (separator space)
         if col_in_line == 7 and len(key) == 1 and key.isprintable():
-            # Move cursor to code area (column 8) and insert character there
             if line_num < len(lines):
                 line_start = sum(len(lines[i]) + 1 for i in range(line_num))
-                # Ensure line is at least 8 characters long
                 line = lines[line_num]
+
+                # Ensure line is at least 8 characters long
                 if len(line) < 8:
-                    # Pad line to have at least 8 characters
                     line = line + ' ' * (8 - len(line))
+
+                if key.isdigit():
+                    # Digit at column 7: move back to column 6 and replace that digit
+                    status = line[0]
+                    space1 = line[1]
+                    linenum_field = line[2:7]  # 5 characters
+                    rest = line[7:]
+
+                    # Replace rightmost digit (position 4 in field, column 6 overall)
+                    linenum_list = list(linenum_field)
+                    linenum_list[4] = key  # position 4 = rightmost of 5-char field
+                    linenum_field = ''.join(linenum_list)
+
+                    # Rebuild line
+                    new_line = status + space1 + linenum_field + rest
+                    lines[line_num] = new_line
+                    new_text = '\n'.join(lines)
+                    self.edit_widget.set_edit_text(new_text)
+
+                    # Keep cursor at column 7 (after the line number)
+                    new_cursor_pos = line_start + 7
+                    self.edit_widget.set_edit_pos(new_cursor_pos)
+                    return None
+                else:
+                    # Non-digit at column 7: move to code area (column 8) and insert
                     lines[line_num] = line
                     current_text = '\n'.join(lines)
                     self.edit_widget.set_edit_text(current_text)
-                # Move cursor to column 8
-                new_cursor_pos = line_start + 8
-                self.edit_widget.set_edit_pos(new_cursor_pos)
-                # Now let the key be processed at the new position
-                return super().keypress(size, key)
+                    # Move cursor to column 8
+                    new_cursor_pos = line_start + 8
+                    self.edit_widget.set_edit_pos(new_cursor_pos)
+                    # Now let the key be processed at the new position
+                    return super().keypress(size, key)
 
         # Handle Enter key - commits line and moves to next with auto-numbering
         if key == 'enter' and self.auto_number_enabled:
