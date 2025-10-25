@@ -166,7 +166,12 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Mark that we need to parse/refresh after paste completes
             self._needs_refresh = True
 
-            return super().keypress(size, key)
+            result = super().keypress(size, key)
+
+            # Force screen invalidation so urwid redraws
+            self._invalidate()
+
+            return result
 
         # Get current cursor position (only for special keys)
         current_text = self.edit_widget.get_edit_text()
