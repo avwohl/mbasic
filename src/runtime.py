@@ -69,12 +69,11 @@ class Runtime:
         self.next_line = None         # Set by GOTO/GOSUB for jump
         self.next_stmt_index = None   # Set by RETURN for precise return point
 
-        # Control flow stacks
-        self.gosub_stack = []         # [(return_line, return_stmt_index), ...]
-        # Unified loop stack - tracks all active loops (FOR and WHILE) in nesting order
-        # Each entry: {'type': 'FOR'|'WHILE', ...type-specific fields...}
-        self.loop_stack = []
-        # Quick lookup: var_name -> index in loop_stack (for FOR loops)
+        # Unified execution stack - tracks all active control flow (GOSUB, FOR, WHILE) in nesting order
+        # Each entry: {'type': 'GOSUB'|'FOR'|'WHILE', ...type-specific fields...}
+        # This allows detection of improper nesting like GOSUB...FOR...RETURN...NEXT
+        self.execution_stack = []
+        # Quick lookup: var_name -> index in execution_stack (for FOR loops only)
         self.for_loop_vars = {}
 
         # Line number resolution
@@ -728,25 +727,43 @@ class Runtime:
                 self.data_pointer = len(self.data_items)
 
     def push_gosub(self, return_line, return_stmt_index):
-        """Push GOSUB return address"""
-        self.gosub_stack.append((return_line, return_stmt_index))
+        """Push GOSUB return address onto unified execution stack"""
+        gosub_entry = {
+            'type': 'GOSUB',
+            'return_line': return_line,
+            'return_stmt': return_stmt_index
+        }
+        self.execution_stack.append(gosub_entry)
 
     def pop_gosub(self):
         """
-        Pop GOSUB return address.
+        Pop GOSUB return address from unified execution stack.
 
         Returns:
             (return_line, return_stmt_index) tuple
 
         Raises:
-            RuntimeError: If stack is empty
+            RuntimeError: If stack is empty or top is not a GOSUB
         """
-        if not self.gosub_stack:
+        if not self.execution_stack:
             raise RuntimeError("RETURN without GOSUB")
-        return self.gosub_stack.pop()
+
+        # Verify the top of stack is a GOSUB
+        if self.execution_stack[-1]['type'] != 'GOSUB':
+            # Error: trying to RETURN but top of stack is a loop
+            entry_type = self.execution_stack[-1]['type']
+            if entry_type == 'FOR':
+                var_name = self.execution_stack[-1]['var']
+                raise RuntimeError(f"RETURN without GOSUB - found FOR {var_name} loop instead")
+            elif entry_type == 'WHILE':
+                raise RuntimeError("RETURN without GOSUB - found WHILE loop instead")
+            raise RuntimeError(f"RETURN without GOSUB - improper nesting")
+
+        entry = self.execution_stack.pop()
+        return (entry['return_line'], entry['return_stmt'])
 
     def push_for_loop(self, var_name, end_value, step_value, return_line, return_stmt_index):
-        """Register a FOR loop on the unified loop stack"""
+        """Register a FOR loop on the unified execution stack"""
         loop_entry = {
             'type': 'FOR',
             'var': var_name,
@@ -755,9 +772,9 @@ class Runtime:
             'return_line': return_line,
             'return_stmt': return_stmt_index
         }
-        self.loop_stack.append(loop_entry)
+        self.execution_stack.append(loop_entry)
         # Track index for quick lookup by variable name
-        self.for_loop_vars[var_name] = len(self.loop_stack) - 1
+        self.for_loop_vars[var_name] = len(self.execution_stack) - 1
 
     def pop_for_loop(self, var_name):
         """Remove a FOR loop - verifies it's on top of stack"""
@@ -768,13 +785,13 @@ class Runtime:
         loop_index = self.for_loop_vars[var_name]
 
         # Verify this FOR loop is on top of the stack
-        if loop_index != len(self.loop_stack) - 1:
-            # Error: trying to exit a FOR loop that isn't the innermost loop
-            # This means there's improper nesting (e.g., FOR I / WHILE / NEXT I / WEND)
-            raise RuntimeError(f"NEXT {var_name} without matching FOR - improper loop nesting")
+        if loop_index != len(self.execution_stack) - 1:
+            # Error: trying to exit a FOR loop that isn't the innermost control structure
+            # This means there's improper nesting (e.g., FOR I / GOSUB / NEXT I / RETURN)
+            raise RuntimeError(f"NEXT {var_name} without matching FOR - improper nesting")
 
         # Remove from stack
-        self.loop_stack.pop()
+        self.execution_stack.pop()
         del self.for_loop_vars[var_name]
 
     def get_for_loop(self, var_name):
@@ -782,39 +799,41 @@ class Runtime:
         if var_name not in self.for_loop_vars:
             return None
         loop_index = self.for_loop_vars[var_name]
-        return self.loop_stack[loop_index]
+        return self.execution_stack[loop_index]
 
     def push_while_loop(self, while_line, while_stmt_index):
-        """Register a WHILE loop on the unified loop stack"""
+        """Register a WHILE loop on the unified execution stack"""
         loop_entry = {
             'type': 'WHILE',
             'while_line': while_line,
             'while_stmt': while_stmt_index
         }
-        self.loop_stack.append(loop_entry)
+        self.execution_stack.append(loop_entry)
 
     def pop_while_loop(self):
         """Remove most recent WHILE loop - verifies it's actually a WHILE"""
-        if not self.loop_stack:
+        if not self.execution_stack:
             return None
 
         # Verify the top of stack is a WHILE loop
-        if self.loop_stack[-1]['type'] != 'WHILE':
-            # Error: trying to WEND but top of stack is a FOR loop
-            loop_type = self.loop_stack[-1]['type']
-            if loop_type == 'FOR':
-                var_name = self.loop_stack[-1]['var']
+        if self.execution_stack[-1]['type'] != 'WHILE':
+            # Error: trying to WEND but top of stack is not a WHILE
+            entry_type = self.execution_stack[-1]['type']
+            if entry_type == 'FOR':
+                var_name = self.execution_stack[-1]['var']
                 raise RuntimeError(f"WEND without WHILE - found FOR {var_name} loop instead")
-            raise RuntimeError("WEND without WHILE - improper loop nesting")
+            elif entry_type == 'GOSUB':
+                raise RuntimeError("WEND without WHILE - found GOSUB instead")
+            raise RuntimeError("WEND without WHILE - improper nesting")
 
-        return self.loop_stack.pop()
+        return self.execution_stack.pop()
 
     def peek_while_loop(self):
         """Get most recent WHILE loop info without removing it"""
         # Find the most recent WHILE loop on the stack
-        for i in range(len(self.loop_stack) - 1, -1, -1):
-            if self.loop_stack[i]['type'] == 'WHILE':
-                return self.loop_stack[i]
+        for i in range(len(self.execution_stack) - 1, -1, -1):
+            if self.execution_stack[i]['type'] == 'WHILE':
+                return self.execution_stack[i]
         return None
 
     def find_line(self, line_number):
@@ -945,20 +964,27 @@ class Runtime:
 
         Note: The first element is the oldest GOSUB, the last is the most recent.
         """
-        # Extract just the line numbers from the stack
-        return [line_num for line_num, stmt_idx in self.gosub_stack]
+        # Extract just the return line numbers from GOSUB entries in the execution stack
+        return [entry['return_line'] for entry in self.execution_stack if entry['type'] == 'GOSUB']
 
-    def get_loop_stack(self):
-        """Export unified loop stack in nesting order.
+    def get_execution_stack(self):
+        """Export unified execution stack (GOSUB, FOR, WHILE) in nesting order.
 
-        Returns information about all active loops (FOR and WHILE), properly
+        Returns information about all active control flow structures,
         interleaved in the order they were entered. This allows detection of
-        improper nesting like FOR...WHILE...NEXT...WEND.
+        improper nesting like FOR...GOSUB...NEXT...RETURN.
 
         Returns:
-            list: List of dictionaries with loop information in nesting order.
-                 The first entry is the outermost loop (entered first),
-                 and the last entry is the innermost loop (entered most recently).
+            list: List of dictionaries with control flow information in nesting order.
+                 The first entry is the outermost (entered first),
+                 and the last entry is the innermost (entered most recently).
+
+                 For GOSUB calls:
+                 {
+                     'type': 'GOSUB',
+                     'from_line': 50,
+                     'return_line': 60
+                 }
 
                  For FOR loops:
                  {
@@ -976,39 +1002,49 @@ class Runtime:
                      'line': 150
                  }
 
-                 Example with nested loops:
+                 Example with nested control flow:
                  [
                      {'type': 'FOR', 'var': 'I', 'current': 1, 'end': 10, 'step': 1, 'line': 100},
-                     {'type': 'WHILE', 'line': 150},
-                     {'type': 'FOR', 'var': 'J', 'current': 3, 'end': 5, 'step': 1, 'line': 200}
+                     {'type': 'GOSUB', 'from_line': 120, 'return_line': 130},
+                     {'type': 'WHILE', 'line': 500}
                  ]
 
-                 This shows: FOR I at 100, then WHILE at 150, then FOR J at 200 (innermost).
-                 Proper unwinding would be: NEXT J, WEND, NEXT I.
+                 This shows: FOR I at 100, then GOSUB from 120, then WHILE at 500 (innermost).
+                 Proper unwinding would be: WEND, RETURN, NEXT I.
 
         Note: The order reflects nesting level based on execution order (when each
-              loop was entered), not source line order. This is correct for BASIC
-              where GOTOs can cause loops to be entered in any line order.
+              structure was entered), not source line order.
         """
         result = []
-        for loop_info in self.loop_stack:
-            if loop_info['type'] == 'FOR':
+        for entry in self.execution_stack:
+            if entry['type'] == 'GOSUB':
+                result.append({
+                    'type': 'GOSUB',
+                    'from_line': entry.get('return_line', 0),  # Line to return to
+                    'return_line': entry.get('return_line', 0)
+                })
+            elif entry['type'] == 'FOR':
                 # Get current value of loop variable
-                var_name = loop_info['var']
+                var_name = entry['var']
                 current_value = self.variables.get(var_name, 0)
 
                 result.append({
                     'type': 'FOR',
                     'var': var_name,
                     'current': current_value,
-                    'end': loop_info.get('end', 0),
-                    'step': loop_info.get('step', 1),
-                    'line': loop_info.get('return_line', 0)
+                    'end': entry.get('end', 0),
+                    'step': entry.get('step', 1),
+                    'line': entry.get('return_line', 0)
                 })
-            elif loop_info['type'] == 'WHILE':
+            elif entry['type'] == 'WHILE':
                 result.append({
                     'type': 'WHILE',
-                    'line': loop_info.get('while_line', 0)
+                    'line': entry.get('while_line', 0)
                 })
 
         return result
+
+    # Backward compatibility alias
+    def get_loop_stack(self):
+        """Deprecated: Use get_execution_stack() instead."""
+        return self.get_execution_stack()

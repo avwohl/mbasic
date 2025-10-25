@@ -1,0 +1,7 @@
+10 REM Test improper nesting - RETURN across FOR boundary
+20 GOSUB 100
+30 END
+100 FOR I = 1 TO 3
+110   PRINT I
+120 NEXT I
+130 RETURN

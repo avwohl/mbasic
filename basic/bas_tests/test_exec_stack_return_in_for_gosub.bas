@@ -1,0 +1,8 @@
+10 REM Test improper nesting - RETURN inside FOR within GOSUB
+20 GOSUB 100
+30 END
+100 FOR I = 1 TO 3
+110   PRINT I
+120   IF I = 2 THEN RETURN
+130 NEXT I
+140 RETURN
