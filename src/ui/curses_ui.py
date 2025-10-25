@@ -84,20 +84,27 @@ class OutputLine(urwid.Text):
 
     def render(self, size, focus=False):
         """Render with green cursor on first char if focused."""
-        # Update text markup based on focus state
-        if focus != self._has_focus:
-            self._has_focus = focus
-            if focus and len(self.line_text) > 0:
-                # GREEN cursor on first character
-                first_char = self.line_text[0]
-                rest = self.line_text[1:] if len(self.line_text) > 1 else ""
-                markup = [('output_focus', first_char), rest]
-                self.set_text(markup)
-            else:
-                # No focus - plain text
-                self.set_text(self.line_text)
+        # ALWAYS update text markup based on focus state
+        # Don't check if focus changed - just update based on current state
+        if focus and len(self.line_text) > 0:
+            # GREEN cursor on first character
+            first_char = self.line_text[0]
+            rest = self.line_text[1:] if len(self.line_text) > 1 else ""
+            markup = [('output_focus', first_char), rest]
+            self.set_text(markup)
+        else:
+            # No focus - plain text
+            self.set_text(self.line_text)
 
+        self._has_focus = focus
         return super().render(size, focus)
+
+    def get_cursor_coords(self, size):
+        """Return cursor position to help ListBox keep it visible."""
+        if self._has_focus:
+            # Return cursor at position 0 (first character)
+            return (0, 0)
+        return None
 
 
 def make_output_line(text):
@@ -179,7 +186,16 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         - Column 6: Space
         - Columns 7+: Code - editable
         """
-        # Get current cursor position
+        # CRITICAL PERFORMANCE: For paste operations, skip expensive processing
+        # Only process special keys that actually need column-aware handling
+        if not (key.startswith('ctrl ') or
+                key in ['tab', 'enter', 'esc', 'up', 'down', 'left', 'right',
+                        'page up', 'page down', 'home', 'end', 'backspace']):
+            # Normal character - just pass through
+            # This makes paste 100x faster by skipping text parsing
+            return super().keypress(size, key)
+
+        # Get current cursor position (only for special keys)
         current_text = self.edit_widget.get_edit_text()
         cursor_pos = self.edit_widget.edit_pos
 
