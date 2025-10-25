@@ -15,6 +15,26 @@ import time
 from ast_nodes import DataStatementNode, DefFnStatementNode
 
 
+def split_variable_name_and_suffix(full_name):
+    """
+    Split a full variable name into base name and type suffix.
+
+    Args:
+        full_name: Full variable name like 'err%', 'x$', 'foo!'
+
+    Returns:
+        tuple: (base_name, type_suffix) or (base_name, None) if no suffix
+
+    Examples:
+        'err%' -> ('err', '%')
+        'x$' -> ('x', '$')
+        'foo' -> ('foo', None)
+    """
+    if full_name and full_name[-1] in '$%!#':
+        return (full_name[:-1], full_name[-1])
+    return (full_name, None)
+
+
 class Runtime:
     """Runtime state for BASIC program execution"""
 
@@ -349,22 +369,8 @@ class Runtime:
             full_name: Full variable name with suffix (lowercase)
             value: Value to set
         """
-        # Split the variable name from the type suffix
-        name = full_name
-        type_suffix = None
-
-        if full_name.endswith('%'):
-            name = full_name[:-1]
-            type_suffix = '%'
-        elif full_name.endswith('!'):
-            name = full_name[:-1]
-            type_suffix = '!'
-        elif full_name.endswith('#'):
-            name = full_name[:-1]
-            type_suffix = '#'
-        elif full_name.endswith('$'):
-            name = full_name[:-1]
-            type_suffix = '$'
+        # Split the variable name from the type suffix using utility function
+        name, type_suffix = split_variable_name_and_suffix(full_name)
 
         # Create a fake token with line=-1 to indicate internal/system setting
         class FakeToken:
