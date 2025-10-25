@@ -64,63 +64,47 @@ class TopLeftBox(urwid.WidgetWrap):
         super().__init__(pile)
 
 
-class OutputLineWidget(urwid.Text):
-    """Selectable text widget for output lines with cursor indicator on first char."""
-
-    def __init__(self, text):
-        """Initialize output line widget.
-
-        Args:
-            text: The line text to display
-        """
-        self.line_text = text
-        # Start with plain text
-        super().__init__(text)
+class SelectableText(urwid.Text):
+    """Simple selectable text widget."""
 
     def selectable(self):
         """Make this widget selectable for focus."""
         return True
 
     def keypress(self, size, key):
-        """Handle keypresses - just return them to allow navigation."""
-        # Return key unconsumed to let ListBox handle navigation
-        # The ListBox will handle up/down/page up/page down
+        """Handle keypresses - return unconsumed to allow ListBox navigation."""
         return key
 
-    def render(self, size, focus=False):
-        """Render with focus highlighting on first character.
 
-        Args:
-            size: Rendering size
-            focus: True if this widget has focus
+def make_output_line(text):
+    """Create an output line widget with focus highlighting on first char.
 
-        Returns:
-            Canvas for rendering
-        """
-        # Update text based on focus state EVERY time render is called
-        # This ensures we show the correct state even when focus changes
-        if focus:
-            # Show green background on first character only
-            if self.line_text and len(self.line_text) > 0:
-                first_char = self.line_text[0]
-                rest = self.line_text[1:] if len(self.line_text) > 1 else ""
-                markup = [('output_focus', first_char), rest]
-                self.set_text(markup)
-            else:
-                # Empty line - show a visible cursor character
-                markup = [('output_focus', ' ')]
-                self.set_text(markup)
-        else:
-            # No focus, show plain text
-            self.set_text(self.line_text)
+    Args:
+        text: Line text to display
 
-        # Call parent render
-        canvas = super().render(size, focus)
+    Returns:
+        Widget with focus highlighting
+    """
+    if text and len(text) > 0:
+        # Create markup: first char can be highlighted, rest is normal
+        first_char = text[0]
+        rest = text[1:] if len(text) > 1 else ""
 
-        # Force invalidate to ensure we redraw on focus changes
-        self._invalidate()
+        # Create text widget with markup
+        # When focused, first char will use output_focus style
+        markup = [('output', first_char), rest]
+        widget = SelectableText(markup)
 
-        return canvas
+        # Wrap in AttrMap to apply focus highlighting to first char
+        # When focused, anything with 'output' becomes 'output_focus'
+        attr_widget = urwid.AttrMap(widget, 'output', {None: 'output', 'output': 'output_focus'})
+
+        return attr_widget
+    else:
+        # Empty line - show space with potential focus
+        widget = SelectableText([('output', ' ')])
+        attr_widget = urwid.AttrMap(widget, 'output', {None: 'output', 'output': 'output_focus'})
+        return attr_widget
 
 
 class ProgramEditorWidget(urwid.WidgetWrap):
@@ -1303,15 +1287,8 @@ Examples:
 
         # Add all lines from buffer with focus highlighting on first char
         for line in self.output_buffer:
-            # Create text widget with markup for first character highlighting
-            if line and len(line) > 0:
-                # Create markup with green on first char when focused
-                text_widget = OutputLineWidget(line)
-            else:
-                # Empty line
-                text_widget = OutputLineWidget("")
-
-            self.output_walker.append(text_widget)
+            line_widget = make_output_line(line)
+            self.output_walker.append(line_widget)
 
         # Set focus to bottom (latest output)
         if len(self.output_walker) > 0:
@@ -1328,18 +1305,16 @@ Examples:
 
         # Add all lines with focus highlighting on first char
         for line in lines:
-            line_widget = OutputLineWidget(line)
+            line_widget = make_output_line(line)
             self.output_walker.append(line_widget)
 
         # Scroll to the bottom (last line)
         if len(self.output_walker) > 0:
             # Set focus on the walker
             self.output_walker.set_focus(len(self.output_walker) - 1)
-            # Force ListBox to scroll to make focused widget visible
-            try:
-                self.output.set_focus_valign('bottom')
-            except:
-                pass
+            # Force a screen update
+            if hasattr(self, 'loop') and self.loop:
+                self.loop.draw_screen()
 
     def _get_input_dialog(self, prompt):
         """Show input dialog and get user response."""
