@@ -625,6 +625,18 @@ class CursesBackend(UIBackend):
         # Register signal handler
         signal.signal(signal.SIGINT, handle_sigint)
 
+        # Set up a callback to make cursor visible after screen starts
+        def setup_cursor():
+            try:
+                import curses
+                # Set cursor to very visible (block cursor)
+                curses.curs_set(2)  # 2 = very visible (block), 1 = normal, 0 = invisible
+            except:
+                pass
+
+        # Schedule cursor setup to run after screen initializes
+        self.loop.set_alarm_in(0, lambda loop, user_data: setup_cursor())
+
         # Run the main loop
         try:
             self.loop.run()
@@ -702,8 +714,6 @@ class CursesBackend(UIBackend):
             ('footer', 'white', 'dark blue'),
             ('focus', 'black', 'yellow'),
             ('error', 'light red', 'black'),
-            # Cursor styles - make cursor visible
-            ('cursor', 'black', 'light gray'),
         ]
 
     def _handle_input(self, key):
