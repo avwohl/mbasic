@@ -56,6 +56,7 @@ python3 mbasic.py --backend curses program.bas
 | Key | Action |
 |-----|--------|
 | `Ctrl+Q` / `Ctrl+C` | Quit the program |
+| `Ctrl+M` | Show menu with all commands and shortcuts |
 | `Ctrl+H` | Show help dialog |
 | `Ctrl+R` | Run the current program |
 | `Ctrl+L` | List program lines |
@@ -92,8 +93,9 @@ python3 mbasic.py --backend curses program.bas
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│ MBASIC 5.21 Screen Editor                          │
+│ File   Edit   Run   Help                           │ ← Menu Bar
 ├─────────────────────────────────────────────────────┤
+│ Editor                                              │
 │●   10 PRINT "Hello, World!"                         │
 │    20 FOR I = 1 TO 10                               │
 │?   30 PRINT I                                       │
@@ -101,12 +103,12 @@ python3 mbasic.py --backend curses program.bas
 │    50 END                                           │
 │                                                     │
 ├─────────────────────────────────────────────────────┤
-│ Output Window                                       │
+│ Output                                              │
 │ Hello, World!                                       │
 │ 1                                                   │
 │ 2                                                   │
 ├─────────────────────────────────────────────────────┤
-│ Status: Ready - Press Ctrl+H for help              │
+│ Status: Ready - Press Ctrl+M for menu, Ctrl+H help │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -140,6 +142,54 @@ When a line has multiple states (error + breakpoint), the status character shows
 │   └──── Line number (columns 1-5)
 └──────── Status (column 0)
 ```
+
+### Menu System
+
+The UI includes a menu bar at the top showing the main command categories: **File**, **Edit**, **Run**, and **Help**.
+
+#### Accessing the Menu
+
+Press `Ctrl+M` to show a popup menu with all available commands organized by category.
+
+**Menu Layout:**
+```
+══════════════════════════════════════════════════════════════
+
+                     MBASIC 5.21 MENU
+
+══════════════════════════════════════════════════════════════
+
+File                          Edit
+────────────────────          ────────────────────
+  New             Ctrl+N        Delete Line     Ctrl+D
+  Open...         Ctrl+O        Renumber...     Ctrl+E
+  Save            Ctrl+S        Toggle Break    Ctrl+B
+  Quit            Ctrl+Q
+
+Run                           Help
+────────────────────          ────────────────────
+  Run             Ctrl+R        Show Help       Ctrl+H
+  Step            Ctrl+T
+  Continue        Ctrl+G
+  Stop            Ctrl+X
+
+══════════════════════════════════════════════════════════════
+
+                  Press any key to close
+
+══════════════════════════════════════════════════════════════
+```
+
+**Features:**
+- All commands show their keyboard shortcuts
+- Organized into logical categories (File, Edit, Run, Help)
+- Press any key to close the menu
+- Menu bar always visible at top of screen
+
+**When to use:**
+- Quick reference for keyboard shortcuts
+- Discover available commands
+- Check which Ctrl+key does what
 
 ## How to Use
 
@@ -925,7 +975,7 @@ Errors will appear in the output window with full tracebacks.
 - [x] Add breakpoint support (toggle with Ctrl+B)
 - [x] Implement Step/Continue/Stop debugger (Ctrl+T/Ctrl+G/Ctrl+X)
 - [x] Visual stepping through colon-separated statements (cyan highlighting shows active statement)
-- [ ] Create menu system
+- [x] Create menu system (Ctrl+M shows all commands with shortcuts)
 
 ### Long Term (v2.0)
 

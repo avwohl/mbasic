@@ -79,6 +79,15 @@ def make_output_line(text):
     return SelectableText(text if text else "")
 
 
+class MenuBar(urwid.Text):
+    """Simple menu bar showing available menu categories."""
+
+    def __init__(self):
+        """Initialize menu bar."""
+        menu_text = " File   Edit   Run   Help "
+        super().__init__(menu_text, align='left')
+
+
 class ProgramEditorWidget(urwid.WidgetWrap):
     """3-column program editor widget for BASIC programs.
 
@@ -1325,6 +1334,7 @@ class CursesBackend(UIBackend):
     def _create_ui(self):
         """Create the urwid UI layout."""
         # Create widgets
+        self.menu_bar = urwid.AttrMap(MenuBar(), 'header')
         self.editor = ProgramEditorWidget()
 
         # Create scrollable output window using ListBox
@@ -1334,7 +1344,7 @@ class CursesBackend(UIBackend):
         # Pass output_walker to editor for displaying syntax errors
         self.editor._output_walker = self.output_walker
 
-        self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+Q or Ctrl+C to quit")
+        self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+M for menu, Ctrl+Q to quit")
 
         # Create editor frame with top/left border only (no bottom/right space reserved)
         editor_frame = TopLeftBox(
@@ -1349,15 +1359,16 @@ class CursesBackend(UIBackend):
             title="Output"
         )
 
-        # Create layout - editor on top (70%), output on bottom (30%)
+        # Create layout - menu bar at top, editor (70%), output (30%), status bar at bottom
         pile = urwid.Pile([
+            ('pack', self.menu_bar),
             ('weight', 7, editor_frame),
             ('weight', 3, output_frame),
             ('pack', self.status_bar)
         ])
 
-        # Set focus to the editor (first item in pile)
-        pile.focus_position = 0
+        # Set focus to the editor (second item in pile, after menu bar)
+        pile.focus_position = 1
 
         # Create main widget with keybindings
         main_widget = urwid.AttrMap(pile, 'body')
@@ -1393,17 +1404,21 @@ class CursesBackend(UIBackend):
             raise urwid.ExitMainLoop()
 
         elif key == 'tab':
-            # Toggle between editor (position 0) and output (position 1)
+            # Toggle between editor (position 1) and output (position 2)
             pile = self.loop.widget.base_widget
-            if pile.focus_position == 0:
+            if pile.focus_position == 1:
                 # Switch to output for scrolling
-                pile.focus_position = 1
+                pile.focus_position = 2
                 self.status_bar.set_text("Output - Use Up/Down to scroll, Tab to return to editor")
             else:
                 # Switch back to editor
-                pile.focus_position = 0
+                pile.focus_position = 1
                 self.status_bar.set_text("Editor - Press Ctrl+H for help")
             return None
+
+        elif key == 'ctrl m':
+            # Show menu
+            self._show_menu()
 
         elif key == 'ctrl h':
             # Show help
@@ -1766,6 +1781,7 @@ MBASIC 5.21 - Keyboard Shortcuts
 
 Global Commands:
   Ctrl+Q / Ctrl+C  - Quit
+  Ctrl+M  - Show menu
   Ctrl+H  - This help
   Ctrl+R  - Run program
   Ctrl+L  - List program
@@ -1841,6 +1857,60 @@ Examples:
         # Store original widget
         main_widget = self.loop.widget.base_widget
         self.loop.unhandled_input = close_help
+
+    def _show_menu(self):
+        """Show menu with all available commands."""
+        menu_text = """
+══════════════════════════════════════════════════════════════
+
+                     MBASIC 5.21 MENU
+
+══════════════════════════════════════════════════════════════
+
+File                          Edit
+────────────────────          ────────────────────
+  New             Ctrl+N        Delete Line     Ctrl+D
+  Open...         Ctrl+O        Renumber...     Ctrl+E
+  Save            Ctrl+S        Toggle Break    Ctrl+B
+  Quit            Ctrl+Q
+
+Run                           Help
+────────────────────          ────────────────────
+  Run             Ctrl+R        Show Help       Ctrl+H
+  Step            Ctrl+T        About           (see help)
+  Continue        Ctrl+G
+  Stop            Ctrl+X
+
+══════════════════════════════════════════════════════════════
+
+                  Press any key to close
+
+══════════════════════════════════════════════════════════════
+"""
+        # Create menu dialog
+        text = urwid.Text(menu_text)
+        fill = urwid.Filler(text, valign='middle')
+        box = urwid.LineBox(fill, title="Menu")
+        overlay = urwid.Overlay(
+            urwid.AttrMap(box, 'body'),
+            self.loop.widget,
+            align='center',
+            width=('relative', 70),
+            valign='middle',
+            height=('relative', 70)
+        )
+
+        # Show overlay and wait for key
+        self.loop.widget = overlay
+
+        # Set up a one-time keypress handler to close the dialog
+        def close_menu(key):
+            self.loop.widget = main_widget
+            self.loop.unhandled_input = self._handle_input
+
+        # Store original widget
+        main_widget = self.loop.widget.base_widget
+        self.loop.unhandled_input = close_menu
 
     def _run_program(self):
         """Run the current program using tick-based interpreter."""
