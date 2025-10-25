@@ -100,12 +100,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
     def keypress(self, size, key):
         """Handle key presses for column-aware editing and auto-numbering.
 
-        Format: "S NNNNN CODE"
+        Format: "SNNNNN CODE"
         - Column 0: Status (●, ?, space) - read-only
-        - Column 1: Space - read-only
-        - Columns 2-6: Line number (5 chars) - editable
-        - Column 7: Space
-        - Columns 8+: Code - editable
+        - Columns 1-5: Line number (5 chars) - editable
+        - Column 6: Space
+        - Columns 7+: Code - editable
         """
         # Get current cursor position
         current_text = self.edit_widget.get_edit_text()
@@ -126,20 +125,20 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         is_control_key = key.startswith('ctrl ') or key in ['tab', 'enter', 'esc']
 
         # If control key or leaving line number area, right-justify line number
-        if is_control_key or (col_in_line == 7 and len(key) == 1):
+        if is_control_key or (col_in_line == 6 and len(key) == 1):
             # Right-justify the line number on the current line
-            if line_num < len(lines) and len(lines[line_num]) >= 7:
+            if line_num < len(lines) and len(lines[line_num]) >= 6:
                 line = lines[line_num]
-                # Extract line number area (columns 2-6)
-                if len(line) >= 7:
+                # Extract line number area (columns 1-5)
+                if len(line) >= 6:
                     status = line[0] if len(line) > 0 else ' '
-                    line_num_text = line[2:7].strip()
-                    rest_of_line = line[7:] if len(line) > 7 else ''
+                    line_num_text = line[1:6].strip()
+                    rest_of_line = line[6:] if len(line) > 6 else ''
 
                     # Right-justify the line number
                     if line_num_text:
                         line_num_formatted = f"{line_num_text:>5}"
-                        new_line = f"{status} {line_num_formatted}{rest_of_line}"
+                        new_line = f"{status}{line_num_formatted}{rest_of_line}"
 
                         # Replace the line
                         lines[line_num] = new_line
@@ -148,31 +147,31 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                         self.edit_widget.set_edit_text(new_text)
                         self.edit_widget.set_edit_pos(old_cursor)
 
-        # Prevent typing in status column (columns 0-1)
-        if col_in_line < 2 and len(key) == 1 and key.isprintable():
-            # Move cursor to line number column (column 2)
-            new_cursor_pos = cursor_pos + (2 - col_in_line)
+        # Prevent typing in status column (column 0)
+        if col_in_line < 1 and len(key) == 1 and key.isprintable():
+            # Move cursor to line number column (column 1)
+            new_cursor_pos = cursor_pos + (1 - col_in_line)
             self.edit_widget.set_edit_pos(new_cursor_pos)
             # Process the key at new position
             cursor_pos = new_cursor_pos
-            col_in_line = 2
+            col_in_line = 1
 
-        # Handle input in line number column (2-6)
-        if 2 <= col_in_line <= 6 and len(key) == 1 and key.isprintable():
+        # Handle input in line number column (1-5)
+        if 1 <= col_in_line <= 5 and len(key) == 1 and key.isprintable():
             if not key.isdigit():
-                # Move cursor to code area (column 8) and insert character there
+                # Move cursor to code area (column 7) and insert character there
                 if line_num < len(lines):
                     line_start = sum(len(lines[i]) + 1 for i in range(line_num))
-                    # Ensure line is at least 8 characters long
+                    # Ensure line is at least 7 characters long
                     line = lines[line_num]
-                    if len(line) < 8:
-                        # Pad line to have at least 8 characters
-                        line = line + ' ' * (8 - len(line))
+                    if len(line) < 7:
+                        # Pad line to have at least 7 characters
+                        line = line + ' ' * (7 - len(line))
                         lines[line_num] = line
                         current_text = '\n'.join(lines)
                         self.edit_widget.set_edit_text(current_text)
-                    # Move cursor to column 8
-                    new_cursor_pos = line_start + 8
+                    # Move cursor to column 7
+                    new_cursor_pos = line_start + 7
                     self.edit_widget.set_edit_pos(new_cursor_pos)
                     # Now let the key be processed at the new position
                     return super().keypress(size, key)
@@ -182,18 +181,17 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     line_start = sum(len(lines[i]) + 1 for i in range(line_num))
                     line = lines[line_num]
 
-                    # Ensure line is at least 8 characters
-                    if len(line) < 8:
-                        line = line + ' ' * (8 - len(line))
+                    # Ensure line is at least 7 characters
+                    if len(line) < 7:
+                        line = line + ' ' * (7 - len(line))
 
-                    # Extract parts: status (0), space (1), linenum (2-6), space (7), code (8+)
+                    # Extract parts: status (0), linenum (1-5), space (6), code (7+)
                     status = line[0]
-                    space1 = line[1]
-                    linenum_field = line[2:7]  # 5 characters
-                    rest = line[7:]
+                    linenum_field = line[1:6]  # 5 characters
+                    rest = line[6:]
 
                     # Find position within linenum_field (0-4)
-                    pos_in_field = col_in_line - 2
+                    pos_in_field = col_in_line - 1
 
                     # Replace character at position (overwrite mode)
                     linenum_list = list(linenum_field)
@@ -202,7 +200,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     linenum_field = ''.join(linenum_list)
 
                     # Rebuild line
-                    new_line = status + space1 + linenum_field + rest
+                    new_line = status + linenum_field + rest
                     lines[line_num] = new_line
                     new_text = '\n'.join(lines)
 
@@ -210,51 +208,50 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     self.edit_widget.set_edit_text(new_text)
 
                     # Position cursor after typed digit (move right, stay in field)
-                    new_col = min(col_in_line + 1, 6)
+                    new_col = min(col_in_line + 1, 5)
                     new_cursor_pos = line_start + new_col
                     self.edit_widget.set_edit_pos(new_cursor_pos)
 
                     return None
 
-        # Handle input at column 7 (separator space)
-        if col_in_line == 7 and len(key) == 1 and key.isprintable():
+        # Handle input at column 6 (separator space)
+        if col_in_line == 6 and len(key) == 1 and key.isprintable():
             if line_num < len(lines):
                 line_start = sum(len(lines[i]) + 1 for i in range(line_num))
                 line = lines[line_num]
 
-                # Ensure line is at least 8 characters long
-                if len(line) < 8:
-                    line = line + ' ' * (8 - len(line))
+                # Ensure line is at least 7 characters long
+                if len(line) < 7:
+                    line = line + ' ' * (7 - len(line))
 
                 if key.isdigit():
-                    # Digit at column 7: move back to column 6 and replace that digit
+                    # Digit at column 6: move back to column 5 and replace that digit
                     status = line[0]
-                    space1 = line[1]
-                    linenum_field = line[2:7]  # 5 characters
-                    rest = line[7:]
+                    linenum_field = line[1:6]  # 5 characters
+                    rest = line[6:]
 
-                    # Replace rightmost digit (position 4 in field, column 6 overall)
+                    # Replace rightmost digit (position 4 in field, column 5 overall)
                     linenum_list = list(linenum_field)
                     linenum_list[4] = key  # position 4 = rightmost of 5-char field
                     linenum_field = ''.join(linenum_list)
 
                     # Rebuild line
-                    new_line = status + space1 + linenum_field + rest
+                    new_line = status + linenum_field + rest
                     lines[line_num] = new_line
                     new_text = '\n'.join(lines)
                     self.edit_widget.set_edit_text(new_text)
 
-                    # Keep cursor at column 7 (after the line number)
-                    new_cursor_pos = line_start + 7
+                    # Keep cursor at column 6 (after the line number)
+                    new_cursor_pos = line_start + 6
                     self.edit_widget.set_edit_pos(new_cursor_pos)
                     return None
                 else:
-                    # Non-digit at column 7: move to code area (column 8) and insert
+                    # Non-digit at column 6: move to code area (column 7) and insert
                     lines[line_num] = line
                     current_text = '\n'.join(lines)
                     self.edit_widget.set_edit_text(current_text)
-                    # Move cursor to column 8
-                    new_cursor_pos = line_start + 8
+                    # Move cursor to column 7
+                    new_cursor_pos = line_start + 7
                     self.edit_widget.set_edit_pos(new_cursor_pos)
                     # Now let the key be processed at the new position
                     return super().keypress(size, key)
@@ -262,15 +259,15 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Handle Enter key - commits line and moves to next with auto-numbering
         if key == 'enter' and self.auto_number_enabled:
             # Right-justify current line number before committing
-            if line_num < len(lines) and len(lines[line_num]) >= 7:
+            if line_num < len(lines) and len(lines[line_num]) >= 6:
                 line = lines[line_num]
                 status = line[0] if len(line) > 0 else ' '
-                line_num_text = line[2:7].strip()
-                rest_of_line = line[7:] if len(line) > 7 else ''
+                line_num_text = line[1:6].strip()
+                rest_of_line = line[6:] if len(line) > 6 else ''
 
                 if line_num_text:
                     line_num_formatted = f"{line_num_text:>5}"
-                    lines[line_num] = f"{status} {line_num_formatted}{rest_of_line}"
+                    lines[line_num] = f"{status}{line_num_formatted}{rest_of_line}"
                     current_text = '\n'.join(lines)
                     self.edit_widget.set_edit_text(current_text)
 
@@ -284,8 +281,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             while self.next_auto_line_num in self.lines:
                 self.next_auto_line_num += self.auto_number_increment
 
-            # Format new line: "  NNNNN "
-            new_line_prefix = f"\n  {self.next_auto_line_num:5d} "
+            # Format new line: " NNNNN "
+            new_line_prefix = f"\n {self.next_auto_line_num:5d} "
 
             # Insert newline and prefix at end of current line
             current_text = self.edit_widget.get_edit_text()
@@ -310,7 +307,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             code_text: BASIC code text
 
         Returns:
-            Formatted string: "S NNNNN CODE"
+            Formatted string: "SNNNNN CODE"
         """
         # Status column (1 char)
         if line_num in self.breakpoints:
@@ -323,15 +320,15 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Line number column (5 chars, right-aligned)
         line_num_str = f"{line_num:5d}"
 
-        # Combine: status + space + line_num + space + code
-        return f"{status} {line_num_str} {code_text}"
+        # Combine: status + line_num + space + code
+        return f"{status}{line_num_str} {code_text}"
 
     def _update_display(self):
         """Update the text display with all program lines."""
         if not self.lines:
             # Empty program - start with first line number ready
-            # Format: "S NNNNN " where S=status (1), space (1), NNNNN=line# (5), space (1)
-            display_text = f"  {self.next_auto_line_num:5d} "
+            # Format: "SNNNNN " where S=status (1), NNNNN=line# (5), space (1)
+            display_text = f" {self.next_auto_line_num:5d} "
             # Increment counter since we've used this number for display
             self.next_auto_line_num += self.auto_number_increment
         else:
@@ -347,7 +344,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # If empty program, position cursor at code column (after line number)
         if not self.lines:
-            self.edit_widget.set_edit_pos(8)  # Position 8 is start of code area
+            self.edit_widget.set_edit_pos(7)  # Position 7 is start of code area
 
     def get_program_text(self):
         """Get the program as line-numbered text.
