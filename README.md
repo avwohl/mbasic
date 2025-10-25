@@ -80,14 +80,19 @@ The **curses screen editor** (default) provides a full-screen terminal interface
 - Calculator-style line number editing
 - Automatic line sorting
 - Split-screen output window
+- Optimized paste performance (instant display)
+- Smart line number parsing (preserves pasted line numbers)
+- Edge-to-edge display (clean copy/paste without borders)
 
 **Features:**
 - `Ctrl+R` - Run program
 - `Ctrl+S` - Save program
 - `Ctrl+O` - Open program
 - `Ctrl+H` - Help
+- `Tab` - Switch between editor and output
 - Arrow keys, Page Up/Down for navigation
 - Auto-numbering with smart collision avoidance
+- Fast paste operations with automatic formatting
 
 See **[Curses Editor Documentation](docs/user/URWID_UI.md)** for complete guide.
 

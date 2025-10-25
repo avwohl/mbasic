@@ -39,12 +39,14 @@ python3 mbasic.py --backend curses program.bas
 - **Automatic sorting** - Lines sort by number when navigating
 - **Protected columns** - Status and separator columns prevent accidental edits
 - **Navigation keys** - Up/down/left/right, Page Up/Down, Home/End
-- **Output window** - Displays program execution results
+- **Output window** - Displays program execution results (scrollable with Tab key)
 - **Status bar** - Shows current state and keyboard shortcuts
 - **Program execution** - Run BASIC programs and see output
 - **Help system** - Built-in help dialog (press Ctrl+H)
 - **File operations** - Save and load programs (Ctrl+S, Ctrl+O)
 - **Configuration** - Configurable settings via .mbasic.conf
+- **Optimized paste** - High-performance paste with automatic line number parsing
+- **Edge-to-edge display** - No left borders for clean copy/paste
 
 ### Keyboard Shortcuts
 
@@ -59,6 +61,7 @@ python3 mbasic.py --backend curses program.bas
 | `Ctrl+N` | New program (clear editor) |
 | `Ctrl+S` | Save program to file |
 | `Ctrl+O` | Open/Load program from file |
+| `Tab` | Switch between editor and output window |
 
 #### Navigation Keys
 
@@ -256,6 +259,100 @@ Press Enter → Next line: 110
 2. Check if `next` would collide with existing line
 3. If collision: use `current_line + 1` (or next available)
 4. If above next line in sequence: use next available slot
+
+## Paste Operations
+
+### High-Performance Paste
+
+The editor is optimized for pasting large amounts of code:
+
+- **Instant display** - Pasted text appears in ~0.1 seconds
+- **Deferred processing** - Line number parsing and sorting happens after paste completes
+- **No lag** - Fast path for normal characters bypasses expensive text parsing
+- **Automatic formatting** - Pasted code is automatically formatted on display
+
+### Smart Line Number Parsing
+
+When you paste BASIC code, line numbers are automatically detected and formatted:
+
+#### Pasting Code Without Line Numbers
+
+```basic
+Paste:
+for i=0 to 10
+print i
+next
+
+Result (with auto-numbering):
+   10 for i=0 to 10
+   20 print i
+   30 next
+   40
+```
+
+Auto-numbering adds line numbers to plain code.
+
+#### Pasting Code With Line Numbers
+
+```basic
+Paste:
+210 for i=0 to 10
+220  print i
+230 next
+
+Result:
+  210 for i=0 to 10
+  220 print i
+  230 next
+  240
+```
+
+**Key behaviors:**
+- Line numbers from pasted code are **preserved**
+- Extra spaces after line numbers are **removed** (e.g., "220  print" becomes "220 print")
+- Numbers in code area are **moved to line number column**
+- Replaces any auto-numbered values
+- Next line continues auto-numbering from last pasted number
+
+#### Mixed Paste (Into Auto-Numbered Lines)
+
+If you paste "210 for..." into a line that already has auto-number "10":
+
+```basic
+Before:
+   10
+
+Paste: 210 for i=0 to 10
+
+After:
+  210 for i=0 to 10
+```
+
+The pasted line number (210) **replaces** the auto-number (10).
+
+### Edge-to-Edge Display
+
+The editor has **no left border** for clean copy/paste:
+
+```
+── Editor ────────────────────────
+   10 PRINT "Hello"
+   20 FOR I = 1 TO 10
+   30 PRINT I
+   40 NEXT I
+```
+
+When you select and copy text from the terminal, you get clean code without border characters.
+
+### Scrollable Output
+
+Press `Tab` to switch between editor and output window:
+
+- **Editor mode** - Edit your program
+- **Output mode** - Scroll through program output with Up/Down arrows
+- Press `Tab` again to return to editor
+
+Output window can display unlimited lines and is fully scrollable.
 
 ## Automatic Line Sorting
 
