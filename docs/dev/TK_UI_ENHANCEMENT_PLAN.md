@@ -7,7 +7,7 @@
 **Basic Features:**
 - ✅ Menu bar (File, Edit, Run, Help)
 - ✅ Toolbar with common actions
-- ✅ Split pane editor (left) and output (right)
+- ✅ Editor and output windows
 - ✅ File operations (New, Open, Save, Save As)
 - ✅ Basic program execution
 - ✅ Status bar
@@ -17,6 +17,7 @@
 **Architecture:**
 - Uses old program_manager architecture (not tick-based interpreter)
 - Basic Text widgets without line numbers
+- Horizontal split layout (needs to be changed to vertical like curses UI)
 - No debugging features
 - No watch windows
 
@@ -43,6 +44,62 @@
 - Missing: Ctrl+R, Ctrl+T, Ctrl+G, Ctrl+X, Ctrl+B, Ctrl+W, Ctrl+K, Ctrl+D, Ctrl+E, Ctrl+H, Ctrl+M
 
 ## Enhancement Plan
+
+### Target Layout (Vertical, Matching Curses UI)
+
+**IMPORTANT:** The layout must match the curses UI vertical arrangement, NOT horizontal split.
+
+```
+┌─────────────────────────────────────────────┐
+│ File  Edit  Run  Help                       │ Menu Bar
+├─────────────────────────────────────────────┤
+│ ●  10  PRINT "Hello"                        │
+│    20  FOR I = 1 TO 10                      │ Editor
+│    30    PRINT I                            │ (60% height)
+│    40  NEXT I                               │
+│    50  END                                  │
+├─────────────────────────────────────────────┤ ← Draggable splitter
+│ Variable    Type      Value                 │
+│ I%          Integer   3                     │ Variables Window
+│ MSG$        String    "Hello"               │ (optional, Ctrl+W)
+├─────────────────────────────────────────────┤ ← Draggable splitter
+│ Type              Details                   │
+│ GOSUB from 20     → line 100                │ Stack Window
+│   FOR I = 2/10    (line 30)                 │ (optional, Ctrl+K)
+├─────────────────────────────────────────────┤ ← Draggable splitter
+│ Hello                                       │
+│ 1                                           │ Output
+│ 2                                           │ (30% height)
+│ 3                                           │
+├─────────────────────────────────────────────┤
+│ Ready - Press Ctrl+H for help               │ Status Bar
+└─────────────────────────────────────────────┘
+```
+
+**Implementation:**
+- Use `tk.PanedWindow` with `orient=tk.VERTICAL`
+- Default: Menu → Editor → Output → Status
+- When variables shown (Ctrl+W): Menu → Editor → Variables → Output → Status
+- When stack shown (Ctrl+K): Menu → Editor → [Variables] → Stack → Output → Status
+- All splitters are draggable
+- Remember sizes between runs
+
+**Current tk_ui.py uses horizontal split:**
+```python
+# WRONG - current implementation (to be changed):
+paned = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
+paned.add(editor_frame, weight=1)  # Left
+paned.add(output_frame, weight=1)  # Right
+```
+
+**Correct implementation:**
+```python
+# RIGHT - new implementation:
+paned = ttk.PanedWindow(self.root, orient=tk.VERTICAL)
+paned.add(editor_frame, weight=6)  # Top (60%)
+# Variables and stack added dynamically with .insert()
+paned.add(output_frame, weight=3)  # Bottom (30%)
+```
 
 ### Phase 1: Modernize Architecture (Priority: CRITICAL)
 
@@ -469,12 +526,12 @@ def _delete_current_line(self):
 
 ## Advantages Over Curses UI
 
-1. **Mouse support**: Click to set breakpoints, select text, resize panes
+1. **Mouse support**: Click to set breakpoints, select text, drag splitters
 2. **Native file dialogs**: Better UX for file operations
-3. **Resizable everything**: Drag window edges, split panes
+3. **Resizable everything**: Drag window edges and vertical splitters
 4. **Better fonts**: Anti-aliased, variable size
 5. **Copy/paste**: Native clipboard integration
-6. **Multiple windows**: Variables and stack in separate windows
+6. **Multiple windows**: Variables and stack in embedded panes with splitters
 7. **Color**: Full RGB color support for syntax highlighting
 8. **Portability**: Same UI on Windows/Mac/Linux
 9. **Accessibility**: Screen reader support, system themes
