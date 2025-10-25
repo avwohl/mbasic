@@ -194,7 +194,7 @@ Examples:
         self.loop.unhandled_input = close_help
 
     def _run_program(self):
-        """Run the current program."""
+        """Run the current program using tick-based interpreter."""
         try:
             # Parse editor content into program
             self._parse_editor_content()
@@ -214,17 +214,16 @@ Examples:
                 line_text = f"{line_num} {self.editor_lines[line_num]}"
                 self.program.add_or_update_line(line_text)
 
-            # Create a capturing IO handler with input support
+            # Create a capturing IO handler with output support
             output_lines = []
             parent_ui = self
 
             class CapturingIOHandler:
-                """IO handler that captures output and handles input."""
+                """IO handler that captures output."""
                 def __init__(self, output_list, ui):
                     self.output_list = output_list
                     self.ui = ui
                     self.debug_enabled = False
-                    self.input_response = None
 
                 def output(self, text, end='\n'):
                     """Capture output."""
@@ -236,20 +235,9 @@ Examples:
                             self.output_list[-1] += str(text) + end
                         else:
                             self.output_list.append(str(text) + end)
-
-                def input_line(self, prompt=""):
-                    """Get user input via dialog."""
-                    # Display current output
+                    # Update display in real-time
                     self.ui._update_output_with_lines(self.output_list)
                     self.ui.loop.draw_screen()
-
-                    # Get input from user
-                    result = self.ui._get_input_dialog(prompt or "? ")
-
-                    # Add prompt and response to output
-                    self.output_list.append(f"{prompt}{result}")
-
-                    return result
 
                 def set_debug(self, enabled):
                     self.debug_enabled = enabled
@@ -257,23 +245,21 @@ Examples:
             # Create runtime and interpreter
             io_handler = CapturingIOHandler(output_lines, parent_ui)
             runtime = Runtime(io_handler, self.program)
-            interpreter = Interpreter(runtime)
+            self.interpreter = Interpreter(runtime)
+            self.runtime = runtime
 
-            # Run the program
-            result = interpreter.run()
+            # Start execution
+            state = self.interpreter.start()
 
-            # Display output
-            if output_lines:
-                self.output_buffer.extend(output_lines)
+            if state.status == 'error':
+                error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                self.output_buffer.append(f"Error: {error_msg}")
+                self._update_output()
+                self.status_bar.set_text("Error - Press Ctrl+H for help")
+                return
 
-            # Show result status
-            if result.get('status') == 'completed':
-                self.output_buffer.append("Program completed")
-            elif result.get('status') == 'error':
-                self.output_buffer.append(f"Error: {result.get('message', 'Unknown error')}")
-
-            self._update_output()
-            self.status_bar.set_text("Ready - Press Ctrl+H for help")
+            # Set up tick-based execution using urwid's alarm
+            self._execute_tick()
 
         except Exception as e:
             import traceback
@@ -281,6 +267,59 @@ Examples:
             self.output_buffer.append(traceback.format_exc())
             self._update_output()
             self.status_bar.set_text("Error - Press Ctrl+H for help")
+
+    def _execute_tick(self):
+        """Execute one tick of the interpreter and schedule next tick."""
+        try:
+            state = self.interpreter.tick(mode='run', max_statements=100)
+
+            # Update status
+            if state.status == 'running':
+                # Schedule next tick
+                self.loop.set_alarm_in(0.01, lambda loop, user_data: self._execute_tick())
+
+            elif state.status == 'waiting_for_input':
+                # Prompt user for input
+                prompt = state.input_prompt or "? "
+                self._get_input_for_interpreter(prompt)
+
+            elif state.status == 'done':
+                # Program completed
+                self.output_buffer.append("Ok")
+                self._update_output()
+                self.status_bar.set_text("Ready - Press Ctrl+H for help")
+
+            elif state.status == 'error':
+                # Error occurred
+                error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                line_num = state.error_info.error_line if state.error_info else "?"
+                self.output_buffer.append(f"Error in {line_num}: {error_msg}")
+                self._update_output()
+                self.status_bar.set_text("Error - Press Ctrl+H for help")
+
+            elif state.status == 'paused' or state.status == 'at_breakpoint':
+                # Paused execution
+                self.output_buffer.append(f"Paused at line {state.current_line}")
+                self._update_output()
+                self.status_bar.set_text("Paused - Press Ctrl+C to continue")
+
+        except Exception as e:
+            import traceback
+            self.output_buffer.append(f"Runtime error: {e}")
+            self.output_buffer.append(traceback.format_exc())
+            self._update_output()
+            self.status_bar.set_text("Error - Press Ctrl+H for help")
+
+    def _get_input_for_interpreter(self, prompt):
+        """Show input dialog and provide input to interpreter."""
+        # Get input from user
+        result = self._get_input_dialog(prompt)
+
+        # Provide input to interpreter
+        self.interpreter.provide_input(result)
+
+        # Continue execution
+        self.loop.set_alarm_in(0.01, lambda loop, user_data: self._execute_tick())
 
     def _list_program(self):
         """List the current program."""
