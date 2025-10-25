@@ -197,6 +197,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         is_arrow_key = is_updown_arrow or is_leftright_arrow
         is_other_nav_key = key in ['page up', 'page down', 'home', 'end']
 
+        # FALLBACK: If navigation key pressed and refresh pending, do it now
+        # This ensures paste updates appear even if alarm doesn't fire
+        if (is_control_key or is_arrow_key or is_other_nav_key) and self._needs_refresh:
+            self._perform_deferred_refresh()
+
         # PERFORMANCE: Skip right-justification during rapid typing/paste
         # Only do it when navigating (which is when user expects formatting)
         should_right_justify = False
@@ -711,6 +716,88 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     # Silently ignore config errors and use defaults
                     pass
 
+    def _parse_line_numbers(self, text):
+        """Parse and reformat lines that start with numbers.
+
+        If a line starts with a number (typical BASIC format like "10 PRINT"),
+        move the number to the line number column.
+
+        Handles both:
+        - Lines with column structure: " [space]     10 PRINT"
+        - Raw pasted lines: "10 PRINT"
+
+        Args:
+            text: Current editor text
+
+        Returns:
+            Reformatted text with numbers in proper columns
+        """
+        lines = text.split('\n')
+        changed = False
+
+        for i, line in enumerate(lines):
+            if not line or not line[0:1].strip():
+                # Empty line or starts with only whitespace, skip
+                # (unless it's raw pasted BASIC code)
+                if line and line.lstrip() and line.lstrip()[0].isdigit():
+                    # Raw pasted line like "10 PRINT" - reformat it
+                    stripped = line.lstrip()
+
+                    # Extract number
+                    num_str = ""
+                    j = 0
+                    while j < len(stripped) and stripped[j].isdigit():
+                        num_str += stripped[j]
+                        j += 1
+
+                    # Get rest of line (skip spaces after number)
+                    while j < len(stripped) and stripped[j] == ' ':
+                        j += 1
+                    rest = stripped[j:]
+
+                    # Reformat with column structure
+                    if num_str:
+                        line_num_formatted = f"{num_str:>5}"
+                        new_line = f" {line_num_formatted} {rest}"
+                        lines[i] = new_line
+                        changed = True
+                continue
+
+            # Check lines with column structure
+            if len(line) >= 7:
+                # Extract status and code area
+                status = line[0]
+                code_area = line[7:] if len(line) >= 7 else ""
+
+                # Check if code area starts with a number
+                # (It's never legal for BASIC code to start with a digit)
+                if code_area and code_area[0].isdigit():
+                    # Parse: extract leading number and rest of code
+                    num_str = ""
+
+                    # Extract the number
+                    j = 0
+                    while j < len(code_area) and code_area[j].isdigit():
+                        num_str += code_area[j]
+                        j += 1
+
+                    # Get rest of line (skip spaces after number)
+                    while j < len(code_area) and code_area[j] == ' ':
+                        j += 1
+                    rest = code_area[j:]
+
+                    # Reformat: put number in line number column (right-justified)
+                    if num_str:
+                        line_num_formatted = f"{num_str:>5}"
+                        new_line = f"{status}{line_num_formatted} {rest}"
+                        lines[i] = new_line
+                        changed = True
+
+        if changed:
+            return '\n'.join(lines)
+        else:
+            return text
+
     def _schedule_deferred_refresh(self):
         """Schedule a deferred screen refresh after idle delay.
 
@@ -752,11 +839,23 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         if not self._needs_refresh and not self._needs_sort:
             return
 
-        # Perform deferred sorting if needed
+        # Get current state
+        current_text = self.edit_widget.get_edit_text()
+        cursor_pos = self.edit_widget.edit_pos
+
+        # Step 1: Parse and reformat lines with numbers in code area
+        # (This handles pasted BASIC code like "10 PRINT")
+        new_text = self._parse_line_numbers(current_text)
+        if new_text != current_text:
+            # Text was reformatted - update the editor
+            self.edit_widget.set_edit_text(new_text)
+            # Try to maintain cursor position (may shift due to reformatting)
+            if cursor_pos <= len(new_text):
+                self.edit_widget.set_edit_pos(cursor_pos)
+            current_text = new_text
+
+        # Step 2: Perform deferred sorting if needed
         if self._needs_sort:
-            # Get current state
-            current_text = self.edit_widget.get_edit_text()
-            cursor_pos = self.edit_widget.edit_pos
             lines = current_text.split('\n')
 
             # Find current line
