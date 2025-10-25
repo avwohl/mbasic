@@ -888,6 +888,9 @@ class CursesBackend(UIBackend):
             # Use bright yellow for focus - this affects cursor visibility
             ('focus', 'black', 'yellow', 'standout'),
             ('error', 'light red', 'black'),
+            # Output area styles
+            ('output', 'white', 'black'),
+            ('output_focus', 'black', 'dark green', 'standout'),
         ]
 
     def _handle_input(self, key):
@@ -1220,9 +1223,12 @@ Examples:
         # Clear existing content
         self.output_walker[:] = []
 
-        # Add all lines from buffer
+        # Add all lines from buffer with focus highlighting
         for line in self.output_buffer:
-            self.output_walker.append(urwid.Text(line))
+            text_widget = urwid.Text(line)
+            # Wrap in AttrMap to show focus with green background
+            attr_widget = urwid.AttrMap(text_widget, 'output', 'output_focus')
+            self.output_walker.append(attr_widget)
 
         # Scroll to the bottom (last line)
         if len(self.output_walker) > 0:
@@ -1233,9 +1239,12 @@ Examples:
         # Clear existing content
         self.output_walker[:] = []
 
-        # Add all lines
+        # Add all lines with focus highlighting
         for line in lines:
-            self.output_walker.append(urwid.Text(line))
+            text_widget = urwid.Text(line)
+            # Wrap in AttrMap to show focus with green background
+            attr_widget = urwid.AttrMap(text_widget, 'output', 'output_focus')
+            self.output_walker.append(attr_widget)
 
         # Scroll to the bottom (last line)
         if len(self.output_walker) > 0:
