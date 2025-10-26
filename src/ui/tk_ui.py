@@ -560,6 +560,9 @@ class TkBackend(UIBackend):
         # Bind click handler for heading clicks
         tree.bind('<Button-1>', self._on_variable_heading_click)
 
+        # Bind double-click handler for editing variable values
+        tree.bind('<Double-Button-1>', self._on_variable_double_click)
+
         self.variables_tree = tree
 
     def _toggle_variables(self):
@@ -624,6 +627,219 @@ class TkBackend(UIBackend):
                 self._sort_variables_by('type')
             elif column == '#2':  # Value column
                 self._sort_variables_by('value')
+
+    def _on_variable_double_click(self, event):
+        """Handle double-click on variable to edit its value."""
+        import tkinter as tk
+        from tkinter import simpledialog
+        import re
+
+        # Check if we clicked on a row (not heading)
+        region = self.variables_tree.identify_region(event.x, event.y)
+        if region != 'cell':
+            return
+
+        # Get selected item
+        selection = self.variables_tree.selection()
+        if not selection:
+            return
+
+        item_id = selection[0]
+        item_data = self.variables_tree.item(item_id)
+
+        # Extract variable info from display
+        variable_display = item_data['text']  # From #0 column (Variable)
+        type_suffix_display = item_data['values'][0]  # Type column
+        value_display = item_data['values'][1]  # Value column
+
+        # Parse variable name and type
+        # Format examples: "A%", "NAME$", "X", "A%(10x10) [5,3]=42"
+        if 'Array' in value_display:
+            # Array variable - edit last accessed element
+            self._edit_array_element(variable_display, type_suffix_display, value_display)
+        else:
+            # Simple variable
+            self._edit_simple_variable(variable_display, type_suffix_display, value_display)
+
+    def _edit_simple_variable(self, variable_name, type_suffix, current_value):
+        """Edit a simple (non-array) variable.
+
+        Args:
+            variable_name: Variable name with type suffix (e.g., "A%", "NAME$")
+            type_suffix: Type character ($, %, !, #, or empty)
+            current_value: Current value as string
+        """
+        import tkinter as tk
+        from tkinter import simpledialog, messagebox
+
+        if not self.interpreter or not self.interpreter.runtime:
+            messagebox.showerror("Error", "No program running")
+            return
+
+        # Determine dialog type based on type suffix
+        if type_suffix == '$':
+            # String variable
+            # Remove quotes from display
+            initial_value = current_value.strip('"')
+            new_value = simpledialog.askstring(
+                "Edit Variable",
+                f"Enter new value for {variable_name}:",
+                initialvalue=initial_value,
+                parent=self.variables_window
+            )
+        elif type_suffix == '%':
+            # Integer variable
+            try:
+                initial_value = int(current_value)
+            except ValueError:
+                initial_value = 0
+            new_value = simpledialog.askinteger(
+                "Edit Variable",
+                f"Enter new value for {variable_name}:",
+                initialvalue=initial_value,
+                parent=self.variables_window
+            )
+        else:
+            # Float variable (single or double precision)
+            try:
+                initial_value = float(current_value)
+            except ValueError:
+                initial_value = 0.0
+            new_value = simpledialog.askfloat(
+                "Edit Variable",
+                f"Enter new value for {variable_name}:",
+                initialvalue=initial_value,
+                parent=self.variables_window
+            )
+
+        if new_value is None:
+            return  # User cancelled
+
+        # Update runtime variable
+        try:
+            # Parse variable name (remove type suffix for runtime call)
+            if variable_name[-1] in '$%!#':
+                base_name = variable_name[:-1]
+                suffix = variable_name[-1]
+            else:
+                base_name = variable_name
+                suffix = None
+
+            # Use debugger_set=True to bypass token requirement
+            self.interpreter.runtime.set_variable(
+                base_name,
+                suffix,
+                new_value,
+                debugger_set=True
+            )
+
+            # Refresh variables window
+            self._update_variables()
+
+            # Show confirmation in status
+            self.status_label.config(text=f"Variable {variable_name} updated to {new_value}")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to update variable: {e}")
+
+    def _edit_array_element(self, variable_name, type_suffix, value_display):
+        """Edit an array element (last accessed cell).
+
+        Args:
+            variable_name: Array name with type suffix (e.g., "A%")
+            type_suffix: Type character ($, %, !, #, or empty)
+            value_display: Display string like "Array(10x10) [5,3]=42"
+        """
+        import tkinter as tk
+        from tkinter import simpledialog, messagebox
+        import re
+
+        if not self.interpreter or not self.interpreter.runtime:
+            messagebox.showerror("Error", "No program running")
+            return
+
+        # Parse last accessed subscripts and value from display
+        # Format: "Array(10x10) [5,3]=42"
+        match = re.search(r'\[([^\]]+)\]=(.+)$', value_display)
+        if not match:
+            messagebox.showwarning("Warning", "No array element accessed yet")
+            return
+
+        subscripts_str = match.group(1)  # "5,3"
+        value_str = match.group(2).strip()  # "42"
+
+        # Parse subscripts
+        try:
+            subscripts = [int(s.strip()) for s in subscripts_str.split(',')]
+        except ValueError:
+            messagebox.showerror("Error", "Invalid subscripts")
+            return
+
+        # Determine dialog type
+        if type_suffix == '$':
+            # String array
+            initial_value = value_str.strip('"')
+            new_value = simpledialog.askstring(
+                "Edit Array Element",
+                f"Enter new value for {variable_name}({subscripts_str}):",
+                initialvalue=initial_value,
+                parent=self.variables_window
+            )
+        elif type_suffix == '%':
+            # Integer array
+            try:
+                initial_value = int(value_str)
+            except ValueError:
+                initial_value = 0
+            new_value = simpledialog.askinteger(
+                "Edit Array Element",
+                f"Enter new value for {variable_name}({subscripts_str}):",
+                initialvalue=initial_value,
+                parent=self.variables_window
+            )
+        else:
+            # Float array
+            try:
+                initial_value = float(value_str)
+            except ValueError:
+                initial_value = 0.0
+            new_value = simpledialog.askfloat(
+                "Edit Array Element",
+                f"Enter new value for {variable_name}({subscripts_str}):",
+                initialvalue=initial_value,
+                parent=self.variables_window
+            )
+
+        if new_value is None:
+            return  # User cancelled
+
+        # Update array element in runtime
+        try:
+            # Parse array name
+            if variable_name[-1] in '$%!#':
+                base_name = variable_name[:-1]
+                suffix = variable_name[-1]
+            else:
+                base_name = variable_name
+                suffix = None
+
+            # Set array element (token=None means no tracking)
+            self.interpreter.runtime.set_array_element(
+                base_name,
+                suffix,
+                subscripts,
+                new_value,
+                token=None  # No tracking for debugger edits
+            )
+
+            # Refresh variables window
+            self._update_variables()
+
+            # Show confirmation
+            self.status_label.config(text=f"Array {variable_name}({subscripts_str}) updated to {new_value}")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to update array element: {e}")
 
     def _toggle_variable_sort_direction(self):
         """Toggle sort direction (ascending/descending) without changing column."""
