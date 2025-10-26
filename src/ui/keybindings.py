@@ -1,112 +1,166 @@
 """
-Keyboard binding definitions for MBASIC UI.
+Keyboard binding definitions for MBASIC Curses UI.
 
-This module centralizes all keyboard shortcuts used across the application.
-Each keybinding is defined in three forms:
-1. key_name: The urwid key name (e.g., 'ctrl a')
-2. char_code: The ASCII control character code (e.g., '\x01')
-3. display_name: The user-facing name (e.g., 'Ctrl+A')
+This module loads keybindings from curses_keybindings.json and provides them
+in the format expected by the Curses UI (urwid key names, character codes, display names).
 
-This ensures consistency across the UI, tests, and documentation.
+This ensures consistency between the JSON config, the UI behavior, and the documentation.
 """
 
+import json
+from pathlib import Path
+
+# Load keybindings from JSON
+_config_path = Path(__file__).parent / 'curses_keybindings.json'
+with open(_config_path, 'r') as f:
+    _config = json.load(f)
+
+
+def _ctrl_key_to_urwid(key_string):
+    """
+    Convert keybinding string to urwid format.
+
+    Examples:
+        "Ctrl+H" -> "ctrl h"
+        "Ctrl+Q" -> "ctrl q"
+        "/" -> "/"
+    """
+    if key_string.startswith('Ctrl+'):
+        letter = key_string[5:].lower()
+        return f'ctrl {letter}'
+    return key_string.lower()
+
+
+def _ctrl_key_to_char(key_string):
+    """
+    Convert keybinding string to control character code.
+
+    Examples:
+        "Ctrl+H" -> '\x08'
+        "Ctrl+A" -> '\x01'
+    """
+    if key_string.startswith('Ctrl+'):
+        letter = key_string[5:].upper()
+        # Ctrl+A = 1, Ctrl+B = 2, etc.
+        code = ord(letter) - ord('A') + 1
+        return chr(code)
+    return key_string
+
+
+def _get_key(section, action):
+    """Get keybinding from config."""
+    if section in _config and action in _config[section]:
+        return _config[section][action]['primary']
+    return None
+
+
 # =============================================================================
-# Global Commands
+# Global Commands (loaded from JSON)
 # =============================================================================
 
 # Help system
-HELP_KEY = 'ctrl a'
-HELP_CHAR = '\x01'
-HELP_DISPLAY = 'Ctrl+A'
+_help_key = _get_key('editor', 'help') or 'Ctrl+H'
+HELP_KEY = _ctrl_key_to_urwid(_help_key)
+HELP_CHAR = _ctrl_key_to_char(_help_key)
+HELP_DISPLAY = _help_key
 
-# Menu system
+# Menu system (not in JSON, hardcoded)
 MENU_KEY = 'ctrl u'
 MENU_CHAR = '\x15'
 MENU_DISPLAY = 'Ctrl+U'
 
 # Quit
-QUIT_KEY = 'ctrl q'
-QUIT_CHAR = '\x11'
-QUIT_DISPLAY = 'Ctrl+Q'
+_quit_key = _get_key('editor', 'quit') or 'Ctrl+Q'
+QUIT_KEY = _ctrl_key_to_urwid(_quit_key)
+QUIT_CHAR = _ctrl_key_to_char(_quit_key)
+QUIT_DISPLAY = _quit_key
 
 # Alternative quit (Ctrl+C)
-QUIT_ALT_KEY = 'ctrl c'
-QUIT_ALT_CHAR = '\x03'
-QUIT_ALT_DISPLAY = 'Ctrl+C'
+_quit_alt_key = _get_key('editor', 'continue') or 'Ctrl+C'
+QUIT_ALT_KEY = _ctrl_key_to_urwid(_quit_alt_key)
+QUIT_ALT_CHAR = _ctrl_key_to_char(_quit_alt_key)
+QUIT_ALT_DISPLAY = _quit_alt_key
 
-# Variables watch window
+# Variables watch window (not in JSON, hardcoded)
 VARIABLES_KEY = 'ctrl w'
 VARIABLES_CHAR = '\x17'
 VARIABLES_DISPLAY = 'Ctrl+W'
 
-# Execution stack window
+# Execution stack window (not in JSON, hardcoded)
 STACK_KEY = 'ctrl k'
 STACK_CHAR = '\x0b'
 STACK_DISPLAY = 'Ctrl+K'
 
 # =============================================================================
-# Program Management
+# Program Management (loaded from JSON)
 # =============================================================================
 
 # Run program
-RUN_KEY = 'ctrl r'
-RUN_CHAR = '\x12'
-RUN_DISPLAY = 'Ctrl+R'
+_run_key = _get_key('editor', 'run') or 'Ctrl+R'
+RUN_KEY = _ctrl_key_to_urwid(_run_key)
+RUN_CHAR = _ctrl_key_to_char(_run_key)
+RUN_DISPLAY = _run_key
 
 # List program
-LIST_KEY = 'ctrl l'
-LIST_CHAR = '\x0c'
-LIST_DISPLAY = 'Ctrl+L'
+_list_key = _get_key('editor', 'load') or 'Ctrl+L'
+LIST_KEY = _ctrl_key_to_urwid(_list_key)
+LIST_CHAR = _ctrl_key_to_char(_list_key)
+LIST_DISPLAY = _list_key
 
 # New program
-NEW_KEY = 'ctrl n'
-NEW_CHAR = '\x0e'
-NEW_DISPLAY = 'Ctrl+N'
+_new_key = _get_key('editor', 'new') or 'Ctrl+N'
+NEW_KEY = _ctrl_key_to_urwid(_new_key)
+NEW_CHAR = _ctrl_key_to_char(_new_key)
+NEW_DISPLAY = _new_key
 
 # Save program
-SAVE_KEY = 'ctrl s'
-SAVE_CHAR = '\x13'
-SAVE_DISPLAY = 'Ctrl+S'
+_save_key = _get_key('editor', 'save') or 'Ctrl+S'
+SAVE_KEY = _ctrl_key_to_urwid(_save_key)
+SAVE_CHAR = _ctrl_key_to_char(_save_key)
+SAVE_DISPLAY = _save_key
 
-# Open/Load program
-OPEN_KEY = 'ctrl o'
-OPEN_CHAR = '\x0f'
-OPEN_DISPLAY = 'Ctrl+O'
+# Open/Load program (same as load/list)
+OPEN_KEY = LIST_KEY
+OPEN_CHAR = LIST_CHAR
+OPEN_DISPLAY = LIST_DISPLAY
 
 # =============================================================================
-# Editing Commands
+# Editing Commands (loaded from JSON where available)
 # =============================================================================
 
 # Toggle breakpoint
-BREAKPOINT_KEY = 'ctrl b'
-BREAKPOINT_CHAR = '\x02'
-BREAKPOINT_DISPLAY = 'Ctrl+B'
+_breakpoint_key = _get_key('editor', 'toggle_breakpoint') or 'Ctrl+B'
+BREAKPOINT_KEY = _ctrl_key_to_urwid(_breakpoint_key)
+BREAKPOINT_CHAR = _ctrl_key_to_char(_breakpoint_key)
+BREAKPOINT_DISPLAY = _breakpoint_key
 
-# Delete current line
+# Delete current line (not in JSON, hardcoded)
 DELETE_LINE_KEY = 'ctrl d'
 DELETE_LINE_CHAR = '\x04'
 DELETE_LINE_DISPLAY = 'Ctrl+D'
 
-# Renumber lines
+# Renumber lines (not in JSON, hardcoded)
 RENUMBER_KEY = 'ctrl e'
 RENUMBER_CHAR = '\x05'
 RENUMBER_DISPLAY = 'Ctrl+E'
 
 # =============================================================================
-# Debugger Commands
+# Debugger Commands (loaded from JSON where available)
 # =============================================================================
 
 # Continue execution (Go)
-CONTINUE_KEY = 'ctrl g'
-CONTINUE_CHAR = '\x07'
-CONTINUE_DISPLAY = 'Ctrl+G'
+_continue_key = _get_key('editor', 'goto_line') or 'Ctrl+G'
+CONTINUE_KEY = _ctrl_key_to_urwid(_continue_key)
+CONTINUE_CHAR = _ctrl_key_to_char(_continue_key)
+CONTINUE_DISPLAY = _continue_key
 
 # Step (execute one line)
-STEP_KEY = 'ctrl t'
-STEP_CHAR = '\x14'
-STEP_DISPLAY = 'Ctrl+T'
+_step_key = _get_key('editor', 'step') or 'Ctrl+T'
+STEP_KEY = _ctrl_key_to_urwid(_step_key)
+STEP_CHAR = _ctrl_key_to_char(_step_key)
+STEP_DISPLAY = _step_key
 
-# Stop execution (eXit)
+# Stop execution (eXit) (not in JSON, hardcoded)
 STOP_KEY = 'ctrl x'
 STOP_CHAR = '\x18'
 STOP_DISPLAY = 'Ctrl+X'
@@ -169,30 +223,30 @@ OUTPUT_STATUS = f"Output - Up/Down scroll, {TAB_DISPLAY} editor"
 
 # All control character codes for reference
 CONTROL_CHARS = {
-    'Ctrl+A': '\x01',  # Help
-    'Ctrl+B': '\x02',  # Breakpoint
-    'Ctrl+C': '\x03',  # Quit (alternative)
-    'Ctrl+D': '\x04',  # Delete line
-    'Ctrl+E': '\x05',  # Renumber
-    'Ctrl+F': '\x06',  # (available)
-    'Ctrl+G': '\x07',  # Continue/Go
-    'Ctrl+H': '\x08',  # Backspace (not available)
-    'Ctrl+I': '\x09',  # Tab (not available)
-    'Ctrl+J': '\x0a',  # Newline/LF (not available)
-    'Ctrl+K': '\x0b',  # Stack window
-    'Ctrl+L': '\x0c',  # List
-    'Ctrl+M': '\x0d',  # Return/Enter (not available)
-    'Ctrl+N': '\x0e',  # New
-    'Ctrl+O': '\x0f',  # Open
-    'Ctrl+P': '\x10',  # (available)
-    'Ctrl+Q': '\x11',  # Quit
-    'Ctrl+R': '\x12',  # Run
-    'Ctrl+S': '\x13',  # Save
-    'Ctrl+T': '\x14',  # Step
-    'Ctrl+U': '\x15',  # Menu
-    'Ctrl+V': '\x16',  # (available)
-    'Ctrl+W': '\x17',  # Variables window
-    'Ctrl+X': '\x18',  # Stop
-    'Ctrl+Y': '\x19',  # (available)
-    'Ctrl+Z': '\x1a',  # (available)
+    'Ctrl+A': '\x01',
+    'Ctrl+B': '\x02',
+    'Ctrl+C': '\x03',
+    'Ctrl+D': '\x04',
+    'Ctrl+E': '\x05',
+    'Ctrl+F': '\x06',
+    'Ctrl+G': '\x07',
+    'Ctrl+H': '\x08',
+    'Ctrl+I': '\x09',  # Tab
+    'Ctrl+J': '\x0a',  # Newline/LF
+    'Ctrl+K': '\x0b',
+    'Ctrl+L': '\x0c',
+    'Ctrl+M': '\x0d',  # Return/Enter
+    'Ctrl+N': '\x0e',
+    'Ctrl+O': '\x0f',
+    'Ctrl+P': '\x10',
+    'Ctrl+Q': '\x11',
+    'Ctrl+R': '\x12',
+    'Ctrl+S': '\x13',
+    'Ctrl+T': '\x14',
+    'Ctrl+U': '\x15',
+    'Ctrl+V': '\x16',
+    'Ctrl+W': '\x17',
+    'Ctrl+X': '\x18',
+    'Ctrl+Y': '\x19',
+    'Ctrl+Z': '\x1a',
 }

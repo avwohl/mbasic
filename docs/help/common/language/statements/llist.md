@@ -20,6 +20,24 @@ type: statement
 
 # LLIST
 
+## Implementation Note
+
+⚠️ **Not Implemented**: This feature requires line printer hardware and is not implemented in this Python-based interpreter.
+
+**Behavior**: Statement is parsed but no listing is sent to a printer
+
+**Why**: Line printers are obsolete hardware. Modern systems use different printing paradigms.
+
+**Alternative**: Use [LIST](list.md) to display program to console or redirect console output to a file for printing:
+```bash
+python3 mbasic.py yourprogram.bas > listing.txt
+# Then print listing.txt using your OS print facilities
+```
+
+**Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
+
+---
+
 ## Syntax
 
 ```basic

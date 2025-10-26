@@ -17,6 +17,20 @@ type: function
 
 # LPOS
 
+## Implementation Note
+
+⚠️ **Not Implemented**: This feature requires line printer hardware and is not implemented in this Python-based interpreter.
+
+**Behavior**: Function always returns 0
+
+**Why**: Line printers are obsolete hardware. There is no printer print head to track in modern systems.
+
+**Alternative**: Use [POS](pos.md) to get the current console print position, or track position manually when writing to files with [PRINT#](../statements/printi-printi-using.md).
+
+**Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
+
+---
+
 ## Syntax
 
 ```basic

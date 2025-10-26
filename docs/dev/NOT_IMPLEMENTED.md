@@ -130,20 +130,21 @@ These are specific to the command-line UI and not applicable to curses/tk/visual
 - **Note**: Different invocation in different UIs
 - **Help**: Should note UI differences
 
-## Recommendations
+## Documentation Status
 
-### Priority 1: Add Implementation Notes
-Add notices to help files for hardware/system functions that are not implemented or have compatibility implementations:
+### ✅ Completed: Implementation Notes Added
 
-1. **peek.md** - Note: Returns random 0-255 for RNG seeding compatibility
-2. **inp.md** - Note: Not implemented, returns 0
-3. **usr.md** - Note: Not implemented, returns 0
-4. **poke.md** - Note: Not implemented, no operation performed
-5. **out.md** - Note: Not implemented, no operation performed
-6. **call.md** - Note: Not implemented, no operation performed
-7. **wait.md** - Note: Not implemented, no operation performed
+All hardware/system function help files now have implementation notes:
 
-### Priority 2: Check and Document
+1. ✅ **peek.md** - Compatibility implementation note (returns random 0-255)
+2. ✅ **inp.md** - Not implemented note (returns 0)
+3. ✅ **usr.md** - Not implemented note (returns 0)
+4. ✅ **poke.md** - Not implemented note (no operation)
+5. ✅ **out.md** - Not implemented note (no operation)
+6. ✅ **call.md** - Not implemented note (no operation)
+7. ✅ **wait.md** - Not implemented note (no operation)
+
+### Priority 1: Check and Document
 Need to verify implementation status:
 
 1. **lprint-lprint-using.md** - Check actual behavior in different UIs
@@ -151,7 +152,7 @@ Need to verify implementation status:
 3. **varptr.md** - Check implementation
 4. **llist.md** - Check implementation
 
-### Priority 3: Historical Reference
+### Priority 2: Historical Reference
 Cassette functions already noted as VT180-excluded, keep as historical reference.
 
 ## Template for Implementation Notice
