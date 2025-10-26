@@ -1191,11 +1191,11 @@ class TkBackend(UIBackend):
         """
         import tkinter as tk
 
-        self.editor_text.delete(1.0, tk.END)
+        self.editor_text.text.delete(1.0, tk.END)
         for line_num, line_text in self.program.get_lines():
             # line_text already includes the line number
             # Just ensure consistent formatting
-            self.editor_text.insert(tk.END, line_text + "\n")
+            self.editor_text.text.insert(tk.END, line_text + "\n")
 
         # Clear error indicators
         self.editor_text.clear_all_errors()
@@ -1208,7 +1208,7 @@ class TkBackend(UIBackend):
         self.program.clear()
 
         # Parse each line from editor and track errors
-        editor_content = self.editor_text.get(1.0, tk.END)
+        editor_content = self.editor_text.text.get(1.0, tk.END)
         for line in editor_content.split('\n'):
             line = line.strip()
             if not line:
@@ -1234,7 +1234,7 @@ class TkBackend(UIBackend):
         import re
 
         # Get editor content
-        editor_content = self.editor_text.get(1.0, tk.END)
+        editor_content = self.editor_text.text.get(1.0, tk.END)
 
         # Clear existing error markers
         self.editor_text.clear_all_errors()
@@ -1438,18 +1438,19 @@ class TkBackend(UIBackend):
         new_line_num = int(new_match.group(1)) if new_match else None
 
         # Trigger sort if:
-        # 1. Line number changed on existing line, OR
-        # 2. New line number was added (old was None, new is not None), OR
-        # 3. Line number was removed (old was not None, new is None and line has content)
+        # 1. Line number changed on existing line (both old and new are not None), OR
+        # 2. Line number was removed (old was not None, new is None and line has content)
+        # DON'T sort if just clicking around without editing (old is None means we're just tracking)
         should_sort = False
 
         if old_line_num != new_line_num:
-            if new_line_num is not None:
-                # Line number changed or new line number added
+            if old_line_num is not None and new_line_num is not None:
+                # Line number actually changed (user edited the number)
                 should_sort = True
-            elif old_line_num is not None and current_text.strip():
+            elif old_line_num is not None and new_line_num is None and current_text.strip():
                 # Line number was removed but line has content
                 should_sort = True
+            # If old_line_num is None, we're just clicking around, don't sort
 
         if should_sort:
             # Save editor to program (which parses all lines)
@@ -1806,7 +1807,7 @@ class TkBackend(UIBackend):
         import tkinter as tk
 
         self.program.clear()
-        self.editor_text.delete(1.0, tk.END)
+        self.editor_text.text.delete(1.0, tk.END)
         self._menu_clear_output()
         self._set_status("New program")
 
