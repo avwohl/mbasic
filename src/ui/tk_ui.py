@@ -1361,25 +1361,32 @@ class TkBackend(UIBackend):
                     next_num = current_line_num + 1
                     break
 
+        # Check if cursor is at the end of the file (last line)
+        # Only create a new auto-numbered line if we're at the end
+        total_lines = int(self.editor_text.text.index(tk.END).split('.')[0]) - 1
+        is_last_line = (current_line_index == total_lines)
+
         # Save current line to program first (so it's included in sort)
         self._save_editor_to_program()
 
         # Refresh editor to sort lines by number
         self._refresh_editor()
 
-        # Now calculate next line number based on ALL lines including the one we just saved
-        all_nums = set(self.program.get_all_line_numbers())
+        # Only create a new auto-numbered line if we were editing the last line
+        if is_last_line:
+            # Now calculate next line number based on ALL lines including the one we just saved
+            all_nums = set(self.program.get_all_line_numbers())
 
-        # Calculate next number using standard increment
-        next_num = current_line_num + self.auto_number_increment
+            # Calculate next number using standard increment
+            next_num = current_line_num + self.auto_number_increment
 
-        # If that conflicts with existing line, keep incrementing
-        while next_num in all_nums:
-            next_num += self.auto_number_increment
+            # If that conflicts with existing line, keep incrementing
+            while next_num in all_nums:
+                next_num += self.auto_number_increment
 
-        # Insert new line with auto-generated number (no leading spaces!)
-        new_line_text = f'\n{next_num} '
-        self.editor_text.text.insert(tk.END, new_line_text)
+            # Insert new line with auto-generated number (no leading spaces!)
+            new_line_text = f'\n{next_num} '
+            self.editor_text.text.insert(tk.END, new_line_text)
 
         # Move cursor to the new line
         self.editor_text.text.mark_set(tk.INSERT, tk.END)
