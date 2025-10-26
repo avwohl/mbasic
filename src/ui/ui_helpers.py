@@ -404,3 +404,88 @@ def parse_renum_args(args: str) -> Tuple[int, int, int]:
         increment = int(parts[2].strip())
 
     return new_start, old_start, increment
+
+
+def parse_delete_args(args: str, all_line_numbers: List[int]) -> Tuple[int, int]:
+    """Parse DELETE command arguments.
+
+    Args:
+        args: Argument string, format: "start-end", "start", "-end", or "start-"
+        all_line_numbers: List of existing line numbers for defaults
+
+    Returns:
+        Tuple of (start_line, end_line)
+
+    Syntax:
+        DELETE 40       - Delete single line 40
+        DELETE 40-100   - Delete lines 40 through 100 (inclusive)
+        DELETE -40      - Delete all lines up to and including 40
+        DELETE 40-      - Delete from line 40 to end of program
+
+    Examples:
+        >>> parse_delete_args("40", [10, 20, 30, 40, 50])
+        (40, 40)
+        >>> parse_delete_args("40-100", [10, 20, 30, 40, 50, 60])
+        (40, 100)
+        >>> parse_delete_args("-40", [10, 20, 30, 40, 50])
+        (10, 40)
+        >>> parse_delete_args("40-", [10, 20, 30, 40, 50])
+        (40, 50)
+    """
+    if not args or not args.strip():
+        raise ValueError("DELETE requires line number or range")
+
+    args = args.strip()
+
+    # Get min and max for defaults
+    min_line = min(all_line_numbers) if all_line_numbers else 0
+    max_line = max(all_line_numbers) if all_line_numbers else 0
+
+    # Check if it's a range
+    if '-' in args:
+        parts = args.split('-', 1)
+
+        # DELETE -40 (from start to 40)
+        if not parts[0]:
+            start = min_line
+            end = int(parts[1].strip())
+        # DELETE 40- (from 40 to end)
+        elif not parts[1]:
+            start = int(parts[0].strip())
+            end = max_line
+        # DELETE 40-100 (range)
+        else:
+            start = int(parts[0].strip())
+            end = int(parts[1].strip())
+    else:
+        # DELETE 40 (single line)
+        start = end = int(args)
+
+    return start, end
+
+
+def delete_line_range(
+    lines: Dict[int, str],
+    start: int,
+    end: int
+) -> Dict[int, str]:
+    """Delete a range of lines from a program.
+
+    Args:
+        lines: Dictionary of line_number -> line_text
+        start: First line number to delete (inclusive)
+        end: Last line number to delete (inclusive)
+
+    Returns:
+        New dictionary with lines deleted
+
+    Example:
+        >>> lines = {10: "10 PRINT A", 20: "20 PRINT B", 30: "30 PRINT C"}
+        >>> delete_line_range(lines, 10, 20)
+        {30: "30 PRINT C"}
+    """
+    new_lines = {}
+    for line_num, line_text in lines.items():
+        if not (start <= line_num <= end):
+            new_lines[line_num] = line_text
+    return new_lines

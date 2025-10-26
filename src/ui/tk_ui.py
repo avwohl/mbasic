@@ -1815,9 +1815,53 @@ class TkBackend(UIBackend):
             self._set_status("Load error")
 
     def cmd_delete(self, args: str) -> None:
-        """Execute DELETE command - delete line range."""
-        # TODO: Implement
-        pass
+        """Execute DELETE command - delete line range using ui_helpers.
+
+        Syntax:
+            DELETE 40       - Delete single line 40
+            DELETE 40-100   - Delete lines 40 through 100 (inclusive)
+            DELETE -40      - Delete all lines up to and including 40
+            DELETE 40-      - Delete from line 40 to end of program
+        """
+        from ui.ui_helpers import parse_delete_args, delete_line_range
+
+        # Get current program lines
+        if not self.program.lines:
+            self._write_output("No program to delete from")
+            return
+
+        try:
+            # Parse arguments
+            all_line_numbers = sorted(self.program.get_all_line_numbers())
+            start, end = parse_delete_args(args, all_line_numbers)
+
+            # Check if any lines in range exist
+            lines_to_delete = [n for n in all_line_numbers if start <= n <= end]
+
+            if not lines_to_delete:
+                self._write_output(f"No lines in range {start}-{end}")
+                return
+
+            # Delete lines from program
+            for line_num in lines_to_delete:
+                if line_num in self.program.lines:
+                    del self.program.lines[line_num]
+                if line_num in self.program.line_asts:
+                    del self.program.line_asts[line_num]
+
+            # Refresh the editor display
+            self._refresh_editor()
+
+            # Show confirmation
+            if len(lines_to_delete) == 1:
+                self._write_output(f"Deleted line {lines_to_delete[0]}")
+            else:
+                self._write_output(f"Deleted {len(lines_to_delete)} lines ({min(lines_to_delete)}-{max(lines_to_delete)})")
+
+        except ValueError as e:
+            self._write_output(f"?Syntax error: {e}")
+        except Exception as e:
+            self._write_output(f"?Error during delete: {e}")
 
     def cmd_renum(self, args: str) -> None:
         """Execute RENUM command - renumber lines using ui_helpers."""

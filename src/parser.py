@@ -1711,13 +1711,14 @@ class Parser:
         """Parse DELETE statement
 
         Syntax:
-            DELETE start-end   - Delete lines from start to end
-            DELETE -end        - Delete from beginning to end
-            DELETE start-      - Delete from start to end of program
+            DELETE 40          - Delete single line 40
+            DELETE 40-100      - Delete lines from start to end
+            DELETE -40         - Delete from beginning to end
+            DELETE 40-         - Delete from start to end of program
         """
         token = self.advance()
 
-        # Parse the range: start-end, -end, or start-
+        # Parse the range: start-end, -end, start-, or just start
         # We need to parse this specially because minus is used as separator, not operator
         start = None
         end = None
@@ -1735,13 +1736,18 @@ class Parser:
                 start_token = self.advance()
                 start = NumberNode(value=start_token.value, literal=str(start_token.value), line_num=start_token.line, column=start_token.column)
 
-                # Expect minus
+                # Check for minus (range)
                 if self.match(TokenType.MINUS):
                     self.advance()
                     # Check if there's an end value
                     if self.match(TokenType.NUMBER):
                         end_token = self.advance()
                         end = NumberNode(value=end_token.value, literal=str(end_token.value), line_num=end_token.line, column=end_token.column)
+                    # else: DELETE start- (to end of program, end stays None)
+                else:
+                    # No minus: single line deletion (DELETE 40)
+                    # Set end to same as start
+                    end = NumberNode(value=start_token.value, literal=str(start_token.value), line_num=start_token.line, column=start_token.column)
 
         return DeleteStatementNode(
             start=start,

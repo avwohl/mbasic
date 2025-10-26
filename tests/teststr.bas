@@ -1,0 +1,12 @@
+10 A$ = ""
+20 FOR I = 1 TO 100
+30   A$ = A$ + "A"
+40 NEXT I
+50 PRINT "100: "; LEN(A$)
+60 FOR I = 1 TO 155
+70   A$ = A$ + "B"
+80 NEXT I
+90 PRINT "255: "; LEN(A$)
+100 A$ = A$ + "C"
+110 PRINT "256: "; LEN(A$)
+120 SYSTEM

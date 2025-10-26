@@ -680,18 +680,32 @@ class InteractiveMode:
             print_error(e, self.program_runtime if hasattr(self, 'program_runtime') else None)
 
     def cmd_delete(self, args):
-        """DELETE start-end - Delete range of lines"""
-        if not args or '-' not in args:
-            print("?Syntax error")
+        """DELETE - Delete line or range of lines using ui_helpers.
+
+        Syntax:
+            DELETE 40       - Delete single line 40
+            DELETE 40-100   - Delete lines 40 through 100 (inclusive)
+            DELETE -40      - Delete all lines up to and including 40
+            DELETE 40-      - Delete from line 40 to end of program
+        """
+        from ui.ui_helpers import parse_delete_args
+
+        if not self.lines:
+            print("?No program")
             return
 
         try:
-            parts = args.split('-', 1)
-            start = int(parts[0]) if parts[0] else min(self.lines.keys())
-            end = int(parts[1]) if parts[1] else max(self.lines.keys())
+            # Parse arguments
+            all_line_numbers = sorted(self.lines.keys())
+            start, end = parse_delete_args(args, all_line_numbers)
 
             # Delete lines in range
             to_delete = [n for n in self.lines.keys() if start <= n <= end]
+
+            if not to_delete:
+                print(f"?No lines in range {start}-{end}")
+                return
+
             for line_num in to_delete:
                 del self.lines[line_num]
                 if line_num in self.line_asts:
@@ -702,6 +716,8 @@ class InteractiveMode:
                     if line_num in self.program_runtime.line_order:
                         self.program_runtime.line_order.remove(line_num)
 
+        except ValueError as e:
+            print(f"?Syntax error")
         except Exception as e:
             print(f"?Syntax error")
 
