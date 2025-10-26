@@ -8,6 +8,7 @@ making it suitable for a modern BASIC IDE experience.
 from .base import UIBackend
 from runtime import Runtime
 from interpreter import Interpreter
+from .keybinding_loader import KeybindingLoader
 
 
 class TkBackend(UIBackend):
@@ -40,6 +41,9 @@ class TkBackend(UIBackend):
             program_manager: ProgramManager instance
         """
         super().__init__(io_handler, program_manager)
+
+        # Load keybindings from config
+        self.keybindings = KeybindingLoader('tk')
 
         # Runtime and interpreter for program execution
         self.runtime = None
@@ -145,12 +149,16 @@ class TkBackend(UIBackend):
         # File menu
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=file_menu)
-        file_menu.add_command(label="New", command=self._menu_new, accelerator="Ctrl+N")
-        file_menu.add_command(label="Open...", command=self._menu_open, accelerator="Ctrl+O")
-        file_menu.add_command(label="Save", command=self._menu_save, accelerator="Ctrl+S")
+        file_menu.add_command(label="New", command=self._menu_new,
+                             accelerator=self.keybindings.get_tk_accelerator('menu', 'file_new'))
+        file_menu.add_command(label="Open...", command=self._menu_open,
+                             accelerator=self.keybindings.get_tk_accelerator('menu', 'file_open'))
+        file_menu.add_command(label="Save", command=self._menu_save,
+                             accelerator=self.keybindings.get_tk_accelerator('menu', 'file_save'))
         file_menu.add_command(label="Save As...", command=self._menu_save_as)
         file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=self._menu_exit)
+        file_menu.add_command(label="Exit", command=self._menu_exit,
+                             accelerator=self.keybindings.get_tk_accelerator('menu', 'file_quit'))
 
         # Edit menu
         edit_menu = tk.Menu(menubar, tearoff=0)
@@ -164,10 +172,11 @@ class TkBackend(UIBackend):
         # Run menu
         run_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Run", menu=run_menu)
-        run_menu.add_command(label="Run Program", command=self._menu_run, accelerator="Ctrl+R")
-        run_menu.add_command(label="Step", command=self._menu_step, accelerator="Ctrl+T")
-        run_menu.add_command(label="Continue", command=self._menu_continue, accelerator="Ctrl+G")
-        run_menu.add_command(label="Stop", command=self._menu_stop, accelerator="Ctrl+X")
+        run_menu.add_command(label="Run Program", command=self._menu_run,
+                            accelerator=self.keybindings.get_tk_accelerator('menu', 'run_program'))
+        run_menu.add_command(label="Step", command=self._menu_step)
+        run_menu.add_command(label="Continue", command=self._menu_continue)
+        run_menu.add_command(label="Stop", command=self._menu_stop)
         run_menu.add_separator()
         run_menu.add_command(label="List Program", command=self._menu_list)
         run_menu.add_separator()
@@ -182,24 +191,18 @@ class TkBackend(UIBackend):
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="Help Topics", command=self._menu_help, accelerator="Ctrl+?")
+        help_menu.add_command(label="Help Topics", command=self._menu_help,
+                             accelerator=self.keybindings.get_tk_accelerator('menu', 'help_topics'))
         help_menu.add_separator()
         help_menu.add_command(label="About", command=self._menu_about)
 
-        # Bind keyboard shortcuts
-        self.root.bind("<Control-n>", lambda e: self._menu_new())
-        self.root.bind("<Control-o>", lambda e: self._menu_open())
-        self.root.bind("<Control-s>", lambda e: self._menu_save())
-        self.root.bind("<Control-r>", lambda e: self._menu_run())
-        self.root.bind("<Control-t>", lambda e: self._menu_step())
-        self.root.bind("<Control-g>", lambda e: self._menu_continue())
-        self.root.bind("<Control-b>", lambda e: self._toggle_breakpoint())
-        self.root.bind("<Control-w>", lambda e: self._toggle_variables())
-        self.root.bind("<Control-k>", lambda e: self._toggle_stack())
-        # Note: Ctrl+X conflicts with Cut, so we'll check in the handler
-        self.root.bind("<F5>", lambda e: self._menu_run())
-        self.root.bind("<Control-question>", lambda e: self._menu_help())  # Ctrl+?
-        self.root.bind("<Control-slash>", lambda e: self._menu_help())      # Ctrl+/ (alternative)
+        # Bind keyboard shortcuts from config
+        self.keybindings.bind_all_to_tk(self.root, 'menu', 'file_new', lambda e: self._menu_new())
+        self.keybindings.bind_all_to_tk(self.root, 'menu', 'file_open', lambda e: self._menu_open())
+        self.keybindings.bind_all_to_tk(self.root, 'menu', 'file_save', lambda e: self._menu_save())
+        self.keybindings.bind_all_to_tk(self.root, 'menu', 'file_quit', lambda e: self._menu_exit())
+        self.keybindings.bind_all_to_tk(self.root, 'menu', 'run_program', lambda e: self._menu_run())
+        self.keybindings.bind_all_to_tk(self.root, 'menu', 'help_topics', lambda e: self._menu_help())
 
     def _create_toolbar(self):
         """Create toolbar with common actions."""
@@ -213,7 +216,10 @@ class TkBackend(UIBackend):
         ttk.Button(toolbar, text="Open", command=self._menu_open).pack(side=tk.LEFT, padx=2, pady=2)
         ttk.Button(toolbar, text="Save", command=self._menu_save).pack(side=tk.LEFT, padx=2, pady=2)
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
-        ttk.Button(toolbar, text="Run (F5)", command=self._menu_run).pack(side=tk.LEFT, padx=2, pady=2)
+
+        # Get run key from config for toolbar label
+        run_key = self.keybindings.get_tk_accelerator('menu', 'run_program') or 'F5'
+        ttk.Button(toolbar, text=f"Run ({run_key})", command=self._menu_run).pack(side=tk.LEFT, padx=2, pady=2)
         ttk.Button(toolbar, text="List", command=self._menu_list).pack(side=tk.LEFT, padx=2, pady=2)
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
         ttk.Button(toolbar, text="Clear Output", command=self._menu_clear_output).pack(side=tk.LEFT, padx=2, pady=2)
@@ -539,12 +545,16 @@ class TkBackend(UIBackend):
         import tkinter as tk
         from tkinter import messagebox
 
+        # Get help key from config
+        help_keys = self.keybindings.get_all_keys('menu', 'help_topics')
+        help_key_text = ' or '.join(help_keys) if help_keys else 'Ctrl+?'
+
         messagebox.showinfo(
             "About MBASIC 5.21",
             "MBASIC 5.21 Interpreter\n\n"
             "A Python implementation of Microsoft BASIC 5.21\n\n"
             "Tkinter GUI Backend\n\n"
-            "Press Ctrl+? or Ctrl+/ for help"
+            f"Press {help_key_text} for help"
         )
 
     # Helper methods
