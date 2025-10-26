@@ -467,7 +467,7 @@ class TkBackend(UIBackend):
         self.variables_window = tk.Toplevel(self.root)
         self.variables_window.title("Variables & Resources")
         self.variables_window.geometry("400x400")
-        self.variables_window.protocol("WM_DELETE_WINDOW", lambda: self._toggle_variables())
+        self.variables_window.protocol("WM_DELETE_WINDOW", lambda: self._close_variables())
         self.variables_window.withdraw()  # Hidden initially
 
         # Create resource usage frame at top
@@ -509,6 +509,11 @@ class TkBackend(UIBackend):
             self.variables_window.focus_force()
             self.variables_visible = True
             self._update_variables()
+
+    def _close_variables(self):
+        """Close variables window (called from X button)."""
+        self.variables_window.withdraw()
+        self.variables_visible = False
 
     def _update_variables(self):
         """Update variables window from runtime."""
@@ -573,7 +578,7 @@ class TkBackend(UIBackend):
         self.stack_window = tk.Toplevel(self.root)
         self.stack_window.title("Execution Stack")
         self.stack_window.geometry("400x300")
-        self.stack_window.protocol("WM_DELETE_WINDOW", lambda: self._toggle_stack())
+        self.stack_window.protocol("WM_DELETE_WINDOW", lambda: self._close_stack())
         self.stack_window.withdraw()  # Hidden initially
 
         # Create Treeview
@@ -604,6 +609,11 @@ class TkBackend(UIBackend):
             self.stack_window.focus_force()
             self.stack_visible = True
             self._update_stack()
+
+    def _close_stack(self):
+        """Close execution stack window (called from X button)."""
+        self.stack_window.withdraw()
+        self.stack_visible = False
 
     def _update_stack(self):
         """Update execution stack window from runtime."""
