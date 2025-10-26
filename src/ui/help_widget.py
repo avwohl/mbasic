@@ -167,7 +167,16 @@ class HelpWidget(urwid.WidgetWrap):
                             file_info.get('description', '')
                         ))
 
-        return results
+        # Deduplicate by path (keep first occurrence)
+        seen_paths = set()
+        deduped_results = []
+        for result in results:
+            path = result[1]  # path is the second element
+            if path not in seen_paths:
+                seen_paths.add(path)
+                deduped_results.append(result)
+
+        return deduped_results
 
     def _find_file_info(self, index: Dict, path: str) -> Optional[Dict]:
         """Find file info in index by path."""
@@ -324,12 +333,31 @@ class HelpWidget(urwid.WidgetWrap):
             if self.current_links and self.current_link_index < len(self.current_links):
                 _, _, target = self.current_links[self.current_link_index]
 
-                # Resolve relative path
-                current_dir = str(Path(self.current_topic).parent)
-                if current_dir == '.':
-                    new_topic = target
+                # Check if target is already an absolute path (from search results)
+                # Absolute paths don't start with . or ..
+                if not target.startswith('.'):
+                    # This is already a help-root-relative path (e.g., from search results)
+                    new_topic = target.replace('\\', '/')
                 else:
-                    new_topic = str(Path(current_dir) / target)
+                    # Resolve relative path from current topic
+                    current_dir = Path(self.current_topic).parent
+                    if str(current_dir) == '.':
+                        new_topic_path = Path(target)
+                    else:
+                        new_topic_path = current_dir / target
+
+                    # Normalize path (resolve .. and .)
+                    # Convert to absolute, resolve, then make relative to help_root
+                    abs_path = (self.help_root / new_topic_path).resolve()
+
+                    try:
+                        new_topic = str(abs_path.relative_to(self.help_root.resolve()))
+                    except ValueError:
+                        # Path is outside help_root, use as-is
+                        new_topic = str(new_topic_path)
+
+                    # Normalize path separators
+                    new_topic = new_topic.replace('\\', '/')
 
                 # Save current topic to history
                 self.history.append(self.current_topic)
