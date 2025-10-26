@@ -23,7 +23,7 @@ Quick reference for the curses text UI.
 |-----|--------|
 | **Ctrl+Q** / **Ctrl+C** | Quit |
 | **Ctrl+U** | Show menu |
-| **Ctrl+A** | This help |
+| **Ctrl+H** | Help (with search) |
 | **Ctrl+W** | Toggle variables watch window |
 | **Ctrl+K** | Toggle execution stack window |
 

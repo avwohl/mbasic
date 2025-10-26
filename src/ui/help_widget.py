@@ -6,11 +6,13 @@ Provides:
 - Enter to follow links
 - ESC/Q to exit
 - Navigation breadcrumbs
+- Search across three-tier help system (/)
 """
 
 import urwid
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
+import json
 from .markdown_renderer import MarkdownRenderer
 
 
@@ -35,13 +37,20 @@ class HelpWidget(urwid.WidgetWrap):
         self.link_positions = []  # List of line numbers with links (for navigation)
         self.current_link_index = 0  # Which link is selected
 
+        # Search state
+        self.search_indexes = self._load_search_indexes()
+        self.search_mode = False
+        self.search_query = ""
+        self.search_results = []
+        self.search_result_index = 0
+
         # Create display widgets
         self.text_widget = urwid.Text("")
         self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker([self.text_widget]))
 
         # Create frame with title and footer
         self.title = urwid.Text("")
-        self.footer = urwid.Text(" ↑/↓=Scroll Tab=Next Link Enter=Follow Link U=Back ESC/Q=Exit ")
+        self.footer = urwid.Text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
 
         frame = urwid.Frame(
             self.listbox,
@@ -56,6 +65,175 @@ class HelpWidget(urwid.WidgetWrap):
 
         # Load initial topic
         self._load_topic(initial_topic)
+
+    def _load_search_indexes(self) -> Dict[str, Dict]:
+        """Load all three search indexes (language, mbasic, ui)."""
+        indexes = {}
+
+        # Try to load each search index
+        index_paths = [
+            ('language', self.help_root / 'common/language/search_index.json'),
+            ('mbasic', self.help_root / 'mbasic/search_index.json'),
+            ('ui', self.help_root / 'ui/curses/search_index.json'),
+        ]
+
+        for name, path in index_paths:
+            try:
+                if path.exists():
+                    with open(path, 'r') as f:
+                        indexes[name] = json.load(f)
+            except Exception:
+                # If index can't be loaded, continue without it
+                pass
+
+        return indexes
+
+    def _search_indexes(self, query: str) -> List[Tuple[str, str, str, str]]:
+        """
+        Search across all loaded indexes.
+
+        Returns list of (tier, path, title, description) tuples.
+        """
+        results = []
+        query_lower = query.lower()
+
+        for tier_name, index in self.search_indexes.items():
+            # Map tier names to paths
+            tier_prefix = {
+                'language': 'common/language/',
+                'mbasic': 'mbasic/',
+                'ui': 'ui/curses/',
+            }.get(tier_name, '')
+
+            tier_label = {
+                'language': '📕 Language',
+                'mbasic': '📗 MBASIC',
+                'ui': '📘 UI',
+            }.get(tier_name, tier_name)
+
+            # Search in keywords
+            if 'keywords' in index:
+                for keyword, paths in index['keywords'].items():
+                    if query_lower in keyword.lower():
+                        # Keyword match - add all files with this keyword
+                        if isinstance(paths, list):
+                            for path in paths:
+                                # Find file info
+                                file_info = self._find_file_info(index, path)
+                                if file_info:
+                                    results.append((
+                                        tier_label,
+                                        tier_prefix + path,
+                                        file_info.get('title', path),
+                                        file_info.get('description', '')
+                                    ))
+                        else:
+                            # Single path (alias)
+                            file_info = self._find_file_info(index, paths)
+                            if file_info:
+                                results.append((
+                                    tier_label,
+                                    tier_prefix + paths,
+                                    file_info.get('title', paths),
+                                    file_info.get('description', '')
+                                ))
+
+            # Search in aliases
+            if 'aliases' in index:
+                for alias, path in index['aliases'].items():
+                    if query_lower in alias.lower():
+                        file_info = self._find_file_info(index, path)
+                        if file_info:
+                            results.append((
+                                tier_label,
+                                tier_prefix + path,
+                                file_info.get('title', path),
+                                file_info.get('description', '')
+                            ))
+
+            # Search in titles and descriptions
+            if 'files' in index:
+                for file_info in index['files']:
+                    title = file_info.get('title', '').lower()
+                    desc = file_info.get('description', '').lower()
+
+                    if query_lower in title or query_lower in desc:
+                        results.append((
+                            tier_label,
+                            tier_prefix + file_info.get('path', ''),
+                            file_info.get('title', ''),
+                            file_info.get('description', '')
+                        ))
+
+        return results
+
+    def _find_file_info(self, index: Dict, path: str) -> Optional[Dict]:
+        """Find file info in index by path."""
+        if 'files' in index:
+            for file_info in index['files']:
+                if file_info.get('path') == path:
+                    return file_info
+        return None
+
+    def _show_search_prompt(self):
+        """Show search input prompt."""
+        self.search_mode = True
+        self.search_query = ""
+        self.footer.set_text(" Search: _ (type query, Enter to search, ESC to cancel)")
+        self.title.set_text(" MBASIC Help: Search ")
+
+    def _execute_search(self):
+        """Execute search and display results."""
+        if not self.search_query:
+            self.search_mode = False
+            self.footer.set_text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
+            self._load_topic(self.current_topic)
+            return
+
+        # Perform search
+        self.search_results = self._search_indexes(self.search_query)
+        self.search_result_index = 0
+
+        # Display results
+        if not self.search_results:
+            result_text = f"No results found for '{self.search_query}'\n\n"
+            result_text += "Try:\n"
+            result_text += "- Different keywords (e.g., 'loop', 'array', 'file')\n"
+            result_text += "- Statement names (e.g., 'print', 'for', 'if')\n"
+            result_text += "- Function names (e.g., 'left$', 'abs', 'int')\n"
+            result_text += "\nPress ESC to return, / to search again"
+            self.text_widget.set_text(result_text)
+            self.current_links = []
+            self.search_mode = False
+            self.footer.set_text(" /=New Search ESC=Back ")
+        else:
+            # Format results
+            result_text = f"Search results for '{self.search_query}' ({len(self.search_results)} found):\n\n"
+
+            self.current_links = []
+            for i, (tier, path, title, desc) in enumerate(self.search_results):
+                result_text += f"{tier} {title}\n"
+                if desc and desc != 'NEEDS_DESCRIPTION':
+                    result_text += f"  {desc[:70]}{'...' if len(desc) > 70 else ''}\n"
+                result_text += f"  → {path}\n\n"
+
+                # Add as link
+                self.current_links.append((i * 4, title, path))
+
+            self.text_widget.set_text(result_text)
+            self.link_positions = [link[0] for link in self.current_links]
+            self.current_link_index = 0
+            self.search_mode = False
+            self.footer.set_text(" ↑/↓=Scroll Tab=Next Result Enter=Open /=New Search ESC=Back ")
+
+        self.title.set_text(f" Search: {self.search_query} ")
+
+    def _cancel_search(self):
+        """Cancel search and return to previous topic."""
+        self.search_mode = False
+        self.search_query = ""
+        self.footer.set_text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
+        self._load_topic(self.current_topic)
 
     def _load_topic(self, relative_path: str) -> bool:
         """Load and render a help topic."""
@@ -106,9 +284,35 @@ class HelpWidget(urwid.WidgetWrap):
     def keypress(self, size, key):
         """Handle keypresses for help navigation."""
 
+        # Search mode input handling
+        if self.search_mode:
+            if key == 'esc':
+                self._cancel_search()
+                return None
+            elif key == 'enter':
+                self._execute_search()
+                return None
+            elif key == 'backspace':
+                if self.search_query:
+                    self.search_query = self.search_query[:-1]
+                    self.footer.set_text(f" Search: {self.search_query}_ (type query, Enter to search, ESC to cancel)")
+                return None
+            elif len(key) == 1 and key.isprintable():
+                self.search_query += key
+                self.footer.set_text(f" Search: {self.search_query}_ (type query, Enter to search, ESC to cancel)")
+                return None
+            else:
+                return None
+
+        # Normal mode navigation
         if key in ('q', 'Q', 'esc'):
             # Signal to close help
             return 'esc'
+
+        elif key == '/':
+            # Enter search mode
+            self._show_search_prompt()
+            return None
 
         elif key == 'enter':
             # Follow current link

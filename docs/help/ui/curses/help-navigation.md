@@ -18,7 +18,7 @@ How to navigate MBASIC help.
 
 ## Opening Help
 
-Press **Ctrl+P** anytime to open help.
+Press **Ctrl+H** anytime to open help.
 
 ## Navigation Keys
 
@@ -27,28 +27,43 @@ Press **Ctrl+P** anytime to open help.
 | Key | Action |
 |-----|--------|
 | **Up/Down** | Scroll one line |
-| **Space** | Page down (full screen) |
-| **B** | Page up |
+| **Page Up/Down** | Scroll one page |
 
 ### Following Links
 
 Links appear in brackets like [this](link).
 
-1. Use **Up/Down** to move cursor to a link
+1. Use **Tab** to move to next link
 2. Press **Enter** to follow the link
+
+### Searching
+
+| Key | Action |
+|-----|--------|
+| **/** | Open search prompt |
+| Type query | Enter search terms |
+| **Enter** | Execute search |
+| **ESC** | Cancel search |
+
+**Search tips:**
+- Search across all three documentation tiers
+- Try keywords like "loop", "array", "file"
+- Try statement names like "print", "for", "if"
+- Try function names like "left$", "abs", "int"
+- Results show tier markers: 📕 Language, 📗 MBASIC, 📘 UI
 
 ### Going Back
 
 | Key | Action |
 |-----|--------|
-| **U** | Go up to parent topic or back in history |
+| **U** | Go back to previous topic |
 
 ### Browsing Topics
 
 | Key | Action |
 |-----|--------|
-| **N** | Next link in current page |
-| **P** | Previous link in current page |
+| **Tab** | Next link in current page |
+| **Shift+Tab** | Previous link in current page |
 
 ### Exiting Help
 
