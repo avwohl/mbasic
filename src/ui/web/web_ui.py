@@ -654,33 +654,176 @@ class MBasicWebIDE:
 
     # Help and examples
     async def menu_help(self):
-        """Show help dialog."""
-        with ui.dialog() as dialog, ui.card().classes('w-96'):
-            ui.label('MBASIC 5.21 Web IDE - Help').classes('text-h6')
+        """Show help browser with three-tier help system."""
+        # Get help root directory
+        help_root = Path(__file__).parent.parent.parent.parent / 'docs' / 'help'
 
-            ui.markdown('''
-**Keyboard Shortcuts:**
-- Ctrl+R: Run program
-- Ctrl+T: Step one line
-- Ctrl+G: Continue from breakpoint
-- Ctrl+Q: Stop program
+        # Create maximized help browser dialog
+        with ui.dialog().props('maximized') as dialog:
+            with ui.card().classes('w-full h-full'):
+                # Header with title and close button
+                with ui.row().classes('w-full items-center mb-2'):
+                    ui.label('MBASIC Help Browser').classes('text-h5')
+                    ui.space()
+                    ui.button(icon='close', on_click=dialog.close).props('flat')
 
-**Features:**
-- Click line numbers to toggle breakpoints
-- Use Variables window to watch values
-- Use Stack window to see FOR/GOSUB stack
-- Save/Load files via File menu
+                # Search bar
+                with ui.row().classes('w-full items-center gap-2 mb-4'):
+                    search_input = ui.input(
+                        label='Search help topics',
+                        placeholder='Type to search...'
+                    ).classes('flex-grow')
 
-**Debugger:**
-- Set breakpoints by clicking line numbers
-- Use Step to execute line by line
-- Use Continue to run until next breakpoint
-- Watch variables and stack in real-time
-''')
+                    ui.button('Search', icon='search', on_click=lambda: self._search_help(search_input.value, help_root, content_area))
 
-            ui.button('Close', on_click=dialog.close).props('flat')
+                # Three-tier navigation tabs
+                with ui.tabs().classes('w-full') as tabs:
+                    language_tab = ui.tab('📕 Language', icon='book')
+                    mbasic_tab = ui.tab('📗 MBASIC 5.21', icon='library_books')
+                    ui_tab = ui.tab('📘 Web UI', icon='computer')
+
+                # Content area
+                with ui.tab_panels(tabs, value=ui_tab).classes('w-full h-full'):
+                    with ui.tab_panel(language_tab):
+                        with ui.scroll_area().classes('w-full h-full'):
+                            self._show_help_index(help_root / 'language', 'language')
+
+                    with ui.tab_panel(mbasic_tab):
+                        with ui.scroll_area().classes('w-full h-full'):
+                            self._show_help_index(help_root / 'mbasic', 'mbasic')
+
+                    with ui.tab_panel(ui_tab):
+                        with ui.scroll_area().classes('w-full h-full'):
+                            content_area = ui.column().classes('w-full')
+                            self._load_help_topic(help_root / 'ui' / 'web' / 'index.md', content_area)
 
         dialog.open()
+
+    def _show_help_index(self, help_dir: Path, category: str):
+        """Show index of help topics in a directory."""
+        if not help_dir.exists():
+            ui.label(f'No help available for {category}').classes('text-grey-6')
+            return
+
+        # Find all markdown files
+        md_files = sorted(help_dir.rglob('*.md'))
+
+        if not md_files:
+            ui.label(f'No help topics found').classes('text-grey-6')
+            return
+
+        # Group by subdirectory
+        topics_by_dir = {}
+        for md_file in md_files:
+            rel_path = md_file.relative_to(help_dir)
+            dir_name = str(rel_path.parent) if str(rel_path.parent) != '.' else 'General'
+
+            if dir_name not in topics_by_dir:
+                topics_by_dir[dir_name] = []
+
+            # Extract title from filename
+            title = md_file.stem.replace('-', ' ').replace('_', ' ').title()
+            topics_by_dir[dir_name].append((title, md_file))
+
+        # Display grouped topics
+        for dir_name in sorted(topics_by_dir.keys()):
+            ui.label(dir_name).classes('text-h6 mt-4 mb-2')
+
+            with ui.column().classes('gap-1'):
+                for title, filepath in sorted(topics_by_dir[dir_name]):
+                    ui.button(
+                        title,
+                        on_click=lambda fp=filepath: self._show_help_content(fp)
+                    ).props('flat align=left color=primary').classes('w-full text-left')
+
+    def _load_help_topic(self, topic_path: Path, container):
+        """Load and display a help topic."""
+        container.clear()
+
+        with container:
+            if not topic_path.exists():
+                ui.label('Help topic not found').classes('text-negative')
+                return
+
+            try:
+                content = topic_path.read_text(encoding='utf-8')
+
+                # Expand macros (like {{kbd:help}})
+                from ui.help_macros import HelpMacros
+                help_root = Path(__file__).parent.parent.parent.parent / 'docs' / 'help'
+                macros = HelpMacros('web', str(help_root))
+                content = macros.expand(content)
+
+                # Display as markdown
+                ui.markdown(content).classes('w-full')
+
+            except Exception as e:
+                ui.label(f'Error loading help: {str(e)}').classes('text-negative')
+
+    def _show_help_content(self, filepath: Path):
+        """Show help content in a new dialog."""
+        with ui.dialog() as dialog, ui.card().classes('w-full').style('max-width: 800px; max-height: 80vh'):
+            with ui.row().classes('w-full items-center mb-2'):
+                ui.label(filepath.stem.replace('-', ' ').title()).classes('text-h6')
+                ui.space()
+                ui.button(icon='close', on_click=dialog.close).props('flat')
+
+            with ui.scroll_area().classes('w-full').style('height: 60vh'):
+                try:
+                    content = filepath.read_text(encoding='utf-8')
+
+                    # Expand macros
+                    from ui.help_macros import HelpMacros
+                    help_root = Path(__file__).parent.parent.parent.parent / 'docs' / 'help'
+                    macros = HelpMacros('web', str(help_root))
+                    content = macros.expand(content)
+
+                    ui.markdown(content).classes('w-full')
+                except Exception as e:
+                    ui.label(f'Error: {str(e)}').classes('text-negative')
+
+        dialog.open()
+
+    def _search_help(self, query: str, help_root: Path, results_area):
+        """Search help topics."""
+        if not query:
+            ui.notify('Please enter a search term', type='warning')
+            return
+
+        results_area.clear()
+
+        with results_area:
+            ui.label(f'Search results for: {query}').classes('text-h6 mb-4')
+
+            # Search all markdown files
+            results = []
+            query_lower = query.lower()
+
+            for md_file in help_root.rglob('*.md'):
+                try:
+                    content = md_file.read_text(encoding='utf-8').lower()
+                    if query_lower in content:
+                        # Get relative path for display
+                        rel_path = md_file.relative_to(help_root)
+                        title = md_file.stem.replace('-', ' ').title()
+                        results.append((title, str(rel_path), md_file))
+                except:
+                    pass
+
+            if results:
+                ui.label(f'Found {len(results)} matches').classes('text-grey-7 mb-2')
+
+                with ui.column().classes('gap-2'):
+                    for title, rel_path, filepath in results[:50]:  # Limit to 50 results
+                        with ui.card().classes('w-full'):
+                            ui.label(title).classes('text-bold')
+                            ui.label(rel_path).classes('text-sm text-grey-6')
+                            ui.button(
+                                'View',
+                                on_click=lambda fp=filepath: self._show_help_content(fp)
+                            ).props('flat color=primary')
+            else:
+                ui.label('No results found').classes('text-grey-6')
 
     async def menu_about(self):
         """Show about dialog."""
