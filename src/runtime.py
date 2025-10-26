@@ -1038,7 +1038,7 @@ class Runtime:
                 # Get current value of loop variable
                 var_name = entry['var']
                 # Parse variable name to get base name and type suffix
-                base_name, type_suffix = parse_variable_name(var_name)
+                base_name, type_suffix = split_variable_name_and_suffix(var_name)
                 current_value = self.get_variable_for_debugger(base_name, type_suffix)
 
                 result.append({
