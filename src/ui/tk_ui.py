@@ -218,6 +218,7 @@ class TkBackend(UIBackend):
         edit_menu.add_command(label="Paste", command=self._menu_paste, accelerator="Ctrl+V")
         edit_menu.add_separator()
         edit_menu.add_command(label="Toggle Breakpoint", command=self._toggle_breakpoint, accelerator="Ctrl+B")
+        edit_menu.add_command(label="Clear All Breakpoints", command=self._clear_all_breakpoints)
 
         # Run menu
         run_menu = tk.Menu(menubar, tearoff=0)
@@ -441,6 +442,21 @@ class TkBackend(UIBackend):
         # Update interpreter state if running
         if self.interpreter:
             self.interpreter.state.breakpoints = self.breakpoints.copy()
+
+    def _clear_all_breakpoints(self):
+        """Clear all breakpoints."""
+        # Clear all breakpoints from editor
+        for line_number in list(self.breakpoints):
+            self.editor_text.set_breakpoint(line_number, False)
+
+        # Clear set
+        self.breakpoints.clear()
+
+        # Update interpreter state if running
+        if self.interpreter:
+            self.interpreter.state.breakpoints = self.breakpoints.copy()
+
+        self._set_status("All breakpoints cleared")
 
     def _create_variables_window(self):
         """Create variables watch window (Toplevel)."""

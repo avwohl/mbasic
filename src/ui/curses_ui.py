@@ -10,7 +10,8 @@ from .base import UIBackend
 from .keybindings import (
     HELP_KEY, MENU_KEY, QUIT_KEY, QUIT_ALT_KEY,
     VARIABLES_KEY, STACK_KEY, RUN_KEY, LIST_KEY, NEW_KEY, SAVE_KEY, OPEN_KEY,
-    BREAKPOINT_KEY, DELETE_LINE_KEY, RENUMBER_KEY,
+    BREAKPOINT_KEY, CLEAR_BREAKPOINTS_KEY, CLEAR_BREAKPOINTS_DISPLAY,
+    DELETE_LINE_KEY, RENUMBER_KEY,
     CONTINUE_KEY, STEP_KEY, STOP_KEY, TAB_KEY,
     STATUS_BAR_SHORTCUTS, EDITOR_STATUS, OUTPUT_STATUS,
     KEYBINDINGS_BY_CATEGORY
@@ -1546,6 +1547,10 @@ class CursesBackend(UIBackend):
             # Toggle breakpoint on current line
             self._toggle_breakpoint_current_line()
 
+        elif key == CLEAR_BREAKPOINTS_KEY:
+            # Clear all breakpoints
+            self._clear_all_breakpoints()
+
         elif key == VARIABLES_KEY:
             # Toggle variables window
             self._toggle_variables_window()
@@ -1892,6 +1897,25 @@ class CursesBackend(UIBackend):
             if self.loop:
                 self.loop.draw_screen()
 
+    def _clear_all_breakpoints(self):
+        """Clear all breakpoints."""
+        if not self.editor.breakpoints:
+            self.status_bar.set_text("No breakpoints to clear")
+            return
+
+        count = len(self.editor.breakpoints)
+        self.editor.breakpoints.clear()
+        self.editor._update_display()
+        self.status_bar.set_text(f"Cleared {count} breakpoint(s)")
+
+        # Update interpreter if running
+        if self.interpreter:
+            self.interpreter.clear_breakpoints()
+
+        # Force redraw
+        if self.loop:
+            self.loop.draw_screen()
+
     def _show_help(self):
         """Show interactive help browser."""
         # Get help root directory
@@ -1937,11 +1961,11 @@ class CursesBackend(UIBackend):
 ══════════════════════════════════════════════════════════════
 
 File                          Edit
-────────────────────          ────────────────────
-  New             Ctrl+N        Delete Line     Ctrl+D
-  Open...         Ctrl+O        Renumber...     Ctrl+E
-  Save            Ctrl+S        Toggle Break    Ctrl+B
-  Quit            Ctrl+Q
+────────────────────          ───────────────────────────
+  New             Ctrl+N        Delete Line       Ctrl+D
+  Open...         Ctrl+O        Renumber...       Ctrl+E
+  Save            Ctrl+S        Toggle Break      Ctrl+B
+  Quit            Ctrl+Q        Clear Breaks      Ctrl+Shift+B
 
 Run                           Help
 ────────────────────          ────────────────────

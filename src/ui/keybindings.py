@@ -134,6 +134,10 @@ BREAKPOINT_KEY = _ctrl_key_to_urwid(_breakpoint_key)
 BREAKPOINT_CHAR = _ctrl_key_to_char(_breakpoint_key)
 BREAKPOINT_DISPLAY = _breakpoint_key
 
+# Clear all breakpoints (hardcoded)
+CLEAR_BREAKPOINTS_KEY = 'ctrl shift b'
+CLEAR_BREAKPOINTS_DISPLAY = 'Ctrl+Shift+B'
+
 # Delete current line (not in JSON, hardcoded)
 DELETE_LINE_KEY = 'ctrl d'
 DELETE_LINE_CHAR = '\x04'
