@@ -1562,7 +1562,7 @@ class TkBackend(UIBackend):
             self._refresh_editor()
 
             # Show confirmation
-            self._write_output(f"Inserted blank line {insert_num}")
+            self._add_output(f"Inserted blank line {insert_num}\n")
 
     def _scroll_to_line(self, line_number):
         """Scroll editor to show the specified BASIC line number.
