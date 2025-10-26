@@ -1037,7 +1037,9 @@ class Runtime:
             elif entry['type'] == 'FOR':
                 # Get current value of loop variable
                 var_name = entry['var']
-                current_value = self.variables.get(var_name, 0)
+                # Parse variable name to get base name and type suffix
+                base_name, type_suffix = parse_variable_name(var_name)
+                current_value = self.get_variable_for_debugger(base_name, type_suffix)
 
                 result.append({
                     'type': 'FOR',
