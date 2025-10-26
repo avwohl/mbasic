@@ -32,7 +32,7 @@ Quick reference for the curses text UI.
 | Key | Action |
 |-----|--------|
 | **{{kbd:run}}** | Run program |
-| **Ctrl+L** | List program |
+| **Ctrl+L** | List program (or Step Line when debugging) |
 | **{{kbd:new}}** | New program |
 | **{{kbd:save}}** | Save program |
 | **Ctrl+O** | Open/Load program |
@@ -50,10 +50,26 @@ Quick reference for the curses text UI.
 | Key | Action |
 |-----|--------|
 | **{{kbd:goto_line}}** | Continue execution (Go) |
-| **{{kbd:step}}** | Step - execute one line (sTep) |
+| **Ctrl+L** | Step Line - execute all statements on current line |
+| **{{kbd:step}}** | Step Statement - execute one statement at a time |
 | **Ctrl+X** | Stop execution (eXit) |
 | **Ctrl+W** | Show/hide variables window |
 | **Ctrl+K** | Show/hide execution stack window |
+
+## Variables Window (when visible)
+
+| Key | Action |
+|-----|--------|
+| **s** | Cycle sort mode (Name → Accessed → Written → Read → Type → Value) |
+| **d** | Toggle sort direction (ascending ↑ / descending ↓) |
+
+**Sort Modes:**
+- **Name**: Alphabetically by variable name
+- **Accessed**: Most recently accessed (read or written)
+- **Written**: Most recently written to
+- **Read**: Most recently read from
+- **Type**: By type suffix ($, %, !, #)
+- **Value**: By value (numbers, strings, arrays)
 
 ## Navigation
 

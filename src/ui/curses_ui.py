@@ -12,7 +12,7 @@ from .keybindings import (
     VARIABLES_KEY, STACK_KEY, RUN_KEY, LIST_KEY, NEW_KEY, SAVE_KEY, OPEN_KEY,
     BREAKPOINT_KEY, CLEAR_BREAKPOINTS_KEY, CLEAR_BREAKPOINTS_DISPLAY,
     DELETE_LINE_KEY, RENUMBER_KEY,
-    CONTINUE_KEY, STEP_KEY, STEP_LINE_KEY, STOP_KEY, TAB_KEY,
+    CONTINUE_KEY, STEP_KEY, STOP_KEY, TAB_KEY,
     STATUS_BAR_SHORTCUTS, EDITOR_STATUS, OUTPUT_STATUS,
     KEYBINDINGS_BY_CATEGORY
 )
@@ -1283,6 +1283,7 @@ class CursesBackend(UIBackend):
         # UI state
         self.app = None
         self.loop = None
+        self.loop_running = False  # Track if event loop has been started
         self.editor = None
         self.output = None
         self.status_bar = None
@@ -1314,10 +1315,13 @@ class CursesBackend(UIBackend):
         self.immediate_status = None
         self.immediate_frame = None
 
-    def start(self):
-        """Start the urwid-based curses UI."""
-        # Create the UI layout
+        # Create the UI layout immediately so widgets exist
+        # (but don't start the loop yet - that happens in start())
         self._create_ui()
+
+    def start(self):
+        """Start the urwid-based curses UI main loop."""
+        # UI already created in __init__, just start the loop
 
         # Set up signal handling for clean exit
         import signal
@@ -1348,11 +1352,13 @@ class CursesBackend(UIBackend):
 
         # Run the main loop
         try:
+            self.loop_running = True
             self.loop.run()
         except KeyboardInterrupt:
             # Handle Ctrl+C gracefully
             pass
         finally:
+            self.loop_running = False
             # Cleanup
             self._cleanup()
 
@@ -1377,7 +1383,7 @@ class CursesBackend(UIBackend):
                 pass
 
         # Clear any pending alarms
-        if hasattr(self, 'loop') and self.loop:
+        if hasattr(self, 'loop') and self.loop and self.loop_running:
             try:
                 # Remove all alarms
                 for alarm in list(self.loop.event_loop.alarm_list):
@@ -1530,8 +1536,13 @@ class CursesBackend(UIBackend):
             self._run_program()
 
         elif key == LIST_KEY:
-            # List program
-            self._list_program()
+            # Context-sensitive: Step Line when debugging, List program otherwise
+            if self.interpreter and self.interpreter.get_state().status in ('paused', 'at_breakpoint', 'running'):
+                # Debugging: Ctrl+L = Step Line
+                self._debug_step_line()
+            else:
+                # Editing: Ctrl+L = List program
+                self._list_program()
 
         elif key == NEW_KEY:
             # New program
@@ -1584,10 +1595,6 @@ class CursesBackend(UIBackend):
         elif key == STEP_KEY:
             # Step Statement - execute one statement
             self._debug_step()
-
-        elif key == STEP_LINE_KEY:
-            # Step Line - execute all statements on line
-            self._debug_step_line()
 
         elif key == STOP_KEY:
             # Stop execution
@@ -1827,7 +1834,7 @@ class CursesBackend(UIBackend):
         self.status_bar.set_text(f"Deleted line {line_number}")
 
         # Force screen redraw
-        if self.loop:
+        if self.loop and self.loop_running:
             self.loop.draw_screen()
 
     def _renumber_lines(self):
@@ -1914,7 +1921,7 @@ class CursesBackend(UIBackend):
         self.status_bar.set_text(f"Renumbered {len(valid_lines)} lines from {start} by {increment}")
 
         # Force screen redraw
-        if self.loop:
+        if self.loop and self.loop_running:
             self.loop.draw_screen()
 
     def _toggle_breakpoint_current_line(self):
@@ -1971,7 +1978,7 @@ class CursesBackend(UIBackend):
             # Restore cursor position
             self.editor.edit_widget.set_edit_pos(cursor_pos)
             # Force screen redraw
-            if self.loop:
+            if self.loop and self.loop_running:
                 self.loop.draw_screen()
 
     def _clear_all_breakpoints(self):
@@ -1990,7 +1997,7 @@ class CursesBackend(UIBackend):
             self.interpreter.clear_breakpoints()
 
         # Force redraw
-        if self.loop:
+        if self.loop and self.loop_running:
             self.loop.draw_screen()
 
     def _show_help(self):
@@ -2044,14 +2051,16 @@ File                          Edit
   Save            Ctrl+S        Toggle Break      Ctrl+B
   Quit            Ctrl+Q        Clear Breaks      Ctrl+Shift+B
 
-Run                           Help
+Run                           Debug Windows
 ────────────────────          ────────────────────
-  Run             Ctrl+R        Show Help       Ctrl+H
-  Step            Ctrl+T        About           (see help)
+  Run             Ctrl+R        Variables       Ctrl+W
+  Step Line       Ctrl+L          Sort: s (mode) d (dir)
+  Step Statement  Ctrl+T        Stack           Ctrl+K
   Continue        Ctrl+G
-  Stop            Ctrl+X
-  Variables       Ctrl+W
-  Stack           Ctrl+K
+  Stop            Ctrl+X        Help
+                                ────────────────────
+                                  Show Help     Ctrl+H
+                                  About         (see help)
 
 ══════════════════════════════════════════════════════════════
 
@@ -2107,7 +2116,7 @@ Run                           Help
             self.status_bar.set_text("Variables window hidden - Ctrl+W to show")
 
         # Redraw screen
-        if hasattr(self, 'loop') and self.loop:
+        if hasattr(self, 'loop') and self.loop and self.loop_running:
             self.loop.draw_screen()
 
     def _update_variables_window(self):
@@ -2244,7 +2253,7 @@ Run                           Help
         self.status_bar.set_text(f"Sorting variables by: {mode_names[self.variables_sort_mode]} {arrow}")
 
         # Redraw screen
-        if hasattr(self, 'loop') and self.loop:
+        if hasattr(self, 'loop') and self.loop and self.loop_running:
             self.loop.draw_screen()
 
     def _toggle_variables_sort_direction(self):
@@ -2271,7 +2280,7 @@ Run                           Help
         self.status_bar.set_text(f"Sort direction: {direction}")
 
         # Redraw screen
-        if hasattr(self, 'loop') and self.loop:
+        if hasattr(self, 'loop') and self.loop and self.loop_running:
             self.loop.draw_screen()
 
     def _toggle_stack_window(self):
@@ -2297,7 +2306,7 @@ Run                           Help
             self.status_bar.set_text("Stack window hidden - Ctrl+K to show")
 
         # Redraw screen
-        if hasattr(self, 'loop') and self.loop:
+        if hasattr(self, 'loop') and self.loop and self.loop_running:
             self.loop.draw_screen()
 
     def _update_stack_window(self):
@@ -2645,7 +2654,7 @@ Run                           Help
             # Set focus on the walker (not the ListBox)
             self.output_walker.set_focus(len(self.output_walker) - 1)
             # Force a screen update
-            if hasattr(self, 'loop') and self.loop:
+            if hasattr(self, 'loop') and self.loop and self.loop_running:
                 self.loop.draw_screen()
 
     def _update_output_with_lines(self, lines):
@@ -2663,7 +2672,7 @@ Run                           Help
             # Set focus on the walker
             self.output_walker.set_focus(len(self.output_walker) - 1)
             # Force a screen update
-            if hasattr(self, 'loop') and self.loop:
+            if hasattr(self, 'loop') and self.loop and self.loop_running:
                 self.loop.draw_screen()
 
     def _get_input_dialog(self, prompt):

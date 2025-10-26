@@ -196,9 +196,9 @@ Like Tk toolbar but text-based:
 - ✅ 1.10 Update window header to show sort mode/direction
 
 #### Phase 2: Debugger Controls
-- ✅ 2.1 Add Ctrl+L keybinding for Step Line
+- ✅ 2.1 Add Ctrl+L keybinding for Step Line (context-sensitive with List)
 - ✅ 2.2 Keep Ctrl+T for Step Statement
-- ⬜ 2.3 Update menu/help display to show both
+- ✅ 2.3 Update menu/help display to show both
 - ⬜ 2.4 Test both step modes
 
 #### Phase 3: Testing

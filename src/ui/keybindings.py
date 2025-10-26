@@ -164,15 +164,14 @@ STEP_KEY = _ctrl_key_to_urwid(_step_key)
 STEP_CHAR = _ctrl_key_to_char(_step_key)
 STEP_DISPLAY = _step_key
 
-# Step Line (execute all statements on line) (not in JSON, hardcoded)
-STEP_LINE_KEY = 'ctrl l'
-STEP_LINE_CHAR = '\x0c'
-STEP_LINE_DISPLAY = 'Ctrl+L'
-
 # Stop execution (eXit) (not in JSON, hardcoded)
 STOP_KEY = 'ctrl x'
 STOP_CHAR = '\x18'
 STOP_DISPLAY = 'Ctrl+X'
+
+# Note: Ctrl+L is context-sensitive in curses UI:
+# - When debugging: Step Line (execute all statements on current line)
+# - When editing: List program (same as LIST_KEY)
 
 # =============================================================================
 # Navigation
@@ -211,10 +210,15 @@ KEYBINDINGS_BY_CATEGORY = {
     ],
     'Debugger (when program running)': [
         (CONTINUE_DISPLAY, 'Continue execution (Go)'),
-        (STEP_DISPLAY, 'Step - execute one line (sTep)'),
+        (LIST_DISPLAY, 'Step Line - execute all statements on current line'),
+        (STEP_DISPLAY, 'Step Statement - execute one statement at a time'),
         (STOP_DISPLAY, 'Stop execution (eXit)'),
         (VARIABLES_DISPLAY, 'Show/hide variables window'),
         (STACK_DISPLAY, 'Show/hide execution stack window'),
+    ],
+    'Variables Window (when visible)': [
+        ('s', 'Cycle sort mode (Name → Accessed → Written → Read → Type → Value)'),
+        ('d', 'Toggle sort direction (ascending ↑ / descending ↓)'),
     ],
     'Navigation': [
         (TAB_DISPLAY, 'Switch between editor and output'),
