@@ -903,23 +903,22 @@ class InteractiveMode:
         line_num_str = str(line_node.line_number)
         parts = [line_num_str]
 
-        # Preserve indentation from original source
-        # The column indicates where the first statement started in the original source
-        # We maintain the same column position (absolute indentation) when possible
+        # Preserve RELATIVE indentation (spaces after line number) from original source
+        # This ensures indentation survives RENUM when line numbers change width
         if line_node.statements:
-            first_stmt = line_node.statements[0]
-            if hasattr(first_stmt, 'column') and first_stmt.column > 0:
-                # The original statement was at this column (1-indexed)
-                # We want to put the statement at the same column position
-                current_pos = len(line_num_str) + 1  # +1 for 1-indexed
-                desired_col = first_stmt.column
+            # Try to calculate relative indentation from source_text if available
+            relative_indent = 1  # Default: single space
 
-                # Add spacing to reach the desired column
-                # But ensure at least 1 space after line number
-                spaces_needed = max(1, desired_col - current_pos)
-                parts.append(' ' * spaces_needed)
-            else:
-                parts.append(' ')
+            if hasattr(line_node, 'source_text') and line_node.source_text:
+                # Extract original line number and count spaces after it
+                import re
+                match = re.match(r'^(\d+)(\s+)', line_node.source_text)
+                if match:
+                    # Spaces after line number in original
+                    relative_indent = len(match.group(2))
+
+            # Apply the relative indentation
+            parts.append(' ' * relative_indent)
 
             # Serialize each statement
             for i, stmt in enumerate(line_node.statements):
