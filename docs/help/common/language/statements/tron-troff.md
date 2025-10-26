@@ -1,3 +1,12 @@
+---
+category: system
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: TRON/TROFF
+type: statement
+---
+
 # TRON/TROFF
 
 ## Syntax

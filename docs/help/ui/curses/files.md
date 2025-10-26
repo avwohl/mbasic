@@ -1,3 +1,11 @@
+---
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: File Operations in Curses UI
+type: guide
+---
+
 # File Operations in Curses UI
 
 How to save and load BASIC programs.

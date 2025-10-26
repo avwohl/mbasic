@@ -1,3 +1,12 @@
+---
+category: control-flow
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: IF ••• THEN[ ••• ELSE] AND IF ••• GOTO
+type: statement
+---
+
 # IF ••• THEN[ ••• ELSE] AND IF ••• GOTO
 
 ## Syntax

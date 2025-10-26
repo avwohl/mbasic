@@ -1,3 +1,12 @@
+---
+category: program-control
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: STOP
+type: statement
+---
+
 # STOP
 
 ## Syntax

@@ -1,3 +1,11 @@
+---
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: Running Programs in Curses UI
+type: guide
+---
+
 # Running Programs in Curses UI
 
 How to execute your BASIC programs.

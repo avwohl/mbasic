@@ -1,3 +1,12 @@
+---
+category: editing
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: RENUM
+type: statement
+---
+
 # RENUM
 
 ## Syntax

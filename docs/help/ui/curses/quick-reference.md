@@ -1,3 +1,11 @@
+---
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: MBASIC - Keyboard Shortcuts
+type: guide
+---
+
 # MBASIC - Keyboard Shortcuts
 
 Quick reference for the curses text UI.

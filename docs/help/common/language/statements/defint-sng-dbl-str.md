@@ -1,3 +1,12 @@
+---
+category: NEEDS_CATEGORIZATION
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: DEFINT/SNG/DBL/STR
+type: statement
+---
+
 # DEFINT/SNG/DBL/STR
 
 ## Syntax

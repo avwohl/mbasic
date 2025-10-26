@@ -1,3 +1,12 @@
+---
+category: error-handling
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: RESUME
+type: statement
+---
+
 # RESUME
 
 **Versions:** Extended, Disk SK, Extended, Disk Disk

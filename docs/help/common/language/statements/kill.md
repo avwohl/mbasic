@@ -1,3 +1,12 @@
+---
+category: file-management
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: KILL
+type: statement
+---
+
 # KILL
 
 ## Syntax

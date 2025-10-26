@@ -1,3 +1,12 @@
+---
+category: file-io
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: ~ INPUTi
+type: statement
+---
+
 # ~   INPUTi
 
 ## Syntax

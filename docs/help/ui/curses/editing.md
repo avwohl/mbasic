@@ -1,3 +1,11 @@
+---
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: Editing Programs in Curses UI
+type: guide
+---
+
 # Editing Programs in Curses UI
 
 How to write and edit BASIC programs.

@@ -1,3 +1,11 @@
+---
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: Error Codes and Messages
+type: reference
+---
+
 # Error Codes and Messages
 
 Summary of BASIC-80 error codes and their meanings.

@@ -1,3 +1,12 @@
+---
+category: variables
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: LET
+type: statement
+---
+
 # LET
 
 ## Syntax

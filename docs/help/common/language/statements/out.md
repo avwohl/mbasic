@@ -1,3 +1,12 @@
+---
+category: hardware
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: OUT
+type: statement
+---
+
 # OUT
 
 ## Implementation Note

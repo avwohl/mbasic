@@ -1,3 +1,12 @@
+---
+category: file-io
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: INPUT$
+type: function
+---
+
 # INPUT$
 
 ## Syntax

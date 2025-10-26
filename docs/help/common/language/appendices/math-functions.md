@@ -1,3 +1,11 @@
+---
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: Mathematical Functions
+type: reference
+---
+
 # Mathematical Functions
 
 Derived mathematical functions that can be calculated using BASIC-80's intrinsic functions.

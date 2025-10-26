@@ -1,3 +1,11 @@
+---
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: Operators and Expressions
+type: guide
+---
+
 # Operators and Expressions
 
 BASIC-80 operators for arithmetic, comparison, and logical operations.

@@ -1,3 +1,12 @@
+---
+category: editing
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: LIST
+type: statement
+---
+
 # LIST
 
 **Versions:** 8K, Extended, Disk Format 2:     LIST [<line number>[-[<line number>]]] Extended, Disk

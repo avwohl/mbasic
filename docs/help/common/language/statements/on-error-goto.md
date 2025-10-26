@@ -1,3 +1,12 @@
+---
+category: error-handling
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: ON ERROR GOTO
+type: statement
+---
+
 # ON ERROR GOTO
 
 ## Syntax

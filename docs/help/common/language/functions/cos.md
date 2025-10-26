@@ -1,3 +1,12 @@
+---
+category: mathematical
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: COS
+type: function
+---
+
 # COS
 
 ## Syntax

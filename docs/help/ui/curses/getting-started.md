@@ -1,3 +1,11 @@
+---
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: Getting Started with Curses UI
+type: guide
+---
+
 # Getting Started with Curses UI
 
 Welcome to the MBASIC curses text interface!

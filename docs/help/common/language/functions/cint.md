@@ -1,3 +1,12 @@
+---
+category: type-conversion
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: CINT
+type: function
+---
+
 # CINT
 
 ## Syntax

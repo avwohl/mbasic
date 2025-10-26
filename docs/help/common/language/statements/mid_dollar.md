@@ -1,3 +1,12 @@
+---
+category: strings
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: MID$
+type: statement
+---
+
 # MID$
 
 ## Syntax

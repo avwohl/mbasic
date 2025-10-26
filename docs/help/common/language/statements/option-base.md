@@ -1,3 +1,12 @@
+---
+category: arrays
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: OPTION BASE
+type: statement
+---
+
 # OPTION BASE
 
 ## Syntax

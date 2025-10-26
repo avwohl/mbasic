@@ -1,3 +1,12 @@
+---
+category: control-flow
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: ON ••• GOSUB AND ON ••• GOTO
+type: statement
+---
+
 # ON ••• GOSUB AND ON ••• GOTO
 
 ## Syntax

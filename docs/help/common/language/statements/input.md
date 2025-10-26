@@ -1,3 +1,12 @@
+---
+category: input-output
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: INPUT
+type: statement
+---
+
 # INPUT
 
 ## Syntax

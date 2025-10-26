@@ -1,3 +1,12 @@
+---
+category: NEEDS_CATEGORIZATION
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: LPRINT AND LPRINT USING
+type: statement
+---
+
 # LPRINT AND LPRINT USING
 
 ## Syntax

@@ -1,3 +1,12 @@
+---
+category: control-flow
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: WHILE ••• WEND
+type: statement
+---
+
 # WHILE ••• WEND
 
 ## Syntax

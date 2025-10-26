@@ -1,3 +1,12 @@
+---
+category: string
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: RIGHT$
+type: function
+---
+
 # RIGHT$
 
 ## Syntax

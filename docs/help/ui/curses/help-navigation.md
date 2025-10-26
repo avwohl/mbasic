@@ -1,3 +1,11 @@
+---
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: Using the Help System
+type: guide
+---
+
 # Using the Help System
 
 How to navigate MBASIC help.

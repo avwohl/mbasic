@@ -1,3 +1,12 @@
+---
+category: error-handling
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: ERROR
+type: statement
+---
+
 # ERROR
 
 ## Syntax

@@ -1,3 +1,11 @@
+---
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: ASCII Character Codes
+type: reference
+---
+
 # ASCII Character Codes
 
 Complete ASCII character code reference for BASIC-80.

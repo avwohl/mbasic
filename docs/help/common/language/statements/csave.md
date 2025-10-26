@@ -1,3 +1,12 @@
+---
+category: NEEDS_CATEGORIZATION
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
+type: statement
+---
+
 # CSAVE      THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
 
 **Versions:** 8K (cassette), Extended (cassette)

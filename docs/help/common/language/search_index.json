@@ -1,10 +1,325 @@
 {
   "files": [
     {
+      "path": "operators.md",
+      "title": "Operators and Expressions",
+      "type": "guide",
+      "category": "",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/renum.md",
+      "title": "RENUM",
+      "type": "statement",
+      "category": "editing",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
       "path": "statements/for-next.md",
       "title": "FOR \u2022\u2022\u2022 NEXT",
       "type": "statement",
       "category": "control-flow",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/list.md",
+      "title": "LIST",
+      "type": "statement",
+      "category": "editing",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/merge.md",
+      "title": "MERGE",
+      "type": "statement",
+      "category": "file-management",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/goto.md",
+      "title": "GOTO",
+      "type": "statement",
+      "category": "control-flow",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/def-fn.md",
+      "title": "DEF FN",
+      "type": "statement",
+      "category": "functions",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/llist.md",
+      "title": "LLIST",
+      "type": "statement",
+      "category": "editing",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/field.md",
+      "title": "FIELD",
+      "type": "statement",
+      "category": "file-io",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/mid_dollar.md",
+      "title": "MID$",
+      "type": "statement",
+      "category": "strings",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/common.md",
+      "title": "COMMON",
+      "type": "statement",
+      "category": "program-control",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/poke.md",
+      "title": "POKE",
+      "type": "statement",
+      "category": "hardware",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/new.md",
+      "title": "NEW",
+      "type": "statement",
+      "category": "program-control",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/stop.md",
+      "title": "STOP",
+      "type": "statement",
+      "category": "program-control",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/open.md",
+      "title": "OPEN",
+      "type": "statement",
+      "category": "file-io",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/out.md",
+      "title": "OUT",
+      "type": "statement",
+      "category": "hardware",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/end.md",
+      "title": "END",
+      "type": "statement",
+      "category": "program-control",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/chain.md",
+      "title": "CHAIN",
+      "type": "statement",
+      "category": "program-control",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/gosub-return.md",
+      "title": "GOSUB \u2022.. RETURN",
+      "type": "statement",
+      "category": "control-flow",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/if-then-else-if-goto.md",
+      "title": "IF \u2022\u2022\u2022 THEN[ \u2022\u2022\u2022 ELSE] AND IF \u2022\u2022\u2022 GOTO",
+      "type": "statement",
+      "category": "control-flow",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/while-wend.md",
+      "title": "WHILE \u2022\u2022\u2022 WEND",
+      "type": "statement",
+      "category": "control-flow",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/erase.md",
+      "title": "ERASE",
+      "type": "statement",
+      "category": "arrays",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/get.md",
+      "title": "GET",
+      "type": "statement",
+      "category": "file-io",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/line-input.md",
+      "title": "LINE INPUT",
+      "type": "statement",
+      "category": "NEEDS_CATEGORIZATION",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/write.md",
+      "title": "WRITE",
+      "type": "statement",
+      "category": "input-output",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/on-gosub-on-goto.md",
+      "title": "ON \u2022\u2022\u2022 GOSUB AND ON \u2022\u2022\u2022 GOTO",
+      "type": "statement",
+      "category": "control-flow",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/null.md",
+      "title": "NULL",
+      "type": "statement",
+      "category": "system",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/rem.md",
+      "title": "REM",
+      "type": "statement",
+      "category": "system",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/input.md",
+      "title": "INPUT",
+      "type": "statement",
+      "category": "input-output",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/randomize.md",
+      "title": "RANDOMIZE",
+      "type": "statement",
+      "category": "system",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/clear.md",
+      "title": "CLEAR",
+      "type": "statement",
+      "category": "program-control",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/delete.md",
+      "title": "DELETE",
+      "type": "statement",
+      "category": "editing",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/csave.md",
+      "title": "CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION",
+      "type": "statement",
+      "category": "NEEDS_CATEGORIZATION",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/wait.md",
+      "title": "WAIT",
+      "type": "statement",
+      "category": "hardware",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/auto.md",
+      "title": "AUTO",
+      "type": "statement",
+      "category": "editing",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/on-error-goto.md",
+      "title": "ON ERROR GOTO",
+      "type": "statement",
+      "category": "error-handling",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/cload.md",
+      "title": "CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION",
+      "type": "statement",
+      "category": "NEEDS_CATEGORIZATION",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/let.md",
+      "title": "LET",
+      "type": "statement",
+      "category": "variables",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/edit.md",
+      "title": "EDIT",
+      "type": "statement",
+      "category": "editing",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/cont.md",
+      "title": "CONT",
+      "type": "statement",
+      "category": "program-control",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/tron-troff.md",
+      "title": "TRON/TROFF",
+      "type": "statement",
+      "category": "system",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/read.md",
+      "title": "READ",
+      "type": "statement",
+      "category": "data",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/err-erl-variables.md",
+      "title": "ERR AND ERL VARIABLES",
+      "type": "statement",
+      "category": "NEEDS_CATEGORIZATION",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/dim.md",
+      "title": "DIM",
+      "type": "statement",
+      "category": "arrays",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/call.md",
+      "title": "CALL",
+      "type": "statement",
+      "category": "hardware",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/input_hash.md",
+      "title": "INPUT#",
+      "type": "statement",
+      "category": "NEEDS_CATEGORIZATION",
       "description": "NEEDS_DESCRIPTION"
     },
     {
@@ -15,8 +330,323 @@
       "description": "Output text and values to the screen"
     },
     {
+      "path": "statements/defint-sng-dbl-str.md",
+      "title": "DEFINT/SNG/DBL/STR",
+      "type": "statement",
+      "category": "NEEDS_CATEGORIZATION",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/writei.md",
+      "title": "WRITEi",
+      "type": "statement",
+      "category": "input-output",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/inputi.md",
+      "title": "~ INPUTi",
+      "type": "statement",
+      "category": "file-io",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/name.md",
+      "title": "NAME",
+      "type": "statement",
+      "category": "file-management",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/put.md",
+      "title": "PUT",
+      "type": "statement",
+      "category": "file-io",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/swap.md",
+      "title": "SWAP",
+      "type": "statement",
+      "category": "variables",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/printi-printi-using.md",
+      "title": "PRINTi AND PRINTi USING",
+      "type": "statement",
+      "category": "file-io",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/kill.md",
+      "title": "KILL",
+      "type": "statement",
+      "category": "file-management",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/close.md",
+      "title": "CLOSE",
+      "type": "statement",
+      "category": "file-io",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/lprint-lprint-using.md",
+      "title": "LPRINT AND LPRINT USING",
+      "type": "statement",
+      "category": "NEEDS_CATEGORIZATION",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/resume.md",
+      "title": "RESUME",
+      "type": "statement",
+      "category": "error-handling",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/width.md",
+      "title": "WIDTH",
+      "type": "statement",
+      "category": "system",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/load.md",
+      "title": "LOAD",
+      "type": "statement",
+      "category": "file-management",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/save.md",
+      "title": "SAVE",
+      "type": "statement",
+      "category": "file-management",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/data.md",
+      "title": "DATA",
+      "type": "statement",
+      "category": "data",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/error.md",
+      "title": "ERROR",
+      "type": "statement",
+      "category": "error-handling",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/option-base.md",
+      "title": "OPTION BASE",
+      "type": "statement",
+      "category": "arrays",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "appendices/ascii-codes.md",
+      "title": "ASCII Character Codes",
+      "type": "reference",
+      "category": "",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "appendices/math-functions.md",
+      "title": "Mathematical Functions",
+      "type": "reference",
+      "category": "",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "appendices/error-codes.md",
+      "title": "Error Codes and Messages",
+      "type": "reference",
+      "category": "",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/pos.md",
+      "title": "POS",
+      "type": "function",
+      "category": "file-io",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/hex_dollar.md",
+      "title": "HEX$",
+      "type": "function",
+      "category": "string",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/sgn.md",
+      "title": "SGN",
+      "type": "function",
+      "category": "mathematical",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
       "path": "functions/abs.md",
       "title": "ABS",
+      "type": "function",
+      "category": "mathematical",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/cos.md",
+      "title": "COS",
+      "type": "function",
+      "category": "mathematical",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/inp.md",
+      "title": "INP",
+      "type": "function",
+      "category": "system",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/val.md",
+      "title": "VAL",
+      "type": "function",
+      "category": "string",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/mid_dollar.md",
+      "title": "MID$",
+      "type": "function",
+      "category": "string",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/sqr.md",
+      "title": "SQR",
+      "type": "function",
+      "category": "mathematical",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/loc.md",
+      "title": "LOC",
+      "type": "function",
+      "category": "file-io",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/cvi-cvs-cvd.md",
+      "title": "CVI, CVS, CVD",
+      "type": "function",
+      "category": "NEEDS_CATEGORIZATION",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/cint.md",
+      "title": "CINT",
+      "type": "function",
+      "category": "type-conversion",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/fix.md",
+      "title": "FIX",
+      "type": "function",
+      "category": "mathematical",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/crr_dollar.md",
+      "title": "CRR$",
+      "type": "function",
+      "category": "NEEDS_CATEGORIZATION",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/right_dollar.md",
+      "title": "RIGHT$",
+      "type": "function",
+      "category": "string",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/lpos.md",
+      "title": "LPOS",
+      "type": "function",
+      "category": "file-io",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/cobl.md",
+      "title": "COBL",
+      "type": "function",
+      "category": "NEEDS_CATEGORIZATION",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/peek.md",
+      "title": "PEEK",
+      "type": "function",
+      "category": "system",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/int.md",
+      "title": "INT",
+      "type": "function",
+      "category": "mathematical",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/varptr.md",
+      "title": "VARPTR",
+      "type": "function",
+      "category": "system",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/inkey_dollar.md",
+      "title": "INKEY$",
+      "type": "function",
+      "category": "system",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/spc.md",
+      "title": "SPC",
+      "type": "function",
+      "category": "string",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/rnd.md",
+      "title": "RND",
+      "type": "function",
+      "category": "mathematical",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/str_dollar.md",
+      "title": "STR$",
+      "type": "function",
+      "category": "string",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/mki_dollar-mks_dollar-mkd_dollar.md",
+      "title": "MKI$, MKS$, MKD$",
+      "type": "function",
+      "category": "NEEDS_CATEGORIZATION",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/sin.md",
+      "title": "SIN",
       "type": "function",
       "category": "mathematical",
       "description": "NEEDS_DESCRIPTION"
@@ -27,13 +657,215 @@
       "type": "function",
       "category": "string",
       "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/fre.md",
+      "title": "FRE",
+      "type": "function",
+      "category": "system",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/spaces.md",
+      "title": "SPACES",
+      "type": "function",
+      "category": "NEEDS_CATEGORIZATION",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/instr.md",
+      "title": "INSTR",
+      "type": "function",
+      "category": "string",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/exp.md",
+      "title": "EXP",
+      "type": "function",
+      "category": "mathematical",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/input_dollar.md",
+      "title": "INPUT$",
+      "type": "function",
+      "category": "file-io",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/len.md",
+      "title": "LEN",
+      "type": "function",
+      "category": "string",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/tan.md",
+      "title": "TAN",
+      "type": "function",
+      "category": "mathematical",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/log.md",
+      "title": "LOG",
+      "type": "function",
+      "category": "mathematical",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/tab.md",
+      "title": "TAB",
+      "type": "function",
+      "category": "NEEDS_CATEGORIZATION",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/atn.md",
+      "title": "ATN",
+      "type": "function",
+      "category": "mathematical",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/eof.md",
+      "title": "EOF",
+      "type": "function",
+      "category": "file-io",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/string_dollar.md",
+      "title": "STRING$",
+      "type": "function",
+      "category": "string",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/asc.md",
+      "title": "ASC",
+      "type": "function",
+      "category": "string",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/usr.md",
+      "title": "USR",
+      "type": "function",
+      "category": "system",
+      "description": "NEEDS_DESCRIPTION"
     }
   ],
   "keywords": {
     "needs_keywords": [
+      "operators.md",
+      "statements/renum.md",
       "statements/for-next.md",
+      "statements/list.md",
+      "statements/merge.md",
+      "statements/goto.md",
+      "statements/def-fn.md",
+      "statements/llist.md",
+      "statements/field.md",
+      "statements/mid_dollar.md",
+      "statements/common.md",
+      "statements/poke.md",
+      "statements/new.md",
+      "statements/stop.md",
+      "statements/open.md",
+      "statements/out.md",
+      "statements/end.md",
+      "statements/chain.md",
+      "statements/gosub-return.md",
+      "statements/if-then-else-if-goto.md",
+      "statements/while-wend.md",
+      "statements/erase.md",
+      "statements/get.md",
+      "statements/line-input.md",
+      "statements/write.md",
+      "statements/on-gosub-on-goto.md",
+      "statements/null.md",
+      "statements/rem.md",
+      "statements/input.md",
+      "statements/randomize.md",
+      "statements/clear.md",
+      "statements/delete.md",
+      "statements/csave.md",
+      "statements/wait.md",
+      "statements/auto.md",
+      "statements/on-error-goto.md",
+      "statements/cload.md",
+      "statements/let.md",
+      "statements/edit.md",
+      "statements/cont.md",
+      "statements/tron-troff.md",
+      "statements/read.md",
+      "statements/err-erl-variables.md",
+      "statements/dim.md",
+      "statements/call.md",
+      "statements/input_hash.md",
+      "statements/defint-sng-dbl-str.md",
+      "statements/writei.md",
+      "statements/inputi.md",
+      "statements/name.md",
+      "statements/put.md",
+      "statements/swap.md",
+      "statements/printi-printi-using.md",
+      "statements/kill.md",
+      "statements/close.md",
+      "statements/lprint-lprint-using.md",
+      "statements/resume.md",
+      "statements/width.md",
+      "statements/load.md",
+      "statements/save.md",
+      "statements/data.md",
+      "statements/error.md",
+      "statements/option-base.md",
+      "appendices/ascii-codes.md",
+      "appendices/math-functions.md",
+      "appendices/error-codes.md",
+      "functions/pos.md",
+      "functions/hex_dollar.md",
+      "functions/sgn.md",
       "functions/abs.md",
-      "functions/left_dollar.md"
+      "functions/cos.md",
+      "functions/inp.md",
+      "functions/val.md",
+      "functions/mid_dollar.md",
+      "functions/sqr.md",
+      "functions/loc.md",
+      "functions/cvi-cvs-cvd.md",
+      "functions/cint.md",
+      "functions/fix.md",
+      "functions/crr_dollar.md",
+      "functions/right_dollar.md",
+      "functions/lpos.md",
+      "functions/cobl.md",
+      "functions/peek.md",
+      "functions/int.md",
+      "functions/varptr.md",
+      "functions/inkey_dollar.md",
+      "functions/spc.md",
+      "functions/rnd.md",
+      "functions/str_dollar.md",
+      "functions/mki_dollar-mks_dollar-mkd_dollar.md",
+      "functions/sin.md",
+      "functions/left_dollar.md",
+      "functions/fre.md",
+      "functions/spaces.md",
+      "functions/instr.md",
+      "functions/exp.md",
+      "functions/input_dollar.md",
+      "functions/len.md",
+      "functions/tan.md",
+      "functions/log.md",
+      "functions/tab.md",
+      "functions/atn.md",
+      "functions/eof.md",
+      "functions/string_dollar.md",
+      "functions/asc.md",
+      "functions/usr.md"
     ],
     "print": [
       "statements/print.md"
@@ -64,27 +896,263 @@
     "?": "statements/print.md"
   },
   "categories": {
+    "editing": [
+      "statements/renum.md",
+      "statements/list.md",
+      "statements/llist.md",
+      "statements/delete.md",
+      "statements/auto.md",
+      "statements/edit.md"
+    ],
     "control-flow": [
-      "statements/for-next.md"
+      "statements/for-next.md",
+      "statements/goto.md",
+      "statements/gosub-return.md",
+      "statements/if-then-else-if-goto.md",
+      "statements/while-wend.md",
+      "statements/on-gosub-on-goto.md"
+    ],
+    "file-management": [
+      "statements/merge.md",
+      "statements/name.md",
+      "statements/kill.md",
+      "statements/load.md",
+      "statements/save.md"
+    ],
+    "functions": [
+      "statements/def-fn.md"
+    ],
+    "file-io": [
+      "statements/field.md",
+      "statements/open.md",
+      "statements/get.md",
+      "statements/inputi.md",
+      "statements/put.md",
+      "statements/printi-printi-using.md",
+      "statements/close.md",
+      "functions/pos.md",
+      "functions/loc.md",
+      "functions/lpos.md",
+      "functions/input_dollar.md",
+      "functions/eof.md"
+    ],
+    "strings": [
+      "statements/mid_dollar.md"
+    ],
+    "program-control": [
+      "statements/common.md",
+      "statements/new.md",
+      "statements/stop.md",
+      "statements/end.md",
+      "statements/chain.md",
+      "statements/clear.md",
+      "statements/cont.md"
+    ],
+    "hardware": [
+      "statements/poke.md",
+      "statements/out.md",
+      "statements/wait.md",
+      "statements/call.md"
+    ],
+    "arrays": [
+      "statements/erase.md",
+      "statements/dim.md",
+      "statements/option-base.md"
+    ],
+    "NEEDS_CATEGORIZATION": [
+      "statements/line-input.md",
+      "statements/csave.md",
+      "statements/cload.md",
+      "statements/err-erl-variables.md",
+      "statements/input_hash.md",
+      "statements/defint-sng-dbl-str.md",
+      "statements/lprint-lprint-using.md",
+      "functions/cvi-cvs-cvd.md",
+      "functions/crr_dollar.md",
+      "functions/cobl.md",
+      "functions/mki_dollar-mks_dollar-mkd_dollar.md",
+      "functions/spaces.md",
+      "functions/tab.md"
     ],
     "input-output": [
-      "statements/print.md"
+      "statements/write.md",
+      "statements/input.md",
+      "statements/print.md",
+      "statements/writei.md"
     ],
-    "mathematical": [
-      "functions/abs.md"
+    "system": [
+      "statements/null.md",
+      "statements/rem.md",
+      "statements/randomize.md",
+      "statements/tron-troff.md",
+      "statements/width.md",
+      "functions/inp.md",
+      "functions/peek.md",
+      "functions/varptr.md",
+      "functions/inkey_dollar.md",
+      "functions/fre.md",
+      "functions/usr.md"
+    ],
+    "error-handling": [
+      "statements/on-error-goto.md",
+      "statements/resume.md",
+      "statements/error.md"
+    ],
+    "variables": [
+      "statements/let.md",
+      "statements/swap.md"
+    ],
+    "data": [
+      "statements/read.md",
+      "statements/data.md"
     ],
     "string": [
-      "functions/left_dollar.md"
+      "functions/hex_dollar.md",
+      "functions/val.md",
+      "functions/mid_dollar.md",
+      "functions/right_dollar.md",
+      "functions/spc.md",
+      "functions/str_dollar.md",
+      "functions/left_dollar.md",
+      "functions/instr.md",
+      "functions/len.md",
+      "functions/string_dollar.md",
+      "functions/asc.md"
+    ],
+    "mathematical": [
+      "functions/sgn.md",
+      "functions/abs.md",
+      "functions/cos.md",
+      "functions/sqr.md",
+      "functions/fix.md",
+      "functions/int.md",
+      "functions/rnd.md",
+      "functions/sin.md",
+      "functions/exp.md",
+      "functions/tan.md",
+      "functions/log.md",
+      "functions/atn.md"
+    ],
+    "type-conversion": [
+      "functions/cint.md"
     ]
   },
   "by_type": {
+    "guide": [
+      "operators.md"
+    ],
     "statement": [
+      "statements/renum.md",
       "statements/for-next.md",
-      "statements/print.md"
+      "statements/list.md",
+      "statements/merge.md",
+      "statements/goto.md",
+      "statements/def-fn.md",
+      "statements/llist.md",
+      "statements/field.md",
+      "statements/mid_dollar.md",
+      "statements/common.md",
+      "statements/poke.md",
+      "statements/new.md",
+      "statements/stop.md",
+      "statements/open.md",
+      "statements/out.md",
+      "statements/end.md",
+      "statements/chain.md",
+      "statements/gosub-return.md",
+      "statements/if-then-else-if-goto.md",
+      "statements/while-wend.md",
+      "statements/erase.md",
+      "statements/get.md",
+      "statements/line-input.md",
+      "statements/write.md",
+      "statements/on-gosub-on-goto.md",
+      "statements/null.md",
+      "statements/rem.md",
+      "statements/input.md",
+      "statements/randomize.md",
+      "statements/clear.md",
+      "statements/delete.md",
+      "statements/csave.md",
+      "statements/wait.md",
+      "statements/auto.md",
+      "statements/on-error-goto.md",
+      "statements/cload.md",
+      "statements/let.md",
+      "statements/edit.md",
+      "statements/cont.md",
+      "statements/tron-troff.md",
+      "statements/read.md",
+      "statements/err-erl-variables.md",
+      "statements/dim.md",
+      "statements/call.md",
+      "statements/input_hash.md",
+      "statements/print.md",
+      "statements/defint-sng-dbl-str.md",
+      "statements/writei.md",
+      "statements/inputi.md",
+      "statements/name.md",
+      "statements/put.md",
+      "statements/swap.md",
+      "statements/printi-printi-using.md",
+      "statements/kill.md",
+      "statements/close.md",
+      "statements/lprint-lprint-using.md",
+      "statements/resume.md",
+      "statements/width.md",
+      "statements/load.md",
+      "statements/save.md",
+      "statements/data.md",
+      "statements/error.md",
+      "statements/option-base.md"
+    ],
+    "reference": [
+      "appendices/ascii-codes.md",
+      "appendices/math-functions.md",
+      "appendices/error-codes.md"
     ],
     "function": [
+      "functions/pos.md",
+      "functions/hex_dollar.md",
+      "functions/sgn.md",
       "functions/abs.md",
-      "functions/left_dollar.md"
+      "functions/cos.md",
+      "functions/inp.md",
+      "functions/val.md",
+      "functions/mid_dollar.md",
+      "functions/sqr.md",
+      "functions/loc.md",
+      "functions/cvi-cvs-cvd.md",
+      "functions/cint.md",
+      "functions/fix.md",
+      "functions/crr_dollar.md",
+      "functions/right_dollar.md",
+      "functions/lpos.md",
+      "functions/cobl.md",
+      "functions/peek.md",
+      "functions/int.md",
+      "functions/varptr.md",
+      "functions/inkey_dollar.md",
+      "functions/spc.md",
+      "functions/rnd.md",
+      "functions/str_dollar.md",
+      "functions/mki_dollar-mks_dollar-mkd_dollar.md",
+      "functions/sin.md",
+      "functions/left_dollar.md",
+      "functions/fre.md",
+      "functions/spaces.md",
+      "functions/instr.md",
+      "functions/exp.md",
+      "functions/input_dollar.md",
+      "functions/len.md",
+      "functions/tan.md",
+      "functions/log.md",
+      "functions/tab.md",
+      "functions/atn.md",
+      "functions/eof.md",
+      "functions/string_dollar.md",
+      "functions/asc.md",
+      "functions/usr.md"
     ]
   }
 }

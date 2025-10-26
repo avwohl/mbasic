@@ -1,3 +1,11 @@
+---
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: Curses UI Keyboard Commands
+type: guide
+---
+
 # Curses UI Keyboard Commands
 
 All keyboard shortcuts for the curses text interface.

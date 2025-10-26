@@ -1,3 +1,12 @@
+---
+category: system
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: INP
+type: function
+---
+
 # INP
 
 ## Implementation Note

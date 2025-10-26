@@ -1,3 +1,12 @@
+---
+category: data
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: READ
+type: statement
+---
+
 # READ
 
 ## Syntax

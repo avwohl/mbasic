@@ -1,3 +1,12 @@
+---
+category: arrays
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: DIM
+type: statement
+---
+
 # DIM
 
 ## Syntax

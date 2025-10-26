@@ -1,0 +1,23 @@
+{
+  "files": [
+    {
+      "path": "architecture.md",
+      "title": "MBASIC Architecture: Interpreter and Compiler",
+      "type": "guide",
+      "category": "",
+      "description": "NEEDS_DESCRIPTION"
+    }
+  ],
+  "keywords": {
+    "needs_keywords": [
+      "architecture.md"
+    ]
+  },
+  "aliases": {},
+  "categories": {},
+  "by_type": {
+    "guide": [
+      "architecture.md"
+    ]
+  }
+}

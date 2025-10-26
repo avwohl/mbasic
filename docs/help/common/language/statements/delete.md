@@ -1,3 +1,12 @@
+---
+category: editing
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: DELETE
+type: statement
+---
+
 # DELETE
 
 ## Syntax
