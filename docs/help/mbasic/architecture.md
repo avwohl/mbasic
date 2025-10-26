@@ -1,3 +1,11 @@
+---
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: 'MBASIC Architecture: Interpreter and Compiler'
+type: guide
+---
+
 # MBASIC Architecture: Interpreter and Compiler
 
 ## Overview

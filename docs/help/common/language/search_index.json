@@ -1,0 +1,90 @@
+{
+  "files": [
+    {
+      "path": "statements/for-next.md",
+      "title": "FOR \u2022\u2022\u2022 NEXT",
+      "type": "statement",
+      "category": "control-flow",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "statements/print.md",
+      "title": "PRINT",
+      "type": "statement",
+      "category": "input-output",
+      "description": "Output text and values to the screen"
+    },
+    {
+      "path": "functions/abs.md",
+      "title": "ABS",
+      "type": "function",
+      "category": "mathematical",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "functions/left_dollar.md",
+      "title": "LEFT$",
+      "type": "function",
+      "category": "string",
+      "description": "NEEDS_DESCRIPTION"
+    }
+  ],
+  "keywords": {
+    "needs_keywords": [
+      "statements/for-next.md",
+      "functions/abs.md",
+      "functions/left_dollar.md"
+    ],
+    "print": [
+      "statements/print.md"
+    ],
+    "output": [
+      "statements/print.md"
+    ],
+    "display": [
+      "statements/print.md"
+    ],
+    "console": [
+      "statements/print.md"
+    ],
+    "write": [
+      "statements/print.md"
+    ],
+    "show": [
+      "statements/print.md"
+    ],
+    "terminal": [
+      "statements/print.md"
+    ],
+    "question mark": [
+      "statements/print.md"
+    ]
+  },
+  "aliases": {
+    "?": "statements/print.md"
+  },
+  "categories": {
+    "control-flow": [
+      "statements/for-next.md"
+    ],
+    "input-output": [
+      "statements/print.md"
+    ],
+    "mathematical": [
+      "functions/abs.md"
+    ],
+    "string": [
+      "functions/left_dollar.md"
+    ]
+  },
+  "by_type": {
+    "statement": [
+      "statements/for-next.md",
+      "statements/print.md"
+    ],
+    "function": [
+      "functions/abs.md",
+      "functions/left_dollar.md"
+    ]
+  }
+}

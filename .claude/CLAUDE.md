@@ -2,6 +2,66 @@
 
 ## Workflow
 - Always commit and push changes when you stop to talk to me
+- Track all installed dependencies and update documentation
+
+## Developer Setup
+
+### System Requirements
+- Python 3.8 or later (3.9+ recommended)
+- Git
+- pip
+
+### Python Dependencies
+
+Install all dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+**Required dependencies:**
+- None (uses Python standard library only)
+
+**Optional UI dependencies:**
+- `urwid>=2.0.0` - For curses backend (full-screen terminal UI)
+
+**Development/testing dependencies:**
+- `pexpect>=4.8.0` - For automated UI testing
+
+**Help system dependencies:**
+- `python-frontmatter>=1.0.0` - For YAML front matter parsing in help files
+
+**Web deployment (optional):**
+- `mkdocs>=1.5.0` - Static site generator for documentation
+- `mkdocs-material>=9.0.0` - Material theme for MkDocs
+- `mkdocs-awesome-pages-plugin>=2.8.0` - Auto-discover pages plugin
+
+Install web deployment tools:
+```bash
+pip install mkdocs mkdocs-material mkdocs-awesome-pages-plugin
+```
+
+### Installation from Clean Linux
+
+```bash
+# Clone repository
+git clone https://github.com/avwohl/mbasic.git
+cd mbasic
+
+# Create virtual environment (recommended)
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Test installation
+python3 mbasic.py
+
+# Optional: Install web deployment tools
+pip install mkdocs mkdocs-material mkdocs-awesome-pages-plugin
+```
+
+See `docs/dev/INSTALLATION_FOR_DEVELOPERS.md` for complete setup guide.
 
 # MBASIC Project Rules
 

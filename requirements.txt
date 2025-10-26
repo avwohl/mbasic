@@ -11,3 +11,6 @@ urwid>=2.0.0        # For curses backend (full-screen terminal UI)
 
 # Development/testing dependencies (optional)
 pexpect>=4.8.0      # For automated UI testing
+
+# Help system dependencies
+python-frontmatter>=1.0.0  # For YAML front matter parsing in help files

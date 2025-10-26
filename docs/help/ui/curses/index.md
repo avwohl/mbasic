@@ -1,22 +1,58 @@
+---
+title: MBASIC Curses UI Help
+type: guide
+ui: curses
+description: Help system for the MBASIC terminal-based IDE
+keywords: [help, curses, terminal, ui, interface]
+---
+
 # MBASIC Curses UI Help
 
-Welcome to the MBASIC curses text interface help system.
+Welcome to the MBASIC terminal-based IDE. This help system integrates documentation for the Curses UI, the MBASIC interpreter, and the BASIC-80 language.
 
-## Getting Started
+## 📘 Curses UI Guide
 
+Learn how to use the terminal interface:
+
+- [Getting Started](getting-started.md) - First steps with the curses UI
 - [Quick Reference](quick-reference.md) - All keyboard shortcuts in one place
-- [Getting Started](getting-started.md) - First time using the curses UI
-
-## Using the Editor
-
 - [Keyboard Commands](keyboard-commands.md) - Complete keyboard reference
 - [Editing Programs](editing.md) - How to write and edit programs
-- [File Operations](files.md) - Save and load your programs
-
-## Running Programs
-
 - [Running Programs](running.md) - Execute and debug your code
-- [Debugger](debugging.md) - Breakpoints, stepping, and variables
+- [Debugger](debugger.md) - Breakpoints, stepping, and variables
+- [File Operations](files.md) - Save and load your programs
+- [Help Navigation](help-navigation.md) - How to use this help system
+
+## 📗 MBASIC Interpreter
+
+About this BASIC interpreter:
+
+- [Getting Started](../../mbasic/getting-started.md) - Your first BASIC program
+- [Architecture](../../mbasic/architecture.md) - Interpreter vs compiler design
+- [Features](../../mbasic/features.md) - What's implemented
+- [Compatibility](../../mbasic/compatibility.md) - MBASIC 5.21 differences
+- [Not Implemented](../../mbasic/not-implemented.md) - What doesn't work
+- [File Formats](../../mbasic/file-formats.md) - .BAS files and encoding
+- [Examples](../../mbasic/examples/index.md) - Sample programs
+
+## 📕 BASIC-80 Language Reference
+
+Complete BASIC-80 language documentation:
+
+- [Language Overview](../../language/index.md) - Introduction to BASIC-80
+- [Operators](../../language/operators.md) - Arithmetic, logical, and relational operators
+- **Statements** - All 63 BASIC-80 statements
+  - [Statements Index](../../language/statements/index.md) - Browse all statements
+  - Organized by category: input-output, control-flow, file-io, arrays, etc.
+- **Functions** - All 40 BASIC-80 functions
+  - [Functions Index](../../language/functions/index.md) - Browse all functions
+  - Organized by category: mathematical, string, type-conversion, etc.
+- **Appendices** - Reference materials
+  - [Error Codes](../../language/appendices/error-codes.md) - All 68 error codes
+  - [ASCII Table](../../language/appendices/ascii-codes.md) - Character codes
+  - [Math Functions](../../language/appendices/math-functions.md) - Derived functions
+
+---
 
 ## Help Navigation
 
@@ -30,11 +66,19 @@ Use these keys while viewing help:
 | **U** | Go back to previous page |
 | **ESC** or **Q** | Close help and return to editor |
 
-## Language Reference
+You can navigate seamlessly between all three sections using the links above.
 
-- [BASIC Language](../../common/language.md) - Complete BASIC language reference
-- [Examples](../../common/examples.md) - Sample programs
+## Search
 
-## See Also
+Press **/** to search across all help content. Results are grouped by section (UI, MBASIC, Language).
 
-- [Common Help](../../common/index.md) - Help shared across all UIs
+## Tips
+
+- **Context-sensitive help**: Press Ctrl+A with cursor on a BASIC keyword for direct help
+- **Quick access**: Bookmark frequently used topics with your browser's history (U key)
+- **Cross-references**: Follow "See Also" links to explore related topics
+- **Categories**: Browse statements and functions by category in the language reference
+
+---
+
+**Welcome to MBASIC!** Choose a section above to get started, or press `/` to search for a specific topic.

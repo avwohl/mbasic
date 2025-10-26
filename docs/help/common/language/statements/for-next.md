@@ -1,3 +1,12 @@
+---
+category: control-flow
+description: NEEDS_DESCRIPTION
+keywords:
+- NEEDS_KEYWORDS
+title: FOR ••• NEXT
+type: statement
+---
+
 # FOR ••• NEXT
 
 ## Syntax

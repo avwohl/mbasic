@@ -1,3 +1,14 @@
+---
+title: PRINT
+type: statement
+category: input-output
+keywords: [print, output, display, console, write, show, terminal, "question mark"]
+aliases: ["?"]
+description: Output text and values to the screen
+syntax: "PRINT [expression[;|,]...]"
+related: [input, print-using, write, lprint]
+---
+
 # PRINT
 
 ## Syntax
