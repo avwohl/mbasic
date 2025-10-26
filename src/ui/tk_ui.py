@@ -75,6 +75,10 @@ class TkBackend(UIBackend):
         self.immediate_entry = None
         self.immediate_status = None
 
+        # Editor auto-sort state
+        self.last_edited_line_index = None  # Last editor line index (1-based)
+        self.last_edited_line_text = None   # Content of last edited line
+
         # Tkinter widgets (created in start())
         self.root = None
         self.editor_text = None
@@ -117,6 +121,14 @@ class TkBackend(UIBackend):
             height=20
         )
         self.editor_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # Bind events for auto-sort on navigation
+        self.editor_text.text.bind('<KeyRelease-Up>', self._on_cursor_move)
+        self.editor_text.text.bind('<KeyRelease-Down>', self._on_cursor_move)
+        self.editor_text.text.bind('<KeyRelease-Prior>', self._on_cursor_move)  # Page Up
+        self.editor_text.text.bind('<KeyRelease-Next>', self._on_cursor_move)   # Page Down
+        self.editor_text.text.bind('<Button-1>', self._on_mouse_click, add='+')
+        self.editor_text.text.bind('<FocusOut>', self._on_focus_out)
 
         # Set up editor context menu
         self._setup_editor_context_menu()
@@ -973,6 +985,109 @@ class TkBackend(UIBackend):
                 success, error = self.program.add_line(line_num, line)
                 if not success:
                     self._add_output(f"Parse error at line {line_num}: {error}\n")
+
+    def _on_cursor_move(self, event):
+        """Handle cursor movement (arrows, page up/down) - check for line change."""
+        self._check_line_change()
+
+    def _on_mouse_click(self, event):
+        """Handle mouse click - check for line change after click settles."""
+        # Use after() to check after click is processed
+        self.root.after(10, self._check_line_change)
+
+    def _on_focus_out(self, event):
+        """Handle focus leaving editor - check for line change."""
+        self._check_line_change()
+
+    def _check_line_change(self):
+        """Check if cursor moved off a line and trigger auto-sort if line number changed."""
+        import tkinter as tk
+        import re
+
+        # Get current cursor position
+        current_pos = self.editor_text.text.index(tk.INSERT)
+        current_line_index = int(current_pos.split('.')[0])
+
+        # If no previous line tracked, just update tracking
+        if self.last_edited_line_index is None:
+            self.last_edited_line_index = current_line_index
+            self.last_edited_line_text = self.editor_text.text.get(
+                f'{current_line_index}.0',
+                f'{current_line_index}.end'
+            )
+            return
+
+        # If still on same line, update tracking
+        if current_line_index == self.last_edited_line_index:
+            self.last_edited_line_text = self.editor_text.text.get(
+                f'{current_line_index}.0',
+                f'{current_line_index}.end'
+            )
+            return
+
+        # Moved to different line - check if previous line's line number changed
+        try:
+            current_text = self.editor_text.text.get(
+                f'{self.last_edited_line_index}.0',
+                f'{self.last_edited_line_index}.end'
+            )
+        except tk.TclError:
+            # Line no longer exists
+            current_text = ""
+
+        # Parse line numbers from old and new text
+        old_match = re.match(r'^\s*(\d+)', self.last_edited_line_text) if self.last_edited_line_text else None
+        new_match = re.match(r'^\s*(\d+)', current_text) if current_text else None
+
+        old_line_num = int(old_match.group(1)) if old_match else None
+        new_line_num = int(new_match.group(1)) if new_match else None
+
+        # If line number changed, trigger sort
+        if old_line_num != new_line_num and new_line_num is not None:
+            # Save editor to program (which parses all lines)
+            self._save_editor_to_program()
+
+            # Refresh editor (which sorts by line number)
+            self._refresh_editor()
+
+            # Scroll to show the edited line in its new position
+            self._scroll_to_line(new_line_num)
+
+        # Update tracking for new line
+        self.last_edited_line_index = current_line_index
+        self.last_edited_line_text = self.editor_text.text.get(
+            f'{current_line_index}.0',
+            f'{current_line_index}.end'
+        )
+
+    def _scroll_to_line(self, line_number):
+        """Scroll editor to show the specified BASIC line number.
+
+        Args:
+            line_number: BASIC line number to scroll to
+        """
+        import tkinter as tk
+
+        # Find which editor line contains this BASIC line number
+        editor_content = self.editor_text.text.get(1.0, tk.END)
+        editor_lines = editor_content.split('\n')
+
+        import re
+        for i, line_text in enumerate(editor_lines):
+            match = re.match(r'^\s*(\d+)', line_text)
+            if match and int(match.group(1)) == line_number:
+                # Found it - scroll to this line (1-indexed)
+                editor_line_index = i + 1
+                self.editor_text.text.see(f'{editor_line_index}.0')
+                # Set cursor at start of code (after line number)
+                # Find where code starts (after line number and space)
+                code_start_match = re.match(r'^\s*\d+\s+', line_text)
+                if code_start_match:
+                    col = len(code_start_match.group(0))
+                else:
+                    col = 0
+                self.editor_text.text.mark_set(tk.INSERT, f'{editor_line_index}.{col}')
+                break
 
     def _add_output(self, text):
         """Add text to output widget."""
