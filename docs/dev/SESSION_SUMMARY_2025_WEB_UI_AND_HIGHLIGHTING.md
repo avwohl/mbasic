@@ -113,6 +113,41 @@ Continued UI enhancement work from previous session, focusing on bringing Web UI
 - `src/ui/tk_ui.py`: Visual highlighting
 - `src/ui/web/web_ui.py`: Status text indicators
 
+### 4. Parse Error Markers - COMPLETE! ✅
+
+**Status**: Complete (All UIs now have error markers)
+
+**Tk UI Implementation** ✅:
+- Added `_validate_editor_syntax()` method to validate all lines
+- Added `_check_line_syntax()` to validate individual lines using Lexer/Parser
+- Updated `_on_cursor_move()` to trigger validation after 100ms delay
+- Updated `_on_focus_out()` to validate when leaving editor
+- Updated `_save_editor_to_program()` to mark errors during save
+- Updated `cmd_load()` to mark errors when loading files
+- Infrastructure already existed in `tk_widgets.py` (set_error, priority system)
+
+**Web UI Implementation** ✅:
+- Added `self.line_errors: Set[int]` to track parse errors
+- Updated CSS with `.error-line` styling (red background)
+- Modified `update_line_numbers()` to show error markers with priority:
+  - Error (? symbol) > Breakpoint (● symbol) > Normal
+  - Red background for errors, light red for breakpoints
+- Added `_check_line_syntax()` using Lexer/Parser validation
+- Added `_validate_editor_syntax()` to validate all editor lines
+- Integrated validation into file operations and editor operations
+- Error markers appear in line numbers column
+
+**Design Reference**:
+- Followed Curses UI implementation pattern
+- Priority system: Error > Breakpoint > Normal
+- Visual markers: ? for error, ● for breakpoint, space for normal
+
+**Files Modified**:
+- `src/ui/tk_ui.py`: Validation and error marking
+- `src/ui/web/web_ui.py`: Error tracking and display
+- `src/ui/curses_ui.py`: Reference implementation (unchanged)
+- `src/ui/tk_widgets.py`: Infrastructure (already existed)
+
 ## Commits
 
 1. **082dc2e** - Web UI: Implement variable editing feature
@@ -123,13 +158,15 @@ Continued UI enhancement work from previous session, focusing on bringing Web UI
 6. **4f917a7** - Phase 1 Complete: Interpreter tracks statement positions
 7. **f1bed4e** - Phase 2: Tk UI statement highlighting
 8. **4240739** - Phase 3: Web UI statement indicator
+9. **ce0b0eb** - Tk UI: Add parse error markers
+10. **4cdf88b** - Web UI: Add parse error markers
 
 ## Statistics
 
-- **Total Commits**: 8
-- **Files Modified**: 9
+- **Total Commits**: 10
+- **Files Modified**: 11
 - **New Documents Created**: 3
-- **Lines of Code Added**: ~650
+- **Lines of Code Added**: ~850
 - **Lines of Documentation**: ~450
 
 ## Testing
@@ -183,17 +220,20 @@ Continued UI enhancement work from previous session, focusing on bringing Web UI
 | Curses | ✅ Complete | Status bar + editor (already had!) |
 | Web | ✅ Complete | Status text indicator |
 
+### Parse Error Markers
+| UI | Status | Implementation |
+|----|--------|----------------|
+| Curses | ✅ Complete | ? marker in line display (reference) |
+| Tk | ✅ Complete | ? marker with red styling |
+| Web | ✅ Complete | ? symbol with red background |
+
+**Priority System** (all UIs): Error (?) > Breakpoint (●) > Normal ( )
+
 ## Next Steps
 
 ### Immediate
 
-1. **Parse Error Markers** (As noted by user):
-   - Add error markers to Tk UI (like Curses has)
-   - Add error markers to Web UI
-   - Show error icon/indicator on lines that fail to parse
-   - Priority order: Error > Breakpoint > Normal
-
-2. **Testing & Documentation for Statement Highlighting**:
+1. **Testing & Documentation for Statement Highlighting**:
    - Create test programs with multi-statement lines
    - Test Ctrl+C in single-line loops
    - Update help documentation
@@ -250,7 +290,7 @@ Continued UI enhancement work from previous session, focusing on bringing Web UI
 
 ## Conclusion
 
-This session successfully completed THREE major features:
+This session successfully completed FOUR major features:
 
 1. **Variable Editing** ✅
    - Complete feature parity across Tk, Curses, and Web UIs
@@ -270,10 +310,18 @@ This session successfully completed THREE major features:
    - Curses UI: Already had it!
    - Web UI: Status text indicators
 
+4. **Parse Error Markers** ✅
+   - **ALL UIs COMPLETE!**
+   - Tk UI: Background validation with error markers
+   - Web UI: Error tracking with visual indicators
+   - Curses UI: Reference implementation (already existed)
+   - Priority system: Error > Breakpoint > Normal
+
 The codebase now has:
 - ✅ Complete feature parity across all UIs
 - ✅ Statement-level debugging for multi-statement lines
+- ✅ Parse error visual feedback on all UIs
 - ✅ Full backwards compatibility
 - ✅ Professional debugging experience
 
-**Next**: Parse error markers for Tk/Web UIs, then testing and documentation.
+**Next**: Testing and documentation for statement highlighting, then investigate auto-numbering workflow for visual UIs.
