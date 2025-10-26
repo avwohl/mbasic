@@ -307,10 +307,10 @@ class TkBackend(UIBackend):
         ttk.Button(toolbar, text="Cont", command=self._menu_continue).pack(side=tk.LEFT, padx=2, pady=2)
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
 
-        # Utility group
-        ttk.Button(toolbar, text="List", command=self._menu_list).pack(side=tk.LEFT, padx=2, pady=2)
-        ttk.Button(toolbar, text="Clear Prog", command=self._menu_new).pack(side=tk.LEFT, padx=2, pady=2)
-        ttk.Button(toolbar, text="Clear Out", command=self._menu_clear_output).pack(side=tk.LEFT, padx=2, pady=2)
+        # Utility buttons removed - use menus instead:
+        # - List → Run > List Program
+        # - Clear Prog → File > New
+        # - Clear Out → Run > Clear Output
 
     # Menu handlers
 
