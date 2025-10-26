@@ -38,6 +38,8 @@ class TkHelpBrowser(tk.Toplevel):
         self.current_topic = initial_topic
         self.history = []  # Stack of previous topics
         self.macros = HelpMacros('tk', help_root)
+        self.link_counter = 0  # Counter for unique link tags
+        self.link_urls = {}  # Map link tags to URLs
 
         # Search state
         self.search_indexes = self._load_search_indexes()
@@ -188,6 +190,10 @@ class TkHelpBrowser(tk.Toplevel):
         self.text_widget.config(state=tk.NORMAL)
         self.text_widget.delete(1.0, tk.END)
 
+        # Reset link counter and URL mapping for new page
+        self.link_counter = 0
+        self.link_urls = {}
+
         # Simple markdown rendering
         lines = markdown.split('\n')
         i = 0
@@ -251,8 +257,10 @@ class TkHelpBrowser(tk.Toplevel):
             link_text = match.group(1)
             link_url = match.group(2)
 
-            # Create unique tag for this link
-            tag_name = f"link_{id(match)}"
+            # Create unique tag for this link using counter
+            self.link_counter += 1
+            tag_name = f"link_{self.link_counter}"
+            self.link_urls[tag_name] = link_url  # Store URL for context menu
             self.text_widget.insert(tk.END, link_text, (tag_name, "link"))
 
             # Bind click to this specific link
@@ -325,6 +333,10 @@ class TkHelpBrowser(tk.Toplevel):
         self.text_widget.config(state=tk.NORMAL)
         self.text_widget.delete(1.0, tk.END)
 
+        # Reset link counter and URL mapping for search results
+        self.link_counter = 0
+        self.link_urls = {}
+
         if not results:
             self.text_widget.insert(tk.END, f"No results found for '{query}'\n\n", "title")
             self.text_widget.insert(tk.END, "Try:\n")
@@ -346,8 +358,10 @@ class TkHelpBrowser(tk.Toplevel):
 
                 self.text_widget.insert(tk.END, f"{tier} ", tier_tag)
 
-                # Title as link
-                tag_name = f"result_link_{id(path)}"
+                # Title as link - use counter for unique tag
+                self.link_counter += 1
+                tag_name = f"result_link_{self.link_counter}"
+                self.link_urls[tag_name] = path  # Store path for context menu
                 self.text_widget.insert(tk.END, title + "\n", (tag_name, "link"))
                 self.text_widget.tag_bind(tag_name, "<Button-1>",
                     lambda e, p=path: self._follow_link(p))
@@ -456,16 +470,41 @@ class TkHelpBrowser(tk.Toplevel):
         self.status_label.config(text="Error")
 
     def _create_context_menu(self):
-        """Create right-click context menu for copy operations."""
-        self.context_menu = tk.Menu(self.text_widget, tearoff=0)
-        self.context_menu.add_command(label="Copy", command=self._copy_selection)
-        self.context_menu.add_command(label="Select All", command=self._select_all)
-
+        """Create right-click context menu for copy operations and links."""
         def show_context_menu(event):
+            # Create a new menu each time based on context
+            menu = tk.Menu(self.text_widget, tearoff=0)
+
+            # Check if we're on a link
+            index = self.text_widget.index(f"@{event.x},{event.y}")
+            tags = self.text_widget.tag_names(index)
+            link_tag = None
+
+            for tag in tags:
+                if tag.startswith("link_") or tag.startswith("result_link_"):
+                    link_tag = tag
+                    break
+
+            if link_tag:
+                # We're on a link - offer to open in new window
+                menu.add_command(label="Open in New Window",
+                                command=lambda: self._open_link_in_new_window(link_tag))
+                menu.add_separator()
+
+            # Always offer copy if there's a selection
             try:
-                self.context_menu.tk_popup(event.x_root, event.y_root)
+                if self.text_widget.tag_ranges(tk.SEL):
+                    menu.add_command(label="Copy", command=self._copy_selection)
+            except tk.TclError:
+                pass
+
+            # Always offer select all
+            menu.add_command(label="Select All", command=self._select_all)
+
+            try:
+                menu.tk_popup(event.x_root, event.y_root)
             finally:
-                self.context_menu.grab_release()
+                menu.grab_release()
 
         self.text_widget.bind("<Button-3>", show_context_menu)  # Right-click
 
@@ -483,6 +522,14 @@ class TkHelpBrowser(tk.Toplevel):
         self.text_widget.tag_add(tk.SEL, "1.0", tk.END)
         self.text_widget.mark_set(tk.INSERT, "1.0")
         self.text_widget.see(tk.INSERT)
+
+    def _open_link_in_new_window(self, link_tag: str):
+        """Open a link in a new help browser window."""
+        # Get the URL from our stored mapping
+        url = self.link_urls.get(link_tag)
+        if url:
+            # Create new browser window with the linked topic
+            new_browser = TkHelpBrowser(self.master, str(self.help_root), url)
 
     def _format_table_row(self, line: str) -> str:
         """Format a markdown table row for display."""
