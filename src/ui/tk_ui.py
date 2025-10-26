@@ -933,11 +933,19 @@ class TkBackend(UIBackend):
     # Helper methods
 
     def _refresh_editor(self):
-        """Load program into editor widget."""
+        """Load program into editor widget.
+
+        Line numbers are formatted as part of the text content:
+        "   10 PRINT" (5-digit right-aligned line number + space + code)
+
+        This makes line numbers copyable with the code.
+        """
         import tkinter as tk
 
         self.editor_text.delete(1.0, tk.END)
         for line_num, line_text in self.program.get_lines():
+            # line_text already includes the line number
+            # Just ensure consistent formatting
             self.editor_text.insert(tk.END, line_text + "\n")
 
         # Clear error indicators
