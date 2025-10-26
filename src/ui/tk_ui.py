@@ -475,10 +475,19 @@ class TkBackend(UIBackend):
     def _toggle_variables(self):
         """Toggle variables window visibility (Ctrl+W)."""
         if self.variables_visible:
-            self.variables_window.withdraw()
-            self.variables_visible = False
+            # Window is shown - check if it's topmost
+            try:
+                # Try to raise/focus the window
+                self.variables_window.lift()
+                self.variables_window.focus_force()
+            except:
+                # If that fails, toggle visibility
+                self.variables_window.withdraw()
+                self.variables_visible = False
         else:
             self.variables_window.deiconify()
+            self.variables_window.lift()
+            self.variables_window.focus_force()
             self.variables_visible = True
             self._update_variables()
 
@@ -561,16 +570,30 @@ class TkBackend(UIBackend):
     def _toggle_stack(self):
         """Toggle execution stack window visibility (Ctrl+K)."""
         if self.stack_visible:
-            self.stack_window.withdraw()
-            self.stack_visible = False
+            # Window is shown - check if it's topmost
+            try:
+                # Try to raise/focus the window
+                self.stack_window.lift()
+                self.stack_window.focus_force()
+            except:
+                # If that fails, toggle visibility
+                self.stack_window.withdraw()
+                self.stack_visible = False
         else:
             self.stack_window.deiconify()
+            self.stack_window.lift()
+            self.stack_window.focus_force()
             self.stack_visible = True
             self._update_stack()
 
     def _update_stack(self):
         """Update execution stack window from runtime."""
-        if not self.stack_visible or not self.runtime:
+        if not self.stack_visible:
+            return
+
+        # Get runtime - prefer interpreter.runtime if available (for tick-based execution)
+        runtime = self.interpreter.runtime if (self.interpreter and hasattr(self.interpreter, 'runtime')) else self.runtime
+        if not runtime:
             return
 
         # Clear tree
@@ -578,7 +601,7 @@ class TkBackend(UIBackend):
             self.stack_tree.delete(item)
 
         # Get stack from runtime
-        stack = self.runtime.get_execution_stack()
+        stack = runtime.get_execution_stack()
 
         # Add to tree with indentation for nesting
         for i, entry in enumerate(stack):
