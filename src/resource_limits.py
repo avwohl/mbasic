@@ -146,13 +146,13 @@ class ResourceLimits:
 
         Args:
             value: The actual value (number, string, array)
-            var_type: TypeInfo (INTEGER, SINGLE, DOUBLE, STRING)
+            var_type: TypeInfo (INTEGER, SINGLE, DOUBLE, STRING) or VarType enum
 
         Returns:
             Estimated size in bytes
         """
         # Import here to avoid circular dependency
-        from parser import TypeInfo
+        from ast_nodes import TypeInfo
 
         if var_type == TypeInfo.INTEGER:
             return 2  # 2 bytes for 16-bit integer

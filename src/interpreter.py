@@ -71,7 +71,7 @@ class InterpreterState:
 class Interpreter:
     """Execute MBASIC AST with tick-based execution for UI integration"""
 
-    def __init__(self, runtime, io_handler=None, breakpoint_callback=None, filesystem_provider=None):
+    def __init__(self, runtime, io_handler=None, breakpoint_callback=None, filesystem_provider=None, limits=None):
         self.runtime = runtime
         self.builtins = BuiltinFunctions(runtime)
 
@@ -86,6 +86,12 @@ class Interpreter:
             from filesystem import RealFileSystemProvider
             filesystem_provider = RealFileSystemProvider()
         self.fs = filesystem_provider
+
+        # Resource limits (defaults to local limits if not provided)
+        if limits is None:
+            from resource_limits import create_local_limits
+            limits = create_local_limits()
+        self.limits = limits
 
         # Breakpoint callback - called when a breakpoint is hit
         # Callback should take (line_number, statement_index) and return True to continue, False to stop
@@ -1105,6 +1111,9 @@ class Interpreter:
 
     def execute_gosub(self, stmt):
         """Execute GOSUB statement"""
+        # Check resource limits
+        self.limits.push_gosub(stmt.line_number)
+
         # Push return address
         self.runtime.push_gosub(
             self.runtime.current_line.line_number,
@@ -1155,6 +1164,9 @@ class Interpreter:
 
         # Check if index is valid (1-based indexing)
         if 1 <= index <= len(stmt.line_numbers):
+            # Check resource limits
+            self.limits.push_gosub(stmt.line_numbers[index - 1])
+
             # Push return address
             self.runtime.push_gosub(
                 self.runtime.current_line.line_number,
@@ -1166,6 +1178,9 @@ class Interpreter:
 
     def execute_return(self, stmt):
         """Execute RETURN statement"""
+        # Pop from resource limits
+        self.limits.pop_gosub()
+
         # Pop return address
         return_line, return_stmt = self.runtime.pop_gosub()
 
@@ -1198,6 +1213,9 @@ class Interpreter:
         # Set loop variable to start
         var_name = stmt.variable.name + (stmt.variable.type_suffix or "")
         self.runtime.set_variable(stmt.variable.name, stmt.variable.type_suffix, start, token=self._make_token_info(stmt.variable))
+
+        # Check resource limits
+        self.limits.push_for_loop(var_name)
 
         # Register loop
         self.runtime.push_for_loop(
@@ -1299,6 +1317,7 @@ class Interpreter:
             return True  # Loop continues
         else:
             # Loop finished
+            self.limits.pop_for_loop()
             self.runtime.pop_for_loop(var_name)
             return False  # Loop finished
 
@@ -1324,6 +1343,9 @@ class Interpreter:
             self.runtime.next_stmt_index = wend_stmt + 1
         else:
             # Condition is true - enter the loop
+            # Check resource limits
+            self.limits.push_while_loop()
+
             # Push loop info so WEND knows where to return
             self.runtime.push_while_loop(
                 self.runtime.current_line.line_number,
@@ -1345,6 +1367,7 @@ class Interpreter:
 
         # Remove the loop from the stack since we're jumping back to WHILE
         # which will re-push if the condition is still true
+        self.limits.pop_while_loop()
         self.runtime.pop_while_loop()
 
     def execute_onerror(self, stmt):
@@ -1481,6 +1504,8 @@ class Interpreter:
 
     def execute_dim(self, stmt):
         """Execute DIM statement"""
+        from ast_nodes import TypeInfo
+
         for array_def in stmt.arrays:
             # array_def is an ArrayDeclNode with name and dimensions
             dimensions = [int(self.evaluate_expression(dim)) for dim in array_def.dimensions]
@@ -1490,6 +1515,13 @@ class Interpreter:
             if name and name[-1] in '$%!#':
                 type_suffix = name[-1]
                 name = name[:-1]
+
+            # Check resource limits before allocating
+            var_type = TypeInfo.from_suffix(type_suffix)
+            full_name = (name + (type_suffix or '')).lower()
+            self.limits.allocate_array(full_name, dimensions, var_type)
+
+            # Proceed with actual allocation
             self.runtime.dimension_array(name, type_suffix, dimensions)
 
     def execute_erase(self, stmt):
@@ -1501,6 +1533,9 @@ class Interpreter:
         Syntax: ERASE array1, array2, ...
         """
         for array_name in stmt.array_names:
+            # Free from resource limits tracking
+            self.limits.free_variable(array_name.lower())
+
             # Array name already includes type suffix from parser
             # Delete using raw method (already have full name)
             self.runtime.delete_array_raw(array_name)
@@ -1520,6 +1555,9 @@ class Interpreter:
         - COMMON variables list is preserved (for CHAIN compatibility)
         - String space and stack space parameters are ignored (as requested)
         """
+        # Clear resource limits tracking
+        self.limits.clear_all()
+
         # Clear all variables
         self.runtime.clear_variables()
 

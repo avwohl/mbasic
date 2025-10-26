@@ -15,7 +15,7 @@ from resource_limits import (
     create_local_limits,
     create_unlimited_limits
 )
-from parser import TypeInfo
+from ast_nodes import TypeInfo
 
 
 def test_gosub_stack_tracking():
