@@ -1,6 +1,6 @@
 ---
 category: file-io
-description: Returns the current cursor     position
+description: Returns the current cursor position
 keywords:
 - function
 - if
@@ -23,13 +23,13 @@ POS (I)
 
 ## Description
 
-Returns the current cursor     position.    The leftmost position is 1. X is a dummy argument.
+Returns the current cursor position. The leftmost position is 1. X is a dummy argument.
 
 ## Example
 
 ```basic
 IF POS(X) >60 THEN PRINT CHR$(13)
-                Also see the LPOS function.
+ Also see the LPOS function.
 ```
 
 ## See Also

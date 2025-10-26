@@ -1,6 +1,6 @@
 ---
 category: type-conversion
-description: Converts X to an integer by rounding         the fractional portion
+description: Converts X to an integer by rounding the fractional portion
 keywords:
 - cint
 - data
@@ -28,19 +28,18 @@ CINT(X)
 
 ## Description
 
-Converts X to an integer by rounding         the fractional portion.    If X is not in the range -32768 to 32767, an "Overflow" error occurs.
+Converts X to an integer by rounding the fractional portion. If X is not in the range -32768 to 32767, an "Overflow" error occurs.
 
 ## Example
 
 ```basic
 PRINT CINT(45.67)
-              46
-             Ok
-             See the CDBL and CSNG functions for converting
-             numbers to the double precision and single
-             precision data type. See also the FIX and INT
-             functions, both of which return integers.
-BASIC-SO FUNCTIONS                                      Page 3-5
+ 46
+ Ok
+ See the CDBL and CSNG functions for converting
+ numbers to the double precision and single
+ precision data type. See also the FIX and INT
+ functions, both of which return integers.
 ```
 
 ## See Also

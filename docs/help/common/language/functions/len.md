@@ -1,6 +1,6 @@
 ---
 category: string
-description: Returns the number of      characters   in   X$
+description: Returns the number of characters in X$
 keywords:
 - function
 - len
@@ -24,15 +24,15 @@ LEN (X$)
 
 ## Description
 
-Returns the number of      characters   in   X$. Non-printing characters and blanks are counted.
+Returns the number of characters in X$. Non-printing characters and blanks are counted.
 
 ## Example
 
 ```basic
 10 X$ = "PORTLAND, OREGON"
-             20 PRINT LEN (X$)
-              16
-             Ok
+ 20 PRINT LEN (X$)
+ 16
+ Ok
 ```
 
 ## See Also

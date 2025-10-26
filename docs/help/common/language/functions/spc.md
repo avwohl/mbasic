@@ -21,15 +21,15 @@ SPC (I)
 
 ## Description
 
-Prints I blanks on the terminal. SPC may only be used with PRINT and LPRINT statements.   I must be in the range 0 to 255.
+Prints I blanks on the terminal. SPC may only be used with PRINT and LPRINT statements. I must be in the range 0 to 255.
 
 ## Example
 
 ```basic
 PRINT "OVER" SPC(15) "THERE"
-             OVER               ~ERE
-             Ok
-             Also see the SPACE$ function.
+ OVER ~ERE
+ Ok
+ Also see the SPACE$ function.
 ```
 
 ## See Also

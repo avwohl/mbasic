@@ -1,6 +1,6 @@
 ---
 category: mathematical
-description: Returns the-natural logarithm of X
+description: Returns the natural logarithm of X
 keywords:
 - function
 - log

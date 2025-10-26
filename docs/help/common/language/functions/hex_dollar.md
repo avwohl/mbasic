@@ -1,6 +1,6 @@
 ---
 category: string
-description: Returns    a  string   which   represents   the hexadecimal value of
+description: Returns a string which represents the hexadecimal value of
   the decimal argument
 keywords:
 - for
@@ -11,7 +11,7 @@ keywords:
 - put
 - return
 - string
-syntax: HEX$ (X) Versionsr     Extended, Disk
+syntax: HEX$ (X) Versionsr Extended, Disk
 title: HEX$
 type: function
 ---
@@ -21,25 +21,24 @@ type: function
 ## Syntax
 
 ```basic
-HEX$ (X) Versionsr     Extended, Disk
+HEX$ (X) Versionsr Extended, Disk
 ```
 
 ## Description
 
-Returns    a  string   which   represents   the hexadecimal value of the decimal argument. X is rounded to an integer      before   HEX$(X)  is evaluated.
+Returns a string which represents the hexadecimal value of the decimal argument. X is rounded to an integer before HEX$(X) is evaluated.
 
 ## Example
 
 ```basic
 10 INPUT X
-              20 A$ = HEX$ (X)
-              30 PRINT X "DECIMAL IS II A$ " HEXADECIMAL II
-              RUN
-              ? 32
-               32 DECIMAL IS 20 HEXADECIMAL
-              Ok
-              See the OCT$ function for octal conversion.
-BASIC-80 FUNCTIONS                                      Page 3-9
+ 20 A$ = HEX$ (X)
+ 30 PRINT X "DECIMAL IS II A$ " HEXADECIMAL II
+ RUN
+ ? 32
+ 32 DECIMAL IS 20 HEXADECIMAL
+ Ok
+ See the OCT$ function for octal conversion.
 ```
 
 ## See Also

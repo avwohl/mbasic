@@ -25,18 +25,18 @@ RIGHT$(X$,I)
 
 ## Description
 
-Returns the rightmost I characters of string X$. If I=LEN{X$), returns X$.      If I=O, the null string (length zero) is returned.
+Returns the rightmost I characters of string X$. If I=LEN{X$), returns X$. If I=O, the null string (length zero) is returned.
 
 ## Example
 
 ```basic
 10 A$="DISK BASIC-80"
-                20 PRINT RIGHT$(A$,8)
-                RUN
-                BASIC-80
-                Ok
-                Also see the MID$ and LEFT$ functions.
-BASIC-SO FUNCTIONS                                  Page 3-1S
+ 20 PRINT RIGHT$(A$,8)
+ RUN
+ BASIC-80
+ Ok
+ Also see the MID$ and LEFT$ functions.
+BASIC-SO FUNCTIONS Page 3-1S
 ```
 
 ## See Also

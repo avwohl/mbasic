@@ -47,7 +47,6 @@ Returns the current position of the line printer print head within the line prin
 
 ```basic
 100 IF LPOS(X) >60 THEN LPRINT CHR$(13)
-BASIC-80 FUNCTIONS                                    Page 3-15
 ```
 
 ## See Also

@@ -30,16 +30,16 @@ Returns a string of length J characters from X$ beginning with the Ith character
 
 ```basic
 LIST
-               10 A$=nGOOD n
-               20 B$=nMORNING EVENING AFTERNOON"
-               30 PRINT A$;MID$(B$,9,7)
-               Ok
-               RUN
-               GOOD EVENING
-               Ok
-               Also see the LEFT$ and RIGHT$ functions.
-NOTE:          If I=O is specified, error message "ILLEGAL
-               ARGUMENT IN <line number>" will be returned.
+ 10 A$=nGOOD n
+ 20 B$=nMORNING EVENING AFTERNOON"
+ 30 PRINT A$;MID$(B$,9,7)
+ Ok
+ RUN
+ GOOD EVENING
+ Ok
+ Also see the LEFT$ and RIGHT$ functions.
+NOTE: If I=O is specified, error message "ILLEGAL
+ ARGUMENT IN <line number>" will be returned.
 ```
 
 ## See Also

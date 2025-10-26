@@ -29,8 +29,8 @@ Returns the absolute value of the expression X.
 
 ```basic
 PRINT ABS(7*(-5»
-             35
-            Ok
+ 35
+ Ok
 ```
 
 ## See Also
