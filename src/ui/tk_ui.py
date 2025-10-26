@@ -1216,7 +1216,7 @@ class TkBackend(UIBackend):
 
             # Try to parse line number
             import re
-            match = re.match(r'^(\d+)\s', line)
+            match = re.match(r'^(\d+)(?:\s|$)', line)  # Whitespace or end of string
             if match:
                 line_num = int(match.group(1))
                 success, error = self.program.add_line(line_num, line)
