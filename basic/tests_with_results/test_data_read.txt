@@ -1,0 +1,7 @@
+Reading colors:
+ 1 : Red
+ 2 : Green
+ 3 : Blue
+Restoring and reading again:
+First color: Red
+

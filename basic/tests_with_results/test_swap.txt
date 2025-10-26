@@ -1,0 +1,5 @@
+Before SWAP: A= 10  B= 20 
+After SWAP:  A= 20  B= 10 
+Before SWAP: X$=HELLO Y$=WORLD
+After SWAP:  X$=WORLD Y$=HELLO
+

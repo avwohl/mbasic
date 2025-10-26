@@ -1,0 +1,10 @@
+Outer WHILE J= 0 
+  Inner FOR I= 1 
+  Inner FOR I= 2 
+  Inner FOR I= 3 
+Outer WHILE J= 1 
+  Inner FOR I= 1 
+  Inner FOR I= 2 
+  Inner FOR I= 3 
+Proper nesting complete
+
