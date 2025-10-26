@@ -1204,7 +1204,7 @@ class TkBackend(UIBackend):
         # Clear current program
         self.program.clear()
 
-        # Parse each line from editor
+        # Parse each line from editor and track errors
         editor_content = self.editor_text.get(1.0, tk.END)
         for line in editor_content.split('\n'):
             line = line.strip()
@@ -1219,10 +1219,76 @@ class TkBackend(UIBackend):
                 success, error = self.program.add_line(line_num, line)
                 if not success:
                     self._add_output(f"Parse error at line {line_num}: {error}\n")
+                    # Mark line as having error
+                    self.editor_text.set_error(line_num, True)
+                else:
+                    # Clear error marker if line is now valid
+                    self.editor_text.set_error(line_num, False)
+
+    def _validate_editor_syntax(self):
+        """Validate syntax of all lines in editor and update error markers."""
+        import tkinter as tk
+        import re
+
+        # Get editor content
+        editor_content = self.editor_text.get(1.0, tk.END)
+
+        # Clear existing error markers
+        self.editor_text.clear_all_errors()
+
+        # Check each line
+        for line in editor_content.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+
+            # Try to parse line number
+            match = re.match(r'^(\d+)\s+(.+)$', line)
+            if match:
+                line_num = int(match.group(1))
+                code = match.group(2)
+
+                # Check syntax
+                is_valid, error_msg = self._check_line_syntax(code)
+                if not is_valid:
+                    self.editor_text.set_error(line_num, True)
+
+    def _check_line_syntax(self, code_text):
+        """Check if a line of BASIC code has valid syntax.
+
+        Args:
+            code_text: The BASIC code (without line number)
+
+        Returns:
+            Tuple of (is_valid: bool, error_message: str or None)
+        """
+        if not code_text or not code_text.strip():
+            return (True, None)
+
+        try:
+            from lexer import Lexer
+            from parser import Parser
+
+            # Tokenize and parse the code
+            lexer = Lexer(code_text)
+            tokens = lexer.tokenize()
+            parser = Parser(tokens, self.program.def_type_map, source=code_text)
+            parser.parse_line()
+
+            return (True, None)
+
+        except Exception as e:
+            # Strip "Parse error at line X, " prefix
+            error_msg = str(e)
+            import re
+            error_msg = re.sub(r'^Parse error at line \d+, ', '', error_msg)
+            return (False, error_msg)
 
     def _on_cursor_move(self, event):
         """Handle cursor movement (arrows, page up/down) - check for line change."""
         self._check_line_change()
+        # Also validate syntax after movement
+        self.root.after(100, self._validate_editor_syntax)
 
     def _on_mouse_click(self, event):
         """Handle mouse click - check for line change after click settles."""
@@ -1232,6 +1298,8 @@ class TkBackend(UIBackend):
     def _on_focus_out(self, event):
         """Handle focus leaving editor - check for line change."""
         self._check_line_change()
+        # Validate syntax when leaving editor
+        self._validate_editor_syntax()
 
     def _on_enter_key(self, event):
         """Handle Enter key - implement auto-numbering.
@@ -1603,8 +1671,12 @@ class TkBackend(UIBackend):
             if errors:
                 for line_num, error in errors:
                     self._add_output(f"Parse error at line {line_num}: {error}\n")
+                    # Mark line as having error
+                    self.editor_text.set_error(line_num, True)
             if success:
                 self._refresh_editor()
+                # Re-validate to show error markers for loaded lines
+                self._validate_editor_syntax()
                 self._set_status(f"Loaded from {filename}")
         except Exception as e:
             self._add_output(f"Load error: {e}\n")
