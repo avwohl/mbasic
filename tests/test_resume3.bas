@@ -1,0 +1,12 @@
+10 REM Test RESUME NEXT
+20 ON ERROR GOTO 1000
+30 PRINT "Testing RESUME NEXT"
+40 X = 1 / 0
+50 PRINT "Line 50 - this WILL print"
+60 PRINT "Line 60"
+70 END
+1000 REM Error handler
+1010 PRINT "Error at line "; ERL
+1020 PRINT "Using RESUME NEXT to skip error line"
+1030 RESUME NEXT
+1040 END
