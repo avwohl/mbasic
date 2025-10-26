@@ -144,16 +144,24 @@ All hardware/system function help files now have implementation notes:
 6. ✅ **call.md** - Not implemented note (no operation)
 7. ✅ **wait.md** - Not implemented note (no operation)
 
-### Priority 1: Check and Document
-Need to verify implementation status:
+### ✅ All Documentation Complete
 
-1. **lprint-lprint-using.md** - Check actual behavior in different UIs
-2. **lpos.md** - Check if function exists
-3. **varptr.md** - Check implementation
-4. **llist.md** - Check implementation
+All printer and special function help files now have implementation notes:
 
-### Priority 2: Historical Reference
+1. ✅ **lprint-lprint-using.md** - Printer output not implemented
+2. ✅ **lpos.md** - Printer head position not implemented
+3. ✅ **varptr.md** - Memory address access not implemented (file rewritten)
+4. ✅ **llist.md** - Printer listing not implemented
+
+### Historical Reference
 Cassette functions already noted as VT180-excluded, keep as historical reference.
+
+## Summary
+
+All required implementation notes have been added to help documentation. Users will now see clear explanations for features that are not implemented due to:
+- Obsolete hardware (printers, cassette tapes, I/O ports)
+- Incompatibility with Python (memory addresses, machine code)
+- Modern alternatives available
 
 ## Template for Implementation Notice
 
