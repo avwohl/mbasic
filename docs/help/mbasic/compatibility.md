@@ -89,7 +89,7 @@ These features differ from CP/M MBASIC by design:
 
 ### 1. Hardware-Specific Features
 
-**PEEK/POKE** - Partially emulated
+**PEEK/POKE** - Emulated for compatibility
 
 MBASIC 5.21:
 ```basic
@@ -98,10 +98,12 @@ MBASIC 5.21:
 ```
 
 This implementation:
-- Provides a virtual memory space
-- PEEK returns values set by POKE
+- POKE: Parsed and executes successfully, but performs no operation (no-op)
+- PEEK: Returns random integer 0-255 (for RNG seeding compatibility)
+- PEEK does NOT return values written by POKE
 - No access to actual system memory
-- Addresses are in virtual address space
+
+**Why:** Programs often used `RANDOMIZE PEEK(0)` to seed random numbers. Since we cannot access real memory, PEEK returns random values to support this common pattern.
 
 **Rationale:** Direct memory access is not portable across modern operating systems.
 
@@ -128,14 +130,16 @@ Error: "Illegal function call"
 
 ### 2. File System Differences
 
-**File paths:**
+**IMPORTANT:** File handling differs between UIs:
+
+**CLI, Tk, and Curses UIs** - Real filesystem access:
 
 MBASIC 5.21 (CP/M):
 ```basic
 OPEN "O", #1, "B:FILE.TXT"    ' Drive letter
 ```
 
-This implementation:
+CLI/Tk/Curses UIs:
 ```basic
 OPEN "O", #1, "FILE.TXT"           ' Current directory
 OPEN "O", #1, "/path/to/file.txt"  ' Absolute path
@@ -143,25 +147,53 @@ OPEN "O", #1, "../data/file.txt"   ' Relative path
 ```
 
 **File names:**
-
 - CP/M: 8.3 format required (FILENAME.EXT)
-- This implementation: Any valid OS filename (long names OK)
+- CLI/Tk/Curses: Any valid OS filename (long names OK)
 
 **Drive letters:**
-
 - CP/M: A:, B:, C:, etc.
-- This implementation: OS-specific paths (/path, C:\path, etc.)
+- CLI/Tk/Curses: OS-specific paths (/path, C:\path, etc.)
+
+---
+
+**Web UI** - In-memory virtual filesystem:
+
+The Web UI uses a sandboxed in-memory filesystem for security:
+
+```basic
+OPEN "O", #1, "DATA.TXT"      ' Simple filename only
+OPEN "O", #1, "GAME.BAS"      ' No paths allowed
+```
+
+**Limitations:**
+- Files stored in browser memory (not browser localStorage)
+- No path support - simple filenames only
+- Filenames converted to UPPERCASE automatically
+- No directories (paths like "folder/file.txt" not supported)
+- Files persist only during browser session
+- 50 file limit, 1MB per file
+
+**File names:**
+- Must be simple names (no slashes, no paths)
+- Automatically uppercased (CP/M style)
+- 8.3 format recommended but not required
+- Examples: DATA.TXT, PROGRAM.BAS, OUTPUT.DAT
+
+**Why different:**
+- Security: No access to user's real filesystem
+- Multi-user: Per-session isolation
+- Portability: Works in any browser without filesystem API
 
 ### 3. Terminal Differences
 
 **Screen control:**
 
-MBASIC 5.21 used CP/M terminal control codes that are hardware-specific.
+MBASIC 5.21 was originally written for ASR33 teletypes and had no built-in terminal control codes.
 
 This implementation:
 - PRINT uses modern terminal or UI output
-- No direct cursor positioning via escape codes
-- Use UI-specific features for screen control
+- No cursor positioning (not in original MBASIC 5.21)
+- Screen control is UI-dependent (visual UIs provide editing features)
 
 **Width and margins:**
 
@@ -170,7 +202,7 @@ This implementation:
 20 WIDTH LPRINT 132      ' Supported for LPRINT
 ```
 
-But terminal width is controlled by the OS, not MBASIC.
+Terminal width is controlled by the UI or OS. The WIDTH statement sets an internal limit but cannot actually resize the terminal window.
 
 ### 4. Memory Model
 

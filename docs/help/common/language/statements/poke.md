@@ -21,11 +21,13 @@ type: statement
 
 ## Implementation Note
 
-⚠️ **Not Implemented**: This feature requires direct memory access and is not implemented in this Python-based interpreter.
+⚠️ **Emulated as No-Op**: This feature requires direct memory access and cannot be implemented in a Python-based interpreter.
 
-**Behavior**: Statement is parsed but no operation is performed
+**Behavior**: Statement is parsed and executes successfully, but performs no operation
 
 **Why**: Cannot write to arbitrary memory addresses from a Python interpreter. POKE was used to modify memory directly, load machine code, or control memory-mapped hardware.
+
+**Note**: Programs using POKE will run without errors, but the memory writes are silently ignored. This allows legacy programs to execute without modification.
 
 **Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
 

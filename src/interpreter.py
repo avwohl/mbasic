@@ -1465,6 +1465,12 @@ class Interpreter:
         """Execute REM statement (do nothing)"""
         pass
 
+    def execute_poke(self, stmt):
+        """Execute POKE statement (no-op - cannot modify memory in Python interpreter)"""
+        # POKE is emulated as a no-op since we cannot write to arbitrary memory
+        # Statement is parsed for compatibility but performs no operation
+        pass
+
     def execute_deftype(self, stmt):
         """Execute DEFINT/DEFSNG/DEFDBL/DEFSTR statement (do nothing at runtime)"""
         # These are compile-time directives handled by the parser

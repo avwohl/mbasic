@@ -22,11 +22,16 @@ type: function
 
 ## Implementation Note
 
-ℹ️ **Compatibility Implementation**: PEEK returns a random value between 0-255.
+ℹ️ **Emulated with Random Values**: PEEK returns a random value between 0-255 (inclusive).
 
-**Why**: Most BASIC programs use PEEK to seed random number generators or check memory-mapped I/O. This compatibility implementation provides suitable random values for RNG seeding.
+**Behavior**: Each call to PEEK returns a new random integer in the range 0-255. This value is NOT related to any POKE operation.
 
-**Note**: Cannot read actual memory addresses (not applicable in Python interpreter). For memory-mapped I/O operations, this implementation will not work correctly.
+**Why**: Most legacy BASIC programs used PEEK to seed random number generators (e.g., `RANDOMIZE PEEK(0)`). Since we cannot read actual memory addresses in a Python interpreter, returning random values provides compatibility for this common use case.
+
+**Note**:
+- PEEK does NOT return values written by POKE (POKE is a no-op)
+- Memory-mapped I/O operations will not work
+- Each PEEK call returns a different random value
 
 **Recommendation**: Use [RANDOMIZE](../statements/randomize.md) and [RND](rnd.md) instead of PEEK for random number generation.
 
@@ -46,7 +51,7 @@ With the 8K version of BASIC-80, I must be less than 32768. To PEEK at a memory 
 
 With Extended and Disk BASIC-80, I must be in the range 0 to 65536.
 
-PEEK is the complementary function to the [POKE](../statements/poke.md) statement.
+PEEK is traditionally the complementary function to the [POKE](../statements/poke.md) statement. However, in this implementation, PEEK returns random values and POKE is a no-op, so they are not functionally related.
 
 ## Example
 
@@ -78,7 +83,7 @@ A = PEEK(&H5A00)
 
 ## See Also
 
-- [POKE](../statements/poke.md) - Write byte to memory (not implemented)
+- [POKE](../statements/poke.md) - Write byte to memory (no-op)
 - [RANDOMIZE](../statements/randomize.md) - Seed random number generator
 - [RND](rnd.md) - Random number function
 - [INP](inp.md) - Read from I/O port (not implemented)
