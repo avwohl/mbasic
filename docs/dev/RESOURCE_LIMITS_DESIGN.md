@@ -1,7 +1,7 @@
 # Resource Limits Design
 
 **Date**: 2025-10-25
-**Status**: Proposal
+**Status**: ✅ IMPLEMENTED (2025-10-26)
 
 ## TL;DR
 
@@ -516,28 +516,28 @@ Temporary string expressions can be longer, but can't be assigned to variables.
 
 ## Implementation Plan
 
-### Phase 1: Create ResourceLimits Class
-- [ ] Create `src/resource_limits.py` with `ResourceLimits` class
-- [ ] Add preset configurations (web, local, unlimited)
-- [ ] Add unit tests for limit checking
+### Phase 1: Create ResourceLimits Class ✅
+- [x] Create `src/resource_limits.py` with `ResourceLimits` class
+- [x] Add preset configurations (web, local, unlimited)
+- [x] Add unit tests for limit checking (11 tests in `tests/test_resource_limits.py`)
 
-### Phase 2: Integrate with Interpreter
-- [ ] Modify `Interpreter.__init__()` to accept limits parameter
-- [ ] Add limit checks to DIM statement
-- [ ] Add limit checks to GOSUB/RETURN
-- [ ] Add limit checks to FOR/NEXT, WHILE/WEND
-- [ ] Add limit checks to string variable assignment
+### Phase 2: Integrate with Interpreter ✅
+- [x] Modify `Interpreter.__init__()` to accept limits parameter
+- [x] Add limit checks to DIM statement
+- [x] Add limit checks to GOSUB/RETURN
+- [x] Add limit checks to FOR/NEXT, WHILE/WEND
+- [x] Add limit checks to string variable assignment (8 tests in `tests/test_interpreter_limits.py`)
 
-### Phase 3: Update UIs
-- [ ] Web UI: Use `create_web_limits()`
-- [ ] Tk UI: Use `create_local_limits()`
-- [ ] Curses UI: Use `create_local_limits()`
-- [ ] CLI UI: Use `create_unlimited_limits()` (or make configurable)
+### Phase 3: Update UIs ✅
+- [x] Web UI: Use `create_web_limits()`
+- [x] Tk UI: Use `create_local_limits()`
+- [x] Curses UI: Use `create_local_limits()`
+- [x] CLI UI: Use `create_unlimited_limits()`
 
-### Phase 4: Add Reporting
-- [ ] Add `SYSTEM` command to show resource usage
-- [ ] Add resource usage to error messages
-- [ ] Add usage display to debug/watch windows
+### Phase 4: Add Reporting ✅
+- [x] Add `LIMITS` command to show resource usage (renamed from SYSTEM to avoid conflict)
+- [x] Add resource usage to error messages (already excellent)
+- [x] Add usage display to debug/watch windows (Tk and Curses UIs)
 
 ## Benefits
 
