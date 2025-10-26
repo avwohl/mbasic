@@ -564,6 +564,57 @@ def _delete_current_line(self):
 
 ---
 
+## Future Enhancement: Interactive Execution Stack
+
+**Feature Request (2025-10-26):**
+
+Add interactivity to the execution stack window to allow navigation to source lines.
+
+**Options:**
+1. **Single-click navigation**: Left-click on a stack item scrolls the editor and highlights the corresponding line
+2. **Context menu**: Right-click on stack item shows menu with "Go to Line" option
+3. **Double-click**: Double-click to jump to line in editor
+
+**Implementation Details:**
+- Execution stack displays FOR loops, WHILE loops, and GOSUB calls
+- Each stack entry has an associated line number:
+  - FOR: line where FOR statement is located
+  - WHILE: line where WHILE statement is located
+  - GOSUB: line where GOSUB was called from
+- Clicking an entry should:
+  - Scroll editor to show that line
+  - Highlight the line (similar to breakpoint highlighting)
+  - Optionally show line in different color to indicate "stack view"
+
+**Benefits:**
+- Easier debugging of nested loops and subroutines
+- Quick navigation to understand call stack
+- Matches behavior of modern debuggers (VS Code, Visual Studio, etc.)
+
+**UI Widget:**
+- Currently using `ttk.Treeview` with columns for type and details
+- Can bind `<ButtonRelease-1>` for single-click
+- Can bind `<Button-3>` (right-click) for context menu
+- Can bind `<Double-Button-1>` for double-click
+
+**Example Code:**
+```python
+def _on_stack_click(self, event):
+    """Handle click on execution stack item."""
+    item = self.stack_tree.selection()
+    if not item:
+        return
+
+    # Get line number from the stack entry
+    line_num = self._get_line_from_stack_item(item[0])
+    if line_num:
+        self._scroll_to_line_and_highlight(line_num)
+```
+
+**Status:** TODO - Not yet implemented
+
+---
+
 **Status:** Plan complete, implementation blocked by environment constraints
 
 **Next Steps:** Implement on machine with GUI environment, test thoroughly
