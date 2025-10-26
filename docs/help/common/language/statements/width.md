@@ -20,15 +20,36 @@ type: statement
 
 # WIDTH
 
+## Implementation Note
+
+⚠️ **Emulated as No-Op**: This statement is parsed for compatibility but performs no operation.
+
+**Behavior**: Statement executes successfully without errors, but does not affect output width.
+
+**Why**: Terminal and UI width is controlled by the operating system or UI framework, not the BASIC program. The WIDTH statement cannot actually change these settings.
+
+**Note**: Programs using WIDTH will run without errors, but width settings are silently ignored.
+
+**Limitations**: The "WIDTH LPRINT" syntax is not supported (parse error). Only the simple "WIDTH <number>" form is accepted.
+
+**Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
+
+---
+
 ## Syntax
 
 ```basic
-WIDTH [LPRINT] <integer expression>
+WIDTH <integer expression>
+```
+
+Original MBASIC 5.21 also supported:
+```basic
+WIDTH LPRINT <integer expression>  ' NOT SUPPORTED in this implementation
 ```
 
 ## Purpose
 
-To set the printed line width in number        of characters for the terminal or line printer.
+To set the printed line width in number of characters for the terminal or line printer.
 
 ## Remarks
 

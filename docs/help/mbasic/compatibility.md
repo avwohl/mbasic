@@ -195,14 +195,13 @@ This implementation:
 - No cursor positioning in program output (not in original MBASIC 5.21)
 - No screen control commands available in BASIC programs
 
-**Width and margins:**
+**Width statement:**
 
 ```basic
-10 WIDTH 80              ' Supported
-20 WIDTH LPRINT 132      ' Supported for LPRINT
+10 WIDTH 80              ' Accepted (no-op)
 ```
 
-Terminal width is controlled by the UI or OS. The WIDTH statement sets an internal limit but cannot actually resize the terminal window.
+Note: WIDTH is parsed for compatibility but performs no operation. Terminal width is controlled by the UI or OS. The "WIDTH LPRINT" syntax is not supported.
 
 ### 4. Memory Model
 
@@ -249,18 +248,6 @@ Minor differences may occur in the least significant digits due to:
 
 4. **Hardware I/O**
    - INP, OUT, WAIT - Hardware-specific
-
-### Emulated Features
-
-**INKEY$** - Non-blocking keyboard input
-
-Works but implementation details differ:
-- MBASIC 5.21: Direct BIOS calls
-- This implementation: OS-dependent non-blocking I/O
-
-**WIDTH** - Terminal width
-
-Sets internal width but can't actually change terminal width (OS-controlled).
 
 ## Testing Against Real MBASIC
 
