@@ -563,7 +563,10 @@ class TkBackend(UIBackend):
                 value = f"Array({dims})"
             else:
                 value = var['value']
-                if var['type_suffix'] == '$':
+                # Format numbers naturally - show integers without decimals
+                if var['type_suffix'] != '$' and isinstance(value, (int, float)) and value == int(value):
+                    value = str(int(value))
+                elif var['type_suffix'] == '$':
                     value = f'"{value}"'
 
             self.variables_tree.insert('', 'end', text=name,
