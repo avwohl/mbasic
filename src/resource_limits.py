@@ -39,7 +39,7 @@ class ResourceLimits:
                  # Memory limits
                  max_total_memory: int = 10*1024*1024,  # 10MB default
                  max_array_size: int = 1*1024*1024,      # 1MB per array
-                 max_string_length: int = 32767,          # 32KB (MBASIC limit)
+                 max_string_length: int = 255,            # 255 bytes (MBASIC 5.21 limit)
 
                  # File system limits
                  max_open_files: int = 10,
@@ -359,7 +359,7 @@ def create_web_limits() -> ResourceLimits:
         max_while_depth=25,
         max_total_memory=5*1024*1024,      # 5MB
         max_array_size=512*1024,            # 512KB per array
-        max_string_length=32767,            # 32KB (MBASIC standard)
+        max_string_length=255,              # 255 bytes (MBASIC 5.21 limit)
         max_open_files=5,
         max_file_size=256*1024,             # 256KB per file
         max_total_files=10,
@@ -380,7 +380,7 @@ def create_local_limits() -> ResourceLimits:
         max_while_depth=100,
         max_total_memory=100*1024*1024,     # 100MB
         max_array_size=10*1024*1024,        # 10MB per array
-        max_string_length=32767,            # 32KB (MBASIC standard)
+        max_string_length=255,              # 255 bytes (MBASIC 5.21 limit)
         max_open_files=20,
         max_file_size=10*1024*1024,         # 10MB per file
         max_total_files=100,

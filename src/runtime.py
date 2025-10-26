@@ -286,6 +286,10 @@ class Runtime:
         # Resolve full variable name
         full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
 
+        # Enforce 255 byte string limit (MBASIC 5.21 compatibility)
+        if resolved_suffix == '$' and isinstance(value, str) and len(value) > 255:
+            raise RuntimeError("String too long")
+
         # Check string length limit if limits provided and it's a string
         if limits and resolved_suffix == '$' and isinstance(value, str):
             limits.check_string_length(value)

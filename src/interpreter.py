@@ -2657,7 +2657,11 @@ class Interpreter:
 
         # Arithmetic
         if op == TokenType.PLUS:
-            return left + right
+            result = left + right
+            # Enforce 255 byte string limit (MBASIC 5.21 compatibility)
+            if isinstance(result, str) and len(result) > 255:
+                raise RuntimeError("String too long")
+            return result
         elif op == TokenType.MINUS:
             return left - right
         elif op == TokenType.MULTIPLY:
