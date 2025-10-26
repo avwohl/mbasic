@@ -2,76 +2,6 @@
 
 Intrinsic functions provided by BASIC-80. These functions may be called from any program without further definition.
 
-## Alphabetical Listing
-
-### A
-- [ABS](abs.md) - Absolute value
-- [ASC](asc.md) - ASCII code of first character
-- [ATN](atn.md) - Arctangent (in radians)
-
-### C
-- [CDBL](cobl.md) - Convert to double precision
-- [CHR$](crr_dollar.md) - Character from ASCII code
-- [CINT](cint.md) - Convert to integer
-- [COS](cos.md) - Cosine (in radians)
-- [CVD, CVI, CVS](cvi-cvs-cvd.md) - Convert string to numeric value
-
-### E
-- [EOF](eof.md) - End of file test
-- [EXP](exp.md) - Exponential function (e^x)
-
-### F
-- [FIX](fix.md) - Truncate to integer (towards zero)
-- [FRE](fre.md) - Free memory available
-
-### H
-- [HEX$](hex_dollar.md) - Convert number to hexadecimal string
-
-### I
-- [INKEY$](inkey_dollar.md) - Read keyboard without waiting
-- [INP](inp.md) - Read from I/O port
-- [INPUT$](input_dollar.md) - Read characters from file or keyboard
-- [INSTR](instr.md) - Find substring position
-- [INT](int.md) - Integer part (rounds down)
-
-### L
-- [LEFT$](left_dollar.md) - Left substring
-- [LEN](len.md) - String length
-- [LOC](loc.md) - Current file position
-- [LOG](log.md) - Natural logarithm
-- [LPOS](lpos.md) - Current printer position
-
-### M
-- [MID$](mid_dollar.md) - Middle substring
-- [MKD$, MKI$, MKS$](mki_dollar-mks_dollar-mkd_dollar.md) - Convert numeric value to string
-
-### P
-- [POS](pos.md) - Current cursor column position
-
-### R
-- [RIGHT$](right_dollar.md) - Right substring
-- [RND](rnd.md) - Random number
-
-### S
-- [SGN](sgn.md) - Sign of number (-1, 0, or 1)
-- [SIN](sin.md) - Sine (in radians)
-- [SPACE$](spaces.md) - String of spaces
-- [SPC](spc.md) - Skip spaces in output
-- [SQR](sqr.md) - Square root
-- [STR$](str_dollar.md) - Convert number to string
-- [STRING$](string_dollar.md) - Repeated character string
-
-### T
-- [TAB](tab.md) - Tab to column position
-- [TAN](tan.md) - Tangent (in radians)
-
-### U
-- [USR](usr.md) - Call machine language function
-
-### V
-- [VAL](val.md) - Convert string to number
-- [VARPTR](varptr.md) - Variable pointer (memory address)
-
 ## By Category
 
 ### Mathematical Functions
@@ -122,6 +52,10 @@ Intrinsic functions provided by BASIC-80. These functions may be called from any
 - [INP](inp.md) - Port input
 - [USR](usr.md) - Machine language call
 - [VARPTR](varptr.md) - Variable address
+
+## Alphabetical Quick Reference
+
+[ABS](abs.md) | [ASC](asc.md) | [ATN](atn.md) | [CDBL](cobl.md) | [CHR$](crr_dollar.md) | [CINT](cint.md) | [COS](cos.md) | [CVD/CVI/CVS](cvi-cvs-cvd.md) | [EOF](eof.md) | [EXP](exp.md) | [FIX](fix.md) | [FRE](fre.md) | [HEX$](hex_dollar.md) | [INKEY$](inkey_dollar.md) | [INP](inp.md) | [INPUT$](input_dollar.md) | [INSTR](instr.md) | [INT](int.md) | [LEFT$](left_dollar.md) | [LEN](len.md) | [LOC](loc.md) | [LOG](log.md) | [LPOS](lpos.md) | [MID$](mid_dollar.md) | [MKD$/MKI$/MKS$](mki_dollar-mks_dollar-mkd_dollar.md) | [POS](pos.md) | [RIGHT$](right_dollar.md) | [RND](rnd.md) | [SGN](sgn.md) | [SIN](sin.md) | [SPACE$](spaces.md) | [SPC](spc.md) | [SQR](sqr.md) | [STR$](str_dollar.md) | [STRING$](string_dollar.md) | [TAB](tab.md) | [TAN](tan.md) | [USR](usr.md) | [VAL](val.md) | [VARPTR](varptr.md)
 
 ## See Also
 
