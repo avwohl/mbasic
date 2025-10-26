@@ -2198,10 +2198,11 @@ Run                           Help
                     if self.debug_enabled:
                         self.output(f"Debug: {message}")
 
-            # Create runtime and interpreter
+            # Create runtime and interpreter with local limits
+            from resource_limits import create_local_limits
             io_handler = CapturingIOHandler()
             runtime = Runtime(self.program.line_asts, self.program.lines)
-            self.interpreter = Interpreter(runtime, io_handler)
+            self.interpreter = Interpreter(runtime, io_handler, limits=create_local_limits())
             self.runtime = runtime
             self.io_handler = io_handler  # Keep reference to get output later
 

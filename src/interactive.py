@@ -330,8 +330,9 @@ class InteractiveMode:
             # Execute using line ASTs directly (new style)
             # Runtime will reference self.line_asts which is mutable
             # Pass line text map for better error messages
+            from resource_limits import create_unlimited_limits
             runtime = Runtime(self.line_asts, self.lines)
-            interpreter = Interpreter(runtime, self.io)
+            interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits())
             # Pass reference to interactive mode so statements like LIST can access the line editor
             interpreter.interactive_mode = self
 
@@ -649,8 +650,9 @@ class InteractiveMode:
                         del self.line_asts[ln]
 
             # Run the program
+            from resource_limits import create_unlimited_limits
             runtime = Runtime(self.line_asts)
-            interpreter = Interpreter(runtime, self.io)
+            interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits())
             interpreter.interactive_mode = self
 
             # Restore variables if saved
@@ -1421,9 +1423,10 @@ class InteractiveMode:
             else:
                 # Initialize immediate mode runtime if needed
                 if self.runtime is None:
+                    from resource_limits import create_unlimited_limits
                     self.runtime = Runtime(ast)
                     self.runtime.setup()
-                    self.interpreter = Interpreter(self.runtime, self.io)
+                    self.interpreter = Interpreter(self.runtime, self.io, limits=create_unlimited_limits())
                     # Pass reference to interactive mode for commands like LOAD/SAVE
                     self.interpreter.interactive_mode = self
                 runtime = self.runtime

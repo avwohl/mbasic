@@ -426,8 +426,12 @@ class MBasicWebIDE:
             self.io_handler = WebIOHandler(self.output_log)
             self.runtime = Runtime(ast)
 
+            # Create resource limits for web environment (restrictive)
+            from resource_limits import create_web_limits
+            limits = create_web_limits()
+
             # Create interpreter with program and sandboxed filesystem
-            self.interpreter = Interpreter(self.runtime, self.io_handler, filesystem_provider=filesystem)
+            self.interpreter = Interpreter(self.runtime, self.io_handler, filesystem_provider=filesystem, limits=limits)
 
             # Set breakpoints
             self.interpreter.breakpoints = self.breakpoints.copy()

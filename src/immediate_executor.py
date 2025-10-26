@@ -155,9 +155,10 @@ class ImmediateExecutor:
                 using_program_runtime = True
             else:
                 # Create temporary runtime/interpreter for this execution
+                from resource_limits import create_unlimited_limits
                 runtime = Runtime(ast)
                 runtime.setup()
-                interpreter = Interpreter(runtime, self.io)
+                interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits())
                 using_program_runtime = False
 
             # Capture output

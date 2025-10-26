@@ -95,9 +95,10 @@ class VisualBackend(UIBackend):
             # Get program AST
             program_ast = self.program.get_program_ast()
 
-            # Create runtime and interpreter
+            # Create runtime and interpreter with local limits
+            from resource_limits import create_local_limits
             self.runtime = Runtime(self.program.line_asts, self.program.lines)
-            self.interpreter = Interpreter(self.runtime, self.io)
+            self.interpreter = Interpreter(self.runtime, self.io, limits=create_local_limits())
 
             # Run the program
             self.interpreter.run()
