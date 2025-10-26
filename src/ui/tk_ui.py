@@ -277,8 +277,7 @@ class TkBackend(UIBackend):
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
 
         # Execution group
-        run_key = self.keybindings.get_tk_accelerator('menu', 'run_program') or 'F5'
-        ttk.Button(toolbar, text=f"Run", command=self._menu_run).pack(side=tk.LEFT, padx=2, pady=2)
+        ttk.Button(toolbar, text="Run", command=self._menu_run).pack(side=tk.LEFT, padx=2, pady=2)
         ttk.Button(toolbar, text="Stop", command=self._menu_stop).pack(side=tk.LEFT, padx=2, pady=2)
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
 
