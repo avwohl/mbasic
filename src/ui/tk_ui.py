@@ -390,14 +390,19 @@ class TkBackend(UIBackend):
             if state.status == 'paused' or state.status == 'at_breakpoint':
                 self._add_output(f"→ Paused at line {state.current_line}\n")
                 self._set_status(f"Paused at line {state.current_line}")
+                # Highlight current statement
+                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
+                    self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
             elif state.status == 'done':
                 self._add_output("\n--- Program finished ---\n")
                 self._set_status("Ready")
+                self._clear_statement_highlight()
             elif state.status == 'error':
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
                 line_num = state.error_info.error_line if state.error_info else "?"
                 self._add_output(f"\n--- Error at line {line_num}: {error_msg} ---\n")
                 self._set_status("Error")
+                self._clear_statement_highlight()
 
             # Update immediate mode status
             self._update_immediate_status()
@@ -424,14 +429,19 @@ class TkBackend(UIBackend):
                 stmt_info = f" statement {state.current_statement_index + 1}" if state.current_statement_index > 0 else ""
                 self._add_output(f"→ Paused at line {state.current_line}{stmt_info}\n")
                 self._set_status(f"Paused at line {state.current_line}{stmt_info}")
+                # Highlight current statement
+                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
+                    self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
             elif state.status == 'done':
                 self._add_output("\n--- Program finished ---\n")
                 self._set_status("Ready")
+                self._clear_statement_highlight()
             elif state.status == 'error':
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
                 line_num = state.error_info.error_line if state.error_info else "?"
                 self._add_output(f"\n--- Error at line {line_num}: {error_msg} ---\n")
                 self._set_status("Error")
+                self._clear_statement_highlight()
 
             # Update immediate mode status
             self._update_immediate_status()
@@ -1390,6 +1400,58 @@ class TkBackend(UIBackend):
         """Set status bar text."""
         self.status_label.config(text=text)
 
+    def _highlight_current_statement(self, line_number, char_start, char_end):
+        """Highlight the current statement being executed in the editor.
+
+        Args:
+            line_number: BASIC line number (e.g., 10, 20, 30)
+            char_start: Character position from start of line
+            char_end: Character position end
+        """
+        if not self.editor_text or not line_number:
+            return
+
+        # Configure highlighting tag if not already configured
+        if 'current_statement' not in self.editor_text.text.tag_names():
+            self.editor_text.text.tag_config(
+                'current_statement',
+                background='#ffeb3b',  # Yellow highlight
+                foreground='black'
+            )
+
+        # Clear previous highlighting
+        self._clear_statement_highlight()
+
+        # Find the editor line containing this BASIC line number
+        editor_content = self.editor_text.text.get('1.0', 'end')
+        lines = editor_content.split('\n')
+
+        for editor_line_idx, line_text in enumerate(lines, 1):
+            # Check if this line starts with the BASIC line number
+            if line_text.strip().startswith(str(line_number) + ' '):
+                # Found the line - calculate position
+                # The line format is: "  10 PRINT..." or "10 PRINT..."
+                # char_start and char_end are relative to the original source
+
+                # Apply highlighting
+                start_idx = f"{editor_line_idx}.{char_start}"
+                end_idx = f"{editor_line_idx}.{char_end}"
+
+                try:
+                    self.editor_text.text.tag_add('current_statement', start_idx, end_idx)
+                    # Scroll to make the statement visible
+                    self.editor_text.text.see(start_idx)
+                except tk.TclError:
+                    # Invalid index - ignore
+                    pass
+
+                break
+
+    def _clear_statement_highlight(self):
+        """Remove statement highlighting from the editor."""
+        if self.editor_text and 'current_statement' in self.editor_text.text.tag_names():
+            self.editor_text.text.tag_remove('current_statement', '1.0', 'end')
+
     def _execute_tick(self):
         """Execute one tick of the interpreter and schedule next tick if needed."""
         if not self.running or not self.interpreter:
@@ -1407,6 +1469,7 @@ class TkBackend(UIBackend):
                 self._add_output("\n--- Program finished ---\n")
                 self._set_status("Ready")
                 self._update_immediate_status()
+                self._clear_statement_highlight()
 
             elif state.status == 'error':
                 self.running = False
@@ -1415,6 +1478,7 @@ class TkBackend(UIBackend):
                 self._add_output(f"\n--- Runtime error at line {line_num}: {error_msg} ---\n")
                 self._set_status("Error")
                 self._update_immediate_status()
+                self._clear_statement_highlight()
 
             elif state.status == 'at_breakpoint':
                 self.running = False
@@ -1422,6 +1486,9 @@ class TkBackend(UIBackend):
                 self._add_output(f"\n● Breakpoint hit at line {state.current_line}\n")
                 self._set_status(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
                 self._update_immediate_status()
+                # Highlight current statement when paused at breakpoint
+                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
+                    self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
                 if self.stack_visible:
                     self._update_stack()
                 if self.variables_visible:
@@ -1433,12 +1500,18 @@ class TkBackend(UIBackend):
                 self._add_output(f"\n→ Paused at line {state.current_line}\n")
                 self._set_status(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
                 self._update_immediate_status()
+                # Highlight current statement when paused
+                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
+                    self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
                 if self.stack_visible:
                     self._update_stack()
                 if self.variables_visible:
                     self._update_variables_window()
 
             elif state.status == 'running':
+                # Highlight current statement while running (brief flash effect)
+                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
+                    self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
                 # Schedule next tick
                 self.tick_timer_id = self.root.after(10, self._execute_tick)
 
