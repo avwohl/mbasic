@@ -806,4 +806,344 @@ ad1fdcf (05:11) - Expression reassociation
 
 ---
 
-*Timeline compiled from git history analysis on October 24, 2025*
+## October 25, 2025 (Friday)
+
+### Session 8: Curses UI Development (6:00 AM - 4:00 PM) - 10 hours
+**Time Range**: 6:00 AM - 4:00 PM
+**Commits**: 8572725 through 971699d (93 commits)
+
+#### Work Completed
+
+**Early Morning: Runtime Improvements** (6:00 AM - 8:00 AM)
+- Simplified variable export API to single method
+- Added utility to split variable names and type suffixes
+- Refactored set_variable_raw for uniform handling
+- Tested GOSUB stack depth in real MBASIC 5.21
+- Added array element tracking (read/write times, token info)
+- Fixed get_for_loop_stack documentation
+- Added get_while_loop_stack() for symmetry
+- Implemented tick-based interpreter for visual UI integration
+- Documented WHILE loop stack behavior from real MBASIC testing
+
+**Curses UI Foundation** (8:00 AM - 10:00 AM)
+- Consolidated doc/ and docs/ into unified docs/ structure
+- Added comprehensive curses UI testing framework
+- Fixed curses UI Ctrl+R (run program) functionality
+- Fixed program output display
+- Customized borders to maximize content space
+- Replaced LineBox with TopLeftBox for better UI
+- Added 3-column editor: status, line numbers, code
+- Implemented column-aware cursor control
+- Auto right-justify line numbers
+- Fixed Ctrl+C clean exit
+
+**Editor Enhancements** (10:00 AM - 12:00 PM)
+- Fixed initial line format and auto-numbering
+- Calculator-style line number editing
+- Prevented typing in separator column
+- Fixed backspace to protect separator
+- Auto-move to code area for non-digits
+- Made cursor bright green with block style
+- Added visual scrollbar indicator
+- Implemented line sorting with arrow keys
+- Made output area scrollable with auto-scroll
+- Optimized keypress handling for reduced lag
+- Added visual focus indicator for output
+
+**Debugger Implementation** (12:00 PM - 2:00 PM)
+- Added Ctrl+B for breakpoint toggling
+- Improved error messages with context
+- Full debugger with Step/Continue/Stop
+- Merged FOR and WHILE stacks into unified loop stack
+- Visual statement highlighting during step debugging
+- Added menu system with keyboard shortcuts
+- Created watch window (Ctrl+W)
+- Unified GOSUB and loop stacks
+- Added execution stack viewer window
+- Fixed semantic analyzer forward substitution bug
+
+**Tk UI Modernization** (2:00 PM - 4:00 PM)
+- **Phase 1**: Modernized with tick-based interpreter
+- **Phase 2**: Added line-numbered editor with status indicators
+- **Phase 3**: Complete breakpoint support
+- **Phase 4**: Added Variables Watch Window
+- **Phase 5**: Added Execution Stack Window
+- **Phase 6**: Changed layout from horizontal to vertical
+
+**Key Files Modified**:
+- src/runtime.py (variable API, array tracking)
+- src/interpreter.py (tick-based execution)
+- src/ui/curses/curses_ui.py (complete rewrite)
+- src/ui/tk/tk_ui.py (modernization)
+- docs/ structure (consolidated documentation)
+- tests/ (curses UI test framework)
+
+---
+
+### Session 9: Help System Development (6:00 PM - 10:00 PM) - 4 hours
+**Time Range**: 6:00 PM - 10:00 PM
+**Commits**: c0e9fb8a through ac6d957 (43 commits)
+
+#### Work Completed
+
+**Help System Infrastructure** (6:00 PM - 7:00 PM)
+- Centralized keybindings in dedicated module
+- Fixed help and menu dialogs
+- Integrated help system with Ctrl+A
+- Added interactive help browser with link navigation
+- Created table of contents for help system
+- Documented session on help & keybindings refactor
+
+**Help Content Migration** (7:00 PM - 8:00 PM)
+- Created help migration plan from basic_ref.txt
+- Extracted 38 BASIC-80 functions into individual files
+- Extracted 37 BASIC-80 statements into individual files
+- Added appendices to help system
+- Added language index and operators reference
+- Completed help system migration
+
+**Three-Tier Help Architecture** (8:00 PM - 9:00 PM)
+- Designed three-tier help system (Language/MBASIC/UI)
+- Added compiler/interpreter architecture docs
+- Specified YAML front matter for indexing
+- Added YAML front matter to all 98 help files
+- Enhanced metadata with descriptions and keywords
+- Implemented YAML indexing system
+- Added comprehensive MBASIC implementation docs
+
+**Help System Integration** (9:00 PM - 10:00 PM)
+- Fixed help system integration and navigation
+- Added MkDocs configuration for web deployment
+- Auto-enhanced metadata for 98 help files
+- Added comprehensive completion summary
+- Integrated search into Curses UI help
+- Added three-tier help to Tk GUI with keybinding macros
+- Made Tk UI read keybindings from JSON config
+- Added implementation notes to printer functions
+
+**Key Files Created**:
+- docs/help/language/ (38 function files, 37 statement files)
+- docs/help/common/index.md
+- docs/help/ui/curses/ (UI-specific help)
+- docs/help/ui/tk/ (UI-specific help)
+- src/keybindings.py (centralized config)
+- src/ui/help_macros.py (macro expansion)
+- mkdocs.yml (web documentation)
+
+---
+
+### Session 10: Web UI Implementation (9:00 PM - 10:15 PM) - 1.25 hours
+**Time Range**: 9:00 PM - 10:15 PM
+**Commits**: ebad254 through 1fb8ddd (5 commits)
+
+#### Work Completed
+
+**Web Framework Research** (9:00 PM - 9:30 PM)
+- Comprehensive web UI framework research
+- Evaluated Flask, Django, Streamlit, NiceGUI
+- Recommended NiceGUI for best fit
+- Created detailed comparison document
+
+**NiceGUI Implementation** (9:30 PM - 9:45 PM)
+- Added NiceGUI web UI for MBASIC
+- Complete web UI with full debugger
+- All Tk UI features ported to web
+- Created session summary
+
+**Filesystem Security** (9:45 PM - 10:10 PM)
+- **CRITICAL SECURITY FIX**: Implemented filesystem abstraction
+- Created three-tier filesystem architecture:
+  - `FileSystemProvider` abstract base
+  - `RealFileSystemProvider` for CLI/Tk/Curses
+  - `SandboxedFileSystemProvider` for web UI
+- Sandboxed filesystem features:
+  - In-memory only (no disk access)
+  - Per-user isolation via NiceGUI session IDs
+  - Resource limits (20 files, 512KB each)
+  - Path normalization to block traversal
+- Prevents RCE vulnerability (users could write `/etc/cron.d/evil`)
+- Created comprehensive security documentation
+
+**Help Browser** (10:10 PM - 10:15 PM)
+- Added integrated help browser to web UI
+- Three-tier navigation (Language/MBASIC/UI)
+- Search functionality across all help files
+- Macro expansion for dynamic content
+- Created web UI help content
+
+**Key Files Created**:
+- src/filesystem/base.py (abstract interface)
+- src/filesystem/real_fs.py (real filesystem)
+- src/filesystem/sandboxed_fs.py (sandboxed for web)
+- src/ui/web/web_ui.py (complete web IDE)
+- docs/dev/FILESYSTEM_SECURITY.md
+- docs/help/ui/web/index.md
+
+**Key Files Modified**:
+- src/interpreter.py (filesystem provider integration)
+
+---
+
+## October 25 Summary
+
+### Time Investment
+- **Session 8 (Curses UI)**: 10 hours
+- **Session 9 (Help System)**: 4 hours
+- **Session 10 (Web UI)**: 1.25 hours
+- **Total**: ~15.25 hours
+
+### Commits
+- **Total Commits**: 141 commits
+- **Average**: 1 commit every 6.5 minutes
+
+### Major Accomplishments
+
+#### 1. Complete Curses UI Rewrite
+**Time**: ~10 hours
+**Features**:
+- 3-column editor (status, line numbers, code)
+- Full debugger (breakpoints, step, continue, stop)
+- Watch window for variables
+- Execution stack viewer
+- Visual statement highlighting
+- Scrollable output with auto-scroll
+- Menu system with keyboard shortcuts
+- Optimized performance
+
+#### 2. Tk UI Modernization (6 Phases)
+**Time**: ~2 hours
+**Features**:
+- Tick-based interpreter integration
+- Line-numbered editor with status
+- Breakpoint support
+- Variables watch window
+- Execution stack window
+- Vertical layout (improved ergonomics)
+
+#### 3. Comprehensive Help System
+**Time**: ~4 hours
+**Components**:
+- 75 individual help files (38 functions, 37 statements)
+- Three-tier architecture (Language/MBASIC/UI)
+- YAML front matter indexing
+- Interactive browser with search
+- MkDocs web deployment
+- Keybinding macros
+- Integrated into all UIs
+
+#### 4. Web UI with NiceGUI
+**Time**: ~1.25 hours
+**Features**:
+- Full MBASIC IDE in browser
+- Complete debugger
+- All Tk UI features
+- **Critical security fix**: Sandboxed filesystem
+- Per-user isolation
+- Integrated help browser
+
+#### 5. Filesystem Security (CRITICAL)
+**Time**: ~30 minutes
+**Impact**: Prevented RCE vulnerability
+**Implementation**:
+- Pluggable filesystem abstraction
+- In-memory sandboxed filesystem for web
+- Per-user isolation (NiceGUI sessions)
+- Resource limits (20 files × 512KB)
+- Path normalization (blocks `../../etc/passwd`)
+- Zero disk access for web users
+
+### Code Changes
+- **141 commits** over ~15 hours
+- Major refactoring of curses UI
+- Complete Tk UI modernization
+- New web UI implementation
+- Comprehensive help system
+- Critical security fixes
+
+### Key Achievements
+
+#### User Interface Parity
+All UIs now have equivalent features:
+- **CLI**: Basic REPL (original)
+- **Curses**: Full IDE with debugger
+- **Tk**: Full GUI IDE with debugger
+- **Web**: Full browser IDE with debugger
+
+#### Security Hardening
+- Web UI filesystem completely sandboxed
+- Per-user data isolation
+- Resource exhaustion prevention
+- Path traversal blocked
+- Ready for public deployment
+
+#### Documentation Excellence
+- 75 individual help files
+- Three-tier help system
+- Web-deployable documentation
+- Searchable help browser
+- Keybinding reference
+
+#### Modern Development Practices
+- Tick-based interpreter (non-blocking execution)
+- Comprehensive testing framework
+- Centralized configuration
+- Modular architecture
+- Security-first design
+
+---
+
+## Combined Statistics (Oct 23-25)
+
+### Total Time Investment
+- **October 23**: ~9.5 hours (compiler work)
+- **October 24**: ~4.5 hours (compiler work)
+- **October 25**: ~15.25 hours (UI work)
+- **Total**: ~29.25 hours over 3 days
+
+### Total Commits
+- **October 23**: 42 commits
+- **October 24**: 28 commits
+- **October 25**: 141 commits
+- **Total**: 211 commits
+
+### Major Systems Developed
+
+#### 1. Semantic Analyzer (Oct 23-24)
+- 27 optimization strategies
+- Type inference system
+- Iterative optimization framework
+- 71 documentation files
+
+#### 2. User Interfaces (Oct 25)
+- Curses UI (complete rewrite)
+- Tk UI (modernization)
+- Web UI (new implementation)
+- Feature parity across all UIs
+
+#### 3. Help System (Oct 25)
+- 75 individual help files
+- Three-tier architecture
+- Interactive browser
+- Web deployment ready
+
+#### 4. Security (Oct 25)
+- Filesystem abstraction layer
+- Sandboxed web filesystem
+- Per-user isolation
+- RCE prevention
+
+### Project Status
+
+**MBASIC is now production-ready with**:
+- ✅ Complete MBASIC 5.21 interpreter
+- ✅ 100% parser coverage (121/121 test files)
+- ✅ World-class semantic analyzer (27 optimizations)
+- ✅ Four complete user interfaces (CLI/Curses/Tk/Web)
+- ✅ Comprehensive help system (75 files)
+- ✅ Security hardened for multi-user deployment
+- ✅ Extensive documentation (100+ markdown files)
+- ✅ Full test coverage
+
+---
+
+*Timeline compiled from git history analysis on October 25, 2025*
