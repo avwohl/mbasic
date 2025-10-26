@@ -19,7 +19,7 @@
       "title": "FOR \u2022\u2022\u2022 NEXT",
       "type": "statement",
       "category": "control-flow",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Execute statements repeatedly with a loop counter"
     },
     {
       "path": "statements/list.md",
@@ -40,7 +40,7 @@
       "title": "GOTO",
       "type": "statement",
       "category": "control-flow",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Branch unconditionally to a specified line number"
     },
     {
       "path": "statements/def-fn.md",
@@ -131,21 +131,21 @@
       "title": "GOSUB \u2022.. RETURN",
       "type": "statement",
       "category": "control-flow",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Branch to and return from a subroutine"
     },
     {
       "path": "statements/if-then-else-if-goto.md",
       "title": "IF \u2022\u2022\u2022 THEN[ \u2022\u2022\u2022 ELSE] AND IF \u2022\u2022\u2022 GOTO",
       "type": "statement",
       "category": "control-flow",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Make decisions and control program flow based on conditional expressions"
     },
     {
       "path": "statements/while-wend.md",
       "title": "WHILE \u2022\u2022\u2022 WEND",
       "type": "statement",
       "category": "control-flow",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Execute statements in a loop while a condition is true"
     },
     {
       "path": "statements/erase.md",
@@ -201,7 +201,7 @@
       "title": "INPUT",
       "type": "statement",
       "category": "input-output",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Read user input from the terminal during program execution"
     },
     {
       "path": "statements/randomize.md",
@@ -306,7 +306,7 @@
       "title": "DIM",
       "type": "statement",
       "category": "arrays",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Declare array dimensions and allocate memory for array variables"
     },
     {
       "path": "statements/call.md",
@@ -495,7 +495,7 @@
       "title": "ABS",
       "type": "function",
       "category": "mathematical",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Return the absolute value of a number (removes negative sign)"
     },
     {
       "path": "functions/cos.md",
@@ -523,7 +523,7 @@
       "title": "MID$",
       "type": "function",
       "category": "string",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Extract a substring from the middle of a string"
     },
     {
       "path": "functions/sqr.md",
@@ -572,7 +572,7 @@
       "title": "RIGHT$",
       "type": "function",
       "category": "string",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Return the rightmost N characters from a string"
     },
     {
       "path": "functions/lpos.md",
@@ -600,7 +600,7 @@
       "title": "INT",
       "type": "function",
       "category": "mathematical",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Return the largest integer less than or equal to a number (floor function)"
     },
     {
       "path": "functions/varptr.md",
@@ -635,7 +635,7 @@
       "title": "STR$",
       "type": "function",
       "category": "string",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Convert a number to its string representation"
     },
     {
       "path": "functions/mki_dollar-mks_dollar-mkd_dollar.md",
@@ -656,7 +656,7 @@
       "title": "LEFT$",
       "type": "function",
       "category": "string",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Return the leftmost N characters from a string"
     },
     {
       "path": "functions/fre.md",
@@ -761,10 +761,8 @@
     "needs_keywords": [
       "operators.md",
       "statements/renum.md",
-      "statements/for-next.md",
       "statements/list.md",
       "statements/merge.md",
-      "statements/goto.md",
       "statements/def-fn.md",
       "statements/llist.md",
       "statements/field.md",
@@ -777,9 +775,6 @@
       "statements/out.md",
       "statements/end.md",
       "statements/chain.md",
-      "statements/gosub-return.md",
-      "statements/if-then-else-if-goto.md",
-      "statements/while-wend.md",
       "statements/erase.md",
       "statements/get.md",
       "statements/line-input.md",
@@ -787,7 +782,6 @@
       "statements/on-gosub-on-goto.md",
       "statements/null.md",
       "statements/rem.md",
-      "statements/input.md",
       "statements/randomize.md",
       "statements/clear.md",
       "statements/delete.md",
@@ -802,7 +796,6 @@
       "statements/tron-troff.md",
       "statements/read.md",
       "statements/err-erl-variables.md",
-      "statements/dim.md",
       "statements/call.md",
       "statements/input_hash.md",
       "statements/defint-sng-dbl-str.md",
@@ -828,30 +821,24 @@
       "functions/pos.md",
       "functions/hex_dollar.md",
       "functions/sgn.md",
-      "functions/abs.md",
       "functions/cos.md",
       "functions/inp.md",
       "functions/val.md",
-      "functions/mid_dollar.md",
       "functions/sqr.md",
       "functions/loc.md",
       "functions/cvi-cvs-cvd.md",
       "functions/cint.md",
       "functions/fix.md",
       "functions/crr_dollar.md",
-      "functions/right_dollar.md",
       "functions/lpos.md",
       "functions/cobl.md",
       "functions/peek.md",
-      "functions/int.md",
       "functions/varptr.md",
       "functions/inkey_dollar.md",
       "functions/spc.md",
       "functions/rnd.md",
-      "functions/str_dollar.md",
       "functions/mki_dollar-mks_dollar-mkd_dollar.md",
       "functions/sin.md",
-      "functions/left_dollar.md",
       "functions/fre.md",
       "functions/spaces.md",
       "functions/instr.md",
@@ -866,6 +853,140 @@
       "functions/string_dollar.md",
       "functions/asc.md",
       "functions/usr.md"
+    ],
+    "for": [
+      "statements/for-next.md"
+    ],
+    "next": [
+      "statements/for-next.md"
+    ],
+    "loop": [
+      "statements/for-next.md",
+      "statements/while-wend.md"
+    ],
+    "iteration": [
+      "statements/for-next.md"
+    ],
+    "counter": [
+      "statements/for-next.md"
+    ],
+    "step": [
+      "statements/for-next.md"
+    ],
+    "nested": [
+      "statements/for-next.md",
+      "statements/gosub-return.md",
+      "statements/if-then-else-if-goto.md",
+      "statements/while-wend.md"
+    ],
+    "repeat": [
+      "statements/for-next.md",
+      "statements/while-wend.md"
+    ],
+    "goto": [
+      "statements/goto.md",
+      "statements/if-then-else-if-goto.md"
+    ],
+    "branch": [
+      "statements/goto.md",
+      "statements/gosub-return.md",
+      "statements/if-then-else-if-goto.md"
+    ],
+    "jump": [
+      "statements/goto.md"
+    ],
+    "transfer": [
+      "statements/goto.md"
+    ],
+    "unconditional": [
+      "statements/goto.md"
+    ],
+    "gosub": [
+      "statements/gosub-return.md"
+    ],
+    "return": [
+      "statements/gosub-return.md"
+    ],
+    "subroutine": [
+      "statements/gosub-return.md"
+    ],
+    "call": [
+      "statements/gosub-return.md"
+    ],
+    "stack": [
+      "statements/gosub-return.md"
+    ],
+    "if": [
+      "statements/if-then-else-if-goto.md"
+    ],
+    "then": [
+      "statements/if-then-else-if-goto.md"
+    ],
+    "else": [
+      "statements/if-then-else-if-goto.md"
+    ],
+    "condition": [
+      "statements/if-then-else-if-goto.md",
+      "statements/while-wend.md"
+    ],
+    "test": [
+      "statements/if-then-else-if-goto.md",
+      "statements/while-wend.md"
+    ],
+    "decision": [
+      "statements/if-then-else-if-goto.md"
+    ],
+    "while": [
+      "statements/while-wend.md"
+    ],
+    "wend": [
+      "statements/while-wend.md"
+    ],
+    "input": [
+      "statements/input.md"
+    ],
+    "read": [
+      "statements/input.md"
+    ],
+    "prompt": [
+      "statements/input.md"
+    ],
+    "keyboard": [
+      "statements/input.md"
+    ],
+    "user": [
+      "statements/input.md"
+    ],
+    "interactive": [
+      "statements/input.md"
+    ],
+    "question mark": [
+      "statements/input.md",
+      "statements/print.md"
+    ],
+    "readline": [
+      "statements/input.md"
+    ],
+    "dim": [
+      "statements/dim.md"
+    ],
+    "array": [
+      "statements/dim.md"
+    ],
+    "dimension": [
+      "statements/dim.md"
+    ],
+    "declare": [
+      "statements/dim.md"
+    ],
+    "allocate": [
+      "statements/dim.md"
+    ],
+    "subscript": [
+      "statements/dim.md"
+    ],
+    "multidimensional": [
+      "statements/dim.md"
     ],
     "print": [
       "statements/print.md"
@@ -888,11 +1009,108 @@
     "terminal": [
       "statements/print.md"
     ],
-    "question mark": [
-      "statements/print.md"
+    "abs": [
+      "functions/abs.md"
+    ],
+    "absolute": [
+      "functions/abs.md"
+    ],
+    "magnitude": [
+      "functions/abs.md"
+    ],
+    "positive": [
+      "functions/abs.md"
+    ],
+    "distance": [
+      "functions/abs.md"
+    ],
+    "mid": [
+      "functions/mid_dollar.md"
+    ],
+    "substring": [
+      "functions/mid_dollar.md",
+      "functions/right_dollar.md",
+      "functions/left_dollar.md"
+    ],
+    "extract": [
+      "functions/mid_dollar.md",
+      "functions/right_dollar.md",
+      "functions/left_dollar.md"
+    ],
+    "string": [
+      "functions/mid_dollar.md",
+      "functions/right_dollar.md",
+      "functions/str_dollar.md",
+      "functions/left_dollar.md"
+    ],
+    "middle": [
+      "functions/mid_dollar.md"
+    ],
+    "slice": [
+      "functions/mid_dollar.md"
+    ],
+    "right": [
+      "functions/right_dollar.md"
+    ],
+    "rightmost": [
+      "functions/right_dollar.md"
+    ],
+    "suffix": [
+      "functions/right_dollar.md"
+    ],
+    "last": [
+      "functions/right_dollar.md"
+    ],
+    "int": [
+      "functions/int.md"
+    ],
+    "integer": [
+      "functions/int.md"
+    ],
+    "floor": [
+      "functions/int.md"
+    ],
+    "truncate": [
+      "functions/int.md"
+    ],
+    "round": [
+      "functions/int.md"
+    ],
+    "convert": [
+      "functions/int.md",
+      "functions/str_dollar.md"
+    ],
+    "str": [
+      "functions/str_dollar.md"
+    ],
+    "number": [
+      "functions/str_dollar.md"
+    ],
+    "format": [
+      "functions/str_dollar.md"
+    ],
+    "text": [
+      "functions/str_dollar.md"
+    ],
+    "left": [
+      "functions/left_dollar.md"
+    ],
+    "leftmost": [
+      "functions/left_dollar.md"
+    ],
+    "prefix": [
+      "functions/left_dollar.md"
+    ],
+    "first": [
+      "functions/left_dollar.md"
     ]
   },
   "aliases": {
+    "GOSUB-RETURN": "statements/gosub-return.md",
+    "IF-THEN": "statements/if-then-else-if-goto.md",
+    "IF-GOTO": "statements/if-then-else-if-goto.md",
+    "IF-THEN-ELSE": "statements/if-then-else-if-goto.md",
+    "WHILE-WEND": "statements/while-wend.md",
     "?": "statements/print.md"
   },
   "categories": {

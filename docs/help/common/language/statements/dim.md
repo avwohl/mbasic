@@ -1,8 +1,16 @@
 ---
 category: arrays
-description: NEEDS_DESCRIPTION
+description: Declare array dimensions and allocate memory for array variables
 keywords:
-- NEEDS_KEYWORDS
+- dim
+- array
+- dimension
+- declare
+- allocate
+- subscript
+- multidimensional
+syntax: "DIM variable(size[,size...])[,variable(size...)...]"
+related: [option-base, erase, read-data]
 title: DIM
 type: statement
 ---

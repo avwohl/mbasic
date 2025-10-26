@@ -1,8 +1,17 @@
 ---
 category: input-output
-description: NEEDS_DESCRIPTION
+description: Read user input from the terminal during program execution
 keywords:
-- NEEDS_KEYWORDS
+- input
+- read
+- prompt
+- keyboard
+- user
+- interactive
+- question mark
+- readline
+syntax: 'INPUT[;] ["prompt string";]variable[,variable...]'
+related: [print, line-input, read-data]
 title: INPUT
 type: statement
 ---

@@ -26,38 +26,112 @@
       "title": "MBASIC - Keyboard Shortcuts",
       "type": "guide",
       "category": "",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Quick reference card for all keyboard shortcuts in the Curses text UI"
     },
     {
       "path": "help-navigation.md",
       "title": "Using the Help System",
       "type": "guide",
       "category": "",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "How to navigate and use the built-in help system in Curses UI"
     },
     {
       "path": "running.md",
       "title": "Running Programs in Curses UI",
       "type": "guide",
       "category": "",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "How to execute BASIC programs and view output in the Curses UI"
     },
     {
       "path": "getting-started.md",
       "title": "Getting Started with Curses UI",
       "type": "guide",
       "category": "",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Introduction and first steps for using the MBASIC Curses text interface"
     }
   ],
   "keywords": {
     "needs_keywords": [
       "editing.md",
       "files.md",
-      "keyboard-commands.md",
-      "quick-reference.md",
-      "help-navigation.md",
-      "running.md",
+      "keyboard-commands.md"
+    ],
+    "keyboard": [
+      "quick-reference.md"
+    ],
+    "shortcuts": [
+      "quick-reference.md"
+    ],
+    "commands": [
+      "quick-reference.md"
+    ],
+    "ctrl": [
+      "quick-reference.md"
+    ],
+    "hotkeys": [
+      "quick-reference.md"
+    ],
+    "quick reference": [
+      "quick-reference.md"
+    ],
+    "cheat sheet": [
+      "quick-reference.md"
+    ],
+    "help": [
+      "help-navigation.md"
+    ],
+    "navigation": [
+      "help-navigation.md"
+    ],
+    "browse": [
+      "help-navigation.md"
+    ],
+    "search": [
+      "help-navigation.md"
+    ],
+    "links": [
+      "help-navigation.md"
+    ],
+    "ctrl+p": [
+      "help-navigation.md"
+    ],
+    "run": [
+      "running.md"
+    ],
+    "execute": [
+      "running.md"
+    ],
+    "output": [
+      "running.md"
+    ],
+    "ctrl+r": [
+      "running.md"
+    ],
+    "debug": [
+      "running.md"
+    ],
+    "breakpoint": [
+      "running.md"
+    ],
+    "step": [
+      "running.md"
+    ],
+    "getting started": [
+      "getting-started.md"
+    ],
+    "introduction": [
+      "getting-started.md"
+    ],
+    "tutorial": [
+      "getting-started.md"
+    ],
+    "first program": [
+      "getting-started.md"
+    ],
+    "hello world": [
+      "getting-started.md"
+    ],
+    "curses": [
       "getting-started.md"
     ]
   },

@@ -1,7 +1,13 @@
 ---
-description: NEEDS_DESCRIPTION
+description: Introduction and first steps for using the MBASIC Curses text interface
 keywords:
-- NEEDS_KEYWORDS
+- getting started
+- introduction
+- tutorial
+- first program
+- hello world
+- curses
+ui: curses
 title: Getting Started with Curses UI
 type: guide
 ---

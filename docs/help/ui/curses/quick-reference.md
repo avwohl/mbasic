@@ -1,7 +1,14 @@
 ---
-description: NEEDS_DESCRIPTION
+description: Quick reference card for all keyboard shortcuts in the Curses text UI
 keywords:
-- NEEDS_KEYWORDS
+- keyboard
+- shortcuts
+- commands
+- ctrl
+- hotkeys
+- quick reference
+- cheat sheet
+ui: curses
 title: MBASIC - Keyboard Shortcuts
 type: guide
 ---

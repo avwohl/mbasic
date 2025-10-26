@@ -1,7 +1,14 @@
 ---
-description: NEEDS_DESCRIPTION
+description: How to execute BASIC programs and view output in the Curses UI
 keywords:
-- NEEDS_KEYWORDS
+- run
+- execute
+- output
+- ctrl+r
+- debug
+- breakpoint
+- step
+ui: curses
 title: Running Programs in Curses UI
 type: guide
 ---

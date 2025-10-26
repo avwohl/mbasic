@@ -1,8 +1,14 @@
 ---
 category: control-flow
-description: NEEDS_DESCRIPTION
+description: Branch unconditionally to a specified line number
 keywords:
-- NEEDS_KEYWORDS
+- goto
+- branch
+- jump
+- transfer
+- unconditional
+syntax: "GOTO line_number"
+related: [gosub-return, if-then-else-if-goto, on-goto, on-gosub]
 title: GOTO
 type: statement
 ---

@@ -1,8 +1,16 @@
 ---
 category: string
-description: NEEDS_DESCRIPTION
+description: Return the rightmost N characters from a string
 keywords:
-- NEEDS_KEYWORDS
+- right
+- substring
+- extract
+- string
+- rightmost
+- suffix
+- last
+syntax: "RIGHT$(string, length)"
+related: [left_dollar, mid_dollar, len]
 title: RIGHT$
 type: function
 ---

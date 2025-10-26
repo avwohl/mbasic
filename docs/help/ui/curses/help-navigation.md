@@ -1,7 +1,13 @@
 ---
-description: NEEDS_DESCRIPTION
+description: How to navigate and use the built-in help system in Curses UI
 keywords:
-- NEEDS_KEYWORDS
+- help
+- navigation
+- browse
+- search
+- links
+- ctrl+p
+ui: curses
 title: Using the Help System
 type: guide
 ---

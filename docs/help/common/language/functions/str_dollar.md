@@ -1,8 +1,15 @@
 ---
 category: string
-description: NEEDS_DESCRIPTION
+description: Convert a number to its string representation
 keywords:
-- NEEDS_KEYWORDS
+- str
+- string
+- convert
+- number
+- format
+- text
+syntax: "STR$(number)"
+related: [val, print-using, left_dollar, right_dollar]
 title: STR$
 type: function
 ---

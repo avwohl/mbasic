@@ -1,8 +1,14 @@
 ---
 category: mathematical
-description: NEEDS_DESCRIPTION
+description: Return the absolute value of a number (removes negative sign)
 keywords:
-- NEEDS_KEYWORDS
+- abs
+- absolute
+- magnitude
+- positive
+- distance
+syntax: "ABS(number)"
+related: [sgn, int, fix]
 title: ABS
 type: function
 ---

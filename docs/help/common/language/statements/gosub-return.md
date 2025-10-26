@@ -1,8 +1,17 @@
 ---
 category: control-flow
-description: NEEDS_DESCRIPTION
+description: Branch to and return from a subroutine
 keywords:
-- NEEDS_KEYWORDS
+- gosub
+- return
+- subroutine
+- call
+- branch
+- nested
+- stack
+aliases: [gosub-return]
+syntax: "GOSUB line_number ... RETURN"
+related: [goto, on-gosub, for-next]
 title: GOSUB •.. RETURN
 type: statement
 ---

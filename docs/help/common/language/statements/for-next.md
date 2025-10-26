@@ -1,8 +1,17 @@
 ---
 category: control-flow
-description: NEEDS_DESCRIPTION
+description: Execute statements repeatedly with a loop counter
 keywords:
-- NEEDS_KEYWORDS
+- for
+- next
+- loop
+- iteration
+- counter
+- step
+- nested
+- repeat
+syntax: "FOR variable = start TO end [STEP increment]"
+related: [while-wend, goto, gosub-return]
 title: FOR ••• NEXT
 type: statement
 ---

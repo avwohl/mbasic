@@ -1,8 +1,16 @@
 ---
 category: string
-description: NEEDS_DESCRIPTION
+description: Return the leftmost N characters from a string
 keywords:
-- NEEDS_KEYWORDS
+- left
+- substring
+- extract
+- string
+- leftmost
+- prefix
+- first
+syntax: "LEFT$(string, length)"
+related: [right_dollar, mid_dollar, len]
 title: LEFT$
 type: function
 ---

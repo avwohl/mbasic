@@ -1,8 +1,17 @@
 ---
 category: control-flow
-description: NEEDS_DESCRIPTION
+description: Execute statements in a loop while a condition is true
 keywords:
-- NEEDS_KEYWORDS
+- while
+- wend
+- loop
+- condition
+- test
+- repeat
+- nested
+aliases: [while-wend]
+syntax: "WHILE expression ... WEND"
+related: [for-next, if-then-else-if-goto, goto]
 title: WHILE ••• WEND
 type: statement
 ---

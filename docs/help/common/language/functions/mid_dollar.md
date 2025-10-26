@@ -1,8 +1,15 @@
 ---
 category: string
-description: NEEDS_DESCRIPTION
+description: Extract a substring from the middle of a string
 keywords:
-- NEEDS_KEYWORDS
+- mid
+- substring
+- extract
+- string
+- middle
+- slice
+syntax: "MID$(string, start[, length])"
+related: [left_dollar, right_dollar, len, instr]
 title: MID$
 type: function
 ---

@@ -1,8 +1,15 @@
 ---
 category: mathematical
-description: NEEDS_DESCRIPTION
+description: Return the largest integer less than or equal to a number (floor function)
 keywords:
-- NEEDS_KEYWORDS
+- int
+- integer
+- floor
+- truncate
+- round
+- convert
+syntax: "INT(number)"
+related: [fix, cint, csng, cdbl]
 title: INT
 type: function
 ---

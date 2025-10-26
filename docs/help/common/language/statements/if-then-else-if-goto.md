@@ -1,8 +1,19 @@
 ---
 category: control-flow
-description: NEEDS_DESCRIPTION
+description: Make decisions and control program flow based on conditional expressions
 keywords:
-- NEEDS_KEYWORDS
+- if
+- then
+- else
+- goto
+- condition
+- test
+- decision
+- branch
+- nested
+aliases: [if-then, if-goto, if-then-else]
+syntax: "IF expression THEN statement|line_number [ELSE statement|line_number]"
+related: [while-wend, for-next, goto, on-goto]
 title: IF ••• THEN[ ••• ELSE] AND IF ••• GOTO
 type: statement
 ---
