@@ -94,10 +94,9 @@ class MarkdownRenderer:
             text = self._extract_links(text, line_num)
             return indent + num + '. ' + text
 
-        # Tables - just pass through simplified
+        # Tables - format properly
         if '|' in line and line.strip().startswith('|'):
-            # Simple table rendering - just clean up
-            return line.strip()
+            return self._format_table_row(line)
 
         # Regular paragraphs - extract links
         if line.strip():
@@ -129,3 +128,28 @@ class MarkdownRenderer:
         text = re.sub(r'`([^`]+)`', r'\1', text)        # Code
 
         return text
+
+    def _format_table_row(self, line: str) -> str:
+        """
+        Format a markdown table row for terminal display.
+        
+        Converts | col1 | col2 | col3 | format to properly spaced columns.
+        """
+        # Strip and split by |
+        parts = [p.strip() for p in line.strip().split('|')]
+        # Remove empty first/last elements from leading/trailing |
+        parts = [p for p in parts if p]
+        
+        # Skip separator rows (|---|---|)
+        if all(set(p) <= set('-: ') for p in parts):
+            return ''  # Skip separator lines entirely
+        
+        # Format columns with consistent spacing (15 chars each)
+        formatted_parts = []
+        for part in parts:
+            # Clean up any remaining markdown in cells
+            part = re.sub(r'\*\*([^*]+)\*\*', r'\1', part)  # Bold
+            part = re.sub(r'`([^`]+)`', r'\1', part)        # Code
+            formatted_parts.append(part.ljust(15))
+        
+        return '  '.join(formatted_parts)
