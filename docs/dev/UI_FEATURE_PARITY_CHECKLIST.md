@@ -24,6 +24,7 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 | **Multi-line editing** | ✅ | ✅ | ✅ | All support full program editing |
 | **Cut/Copy/Paste** | ✅ | ⚠️ | ✅ | Curses: Terminal-dependent |
 | **Undo/Redo** | ✅ | ❌ | ⚠️ | Tk: Native. Web: Browser-dependent |
+| **Smart Insert Line (Ctrl+I)** | ✅ | ❌ | ❌ | **WORKING 2025-10-26** - Tk only. Inserts line between current/next |
 
 ### Line Numbers
 
@@ -99,6 +100,9 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 | **Continue** | ✅ | ✅ | ✅ | Resume after breakpoint |
 | **Current line indicator** | ✅ | ✅ | ✅ | Show which line is executing |
 | **Statement highlighting** | ✅ | ✅ | ⚠️ | Tk: Visual. Curses: Status. Web: Status text |
+| **Step shows NEXT statement** | ✅ | ✅ | ✅ | **WORKING 2025-10-26** - Shows what WILL execute |
+| **Jump highlighting** | ✅ | ✅ | ✅ | **WORKING 2025-10-26** - GOSUB/RETURN/NEXT/GOTO visible |
+| **Mid-line RETURN** | ✅ | ✅ | ✅ | **WORKING 2025-10-26** - Highlights stmt after GOSUB |
 
 ### Variables & State
 
@@ -113,6 +117,7 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 | **Array subscript tracking** | ✅ | ✅ | ✅ | Show last accessed subscript |
 | **Last modified time** | ✅ | ✅ | ✅ | Timestamp for variable changes |
 | **Search/filter variables** | ⚠️ | ⚠️ | ❌ | Limited search. TODO: Enhance |
+| **Value before Type columns** | ✅ | ⚠️ | ⚠️ | **UPDATED 2025-10-26** - Tk shows Value first. Verify others |
 
 ### Execution Stack
 
@@ -153,6 +158,7 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 | **Help** | Ctrl+H | Ctrl+H | ❌ | Web: Menu only (Help menu available) |
 | **Variables** | Ctrl+V | Ctrl+V | ✅ Ctrl+V | **ADDED 2025-10-26** |
 | **Stack** | Ctrl+K | Ctrl+K | ✅ Ctrl+K | **ADDED 2025-10-26** |
+| **Smart Insert Line** | Ctrl+I | ❌ | ❌ | **ADDED 2025-10-26** - Tk only |
 
 ### Window Management
 
@@ -341,3 +347,7 @@ For each feature marked ✅, verify:
 - 2025-10-26: Verified statement highlighting complete across all UIs
 - 2025-10-26: **Web UI keyboard shortcuts implemented** - Added all major shortcuts (Ctrl+B, Ctrl+E, Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+V, Ctrl+K)
 - 2025-10-26: **Web UI upgraded from 85% to 95% feature complete**
+- 2025-10-26: **Debugger enhancements WORKING** - Step mode shows NEXT statement, jump highlighting, RETURN fixes
+- 2025-10-26: **Smart Insert Line (Ctrl+I) WORKING in Tk UI** - Inserts line between current and next
+- 2025-10-26: **Variables window column swap** - Value before Type for better usability
+- 2025-10-26: Created TK_UI_CHANGES_FOR_OTHER_UIS.md with verification checklist
