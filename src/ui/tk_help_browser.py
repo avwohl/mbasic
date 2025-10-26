@@ -274,25 +274,31 @@ class TkHelpBrowser(tk.Toplevel):
 
     def _follow_link(self, target: str):
         """Follow a link to another help topic."""
-        # Resolve relative path
-        current_dir = Path(self.current_topic).parent
-        if str(current_dir) == '.':
-            new_topic_path = Path(target)
+        # Check if target is already an absolute path (from search results)
+        # Absolute paths don't start with . or ..
+        if not target.startswith('.'):
+            # This is already a help-root-relative path (e.g., from search results)
+            new_topic = target.replace('\\', '/')
         else:
-            new_topic_path = current_dir / target
+            # Resolve relative path from current topic
+            current_dir = Path(self.current_topic).parent
+            if str(current_dir) == '.':
+                new_topic_path = Path(target)
+            else:
+                new_topic_path = current_dir / target
 
-        # Normalize path (resolve .. and .)
-        # Convert to absolute, resolve, then make relative to help_root
-        abs_path = (self.help_root / new_topic_path).resolve()
+            # Normalize path (resolve .. and .)
+            # Convert to absolute, resolve, then make relative to help_root
+            abs_path = (self.help_root / new_topic_path).resolve()
 
-        try:
-            new_topic = str(abs_path.relative_to(self.help_root.resolve()))
-        except ValueError:
-            # Path is outside help_root, use as-is
-            new_topic = str(new_topic_path)
+            try:
+                new_topic = str(abs_path.relative_to(self.help_root.resolve()))
+            except ValueError:
+                # Path is outside help_root, use as-is
+                new_topic = str(new_topic_path)
 
-        # Normalize path separators
-        new_topic = new_topic.replace('\\', '/')
+            # Normalize path separators
+            new_topic = new_topic.replace('\\', '/')
 
         # Save current topic to history
         self.history.append(self.current_topic)
@@ -559,22 +565,27 @@ class TkHelpBrowser(tk.Toplevel):
         # Get the URL from our stored mapping
         url = self.link_urls.get(link_tag)
         if url:
-            # Resolve the relative path based on current topic
-            current_dir = Path(self.current_topic).parent
-            if str(current_dir) == '.':
-                new_topic_path = Path(url)
+            # Check if URL is already an absolute path (from search results)
+            if not url.startswith('.'):
+                # Already a help-root-relative path
+                resolved_url = url.replace('\\', '/')
             else:
-                new_topic_path = current_dir / url
+                # Resolve the relative path based on current topic
+                current_dir = Path(self.current_topic).parent
+                if str(current_dir) == '.':
+                    new_topic_path = Path(url)
+                else:
+                    new_topic_path = current_dir / url
 
-            # Convert to absolute path and back to relative from help_root
-            abs_path = (self.help_root / new_topic_path).resolve()
-            try:
-                resolved_url = str(abs_path.relative_to(self.help_root.resolve()))
-            except ValueError:
-                # If it can't be made relative, use the original
-                resolved_url = str(new_topic_path)
+                # Convert to absolute path and back to relative from help_root
+                abs_path = (self.help_root / new_topic_path).resolve()
+                try:
+                    resolved_url = str(abs_path.relative_to(self.help_root.resolve()))
+                except ValueError:
+                    # If it can't be made relative, use the original
+                    resolved_url = str(new_topic_path)
 
-            resolved_url = resolved_url.replace('\\', '/')
+                resolved_url = resolved_url.replace('\\', '/')
 
             # Create new browser window with the resolved topic
             new_browser = TkHelpBrowser(self.master, str(self.help_root), resolved_url)
