@@ -102,11 +102,13 @@ docs/help/language/
 docs/help/mbasic/
 ├── index.md                    # MBASIC interpreter overview
 ├── getting-started.md          # First steps with MBASIC
+├── architecture.md             # Interpreter vs compiler architecture
 ├── features.md                 # What's implemented
 ├── differences.md              # Differences from MBASIC 5.21
 ├── compatibility.md            # Compatibility implementations (PEEK, etc.)
 ├── not-implemented.md          # What's not implemented (hardware, etc.)
 ├── file-formats.md             # .BAS files, encoding, line endings
+├── optimizations.md            # Semantic analyzer and optimizations
 ├── examples/                   # Sample programs
 │   ├── index.md
 │   ├── hello-world.md

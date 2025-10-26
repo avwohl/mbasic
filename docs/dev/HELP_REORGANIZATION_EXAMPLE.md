@@ -34,10 +34,12 @@ mv docs/help/common/language docs/help/language
 
 **New files to create**:
 - `docs/help/mbasic/index.md` - MBASIC overview
+- `docs/help/mbasic/architecture.md` - ✅ **CREATED** Interpreter vs compiler
 - `docs/help/mbasic/features.md` - What's implemented
 - `docs/help/mbasic/compatibility.md` - Compatibility implementations
 - `docs/help/mbasic/not-implemented.md` - What's not implemented
 - `docs/help/mbasic/file-formats.md` - .BAS files, encoding
+- `docs/help/mbasic/optimizations.md` - Semantic analyzer guide
 
 ### Files That Stay in `docs/help/ui/{backend}/`
 
@@ -425,10 +427,12 @@ docs/help/
 ├── mbasic/                        # TIER 2: MBASIC Implementation
 │   ├── index.md                  # 🆕 Create new
 │   ├── getting-started.md        # ✏️ Move from common/, rewrite
+│   ├── architecture.md           # ✅ CREATED - Interpreter vs compiler
 │   ├── features.md               # 🆕 Create new
 │   ├── compatibility.md          # 🆕 Create new (content from NOT_IMPLEMENTED.md)
 │   ├── not-implemented.md        # ✏️ Move from docs/dev/NOT_IMPLEMENTED.md
 │   ├── file-formats.md           # 🆕 Create new
+│   ├── optimizations.md          # 🆕 Create new (from compiler docs)
 │   ├── examples/
 │   │   └── index.md              # ✏️ Move from common/examples.md
 │   └── tutorial/
