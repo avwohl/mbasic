@@ -109,8 +109,18 @@ class TkHelpBrowser(tk.Toplevel):
         self.text_widget.tag_bind("link", "<Enter>", lambda e: self.text_widget.config(cursor="hand2"))
         self.text_widget.tag_bind("link", "<Leave>", lambda e: self.text_widget.config(cursor="arrow"))
 
-        # Make text read-only
-        self.text_widget.bind("<Key>", lambda e: "break")
+        # Make text read-only but allow copy (Ctrl+C)
+        def readonly_key_handler(event):
+            # Allow copy operations
+            if event.state & 0x4:  # Control key
+                if event.keysym in ('c', 'C', 'a', 'A'):  # Ctrl+C, Ctrl+A
+                    return  # Allow these
+            return "break"  # Block all other keys
+
+        self.text_widget.bind("<Key>", readonly_key_handler)
+
+        # Enable right-click context menu for copy
+        self._create_context_menu()
 
         # Status bar
         self.status_label = ttk.Label(self, text="Ready", relief=tk.SUNKEN, anchor=tk.W)
@@ -208,6 +218,12 @@ class TkHelpBrowser(tk.Toplevel):
                     code_lines.append(lines[i])
                     i += 1
                 self.text_widget.insert(tk.END, '\n'.join(code_lines) + "\n\n", "code")
+
+            # Tables - format properly
+            elif '|' in line and line.strip().startswith('|'):
+                formatted = self._format_table_row(line)
+                if formatted:  # Skip separator rows
+                    self.text_widget.insert(tk.END, formatted + "\n", "code")
 
             # Lists
             elif line.startswith('- ') or line.startswith('* '):
@@ -438,3 +454,52 @@ class TkHelpBrowser(tk.Toplevel):
         self.text_widget.insert(tk.END, message)
         self.text_widget.config(state=tk.DISABLED)
         self.status_label.config(text="Error")
+
+    def _create_context_menu(self):
+        """Create right-click context menu for copy operations."""
+        self.context_menu = tk.Menu(self.text_widget, tearoff=0)
+        self.context_menu.add_command(label="Copy", command=self._copy_selection)
+        self.context_menu.add_command(label="Select All", command=self._select_all)
+
+        def show_context_menu(event):
+            try:
+                self.context_menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                self.context_menu.grab_release()
+
+        self.text_widget.bind("<Button-3>", show_context_menu)  # Right-click
+
+    def _copy_selection(self):
+        """Copy selected text to clipboard."""
+        try:
+            selected_text = self.text_widget.get(tk.SEL_FIRST, tk.SEL_LAST)
+            self.clipboard_clear()
+            self.clipboard_append(selected_text)
+        except tk.TclError:
+            pass  # No selection
+
+    def _select_all(self):
+        """Select all text in the widget."""
+        self.text_widget.tag_add(tk.SEL, "1.0", tk.END)
+        self.text_widget.mark_set(tk.INSERT, "1.0")
+        self.text_widget.see(tk.INSERT)
+
+    def _format_table_row(self, line: str) -> str:
+        """Format a markdown table row for display."""
+        # Strip and split by |
+        parts = [p.strip() for p in line.strip().split('|')]
+        parts = [p for p in parts if p]
+
+        # Skip separator rows (|---|---|)
+        if all(set(p) <= set('-: ') for p in parts):
+            return ''  # Skip separator lines entirely
+
+        # Format columns with consistent spacing (15 chars each)
+        formatted_parts = []
+        for part in parts:
+            # Clean up any remaining markdown in cells
+            part = re.sub(r'\*\*([^*]+)\*\*', r'\1', part)  # Bold
+            part = re.sub(r'`([^`]+)`', r'\1', part)        # Code
+            formatted_parts.append(part.ljust(15))
+
+        return '  '.join(formatted_parts)
