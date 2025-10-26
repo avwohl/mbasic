@@ -2160,6 +2160,10 @@ class Interpreter:
         file_num = int(self.evaluate_expression(stmt.file_number))
         filename = self.evaluate_expression(stmt.filename)
 
+        # Check file number range (MBASIC 5.21: #1 through #15)
+        if file_num < 1 or file_num > 15:
+            raise RuntimeError("Bad file number")
+
         if not isinstance(filename, str):
             raise RuntimeError("OPEN requires string filename")
 
