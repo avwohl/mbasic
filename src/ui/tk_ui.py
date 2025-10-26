@@ -648,8 +648,28 @@ class TkBackend(UIBackend):
             type_name = type_map.get(var['type_suffix'], 'Unknown')
 
             if var['is_array']:
-                dims = 'x'.join(str(d) for d in var['dimensions'])
-                value = f"Array({dims})"
+                # Enforce 4 dimension display limit
+                dims = var['dimensions'][:4] if len(var['dimensions']) <= 4 else var['dimensions'][:4] + ['...']
+                dims_str = 'x'.join(str(d) for d in dims)
+
+                # Show last accessed cell and value if available
+                if var.get('last_accessed_subscripts') and var.get('last_accessed_value') is not None:
+                    subs = var['last_accessed_subscripts']
+                    last_val = var['last_accessed_value']
+
+                    # Format the value naturally
+                    if var['type_suffix'] != '$' and isinstance(last_val, (int, float)) and last_val == int(last_val):
+                        last_val_str = str(int(last_val))
+                    elif var['type_suffix'] == '$':
+                        last_val_str = f'"{last_val}"'
+                    else:
+                        last_val_str = str(last_val)
+
+                    # Format subscripts
+                    subs_str = ','.join(str(s) for s in subs)
+                    value = f"Array({dims_str}) [{subs_str}]={last_val_str}"
+                else:
+                    value = f"Array({dims_str})"
             else:
                 value = var['value']
                 # Format numbers naturally - show integers without decimals

@@ -504,7 +504,16 @@ class Runtime:
 
         # Track read access if token is provided
         if token is not None:
-            # Create tracking key for this array element
+            # Track at array level (for variables window display)
+            tracking_info = {
+                'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
+                'position': getattr(token, 'position', None),
+                'timestamp': time.perf_counter()
+            }
+            array_info['last_read_subscripts'] = list(subscripts)  # Store copy of subscripts
+            array_info['last_read'] = tracking_info
+
+            # Create tracking key for this array element (for per-element tracking)
             element_key = f"{full_name}[{','.join(map(str, subscripts))}]"
 
             # Initialize tracking dict if needed
@@ -517,12 +526,8 @@ class Runtime:
                     'last_write': None
                 }
 
-            # Update read tracking
-            self._array_element_tracking[element_key]['last_read'] = {
-                'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
-                'position': getattr(token, 'position', None),
-                'timestamp': time.perf_counter()
-            }
+            # Update per-element read tracking
+            self._array_element_tracking[element_key]['last_read'] = tracking_info
 
         return data[index]
 
@@ -564,7 +569,16 @@ class Runtime:
 
         # Track write access if token is provided
         if token is not None:
-            # Create tracking key for this array element
+            # Track at array level (for variables window display)
+            tracking_info = {
+                'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
+                'position': getattr(token, 'position', None),
+                'timestamp': time.perf_counter()
+            }
+            array_info['last_write_subscripts'] = list(subscripts)  # Store copy of subscripts
+            array_info['last_write'] = tracking_info
+
+            # Create tracking key for this array element (for per-element tracking)
             element_key = f"{full_name}[{','.join(map(str, subscripts))}]"
 
             # Initialize tracking dict if needed
@@ -577,12 +591,8 @@ class Runtime:
                     'last_write': None
                 }
 
-            # Update write tracking
-            self._array_element_tracking[element_key]['last_write'] = {
-                'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
-                'position': getattr(token, 'position', None),
-                'timestamp': time.perf_counter()
-            }
+            # Update per-element write tracking
+            self._array_element_tracking[element_key]['last_write'] = tracking_info
 
     def get_array_element_for_debugger(self, name, type_suffix, subscripts, def_type_map=None):
         """
@@ -664,10 +674,14 @@ class Runtime:
         else:
             default_value = 0
 
-        # Create array
+        # Create array with access tracking
         self._arrays[full_name] = {
             'dims': dimensions,
-            'data': [default_value] * total_size
+            'data': [default_value] * total_size,
+            'last_read_subscripts': None,  # Last accessed subscripts for read
+            'last_write_subscripts': None,  # Last accessed subscripts for write
+            'last_read': None,  # Tracking info: {line, position, timestamp}
+            'last_write': None  # Tracking info: {line, position, timestamp}
         }
 
     def delete_array(self, name, type_suffix=None, def_type_map=None):
@@ -955,9 +969,26 @@ class Runtime:
                 'is_array': True,
                 'dimensions': array_data['dims'],
                 'base': self.array_base,  # Global OPTION BASE setting
-                'last_read': None,  # Arrays don't track access yet
-                'last_write': None
+                'last_read': array_data.get('last_read'),  # Tracking info for array access
+                'last_write': array_data.get('last_write'),
+                'last_read_subscripts': array_data.get('last_read_subscripts'),  # Last accessed indexes
+                'last_write_subscripts': array_data.get('last_write_subscripts')
             }
+
+            # Get value of last accessed cell (prefer write over read)
+            last_subscripts = array_data.get('last_write_subscripts') or array_data.get('last_read_subscripts')
+            if last_subscripts:
+                try:
+                    # Use debugger method to avoid updating tracking
+                    last_value = self.get_array_element_for_debugger(base_name, type_suffix, last_subscripts)
+                    var_info['last_accessed_value'] = last_value
+                    var_info['last_accessed_subscripts'] = last_subscripts
+                except:
+                    var_info['last_accessed_value'] = None
+                    var_info['last_accessed_subscripts'] = None
+            else:
+                var_info['last_accessed_value'] = None
+                var_info['last_accessed_subscripts'] = None
 
             result.append(var_info)
 
