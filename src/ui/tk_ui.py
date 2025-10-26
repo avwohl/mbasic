@@ -1566,9 +1566,16 @@ class TkBackend(UIBackend):
         for idx, line in enumerate(lines):
             line_match = re.match(r'^\s*(\d+)', line)
             if line_match and int(line_match.group(1)) == insert_num:
-                # Found our inserted line, position cursor after the line number
+                # Found our inserted line, position cursor after the line number AND space
                 text_line_num = idx + 1  # Tk uses 1-based line numbers
-                cursor_col = len(str(insert_num)) + 1  # After line number and space
+                # Find position after line number and following space
+                # Line format is "   25 " or "   25 PRINT" - find the space after digits
+                after_number_match = re.match(r'^\s*\d+\s+', line)
+                if after_number_match:
+                    cursor_col = len(after_number_match.group(0))
+                else:
+                    # No space after number, position after the number
+                    cursor_col = len(line_match.group(0))
                 self.editor_text.text.mark_set(tk.INSERT, f'{text_line_num}.{cursor_col}')
                 self.editor_text.text.see(f'{text_line_num}.0')  # Scroll to show it
                 break
@@ -1649,14 +1656,22 @@ class TkBackend(UIBackend):
 
         for editor_line_idx, line_text in enumerate(lines, 1):
             # Check if this line starts with the BASIC line number
-            if line_text.strip().startswith(str(line_number) + ' '):
+            import re
+            match = re.match(r'^\s*(\d+)', line_text)
+            if match and int(match.group(1)) == line_number:
                 # Found the line - calculate position
-                # The line format is: "  10 PRINT..." or "10 PRINT..."
-                # char_start and char_end are relative to the original source
+                # The line format is: "   20 PRINT I" (formatted with spaces)
+                # char_start and char_end are relative to the original source "20 PRINT I"
+                # We need to adjust for the formatting prefix in the editor
 
-                # Apply highlighting
-                start_idx = f"{editor_line_idx}.{char_start}"
-                end_idx = f"{editor_line_idx}.{char_end}"
+                # Find where the line number starts in the editor
+                line_num_start = match.start(1)  # Position of first digit
+                # The original source starts at "20 PRINT I", so position 0 is '2'
+                # In editor "   20 PRINT I", the '2' is at position 3
+                # So we add line_num_start to char positions
+
+                start_idx = f"{editor_line_idx}.{line_num_start + char_start}"
+                end_idx = f"{editor_line_idx}.{line_num_start + char_end}"
 
                 try:
                     self.editor_text.text.tag_add('current_statement', start_idx, end_idx)

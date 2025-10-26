@@ -181,7 +181,7 @@ class LineNumberedText(tk.Frame if tk else object):
         if not line_text:
             return None
 
-        match = re.match(r'^(\d+)\s', line_text)
+        match = re.match(r'^(\d+)(?:\s|$)', line_text)  # Whitespace or end of string
         if match:
             return int(match.group(1))
         return None
