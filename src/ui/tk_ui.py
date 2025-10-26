@@ -1739,7 +1739,7 @@ class TkBackend(UIBackend):
             self.runtime = Runtime(self.program.line_asts, self.program.lines)
 
             # Create Tk-specific IOHandler that outputs to output pane
-            tk_io = TkIOHandler(self._add_output)
+            tk_io = TkIOHandler(self._add_output, self.root)
             self.interpreter = Interpreter(self.runtime, tk_io, limits=create_local_limits())
 
             # Start tick-based execution
@@ -2165,37 +2165,104 @@ class TkIOHandler(IOHandler):
     output text widget via a callback function.
     """
     
-    def __init__(self, output_callback):
+    def __init__(self, output_callback, root=None):
         """Initialize Tk IOHandler.
-        
+
         Args:
             output_callback: Function to call with output text (str) -> None
+            root: Tk root window (needed for dialogs)
         """
         self.output_callback = output_callback
         self.input_callback = None  # Will be set when INPUT is needed
-        
+        self.root = root  # Tk root window for dialogs
+
     def output(self, text: str, end: str = '\n') -> None:
         """Output text to Tk output pane."""
         full_text = text + end
         if self.output_callback:
             self.output_callback(full_text)
-    
+
     def input(self, prompt: str = '') -> str:
-        """Input from user via dialog."""
-        # TODO: Implement input dialog
-        raise RuntimeError("INPUT not yet implemented in Tk UI")
-    
+        """Input from user via modal dialog.
+
+        Used by INPUT statement for reading comma-separated values.
+        Shows a simple input dialog with the prompt.
+        """
+        from tkinter import simpledialog
+
+        # Show prompt in output first
+        if prompt:
+            self.output(prompt, end='')
+
+        # Show modal input dialog
+        result = simpledialog.askstring(
+            "INPUT",
+            prompt if prompt else "Enter value:",
+            parent=self.root
+        )
+
+        # If user clicked Cancel, raise exception (mimics Ctrl+C)
+        if result is None:
+            raise KeyboardInterrupt("Input cancelled")
+
+        # Echo the input to output
+        self.output(result)
+
+        return result
+
     def input_line(self, prompt: str = '') -> str:
-        """Input complete line from user via dialog."""
-        # TODO: Implement input dialog
-        raise RuntimeError("LINE INPUT not yet implemented in Tk UI")
-    
+        """Input complete line from user via modal dialog.
+
+        Used by LINE INPUT statement for reading entire line as string.
+        Identical to input() for Tk UI.
+        """
+        from tkinter import simpledialog
+
+        # Show prompt in output first
+        if prompt:
+            self.output(prompt, end='')
+
+        # Show modal input dialog
+        result = simpledialog.askstring(
+            "LINE INPUT",
+            prompt if prompt else "Enter line:",
+            parent=self.root
+        )
+
+        # If user clicked Cancel, raise exception (mimics Ctrl+C)
+        if result is None:
+            raise KeyboardInterrupt("Input cancelled")
+
+        # Echo the input to output
+        self.output(result)
+
+        return result
+
     def input_char(self, blocking: bool = True) -> str:
-        """Input single character."""
-        # TODO: Implement character input
+        """Input single character via modal dialog.
+
+        Used by INKEY$ and INPUT$ for single character input.
+        For Tk UI, shows a simple input dialog limited to 1 character.
+        """
         if not blocking:
-            return ""  # Non-blocking: no key available
-        raise RuntimeError("INPUT$ not yet implemented in Tk UI")
+            # Non-blocking: no key available (would need background monitoring)
+            return ""
+
+        from tkinter import simpledialog
+
+        # Show modal input dialog
+        result = simpledialog.askstring(
+            "INPUT$ (Single Character)",
+            "Enter a single character:",
+            parent=self.root
+        )
+
+        # If user clicked Cancel, return empty string
+        if result is None:
+            return ""
+
+        # Return first character only
+        return result[0] if result else ""
     
     def clear_screen(self) -> None:
         """Clear screen - no-op for Tk UI."""
