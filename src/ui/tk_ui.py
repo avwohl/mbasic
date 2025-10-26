@@ -1975,32 +1975,19 @@ class TkBackend(UIBackend):
             return
 
         try:
-            # Import serialization from interactive module
-            from interactive import InteractiveMode
+            # Import utilities from ui_helpers
+            from ui.ui_helpers import build_line_mapping, serialize_line
 
             # Build mapping from old line numbers to new line numbers
             old_lines = sorted(self.program.line_asts.keys())
-            line_map = {}
-
-            # Lines before old_start stay the same
-            for old_num in old_lines:
-                if old_num < old_start:
-                    line_map[old_num] = old_num
-
-            # Lines from old_start onwards get renumbered
-            new_num = new_start
-            for old_num in old_lines:
-                if old_num >= old_start:
-                    line_map[old_num] = new_num
-                    new_num += increment
+            line_map = build_line_mapping(old_lines, new_start, old_start, increment)
 
             # Walk each line AST and update line number references
-            # Create a temporary InteractiveMode just to access _renum_statement
-            temp_mode = InteractiveMode()
+            # Delegate to interpreter's interactive_mode for _renum_statement
             for line_node in self.program.line_asts.values():
                 # Update line number references in statements
                 for stmt in line_node.statements:
-                    temp_mode._renum_statement(stmt, line_map)
+                    self.interpreter.interactive_mode._renum_statement(stmt, line_map)
                 # Update the line's own number
                 old_line_num = line_node.line_number
                 line_node.line_number = line_map[old_line_num]
@@ -2012,7 +1999,8 @@ class TkBackend(UIBackend):
                 new_num = line_map[old_num]
                 line_node = self.program.line_asts[old_num]
                 new_line_asts[new_num] = line_node
-                new_lines[new_num] = temp_mode._serialize_line(line_node)
+                # Use ui_helpers directly for serialization
+                new_lines[new_num] = serialize_line(line_node)
 
             # Update the program object
             self.program.line_asts = new_line_asts
