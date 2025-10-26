@@ -274,13 +274,14 @@ class TkHelpBrowser(tk.Toplevel):
 
     def _follow_link(self, target: str):
         """Follow a link to another help topic."""
-        # Check if target is already an absolute path (from search results)
-        # Absolute paths don't start with . or ..
-        if not target.startswith('.'):
-            # This is already a help-root-relative path (e.g., from search results)
-            new_topic = target.replace('\\', '/')
+        # Check if target is an absolute path (starts with / or contains :/)
+        # Absolute paths are relative to help root
+        if target.startswith('/') or ':/' in target or ':\\' in target:
+            # This is an absolute path relative to help root
+            new_topic = target.lstrip('/').replace('\\', '/')
         else:
-            # Resolve relative path from current topic
+            # Resolve relative path from current topic's directory
+            # This includes both "./" prefixed and simple filenames like "getting-started.md"
             current_dir = Path(self.current_topic).parent
             if str(current_dir) == '.':
                 new_topic_path = Path(target)
