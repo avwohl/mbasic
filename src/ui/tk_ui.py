@@ -1742,6 +1742,9 @@ class TkBackend(UIBackend):
             tk_io = TkIOHandler(self._add_output, self.root)
             self.interpreter = Interpreter(self.runtime, tk_io, limits=create_local_limits())
 
+            # Wire up interpreter to use Tk UI's command methods (MERGE, LOAD, FILES, etc.)
+            self.interpreter.interactive_mode = self
+
             # Start tick-based execution
             state = self.interpreter.start()
             if state.status == 'error':
@@ -1813,6 +1816,84 @@ class TkBackend(UIBackend):
         except Exception as e:
             self._add_output(f"Load error: {e}\n")
             self._set_status("Load error")
+
+    def cmd_merge(self, filename: str) -> None:
+        """Execute MERGE command - merge file into current program.
+
+        MERGE adds or replaces lines from a file without clearing existing lines.
+        - Lines with matching line numbers are replaced
+        - New line numbers are added
+        - Existing lines not in the file are kept
+        """
+        try:
+            success, errors, lines_added, lines_replaced = self.program.merge_from_file(filename)
+            if errors:
+                for line_num, error in errors:
+                    self._add_output(f"Parse error at line {line_num}: {error}\n")
+                    # Mark line as having error
+                    self.editor_text.set_error(line_num, True)
+            if success:
+                self._refresh_editor()
+                # Re-validate to show error markers for merged lines
+                self._validate_editor_syntax()
+                self._add_output(f"Merged from {filename}\n")
+                self._add_output(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced\n")
+                self._set_status(f"Merged from {filename}")
+            else:
+                self._add_output("No lines merged\n")
+                self._set_status("Merge failed")
+        except FileNotFoundError:
+            self._add_output(f"?File not found: {filename}\n")
+            self._set_status("File not found")
+        except Exception as e:
+            self._add_output(f"Merge error: {e}\n")
+            self._set_status("Merge error")
+
+    def cmd_files(self, filespec: str = "") -> None:
+        """Execute FILES command - display directory listing.
+
+        FILES - List all files in current directory
+        FILES "*.BAS" - List files matching pattern
+        """
+        import glob
+        import os
+
+        # Default pattern if no argument
+        if not filespec:
+            pattern = "*"
+        else:
+            # Remove quotes if present
+            pattern = filespec.strip().strip('"').strip("'")
+
+            # If pattern is empty after stripping, use default
+            if not pattern:
+                pattern = "*"
+
+        # Get matching files
+        try:
+            files = sorted(glob.glob(pattern))
+
+            if not files:
+                self._add_output(f"No files matching: {pattern}\n")
+                return
+
+            # Display files (one per line with size)
+            self._add_output(f"\nDirectory listing for: {pattern}\n")
+            self._add_output("-" * 50 + "\n")
+            for filename in files:
+                try:
+                    if os.path.isfile(filename):
+                        size = os.path.getsize(filename)
+                        self._add_output(f"{filename:<30} {size:>12} bytes\n")
+                    elif os.path.isdir(filename):
+                        self._add_output(f"{filename:<30}        <DIR>\n")
+                except OSError:
+                    self._add_output(f"{filename:<30}            ?\n")
+
+            self._add_output(f"\n{len(files)} file(s)\n")
+
+        except Exception as e:
+            self._add_output(f"?Error listing files: {e}\n")
 
     def cmd_delete(self, args: str) -> None:
         """Execute DELETE command - delete line range using ui_helpers.

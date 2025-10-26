@@ -681,6 +681,7 @@ class RandomizeStatementNode:
 class RemarkStatementNode:
     """REM/REMARK statement - comment"""
     text: str
+    comment_type: str = "REM"  # "REM", "REMARK", or "APOSTROPHE" - preserves original syntax
     line_num: int = 0
     column: int = 0
 

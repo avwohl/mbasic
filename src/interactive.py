@@ -927,7 +927,14 @@ class InteractiveMode:
                 if i == 0:
                     parts.append(stmt_text)
                 else:
-                    parts.append(' : ' + stmt_text)
+                    # Check if this is an inline comment (REM or apostrophe)
+                    # Comments should have spacing before them, not colon separator
+                    if type(stmt).__name__ == 'RemarkStatementNode':
+                        # Inline comment - preserve spacing, no colon
+                        # Use 4 spaces before comment as default
+                        parts.append('    ' + stmt_text)
+                    else:
+                        parts.append(' : ' + stmt_text)
 
         return ''.join(parts)
 
@@ -948,7 +955,7 @@ class InteractiveMode:
         # For a complete implementation, we'd need to handle all statement types
 
         if stmt_type == 'PrintStatementNode':
-            parts = ['print']
+            parts = ['PRINT']
             for i, expr in enumerate(stmt.expressions):
                 if i > 0 and i <= len(stmt.separators):
                     # Add separator from previous expression
@@ -960,10 +967,10 @@ class InteractiveMode:
             return ''.join(parts)
 
         elif stmt_type == 'GotoStatementNode':
-            return f"goto {stmt.line_number}"
+            return f"GOTO {stmt.line_number}"
 
         elif stmt_type == 'GosubStatementNode':
-            return f"gosub {stmt.line_number}"
+            return f"GOSUB {stmt.line_number}"
 
         elif stmt_type == 'LetStatementNode':
             var_text = self._serialize_variable(stmt.variable)
@@ -971,29 +978,33 @@ class InteractiveMode:
             return f"{var_text} = {expr_text}"
 
         elif stmt_type == 'EndStatementNode':
-            return "end"
+            return "END"
 
         elif stmt_type == 'ReturnStatementNode':
-            return "return"
+            return "RETURN"
 
         elif stmt_type == 'StopStatementNode':
-            return "stop"
+            return "STOP"
 
         elif stmt_type == 'RemarkStatementNode':
-            # Preserve comments using REM
-            return f"rem {stmt.text}"
+            # Preserve comments using original syntax (REM or ')
+            # Note: REMARK is converted to REM for consistency
+            if stmt.comment_type == "APOSTROPHE":
+                return f"' {stmt.text}"
+            else:  # REM, REMARK, or default
+                return f"REM {stmt.text}"
 
         elif stmt_type == 'IfStatementNode':
-            parts = ['if ', self._serialize_expression(stmt.condition)]
+            parts = ['IF ', self._serialize_expression(stmt.condition)]
             if stmt.then_line_number is not None:
-                parts.append(f' then {stmt.then_line_number}')
+                parts.append(f' THEN {stmt.then_line_number}')
             elif stmt.then_statements:
-                parts.append(' then ')
+                parts.append(' THEN ')
                 parts.append(' : '.join(self._serialize_statement(s) for s in stmt.then_statements))
             if stmt.else_line_number is not None:
-                parts.append(f' else {stmt.else_line_number}')
+                parts.append(f' ELSE {stmt.else_line_number}')
             elif stmt.else_statements:
-                parts.append(' else ')
+                parts.append(' ELSE ')
                 parts.append(' : '.join(self._serialize_statement(s) for s in stmt.else_statements))
             return ''.join(parts)
 
@@ -1001,37 +1012,37 @@ class InteractiveMode:
             var = self._serialize_variable(stmt.variable)
             start = self._serialize_expression(stmt.start_expr)
             end = self._serialize_expression(stmt.end_expr)
-            parts = [f"for {var} = {start} to {end}"]
+            parts = [f"FOR {var} = {start} TO {end}"]
             if stmt.step_expr:
                 step = self._serialize_expression(stmt.step_expr)
-                parts.append(f" step {step}")
+                parts.append(f" STEP {step}")
             return ''.join(parts)
 
         elif stmt_type == 'NextStatementNode':
             if stmt.variables:
                 vars_text = ', '.join(self._serialize_variable(v) for v in stmt.variables)
-                return f"next {vars_text}"
-            return "next"
+                return f"NEXT {vars_text}"
+            return "NEXT"
 
         elif stmt_type == 'OnGotoStatementNode':
             expr = self._serialize_expression(stmt.expression)
             lines = ','.join(str(line) for line in stmt.target_lines)
-            return f"on {expr} goto {lines}"
+            return f"ON {expr} GOTO {lines}"
 
         elif stmt_type == 'OnGosubStatementNode':
             expr = self._serialize_expression(stmt.expression)
             lines = ','.join(str(line) for line in stmt.target_lines)
-            return f"on {expr} gosub {lines}"
+            return f"ON {expr} GOSUB {lines}"
 
         elif stmt_type == 'OnErrorStatementNode':
             if stmt.line_number is not None:
-                return f"on error goto {stmt.line_number}"
+                return f"ON ERROR GOTO {stmt.line_number}"
             else:
-                return "on error goto 0"
+                return "ON ERROR GOTO 0"
 
         elif stmt_type == 'ErrorStatementNode':
             error_code = self._serialize_expression(stmt.error_code)
-            return f"error {error_code}"
+            return f"ERROR {error_code}"
 
         # For other statement types, use a generic approach
         # This is a fallback - ideally all statement types should be handled explicitly
@@ -1066,10 +1077,10 @@ class InteractiveMode:
             TokenType.LESS_EQUAL: '<=',
             TokenType.GREATER_THAN: '>',
             TokenType.GREATER_EQUAL: '>=',
-            TokenType.AND: 'and',
-            TokenType.OR: 'or',
-            TokenType.NOT: 'not',
-            TokenType.MOD: 'mod',
+            TokenType.AND: 'AND',
+            TokenType.OR: 'OR',
+            TokenType.NOT: 'NOT',
+            TokenType.MOD: 'MOD',
             TokenType.BACKSLASH: '\\',
         }
 
@@ -1082,7 +1093,12 @@ class InteractiveMode:
         expr_type = type(expr).__name__
 
         if expr_type == 'NumberNode':
-            return str(expr.value)
+            # Preserve integer vs float representation
+            # If the value is a whole number, show it without decimal point
+            if isinstance(expr.value, float) and expr.value.is_integer():
+                return str(int(expr.value))
+            else:
+                return str(expr.value)
 
         elif expr_type == 'StringNode':
             return f'"{expr.value}"'

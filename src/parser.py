@@ -119,6 +119,20 @@ class Parser:
             return True
         return token.type in (TokenType.NEWLINE, TokenType.EOF)
 
+    def at_end_of_statement(self) -> bool:
+        """Check if at end of current statement.
+
+        A statement ends at:
+        - End of line (NEWLINE or EOF)
+        - Statement separator (COLON)
+        - Comment (REM, REMARK, or APOSTROPHE)
+        """
+        token = self.current()
+        if token is None:
+            return True
+        return token.type in (TokenType.NEWLINE, TokenType.EOF, TokenType.COLON,
+                              TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE)
+
     # ========================================================================
     # Two-Pass Compilation
     # ========================================================================
@@ -339,11 +353,13 @@ class Parser:
                 if not self.at_end_of_line() and not self.match(TokenType.COLON):
                     token = self.current()
                     raise ParseError(f"Expected : or newline after ;, got {token.type.name}", token)
-            elif self.match(TokenType.REM, TokenType.REMARK):
-                # Allow REM without colon after statement (standard MBASIC)
-                # REM consumes rest of line
-                self.parse_remark()
-                break  # REM ends the line
+            elif self.match(TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE):
+                # Allow REM/REMARK/' without colon after statement (standard MBASIC)
+                # These consume rest of line as a comment
+                stmt = self.parse_remark()
+                if stmt:
+                    statements.append(stmt)
+                break  # Comment ends the line
             elif not self.at_end_of_line():
                 # Expected COLON or NEWLINE
                 token = self.current()
@@ -1098,8 +1114,12 @@ class Parser:
         # Comment text is stored in token.value by the lexer
         comment_text = token.value if isinstance(token.value, str) else ""
 
+        # Preserve the original comment syntax
+        comment_type = token.type.name  # "REM", "REMARK", or "APOSTROPHE"
+
         return RemarkStatementNode(
             text=comment_text,
+            comment_type=comment_type,
             line_num=token.line,
             column=token.column
         )
@@ -1132,20 +1152,20 @@ class Parser:
         expressions: List[ExpressionNode] = []
         separators: List[str] = []
 
-        while not self.at_end_of_line() and not self.match(TokenType.COLON) and not self.match(TokenType.ELSE):
+        while not self.at_end_of_line() and not self.match(TokenType.COLON) and not self.match(TokenType.ELSE) and not self.match(TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE):
             # Check for separator first
             if self.match(TokenType.SEMICOLON):
                 separators.append(';')
                 self.advance()
                 # Check if more expressions follow
-                if self.at_end_of_line() or self.match(TokenType.COLON) or self.match(TokenType.ELSE):
+                if self.at_end_of_line() or self.match(TokenType.COLON) or self.match(TokenType.ELSE) or self.match(TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE):
                     break
                 continue
             elif self.match(TokenType.COMMA):
                 separators.append(',')
                 self.advance()
                 # Check if more expressions follow
-                if self.at_end_of_line() or self.match(TokenType.COLON) or self.match(TokenType.ELSE):
+                if self.at_end_of_line() or self.match(TokenType.COLON) or self.match(TokenType.ELSE) or self.match(TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE):
                     break
                 continue
 

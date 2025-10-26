@@ -262,6 +262,62 @@ class ProgramManager:
         else:
             return (False, errors)
 
+    def merge_from_file(self, filename: str) -> Tuple[bool, List[Tuple[int, str]], int, int]:
+        """Merge program from file into current program.
+
+        Lines from file are added to or replace existing lines.
+        Does NOT clear existing program (unlike load_from_file).
+
+        Args:
+            filename: Path to file
+
+        Returns:
+            Tuple of (success, errors, lines_added, lines_replaced)
+            success: True if at least one line loaded successfully
+            errors: List of (line_number, error_message) for failed lines
+            lines_added: Count of new lines added
+            lines_replaced: Count of existing lines replaced
+
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            IOError: If file cannot be read
+        """
+        errors = []
+        lines_added = 0
+        lines_replaced = 0
+
+        with open(filename, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+
+                # Extract line number
+                match = re.match(r'^(\d+)\s', line)
+                if not match:
+                    continue  # Skip lines without line numbers
+
+                line_num = int(match.group(1))
+
+                # Check if line already exists
+                is_replacement = line_num in self.lines
+
+                success, error = self.add_line(line_num, line)
+
+                if success:
+                    if is_replacement:
+                        lines_replaced += 1
+                    else:
+                        lines_added += 1
+                else:
+                    errors.append((line_num, error))
+
+        total_success = lines_added + lines_replaced
+        if total_success > 0:
+            return (True, errors, lines_added, lines_replaced)
+        else:
+            return (False, errors, 0, 0)
+
     def get_program_ast(self) -> 'ProgramNode':
         """Build ProgramNode from current lines for execution.
 
