@@ -474,7 +474,16 @@ class TkHelpBrowser(tk.Toplevel):
                             file_info.get('description', '')
                         ))
 
-        return results
+        # Deduplicate by path (keep first occurrence)
+        seen_paths = set()
+        deduped_results = []
+        for result in results:
+            path = result[1]  # path is the second element
+            if path not in seen_paths:
+                seen_paths.add(path)
+                deduped_results.append(result)
+
+        return deduped_results
 
     def _find_file_info(self, index: Dict, path: str) -> Optional[Dict]:
         """Find file info in index by path."""
