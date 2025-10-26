@@ -30,6 +30,7 @@ from parser import Parser
 from interpreter import Interpreter
 from runtime import Runtime
 from filesystem import SandboxedFileSystemProvider
+from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 
 
 class MBasicWebIDE:
@@ -67,6 +68,12 @@ class MBasicWebIDE:
         self.stack_dialog = None
         self.stack_table = None
         self.stack_visible = False
+
+        # Immediate mode
+        self.immediate_executor = None
+        self.immediate_log = None
+        self.immediate_input = None
+        self.immediate_status = None
 
     def create_ui(self):
         """Create the main UI layout."""
@@ -189,9 +196,10 @@ class MBasicWebIDE:
                         ui.button('Variables', on_click=self.toggle_variables, icon='list').props('outline')
                         ui.button('Stack', on_click=self.toggle_stack, icon='view_list').props('outline')
 
-            # Right panel: Output
+            # Right panel: Output and Immediate Mode
             with splitter.after:
-                with ui.card().classes('w-full h-full'):
+                # Output section (70% height)
+                with ui.card().classes('w-full').style('height: 60%; margin-bottom: 8px'):
                     ui.label('Output').classes('text-h6 mb-2')
 
                     # Output log
@@ -199,6 +207,25 @@ class MBasicWebIDE:
                     self.output_log.push('MBASIC 5.21 Web IDE')
                     self.output_log.push('Ready')
                     self.output_log.push('')
+
+                # Immediate Mode section (30% height)
+                with ui.card().classes('w-full').style('height: calc(40% - 8px)'):
+                    with ui.row().classes('items-center mb-2'):
+                        ui.label('Immediate Mode').classes('text-h6')
+                        ui.space()
+                        self.immediate_status = ui.label('Ok').classes('text-sm font-bold text-green')
+
+                    # Immediate mode history log
+                    self.immediate_log = ui.log(max_lines=100).classes('output-log w-full').style('height: calc(100% - 90px); font-size: 12px')
+
+                    # Immediate mode input
+                    with ui.row().classes('w-full items-center gap-2 mt-2'):
+                        ui.label('Ok >').classes('text-sm font-mono')
+                        self.immediate_input = ui.input(
+                            placeholder='Enter BASIC command (e.g., PRINT X, A=5)'
+                        ).classes('flex-grow code-editor').on('keydown.enter', self.execute_immediate)
+
+                        ui.button('Execute', on_click=self.execute_immediate, icon='play_arrow').props('dense color=secondary')
 
         # Footer status bar
         with ui.footer():
@@ -405,6 +432,11 @@ class MBasicWebIDE:
             # Set breakpoints
             self.interpreter.breakpoints = self.breakpoints.copy()
 
+            # Initialize immediate mode executor
+            immediate_io = OutputCapturingIOHandler()
+            self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
+            self.update_immediate_status()
+
             # Run with tick-based execution for breakpoint support
             self.execute_ticks()
 
@@ -434,6 +466,7 @@ class MBasicWebIDE:
             # Update debug windows
             self.update_variables_window()
             self.update_stack_window()
+            self.update_immediate_status()
 
             if result == 'BREAK':
                 # Hit breakpoint
@@ -441,6 +474,7 @@ class MBasicWebIDE:
                 self.status_label.text = f'Paused at breakpoint (line {self.interpreter.current_line_number})'
                 ui.notify(f'Breakpoint at line {self.interpreter.current_line_number}', type='info')
                 self.running = False
+                self.update_immediate_status()
                 return
 
             elif result == 'DONE':
@@ -449,6 +483,7 @@ class MBasicWebIDE:
                 self.status_label.text = 'Program completed'
                 ui.notify('Program completed', type='positive')
                 self.running = False
+                self.update_immediate_status()
                 return
 
             # Continue execution
@@ -925,6 +960,62 @@ for CP/M systems, running in your web browser.
         self.update_line_numbers()
         ui.notify('Example loaded')
         dialog.close()
+
+    def update_immediate_status(self):
+        """Update immediate mode panel status based on interpreter state."""
+        if not self.immediate_executor or not self.immediate_status or not self.immediate_input:
+            return
+
+        if self.immediate_executor.can_execute_immediate():
+            # Safe to execute - enable input
+            self.immediate_status.text = 'Ok'
+            self.immediate_status.classes(remove='text-red', add='text-green')
+            self.immediate_input.enable()
+        else:
+            # Not safe - disable input
+            status = self.interpreter.state.status if hasattr(self.interpreter, 'state') else 'unknown'
+            self.immediate_status.text = f'[{status}]'
+            self.immediate_status.classes(remove='text-green', add='text-red')
+            self.immediate_input.disable()
+
+    def execute_immediate(self):
+        """Execute immediate mode command."""
+        if not self.immediate_executor or not self.immediate_input or not self.immediate_log:
+            ui.notify('Immediate mode not initialized', type='warning')
+            return
+
+        command = self.immediate_input.value.strip()
+        if not command:
+            return
+
+        # Check if safe to execute
+        if not self.immediate_executor.can_execute_immediate():
+            self.immediate_log.push('Cannot execute while program is running')
+            ui.notify('Cannot execute while program is running', type='warning')
+            return
+
+        # Log the command
+        self.immediate_log.push(f'> {command}')
+
+        # Execute
+        success, output = self.immediate_executor.execute(command)
+
+        # Log the result
+        if output:
+            for line in output.rstrip().split('\n'):
+                self.immediate_log.push(line)
+
+        if success:
+            self.immediate_log.push('Ok')
+        else:
+            ui.notify('Immediate mode error', type='negative')
+
+        # Clear input
+        self.immediate_input.value = ''
+
+        # Update variables/stack windows if open
+        self.update_variables_window()
+        self.update_stack_window()
 
 
 def create_app():
