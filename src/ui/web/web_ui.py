@@ -192,6 +192,9 @@ class MBasicWebIDE:
                         ui.button('Continue', on_click=self.menu_continue, icon='play_circle_outline')
                         ui.button('Stop', on_click=self.menu_stop, icon='stop').props('color=negative')
                         ui.separator().props('vertical')
+                        ui.button('Sort', on_click=self.sort_program_lines, icon='sort', tooltip='Sort lines by line number').props('outline')
+                        ui.button('Renumber', on_click=self.renumber_program, icon='format_list_numbered', tooltip='Renumber lines (10, 20, 30...)').props('outline')
+                        ui.separator().props('vertical')
                         ui.button('Breakpoint', on_click=self.toggle_breakpoint, icon='radio_button_checked').props('outline')
                         ui.button('Variables', on_click=self.toggle_variables, icon='list').props('outline')
                         ui.button('Stack', on_click=self.toggle_stack, icon='view_list').props('outline')
@@ -267,6 +270,126 @@ class MBasicWebIDE:
         # For now, just show a dialog to enter line number
         # In future, could track cursor position
         ui.notify('Click on line numbers to toggle breakpoints', type='info')
+
+    def sort_program_lines(self):
+        """Sort program lines by line number."""
+        import re
+
+        if not self.editor or not self.editor.value:
+            ui.notify('No program to sort', type='warning')
+            return
+
+        lines = self.editor.value.split('\n')
+
+        # Separate lines with and without line numbers
+        numbered_lines = []
+        unnumbered_lines = []
+
+        line_num_pattern = re.compile(r'^\s*(\d+)\s')
+
+        for line in lines:
+            match = line_num_pattern.match(line)
+            if match:
+                line_number = int(match.group(1))
+                numbered_lines.append((line_number, line))
+            else:
+                # Keep unnumbered lines (comments, blank lines) at the end
+                if line.strip():  # Only keep non-empty unnumbered lines
+                    unnumbered_lines.append(line)
+
+        # Sort numbered lines
+        numbered_lines.sort(key=lambda x: x[0])
+
+        # Rebuild program
+        sorted_lines = [line for _, line in numbered_lines] + unnumbered_lines
+
+        self.editor.value = '\n'.join(sorted_lines)
+        self.update_line_numbers()
+        ui.notify('Program lines sorted', type='positive')
+
+    def renumber_program(self):
+        """Renumber program lines starting at 10 with increment of 10."""
+        import re
+
+        if not self.editor or not self.editor.value:
+            ui.notify('No program to renumber', type='warning')
+            return
+
+        # Create dialog to get renumber parameters
+        with ui.dialog() as dialog, ui.card():
+            ui.label('Renumber Program').classes('text-h6 mb-2')
+
+            start_input = ui.number(label='Start line number', value=10, format='%.0f').classes('w-full mb-2')
+            increment_input = ui.number(label='Increment', value=10, format='%.0f').classes('w-full mb-2')
+
+            with ui.row().classes('w-full gap-2 mt-4'):
+                ui.button('Cancel', on_click=dialog.close).props('flat')
+                ui.button(
+                    'Renumber',
+                    on_click=lambda: self._apply_renumber(int(start_input.value), int(increment_input.value), dialog)
+                ).props('color=primary')
+
+        dialog.open()
+
+    def _apply_renumber(self, start: int, increment: int, dialog):
+        """Apply renumbering to program."""
+        import re
+
+        lines = self.editor.value.split('\n')
+
+        # Parse lines with line numbers
+        numbered_lines = []
+        unnumbered_lines = []
+
+        line_num_pattern = re.compile(r'^\s*(\d+)\s+(.*)$')
+
+        for line in lines:
+            match = line_num_pattern.match(line)
+            if match:
+                old_num = int(match.group(1))
+                code = match.group(2)
+                numbered_lines.append((old_num, code))
+            else:
+                # Keep unnumbered lines (comments, blank lines)
+                if line.strip():
+                    unnumbered_lines.append(line)
+
+        # Sort by original line number
+        numbered_lines.sort(key=lambda x: x[0])
+
+        # Create mapping from old to new line numbers for GOTO/GOSUB updates
+        line_mapping = {}
+        new_num = start
+        for old_num, _ in numbered_lines:
+            line_mapping[old_num] = new_num
+            new_num += increment
+
+        # Renumber lines and update GOTO/GOSUB/THEN/ELSE references
+        renumbered_lines = []
+        new_num = start
+
+        goto_pattern = re.compile(r'\b(GOTO|GOSUB|THEN|ELSE|ON\s+\w+\s+GOTO|ON\s+\w+\s+GOSUB)\s+(\d+)', re.IGNORECASE)
+
+        for old_num, code in numbered_lines:
+            # Update GOTO/GOSUB references in the code
+            def replace_line_ref(match):
+                keyword = match.group(1)
+                old_target = int(match.group(2))
+                new_target = line_mapping.get(old_target, old_target)
+                return f'{keyword} {new_target}'
+
+            updated_code = goto_pattern.sub(replace_line_ref, code)
+
+            # Format with new line number
+            renumbered_lines.append(f'{new_num:>5} {updated_code}')
+            new_num += increment
+
+        # Rebuild program
+        self.editor.value = '\n'.join(renumbered_lines + unnumbered_lines)
+        self.update_line_numbers()
+
+        ui.notify(f'Program renumbered ({start} to {new_num - increment})', type='positive')
+        dialog.close()
 
     # File operations
     def menu_new(self):
