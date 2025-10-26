@@ -1580,6 +1580,14 @@ class CursesBackend(UIBackend):
             # Toggle sort direction in variables window
             self._toggle_variables_sort_direction()
 
+        elif key == 'e' and self.watch_window_visible:
+            # Edit selected variable value
+            self._edit_selected_variable()
+
+        elif key == 'enter' and self.watch_window_visible:
+            # Edit selected variable value (Enter key)
+            self._edit_selected_variable()
+
         elif key == DELETE_LINE_KEY:
             # Delete current line
             self._delete_current_line()
@@ -2244,7 +2252,7 @@ Run                           Debug Windows
 
         # Update window title
         arrow = '↓' if self.variables_sort_reverse else '↑'
-        self.variables_frame.set_title(f"Variables (Sort: {mode_names[self.variables_sort_mode]} {arrow}) - s=mode d=dir Ctrl+W=toggle")
+        self.variables_frame.set_title(f"Variables (Sort: {mode_names[self.variables_sort_mode]} {arrow}) - s=mode d=dir e=edit Ctrl+W=toggle")
 
         # Update variables display
         self._update_variables_window()
@@ -2270,7 +2278,7 @@ Run                           Debug Windows
             'value': 'Value'
         }
         arrow = '↓' if self.variables_sort_reverse else '↑'
-        self.variables_frame.set_title(f"Variables (Sort: {mode_names[self.variables_sort_mode]} {arrow}) - s=mode d=dir Ctrl+W=toggle")
+        self.variables_frame.set_title(f"Variables (Sort: {mode_names[self.variables_sort_mode]} {arrow}) - s=mode d=dir e=edit Ctrl+W=toggle")
 
         # Update variables display
         self._update_variables_window()
@@ -2282,6 +2290,135 @@ Run                           Debug Windows
         # Redraw screen
         if hasattr(self, 'loop') and self.loop and self.loop_running:
             self.loop.draw_screen()
+
+    def _edit_selected_variable(self):
+        """Edit the currently selected variable in the variables window."""
+        import re
+
+        if not self.interpreter or not self.interpreter.runtime:
+            self.status_bar.set_text("No program running")
+            return
+
+        # Get focused item from variables walker
+        try:
+            focus_idx = self.variables_walker.get_focus()[1]
+            if focus_idx is None or focus_idx >= len(self.variables_walker):
+                self.status_bar.set_text("No variable selected")
+                return
+        except (IndexError, AttributeError):
+            self.status_bar.set_text("No variable selected")
+            return
+
+        # Get the widget at focus position
+        widget = self.variables_walker[focus_idx]
+        # Extract text from the widget
+        text = widget.get_text()[0] if hasattr(widget, 'get_text') else str(widget)
+
+        # Parse variable line format: "NAME$        = "value""
+        # or "A%           = Array(10x10) [5,3]=42"
+        parts = text.split('=', 1)
+        if len(parts) != 2:
+            self.status_bar.set_text("Cannot parse variable")
+            return
+
+        variable_name = parts[0].strip()
+        value_part = parts[1].strip()
+
+        # Determine variable type
+        type_suffix = variable_name[-1] if variable_name[-1] in '$%!#' else None
+
+        # Check if array
+        if 'Array' in value_part:
+            # Array variable - edit last accessed element
+            match = re.search(r'\[([^\]]+)\]=(.+)$', value_part)
+            if not match:
+                self.status_bar.set_text("No array element accessed yet - Press 'e' to edit")
+                return
+
+            subscripts_str = match.group(1)
+            value_str = match.group(2).strip().strip('"')
+
+            # Parse subscripts
+            try:
+                subscripts = [int(s.strip()) for s in subscripts_str.split(',')]
+            except ValueError:
+                self.status_bar.set_text("Invalid array subscripts")
+                return
+
+            # Get new value from user
+            prompt = f"{variable_name}({subscripts_str}) = "
+            new_value_str = self._get_input_dialog(prompt)
+
+            if not new_value_str:
+                return  # User cancelled
+
+            # Convert to appropriate type
+            try:
+                if type_suffix == '$':
+                    new_value = new_value_str
+                elif type_suffix == '%':
+                    new_value = int(new_value_str)
+                else:
+                    new_value = float(new_value_str)
+            except ValueError:
+                self.status_bar.set_text(f"Invalid value for type {type_suffix}")
+                return
+
+            # Update array element
+            try:
+                base_name = variable_name[:-1] if type_suffix else variable_name
+                self.interpreter.runtime.set_array_element(
+                    base_name,
+                    type_suffix,
+                    subscripts,
+                    new_value,
+                    token=None  # No tracking for debugger edits
+                )
+
+                self._update_variables_window()
+                self.status_bar.set_text(f"{variable_name}({subscripts_str}) = {new_value}")
+
+            except Exception as e:
+                self.status_bar.set_text(f"Error: {e}")
+
+        else:
+            # Simple variable
+            current_value = value_part.strip('"')
+
+            # Get new value from user
+            prompt = f"{variable_name} = "
+            new_value_str = self._get_input_dialog(prompt)
+
+            if not new_value_str:
+                return  # User cancelled
+
+            # Convert to appropriate type
+            try:
+                if type_suffix == '$':
+                    new_value = new_value_str
+                elif type_suffix == '%':
+                    new_value = int(new_value_str)
+                else:
+                    new_value = float(new_value_str)
+            except ValueError:
+                self.status_bar.set_text(f"Invalid value for type {type_suffix}")
+                return
+
+            # Update variable
+            try:
+                base_name = variable_name[:-1] if type_suffix else variable_name
+                self.interpreter.runtime.set_variable(
+                    base_name,
+                    type_suffix,
+                    new_value,
+                    debugger_set=True
+                )
+
+                self._update_variables_window()
+                self.status_bar.set_text(f"{variable_name} = {new_value}")
+
+            except Exception as e:
+                self.status_bar.set_text(f"Error: {e}")
 
     def _toggle_stack_window(self):
         """Toggle visibility of the execution stack window."""

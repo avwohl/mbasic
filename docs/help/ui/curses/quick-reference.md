@@ -62,6 +62,7 @@ Quick reference for the curses text UI.
 |-----|--------|
 | **s** | Cycle sort mode (Name → Accessed → Written → Read → Type → Value) |
 | **d** | Toggle sort direction (ascending ↑ / descending ↓) |
+| **e** or **Enter** | Edit selected variable value (simple variables and array elements) |
 
 **Sort Modes:**
 - **Name**: Alphabetically by variable name
