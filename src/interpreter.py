@@ -46,6 +46,8 @@ class InterpreterState:
     current_line: Optional[int] = None
     current_statement_index: int = 0
     line_index: int = 0  # Index into runtime.line_order
+    current_statement_char_start: int = 0  # Character position for statement highlighting
+    current_statement_char_end: int = 0    # Character position for statement highlighting
 
     # Input handling (THE CRITICAL STATE)
     input_prompt: Optional[str] = None
@@ -202,12 +204,16 @@ class Interpreter:
                 # Check if program is complete
                 if self.state.line_index >= len(self.runtime.line_order):
                     self.state.status = 'done'
+                    self.state.current_statement_char_start = 0
+                    self.state.current_statement_char_end = 0
                     self._restore_break_handler()
                     return self.state
 
                 # Check if halted
                 if self.runtime.halted:
                     self.state.status = 'done'
+                    self.state.current_statement_char_start = 0
+                    self.state.current_statement_char_end = 0
                     self._restore_break_handler()
                     return self.state
 
@@ -260,6 +266,10 @@ class Interpreter:
 
                     stmt = line_node.statements[self.runtime.current_stmt_index]
                     self.state.current_statement_index = self.runtime.current_stmt_index
+
+                    # Update statement position for highlighting (if available)
+                    self.state.current_statement_char_start = getattr(stmt, 'char_start', 0)
+                    self.state.current_statement_char_end = getattr(stmt, 'char_end', 0)
 
                     # Execute statement
                     try:
