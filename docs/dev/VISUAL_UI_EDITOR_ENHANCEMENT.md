@@ -171,7 +171,9 @@ while next_num in existing_lines or next_num >= max_allowed:
 
 **Status Legend**: ⬜ Not Started | 🟨 In Progress | ✅ Completed
 
-#### Phase 1: Tk UI Refactoring
+**Note**: Curses UI feature parity (variables window, debugger controls) is tracked in separate document: `CURSES_UI_FEATURE_PARITY.md`
+
+#### Phase 1: Tk UI Refactoring (Editor)
 - ⬜ 1.1 Remove line number display from column (keep status only)
 - ⬜ 1.2 Implement auto-sort on line change
 - ⬜ 1.3 Implement auto-numbering on Enter key
@@ -179,27 +181,29 @@ while next_num in existing_lines or next_num >= max_allowed:
 - ⬜ 1.5 Update LineNumberedText widget
 - ⬜ 1.6 Add event bindings for cursor movement tracking
 
-#### Phase 2: Web UI Refactoring
+#### Phase 2: Web UI Refactoring (Editor)
 - ⬜ 2.1 Remove line number gutter (keep status only)
 - ⬜ 2.2 Implement auto-sort on line change
 - ⬜ 2.3 Implement auto-numbering on Enter key
 - ⬜ 2.4 Add auto-scroll to sorted position
 - ⬜ 2.5 Add JavaScript event handlers
 
-#### Phase 3: Testing
+#### Phase 3: Testing (All UIs)
 - ⬜ 3.1 Test Tk UI line editing workflow
 - ⬜ 3.2 Test Web UI line editing workflow
 - ⬜ 3.3 Test auto-numbering in both UIs
 - ⬜ 3.4 Test auto-sort in both UIs
 - ⬜ 3.5 Test line number copying
 - ⬜ 3.6 Performance test with 1000+ line programs
-- ⬜ 3.7 Comparison test against curses UI
+- ⬜ 3.7 Comparison test against curses UI (reference implementation)
 
 #### Phase 4: Documentation
 - ⬜ 4.1 Update Tk UI help documentation
 - ⬜ 4.2 Update Web UI help documentation
 - ⬜ 4.3 Add screenshots showing new behavior
 - ⬜ 4.4 Update user guide
+
+**See also**: `CURSES_UI_FEATURE_PARITY.md` for curses-specific enhancements (variables window sorting, array cell display, step commands)
 
 ### Phase 1: Tk UI Refactoring
 
