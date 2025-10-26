@@ -12,7 +12,7 @@ from .keybindings import (
     VARIABLES_KEY, STACK_KEY, RUN_KEY, LIST_KEY, NEW_KEY, SAVE_KEY, OPEN_KEY,
     BREAKPOINT_KEY, CLEAR_BREAKPOINTS_KEY, CLEAR_BREAKPOINTS_DISPLAY,
     DELETE_LINE_KEY, RENUMBER_KEY,
-    CONTINUE_KEY, STEP_KEY, STOP_KEY, TAB_KEY,
+    CONTINUE_KEY, STEP_KEY, STEP_LINE_KEY, STOP_KEY, TAB_KEY,
     STATUS_BAR_SHORTCUTS, EDITOR_STATUS, OUTPUT_STATUS,
     KEYBINDINGS_BY_CATEGORY
 )
@@ -1582,8 +1582,12 @@ class CursesBackend(UIBackend):
             self._debug_continue()
 
         elif key == STEP_KEY:
-            # Step - execute one line
+            # Step Statement - execute one statement
             self._debug_step()
+
+        elif key == STEP_LINE_KEY:
+            # Step Line - execute all statements on line
+            self._debug_step_line()
 
         elif key == STOP_KEY:
             # Stop execution
@@ -1677,6 +1681,69 @@ class CursesBackend(UIBackend):
             self.output_buffer.append(traceback.format_exc())
             self._update_output()
             self.status_bar.set_text(f"Step error: {e}")
+
+    def _debug_step_line(self):
+        """Execute all statements on current line and pause (step by line)."""
+        if not self.interpreter:
+            self.status_bar.set_text("No program running")
+            return
+
+        try:
+            state = self.interpreter.get_state()
+            if state.status in ('paused', 'at_breakpoint', 'running'):
+                # Execute all statements on line
+                self.status_bar.set_text("Stepping line...")
+                state = self.interpreter.tick(mode='step_line', max_statements=100)
+
+                # Collect any output
+                new_output = self.io_handler.get_and_clear_output()
+                if new_output:
+                    self.output_buffer.extend(new_output)
+                    self._update_output()
+
+                # Update editor display
+                if state.status in ('paused', 'at_breakpoint') and state.current_line:
+                    self.editor._update_display(
+                        highlight_line=state.current_line,
+                        highlight_stmt=0,  # Highlight whole line, not specific statement
+                        line_table=self.runtime.line_table if self.runtime else None
+                    )
+
+                    # Update variables window if visible
+                    if self.watch_window_visible:
+                        self._update_variables_window()
+
+                    # Update stack window if visible
+                    if self.stack_window_visible:
+                        self._update_stack_window()
+
+                    # Show where we paused
+                    self.output_buffer.append(f"→ Paused at line {state.current_line}")
+                    self._update_output()
+                    self.status_bar.set_text(f"Paused at line {state.current_line} - Ctrl+L=Step Line, Ctrl+T=Step Stmt, Ctrl+G=Continue")
+                    self._update_immediate_status()
+                elif state.status == 'done':
+                    self.editor._update_display()
+                    self.output_buffer.append("Program completed")
+                    self._update_output()
+                    self.status_bar.set_text("Program completed")
+                    self._update_immediate_status()
+                elif state.status == 'error':
+                    self.editor._update_display()
+                    error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                    line_num = state.error_info.error_line if state.error_info else "?"
+                    self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
+                    self._update_output()
+                    self.status_bar.set_text("Error during step")
+                    self._update_immediate_status()
+            else:
+                self.status_bar.set_text(f"Cannot step (status: {state.status})")
+        except Exception as e:
+            import traceback
+            self.output_buffer.append(f"Step line error: {e}")
+            self.output_buffer.append(traceback.format_exc())
+            self._update_output()
+            self.status_bar.set_text(f"Step line error: {e}")
 
     def _debug_stop(self):
         """Stop program execution."""

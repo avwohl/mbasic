@@ -164,6 +164,11 @@ STEP_KEY = _ctrl_key_to_urwid(_step_key)
 STEP_CHAR = _ctrl_key_to_char(_step_key)
 STEP_DISPLAY = _step_key
 
+# Step Line (execute all statements on line) (not in JSON, hardcoded)
+STEP_LINE_KEY = 'ctrl l'
+STEP_LINE_CHAR = '\x0c'
+STEP_LINE_DISPLAY = 'Ctrl+L'
+
 # Stop execution (eXit) (not in JSON, hardcoded)
 STOP_KEY = 'ctrl x'
 STOP_CHAR = '\x18'
