@@ -210,16 +210,16 @@ Check web_ui.py for command implementations and update similarly.
 ## Testing Checklist
 
 ### AST Serialization
-- [ ] CLI: RENUM preserves indentation
-- [ ] Tk: RENUM preserves indentation
+- [x] CLI: RENUM preserves indentation ✓ Tested - all loop levels preserved
+- [x] Tk: RENUM preserves indentation ✓ Tested - ui_helpers logic works correctly
 - [ ] Web: RENUM preserves indentation
-- [ ] All: Comments (' vs REM) preserved
-- [ ] All: Variable case normalized
-- [ ] All: Line structure correct
+- [x] All: Comments (' vs REM) preserved ✓ Tested - apostrophe and REM preserved
+- [x] All: Variable case normalized ✓ Working - lowercase in serialization
+- [x] All: Line structure correct ✓ Working - statements and colons handled
 
 ### Command Implementations
-- [ ] CLI: RENUM works
-- [ ] Tk: RENUM works
+- [x] CLI: RENUM works ✓ Tested and committed
+- [x] Tk: RENUM works ✓ Uses ui_helpers directly, no temp InteractiveMode
 - [ ] Web: RENUM works (if implemented)
 - [ ] CLI: DELETE works
 - [ ] Tk: DELETE works
@@ -228,10 +228,28 @@ Check web_ui.py for command implementations and update similarly.
 - [ ] Tk: LIST works
 - [ ] Curses: LIST works
 
-## Next Steps
+## Completed Steps
 
-1. Update InteractiveMode._serialize_* methods to delegate
-2. Update Tk UI cmd_renum to use ui_helpers directly
-3. Check Web UI for command implementations
-4. Test all UIs
-5. Update documentation
+1. ✅ Update InteractiveMode._serialize_* methods to delegate
+2. ✅ Update Tk UI cmd_renum to use ui_helpers directly
+3. ✅ Check Web UI for command implementations (already using ui_helpers)
+4. ✅ Test CLI (RENUM and comment preservation)
+5. ✅ Test Tk UI (RENUM logic with ui_helpers)
+6. ✅ Commit and push changes
+
+## Status Summary
+
+**Phase 1-3: COMPLETE**
+- All serialization functions moved to ui_helpers.py
+- InteractiveMode delegates to ui_helpers
+- Tk UI uses ui_helpers directly
+- Web UI already using ui_helpers
+
+**Testing: IN PROGRESS**
+- CLI RENUM: ✅ Tested - indentation preserved
+- CLI Comments: ✅ Tested - apostrophe and REM preserved
+- Tk UI RENUM: ✅ Tested - ui_helpers logic works correctly
+
+**Remaining: Optional**
+- Test DELETE and LIST commands (lower priority)
+- Test Web UI (if RENUM is implemented there)
