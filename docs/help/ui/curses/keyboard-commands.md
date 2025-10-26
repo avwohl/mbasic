@@ -29,10 +29,46 @@ All keyboard shortcuts for the curses text interface.
 | **Ctrl+S** | Save program (prompts for filename) |
 | **Ctrl+O** | Load program (prompts for filename) |
 | **Ctrl+N** | New program (clear all lines) |
+| **Ctrl+E** | Renumber program lines (RENUM command) |
 | **ESC** | Clear error message, return to Ready |
 | **Q** | Quit the IDE |
 
 **Note:** No function keys required! All commands use Ctrl or regular keys.
+
+## Debugging Commands
+
+| Key | Action |
+|-----|--------|
+| **b** | Toggle breakpoint on current line (shows ● indicator) |
+| **Ctrl+T** | Step (execute one statement, then pause) |
+| **Ctrl+G** | Continue (run to next breakpoint or end) |
+| **Ctrl+Q** | Stop execution |
+| **Ctrl+V** | Open variables window (during execution) |
+| **Ctrl+K** | Open execution stack window (during execution) |
+
+### Line Indicators
+
+Lines in the editor show status with indicators:
+
+| Indicator | Meaning |
+|-----------|---------|
+| **?** | Parse error (syntax error in line) |
+| **●** | Breakpoint set on this line |
+| **(space)** | Normal line |
+
+**Priority:** Error (?) > Breakpoint (●) > Normal
+
+### Statement Highlighting
+
+When stepping through code, the status bar shows which statement is executing:
+- Single-statement line: `Line 100`
+- Multi-statement line: `Line 100 statement 2`
+
+Multi-statement lines use `:` to separate statements:
+```basic
+100 A = 1 : B = 2 : C = 3
+```
+Use **Ctrl+T** to step through each statement individually.
 
 ## Editing Commands
 
