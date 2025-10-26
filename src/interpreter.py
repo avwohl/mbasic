@@ -237,6 +237,13 @@ class Interpreter:
                 # Check for breakpoint (skip in step modes - we're intentionally stepping through)
                 if mode == 'run' and line_number in self.state.breakpoints:
                     self.state.status = 'at_breakpoint'
+                    # Set char positions to show what we're ABOUT to execute
+                    self.runtime.current_stmt_index = 0
+                    self.state.current_statement_index = 0
+                    if len(line_node.statements) > 0:
+                        first_stmt = line_node.statements[0]
+                        self.state.current_statement_char_start = getattr(first_stmt, 'char_start', 0)
+                        self.state.current_statement_char_end = getattr(first_stmt, 'char_end', 0)
                     return self.state
 
                 # Print trace if enabled
@@ -337,6 +344,27 @@ class Interpreter:
                                 # Move to next line
                                 self.state.line_index += 1
 
+                            # Reset statement index for the new line
+                            self.runtime.current_stmt_index = 0
+                            self.state.current_statement_index = 0
+
+                            # Update state to point to NEXT statement we're about to execute
+                            if self.state.line_index < len(self.runtime.line_order):
+                                next_line_number = self.runtime.line_order[self.state.line_index]
+                                next_line_node = self.runtime.line_table[next_line_number]
+                                self.state.current_line = next_line_number
+                                self.runtime.current_line = next_line_node
+                                if len(next_line_node.statements) > 0:
+                                    next_stmt = next_line_node.statements[0]
+                                    self.state.current_statement_char_start = getattr(next_stmt, 'char_start', 0)
+                                    self.state.current_statement_char_end = getattr(next_stmt, 'char_end', 0)
+                        else:
+                            # More statements on this line - update to show NEXT statement
+                            next_stmt = line_node.statements[self.runtime.current_stmt_index]
+                            self.state.current_statement_char_start = getattr(next_stmt, 'char_start', 0)
+                            self.state.current_statement_char_end = getattr(next_stmt, 'char_end', 0)
+                            self.state.current_statement_index = self.runtime.current_stmt_index
+
                         self.state.status = 'paused'
                         return self.state
 
@@ -361,6 +389,18 @@ class Interpreter:
 
                 # Handle step_line mode
                 if mode == 'step_line':
+                    # Update state to point to NEXT line we're about to execute
+                    self.runtime.current_stmt_index = 0
+                    self.state.current_statement_index = 0
+                    if self.state.line_index < len(self.runtime.line_order):
+                        next_line_number = self.runtime.line_order[self.state.line_index]
+                        next_line_node = self.runtime.line_table[next_line_number]
+                        self.state.current_line = next_line_number
+                        self.runtime.current_line = next_line_node
+                        if len(next_line_node.statements) > 0:
+                            next_stmt = next_line_node.statements[0]
+                            self.state.current_statement_char_start = getattr(next_stmt, 'char_start', 0)
+                            self.state.current_statement_char_end = getattr(next_stmt, 'char_end', 0)
                     self.state.status = 'paused'
                     return self.state
 

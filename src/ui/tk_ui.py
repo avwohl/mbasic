@@ -575,14 +575,14 @@ class TkBackend(UIBackend):
         self.resource_label.pack(fill=tk.X, padx=5, pady=5)
 
         # Create Treeview
-        tree = ttk.Treeview(self.variables_window, columns=('Type', 'Value'), show='tree headings')
+        tree = ttk.Treeview(self.variables_window, columns=('Value', 'Type'), show='tree headings')
         # Set initial heading text with arrows
         tree.heading('#0', text='↓ Variable (Last Accessed)')
-        tree.heading('Type', text='  Type')
         tree.heading('Value', text='  Value')
+        tree.heading('Type', text='  Type')
         tree.column('#0', width=180)
-        tree.column('Type', width=80)
         tree.column('Value', width=140)
+        tree.column('Type', width=80)
         tree.pack(fill=tk.BOTH, expand=True)
 
         # Bind click handler for heading clicks
@@ -636,10 +636,10 @@ class TkBackend(UIBackend):
         # to determine if we're clicking the arrow or the text
         if column == '#0':  # Tree column (Variable)
             col_x = event.x
-        elif column == '#1':  # Type column
+        elif column == '#1':  # Value column (swapped to be first)
             col_x = event.x - self.variables_tree.column('#0', 'width')
-        elif column == '#2':  # Value column
-            col_x = event.x - self.variables_tree.column('#0', 'width') - self.variables_tree.column('Type', 'width')
+        elif column == '#2':  # Type column (swapped to be second)
+            col_x = event.x - self.variables_tree.column('#0', 'width') - self.variables_tree.column('Value', 'width')
         else:
             return
 
@@ -651,10 +651,10 @@ class TkBackend(UIBackend):
         else:
             if column == '#0':  # Variable column
                 self._cycle_variable_sort()
-            elif column == '#1':  # Type column
-                self._sort_variables_by('type')
-            elif column == '#2':  # Value column
+            elif column == '#1':  # Value column (swapped)
                 self._sort_variables_by('value')
+            elif column == '#2':  # Type column (swapped)
+                self._sort_variables_by('type')
 
     def _on_variable_double_click(self, event):
         """Handle double-click on variable to edit its value."""
@@ -677,8 +677,8 @@ class TkBackend(UIBackend):
 
         # Extract variable info from display
         variable_display = item_data['text']  # From #0 column (Variable)
-        type_suffix_display = item_data['values'][0]  # Type column
-        value_display = item_data['values'][1]  # Value column
+        value_display = item_data['values'][0]  # Value column (swapped to first)
+        type_suffix_display = item_data['values'][1]  # Type column (swapped to second)
 
         # Parse variable name and type
         # Format examples: "A%", "NAME$", "X", "A%(10x10) [5,3]=42"
@@ -923,16 +923,16 @@ class TkBackend(UIBackend):
             }
             var_text = f'{arrow} Variable ({sort_labels[self.variables_sort_column]})'
             self.variables_tree.heading('#0', text=var_text)
-            self.variables_tree.heading('Type', text='  Type')
             self.variables_tree.heading('Value', text='  Value')
+            self.variables_tree.heading('Type', text='  Type')
         elif self.variables_sort_column == 'type':
             self.variables_tree.heading('#0', text='  Variable')
-            self.variables_tree.heading('Type', text=f'{arrow} Type')
             self.variables_tree.heading('Value', text='  Value')
+            self.variables_tree.heading('Type', text=f'{arrow} Type')
         elif self.variables_sort_column == 'value':
             self.variables_tree.heading('#0', text='  Variable')
-            self.variables_tree.heading('Type', text='  Type')
             self.variables_tree.heading('Value', text=f'{arrow} Value')
+            self.variables_tree.heading('Type', text='  Type')
 
     def _update_variables(self):
         """Update variables window from runtime."""
@@ -1046,7 +1046,7 @@ class TkBackend(UIBackend):
                     value = f'"{value}"'
 
             self.variables_tree.insert('', 'end', text=name,
-                                      values=(type_name, value))
+                                      values=(value, type_name))
 
     def _create_stack_window(self):
         """Create execution stack window (Toplevel)."""
