@@ -1361,10 +1361,29 @@ class TkBackend(UIBackend):
                     next_num = current_line_num + 1
                     break
 
-        # Insert new line with auto-generated number
-        # Format: right-aligned 5 digits + space
-        new_line_text = f'\n{next_num:>5} '
-        self.editor_text.text.insert(tk.INSERT, new_line_text)
+        # Save current line to program first (so it's included in sort)
+        self._save_editor_to_program()
+
+        # Refresh editor to sort lines by number
+        self._refresh_editor()
+
+        # Now calculate next line number based on ALL lines including the one we just saved
+        all_nums = set(self.program.get_all_line_numbers())
+
+        # Calculate next number using standard increment
+        next_num = current_line_num + self.auto_number_increment
+
+        # If that conflicts with existing line, keep incrementing
+        while next_num in all_nums:
+            next_num += self.auto_number_increment
+
+        # Insert new line with auto-generated number (no leading spaces!)
+        new_line_text = f'\n{next_num} '
+        self.editor_text.text.insert(tk.END, new_line_text)
+
+        # Move cursor to the new line
+        self.editor_text.text.mark_set(tk.INSERT, tk.END)
+        self.editor_text.text.see(tk.END)
 
         return 'break'  # Prevent default Enter behavior
 
