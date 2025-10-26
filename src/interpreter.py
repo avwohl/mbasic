@@ -313,8 +313,30 @@ class Interpreter:
 
                     self.runtime.current_stmt_index += 1
 
-                    # Handle step modes
+                    # Handle step_statement mode
                     if mode == 'step_statement':
+                        # Check if we've finished all statements on this line
+                        if self.runtime.current_stmt_index >= len(line_node.statements):
+                            # All statements on this line are done, advance to next line
+                            if self.runtime.next_line is not None:
+                                # Handle jump
+                                target_line = self.runtime.next_line
+                                self.runtime.next_line = None
+                                try:
+                                    self.state.line_index = self.runtime.line_order.index(target_line)
+                                except ValueError:
+                                    self.state.status = 'error'
+                                    self.state.error_info = ErrorInfo(
+                                        error_code=8,  # Undefined line number
+                                        error_line=line_number,
+                                        error_message=f"Undefined line number: {target_line}"
+                                    )
+                                    self._restore_break_handler()
+                                    raise RuntimeError(f"Undefined line number: {target_line}")
+                            else:
+                                # Move to next line
+                                self.state.line_index += 1
+
                         self.state.status = 'paused'
                         return self.state
 
