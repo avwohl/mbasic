@@ -1324,10 +1324,16 @@ class TkBackend(UIBackend):
         # Parse line number from current line
         match = re.match(r'^\s*(\d+)', current_line_text)
         if not match:
-            # No line number on current line - use default start
-            next_num = self.auto_number_start
+            # No line number on current line - allow default behavior
+            return None
         else:
             current_line_num = int(match.group(1))
+
+            # Check if current line has content after the line number
+            content_match = re.match(r'^\s*\d+\s+(.+)', current_line_text)
+            if not content_match or not content_match.group(1).strip():
+                # Current line is blank (just a number) - don't create another blank line
+                return None
 
             # Calculate next number
             next_num = current_line_num + self.auto_number_increment
@@ -1405,8 +1411,21 @@ class TkBackend(UIBackend):
         old_line_num = int(old_match.group(1)) if old_match else None
         new_line_num = int(new_match.group(1)) if new_match else None
 
-        # If line number changed, trigger sort
-        if old_line_num != new_line_num and new_line_num is not None:
+        # Trigger sort if:
+        # 1. Line number changed on existing line, OR
+        # 2. New line number was added (old was None, new is not None), OR
+        # 3. Line number was removed (old was not None, new is None and line has content)
+        should_sort = False
+
+        if old_line_num != new_line_num:
+            if new_line_num is not None:
+                # Line number changed or new line number added
+                should_sort = True
+            elif old_line_num is not None and current_text.strip():
+                # Line number was removed but line has content
+                should_sort = True
+
+        if should_sort:
             # Save editor to program (which parses all lines)
             self._save_editor_to_program()
 
