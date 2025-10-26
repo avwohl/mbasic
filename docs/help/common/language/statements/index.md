@@ -179,13 +179,13 @@ All BASIC-80 commands and statements are described in this reference.
 - [POKE](poke.md) - Write to memory
 - [WAIT](wait.md) - Wait for port
 
-### Program Editing (CLI Only)
+### Program Editing
 - [AUTO](auto.md) - Automatic line numbering
-- [DELETE](delete.md) - Delete lines
-- [EDIT](edit.md) - Edit line
-- [LIST](list.md) - List program
-- [LLIST](llist.md) - List to printer
-- [RENUM](renum.md) - Renumber lines
+- [DELETE](delete.md) - Delete program lines
+- [EDIT](edit.md) - Edit program line (CLI line editor)
+- [LIST](list.md) - List program lines
+- [LLIST](llist.md) - List program to printer
+- [RENUM](renum.md) - Renumber program lines
 
 ### System
 - [NULL](null.md) - Set null character count
