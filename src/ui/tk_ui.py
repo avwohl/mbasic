@@ -10,6 +10,7 @@ from runtime import Runtime
 from interpreter import Interpreter
 from .keybinding_loader import KeybindingLoader
 from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
+from iohandler.base import IOHandler
 
 
 class TkBackend(UIBackend):
@@ -688,9 +689,7 @@ class TkBackend(UIBackend):
             # Execute one quantum of work
             state = self.interpreter.tick(mode='run', max_statements=100)
 
-            # Collect any output from io_handler
-            # Note: For Tk, we should use a capturing IOHandler
-            # For now, output goes to console
+            # Output is routed to output pane via TkIOHandler
 
             # Handle different states
             if state.status == 'done':
@@ -747,7 +746,10 @@ class TkBackend(UIBackend):
             # Create runtime and interpreter with local limits
             from resource_limits import create_local_limits
             self.runtime = Runtime(self.program.line_asts, self.program.lines)
-            self.interpreter = Interpreter(self.runtime, self.io, limits=create_local_limits())
+
+            # Create Tk-specific IOHandler that outputs to output pane
+            tk_io = TkIOHandler(self._add_output)
+            self.interpreter = Interpreter(self.runtime, tk_io, limits=create_local_limits())
 
             # Start tick-based execution
             state = self.interpreter.start()
@@ -902,3 +904,57 @@ class TkBackend(UIBackend):
         self.immediate_history.insert(tk.END, text)
         self.immediate_history.see(tk.END)
         self.immediate_history.config(state=tk.DISABLED)
+
+
+class TkIOHandler(IOHandler):
+    """IOHandler that routes output to Tk output pane.
+    
+    This handler captures program output and sends it to the Tk UI's
+    output text widget via a callback function.
+    """
+    
+    def __init__(self, output_callback):
+        """Initialize Tk IOHandler.
+        
+        Args:
+            output_callback: Function to call with output text (str) -> None
+        """
+        self.output_callback = output_callback
+        self.input_callback = None  # Will be set when INPUT is needed
+        
+    def output(self, text: str, end: str = '\n') -> None:
+        """Output text to Tk output pane."""
+        full_text = text + end
+        if self.output_callback:
+            self.output_callback(full_text)
+    
+    def input(self, prompt: str = '') -> str:
+        """Input from user via dialog."""
+        # TODO: Implement input dialog
+        raise RuntimeError("INPUT not yet implemented in Tk UI")
+    
+    def input_line(self, prompt: str = '') -> str:
+        """Input complete line from user via dialog."""
+        # TODO: Implement input dialog
+        raise RuntimeError("LINE INPUT not yet implemented in Tk UI")
+    
+    def input_char(self, blocking: bool = True) -> str:
+        """Input single character."""
+        # TODO: Implement character input
+        if not blocking:
+            return ""  # Non-blocking: no key available
+        raise RuntimeError("INPUT$ not yet implemented in Tk UI")
+    
+    def clear_screen(self) -> None:
+        """Clear screen - no-op for Tk UI."""
+        pass
+    
+    def error(self, message: str) -> None:
+        """Output error message."""
+        if self.output_callback:
+            self.output_callback(f"ERROR: {message}\n")
+    
+    def debug(self, message: str) -> None:
+        """Output debug message."""
+        if self.output_callback:
+            self.output_callback(f"DEBUG: {message}\n")

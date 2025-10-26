@@ -26,10 +26,9 @@
       "description": "Quit application"
     },
     "run_program": {
-      "keys": ["F5"],
-      "primary": "F5",
-      "description": "Run program",
-      "note": "Exception to no-function-keys rule: F5 is standard IDE convention"
+      "keys": ["Ctrl+R"],
+      "primary": "Ctrl+R",
+      "description": "Run program"
     },
     "help_topics": {
       "keys": ["Ctrl+?", "Ctrl+/"],
