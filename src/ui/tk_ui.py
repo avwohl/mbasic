@@ -1945,42 +1945,90 @@ class TkBackend(UIBackend):
             self._write_output(f"?Error during delete: {e}")
 
     def cmd_renum(self, args: str) -> None:
-        """Execute RENUM command - renumber lines using ui_helpers."""
-        from ui.ui_helpers import parse_renum_args, renumber_program_lines
+        """Execute RENUM command - renumber lines using AST serialization.
 
+        Uses AST-based approach:
+        1. Build line number mapping (old -> new)
+        2. Walk AST and update all line number references
+        3. Serialize AST back to source
+        4. Refresh editor display
+
+        This ensures AST is the single source of truth.
+        """
         # Parse arguments
-        new_start, old_start, increment = parse_renum_args(args)
+        new_start = 10
+        old_start = 0
+        increment = 10
+
+        if args:
+            parts = args.split(',')
+            if parts[0]:
+                new_start = int(parts[0])
+            if len(parts) > 1 and parts[1]:
+                old_start = int(parts[1])
+            if len(parts) > 2 and parts[2]:
+                increment = int(parts[2])
 
         # Get current program lines
-        if not self.program.lines:
-            self._write_output("No program to renumber")
+        if not self.program.line_asts:
+            self._add_output("No program to renumber\n")
             return
 
         try:
-            # Use shared renumber logic
-            new_lines, line_mapping = renumber_program_lines(
-                self.program.lines, new_start, old_start, increment
-            )
+            # Import serialization from interactive module
+            from interactive import InteractiveMode
 
-            # Update program by reparsing all renumbered lines
-            # This ensures ASTs are correctly updated
-            self.program.lines.clear()
-            self.program.line_asts.clear()
+            # Build mapping from old line numbers to new line numbers
+            old_lines = sorted(self.program.line_asts.keys())
+            line_map = {}
 
-            for line_num, line_text in sorted(new_lines.items()):
-                success, error = self.program.add_line(line_num, line_text)
-                if not success:
-                    self._write_output(f"Warning: Error parsing line {line_num}: {error}")
+            # Lines before old_start stay the same
+            for old_num in old_lines:
+                if old_num < old_start:
+                    line_map[old_num] = old_num
+
+            # Lines from old_start onwards get renumbered
+            new_num = new_start
+            for old_num in old_lines:
+                if old_num >= old_start:
+                    line_map[old_num] = new_num
+                    new_num += increment
+
+            # Walk each line AST and update line number references
+            # Create a temporary InteractiveMode just to access _renum_statement
+            temp_mode = InteractiveMode()
+            for line_node in self.program.line_asts.values():
+                # Update line number references in statements
+                for stmt in line_node.statements:
+                    temp_mode._renum_statement(stmt, line_map)
+                # Update the line's own number
+                old_line_num = line_node.line_number
+                line_node.line_number = line_map[old_line_num]
+
+            # Rebuild line_asts dict with new line numbers
+            new_line_asts = {}
+            new_lines = {}
+            for old_num in old_lines:
+                new_num = line_map[old_num]
+                line_node = self.program.line_asts[old_num]
+                new_line_asts[new_num] = line_node
+                new_lines[new_num] = temp_mode._serialize_line(line_node)
+
+            # Update the program object
+            self.program.line_asts = new_line_asts
+            self.program.lines = new_lines
 
             # Refresh the editor display
             self._refresh_editor()
 
             # Calculate range for message
             final_num = max(new_lines.keys()) if new_lines else new_start
-            self._write_output(f"Renumbered ({new_start} to {final_num})")
+            self._add_output(f"Renumbered ({new_start} to {final_num})\n")
 
         except Exception as e:
-            self._write_output(f"Error during renumber: {e}")
+            import traceback
+            self._add_output(f"Error during renumber: {e}\n")
+            self._add_output(traceback.format_exc())
 
     def cmd_cont(self) -> None:
         """Execute CONT command - continue after STOP.
