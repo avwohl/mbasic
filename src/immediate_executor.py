@@ -144,10 +144,33 @@ class ImmediateExecutor:
             return self._show_help()
 
         # Special case: Numbered line - this is a program edit, not immediate execution
-        # Check if statement starts with a line number
+        # In real MBASIC, typing a numbered line in immediate mode adds/edits that line
         import re
-        if re.match(r'^\d+\s', statement):
-            return (False, "Use the Program Editor to add/edit numbered lines\n")
+        line_match = re.match(r'^(\d+)\s*(.*)$', statement)
+        if line_match:
+            line_num = int(line_match.group(1))
+            line_content = line_match.group(2).strip()
+
+            # Add or update the line in the program
+            # This should update the UI's program manager
+            if hasattr(self.interpreter, 'interactive_mode') and self.interpreter.interactive_mode:
+                # Call the UI's method to add/edit a line
+                ui = self.interpreter.interactive_mode
+                if hasattr(ui, 'program') and ui.program:
+                    if line_content:
+                        # Add/update line
+                        ui.program.add_or_update_line(line_num, line_content)
+                    else:
+                        # Delete line (numbered line with no content)
+                        ui.program.delete_line(line_num)
+
+                    # Refresh the editor display
+                    if hasattr(ui, '_refresh_editor'):
+                        ui._refresh_editor()
+
+                    return (True, "")
+
+            return (False, "Cannot edit program lines in this mode\n")
 
         # Build a minimal program with line 0
         program_text = "0 " + statement
