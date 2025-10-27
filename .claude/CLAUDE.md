@@ -4,6 +4,34 @@
 - Always commit and push changes when you stop to talk to me
 - Track all installed dependencies and update documentation
 
+## TODO Tracking Rules
+
+**CRITICAL: When you agree to implement a feature or add something to a todo list, it MUST be documented in a file with "TODO" in the filename.**
+
+- **Why**: User searches for files with "TODO" in the name to resume work
+- **Where**: Create files in `docs/dev/` with pattern `*_TODO.md`
+- **When to create**:
+  - User requests a new feature for future implementation
+  - You agree to add something to a todo list
+  - Planning multi-step work that won't be completed immediately
+- **What to include**:
+  - Clear description of what needs to be done
+  - Implementation details and approaches
+  - Priority level (HIGH/MEDIUM/LOW)
+  - Status section (⏳ TODO at top of file)
+  - Test cases and acceptance criteria
+- **When complete**: Move file to `docs/history/` and rename TODO → DONE
+  - Example: `ARRAY_ELEMENT_SELECTOR_TODO.md` → `history/ARRAY_ELEMENT_SELECTOR_DONE.md`
+
+**Examples**:
+- User: "Can you add a way to edit array elements by typing indices?"
+- Claude: "Yes! Let me document that." → Creates `docs/dev/ARRAY_ELEMENT_SELECTOR_TODO.md`
+
+**Don't create TODO files for**:
+- Tasks you're implementing immediately in the same session
+- Simple bug fixes being done right now
+- Questions or discussions without actionable work
+
 ## Debugging
 
 ### Debug Mode
