@@ -1163,7 +1163,9 @@ def serialize_variable(var):
         'x$'
     """
     text = var.name
-    if var.type_suffix:
+    # Only add type suffix if it was explicit in the original source
+    # Don't add suffixes that were inferred from DEF statements
+    if var.type_suffix and getattr(var, 'explicit_type_suffix', False):
         text += var.type_suffix
     if var.subscripts:
         subs = ','.join(serialize_expression(sub) for sub in var.subscripts)

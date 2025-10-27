@@ -868,8 +868,10 @@ class Parser:
 
         # Extract type suffix and strip it from name
         type_suffix = self.get_type_suffix(name)
+        explicit_type_suffix = False
         if type_suffix:
             name = name[:-1]  # Remove the suffix character from the name
+            explicit_type_suffix = True  # Suffix was in the original source
         else:
             # No explicit suffix - check DEF type map
             first_letter = name[0].lower()
@@ -885,6 +887,7 @@ class Parser:
                 elif var_type == TypeInfo.SINGLE:
                     type_suffix = '!'
                 # Note: We don't modify name here, just set type_suffix
+                # explicit_type_suffix remains False (inferred from DEF)
 
         # Check for array subscripts or function arguments
         if self.match(TokenType.LPAREN):
@@ -918,6 +921,7 @@ class Parser:
                     name=name,
                     type_suffix=type_suffix,
                     subscripts=args,
+                    explicit_type_suffix=explicit_type_suffix,
                     line_num=token.line,
                     column=token.column
                 )
@@ -938,6 +942,7 @@ class Parser:
                     name=name,
                     type_suffix=type_suffix,
                     subscripts=None,
+                    explicit_type_suffix=explicit_type_suffix,
                     line_num=token.line,
                     column=token.column
                 )
