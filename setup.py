@@ -12,14 +12,14 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="mbasic-interpreter",
-    version="0.65.0",  # Reflects ~65% implementation status
-    description="An interpreter for MBASIC 5.21 (Microsoft BASIC-80 for CP/M) - Core features complete, file I/O in progress",
+    version="0.99.0",  # Reflects ~99% implementation status (core complete)
+    description="An interpreter for MBASIC 5.21 (Microsoft BASIC-80 for CP/M) - Full implementation complete",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    author="Your Name",  # TODO: Update with your information
-    author_email="your.email@example.com",  # TODO: Update with your information
+    author="Aaron Wohl",
+    author_email="wohl@awohl.com",
     url="https://github.com/avwohl/mbasic",
-    license="MIT",  # TODO: Update if you choose a different license
+    license="MIT",
 
     packages=find_packages(exclude=["tests", "basic", "doc", "utils", "bin"]),
 
@@ -52,7 +52,7 @@ setup(
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
-        "License :: OSI Approved :: MIT License",  # TODO: Update if different
+        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",

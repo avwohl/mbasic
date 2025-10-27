@@ -246,6 +246,60 @@ class HelpWidget(urwid.WidgetWrap):
         self.footer.set_text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
         self._load_topic(self.current_topic)
 
+    def _create_text_markup_with_links(self, lines: List[str]) -> List:
+        """
+        Convert plain text lines to urwid markup with link highlighting.
+
+        Links are marked with [text] in the rendered output. This method
+        converts them to use the 'link' attribute for highlighting.
+
+        Args:
+            lines: List of plain text lines with links marked as [text]
+
+        Returns:
+            Urwid text markup (list of tuples or strings)
+        """
+        import re
+
+        markup = []
+
+        for line in lines:
+            # Find all [text] patterns (links)
+            link_pattern = r'\[([^\]]+)\]'
+
+            # Split the line by links and build markup
+            last_end = 0
+            line_markup = []
+
+            for match in re.finditer(link_pattern, line):
+                # Add text before the link
+                if match.start() > last_end:
+                    line_markup.append(line[last_end:match.start()])
+
+                # Add the link with 'link' attribute
+                link_text = match.group(0)  # Keep the brackets
+                line_markup.append(('link', link_text))
+
+                last_end = match.end()
+
+            # Add remaining text after last link
+            if last_end < len(line):
+                line_markup.append(line[last_end:])
+
+            # If line has no links, just add it as plain text
+            if not line_markup:
+                line_markup = [line]
+
+            # Add newline after each line (except the last)
+            markup.extend(line_markup)
+            markup.append('\n')
+
+        # Remove trailing newline
+        if markup and markup[-1] == '\n':
+            markup.pop()
+
+        return markup
+
     def _load_topic(self, relative_path: str) -> bool:
         """Load and render a help topic."""
         full_path = self.help_root / relative_path
@@ -268,9 +322,8 @@ class HelpWidget(urwid.WidgetWrap):
 
             lines, links = self.renderer.render(markdown)
 
-            # Create text markup - just use plain text for now
-            # TODO: Add link highlighting with urwid markup
-            text_markup = '\n'.join(lines)
+            # Create text markup with link highlighting
+            text_markup = self._create_text_markup_with_links(lines)
 
             # Set the content
             self.text_widget.set_text(text_markup)

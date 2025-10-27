@@ -1502,6 +1502,8 @@ class CursesBackend(UIBackend):
             # Immediate mode status indicators
             ('immediate_ok', 'light green,bold', 'black'),
             ('immediate_disabled', 'light red,bold', 'black'),
+            # Help system link highlighting
+            ('link', 'light cyan,bold', 'black'),
         ]
 
     def _handle_input(self, key):
