@@ -212,8 +212,9 @@ class TkBackend(UIBackend):
         self._setup_immediate_context_menu()
 
         # Immediate mode input
-        input_frame = ttk.Frame(immediate_frame)
+        input_frame = ttk.Frame(immediate_frame, height=40)
         input_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
+        input_frame.pack_propagate(False)  # Force frame to maintain its height
 
         ttk.Label(input_frame, text="Ok >", font=("Courier", 10)).pack(side=tk.LEFT, padx=(0, 5))
         # Use tk.Entry instead of ttk.Entry for better input reliability
