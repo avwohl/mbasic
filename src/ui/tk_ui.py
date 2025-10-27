@@ -223,6 +223,17 @@ class TkBackend(UIBackend):
         self.immediate_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
         self.immediate_entry.bind('<Return>', lambda e: self._execute_immediate())
 
+        # Add click handler to force focus when clicking in entry
+        def on_entry_click(e):
+            print(f"[DEBUG] Button-1 click in immediate_entry at x={e.x} y={e.y}", flush=True)
+            debug_log(f"Button-1 click in immediate_entry at x={e.x} y={e.y}", level=1)
+            # Force focus to this widget when clicked
+            self.immediate_entry.focus_force()
+            # Also set the insert cursor at the click position
+            self.immediate_entry.icursor(f"@{e.x}")
+            print(f"[DEBUG] Focus after click: {self.root.focus_get()}", flush=True)
+            return "break"  # Prevent event from propagating
+
         # Debug: Add bindings to test if widget receives events
         def debug_key(e):
             print(f"[DEBUG] Key event in immediate_entry: char='{e.char}' keysym={e.keysym} keycode={e.keycode}", flush=True)
@@ -234,14 +245,13 @@ class TkBackend(UIBackend):
         def debug_focus_out(e):
             print(f"[DEBUG] FocusOut event in immediate_entry", flush=True)
             debug_log(f"FocusOut event in immediate_entry", level=1)
-        def debug_click(e):
-            print(f"[DEBUG] Button-1 click in immediate_entry at x={e.x} y={e.y}", flush=True)
-            debug_log(f"Button-1 click in immediate_entry at x={e.x} y={e.y}", level=1)
+
+        # Bind click handler FIRST (so it runs before debug and returns "break")
+        self.immediate_entry.bind('<Button-1>', on_entry_click)
         # Always add debug bindings to diagnose the issue
         self.immediate_entry.bind('<Key>', debug_key, add='+')
         self.immediate_entry.bind('<FocusIn>', debug_focus_in, add='+')
         self.immediate_entry.bind('<FocusOut>', debug_focus_out, add='+')
-        self.immediate_entry.bind('<Button-1>', debug_click, add='+')
 
         execute_btn = ttk.Button(input_frame, text="Execute", command=self._execute_immediate)
         execute_btn.pack(side=tk.LEFT)
