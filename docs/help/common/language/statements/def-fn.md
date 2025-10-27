@@ -50,8 +50,8 @@ DEF FN<name>(<parameter list>)=<function definition>       ' Without spaces
 ### Spacing
 
 **Space after FN is optional**. Both styles are valid:
-- `DEF FNA(X) = X * 2` - with spaces (more readable)
-- `DEF FNA(X)=X*2` - compact style (also valid)
+- `DEF FN A(X) = X * 2` - with space after FN (FN and A are separate)
+- `DEF FNA(X) = X * 2` - without space after FN (FNA is one token)
 
 Choose the style that matches your coding preference. Both are equally supported.
 
