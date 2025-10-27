@@ -1712,8 +1712,8 @@ class Interpreter:
             full_name = (name + (type_suffix or '')).lower()
             self.limits.allocate_array(full_name, dimensions, var_type)
 
-            # Proceed with actual allocation
-            self.runtime.dimension_array(name, type_suffix, dimensions)
+            # Proceed with actual allocation, pass token for tracking
+            self.runtime.dimension_array(name, type_suffix, dimensions, token=stmt.token)
 
     def execute_erase(self, stmt):
         """Execute ERASE statement

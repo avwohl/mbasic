@@ -649,7 +649,7 @@ class Runtime:
 
         return index
 
-    def dimension_array(self, name, type_suffix, dimensions, def_type_map=None):
+    def dimension_array(self, name, type_suffix, dimensions, def_type_map=None, token=None):
         """
         Create/dimension an array.
 
@@ -658,7 +658,10 @@ class Runtime:
             type_suffix: Type suffix or None
             dimensions: List of dimension sizes
             def_type_map: Optional DEF type mapping
+            token: Optional token for tracking DIM statement location
         """
+        import time
+
         # Resolve full array name
         full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
 
@@ -678,14 +681,23 @@ class Runtime:
         else:
             default_value = 0
 
+        # Track DIM as a write operation
+        tracking_info = None
+        if token is not None:
+            tracking_info = {
+                'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
+                'position': getattr(token, 'position', None),
+                'timestamp': time.perf_counter()
+            }
+
         # Create array with access tracking
         self._arrays[full_name] = {
             'dims': dimensions,
             'data': [default_value] * total_size,
             'last_read_subscripts': None,  # Last accessed subscripts for read
             'last_write_subscripts': None,  # Last accessed subscripts for write
-            'last_read': None,  # Tracking info: {line, position, timestamp}
-            'last_write': None  # Tracking info: {line, position, timestamp}
+            'last_read': tracking_info,  # DIM counts as both read and write
+            'last_write': tracking_info
         }
 
     def delete_array(self, name, type_suffix=None, def_type_map=None):

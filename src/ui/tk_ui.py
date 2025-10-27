@@ -1173,6 +1173,16 @@ class TkBackend(UIBackend):
         except:
             dimensions = []
 
+        # If no default subscripts, use first element based on array_base
+        if not default_subscripts and dimensions:
+            array_base = self.runtime.array_base
+            if array_base == 0:
+                # OPTION BASE 0: use all zeros
+                default_subscripts = ','.join(['0'] * len(dimensions))
+            else:
+                # OPTION BASE 1: use all ones
+                default_subscripts = ','.join(['1'] * len(dimensions))
+
         # Create custom dialog
         dialog = tk.Toplevel(self.variables_window)
         dialog.title(f"Edit Array Element: {variable_name}")
