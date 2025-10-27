@@ -1155,11 +1155,12 @@ class TkBackend(UIBackend):
         result = {'cancelled': True}
 
         def update_current_value(*args):
-            """Show current value when subscripts change."""
+            """Show current value when subscripts change and pre-fill the value entry."""
             subscripts_str = subscripts_entry.get().strip()
             if not subscripts_str:
                 current_value_label.config(text="Enter subscripts above")
                 error_label.config(text="")
+                value_entry.delete(0, 'end')
                 return
 
             try:
@@ -1170,6 +1171,7 @@ class TkBackend(UIBackend):
                 if dimensions and len(subscripts) != len(dimensions):
                     error_label.config(text=f"Expected {len(dimensions)} subscripts, got {len(subscripts)}")
                     current_value_label.config(text="")
+                    value_entry.delete(0, 'end')
                     return
 
                 # Validate bounds
@@ -1178,6 +1180,7 @@ class TkBackend(UIBackend):
                         if sub < 0 or sub > dimensions[i]:
                             error_label.config(text=f"Subscript {i} out of bounds: {sub} not in [0, {dimensions[i]}]")
                             current_value_label.config(text="")
+                            value_entry.delete(0, 'end')
                             return
 
                 # Get current value using runtime's method
@@ -1185,12 +1188,26 @@ class TkBackend(UIBackend):
                 current_value_label.config(text=f"Current value: {current_val}")
                 error_label.config(text="")
 
+                # Pre-fill the value entry with current value
+                value_entry.delete(0, 'end')
+                if type_suffix == '$':
+                    # String - insert as-is
+                    value_entry.insert(0, str(current_val))
+                elif type_suffix == '%' or (isinstance(current_val, (int, float)) and current_val == int(current_val)):
+                    # Integer - show without decimal
+                    value_entry.insert(0, str(int(current_val)))
+                else:
+                    # Float - show as-is
+                    value_entry.insert(0, str(current_val))
+
             except ValueError:
                 error_label.config(text="Invalid subscripts (must be integers)")
                 current_value_label.config(text="")
+                value_entry.delete(0, 'end')
             except Exception as e:
                 error_label.config(text=f"Error: {str(e)}")
                 current_value_label.config(text="")
+                value_entry.delete(0, 'end')
 
         # Update current value when subscripts change
         subscripts_entry.bind('<KeyRelease>', update_current_value)
