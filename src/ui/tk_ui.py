@@ -1373,12 +1373,24 @@ class TkBackend(UIBackend):
 
     def _update_variables(self):
         """Update variables window from runtime."""
-        if not self.variables_visible or not self.runtime:
+        if not self.variables_visible:
+            return
+
+        # Choose runtime: program runtime if available, otherwise standalone immediate mode runtime
+        runtime = self.runtime
+        interpreter = self.interpreter
+
+        # If no program runtime, check for standalone immediate mode runtime
+        if not runtime and self.immediate_executor:
+            runtime = self.immediate_executor.standalone_runtime
+            interpreter = self.immediate_executor.standalone_interpreter
+
+        if not runtime:
             return
 
         # Update resource usage
-        if self.interpreter and hasattr(self.interpreter, 'limits'):
-            limits = self.interpreter.limits
+        if interpreter and hasattr(interpreter, 'limits'):
+            limits = interpreter.limits
 
             # Format memory usage
             mem_pct = (limits.current_memory_usage / limits.max_total_memory * 100) if limits.max_total_memory > 0 else 0
@@ -1399,7 +1411,7 @@ class TkBackend(UIBackend):
             self.variables_tree.delete(item)
 
         # Get variables from runtime
-        variables = self.runtime.get_all_variables()
+        variables = runtime.get_all_variables()
 
         # Map type suffix to type name
         type_map = {
