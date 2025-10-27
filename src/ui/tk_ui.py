@@ -1111,12 +1111,17 @@ class TkBackend(UIBackend):
                 base_name = variable_name
                 suffix = None
 
-            # Use token=None for immediate mode / variable editor
+            # Create a token with line=-1 to indicate immediate mode / variable editor
+            class ImmediateModeToken:
+                def __init__(self):
+                    self.line = -1
+                    self.position = None
+
             self.runtime.set_variable(
                 base_name,
                 suffix,
                 new_value,
-                token=None
+                token=ImmediateModeToken()
             )
 
             # Refresh variables window
@@ -1277,13 +1282,19 @@ class TkBackend(UIBackend):
                 else:
                     new_value = float(new_value_str)
 
+                # Create a token with line=-1 to indicate immediate mode / variable editor
+                class ImmediateModeToken:
+                    def __init__(self):
+                        self.line = -1
+                        self.position = None
+
                 # Update array element
                 self.runtime.set_array_element(
                     base_name,
                     suffix,
                     subscripts,
                     new_value,
-                    token=None
+                    token=ImmediateModeToken()
                 )
 
                 result['cancelled'] = False
