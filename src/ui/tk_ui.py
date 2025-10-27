@@ -1970,12 +1970,30 @@ class TkBackend(UIBackend):
             # Sanitize: clear parity bits and filter control characters
             sanitized_text, was_modified = sanitize_and_clear_parity(clipboard_text)
 
-            # Remove blank lines and validate line numbers
+            # Remove blank lines and auto-number lines without line numbers
             import re
+            from lexer import tokenize
+            from parser import Parser
+
             lines = sanitized_text.split('\n')
             filtered_lines = []
             removed_blank = False
             removed_invalid = False
+            added_line_numbers = False
+
+            # Start with default auto-number or find highest existing line number
+            next_line_num = self.auto_number_start
+
+            # First pass - find highest line number in pasted content
+            for line in lines:
+                stripped = line.strip()
+                if stripped:
+                    match = re.match(r'^\s*(\d+)', stripped)
+                    if match:
+                        line_num = int(match.group(1))
+                        next_line_num = max(next_line_num, line_num + self.auto_number_increment)
+
+            # Second pass - process lines
             for line in lines:
                 stripped = line.strip()
                 if not stripped:
@@ -1986,11 +2004,25 @@ class TkBackend(UIBackend):
 
                 # Check if line starts with a line number
                 if not re.match(r'^\s*\d+', stripped):
-                    # Line without line number - reject it
-                    removed_invalid = True
+                    # Line without line number - try to auto-number it
+                    # First check if it would be valid BASIC code
+                    try:
+                        test_line = f"1 {stripped}"
+                        tokens = list(tokenize(test_line))
+                        parser = Parser(tokens, self.program.def_type_map, source=test_line)
+                        parser.parse_line()
+
+                        # Valid BASIC code - add line number
+                        numbered_line = f"{next_line_num} {stripped}"
+                        filtered_lines.append(numbered_line)
+                        next_line_num += self.auto_number_increment
+                        added_line_numbers = True
+                    except:
+                        # Invalid BASIC code - reject it
+                        removed_invalid = True
                     continue
 
-                # Valid line - keep it
+                # Valid line with line number - keep it
                 filtered_lines.append(line)
 
             sanitized_text = '\n'.join(filtered_lines)
@@ -1999,15 +2031,17 @@ class TkBackend(UIBackend):
             if clipboard_text.endswith('\n'):
                 sanitized_text += '\n'
 
-            if was_modified or removed_blank or removed_invalid:
+            if was_modified or removed_blank or removed_invalid or added_line_numbers:
                 # Show warning that content was modified
                 msg = []
                 if was_modified:
                     msg.append("control characters removed")
                 if removed_blank:
                     msg.append("blank lines removed")
+                if added_line_numbers:
+                    msg.append("line numbers added")
                 if removed_invalid:
-                    msg.append("lines without line numbers removed")
+                    msg.append("invalid lines removed")
                 self._set_status(f"Pasted content was sanitized ({', '.join(msg)})")
 
             # Insert sanitized text at cursor position
