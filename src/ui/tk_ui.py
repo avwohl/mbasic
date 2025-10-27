@@ -256,10 +256,23 @@ class TkBackend(UIBackend):
         # Give initial focus to immediate entry for convenience
         # Use focus_force to ensure focus is actually set
         def set_initial_focus():
-            print(f"[DEBUG] Calling focus_force on immediate_entry", flush=True)
-            self.immediate_entry.focus_force()
-            print(f"[DEBUG] Focus widget after focus_force: {self.root.focus_get()}", flush=True)
-        self.root.after(100, set_initial_focus)
+            print(f"[DEBUG] Attempting to set focus to immediate_entry", flush=True)
+            # Ensure widget is mapped before setting focus
+            self.root.update_idletasks()
+            # Try multiple times with increasing delays to ensure it takes
+            for i in range(5):
+                self.immediate_entry.focus_force()
+                focused_widget = self.root.focus_get()
+                print(f"[DEBUG] Attempt {i+1}: Focus widget = {focused_widget}, Entry widget = {self.immediate_entry}", flush=True)
+                if focused_widget == self.immediate_entry:
+                    print(f"[DEBUG] Successfully set focus to immediate_entry!", flush=True)
+                    break
+                self.root.after(50)
+            else:
+                print(f"[DEBUG] WARNING: Failed to set focus to immediate_entry after 5 attempts", flush=True)
+                print(f"[DEBUG] Entry state: {self.immediate_entry.cget('state')}", flush=True)
+                print(f"[DEBUG] Entry takefocus: {self.immediate_entry.cget('takefocus')}", flush=True)
+        self.root.after(200, set_initial_focus)
 
         # Initialize immediate executor for standalone use (no program running)
         # This allows immediate mode to work even before a program is loaded
