@@ -1982,17 +1982,21 @@ class TkBackend(UIBackend):
         # Refresh to sort lines
         self._refresh_editor()
 
-        # Move to end of editor (after all lines)
+        # At this point, the editor contains only the numbered lines (no blank lines)
+        # because _refresh_editor loads from the program, which filters out blank lines
+
+        # Get the last position in the editor
+        last_pos = self.editor_text.text.index(tk.END)
+
+        # Check if we're already at the end of a line with content
+        # If the last character is NOT a newline, add one
+        last_char = self.editor_text.text.get("end-2c", "end-1c")
+        if last_char != '\n':
+            self.editor_text.text.insert(tk.END, '\n')
+
+        # Move cursor to end
         self.editor_text.text.mark_set(tk.INSERT, tk.END)
         self.editor_text.text.see(tk.END)
-
-        # DON'T insert a newline here - the user will type on the same line
-        # When they start typing, it will appear after the existing content
-        # Actually, we DO need a newline or they can't type on a new line
-        # The issue is that blank lines get saved to the program
-
-        # Let's NOT insert a newline and see what happens
-        # The user can press Enter again if they want a blank line
 
         return 'break'  # Prevent default Enter behavior
 
