@@ -200,39 +200,14 @@ class TkBackend(UIBackend):
 
         # Add click handler to force focus when clicking in entry
         def on_entry_click(e):
-            print(f"[DEBUG] Button-1 click in immediate_entry at x={e.x} y={e.y}", flush=True)
-            print(f"[DEBUG] At click time: viewable={self.immediate_entry.winfo_viewable()} mapped={self.immediate_entry.winfo_ismapped()}", flush=True)
-            debug_log(f"Button-1 click in immediate_entry at x={e.x} y={e.y}", level=1)
             # Force focus to this widget when clicked
             self.immediate_entry.focus_force()
             # Also set the insert cursor at the click position
             self.immediate_entry.icursor(f"@{e.x}")
-            focused = self.root.focus_get()
-            print(f"[DEBUG] Focus after click: {focused} (entry={self.immediate_entry})", flush=True)
-            if focused == self.immediate_entry:
-                print(f"[DEBUG] SUCCESS! Entry has focus!", flush=True)
-            else:
-                print(f"[DEBUG] FAIL! Focus is still on {focused}", flush=True)
             return "break"  # Prevent event from propagating
 
-        # Debug: Add bindings to test if widget receives events
-        def debug_key(e):
-            print(f"[DEBUG] Key event in immediate_entry: char='{e.char}' keysym={e.keysym} keycode={e.keycode}", flush=True)
-            debug_log(f"Key event in immediate_entry: char='{e.char}' keysym={e.keysym} keycode={e.keycode}", level=1)
-            return None  # Don't block the event
-        def debug_focus_in(e):
-            print(f"[DEBUG] FocusIn event in immediate_entry", flush=True)
-            debug_log(f"FocusIn event in immediate_entry", level=1)
-        def debug_focus_out(e):
-            print(f"[DEBUG] FocusOut event in immediate_entry", flush=True)
-            debug_log(f"FocusOut event in immediate_entry", level=1)
-
-        # Bind click handler FIRST (so it runs before debug and returns "break")
+        # Bind click handler
         self.immediate_entry.bind('<Button-1>', on_entry_click)
-        # Always add debug bindings to diagnose the issue
-        self.immediate_entry.bind('<Key>', debug_key, add='+')
-        self.immediate_entry.bind('<FocusIn>', debug_focus_in, add='+')
-        self.immediate_entry.bind('<FocusOut>', debug_focus_out, add='+')
 
         execute_btn = ttk.Button(input_frame, text="Execute", command=self._execute_immediate)
         execute_btn.pack(side=tk.LEFT)
@@ -254,57 +229,13 @@ class TkBackend(UIBackend):
 
         # Give initial focus to immediate entry for convenience
         def set_initial_focus():
-            print(f"[DEBUG] Attempting to set focus to immediate_entry", flush=True)
             # Ensure all widgets are fully laid out
             self.root.update_idletasks()
+            # Set focus to immediate entry
+            self.immediate_entry.focus_force()
 
-            try:
-                # Bring entry to front
-                self.immediate_entry.lift()
-                # Place cursor at position 0
-                self.immediate_entry.icursor(0)
-                # Insert and delete a character to "wake up" the widget
-                self.immediate_entry.insert(0, " ")
-                self.immediate_entry.delete(0)
-                # Set focus
-                self.immediate_entry.focus_force()
-                focused = self.root.focus_get()
-                print(f"[DEBUG] After focus_force with lift: focused={focused}, entry={self.immediate_entry}", flush=True)
-                print(f"[DEBUG] Entry winfo_viewable={self.immediate_entry.winfo_viewable()}", flush=True)
-                print(f"[DEBUG] Entry winfo_ismapped={self.immediate_entry.winfo_ismapped()}", flush=True)
-                print(f"[DEBUG] Entry winfo_width={self.immediate_entry.winfo_width()} height={self.immediate_entry.winfo_height()}", flush=True)
-                print(f"[DEBUG] Entry winfo_x={self.immediate_entry.winfo_x()} y={self.immediate_entry.winfo_y()}", flush=True)
-
-            except Exception as e:
-                print(f"[DEBUG] Error setting focus: {e}", flush=True)
-                import traceback
-                traceback.print_exc()
-
-        # Try setting focus after a longer delay to ensure window is fully realized
+        # Try setting focus after a delay to ensure window is fully realized
         self.root.after(500, set_initial_focus)
-
-        # Store reference to input_frame for diagnostics
-        self.immediate_input_frame = input_frame
-        self.immediate_frame_container = immediate_frame
-
-        # Add a second check much later to see if widget ever gets proper size
-        def check_widget_later():
-            print(f"[DEBUG] Widget check at 2000ms:", flush=True)
-            print(f"[DEBUG] Entry:", flush=True)
-            print(f"[DEBUG]   viewable={self.immediate_entry.winfo_viewable()} mapped={self.immediate_entry.winfo_ismapped()}", flush=True)
-            print(f"[DEBUG]   width={self.immediate_entry.winfo_width()} height={self.immediate_entry.winfo_height()}", flush=True)
-            print(f"[DEBUG]   x={self.immediate_entry.winfo_x()} y={self.immediate_entry.winfo_y()}", flush=True)
-            print(f"[DEBUG] Input frame:", flush=True)
-            print(f"[DEBUG]   viewable={self.immediate_input_frame.winfo_viewable()} mapped={self.immediate_input_frame.winfo_ismapped()}", flush=True)
-            print(f"[DEBUG]   width={self.immediate_input_frame.winfo_width()} height={self.immediate_input_frame.winfo_height()}", flush=True)
-            print(f"[DEBUG] Immediate frame:", flush=True)
-            print(f"[DEBUG]   viewable={self.immediate_frame_container.winfo_viewable()} mapped={self.immediate_frame_container.winfo_ismapped()}", flush=True)
-            print(f"[DEBUG]   width={self.immediate_frame_container.winfo_width()} height={self.immediate_frame_container.winfo_height()}", flush=True)
-            if self.immediate_entry.winfo_width() > 10:
-                print(f"[DEBUG] Widget has proper size now! Trying focus again...", flush=True)
-                self.immediate_entry.focus_force()
-                print(f"[DEBUG] Focus after retry: {self.root.focus_get()}", flush=True)
-        self.root.after(2000, check_widget_later)
 
         # Initialize runtime/interpreter for immediate mode and program execution
         # Create empty runtime that both immediate mode and programs will use
