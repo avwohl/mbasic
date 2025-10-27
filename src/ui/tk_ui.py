@@ -1876,6 +1876,7 @@ class TkBackend(UIBackend):
         This ensures the editor can NEVER contain blank lines.
         """
         import tkinter as tk
+        from debug_logger import debug_log
 
         # Check if modification flag is set
         if not self.editor_text.text.edit_modified():
@@ -1891,16 +1892,23 @@ class TkBackend(UIBackend):
         content = self.editor_text.text.get(1.0, tk.END)
         lines = content.split('\n')
 
+        debug_log(f"Editor modified, checking {len(lines)} lines", level=1)
+
         # Filter out blank lines (completely empty or only whitespace)
         # But keep the last line (which is always empty in Tk Text widget)
         filtered_lines = []
+        removed_count = 0
         for i, line in enumerate(lines):
             # Keep non-blank lines
             if line.strip() or i == len(lines) - 1:
                 filtered_lines.append(line)
+            else:
+                removed_count += 1
+                debug_log(f"Removing blank line at index {i}", level=1)
 
         # Check if we need to update
-        if len(filtered_lines) != len(lines):
+        if removed_count > 0:
+            debug_log(f"Removed {removed_count} blank lines", level=1)
             # Blank lines were found - remove them
             new_content = '\n'.join(filtered_lines)
 
@@ -2023,11 +2031,11 @@ class TkBackend(UIBackend):
         # Refresh editor to sort lines by number
         self._refresh_editor()
 
-        # Insert a plain newline (no line number yet)
-        # Line number will be added when user finishes typing the next line
-        self.editor_text.text.insert(tk.END, '\n')
+        # DON'T insert a newline - this would create a blank line
+        # Instead, just move cursor to the end and let the user type
+        # When they type and press Enter, that line will get auto-numbered
 
-        # Move cursor to the new blank line
+        # Move cursor to the end
         self.editor_text.text.mark_set(tk.INSERT, tk.END)
         self.editor_text.text.see(tk.END)
 
