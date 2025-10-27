@@ -225,16 +225,23 @@ class TkBackend(UIBackend):
 
         # Debug: Add bindings to test if widget receives events
         def debug_key(e):
+            print(f"[DEBUG] Key event in immediate_entry: char='{e.char}' keysym={e.keysym} keycode={e.keycode}", flush=True)
             debug_log(f"Key event in immediate_entry: char='{e.char}' keysym={e.keysym} keycode={e.keycode}", level=1)
             return None  # Don't block the event
         def debug_focus_in(e):
+            print(f"[DEBUG] FocusIn event in immediate_entry", flush=True)
             debug_log(f"FocusIn event in immediate_entry", level=1)
         def debug_focus_out(e):
+            print(f"[DEBUG] FocusOut event in immediate_entry", flush=True)
             debug_log(f"FocusOut event in immediate_entry", level=1)
-        if is_debug_mode():
-            self.immediate_entry.bind('<Key>', debug_key, add='+')
-            self.immediate_entry.bind('<FocusIn>', debug_focus_in, add='+')
-            self.immediate_entry.bind('<FocusOut>', debug_focus_out, add='+')
+        def debug_click(e):
+            print(f"[DEBUG] Button-1 click in immediate_entry at x={e.x} y={e.y}", flush=True)
+            debug_log(f"Button-1 click in immediate_entry at x={e.x} y={e.y}", level=1)
+        # Always add debug bindings to diagnose the issue
+        self.immediate_entry.bind('<Key>', debug_key, add='+')
+        self.immediate_entry.bind('<FocusIn>', debug_focus_in, add='+')
+        self.immediate_entry.bind('<FocusOut>', debug_focus_out, add='+')
+        self.immediate_entry.bind('<Button-1>', debug_click, add='+')
 
         execute_btn = ttk.Button(input_frame, text="Execute", command=self._execute_immediate)
         execute_btn.pack(side=tk.LEFT)
@@ -248,7 +255,11 @@ class TkBackend(UIBackend):
         self.immediate_entry.config(state=tk.NORMAL)
         # Give initial focus to immediate entry for convenience
         # Use focus_force to ensure focus is actually set
-        self.root.after(100, lambda: self.immediate_entry.focus_force())
+        def set_initial_focus():
+            print(f"[DEBUG] Calling focus_force on immediate_entry", flush=True)
+            self.immediate_entry.focus_force()
+            print(f"[DEBUG] Focus widget after focus_force: {self.root.focus_get()}", flush=True)
+        self.root.after(100, set_initial_focus)
 
         # Initialize immediate executor for standalone use (no program running)
         # This allows immediate mode to work even before a program is loaded
