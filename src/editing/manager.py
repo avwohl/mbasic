@@ -354,13 +354,16 @@ class ProgramManager:
         try:
             from lexer import tokenize
             from parser import Parser
+            from debug_logger import debug_log
 
+            debug_log(f"parse_single_line: {repr(line_text)}", level=2)
             tokens = list(tokenize(line_text))
             parser = Parser(tokens, self.def_type_map, source=line_text)
             line_node = parser.parse_line()
             return (line_node, None)
 
         except Exception as e:
+            from debug_logger import debug_log
             # Strip "Parse error at line X, " from parser error messages
             error_msg = str(e)
             # Remove "Parse error at line N, " prefix since we show the BASIC line number
@@ -371,6 +374,7 @@ class ProgramManager:
             else:
                 full_error = f"Syntax error: {error_msg}"
 
+            debug_log(f"parse_single_line error for {repr(line_text)}: {full_error}", level=1)
             return (None, full_error)
 
     def has_lines(self) -> bool:
