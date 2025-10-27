@@ -1683,6 +1683,11 @@ class TkBackend(UIBackend):
         if len(event.char) != 1:
             return None
 
+        # Allow editing keys (backspace, delete) - these modify text but aren't input
+        char_code = ord(event.char)
+        if char_code in (8, 127):  # Backspace (0x08) or Delete (0x7F)
+            return None
+
         # Clear parity bit
         from input_sanitizer import clear_parity
         char = clear_parity(event.char)
