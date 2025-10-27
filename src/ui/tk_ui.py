@@ -235,10 +235,6 @@ class TkBackend(UIBackend):
         execute_btn = ttk.Button(input_frame, text="Execute", command=self._execute_immediate)
         execute_btn.pack(side=tk.LEFT)
 
-        # Help hint
-        help_hint = ttk.Label(input_frame, text="(Type HELP for commands)", foreground="gray", font=("Courier", 9))
-        help_hint.pack(side=tk.LEFT, padx=10)
-
         # Create dummy immediate_history and immediate_status for compatibility
         # (some code still references these)
         self.immediate_history = None
