@@ -97,19 +97,44 @@ This outputs detailed error traces to stderr (visible to Claude) while keeping t
 See `docs/dev/DEBUG_MODE.md` for full details.
 
 ### Persistent Debug Mode
-**CRITICAL: When debugging actively, add to .bashrc:**
+**CRITICAL: MBASIC_DEBUG must ALWAYS be enabled in .bashrc:**
 ```bash
 export MBASIC_DEBUG=1
 ```
 
+**Purpose:** Ensures ALL unexpected errors are automatically sent to Claude via the debug link.
+**Do NOT disable this** - it's not for controlling verbose debug output, it's for error visibility.
+
 After adding to .bashrc, restart the shell or run `source ~/.bashrc`.
+
+### Debug Levels
+Control verbosity with MBASIC_DEBUG_LEVEL (requires MBASIC_DEBUG=1):
+- **Level 1 (default)**: Errors only - unexpected errors sent to stderr
+- **Level 2 (verbose)**: Detailed debug output (e.g., FOR loop stack operations)
+
+```bash
+# For verbose debugging output:
+export MBASIC_DEBUG_LEVEL=2
+```
 
 ### Checking Debug Output
 **When debugging, ALWAYS check the debug link for stderr output:**
 - Debug output is automatically sent via the debug link
 - Check the debug link/logs when investigating errors
-- Debug prints from Python code (print(..., file=sys.stderr)) will appear in the debug output
+- Debug prints from Python code use debug_logger.debug_log()
 - User may reference "check your debug link" or "it was sent to stderr" - this means check the debug output system
+
+### Adding Debug Output
+Use the debug_logger module, not raw print statements:
+```python
+from src.debug_logger import debug_log
+
+# Error-level debug (always shown when MBASIC_DEBUG=1)
+debug_log("Important error info", level=1)
+
+# Verbose debug (only shown when MBASIC_DEBUG_LEVEL=2)
+debug_log("Detailed operation", context={'var': value}, level=2)
+```
 
 ## Developer Setup
 

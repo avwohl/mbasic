@@ -793,16 +793,22 @@ class Runtime:
 
     def push_for_loop(self, var_name, end_value, step_value, return_line, return_stmt_index):
         """Register a FOR loop on the unified execution stack"""
-        import sys
-        import traceback
+        from src.debug_logger import debug_log
 
-        # DEBUG: Log every push with stack trace
-        print(f"DEBUG: push_for_loop({var_name}) at line {return_line}, stack size before: {len(self.execution_stack)}", file=sys.stderr)
+        # Verbose debug logging (only if MBASIC_DEBUG_LEVEL=2)
+        debug_log(
+            f"push_for_loop({var_name}) at line {return_line}",
+            context={'stack_size_before': len(self.execution_stack)},
+            level=2
+        )
 
         # Check if this variable already has an active FOR loop
         # This prevents nested FOR loops with the same variable (e.g., FOR I=1 TO 10 / FOR I=1 TO 5)
         if var_name in self.for_loop_vars:
-            print(f"  ERROR: {var_name} already on stack at index {self.for_loop_vars[var_name]}!", file=sys.stderr)
+            debug_log(
+                f"ERROR: {var_name} already on stack at index {self.for_loop_vars[var_name]}!",
+                level=1  # Always log errors
+            )
             raise RuntimeError(f"FOR loop variable {var_name} already active - nested FOR loops with same variable not allowed")
 
         loop_entry = {
@@ -817,7 +823,11 @@ class Runtime:
         # Track index for quick lookup by variable name
         self.for_loop_vars[var_name] = len(self.execution_stack) - 1
 
-        print(f"  Stack size after: {len(self.execution_stack)}", file=sys.stderr)
+        debug_log(
+            f"push_for_loop({var_name}) complete",
+            context={'stack_size_after': len(self.execution_stack)},
+            level=2
+        )
 
     def pop_for_loop(self, var_name):
         """Remove a FOR loop - verifies it's on top of stack"""

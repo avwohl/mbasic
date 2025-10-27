@@ -27,6 +27,24 @@ def is_debug_mode() -> bool:
     return debug_var in ('1', 'true', 'yes', 'on')
 
 
+def get_debug_level() -> int:
+    """Get debug verbosity level.
+
+    Returns:
+        Debug level (0=off, 1=errors only, 2=verbose)
+        Controlled by MBASIC_DEBUG_LEVEL environment variable
+        Default is 1 when MBASIC_DEBUG is enabled
+    """
+    if not is_debug_mode():
+        return 0
+
+    level_var = os.environ.get('MBASIC_DEBUG_LEVEL', '1')
+    try:
+        return int(level_var)
+    except ValueError:
+        return 1
+
+
 def debug_log_error(message: str,
                    exception: Optional[Exception] = None,
                    context: Optional[Dict[str, Any]] = None) -> str:
@@ -84,14 +102,15 @@ def debug_log_error(message: str,
     return ui_message
 
 
-def debug_log(message: str, context: Optional[Dict[str, Any]] = None) -> None:
+def debug_log(message: str, context: Optional[Dict[str, Any]] = None, level: int = 1) -> None:
     """Log a debug message (not an error).
 
     Args:
         message: Debug message
         context: Optional context information
+        level: Debug level required (1=normal, 2=verbose). Only logs if get_debug_level() >= level
     """
-    if not is_debug_mode():
+    if get_debug_level() < level:
         return
 
     lines = [f"DEBUG: {message}"]
