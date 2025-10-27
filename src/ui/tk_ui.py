@@ -192,28 +192,10 @@ class TkBackend(UIBackend):
         self.immediate_status = ttk.Label(header_frame, text="Ok", foreground="green", font=header_font)
         self.immediate_status.pack(side=tk.LEFT, padx=10)
 
-        # Immediate mode history (scrollable output)
-        self.immediate_history = scrolledtext.ScrolledText(
-            immediate_frame,
-            wrap=tk.WORD,
-            width=100,
-            height=6,
-            font=("Courier", 10),
-            state=tk.DISABLED
-        )
-        # Don't use expand=True - let it take available space but leave room for input below
-        self.immediate_history.pack(fill=tk.BOTH, expand=False, padx=5, pady=(0, 5))
-
-        # Add click handler to focus immediate entry when clicking in history
-        self.immediate_history.bind('<Button-1>', lambda e: self._focus_immediate_entry(), add='+')
-
-        # Add right-click context menus for copy functionality
-        self._setup_output_context_menu()
-        self._setup_immediate_context_menu()
-
+        # IMPORTANT: Pack input frame FIRST (from bottom) so it gets space allocated
         # Immediate mode input
         input_frame = ttk.Frame(immediate_frame, height=40)
-        input_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
+        input_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=(0, 5))
         input_frame.pack_propagate(False)  # Force frame to maintain its height
 
         ttk.Label(input_frame, text="Ok >", font=("Courier", 10)).pack(side=tk.LEFT, padx=(0, 5))
@@ -267,6 +249,26 @@ class TkBackend(UIBackend):
         # Help hint
         help_hint = ttk.Label(input_frame, text="(Type HELP for commands)", foreground="gray", font=("Courier", 9))
         help_hint.pack(side=tk.LEFT, padx=10)
+
+        # NOW pack history (after input is packed from bottom, so it gets remaining space)
+        # Immediate mode history (scrollable output)
+        self.immediate_history = scrolledtext.ScrolledText(
+            immediate_frame,
+            wrap=tk.WORD,
+            width=100,
+            height=6,
+            font=("Courier", 10),
+            state=tk.DISABLED
+        )
+        # Fill remaining space between header and input frame
+        self.immediate_history.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
+
+        # Add click handler to focus immediate entry when clicking in history
+        self.immediate_history.bind('<Button-1>', lambda e: self._focus_immediate_entry(), add='+')
+
+        # Add right-click context menus for copy functionality
+        self._setup_output_context_menu()
+        self._setup_immediate_context_menu()
 
         # Initialize immediate mode entry to be enabled and focused
         # (it will be enabled/disabled later based on program state via _update_immediate_status)
