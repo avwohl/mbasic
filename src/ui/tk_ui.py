@@ -201,7 +201,8 @@ class TkBackend(UIBackend):
             font=("Courier", 10),
             state=tk.DISABLED
         )
-        self.immediate_history.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
+        # Don't use expand=True - let it take available space but leave room for input below
+        self.immediate_history.pack(fill=tk.BOTH, expand=False, padx=5, pady=(0, 5))
 
         # Add click handler to focus immediate entry when clicking in history
         self.immediate_history.bind('<Button-1>', lambda e: self._focus_immediate_entry(), add='+')
