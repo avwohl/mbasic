@@ -62,6 +62,11 @@ class ImmediateExecutor:
         for letter in 'abcdefghijklmnopqrstuvwxyz':
             self.def_type_map[letter] = TypeInfo.SINGLE
 
+        # Create persistent standalone runtime for when no program is loaded
+        # This allows variables to persist across immediate mode executions
+        self.standalone_runtime = None
+        self.standalone_interpreter = None
+
     def can_execute_immediate(self):
         """
         Check if immediate mode execution is safe.
@@ -152,17 +157,23 @@ class ImmediateExecutor:
             parser = Parser(tokens, self.def_type_map)
             ast = parser.parse()
 
-            # Choose runtime: use program runtime if available, otherwise create temporary
+            # Choose runtime: use program runtime if available, otherwise use persistent standalone
             if self.runtime is not None and self.interpreter is not None:
                 runtime = self.runtime
                 interpreter = self.interpreter
                 using_program_runtime = True
             else:
-                # Create temporary runtime/interpreter for this execution
-                from resource_limits import create_unlimited_limits
-                runtime = Runtime(ast)
-                runtime.setup()
-                interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits())
+                # Use persistent standalone runtime for immediate mode
+                # This allows variables to persist across executions
+                if self.standalone_runtime is None:
+                    # Create persistent standalone runtime on first use
+                    from resource_limits import create_unlimited_limits
+                    self.standalone_runtime = Runtime(ast)
+                    self.standalone_runtime.setup()
+                    self.standalone_interpreter = Interpreter(self.standalone_runtime, self.io, limits=create_unlimited_limits())
+
+                runtime = self.standalone_runtime
+                interpreter = self.standalone_interpreter
                 using_program_runtime = False
 
             # Capture output
