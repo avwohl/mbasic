@@ -6,25 +6,19 @@
 
 ## Git Commit and Push Workflow
 
-**FOLLOW THESE STEPS FOR EVERY COMMIT:**
+**Use checkpoint script for ALL commits:**
 
-1. **First: Increment VERSION in src/version.py**
-   ```bash
-   # Edit src/version.py - increment the last number
-   # 1.0.5 → 1.0.6 → 1.0.7, etc.
-   ```
-   - Version appears in debug output so we know user has latest code
-   - Format: "X.Y.Z" where Z increments each commit
-   - **DO NOT SKIP THIS STEP** - without it, we can't verify user's code version
+```bash
+./checkpoint.sh "Your commit message"
+```
 
-2. **Then: git add, commit, push**
-   ```bash
-   git add -A
-   git commit -m "Your commit message"
-   git push
-   ```
+This automatically:
+- Increments VERSION in src/version.py (1.0.5 → 1.0.6)
+- Runs git add -A
+- Commits with version number in message
+- Pushes to remote
 
-3. **Always commit and push changes when you stop to talk to me**
+**Always checkpoint when stopping to talk to user.**
 
 ## Work-in-Progress Tracking
 
