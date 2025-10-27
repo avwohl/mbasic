@@ -152,7 +152,7 @@ class TkBackend(UIBackend):
         self.editor_text.text.bind('<Return>', self._on_enter_key)
 
         # Bind Ctrl+I for smart insert line (must be on text widget to prevent tab)
-        self.editor_text.text.bind('<Control-i>', lambda e: self._on_ctrl_i())
+        self.editor_text.text.bind('<Control-i>', self._on_ctrl_i)
 
         # Bind paste event for input sanitization
         self.editor_text.text.bind('<<Paste>>', self._on_paste)
@@ -2270,7 +2270,7 @@ class TkBackend(UIBackend):
                     plural = "s" if error_count > 1 else ""
                     self._set_status(f"Syntax error{plural} in program - cannot run")
 
-    def _on_ctrl_i(self):
+    def _on_ctrl_i(self, event=None):
         """Handle Ctrl+I - smart insert line.
 
         Returns 'break' to prevent tab insertion.
