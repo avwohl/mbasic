@@ -3,6 +3,59 @@
 ## Workflow
 - Always commit and push changes when you stop to talk to me
 - Track all installed dependencies and update documentation
+- **Check `docs/dev/WORK_IN_PROGRESS.md` on EVERY startup** - contains current task that may be incomplete
+
+## Work-in-Progress Tracking
+
+**CRITICAL: Track all immediate work in `docs/dev/WORK_IN_PROGRESS.md` to survive crashes/unexpected shutdowns.**
+
+### On Every Startup
+1. **ALWAYS check if `docs/dev/WORK_IN_PROGRESS.md` exists**
+2. **If it exists**: Read it and inform user what was being worked on
+3. **Ask user**: "Do you want to continue this work, or start something new?"
+
+### When Starting Immediate Work
+**Before implementing anything**, update `WORK_IN_PROGRESS.md` with:
+- What you're working on
+- Current status (what's done, what's next)
+- Files being modified
+- Any important context
+
+### When Completing Work
+**Delete or clear `WORK_IN_PROGRESS.md`** when task is complete and committed.
+
+### File Format
+```markdown
+# Work in Progress
+
+## Task
+Brief description of what's being implemented
+
+## Status
+- ✅ Step 1 completed
+- ⏳ Step 2 in progress
+- ⏸️ Step 3 pending
+
+## Files Modified
+- path/to/file1.py
+- path/to/file2.py
+
+## Next Steps
+1. Complete step 2
+2. Test feature
+3. Commit changes
+
+## Context/Notes
+Any important details needed to resume work
+```
+
+### Example Usage
+```
+User: "Can you fix the array bounds checking bug?"
+Claude: Updates WORK_IN_PROGRESS.md → starts fixing → crash
+User: Restarts Claude
+Claude: Checks WORK_IN_PROGRESS.md → "I see you were fixing array bounds checking. Continue?"
+```
 
 ## TODO Tracking Rules
 
