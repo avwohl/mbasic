@@ -1,81 +1,84 @@
 # Work in Progress
 
-## Task
-Fix immediate mode entry widget not accepting input in TK UI
+## Last Session: 2025-01-27 - Auto-Numbering and Type Suffix Fixes
 
-## Status
-- ✅ Identified root cause: immediate_executor not initialized at startup
-- ✅ Identified root cause: entry widget not explicitly enabled/focused
-- ✅ Fixed: Initialize entry to NORMAL state and set focus after 100ms
-- ✅ Fixed: Create immediate executor at startup with None context
-- ✅ Fixed: Update immediate executor context when program runs (instead of recreating)
-- ✅ Identified second issue: ttk.Entry may have focus issues
-- ✅ Fixed: Changed from ttk.Entry to tk.Entry for better input reliability
-- ✅ Fixed: Use focus_force() instead of focus_set() for more reliable focus
-- ⏳ Testing: Need to manually test in TK UI (second attempt)
+### Session Summary ✅ COMPLETED
 
-## Files Modified
-- src/ui/tk_ui.py (lines 229-238, 2417-2420)
+Major work on auto-numbering feature and critical type suffix serialization bug.
 
-## Root Causes
-1. **Entry widget not initialized**: The immediate_entry widget was created but never explicitly set to NORMAL state or given focus
-2. **Immediate executor not created**: The immediate_executor was only created when a program ran (_menu_run), not at UI startup
-3. **Early return in _update_immediate_status**: When immediate_executor was None, the method returned early without enabling the entry
-4. **ttk.Entry focus issues**: ttk.Entry widget may not reliably accept focus/input in all scenarios
-5. **Weak focus methods**: focus_set() may not work reliably; focus_force() is more aggressive
+### Completed Tasks
 
-## Changes Made
+1. **Fixed Ctrl+I Smart Insert Issues** (v1.0.77-1.0.80)
+   - Fixed renumber error - added `_renum_statement()` and `_renum_erl_comparison()` to TkBackend
+   - Fixed cursor position lost after refresh - saves line number before refresh, restores after
+   - Fixed multiple blank lines - saves/refreshes before inserting to remove previous blanks
 
-### 1. Change from ttk.Entry to tk.Entry (line 219)
-```python
-# Use tk.Entry instead of ttk.Entry for better input reliability
-self.immediate_entry = tk.Entry(input_frame, font=("Courier", 10), state='normal')
-```
+2. **Fixed Enter Key Auto-Numbering** (v1.0.78, 1.0.81, 1.0.83-1.0.84)
+   - Fixed selection handling - deletes selection without auto-numbering
+   - Fixed jumping to end - only adds prompt if on last line
+   - Fixed middle-of-program - inserts numbered line between current and next
+   - Added renumber prompt when no room to insert
 
-### 2. Initialize entry widget with focus_force (lines 230-235)
-```python
-# Initialize immediate mode entry to be enabled and focused
-self.immediate_entry.config(state=tk.NORMAL)
-# Give initial focus to immediate entry for convenience
-# Use focus_force to ensure focus is actually set
-self.root.after(100, lambda: self.immediate_entry.focus_force())
-```
+3. **Fixed Paste Issues** (v1.0.82)
+   - Single-line paste into existing line now does simple inline insert
+   - No longer auto-numbers when pasting "y=y+3" after "85 "
 
-### 3. Create immediate executor at startup (lines 237-240)
-```python
-# Initialize immediate executor for standalone use (no program running)
-immediate_io = OutputCapturingIOHandler()
-self.immediate_executor = ImmediateExecutor(runtime=None, interpreter=None, io_handler=immediate_io)
-```
+4. **Fixed Type Suffix Serialization Bug** (v1.0.85) ⚠️ CRITICAL
+   - **Problem**: `x=x+1` became `x! = x! + 1` after renumber
+   - **Cause**: Serialization outputted all suffixes, including DEF-inferred ones
+   - **Fix**:
+     - Added `explicit_type_suffix` flag to VariableNode
+     - Parser tracks explicit vs inferred suffixes
+     - Serialization only outputs explicit suffixes
+   - **Note**: Only updated main expression path, other VariableNode sites may need updating
 
-### 4. Update context instead of recreating (lines 2417-2420)
-```python
-# Update immediate mode executor context to use program's runtime and interpreter
-if self.immediate_executor:
-    self.immediate_executor.set_context(self.runtime, self.interpreter)
-```
+### New TODOs Created
 
-### 5. Use focus_force in click handler (line 2701)
-```python
-self.immediate_entry.focus_force()  # Changed from focus_set()
-```
+1. **PRETTY_PRINTER_SPACING_TODO.md** - Spacing options (compact/normal/spacious)
+2. **SINGLE_SOURCE_OF_TRUTH_TODO.md** - Eliminate editor/program duplication
 
-## Next Steps
-1. ~~Test immediate mode entry accepts input on startup~~
-2. Test immediate mode works before running a program
-3. Test immediate mode works during program execution (at breakpoint/error/paused)
-4. Commit changes if tests pass
+### Files Modified
 
-## Test Plan
-1. Launch `python3 mbasic.py --ui tk`
-2. Verify cursor appears in immediate mode entry
-3. Type "PRINT 123" and press Enter
-4. Verify output appears in immediate history
-5. Load test program: basic/test_immediate_input.bas
-6. Run program and pause at breakpoint
-7. Verify immediate mode works during pause
+- `src/ui/tk_ui.py` - Enter, Ctrl+I, paste, renumber
+- `src/ast_nodes.py` - Added explicit_type_suffix field
+- `src/parser.py` - Track explicit vs inferred suffixes
+- `src/ui/ui_helpers.py` - Only serialize explicit suffixes
 
-## Context/Notes
-- ImmediateExecutor supports None context and creates temporary runtime when needed
-- Entry widget needs explicit state=NORMAL after creation
-- Focus must be set after window is realized (using after(100, ...))
+### Auto-Numbering Status
+
+**Working:** ✅
+- Auto-number typed/pasted lines
+- Line number prompts
+- Blank line prevention
+- Syntax error preservation
+- Ctrl+I smart insert
+- Enter in middle of program
+- Inline paste
+- Selection handling
+
+**Limitations:**
+- Type suffix tracking only in `parse_variable_or_function()`
+- Other VariableNode sites may need updates
+- Pretty printing always adds spaces
+
+### Next Steps (when resuming)
+
+1. Test type suffix fix with mixed explicit/implicit types
+2. Verify renumber preserves original suffixes
+3. Check other VariableNode creation sites if issues found
+4. Test auto-numbering edge cases (large programs, rapid typing)
+
+### Important Context
+
+The type suffix bug was CRITICAL but subtle:
+- Variables defined by `DEFINT A-Z` were getting `!` suffixes added during serialization
+- Changed `x` to `x!` after renumber
+- Fix tracks whether suffixes were in original source or inferred from DEF
+- This preserves programmer's original intent
+
+## Current State
+
+- **Version**: 1.0.87
+- **Status**: Auto-numbering feature complete, type suffix bug fixed
+- **Blocking Issues**: None
+- **Ready for**: Testing and use
