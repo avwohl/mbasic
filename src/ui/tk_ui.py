@@ -1442,13 +1442,18 @@ class TkBackend(UIBackend):
         self.editor_text.clear_all_errors()
 
     def _save_editor_to_program(self):
-        """Save editor content back to program."""
+        """Save editor content back to program.
+
+        Returns:
+            bool: True if all lines parsed successfully, False if any errors occurred
+        """
         import tkinter as tk
 
         # Clear current program
         self.program.clear()
 
         # Parse each line from editor and track errors
+        had_errors = False
         editor_content = self.editor_text.text.get(1.0, tk.END)
         for line in editor_content.split('\n'):
             line_stripped = line.strip()
@@ -1467,9 +1472,12 @@ class TkBackend(UIBackend):
                     self._add_output(f"Parse error at line {line_num}: {error}\n")
                     # Mark line as having error
                     self.editor_text.set_error(line_num, True)
+                    had_errors = True
                 else:
                     # Clear error marker if line is now valid
                     self.editor_text.set_error(line_num, False)
+
+        return not had_errors
 
     def _validate_editor_syntax(self):
         """Validate syntax of all lines in editor and update error markers."""
@@ -1608,7 +1616,12 @@ class TkBackend(UIBackend):
                     break
 
         # Save current line to program first (so it's included in sort)
-        self._save_editor_to_program()
+        success = self._save_editor_to_program()
+
+        # Only refresh if no parse errors - preserve user's work if there are errors
+        if not success:
+            # Don't auto-number on error - let user fix the error first
+            return None
 
         # Refresh editor to sort lines by number
         self._refresh_editor()
@@ -1766,13 +1779,16 @@ class TkBackend(UIBackend):
 
         if should_sort:
             # Save editor to program (which parses all lines)
-            self._save_editor_to_program()
+            success = self._save_editor_to_program()
 
-            # Refresh editor (which sorts by line number)
-            self._refresh_editor()
+            # Only refresh and sort if all lines parsed successfully
+            # If there were errors, keep the editor as-is so user can fix them
+            if success:
+                # Refresh editor (which sorts by line number)
+                self._refresh_editor()
 
-            # Scroll to show the edited line in its new position
-            self._scroll_to_line(new_line_num)
+                # Scroll to show the edited line in its new position
+                self._scroll_to_line(new_line_num)
 
         # Update tracking for new line
         self.last_edited_line_index = current_line_index
@@ -1876,7 +1892,13 @@ class TkBackend(UIBackend):
         self.editor_text.text.insert(f'{insert_index}.0', new_line_text)
 
         # Trigger save and sort (this will reorder all lines by line number)
-        self._save_editor_to_program()
+        success = self._save_editor_to_program()
+        if not success:
+            # Parse errors exist - don't refresh to preserve user's work
+            # Just position cursor at the new line we inserted
+            self.editor_text.text.mark_set('insert', f'{insert_index}.end')
+            return
+
         self._refresh_editor()
 
         # After refresh, find where the new line ended up and position cursor there
