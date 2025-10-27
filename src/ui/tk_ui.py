@@ -185,8 +185,10 @@ class TkBackend(UIBackend):
         header_frame = ttk.Frame(immediate_frame)
         header_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Label(header_frame, text="Immediate Mode:").pack(side=tk.LEFT)
-        self.immediate_status = ttk.Label(header_frame, text="Ok", foreground="green", font=("Courier", 10, "bold"))
+        # Use consistent font for both labels
+        header_font = ("TkDefaultFont", 10)
+        ttk.Label(header_frame, text="Immediate Mode:", font=header_font).pack(side=tk.LEFT)
+        self.immediate_status = ttk.Label(header_frame, text="Ok", foreground="green", font=header_font)
         self.immediate_status.pack(side=tk.LEFT, padx=10)
 
         # Immediate mode history (scrollable output)
@@ -2096,6 +2098,7 @@ class TkBackend(UIBackend):
             self._add_output(f"\n--- Execution error: {e} ---\n")
             self._add_output(traceback.format_exc())
             self._set_status("Error")
+            self._update_immediate_status()
 
     # UIBackend interface methods
 

@@ -96,6 +96,13 @@ class LineNumberedText(tk.Frame if tk else object):
         self.text.bind('<<Modified>>', self._on_modified)
         self.text.bind('<KeyRelease>', self._on_text_change)
 
+        # Track current line for blank line removal
+        self.current_line = None
+
+        # Bind events for blank line removal
+        self.text.bind('<KeyPress>', self._on_cursor_move, add='+')
+        self.text.bind('<ButtonPress-1>', self._on_cursor_move, add='+')
+
         # Initial draw
         self._redraw()
 
@@ -122,6 +129,41 @@ class LineNumberedText(tk.Frame if tk else object):
     def _on_text_change(self, event=None):
         """Handle key release in text widget."""
         self._redraw()
+
+    def _on_cursor_move(self, event=None):
+        """Handle cursor movement - remove blank lines when moving away from them."""
+        # Get current cursor position
+        cursor_pos = self.text.index(tk.INSERT)
+        new_line = int(cursor_pos.split('.')[0])
+
+        # Check if we're moving to a different line
+        if self.current_line is not None and self.current_line != new_line:
+            # Check if the previous line is blank (only whitespace)
+            line_text = self.text.get(f'{self.current_line}.0', f'{self.current_line}.end')
+            if line_text.strip() == '':
+                # Delete the blank line
+                # Need to schedule this after current event processing to avoid issues
+                self.text.after_idle(self._delete_line, self.current_line)
+
+        # Update current line
+        self.current_line = new_line
+
+    def _delete_line(self, line_num):
+        """Delete a line from the text widget.
+
+        Args:
+            line_num: Text widget line number (1-based)
+        """
+        # Check if line still exists and is still blank
+        try:
+            line_text = self.text.get(f'{line_num}.0', f'{line_num}.end')
+            if line_text.strip() == '':
+                # Delete the entire line including newline
+                self.text.delete(f'{line_num}.0', f'{line_num + 1}.0')
+                self._redraw()
+        except tk.TclError:
+            # Line no longer exists, ignore
+            pass
 
     def _redraw(self):
         """Redraw status column (●=breakpoint, ?=error).

@@ -2582,7 +2582,7 @@ class Parser:
             type_suffix = self.get_type_suffix(raw_name)
             if type_suffix:
                 raw_name = raw_name[:-1]
-            function_name = "FN" + raw_name
+            function_name = "fn" + raw_name  # Use lowercase 'fn' to match function calls
         elif fn_name_token and fn_name_token.type == TokenType.IDENTIFIER:
             # "DEF FNR" without space - identifier is "fnr" (normalized to lowercase)
             if not fn_name_token.value.startswith("fn"):
