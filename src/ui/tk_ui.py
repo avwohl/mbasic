@@ -2284,6 +2284,7 @@ class TkBackend(UIBackend):
         except Exception as e:
             import traceback
             self.running = False
+            self.paused_at_breakpoint = True  # Allow Continue to work after exception
 
             # Gather context for debug logging
             context = {}
@@ -2307,9 +2308,37 @@ class TkBackend(UIBackend):
                 self._add_output("(Full traceback sent to stderr - check console)\n")
             else:
                 self._add_output(traceback.format_exc())
+            self._add_output("(Edit the line and click Continue to retry, or Stop to end)\n")
 
-            self._set_status("Error")
+            # Get error line from state
+            error_line = context.get('error_line', '?')
+            self._set_status(f"Error at line {error_line} - Edit and Continue, or Stop")
             self._update_immediate_status()
+
+            # Highlight the error statement (yellow highlight)
+            if self.interpreter and hasattr(self.interpreter, 'state'):
+                state = self.interpreter.state
+                from src.debug_logger import debug_log
+                debug_log(f"Exception handler: line={state.current_line}, char_start={state.current_statement_char_start}, char_end={state.current_statement_char_end}", level=1)
+                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
+                    self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
+
+            # Mark the error line with red ? indicator
+            if error_line and error_line != "?":
+                try:
+                    error_line_int = int(error_line)
+                    from src.debug_logger import debug_log
+                    debug_log(f"Setting error marker on line {error_line_int} (from exception handler)", level=1)
+                    self.editor_text.set_error(error_line_int, True, str(e))
+                except (ValueError, AttributeError, TypeError) as marker_error:
+                    from src.debug_logger import debug_log
+                    debug_log(f"Failed to set error marker: {marker_error}", level=1)
+
+            # Update stack and variables to show state at error
+            if self.stack_visible:
+                self._update_stack()
+            if self.variables_visible:
+                self._update_variables()
 
     # UIBackend interface methods
 
