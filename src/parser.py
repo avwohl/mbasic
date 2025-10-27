@@ -573,24 +573,16 @@ class Parser:
             # If we get here, MID$ is being used in an unsupported way
             raise ParseError(f"MID$ must be used as function or assignment statement", token)
 
-        # Assignment (implicit LET) or implicit REM (comment line)
+        # Assignment (implicit LET)
         elif token.type == TokenType.IDENTIFIER:
-            # Check if next token is = or ( (assignment) or not (treat as comment)
-            # In old BASIC, lines like "REMEMBER THIS" or "REMARKABLE PROGRAM"
-            # were treated as comments even though they're not REM statements
+            # Check if next token is = or ( (assignment)
             # Note: ( indicates array subscript like A%(0) = 99
             next_token = self.peek()
             if next_token and next_token.type in (TokenType.EQUAL, TokenType.LPAREN):
                 return self.parse_assignment()
             else:
-                # Treat as implicit REM - consume rest of line
-                comment_text = token.value
-                while self.current() and self.current().type not in (TokenType.NEWLINE, TokenType.EOF, TokenType.COLON):
-                    comment_text += " " + str(self.current().value)
-                    self.advance()
-                # Return a REM statement node
-                from ast_nodes import RemarkStatementNode
-                return RemarkStatementNode(comment_text, token.line, token.column)
+                # Not an assignment - this is an error
+                raise ParseError(f"Unknown statement or command: '{token.value}'", token)
 
         # Unknown statement
         else:
