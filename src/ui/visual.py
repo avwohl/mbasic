@@ -8,6 +8,7 @@ framework (Kivy, BeeWare, Qt, etc.).
 from .base import UIBackend
 from runtime import Runtime
 from interpreter import Interpreter
+from debug_logger import debug_log_error, is_debug_mode
 
 
 class VisualBackend(UIBackend):
@@ -106,7 +107,20 @@ class VisualBackend(UIBackend):
             self.io.output("Program finished")
 
         except Exception as e:
-            self.io.error(f"Runtime error: {e}")
+            # Log error (outputs to stderr in debug mode)
+            context = {}
+            if self.runtime and hasattr(self.runtime, 'current_line') and self.runtime.current_line:
+                context['current_line'] = self.runtime.current_line.line_number
+
+            error_msg = debug_log_error(
+                "Runtime error",
+                exception=e,
+                context=context
+            )
+
+            self.io.error(error_msg)
+            if is_debug_mode():
+                self.io.output("(Full traceback sent to stderr - check console)")
 
     def cmd_list(self, args: str = "") -> None:
         """Execute LIST command - list program lines.
@@ -131,7 +145,8 @@ class VisualBackend(UIBackend):
             self.program.save_to_file(filename)
             self.io.output(f"Saved to {filename}")
         except Exception as e:
-            self.io.error(f"Save error: {e}")
+            error_msg = debug_log_error("Save error", exception=e, context={'filename': filename})
+            self.io.error(error_msg)
 
     def cmd_load(self, filename: str) -> None:
         """Execute LOAD command - load from file."""
@@ -145,7 +160,8 @@ class VisualBackend(UIBackend):
                 # Refresh editor display
                 self.refresh_editor()
         except Exception as e:
-            self.io.error(f"Load error: {e}")
+            error_msg = debug_log_error("Load error", exception=e, context={'filename': filename})
+            self.io.error(error_msg)
 
     def refresh_editor(self) -> None:
         """Refresh editor display after loading.

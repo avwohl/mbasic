@@ -26,6 +26,7 @@ from lexer import Lexer
 from parser import Parser
 from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 from input_sanitizer import is_valid_input_char, clear_parity
+from debug_logger import debug_log_error, is_debug_mode
 
 
 class TopLeftBox(urwid.WidgetWrap):
@@ -1750,8 +1751,15 @@ class CursesBackend(UIBackend):
                 self.status_bar.set_text(f"Cannot step (status: {state.status})")
         except Exception as e:
             import traceback
+
+            # Log error (outputs to stderr in debug mode)
+            error_msg = debug_log_error("Step error", exception=e)
+
             self.output_buffer.append(f"Step error: {e}")
-            self.output_buffer.append(traceback.format_exc())
+            if is_debug_mode():
+                self.output_buffer.append("(Full traceback sent to stderr - check console)")
+            else:
+                self.output_buffer.append(traceback.format_exc())
             self._update_output()
             self.status_bar.set_text(f"Step error: {e}")
 
@@ -1813,8 +1821,15 @@ class CursesBackend(UIBackend):
                 self.status_bar.set_text(f"Cannot step (status: {state.status})")
         except Exception as e:
             import traceback
+
+            # Log error (outputs to stderr in debug mode)
+            error_msg = debug_log_error("Step line error", exception=e)
+
             self.output_buffer.append(f"Step line error: {e}")
-            self.output_buffer.append(traceback.format_exc())
+            if is_debug_mode():
+                self.output_buffer.append("(Full traceback sent to stderr - check console)")
+            else:
+                self.output_buffer.append(traceback.format_exc())
             self._update_output()
             self.status_bar.set_text(f"Step line error: {e}")
 
@@ -2897,17 +2912,29 @@ Run                           Debug Windows
 
         except Exception as e:
             import traceback
-            # Format unexpected error with box
+
+            # Log error (outputs to stderr in debug mode)
+            error_msg = debug_log_error(
+                "Runtime initialization error",
+                exception=e,
+                context={'phase': 'program setup'}
+            )
+
+            # Format error with box
             self.output_buffer.append("")
             self.output_buffer.append("┌─ Unexpected Error ───────────────────────────────┐")
             self.output_buffer.append(f"│ {type(e).__name__}: {e}")
             self.output_buffer.append("│")
-            self.output_buffer.append("│ This is an internal error. Details below:")
+            if is_debug_mode():
+                self.output_buffer.append("│ (Full traceback sent to stderr - check console)")
+            else:
+                self.output_buffer.append("│ This is an internal error. Details below:")
             self.output_buffer.append("└──────────────────────────────────────────────────┘")
             self.output_buffer.append("")
-            # Add traceback for debugging
-            for line in traceback.format_exc().split('\n'):
-                self.output_buffer.append(line)
+            # Add traceback for debugging (only if not in debug mode)
+            if not is_debug_mode():
+                for line in traceback.format_exc().split('\n'):
+                    self.output_buffer.append(line)
             self._update_output()
             self.status_bar.set_text("Internal error - See output")
 
@@ -2987,17 +3014,38 @@ Run                           Debug Windows
 
         except Exception as e:
             import traceback
+
+            # Gather context for debug logging
+            context = {}
+            if self.interpreter and hasattr(self.interpreter, 'state'):
+                state = self.interpreter.state
+                context['current_line'] = state.current_line
+                context['status'] = state.status
+                if state.error_info:
+                    context['error_line'] = state.error_info.error_line
+
+            # Log error (outputs to stderr in debug mode)
+            error_msg = debug_log_error(
+                "Execution error",
+                exception=e,
+                context=context
+            )
+
             # Format unexpected tick error with box
             self.output_buffer.append("")
             self.output_buffer.append("┌─ Execution Error ────────────────────────────────┐")
             self.output_buffer.append(f"│ {type(e).__name__}: {e}")
             self.output_buffer.append("│")
-            self.output_buffer.append("│ An error occurred during program execution.")
+            if is_debug_mode():
+                self.output_buffer.append("│ (Full traceback sent to stderr - check console)")
+            else:
+                self.output_buffer.append("│ An error occurred during program execution.")
             self.output_buffer.append("└──────────────────────────────────────────────────┘")
             self.output_buffer.append("")
-            # Add traceback for debugging
-            for line in traceback.format_exc().split('\n'):
-                self.output_buffer.append(line)
+            # Add traceback for debugging (only if not in debug mode)
+            if not is_debug_mode():
+                for line in traceback.format_exc().split('\n'):
+                    self.output_buffer.append(line)
             self._update_output()
             self.status_bar.set_text("Execution error - See output")
 

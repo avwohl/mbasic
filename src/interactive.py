@@ -18,6 +18,7 @@ from runtime import Runtime
 from interpreter import Interpreter
 import ast_nodes
 from input_sanitizer import sanitize_and_clear_parity
+from debug_logger import debug_log_error, is_debug_mode
 
 # Try to import readline for better line editing
 # This enhances input() with:
@@ -34,21 +35,37 @@ except ImportError:
 
 
 def print_error(e, runtime=None):
-    """Print error with optional traceback in DEBUG mode"""
-    if os.environ.get('DEBUG'):
-        # Print full traceback in debug mode
-        print(f"?{type(e).__name__}: {e}")
-        traceback.print_exc()
-    else:
-        # Normal mode - just print error with line number if available
-        if runtime and runtime.current_line:
+    """Print error with optional traceback in MBASIC_DEBUG mode"""
+    # Gather context for debug logging
+    context = {}
+    if runtime:
+        if runtime.current_line:
+            context['current_line'] = runtime.current_line.line_number
+        if hasattr(runtime, 'line_text_map') and runtime.current_line:
             line_num = runtime.current_line.line_number
-            print(f"?{type(e).__name__} in {line_num}: {e}")
-            # Also print the source code line if available
-            if hasattr(runtime, 'line_text_map') and line_num in runtime.line_text_map:
-                print(f"  {runtime.line_text_map[line_num]}")
-        else:
-            print(f"?{type(e).__name__}: {e}")
+            if line_num in runtime.line_text_map:
+                context['source_line'] = runtime.line_text_map[line_num]
+
+    # Log error (outputs to stderr in debug mode)
+    error_msg = debug_log_error(
+        "Runtime error",
+        exception=e,
+        context=context
+    )
+
+    # Normal mode - print error with line number if available
+    if runtime and runtime.current_line:
+        line_num = runtime.current_line.line_number
+        print(f"?{type(e).__name__} in {line_num}: {e}")
+        # Also print the source code line if available
+        if hasattr(runtime, 'line_text_map') and line_num in runtime.line_text_map:
+            print(f"  {runtime.line_text_map[line_num]}")
+    else:
+        print(f"?{type(e).__name__}: {e}")
+
+    # In debug mode, print a hint about stderr
+    if is_debug_mode():
+        print("(Full traceback sent to stderr - check console)")
 
 
 class InteractiveMode:
