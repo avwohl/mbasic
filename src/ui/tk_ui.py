@@ -1986,11 +1986,13 @@ class TkBackend(UIBackend):
         self.editor_text.text.mark_set(tk.INSERT, tk.END)
         self.editor_text.text.see(tk.END)
 
-        # Insert a newline for the next line
-        self.editor_text.text.insert(tk.END, '\n')
+        # DON'T insert a newline here - the user will type on the same line
+        # When they start typing, it will appear after the existing content
+        # Actually, we DO need a newline or they can't type on a new line
+        # The issue is that blank lines get saved to the program
 
-        # Move cursor to the new line
-        self.editor_text.text.mark_set(tk.INSERT, tk.END)
+        # Let's NOT insert a newline and see what happens
+        # The user can press Enter again if they want a blank line
 
         return 'break'  # Prevent default Enter behavior
 
