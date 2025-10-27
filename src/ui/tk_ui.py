@@ -187,7 +187,7 @@ class TkBackend(UIBackend):
         input_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         input_frame.pack_propagate(False)  # Force frame to maintain its height
 
-        ttk.Label(input_frame, text="Ok >", font=("Courier", 10)).pack(side=tk.LEFT, padx=(0, 5))
+        tk.Label(input_frame, text="Ok >", font=("Courier", 10), fg="green").pack(side=tk.LEFT, padx=(0, 5))
         # Use tk.Entry instead of ttk.Entry for better input reliability
         # Explicitly set state, takefocus, and exportselection to ensure entry accepts input
         self.immediate_entry = tk.Entry(input_frame, font=("Courier", 10),
