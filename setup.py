@@ -17,7 +17,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Aaron Wohl",
-    author_email="wohl@awohl.com",
+    author_email="mbasic@wohl.com",
     url="https://github.com/avwohl/mbasic",
     license="MIT",
 
