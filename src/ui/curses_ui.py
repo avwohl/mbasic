@@ -23,6 +23,7 @@ from interpreter import Interpreter
 from lexer import Lexer
 from parser import Parser
 from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
+from input_sanitizer import is_valid_input_char, clear_parity
 
 
 class TopLeftBox(urwid.WidgetWrap):
@@ -1232,7 +1233,17 @@ class EditorWidget(urwid.Edit):
 
     def keypress(self, size, key):
         """Handle key presses in the editor."""
-        # Let parent handle most keys
+        # Sanitize character input: clear parity bits and filter control characters
+        if len(key) == 1:
+            # Clear parity bit
+            key = clear_parity(key)
+
+            # Filter invalid characters
+            if not is_valid_input_char(key):
+                # Block invalid character
+                return None
+
+        # Let parent handle keys
         return super().keypress(size, key)
 
 
@@ -1257,6 +1268,16 @@ class ImmediateInput(urwid.Edit):
                 self.on_execute_callback()
             return None  # Consume the key
         else:
+            # Sanitize character input: clear parity bits and filter control characters
+            if len(key) == 1:
+                # Clear parity bit
+                key = clear_parity(key)
+
+                # Filter invalid characters
+                if not is_valid_input_char(key):
+                    # Block invalid character
+                    return None
+
             # Let parent handle other keys
             return super().keypress(size, key)
 

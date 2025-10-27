@@ -7,6 +7,7 @@ Extracted from InteractiveMode to enable reuse across different UIs.
 import re
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
+from input_sanitizer import sanitize_and_clear_parity
 
 
 class ProgramManager:
@@ -243,6 +244,9 @@ class ProgramManager:
                 if not line:
                     continue
 
+                # Sanitize input: clear parity bits and filter control characters
+                line, was_modified = sanitize_and_clear_parity(line)
+
                 # Extract line number
                 match = re.match(r'^(\d+)\s', line)
                 if not match:
@@ -291,6 +295,9 @@ class ProgramManager:
                 line = line.strip()
                 if not line:
                     continue
+
+                # Sanitize input: clear parity bits and filter control characters
+                line, was_modified = sanitize_and_clear_parity(line)
 
                 # Extract line number
                 match = re.match(r'^(\d+)\s', line)

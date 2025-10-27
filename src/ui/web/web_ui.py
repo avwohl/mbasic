@@ -31,6 +31,7 @@ from interpreter import Interpreter
 from runtime import Runtime
 from filesystem import SandboxedFileSystemProvider
 from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
+from input_sanitizer import sanitize_and_clear_parity
 
 
 class MBasicWebIDE:
@@ -570,6 +571,12 @@ class MBasicWebIDE:
         """Handle file upload."""
         try:
             content = e.content.read().decode('utf-8')
+
+            # Sanitize input: clear parity bits and filter control characters
+            content, was_modified = sanitize_and_clear_parity(content)
+            if was_modified:
+                ui.notify('File content was sanitized (control characters removed)', type='info')
+
             self.editor.value = content
             self.current_file = e.name
             self.current_path = None
@@ -637,6 +644,12 @@ class MBasicWebIDE:
         """Load a file from server."""
         try:
             content = file_path.read_text(encoding='utf-8', errors='ignore')
+
+            # Sanitize input: clear parity bits and filter control characters
+            content, was_modified = sanitize_and_clear_parity(content)
+            if was_modified:
+                ui.notify('File content was sanitized (control characters removed)', type='info')
+
             self.editor.value = content
             self.current_file = file_name
             self.current_path = None
@@ -685,6 +698,11 @@ class MBasicWebIDE:
 
         try:
             code = self.editor.value
+
+            # Sanitize input: clear parity bits and filter control characters
+            code, was_modified = sanitize_and_clear_parity(code)
+            if was_modified:
+                ui.notify('Editor content was sanitized (control characters removed)', type='info')
 
             # Parse the program
             lexer = Lexer(code)

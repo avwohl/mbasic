@@ -17,6 +17,7 @@ from parser import Parser
 from runtime import Runtime
 from interpreter import Interpreter
 import ast_nodes
+from input_sanitizer import sanitize_and_clear_parity
 
 # Try to import readline for better line editing
 # This enhances input() with:
@@ -201,6 +202,11 @@ class InteractiveMode:
             try:
                 # Read input
                 line = input()
+
+                # Sanitize input: clear parity bits and filter control characters
+                # (except Ctrl+A which is used for edit mode)
+                if line and line[0] != '\x01':
+                    line, _ = sanitize_and_clear_parity(line)
 
                 # Reset Ctrl+C counter on successful input
                 self.ctrl_c_count = 0
@@ -584,6 +590,9 @@ class InteractiveMode:
                     if not line:
                         continue
 
+                    # Sanitize input: clear parity bits and filter control characters
+                    line, _ = sanitize_and_clear_parity(line)
+
                     match = re.match(r'^(\d+)\s', line)
                     if match:
                         line_num = int(match.group(1))
@@ -600,6 +609,9 @@ class InteractiveMode:
                     line = line.strip()
                     if not line:
                         continue
+
+                    # Sanitize input: clear parity bits and filter control characters
+                    line, _ = sanitize_and_clear_parity(line)
 
                     match = re.match(r'^(\d+)\s', line)
                     if match:
@@ -1082,6 +1094,9 @@ class InteractiveMode:
                     # Ctrl+D exits AUTO mode
                     print()
                     break
+
+                # Sanitize input: clear parity bits and filter control characters
+                line_text, _ = sanitize_and_clear_parity(line_text)
 
                 # Check if line is empty (just pressing Enter)
                 if not line_text or not line_text.strip():

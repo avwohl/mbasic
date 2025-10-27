@@ -11,6 +11,7 @@ from interpreter import Interpreter
 from .keybinding_loader import KeybindingLoader
 from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 from iohandler.base import IOHandler
+from input_sanitizer import sanitize_and_clear_parity, is_valid_input_char
 
 
 class TkBackend(UIBackend):
@@ -140,6 +141,12 @@ class TkBackend(UIBackend):
 
         # Bind Ctrl+I for smart insert line (must be on text widget to prevent tab)
         self.editor_text.text.bind('<Control-i>', lambda e: self._on_ctrl_i())
+
+        # Bind paste event for input sanitization
+        self.editor_text.text.bind('<<Paste>>', self._on_paste)
+
+        # Bind key press for input sanitization
+        self.editor_text.text.bind('<Key>', self._on_key_press, add='+')
 
         # Set up editor context menu
         self._setup_editor_context_menu()
@@ -1408,6 +1415,70 @@ class TkBackend(UIBackend):
         self.editor_text.text.see(tk.END)
 
         return 'break'  # Prevent default Enter behavior
+
+    def _on_paste(self, event):
+        """Handle paste event - sanitize clipboard content.
+
+        Returns:
+            'break' to prevent default paste, None to allow it
+        """
+        import tkinter as tk
+
+        try:
+            # Get clipboard content
+            clipboard_text = self.root.clipboard_get()
+
+            # Sanitize: clear parity bits and filter control characters
+            sanitized_text, was_modified = sanitize_and_clear_parity(clipboard_text)
+
+            if was_modified:
+                # Show warning that content was modified
+                self._set_status("Pasted content was sanitized (control characters removed)")
+
+            # Insert sanitized text at cursor position
+            try:
+                # Delete selected text if any
+                self.editor_text.text.delete(tk.SEL_FIRST, tk.SEL_LAST)
+            except tk.TclError:
+                # No selection, just insert
+                pass
+
+            self.editor_text.text.insert(tk.INSERT, sanitized_text)
+
+            # Prevent default paste behavior
+            return 'break'
+
+        except tk.TclError:
+            # Clipboard empty or error - allow default behavior
+            return None
+
+    def _on_key_press(self, event):
+        """Handle key press - filter invalid characters.
+
+        Returns:
+            'break' to prevent character insertion, None to allow it
+        """
+        # Ignore special keys (arrows, function keys, modifiers, etc.)
+        if len(event.char) != 1:
+            return None
+
+        # Clear parity bit
+        from input_sanitizer import clear_parity
+        char = clear_parity(event.char)
+
+        # Check if character is valid
+        if not is_valid_input_char(char):
+            # Block invalid character
+            return 'break'
+
+        # If parity bit was set, insert the cleared character instead
+        if char != event.char:
+            import tkinter as tk
+            self.editor_text.text.insert(tk.INSERT, char)
+            return 'break'
+
+        # Allow valid character
+        return None
 
     def _check_line_change(self):
         """Check if cursor moved off a line and trigger auto-sort if line number changed."""
