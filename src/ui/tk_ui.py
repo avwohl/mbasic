@@ -9,6 +9,7 @@ from .base import UIBackend
 from runtime import Runtime
 from interpreter import Interpreter
 from .keybinding_loader import KeybindingLoader
+from .recent_files import RecentFilesManager
 from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 from iohandler.base import IOHandler
 from input_sanitizer import sanitize_and_clear_parity, is_valid_input_char
@@ -47,6 +48,9 @@ class TkBackend(UIBackend):
 
         # Load keybindings from config
         self.keybindings = KeybindingLoader('tk')
+
+        # Recent files manager
+        self.recent_files = RecentFilesManager()
 
         # Runtime and interpreter for program execution
         self.runtime = None
@@ -90,6 +94,7 @@ class TkBackend(UIBackend):
         self.editor_text = None
         self.output_text = None
         self.status_label = None
+        self.recent_files_menu = None  # Recent Files submenu
 
     def start(self) -> None:
         """Start the Tkinter GUI.
@@ -235,6 +240,13 @@ class TkBackend(UIBackend):
                              accelerator=self.keybindings.get_tk_accelerator('menu', 'file_new'))
         file_menu.add_command(label="Open...", command=self._menu_open,
                              accelerator=self.keybindings.get_tk_accelerator('menu', 'file_open'))
+
+        # Recent Files submenu
+        self.recent_files_menu = tk.Menu(file_menu, tearoff=0)
+        file_menu.add_cascade(label="Recent Files", menu=self.recent_files_menu)
+        self._update_recent_files_menu()
+
+        file_menu.add_separator()
         file_menu.add_command(label="Save", command=self._menu_save,
                              accelerator=self.keybindings.get_tk_accelerator('menu', 'file_save'))
         file_menu.add_command(label="Save As...", command=self._menu_save_as)
@@ -342,6 +354,9 @@ class TkBackend(UIBackend):
         )
         if filename:
             self.cmd_load(filename)
+            # Add to recent files
+            self.recent_files.add_file(filename)
+            self._update_recent_files_menu()
 
     def _menu_save(self):
         """File > Save"""
@@ -364,10 +379,94 @@ class TkBackend(UIBackend):
         if filename:
             self._save_editor_to_program()
             self.cmd_save(filename)
+            # Add to recent files
+            self.recent_files.add_file(filename)
+            self._update_recent_files_menu()
 
     def _menu_exit(self):
         """File > Exit"""
         self.root.quit()
+
+    def _update_recent_files_menu(self):
+        """Update the Recent Files submenu with current list."""
+        import tkinter as tk
+        from pathlib import Path
+
+        if not self.recent_files_menu:
+            return
+
+        # Clear existing menu items
+        self.recent_files_menu.delete(0, tk.END)
+
+        # Get recent files
+        recent = self.recent_files.get_recent_files(max_count=10)
+
+        if not recent:
+            # No recent files
+            self.recent_files_menu.add_command(label="(No recent files)", state=tk.DISABLED)
+        else:
+            # Add recent files
+            for i, filepath in enumerate(recent, 1):
+                # Show just the filename with accelerator number
+                filename = Path(filepath).name
+                # Add accelerator if within first 9 files (1-9 keys)
+                if i <= 9:
+                    label = f"{i}. {filename}"
+                else:
+                    label = f"   {filename}"
+
+                self.recent_files_menu.add_command(
+                    label=label,
+                    command=lambda f=filepath: self._open_recent_file(f)
+                )
+
+            # Add separator and clear option
+            self.recent_files_menu.add_separator()
+            self.recent_files_menu.add_command(
+                label="Clear Recent Files",
+                command=self._clear_recent_files
+            )
+
+    def _open_recent_file(self, filepath):
+        """Open a file from the recent files list.
+
+        Args:
+            filepath: Full path to file to open
+        """
+        from pathlib import Path
+
+        # Check if file exists
+        if not Path(filepath).exists():
+            import tkinter as tk
+            from tkinter import messagebox
+            messagebox.showerror(
+                "File Not Found",
+                f"The file '{filepath}' no longer exists.\n\n"
+                "It will be removed from the recent files list."
+            )
+            # Remove from recent files
+            self.recent_files.remove_file(filepath)
+            self._update_recent_files_menu()
+            return
+
+        # Load the file
+        self.cmd_load(filepath)
+        # Update recent files (moves to top)
+        self.recent_files.add_file(filepath)
+        self._update_recent_files_menu()
+
+    def _clear_recent_files(self):
+        """Clear the recent files list."""
+        import tkinter as tk
+        from tkinter import messagebox
+
+        result = messagebox.askyesno(
+            "Clear Recent Files",
+            "Are you sure you want to clear the recent files list?"
+        )
+        if result:
+            self.recent_files.clear()
+            self._update_recent_files_menu()
 
     def _menu_cut(self):
         """Edit > Cut"""
