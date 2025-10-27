@@ -1784,14 +1784,22 @@ class TkBackend(UIBackend):
 
         # Show errors in output window if any found
         if errors_found:
-            self._add_output("\n=== Syntax Errors ===\n")
-            for line_num, error_msg in errors_found:
-                self._add_output(f"Line {line_num}: {error_msg}\n")
-            self._add_output("===================\n")
+            # Only show error list in output if there are multiple errors or this is the first time
+            # Don't spam output on every keystroke
+            should_show_list = len(errors_found) > 1
+            if should_show_list:
+                self._add_output("\n=== Syntax Errors ===\n")
+                for line_num, error_msg in errors_found:
+                    self._add_output(f"Line {line_num}: {error_msg}\n")
+                self._add_output("===================\n")
+
             # Update status bar to show there are syntax errors
             error_count = len(errors_found)
             plural = "s" if error_count > 1 else ""
             self._set_status(f"Syntax error{plural} in program - cannot run")
+
+            from debug_logger import debug_log
+            debug_log(f"Validation found {error_count} error(s), status set", level=2)
         else:
             # No errors - clear any previous error status
             if hasattr(self, 'status_label') and self.status_label:
@@ -2141,6 +2149,12 @@ class TkBackend(UIBackend):
             error_msg = self.editor_text.get_error_message(line_num)
             if error_msg:
                 self._set_status(f"Error on line {line_num}: {error_msg}")
+            else:
+                # Current line is OK, but check if there are errors elsewhere in program
+                if hasattr(self.editor_text, 'errors') and self.editor_text.errors:
+                    error_count = len(self.editor_text.errors)
+                    plural = "s" if error_count > 1 else ""
+                    self._set_status(f"Syntax error{plural} in program - cannot run")
 
     def _on_ctrl_i(self):
         """Handle Ctrl+I - smart insert line.
