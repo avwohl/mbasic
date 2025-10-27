@@ -2275,7 +2275,10 @@ class TkBackend(UIBackend):
 
         Returns 'break' to prevent tab insertion.
         """
+        from debug_logger import debug_log
+        debug_log("Ctrl+I handler called", level=1)
         self._smart_insert_line()
+        debug_log("Ctrl+I handler returning 'break'", level=1)
         return 'break'
 
     def _smart_insert_line(self):
@@ -2290,6 +2293,7 @@ class TkBackend(UIBackend):
         import tkinter as tk
         from tkinter import messagebox
         from ui.ui_helpers import calculate_midpoint, find_insert_line_number, needs_renumber_for_insert
+        from debug_logger import debug_log
         import re
 
         # Get current line
@@ -2300,13 +2304,17 @@ class TkBackend(UIBackend):
             f'{current_line_index}.end'
         ).strip()
 
+        debug_log(f"Smart insert: line_index={current_line_index}, text={repr(current_line_text)}", level=1)
+
         # Parse current line number
         match = re.match(r'^(\d+)', current_line_text)
         if not match:
+            debug_log(f"No match for line number in: {repr(current_line_text)}", level=1)
             messagebox.showinfo("Smart Insert", "Current line has no line number.\nAdd a line number first.")
             return
 
         current_line_num = int(match.group(1))
+        debug_log(f"Current line number: {current_line_num}", level=1)
 
         # Get all line numbers sorted - parse directly from editor text
         all_line_numbers = []
