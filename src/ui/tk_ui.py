@@ -661,12 +661,37 @@ class TkBackend(UIBackend):
             self._set_status("Error")
 
     def _menu_continue(self):
-        """Run > Continue (from breakpoint)"""
+        """Run > Continue (from breakpoint or error)"""
         if not self.interpreter or not self.paused_at_breakpoint:
             self._set_status("Not paused")
             return
 
         try:
+            # If we're continuing from an error, re-parse the program to incorporate edits
+            if self.interpreter.state.status == 'error':
+                self._add_output("\n--- Re-parsing program after edit ---\n")
+
+                # Get current editor text
+                program_text = self.editor_text.get("1.0", tk.END)
+
+                # Parse the updated program
+                from src.parser import Parser
+                from src.lexer import Lexer
+                lexer = Lexer(program_text)
+                tokens = lexer.tokenize()
+                parser = Parser(tokens)
+                program = parser.parse()
+
+                # Update the interpreter's runtime with new program
+                self.interpreter.runtime.line_table = program.line_table
+                self.interpreter.runtime.line_order = program.line_order
+
+                # Clear error state
+                self.interpreter.state.status = 'paused'
+                self.interpreter.state.error_info = None
+
+                self._add_output("--- Program updated, resuming execution ---\n")
+
             # Resume execution
             self.running = True
             self.paused_at_breakpoint = False
@@ -2165,12 +2190,13 @@ class TkBackend(UIBackend):
 
             elif state.status == 'error':
                 self.running = False
+                self.paused_at_breakpoint = True  # Allow Continue to work after error
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
                 line_num = state.error_info.error_line if state.error_info else "?"
-                self._add_output(f"\n--- Runtime error at line {line_num}: {error_msg} ---\n")
-                self._set_status("Error")
+                self._add_output(f"\n--- Execution error: {error_msg} ---\n")
+                self._add_output("(Edit the line and click Continue to retry, or Stop to end)\n")
+                self._set_status(f"Error at line {line_num} - Edit and Continue, or Stop")
                 self._update_immediate_status()
-                self._clear_statement_highlight()
                 # Update stack and variables to show state at error
                 if self.stack_visible:
                     self._update_stack()
