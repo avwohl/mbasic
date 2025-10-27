@@ -24,11 +24,36 @@ To define and name a function that is written by the user.
 DEF FN<name>[(<parameter list>)]=<function definition>
 ```
 
+**Alternative forms (all valid):**
+```basic
+DEF FN<name> [(<parameter list>)] = <function definition>  ' With spaces
+DEF FN<name>(<parameter list>)=<function definition>       ' Without spaces
+```
+
 ## Parameters
 
-- **name** - A legal variable name. This name, preceded by FN, becomes the name of the function.
+- **name** - A legal variable name that becomes the function name after FN. **Can be one or more characters** (e.g., `A`, `ABC`, `UCASE$`, `DISTANCE`).
 - **parameter list** - Variable names in the function definition that are to be replaced when the function is called. Items are separated by commas.
 - **function definition** - An expression that performs the operation of the function. Limited to one line.
+
+## Syntax Notes
+
+### Function Names
+
+**Function names can be multiple characters**, not just single letters:
+- ✓ `FNA` - single character
+- ✓ `FNABC` - multiple characters
+- ✓ `FNUCASE$` - multi-character with type suffix
+- ✓ `FNDIST` - descriptive multi-character name
+- ✓ `FNAREA%` - multi-character with integer type
+
+### Spacing
+
+**Space after FN is optional**. Both styles are valid:
+- `DEF FNA(X) = X * 2` - with spaces (more readable)
+- `DEF FNA(X)=X*2` - compact style (also valid)
+
+Choose the style that matches your coding preference. Both are equally supported.
 
 ## Remarks
 
@@ -63,42 +88,7 @@ If a type is specified in the function name:
 
 ## Examples
 
-### Example 1: Simple Mathematical Function
-
-```basic
-10 DEF FNAB(X,Y) = X^3 / Y^2
-20 I = 5
-30 J = 2
-40 T = FNAB(I, J)
-50 PRINT "FNAB("; I; ","; J; ") ="; T
-60 END
-```
-
-**Output:**
-```
-FNAB( 5 , 2 ) = 31.25
-```
-
-**Explanation:**
-- Line 10 defines the function FNAB which raises X to the 3rd power and divides by Y squared
-- Line 40 calls the function with arguments I=5 and J=2
-- Result: 5^3 / 2^2 = 125 / 4 = 31.25
-
-### Example 2: String Function
-
-```basic
-10 DEF FN$ = "Hello, " + N$
-20 N$ = "World"
-30 PRINT FN$
-40 END
-```
-
-**Output:**
-```
-Hello, World
-```
-
-### Example 3: Single Parameter Function
+### Example 1: Single-Character Name (Traditional Style)
 
 ```basic
 10 DEF FND(X) = X * 2
@@ -113,27 +103,139 @@ Hello, World
  2  4  6  8  10
 ```
 
-### Example 4: Using Current Variable Values
+### Example 2: Multi-Character Name (More Descriptive)
+
+```basic
+10 DEF FNAREA(R) = 3.14159 * R^2
+20 RADIUS = 5
+30 PRINT "Area of circle with radius"; RADIUS; "is"; FNAREA(RADIUS)
+40 END
+```
+
+**Output:**
+```
+Area of circle with radius 5 is 78.53975
+```
+
+### Example 3: Compact Style (No Spaces)
+
+```basic
+10 DEF FNMAX(A,B)=A*(A>=B)+B*(B>A)
+20 PRINT FNMAX(10, 20)
+30 PRINT FNMAX(30, 15)
+40 END
+```
+
+**Output:**
+```
+ 20
+ 30
+```
+
+**Explanation:**
+- Uses compact syntax without spaces
+- Returns the maximum of two numbers
+- Uses boolean expressions: (A>=B) is -1 if true, 0 if false
+
+### Example 4: String Function - Uppercase Conversion
+
+```basic
+10 DEF FNUCASE$(Z$,N)=CHR$(ASC(MID$(Z$,N,1)) AND &H5F)
+20 A$ = "hello world"
+30 FOR I = 1 TO LEN(A$)
+40   PRINT FNUCASE$(A$, I);
+50 NEXT I
+60 PRINT
+70 END
+```
+
+**Output:**
+```
+HELLO WORLD
+```
+
+**Explanation:**
+- Multi-character function name with type suffix
+- Converts a single character to uppercase using bit manipulation
+- AND &H5F clears bit 5, converting lowercase to uppercase
+
+### Example 5: Distance Calculation (Real-World Example)
+
+```basic
+10 DEF FNDIST(X1,Y1,X2,Y2) = SQR((X2-X1)^2 + (Y2-Y1)^2)
+20 ' Calculate distance between two points
+30 PRINT "Distance from (0,0) to (3,4):"; FNDIST(0,0,3,4)
+40 PRINT "Distance from (1,1) to (4,5):"; FNDIST(1,1,4,5)
+50 END
+```
+
+**Output:**
+```
+Distance from (0,0) to (3,4): 5
+Distance from (1,1) to (4,5): 5
+```
+
+### Example 6: Using Current Variable Values
 
 ```basic
 10 A = 10
 20 DEF FNX(Y) = Y + A
-30 PRINT FNX(5)
+30 PRINT "With A=10: FNX(5) ="; FNX(5)
 40 A = 20
-50 PRINT FNX(5)
+50 PRINT "With A=20: FNX(5) ="; FNX(5)
 60 END
 ```
 
 **Output:**
 ```
- 15
- 25
+With A=10: FNX(5) = 15
+With A=20: FNX(5) = 25
 ```
 
 **Explanation:**
 - The function FNX uses the current value of variable A
+- Variable A is not in the parameter list, so its current value is used
 - First call: Y=5, A=10, result = 15
 - Second call: Y=5, A=20, result = 25
+
+### Example 7: Integer Function with Type Suffix
+
+```basic
+10 DEF FNHALF%(N) = N \ 2
+20 PRINT FNHALF%(7)
+30 PRINT FNHALF%(10)
+40 PRINT FNHALF%(15)
+50 END
+```
+
+**Output:**
+```
+ 3
+ 5
+ 7
+```
+
+**Explanation:**
+- Function returns integer division (truncates, doesn't round)
+- Type suffix % forces integer result
+
+### Example 8: Temperature Conversion Functions
+
+```basic
+10 DEF FNFTOC(F) = (F - 32) * 5 / 9
+20 DEF FNCTOF(C) = C * 9 / 5 + 32
+30 PRINT "100°F ="; FNFTOC(100); "°C"
+40 PRINT "0°C ="; FNCTOF(0); "°F"
+50 PRINT "32°F ="; FNFTOC(32); "°C"
+60 END
+```
+
+**Output:**
+```
+100°F = 37.77778 °C
+0°C = 32 °F
+32°F = 0 °C
+```
 
 ## Common Errors
 
