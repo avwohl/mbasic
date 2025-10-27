@@ -305,11 +305,9 @@ class TkBackend(UIBackend):
         self.root.after(2000, check_widget_later)
 
         # Initialize runtime/interpreter for immediate mode and program execution
-        # Create empty program runtime that both immediate mode and programs will use
-        from parser import Program
+        # Create empty runtime that both immediate mode and programs will use
         from resource_limits import create_unlimited_limits
-        empty_program = Program()
-        self.runtime = Runtime(empty_program.line_asts, empty_program.lines)
+        self.runtime = Runtime({}, {})
 
         # Create IOHandler that outputs to output pane
         tk_io = TkIOHandler(self._add_output, self.root)
