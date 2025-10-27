@@ -1474,10 +1474,14 @@ class CursesBackend(UIBackend):
         # Create immediate mode status indicator
         self.immediate_status = urwid.Text(('immediate_ok', "Ok"))
 
+        # Create help hint
+        help_hint = urwid.Text(('dim', "Type HELP for commands"), align='right')
+
         # Create immediate mode panel (status + history + input)
         immediate_content = urwid.Pile([
             ('pack', self.immediate_status),
             ('weight', 1, self.immediate_window),
+            ('pack', help_hint),
             ('pack', self.immediate_input)
         ])
 

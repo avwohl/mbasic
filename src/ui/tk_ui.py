@@ -210,6 +210,10 @@ class TkBackend(UIBackend):
         execute_btn = ttk.Button(input_frame, text="Execute", command=self._execute_immediate)
         execute_btn.pack(side=tk.LEFT)
 
+        # Help hint
+        help_hint = ttk.Label(input_frame, text="(Type HELP for commands)", foreground="gray", font=("Courier", 9))
+        help_hint.pack(side=tk.LEFT, padx=10)
+
         # Status bar
         self.status_label = ttk.Label(self.root, text="Ready", relief=tk.SUNKEN, anchor=tk.W)
         self.status_label.pack(side=tk.BOTTOM, fill=tk.X)

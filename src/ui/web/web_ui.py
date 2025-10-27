@@ -245,10 +245,13 @@ class MBasicWebIDE:
                     with ui.row().classes('w-full items-center gap-2 mt-2'):
                         ui.label('Ok >').classes('text-sm font-mono')
                         self.immediate_input = ui.input(
-                            placeholder='Enter BASIC command (e.g., PRINT X, A=5)'
+                            placeholder='Enter BASIC command (e.g., PRINT X, A=5) or HELP'
                         ).classes('flex-grow code-editor').on('keydown.enter', self.execute_immediate)
 
                         ui.button('Execute', on_click=self.execute_immediate, icon='play_arrow').props('dense color=secondary')
+
+                    # Help hint
+                    ui.label('Type HELP for available commands').classes('text-xs text-grey-6 mt-1')
 
         # Footer status bar
         with ui.footer():

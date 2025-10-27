@@ -139,6 +139,10 @@ class ImmediateExecutor:
         if not statement:
             return (True, "")
 
+        # Special case: HELP command
+        if statement.upper() in ('HELP', 'HELP()', '?HELP'):
+            return self._show_help()
+
         # Build a minimal program with line 0
         program_text = "0 " + statement
 
@@ -241,6 +245,71 @@ class ImmediateExecutor:
                 return f"Undefined variable\n"
             else:
                 return f"?{error_name}: {exception}\n"
+
+    def _show_help(self):
+        """
+        Show help for immediate mode commands.
+
+        Returns:
+            tuple: (True, help_text)
+        """
+        help_text = """
+═══════════════════════════════════════════════════════════════════
+                    IMMEDIATE MODE HELP
+═══════════════════════════════════════════════════════════════════
+
+Immediate mode allows you to execute BASIC statements directly without
+line numbers. You can interact with program variables and test code.
+
+AVAILABLE COMMANDS:
+───────────────────────────────────────────────────────────────────
+
+  PRINT <expr>     Print value of expression
+  ? <expr>         Shorthand for PRINT
+  <var> = <expr>   Assign value to variable
+  LET <var>=<expr> Explicit assignment
+
+EXAMPLES:
+───────────────────────────────────────────────────────────────────
+
+  PRINT 2 + 2              → Prints: 4
+  ? "Hello"                → Prints: Hello
+  X = 100                  → Sets X to 100
+  PRINT X                  → Prints: 100
+  Y$ = "BASIC"             → Sets Y$ to "BASIC"
+  ? SQR(16)                → Prints: 4
+  ? INT(3.7)               → Prints: 3
+
+ACCESSING PROGRAM VARIABLES:
+───────────────────────────────────────────────────────────────────
+
+When a program is loaded or running, you can inspect and modify its
+variables in immediate mode:
+
+  PRINT SCORE              → View program variable
+  LIVES = 3                → Modify program variable
+  ? PLAYER$                → Check string variable
+
+LIMITATIONS:
+───────────────────────────────────────────────────────────────────
+
+  • Cannot use multi-statement lines (no : separator)
+  • Cannot use GOTO, GOSUB, or control flow statements
+  • Cannot define or call functions (DEF FN)
+  • Cannot execute during INPUT or program running state
+
+SPECIAL COMMANDS:
+───────────────────────────────────────────────────────────────────
+
+  HELP                     Show this help message
+
+═══════════════════════════════════════════════════════════════════
+
+Press Ctrl+H (UI help) for keyboard shortcuts and UI features.
+
+═══════════════════════════════════════════════════════════════════
+"""
+        return (True, help_text)
 
 
 class OutputCapturingIOHandler:
