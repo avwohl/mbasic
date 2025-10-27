@@ -148,6 +148,11 @@ RENUMBER_KEY = 'ctrl e'
 RENUMBER_CHAR = '\x05'
 RENUMBER_DISPLAY = 'Ctrl+E'
 
+# Smart Insert Line (not in JSON, hardcoded)
+INSERT_LINE_KEY = 'ctrl i'
+INSERT_LINE_CHAR = '\x09'  # Same as tab, but urwid distinguishes 'ctrl i' from 'tab'
+INSERT_LINE_DISPLAY = 'Ctrl+I'
+
 # =============================================================================
 # Debugger Commands (loaded from JSON where available)
 # =============================================================================
@@ -206,6 +211,7 @@ KEYBINDINGS_BY_CATEGORY = {
     'Editing': [
         (BREAKPOINT_DISPLAY, 'Toggle breakpoint on current line'),
         (DELETE_LINE_DISPLAY, 'Delete current line'),
+        (INSERT_LINE_DISPLAY, 'Smart insert line between current and next'),
         (RENUMBER_DISPLAY, 'Renumber all lines (RENUM)'),
     ],
     'Debugger (when program running)': [

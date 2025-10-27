@@ -11,7 +11,7 @@ from .keybindings import (
     HELP_KEY, MENU_KEY, QUIT_KEY, QUIT_ALT_KEY,
     VARIABLES_KEY, STACK_KEY, RUN_KEY, LIST_KEY, NEW_KEY, SAVE_KEY, OPEN_KEY,
     BREAKPOINT_KEY, CLEAR_BREAKPOINTS_KEY, CLEAR_BREAKPOINTS_DISPLAY,
-    DELETE_LINE_KEY, RENUMBER_KEY,
+    DELETE_LINE_KEY, INSERT_LINE_KEY, RENUMBER_KEY,
     CONTINUE_KEY, STEP_KEY, STOP_KEY, TAB_KEY,
     STATUS_BAR_SHORTCUTS, EDITOR_STATUS, OUTPUT_STATUS,
     KEYBINDINGS_BY_CATEGORY
@@ -1615,6 +1615,10 @@ class CursesBackend(UIBackend):
             # Delete current line
             self._delete_current_line()
 
+        elif key == INSERT_LINE_KEY:
+            # Smart insert line between current and next
+            self._smart_insert_line()
+
         elif key == RENUMBER_KEY:
             # Renumber all lines
             self._renumber_lines()
@@ -1868,6 +1872,121 @@ class CursesBackend(UIBackend):
         if self.loop and self.loop_running:
             self.loop.draw_screen()
 
+    def _smart_insert_line(self):
+        """Smart insert - insert blank line between current and next line.
+
+        Uses midpoint calculation to find appropriate line number.
+        If no room, offers to renumber the program.
+        """
+        from ui.ui_helpers import calculate_midpoint
+
+        # Get current cursor position and text
+        cursor_pos = self.editor.edit_widget.edit_pos
+        current_text = self.editor.edit_widget.get_edit_text()
+
+        # Find which line we're on
+        text_before_cursor = current_text[:cursor_pos]
+        line_index = text_before_cursor.count('\n')
+
+        # Get all lines
+        lines = current_text.split('\n')
+        if line_index >= len(lines):
+            self.status_bar.set_text("No current line")
+            return
+
+        current_line = lines[line_index]
+
+        # Parse current line number from columns 1-5
+        if len(current_line) < 6:
+            self.status_bar.set_text("Current line has no line number")
+            return
+
+        line_number_str = current_line[1:6].strip()
+        if not line_number_str or not line_number_str.isdigit():
+            self.status_bar.set_text("Current line has no line number")
+            return
+
+        current_line_num = int(line_number_str)
+
+        # Collect all line numbers in program
+        all_line_numbers = []
+        for line in lines:
+            if len(line) >= 6:
+                num_str = line[1:6].strip()
+                if num_str and num_str.isdigit():
+                    all_line_numbers.append(int(num_str))
+
+        all_line_numbers = sorted(set(all_line_numbers))
+
+        if not all_line_numbers:
+            self.status_bar.set_text("No program lines found")
+            return
+
+        # Find the next line after current (to insert between prev and current)
+        # We want to insert BEFORE current, so find line before current
+        prev_line_num = None
+        for i, line_num in enumerate(all_line_numbers):
+            if line_num == current_line_num:
+                # Found current line - get previous
+                if i > 0:
+                    prev_line_num = all_line_numbers[i - 1]
+                break
+
+        # Calculate insertion point (insert BEFORE current line)
+        if prev_line_num is None:
+            # At beginning of program - insert line before current
+            insert_num = max(1, current_line_num - self.editor.auto_number_increment)
+            # Make sure we don't conflict with current
+            if insert_num >= current_line_num:
+                insert_num = current_line_num - 1 if current_line_num > 1 else None
+            if insert_num is None or insert_num < 1:
+                self.status_bar.set_text("No room before first line. Use RENUM to make space.")
+                return
+        else:
+            # Between previous and current lines - try midpoint
+            midpoint = calculate_midpoint(prev_line_num, current_line_num)
+            if midpoint is not None:
+                insert_num = midpoint
+            else:
+                # No room - offer to renumber
+                response = self._get_input_dialog(
+                    f"No room between lines {prev_line_num} and {current_line_num}. Renumber? (y/n): "
+                )
+                if response and response.lower().startswith('y'):
+                    # Renumber to make room
+                    self._renumber_lines()
+                return
+
+        # Insert blank line BEFORE current line (at current line's position)
+        # Format: status(1) + line_num(5) + space + code
+        status_char = ' '  # New line has no breakpoint or error
+        new_line_text = f"{status_char}{insert_num:5d} "
+
+        # Insert at current position
+        lines.insert(line_index, new_line_text)
+
+        # Update editor.lines dict
+        self.editor.lines[insert_num] = ""  # Empty code
+
+        # Update display
+        new_text = '\n'.join(lines)
+        self.editor.edit_widget.set_edit_text(new_text)
+
+        # Position cursor on the new line, at the code area (column 7)
+        if line_index > 0:
+            new_cursor_pos = sum(len(lines[i]) + 1 for i in range(line_index)) + 7
+        else:
+            new_cursor_pos = 7  # Column 7 is start of code area
+
+        self.editor.edit_widget.set_edit_pos(new_cursor_pos)
+
+        # Update status bar
+        self.status_bar.set_text(f"Inserted line {insert_num}")
+
+        # Force screen redraw
+        if self.loop and self.loop_running:
+            self.loop.draw_screen()
+
     def _renumber_lines(self):
         """Renumber all lines with a dialog for start and increment."""
         # Get current parameters
@@ -2078,9 +2197,10 @@ class CursesBackend(UIBackend):
 File                          Edit
 ────────────────────          ───────────────────────────
   New             Ctrl+N        Delete Line       Ctrl+D
-  Open...         Ctrl+O        Renumber...       Ctrl+E
-  Save            Ctrl+S        Toggle Break      Ctrl+B
-  Quit            Ctrl+Q        Clear Breaks      Ctrl+Shift+B
+  Open...         Ctrl+O        Insert Line       Ctrl+I
+  Save            Ctrl+S        Renumber...       Ctrl+E
+  Quit            Ctrl+Q        Toggle Break      Ctrl+B
+                                Clear Breaks      Ctrl+Shift+B
 
 Run                           Debug Windows
 ────────────────────          ────────────────────
