@@ -14,6 +14,7 @@ from .auto_save import AutoSaveManager
 from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 from iohandler.base import IOHandler
 from input_sanitizer import sanitize_and_clear_parity, is_valid_input_char
+from debug_logger import debug_log_error, is_debug_mode
 
 
 class TkBackend(UIBackend):
@@ -2095,8 +2096,30 @@ class TkBackend(UIBackend):
         except Exception as e:
             import traceback
             self.running = False
-            self._add_output(f"\n--- Execution error: {e} ---\n")
-            self._add_output(traceback.format_exc())
+
+            # Gather context for debug logging
+            context = {}
+            if self.interpreter and hasattr(self.interpreter, 'state'):
+                state = self.interpreter.state
+                context['current_line'] = state.current_line
+                context['status'] = state.status
+                if state.error_info:
+                    context['error_line'] = state.error_info.error_line
+
+            # Log error (outputs to stderr in debug mode)
+            error_msg = debug_log_error(
+                "Execution error",
+                exception=e,
+                context=context
+            )
+
+            # Display error in UI
+            self._add_output(f"\n--- {error_msg} ---\n")
+            if is_debug_mode():
+                self._add_output("(Full traceback sent to stderr - check console)\n")
+            else:
+                self._add_output(traceback.format_exc())
+
             self._set_status("Error")
             self._update_immediate_status()
 
@@ -2148,8 +2171,21 @@ class TkBackend(UIBackend):
 
         except Exception as e:
             import traceback
-            self._add_output(f"\n--- Runtime error: {e} ---\n")
-            self._add_output(traceback.format_exc())
+
+            # Log error (outputs to stderr in debug mode)
+            error_msg = debug_log_error(
+                "Runtime initialization error",
+                exception=e,
+                context={'phase': 'program setup'}
+            )
+
+            # Display error in UI
+            self._add_output(f"\n--- {error_msg} ---\n")
+            if is_debug_mode():
+                self._add_output("(Full traceback sent to stderr - check console)\n")
+            else:
+                self._add_output(traceback.format_exc())
+
             self._set_status("Error")
 
     def cmd_list(self, args: str = "") -> None:

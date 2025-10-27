@@ -4,6 +4,17 @@
 - Always commit and push changes when you stop to talk to me
 - Track all installed dependencies and update documentation
 
+## Debugging
+
+### Debug Mode
+When debugging errors, enable debug mode for detailed output:
+```bash
+MBASIC_DEBUG=1 python3 mbasic.py program.bas
+```
+
+This outputs detailed error traces to stderr (visible to Claude) while keeping the UI clean.
+See `docs/dev/DEBUG_MODE.md` for full details.
+
 ## Developer Setup
 
 ### System Requirements
