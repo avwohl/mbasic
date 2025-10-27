@@ -679,20 +679,26 @@ class TkBackend(UIBackend):
                 self._add_output("\n--- Re-parsing program after edit ---\n")
 
                 # Clear all error markers first
+                debug_log(f"Clearing all error markers", level=1)
                 self.editor_text.clear_all_errors()
 
                 # Get current editor text
+                debug_log(f"Getting editor text", level=1)
                 program_text = self.editor_text.get("1.0", tk.END)
+                debug_log(f"Got {len(program_text)} chars of program text", level=1)
 
                 # Parse the updated program
                 from src.parser import Parser
                 from src.lexer import Lexer
                 try:
+                    debug_log(f"Starting parse", level=1)
                     lexer = Lexer(program_text)
                     tokens = lexer.tokenize()
                     parser = Parser(tokens)
                     program = parser.parse()
+                    debug_log(f"Parse successful, got {len(program.line_table)} lines", level=1)
                 except Exception as parse_error:
+                    debug_log(f"Parse FAILED: {parse_error}", level=1)
                     self._add_output(f"Parse error: {parse_error}\n")
                     self._add_output("Fix the syntax error and try again.\n")
                     self._set_status("Parse error - fix and retry")
@@ -722,6 +728,9 @@ class TkBackend(UIBackend):
 
         except Exception as e:
             import traceback
+            from src.debug_logger import debug_log
+            debug_log(f"Continue EXCEPTION: {e}", level=1)
+            debug_log(f"Traceback: {traceback.format_exc()}", level=1)
             self._add_output(f"Continue error: {e}\n")
             self._add_output(f"Traceback: {traceback.format_exc()}\n")
             self._set_status("Error")
