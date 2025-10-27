@@ -1733,8 +1733,15 @@ class TkBackend(UIBackend):
             match = re.match(r'^(\d+)(?:\s|$)', line_stripped)  # Whitespace or end of string
             if match:
                 line_num = int(match.group(1))
+
+                # Check if there's any content after the line number
+                # Skip lines that are just a number (e.g., "20 " or "20")
+                content_match = re.match(r'^\d+\s+(.+)', line_stripped)
+                if not content_match or not content_match.group(1).strip():
+                    # No content after line number - skip this line
+                    continue
+
                 # Save the original line (with formatting), not stripped
-                # This preserves trailing spaces for blank lines like "25 "
                 success, error = self.program.add_line(line_num, line.rstrip('\r\n'))
                 if not success:
                     self._add_output(f"Parse error at line {line_num}: {error}\n")
@@ -1968,25 +1975,11 @@ class TkBackend(UIBackend):
         # Refresh editor to sort lines by number
         self._refresh_editor()
 
-        # Check if the line we just edited has the HIGHEST line number
-        # Only create a new auto-numbered line if this was the highest numbered line
-        all_nums = set(self.program.get_all_line_numbers())
-        is_highest_line = (current_line_num == max(all_nums)) if all_nums else True
+        # Insert a plain newline (no line number yet)
+        # Line number will be added when user finishes typing the next line
+        self.editor_text.text.insert(tk.END, '\n')
 
-        # Only create a new auto-numbered line if we were editing the highest numbered line
-        if is_highest_line:
-            # Calculate next number using standard increment
-            next_num = current_line_num + self.auto_number_increment
-
-            # If that conflicts with existing line, keep incrementing
-            while next_num in all_nums:
-                next_num += self.auto_number_increment
-
-            # Insert new line with auto-generated number (no leading spaces!)
-            new_line_text = f'\n{next_num} '
-            self.editor_text.text.insert(tk.END, new_line_text)
-
-        # Move cursor to the new line
+        # Move cursor to the new blank line
         self.editor_text.text.mark_set(tk.INSERT, tk.END)
         self.editor_text.text.see(tk.END)
 
