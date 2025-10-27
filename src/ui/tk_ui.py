@@ -293,6 +293,8 @@ class TkBackend(UIBackend):
                 print(f"[DEBUG] After focus_force with lift: focused={focused}, entry={self.immediate_entry}", flush=True)
                 print(f"[DEBUG] Entry winfo_viewable={self.immediate_entry.winfo_viewable()}", flush=True)
                 print(f"[DEBUG] Entry winfo_ismapped={self.immediate_entry.winfo_ismapped()}", flush=True)
+                print(f"[DEBUG] Entry winfo_width={self.immediate_entry.winfo_width()} height={self.immediate_entry.winfo_height()}", flush=True)
+                print(f"[DEBUG] Entry winfo_x={self.immediate_entry.winfo_x()} y={self.immediate_entry.winfo_y()}", flush=True)
 
             except Exception as e:
                 print(f"[DEBUG] Error setting focus: {e}", flush=True)
