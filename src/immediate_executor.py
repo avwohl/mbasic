@@ -48,8 +48,8 @@ class ImmediateExecutor:
         Initialize immediate executor.
 
         Args:
-            runtime: Runtime instance (program runtime if available, or None)
-            interpreter: Interpreter instance (program interpreter if available, or None)
+            runtime: Runtime instance (always available in TK UI)
+            interpreter: Interpreter instance (always available in TK UI)
             io_handler: IOHandler instance for capturing output
         """
         self.runtime = runtime
@@ -61,11 +61,6 @@ class ImmediateExecutor:
         from parser import TypeInfo
         for letter in 'abcdefghijklmnopqrstuvwxyz':
             self.def_type_map[letter] = TypeInfo.SINGLE
-
-        # Create persistent standalone runtime for when no program is loaded
-        # This allows variables to persist across immediate mode executions
-        self.standalone_runtime = None
-        self.standalone_interpreter = None
 
     def can_execute_immediate(self):
         """
@@ -157,24 +152,12 @@ class ImmediateExecutor:
             parser = Parser(tokens, self.def_type_map)
             ast = parser.parse()
 
-            # Choose runtime: use program runtime if available, otherwise use persistent standalone
-            if self.runtime is not None and self.interpreter is not None:
-                runtime = self.runtime
-                interpreter = self.interpreter
-                using_program_runtime = True
-            else:
-                # Use persistent standalone runtime for immediate mode
-                # This allows variables to persist across executions
-                if self.standalone_runtime is None:
-                    # Create persistent standalone runtime on first use
-                    from resource_limits import create_unlimited_limits
-                    self.standalone_runtime = Runtime(ast)
-                    self.standalone_runtime.setup()
-                    self.standalone_interpreter = Interpreter(self.standalone_runtime, self.io, limits=create_unlimited_limits())
+            # Use the runtime and interpreter (always available in TK UI)
+            if self.runtime is None or self.interpreter is None:
+                return (False, "Runtime not initialized\n")
 
-                runtime = self.standalone_runtime
-                interpreter = self.standalone_interpreter
-                using_program_runtime = False
+            runtime = self.runtime
+            interpreter = self.interpreter
 
             # Capture output
             if self.io:
@@ -184,10 +167,9 @@ class ImmediateExecutor:
             if ast.lines and len(ast.lines) > 0:
                 line_node = ast.lines[0]
 
-                # Save current execution position if using program runtime
-                if using_program_runtime:
-                    old_line = runtime.current_line
-                    old_index = runtime.current_stmt_index
+                # Save current execution position
+                old_line = runtime.current_line
+                old_index = runtime.current_stmt_index
 
                 # Update runtime's current line
                 runtime.current_line = line_node
@@ -197,10 +179,9 @@ class ImmediateExecutor:
                 for stmt in line_node.statements:
                     interpreter.execute_statement(stmt)
 
-                # Restore previous position if using program runtime
-                if using_program_runtime:
-                    runtime.current_line = old_line
-                    runtime.current_stmt_index = old_index
+                # Restore previous position
+                runtime.current_line = old_line
+                runtime.current_stmt_index = old_index
 
             # Get captured output
             output = self.io.get_output() if self.io else ""

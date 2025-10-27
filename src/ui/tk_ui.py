@@ -304,10 +304,23 @@ class TkBackend(UIBackend):
                 print(f"[DEBUG] Focus after retry: {self.root.focus_get()}", flush=True)
         self.root.after(2000, check_widget_later)
 
-        # Initialize immediate executor for standalone use (no program running)
-        # This allows immediate mode to work even before a program is loaded
+        # Initialize runtime/interpreter for immediate mode and program execution
+        # Create empty program runtime that both immediate mode and programs will use
+        from parser import Program
+        from resource_limits import create_unlimited_limits
+        empty_program = Program()
+        self.runtime = Runtime(empty_program.line_asts, empty_program.lines)
+
+        # Create IOHandler that outputs to output pane
+        tk_io = TkIOHandler(self._add_output, self.root)
+        self.interpreter = Interpreter(self.runtime, tk_io, limits=create_unlimited_limits())
+
+        # Wire up interpreter to use Tk UI's command methods
+        self.interpreter.interactive_mode = self
+
+        # Initialize immediate executor to use the same runtime/interpreter
         immediate_io = OutputCapturingIOHandler()
-        self.immediate_executor = ImmediateExecutor(runtime=None, interpreter=None, io_handler=immediate_io)
+        self.immediate_executor = ImmediateExecutor(runtime=self.runtime, interpreter=self.interpreter, io_handler=immediate_io)
 
         # Status bar
         self.status_label = ttk.Label(self.root, text="Ready", relief=tk.SUNKEN, anchor=tk.W)
@@ -1373,20 +1386,11 @@ class TkBackend(UIBackend):
 
     def _update_variables(self):
         """Update variables window from runtime."""
-        if not self.variables_visible:
+        if not self.variables_visible or not self.runtime:
             return
 
-        # Choose runtime: program runtime if available, otherwise standalone immediate mode runtime
         runtime = self.runtime
         interpreter = self.interpreter
-
-        # If no program runtime, check for standalone immediate mode runtime
-        if not runtime and self.immediate_executor:
-            runtime = self.immediate_executor.standalone_runtime
-            interpreter = self.immediate_executor.standalone_interpreter
-
-        if not runtime:
-            return
 
         # Update resource usage
         if interpreter and hasattr(interpreter, 'limits'):
