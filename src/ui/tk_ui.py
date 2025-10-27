@@ -203,6 +203,9 @@ class TkBackend(UIBackend):
         )
         self.immediate_history.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
 
+        # Add click handler to focus immediate entry when clicking in history
+        self.immediate_history.bind('<Button-1>', lambda e: self._focus_immediate_entry(), add='+')
+
         # Add right-click context menus for copy functionality
         self._setup_output_context_menu()
         self._setup_immediate_context_menu()
@@ -2678,6 +2681,11 @@ class TkBackend(UIBackend):
             self._write_output(f"?Error continuing: {e}")
 
     # Immediate mode methods
+
+    def _focus_immediate_entry(self):
+        """Focus the immediate mode entry widget when clicking in immediate mode area."""
+        if self.immediate_entry:
+            self.immediate_entry.focus_set()
 
     def _update_immediate_status(self):
         """Update immediate mode panel status based on interpreter state."""
