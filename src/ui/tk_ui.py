@@ -304,6 +304,18 @@ class TkBackend(UIBackend):
         # Try setting focus after a longer delay to ensure window is fully realized
         self.root.after(500, set_initial_focus)
 
+        # Add a second check much later to see if widget ever gets proper size
+        def check_widget_later():
+            print(f"[DEBUG] Widget check at 2000ms:", flush=True)
+            print(f"[DEBUG]   viewable={self.immediate_entry.winfo_viewable()} mapped={self.immediate_entry.winfo_ismapped()}", flush=True)
+            print(f"[DEBUG]   width={self.immediate_entry.winfo_width()} height={self.immediate_entry.winfo_height()}", flush=True)
+            print(f"[DEBUG]   x={self.immediate_entry.winfo_x()} y={self.immediate_entry.winfo_y()}", flush=True)
+            if self.immediate_entry.winfo_width() > 10:
+                print(f"[DEBUG] Widget has proper size now! Trying focus again...", flush=True)
+                self.immediate_entry.focus_force()
+                print(f"[DEBUG] Focus after retry: {self.root.focus_get()}", flush=True)
+        self.root.after(2000, check_widget_later)
+
         # Initialize immediate executor for standalone use (no program running)
         # This allows immediate mode to work even before a program is loaded
         immediate_io = OutputCapturingIOHandler()
