@@ -1962,9 +1962,33 @@ class TkBackend(UIBackend):
             # Sanitize: clear parity bits and filter control characters
             sanitized_text, was_modified = sanitize_and_clear_parity(clipboard_text)
 
-            if was_modified:
+            # Remove blank lines (lines with no content or no line number)
+            lines = sanitized_text.split('\n')
+            filtered_lines = []
+            removed_blank = False
+            for line in lines:
+                stripped = line.strip()
+                # Keep line if it has content (not just whitespace)
+                if stripped:
+                    filtered_lines.append(line)
+                elif not stripped and line != lines[-1]:
+                    # Remove blank line (unless it's the trailing newline)
+                    removed_blank = True
+
+            sanitized_text = '\n'.join(filtered_lines)
+
+            # Add back trailing newline if original had one
+            if clipboard_text.endswith('\n'):
+                sanitized_text += '\n'
+
+            if was_modified or removed_blank:
                 # Show warning that content was modified
-                self._set_status("Pasted content was sanitized (control characters removed)")
+                msg = []
+                if was_modified:
+                    msg.append("control characters removed")
+                if removed_blank:
+                    msg.append("blank lines removed")
+                self._set_status(f"Pasted content was sanitized ({', '.join(msg)})")
 
             # Insert sanitized text at cursor position
             try:
