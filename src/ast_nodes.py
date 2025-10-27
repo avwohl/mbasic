@@ -236,6 +236,7 @@ class DimStatementNode:
     arrays: List['ArrayDeclNode']
     line_num: int = 0
     column: int = 0
+    token: Optional[Any] = None  # Token for tracking access time
 
 
 @dataclass
