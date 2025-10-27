@@ -116,7 +116,7 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 | **Array display** | ✅ | ✅ | ✅ | Show array elements |
 | **Array subscript tracking** | ✅ | ✅ | ✅ | Show last accessed subscript |
 | **Last modified time** | ✅ | ✅ | ✅ | Timestamp for variable changes |
-| **Search/filter variables** | ⚠️ | ⚠️ | ❌ | Limited search. TODO: Enhance |
+| **Search/filter variables** | ✅ | ✅ | ✅ | **COMPLETE 2025-10-27** - Real-time filter on name, value, type |
 | **Value before Type columns** | ✅ | ⚠️ | ⚠️ | **UPDATED 2025-10-26** - Tk shows Value first. Verify others |
 
 ### Execution Stack
@@ -300,9 +300,10 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
    - Files: All UI files
    - Implement: Periodic auto-save to temp file (~/.mbasic/autosave/)
 
-5. ⚠️ **All UIs: Limited variable search** - Hard to find in large programs
+5. ✅ **DONE: All UIs: Variable search/filter** - **COMPLETED 2025-10-27**
    - Files: tk_ui.py, curses_ui.py, web_ui.py
-   - Enhance: Filter/search in variables window
+   - Implementation: Real-time filter on name, value, type
+   - Tk/Web: Input field with instant feedback. Curses: 'f' key dialog
 
 ### Medium Priority (Nice to Have)
 6. ❌ **All UIs: No syntax highlighting** - Would improve readability
@@ -323,9 +324,9 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 2. ✅ **DONE: Add statement highlighting to all UIs** (Completed 2025-10-26)
 3. ✅ **DONE: Add missing keyboard shortcuts to Web UI** (Completed 2025-10-26)
 4. 🔧 **TODO: Implement current line highlight in Web UI** (Limitation: textarea component)
-5. 📝 **TODO: Add recent files list to all UIs**
+5. ✅ **DONE: Add recent files list to all UIs** (Completed 2025-10-27)
 6. 📝 **TODO: Implement auto-save functionality**
-7. 📝 **TODO: Enhance variable search/filter**
+7. ✅ **DONE: Enhance variable search/filter** (Completed 2025-10-27)
 8. 🎯 **FUTURE: Full syntax highlighting**
 9. 🎯 **FUTURE: Layout persistence**
 10. 🎯 **FUTURE: Theme/dark mode support**
@@ -359,3 +360,5 @@ For each feature marked ✅, verify:
 - 2025-10-26: **Smart Insert Line (Ctrl+I) WORKING in Tk UI** - Inserts line between current and next
 - 2025-10-26: **Variables window column swap** - Value before Type for better usability
 - 2025-10-26: Created TK_UI_CHANGES_FOR_OTHER_UIS.md with verification checklist
+- 2025-10-27: **Recent Files COMPLETE** - All UIs track last 10 files in ~/.mbasic/recent_files.json
+- 2025-10-27: **Variable Search/Filter COMPLETE** - Real-time filtering in all UIs by name, value, type
