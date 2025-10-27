@@ -1715,6 +1715,8 @@ class TkBackend(UIBackend):
         """Handle mouse click - check for line change after click settles."""
         # Use after() to check after click is processed
         self.root.after(10, self._check_line_change)
+        # Also validate syntax after clicking (clears red ? when line is fixed)
+        self.root.after(100, self._validate_editor_syntax)
 
     def _on_focus_out(self, event):
         """Handle focus leaving editor - check for line change."""
