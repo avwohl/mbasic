@@ -1788,6 +1788,16 @@ class TkBackend(UIBackend):
             for line_num, error_msg in errors_found:
                 self._add_output(f"Line {line_num}: {error_msg}\n")
             self._add_output("===================\n")
+            # Update status bar to show there are syntax errors
+            error_count = len(errors_found)
+            plural = "s" if error_count > 1 else ""
+            self._set_status(f"Syntax error{plural} in program - cannot run")
+        else:
+            # No errors - clear any previous error status
+            if hasattr(self, 'status_label') and self.status_label:
+                current_status = self.status_label.cget('text')
+                if 'Syntax error' in current_status:
+                    self._set_status("Ready")
 
     def _check_line_syntax(self, code_text):
         """Check if a line of BASIC code has valid syntax.
