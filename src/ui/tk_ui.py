@@ -2031,15 +2031,14 @@ class TkBackend(UIBackend):
         # Refresh editor to sort lines by number
         self._refresh_editor()
 
-        # DON'T insert a newline - this would create a blank line
-        # Instead, just move cursor to the end and let the user type
-        # When they type and press Enter, that line will get auto-numbered
-
-        # Move cursor to the end
+        # Move cursor to the end (after the last line)
+        # Don't insert anything - let default Enter behavior add the newline
         self.editor_text.text.mark_set(tk.INSERT, tk.END)
         self.editor_text.text.see(tk.END)
 
-        return 'break'  # Prevent default Enter behavior
+        # Allow default Enter behavior to insert newline
+        # The blank line will be handled by typing on it
+        return None
 
     def _on_paste(self, event):
         """Handle paste event - sanitize clipboard content.
