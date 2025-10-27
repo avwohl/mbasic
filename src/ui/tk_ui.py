@@ -2821,19 +2821,15 @@ class TkBackend(UIBackend):
             messagebox.showwarning("Warning", "Cannot execute while program is running")
             return
 
-        # Log the command
-        self._add_immediate_output(f"> {command}\n")
-
-        # Execute
+        # Execute (don't echo the command or add "Ok" - just show results)
         success, output = self.immediate_executor.execute(command)
 
-        # Log the result
+        # Show output if any
         if output:
             self._add_immediate_output(output)
 
-        if success:
-            self._add_immediate_output("Ok\n")
-        else:
+        if not success:
+            # Only show error dialog on failure
             messagebox.showerror("Error", "Immediate mode error")
 
         # Clear input
