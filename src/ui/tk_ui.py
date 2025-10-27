@@ -14,7 +14,7 @@ from .auto_save import AutoSaveManager
 from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 from iohandler.base import IOHandler
 from input_sanitizer import sanitize_and_clear_parity, is_valid_input_char
-from debug_logger import debug_log_error, is_debug_mode
+from debug_logger import debug_log_error, is_debug_mode, debug_log
 
 
 class TkBackend(UIBackend):
@@ -216,9 +216,25 @@ class TkBackend(UIBackend):
 
         ttk.Label(input_frame, text="Ok >", font=("Courier", 10)).pack(side=tk.LEFT, padx=(0, 5))
         # Use tk.Entry instead of ttk.Entry for better input reliability
-        self.immediate_entry = tk.Entry(input_frame, font=("Courier", 10), state='normal')
+        # Explicitly set state, takefocus, and exportselection to ensure entry accepts input
+        self.immediate_entry = tk.Entry(input_frame, font=("Courier", 10),
+                                        state='normal', takefocus=True,
+                                        exportselection=False)
         self.immediate_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
         self.immediate_entry.bind('<Return>', lambda e: self._execute_immediate())
+
+        # Debug: Add bindings to test if widget receives events
+        def debug_key(e):
+            debug_log(f"Key event in immediate_entry: char='{e.char}' keysym={e.keysym} keycode={e.keycode}", level=1)
+            return None  # Don't block the event
+        def debug_focus_in(e):
+            debug_log(f"FocusIn event in immediate_entry", level=1)
+        def debug_focus_out(e):
+            debug_log(f"FocusOut event in immediate_entry", level=1)
+        if is_debug_mode():
+            self.immediate_entry.bind('<Key>', debug_key, add='+')
+            self.immediate_entry.bind('<FocusIn>', debug_focus_in, add='+')
+            self.immediate_entry.bind('<FocusOut>', debug_focus_out, add='+')
 
         execute_btn = ttk.Button(input_frame, text="Execute", command=self._execute_immediate)
         execute_btn.pack(side=tk.LEFT)
