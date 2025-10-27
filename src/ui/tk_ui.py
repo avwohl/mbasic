@@ -215,7 +215,8 @@ class TkBackend(UIBackend):
         input_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
 
         ttk.Label(input_frame, text="Ok >", font=("Courier", 10)).pack(side=tk.LEFT, padx=(0, 5))
-        self.immediate_entry = ttk.Entry(input_frame, font=("Courier", 10))
+        # Use tk.Entry instead of ttk.Entry for better input reliability
+        self.immediate_entry = tk.Entry(input_frame, font=("Courier", 10), state='normal')
         self.immediate_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
         self.immediate_entry.bind('<Return>', lambda e: self._execute_immediate())
 
@@ -230,7 +231,8 @@ class TkBackend(UIBackend):
         # (it will be enabled/disabled later based on program state via _update_immediate_status)
         self.immediate_entry.config(state=tk.NORMAL)
         # Give initial focus to immediate entry for convenience
-        self.root.after(100, lambda: self.immediate_entry.focus_set())
+        # Use focus_force to ensure focus is actually set
+        self.root.after(100, lambda: self.immediate_entry.focus_force())
 
         # Initialize immediate executor for standalone use (no program running)
         # This allows immediate mode to work even before a program is loaded
@@ -2696,7 +2698,7 @@ class TkBackend(UIBackend):
     def _focus_immediate_entry(self):
         """Focus the immediate mode entry widget when clicking in immediate mode area."""
         if self.immediate_entry:
-            self.immediate_entry.focus_set()
+            self.immediate_entry.focus_force()
 
     def _update_immediate_status(self):
         """Update immediate mode panel status based on interpreter state."""
