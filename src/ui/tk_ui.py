@@ -1449,15 +1449,13 @@ class TkBackend(UIBackend):
             self.stack_tree.insert('', 'end', text=text, values=(details,))
             return
 
-        # Add to tree with indentation for nesting
+        # Add to tree (no indentation for easier debugging)
         for i, entry in enumerate(stack):
-            indent = "  " * i
-
             if entry['type'] == 'GOSUB':
-                text = f"{indent}GOSUB"
+                text = "GOSUB"
                 details = f"from line {entry['from_line']}"
             elif entry['type'] == 'FOR':
-                text = f"{indent}FOR"
+                text = "FOR"
                 var = entry['var']
                 current = entry['current']
                 end = entry['end']
@@ -1472,10 +1470,10 @@ class TkBackend(UIBackend):
                 else:
                     details = f"{var} = {current_str} TO {end_str} STEP {step_str}"
             elif entry['type'] == 'WHILE':
-                text = f"{indent}WHILE"
+                text = "WHILE"
                 details = f"at line {entry['line']}"
             else:
-                text = f"{indent}{entry['type']}"
+                text = entry['type']
                 details = ""
 
             self.stack_tree.insert('', 'end', text=text, values=(details,))
@@ -2173,6 +2171,11 @@ class TkBackend(UIBackend):
                 self._set_status("Error")
                 self._update_immediate_status()
                 self._clear_statement_highlight()
+                # Update stack and variables to show state at error
+                if self.stack_visible:
+                    self._update_stack()
+                if self.variables_visible:
+                    self._update_variables()
 
             elif state.status == 'at_breakpoint':
                 self.running = False

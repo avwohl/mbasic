@@ -793,6 +793,14 @@ class Runtime:
 
     def push_for_loop(self, var_name, end_value, step_value, return_line, return_stmt_index):
         """Register a FOR loop on the unified execution stack"""
+        import sys
+        import traceback
+
+        # DEBUG: Log every push with stack trace
+        print(f"DEBUG: push_for_loop({var_name}) at line {return_line}, stack size before: {len(self.execution_stack)}", file=sys.stderr)
+        if var_name in self.for_loop_vars:
+            print(f"  WARNING: {var_name} already on stack at index {self.for_loop_vars[var_name]}!", file=sys.stderr)
+
         loop_entry = {
             'type': 'FOR',
             'var': var_name,
@@ -804,6 +812,8 @@ class Runtime:
         self.execution_stack.append(loop_entry)
         # Track index for quick lookup by variable name
         self.for_loop_vars[var_name] = len(self.execution_stack) - 1
+
+        print(f"  Stack size after: {len(self.execution_stack)}", file=sys.stderr)
 
     def pop_for_loop(self, var_name):
         """Remove a FOR loop - verifies it's on top of stack"""
