@@ -216,7 +216,7 @@ class NiceGUIBackend(UIBackend):
                 self.editor = ui.textarea(
                     value='',
                     placeholder='Program Editor - Enter BASIC program here (e.g., 10 PRINT "Hello")'
-                ).classes('w-full font-mono').style('height: 300px; margin: 0;').props('outlined').mark('editor')
+                ).classes('w-full font-mono').style('height: 300px; margin: 0; padding: 4px;').props('outlined dense').mark('editor')
 
                 # Bind keyboard events for auto-numbering
                 self.editor.on('keydown.enter', self._on_enter_key)
@@ -228,10 +228,11 @@ class NiceGUIBackend(UIBackend):
                 ).classes('w-full font-mono').style(
                     'height: 300px; '
                     'margin: 0; '
+                    'padding: 4px; '
                     'background-color: white; '
                     'color: black; '
                     'font-size: 14px;'
-                ).props('readonly outlined').mark('output')
+                ).props('readonly outlined dense').mark('output')
 
             # INPUT row (hidden by default, shown when INPUT statement needs input)
             self.input_row = ui.row().classes('w-full p-2 gap-2 bg-blue-50')
@@ -247,7 +248,7 @@ class NiceGUIBackend(UIBackend):
                 self.immediate_entry = ui.textarea(
                     value='',
                     placeholder='Enter BASIC command (e.g., PRINT 2+2)'
-                ).classes('flex-grow font-mono').style('height: 60px; margin: 0;').props('outlined').mark('immediate_entry')
+                ).classes('flex-grow font-mono').style('height: 60px; margin: 0; padding: 4px;').props('outlined dense').mark('immediate_entry')
                 self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
                 ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
