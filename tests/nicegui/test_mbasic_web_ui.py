@@ -11,6 +11,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+import asyncio
 import pytest
 from nicegui.testing import User
 from src.iohandler.console import ConsoleIOHandler
@@ -143,6 +144,39 @@ async def test_list_program(user: User):
     # Should see program in output
     await user.should_see('10 PRINT "A"', marker='output')
     await user.should_see('20 PRINT "B"', marker='output')
+
+
+@pytest.mark.asyncio
+async def test_run_program(user: User):
+    """Test running a simple BASIC program."""
+    from src.ui.web.nicegui_backend import NiceGUIBackend
+
+    io_handler = ConsoleIOHandler()
+    program_mgr = ProgramManager(create_def_type_map())
+    backend = NiceGUIBackend(io_handler, program_mgr)
+    backend.build_ui()
+
+    await user.open('/')
+
+    # Add a simple program
+    user.find(marker='editor').type('10 PRINT "Hello, World!"')
+    user.find(marker='btn_add_line').click()
+
+    user.find(marker='editor').type('20 PRINT "Testing 1 2 3"')
+    user.find(marker='btn_add_line').click()
+
+    user.find(marker='editor').type('30 END')
+    user.find(marker='btn_add_line').click()
+
+    # Run the program
+    user.find(marker='btn_run').click()
+
+    # Wait a bit for execution
+    await asyncio.sleep(0.5)
+
+    # Should see output
+    await user.should_see('Hello, World!', marker='output')
+    await user.should_see('Testing 1 2 3', marker='output')
 
 
 if __name__ == '__main__':

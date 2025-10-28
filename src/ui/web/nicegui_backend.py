@@ -4,9 +4,53 @@ Provides a modern web-based UI for the MBASIC interpreter using NiceGUI.
 """
 
 import re
+import asyncio
 from nicegui import ui, app
 from pathlib import Path
 from ..base import UIBackend
+from src.runtime import Runtime
+from src.interpreter import Interpreter
+from src.iohandler.base import IOHandler
+
+
+class SimpleWebIOHandler(IOHandler):
+    """Simple IO handler for NiceGUI that appends to textarea."""
+
+    def __init__(self, output_callback):
+        """
+        Initialize web IO handler.
+
+        Args:
+            output_callback: Function to call with output text
+        """
+        self.output_callback = output_callback
+
+    def print(self, text="", end="\n"):
+        """Output text to the web UI."""
+        output = str(text) + end
+        self.output_callback(output)
+
+    def input(self, prompt=""):
+        """Get input from user (not yet implemented for web)."""
+        # TODO: Implement web input dialog
+        self.print(f"{prompt}[INPUT NOT YET IMPLEMENTED]")
+        return ""
+
+    def get_char(self):
+        """Get single character (not implemented)."""
+        return ""
+
+    def clear_screen(self):
+        """Clear screen (not applicable for textarea)."""
+        pass
+
+    def set_cursor_position(self, row, col):
+        """Set cursor position (not applicable)."""
+        pass
+
+    def get_screen_size(self):
+        """Get screen size."""
+        return (24, 80)
 
 
 class NiceGUIBackend(UIBackend):
@@ -43,6 +87,10 @@ class NiceGUIBackend(UIBackend):
         self.running = False
         self.paused = False
         self.breakpoints = set()  # Line numbers with breakpoints
+        self.interpreter = None
+        self.runtime = None
+        self.exec_io = None
+        self.tick_task = None  # Async task for execution
 
         # UI elements (created in build_ui())
         self.editor = None
@@ -186,13 +234,85 @@ class NiceGUIBackend(UIBackend):
 
     def _menu_run(self):
         """Run > Run Program - Execute program."""
-        # TODO: Implement program execution
-        self._set_status('Run not yet implemented')
-        ui.notify('Execution coming soon', type='info')
+        if self.running:
+            self._set_status('Program already running')
+            return
+
+        try:
+            # Clear output
+            self._clear_output()
+            self._set_status('Running...')
+
+            # Get program AST
+            program_ast = self.program.get_program_ast()
+
+            # Create runtime and interpreter
+            from src.resource_limits import create_local_limits
+            self.runtime = Runtime(self.program.line_asts, self.program.lines)
+
+            # Create IO handler that outputs to our output pane
+            self.exec_io = SimpleWebIOHandler(self._append_output)
+            self.interpreter = Interpreter(self.runtime, self.exec_io, limits=create_local_limits())
+
+            # Wire up interpreter to use this UI's methods
+            self.interpreter.interactive_mode = self
+
+            # Start interpreter
+            state = self.interpreter.start()
+            if state.status == 'error':
+                error_msg = state.error_info.error_message if state.error_info else 'Unknown'
+                self._append_output(f"\n--- Setup error: {error_msg} ---\n")
+                self._set_status('Error')
+                return
+
+            # Mark as running
+            self.running = True
+
+            # Start async execution
+            ui.timer(0.01, self._execute_tick, once=False)
+
+        except Exception as e:
+            self._append_output(f"\n--- Error: {e} ---\n")
+            self._set_status(f'Error: {e}')
+            self.running = False
+
+    def _execute_tick(self):
+        """Execute one tick of the interpreter."""
+        if not self.running or not self.interpreter:
+            return
+
+        try:
+            # Execute one tick (up to 1000 statements)
+            state = self.interpreter.tick(mode='run', max_statements=1000)
+
+            # Handle state
+            if state.status == 'done':
+                self._append_output("\n--- Program finished ---\n")
+                self._set_status("Ready")
+                self.running = False
+            elif state.status == 'error':
+                error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                self._append_output(f"\n--- Error: {error_msg} ---\n")
+                self._set_status("Error")
+                self.running = False
+            elif state.status == 'paused' or state.status == 'at_breakpoint':
+                self._set_status(f"Paused at line {state.current_line}")
+                self.running = False
+                self.paused = True
+
+        except Exception as e:
+            self._append_output(f"\n--- Tick error: {e} ---\n")
+            self._set_status(f"Error: {e}")
+            self.running = False
 
     def _menu_stop(self):
         """Run > Stop - Stop execution."""
-        self._set_status('Stop not yet implemented')
+        if self.running:
+            self.running = False
+            self._set_status('Stopped')
+            self._append_output("\n--- Program stopped ---\n")
+        else:
+            self._set_status('No program running')
 
     def _menu_step(self):
         """Run > Step - Step one line."""
