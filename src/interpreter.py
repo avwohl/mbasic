@@ -379,11 +379,9 @@ class Interpreter:
                         self.state.status = 'paused'
                         return self.state
 
-                    # Check if we need to jump
-                    if self.runtime.has_pending_jump():
+                    # Advance to next statement (will return False if jump pending)
+                    if not self.advance_to_next_statement():
                         break
-
-                    self.runtime.current_stmt_index += 1
 
                     # Handle step_statement mode
                     if mode == 'step_statement':
@@ -708,11 +706,9 @@ class Interpreter:
                 stmt = line_node.statements[self.runtime.current_stmt_index]
                 self.execute_statement(stmt)
 
-                # Check if we need to jump
-                if self.runtime.has_pending_jump():
+                # Advance to next statement (will return False if jump pending)
+                if not self.advance_to_next_statement():
                     break
-
-                self.runtime.current_stmt_index += 1
 
         except Exception as e:
             return {
@@ -868,15 +864,13 @@ class Interpreter:
                             traceback.print_exc()
                         raise
 
-                # Check if we need to jump
-                if self.runtime.has_pending_jump():
+                # Advance to next statement (will return False if jump pending)
+                if not self.advance_to_next_statement():
                     # Break to jump to new line (will be handled by after-loop code)
                     import os
                     if os.environ.get('DEBUG'):
                         self.io.debug(f"In-loop detected jump to line {self.runtime.next_line}, breaking to after-loop handler")
                     break
-
-                self.runtime.current_stmt_index += 1
 
             # After executing all statements on the line, check if we need to jump
             # This handles jumps from error handlers
@@ -1009,6 +1003,22 @@ class Interpreter:
             stmt_idx = 0  # Start from first statement in next line
 
         return None
+
+    def advance_to_next_statement(self):
+        """
+        Advance to the next statement in the current line.
+
+        This is the single point of control for statement advancement.
+        Should be called after executing a statement (if no jump occurred).
+
+        Returns:
+            bool: True if advanced successfully, False if at end of line or jump pending
+        """
+        if self.runtime.has_pending_jump():
+            return False
+
+        self.runtime.current_stmt_index += 1
+        return True
 
     def execute_statement(self, stmt):
         """Execute a single statement"""
