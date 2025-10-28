@@ -488,15 +488,18 @@ class NiceGUIBackend(UIBackend):
     def _append_output(self, text):
         """Append text to output pane and auto-scroll to bottom."""
         self.output.value += text
-        # Auto-scroll to bottom using JavaScript
-        # NiceGUI textarea doesn't have a built-in scroll method,
-        # so we use run_javascript to scroll the underlying element
-        try:
-            # Find the textarea element and scroll to bottom
-            self.output.run_method('scrollTop', self.output.run_method('scrollHeight'))
-        except:
-            # Silently ignore scroll errors (element might not be ready)
-            pass
+        # Auto-scroll to bottom
+        # For NiceGUI textarea, we need to scroll the underlying Quasar component
+        # The textarea component exposes a native element that can be scrolled
+        ui.run_javascript(f'''
+            const outputArea = getElement({self.output.id});
+            if (outputArea && outputArea.$el) {{
+                const textarea = outputArea.$el.querySelector('textarea');
+                if (textarea) {{
+                    textarea.scrollTop = textarea.scrollHeight;
+                }}
+            }}
+        ''')
 
     def _show_input_row(self, prompt=''):
         """Show the INPUT row with prompt."""
