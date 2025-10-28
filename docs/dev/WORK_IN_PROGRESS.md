@@ -63,7 +63,7 @@ Over hundreds/thousands of changes focused on TK client and interpreter rewrites
 
 **Rationale:** Current web UI was a quick prototype. Rather than update it to match hundreds of TK changes, faster to rebuild with NiceGUI (impressed with its speed). Can salvage useful code from oldweb.
 
-**Completed (v1.0.161-167):**
+**Completed (v1.0.161-171):**
 - Moved old web UI to `src/ui/oldweb`
 - Created `src/ui/web/nicegui_backend.py` (440+ lines)
 - Implemented basic UI: menu bar, toolbar, split pane (editor/output), status bar
@@ -80,6 +80,17 @@ Over hundreds/thousands of changes focused on TK client and interpreter rewrites
   - Documented inline input as better approach
   - Created TODOs for TK, Web, and Curses INPUT improvements
   - Curses already uses inline input correctly!
+- **Web UI Integration** (v1.0.169):
+  - Added web backend to mbasic.py entry point
+  - Updated requirements.txt with nicegui dependencies
+  - Can launch with: python3 mbasic.py --backend web
+- **Documentation** (v1.0.170):
+  - Created comprehensive README for web UI
+  - Documents features, installation, usage, architecture
+- **Curses INPUT Verification** (v1.0.171):
+  - ✅ Verified curses INPUT uses inline input (correct approach)
+  - Created test program: tests/test_curses_input.bas
+  - Confirmed this is the model TK and Web should follow
 - All 6 tests passing:
   - ✅ test_ui_loads - UI loads without errors
   - ✅ test_add_program_line - Can add BASIC lines
@@ -87,6 +98,11 @@ Over hundreds/thousands of changes focused on TK client and interpreter rewrites
   - ✅ test_clear_output - Clear output works
   - ✅ test_list_program - List Program outputs to console
   - ✅ test_run_program - Program execution works!
+
+**Next Steps:**
+- ⏸️ Implement inline INPUT for web UI (see docs/dev/WEB_UI_INPUT_UX_TODO.md)
+- ⏸️ Replace TK INPUT dialog with inline input (see docs/dev/TK_UI_INPUT_DIALOG_TODO.md)
+- ⏸️ Add file operations to web UI (Open/Save)
 
 #### Phase 2b: Update Curses UI
 1. ⏸️ Fix editor line number display (embed in text like TK)
