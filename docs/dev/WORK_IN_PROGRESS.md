@@ -112,20 +112,33 @@ Over hundreds/thousands of changes focused on TK client and interpreter rewrites
   - Added test_input_statement() test
   - Manual testing required (pytest not available)
 
-**Web UI Redesign (v1.0.194 - IN PROGRESS):**
-- ⏳ Redesigning web UI to match TK look and feel
-- Changed from horizontal split to vertical split (editor top 60%, output bottom 40%)
-- Removed separate "entry field + program display" design
-- Added single multi-line editor (like TK)
-- Added auto-numbering configuration variables
-- **BLOCKED:** Need to finish refactoring before web UI is functional
-- **TODO:** Update _add_line to _save_editor_to_program/_load_program_to_editor
-- **TODO:** Implement auto-numbering on Enter key
-- **TODO:** Update all menu handlers for new design
+**Web UI Redesign (v1.0.194-197 - COMPLETED):**
+- ✅ Redesigned web UI to match TK look and feel
+- ✅ Changed from horizontal split to vertical split (editor top 60%, output bottom 40%)
+- ✅ Removed separate "entry field + program display" design
+- ✅ Added single multi-line editor (like TK)
+- ✅ Added auto-numbering configuration variables (deferred auto-numbering on Enter - complex)
+- ✅ Replaced _add_line/_update_program_display with _save_editor_to_program/_load_program_to_editor
+- ✅ Updated _menu_new to clear single editor
+- ✅ Updated _menu_run to save editor content first before execution
+- ✅ Implemented file operations:
+  - Open: NiceGUI upload dialog with .bas/.txt filter
+  - Save: Downloads current file
+  - Save As: Dialog with filename input, downloads file
+- ✅ Added immediate mode command input at bottom of output pane
+  - Input field for BASIC commands without line numbers
+  - Execute button and Enter key support
+  - Uses ImmediateExecutor like TK
+  - Shows command and output in output pane
+
+**Deferred:**
+- ⏸️ Auto-numbering on Enter key - Complex cursor manipulation in web textarea
+- ⏸️ Recent Files menu - Would need localStorage or server-side storage
+- ⏸️ Advanced features: breakpoints, stepping, variables window, stack window
 
 **Next Steps:**
-- ⏳ Complete web UI redesign (currently broken mid-refactor)
-- ⏸️ Add file operations to web UI (Open/Save)
+- ⏸️ Test web UI thoroughly
+- ⏸️ Update Playwright tests for new layout
 
 #### Phase 2b: Update Curses UI
 1. ⏸️ Fix editor line number display (embed in text like TK)
