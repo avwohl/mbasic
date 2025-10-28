@@ -223,7 +223,7 @@ class NiceGUIBackend(UIBackend):
                     self.output = ui.textarea(
                         value='MBASIC 5.21 Web IDE\nReady\n',
                         placeholder='Program output will appear here'
-                    ).classes('w-full flex-grow font-mono').props('readonly').mark('output')
+                    ).classes('w-full font-mono').style('height: 250px').props('readonly').mark('output')
 
                     # INPUT row (hidden by default, shown when INPUT statement needs input)
                     self.input_row = ui.row().classes('w-full p-2 gap-2')
