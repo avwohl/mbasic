@@ -201,9 +201,7 @@ class NiceGUIBackend(UIBackend):
                 ui.button('Open', on_click=self._menu_open, icon='folder_open').mark('btn_open')
                 ui.button('Save', on_click=self._menu_save, icon='save').mark('btn_save')
                 ui.separator().props('vertical')
-                run_btn = ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
-                print(f"DEBUG: Created Run button: {run_btn}", file=sys.stderr)
-                sys.stderr.flush()
+                ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
                 ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
                 ui.button('Step', on_click=self._menu_step, icon='skip_next').mark('btn_step')
                 ui.button('Continue', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
@@ -556,55 +554,38 @@ class NiceGUIBackend(UIBackend):
 
     def _menu_run(self):
         """Run > Run Program - Execute program."""
-        print("=" * 70, file=sys.stderr)
-        print("WEB UI: _menu_run called!", file=sys.stderr)
-        print("=" * 70, file=sys.stderr)
-        sys.stderr.flush()
-        log_web_error("_menu_run", Exception("DEBUG: _menu_run called"))
-
         if self.running:
             self._set_status('Program already running')
             return
 
         try:
             # Save editor content to program first
-            log_web_error("_menu_run", Exception("DEBUG: About to save editor"))
             if not self._save_editor_to_program():
-                log_web_error("_menu_run", Exception("DEBUG: Save editor failed"))
                 return  # Parse errors, don't run
-
-            log_web_error("_menu_run", Exception(f"DEBUG: Save succeeded, program.lines={len(self.program.lines)}"))
 
             # Check if program has lines
             if not self.program.lines:
-                log_web_error("_menu_run", Exception("DEBUG: No program lines - exiting"))
                 self._set_status('No program loaded')
                 ui.notify('No program in editor. Add some lines first.', type='warning')
                 return
 
-            log_web_error("_menu_run", Exception("DEBUG: Program has lines, starting run"))
             # Don't clear output - continuous scrolling like ASR33 teletype
             self._set_status('Running...')
 
-            log_web_error("_menu_run", Exception("DEBUG: Getting program AST"))
             # Get program AST
             program_ast = self.program.get_program_ast()
 
-            log_web_error("_menu_run", Exception("DEBUG: Creating runtime"))
             # Create runtime and interpreter
             from src.resource_limits import create_local_limits
             self.runtime = Runtime(self.program.line_asts, self.program.lines)
 
-            log_web_error("_menu_run", Exception("DEBUG: Creating interpreter"))
             # Create IO handler that outputs to our output pane
             self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
             self.interpreter = Interpreter(self.runtime, self.exec_io, limits=create_local_limits())
 
-            log_web_error("_menu_run", Exception("DEBUG: Wiring up interpreter"))
             # Wire up interpreter to use this UI's methods
             self.interpreter.interactive_mode = self
 
-            log_web_error("_menu_run", Exception("DEBUG: Starting interpreter"))
             # Start interpreter
             state = self.interpreter.start()
             if state.status == 'error':
@@ -613,16 +594,11 @@ class NiceGUIBackend(UIBackend):
                 self._set_status('Error')
                 return
 
-            log_web_error("_menu_run", Exception("DEBUG: Interpreter started, marking running"))
             # Mark as running
             self.running = True
-            log_web_error("_menu_run", Exception(f"DEBUG: Set running=True, value is now {self.running}"))
 
-            log_web_error("_menu_run", Exception("DEBUG: Starting timer"))
             # Start async execution - store timer handle so we can cancel it
             self.exec_timer = ui.timer(0.01, self._execute_tick, once=False)
-
-            log_web_error("_menu_run", Exception(f"DEBUG: _menu_run complete! timer={self.exec_timer}"))
 
         except Exception as e:
             log_web_error("_menu_run", e)
@@ -640,8 +616,6 @@ class NiceGUIBackend(UIBackend):
         try:
             # Execute one tick (up to 1000 statements)
             state = self.interpreter.tick(mode='run', max_statements=1000)
-
-            log_web_error("_execute_tick", Exception(f"DEBUG: Tick returned status={state.status}"))
 
             # Handle state
             if state.status == 'done':
@@ -994,8 +968,6 @@ class NiceGUIBackend(UIBackend):
 
     def _append_output(self, text):
         """Append text to output pane and auto-scroll to bottom."""
-        log_web_error("_append_output", Exception(f"DEBUG: Appending {len(text)} chars: {text[:50]}..."))
-
         # Update our internal buffer
         self.output_text += text
 
@@ -1005,15 +977,19 @@ class NiceGUIBackend(UIBackend):
         if len(self.output_text) > MAX_OUTPUT_CHARS:
             # Keep last MAX_OUTPUT_CHARS, add indicator at start
             self.output_text = "[... output truncated ...]\n" + self.output_text[-MAX_OUTPUT_CHARS:]
-            log_web_error("_append_output", Exception(f"DEBUG: Buffer truncated to {len(self.output_text)} chars"))
-
-        log_web_error("_append_output", Exception(f"DEBUG: Buffer now {len(self.output_text)} chars"))
 
         # Update the textarea directly (push-based, not polling)
         if self.output:
             self.output.value = self.output_text
             self.output.update()  # Force NiceGUI to push update to browser
-            log_web_error("_append_output", Exception(f"DEBUG: Updated textarea.value to {len(self.output_text)} chars"))
+
+            # Auto-scroll to bottom using JavaScript
+            ui.run_javascript('''
+                const textarea = document.querySelector('[data-ref="output"] textarea');
+                if (textarea) {
+                    textarea.scrollTop = textarea.scrollHeight;
+                }
+            ''')
 
     def _show_input_row(self, prompt=''):
         """Show the INPUT row with prompt."""
