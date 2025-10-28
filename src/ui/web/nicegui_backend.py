@@ -1010,9 +1010,14 @@ class NiceGUIBackend(UIBackend):
         self.output_text += text
         log_web_error("_append_output", Exception(f"DEBUG: Buffer now {len(self.output_text)} chars"))
 
-        # Use set_value() to programmatically update the textarea
-        self.output.set_value(self.output_text)
-        log_web_error("_append_output", Exception(f"DEBUG: Called set_value()"))
+        # CRITICAL: Use self.output._props['value'] to directly set the backing property
+        # This bypasses NiceGUI's update mechanism which doesn't work from timers
+        self.output._props['value'] = self.output_text
+        log_web_error("_append_output", Exception(f"DEBUG: Set _props['value'] directly"))
+
+        # Force NiceGUI to push the update to the client
+        self.output.update()
+        log_web_error("_append_output", Exception(f"DEBUG: Called update()"))
 
         # Scroll to bottom using JavaScript
         ui.run_javascript('''
