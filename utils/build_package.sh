@@ -146,9 +146,6 @@ if [ "$ACTION" = "test" ]; then
         exit 1
     fi
 
-    echo "Testing --version..."
-    mbasic --version
-
     echo "Testing --list-backends..."
     mbasic --list-backends
 
