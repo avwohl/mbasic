@@ -4,6 +4,48 @@
 - Track all installed dependencies and update documentation
 - **Check `docs/dev/WORK_IN_PROGRESS.md` on EVERY startup** - contains current task that may be incomplete
 
+## 🚨 CRITICAL: Running Real MBASIC Comparisons
+
+**READ THIS FIRST when user asks to compare with real MBASIC 5.21**
+
+This section exists because every day I forget how to do this and it takes 10+ tries. DON'T BE THAT CLAUDE. Read this carefully.
+
+**Full documentation:** `tests/HOW_TO_RUN_REAL_MBASIC.md`
+
+**Quick Reference - DO THIS:**
+
+```bash
+# 1. MUST cd to tests directory FIRST
+cd /home/wohl/cl/mbasic/tests
+
+# 2. Create test program that MUST end with SYSTEM not END
+cat > test.bas << 'EOF'
+10 PRINT "Hello"
+20 FOR I = 1 TO 3
+30   PRINT I
+40 NEXT I
+50 SYSTEM
+EOF
+
+# 3. Run our implementation
+python3 ../mbasic.py test.bas > /tmp/our_output.txt 2>&1
+
+# 4. Run real MBASIC (pipe content, don't pass filename)
+(cat test.bas && echo "RUN") | timeout 10 tnylpo ../com/mbasic > /tmp/real_output.txt 2>&1
+
+# 5. Compare
+diff /tmp/our_output.txt /tmp/real_output.txt
+```
+
+**Critical requirements (NEVER forget these):**
+1. **MUST run from `tests/` directory** - tnylpo needs relative path to `../com/mbasic`
+2. **MUST pipe program content** - Cannot pass filename to tnylpo
+3. **MUST end with `SYSTEM`** - `END` hangs waiting for input
+4. **MUST use `(cat file && echo "RUN")`** - Pipes content then RUN command
+5. **Keep lines short** - MBASIC has line buffer limits
+
+**Why this exists:** User said "every day when i ask you to compare a basic program in our basic vs real it takes you like 10 tries to get it work". This is unacceptable. Follow the instructions above EXACTLY.
+
 ## Git Commit and Push Workflow
 
 **Use checkpoint script for ALL commits:**
