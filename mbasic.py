@@ -84,7 +84,7 @@ def load_backend(backend_name, io_handler, program_manager):
     """Load a UI backend dynamically using importlib
 
     Args:
-        backend_name: Name of backend ('cli', 'visual', 'curses', 'tk')
+        backend_name: Name of backend ('cli', 'visual', 'curses', 'tk', 'web')
         io_handler: IOHandler instance for I/O operations
         program_manager: ProgramManager instance for program storage
 
@@ -102,6 +102,7 @@ def load_backend(backend_name, io_handler, program_manager):
             'visual': ('ui.visual', 'VisualBackend'),
             'curses': ('ui.curses_ui', 'CursesBackend'),
             'tk': ('ui.tk_ui', 'TkBackend'),
+            'web': ('ui.web', 'NiceGUIBackend'),
         }
 
         if backend_name not in backend_map:
@@ -137,6 +138,14 @@ def load_backend(backend_name, io_handler, program_manager):
                 "         or: pip install urwid>=2.0.0\n"
                 "\n"
                 "Alternative: Use --backend cli or --backend tk\n"
+                "Run 'python3 mbasic.py --list-backends' to see all available backends."
+            ),
+            'web': (
+                "\nWeb backend requires nicegui library.\n"
+                "Install with: pip install mbasic[web]\n"
+                "         or: pip install nicegui>=3.2.0\n"
+                "\n"
+                "Alternative: Use --backend cli, --backend curses, or --backend tk\n"
                 "Run 'python3 mbasic.py --list-backends' to see all available backends."
             ),
         }
@@ -215,7 +224,7 @@ Examples:
 
     parser.add_argument(
         '--backend',
-        choices=['cli', 'visual', 'curses', 'tk'],
+        choices=['cli', 'visual', 'curses', 'tk', 'web'],
         default='curses',
         help='UI backend to use (default: curses)'
     )

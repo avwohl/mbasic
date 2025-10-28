@@ -8,9 +8,12 @@
 
 # Optional UI dependencies
 urwid>=2.0.0        # For curses backend (full-screen terminal UI)
+nicegui>=3.2.0      # For web backend (browser-based UI)
 
 # Development/testing dependencies (optional)
-pexpect>=4.8.0      # For automated UI testing
+pexpect>=4.8.0         # For automated UI testing
+pytest>=8.0.0          # For running tests
+pytest-asyncio>=1.0.0  # For async NiceGUI tests
 
 # Help system dependencies
 python-frontmatter>=1.0.0  # For YAML front matter parsing in help files
