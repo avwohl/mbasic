@@ -163,7 +163,7 @@ class NiceGUIBackend(UIBackend):
                         self.editor = ui.textarea(
                             placeholder='Enter BASIC line (e.g., 10 PRINT "Hello")',
                             on_change=lambda: None
-                        ).classes('flex-grow').mark('editor')
+                        ).classes('flex-grow h-[200px]').mark('editor')
 
                         ui.button('Add Line', on_click=self._add_line, icon='add').mark('btn_add_line')
 
@@ -172,7 +172,7 @@ class NiceGUIBackend(UIBackend):
                     self.program_display = ui.textarea(
                         value='',
                         placeholder='No program loaded'
-                    ).classes('w-full flex-grow font-mono').props('readonly').mark('program_display')
+                    ).classes('w-full h-[300px] font-mono').props('readonly').mark('program_display')
 
                 # Right pane - Output
                 with splitter.after:
