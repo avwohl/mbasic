@@ -99,9 +99,20 @@ Over hundreds/thousands of changes focused on TK client and interpreter rewrites
   - ✅ test_list_program - List Program outputs to console
   - ✅ test_run_program - Program execution works!
 
+- **TK UI INPUT Fix** (v1.0.173):
+  - ✅ Replaced modal dialog with inline input field
+  - Input row appears below output pane (hidden by default)
+  - Uses queue.Queue() for synchronization
+  - Matches curses inline input approach
+  - Manual testing required
+- **Web UI INPUT Implementation** (v1.0.174):
+  - ✅ Implemented inline INPUT with asyncio.Future coordination
+  - Input field appears below output (visible property toggle)
+  - Async/sync coordination for interpreter compatibility
+  - Added test_input_statement() test
+  - Manual testing required (pytest not available)
+
 **Next Steps:**
-- ⏸️ Implement inline INPUT for web UI (see docs/dev/WEB_UI_INPUT_UX_TODO.md)
-- ⏸️ Replace TK INPUT dialog with inline input (see docs/dev/TK_UI_INPUT_DIALOG_TODO.md)
 - ⏸️ Add file operations to web UI (Open/Save)
 
 #### Phase 2b: Update Curses UI
