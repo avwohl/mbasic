@@ -235,10 +235,11 @@ class NiceGUIBackend(UIBackend):
                 with splitter.after:
                     ui.label('Output').classes('text-lg font-bold p-2')
                     # Direct textarea - we'll update it via JavaScript polling
+                    # Use min-height to ensure visibility, white background for text visibility
                     self.output = ui.textarea(
                         value='MBASIC 5.21 Web IDE\nReady\n',
                         placeholder='Program output will appear here'
-                    ).classes('w-full font-mono').style('height: 250px').props('readonly').mark('output')
+                    ).classes('w-full font-mono').style('min-height: 150px; height: 100%; background-color: white;').props('readonly').mark('output')
 
                     # Add JavaScript to poll for output updates every 100ms
                     ui.add_head_html('''
@@ -252,6 +253,16 @@ class NiceGUIBackend(UIBackend):
                             if (textarea) {
                                 console.log("MBASIC TEST: Textarea visible:", textarea.offsetParent !== null);
                                 console.log("MBASIC TEST: Textarea height:", textarea.offsetHeight);
+
+                                // Check computed styles
+                                const computed = window.getComputedStyle(textarea);
+                                console.log("MBASIC TEST: color:", computed.color);
+                                console.log("MBASIC TEST: backgroundColor:", computed.backgroundColor);
+                                console.log("MBASIC TEST: display:", computed.display);
+                                console.log("MBASIC TEST: visibility:", computed.visibility);
+                                console.log("MBASIC TEST: opacity:", computed.opacity);
+                                console.log("MBASIC TEST: fontSize:", computed.fontSize);
+
                                 console.log("MBASIC TEST: Setting test value...");
                                 textarea.value = "*** JAVASCRIPT TEST - Can you see this? ***\\n" + textarea.value;
                             } else {
@@ -263,13 +274,36 @@ class NiceGUIBackend(UIBackend):
                             try {
                                 const response = await fetch('/get_output');
                                 const data = await response.json();
-                                console.log("MBASIC POLL: Got output, length=" + data.output.length);
                                 const textarea = document.querySelector('textarea[readonly]');
-                                console.log("MBASIC POLL: textarea=" + textarea + ", current length=" + (textarea ? textarea.value.length : 0));
-                                if (textarea && data.output !== textarea.value) {
-                                    console.log("MBASIC POLL: Updating textarea!");
-                                    textarea.value = data.output;
+
+                                if (!textarea) {
+                                    console.error("MBASIC POLL: No readonly textarea found!");
+                                    return;
+                                }
+
+                                const serverOutput = data.output;
+                                const currentValue = textarea.value;
+
+                                if (serverOutput !== currentValue) {
+                                    console.log("MBASIC POLL: UPDATE NEEDED");
+                                    console.log("  Server:", serverOutput.substring(0, 100));
+                                    console.log("  Current:", currentValue.substring(0, 100));
+
+                                    // Update the textarea value
+                                    textarea.value = serverOutput;
+
+                                    // Trigger input event so Vue/Quasar knows about the change
+                                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                                    textarea.dispatchEvent(new Event('change', { bubbles: true }));
+
+                                    // Remove placeholder class if present
+                                    if (serverOutput && textarea.classList.contains('q-placeholder')) {
+                                        textarea.classList.remove('q-placeholder');
+                                        console.log("  Removed q-placeholder class");
+                                    }
+
                                     textarea.scrollTop = textarea.scrollHeight;
+                                    console.log("  UPDATED! New length:", textarea.value.length);
                                 }
                             } catch (e) {
                                 console.error("MBASIC POLL ERROR:", e);
@@ -1044,8 +1078,7 @@ class NiceGUIBackend(UIBackend):
 
     def _clear_output(self):
         """Clear output pane."""
-        self.output_text = 'MBASIC 5.21 Web IDE\nReady\n'
-        self.output.set_value(self.output_text)
+        self.output_text = ''
         self._set_status('Output cleared')
 
     def _append_output(self, text):
@@ -1056,27 +1089,10 @@ class NiceGUIBackend(UIBackend):
         self.output_text += text
         log_web_error("_append_output", Exception(f"DEBUG: Buffer now {len(self.output_text)} chars"))
 
-        # CRITICAL: Use self.output._props['value'] to directly set the backing property
-        # This bypasses NiceGUI's update mechanism which doesn't work from timers
-        self.output._props['value'] = self.output_text
-        log_web_error("_append_output", Exception(f"DEBUG: Set _props['value'] directly"))
-
-        # Force NiceGUI to push the update to the client
-        self.output.update()
-        log_web_error("_append_output", Exception(f"DEBUG: Called update()"))
-
-        # Scroll to bottom using JavaScript
-        ui.run_javascript('''
-            setTimeout(() => {
-                const textareas = document.querySelectorAll('textarea');
-                for (let ta of textareas) {
-                    if (ta.readOnly) {
-                        ta.scrollTop = ta.scrollHeight;
-                        break;
-                    }
-                }
-            }, 50);
-        ''')
+        # DON'T update the NiceGUI component directly - this causes it to reset
+        # the textarea value in the browser, overwriting what JavaScript polling set.
+        # Just update our buffer and let JavaScript polling fetch it via /get_output.
+        # No need to call self.output.set_value() or self.output.update() here.
 
     def _show_input_row(self, prompt=''):
         """Show the INPUT row with prompt."""
