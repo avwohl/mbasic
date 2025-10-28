@@ -105,3 +105,7 @@ extra_css:
 
 docs_dir: docs
 site_dir: site
+
+# Exclude files that conflict or shouldn't be in the site
+exclude_docs: |
+  README.md
