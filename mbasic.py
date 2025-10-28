@@ -24,6 +24,54 @@ sys.path.insert(0, str(Path(__file__).parent / 'src'))
 from parser import TypeInfo
 
 
+def list_backends():
+    """Check which backends are available and print status"""
+    backends = {
+        'cli': {
+            'name': 'CLI',
+            'description': 'Line-based command interface',
+            'module': None,  # Built-in, always available
+            'install': None
+        },
+        'visual': {
+            'name': 'Visual',
+            'description': 'Generic visual stub',
+            'module': None,  # Built-in, always available
+            'install': None
+        },
+        'curses': {
+            'name': 'Curses',
+            'description': 'Full-screen terminal UI',
+            'module': 'urwid',
+            'install': 'pip install mbasic[curses]'
+        },
+        'tk': {
+            'name': 'Tkinter',
+            'description': 'Graphical UI',
+            'module': 'tkinter',
+            'install': 'Included with Python (may need: apt install python3-tk)'
+        },
+    }
+
+    print("Available MBASIC backends:\n")
+    for name, info in backends.items():
+        status = "✓ Available"
+        install_help = ""
+
+        # Check if module is available
+        if info['module']:
+            try:
+                __import__(info['module'])
+            except ImportError:
+                status = "✗ Not available"
+                if info['install']:
+                    install_help = f" ({info['install']})"
+
+        print(f"  {name:10} {info['name']:12} {info['description']:30} {status}{install_help}")
+
+    print("\nUsage: python3 mbasic.py --backend <name>")
+
+
 def create_default_def_type_map():
     """Create default DEF type map (all SINGLE precision)"""
     def_type_map = {}
@@ -44,7 +92,7 @@ def load_backend(backend_name, io_handler, program_manager):
         UIBackend instance
 
     Raises:
-        ImportError: If backend module cannot be loaded
+        ImportError: If backend module cannot be loaded (with helpful installation instructions)
         AttributeError: If backend doesn't have required classes
     """
     try:
@@ -71,7 +119,33 @@ def load_backend(backend_name, io_handler, program_manager):
         return backend_class(io_handler, program_manager)
 
     except ImportError as e:
-        raise ImportError(f"Failed to load backend '{backend_name}': {e}")
+        # Provide helpful installation instructions
+        help_messages = {
+            'tk': (
+                "\nTkinter backend requires tkinter (usually included with Python).\n"
+                "If missing:\n"
+                "  • Debian/Ubuntu: sudo apt-get install python3-tk\n"
+                "  • RHEL/Fedora:   sudo dnf install python3-tkinter\n"
+                "  • macOS/Windows: Reinstall Python from python.org\n"
+                "\n"
+                "Alternative: Use --backend cli or --backend curses\n"
+                "Run 'python3 mbasic.py --list-backends' to see all available backends."
+            ),
+            'curses': (
+                "\nCurses backend requires urwid library.\n"
+                "Install with: pip install mbasic[curses]\n"
+                "         or: pip install urwid>=2.0.0\n"
+                "\n"
+                "Alternative: Use --backend cli or --backend tk\n"
+                "Run 'python3 mbasic.py --list-backends' to see all available backends."
+            ),
+        }
+
+        error_msg = f"Failed to load backend '{backend_name}': {e}"
+        if backend_name in help_messages:
+            error_msg += help_messages[backend_name]
+
+        raise ImportError(error_msg)
     except AttributeError as e:
         raise AttributeError(f"Backend '{backend_name}' does not have class '{class_name}': {e}")
 
@@ -152,7 +226,18 @@ Examples:
         help='Enable debug output'
     )
 
+    parser.add_argument(
+        '--list-backends',
+        action='store_true',
+        help='List available backends and exit'
+    )
+
     args = parser.parse_args()
+
+    # Handle --list-backends first (exit after showing)
+    if args.list_backends:
+        list_backends()
+        sys.exit(0)
 
     # Create I/O handler based on backend choice
     if args.backend == 'cli':

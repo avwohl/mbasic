@@ -1,54 +1,112 @@
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mbasic-interpreter"
-version = "0.65.0"
-description = "An interpreter for MBASIC 5.21 (Microsoft BASIC-80 for CP/M) - Core features complete, file I/O in progress"
+name = "mbasic"
+version = "1.0.117"
+description = "MBASIC 5.21 (Microsoft BASIC-80) interpreter with modern enhancements"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
+license = {text = "0BSD"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}  # TODO: Update with your information
+    {name = "Aaron Wohl", email = "aaron@example.com"}
 ]
-keywords = ["basic", "interpreter", "mbasic", "basic-80", "cpm", "retro-computing", "vintage"]
+keywords = [
+    "basic",
+    "interpreter",
+    "vintage",
+    "retro",
+    "programming",
+    "mbasic",
+    "microsoft-basic",
+    "basic-80",
+    "cp/m",
+    "vintage-computing"
+]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Education",
-    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Other",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Interpreters",
+    "Topic :: Software Development :: Compilers",
     "Topic :: System :: Emulators",
-    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Environment :: Console :: Curses",
 ]
 
+# Core MBASIC has ZERO dependencies - pure Python stdlib
 dependencies = []
 
 [project.optional-dependencies]
+# Curses UI backend (full-screen terminal interface)
+curses = ["urwid>=2.0.0"]
+
+# Tkinter UI backend (graphical interface)
+# Note: tkinter is included with Python, but on some Linux systems
+# requires python3-tk package: sudo apt-get install python3-tk
+tk = []
+
+# All UI backends
+all = ["urwid>=2.0.0"]
+
+# Development dependencies
 dev = [
     "pytest>=7.0",
-    "pytest-cov>=4.0",
+    "pexpect>=4.8.0",
+]
+
+# Help system (for frontmatter parsing in help files)
+help = ["python-frontmatter>=1.0.0"]
+
+# Documentation generation
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.4.0",
+    "mkdocs-awesome-pages-plugin>=2.9.0"
+]
+
+# Full development environment
+full = [
+    "urwid>=2.0.0",
+    "pytest>=7.0",
+    "pexpect>=4.8.0",
+    "python-frontmatter>=1.0.0",
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.4.0",
+    "mkdocs-awesome-pages-plugin>=2.9.0"
 ]
 
 [project.urls]
 Homepage = "https://github.com/avwohl/mbasic"
-Repository = "https://github.com/avwohl/mbasic.git"
+Documentation = "https://avwohl.github.io/mbasic/"
+Repository = "https://github.com/avwohl/mbasic"
 Issues = "https://github.com/avwohl/mbasic/issues"
-Documentation = "https://github.com/avwohl/mbasic/blob/main/README.md"
+Changelog = "https://github.com/avwohl/mbasic/blob/main/docs/dev/WORK_IN_PROGRESS.md"
 
 [project.scripts]
 mbasic = "mbasic:main"
 
 [tool.setuptools]
-packages = ["src"]
+# Include both the entry point module and the src package
+py-modules = ["mbasic"]  # Entry point: mbasic.py
+packages = ["src", "src.ui", "src.editing", "src.filesystem", "src.iohandler"]  # All src packages
+
+# Tell setuptools not to look for __init__.py in src (flat namespace)
+# This allows imports like: from runtime import Runtime
+[tool.setuptools.package-dir]
+"" = "."  # Root is current directory
 
 [tool.setuptools.package-data]
+# Include additional data files if needed
 "*" = ["*.md", "*.txt"]
