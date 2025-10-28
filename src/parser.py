@@ -3565,7 +3565,7 @@ class Parser:
             column=token.column
         )
 
-    def parse_set_setting(self) -> ast_nodes.SetSettingStatementNode:
+    def parse_set_setting(self) -> SetSettingStatementNode:
         """Parse SET statement for settings
 
         Syntax:
@@ -3597,14 +3597,14 @@ class Parser:
 
         value = self.parse_expression()
 
-        return ast_nodes.SetSettingStatementNode(
+        return SetSettingStatementNode(
             setting_name=setting_name,
             value=value,
             line_num=token.line,
             column=token.column
         )
 
-    def parse_show_settings(self) -> ast_nodes.ShowSettingsStatementNode:
+    def parse_show_settings(self) -> ShowSettingsStatementNode:
         """Parse SHOW SETTINGS statement
 
         Syntax:
@@ -3627,13 +3627,13 @@ class Parser:
             if self.match(TokenType.STRING):
                 pattern = self.advance().value
 
-        return ast_nodes.ShowSettingsStatementNode(
+        return ShowSettingsStatementNode(
             pattern=pattern,
             line_num=token.line,
             column=token.column
         )
 
-    def parse_help_setting(self) -> ast_nodes.HelpSettingStatementNode:
+    def parse_help_setting(self) -> HelpSettingStatementNode:
         """Parse HELP SET statement
 
         Syntax:
@@ -3654,7 +3654,7 @@ class Parser:
 
         setting_name = self.advance().value
 
-        return ast_nodes.HelpSettingStatementNode(
+        return HelpSettingStatementNode(
             setting_name=setting_name,
             line_num=token.line,
             column=token.column

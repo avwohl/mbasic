@@ -2963,7 +2963,7 @@ class Interpreter:
         # Get setting definition
         definition = get_definition(stmt.setting_name)
         if not definition:
-            self.io.write(f"?Unknown setting: {stmt.setting_name}\n")
+            self.io.output(f"?Unknown setting: {stmt.setting_name}")
             return
 
         # Convert value based on definition type
@@ -2979,7 +2979,7 @@ class Interpreter:
                 elif value_lower in ('false', 'no', '0'):
                     value = False
                 else:
-                    self.io.write(f"?Invalid boolean value: {value}\n")
+                    self.io.output(f"?Invalid boolean value: {value}")
                     return
         elif definition.type == SettingType.INTEGER:
             value = int(value)
@@ -2990,9 +2990,9 @@ class Interpreter:
 
         # Validate value
         if not validate_value(stmt.setting_name, value):
-            self.io.write(f"?Invalid value for {stmt.setting_name}: {value}\n")
+            self.io.output(f"?Invalid value for {stmt.setting_name}: {value}")
             if definition.choices:
-                self.io.write(f"  Valid choices: {', '.join(str(c) for c in definition.choices)}\n")
+                self.io.output(f"  Valid choices: {', '.join(str(c) for c in definition.choices)}")
             return
 
         # Set and save setting
@@ -3000,9 +3000,9 @@ class Interpreter:
             settings_mgr = get_settings_manager()
             settings_mgr.set(stmt.setting_name, value, scope=SettingScope.GLOBAL)
             settings_mgr.save(scope=SettingScope.GLOBAL)
-            self.io.write(f"Setting '{stmt.setting_name}' = {value}\n")
+            self.io.output(f"Setting '{stmt.setting_name}' = {value}")
         except Exception as e:
-            self.io.write(f"?Error setting {stmt.setting_name}: {e}\n")
+            self.io.output(f"?Error setting {stmt.setting_name}: {e}")
 
     def execute_showsettings(self, stmt):
         """Execute SHOW SETTINGS command
@@ -3024,9 +3024,9 @@ class Interpreter:
 
         if not filtered:
             if stmt.pattern:
-                self.io.write(f"No settings matching '{stmt.pattern}'\n")
+                self.io.output(f"No settings matching '{stmt.pattern}'")
             else:
-                self.io.write("No settings configured\n")
+                self.io.output("No settings configured")
             return
 
         # Group by category
@@ -3040,9 +3040,9 @@ class Interpreter:
 
         # Display settings by category
         for category in sorted(categories.keys()):
-            self.io.write(f"\n{category}:\n")
+            self.io.output(f"\n{category}:")
             for key, value in categories[category]:
-                self.io.write(f"  {key} = {value}\n")
+                self.io.output(f"  {key} = {value}")
 
     def execute_helpsetting(self, stmt):
         """Execute HELP SET command
@@ -3053,23 +3053,23 @@ class Interpreter:
 
         definition = get_definition(stmt.setting_name)
         if not definition:
-            self.io.write(f"?Unknown setting: {stmt.setting_name}\n")
+            self.io.output(f"?Unknown setting: {stmt.setting_name}")
             return
 
         # Display setting information
-        self.io.write(f"\n{stmt.setting_name}\n")
-        self.io.write(f"  Type: {definition.type.value}\n")
-        self.io.write(f"  Default: {definition.default}\n")
+        self.io.output(f"\n{stmt.setting_name}")
+        self.io.output(f"  Type: {definition.type.value}")
+        self.io.output(f"  Default: {definition.default}")
 
         if definition.choices:
-            self.io.write(f"  Choices: {', '.join(str(c) for c in definition.choices)}\n")
+            self.io.output(f"  Choices: {', '.join(str(c) for c in definition.choices)}")
 
         if definition.min_value is not None:
-            self.io.write(f"  Min: {definition.min_value}\n")
+            self.io.output(f"  Min: {definition.min_value}")
         if definition.max_value is not None:
-            self.io.write(f"  Max: {definition.max_value}\n")
+            self.io.output(f"  Max: {definition.max_value}")
 
-        self.io.write(f"\n  {definition.description}\n")
+        self.io.output(f"\n  {definition.description}")
 
         if definition.help_text:
-            self.io.write(f"\n{definition.help_text}\n")
+            self.io.output(f"\n{definition.help_text}")
