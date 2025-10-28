@@ -112,7 +112,19 @@ Over hundreds/thousands of changes focused on TK client and interpreter rewrites
   - Added test_input_statement() test
   - Manual testing required (pytest not available)
 
+**Web UI Redesign (v1.0.194 - IN PROGRESS):**
+- ⏳ Redesigning web UI to match TK look and feel
+- Changed from horizontal split to vertical split (editor top 60%, output bottom 40%)
+- Removed separate "entry field + program display" design
+- Added single multi-line editor (like TK)
+- Added auto-numbering configuration variables
+- **BLOCKED:** Need to finish refactoring before web UI is functional
+- **TODO:** Update _add_line to _save_editor_to_program/_load_program_to_editor
+- **TODO:** Implement auto-numbering on Enter key
+- **TODO:** Update all menu handlers for new design
+
 **Next Steps:**
+- ⏳ Complete web UI redesign (currently broken mid-refactor)
 - ⏸️ Add file operations to web UI (Open/Save)
 
 #### Phase 2b: Update Curses UI
