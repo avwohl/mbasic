@@ -1,84 +1,99 @@
 # Work in Progress
 
-## Last Session: 2025-01-27 - Auto-Numbering and Type Suffix Fixes
+## Current Session: 2025-10-27 - Spacing and Case Preservation
 
 ### Session Summary ✅ COMPLETED
 
-Major work on auto-numbering feature and critical type suffix serialization bug.
+Major work on preserving original source formatting - both spacing and variable case.
 
 ### Completed Tasks
 
-1. **Fixed Ctrl+I Smart Insert Issues** (v1.0.77-1.0.80)
-   - Fixed renumber error - added `_renum_statement()` and `_renum_erl_comparison()` to TkBackend
-   - Fixed cursor position lost after refresh - saves line number before refresh, restores after
-   - Fixed multiple blank lines - saves/refreshes before inserting to remove previous blanks
+1. **Position-Aware Serialization** (v1.0.89)
+   - Created `position_serializer.py` with conflict detection
+   - Fast path: uses original `source_text` from LineNode
+   - Fallback: reconstructs from AST with position tracking
+   - Debug mode reports position conflicts
+   - Test results: 28.9% of files (107/370) preserved exactly
+   - All unit tests passing for spacing preservation
 
-2. **Fixed Enter Key Auto-Numbering** (v1.0.78, 1.0.81, 1.0.83-1.0.84)
-   - Fixed selection handling - deletes selection without auto-numbering
-   - Fixed jumping to end - only adds prompt if on last line
-   - Fixed middle-of-program - inserts numbered line between current and next
-   - Added renumber prompt when no room to insert
-
-3. **Fixed Paste Issues** (v1.0.82)
-   - Single-line paste into existing line now does simple inline insert
-   - No longer auto-numbers when pasting "y=y+3" after "85 "
-
-4. **Fixed Type Suffix Serialization Bug** (v1.0.85) ⚠️ CRITICAL
-   - **Problem**: `x=x+1` became `x! = x! + 1` after renumber
-   - **Cause**: Serialization outputted all suffixes, including DEF-inferred ones
-   - **Fix**:
-     - Added `explicit_type_suffix` flag to VariableNode
-     - Parser tracks explicit vs inferred suffixes
-     - Serialization only outputs explicit suffixes
-   - **Note**: Only updated main expression path, other VariableNode sites may need updating
-
-### New TODOs Created
-
-1. **PRETTY_PRINTER_SPACING_TODO.md** - Spacing options (compact/normal/spacious)
-2. **SINGLE_SOURCE_OF_TRUTH_TODO.md** - Eliminate editor/program duplication
+2. **Case-Preserving Variables** (v1.0.90)
+   - Added `original_case` field to Token and VariableNode
+   - Lexer stores original case before lowercasing
+   - Parser preserves case in VariableNode
+   - Serializers output original case
+   - Lookup remains case-insensitive
+   - Test results: 9/10 tests passing
+   - Historical note: approach by William Wulf (CMU, 1984)
 
 ### Files Modified
 
-- `src/ui/tk_ui.py` - Enter, Ctrl+I, paste, renumber
-- `src/ast_nodes.py` - Added explicit_type_suffix field
-- `src/parser.py` - Track explicit vs inferred suffixes
-- `src/ui/ui_helpers.py` - Only serialize explicit suffixes
+**v1.0.89 - Spacing Preservation:**
+- `src/position_serializer.py` - NEW: Position-aware serialization with conflict tracking
+- `test_position_serializer.py` - NEW: Comprehensive test suite
+- `tests/type_suffix_test.bas` - NEW: Test for type suffix behavior
 
-### Auto-Numbering Status
+**v1.0.90 - Case Preservation:**
+- `src/tokens.py` - Added `original_case` field to Token
+- `src/lexer.py` - Store original case before lowercasing
+- `src/ast_nodes.py` - Added `original_case` field to VariableNode
+- `src/parser.py` - Preserve case when creating VariableNodes
+- `src/position_serializer.py` - Output variables with original case
+- `src/ui/ui_helpers.py` - Output variables with original case
+- `test_case_preservation.py` - NEW: Case preservation test suite
 
-**Working:** ✅
-- Auto-number typed/pasted lines
-- Line number prompts
-- Blank line prevention
-- Syntax error preservation
-- Ctrl+I smart insert
-- Enter in middle of program
-- Inline paste
-- Selection handling
+### Documentation Created
 
-**Limitations:**
-- Type suffix tracking only in `parse_variable_or_function()`
-- Other VariableNode sites may need updates
-- Pretty printing always adds spaces
+- `docs/dev/PRESERVE_ORIGINAL_SPACING_TODO.md` - Complete plan for spacing preservation
+- `docs/dev/CASE_PRESERVING_VARIABLES_TODO.md` - Complete plan for case preservation
+- `docs/dev/SETTINGS_SYSTEM_TODO.md` - Plan for configuration system
+- `docs/dev/VARIABLE_TYPE_SUFFIX_BEHAVIOR.md` - Documentation of type suffix rules
+- `docs/dev/EXPLICIT_TYPE_SUFFIX_WITH_DEFSNG_ISSUE.md` - Analysis of DEFSNG interaction
 
-### Next Steps (when resuming)
+### Key Features
 
-1. Test type suffix fix with mixed explicit/implicit types
-2. Verify renumber preserves original suffixes
-3. Check other VariableNode creation sites if issues found
-4. Test auto-numbering edge cases (large programs, rapid typing)
+**Spacing Preservation:**
+- Preserves exact spacing as typed: `X=Y+3` stays `X=Y+3`, not `X = Y + 3`
+- Position conflict detection for debugging
+- Fast path uses original source_text
+- Fallback reconstructs from AST
 
-### Important Context
+**Case Preservation:**
+- Variables display as typed: `TargetAngle`, `targetAngle`, `TARGETANGLE`
+- Lookup remains case-insensitive (all refer to same variable)
+- Backward compatible - no runtime changes
 
-The type suffix bug was CRITICAL but subtle:
-- Variables defined by `DEFINT A-Z` were getting `!` suffixes added during serialization
-- Changed `x` to `x!` after renumber
-- Fix tracks whether suffixes were in original source or inferred from DEF
-- This preserves programmer's original intent
+### Test Results
+
+**Spacing Preservation:**
+- ✅ 7/7 unit tests passing
+- ✅ 107/370 files (28.9%) preserved exactly
+- ❌ 57 files changed (need investigation)
+- ❌ 206 parse errors (mostly in `bad_syntax/` - expected)
+
+**Case Preservation:**
+- ✅ 9/10 unit tests passing (snake_case with underscore not valid BASIC)
+- ✅ No regressions in game preservation test
 
 ## Current State
 
-- **Version**: 1.0.87
-- **Status**: Auto-numbering feature complete, type suffix bug fixed
+- **Version**: 1.0.90
+- **Status**: Spacing and case preservation complete
 - **Blocking Issues**: None
-- **Ready for**: Testing and use
+- **Ready for**: Further enhancements
+
+## Next Steps (when resuming)
+
+1. **RENUM with position adjustment** - Preserve spacing through renumbering
+2. **Investigate 57 changed files** - Why aren't they perfectly preserved?
+3. **Settings system** - Configuration for case conflict handling, etc.
+4. **Single source of truth** - Architectural refactor
+
+## Important Context
+
+**Design Philosophy:**
+All recent work follows the principle of **maintaining fidelity to source code**:
+- Type suffix preservation (v1.0.85) - Don't output DEF-inferred suffixes
+- Spacing preservation (v1.0.89) - Preserve user's exact spacing
+- Case preservation (v1.0.90) - Display variables as user typed them
+
+This respects the programmer's original intent and formatting choices.
