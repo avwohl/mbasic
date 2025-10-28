@@ -134,12 +134,13 @@ With prefer_upper: Would use 'TARGETANGLE' if used later
         key="keywords.case_style",
         type=SettingType.ENUM,
         default="force_lower",
-        choices=["force_lower", "force_upper", "first_wins", "error", "preserve"],
+        choices=["force_lower", "force_upper", "force_capitalize", "first_wins", "error", "preserve"],
         description="How to handle keyword case in source code",
         help_text="""Controls how keywords are displayed and validated.
 
 - force_lower: Convert all keywords to lowercase (default, MBASIC 5.21 style)
 - force_upper: Convert all keywords to UPPERCASE (classic BASIC style)
+- force_capitalize: Capitalize keywords (Print, For, If - modern readable style)
 - first_wins: First occurrence sets case for that keyword throughout program
 - error: Flag case inconsistencies as errors
 - preserve: Keep each keyword exactly as typed (modern style)
@@ -147,6 +148,10 @@ With prefer_upper: Would use 'TARGETANGLE' if used later
 Example with force_upper:
   10 print "hello"  -> 10 PRINT "hello"
   20 Print "world"  -> 20 PRINT "world"
+
+Example with force_capitalize:
+  10 PRINT "hello"  -> 10 Print "hello"
+  20 print "world"  -> 20 Print "world"
 
 Example with first_wins:
   10 Print "hello"  -> 10 Print "hello"
