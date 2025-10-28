@@ -209,14 +209,13 @@ class NiceGUIBackend(UIBackend):
                 ui.button('Continue', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
 
             # Main content area - simple stacked layout (no splitter)
-            # The splitter was causing visibility issues, so using simple column layout
-            # Remove all gaps and margins for truly compact layout
+            # Put everything in one column for proper layout control
             with ui.column().classes('w-full').style('gap: 0; margin: 0; padding: 0;'):
                 # Editor section (no label)
                 self.editor = ui.textarea(
                     value='',
                     placeholder='Program Editor - Enter BASIC program here (e.g., 10 PRINT "Hello")'
-                ).classes('w-full font-mono').style('height: 300px; margin: 0; padding: 4px;').props('outlined dense').mark('editor')
+                ).classes('w-full font-mono').style('height: 300px; margin: 0 !important; padding: 4px !important;').props('outlined dense').mark('editor')
 
                 # Bind keyboard events for auto-numbering
                 self.editor.on('keydown.enter', self._on_enter_key)
@@ -227,34 +226,34 @@ class NiceGUIBackend(UIBackend):
                     placeholder='Program output will appear here'
                 ).classes('w-full font-mono').style(
                     'height: 300px; '
-                    'margin: 0; '
-                    'padding: 4px; '
+                    'margin: 0 !important; '
+                    'padding: 4px !important; '
                     'background-color: white; '
                     'color: black; '
                     'font-size: 14px;'
                 ).props('readonly outlined dense').mark('output')
 
-            # INPUT row (hidden by default, shown when INPUT statement needs input)
-            self.input_row = ui.row().classes('w-full p-2 gap-2 bg-blue-50')
-            with self.input_row:
-                self.input_label = ui.label('').classes('font-bold text-blue-600')
-                self.input_field = ui.input(placeholder='Enter value...').classes('flex-grow').mark('input_field')
-                self.input_field.on('keydown.enter', self._submit_input)
-                self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
-            self.input_row.visible = False  # Hidden by default
+                # INPUT row (hidden by default, shown when INPUT statement needs input)
+                self.input_row = ui.row().classes('w-full p-2 gap-2 bg-blue-50')
+                with self.input_row:
+                    self.input_label = ui.label('').classes('font-bold text-blue-600')
+                    self.input_field = ui.input(placeholder='Enter value...').classes('flex-grow').mark('input_field')
+                    self.input_field.on('keydown.enter', self._submit_input)
+                    self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
+                self.input_row.visible = False  # Hidden by default
 
-            # Immediate mode (no label, just textarea with execute button)
-            with ui.row().classes('w-full gap-2').style('margin: 0; padding: 0;'):
-                self.immediate_entry = ui.textarea(
-                    value='',
-                    placeholder='Enter BASIC command (e.g., PRINT 2+2)'
-                ).classes('flex-grow font-mono').style('height: 60px; margin: 0; padding: 4px;').props('outlined dense').mark('immediate_entry')
-                self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
-                ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
+                # Immediate mode (no label, just textarea with execute button)
+                with ui.row().classes('w-full gap-2').style('margin: 0; padding: 0;'):
+                    self.immediate_entry = ui.textarea(
+                        value='',
+                        placeholder='Enter BASIC command (e.g., PRINT 2+2)'
+                    ).classes('flex-grow font-mono').style('height: 60px; margin: 0 !important; padding: 4px !important;').props('outlined dense').mark('immediate_entry')
+                    self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
+                    ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
-            # Status bar at the very bottom
-            with ui.row().classes('w-full bg-gray-200'):
-                self.status_label = ui.label('Ready').mark('status')
+                # Status bar at the very bottom
+                with ui.row().classes('w-full bg-gray-200').style('margin: 0; padding: 4px;'):
+                    self.status_label = ui.label('Ready').mark('status')
 
     def _create_menu(self):
         """Create menu bar."""
