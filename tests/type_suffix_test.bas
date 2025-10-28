@@ -1,0 +1,7 @@
+10 K = 100
+20 K! = 3.14
+30 K% = 42
+40 PRINT "K ="; K
+50 PRINT "K! ="; K!
+60 PRINT "K% ="; K%
+70 SYSTEM
