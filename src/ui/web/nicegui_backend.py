@@ -587,9 +587,8 @@ class NiceGUIBackend(UIBackend):
                 ui.notify('No program in editor. Add some lines first.', type='warning')
                 return
 
-            log_web_error("_menu_run", Exception("DEBUG: Program has lines, clearing output"))
-            # Clear output
-            self._clear_output()
+            log_web_error("_menu_run", Exception("DEBUG: Program has lines, starting run"))
+            # Don't clear output - continuous scrolling like ASR33 teletype
             self._set_status('Running...')
 
             log_web_error("_menu_run", Exception("DEBUG: Getting program AST"))
