@@ -178,6 +178,11 @@ STOP_DISPLAY = 'Ctrl+X'
 # - When debugging: Step Line (execute all statements on current line)
 # - When editing: List program (same as LIST_KEY)
 
+# Settings
+SETTINGS_KEY = 'ctrl p'
+SETTINGS_CHAR = '\x10'  # Ctrl+P
+SETTINGS_DISPLAY = 'Ctrl+P'
+
 # =============================================================================
 # Navigation
 # =============================================================================
@@ -198,6 +203,7 @@ KEYBINDINGS_BY_CATEGORY = {
         (QUIT_ALT_DISPLAY, 'Quit (alternative)'),
         (MENU_DISPLAY, 'Show menu'),
         (HELP_DISPLAY, 'This help'),
+        (SETTINGS_DISPLAY, 'Settings'),
         (VARIABLES_DISPLAY, 'Toggle variables watch window'),
         (STACK_DISPLAY, 'Toggle execution stack window'),
     ],

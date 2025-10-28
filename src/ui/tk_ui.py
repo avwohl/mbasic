@@ -323,6 +323,8 @@ class TkBackend(UIBackend):
         edit_menu.add_separator()
         edit_menu.add_command(label="Toggle Breakpoint", command=self._toggle_breakpoint, accelerator="Ctrl+B")
         edit_menu.add_command(label="Clear All Breakpoints", command=self._clear_all_breakpoints)
+        edit_menu.add_separator()
+        edit_menu.add_command(label="Settings...", command=self._menu_settings)
 
         # Run menu
         run_menu = tk.Menu(menubar, tearoff=0)
@@ -1703,6 +1705,13 @@ class TkBackend(UIBackend):
             "Tkinter GUI Backend\n\n"
             f"Press {help_key_text} for help"
         )
+
+    def _menu_settings(self):
+        """Edit > Settings..."""
+        from .tk_settings_dialog import SettingsDialog
+
+        # Create and show settings dialog
+        SettingsDialog(self.root)
 
     # Helper methods
 

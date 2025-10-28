@@ -1,124 +1,91 @@
 # Work in Progress
 
-## Status: Ready for Next Task
+## Task: Settings UI Integration
 
-**Version**: 1.0.154+ (as of 2025-10-28)
+**Started:** 2025-10-28
+**Completed:** 2025-10-28
+**Status:** Complete
 
-### Recently Completed (v1.0.154+)
+### Goal
 
-**Keyword Case Display Fix** - COMPLETE
+Add GUI for managing settings in TK and curses interfaces. Currently settings can only be changed via CLI commands (`SET`, `SHOW SETTINGS`).
 
-Fixed critical bug where keyword case policies were not being applied to keyword display. Keywords now correctly show consistent case throughout the program based on the configured policy.
+### Requirements
 
-#### The Bug
+**TK UI:**
+- Settings menu item in menu bar
+- Settings dialog with all available settings
+- Organized by category (keywords, variables, editor, etc.)
+- Input widgets appropriate for setting type (dropdown for enum, checkbox for bool, etc.)
+- Apply/OK/Cancel buttons
+- Live validation
 
-Lexer was ignoring the return value from `KeywordCaseManager.register_keyword()`:
+**Curses UI:**
+- Settings screen accessible via keyboard shortcut
+- Navigate settings with arrow keys
+- Edit settings with appropriate input method
+- Save changes or cancel
 
-**Before (WRONG):**
-```python
-token.original_case_keyword = ident  # Always used typed case
-self.keyword_case_manager.register_keyword(...)  # Return value ignored!
-```
+### Available Settings
 
-**After (CORRECT):**
-```python
-display_case = self.keyword_case_manager.register_keyword(...)
-token.original_case_keyword = display_case  # Use policy-determined case
-```
+From `src/settings_definitions.py`:
+- `keywords.case_style` - Enum: force_lower, force_upper, force_capitalize, first_wins, error, preserve
+- `variables.case_policy` - Enum: first_wins, error, prefer_upper, prefer_lower, prefer_mixed
+- More settings may exist - need to enumerate all
 
-#### Impact
+### Implementation Plan
 
-**Before fix:**
-- Keywords always displayed as originally typed, regardless of policy
-- `first_wins` policy had no effect on display
-- Program with mixed case showed mixed case (inconsistent)
+#### Phase 1: TK UI (Simpler, start here)
+1. ✅ Enumerate all available settings from settings system
+2. ✅ Design settings dialog layout
+3. ✅ Create settings dialog class
+4. ✅ Add "Settings..." menu item
+5. ✅ Test TK settings UI
 
-**After fix:**
-- Keywords display according to policy
-- `first_wins`: All keywords use first occurrence's case
-- `force_upper/lower/capitalize`: All keywords converted
-- Program shows consistent keyword case
+#### Phase 2: Curses UI
+1. ✅ Design curses settings screen
+2. ✅ Implement settings navigation
+3. ✅ Test curses settings UI
 
-#### Example
+#### Phase 3: Documentation
+1. ✅ Update user documentation
+2. ✅ Commit changes
 
-Program with mixed case:
-```basic
-10 Print "First"
-20 PRINT "Second"
-30 print "Third"
-```
+### Summary
 
-**Policy: `first_wins`**
-- Before: Displayed as `Print`, `PRINT`, `print` (inconsistent)
-- After: All display as `Print` (consistent - first wins)
+Successfully implemented settings UI for both TK and curses interfaces:
 
-**Policy: `force_upper`**
-- Before: Displayed as `Print`, `PRINT`, `print` (ignored policy)
-- After: All display as `PRINT` (policy enforced)
+**TK UI:**
+- Created `src/ui/tk_settings_dialog.py` with full settings dialog
+- Tabbed interface organized by category (editor, interpreter, keywords, variables, ui)
+- Appropriate widgets for each type (checkbox, spinbox, combobox, entry)
+- OK/Cancel/Apply/Reset buttons
+- Help text for each setting
+- Added "Settings..." menu item to Edit menu
 
-#### Files Modified
-
-**Implementation:**
-- `src/lexer.py` - Fixed 3 locations where `register_keyword()` is called (lines 245, 272, 303)
+**Curses UI:**
+- Created `src/ui/curses_settings_widget.py` with settings widget
+- Category-based layout with scrolling
+- Checkbox, IntEdit, RadioButton, and Edit widgets for different types
+- OK/Cancel/Apply/Reset buttons
+- Ctrl+P keyboard shortcut to open settings
+- ESC to close
 
 **Testing:**
-- `tests/regression/lexer/test_keyword_case_display_consistency.py` - 8 tests (✓ ALL PASSING)
-- `tests/regression/lexer/test_keyword_case_scope_isolation.py` - 7 tests (✓ ALL PASSING)
-- `tests/manual/test_keyword_case_program.bas` - Example program for manual testing
+- Created `tests/manual/test_tk_settings_ui.py` - all tests pass
+- Created `tests/manual/test_curses_settings_ui.py` - all tests pass
 
-#### Test Results
+All 12 available settings are accessible in both UIs.
 
-```bash
-$ python3 tests/regression/lexer/test_keyword_case_display_consistency.py
-Ran 8 tests in 0.001s
-OK
+### Files to Create/Modify
 
-$ python3 tests/run_regression.py --category lexer
-✅ ALL REGRESSION TESTS PASSED
-```
+**TK UI:**
+- `src/ui/tk_ui.py` - Add menu item and settings dialog
+- Possibly `src/ui/tk_settings_dialog.py` - New settings dialog class
 
-#### Scope Behavior (Correct)
+**Curses UI:**
+- `src/ui/curses_ui.py` - Add settings screen/dialog
 
-✅ **Whole program shares one KeywordCaseManager:**
-```basic
-10 Print "First"
-20 PRINT "Second"  → Shows as "Print" (first_wins)
-30 print "Third"   → Shows as "Print" (first_wins)
-```
+### Next Steps
 
-✅ **Immediate mode uses separate manager:**
-```
-Program: 10 RUN
-Immediate: run  → No conflict (separate scope)
-```
-
-This is correct because:
-- Keywords are syntax (should be consistent within program)
-- Variables are runtime state (shared between modes)
-
----
-
-## Previous Work
-
-### Keyword Case Settings Integration
-**Completed:** 2025-10-28 (v1.0.153)
-- Integrated `keywords.case_style` setting with lexer
-- Error policy now surfaces in all UIs
-- See: `docs/history/SESSION_2025_10_28_KEYWORD_CASE_INTEGRATION.md`
-
-### Help System Search Improvements
-**Completed:** 2025-10-28 (v1.0.151)
-- Search ranking, fuzzy matching, in-page search
-- See: `docs/history/SESSION_2025_10_28_HELP_SEARCH_IMPROVEMENTS.md`
-
----
-
-## Potential Next Tasks
-
-1. **Settings UI Integration**
-   - Add settings UI to curses/TK interfaces
-   - Currently settings work via CLI commands only
-
-**Deferred to future:**
-- Pretty Printer Spacing Options
-- PyPI Distribution (see `docs/future/PYPI_DISTRIBUTION.md`)
+Starting with enumerating available settings...

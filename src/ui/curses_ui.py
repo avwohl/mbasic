@@ -12,7 +12,7 @@ from .keybindings import (
     VARIABLES_KEY, STACK_KEY, RUN_KEY, LIST_KEY, NEW_KEY, SAVE_KEY, OPEN_KEY,
     BREAKPOINT_KEY, CLEAR_BREAKPOINTS_KEY, CLEAR_BREAKPOINTS_DISPLAY,
     DELETE_LINE_KEY, INSERT_LINE_KEY, RENUMBER_KEY,
-    CONTINUE_KEY, STEP_KEY, STOP_KEY, TAB_KEY,
+    CONTINUE_KEY, STEP_KEY, STOP_KEY, TAB_KEY, SETTINGS_KEY,
     STATUS_BAR_SHORTCUTS, EDITOR_STATUS, OUTPUT_STATUS,
     KEYBINDINGS_BY_CATEGORY
 )
@@ -1576,6 +1576,10 @@ class CursesBackend(UIBackend):
             # Show help
             self._show_help()
 
+        elif key == SETTINGS_KEY:
+            # Show settings
+            self._show_settings()
+
         elif key == RUN_KEY:
             # Run program
             self._run_program()
@@ -2291,6 +2295,48 @@ Run                           Debug Windows
         # Show overlay and set handler
         self.loop.widget = overlay
         self.loop.unhandled_input = close_menu
+
+    def _show_settings(self):
+        """Show settings editor."""
+        from .curses_settings_widget import SettingsWidget
+
+        # Create settings widget
+        settings_widget = SettingsWidget()
+
+        # Create overlay
+        overlay = urwid.Overlay(
+            urwid.AttrMap(settings_widget, 'body'),
+            self.loop.widget,
+            align='center',
+            width=('relative', 80),
+            valign='middle',
+            height=('relative', 80)
+        )
+
+        # Store original widget BEFORE replacing it
+        main_widget = self.loop.widget
+
+        # Set up keypress handler to close settings when ESC pressed
+        def settings_input(key):
+            # Let the settings widget handle the key first
+            result = settings_widget.keypress((80, 24), key)
+
+            # Check if widget wants to close
+            if hasattr(settings_widget, 'signal'):
+                if settings_widget.signal == 'close':
+                    # Close settings
+                    self.loop.widget = main_widget
+                    self.loop.unhandled_input = self._handle_input
+                elif settings_widget.signal == 'applied':
+                    # Settings applied - could show message
+                    # For now just clear the signal
+                    settings_widget.signal = None
+
+            # Don't return anything - we handled it
+
+        # Show overlay and set handler
+        self.loop.widget = overlay
+        self.loop.unhandled_input = settings_input
 
     def _toggle_variables_window(self):
         """Toggle visibility of the variables watch window."""
