@@ -4,13 +4,32 @@ Provides a modern web-based UI for the MBASIC interpreter using NiceGUI.
 """
 
 import re
+import sys
 import asyncio
+import traceback
 from nicegui import ui, app
 from pathlib import Path
 from ..base import UIBackend
 from src.runtime import Runtime
 from src.interpreter import Interpreter
 from src.iohandler.base import IOHandler
+
+
+def log_web_error(context: str, exception: Exception):
+    """Log web UI error to stderr for debugging.
+
+    Args:
+        context: Description of where error occurred (e.g., "_menu_run")
+        exception: The exception that was caught
+    """
+    sys.stderr.write(f"\n{'='*70}\n")
+    sys.stderr.write(f"WEB UI ERROR in {context}\n")
+    sys.stderr.write(f"{'='*70}\n")
+    sys.stderr.write(f"Error: {exception}\n")
+    sys.stderr.write(f"{'-'*70}\n")
+    traceback.print_exc(file=sys.stderr)
+    sys.stderr.write(f"{'='*70}\n\n")
+    sys.stderr.flush()
 
 
 class SimpleWebIOHandler(IOHandler):
@@ -326,6 +345,7 @@ class NiceGUIBackend(UIBackend):
             ui.timer(0.01, self._execute_tick, once=False)
 
         except Exception as e:
+            log_web_error("_menu_run", e)
             self._append_output(f"\n--- Error: {e} ---\n")
             self._set_status(f'Error: {e}')
             self.running = False
@@ -355,6 +375,7 @@ class NiceGUIBackend(UIBackend):
                 self.paused = True
 
         except Exception as e:
+            log_web_error("_execute_tick", e)
             self._append_output(f"\n--- Tick error: {e} ---\n")
             self._set_status(f"Error: {e}")
             self.running = False
@@ -448,6 +469,7 @@ class NiceGUIBackend(UIBackend):
                 self._set_status(f'Added {added_count} line(s) - Total: {len(self.program.lines)}')
 
         except Exception as e:
+            log_web_error("_add_line", e)
             ui.notify(f'Error: {e}', type='negative')
             self._set_status(f'Error: {e}')
 
@@ -464,8 +486,17 @@ class NiceGUIBackend(UIBackend):
         self._set_status('Output cleared')
 
     def _append_output(self, text):
-        """Append text to output pane."""
+        """Append text to output pane and auto-scroll to bottom."""
         self.output.value += text
+        # Auto-scroll to bottom using JavaScript
+        # NiceGUI textarea doesn't have a built-in scroll method,
+        # so we use run_javascript to scroll the underlying element
+        try:
+            # Find the textarea element and scroll to bottom
+            self.output.run_method('scrollTop', self.output.run_method('scrollHeight'))
+        except:
+            # Silently ignore scroll errors (element might not be ready)
+            pass
 
     def _show_input_row(self, prompt=''):
         """Show the INPUT row with prompt."""
