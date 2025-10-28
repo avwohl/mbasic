@@ -12,8 +12,12 @@ Usage:
     python3 mbasic.py --debug                 # Enable debug output
 """
 
-import sys
+# Suppress GTK accessibility bridge warning before any imports
+# This prevents "Not loading module 'atk-bridge'" message on some Linux systems
 import os
+os.environ['NO_AT_BRIDGE'] = '1'
+
+import sys
 import argparse
 import importlib
 from pathlib import Path
