@@ -238,11 +238,7 @@ class NiceGUIBackend(UIBackend):
                 self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
             self.input_row.visible = False  # Hidden by default
 
-            # Controls row - Clear Output button
-            with ui.row().classes('w-full p-2 gap-2'):
-                ui.button('Clear Output', on_click=self._clear_output, icon='clear').mark('btn_clear_output')
-
-            # Immediate mode command input (OUTSIDE splitter, below output)
+            # Immediate mode command input
             ui.label('Immediate Mode:').classes('font-bold px-2 pt-2')
             with ui.row().classes('w-full p-2 gap-2'):
                 self.immediate_entry = ui.input(
