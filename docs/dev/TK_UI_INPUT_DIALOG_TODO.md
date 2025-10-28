@@ -1,6 +1,6 @@
 # TK UI: Replace INPUT Dialog with Inline Input
 
-## Status: ⏳ TODO
+## Status: ✅ IMPLEMENTED (v1.0.173) - Needs Manual Testing
 
 ## Problem
 
@@ -110,16 +110,66 @@ def input(self, prompt: str = '') -> str:
 - Input row can be hidden/shown as needed
 - Similar pattern to immediate mode entry that already exists
 
-## Priority
+## Implementation Complete
 
-**MEDIUM** - INPUT works but UX is poor for games
+**Version:** 1.0.173
 
-## Files to Modify
+**Changes Made:**
 
-- `src/ui/tk_ui.py:3421-3447` - Replace dialog with inline input
-- `src/ui/tk_ui.py:150-230` - Add input row UI elements (near immediate mode entry)
+1. **Added INPUT row widgets to TkBackend `__init__()`:**
+   - `self.input_row` - Frame containing INPUT UI elements
+   - `self.input_label` - Label showing prompt text
+   - `self.input_entry` - Entry field for user input
+   - `self.input_submit_btn` - Submit button
+   - `self.input_queue` - Queue for thread-safe coordination
+
+2. **Created INPUT row UI in `start()`:**
+   - Added after output_text widget
+   - Hidden by default (not packed)
+   - Styled similar to immediate mode entry
+   - Bound Enter key to submit
+
+3. **Added helper methods to TkBackend:**
+   - `_show_input_row(prompt)` - Display INPUT row with prompt
+   - `_hide_input_row()` - Hide INPUT row after submission
+   - `_submit_input()` - Handle input submission
+
+4. **Modified TkIOHandler:**
+   - Added `backend` parameter to `__init__()`
+   - Replaced `input()` method to use inline input row
+   - Uses queue.Queue() for blocking coordination
+   - Fallback to dialog if backend not available
+
+5. **Updated TkIOHandler instantiation:**
+   - Line 294: `TkIOHandler(self._add_output, self.root, backend=self)`
+   - Line 2813: `TkIOHandler(self._add_output, self.root, backend=self)`
+
+**Benefits Achieved:**
+- ✅ Can see all output while typing input
+- ✅ Better for games with narrative text
+- ✅ More terminal-like experience
+- ✅ Similar to immediate mode entry (familiar UX)
+- ✅ No modal dialogs blocking view
+
+**Testing:**
+
+Manual test required (TK backend doesn't support CLI loading yet):
+
+```bash
+python3 mbasic.py --backend tk
+# Load tests/test_curses_input.bas
+# Run program
+# Verify inline input appears below output
+```
+
+See `tests/test_tk_input_manual.md` for detailed test procedure.
+
+## Files Modified
+
+- `src/ui/tk_ui.py` - ~100 lines changed (INPUT row UI, helper methods, TkIOHandler.input())
+- `tests/test_tk_input_manual.md` - Manual test instructions
 
 ## Related
 
-- `docs/dev/WEB_UI_INPUT_UX_TODO.md` - Same issue for web UI
-- Both UIs should use consistent inline input approach
+- `docs/dev/WEB_UI_INPUT_UX_TODO.md` - Same issue for web UI (next task)
+- `docs/dev/CURSES_UI_INPUT_CHECK_TODO.md` - Curses model we followed

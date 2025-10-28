@@ -103,6 +103,13 @@ class TkBackend(UIBackend):
         self.variables_search_entry = None  # Variables window search entry
         self.variables_filter_text = ""  # Current filter text
 
+        # INPUT row widgets (hidden until INPUT statement needs input)
+        self.input_row = None
+        self.input_label = None
+        self.input_entry = None
+        self.input_submit_btn = None
+        self.input_queue = None  # Queue for coordinating INPUT with interpreter
+
     def start(self) -> None:
         """Start the Tkinter GUI.
 
@@ -177,6 +184,32 @@ class TkBackend(UIBackend):
             state=tk.DISABLED
         )
         self.output_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # INPUT row (hidden by default, shown when INPUT statement needs input)
+        self.input_row = ttk.Frame(output_frame, height=40)
+        # Don't pack yet - will be packed when needed
+
+        # Create INPUT prompt label
+        self.input_label = tk.Label(self.input_row, text="", font=("Courier", 10), fg="blue")
+        self.input_label.pack(side=tk.LEFT, padx=(5, 5))
+
+        # Create INPUT entry field
+        self.input_entry = tk.Entry(self.input_row, font=("Courier", 10),
+                                    state='normal', takefocus=True,
+                                    exportselection=False)
+        self.input_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+
+        # Create submit button
+        self.input_submit_btn = tk.Button(self.input_row, text="Submit",
+                                          command=self._submit_input)
+        self.input_submit_btn.pack(side=tk.LEFT, padx=(0, 5))
+
+        # Bind Enter key to submit
+        self.input_entry.bind('<Return>', lambda e: self._submit_input())
+
+        # Initialize input queue
+        import queue
+        self.input_queue = queue.Queue()
 
         # Bottom pane: Immediate Mode - just the input line
         immediate_frame = ttk.Frame(paned)
@@ -258,7 +291,7 @@ class TkBackend(UIBackend):
         self.runtime = Runtime({}, {})
 
         # Create IOHandler that outputs to output pane
-        tk_io = TkIOHandler(self._add_output, self.root)
+        tk_io = TkIOHandler(self._add_output, self.root, backend=self)
         self.interpreter = Interpreter(self.runtime, tk_io, limits=create_unlimited_limits())
 
         # Wire up interpreter to use Tk UI's command methods
@@ -2777,7 +2810,7 @@ class TkBackend(UIBackend):
             self.runtime = Runtime(self.program.line_asts, self.program.lines)
 
             # Create Tk-specific IOHandler that outputs to output pane
-            tk_io = TkIOHandler(self._add_output, self.root)
+            tk_io = TkIOHandler(self._add_output, self.root, backend=self)
             self.interpreter = Interpreter(self.runtime, tk_io, limits=create_local_limits())
 
             # Wire up interpreter to use Tk UI's command methods (MERGE, LOAD, FILES, etc.)
@@ -3393,6 +3426,33 @@ class TkBackend(UIBackend):
         self.immediate_history.mark_set(tk.INSERT, "1.0")
         self.immediate_history.see(tk.INSERT)
 
+    def _show_input_row(self, prompt: str = ''):
+        """Show the INPUT row with prompt."""
+        if self.input_row and self.input_label and self.input_entry:
+            # Set prompt text
+            self.input_label.config(text=prompt)
+
+            # Clear entry field
+            self.input_entry.delete(0, tk.END)
+
+            # Pack the input row (makes it visible)
+            self.input_row.pack(fill=tk.X, padx=5, pady=(0, 5))
+
+            # Focus on input field
+            self.input_entry.focus_force()
+
+    def _hide_input_row(self):
+        """Hide the INPUT row."""
+        if self.input_row:
+            self.input_row.pack_forget()
+
+    def _submit_input(self):
+        """Submit INPUT value from inline input field."""
+        if self.input_entry and self.input_queue:
+            value = self.input_entry.get()
+            self.input_queue.put(value)
+            self.input_entry.delete(0, tk.END)
+
 
 class TkIOHandler(IOHandler):
     """IOHandler that routes output to Tk output pane.
@@ -3401,16 +3461,18 @@ class TkIOHandler(IOHandler):
     output text widget via a callback function.
     """
     
-    def __init__(self, output_callback, root=None):
+    def __init__(self, output_callback, root=None, backend=None):
         """Initialize Tk IOHandler.
 
         Args:
             output_callback: Function to call with output text (str) -> None
             root: Tk root window (needed for dialogs)
+            backend: TkBackend instance for accessing INPUT row controls
         """
         self.output_callback = output_callback
         self.input_callback = None  # Will be set when INPUT is needed
         self.root = root  # Tk root window for dialogs
+        self.backend = backend  # TkBackend for INPUT row access
 
     def output(self, text: str, end: str = '\n') -> None:
         """Output text to Tk output pane."""
@@ -3419,32 +3481,45 @@ class TkIOHandler(IOHandler):
             self.output_callback(full_text)
 
     def input(self, prompt: str = '') -> str:
-        """Input from user via modal dialog.
+        """Input from user via inline input field.
 
         Used by INPUT statement for reading comma-separated values.
-        Shows a simple input dialog with the prompt.
+        Shows an inline input field below output pane.
         """
-        from tkinter import simpledialog
-
         # Show prompt in output first
         if prompt:
             self.output(prompt, end='')
 
-        # Show modal input dialog
-        result = simpledialog.askstring(
-            "INPUT",
-            prompt if prompt else "Enter value:",
-            parent=self.root
-        )
+        # Use inline input if backend available
+        if self.backend and hasattr(self.backend, '_show_input_row'):
+            # Show input row
+            self.backend._show_input_row(prompt)
 
-        # If user clicked Cancel, raise exception (mimics Ctrl+C)
-        if result is None:
-            raise KeyboardInterrupt("Input cancelled")
+            # Block until user submits input (queue blocks)
+            result = self.backend.input_queue.get()
 
-        # Echo the input to output
-        self.output(result)
+            # Hide input row
+            self.backend._hide_input_row()
 
-        return result
+            # Echo input to output
+            self.output(result)
+
+            return result
+        else:
+            # Fallback to dialog if backend not available
+            from tkinter import simpledialog
+
+            result = simpledialog.askstring(
+                "INPUT",
+                prompt if prompt else "Enter value:",
+                parent=self.root
+            )
+
+            if result is None:
+                raise KeyboardInterrupt("Input cancelled")
+
+            self.output(result)
+            return result
 
     def input_line(self, prompt: str = '') -> str:
         """Input complete line from user via modal dialog.
