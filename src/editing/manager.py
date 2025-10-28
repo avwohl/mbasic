@@ -7,7 +7,7 @@ Extracted from InteractiveMode to enable reuse across different UIs.
 import re
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
-from input_sanitizer import sanitize_and_clear_parity
+from src.input_sanitizer import sanitize_and_clear_parity
 
 
 class ProgramManager:

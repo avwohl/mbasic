@@ -32,7 +32,7 @@ from interpreter import Interpreter
 from runtime import Runtime
 from filesystem import SandboxedFileSystemProvider
 from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
-from input_sanitizer import sanitize_and_clear_parity
+from src.input_sanitizer import sanitize_and_clear_parity
 
 
 class MBasicWebIDE:

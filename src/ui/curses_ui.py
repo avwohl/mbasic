@@ -25,7 +25,7 @@ from src.interpreter import Interpreter
 from src.lexer import Lexer
 from src.parser import Parser
 from src.immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
-from input_sanitizer import is_valid_input_char, clear_parity
+from src.input_sanitizer import is_valid_input_char, clear_parity
 from src.debug_logger import debug_log_error, is_debug_mode
 
 

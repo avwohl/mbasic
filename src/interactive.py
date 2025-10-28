@@ -17,7 +17,7 @@ from src.parser import Parser
 from src.runtime import Runtime
 from src.interpreter import Interpreter
 import src.ast_nodes as ast_nodes
-from input_sanitizer import sanitize_and_clear_parity
+from src.input_sanitizer import sanitize_and_clear_parity
 from src.debug_logger import debug_log_error, is_debug_mode
 
 # Try to import readline for better line editing

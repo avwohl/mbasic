@@ -13,7 +13,7 @@ from .recent_files import RecentFilesManager
 from .auto_save import AutoSaveManager
 from src.immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 from src.iohandler.base import IOHandler
-from input_sanitizer import sanitize_and_clear_parity, is_valid_input_char
+from src.input_sanitizer import sanitize_and_clear_parity, is_valid_input_char
 from src.debug_logger import debug_log_error, is_debug_mode, debug_log
 
 
@@ -2264,7 +2264,7 @@ class TkBackend(UIBackend):
             return None
 
         # Clear parity bit
-        from input_sanitizer import clear_parity
+        from src.input_sanitizer import clear_parity
         char = clear_parity(event.char)
 
         # Check if character is valid
