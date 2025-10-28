@@ -148,9 +148,10 @@ See `docs/dev/DISTRIBUTION_TESTING.md` for complete instructions.
 
 ### Potential Next Tasks
 
-1. **Keyword Case Error Policy**
-   - Implement `error` policy checking at parse/edit time
-   - Currently all policies except `error` are working
+1. **Keyword Case Error Policy** (Core implemented, UI integration pending)
+   - Core implementation: ✅ CaseKeeperTable raises ValueError on conflicts
+   - Integration needed: Surface errors to editor/parser UI
+   - Note: Mechanism works, needs better error reporting in UIs
 
 2. **PyPI Distribution**
    - Package and publish to PyPI
