@@ -2,76 +2,97 @@
 
 ## Status: Ready for Next Task
 
-**Version**: 1.0.149+ (as of 2025-10-28)
+**Version**: 1.0.153+ (as of 2025-10-28)
 
-### Recently Completed (v1.0.149+)
+### Recently Completed (v1.0.153+)
 
-**Help System Search Improvements** - COMPLETE
+**Keyword Case Error Policy - UI Integration** - COMPLETE
 
-Added three major improvements to the TK help browser:
+Successfully integrated the `keywords.case_style` setting with all UIs. The 'error' policy now properly raises and displays ValueError when keyword case conflicts are detected.
 
-1. ✅ **Search Result Ranking** - Results now ranked by relevance:
-   - Exact title match (score: 100)
-   - Title contains query (score: 10)
-   - Exact keyword match (score: 50)
-   - Keyword contains query (score: 5)
-   - Description contains query (score: 2)
-   - Type/category match (score: 1)
-   - Results sorted by score descending
+#### Summary of Changes
 
-2. ✅ **Fuzzy Matching** - Handles typos in search:
-   - Simple Levenshtein distance algorithm (no dependencies)
-   - Edit distance ≤ 2 for words ≥ 4 characters
-   - Examples: "prnt" finds "PRINT", "inpt" finds "INPUT"
-   - Applied to titles and keywords only
-   - Only used when no exact matches found
+✅ **Integration implemented:**
+- Added `create_keyword_case_manager()` helper function in `src/lexer.py`
+- Reads `keywords.case_style` setting and creates properly configured KeywordCaseManager
+- Updated all Lexer instantiations to use settings-configured manager
+- Error messages automatically surface through existing UI error handling
 
-3. ✅ **In-Page Search (Ctrl+F)** - Find text within current help page:
-   - Press Ctrl+F to open search bar
-   - All matches highlighted in yellow
-   - Current match highlighted in orange
-   - Next/Prev buttons to navigate matches
-   - Shows "N/M" match counter
-   - Press Escape or click Close to dismiss
+✅ **Locations fixed:**
+- `src/lexer.py` - Added helper function, updated tokenize()
+- `src/ui/tk_ui.py` - Pass keyword_case_manager to Lexer (line 743)
+- `src/ui/curses_ui.py` - Pass keyword_case_manager to Lexer (line 847)
+- `src/ui/web/web_ui.py` - Pass keyword_case_manager to Lexer (2 locations)
 
-### Files Modified
+✅ **Error Display:**
+- TK UI: Errors shown in output area with "Parse error - fix and retry" status
+- Curses UI: Errors handled by existing error display mechanism
+- Web UI: Errors caught and displayed in web interface
+- Error format: `"Case conflict: 'print' at line 2:4 vs 'PRINT' at line 1:4"`
+
+#### Files Modified
 
 **Implementation:**
-- `src/ui/tk_help_browser.py` - Added search ranking, fuzzy matching, and in-page search
+- `src/lexer.py` - Added `create_keyword_case_manager()` function
+- `src/ui/tk_ui.py` - Use settings-configured keyword manager
+- `src/ui/curses_ui.py` - Use settings-configured keyword manager
+- `src/ui/web/web_ui.py` - Use settings-configured keyword manager (2 locations)
 
 **Testing:**
-- `tests/regression/help/test_help_search_ranking.py` - Unit tests for search logic (✓ PASSING)
-- `tests/manual/test_help_search_improvements.py` - Manual test instructions
+- `tests/regression/lexer/test_keyword_case_settings_integration.py` - 7 tests (✓ ALL PASSING)
+- `tests/manual/test_keyword_case_error_ui.md` - Manual test instructions
+- `tests/manual/test_keyword_case_error_display.bas` - Example program with conflicts
 
-### Test Results
+#### Test Results
 
 ```bash
-$ python3 tests/regression/help/test_help_search_ranking.py
-Ran 7 tests in 0.062s
+$ python3 tests/regression/lexer/test_keyword_case_settings_integration.py
+Ran 7 tests in 0.001s
 OK
+
+$ python3 tests/run_regression.py --category lexer
+✅ ALL REGRESSION TESTS PASSED
 ```
 
-All tests pass:
-- ✓ Fuzzy match with exact match
-- ✓ Fuzzy match with typos
-- ✓ Fuzzy match with character swaps
-- ✓ Short queries don't fuzzy match
-- ✓ Very different strings don't match
-- ✓ Search ranking by relevance
-- ✓ Fuzzy matching fallback
+All tests verify:
+- ✓ Settings are read correctly
+- ✓ Error policy raises ValueError on conflicts
+- ✓ Error policy succeeds when no conflicts
+- ✓ All other policies work correctly
+- ✓ Error messages include line/column info
+
+#### Example Usage
+
+```bash
+# Set policy to error
+SET keywords.case_style error
+
+# Load program with mixed case
+LOAD "test.bas"
+
+# If program has case conflicts:
+# ERROR: Case conflict: 'print' at line 20:4 vs 'PRINT' at line 10:4
+```
 
 ---
 
 ## Previous Work
 
+### Help System Search Improvements
+**Completed:** 2025-10-28 (v1.0.151)
+- Search ranking by relevance
+- Fuzzy matching for typos
+- In-page search (Ctrl+F)
+- See: `docs/history/SESSION_2025_10_28_HELP_SEARCH_IMPROVEMENTS.md`
+
 ### PyPI Distribution Preparation
 **Completed:** 2025-10-28 (v1.0.147-148)
-- Package fully prepared and ready for publication
-- See: `docs/dev/DISTRIBUTION_TESTING.md`
+- Package ready but deferred
+- See: `docs/future/PYPI_DISTRIBUTION.md`
 
 ### Test Organization
 **Completed:** 2025-10-28 (v1.0.140-144)
-- 35 tests organized into proper structure
+- 35 tests organized
 - All regression tests passing
 - See: `tests/README.md`
 
@@ -79,14 +100,10 @@ All tests pass:
 
 ## Potential Next Tasks
 
-1. **Keyword Case Error Policy Integration**
-   - Core implementation: ✅ Complete
-   - Integration needed: Surface errors to editor/parser UI
-
-2. **Settings UI Integration**
+1. **Settings UI Integration**
    - Add settings UI to curses/TK interfaces
    - Currently settings work via CLI commands only
 
 **Deferred to future:**
 - Pretty Printer Spacing Options
-- PyPI Distribution (see `docs/future/DISTRIBUTION_TESTING.md`)
+- PyPI Distribution (see `docs/future/PYPI_DISTRIBUTION.md`)

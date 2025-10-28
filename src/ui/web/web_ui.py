@@ -408,7 +408,9 @@ class MBasicWebIDE:
 
         try:
             # Try to parse the line
-            lexer = Lexer(code_text)
+            from src.lexer import create_keyword_case_manager
+            keyword_mgr = create_keyword_case_manager()
+            lexer = Lexer(code_text, keyword_case_manager=keyword_mgr)
             tokens = lexer.tokenize()
 
             # Create a minimal parser to check syntax
@@ -936,7 +938,9 @@ class MBasicWebIDE:
                 ui.notify('Editor content was sanitized (control characters removed)', type='info')
 
             # Parse the program
-            lexer = Lexer(code)
+            from src.lexer import create_keyword_case_manager
+            keyword_mgr = create_keyword_case_manager()
+            lexer = Lexer(code, keyword_case_manager=keyword_mgr)
             tokens = lexer.tokenize()
             parser = Parser(tokens)
             ast = parser.parse()

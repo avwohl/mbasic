@@ -840,9 +840,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             from parser import Parser
             from ast_nodes import RemarkStatementNode
             from tokens import TokenType
+            from lexer import create_keyword_case_manager
 
             # Tokenize the code
-            lexer = Lexer(code_text)
+            keyword_mgr = create_keyword_case_manager()
+            lexer = Lexer(code_text, keyword_case_manager=keyword_mgr)
             tokens = lexer.tokenize()
 
             # Reject bare identifiers (the parser treats them as implicit REMs for

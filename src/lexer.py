@@ -7,6 +7,22 @@ from src.tokens import Token, TokenType, KEYWORDS
 from src.keyword_case_manager import KeywordCaseManager
 
 
+def create_keyword_case_manager() -> KeywordCaseManager:
+    """
+    Create a KeywordCaseManager configured from settings.
+
+    Returns:
+        KeywordCaseManager with policy from settings, or default policy
+    """
+    try:
+        from src.settings import get
+        policy = get("keywords.case_style", "force_lower")
+        return KeywordCaseManager(policy=policy)
+    except Exception:
+        # If settings unavailable, use default
+        return KeywordCaseManager(policy="force_lower")
+
+
 class LexerError(Exception):
     """Exception raised for lexer errors"""
     def __init__(self, message: str, line: int, column: int):
@@ -485,5 +501,6 @@ class Lexer:
 
 def tokenize(source: str) -> List[Token]:
     """Convenience function to tokenize source code"""
-    lexer = Lexer(source)
+    keyword_mgr = create_keyword_case_manager()
+    lexer = Lexer(source, keyword_case_manager=keyword_mgr)
     return lexer.tokenize()

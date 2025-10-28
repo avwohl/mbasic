@@ -737,10 +737,11 @@ class TkBackend(UIBackend):
 
                 # Parse the updated program
                 from src.parser import Parser
-                from src.lexer import Lexer
+                from src.lexer import Lexer, create_keyword_case_manager
                 try:
                     debug_log(f"Starting parse", level=1)
-                    lexer = Lexer(program_text)
+                    keyword_mgr = create_keyword_case_manager()
+                    lexer = Lexer(program_text, keyword_case_manager=keyword_mgr)
                     tokens = lexer.tokenize()
                     parser = Parser(tokens)
                     program = parser.parse()
