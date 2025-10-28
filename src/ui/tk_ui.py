@@ -763,6 +763,15 @@ class TkBackend(UIBackend):
                 self.runtime.line_order = new_line_order
                 debug_log(f"Updated line_table with {len(new_line_table)} lines", level=1)
 
+                # Validate execution stack after program edits
+                valid, removed_entries, messages = self.runtime.validate_stack()
+                if removed_entries:
+                    self._add_output("\n⚠️  Warning: Program edits invalidated execution stack:\n")
+                    for msg in messages:
+                        self._add_output(f"  • {msg}\n")
+                    self._add_output(f"  {len(removed_entries)} stack entry(ies) removed\n\n")
+                    debug_log(f"Stack validation removed {len(removed_entries)} entries", level=1)
+
                 # Clear error state and set to paused
                 self.interpreter.state.status = 'paused'
                 self.interpreter.state.error_info = None
