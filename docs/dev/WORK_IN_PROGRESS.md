@@ -63,19 +63,30 @@ Over hundreds/thousands of changes focused on TK client and interpreter rewrites
 
 **Rationale:** Current web UI was a quick prototype. Rather than update it to match hundreds of TK changes, faster to rebuild with NiceGUI (impressed with its speed). Can salvage useful code from oldweb.
 
-**Completed (v1.0.161-162):**
+**Completed (v1.0.161-167):**
 - Moved old web UI to `src/ui/oldweb`
-- Created `src/ui/web/nicegui_backend.py` (284 lines)
+- Created `src/ui/web/nicegui_backend.py` (440+ lines)
 - Implemented basic UI: menu bar, toolbar, split pane (editor/output), status bar
-- Created comprehensive test suite: `tests/nicegui/test_mbasic_web_ui.py` (5 tests)
+- Created comprehensive test suite: `tests/nicegui/test_mbasic_web_ui.py` (6 tests)
 - Fixed NiceGUI menu API (nested context managers, not bind_menu())
 - Fixed ProgramManager imports (moved lazy imports to top of file for test compatibility)
-- All 5 tests passing:
+- **Added program execution** (v1.0.164-165):
+  - Created SimpleWebIOHandler for web output
+  - Implemented tick-based execution with ui.timer()
+  - Programs can run and produce output
+  - Stop functionality works
+- **INPUT UX Research** (v1.0.165-167):
+  - Identified INPUT dialog UX issue (blocks game text)
+  - Documented inline input as better approach
+  - Created TODOs for TK, Web, and Curses INPUT improvements
+  - Curses already uses inline input correctly!
+- All 6 tests passing:
   - ✅ test_ui_loads - UI loads without errors
   - ✅ test_add_program_line - Can add BASIC lines
   - ✅ test_new_program - File > New clears program
   - ✅ test_clear_output - Clear output works
   - ✅ test_list_program - List Program outputs to console
+  - ✅ test_run_program - Program execution works!
 
 #### Phase 2b: Update Curses UI
 1. ⏸️ Fix editor line number display (embed in text like TK)
