@@ -12,12 +12,8 @@ Usage:
     python3 mbasic.py --debug                 # Enable debug output
 """
 
-# Suppress GTK accessibility bridge warning before any imports
-# This prevents "Not loading module 'atk-bridge'" message on some Linux systems
-import os
-os.environ['NO_AT_BRIDGE'] = '1'
-
 import sys
+import os
 import argparse
 import importlib
 from pathlib import Path
@@ -113,10 +109,6 @@ def load_backend(backend_name, io_handler, program_manager):
             raise ValueError(f"Unknown backend: {backend_name}")
 
         module_name, class_name = backend_map[backend_name]
-
-        # Suppress GTK warnings for web backend before importing
-        if backend_name == 'web':
-            os.environ['NO_AT_BRIDGE'] = '1'
 
         # Import the backend module
         backend_module = importlib.import_module(module_name)
