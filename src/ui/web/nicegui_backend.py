@@ -357,7 +357,7 @@ class NiceGUIBackend(UIBackend):
         """Open a file from recent files."""
         # For web UI, we can't actually open local files
         # Just show a notification
-        ui.notify(f'Recent file: {filename}. Use Open to load files.', type='info')
+        self._notify(f'Recent file: {filename}. Use Open to load files.', type='info')
         self._set_status(f'Recent: {filename}')
 
     # =========================================================================
@@ -402,7 +402,7 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             log_web_error("_toggle_breakpoint", e)
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
 
     def _do_toggle_breakpoint(self, line_num_str, dialog):
         """Actually toggle the breakpoint."""
@@ -411,20 +411,20 @@ class NiceGUIBackend(UIBackend):
 
             if line_num in self.breakpoints:
                 self.breakpoints.remove(line_num)
-                ui.notify(f'Breakpoint removed: line {line_num}', type='info')
+                self._notify(f'Breakpoint removed: line {line_num}', type='info')
                 self._set_status(f'Removed breakpoint at {line_num}')
             else:
                 self.breakpoints.add(line_num)
-                ui.notify(f'Breakpoint set: line {line_num}', type='positive')
+                self._notify(f'Breakpoint set: line {line_num}', type='positive')
                 self._set_status(f'Breakpoint at {line_num}')
 
             dialog.close()
 
         except ValueError:
-            ui.notify('Please enter a valid line number', type='warning')
+            self._notify('Please enter a valid line number', type='warning')
         except Exception as e:
             log_web_error("_do_toggle_breakpoint", e)
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
 
     # =========================================================================
     # Menu Handlers
@@ -439,7 +439,7 @@ class NiceGUIBackend(UIBackend):
             self._set_status('New program')
         except Exception as e:
             log_web_error("_menu_new", e)
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
 
     def _menu_open(self):
         """File > Open - Load program from file."""
@@ -455,7 +455,7 @@ class NiceGUIBackend(UIBackend):
             dialog.open()
         except Exception as e:
             log_web_error("_menu_open", e)
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
 
     def _handle_file_upload(self, e, dialog):
         """Handle file upload from Open dialog."""
@@ -476,12 +476,12 @@ class NiceGUIBackend(UIBackend):
             self._add_recent_file(e.name)
 
             self._set_status(f'Opened: {e.name}')
-            ui.notify(f'Loaded {e.name}', type='positive')
+            self._notify(f'Loaded {e.name}', type='positive')
             dialog.close()
 
         except Exception as ex:
             log_web_error("_handle_file_upload", ex)
-            ui.notify(f'Error loading file: {ex}', type='negative')
+            self._notify(f'Error loading file: {ex}', type='negative')
 
     def _menu_save(self):
         """File > Save - Save current program."""
@@ -497,11 +497,11 @@ class NiceGUIBackend(UIBackend):
             ui.download(content.encode('utf-8'), filename)
 
             self._set_status(f'Saved: {filename}')
-            ui.notify(f'Downloaded {filename}', type='positive')
+            self._notify(f'Downloaded {filename}', type='positive')
 
         except Exception as e:
             log_web_error("_menu_save", e)
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
 
     def _menu_save_as(self):
         """File > Save As - Save with new filename."""
@@ -521,13 +521,13 @@ class NiceGUIBackend(UIBackend):
             dialog.open()
         except Exception as e:
             log_web_error("_menu_save_as", e)
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
 
     def _handle_save_as(self, filename, dialog):
         """Handle Save As dialog."""
         try:
             if not filename:
-                ui.notify('Please enter a filename', type='warning')
+                self._notify('Please enter a filename', type='warning')
                 return
 
             # Save editor to program first
@@ -541,12 +541,12 @@ class NiceGUIBackend(UIBackend):
             ui.download(content.encode('utf-8'), filename)
 
             self._set_status(f'Saved: {filename}')
-            ui.notify(f'Downloaded {filename}', type='positive')
+            self._notify(f'Downloaded {filename}', type='positive')
             dialog.close()
 
         except Exception as e:
             log_web_error("_handle_save_as", e)
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
 
     def _menu_exit(self):
         """File > Exit - Quit application."""
@@ -566,7 +566,7 @@ class NiceGUIBackend(UIBackend):
             # Check if program has lines
             if not self.program.lines:
                 self._set_status('No program loaded')
-                ui.notify('No program in editor. Add some lines first.', type='warning')
+                self._notify('No program in editor. Add some lines first.', type='warning')
                 return
 
             # Don't clear output - continuous scrolling like ASR33 teletype
@@ -662,7 +662,7 @@ class NiceGUIBackend(UIBackend):
                     return  # Parse errors
 
                 if not self.program.lines:
-                    ui.notify('No program loaded', type='warning')
+                    self._notify('No program loaded', type='warning')
                     return
 
                 # Start execution in step mode
@@ -707,7 +707,7 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             log_web_error("_menu_step", e)
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
 
     def _menu_continue(self):
         """Run > Continue - Continue from breakpoint."""
@@ -716,11 +716,11 @@ class NiceGUIBackend(UIBackend):
                 self.paused = False
                 self._set_status('Continuing...')
             else:
-                ui.notify('Not paused at breakpoint', type='warning')
+                self._notify('Not paused at breakpoint', type='warning')
 
         except Exception as e:
             log_web_error("_menu_continue", e)
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
 
     def _menu_list(self):
         """Run > List Program - List to output."""
@@ -733,7 +733,7 @@ class NiceGUIBackend(UIBackend):
         """Show Variables window."""
         try:
             if not self.runtime:
-                ui.notify('No program running', type='warning')
+                self._notify('No program running', type='warning')
                 return
 
             # Create dialog with variables table
@@ -790,13 +790,13 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             log_web_error("_show_variables_window", e)
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
 
     def _show_stack_window(self):
         """Show Execution Stack window."""
         try:
             if not self.runtime:
-                ui.notify('No program running', type='warning')
+                self._notify('No program running', type='warning')
                 return
 
             # Create dialog with stack display
@@ -823,15 +823,15 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             log_web_error("_show_stack_window", e)
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
 
     def _menu_help(self):
         """Help > Help Topics."""
-        ui.notify('Help system coming soon', type='info')
+        self._notify('Help system coming soon', type='info')
 
     def _menu_about(self):
         """Help > About."""
-        ui.notify('MBASIC 5.21 Web IDE\nBuilt with NiceGUI', type='info')
+        self._notify('MBASIC 5.21 Web IDE\nBuilt with NiceGUI', type='info')
 
     # =========================================================================
     # Editor Actions
@@ -881,8 +881,7 @@ class NiceGUIBackend(UIBackend):
                     error_msg += f' (and {len(errors)-3} more)'
 
                 # Show in both popup and output
-                ui.notify(error_msg, type='warning')
-                self._append_output(f'\n--- Parse Error ---\n{error_msg}\n')
+                self._notify(error_msg, type='warning')
                 self._set_status(f'Parse errors: {len(errors)}')
                 return False
 
@@ -891,7 +890,7 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             log_web_error("_save_editor_to_program", e)
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
             return False
 
     def _load_program_to_editor(self):
@@ -904,7 +903,7 @@ class NiceGUIBackend(UIBackend):
             self._set_status(f'Loaded {len(lines)} lines')
         except Exception as e:
             log_web_error("_load_program_to_editor", e)
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
 
     def _on_enter_key(self, e):
         """Handle Enter key in editor for auto-numbering.
@@ -1145,8 +1144,32 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             log_web_error("_execute_immediate", e)
-            self._append_output(f'Error: {e}\n')
-            ui.notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {e}', type='negative')
+
+    def _notify(self, message, type='info', log_to_output=True):
+        """Show notification popup and optionally log to output.
+
+        Args:
+            message: Notification message
+            type: 'positive', 'negative', 'warning', 'info'
+            log_to_output: If True, also append to output pane (default: True)
+        """
+        # Show popup
+        ui.notify(message, type=type)
+
+        # Also log to output (unless explicitly disabled)
+        if log_to_output:
+            # Format based on type
+            if type == 'negative':
+                prefix = '--- Error ---'
+            elif type == 'warning':
+                prefix = '--- Warning ---'
+            elif type == 'positive':
+                prefix = '--- Success ---'
+            else:
+                prefix = '--- Info ---'
+
+            self._append_output(f'\n{prefix}\n{message}\n')
 
     def _set_status(self, message):
         """Set status bar message."""
