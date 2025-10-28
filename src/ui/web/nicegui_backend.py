@@ -3,6 +3,10 @@
 Provides a modern web-based UI for the MBASIC interpreter using NiceGUI.
 """
 
+# Suppress GTK accessibility bridge warning before NiceGUI import
+import os
+os.environ['NO_AT_BRIDGE'] = '1'
+
 import re
 import sys
 import asyncio

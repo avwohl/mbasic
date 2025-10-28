@@ -114,6 +114,10 @@ def load_backend(backend_name, io_handler, program_manager):
 
         module_name, class_name = backend_map[backend_name]
 
+        # Suppress GTK warnings for web backend before importing
+        if backend_name == 'web':
+            os.environ['NO_AT_BRIDGE'] = '1'
+
         # Import the backend module
         backend_module = importlib.import_module(module_name)
 
