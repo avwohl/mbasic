@@ -75,6 +75,41 @@ $ python3 tests/run_regression.py
 
 ---
 
+## Active Work: PyPI Distribution Preparation
+
+**Started:** 2025-10-28
+**Task:** Prepare MBASIC for PyPI distribution (build and test, NO PUBLISH without approval)
+**Current Version:** 1.0.146
+
+### Goal
+
+Prepare MBASIC as a proper Python package that can be installed via `pip install mbasic`. This includes:
+- Creating packaging configuration (`pyproject.toml`)
+- Setting up entry points for command-line usage
+- Testing local and built installations
+- Documenting the distribution process
+- **NOT publishing to PyPI without explicit approval**
+
+### Status
+
+- ⏳ Create pyproject.toml
+- ⏸️ Update mbasic.py entry point
+- ⏸️ Create MANIFEST.in
+- ⏸️ Test local installation
+- ⏸️ Build package
+- ⏸️ Test built package
+- ⏸️ Documentation
+
+### Files to Modify
+
+- `pyproject.toml` (new) - Package metadata and dependencies
+- `mbasic.py` - Add main() entry point
+- `MANIFEST.in` (new) - Include non-Python files
+- `README.md` - Update with pip install instructions
+- `docs/dev/DISTRIBUTION_TESTING.md` (new) - Testing procedures
+
+---
+
 ## Status: Ready for Next Task
 
 ### Potential Next Tasks

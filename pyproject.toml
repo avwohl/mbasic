@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mbasic"
-version = "1.0.117"
+version = "1.0.146"
 description = "MBASIC 5.21 (Microsoft BASIC-80) interpreter with modern enhancements"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "0BSD"}
+license = {text = "MIT"}
 authors = [
-    {name = "Aaron Wohl", email = "aaron@example.com"}
+    {name = "Aaron Wohl", email = "mbasic@wohl.com"}
 ]
 keywords = [
     "basic",
@@ -64,6 +64,8 @@ all = ["urwid>=2.0.0"]
 dev = [
     "pytest>=7.0",
     "pexpect>=4.8.0",
+    "build>=0.10.0",
+    "twine>=4.0.0",
 ]
 
 # Help system (for frontmatter parsing in help files)
