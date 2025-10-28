@@ -993,27 +993,29 @@ class NiceGUIBackend(UIBackend):
 
     def _append_output(self, text):
         """Append text to output pane and auto-scroll to bottom."""
+        import json
         log_web_error("_append_output", Exception(f"DEBUG: Appending {len(text)} chars: {text[:50]}..."))
         self.output.value += text
         log_web_error("_append_output", Exception(f"DEBUG: Output value now {len(self.output.value)} chars"))
-        # Force update and then scroll
-        self.output.update()
-        log_web_error("_append_output", Exception("DEBUG: update() called"))
-        # Auto-scroll to bottom
-        # Use mark selector to find the specific textarea
-        ui.run_javascript('''
-            setTimeout(() => {
-                // Find all textareas with the 'output' mark
+
+        # Force update using JavaScript since self.output.update() doesn't work from timer callbacks
+        # Escape the value for JavaScript
+        escaped_value = json.dumps(self.output.value)
+        log_web_error("_append_output", Exception(f"DEBUG: Calling JavaScript to set value"))
+        ui.run_javascript(f'''
+            setTimeout(() => {{
+                // Find the output textarea (readonly, contains MBASIC)
                 const textareas = document.querySelectorAll('textarea');
-                for (let ta of textareas) {
-                    // Check if this is the output textarea (readonly, has content starting with MBASIC)
-                    if (ta.readOnly && ta.value.includes('MBASIC 5.21')) {
+                for (let ta of textareas) {{
+                    if (ta.readOnly) {{
+                        ta.value = {escaped_value};
                         ta.scrollTop = ta.scrollHeight;
                         break;
-                    }
-                }
-            }, 50);
+                    }}
+                }}
+            }}, 10);
         ''')
+        log_web_error("_append_output", Exception("DEBUG: JavaScript call complete"))
 
     def _show_input_row(self, prompt=''):
         """Show the INPUT row with prompt."""
