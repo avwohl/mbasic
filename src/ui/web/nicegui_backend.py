@@ -208,22 +208,20 @@ class NiceGUIBackend(UIBackend):
                 ui.button('Step', on_click=self._menu_step, icon='skip_next').mark('btn_step')
                 ui.button('Continue', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
 
-            # Main content area - just stack everything with borders to see what's happening
-            with ui.element('div').style('width: 100%; display: flex; flex-direction: column; border: 3px solid red;'):
+            # Main content area
+            with ui.element('div').style('width: 100%; display: flex; flex-direction: column;'):
                 # Editor
-                ui.label('EDITOR').style('background: yellow;')
                 self.editor = ui.textarea(
                     value='',
                     placeholder='Program Editor'
-                ).style('width: 100%; border: 2px solid blue; user-select: text;').props('outlined dense rows=10').mark('editor')
+                ).style('width: 100%;').props('outlined dense rows=10').mark('editor')
                 self.editor.on('keydown.enter', self._on_enter_key)
 
                 # Output
-                ui.label('OUTPUT').style('background: yellow;')
                 self.output = ui.textarea(
                     value='MBASIC 5.21 Web IDE\nReady\n',
                     placeholder='Output'
-                ).style('width: 100%; border: 2px solid green; background: white; color: black;').props('readonly outlined dense rows=10').mark('output')
+                ).style('width: 100%;').props('readonly outlined dense rows=10').mark('output')
 
                 # INPUT row (hidden by default)
                 self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm')
@@ -235,17 +233,15 @@ class NiceGUIBackend(UIBackend):
                 self.input_row.visible = False
 
                 # Immediate
-                ui.label('IMMEDIATE').style('background: yellow;')
                 with ui.row().style('width: 100%;'):
                     self.immediate_entry = ui.textarea(
                         value='',
                         placeholder='Command'
-                    ).style('width: 100%; border: 2px solid purple;').props('outlined dense rows=3').mark('immediate_entry')
+                    ).style('width: 100%;').props('outlined dense rows=3').mark('immediate_entry')
                     self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
                     ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
                 # Status
-                ui.label('STATUS').style('background: yellow;')
                 with ui.row().classes('w-full bg-gray-200 q-pa-xs').style('justify-content: space-between;'):
                     self.status_label = ui.label('Ready').mark('status')
                     ui.label(f'v{VERSION}').classes('text-gray-600')
