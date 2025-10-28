@@ -13,7 +13,7 @@ Features:
 - Cross-platform (uses pathlib)
 
 Usage:
-    from ui.recent_files import RecentFilesManager
+    from src.ui.recent_files import RecentFilesManager
 
     rfm = RecentFilesManager()
     rfm.add_file("/path/to/program.bas")

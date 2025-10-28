@@ -7,7 +7,7 @@ keywords to their display case based on the configured policy.
 The keyword table is the single source of truth for how keywords should be displayed.
 """
 
-from case_keeper import CaseKeeperTable
+from src.case_keeper import CaseKeeperTable
 
 
 class KeywordCaseManager:

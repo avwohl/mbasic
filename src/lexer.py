@@ -3,8 +3,8 @@ Lexer for MBASIC 5.21 (CP/M era Microsoft BASIC-80)
 Based on BASIC-80 Reference Manual Version 5.21
 """
 from typing import List, Optional
-from tokens import Token, TokenType, KEYWORDS
-from keyword_case_manager import KeywordCaseManager
+from src.tokens import Token, TokenType, KEYWORDS
+from src.keyword_case_manager import KeywordCaseManager
 
 
 class LexerError(Exception):

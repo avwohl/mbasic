@@ -7,8 +7,8 @@ token positions and spacing. Includes debug tracking for position conflicts.
 
 from typing import List, Optional, Tuple, Dict
 from dataclasses import dataclass
-import ast_nodes
-from tokens import TokenType
+import src.ast_nodes as ast_nodes
+from src.tokens import TokenType
 
 
 @dataclass
@@ -214,7 +214,7 @@ class PositionSerializer:
             return self.serialize_rem_statement(stmt)
         else:
             # Fallback: Use pretty printing from ui_helpers
-            from ui.ui_helpers import serialize_statement
+            from src.ui.ui_helpers import serialize_statement
             return " " + serialize_statement(stmt)
 
     def serialize_let_statement(self, stmt: ast_nodes.LetStatementNode) -> str:
@@ -420,7 +420,7 @@ class PositionSerializer:
 
         else:
             # Fallback: use pretty printing
-            from ui.ui_helpers import serialize_expression
+            from src.ui.ui_helpers import serialize_expression
             return " " + serialize_expression(expr)
 
 

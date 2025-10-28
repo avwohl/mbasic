@@ -6,10 +6,10 @@ Allows execution of BASIC statements without line numbers in the context
 of the current runtime state.
 """
 
-from lexer import tokenize
-from parser import Parser
-from runtime import Runtime
-from interpreter import Interpreter
+from src.lexer import tokenize
+from src.parser import Parser
+from src.runtime import Runtime
+from src.interpreter import Interpreter
 import traceback
 import os
 

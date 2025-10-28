@@ -12,9 +12,9 @@ Key differences from interpreter:
 """
 
 from typing import List, Optional, Dict, Tuple
-from tokens import Token, TokenType
-from ast_nodes import *
-from keyword_case_manager import KeywordCaseManager
+from src.tokens import Token, TokenType
+from src.ast_nodes import *
+from src.keyword_case_manager import KeywordCaseManager
 
 
 class ParseError(Exception):

@@ -12,13 +12,13 @@ import re
 import os
 import traceback
 from pathlib import Path
-from lexer import tokenize
-from parser import Parser
-from runtime import Runtime
-from interpreter import Interpreter
-import ast_nodes
+from src.lexer import tokenize
+from src.parser import Parser
+from src.runtime import Runtime
+from src.interpreter import Interpreter
+import src.ast_nodes as ast_nodes
 from input_sanitizer import sanitize_and_clear_parity
-from debug_logger import debug_log_error, is_debug_mode
+from src.debug_logger import debug_log_error, is_debug_mode
 
 # Try to import readline for better line editing
 # This enhances input() with:
@@ -96,7 +96,7 @@ class InteractiveMode:
 
         # I/O handler (defaults to console if not provided)
         if io_handler is None:
-            from iohandler.console import ConsoleIOHandler
+            from src.iohandler.console import ConsoleIOHandler
             io_handler = ConsoleIOHandler(debug_enabled=False)
         self.io = io_handler
 
@@ -701,7 +701,7 @@ class InteractiveMode:
             DELETE -40      - Delete all lines up to and including 40
             DELETE 40-      - Delete from line 40 to end of program
         """
-        from ui.ui_helpers import delete_lines_from_program
+        from src.ui.ui_helpers import delete_lines_from_program
 
         try:
             deleted = delete_lines_from_program(self, args, self.program_runtime)
@@ -727,7 +727,7 @@ class InteractiveMode:
             RENUM 100,50    -> 100,50,10 (renumber from line 50 onwards)
             RENUM 100,50,20 -> 100,50,20 (full control)
         """
-        from ui.ui_helpers import renum_program
+        from src.ui.ui_helpers import renum_program
 
         try:
             # Use consolidated RENUM implementation
@@ -844,7 +844,7 @@ class InteractiveMode:
         Returns:
             str: Source text for the line
         """
-        from ui.ui_helpers import serialize_line
+        from src.ui.ui_helpers import serialize_line
         return serialize_line(line_node)
 
     def _serialize_statement(self, stmt):
@@ -856,22 +856,22 @@ class InteractiveMode:
         Returns:
             str: Source text for the statement
         """
-        from ui.ui_helpers import serialize_statement
+        from src.ui.ui_helpers import serialize_statement
         return serialize_statement(stmt)
 
     def _serialize_variable(self, var):
         """Serialize a variable reference"""
-        from ui.ui_helpers import serialize_variable
+        from src.ui.ui_helpers import serialize_variable
         return serialize_variable(var)
 
     def _token_to_operator(self, token_type):
         """Convert a TokenType operator to its string representation"""
-        from ui.ui_helpers import token_to_operator
+        from src.ui.ui_helpers import token_to_operator
         return token_to_operator(token_type)
 
     def _serialize_expression(self, expr):
         """Serialize an expression node to source text"""
-        from ui.ui_helpers import serialize_expression
+        from src.ui.ui_helpers import serialize_expression
         return serialize_expression(expr)
 
     def cmd_edit(self, args):
@@ -1155,7 +1155,7 @@ class InteractiveMode:
         FILES "*.BAS" - List files matching pattern
         FILES "A:*.*" - List files on drive A (not supported, lists current dir)
         """
-        from ui.ui_helpers import list_files
+        from src.ui.ui_helpers import list_files
 
         try:
             files = list_files(filespec)

@@ -18,9 +18,9 @@ class CLIBackend(UIBackend):
     use UIBackend interface more directly.
 
     Usage:
-        from iohandler.console import ConsoleIOHandler
+        from src.iohandler.console import ConsoleIOHandler
         from editing import ProgramManager
-        from ui.cli import CLIBackend
+        from src.ui.cli import CLIBackend
 
         io = ConsoleIOHandler()
         program = ProgramManager(def_type_map)

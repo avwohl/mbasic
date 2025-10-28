@@ -24,8 +24,8 @@ import base64
 # Add parent directories to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from iohandler.web_io import WebIOHandler
-from ui.recent_files import RecentFilesManager
+from src.iohandler.web_io import WebIOHandler
+from src.ui.recent_files import RecentFilesManager
 from lexer import Lexer
 from parser import Parser
 from interpreter import Interpreter
@@ -520,7 +520,7 @@ class MBasicWebIDE:
     def _apply_renumber(self, start: int, increment: int, dialog, old_start: int = 0):
         """Apply renumbering to program using shared ui_helpers module."""
         import re
-        from ui.ui_helpers import parse_line_number, renumber_program_lines
+        from src.ui.ui_helpers import parse_line_number, renumber_program_lines
 
         lines = self.editor.value.split('\n')
 
@@ -1601,7 +1601,7 @@ class MBasicWebIDE:
                 content = topic_path.read_text(encoding='utf-8')
 
                 # Expand macros (like {{kbd:help}})
-                from ui.help_macros import HelpMacros
+                from src.ui.help_macros import HelpMacros
                 help_root = Path(__file__).parent.parent.parent.parent / 'docs' / 'help'
                 macros = HelpMacros('web', str(help_root))
                 content = macros.expand(content)
@@ -1625,7 +1625,7 @@ class MBasicWebIDE:
                     content = filepath.read_text(encoding='utf-8')
 
                     # Expand macros
-                    from ui.help_macros import HelpMacros
+                    from src.ui.help_macros import HelpMacros
                     help_root = Path(__file__).parent.parent.parent.parent / 'docs' / 'help'
                     macros = HelpMacros('web', str(help_root))
                     content = macros.expand(content)

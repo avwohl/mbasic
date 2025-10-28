@@ -12,7 +12,7 @@ This module manages:
 """
 
 import time
-from ast_nodes import DataStatementNode, DefFnStatementNode
+from src.ast_nodes import DataStatementNode, DefFnStatementNode
 
 
 def split_variable_name_and_suffix(full_name):

@@ -6,9 +6,9 @@ framework (Kivy, BeeWare, Qt, etc.).
 """
 
 from .base import UIBackend
-from runtime import Runtime
-from interpreter import Interpreter
-from debug_logger import debug_log_error, is_debug_mode
+from src.runtime import Runtime
+from src.interpreter import Interpreter
+from src.debug_logger import debug_log_error, is_debug_mode
 
 
 class VisualBackend(UIBackend):

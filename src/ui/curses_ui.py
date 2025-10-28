@@ -20,13 +20,13 @@ from .markdown_renderer import MarkdownRenderer
 from .help_widget import HelpWidget
 from .recent_files import RecentFilesManager
 from .auto_save import AutoSaveManager
-from runtime import Runtime
-from interpreter import Interpreter
-from lexer import Lexer
-from parser import Parser
-from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
+from src.runtime import Runtime
+from src.interpreter import Interpreter
+from src.lexer import Lexer
+from src.parser import Parser
+from src.immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 from input_sanitizer import is_valid_input_char, clear_parity
-from debug_logger import debug_log_error, is_debug_mode
+from src.debug_logger import debug_log_error, is_debug_mode
 
 
 class TopLeftBox(urwid.WidgetWrap):
@@ -1924,7 +1924,7 @@ class CursesBackend(UIBackend):
         Uses midpoint calculation to find appropriate line number.
         If no room, offers to renumber the program.
         """
-        from ui.ui_helpers import calculate_midpoint
+        from src.ui.ui_helpers import calculate_midpoint
 
         # Get current cursor position and text
         cursor_pos = self.editor.edit_widget.edit_pos
@@ -3645,7 +3645,7 @@ Run                           Debug Windows
 
     def cmd_delete(self, args):
         """Execute DELETE command using ui_helpers."""
-        from ui.ui_helpers import delete_lines_from_program
+        from src.ui.ui_helpers import delete_lines_from_program
 
         try:
             deleted = delete_lines_from_program(self.program, args, runtime=None)
@@ -3662,7 +3662,7 @@ Run                           Debug Windows
 
     def cmd_renum(self, args):
         """Execute RENUM command using ui_helpers."""
-        from ui.ui_helpers import renum_program
+        from src.ui.ui_helpers import renum_program
 
         # Need access to InteractiveMode's _renum_statement
         # Curses UI has self.interpreter which should have interactive_mode
@@ -3714,7 +3714,7 @@ Run                           Debug Windows
 
     def cmd_files(self, filespec=""):
         """Execute FILES command using ui_helpers."""
-        from ui.ui_helpers import list_files
+        from src.ui.ui_helpers import list_files
 
         try:
             files = list_files(filespec)

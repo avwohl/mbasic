@@ -5,7 +5,7 @@ Abstract Syntax Tree (AST) node definitions for MBASIC 5.21
 from typing import List, Optional, Any, Set
 from dataclasses import dataclass
 from enum import Enum
-from tokens import TokenType, Token
+from src.tokens import TokenType, Token
 
 
 # ============================================================================

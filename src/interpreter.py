@@ -8,10 +8,10 @@ import sys
 import signal
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Callable, Any
-from runtime import Runtime
-from basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
-from tokens import TokenType
-import ast_nodes
+from src.runtime import Runtime
+from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
+from src.tokens import TokenType
+import src.ast_nodes as ast_nodes
 
 
 class BreakException(Exception):
@@ -80,7 +80,7 @@ class Interpreter:
 
         # I/O handler (defaults to console if not provided)
         if io_handler is None:
-            from iohandler.console import ConsoleIOHandler
+            from src.iohandler.console import ConsoleIOHandler
             io_handler = ConsoleIOHandler(debug_enabled=False)
         self.io = io_handler
 

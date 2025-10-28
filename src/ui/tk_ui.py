@@ -6,15 +6,15 @@ making it suitable for a modern BASIC IDE experience.
 """
 
 from .base import UIBackend
-from runtime import Runtime
-from interpreter import Interpreter
+from src.runtime import Runtime
+from src.interpreter import Interpreter
 from .keybinding_loader import KeybindingLoader
 from .recent_files import RecentFilesManager
 from .auto_save import AutoSaveManager
-from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
-from iohandler.base import IOHandler
+from src.immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
+from src.iohandler.base import IOHandler
 from input_sanitizer import sanitize_and_clear_parity, is_valid_input_char
-from debug_logger import debug_log_error, is_debug_mode, debug_log
+from src.debug_logger import debug_log_error, is_debug_mode, debug_log
 
 
 class TkBackend(UIBackend):
@@ -29,9 +29,9 @@ class TkBackend(UIBackend):
     - File dialogs for Open/Save
 
     Usage:
-        from iohandler.console import ConsoleIOHandler
+        from src.iohandler.console import ConsoleIOHandler
         from editing import ProgramManager
-        from ui.tk_ui import TkBackend
+        from src.ui.tk_ui import TkBackend
 
         io = ConsoleIOHandler()
         program = ProgramManager(def_type_map)
@@ -2049,7 +2049,7 @@ class TkBackend(UIBackend):
                 new_line_num = tentative
             else:
                 # No room - try midpoint
-                from ui.ui_helpers import calculate_midpoint
+                from src.ui.ui_helpers import calculate_midpoint
                 midpoint = calculate_midpoint(current_line_num, next_existing_line_num)
                 if midpoint is not None:
                     new_line_num = midpoint
@@ -2399,7 +2399,7 @@ class TkBackend(UIBackend):
         """
         import tkinter as tk
         from tkinter import messagebox
-        from ui.ui_helpers import calculate_midpoint, find_insert_line_number, needs_renumber_for_insert
+        from src.ui.ui_helpers import calculate_midpoint, find_insert_line_number, needs_renumber_for_insert
         from debug_logger import debug_log
         import re
 
@@ -2934,7 +2934,7 @@ class TkBackend(UIBackend):
         FILES - List all files in current directory
         FILES "*.BAS" - List files matching pattern
         """
-        from ui.ui_helpers import list_files
+        from src.ui.ui_helpers import list_files
 
         try:
             files = list_files(filespec)
@@ -2969,7 +2969,7 @@ class TkBackend(UIBackend):
             DELETE -40      - Delete all lines up to and including 40
             DELETE 40-      - Delete from line 40 to end of program
         """
-        from ui.ui_helpers import delete_lines_from_program
+        from src.ui.ui_helpers import delete_lines_from_program
 
         try:
             # Delete using consolidated function
@@ -3000,7 +3000,7 @@ class TkBackend(UIBackend):
 
         This ensures AST is the single source of truth.
         """
-        from ui.ui_helpers import renum_program
+        from src.ui.ui_helpers import renum_program
 
         try:
             # Use consolidated RENUM implementation

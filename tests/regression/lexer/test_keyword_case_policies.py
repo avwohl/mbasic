@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 from src.lexer import Lexer
 from src.parser import Parser
 from src.position_serializer import PositionSerializer
+from src.keyword_case_manager import KeywordCaseManager
 
 # Test program
 test_code = """10 PRINT "Test"
@@ -23,7 +24,6 @@ def test_policy(policy_name):
     print(f"\n=== Testing policy: {policy_name} ===")
 
     # Create keyword case manager with policy
-    from keyword_case_manager import KeywordCaseManager
     keyword_case_manager = KeywordCaseManager(policy=policy_name)
 
     # Lexer builds keyword case table during tokenization
