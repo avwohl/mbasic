@@ -97,12 +97,13 @@ Implemented comprehensive settings system with CLI commands and variable case co
 
 6. **Settings Scope Testing** - Test project/file-level settings
 
-7. **Package Distribution** - Setup automated builds for .deb, .snap, multi-arch
-   - See `docs/dev/PACKAGING_BUILD_FARMS_TODO.md` for complete plan
-   - Phase 1: Snap via GitHub Actions (1-2 days) - FREE ARM64 runners!
-   - Phase 2: Ubuntu PPA via Launchpad (3-5 days) - FREE build farm
-   - Target architectures: amd64, arm64, armhf
-   - Est. 1-2 weeks total
+7. **Simple Distribution via PyPI** - Pure Python = simple distribution!
+   - ~~Build farms OVERKILL for interpreted Python~~ (see PACKAGING_BUILD_FARMS_TODO.md for why)
+   - See `docs/dev/SIMPLE_DISTRIBUTION_APPROACH.md` for recommended approach
+   - **Recommended**: Publish to PyPI (30 minutes work)
+   - Users: `pip install mbasic` - works everywhere (Linux, Mac, Windows, all architectures)
+   - Optional: GitHub Releases with zip files
+   - Optional later: Desktop integration (.desktop files) if needed
 
 ## Previous Session: 2025-10-28 - Architecture and Safety ✅ COMPLETED
 
