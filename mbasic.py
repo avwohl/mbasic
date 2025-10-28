@@ -51,6 +51,12 @@ def list_backends():
             'module': 'tkinter',
             'install': 'Included with Python (may need: apt install python3-tk)'
         },
+        'web': {
+            'name': 'Web',
+            'description': 'Web-based UI (NiceGUI)',
+            'module': 'nicegui',
+            'install': 'pip install nicegui'
+        },
     }
 
     print("Available MBASIC backends:\n")
@@ -98,11 +104,11 @@ def load_backend(backend_name, io_handler, program_manager):
     try:
         # Map backend name to module and class name
         backend_map = {
-            'cli': ('ui.cli', 'CLIBackend'),
-            'visual': ('ui.visual', 'VisualBackend'),
-            'curses': ('ui.curses_ui', 'CursesBackend'),
-            'tk': ('ui.tk_ui', 'TkBackend'),
-            'web': ('ui.web', 'NiceGUIBackend'),
+            'cli': ('src.ui.cli', 'CLIBackend'),
+            'visual': ('src.ui.visual', 'VisualBackend'),
+            'curses': ('src.ui.curses_ui', 'CursesBackend'),
+            'tk': ('src.ui.tk_ui', 'TkBackend'),
+            'web': ('src.ui.web', 'NiceGUIBackend'),
         }
 
         if backend_name not in backend_map:

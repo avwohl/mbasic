@@ -181,14 +181,6 @@ class NiceGUIBackend(UIBackend):
         - Status bar
         """
 
-        # API endpoint for polling output
-        from fastapi.responses import JSONResponse
-
-        @app.get('/get_output')
-        def get_output():
-            """Return current output text for JavaScript polling."""
-            return JSONResponse({'output': self.output_text})
-
         # Main page
         @ui.page('/')
         def main_page():
@@ -234,106 +226,42 @@ class NiceGUIBackend(UIBackend):
                 # Bottom pane - Output (40% of space)
                 with splitter.after:
                     ui.label('Output').classes('text-lg font-bold p-2')
-                    # Direct textarea - we'll update it via JavaScript polling
-                    # Use min-height to ensure visibility, white background for text visibility
+                    # Output textarea - black text on white background
+                    # Set explicit color and background to ensure visibility
+                    # Use flex-grow to take up remaining space
                     self.output = ui.textarea(
                         value='MBASIC 5.21 Web IDE\nReady\n',
                         placeholder='Program output will appear here'
-                    ).classes('w-full font-mono').style('min-height: 150px; height: 100%; background-color: white;').props('readonly').mark('output')
+                    ).classes('w-full flex-grow font-mono').style(
+                        'background-color: white; '
+                        'color: black; '
+                        'font-size: 14px;'
+                    ).props('readonly').mark('output')
 
-                    # Add JavaScript to poll for output updates every 100ms
-                    ui.add_head_html('''
-                        <script>
-                        console.log("MBASIC: Setting up output polling...");
+            # INPUT row (hidden by default, shown when INPUT statement needs input)
+            # This is OUTSIDE the splitter, below it
+            self.input_row = ui.row().classes('w-full p-2 gap-2 bg-blue-50')
+            with self.input_row:
+                self.input_label = ui.label('').classes('font-bold text-blue-600')
+                self.input_field = ui.input(placeholder='Enter value...').classes('flex-grow').mark('input_field')
+                self.input_field.on('keydown.enter', self._submit_input)
+                self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
+            self.input_row.visible = False  # Hidden by default
 
-                        // Test on page load
-                        setTimeout(() => {
-                            const textarea = document.querySelector('textarea[readonly]');
-                            console.log("MBASIC TEST: Found textarea:", textarea);
-                            if (textarea) {
-                                console.log("MBASIC TEST: Textarea visible:", textarea.offsetParent !== null);
-                                console.log("MBASIC TEST: Textarea height:", textarea.offsetHeight);
+            # Controls row - Clear Output button
+            with ui.row().classes('w-full p-2 gap-2'):
+                ui.button('Clear Output', on_click=self._clear_output, icon='clear').mark('btn_clear_output')
 
-                                // Check computed styles
-                                const computed = window.getComputedStyle(textarea);
-                                console.log("MBASIC TEST: color:", computed.color);
-                                console.log("MBASIC TEST: backgroundColor:", computed.backgroundColor);
-                                console.log("MBASIC TEST: display:", computed.display);
-                                console.log("MBASIC TEST: visibility:", computed.visibility);
-                                console.log("MBASIC TEST: opacity:", computed.opacity);
-                                console.log("MBASIC TEST: fontSize:", computed.fontSize);
+            # Immediate mode command input (OUTSIDE splitter, below output)
+            ui.label('Immediate Mode:').classes('font-bold px-2 pt-2')
+            with ui.row().classes('w-full p-2 gap-2'):
+                self.immediate_entry = ui.input(
+                    placeholder='Enter BASIC command (e.g., PRINT 2+2)',
+                ).classes('flex-grow font-mono').mark('immediate_entry')
+                self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
+                ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
-                                console.log("MBASIC TEST: Setting test value...");
-                                textarea.value = "*** JAVASCRIPT TEST - Can you see this? ***\\n" + textarea.value;
-                            } else {
-                                console.error("MBASIC TEST: Could not find readonly textarea!");
-                            }
-                        }, 1000);
-
-                        setInterval(async () => {
-                            try {
-                                const response = await fetch('/get_output');
-                                const data = await response.json();
-                                const textarea = document.querySelector('textarea[readonly]');
-
-                                if (!textarea) {
-                                    console.error("MBASIC POLL: No readonly textarea found!");
-                                    return;
-                                }
-
-                                const serverOutput = data.output;
-                                const currentValue = textarea.value;
-
-                                if (serverOutput !== currentValue) {
-                                    console.log("MBASIC POLL: UPDATE NEEDED");
-                                    console.log("  Server:", serverOutput.substring(0, 100));
-                                    console.log("  Current:", currentValue.substring(0, 100));
-
-                                    // Update the textarea value
-                                    textarea.value = serverOutput;
-
-                                    // Trigger input event so Vue/Quasar knows about the change
-                                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                                    textarea.dispatchEvent(new Event('change', { bubbles: true }));
-
-                                    // Remove placeholder class if present
-                                    if (serverOutput && textarea.classList.contains('q-placeholder')) {
-                                        textarea.classList.remove('q-placeholder');
-                                        console.log("  Removed q-placeholder class");
-                                    }
-
-                                    textarea.scrollTop = textarea.scrollHeight;
-                                    console.log("  UPDATED! New length:", textarea.value.length);
-                                }
-                            } catch (e) {
-                                console.error("MBASIC POLL ERROR:", e);
-                            }
-                        }, 100);
-                        </script>
-                    ''')
-
-                    # INPUT row (hidden by default, shown when INPUT statement needs input)
-                    self.input_row = ui.row().classes('w-full p-2 gap-2')
-                    with self.input_row:
-                        self.input_label = ui.label('').classes('font-bold text-blue-600')
-                        self.input_field = ui.input(placeholder='Enter value...').classes('flex-grow').mark('input_field')
-                        self.input_field.on('keydown.enter', self._submit_input)
-                        self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
-                    self.input_row.visible = False  # Hidden by default
-
-                    with ui.row().classes('w-full p-2'):
-                        ui.button('Clear Output', on_click=self._clear_output, icon='clear').mark('btn_clear_output')
-
-                    # Immediate mode command input
-                    ui.label('Immediate Mode:').classes('font-bold px-2 pt-2')
-                    with ui.row().classes('w-full p-2 gap-2'):
-                        self.immediate_entry = ui.input(
-                            placeholder='Enter BASIC command (e.g., PRINT 2+2)',
-                        ).classes('flex-grow font-mono').mark('immediate_entry')
-                        self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
-                        ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
-
-            # Status bar
+            # Status bar at the very bottom
             with ui.row().classes('w-full bg-gray-200 p-2'):
                 self.status_label = ui.label('Ready').mark('status')
 
@@ -1079,6 +1007,8 @@ class NiceGUIBackend(UIBackend):
     def _clear_output(self):
         """Clear output pane."""
         self.output_text = ''
+        if self.output:
+            self.output.value = ''
         self._set_status('Output cleared')
 
     def _append_output(self, text):
@@ -1089,10 +1019,10 @@ class NiceGUIBackend(UIBackend):
         self.output_text += text
         log_web_error("_append_output", Exception(f"DEBUG: Buffer now {len(self.output_text)} chars"))
 
-        # DON'T update the NiceGUI component directly - this causes it to reset
-        # the textarea value in the browser, overwriting what JavaScript polling set.
-        # Just update our buffer and let JavaScript polling fetch it via /get_output.
-        # No need to call self.output.set_value() or self.output.update() here.
+        # Update the textarea directly (push-based, not polling)
+        if self.output:
+            self.output.value = self.output_text
+            log_web_error("_append_output", Exception(f"DEBUG: Updated textarea.value to {len(self.output_text)} chars"))
 
     def _show_input_row(self, prompt=''):
         """Show the INPUT row with prompt."""
