@@ -77,14 +77,25 @@ Implemented comprehensive settings system with CLI commands and variable case co
 
 ### Next Steps
 
-1. **Keyword Case Handling** - Extend case conflict to keywords (separate `keywords.case_style` setting)
+1. **Fix CHAIN/MERGE Case Handling** - Critical bug in `update_variables()`
+   - See `docs/dev/CASE_CONFLICT_WITH_CHAIN_MERGE_COMMON.md` for analysis
+   - Bug: `update_variables()` uses `set_variable_raw()` - bypasses case checking
+   - Impact: CHAIN ALL loses original_case, variable window shows wrong case
+   - Solution: Update `update_variables()` to preserve `original_case` metadata
+   - Priority: HIGH (affects variable display after CHAIN)
+
+2. **Keyword Case Handling** - Extend case conflict to keywords (separate `keywords.case_style` setting)
    - See `docs/dev/KEYWORD_CASE_HANDLING_TODO.md` for design
    - Default: `force_lower` (MBASIC 5.21 style)
    - Policies: force_lower, force_upper, first_wins, error, preserve
-2. **Documentation** - Document case conflict system and TK UI improvements
-3. **Additional UI Integration** - Add settings to curses/TK UIs
-4. **Pretty Printer Settings** - Add configurable spacing options
-5. **Settings Scope Testing** - Test project/file-level settings
+
+3. **Documentation** - Document case conflict system and TK UI improvements
+
+4. **Additional UI Integration** - Add settings to curses/TK UIs
+
+5. **Pretty Printer Settings** - Add configurable spacing options
+
+6. **Settings Scope Testing** - Test project/file-level settings
 
 ## Previous Session: 2025-10-28 - Architecture and Safety ✅ COMPLETED
 
