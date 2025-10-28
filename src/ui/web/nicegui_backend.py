@@ -152,6 +152,7 @@ class NiceGUIBackend(UIBackend):
         self.editor = None
         self.output = None
         self.status_label = None
+        self.immediate_entry = None  # Immediate mode command input
 
         # INPUT row elements (for inline input)
         self.input_row = None
@@ -226,6 +227,15 @@ class NiceGUIBackend(UIBackend):
 
                     with ui.row().classes('w-full p-2'):
                         ui.button('Clear Output', on_click=self._clear_output, icon='clear').mark('btn_clear_output')
+
+                    # Immediate mode command input
+                    ui.label('Immediate Mode:').classes('font-bold px-2 pt-2')
+                    with ui.row().classes('w-full p-2 gap-2'):
+                        self.immediate_entry = ui.input(
+                            placeholder='Enter BASIC command (e.g., PRINT 2+2)',
+                        ).classes('flex-grow font-mono').mark('immediate_entry')
+                        self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
+                        ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
             # Status bar
             with ui.row().classes('w-full bg-gray-200 p-2'):
@@ -686,6 +696,50 @@ class NiceGUIBackend(UIBackend):
         else:
             # Event loop not running, use run_until_complete
             return loop.run_until_complete(self._get_input_async(prompt))
+
+    def _on_immediate_enter(self, e):
+        """Handle Enter key in immediate mode input."""
+        self._execute_immediate()
+
+    def _execute_immediate(self):
+        """Execute immediate mode command."""
+        try:
+            command = self.immediate_entry.value.strip()
+            if not command:
+                return
+
+            # Clear the input
+            self.immediate_entry.value = ''
+
+            # Show command in output
+            self._append_output(f'> {command}\n')
+
+            # Execute the command
+            from src.immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
+
+            # Create output capturing IO handler
+            output_io = OutputCapturingIOHandler()
+
+            # Create immediate executor
+            immediate_executor = ImmediateExecutor(
+                self.program,
+                self.runtime if self.runtime else None,
+                output_io
+            )
+
+            # Execute command
+            result = immediate_executor.execute_line(command)
+
+            # Show result
+            if output_io.output_buffer:
+                self._append_output(output_io.output_buffer)
+
+            self._set_status('Immediate command executed')
+
+        except Exception as e:
+            log_web_error("_execute_immediate", e)
+            self._append_output(f'Error: {e}\n')
+            ui.notify(f'Error: {e}', type='negative')
 
     def _set_status(self, message):
         """Set status bar message."""
