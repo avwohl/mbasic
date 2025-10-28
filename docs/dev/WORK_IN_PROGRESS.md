@@ -112,12 +112,15 @@ Over hundreds/thousands of changes focused on TK client and interpreter rewrites
   - Added test_input_statement() test
   - Manual testing required (pytest not available)
 
-**Web UI Redesign (v1.0.194-197 - COMPLETED):**
+**Web UI Redesign (v1.0.194-201 - COMPLETED):**
 - ✅ Redesigned web UI to match TK look and feel
 - ✅ Changed from horizontal split to vertical split (editor top 60%, output bottom 40%)
 - ✅ Removed separate "entry field + program display" design
 - ✅ Added single multi-line editor (like TK)
-- ✅ Added auto-numbering configuration variables (deferred auto-numbering on Enter - complex)
+- ✅ Implemented auto-numbering on Enter key (v1.0.199)
+  - JavaScript-based cursor detection and line number insertion
+  - Calculates next line number from highest existing line
+  - Configurable start and increment
 - ✅ Replaced _add_line/_update_program_display with _save_editor_to_program/_load_program_to_editor
 - ✅ Updated _menu_new to clear single editor
 - ✅ Updated _menu_run to save editor content first before execution
@@ -125,20 +128,37 @@ Over hundreds/thousands of changes focused on TK client and interpreter rewrites
   - Open: NiceGUI upload dialog with .bas/.txt filter
   - Save: Downloads current file
   - Save As: Dialog with filename input, downloads file
+- ✅ Added Recent Files menu with localStorage (v1.0.199)
+  - Tracks last 10 opened files
+  - Stored in browser localStorage
+  - Shows in File > Recent Files submenu
 - ✅ Added immediate mode command input at bottom of output pane
   - Input field for BASIC commands without line numbers
   - Execute button and Enter key support
   - Uses ImmediateExecutor like TK
   - Shows command and output in output pane
-
-**Deferred:**
-- ⏸️ Auto-numbering on Enter key - Complex cursor manipulation in web textarea
-- ⏸️ Recent Files menu - Would need localStorage or server-side storage
-- ⏸️ Advanced features: breakpoints, stepping, variables window, stack window
+- ✅ Added breakpoints support (v1.0.200)
+  - Toggle Breakpoint button in editor
+  - Dialog to set/remove breakpoints by line number
+  - Stored in breakpoints set
+- ✅ Implemented Step/Continue functionality (v1.0.200)
+  - Step: Execute one line at a time
+  - Continue: Resume from breakpoint
+  - Proper state management with paused flag
+- ✅ Added Variables window (v1.0.201)
+  - Run > Show Variables menu item
+  - Dialog with table showing all program variables
+  - Displays name, type, and value
+  - Arrays show element count
+- ✅ Added Execution Stack window (v1.0.201)
+  - Run > Show Stack menu item
+  - Dialog showing GOSUB call stack
+  - Shows stack depth and line numbers
 
 **Next Steps:**
 - ⏸️ Test web UI thoroughly
 - ⏸️ Update Playwright tests for new layout
+- ⏸️ Move to Phase 2b: Update Curses UI
 
 #### Phase 2b: Update Curses UI
 1. ⏸️ Fix editor line number display (embed in text like TK)
