@@ -203,6 +203,30 @@ git push origin v1.0.119
 # - Attach: dist/*.whl and dist/*.tar.gz
 ```
 
+### Step 9: Make Repository Public and Enable GitHub Pages
+
+**After publishing to PyPI, make the repository public:**
+
+```bash
+# 1. Go to repository settings:
+#    https://github.com/avwohl/mbasic/settings
+
+# 2. Scroll to "Danger Zone" section
+
+# 3. Click "Change visibility" → "Make public"
+
+# 4. Enable GitHub Pages:
+#    https://github.com/avwohl/mbasic/settings/pages
+#    - Under "Source", select "GitHub Actions"
+#    - This deploys docs to: https://avwohl.github.io/mbasic
+
+# 5. Verify docs deploy successfully:
+#    - Check workflow: https://github.com/avwohl/mbasic/actions
+#    - Visit site: https://avwohl.github.io/mbasic
+```
+
+**Note:** GitHub Pages requires a public repository. The documentation build workflow is already configured and will automatically deploy once the repository is public and Pages is enabled.
+
 ---
 
 ## Updating for New Release
