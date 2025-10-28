@@ -275,6 +275,9 @@ class NiceGUIBackend(UIBackend):
                     ui.menu_item('Continue', on_click=self._menu_continue)
                     ui.separator()
                     ui.menu_item('List Program', on_click=self._menu_list)
+                    ui.separator()
+                    ui.menu_item('Show Variables', on_click=self._show_variables_window)
+                    ui.menu_item('Show Stack', on_click=self._show_stack_window)
                     ui.menu_item('Clear Output', on_click=self._clear_output)
 
             # Help menu
@@ -692,6 +695,102 @@ class NiceGUIBackend(UIBackend):
         for line_num, line_text in lines:
             self._append_output(line_text)
         self._set_status('Program listed')
+
+    def _show_variables_window(self):
+        """Show Variables window."""
+        try:
+            if not self.runtime:
+                ui.notify('No program running', type='warning')
+                return
+
+            # Create dialog with variables table
+            with ui.dialog() as dialog, ui.card().classes('w-[800px]'):
+                ui.label('Program Variables').classes('text-xl font-bold')
+
+                # Get all variables from runtime
+                variables = {}
+                if hasattr(self.runtime, 'variables'):
+                    variables = self.runtime.variables
+
+                if not variables:
+                    ui.label('No variables defined').classes('text-gray-500 p-4')
+                else:
+                    # Create table
+                    columns = [
+                        {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left'},
+                        {'name': 'type', 'label': 'Type', 'field': 'type', 'align': 'left'},
+                        {'name': 'value', 'label': 'Value', 'field': 'value', 'align': 'left'},
+                    ]
+
+                    rows = []
+                    for name, value in variables.items():
+                        # Determine type
+                        if isinstance(value, str):
+                            var_type = 'String'
+                        elif isinstance(value, float):
+                            var_type = 'Float'
+                        elif isinstance(value, int):
+                            var_type = 'Integer'
+                        elif isinstance(value, list):
+                            var_type = 'Array'
+                        else:
+                            var_type = str(type(value).__name__)
+
+                        # Format value
+                        if isinstance(value, list):
+                            value_str = f'[{len(value)} elements]'
+                        else:
+                            value_str = str(value)
+                            if len(value_str) > 50:
+                                value_str = value_str[:47] + '...'
+
+                        rows.append({
+                            'name': name,
+                            'type': var_type,
+                            'value': value_str
+                        })
+
+                    ui.table(columns=columns, rows=rows, row_key='name').classes('w-full')
+
+                ui.button('Close', on_click=dialog.close).classes('mt-4')
+            dialog.open()
+
+        except Exception as e:
+            log_web_error("_show_variables_window", e)
+            ui.notify(f'Error: {e}', type='negative')
+
+    def _show_stack_window(self):
+        """Show Execution Stack window."""
+        try:
+            if not self.runtime:
+                ui.notify('No program running', type='warning')
+                return
+
+            # Create dialog with stack display
+            with ui.dialog() as dialog, ui.card().classes('w-[600px]'):
+                ui.label('Execution Stack').classes('text-xl font-bold')
+
+                # Get call stack from runtime
+                stack = []
+                if hasattr(self.runtime, 'gosub_stack'):
+                    stack = self.runtime.gosub_stack
+
+                if not stack:
+                    ui.label('Stack is empty').classes('text-gray-500 p-4')
+                else:
+                    # Show stack entries
+                    ui.label(f'{len(stack)} entries').classes('text-sm text-gray-600 mb-2')
+                    for i, entry in enumerate(reversed(stack)):
+                        with ui.row().classes('w-full p-2 bg-gray-100 rounded mb-1'):
+                            ui.label(f'#{i+1}:').classes('font-bold w-12')
+                            ui.label(f'Line {entry}').classes('font-mono')
+
+                ui.button('Close', on_click=dialog.close).classes('mt-4')
+            dialog.open()
+
+        except Exception as e:
+            log_web_error("_show_stack_window", e)
+            ui.notify(f'Error: {e}', type='negative')
 
     def _menu_help(self):
         """Help > Help Topics."""
