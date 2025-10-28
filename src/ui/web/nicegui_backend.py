@@ -215,7 +215,7 @@ class NiceGUIBackend(UIBackend):
                 self.editor = ui.textarea(
                     value='',
                     placeholder='Program Editor'
-                ).style('height: 200px; width: 100%; border: 2px solid blue; user-select: text;').props('outlined dense').mark('editor')
+                ).style('width: 100%; border: 2px solid blue; user-select: text;').props('outlined dense rows=10').mark('editor')
                 self.editor.on('keydown.enter', self._on_enter_key)
 
                 # Output
@@ -223,7 +223,7 @@ class NiceGUIBackend(UIBackend):
                 self.output = ui.textarea(
                     value='MBASIC 5.21 Web IDE\nReady\n',
                     placeholder='Output'
-                ).style('height: 200px; width: 100%; border: 2px solid green; background: white; color: black;').props('readonly outlined dense').mark('output')
+                ).style('width: 100%; border: 2px solid green; background: white; color: black;').props('readonly outlined dense rows=10').mark('output')
 
                 # INPUT row (hidden by default)
                 self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm')
@@ -240,7 +240,7 @@ class NiceGUIBackend(UIBackend):
                     self.immediate_entry = ui.textarea(
                         value='',
                         placeholder='Command'
-                    ).style('height: 60px; width: 100%; border: 2px solid purple;').props('outlined dense').mark('immediate_entry')
+                    ).style('width: 100%; border: 2px solid purple;').props('outlined dense rows=3').mark('immediate_entry')
                     self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
                     ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
