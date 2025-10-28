@@ -22,14 +22,14 @@ test_code = """10 PRINT "Test"
 def test_policy(policy_name):
     print(f"\n=== Testing policy: {policy_name} ===")
 
-    # Parse the code
+    # Parse the code with keyword case policy
     lexer = Lexer(test_code)
     tokens = lexer.tokenize()
-    parser = Parser(tokens)
+    parser = Parser(tokens, keyword_case_policy=policy_name)
     program = parser.parse_program()
 
-    # Serialize with this policy
-    serializer = PositionSerializer(debug=False, keyword_case_policy=policy_name)
+    # Serialize using the parser's keyword case manager
+    serializer = PositionSerializer(debug=False, keyword_case_manager=parser.keyword_case_manager)
 
     # Print each line
     for line_node in program.lines:

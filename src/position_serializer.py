@@ -75,32 +75,20 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
 class PositionSerializer:
     """Serializes AST with position preservation and conflict tracking"""
 
-    def __init__(self, debug=False, keyword_case_policy: Optional[str] = None):
+    def __init__(self, debug=False, keyword_case_manager=None):
         """Initialize serializer.
 
         Args:
             debug: If True, collect and report position conflicts
-            keyword_case_policy: Optional override for keyword case policy (from settings if None)
+            keyword_case_manager: KeywordCaseManager instance (from parser) with keyword case table
         """
         self.debug = debug
         self.conflicts: List[PositionConflict] = []
         self.current_column = 0
         self.current_line = 0
 
-        # Get keyword case policy from settings if not provided
-        if keyword_case_policy is None:
-            try:
-                from src.settings import get_settings_manager
-                settings_mgr = get_settings_manager()
-                self.keyword_case_policy = settings_mgr.get("keywords.case_style", "force_lower")
-            except:
-                # Fallback if settings not available
-                self.keyword_case_policy = "force_lower"
-        else:
-            self.keyword_case_policy = keyword_case_policy
-
-        # Keyword tracker for first_wins policy
-        self.keyword_tracker: Dict[str, str] = {}
+        # Store reference to keyword case manager from parser
+        self.keyword_case_manager = keyword_case_manager
 
     def reset(self):
         """Reset serializer state for new line"""
@@ -108,7 +96,7 @@ class PositionSerializer:
         self.conflicts = []
 
     def emit_keyword(self, keyword: str, expected_column: Optional[int], node_type: str = "Keyword") -> str:
-        """Emit a keyword token with case policy applied.
+        """Emit a keyword token with case from keyword case table.
 
         Args:
             keyword: The keyword to emit (normalized lowercase)
@@ -116,16 +104,14 @@ class PositionSerializer:
             node_type: Type of AST node for debugging
 
         Returns:
-            String with appropriate spacing + keyword text (with case applied)
+            String with appropriate spacing + keyword text (with case from table)
         """
-        # Apply keyword case policy
-        keyword_with_case = apply_keyword_case_policy(keyword, self.keyword_case_policy, self.keyword_tracker)
-
-        # Track for first_wins policy
-        if self.keyword_case_policy == "first_wins":
-            keyword_lower = keyword.lower()
-            if keyword_lower not in self.keyword_tracker:
-                self.keyword_tracker[keyword_lower] = keyword_with_case
+        # Get display case from keyword case manager table
+        if self.keyword_case_manager:
+            keyword_with_case = self.keyword_case_manager.get_display_case(keyword)
+        else:
+            # Fallback if no manager (shouldn't happen)
+            keyword_with_case = keyword.lower()
 
         # Use regular emit_token for positioning
         return self.emit_token(keyword_with_case, expected_column, node_type)
