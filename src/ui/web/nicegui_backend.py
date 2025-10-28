@@ -879,7 +879,10 @@ class NiceGUIBackend(UIBackend):
                 error_msg = '; '.join(errors[:3])
                 if len(errors) > 3:
                     error_msg += f' (and {len(errors)-3} more)'
+
+                # Show in both popup and output
                 ui.notify(error_msg, type='warning')
+                self._append_output(f'\n--- Parse Error ---\n{error_msg}\n')
                 self._set_status(f'Parse errors: {len(errors)}')
                 return False
 
