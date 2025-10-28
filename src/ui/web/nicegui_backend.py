@@ -205,7 +205,7 @@ class NiceGUIBackend(UIBackend):
 
             # Main content area - simple stacked layout (no splitter)
             # The splitter was causing visibility issues, so using simple column layout
-            with ui.column().classes('w-full gap-4 p-4'):
+            with ui.column().classes('w-full gap-2 p-4'):
                 # Editor section
                 ui.label('Program Editor:').classes('text-lg font-bold')
                 self.editor = ui.textarea(
@@ -1008,6 +1008,15 @@ class NiceGUIBackend(UIBackend):
 
         # Update our internal buffer
         self.output_text += text
+
+        # Limit output buffer to last 10,000 characters to prevent infinite growth
+        # Truncate from the beginning if too long
+        MAX_OUTPUT_CHARS = 10000
+        if len(self.output_text) > MAX_OUTPUT_CHARS:
+            # Keep last MAX_OUTPUT_CHARS, add indicator at start
+            self.output_text = "[... output truncated ...]\n" + self.output_text[-MAX_OUTPUT_CHARS:]
+            log_web_error("_append_output", Exception(f"DEBUG: Buffer truncated to {len(self.output_text)} chars"))
+
         log_web_error("_append_output", Exception(f"DEBUG: Buffer now {len(self.output_text)} chars"))
 
         # Update the textarea directly (push-based, not polling)
