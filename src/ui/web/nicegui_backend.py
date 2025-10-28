@@ -172,7 +172,7 @@ class NiceGUIBackend(UIBackend):
                     self.program_display = ui.textarea(
                         value='',
                         placeholder='No program loaded'
-                    ).classes('w-full h-[300px] font-mono').props('readonly').mark('program_display')
+                    ).classes('w-full h-[300px] font-mono').mark('program_display')
 
                 # Right pane - Output
                 with splitter.after:
@@ -267,6 +267,12 @@ class NiceGUIBackend(UIBackend):
         """Run > Run Program - Execute program."""
         if self.running:
             self._set_status('Program already running')
+            return
+
+        # Check if program has lines
+        if not self.program.lines:
+            self._set_status('No program loaded')
+            ui.notify('No program loaded. Add some lines first.', type='warning')
             return
 
         try:
@@ -422,7 +428,7 @@ class NiceGUIBackend(UIBackend):
                 self._set_status(f'Added {added_count} lines, {len(errors)} errors')
                 ui.notify(error_msg, type='warning')
             else:
-                self._set_status(f'Added {added_count} line(s)')
+                self._set_status(f'Added {added_count} line(s) - Total: {len(self.program.lines)}')
 
         except Exception as e:
             ui.notify(f'Error: {e}', type='negative')
