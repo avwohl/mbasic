@@ -153,6 +153,9 @@ class NiceGUIBackend(UIBackend):
         self.exec_io = None
         self.tick_task = None  # Async task for execution
 
+        # Output buffer - using a dict for NiceGUI reactivity
+        self.output_text = {'value': 'MBASIC 5.21 Web IDE\nReady\n'}
+
         # UI elements (created in build_ui())
         self.editor = None
         self.output = None
@@ -221,10 +224,11 @@ class NiceGUIBackend(UIBackend):
                 # Bottom pane - Output (40% of space)
                 with splitter.after:
                     ui.label('Output').classes('text-lg font-bold p-2')
+                    # Bind textarea to reactive dict for automatic updates
                     self.output = ui.textarea(
-                        value='MBASIC 5.21 Web IDE\nReady\n',
                         placeholder='Program output will appear here'
                     ).classes('w-full font-mono').style('height: 250px').props('readonly').mark('output')
+                    self.output.bind_value(self.output_text, 'value')
 
                     # INPUT row (hidden by default, shown when INPUT statement needs input)
                     self.input_row = ui.row().classes('w-full p-2 gap-2')
@@ -988,49 +992,30 @@ class NiceGUIBackend(UIBackend):
 
     def _clear_output(self):
         """Clear output pane."""
-        self.output.value = 'MBASIC 5.21 Web IDE\nReady\n'
+        self.output_text['value'] = 'MBASIC 5.21 Web IDE\nReady\n'
         self._set_status('Output cleared')
 
     def _append_output(self, text):
         """Append text to output pane and auto-scroll to bottom."""
-        import json
         log_web_error("_append_output", Exception(f"DEBUG: Appending {len(text)} chars: {text[:50]}..."))
-        self.output.value += text
-        log_web_error("_append_output", Exception(f"DEBUG: Output value now {len(self.output.value)} chars"))
 
-        # Force update using JavaScript since self.output.update() doesn't work from timer callbacks
-        # Escape the value for JavaScript
-        escaped_value = json.dumps(self.output.value)
-        log_web_error("_append_output", Exception(f"DEBUG: Calling JavaScript to set value, length={len(self.output.value)}"))
+        # Update the reactive dict - this should trigger NiceGUI's binding to update the UI
+        self.output_text['value'] += text
 
-        # Try multiple approaches to update the UI
-        # Approach 1: Direct DOM manipulation with console logging
-        ui.run_javascript(f'''
-            console.log("MBASIC: JavaScript executing, looking for textarea...");
-            const textareas = document.querySelectorAll('textarea');
-            console.log("MBASIC: Found " + textareas.length + " textareas");
-            let found = false;
-            for (let i = 0; i < textareas.length; i++) {{
-                const ta = textareas[i];
-                console.log("MBASIC: Textarea " + i + " - readonly=" + ta.readOnly + ", value length=" + ta.value.length);
-                if (ta.readOnly) {{
-                    console.log("MBASIC: Setting readonly textarea value to length " + {len(self.output.value)});
-                    ta.value = {escaped_value};
-                    ta.scrollTop = ta.scrollHeight;
-                    found = true;
-                    console.log("MBASIC: Updated! New value length=" + ta.value.length);
-                    break;
-                }}
-            }}
-            if (!found) {{
-                console.log("MBASIC: ERROR - Could not find readonly textarea!");
-            }}
+        log_web_error("_append_output", Exception(f"DEBUG: Output text now {len(self.output_text['value'])} chars"))
+
+        # Scroll to bottom using JavaScript
+        ui.run_javascript('''
+            setTimeout(() => {
+                const textareas = document.querySelectorAll('textarea');
+                for (let ta of textareas) {
+                    if (ta.readOnly) {
+                        ta.scrollTop = ta.scrollHeight;
+                        break;
+                    }
+                }
+            }, 50);
         ''')
-
-        # Approach 2: Also try calling update() in case it helps
-        self.output.update()
-
-        log_web_error("_append_output", Exception("DEBUG: JavaScript and update() called"))
 
     def _show_input_row(self, prompt=''):
         """Show the INPUT row with prompt."""
