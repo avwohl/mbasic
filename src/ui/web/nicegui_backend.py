@@ -13,6 +13,7 @@ from ..base import UIBackend
 from src.runtime import Runtime
 from src.interpreter import Interpreter
 from src.iohandler.base import IOHandler
+from src.version import VERSION
 
 
 def log_web_error(context: str, exception: Exception):
@@ -1144,6 +1145,12 @@ class NiceGUIBackend(UIBackend):
 
         This builds the UI and starts the NiceGUI server.
         """
+        # Log version to debug output
+        sys.stderr.write(f"\n{'='*70}\n")
+        sys.stderr.write(f"MBASIC Web UI Starting - Version {VERSION}\n")
+        sys.stderr.write(f"{'='*70}\n\n")
+        sys.stderr.flush()
+
         self.build_ui()
         ui.run(
             title='MBASIC 5.21 - Web IDE',
