@@ -54,10 +54,15 @@ class Runtime:
             self.line_table_dict = None
 
         # Variable storage (PRIVATE - use get_variable/set_variable methods)
-        # Each variable is stored as: name_with_suffix -> {'value': val, 'last_read': {...}, 'last_write': {...}}
+        # Each variable is stored as: name_with_suffix -> {'value': val, 'last_read': {...}, 'last_write': {...}, 'original_case': str, 'case_variants': [...]}
         # Note: line -1 in last_write indicates debugger/prompt/internal set (not from program execution)
         self._variables = {}
         self._arrays = {}             # name_with_suffix -> {'dims': [...], 'data': [...]}
+
+        # Case tracking for conflict detection (settings.variables.case_conflict)
+        # Maps normalized name (lowercase) to list of all case variants seen: {'targetangle': [('TargetAngle', line, col), ('targetangle', line, col)]}
+        self._variable_case_variants = {}
+
         self.common_vars = []         # List of variable names declared in COMMON (order matters!)
         self.array_base = 0           # Array index base (0 or 1, set by OPTION BASE)
         self.option_base_executed = False  # Track if OPTION BASE has been executed (can only execute once)
@@ -216,7 +221,103 @@ class Runtime:
         # No DEF type map or not found - default to single precision
         return (name + '!', '!')
 
-    def get_variable(self, name, type_suffix=None, def_type_map=None, token=None):
+    def _check_case_conflict(self, name, original_case, token, settings_manager=None):
+        """
+        Check for variable name case conflicts and handle according to settings.
+
+        Args:
+            name: Normalized lowercase name (e.g., 'targetangle')
+            original_case: Original case from source (e.g., 'TargetAngle')
+            token: Token with line and position info
+            settings_manager: Optional SettingsManager for getting case_conflict setting
+
+        Returns:
+            str: The canonical case to use for this variable (might differ from original_case)
+
+        Raises:
+            RuntimeError: If case_conflict setting is 'error' and conflict detected
+        """
+        # Get the case conflict setting
+        case_conflict_policy = "first_wins"  # Default
+        if settings_manager:
+            case_conflict_policy = settings_manager.get("variables.case_conflict", "first_wins")
+
+        # Track this case variant
+        if name not in self._variable_case_variants:
+            self._variable_case_variants[name] = []
+
+        variants = self._variable_case_variants[name]
+
+        # Check if this exact case already exists
+        for existing_case, existing_line, existing_col in variants:
+            if existing_case == original_case:
+                # Same case - no conflict
+                return original_case
+
+        # New case variant detected
+        line_num = getattr(token, 'line', None)
+        col_num = getattr(token, 'column', None)
+
+        # If this is the first variant, just store it
+        if not variants:
+            variants.append((original_case, line_num, col_num))
+            return original_case
+
+        # Conflict detected! Handle according to policy
+        if case_conflict_policy == "error":
+            # Raise error showing all variants
+            first_case, first_line, first_col = variants[0]
+            error_msg = f"Variable name case conflict: '{first_case}' at line {first_line}"
+            error_msg += f" vs '{original_case}' at line {line_num}"
+            raise RuntimeError(error_msg)
+
+        elif case_conflict_policy == "first_wins":
+            # Use the first case seen (silent)
+            first_case, _, _ = variants[0]
+            # Still track this variant for inspection/debugging
+            variants.append((original_case, line_num, col_num))
+            return first_case
+
+        elif case_conflict_policy == "prefer_upper":
+            # Choose version with most uppercase letters
+            all_cases = variants + [(original_case, line_num, col_num)]
+            best_case = max(all_cases, key=lambda x: sum(1 for c in x[0] if c.isupper()))
+            if (original_case, line_num, col_num) not in variants:
+                variants.append((original_case, line_num, col_num))
+            return best_case[0]
+
+        elif case_conflict_policy == "prefer_lower":
+            # Choose version with most lowercase letters
+            all_cases = variants + [(original_case, line_num, col_num)]
+            best_case = max(all_cases, key=lambda x: sum(1 for c in x[0] if c.islower()))
+            if (original_case, line_num, col_num) not in variants:
+                variants.append((original_case, line_num, col_num))
+            return best_case[0]
+
+        elif case_conflict_policy == "prefer_mixed":
+            # Prefer mixed case (camelCase/PascalCase)
+            # Mixed case = has both upper and lower
+            all_cases = variants + [(original_case, line_num, col_num)]
+
+            def mixed_score(case_str):
+                has_upper = any(c.isupper() for c in case_str)
+                has_lower = any(c.islower() for c in case_str)
+                if has_upper and has_lower:
+                    return 1  # Mixed case
+                return 0  # All upper or all lower
+
+            best_case = max(all_cases, key=lambda x: mixed_score(x[0]))
+            if (original_case, line_num, col_num) not in variants:
+                variants.append((original_case, line_num, col_num))
+            return best_case[0]
+
+        else:
+            # Unknown policy - default to first_wins
+            first_case, _, _ = variants[0]
+            variants.append((original_case, line_num, col_num))
+            return first_case
+
+    def get_variable(self, name, type_suffix=None, def_type_map=None, token=None, original_case=None, settings_manager=None):
         """
         Get variable value for program execution, tracking read access.
 
@@ -241,6 +342,11 @@ class Runtime:
         # Resolve full variable name
         full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
 
+        # Check for case conflicts and get canonical case
+        if original_case is None:
+            original_case = name  # Fallback if not provided
+        canonical_case = self._check_case_conflict(name, original_case, token, settings_manager)
+
         # Initialize variable entry if needed
         if full_name not in self._variables:
             # Create with default value
@@ -248,8 +354,12 @@ class Runtime:
             self._variables[full_name] = {
                 'value': default_value,
                 'last_read': None,
-                'last_write': None
+                'last_write': None,
+                'original_case': canonical_case  # Store canonical case
             }
+        else:
+            # Always update original_case to canonical (for prefer_upper/prefer_lower/prefer_mixed policies)
+            self._variables[full_name]['original_case'] = canonical_case
 
         # Track read access
         self._variables[full_name]['last_read'] = {
@@ -261,7 +371,7 @@ class Runtime:
         # Return value
         return self._variables[full_name]['value']
 
-    def set_variable(self, name, type_suffix, value, def_type_map=None, token=None, debugger_set=False, limits=None):
+    def set_variable(self, name, type_suffix, value, def_type_map=None, token=None, debugger_set=False, limits=None, original_case=None, settings_manager=None):
         """
         Set variable value for program execution, tracking write access.
 
@@ -276,6 +386,8 @@ class Runtime:
             token: REQUIRED (unless debugger_set=True) - Token with line and position
             debugger_set: True if this set is from debugger, not program execution
             limits: Optional ResourceLimits object for tracking
+            original_case: Original case from source (for case preservation)
+            settings_manager: Optional SettingsManager for case conflict handling
 
         Raises:
             ValueError: If token is None and debugger_set is False
@@ -285,6 +397,14 @@ class Runtime:
 
         # Resolve full variable name
         full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
+
+        # Check for case conflicts and get canonical case (skip for debugger sets)
+        if not debugger_set and token is not None:
+            if original_case is None:
+                original_case = name  # Fallback if not provided
+            canonical_case = self._check_case_conflict(name, original_case, token, settings_manager)
+        else:
+            canonical_case = original_case or name
 
         # Enforce 255 byte string limit (MBASIC 5.21 compatibility)
         if resolved_suffix == '$' and isinstance(value, str) and len(value) > 255:
@@ -305,8 +425,12 @@ class Runtime:
             self._variables[full_name] = {
                 'value': None,
                 'last_read': None,
-                'last_write': None
+                'last_write': None,
+                'original_case': canonical_case  # Store canonical case
             }
+        else:
+            # Always update original_case to canonical (for prefer_upper/prefer_lower/prefer_mixed policies)
+            self._variables[full_name]['original_case'] = canonical_case
 
         # Set value
         self._variables[full_name]['value'] = value

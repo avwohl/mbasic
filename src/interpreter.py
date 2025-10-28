@@ -74,7 +74,7 @@ class InterpreterState:
 class Interpreter:
     """Execute MBASIC AST with tick-based execution for UI integration"""
 
-    def __init__(self, runtime, io_handler=None, breakpoint_callback=None, filesystem_provider=None, limits=None):
+    def __init__(self, runtime, io_handler=None, breakpoint_callback=None, filesystem_provider=None, limits=None, settings_manager=None):
         self.runtime = runtime
         self.builtins = BuiltinFunctions(runtime)
 
@@ -95,6 +95,12 @@ class Interpreter:
             from resource_limits import create_local_limits
             limits = create_local_limits()
         self.limits = limits
+
+        # Settings manager (defaults to global settings if not provided)
+        if settings_manager is None:
+            from src.settings import get_settings_manager
+            settings_manager = get_settings_manager()
+        self.settings_manager = settings_manager
 
         # Breakpoint callback - called when a breakpoint is hit
         # Callback should take (line_number, statement_index) and return True to continue, False to stop
@@ -1375,7 +1381,15 @@ class Interpreter:
 
         # Set loop variable to start
         var_name = stmt.variable.name + (stmt.variable.type_suffix or "")
-        self.runtime.set_variable(stmt.variable.name, stmt.variable.type_suffix, start, token=self._make_token_info(stmt.variable), limits=self.limits)
+        self.runtime.set_variable(
+            stmt.variable.name,
+            stmt.variable.type_suffix,
+            start,
+            token=self._make_token_info(stmt.variable),
+            limits=self.limits,
+            original_case=getattr(stmt.variable, 'original_case', stmt.variable.name),
+            settings_manager=self.settings_manager
+        )
 
         # Check resource limits
         self.limits.push_for_loop(var_name)
@@ -1687,7 +1701,15 @@ class Interpreter:
                 subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
                 self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value, token=self._make_token_info(var_node))
             else:
-                self.runtime.set_variable(var_node.name, var_node.type_suffix, value, token=self._make_token_info(var_node), limits=self.limits)
+                self.runtime.set_variable(
+                    var_node.name,
+                    var_node.type_suffix,
+                    value,
+                    token=self._make_token_info(var_node),
+                    limits=self.limits,
+                    original_case=getattr(var_node, 'original_case', var_node.name),
+                    settings_manager=self.settings_manager
+                )
 
     def execute_restore(self, stmt):
         """Execute RESTORE statement"""
@@ -1885,7 +1907,15 @@ class Interpreter:
                 subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
                 self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value, token=self._make_token_info(var_node))
             else:
-                self.runtime.set_variable(var_node.name, var_node.type_suffix, value, token=self._make_token_info(var_node), limits=self.limits)
+                self.runtime.set_variable(
+                    var_node.name,
+                    var_node.type_suffix,
+                    value,
+                    token=self._make_token_info(var_node),
+                    limits=self.limits,
+                    original_case=getattr(var_node, 'original_case', var_node.name),
+                    settings_manager=self.settings_manager
+                )
 
         # Clear input state after successful completion
         self.state.input_variables = []
@@ -1999,7 +2029,15 @@ class Interpreter:
             subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
             self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, line, token=self._make_token_info(var_node))
         else:
-            self.runtime.set_variable(var_node.name, var_node.type_suffix, line, token=self._make_token_info(var_node), limits=self.limits)
+            self.runtime.set_variable(
+                var_node.name,
+                var_node.type_suffix,
+                line,
+                token=self._make_token_info(var_node),
+                limits=self.limits,
+                original_case=getattr(var_node, 'original_case', var_node.name),
+                settings_manager=self.settings_manager
+            )
 
         # Clear input state after successful completion
         self.state.input_variables = []
@@ -2817,7 +2855,13 @@ class Interpreter:
             return self.runtime.get_array_element(expr.name, expr.type_suffix, subscripts, token=self._make_token_info(expr))
         else:
             # Simple variable
-            return self.runtime.get_variable(expr.name, expr.type_suffix, token=self._make_token_info(expr))
+            return self.runtime.get_variable(
+                expr.name,
+                expr.type_suffix,
+                token=self._make_token_info(expr),
+                original_case=getattr(expr, 'original_case', expr.name),
+                settings_manager=self.settings_manager
+            )
 
     def evaluate_binaryop(self, expr):
         """Evaluate binary operation"""
