@@ -129,6 +129,36 @@ With prefer_upper: Would use 'TARGETANGLE' if used later
         scope=SettingScope.GLOBAL,
     ),
 
+    # Keyword settings
+    "keywords.case_style": SettingDefinition(
+        key="keywords.case_style",
+        type=SettingType.ENUM,
+        default="force_lower",
+        choices=["force_lower", "force_upper", "first_wins", "error", "preserve"],
+        description="How to handle keyword case in source code",
+        help_text="""Controls how keywords are displayed and validated.
+
+- force_lower: Convert all keywords to lowercase (default, MBASIC 5.21 style)
+- force_upper: Convert all keywords to UPPERCASE (classic BASIC style)
+- first_wins: First occurrence sets case for that keyword throughout program
+- error: Flag case inconsistencies as errors
+- preserve: Keep each keyword exactly as typed (modern style)
+
+Example with force_upper:
+  10 print "hello"  -> 10 PRINT "hello"
+  20 Print "world"  -> 20 PRINT "world"
+
+Example with first_wins:
+  10 Print "hello"  -> 10 Print "hello"
+  20 PRINT "world"  -> 20 Print "world"  (uses first case)
+
+Example with error:
+  10 Print "hello"
+  20 PRINT "world"  -> ERROR: Keyword case conflict!
+""",
+        scope=SettingScope.PROJECT,
+    ),
+
     # Editor settings
     "editor.auto_number": SettingDefinition(
         key="editor.auto_number",

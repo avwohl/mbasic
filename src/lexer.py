@@ -220,7 +220,9 @@ class Lexer:
         # Check if it's a keyword (case-insensitive, normalize to lowercase)
         ident_lower = ident.lower()
         if ident_lower in KEYWORDS:
-            return Token(KEYWORDS[ident_lower], ident_lower, start_line, start_column)
+            token = Token(KEYWORDS[ident_lower], ident_lower, start_line, start_column)
+            token.original_case_keyword = ident  # Preserve original keyword case
+            return token
 
         # Special handling for file I/O statements with # (file number follows)
         # In MBASIC, "PRINT#1,A" should be tokenized as PRINT + # + 1
@@ -243,7 +245,9 @@ class Lexer:
             self.column -= 1
             # Return the keyword token without the #
             keyword = ident_lower[:-1]  # Remove the #
-            return Token(FILE_IO_KEYWORDS[ident_lower], keyword, start_line, start_column)
+            token = Token(FILE_IO_KEYWORDS[ident_lower], keyword, start_line, start_column)
+            token.original_case_keyword = ident[:-1]  # Preserve original case without the #
+            return token
 
         # Check if identifier starts with a statement keyword (MBASIC compatibility)
         # In old BASIC, keywords could run together: "NEXTI" = "NEXT I", "FORI" = "FOR I"
@@ -270,7 +274,9 @@ class Lexer:
                         self.column -= 1
 
                     # Return the keyword token
-                    return Token(KEYWORDS[keyword], keyword, start_line, start_column)
+                    token = Token(KEYWORDS[keyword], keyword, start_line, start_column)
+                    token.original_case_keyword = keyword_part  # Preserve original case of keyword part
+                    return token
 
         # Otherwise it's an identifier
         # Normalize to lowercase (BASIC is case-insensitive) but preserve original case
