@@ -250,8 +250,9 @@ class NiceGUIBackend(UIBackend):
                     ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
                 # Status bar at the very bottom
-                with ui.row().classes('w-full bg-gray-200 q-ma-none q-pa-xs'):
+                with ui.row().classes('w-full bg-gray-200 q-ma-none q-pa-xs').style('justify-content: space-between;'):
                     self.status_label = ui.label('Ready').mark('status')
+                    ui.label(f'v{VERSION}').classes('text-gray-600')
 
     def _create_menu(self):
         """Create menu bar."""
