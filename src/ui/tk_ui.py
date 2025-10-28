@@ -1463,7 +1463,9 @@ class TkBackend(UIBackend):
             filter_lower = self.variables_filter_text.lower()
             filtered_variables = []
             for var in sorted_variables:
-                name = var['name'] + var['type_suffix']
+                # Use original_case for filter matching (respects case conflict policy)
+                display_name = var.get('original_case', var['name'])
+                name = display_name + var['type_suffix']
                 # Check if filter matches name, value (as string), or type
                 if (filter_lower in name.lower() or
                     filter_lower in str(var['value']).lower() or
@@ -1479,7 +1481,9 @@ class TkBackend(UIBackend):
 
         # Add to tree
         for var in sorted_variables:
-            name = var['name'] + var['type_suffix']
+            # Use original_case for display if available (respects case conflict policy)
+            display_name = var.get('original_case', var['name'])
+            name = display_name + var['type_suffix']
             type_name = type_map.get(var['type_suffix'], 'Unknown')
 
             if var['is_array']:

@@ -51,17 +51,22 @@ Implemented comprehensive settings system with CLI commands and variable case co
 - `src/interpreter.py` - Fixed io.write() → io.output()
 - `src/parser.py` - Fixed type hints
 
-**v1.0.106 - Variable Case Conflict Integration:**
+**v1.0.106-108 - Variable Case Conflict Integration:**
 - `src/runtime.py` - Added `_variable_case_variants` tracking dictionary
 - `src/runtime.py` - Added `_check_case_conflict()` method with 5 policy implementations
 - `src/runtime.py` - Updated `get_variable()` to track original_case and detect conflicts
 - `src/runtime.py` - Updated `set_variable()` to track original_case and detect conflicts
 - `src/runtime.py` - Store `original_case` in variable metadata for all variables
+- `src/runtime.py` - Updated `get_all_variables()` to include `original_case` in returned dict
 - `src/interpreter.py` - Added `settings_manager` parameter to Interpreter.__init__()
 - `src/interpreter.py` - Updated all `get_variable()` calls to pass original_case and settings_manager
 - `src/interpreter.py` - Updated all `set_variable()` calls to pass original_case and settings_manager
-- `test_case_conflict_unit.py` - NEW: Unit tests for case conflict policies
-- All 3 test cases passing: first_wins, prefer_upper, error
+- `src/interpreter.py` - Fixed `execute_let()` to pass original_case and settings_manager (critical fix)
+- `src/ui/tk_ui.py` - Updated `_update_variables()` to display canonical case from `original_case`
+- `src/ui/tk_ui.py` - Updated variable filter to use `original_case` for matching
+- `test_case_conflict_unit.py` - NEW: Unit tests for case conflict policies (3/3 passing)
+- `test_case_conflict_integration.py` - NEW: Integration tests with full AST (2/2 passing)
+- All 5 test cases passing: first_wins, prefer_upper, prefer_lower, error, variable window display
 
 **Case Conflict Policies Implemented:**
 1. `first_wins` (default) - First occurrence sets case, silent

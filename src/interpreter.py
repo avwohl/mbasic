@@ -1061,7 +1061,9 @@ class Interpreter:
                 stmt.variable.type_suffix,
                 value,
                 token=self._make_token_info(stmt.variable),
-                limits=self.limits
+                limits=self.limits,
+                original_case=getattr(stmt.variable, 'original_case', stmt.variable.name),
+                settings_manager=self.settings_manager
             )
 
     def execute_swap(self, stmt):

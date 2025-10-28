@@ -1147,6 +1147,7 @@ class Runtime:
                   - 'value': Current value (scalars only)
                   - 'dimensions': List of dimension sizes (arrays only)
                   - 'base': Array base 0 or 1 (arrays only)
+                  - 'original_case': Canonical case for display (e.g., 'TargetAngle', 'Counter')
                   - 'last_read': {'line': int, 'position': int, 'timestamp': float} or None
                   - 'last_write': {'line': int, 'position': int, 'timestamp': float} or None
 
@@ -1187,7 +1188,8 @@ class Runtime:
                 'is_array': False,
                 'value': var_entry['value'],
                 'last_read': var_entry['last_read'],
-                'last_write': var_entry['last_write']
+                'last_write': var_entry['last_write'],
+                'original_case': var_entry.get('original_case', base_name)  # Include canonical case for display
             }
 
             result.append(var_info)
