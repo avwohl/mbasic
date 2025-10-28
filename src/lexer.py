@@ -4,6 +4,7 @@ Based on BASIC-80 Reference Manual Version 5.21
 """
 from typing import List, Optional
 from tokens import Token, TokenType, KEYWORDS
+from keyword_case_manager import KeywordCaseManager
 
 
 class LexerError(Exception):
@@ -17,12 +18,15 @@ class LexerError(Exception):
 class Lexer:
     """Tokenizes MBASIC 5.21 source code"""
 
-    def __init__(self, source: str):
+    def __init__(self, source: str, keyword_case_manager: Optional[KeywordCaseManager] = None):
         self.source = source
         self.pos = 0
         self.line = 1
         self.column = 1
         self.tokens: List[Token] = []
+
+        # Keyword case manager - builds table during tokenization
+        self.keyword_case_manager = keyword_case_manager or KeywordCaseManager(policy="force_lower")
 
     def current_char(self) -> Optional[str]:
         """Return the current character or None if at end"""
@@ -222,6 +226,8 @@ class Lexer:
         if ident_lower in KEYWORDS:
             token = Token(KEYWORDS[ident_lower], ident_lower, start_line, start_column)
             token.original_case_keyword = ident  # Preserve original keyword case
+            # Register keyword in case table during lexing
+            self.keyword_case_manager.register_keyword(ident_lower, ident, start_line, start_column)
             return token
 
         # Special handling for file I/O statements with # (file number follows)
@@ -247,6 +253,8 @@ class Lexer:
             keyword = ident_lower[:-1]  # Remove the #
             token = Token(FILE_IO_KEYWORDS[ident_lower], keyword, start_line, start_column)
             token.original_case_keyword = ident[:-1]  # Preserve original case without the #
+            # Register keyword in case table
+            self.keyword_case_manager.register_keyword(keyword, ident[:-1], start_line, start_column)
             return token
 
         # Check if identifier starts with a statement keyword (MBASIC compatibility)
@@ -276,6 +284,8 @@ class Lexer:
                     # Return the keyword token
                     token = Token(KEYWORDS[keyword], keyword, start_line, start_column)
                     token.original_case_keyword = keyword_part  # Preserve original case of keyword part
+                    # Register keyword in case table
+                    self.keyword_case_manager.register_keyword(keyword, keyword_part, start_line, start_column)
                     return token
 
         # Otherwise it's an identifier

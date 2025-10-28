@@ -37,7 +37,7 @@ class Parser:
     2. parse_program() - Parse program with global type information
     """
 
-    def __init__(self, tokens: List[Token], def_type_map: Dict[str, str] = None, source: str = "", keyword_case_policy: str = "force_lower"):
+    def __init__(self, tokens: List[Token], def_type_map: Dict[str, str] = None, source: str = "", keyword_case_manager: Optional[KeywordCaseManager] = None):
         self.tokens = tokens
         self.position = 0
         self.source = source  # Original source code for statement highlighting
@@ -58,25 +58,11 @@ class Parser:
         # Symbol table - maps variable names to their types
         self.symbol_table: Dict[str, str] = {}
 
-        # Keyword case manager - single source of truth for keyword display case
-        self.keyword_case_manager = KeywordCaseManager(policy=keyword_case_policy)
+        # Keyword case manager - passed from lexer (already populated during tokenization)
+        self.keyword_case_manager = keyword_case_manager or KeywordCaseManager(policy="force_lower")
 
         # Line number to position mapping for GOTO/GOSUB
         self.line_map: Dict[int, int] = {}
-
-    def register_keyword(self, token: Token):
-        """Register a keyword token with the case manager.
-
-        Args:
-            token: Token containing keyword with original_case_keyword
-        """
-        if hasattr(token, 'original_case_keyword') and token.original_case_keyword:
-            self.keyword_case_manager.register_keyword(
-                token.value,  # normalized (lowercase)
-                token.original_case_keyword,  # original case
-                token.line,
-                token.column
-            )
 
         # User-defined functions (DEF FN)
         self.functions: Dict[str, DefFnStatementNode] = {}
@@ -1172,7 +1158,6 @@ class Parser:
             PRINT #filenum, USING format$; expr1 - Formatted print to file
         """
         token = self.advance()
-        self.register_keyword(token)  # Register PRINT keyword case
 
         # Check for file number: PRINT #n, ...
         file_number = None
@@ -1988,7 +1973,6 @@ class Parser:
         - IF condition GOTO line_number
         """
         token = self.advance()
-        self.register_keyword(token)  # Register IF keyword case
 
         # Parse condition
         condition = self.parse_expression()
@@ -2001,7 +1985,6 @@ class Parser:
 
         if self.match(TokenType.THEN):
             then_token = self.advance()
-            self.register_keyword(then_token)  # Register THEN keyword case
 
             # Check if THEN is followed by line number
             if self.match(TokenType.LINE_NUMBER, TokenType.NUMBER):
@@ -2139,7 +2122,6 @@ class Parser:
         which we'll try to handle gracefully
         """
         token = self.advance()
-        self.register_keyword(token)  # Register FOR keyword case
 
         # Check if we have a proper variable or just a number (malformed)
         var_token = self.current()
@@ -2199,7 +2181,6 @@ class Parser:
 
         # Expect TO
         to_token = self.expect(TokenType.TO)
-        self.register_keyword(to_token)  # Register TO keyword case
 
         # Parse end expression
         end_expr = self.parse_expression()
@@ -2208,7 +2189,6 @@ class Parser:
         step_expr = None
         if self.match(TokenType.STEP):
             step_token = self.advance()
-            self.register_keyword(step_token)  # Register STEP keyword case
             step_expr = self.parse_expression()
 
         return ForStatementNode(
