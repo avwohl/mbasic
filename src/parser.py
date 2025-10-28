@@ -864,13 +864,17 @@ class Parser:
     def parse_variable_or_function(self) -> ExpressionNode:
         """Parse variable reference or function call"""
         token = self.advance()
-        name = token.value
+        name = token.value  # Normalized lowercase name
+        original_case = getattr(token, 'original_case', name)  # Original case from lexer
 
         # Extract type suffix and strip it from name
         type_suffix = self.get_type_suffix(name)
         explicit_type_suffix = False
         if type_suffix:
             name = name[:-1]  # Remove the suffix character from the name
+            # Also strip from original case
+            if original_case and len(original_case) > 0:
+                original_case = original_case[:-1]
             explicit_type_suffix = True  # Suffix was in the original source
         else:
             # No explicit suffix - check DEF type map
@@ -919,6 +923,7 @@ class Parser:
                 # It's an array with subscripts
                 return VariableNode(
                     name=name,
+                    original_case=original_case,
                     type_suffix=type_suffix,
                     subscripts=args,
                     explicit_type_suffix=explicit_type_suffix,
@@ -940,6 +945,7 @@ class Parser:
                 # Simple variable
                 return VariableNode(
                     name=name,
+                    original_case=original_case,
                     type_suffix=type_suffix,
                     subscripts=None,
                     explicit_type_suffix=explicit_type_suffix,

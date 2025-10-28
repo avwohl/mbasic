@@ -206,11 +206,14 @@ class TokenType(Enum):
 class Token:
     """Represents a single token in MBASIC source code"""
     type: TokenType
-    value: Any
+    value: Any  # Normalized value (lowercase for identifiers)
     line: int
     column: int
+    original_case: Any = None  # Original case for identifiers (before lowercasing)
 
     def __repr__(self):
+        if self.original_case and self.original_case != self.value:
+            return f"Token({self.type.name}, {self.value!r} [{self.original_case!r}], {self.line}:{self.column})"
         return f"Token({self.type.name}, {self.value!r}, {self.line}:{self.column})"
 
 

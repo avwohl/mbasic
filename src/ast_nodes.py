@@ -904,9 +904,10 @@ class StringNode:
 @dataclass
 class VariableNode:
     """Variable reference"""
-    name: str
-    type_suffix: Optional[str]  # $, %, !, #
-    subscripts: Optional[List['ExpressionNode']]  # For array access
+    name: str  # Normalized lowercase name for lookups
+    type_suffix: Optional[str] = None  # $, %, !, #
+    subscripts: Optional[List['ExpressionNode']] = None  # For array access
+    original_case: Optional[str] = None  # Original case as typed by user (for display)
     explicit_type_suffix: bool = False  # True if type_suffix was in original source, False if inferred from DEF
     line_num: int = 0
     column: int = 0

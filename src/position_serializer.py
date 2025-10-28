@@ -270,7 +270,8 @@ class PositionSerializer:
             return self.emit_token(f'"{expr.value}"', expr.column, "String")
 
         elif expr_type == 'VariableNode':
-            text = expr.name
+            # Use original case if available, otherwise fall back to normalized name
+            text = getattr(expr, 'original_case', expr.name) or expr.name
             # Only add type suffix if explicit
             if expr.type_suffix and getattr(expr, 'explicit_type_suffix', False):
                 text += expr.type_suffix

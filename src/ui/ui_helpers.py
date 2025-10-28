@@ -1162,7 +1162,8 @@ def serialize_variable(var):
         >>> serialize_variable(var_node)
         'x$'
     """
-    text = var.name
+    # Use original case if available, otherwise fall back to normalized name
+    text = getattr(var, 'original_case', var.name) or var.name
     # Only add type suffix if it was explicit in the original source
     # Don't add suffixes that were inferred from DEF statements
     if var.type_suffix and getattr(var, 'explicit_type_suffix', False):
