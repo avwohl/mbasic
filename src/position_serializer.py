@@ -192,14 +192,21 @@ class PositionSerializer:
         result += self.serialize_expression(stmt.condition)
         result += self.emit_token("THEN", None, "ThenKeyword")
 
+        # Direct THEN line number (e.g., IF X>5 THEN 100)
+        if stmt.then_line_number is not None:
+            result += self.emit_token(str(stmt.then_line_number), None, "LineNumber")
         # THEN statements
-        for i, then_stmt in enumerate(stmt.then_statements):
-            if i > 0:
-                result += self.emit_token(":", None, "StatementSep")
-            result += self.serialize_statement(then_stmt)
+        elif stmt.then_statements:
+            for i, then_stmt in enumerate(stmt.then_statements):
+                if i > 0:
+                    result += self.emit_token(":", None, "StatementSep")
+                result += self.serialize_statement(then_stmt)
 
-        # ELSE statements if present
-        if stmt.else_statements:
+        # ELSE statements or line number
+        if stmt.else_line_number is not None:
+            result += self.emit_token("ELSE", None, "ElseKeyword")
+            result += self.emit_token(str(stmt.else_line_number), None, "LineNumber")
+        elif stmt.else_statements:
             result += self.emit_token("ELSE", None, "ElseKeyword")
             for i, else_stmt in enumerate(stmt.else_statements):
                 if i > 0:
@@ -211,13 +218,13 @@ class PositionSerializer:
     def serialize_goto_statement(self, stmt: ast_nodes.GotoStatementNode) -> str:
         """Serialize GOTO statement"""
         result = self.emit_token("GOTO", stmt.column, "GotoKeyword")
-        result += self.emit_token(str(stmt.target_line), None, "LineNumber")
+        result += self.emit_token(str(stmt.line_number), None, "LineNumber")
         return result
 
     def serialize_gosub_statement(self, stmt: ast_nodes.GosubStatementNode) -> str:
         """Serialize GOSUB statement"""
         result = self.emit_token("GOSUB", stmt.column, "GosubKeyword")
-        result += self.emit_token(str(stmt.target_line), None, "LineNumber")
+        result += self.emit_token(str(stmt.line_number), None, "LineNumber")
         return result
 
     def serialize_for_statement(self, stmt: ast_nodes.ForStatementNode) -> str:
@@ -350,3 +357,166 @@ def serialize_line_with_positions(line_node: ast_nodes.LineNode, debug=False) ->
     """
     serializer = PositionSerializer(debug=debug)
     return serializer.serialize_line(line_node)
+
+
+def renumber_with_spacing_preservation(program_lines: dict, start: int, step: int, debug=False):
+    """Renumber program lines while preserving spacing.
+
+    This is the fancy implementation that adjusts token positions after renumbering
+    to preserve the original spacing as much as possible.
+
+    Args:
+        program_lines: Dict of line_number -> LineNode
+        start: New starting line number
+        step: Increment between lines
+        debug: If True, print debug information
+
+    Returns:
+        Dict of new_line_number -> LineNode (with updated source_text)
+    """
+    # Build mapping of old -> new line numbers
+    old_line_nums = sorted(program_lines.keys())
+    line_num_map = {}
+    new_num = start
+
+    for old_num in old_line_nums:
+        line_num_map[old_num] = new_num
+        new_num += step
+
+    # Process each line
+    new_program_lines = {}
+
+    for old_num in old_line_nums:
+        line_node = program_lines[old_num]
+        new_num = line_num_map[old_num]
+
+        # Regenerate source_text from AST with new line numbers
+        # This is simpler and more reliable than trying to adjust token positions
+
+        # Method: Update line references first, then serialize with new line number
+
+        # Update line number in the node
+        line_node.line_number = new_num
+
+        # Update line number references in all statements BEFORE serializing
+        _update_line_refs_in_node(line_node, line_num_map)
+
+        # Clear source_text to force AST serialization
+        line_node.source_text = ""  # Force regeneration from AST
+
+        # Now serialize - will use fallback since source_text is empty
+        serializer = PositionSerializer(debug=debug)
+        new_source_text, conflicts = serializer.serialize_line(line_node)
+
+        # Update the LineNode with new source text
+        line_node.source_text = new_source_text
+
+        # Store in new program
+        new_program_lines[new_num] = line_node
+
+        if debug and conflicts:
+            print(f"Line {new_num}: {len(conflicts)} position conflicts during renum")
+
+    return new_program_lines
+
+
+def _update_line_refs_in_node(line_node, line_num_map):
+    """Update all line number references in a LineNode's statements.
+
+    Args:
+        line_node: LineNode to update
+        line_num_map: Dict mapping old line numbers to new ones
+    """
+    for stmt in line_node.statements:
+        _update_line_refs_in_statement(stmt, line_num_map)
+
+
+def _update_line_refs_in_statement(stmt, line_num_map):
+    """Recursively update line number references in a statement.
+
+    Args:
+        stmt: Statement node to update
+        line_num_map: Dict mapping old line numbers to new ones
+    """
+    stmt_type = type(stmt).__name__
+
+    if stmt_type == 'GotoStatementNode':
+        if stmt.line_number in line_num_map:
+            stmt.line_number = line_num_map[stmt.line_number]
+
+    elif stmt_type == 'GosubStatementNode':
+        if stmt.line_number in line_num_map:
+            stmt.line_number = line_num_map[stmt.line_number]
+
+    elif stmt_type == 'OnGotoStatementNode':
+        stmt.line_numbers = [line_num_map.get(ln, ln) for ln in stmt.line_numbers]
+
+    elif stmt_type == 'OnGosubStatementNode':
+        stmt.line_numbers = [line_num_map.get(ln, ln) for ln in stmt.line_numbers]
+
+    elif stmt_type == 'OnErrorStatementNode':
+        if stmt.line_number in line_num_map:
+            stmt.line_number = line_num_map[stmt.line_number]
+
+    elif stmt_type == 'RestoreStatementNode':
+        if stmt.line_number and stmt.line_number in line_num_map:
+            stmt.line_number = line_num_map[stmt.line_number]
+
+    elif stmt_type == 'ResumeStatementNode':
+        if stmt.line_number and stmt.line_number in line_num_map:
+            stmt.line_number = line_num_map[stmt.line_number]
+
+    elif stmt_type == 'IfStatementNode':
+        # Handle THEN line_number (direct branch)
+        if hasattr(stmt, 'then_line_number') and stmt.then_line_number:
+            if stmt.then_line_number in line_num_map:
+                stmt.then_line_number = line_num_map[stmt.then_line_number]
+        # Handle ELSE line_number (direct branch)
+        if hasattr(stmt, 'else_line_number') and stmt.else_line_number:
+            if stmt.else_line_number in line_num_map:
+                stmt.else_line_number = line_num_map[stmt.else_line_number]
+        # Recurse into THEN/ELSE statements
+        if hasattr(stmt, 'then_statements') and stmt.then_statements:
+            for then_stmt in stmt.then_statements:
+                _update_line_refs_in_statement(then_stmt, line_num_map)
+        if hasattr(stmt, 'else_statements') and stmt.else_statements:
+            for else_stmt in stmt.else_statements:
+                _update_line_refs_in_statement(else_stmt, line_num_map)
+
+        # Handle ERL comparisons in condition
+        if hasattr(stmt, 'condition'):
+            _update_erl_in_expression(stmt.condition, line_num_map)
+
+
+def _update_erl_in_expression(expr, line_num_map):
+    """Update ERL comparisons in expressions (e.g., IF ERL = 10 THEN).
+
+    Args:
+        expr: Expression node to check
+        line_num_map: Dict mapping old line numbers to new ones
+    """
+    expr_type = type(expr).__name__
+
+    if expr_type == 'BinaryOpNode':
+        # Check if this is ERL comparison: ERL = line_number
+        left_type = type(expr.left).__name__
+        right_type = type(expr.right).__name__
+
+        # ERL = number or number = ERL
+        if left_type == 'FunctionCallNode' and expr.left.name.lower() == 'erl':
+            if right_type == 'NumberNode':
+                line_num = int(expr.right.value)
+                if line_num in line_num_map:
+                    expr.right.value = float(line_num_map[line_num])
+        elif right_type == 'FunctionCallNode' and expr.right.name.lower() == 'erl':
+            if left_type == 'NumberNode':
+                line_num = int(expr.left.value)
+                if line_num in line_num_map:
+                    expr.left.value = float(line_num_map[line_num])
+
+        # Recurse
+        _update_erl_in_expression(expr.left, line_num_map)
+        _update_erl_in_expression(expr.right, line_num_map)
+
+    elif expr_type == 'UnaryOpNode':
+        _update_erl_in_expression(expr.operand, line_num_map)
