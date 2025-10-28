@@ -632,12 +632,18 @@ class NiceGUIBackend(UIBackend):
 
     def _execute_tick(self):
         """Execute one tick of the interpreter."""
+        log_web_error("_execute_tick", Exception(f"DEBUG: Tick called, running={self.running}, interpreter={self.interpreter is not None}"))
+
         if not self.running or not self.interpreter:
+            log_web_error("_execute_tick", Exception("DEBUG: Early return - not running or no interpreter"))
             return
 
         try:
+            log_web_error("_execute_tick", Exception("DEBUG: About to call interpreter.tick"))
             # Execute one tick (up to 1000 statements)
             state = self.interpreter.tick(mode='run', max_statements=1000)
+
+            log_web_error("_execute_tick", Exception(f"DEBUG: Tick returned status={state.status}"))
 
             # Handle state
             if state.status == 'done':
