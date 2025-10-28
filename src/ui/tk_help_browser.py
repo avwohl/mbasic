@@ -4,7 +4,8 @@ Tkinter-based help browser for navigating markdown documentation.
 Provides:
 - Scrollable help content display
 - Clickable links
-- Search across three-tier help system
+- Search across three-tier help system with ranking and fuzzy matching
+- In-page search (Ctrl+F) with match highlighting
 - Navigation history (back button)
 """
 
@@ -44,6 +45,12 @@ class TkHelpBrowser(tk.Toplevel):
         # Search state
         self.search_indexes = self._load_search_indexes()
 
+        # In-page search state
+        self.inpage_search_visible = False
+        self.inpage_search_query = ""
+        self.inpage_search_matches = []  # List of (start, end) positions
+        self.inpage_search_current = -1  # Current match index
+
         # Create UI
         self._create_widgets()
 
@@ -80,6 +87,24 @@ class TkHelpBrowser(tk.Toplevel):
 
         ttk.Button(toolbar, text="🔍 Search", command=self._execute_search, width=10).pack(side=tk.LEFT, padx=2)
 
+        # In-page search bar (hidden by default)
+        self.inpage_search_bar = ttk.Frame(self)
+
+        ttk.Label(self.inpage_search_bar, text="Find in page:").pack(side=tk.LEFT, padx=5)
+
+        self.inpage_search_entry = ttk.Entry(self.inpage_search_bar, width=30)
+        self.inpage_search_entry.pack(side=tk.LEFT, padx=2)
+        self.inpage_search_entry.bind('<Return>', lambda e: self._inpage_find_next())
+        self.inpage_search_entry.bind('<Escape>', lambda e: self._inpage_search_close())
+
+        ttk.Button(self.inpage_search_bar, text="▲ Prev", command=self._inpage_find_prev, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Button(self.inpage_search_bar, text="▼ Next", command=self._inpage_find_next, width=8).pack(side=tk.LEFT, padx=2)
+
+        self.inpage_match_label = ttk.Label(self.inpage_search_bar, text="")
+        self.inpage_match_label.pack(side=tk.LEFT, padx=5)
+
+        ttk.Button(self.inpage_search_bar, text="✕ Close", command=self._inpage_search_close, width=8).pack(side=tk.LEFT, padx=2)
+
         # Main content frame with scrollbar
         content_frame = ttk.Frame(self)
         content_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -105,21 +130,33 @@ class TkHelpBrowser(tk.Toplevel):
         self.text_widget.tag_config("tier_language", foreground="#c0392b")  # 📕
         self.text_widget.tag_config("tier_mbasic", foreground="#27ae60")    # 📗
         self.text_widget.tag_config("tier_ui", foreground="#2980b9")        # 📘
+        self.text_widget.tag_config("search_highlight", background="#ffff00")  # Yellow highlight
+        self.text_widget.tag_config("search_current", background="#ffa500")    # Orange for current match
+
+        # Raise search tags so they appear above other formatting
+        self.text_widget.tag_raise("search_highlight")
+        self.text_widget.tag_raise("search_current")
 
         # Bind link clicks
         self.text_widget.tag_bind("link", "<Button-1>", self._on_link_click)
         self.text_widget.tag_bind("link", "<Enter>", lambda e: self.text_widget.config(cursor="hand2"))
         self.text_widget.tag_bind("link", "<Leave>", lambda e: self.text_widget.config(cursor="arrow"))
 
-        # Make text read-only but allow copy (Ctrl+C)
+        # Make text read-only but allow copy (Ctrl+C) and find (Ctrl+F)
         def readonly_key_handler(event):
-            # Allow copy operations
+            # Allow copy operations and find
             if event.state & 0x4:  # Control key
                 if event.keysym in ('c', 'C', 'a', 'A'):  # Ctrl+C, Ctrl+A
                     return  # Allow these
+                elif event.keysym in ('f', 'F'):  # Ctrl+F
+                    self._inpage_search_show()
+                    return "break"
             return "break"  # Block all other keys
 
         self.text_widget.bind("<Key>", readonly_key_handler)
+
+        # Also bind Ctrl+F globally to the window
+        self.bind("<Control-f>", lambda e: self._inpage_search_show())
 
         # Enable right-click context menu for copy
         self._create_context_menu()
@@ -388,18 +425,70 @@ class TkHelpBrowser(tk.Toplevel):
         self.text_widget.config(state=tk.DISABLED)
         self.status_label.config(text=f"Search: {query} ({len(results)} results)")
 
+    def _fuzzy_match(self, query: str, target: str, max_distance: int = 2) -> bool:
+        """
+        Check if query fuzzy matches target using simple edit distance.
+
+        Args:
+            query: Search query (already lowercase)
+            target: Target string (already lowercase)
+            max_distance: Maximum edit distance to consider a match
+
+        Returns:
+            True if fuzzy match within max_distance
+        """
+        # Only apply fuzzy matching to words >= 4 chars
+        if len(query) < 4:
+            return False
+
+        # Quick exact match check
+        if query in target:
+            return True
+
+        # Check each word in target
+        target_words = target.split()
+        for word in target_words:
+            if len(word) < 4:
+                continue
+
+            # Simple Levenshtein distance calculation
+            if len(query) > len(word) + max_distance or len(word) > len(query) + max_distance:
+                continue
+
+            # Create distance matrix
+            d = [[0] * (len(word) + 1) for _ in range(len(query) + 1)]
+
+            for i in range(len(query) + 1):
+                d[i][0] = i
+            for j in range(len(word) + 1):
+                d[0][j] = j
+
+            for i in range(1, len(query) + 1):
+                for j in range(1, len(word) + 1):
+                    cost = 0 if query[i-1] == word[j-1] else 1
+                    d[i][j] = min(
+                        d[i-1][j] + 1,      # deletion
+                        d[i][j-1] + 1,      # insertion
+                        d[i-1][j-1] + cost  # substitution
+                    )
+
+            if d[len(query)][len(word)] <= max_distance:
+                return True
+
+        return False
+
     def _search_indexes(self, query: str) -> List[Tuple[str, str, str, str]]:
         """
-        Search the merged index.
+        Search the merged index with ranking and fuzzy matching.
 
-        Returns list of (tier, path, title, description) tuples.
+        Returns list of (tier, path, title, description) tuples, sorted by relevance.
         """
-        results = []
+        scored_results = []
         query_lower = query.lower()
 
         # Merged index has pre-built structure with all files and metadata
         if 'files' not in self.search_indexes:
-            return results
+            return []
 
         # Map tier to labels
         tier_labels = {
@@ -408,20 +497,47 @@ class TkHelpBrowser(tk.Toplevel):
         }
 
         for file_info in self.search_indexes['files']:
-            # Check if query matches title, description, type, or keywords
+            # Get searchable fields
             title = file_info.get('title', '').lower()
             desc = file_info.get('description', '').lower()
             file_type = file_info.get('type', '').lower()
             category = file_info.get('category', '').lower()
             keywords = [kw.lower() for kw in file_info.get('keywords', [])]
 
-            # Match against query
-            if (query_lower in title or
-                query_lower in desc or
-                query_lower in file_type or
-                query_lower in category or
-                any(query_lower in kw for kw in keywords)):
+            score = 0
 
+            # Exact matches (higher scores)
+            if query_lower == title:
+                score += 100  # Exact title match
+            elif query_lower in title:
+                score += 10   # Title contains query
+
+            # Check exact keyword matches
+            if query_lower in keywords:
+                score += 50   # Exact keyword match
+            elif any(query_lower in kw for kw in keywords):
+                score += 5    # Keyword contains query
+
+            # Check description match
+            if query_lower in desc:
+                score += 2
+
+            # Check type/category match
+            if query_lower in file_type or query_lower in category:
+                score += 1
+
+            # Fuzzy matching on title and keywords (only if no exact matches)
+            if score == 0:
+                if self._fuzzy_match(query_lower, title):
+                    score += 8  # Fuzzy title match
+
+                for kw in keywords:
+                    if self._fuzzy_match(query_lower, kw):
+                        score += 4  # Fuzzy keyword match
+                        break
+
+            # If we have any score, add to results
+            if score > 0:
                 # Determine tier label from tier field or path
                 tier_name = file_info.get('tier', '')
                 if tier_name.startswith('ui/'):
@@ -429,14 +545,129 @@ class TkHelpBrowser(tk.Toplevel):
                 else:
                     tier_label = tier_labels.get(tier_name, '📙 Other')
 
-                results.append((
+                scored_results.append((
+                    score,
                     tier_label,
                     file_info.get('path', ''),
                     file_info.get('title', ''),
                     file_info.get('description', '')
                 ))
 
-        return results
+        # Sort by score descending, then by title
+        scored_results.sort(key=lambda x: (-x[0], x[3].lower()))
+
+        # Return without scores (drop first element)
+        return [(tier, path, title, desc) for _, tier, path, title, desc in scored_results]
+
+    def _inpage_search_show(self):
+        """Show the in-page search bar and focus on it."""
+        if not self.inpage_search_visible:
+            self.inpage_search_bar.pack(side=tk.TOP, fill=tk.X, padx=5, pady=2, after=self.children['!frame'])
+            self.inpage_search_visible = True
+
+        self.inpage_search_entry.focus()
+        self.inpage_search_entry.select_range(0, tk.END)
+
+    def _inpage_search_close(self):
+        """Close the in-page search bar and clear highlights."""
+        if self.inpage_search_visible:
+            self.inpage_search_bar.pack_forget()
+            self.inpage_search_visible = False
+
+        # Clear all search highlights
+        self.text_widget.tag_remove("search_highlight", "1.0", tk.END)
+        self.text_widget.tag_remove("search_current", "1.0", tk.END)
+
+        # Reset search state
+        self.inpage_search_matches = []
+        self.inpage_search_current = -1
+        self.inpage_search_query = ""
+        self.inpage_match_label.config(text="")
+
+    def _inpage_find_matches(self):
+        """Find all matches for the current in-page search query."""
+        query = self.inpage_search_entry.get().strip()
+
+        # If query is empty or unchanged, don't re-search
+        if not query:
+            return
+
+        # If query changed, clear old highlights and find new matches
+        if query != self.inpage_search_query:
+            self.inpage_search_query = query
+            self.inpage_search_matches = []
+            self.inpage_search_current = -1
+
+            # Clear old highlights
+            self.text_widget.tag_remove("search_highlight", "1.0", tk.END)
+            self.text_widget.tag_remove("search_current", "1.0", tk.END)
+
+            # Find all matches using text widget's search method
+            start_pos = "1.0"
+            while True:
+                pos = self.text_widget.search(query, start_pos, stopindex=tk.END, nocase=True)
+                if not pos:
+                    break
+
+                end_pos = f"{pos}+{len(query)}c"
+                self.inpage_search_matches.append((pos, end_pos))
+
+                # Highlight this match
+                self.text_widget.tag_add("search_highlight", pos, end_pos)
+
+                start_pos = end_pos
+
+            # Update match count label
+            if self.inpage_search_matches:
+                self.inpage_match_label.config(text=f"{len(self.inpage_search_matches)} matches")
+            else:
+                self.inpage_match_label.config(text="No matches")
+
+    def _inpage_find_next(self):
+        """Find and highlight the next match."""
+        self._inpage_find_matches()
+
+        if not self.inpage_search_matches:
+            return
+
+        # Move to next match
+        self.inpage_search_current = (self.inpage_search_current + 1) % len(self.inpage_search_matches)
+
+        # Update highlights
+        self._inpage_highlight_current()
+
+    def _inpage_find_prev(self):
+        """Find and highlight the previous match."""
+        self._inpage_find_matches()
+
+        if not self.inpage_search_matches:
+            return
+
+        # Move to previous match
+        self.inpage_search_current = (self.inpage_search_current - 1) % len(self.inpage_search_matches)
+
+        # Update highlights
+        self._inpage_highlight_current()
+
+    def _inpage_highlight_current(self):
+        """Highlight the current match and scroll to it."""
+        if not self.inpage_search_matches or self.inpage_search_current < 0:
+            return
+
+        # Remove old current highlight
+        self.text_widget.tag_remove("search_current", "1.0", tk.END)
+
+        # Add current highlight
+        pos, end_pos = self.inpage_search_matches[self.inpage_search_current]
+        self.text_widget.tag_add("search_current", pos, end_pos)
+
+        # Scroll to make current match visible
+        self.text_widget.see(pos)
+
+        # Update match count label
+        self.inpage_match_label.config(
+            text=f"{self.inpage_search_current + 1}/{len(self.inpage_search_matches)}"
+        )
 
     def _display_error(self, message: str):
         """Display an error message in the text widget."""
