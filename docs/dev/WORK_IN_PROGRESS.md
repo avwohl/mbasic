@@ -2,11 +2,11 @@
 
 ## Current Status: Ready for Next Task
 
-**Version**: 1.0.131 (as of 2025-10-28)
+**Version**: 1.0.138 (as of 2025-10-28)
 
-### Recently Completed (v1.0.104-131)
+### Recently Completed (v1.0.104-138)
 
-Major work completed on settings system, case handling (variables and keywords), test organization, and critical documentation improvements.
+Major work completed on settings system, case handling, documentation system, and help build validation.
 
 **Summary:**
 - ✅ Settings infrastructure with CLI commands (SET, SHOW SETTINGS, HELP SET)
@@ -14,8 +14,14 @@ Major work completed on settings system, case handling (variables and keywords),
 - ✅ Keyword case handling with table-based architecture (6 policies)
 - ✅ Test organization planning (Phase 1 complete: 35 tests inventoried)
 - ✅ Critical documentation improvements (real MBASIC testing, test inventory)
+- ✅ TK UI help system restructured (582 lines → 95 line index with subsections)
+- ✅ Checkpoint script auto-rebuilds help indexes when docs/help/ changes
+- ✅ Help build validates macro expansion, fails on unexpanded {{kbd:...}} macros
+- ✅ TK keybindings JSON file completed with all editor/view shortcuts
 
-**See:** `docs/history/SESSION_2025_10_28_SETTINGS_AND_CASE_HANDLING.md` for full details
+**See:**
+- `docs/history/SESSION_2025_10_28_SETTINGS_AND_CASE_HANDLING.md` - Settings system work
+- `docs/dev/GITHUB_DOCS_WORKFLOW_EXPLAINED.md` - GitHub Pages deployment explanation
 
 ---
 
