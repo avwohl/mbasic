@@ -663,8 +663,37 @@ class NiceGUIBackend(UIBackend):
                     return
 
                 # Start execution in step mode
+                # Same setup as _menu_run
+                self._clear_output()
+
+                # Get program AST
+                program_ast = self.program.get_program_ast()
+
+                # Create runtime and interpreter
+                from src.resource_limits import create_local_limits
+                self.runtime = Runtime(self.program.line_asts, self.program.lines)
+
+                # Create IO handler
+                self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
+                self.interpreter = Interpreter(self.runtime, self.exec_io, limits=create_local_limits())
+
+                # Wire up interpreter
+                self.interpreter.interactive_mode = self
+
+                # Start interpreter
+                state = self.interpreter.start()
+                if state.status == 'error':
+                    error_msg = state.error_info.error_message if state.error_info else 'Unknown'
+                    self._append_output(f"\n--- Setup error: {error_msg} ---\n")
+                    self._set_status('Error')
+                    return
+
+                # Mark as running but paused
+                self.running = True
                 self.paused = True
-                asyncio.create_task(self._start_execution())
+
+                # Start async execution
+                ui.timer(0.01, self._execute_tick, once=False)
                 self._set_status('Stepping...')
             else:
                 # Already running - step one tick
