@@ -529,6 +529,22 @@ class Parser:
         elif token.type == TokenType.CALL:
             return self.parse_call()
 
+        # Settings commands
+        elif token.type == TokenType.SET:
+            return self.parse_set_setting()
+        elif token.type == TokenType.SHOW:
+            # Check if followed by SETTINGS
+            if self.peek() and self.peek().type == TokenType.SETTINGS:
+                return self.parse_show_settings()
+            else:
+                raise ParseError(f"SHOW must be followed by SETTINGS", token)
+        elif token.type == TokenType.HELP:
+            # Check if followed by SET
+            if self.peek() and self.peek().type == TokenType.SET:
+                return self.parse_help_setting()
+            else:
+                raise ParseError(f"HELP must be followed by SET for setting help", token)
+
         # Error handling
         elif token.type == TokenType.ERROR:
             return self.parse_error()
@@ -3545,6 +3561,101 @@ class Parser:
 
         return ResumeStatementNode(
             line_number=line_number,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_set_setting(self) -> ast_nodes.SetSettingStatementNode:
+        """Parse SET statement for settings
+
+        Syntax:
+            SET "setting.name" value
+            SET "setting.name" = value
+
+        Examples:
+            SET "variables.case_conflict" "first_wins"
+            SET "editor.auto_number" 1
+            SET "ui.font_size" 14
+
+        Note: Setting names must be string literals to support dots.
+        """
+        token = self.advance()  # Consume SET
+
+        # Parse setting name as string literal (to support dots in names)
+        if not self.match(TokenType.STRING):
+            raise ParseError(f"Expected setting name (string) after SET", self.current_token())
+
+        setting_name = self.advance().value
+
+        # Optional equals sign
+        if self.match(TokenType.EQUAL):
+            self.advance()
+
+        # Parse value expression
+        if self.at_end_of_line():
+            raise ParseError(f"Expected value after SET {setting_name}", self.current_token())
+
+        value = self.parse_expression()
+
+        return ast_nodes.SetSettingStatementNode(
+            setting_name=setting_name,
+            value=value,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_show_settings(self) -> ast_nodes.ShowSettingsStatementNode:
+        """Parse SHOW SETTINGS statement
+
+        Syntax:
+            SHOW SETTINGS              - Show all settings
+            SHOW SETTINGS "pattern"    - Show settings matching pattern
+
+        Examples:
+            SHOW SETTINGS
+            SHOW SETTINGS "variables"
+            SHOW SETTINGS "editor.auto"
+
+        Note: Pattern must be string literal to support dots.
+        """
+        token = self.advance()  # Consume SHOW
+        self.expect(TokenType.SETTINGS)  # Consume SETTINGS
+
+        # Optional pattern (string literal)
+        pattern = None
+        if not self.at_end_of_line() and not self.match(TokenType.COLON):
+            if self.match(TokenType.STRING):
+                pattern = self.advance().value
+
+        return ast_nodes.ShowSettingsStatementNode(
+            pattern=pattern,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_help_setting(self) -> ast_nodes.HelpSettingStatementNode:
+        """Parse HELP SET statement
+
+        Syntax:
+            HELP SET "setting.name"
+
+        Examples:
+            HELP SET "variables.case_conflict"
+            HELP SET "editor.auto_number"
+
+        Note: Setting name must be string literal to support dots.
+        """
+        token = self.advance()  # Consume HELP
+        self.expect(TokenType.SET)  # Consume SET
+
+        # Parse setting name as string literal
+        if not self.match(TokenType.STRING):
+            raise ParseError(f"Expected setting name (string) after HELP SET", self.current_token())
+
+        setting_name = self.advance().value
+
+        return ast_nodes.HelpSettingStatementNode(
+            setting_name=setting_name,
             line_num=token.line,
             column=token.column
         )

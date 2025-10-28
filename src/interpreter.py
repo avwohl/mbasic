@@ -2944,3 +2944,132 @@ class Interpreter:
             self.runtime.set_variable(base_name, type_suffix, saved_value, debugger_set=True)
 
         return result
+
+    # ========================================================================
+    # Settings Commands
+    # ========================================================================
+
+    def execute_setsetting(self, stmt):
+        """Execute SET setting command
+
+        Syntax: SET "setting.name" value
+        """
+        from src.settings import get_settings_manager, SettingScope
+        from src.settings_definitions import get_definition, validate_value
+
+        # Evaluate value expression
+        value = self.evaluate_expression(stmt.value)
+
+        # Get setting definition
+        definition = get_definition(stmt.setting_name)
+        if not definition:
+            self.io.write(f"?Unknown setting: {stmt.setting_name}\n")
+            return
+
+        # Convert value based on definition type
+        from src.settings_definitions import SettingType
+        if definition.type == SettingType.BOOLEAN:
+            # Accept 0/1, "true"/"false", "yes"/"no"
+            if isinstance(value, (int, float)):
+                value = bool(value)
+            elif isinstance(value, str):
+                value_lower = value.lower()
+                if value_lower in ('true', 'yes', '1'):
+                    value = True
+                elif value_lower in ('false', 'no', '0'):
+                    value = False
+                else:
+                    self.io.write(f"?Invalid boolean value: {value}\n")
+                    return
+        elif definition.type == SettingType.INTEGER:
+            value = int(value)
+        elif definition.type == SettingType.STRING:
+            value = str(value)
+        elif definition.type == SettingType.ENUM:
+            value = str(value)
+
+        # Validate value
+        if not validate_value(stmt.setting_name, value):
+            self.io.write(f"?Invalid value for {stmt.setting_name}: {value}\n")
+            if definition.choices:
+                self.io.write(f"  Valid choices: {', '.join(str(c) for c in definition.choices)}\n")
+            return
+
+        # Set and save setting
+        try:
+            settings_mgr = get_settings_manager()
+            settings_mgr.set(stmt.setting_name, value, scope=SettingScope.GLOBAL)
+            settings_mgr.save(scope=SettingScope.GLOBAL)
+            self.io.write(f"Setting '{stmt.setting_name}' = {value}\n")
+        except Exception as e:
+            self.io.write(f"?Error setting {stmt.setting_name}: {e}\n")
+
+    def execute_showsettings(self, stmt):
+        """Execute SHOW SETTINGS command
+
+        Syntax: SHOW SETTINGS ["pattern"]
+        """
+        from src.settings import get_settings_manager
+        from src.settings_definitions import get_all_definitions
+
+        settings_mgr = get_settings_manager()
+        all_settings = settings_mgr.get_all_settings()
+
+        # Filter by pattern if provided
+        if stmt.pattern:
+            pattern = stmt.pattern.lower()
+            filtered = {k: v for k, v in all_settings.items() if pattern in k.lower()}
+        else:
+            filtered = all_settings
+
+        if not filtered:
+            if stmt.pattern:
+                self.io.write(f"No settings matching '{stmt.pattern}'\n")
+            else:
+                self.io.write("No settings configured\n")
+            return
+
+        # Group by category
+        categories = {}
+        for key, value in sorted(filtered.items()):
+            parts = key.split('.', 1)
+            category = parts[0] if len(parts) > 1 else 'General'
+            if category not in categories:
+                categories[category] = []
+            categories[category].append((key, value))
+
+        # Display settings by category
+        for category in sorted(categories.keys()):
+            self.io.write(f"\n{category}:\n")
+            for key, value in categories[category]:
+                self.io.write(f"  {key} = {value}\n")
+
+    def execute_helpsetting(self, stmt):
+        """Execute HELP SET command
+
+        Syntax: HELP SET "setting.name"
+        """
+        from src.settings_definitions import get_definition
+
+        definition = get_definition(stmt.setting_name)
+        if not definition:
+            self.io.write(f"?Unknown setting: {stmt.setting_name}\n")
+            return
+
+        # Display setting information
+        self.io.write(f"\n{stmt.setting_name}\n")
+        self.io.write(f"  Type: {definition.type.value}\n")
+        self.io.write(f"  Default: {definition.default}\n")
+
+        if definition.choices:
+            self.io.write(f"  Choices: {', '.join(str(c) for c in definition.choices)}\n")
+
+        if definition.min_value is not None:
+            self.io.write(f"  Min: {definition.min_value}\n")
+        if definition.max_value is not None:
+            self.io.write(f"  Max: {definition.max_value}\n")
+
+        self.io.write(f"\n  {definition.description}\n")
+
+        if definition.help_text:
+            self.io.write(f"\n{definition.help_text}\n")

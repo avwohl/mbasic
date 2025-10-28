@@ -97,11 +97,15 @@ class TokenType(Enum):
     ERROR = auto()
     ERR = auto()
     ERL = auto()
+    HELP = auto()
     OUT = auto()
     POKE = auto()
     RANDOMIZE = auto()
     REM = auto()
     REMARK = auto()          # Synonym for REM
+    SET = auto()             # SET (for settings, not same as LET)
+    SETTINGS = auto()        # SETTINGS (used in SHOW SETTINGS)
+    SHOW = auto()            # SHOW (for SHOW SETTINGS)
     SWAP = auto()
     TRON = auto()
     TROFF = auto()
@@ -302,11 +306,15 @@ KEYWORDS = {
     'error': TokenType.ERROR,
     'err': TokenType.ERR,
     'erl': TokenType.ERL,
+    'help': TokenType.HELP,
     'out': TokenType.OUT,
     'poke': TokenType.POKE,
     'randomize': TokenType.RANDOMIZE,
     'rem': TokenType.REM,
     'remark': TokenType.REMARK,
+    'set': TokenType.SET,
+    'settings': TokenType.SETTINGS,
+    'show': TokenType.SHOW,
     'swap': TokenType.SWAP,
     'tron': TokenType.TRON,
     'troff': TokenType.TROFF,

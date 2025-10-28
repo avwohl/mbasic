@@ -1,8 +1,12 @@
 # Work in Progress
 
-## Current Session: 2025-10-27 - Spacing, Case, and RENUM Preservation
+## Current Session: 2025-10-28 - Architecture and Safety
 
 ### Session Summary ✅ COMPLETED
+
+Major architectural improvements - single source of truth, stack validation, and documentation fixes.
+
+## Previous Session: 2025-10-27 - Spacing, Case, and RENUM Preservation ✅ COMPLETED
 
 Major work on preserving original source formatting - spacing, variable case, and RENUM with position preservation.
 
@@ -39,6 +43,23 @@ Major work on preserving original source formatting - spacing, variable case, an
    - Simplified RENUM to adjust AST positions only
    - Updated parser to not store source_text
    - All tests still passing
+
+5. **Documentation and Bug Fixes** (v1.0.96-99)
+   - v1.0.96-97: Fixed docs deployment workflow (removed strict mode temporarily)
+   - v1.0.98: Updated WORK_IN_PROGRESS.md
+   - v1.0.99: Fixed REM statement serialization (text field not comment)
+
+6. **Edit-at-Breakpoint Stack Validation** (v1.0.100-102)
+   - Added `validate_stack()` method to Runtime
+   - Validates FOR/GOSUB/WHILE return addresses after program edits
+   - Integrated into tk_ui continue handler with warning messages
+   - Prevents crashes when user edits code at breakpoints
+   - Moved completed TODO to history
+
+7. **MkDocs Strict Mode Fix** (v1.0.103)
+   - Simplified nav structure to use auto-discovery (awesome-pages plugin)
+   - Re-enabled strict mode in deployment workflow
+   - Moved completed TODO to history
 
 ### Files Modified
 
@@ -123,11 +144,11 @@ Major work on preserving original source formatting - spacing, variable case, an
 
 ## Current State
 
-- **Version**: 1.0.97
-- **Status**: Single source of truth architecture complete
+- **Version**: 1.0.103
+- **Status**: Architecture mature, safety features complete
 - **Blocking Issues**: None
-- **Ready for**: Further enhancements
-- **Recent**: v1.0.95 removed source_text duplication, v1.0.96-97 fixed docs deployment
+- **Ready for**: New features or refinements
+- **Recent**: v1.0.100-102 stack validation, v1.0.103 docs deployment
 
 ## Next Steps (when resuming)
 

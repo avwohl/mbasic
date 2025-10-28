@@ -946,7 +946,62 @@ class FunctionCallNode:
 
 
 # ============================================================================
-# Type System Support
+# Settings Commands
+# ============================================================================
+
+@dataclass
+class SetSettingStatementNode:
+    """SET statement - set a configuration setting
+
+    Syntax:
+        SET setting_name value
+        SET setting_name = value
+
+    Examples:
+        SET variables.case_conflict first_wins
+        SET editor.auto_number true
+        SET ui.font_size 14
+    """
+    setting_name: str  # Setting key (e.g., "variables.case_conflict")
+    value: 'ExpressionNode'  # Value to set
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class ShowSettingsStatementNode:
+    """SHOW SETTINGS statement - display current settings
+
+    Syntax:
+        SHOW SETTINGS           - Show all settings
+        SHOW SETTINGS pattern   - Show settings matching pattern
+
+    Examples:
+        SHOW SETTINGS
+        SHOW SETTINGS variables
+        SHOW SETTINGS editor.auto
+    """
+    pattern: Optional[str] = None  # Optional pattern to filter settings
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class HelpSettingStatementNode:
+    """HELP SET statement - show help for a setting
+
+    Syntax:
+        HELP SET setting_name
+
+    Examples:
+        HELP SET variables.case_conflict
+        HELP SET editor.auto_number
+    """
+    setting_name: str  # Setting key to show help for
+    line_num: int = 0
+    column: int = 0
+
+
 # ============================================================================
 
 class TypeInfo:
