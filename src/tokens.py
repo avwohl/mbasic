@@ -25,6 +25,7 @@ class TokenType(Enum):
     LLIST = auto()
     LOAD = auto()
     MERGE = auto()
+    WATCH = auto()
     NEW = auto()
     RENUM = auto()
     RUN = auto()
@@ -245,6 +246,7 @@ KEYWORDS = {
     'new': TokenType.NEW,
     'renum': TokenType.RENUM,
     'run': TokenType.RUN,
+    'watch': TokenType.WATCH,
     'save': TokenType.SAVE,
 
     # File operations

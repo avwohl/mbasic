@@ -677,6 +677,33 @@ class ContStatementNode:
 
 
 @dataclass
+class StepStatementNode:
+    """STEP statement - single-step execution (debug command)
+
+    Syntax: STEP [count]
+
+    STEP executes one or more statements in debug mode, pausing after each.
+    """
+    count: int = None
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class WatchStatementNode:
+    """WATCH statement - variable inspection (debug command)
+
+    Syntax: WATCH [variable]
+
+    WATCH displays variable values during debugging.
+    If no variable specified, shows all variables.
+    """
+    variable: str = None
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
 class RandomizeStatementNode:
     """RANDOMIZE statement - initialize random number generator
 

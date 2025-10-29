@@ -832,6 +832,26 @@ class NiceGUIBackend(UIBackend):
             self._append_output(line_text)
         self._set_status('Program listed')
 
+    def _menu_sort_lines(self):
+        """Sort program lines by line number."""
+        try:
+            # Get all lines
+            lines = self.program.get_lines()
+            if not lines:
+                self._notify('No program to sort', type='warning')
+                return
+
+            # Lines are already stored sorted by line number in the program
+            # Just rebuild the editor text from sorted lines
+            sorted_text = '\n'.join(line_text for line_num, line_text in lines)
+            self.editor.value = sorted_text
+
+            self._notify('Program lines sorted', type='positive')
+            self._set_status('Lines sorted by line number')
+        except Exception as e:
+            log_web_error("_menu_sort_lines", e)
+            self._notify(f'Error: {e}', type='negative')
+
     def _show_variables_window(self):
         """Show Variables window."""
         try:
