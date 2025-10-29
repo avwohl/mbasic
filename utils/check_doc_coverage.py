@@ -13,6 +13,22 @@ import re
 from pathlib import Path
 
 
+def normalize_function_name(name):
+    """Normalize function name for comparison.
+
+    Converts various representations to a canonical form:
+    - STR$ -> STR
+    - str_dollar -> STR
+    - STR_DOLLAR -> STR
+    """
+    name = name.upper()
+    if name.endswith('$'):
+        name = name[:-1]
+    if name.endswith('_DOLLAR'):
+        name = name[:-7]
+    return name
+
+
 def get_implemented_functions():
     """Extract all function names from basic_builtins.py."""
     builtin_file = Path('src/basic_builtins.py')
@@ -26,9 +42,8 @@ def get_implemented_functions():
     functions = []
     for match in re.finditer(pattern, content, re.MULTILINE):
         func_name = match.group(1)
-        # Convert internal names to BASIC names
-        if func_name.endswith('_DOLLAR'):
-            func_name = func_name[:-7] + '$'
+        # Normalize: remove _DOLLAR suffix for comparison
+        func_name = normalize_function_name(func_name)
         functions.append(func_name)
 
     return sorted(set(functions))
@@ -65,18 +80,63 @@ def get_documented_functions():
     for md_file in func_dir.glob('*.md'):
         if md_file.name == 'index.md':
             continue
-        func_name = md_file.stem.upper()
-        # Convert filename conventions back to BASIC names
-        func_name = func_name.replace('_DOLLAR', '$')
+        func_name = md_file.stem
 
         # Handle multi-function docs (e.g., "cvi-cvs-cvd.md")
         if '-' in func_name:
             for part in func_name.split('-'):
-                functions.append(part)
+                # Normalize each part
+                functions.append(normalize_function_name(part))
         else:
-            functions.append(func_name)
+            # Normalize: removes _dollar suffix and converts to uppercase
+            functions.append(normalize_function_name(func_name))
 
     return sorted(set(functions))
+
+
+def normalize_statement_name(name):
+    """Normalize statement name for comparison.
+
+    Converts various representations to canonical form:
+    - LINEINPUT -> LINE INPUT
+    - line-input -> LINE INPUT
+    - PRINTUSING -> PRINT USING
+    - print-using -> PRINT USING
+    - ONERROR -> ON ERROR
+    """
+    name = name.upper().replace('-', ' ').replace('_', ' ')
+
+    # Special cases with known mappings
+    mappings = {
+        'LINE INPUT': 'LINEINPUT',
+        'PRINT USING': 'PRINTUSING',
+        'ON ERROR': 'ONERROR',
+        'ON GOTO': 'ONGOTO',
+        'ON GOSUB': 'ONGOSUB',
+        'OPTION BASE': 'OPTIONBASE',
+        'DEF FN': 'DEFFN',
+        'FOR NEXT': 'FOR',  # for-next.md documents FOR statement
+        'WHILE WEND': 'WHILE',  # while-wend.md documents WHILE
+        'GOSUB RETURN': 'GOSUB',  # gosub-return.md documents GOSUB
+        'IF THEN ELSE IF GOTO': 'IF',  # if-then-else-if-goto.md
+    }
+
+    # Check if normalized name matches any mapping
+    if name in mappings:
+        return mappings[name]
+
+    # For compound docs, return the first statement
+    # e.g., "FOR/NEXT" -> "FOR"
+    if '/' in name:
+        return name.split('/')[0]
+    if ' ' in name:
+        # Try to find a mapping, otherwise return first word
+        for key, val in mappings.items():
+            if key == name:
+                return val
+        return name.split()[0]
+
+    return name
 
 
 def get_documented_statements():
@@ -90,9 +150,18 @@ def get_documented_statements():
     for md_file in stmt_dir.glob('*.md'):
         if md_file.name == 'index.md':
             continue
-        # Handle compound statement names like "for-next.md"
-        stmt_name = md_file.stem.upper().replace('-', '/')
-        statements.append(stmt_name)
+        stmt_name = md_file.stem
+        # Normalize statement name
+        normalized = normalize_statement_name(stmt_name)
+        statements.append(normalized)
+
+        # For compound docs, also add the other statements mentioned
+        # e.g., "for-next.md" should also count as documenting NEXT
+        if '-' in md_file.stem.lower():
+            parts = md_file.stem.upper().replace('-', ' ').split()
+            for part in parts:
+                if part not in ['IF', 'THEN', 'ELSE', 'GOTO']:  # Skip keywords
+                    statements.append(part)
 
     return sorted(set(statements))
 
