@@ -20,12 +20,15 @@ def normalize_function_name(name):
     - STR$ -> STR
     - str_dollar -> STR
     - STR_DOLLAR -> STR
+    - INPUT_STR -> INPUT (Python naming for INPUT$)
     """
     name = name.upper()
     if name.endswith('$'):
         name = name[:-1]
     if name.endswith('_DOLLAR'):
         name = name[:-7]
+    if name.endswith('_STR'):
+        name = name[:-4]
     return name
 
 
@@ -157,10 +160,28 @@ def get_documented_statements():
 
         # For compound docs, also add the other statements mentioned
         # e.g., "for-next.md" should also count as documenting NEXT
-        if '-' in md_file.stem.lower():
+        # Special handling for compound ON statements
+        if md_file.stem == 'on-gosub-on-goto':
+            statements.append('ONGOSUB')
+            statements.append('ONGOTO')
+        elif md_file.stem == 'on-error-goto':
+            statements.append('ONERROR')
+        elif md_file.stem == 'defint-sng-dbl-str':
+            # This doc covers the generic DEFTYPE statement
+            statements.append('DEFTYPE')
+        elif md_file.stem == 'printi-printi-using':
+            # This doc covers PRINTUSING
+            statements.append('PRINTUSING')
+        elif md_file.stem == 'rem':
+            # Implementation uses execute_remark
+            statements.append('REMARK')
+        elif md_file.stem == 'mid-assignment':
+            # Implementation uses MIDASSIGNMENT
+            statements.append('MIDASSIGNMENT')
+        elif '-' in md_file.stem.lower():
             parts = md_file.stem.upper().replace('-', ' ').split()
             for part in parts:
-                if part not in ['IF', 'THEN', 'ELSE', 'GOTO']:  # Skip keywords
+                if part not in ['IF', 'THEN', 'ELSE', 'GOTO', 'ON']:  # Skip keywords
                     statements.append(part)
 
     return sorted(set(statements))

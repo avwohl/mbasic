@@ -5,22 +5,14 @@ MBASIC Documentation Coverage Report
 📊 FUNCTIONS
 --------------------------------------------------------------------------------
 Implemented functions: 45
-Documented functions:  45
+Documented functions:  51
 
-❌ Missing documentation (7 functions):
-   - CDBL
-   - CHR
-   - CSNG
-   - INPUT_STR
-   - LOF
-   - OCT
-   - SPACE
+✅ All implemented functions are documented!
 
-⚠️  Documentation without implementation (7 functions):
+⚠️  Documentation without implementation (6 functions):
    - COBL
    - CRR
    - FRE
-   - INPUT
    - LPOS
    - SPACES
    - VARPTR
@@ -28,33 +20,12 @@ Documented functions:  45
 📊 STATEMENTS
 --------------------------------------------------------------------------------
 Implemented statements: 65
-Documented statements:  76
+Documented statements:  92
 
-❌ Missing documentation (19 statements):
-   - CLS
-   - DEFTYPE
-   - FILES
-   - HELPSETTING
-   - LIMITS
-   - LSET
-   - MIDASSIGNMENT
-   - ONERROR
-   - ONGOSUB
-   - ONGOTO
-   - PRINTUSING
-   - REMARK
-   - RESET
-   - RESTORE
-   - RSET
-   - RUN
-   - SETSETTING
-   - SHOWSETTINGS
-   - SYSTEM
+✅ All implemented statements are documented!
 
 ================================================================================
 SUMMARY
 ================================================================================
-❌ 26 items need documentation
-   - 7 functions
-   - 19 statements
+✅ Documentation is complete!
 
