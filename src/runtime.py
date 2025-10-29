@@ -1159,6 +1159,32 @@ class Runtime:
         """
         return self.next_line is None
 
+    def has_error_handler(self):
+        """
+        Check if an error handler is installed (ON ERROR GOTO).
+
+        Returns:
+            True if error_handler is set, False otherwise
+        """
+        return self.error_handler is not None
+
+    def has_active_loop(self, var_name=None):
+        """
+        Check if a FOR loop is active.
+
+        Args:
+            var_name: Optional loop variable name to check for specific loop
+
+        Returns:
+            True if loop exists, False otherwise
+        """
+        if var_name is None:
+            # Check if any FOR loop is active
+            return any(entry['type'] == 'FOR' for entry in self.execution_stack)
+        else:
+            # Check for specific loop variable
+            return var_name in self.for_loop_vars
+
     # ========================================================================
     # Debugging and Inspection Interface
     # ========================================================================

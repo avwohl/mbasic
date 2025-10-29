@@ -343,7 +343,7 @@ class Interpreter:
                     )
 
                     # Check if we have an error handler
-                    if self.runtime.error_handler is not None and not self.runtime.in_error_handler:
+                    if self.runtime.has_error_handler() and not self.runtime.in_error_handler:
                         self._invoke_error_handler(error_code, pc)
                         # Error handler set npc, loop will handle it
                         continue
@@ -752,7 +752,7 @@ class Interpreter:
                     return
                 except Exception as e:
                     # Check if we have an error handler
-                    if self.runtime.error_handler is not None and not self.runtime.in_error_handler:
+                    if self.runtime.has_error_handler() and not self.runtime.in_error_handler:
                         # Handle the error
                         import os
                         error_code = self._map_exception_to_error_code(e)
