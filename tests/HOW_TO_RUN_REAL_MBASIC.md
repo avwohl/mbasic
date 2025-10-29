@@ -41,20 +41,22 @@ You must pipe the program content to MBASIC as if it's being typed:
 
 ```bash
 cd /home/wohl/cl/mbasic/tests
-(cat test.bas && echo "RUN") | timeout 10 tnylpo ../com/mbasic
+(cat test.bas && echo "RUN") | timeout 1 tnylpo ../com/mbasic
 ```
 
 This:
 1. Cats the .bas file (types the program lines)
 2. Echoes "RUN" command
 3. Pipes everything to tnylpo running MBASIC
-4. Uses timeout to prevent hanging
+4. Uses timeout to prevent hanging (use 1 second for faster test feedback)
+
+**Note on Timeout**: If the program has syntax errors, MBASIC will show the error and wait at "Ok" prompt until timeout expires. Use `timeout 1` for faster feedback during testing.
 
 ### Example: Running hello.bas
 
 ```bash
 cd /home/wohl/cl/mbasic/tests
-(cat hello.bas && echo "RUN") | timeout 5 tnylpo ../com/mbasic
+(cat hello.bas && echo "RUN") | timeout 1 tnylpo ../com/mbasic
 ```
 
 Output:
@@ -74,7 +76,7 @@ Hello from MBASIC!
 ### Capturing Output to File
 
 ```bash
-(cat test.bas && echo "RUN") | timeout 10 tnylpo ../com/mbasic 2>&1 | tee output.txt
+(cat test.bas && echo "RUN") | timeout 1 tnylpo ../com/mbasic 2>&1 | tee output.txt
 ```
 
 ## Common Issues
@@ -120,8 +122,8 @@ cd /home/wohl/cl/mbasic/tests
 # Run on our implementation
 python3 ../mbasic.py mytest.bas > /tmp/our_output.txt 2>&1
 
-# Run on real MBASIC
-(cat mytest.bas && echo "RUN") | timeout 10 tnylpo ../com/mbasic > /tmp/real_output.txt 2>&1
+# Run on real MBASIC (use timeout 1 for faster feedback)
+(cat mytest.bas && echo "RUN") | timeout 1 tnylpo ../com/mbasic > /tmp/real_output.txt 2>&1
 
 # Compare
 diff /tmp/our_output.txt /tmp/real_output.txt
