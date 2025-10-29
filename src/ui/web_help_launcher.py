@@ -54,7 +54,10 @@ def open_help():
     return open_help_in_browser()
 
 
-class WebHelpLauncher:
+# Legacy class removed - using direct web URL instead
+# The help site is already built and served at http://localhost/mbasic_docs
+
+class WebHelpLauncher_DEPRECATED:
     """Legacy class wrapper for compatibility."""
 
     def __init__(self, help_root: str = "docs/help"):
@@ -190,15 +193,7 @@ class WebHelpLauncher:
             self.server_process = None
 
 
-def open_help_in_browser(topic: Optional[str] = None, ui_type: str = "tk"):
-    """Convenience function to open help in browser.
-
-    Args:
-        topic: Specific help topic
-        ui_type: UI type for UI-specific help
-    """
-    launcher = WebHelpLauncher()
-    launcher.open_help(topic, ui_type)
+# Duplicate function removed - the simple version above is used
 
 
 # Alternative: Use GitHub Pages or other hosted documentation
