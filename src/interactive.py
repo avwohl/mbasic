@@ -39,10 +39,10 @@ def print_error(e, runtime=None):
     # Gather context for debug logging
     context = {}
     if runtime:
-        if runtime.current_line:
-            context['current_line'] = runtime.current_line.line_number
-        if hasattr(runtime, 'line_text_map') and runtime.current_line:
-            line_num = runtime.current_line.line_number
+        if runtime.pc and runtime.pc.line_num:
+            context['current_line'] = runtime.pc.line_num
+        if hasattr(runtime, 'line_text_map') and runtime.pc and runtime.pc.line_num:
+            line_num = runtime.pc.line_num
             if line_num in runtime.line_text_map:
                 context['source_line'] = runtime.line_text_map[line_num]
 
@@ -54,8 +54,8 @@ def print_error(e, runtime=None):
     )
 
     # Normal mode - print error with line number if available
-    if runtime and runtime.current_line:
-        line_num = runtime.current_line.line_number
+    if runtime and runtime.pc and runtime.pc.line_num:
+        line_num = runtime.pc.line_num
         print(f"?{type(e).__name__} in {line_num}: {e}")
         # Also print the source code line if available
         if hasattr(runtime, 'line_text_map') and line_num in runtime.line_text_map:
@@ -297,8 +297,6 @@ class InteractiveMode:
                     # Update runtime's line_table if program is running
                     if self.program_runtime and line_num in self.program_runtime.line_table:
                         del self.program_runtime.line_table[line_num]
-                        if line_num in self.program_runtime.line_order:
-                            self.program_runtime.line_order.remove(line_num)
             else:
                 # Add/replace line - store both text and parsed AST
                 self.lines[line_num] = line
@@ -308,10 +306,6 @@ class InteractiveMode:
                     # Update runtime's line_table if program is running
                     if self.program_runtime:
                         self.program_runtime.line_table[line_num] = line_ast
-                        if line_num not in self.program_runtime.line_order:
-                            # Insert in sorted position
-                            import bisect
-                            bisect.insort(self.program_runtime.line_order, line_num)
         else:
             # Direct command
             self.execute_command(line)
@@ -546,9 +540,6 @@ class InteractiveMode:
                     for line_num in self.program.line_asts:
                         line_ast = self.program.line_asts[line_num]
                         self.program_runtime.line_table[line_num] = line_ast
-                        if line_num not in self.program_runtime.line_order:
-                            import bisect
-                            bisect.insort(self.program_runtime.line_order, line_num)
 
                 print(f"Merged from {filename}")
                 print(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
@@ -1148,9 +1139,6 @@ class InteractiveMode:
                     # Update runtime's line_table if program is running
                     if self.program_runtime:
                         self.program_runtime.line_table[current_line] = line_ast
-                        if current_line not in self.program_runtime.line_order:
-                            import bisect
-                            bisect.insort(self.program_runtime.line_order, current_line)
 
                 # Move to next line number
                 current_line += increment
@@ -1238,19 +1226,15 @@ class InteractiveMode:
             # Execute just the statement at line 0
             if ast.lines and len(ast.lines) > 0:
                 line_node = ast.lines[0]
-                # Update runtime's current line
-                old_line = runtime.current_line
-                old_index = runtime.current_stmt_index
-                runtime.current_line = line_node
-                runtime.current_stmt_index = 0
+                # Save old PC (important for stopped programs)
+                old_pc = runtime.pc
 
                 # Execute each statement on line 0
                 for stmt in line_node.statements:
                     interpreter.execute_statement(stmt)
 
-                # Restore previous line/index (important for stopped programs)
-                runtime.current_line = old_line
-                runtime.current_stmt_index = old_index
+                # Restore previous PC
+                runtime.pc = old_pc
 
         except Exception as e:
             # Use helper function for consistent error reporting

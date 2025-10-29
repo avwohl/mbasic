@@ -86,7 +86,6 @@ class Runtime:
 
         # Line number resolution
         self.line_table = {}          # line_number -> LineNode
-        self.line_order = []          # [line_number, ...] in order
         self.line_text_map = line_text_map or {}  # line_number -> source text (for error messages)
 
         # DATA statements
@@ -142,18 +141,14 @@ class Runtime:
         """
         # Build line number table
         if self.line_table_dict:
-            # New style: line_table already provided, just populate line_order
+            # New style: line_table already provided
             self.line_table = self.line_table_dict
-            self.line_order = sorted(self.line_table.keys())
             lines_to_process = self.line_table.values()
         else:
             # Old style: build from AST
             for line in self.ast.lines:
                 self.line_table[line.line_number] = line
-                self.line_order.append(line.line_number)
             lines_to_process = self.ast.lines
-            # Sort line numbers for sequential execution
-            self.line_order.sort()
 
         # Build statement table and extract DATA values and DEF FN definitions
         for line in lines_to_process:
@@ -1128,10 +1123,11 @@ class Runtime:
         Returns:
             Next line number or None if at end
         """
+        line_numbers = sorted(self.line_table.keys())
         try:
-            index = self.line_order.index(current_line_number)
-            if index + 1 < len(self.line_order):
-                return self.line_order[index + 1]
+            index = line_numbers.index(current_line_number)
+            if index + 1 < len(line_numbers):
+                return line_numbers[index + 1]
         except ValueError:
             pass
         return None

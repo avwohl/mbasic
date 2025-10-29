@@ -621,16 +621,17 @@ class Interpreter:
         depth = 1  # Track nesting depth
 
         # Get the line index to start searching
+        line_numbers = sorted(self.runtime.line_table.keys())
         try:
-            line_idx = self.runtime.line_order.index(start_line)
+            line_idx = line_numbers.index(start_line)
         except ValueError:
             return None
 
         # Start from the next statement in the same line
         stmt_idx = start_stmt + 1
 
-        while line_idx < len(self.runtime.line_order):
-            line_num = self.runtime.line_order[line_idx]
+        while line_idx < len(line_numbers):
+            line_num = line_numbers[line_idx]
             line = self.runtime.line_table[line_num]
 
             # Search through statements in this line
@@ -1186,8 +1187,14 @@ class Interpreter:
 
             wend_line, wend_stmt = wend_pos
 
-            # Jump to the statement AFTER the WEND
-            self.runtime.npc = PC(wend_line, wend_stmt + 1)
+            # Jump to the statement AFTER the WEND using statement_table
+            wend_pc = PC(wend_line, wend_stmt)
+            next_pc = self.runtime.statement_table.next_pc(wend_pc)
+            if next_pc is None:
+                # No more statements - program ends
+                self.runtime.halted = True
+            else:
+                self.runtime.npc = next_pc
         else:
             # Condition is true - enter the loop
             # Check resource limits

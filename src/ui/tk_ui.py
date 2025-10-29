@@ -809,10 +809,8 @@ class TkBackend(UIBackend):
                 new_line_table = {}
                 for line in program.lines:
                     new_line_table[line.line_number] = line
-                new_line_order = sorted(new_line_table.keys())
 
                 self.runtime.line_table = new_line_table
-                self.runtime.line_order = new_line_order
                 debug_log(f"Updated line_table with {len(new_line_table)} lines", level=1)
 
                 # Validate execution stack after program edits

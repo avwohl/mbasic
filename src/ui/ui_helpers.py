@@ -541,8 +541,6 @@ def delete_lines_from_program(program_manager, args: str, runtime=None):
         if runtime:
             if hasattr(runtime, 'line_table') and line_num in runtime.line_table:
                 del runtime.line_table[line_num]
-            if hasattr(runtime, 'line_order') and line_num in runtime.line_order:
-                runtime.line_order.remove(line_num)
 
     return to_delete
 
@@ -661,8 +659,6 @@ def renum_program(program_manager, args: str, renum_callback, runtime=None):
     if runtime:
         if hasattr(runtime, 'line_table'):
             runtime.line_table = new_line_asts
-        if hasattr(runtime, 'line_order'):
-            runtime.line_order = sorted(new_line_asts.keys())
 
     return old_lines, line_map
 
