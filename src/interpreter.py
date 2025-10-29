@@ -105,13 +105,13 @@ class Interpreter:
 
         # Filesystem provider (defaults to real filesystem if not provided)
         if filesystem_provider is None:
-            from filesystem import RealFileSystemProvider
+            from src.filesystem import RealFileSystemProvider
             filesystem_provider = RealFileSystemProvider()
         self.fs = filesystem_provider
 
         # Resource limits (defaults to local limits if not provided)
         if limits is None:
-            from resource_limits import create_local_limits
+            from src.resource_limits import create_local_limits
             limits = create_local_limits()
         self.limits = limits
 

@@ -3069,7 +3069,7 @@ Run                           Debug Windows
                         self.output(f"Debug: {message}")
 
             # Create runtime and interpreter with local limits
-            from resource_limits import create_local_limits
+            from src.resource_limits import create_local_limits
             io_handler = CapturingIOHandler()
             runtime = Runtime(self.program.line_asts, self.program.lines)
             self.interpreter = Interpreter(runtime, io_handler, limits=create_local_limits())

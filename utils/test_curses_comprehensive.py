@@ -10,7 +10,11 @@ Combines multiple approaches for robust testing:
 
 import sys
 import os
-sys.path.insert(0, 'src')
+from pathlib import Path
+
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 import pexpect
 import time
@@ -56,10 +60,10 @@ class CursesUITester:
         result = TestResult("UI Creation")
 
         try:
-            from ui.curses_ui import CursesBackend
-            from iohandler.console import ConsoleIOHandler
-            from editing import ProgramManager
-            from parser import TypeInfo
+            from src.ui.curses_ui import CursesBackend
+            from src.iohandler.console import ConsoleIOHandler
+            from src.editing import ProgramManager
+            from src.parser import TypeInfo
 
             # Create components
             def_type_map = {letter: TypeInfo.SINGLE for letter in 'abcdefghijklmnopqrstuvwxyz'}
@@ -83,10 +87,10 @@ class CursesUITester:
         result = TestResult("Input Handlers")
 
         try:
-            from ui.curses_ui import CursesBackend
-            from iohandler.console import ConsoleIOHandler
-            from editing import ProgramManager
-            from parser import TypeInfo
+            from src.ui.curses_ui import CursesBackend
+            from src.iohandler.console import ConsoleIOHandler
+            from src.editing import ProgramManager
+            from src.parser import TypeInfo
 
             def_type_map = {letter: TypeInfo.SINGLE for letter in 'abcdefghijklmnopqrstuvwxyz'}
             io_handler = ConsoleIOHandler(debug_enabled=False)
@@ -131,10 +135,10 @@ class CursesUITester:
         result = TestResult("Program Parsing")
 
         try:
-            from ui.curses_ui import CursesBackend
-            from iohandler.console import ConsoleIOHandler
-            from editing import ProgramManager
-            from parser import TypeInfo
+            from src.ui.curses_ui import CursesBackend
+            from src.iohandler.console import ConsoleIOHandler
+            from src.editing import ProgramManager
+            from src.parser import TypeInfo
 
             def_type_map = {letter: TypeInfo.SINGLE for letter in 'abcdefghijklmnopqrstuvwxyz'}
             io_handler = ConsoleIOHandler(debug_enabled=False)
@@ -164,10 +168,10 @@ class CursesUITester:
         result = TestResult("Run Program Method")
 
         try:
-            from ui.curses_ui import CursesBackend
-            from iohandler.console import ConsoleIOHandler
-            from editing import ProgramManager
-            from parser import TypeInfo
+            from src.ui.curses_ui import CursesBackend
+            from src.iohandler.console import ConsoleIOHandler
+            from src.editing import ProgramManager
+            from src.parser import TypeInfo
 
             def_type_map = {letter: TypeInfo.SINGLE for letter in 'abcdefghijklmnopqrstuvwxyz'}
             io_handler = ConsoleIOHandler(debug_enabled=False)
