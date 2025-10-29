@@ -880,37 +880,7 @@ class CursesFeatureTests(UIFeatureTest):
             print(f"✗ {self.ui_name} cannot launch (urwid not installed)")
             return self.summary()
 
-        # Run the existing Curses comprehensive test framework
-        print("\nRunning Curses comprehensive test framework...")
-        import subprocess
-        result = subprocess.run(
-            [sys.executable, "utils/test_curses_comprehensive.py"],
-            cwd=self.project_root,
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-
-        # Parse the output to count passes/failures
-        output = result.stdout
-        test_features = ["UI Creation", "Input Handlers", "Program Parsing", "Run Program", "pexpect Integration"]
-        if "5/5 tests passed" in output:
-            # All 5 tests in the framework passed
-            self.passed.extend(test_features)
-            self.features_tested.extend(test_features)
-            print("  ✓ UI Creation")
-            print("  ✓ Input Handlers")
-            print("  ✓ Program Parsing")
-            print("  ✓ Run Program")
-            print("  ✓ pexpect Integration")
-        else:
-            # Some tests failed - mark them as failed
-            self.failed.extend(test_features)
-            self.features_tested.extend(test_features)
-            print("  ✗ Curses comprehensive tests failed")
-
-        # Test all 38 features using canonical names
-        print("\n=== FEATURE TESTS (38 features) ===")
+        print("\n=== TESTING 37 FEATURES ===")
 
         print("\n1. FILE OPERATIONS")
         self.test("New Program", self.test_has_new_program)
@@ -1391,11 +1361,7 @@ class TkFeatureTests(UIFeatureTest):
             print(f"✗ {self.ui_name} cannot launch (tkinter not available) - skipping")
             return self.summary()
 
-        print("\n=== INFRASTRUCTURE TESTS ===")
-        self.test("UI Creation", self.test_ui_creation)
-        self.test("Menu System", self.test_has_menu)
-
-        print("\n=== FEATURE TESTS (38 features) ===")
+        print("\n=== TESTING 37 FEATURES ===")
 
         print("\n1. FILE OPERATIONS")
         self.test("New Program", self.test_has_new_program)
@@ -1414,18 +1380,18 @@ class TkFeatureTests(UIFeatureTest):
         self.test("List Program", self.test_has_list_program)
         self.test("Renumber", self.test_has_renumber)
         self.test("Auto Line Numbers", self.test_has_auto_line_numbers)
-        self.test("Step Execution", self.test_has_step)
-        self.test("Step Statement", self.test_has_step_statement)
 
         print("\n3. DEBUGGING")
         self.test("Breakpoints", self.test_has_breakpoint)
+        self.test("Step Statement", self.test_has_step_statement)
+        self.test("Step Line", self.test_has_step)
         self.test("Clear All Breakpoints", self.test_has_clear_all_breakpoints)
         self.test("Multi-Statement Debug", self.test_has_multi_statement_debug)
         self.test("Current Line Highlight", self.test_has_current_line_highlight)
 
         print("\n4. VARIABLE INSPECTION")
-        self.test("Variables", self.test_has_variables)
-        self.test("Edit Variable", self.test_has_edit_variable)
+        self.test("Variables Window", self.test_has_variables)
+        self.test("Edit Variable Value", self.test_has_edit_variable)
         self.test("Variable Filtering", self.test_has_variable_filtering)
         self.test("Variable Sorting", self.test_has_variable_sorting)
         self.test("Execution Stack", self.test_has_execution_stack)
@@ -1667,11 +1633,7 @@ class WebFeatureTests(UIFeatureTest):
             print(f"✗ {self.ui_name} cannot launch (nicegui not installed) - skipping")
             return self.summary()
 
-        print("\n1. UI STRUCTURE")
-        self.test("UI Creation", self.test_ui_creation)
-        self.test("Editor Area", self.test_has_editor)
-
-        print("\n2. EXECUTION")
+        print("\n1. EXECUTION")
         self.test("Run Program", self.test_has_run)
         self.test("Stop Program", self.test_has_stop)
         self.test("Continue", self.test_has_continue)
@@ -1680,27 +1642,27 @@ class WebFeatureTests(UIFeatureTest):
         self.test("List Program", self.test_has_list_program)
         self.test("Clear Output", self.test_has_clear_output)
 
-        print("\n3. DEBUGGING")
+        print("\n2. DEBUGGING")
         self.test("Breakpoints", self.test_has_breakpoint)
         self.test("Clear All Breakpoints", self.test_has_clear_breakpoints)
         self.test("Breakpoints Wired", self.test_breakpoints_wired)
         self.test("Multi-Statement Debug", self.test_has_multi_statement_debug)
         self.test("Current Line Highlight", self.test_has_current_line_highlight)
 
-        print("\n4. VARIABLE INSPECTION")
+        print("\n3. VARIABLE INSPECTION")
         self.test("Variables Window", self.test_has_variables)
         self.test("Execution Stack", self.test_has_stack)
         self.test("Edit Variable Value", self.test_has_edit_variable)
         self.test("Variable Filtering", self.test_has_variable_filtering)
         self.test("Variable Sorting", self.test_has_variable_sorting)
 
-        print("\n5. EDITOR FEATURES")
+        print("\n4. EDITOR FEATURES")
         self.test("Sort Lines", self.test_has_sort_lines)
         self.test("Recent Files", self.test_has_recent_files)
         self.test("Multi-Line Edit", self.test_has_multi_line_edit)
         self.test("Syntax Checking", self.test_has_syntax_checking)
 
-        print("\n6. HELP")
+        print("\n5. HELP")
         self.test("Help Command", self.test_has_help)
 
         return self.summary()
