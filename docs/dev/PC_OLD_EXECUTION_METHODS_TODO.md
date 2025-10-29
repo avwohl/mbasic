@@ -50,6 +50,66 @@ Fields that could be removed after migration:
 
 ## Migration Plan
 
+### Phase 0: Update Breakpoint API
+
+**Current API:**
+```python
+def set_breakpoint(self, line: int, stmt_offset: int = None):
+    if stmt_offset is not None:
+        pc = PC(line, stmt_offset)
+        self.state.breakpoints.add(pc)
+    else:
+        self.state.breakpoints.add(line)
+
+def clear_breakpoint(self, line: int, stmt_offset: int = None):
+    if stmt_offset is not None:
+        pc = PC(line, stmt_offset)
+        self.state.breakpoints.discard(pc)
+    else:
+        self.state.breakpoints.discard(line)
+```
+
+**New API (with PC object support):**
+```python
+def set_breakpoint(self, line_or_pc: Union[int, PC], stmt_offset: int = None):
+    """Add breakpoint. Accepts PC object or (line, offset) for backwards compatibility."""
+    if isinstance(line_or_pc, PC):
+        # PC object passed directly
+        self.state.breakpoints.add(line_or_pc)
+    elif stmt_offset is not None:
+        # Statement-level: (line, offset)
+        self.state.breakpoints.add(PC(line_or_pc, stmt_offset))
+    else:
+        # Line-level: just line number
+        self.state.breakpoints.add(line_or_pc)
+
+def clear_breakpoint(self, line_or_pc: Union[int, PC], stmt_offset: int = None):
+    """Remove breakpoint. Accepts PC object or (line, offset) for backwards compatibility."""
+    if isinstance(line_or_pc, PC):
+        self.state.breakpoints.discard(line_or_pc)
+    elif stmt_offset is not None:
+        self.state.breakpoints.discard(PC(line_or_pc, stmt_offset))
+    else:
+        self.state.breakpoints.discard(line_or_pc)
+```
+
+**Usage examples:**
+```python
+# Line-level (backwards compatible)
+interp.set_breakpoint(100)
+
+# Statement-level (backwards compatible)
+interp.set_breakpoint(100, 2)
+
+# PC object (new, cleaner)
+pc = PC(100, 2)
+interp.set_breakpoint(pc)
+
+# Or from statement table
+pc = runtime.statement_table.first_pc()
+interp.set_breakpoint(pc)
+```
+
 ### Phase 1: Convert Old Execution Methods
 
 **Option A: Convert to PC-based (recommended)**

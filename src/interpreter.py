@@ -7,7 +7,7 @@ Executes BASIC programs from AST.
 import sys
 import signal
 from dataclasses import dataclass, field
-from typing import Literal, Optional, Callable, Any
+from typing import Literal, Optional, Callable, Any, Union
 from src.runtime import Runtime
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
@@ -453,35 +453,51 @@ class Interpreter:
         """
         return self.state
 
-    def set_breakpoint(self, line: int, stmt_offset: int = None):
+    def set_breakpoint(self, line_or_pc: Union[int, PC], stmt_offset: int = None):
         """Add a breakpoint at the specified line or statement.
 
         Args:
-            line: Line number for breakpoint
+            line_or_pc: Line number (int) or PC object for breakpoint
             stmt_offset: Optional statement offset (0-based). If None, breaks on entire line.
-        """
-        if stmt_offset is not None:
-            # Statement-level breakpoint
-            pc = PC(line, stmt_offset)
-            self.state.breakpoints.add(pc)
-        else:
-            # Line-level breakpoint (backwards compatible)
-            self.state.breakpoints.add(line)
+                        Ignored if line_or_pc is a PC object.
 
-    def clear_breakpoint(self, line: int, stmt_offset: int = None):
+        Examples:
+            set_breakpoint(100)           # Line-level
+            set_breakpoint(100, 2)        # Statement-level (line 100, 3rd statement)
+            set_breakpoint(PC(100, 2))    # PC object (preferred)
+        """
+        if isinstance(line_or_pc, PC):
+            # PC object passed directly
+            self.state.breakpoints.add(line_or_pc)
+        elif stmt_offset is not None:
+            # Statement-level: (line, offset)
+            self.state.breakpoints.add(PC(line_or_pc, stmt_offset))
+        else:
+            # Line-level: just line number
+            self.state.breakpoints.add(line_or_pc)
+
+    def clear_breakpoint(self, line_or_pc: Union[int, PC], stmt_offset: int = None):
         """Remove a breakpoint at the specified line or statement.
 
         Args:
-            line: Line number to remove breakpoint from
+            line_or_pc: Line number (int) or PC object for breakpoint
             stmt_offset: Optional statement offset. If None, removes line-level breakpoint.
+                        Ignored if line_or_pc is a PC object.
+
+        Examples:
+            clear_breakpoint(100)           # Line-level
+            clear_breakpoint(100, 2)        # Statement-level
+            clear_breakpoint(PC(100, 2))    # PC object (preferred)
         """
-        if stmt_offset is not None:
-            # Statement-level breakpoint
-            pc = PC(line, stmt_offset)
-            self.state.breakpoints.discard(pc)
+        if isinstance(line_or_pc, PC):
+            # PC object passed directly
+            self.state.breakpoints.discard(line_or_pc)
+        elif stmt_offset is not None:
+            # Statement-level: (line, offset)
+            self.state.breakpoints.discard(PC(line_or_pc, stmt_offset))
         else:
-            # Line-level breakpoint
-            self.state.breakpoints.discard(line)
+            # Line-level: just line number
+            self.state.breakpoints.discard(line_or_pc)
 
     # ========================================================================
     # Legacy Execution Methods (kept for backward compatibility)
