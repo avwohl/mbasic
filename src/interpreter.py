@@ -334,20 +334,22 @@ class Interpreter:
                     return self.state
 
                 except Exception as e:
+                    # Set ErrorInfo for both handler and no-handler cases (needed by RESUME)
+                    error_code = self._map_exception_to_error_code(e)
+                    self.state.error_info = ErrorInfo(
+                        error_code=error_code,
+                        pc=pc,
+                        error_message=str(e)
+                    )
+
                     # Check if we have an error handler
                     if self.runtime.error_handler is not None and not self.runtime.in_error_handler:
-                        error_code = self._map_exception_to_error_code(e)
                         self._invoke_error_handler(error_code, pc)
                         # Error handler set npc, loop will handle it
                         continue
                     else:
-                        # No error handler - set error state
+                        # No error handler - set error state and raise
                         self.state.status = 'error'
-                        self.state.error_info = ErrorInfo(
-                            error_code=self._map_exception_to_error_code(e),
-                            pc=pc,
-                            error_message=str(e)
-                        )
                         self._restore_break_handler()
                         raise
 
