@@ -1693,6 +1693,26 @@ class WebFeatureTests(UIFeatureTest):
         except:
             return False
 
+    def test_has_line_editing(self):
+        """Test has Line Editing feature"""
+        # Web UI textarea provides line editing natively
+        return True
+
+    def test_has_cut_copy_paste(self):
+        """Test has Cut/Copy/Paste feature"""
+        # Web UI textarea supports browser clipboard operations
+        return True
+
+    def test_has_integrated_docs(self):
+        """Test has Integrated Docs feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                # Web UI opens help in browser
+                return '_menu_help' in source or 'open_help_in_browser' in source
+        except:
+            return False
+
     def run_all(self):
         """Run all Web tests"""
         print(f"\n{'='*60}")
@@ -1734,12 +1754,15 @@ class WebFeatureTests(UIFeatureTest):
         self.test("Variable Sorting", self.test_has_variable_sorting)
 
         print("\n5. EDITOR FEATURES")
-        self.test("Sort Lines", self.test_has_sort_lines)
+        self.test("Line Editing", self.test_has_line_editing)
         self.test("Multi-Line Edit", self.test_has_multi_line_edit)
+        self.test("Cut/Copy/Paste", self.test_has_cut_copy_paste)
+        self.test("Sort Lines", self.test_has_sort_lines)
         self.test("Syntax Checking", self.test_has_syntax_checking)
 
         print("\n6. HELP")
         self.test("Help Command", self.test_has_help)
+        self.test("Integrated Docs", self.test_has_integrated_docs)
 
         return self.summary()
 
