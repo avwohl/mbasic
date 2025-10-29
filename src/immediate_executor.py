@@ -174,24 +174,17 @@ class ImmediateExecutor:
                     # Restore yellow highlight if there's a current execution position
                     if hasattr(ui.interpreter, 'state') and ui.interpreter.state:
                         state = ui.interpreter.state
-                        if (state.status in ('error', 'paused', 'at_breakpoint') and
-                            hasattr(state, 'current_line') and state.current_line):
-                            # Recalculate char positions from statement index (more robust when line is edited)
-                            if hasattr(ui, '_highlight_current_statement'):
-                                # Get the updated line from runtime
-                                line_num = state.current_line
-                                stmt_idx = getattr(state, 'current_statement_index', 0)
-
-                                # Get char positions from the newly parsed line
-                                # (state.current_statement_char_start/end are now computed properties)
-                                if ui.runtime.statement_table.line_exists(line_num):
-                                    line_statements = ui.runtime.statement_table.get_line_statements(line_num)
-                                    if stmt_idx < len(line_statements):
-                                        stmt = line_statements[stmt_idx]
+                        if state.status in ('error', 'paused', 'at_breakpoint'):
+                            # Get current PC directly from runtime
+                            if hasattr(ui, '_highlight_current_statement') and hasattr(ui, 'runtime'):
+                                pc = ui.runtime.pc
+                                if not pc.halted():
+                                    # Look up the statement at current PC
+                                    stmt = ui.runtime.statement_table.get(pc)
+                                    if stmt:
                                         char_start = getattr(stmt, 'char_start', 0)
                                         char_end = getattr(stmt, 'char_end', 0)
-
-                                        ui._highlight_current_statement(line_num, char_start, char_end)
+                                        ui._highlight_current_statement(pc.line_num, char_start, char_end)
 
                     return (True, "")
 
