@@ -74,12 +74,8 @@ class Runtime:
         self.npc = None               # Next program counter (set by GOTO/GOSUB/etc., None = sequential)
         self.statement_table = StatementTable()  # Ordered collection of statements indexed by PC
 
-        # Execution control - OLD design (DEPRECATED - kept for compatibility during migration)
-        self.current_line = None      # Currently executing LineNode
-        self.current_stmt_index = 0   # Index of current statement in line
+        # Execution control
         self.halted = False           # Program finished?
-        self.next_line = None         # Set by GOTO/GOSUB for jump
-        self.next_stmt_index = None   # Set by RETURN for precise return point
 
         # Unified execution stack - tracks all active control flow (GOSUB, FOR, WHILE) in nesting order
         # Each entry: {'type': 'GOSUB'|'FOR'|'WHILE', ...type-specific fields...}
@@ -126,9 +122,7 @@ class Runtime:
 
         # STOP/CONT state preservation
         self.stopped = False              # True if program stopped via STOP or Break
-        self.stop_pc = None               # PC where STOP occurred (NEW - for CONT)
-        self.stop_line = None             # Line where STOP occurred (OLD - will be removed)
-        self.stop_stmt_index = None       # Statement index where STOP occurred (OLD - will be removed)
+        self.stop_pc = None               # PC where STOP occurred (for CONT)
 
         # Break handling (Ctrl+C)
         self.break_requested = False      # True when Ctrl+C pressed during execution
@@ -380,7 +374,7 @@ class Runtime:
 
         # Track read access
         self._variables[full_name]['last_read'] = {
-            'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
+            'line': getattr(token, 'line', self.pc.line_num if self.pc and not self.pc.halted() else None),
             'position': getattr(token, 'position', None),
             'timestamp': time.perf_counter()  # High precision timestamp for debugging
         }
@@ -463,7 +457,7 @@ class Runtime:
         elif token is not None:
             # Normal program execution or internal set (token.line may be -1 for internal/system variables)
             self._variables[full_name]['last_write'] = {
-                'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
+                'line': getattr(token, 'line', self.pc.line_num if self.pc and not self.pc.halted() else None),
                 'position': getattr(token, 'position', None),
                 'timestamp': time.perf_counter()  # High precision timestamp for debugging
             }
@@ -652,7 +646,7 @@ class Runtime:
         if token is not None:
             # Track at array level (for variables window display)
             tracking_info = {
-                'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
+                'line': getattr(token, 'line', self.pc.line_num if self.pc and not self.pc.halted() else None),
                 'position': getattr(token, 'position', None),
                 'timestamp': time.perf_counter()
             }
@@ -717,7 +711,7 @@ class Runtime:
         if token is not None:
             # Track at array level (for variables window display)
             tracking_info = {
-                'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
+                'line': getattr(token, 'line', self.pc.line_num if self.pc and not self.pc.halted() else None),
                 'position': getattr(token, 'position', None),
                 'timestamp': time.perf_counter()
             }
@@ -827,7 +821,7 @@ class Runtime:
         tracking_info = None
         if token is not None:
             tracking_info = {
-                'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
+                'line': getattr(token, 'line', self.pc.line_num if self.pc and not self.pc.halted() else None),
                 'position': getattr(token, 'position', None),
                 'timestamp': time.perf_counter()
             }
@@ -1147,9 +1141,9 @@ class Runtime:
         Check if a GOTO/GOSUB jump is pending.
 
         Returns:
-            True if next_line is set (jump pending), False otherwise
+            True if npc is set (jump pending), False otherwise
         """
-        return self.next_line is not None
+        return self.npc is not None
 
     def is_sequential_execution(self):
         """
@@ -1158,7 +1152,7 @@ class Runtime:
         Returns:
             True if no jump pending, False if GOTO/GOSUB jump is waiting
         """
-        return self.next_line is None
+        return self.npc is None
 
     def has_error_handler(self):
         """

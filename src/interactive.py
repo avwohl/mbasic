@@ -142,8 +142,6 @@ class InteractiveMode:
             # Also clear STOP state since line edits invalidate the stop position
             self.program_runtime.stopped = False
             self.program_runtime.stop_pc = None
-            self.program_runtime.stop_line = None  # OLD - will be removed in Phase 3
-            self.program_runtime.stop_stmt_index = None  # OLD - will be removed in Phase 3
 
     def _setup_readline(self):
         """Configure readline for better line editing"""
@@ -382,13 +380,8 @@ class InteractiveMode:
             self.program_runtime.stopped = False
             self.program_runtime.halted = False
 
-            # Restore execution position from PC (NEW)
-            if self.program_runtime.stop_pc:
-                self.program_runtime.pc = self.program_runtime.stop_pc
-            else:
-                # Fallback to old fields for backwards compatibility
-                self.program_runtime.current_line = self.program_runtime.stop_line
-                self.program_runtime.current_stmt_index = self.program_runtime.stop_stmt_index
+            # Restore execution position from PC
+            self.program_runtime.pc = self.program_runtime.stop_pc
 
             # Resume execution using tick-based loop (same as run())
             state = self.program_interpreter.state
