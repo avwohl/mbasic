@@ -1,31 +1,62 @@
 """Web browser help launcher for MBASIC.
 
-Opens help documentation in the system's default web browser instead of
-using custom help windows. This leverages the fact that help is already
-built for web viewing.
+Opens help documentation in the system's default web browser.
+Points to a web server serving the built MkDocs documentation.
 """
 
 import webbrowser
-import os
-import subprocess
-import time
-import socket
-from pathlib import Path
-from typing import Optional
+
+
+# URL where help documentation is served
+# This will be updated once the web server is configured
+HELP_BASE_URL = "http://YOUR_SERVER_URL_HERE"
+
+
+def open_help_in_browser(topic=None, ui_type="tk"):
+    """Open help documentation in web browser.
+
+    Args:
+        topic: Specific help topic (e.g., "statements/print", "ui/tk/index")
+        ui_type: UI type for UI-specific help ("tk", "curses", "web", "cli")
+
+    Returns:
+        bool: True if browser opened successfully
+    """
+    # Construct URL
+    if topic:
+        # Handle different topic formats
+        if not topic.startswith('/'):
+            topic = '/' + topic
+        if not topic.endswith('/') and '.' not in topic:
+            topic += '/'
+        url = HELP_BASE_URL + topic
+    else:
+        # Default to UI-specific index
+        url = f"{HELP_BASE_URL}/ui/{ui_type}/"
+
+    # Open in browser
+    try:
+        webbrowser.open(url)
+        return True
+    except Exception as e:
+        print(f"Error opening help: {e}")
+        return False
+
+
+# Simple convenience function
+def open_help():
+    """Open help documentation in browser (default page)."""
+    return open_help_in_browser()
 
 
 class WebHelpLauncher:
-    """Launches help documentation in web browser."""
+    """Legacy class wrapper for compatibility."""
 
     def __init__(self, help_root: str = "docs/help"):
-        """Initialize help launcher.
-
-        Args:
-            help_root: Path to help documentation root
-        """
+        """Initialize help launcher (legacy compatibility)."""
         self.help_root = Path(help_root)
         self.server_process = None
-        self.server_port = 8081  # Different from main web UI (8080)
+        self.server_port = 8000
 
     def open_help(self, topic: Optional[str] = None, ui_type: str = "tk"):
         """Open help documentation in web browser.

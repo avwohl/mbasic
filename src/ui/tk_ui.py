@@ -1727,17 +1727,9 @@ class TkBackend(UIBackend):
     def _menu_help(self):
         """Help > Help Topics (F1) - Opens in web browser"""
         import webbrowser
-        from pathlib import Path
-
-        # Option 1: Use web browser launcher (recommended)
-        try:
-            from .web_help_launcher import open_help_in_browser
-            open_help_in_browser(topic="ui/tk/index", ui_type="tk")
-        except ImportError:
-            # Fallback to old help browser if new launcher not available
-            from .tk_help_browser import TkHelpBrowser
-            help_root = Path(__file__).parent.parent.parent / "docs" / "help"
-            TkHelpBrowser(self.root, str(help_root), "ui/tk/index.md")
+        # Open help documentation in web browser
+        from .web_help_launcher import open_help_in_browser
+        open_help_in_browser(topic="ui/tk/index", ui_type="tk")
 
     def _menu_about(self):
         """Help > About"""
