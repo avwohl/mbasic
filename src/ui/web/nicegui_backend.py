@@ -491,18 +491,20 @@ class NiceGUIBackend(UIBackend):
     def _menu_save(self):
         """File > Save - Save current program."""
         try:
+            # If no filename, trigger Save As instead
+            if not self.current_file:
+                self._menu_save_as()
+                return
+
             # Save editor to program first
             self._save_editor_to_program()
 
-            # Get filename
-            filename = self.current_file or 'program.bas'
-
             # Download file with current editor content
             content = self.editor.value
-            ui.download(content.encode('utf-8'), filename)
+            ui.download(content.encode('utf-8'), self.current_file)
 
-            self._set_status(f'Saved: {filename}')
-            self._notify(f'Downloaded {filename}', type='positive')
+            self._set_status(f'Saved: {self.current_file}')
+            self._notify(f'Downloaded {self.current_file}', type='positive')
 
         except Exception as e:
             log_web_error("_menu_save", e)
