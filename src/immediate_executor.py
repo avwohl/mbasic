@@ -183,16 +183,13 @@ class ImmediateExecutor:
                                 stmt_idx = getattr(state, 'current_statement_index', 0)
 
                                 # Get char positions from the newly parsed line
+                                # (state.current_statement_char_start/end are now computed properties)
                                 if line_num in ui.runtime.line_table:
                                     line_node = ui.runtime.line_table[line_num]
                                     if stmt_idx < len(line_node.statements):
                                         stmt = line_node.statements[stmt_idx]
                                         char_start = getattr(stmt, 'char_start', 0)
                                         char_end = getattr(stmt, 'char_end', 0)
-
-                                        # Update state with new char positions
-                                        state.current_statement_char_start = char_start
-                                        state.current_statement_char_end = char_end
 
                                         ui._highlight_current_statement(line_num, char_start, char_end)
 

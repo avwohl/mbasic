@@ -43,13 +43,6 @@ class InterpreterState:
     status: Literal['idle', 'running', 'paused', 'done',
                     'waiting_for_input', 'at_breakpoint', 'error'] = 'idle'
 
-    # Execution position for UI display (CACHED - synced from runtime.pc during execution)
-    # NOTE: This is duplicated data! UIs should migrate to reading interpreter.runtime.pc directly.
-    # Kept for backwards compatibility with existing UIs.
-    current_line: Optional[int] = None  # Cached from runtime.pc.line_num
-    current_statement_char_start: int = 0  # Cached from statement.char_start
-    current_statement_char_end: int = 0    # Cached from statement.char_end
-
     # Input handling (THE CRITICAL STATE)
     input_prompt: Optional[str] = None
     input_variables: list = field(default_factory=list)  # Variables waiting for input
@@ -70,6 +63,47 @@ class InterpreterState:
 
     # First line flag (for CONT support)
     is_first_line: bool = True
+
+    # Reference to interpreter (for computing derived properties)
+    _interpreter: Optional['Interpreter'] = field(default=None, repr=False)
+
+    @property
+    def current_line(self) -> Optional[int]:
+        """Get current line from runtime.pc (computed property, not cached)"""
+        if self._interpreter and hasattr(self._interpreter, 'runtime'):
+            pc = self._interpreter.runtime.pc
+            return pc.line_num if pc and not pc.halted() else None
+        return None
+
+    @property
+    def current_statement_char_start(self) -> int:
+        """Get current statement char_start from statement table (computed property)"""
+        if self._interpreter and hasattr(self._interpreter, 'runtime'):
+            pc = self._interpreter.runtime.pc
+            if pc and not pc.halted():
+                stmt = self._interpreter.runtime.statement_table.get(pc)
+                if stmt:
+                    return getattr(stmt, 'char_start', 0)
+        return 0
+
+    @property
+    def current_statement_char_end(self) -> int:
+        """Get current statement char_end from statement table (computed property)"""
+        if self._interpreter and hasattr(self._interpreter, 'runtime'):
+            pc = self._interpreter.runtime.pc
+            if pc and not pc.halted():
+                stmt = self._interpreter.runtime.statement_table.get(pc)
+                if stmt:
+                    return getattr(stmt, 'char_end', 0)
+        return 0
+
+    @property
+    def current_statement_index(self) -> int:
+        """Get current statement offset from runtime.pc (computed property)"""
+        if self._interpreter and hasattr(self._interpreter, 'runtime'):
+            pc = self._interpreter.runtime.pc
+            return pc.stmt_offset if pc and not pc.halted() else 0
+        return 0
 
 
 class Interpreter:
@@ -108,7 +142,7 @@ class Interpreter:
         self.breakpoint_callback = breakpoint_callback
 
         # Execution state for tick-based execution
-        self.state = InterpreterState()
+        self.state = InterpreterState(_interpreter=self)
 
     @staticmethod
     def _make_token_info(node):
@@ -163,7 +197,7 @@ class Interpreter:
             self.runtime.setup()
 
             # Initialize state
-            self.state = InterpreterState()
+            self.state = InterpreterState(_interpreter=self)
             self.state.status = 'running'
             self.state.is_first_line = True
 
@@ -233,8 +267,6 @@ class Interpreter:
                 # Check if halted
                 if pc.halted() or self.runtime.halted:
                     self.state.status = 'done'
-                    self.state.current_statement_char_start = 0
-                    self.state.current_statement_char_end = 0
                     self._restore_break_handler()
                     return self.state
 
@@ -253,8 +285,6 @@ class Interpreter:
                     pc = self.runtime.npc
                     self.runtime.npc = None
                     self.runtime.pc = pc
-                    # Update state for UI
-                    self.state.current_line = pc.line_num
 
                 # Check for breakpoint (supports both line-level and statement-level)
                 # Check exact PC first (statement-level), then line-level
@@ -271,12 +301,6 @@ class Interpreter:
                     if not self.state.skip_next_breakpoint_check:
                         self.state.status = 'at_breakpoint'
                         self.state.skip_next_breakpoint_check = True
-                        self.state.current_line = pc.line_num
-                        # Get statement for highlighting
-                        stmt = self.runtime.statement_table.get(pc)
-                        if stmt:
-                            self.state.current_statement_char_start = getattr(stmt, 'char_start', 0)
-                            self.state.current_statement_char_end = getattr(stmt, 'char_end', 0)
                         return self.state
                     else:
                         self.state.skip_next_breakpoint_check = False
@@ -295,11 +319,6 @@ class Interpreter:
                 stmt = self.runtime.statement_table.get(pc)
                 if stmt is None:
                     raise RuntimeError(f"Invalid PC: {pc}")
-
-                # Update state for UI
-                self.state.current_line = pc.line_num
-                self.state.current_statement_char_start = getattr(stmt, 'char_start', 0)
-                self.state.current_statement_char_end = getattr(stmt, 'char_end', 0)
 
                 # Execute statement
                 try:
@@ -423,7 +442,7 @@ class Interpreter:
         Returns:
             InterpreterState: Reset state
         """
-        self.state = InterpreterState()
+        self.state = InterpreterState(_interpreter=self)
         return self.state
 
     def get_state(self):
