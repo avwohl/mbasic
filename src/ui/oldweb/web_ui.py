@@ -19,7 +19,7 @@ import sys
 import asyncio
 from datetime import datetime
 from typing import Optional, Set
-import base64
+
 
 # Add parent directories to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))

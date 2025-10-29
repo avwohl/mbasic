@@ -2660,7 +2660,7 @@ class TkBackend(UIBackend):
         """
         import tkinter as tk
         from tkinter import messagebox
-        from src.ui.ui_helpers import calculate_midpoint, find_insert_line_number, needs_renumber_for_insert
+        from src.ui.ui_helpers import calculate_midpoint
         from debug_logger import debug_log
         import re
 

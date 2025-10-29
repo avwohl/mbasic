@@ -14,7 +14,6 @@ from .settings_definitions import (
     SettingDefinition,
     SettingScope,
     get_definition,
-    get_default_value,
     validate_value,
 )
 

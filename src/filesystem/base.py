@@ -6,7 +6,7 @@ file I/O operations, especially for web-based multi-user environments.
 """
 
 from abc import ABC, abstractmethod
-from typing import BinaryIO, TextIO, Union, Optional
+from typing import Union, Optional
 
 
 class FileHandle(ABC):

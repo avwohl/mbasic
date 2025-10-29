@@ -2687,7 +2687,6 @@ class Interpreter:
         Syntax: SHOW SETTINGS ["pattern"]
         """
         from src.settings import get_settings_manager
-        from src.settings_definitions import get_all_definitions
 
         settings_mgr = get_settings_manager()
         all_settings = settings_mgr.get_all_settings()
