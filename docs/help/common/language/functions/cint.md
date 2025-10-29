@@ -33,15 +33,24 @@ Converts X to an integer by rounding the fractional portion. If X is not in the 
 ## Example
 
 ```basic
-PRINT CINT(45.67)
- 46
- Ok
- See the CDBL and CSNG functions for converting
- numbers to the double precision and single
- precision data type. See also the FIX and INT
- functions, both of which return integers.
+10 PRINT CINT(45.67)
+RUN
+46
+Ok
+
+10 PRINT CINT(12.3), CINT(12.5), CINT(12.9)
+RUN
+12  13  13
+Ok
 ```
+
+## Notes
+
+CINT rounds to the nearest integer (.5 rounds up). If you need truncation instead of rounding, use FIX or INT.
 
 ## See Also
 
-*Related functions will be linked here*
+- [FIX](fix.md) - Truncates to integer (rounds toward zero)
+- [INT](int.md) - Returns largest integer ≤ X (rounds down)
+- CSNG - Convert to single precision (not yet documented)
+- CDBL - Convert to double precision (not yet documented)
