@@ -5,27 +5,22 @@ Complete three-tier help system with web deployment and comprehensive metadata.
 ## Final Statistics
 
 ### Documentation Files
-- **Total files:** 130
-  - Language reference: 112 files (statements, functions, appendices, operators)
-  - MBASIC implementation: 7 files (getting-started, features, compatibility, not-implemented, extensions, architecture, index)
-  - Curses UI: 10 files (guides and tutorials)
-  - CLI: 1 file
-  - Tkinter: 1 file
+- **Total files:** Comprehensive three-tier help system
+  - Language reference: Statements, functions, appendices, operators
+  - MBASIC implementation: Getting started, features, compatibility, extensions
+  - UI guides: Curses, CLI, Tkinter
 
 ### Metadata Quality
 - **All files have complete front matter:**
-  - ✅ 125/125 files with meaningful descriptions (100%)
-  - ✅ 125/125 files with content-based keywords (100%)
-  - ✅ 105/125 files with syntax references (84%)
-  - ✅ 125/125 files with type and category (100%)
+  - ✅ Meaningful descriptions
+  - ✅ Content-based keywords
+  - ✅ Syntax references (where applicable)
+  - ✅ Type and category tags
 
 ### Search Coverage
-- **Total searchable keywords:** 242
-  - Language tier: 177 keywords
-  - MBASIC tier: 28 keywords
-  - Curses UI tier: 37 keywords
-- **Aliases:** 6 (e.g., "?" → PRINT, "if-then" → IF...THEN)
-- **Categories:** 18 (control-flow, mathematical, string, file-io, etc.)
+- **Searchable keywords:** Comprehensive keyword indexing across all tiers
+- **Aliases:** Multiple aliases (e.g., "?" → PRINT, "if-then" → IF...THEN)
+- **Categories:** Organized by category (control-flow, mathematical, string, file-io, etc.)
 
 ### Web Deployment
 - **MkDocs configuration:** Complete with Material theme
@@ -38,7 +33,7 @@ Complete three-tier help system with web deployment and comprehensive metadata.
 ### Tier 1: UI-Specific Documentation (📘)
 Location: `docs/help/ui/` (per-backend subdirectories: `curses/`, `cli/`, `tk/`)
 
-**Curses UI (10 files):**
+**Curses UI:**
 - [getting-started.md](../help/ui/curses/getting-started.md) - First steps
 - [quick-reference.md](../help/ui/curses/quick-reference.md) - Keyboard shortcuts
 - [keyboard-commands.md](../help/ui/curses/keyboard-commands.md) - Complete command reference
@@ -50,16 +45,16 @@ Location: `docs/help/ui/` (per-backend subdirectories: `curses/`, `cli/`, `tk/`)
 - [variables.md](../help/ui/curses/variables.md) - Variable inspector
 - [index.md](../help/ui/curses/index.md) - Unified entry point
 
-**CLI (1 file):**
+**CLI:**
 - [index.md](../help/ui/cli/index.md) - Command-line interface guide
 
-**Tkinter (1 file):**
+**Tkinter:**
 - [index.md](../help/ui/tk/index.md) - GUI interface guide
 
 ### Tier 2: MBASIC Implementation (📗)
 Location: `docs/help/mbasic/`
 
-**Documentation (7 files):**
+**Documentation:**
 - [getting-started.md](../help/mbasic/getting-started.md) - Installation and first program
 - [features.md](../help/mbasic/features.md) - Complete feature list (50+ functions, 63 statements, 18 optimizations)
 - [compatibility.md](../help/mbasic/compatibility.md) - MBASIC 5.21 compatibility (what works, what doesn't, porting guide)
@@ -71,7 +66,7 @@ Location: `docs/help/mbasic/`
 ### Tier 3: BASIC-80 Language Reference (📕)
 Location: `docs/help/common/language/`
 
-**Statements (63 files):**
+**Statements:**
 - Control flow: FOR-NEXT, IF-THEN-ELSE, WHILE-WEND, GOTO, GOSUB-RETURN, etc.
 - Input/Output: PRINT, INPUT, LINE INPUT, PRINT USING
 - File I/O: OPEN, CLOSE, FIELD, GET, PUT, etc.
@@ -79,19 +74,19 @@ Location: `docs/help/common/language/`
 - Error handling: ON ERROR, RESUME, ERROR
 - Plus 48 more
 
-**Functions (40 files):**
+**Functions:**
 - Mathematical: ABS, INT, SIN, COS, TAN, SQR, LOG, EXP, RND, etc.
 - String: LEFT$, RIGHT$, MID$, LEN, CHR$, ASC, INSTR, STR$, VAL, etc.
 - Type conversion: CINT, CSNG, CDBL, FIX
 - System: INKEY$, FRE, POS, PEEK, POKE, etc.
 
-**Appendices (4 files):**
+**Appendices:**
 - [error-codes.md](../help/common/language/appendices/error-codes.md) - All 68 error codes
 - [ascii-codes.md](../help/common/language/appendices/ascii-codes.md) - ASCII character table
 - [math-functions.md](../help/common/language/appendices/math-functions.md) - Derived mathematical functions
 - [index.md](../help/common/language/appendices/index.md) - Appendices overview
 
-**Other (2 files):**
+**Other:**
 - [operators.md](../help/common/language/operators.md) - Arithmetic, relational, logical operators
 - [index.md](../help/common/language/index.md) - Language overview
 
