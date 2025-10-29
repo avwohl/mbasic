@@ -8,7 +8,7 @@ These test that the UI backend can be instantiated and has basic structure. They
 - **Menu System** (GUI UIs only) - Tests that menu structure exists
 - **Editor Area** (GUI UIs only) - Tests that text editing area exists
 
-## Feature Tests (38 Features)
+## Feature Tests (37 Features)
 These test actual user-facing functionality from ALL_FEATURES_CANONICAL_NAMES.txt
 
 ### 1. FILE OPERATIONS (8 features)
@@ -45,48 +45,47 @@ These test actual user-facing functionality from ALL_FEATURES_CANONICAL_NAMES.tx
 25. Execution Stack
 26. Resource Usage
 
-### 5. EDITOR FEATURES (8 features)
+### 5. EDITOR FEATURES (7 features)
 27. Line Editing
 28. Multi-Line Edit
 29. Cut/Copy/Paste
-30. Undo/Redo
-31. Find/Replace
-32. Smart Insert
-33. Sort Lines
-34. Syntax Checking
+30. Find/Replace
+31. Smart Insert
+32. Sort Lines
+33. Syntax Checking
 
 ### 6. HELP SYSTEM (4 features)
-35. Help Command
-36. Integrated Docs
-37. Search Help
-38. Context Help
+34. Help Command
+35. Integrated Docs
+36. Search Help
+37. Context Help
 
 ## Test Counts by UI
 
 ### CLI
 - Infrastructure: 0
-- Features: 16/38
+- Features: 16/37
 
 ### Curses
 - Infrastructure: 5 (UI Creation, Input Handlers, Program Parsing, Run Program, pexpect Integration)
-- Features: 5/38 (Variable Filtering, Variable Sorting, Multi-Statement Debug, Current Line Highlight, Syntax Checking)
+- Features: 37/37 (all features tested)
 
 ### Tkinter
 - Infrastructure: 2 (UI Creation, Menu System)
-- Features: 38/38 (all features tested)
+- Features: 37/37 (all features tested)
 
 ### Web
 - Infrastructure: 2 (UI Creation, Editor Area)
-- Features: 23/38
+- Features: 23/37
 
 ## Total Test Count Breakdown
 
 | UI | Infrastructure | Features | Total |
 |----|---------------|----------|-------|
 | CLI | 0 | 16 | 16 |
-| Curses | 5 | 5 | 10 |
-| Tkinter | 2 | 38 | 40 |
+| Curses | 5 | 37 | 42 |
+| Tkinter | 2 | 37 | 39 |
 | Web | 2 | 23 | 25 |
-| **TOTAL** | **9** | **82** | **91** |
+| **TOTAL** | **9** | **113** | **122** |
 
-**Note:** Infrastructure tests are necessary to verify the UI can launch, but only the 38 feature tests count toward "feature coverage".
+**Note:** Infrastructure tests are necessary to verify the UI can launch, but only the 37 feature tests count toward "feature coverage".

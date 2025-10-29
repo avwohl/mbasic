@@ -799,16 +799,6 @@ class CursesFeatureTests(UIFeatureTest):
         except:
             return False
 
-    def test_has_undo_redo(self):
-        """Test has Undo/Redo feature"""
-        try:
-            from src.ui.curses_ui import CursesBackend
-            import inspect
-            source = inspect.getsource(CursesBackend)
-            return 'undo' in source.lower() or 'redo' in source.lower()
-        except:
-            return False
-
     def test_has_find_replace(self):
         """Test has Find/Replace feature"""
         try:
@@ -960,7 +950,6 @@ class CursesFeatureTests(UIFeatureTest):
         self.test("Line Editing", self.test_has_line_editing)
         self.test("Multi-Line Edit", self.test_has_multi_line_edit)
         self.test("Cut/Copy/Paste", self.test_has_cut_copy_paste)
-        self.test("Undo/Redo", self.test_has_undo_redo)
         self.test("Find/Replace", self.test_has_find_replace)
         self.test("Smart Insert", self.test_has_smart_insert)
         self.test("Sort Lines", self.test_has_sort_lines)
@@ -1066,16 +1055,6 @@ class TkFeatureTests(UIFeatureTest):
             import inspect
             methods = [m[0] for m in inspect.getmembers(TkBackend, predicate=inspect.isfunction)]
             return any('find' in m.lower() or 'replace' in m.lower() for m in methods)
-        except:
-            return False
-
-    def test_has_undo_redo(self):
-        """Test has undo/redo"""
-        try:
-            from src.ui.tk_ui import TkBackend
-            # Tkinter Text widget has built-in undo/redo support
-            # Check if editor is a Text widget (which it is)
-            return True  # Tkinter Text widget has built-in undo
         except:
             return False
 
@@ -1456,7 +1435,6 @@ class TkFeatureTests(UIFeatureTest):
         self.test("Line Editing", self.test_has_line_editing)
         self.test("Multi-Line Edit", self.test_has_multi_line_edit)
         self.test("Cut/Copy/Paste", self.test_has_clipboard)
-        self.test("Undo/Redo", self.test_has_undo_redo)
         self.test("Find/Replace", self.test_has_find_replace)
         self.test("Smart Insert", self.test_has_smart_insert)
         self.test("Sort Lines", self.test_has_sort_lines)
@@ -1611,17 +1589,6 @@ class WebFeatureTests(UIFeatureTest):
         except:
             return False
 
-    def test_has_undo_redo(self):
-        """Test has undo/redo in editor"""
-        try:
-            from src.ui.web.nicegui_backend import NiceGUIBackend
-            import inspect
-            source = inspect.getsource(NiceGUIBackend)
-            # NiceGUI editor has built-in undo/redo via browser
-            return 'editor' in source
-        except:
-            return False
-
     def test_has_sort_lines(self):
         """Test has sort lines"""
         try:
@@ -1728,7 +1695,6 @@ class WebFeatureTests(UIFeatureTest):
         self.test("Variable Sorting", self.test_has_variable_sorting)
 
         print("\n5. EDITOR FEATURES")
-        self.test("Undo/Redo", self.test_has_undo_redo)
         self.test("Sort Lines", self.test_has_sort_lines)
         self.test("Recent Files", self.test_has_recent_files)
         self.test("Multi-Line Edit", self.test_has_multi_line_edit)

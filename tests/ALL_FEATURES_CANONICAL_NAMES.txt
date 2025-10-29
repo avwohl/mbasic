@@ -1,4 +1,4 @@
-# All 38 Features - Canonical Names
+# All 37 Features - Canonical Names
 # These are the standard feature names used in test scripts
 
 ## FILE OPERATIONS (8 features)
@@ -35,11 +35,10 @@ Variable Sorting
 Execution Stack
 Resource Usage
 
-## EDITOR FEATURES (8 features)
+## EDITOR FEATURES (7 features)
 Line Editing
 Multi-Line Edit
 Cut/Copy/Paste
-Undo/Redo
 Find/Replace
 Smart Insert
 Sort Lines
@@ -51,4 +50,4 @@ Integrated Docs
 Search Help
 Context Help
 
-# TOTAL: 38 features
+# TOTAL: 37 features
