@@ -448,13 +448,15 @@ class NiceGUIBackend(UIBackend):
         """File > Open - Load program from file."""
         try:
             # Create upload dialog
-            with ui.dialog() as dialog, ui.card():
-                ui.label('Open BASIC Program')
+            with ui.dialog() as dialog, ui.card().classes('w-96'):
+                ui.label('Open BASIC Program').classes('text-h6 mb-4')
+                ui.label('Select a .BAS or .TXT file to open:').classes('mb-2')
                 upload = ui.upload(
                     on_upload=lambda e: self._handle_file_upload(e, dialog),
                     auto_upload=True
                 ).classes('w-full').props('accept=".bas,.txt"')
-                ui.button('Cancel', on_click=dialog.close)
+                with ui.row().classes('w-full justify-end mt-4'):
+                    ui.button('Cancel', on_click=dialog.close)
             dialog.open()
         except Exception as e:
             log_web_error("_menu_open", e)
