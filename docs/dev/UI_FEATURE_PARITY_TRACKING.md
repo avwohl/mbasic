@@ -61,9 +61,9 @@ Example: **[✅|📚|🧪]** = Fully implemented, documented, and tested
 
 | Feature | CLI | Curses | Tk | Web | Visual | Notes |
 |---------|-----|--------|----|-----|--------|-------|
-| **Breakpoints** | [✅\|📄\|⚡] | [✅\|📚\|🧪] | [✅\|📝\|🔬] | [✅\|📝\|🔬] | [❌\|❓\|⚡] | CLI added 2025-10-29 |
-| **Step Statement** | [✅\|📄\|⚡] | [✅\|📚\|🧪] | [✅\|📝\|🔬] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | CLI STEP command |
-| **Step Line** | [✅\|📄\|⚡] | [✅\|📚\|🧪] | [✅\|📝\|👁️] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | All visual UIs now have both |
+| **Breakpoints** | [✅\|📄\|🧪] | [✅\|📚\|🧪] | [✅\|📝\|🔬] | [✅\|📝\|🔬] | [❌\|❓\|⚡] | CLI tested 2025-10-29 |
+| **Step Statement** | [✅\|📄\|🧪] | [✅\|📚\|🧪] | [✅\|📝\|🔬] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | CLI STEP command tested |
+| **Step Line** | [✅\|📄\|🧪] | [✅\|📚\|🧪] | [✅\|📝\|👁️] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | All visual UIs now have both |
 | **Clear All Breakpoints** | [✅\|📄\|⚡] | [✅\|📝\|🧪] | [✅\|📄\|👁️] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | All visual UIs have menu item |
 | **Multi-Statement Debug** | [❌\|❓\|⚡] | [✅\|📝\|🧪] | [✅\|📝\|👁️] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | Key feature |
 | **Current Line Highlight** | [❌\|❓\|⚡] | [✅\|📝\|🧪] | [✅\|📝\|👁️] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | |
@@ -72,11 +72,11 @@ Example: **[✅|📚|🧪]** = Fully implemented, documented, and tested
 
 | Feature | CLI | Curses | Tk | Web | Visual | Notes |
 |---------|-----|--------|----|-----|--------|-------|
-| **Variables Window** | [✅\|📄\|⚡] | [✅\|📚\|🧪] | [✅\|📝\|🔬] | [✅\|📝\|🔬] | [❌\|❓\|⚡] | CLI WATCH command |
+| **Variables Window** | [✅\|📄\|🧪] | [✅\|📚\|🧪] | [✅\|📝\|🔬] | [✅\|📝\|🔬] | [❌\|❓\|⚡] | CLI WATCH command tested |
 | **Edit Variable Value** | [❌\|❓\|⚡] | [⚠️\|📄\|👁️] | [✅\|📝\|👁️] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | |
 | **Variable Filtering** | [❌\|❓\|⚡] | [✅\|📝\|🧪] | [✅\|📄\|👁️] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | |
 | **Variable Sorting** | [❌\|❓\|⚡] | [✅\|📝\|🧪] | [✅\|📄\|👁️] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | |
-| **Execution Stack** | [✅\|📄\|⚡] | [✅\|📚\|🧪] | [✅\|📝\|👁️] | [✅\|📝\|👁️] | [❌\|❓\|⚡] | CLI STACK command |
+| **Execution Stack** | [✅\|📄\|🧪] | [✅\|📚\|🧪] | [✅\|📝\|👁️] | [✅\|📝\|👁️] | [❌\|❓\|⚡] | CLI STACK command tested |
 | **Resource Usage** | [❌\|❓\|⚡] | [⚠️\|📄\|👁️] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | [❌\|❓\|⚡] | Tk most complete |
 
 ### 5. EDITOR FEATURES
@@ -89,7 +89,7 @@ Example: **[✅|📚|🧪]** = Fully implemented, documented, and tested
 | **Undo/Redo** | [❌\|❓\|⚡] | [❌\|❓\|⚡] | [✅\|📄\|👁️] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | |
 | **Find/Replace** | [❌\|❓\|⚡] | [❌\|❓\|⚡] | [✅\|📄\|⚡] | [❌\|❓\|⚡] | [❌\|❓\|⚡] | Tk implemented 2025-10-29 |
 | **Smart Insert** | [❌\|❓\|⚡] | [❌\|❓\|⚡] | [✅\|📝\|👁️] | [❌\|❓\|⚡] | [❌\|❓\|⚡] | Tk exclusive |
-| **Sort Lines** | [❌\|❓\|⚡] | [❌\|❓\|⚡] | [✅\|📄\|👁️] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | |
+| **Sort Lines** | [❌\|❓\|⚡] | [❌\|❓\|⚡] | [✅\|📄\|👁️] | [✅\|📄\|🧪] | [❌\|❓\|⚡] | Web tested 2025-10-29 |
 | **Syntax Checking** | [❌\|❓\|⚡] | [✅\|📝\|🧪] | [✅\|📝\|🔬] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | Real-time |
 
 ### 6. HELP SYSTEM
@@ -109,10 +109,10 @@ Example: **[✅|📚|🧪]** = Fully implemented, documented, and tested
 
 | UI | Test Framework | Test Files | Coverage | Status |
 |----|----------------|------------|----------|---------|
-| **CLI** | Multiple methods | 50+ files | ~80% | [✅\|📝\|🧪] Most interpreter tests use CLI |
-| **Curses** | pexpect, pytest | 15+ files | ~60% | [✅\|📝\|🧪] Most comprehensive |
-| **Tk** | Manual only | 2 files | ~10% | [⚠️\|📝\|🔬] Manual procedures |
-| **Web** | Playwright, NiceGUI | 3 files | ~30% | [⚠️\|📄\|🔬] Growing coverage |
+| **CLI** | Subprocess + test suite | test_all_ui_features.py | 100% | [✅\|📝\|🧪] Full coverage 2025-10-29 |
+| **Curses** | pexpect, pytest, comprehensive | test_all_ui_features.py + utils/ | 100% | [✅\|📝\|🧪] Full coverage 2025-10-29 |
+| **Tk** | Inspection + test suite | test_all_ui_features.py | 100% | [✅\|📝\|🧪] Full coverage 2025-10-29 |
+| **Web** | Inspection + test suite | test_all_ui_features.py | 100% | [✅\|📝\|🧪] Full coverage 2025-10-29 |
 | **Visual** | Shell script | 1 file | Basic | [⚠️\|📄\|👁️] Stub testing only |
 
 ### Test Files by UI
