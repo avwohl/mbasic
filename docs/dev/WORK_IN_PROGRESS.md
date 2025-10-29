@@ -2,29 +2,35 @@
 
 ## No Active Work
 
-Last session completed: 2025-10-29 - error state redundancy removal (v1.0.300)
+Last session completed: 2025-10-29 - AST/line_table_dict redundancy removal (v1.0.300)
 
 All work committed and pushed.
 
 ### Session Summary
-Removed redundant `error_occurred` and `in_error_handler` boolean flags from Runtime. Both were duplicating state already tracked by `state.error_info`.
+Removed multiple redundant state fields from Runtime after identifying they were only needed temporarily during initialization.
 
-**Changes:**
-- Replaced all `error_occurred` checks with `state.error_info is not None`
-- Replaced all `in_error_handler` checks with `state.error_info is not None`
+**Part 1: Error state redundancy (v1.0.299)**
+- Removed `error_occurred` and `in_error_handler` boolean flags
+- Both were duplicating state already tracked by `state.error_info`
 - Fixed error handler invocation logic - check for existing error_info BEFORE setting new one
-- Removed error_occurred and in_error_handler fields from Runtime.__init__
-- Updated 6 locations in interpreter.py to use state.error_info instead
-- All error handling tests passing (ON ERROR GOTO, RESUME, ERL%, ERR%, ERS%)
+- All error handling tests passing
+
+**Part 2: AST/line_table_dict redundancy (v1.0.300)**
+- Removed `self.ast` and `self.line_table_dict` fields
+- Both were only used once during `setup()` to build statement_table
+- Replaced with single `self._ast_or_line_table` field that's only used during setup()
+- Simplified initialization logic - no longer maintains two separate code paths
+- All tests passing (FOR, WHILE, GOSUB, error handling)
 
 **Impact:**
-- Eliminated redundant state tracking - error_info is now single source of truth
-- Prevented potential sync bugs between the 3 pieces of state
-- Simplified error state management
+- Eliminated 4 redundant state fields from Runtime
+- Prevented potential sync bugs between duplicate state
+- Simplified initialization - statement_table is now the primary data structure
+- Cleaner architecture: temporary setup data doesn't persist as instance fields
 
 ### Next Session Recommendations
-- Continue looking for other redundant state tracking patterns
-- Review other opportunities for state consolidation
+- Review other Runtime fields for similar patterns
+- Consider if `_ast_or_line_table` could be made a local variable in setup() and removed entirely
 
 ---
 

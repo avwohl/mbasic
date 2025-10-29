@@ -47,13 +47,9 @@ class Runtime:
             ast_or_line_table: Either a ProgramNode AST (old style) or a dict {line_num: LineNode} (new style)
             line_text_map: Optional dict {line_num: line_text} for error messages
         """
-        # Support both old-style (full AST) and new-style (line table dict)
-        if isinstance(ast_or_line_table, dict):
-            self.ast = None
-            self.line_table_dict = ast_or_line_table
-        else:
-            self.ast = ast_or_line_table
-            self.line_table_dict = None
+        # Store input for setup() - will be processed into statement_table
+        # Can be either ProgramNode AST or dict {line_num: LineNode}
+        self._ast_or_line_table = ast_or_line_table
 
         # Variable storage (PRIVATE - use get_variable/set_variable methods)
         # Each variable is stored as: name_with_suffix -> {'value': val, 'last_read': {...}, 'last_write': {...}, 'original_case': str, 'case_variants': [...]}
@@ -139,13 +135,13 @@ class Runtime:
         Initialize runtime by building lookup tables.
         Call this once before execution starts.
         """
-        # Determine which lines to process
-        if self.line_table_dict:
-            # New style: line_table_dict already provided
-            lines_to_process = self.line_table_dict.values()
+        # Determine which lines to process from input
+        if isinstance(self._ast_or_line_table, dict):
+            # New style: dict {line_num: LineNode} already provided
+            lines_to_process = self._ast_or_line_table.values()
         else:
-            # Old style: build from AST
-            lines_to_process = self.ast.lines
+            # Old style: ProgramNode AST - extract lines
+            lines_to_process = self._ast_or_line_table.lines
 
         # Build statement table and extract DATA values and DEF FN definitions
         for line in lines_to_process:
