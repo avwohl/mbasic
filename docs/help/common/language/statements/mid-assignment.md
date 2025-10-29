@@ -80,6 +80,6 @@ Ok
 
 ## See Also
 
-- [MID$](mid_dollar.md) - Extract substring from string (function)
-- [LEFT$](left_dollar.md) - Extract leftmost characters
-- [RIGHT$](right_dollar.md) - Extract rightmost characters
+- [MID$](../functions/mid_dollar.md) - Extract substring from string (function)
+- [LEFT$](../functions/left_dollar.md) - Extract leftmost characters
+- [RIGHT$](../functions/right_dollar.md) - Extract rightmost characters

@@ -67,7 +67,7 @@ The file must be opened for sequential output before using WRITE #.
 
 ## See Also
 
-- [PRINT #](printi.md) - Write to file without automatic delimiters
+- [PRINT #](printi-printi-using.md) - Write to file without automatic delimiters
 - [INPUT #](inputi.md) - Read data from sequential file
 - [OPEN](open.md) - Open file for I/O
 - [CLOSE](close.md) - Close file
