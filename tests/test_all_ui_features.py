@@ -1585,18 +1585,36 @@ class WebFeatureTests(UIFeatureTest):
 
     def test_has_current_line_highlight(self):
         """Test has current line highlighting"""
-        # Web UI does not have visual line highlighting during debugging
-        return False
+        try:
+            # Check if Web UI has current line indicator
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                # Look for current_line_label and highlighting logic
+                return 'current_line_label' in source and 'Executing line' in source
+        except:
+            return False
 
     def test_has_edit_variable(self):
         """Test can edit variable values"""
-        # Web UI variables window is read-only (no edit functionality)
-        return False
+        try:
+            # Check if variables window has edit functionality
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                # Look for edit_variable function and rowDblclick handler
+                return 'edit_variable' in source and 'rowDblclick' in source
+        except:
+            return False
 
     def test_has_variable_filtering(self):
         """Test has variable filtering"""
-        # Web UI variables window does not have filtering
-        return False
+        try:
+            # Check if variables window has filter functionality
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                # Look for filter input in variables window
+                return 'filter_input' in source and '_show_variables_window' in source
+        except:
+            return False
 
     def test_has_variable_sorting(self):
         """Test has variable sorting"""
@@ -1620,8 +1638,14 @@ class WebFeatureTests(UIFeatureTest):
 
     def test_has_syntax_checking(self):
         """Test has syntax checking"""
-        # Web UI does not have real-time syntax checking
-        return False
+        try:
+            # Check if Web UI has syntax checking functionality
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                # Look for _check_syntax method and syntax_error_label
+                return '_check_syntax' in source and 'syntax_error_label' in source
+        except:
+            return False
 
     def run_all(self):
         """Run all Web tests"""
@@ -1647,16 +1671,20 @@ class WebFeatureTests(UIFeatureTest):
         self.test("Clear All Breakpoints", self.test_has_clear_breakpoints)
         self.test("Breakpoints Wired", self.test_breakpoints_wired)
         self.test("Multi-Statement Debug", self.test_has_multi_statement_debug)
+        self.test("Current Line Highlight", self.test_has_current_line_highlight)
 
         print("\n3. VARIABLE INSPECTION")
         self.test("Variables Window", self.test_has_variables)
         self.test("Execution Stack", self.test_has_stack)
+        self.test("Edit Variable Value", self.test_has_edit_variable)
+        self.test("Variable Filtering", self.test_has_variable_filtering)
         self.test("Variable Sorting", self.test_has_variable_sorting)
 
         print("\n4. EDITOR FEATURES")
         self.test("Sort Lines", self.test_has_sort_lines)
         self.test("Recent Files", self.test_has_recent_files)
         self.test("Multi-Line Edit", self.test_has_multi_line_edit)
+        self.test("Syntax Checking", self.test_has_syntax_checking)
 
         print("\n5. HELP")
         self.test("Help Command", self.test_has_help)

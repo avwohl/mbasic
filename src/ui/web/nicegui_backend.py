@@ -168,6 +168,7 @@ class NiceGUIBackend(UIBackend):
         self.editor = None
         self.output = None
         self.status_label = None
+        self.current_line_label = None  # Current line indicator
         self.immediate_entry = None  # Immediate mode command input
         self.recent_files_menu = None  # Recent files submenu
 
@@ -209,6 +210,8 @@ class NiceGUIBackend(UIBackend):
                 ui.button('Step Line', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
                 ui.button('Step Stmt', on_click=self._menu_step_stmt, icon='redo').mark('btn_step_stmt')
                 ui.button('Continue', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
+                ui.separator().props('vertical')
+                ui.button('Check Syntax', on_click=self._check_syntax, icon='check_circle').mark('btn_check_syntax')
 
             # Main content area
             with ui.element('div').style('width: 100%; display: flex; flex-direction: column;'):
@@ -218,6 +221,14 @@ class NiceGUIBackend(UIBackend):
                     placeholder='Program Editor'
                 ).style('width: 100%;').props('outlined dense rows=10').mark('editor')
                 self.editor.on('keydown.enter', self._on_enter_key)
+
+                # Current line indicator
+                self.current_line_label = ui.label('').classes('text-sm font-mono bg-yellow-100 p-1')
+                self.current_line_label.visible = False
+
+                # Syntax error indicator
+                self.syntax_error_label = ui.label('').classes('text-sm font-mono bg-red-100 text-red-700 p-1')
+                self.syntax_error_label.visible = False
 
                 # Output
                 self.output = ui.textarea(
@@ -651,6 +662,9 @@ class NiceGUIBackend(UIBackend):
                 self._append_output("\n--- Program finished ---\n")
                 self._set_status("Ready")
                 self.running = False
+                # Hide current line highlight
+                if self.current_line_label:
+                    self.current_line_label.visible = False
                 if hasattr(self, 'exec_timer') and self.exec_timer:
                     self.exec_timer.cancel()
             elif state.status == 'error':
@@ -658,12 +672,19 @@ class NiceGUIBackend(UIBackend):
                 self._append_output(f"\n--- Error: {error_msg} ---\n")
                 self._set_status("Error")
                 self.running = False
+                # Hide current line highlight
+                if self.current_line_label:
+                    self.current_line_label.visible = False
                 if hasattr(self, 'exec_timer') and self.exec_timer:
                     self.exec_timer.cancel()
             elif state.status == 'paused' or state.status == 'at_breakpoint':
                 self._set_status(f"Paused at line {state.current_line}")
                 self.running = False
                 self.paused = True
+                # Show current line highlight
+                if self.current_line_label:
+                    self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
+                    self.current_line_label.visible = True
                 if hasattr(self, 'exec_timer') and self.exec_timer:
                     self.exec_timer.cancel()
 
@@ -871,6 +892,9 @@ class NiceGUIBackend(UIBackend):
                 if not variables:
                     ui.label('No variables defined').classes('text-gray-500 p-4')
                 else:
+                    # Add search/filter box
+                    filter_input = ui.input(placeholder='Filter variables...').classes('w-full mb-2')
+
                     # Create table
                     columns = [
                         {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left'},
@@ -906,7 +930,52 @@ class NiceGUIBackend(UIBackend):
                             'value': value_str
                         })
 
-                    ui.table(columns=columns, rows=rows, row_key='name').classes('w-full')
+                    # Create table with filter binding and edit capability
+                    table = ui.table(columns=columns, rows=rows, row_key='name').classes('w-full')
+
+                    # Connect filter to table
+                    filter_input.bind_value(table, 'filter')
+
+                    # Add double-click handler for editing values
+                    async def edit_variable(e):
+                        """Handle double-click to edit variable value."""
+                        if e.args and 'row' in e.args:
+                            var_name = e.args['row']['name']
+                            current_value = variables.get(var_name)
+
+                            # Prompt for new value
+                            with ui.dialog() as edit_dialog, ui.card():
+                                ui.label(f'Edit Variable: {var_name}').classes('text-lg font-bold')
+                                new_value_input = ui.input(
+                                    label='New Value',
+                                    value=str(current_value)
+                                ).classes('w-64')
+
+                                def save_edit():
+                                    try:
+                                        # Update variable in runtime
+                                        new_val = new_value_input.value
+                                        # Try to preserve type
+                                        if isinstance(current_value, int):
+                                            self.runtime.variables[var_name] = int(new_val)
+                                        elif isinstance(current_value, float):
+                                            self.runtime.variables[var_name] = float(new_val)
+                                        else:
+                                            self.runtime.variables[var_name] = new_val
+
+                                        edit_dialog.close()
+                                        dialog.close()
+                                        self._notify(f'Variable {var_name} updated', type='positive')
+                                    except Exception as ex:
+                                        self._notify(f'Error: {ex}', type='negative')
+
+                                with ui.row():
+                                    ui.button('Save', on_click=save_edit).classes('bg-blue-500')
+                                    ui.button('Cancel', on_click=edit_dialog.close)
+
+                            edit_dialog.open()
+
+                    table.on('rowDblclick', edit_variable)
 
                 ui.button('Close', on_click=dialog.close).classes('mt-4')
             dialog.open()
@@ -957,6 +1026,60 @@ class NiceGUIBackend(UIBackend):
     def _menu_about(self):
         """Help > About."""
         self._notify('MBASIC 5.21 Web IDE\nBuilt with NiceGUI', type='info')
+
+    def _check_syntax(self):
+        """Check syntax of current program."""
+        try:
+            # Get editor content
+            text = self.editor.value
+            if not text or not text.strip():
+                self.syntax_error_label.visible = False
+                self._notify('No program to check', type='info')
+                return
+
+            # Parse each line and collect errors
+            lines = text.split('\n')
+            errors = []
+
+            for line_text in lines:
+                line_text = line_text.strip()
+                if not line_text:
+                    continue  # Skip blank lines
+
+                # Parse line number
+                match = re.match(r'^(\d+)(?:\s|$)', line_text)
+                if not match:
+                    errors.append(f'Line must start with number: {line_text[:30]}...')
+                    continue
+
+                line_num = int(match.group(1))
+
+                # Try to parse the line
+                try:
+                    from src.parser import Parser
+                    from src.lexer import Lexer
+                    lexer = Lexer(line_text)
+                    tokens = lexer.tokenize()
+                    parser = Parser(tokens)
+                    parser.parse_line()
+                except Exception as e:
+                    errors.append(f'Line {line_num}: {str(e)}')
+
+            # Display results
+            if errors:
+                error_msg = '\n'.join(errors[:5])
+                if len(errors) > 5:
+                    error_msg += f'\n... and {len(errors)-5} more errors'
+                self.syntax_error_label.set_text(f'Syntax Errors:\n{error_msg}')
+                self.syntax_error_label.visible = True
+                self._notify(f'Found {len(errors)} syntax error(s)', type='warning')
+            else:
+                self.syntax_error_label.visible = False
+                self._notify('No syntax errors found', type='positive')
+
+        except Exception as e:
+            log_web_error("_check_syntax", e)
+            self._notify(f'Error checking syntax: {e}', type='negative')
 
     # =========================================================================
     # Editor Actions
