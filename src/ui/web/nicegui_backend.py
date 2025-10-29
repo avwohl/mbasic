@@ -206,7 +206,8 @@ class NiceGUIBackend(UIBackend):
                 ui.separator().props('vertical')
                 ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
                 ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
-                ui.button('Step', on_click=self._menu_step, icon='skip_next').mark('btn_step')
+                ui.button('Step Line', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
+                ui.button('Step Stmt', on_click=self._menu_step_stmt, icon='redo').mark('btn_step_stmt')
                 ui.button('Continue', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
 
             # Main content area
@@ -270,7 +271,8 @@ class NiceGUIBackend(UIBackend):
                 with ui.menu():
                     ui.menu_item('Run Program', on_click=self._menu_run)
                     ui.menu_item('Stop', on_click=self._menu_stop)
-                    ui.menu_item('Step', on_click=self._menu_step)
+                    ui.menu_item('Step Line', on_click=self._menu_step_line)
+                    ui.menu_item('Step Statement', on_click=self._menu_step_stmt)
                     ui.menu_item('Continue', on_click=self._menu_continue)
                     ui.separator()
                     ui.menu_item('List Program', on_click=self._menu_list)
@@ -660,11 +662,11 @@ class NiceGUIBackend(UIBackend):
         else:
             self._set_status('No program running')
 
-    def _menu_step(self):
-        """Run > Step - Step one line."""
+    def _menu_step_line(self):
+        """Run > Step Line - Execute all statements on current line and pause."""
         try:
             if not self.running:
-                # Not running - start in step mode
+                # Not running - start program and step one line
                 if not self._save_editor_to_program():
                     return  # Parse errors
 
@@ -672,12 +674,8 @@ class NiceGUIBackend(UIBackend):
                     self._notify('No program loaded', type='warning')
                     return
 
-                # Start execution in step mode
-                # Same setup as _menu_run
+                # Start execution
                 self._clear_output()
-
-                # Get program AST
-                program_ast = self.program.get_program_ast()
 
                 # Create runtime and interpreter
                 from src.resource_limits import create_local_limits
@@ -698,32 +696,102 @@ class NiceGUIBackend(UIBackend):
                     self._set_status('Error')
                     return
 
-                # Mark as running but paused
-                self.running = True
-                self.paused = True
+                # Execute one line
+                state = self.interpreter.tick(mode='step_line', max_statements=100)
+                self._handle_step_result(state, 'line')
 
-                # Start async execution
-                ui.timer(0.01, self._execute_tick, once=False)
-                self._set_status('Stepping...')
             else:
-                # Already running - step one tick
-                if self.paused and self.interpreter:
-                    self.paused = False  # Allow one tick
-                    # The tick handler will pause again
-                    self._set_status('Step')
+                # Already running - step one line
+                if self.interpreter:
+                    state = self.interpreter.tick(mode='step_line', max_statements=100)
+                    self._handle_step_result(state, 'line')
 
         except Exception as e:
-            log_web_error("_menu_step", e)
+            log_web_error("_menu_step_line", e)
             self._notify(f'Error: {e}', type='negative')
 
+    def _menu_step_stmt(self):
+        """Run > Step Statement - Execute one statement and pause."""
+        try:
+            if not self.running:
+                # Not running - start program and step one statement
+                if not self._save_editor_to_program():
+                    return  # Parse errors
+
+                if not self.program.lines:
+                    self._notify('No program loaded', type='warning')
+                    return
+
+                # Start execution
+                self._clear_output()
+
+                # Create runtime and interpreter
+                from src.resource_limits import create_local_limits
+                self.runtime = Runtime(self.program.line_asts, self.program.lines)
+
+                # Create IO handler
+                self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
+                self.interpreter = Interpreter(self.runtime, self.exec_io, limits=create_local_limits())
+
+                # Wire up interpreter
+                self.interpreter.interactive_mode = self
+
+                # Start interpreter
+                state = self.interpreter.start()
+                if state.status == 'error':
+                    error_msg = state.error_info.error_message if state.error_info else 'Unknown'
+                    self._append_output(f"\n--- Setup error: {error_msg} ---\n")
+                    self._set_status('Error')
+                    return
+
+                # Execute one statement
+                state = self.interpreter.tick(mode='step_statement', max_statements=1)
+                self._handle_step_result(state, 'statement')
+
+            else:
+                # Already running - step one statement
+                if self.interpreter:
+                    state = self.interpreter.tick(mode='step_statement', max_statements=1)
+                    self._handle_step_result(state, 'statement')
+
+        except Exception as e:
+            log_web_error("_menu_step_stmt", e)
+            self._notify(f'Error: {e}', type='negative')
+
+    def _handle_step_result(self, state, step_type):
+        """Handle result of a step operation."""
+        if state.status == 'done':
+            self._append_output("\n--- Program finished ---\n")
+            self._set_status("Ready")
+            self.running = False
+            self.paused = False
+        elif state.status == 'error':
+            error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+            self._append_output(f"\n--- Error: {error_msg} ---\n")
+            self._set_status("Error")
+            self.running = False
+            self.paused = False
+        elif state.status in ('paused', 'at_breakpoint'):
+            self._set_status(f"Paused at line {state.current_line}")
+            self.running = True
+            self.paused = True
+        elif state.status == 'running':
+            # Still running after step - mark as paused to prevent automatic continuation
+            self._set_status(f"Paused at line {state.current_line}")
+            self.running = True
+            self.paused = True
+
     def _menu_continue(self):
-        """Run > Continue - Continue from breakpoint."""
+        """Run > Continue - Continue from breakpoint/pause."""
         try:
             if self.running and self.paused:
                 self.paused = False
                 self._set_status('Continuing...')
+                # Start timer to continue execution in run mode
+                if not hasattr(self, 'exec_timer') or not self.exec_timer:
+                    self.exec_timer = ui.timer(0.01, self._execute_tick, once=False)
             else:
-                self._notify('Not paused at breakpoint', type='warning')
+                self._notify('Not paused', type='warning')
 
         except Exception as e:
             log_web_error("_menu_continue", e)
