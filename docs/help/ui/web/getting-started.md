@@ -48,8 +48,9 @@ Quick-access buttons below the menu bar:
 - **Save As** - Download program with custom filename
 - **Run** - Parse and execute the program (▶️ green button)
 - **Stop** - Stop running program (⏹️ red button)
-- **Step** - Execute one statement at a time (⏭️ button)
-- **Continue** - Resume execution after stepping (▶️⏸️ button)
+- **Step Line** - Execute all statements on current line, then pause (⏭️ button)
+- **Step Stmt** - Execute one statement, then pause (↻ button)
+- **Continue** - Resume normal execution after stepping (▶️⏸️ button)
 
 ### 3. Program Editor
 
@@ -258,26 +259,40 @@ Output shows: 1 2 3 4 5
 
 ### Step Execution
 
-Want to see your program run one statement at a time?
+The Web UI provides two types of stepping:
 
-1. Click **Step** button instead of Run
-2. Program executes first statement and pauses
-3. Click **Step** again to execute next statement
-4. Click **Continue** to resume normal execution
-5. Click **Stop** to end execution
+**Step Statement** - Execute one statement at a time:
+1. Click **Step Stmt** button
+2. Program executes one statement and pauses
+3. Click **Step Stmt** again for next statement
+4. Useful for debugging complex lines with multiple statements
+
+**Step Line** - Execute all statements on one line, then pause:
+1. Click **Step Line** button
+2. Program executes all statements on current line and pauses
+3. Click **Step Line** again for next line
+4. Faster than statement stepping for most debugging
 
 **Example:**
 ```basic
 10 PRINT "Step 1"
-20 PRINT "Step 2"
-30 PRINT "Step 3"
+20 X=1: Y=2: PRINT X+Y
+30 PRINT "Step 2"
 40 END
 ```
 
-Click **Step** → Output shows "Step 1", program pauses
-Click **Step** → Output shows "Step 2", program pauses
-Click **Step** → Output shows "Step 3", program pauses
-Click **Step** → Program ends
+**Using Step Stmt:**
+- Click **Step Stmt** → Output shows "Step 1", pauses
+- Click **Step Stmt** → X=1 executes, pauses (still on line 20)
+- Click **Step Stmt** → Y=2 executes, pauses (still on line 20)
+- Click **Step Stmt** → PRINT X+Y executes, shows "3", pauses at line 30
+
+**Using Step Line:**
+- Click **Step Line** → Output shows "Step 1", pauses at line 20
+- Click **Step Line** → All three statements execute, shows "3", pauses at line 30
+- Click **Step Line** → Output shows "Step 2", pauses at line 40
+
+**Continue:** Click **Continue** to resume normal execution from any paused state
 
 ### Show Variables
 
