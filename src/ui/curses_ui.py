@@ -1346,6 +1346,7 @@ class CursesBackend(UIBackend):
         # Editor state
         self.editor_lines = {}  # line_num -> text for editing
         self.current_line_num = 10  # Default starting line number
+        self.current_filename = None  # Track current filename for Save vs Save As
 
         # Execution state
         self.runtime = None
@@ -1661,6 +1662,10 @@ class CursesBackend(UIBackend):
         elif key == SAVE_KEY:
             # Save program
             self._save_program()
+
+        elif key == 'shift ctrl s' or key == 'ctrl S':
+            # Save As - always prompt for filename
+            self._save_as_program()
 
         elif key == OPEN_KEY:
             # Open/Load program
@@ -3265,6 +3270,7 @@ Run                           Debug Windows
 
         self.editor_lines = {}
         self.editor.clear()
+        self.current_filename = None  # Clear filename for new program
         self.output_buffer.append("Program cleared")
         self._update_output()
         self._update_status_with_errors("Ready")
@@ -3483,6 +3489,9 @@ Run                           Debug Windows
             # Add to recent files
             self.recent_files.add_file(filename)
 
+            # Store as current filename
+            self.current_filename = filename
+
             self.output_buffer.append(f"Loaded {filename}")
             self._update_output()
 
@@ -3499,8 +3508,62 @@ Run                           Debug Windows
             self._update_output()
 
     def _save_program(self):
-        """Save program to file."""
-        # Get filename from user
+        """Save program to file (uses current filename if available)."""
+        # Use current filename if we have one, otherwise prompt
+        if self.current_filename:
+            filename = self.current_filename
+            self.output_buffer.append(f"Saving to {filename}...")
+            self._update_output()
+        else:
+            # No current filename, prompt for one
+            filename = self._get_input_dialog("Save as: ")
+
+            if not filename:
+                self.output_buffer.append("Save cancelled")
+                self._update_output()
+                return
+
+        try:
+            # Parse editor content first
+            self._parse_editor_content()
+
+            # Create program content
+            lines = []
+            for line_num in sorted(self.editor_lines.keys()):
+                lines.append(f"{line_num} {self.editor_lines[line_num]}")
+
+            # Write to file
+            with open(filename, 'w') as f:
+                f.write('\n'.join(lines))
+                f.write('\n')
+
+            # Add to recent files
+            self.recent_files.add_file(filename)
+
+            # Store as current filename
+            self.current_filename = filename
+
+            self.output_buffer.append(f"Saved to {filename}")
+            self._update_output()
+
+            # Clean up autosave after successful save
+            self.auto_save.cleanup_after_save(filename)
+
+            # Restart autosave with new filename
+            self.auto_save.stop_autosave()
+            self.auto_save.start_autosave(
+                filename,
+                self._get_editor_content,
+                interval=30
+            )
+
+        except Exception as e:
+            self.output_buffer.append(f"Error saving file: {e}")
+            self._update_output()
+
+    def _save_as_program(self):
+        """Save program to a new file (always prompts for filename)."""
+        # Always prompt for filename
         filename = self._get_input_dialog("Save as: ")
 
         if not filename:
@@ -3524,6 +3587,9 @@ Run                           Debug Windows
 
             # Add to recent files
             self.recent_files.add_file(filename)
+
+            # Store as current filename
+            self.current_filename = filename
 
             self.output_buffer.append(f"Saved to {filename}")
             self._update_output()

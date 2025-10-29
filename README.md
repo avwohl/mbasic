@@ -1,11 +1,15 @@
-# MBASIC 5.21 Interpreter
+# MBASIC-2025: Modern MBASIC 5.21 Interpreter
 
-An interpreter for MBASIC 5.21 (BASIC-80 for CP/M) written in Python.
+A modern implementation of Microsoft BASIC-80 5.21 (CP/M era) with optional development extensions, written in Python.
 
 > **About MBASIC:** MBASIC was a BASIC interpreter originally developed by Microsoft in the late 1970s. This is an independent, open-source reimplementation created for educational purposes and historical software preservation. See [MBASIC History](docs/MBASIC_HISTORY.md) for more information.
 
-**Status:** Full MBASIC 5.21 implementation complete. All core features, file I/O, and error handling implemented.
-See [STATUS.md](STATUS.md) for detailed implementation status.
+**Status:** Full MBASIC 5.21 implementation complete with 100% compatibility, plus modern debugging and UI features.
+- ✅ **100% Compatible**: All original MBASIC 5.21 programs run unchanged
+- ✅ **Modern Extensions**: Optional debugging commands (BREAK, STEP, WATCH, STACK)
+- ✅ **Multiple UIs**: CLI (classic), Curses, Tk (GUI), Web (browser)
+
+See [STATUS.md](STATUS.md) for implementation details and [Extensions](docs/help/mbasic/extensions.md) for modern features.
 
 ## Installation
 

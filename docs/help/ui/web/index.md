@@ -109,6 +109,15 @@ Compared to desktop UIs, the web UI:
 - No debugger or breakpoint support (yet)
 - Files don't persist after session ends
 
+## Documentation
+
+### Web UI Guides
+
+- [Getting Started](getting-started.md) - First steps with Web UI
+- [Debugging Guide](debugging.md) - Debug tools and features
+- [Features Reference](features.md) - Complete feature list
+- [Keyboard Shortcuts](keyboard-shortcuts.md) - Quick reference
+
 ## Getting More Help
 
 Use the tabs in this help browser to explore:

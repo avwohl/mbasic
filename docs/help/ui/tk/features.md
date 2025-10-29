@@ -57,9 +57,17 @@ Updates in real-time during debugging.
 
 Shows active FOR loops and GOSUB calls. Perfect for understanding nested structures.
 
-## Find and Replace ({{kbd:find_replace}})
+## Find and Replace
 
-Search and replace across your entire program.
+**Find text ({{kbd:find}}):**
+- Opens Find dialog with search options
+- Case sensitive and whole word matching
+- Press F3 to find next occurrence
+
+**Replace text ({{kbd:find_replace}}):**
+- Find and replace single or all occurrences
+- Visual highlighting of matches
+- Shows replacement count
 
 ## More Features
 

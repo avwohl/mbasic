@@ -3,6 +3,28 @@
 ## Workflow
 - Track all installed dependencies and update documentation
 - **Check `docs/dev/WORK_IN_PROGRESS.md` on EVERY startup** - contains current task that may be incomplete
+- **Update `docs/dev/UI_FEATURE_PARITY_TRACKING.md` after ANY UI changes** - tracks implementation/documentation/testing status across all UIs
+
+## 🔧 Utility Scripts
+
+**BEFORE writing a new utility script, check if one already exists!**
+
+See `utils/UTILITY_SCRIPTS_INDEX.md` for complete list and descriptions.
+
+**Common utilities you should know about:**
+- `utils/fix_keyword_spacing.py` - Fixes keywords running together (FORI→FOR I, IFK9→IF K9)
+- `utils/analyze_errors.py` - Analyzes parser/lexer errors across files
+- `utils/show_parse_tree.py` - Visualizes parse tree for debugging
+- `utils/detokenizer.py` - Converts tokenized BASIC to ASCII
+- `utils/clean_post_end.py` - Removes unreachable code after END
+- `utils/find_duplicates.py` - Finds duplicate BASIC programs
+
+**When importing old BASIC:** Run these in order if needed:
+1. `unsqueeze2.py` - If compressed
+2. `detokenizer.py` - If tokenized
+3. `fix_keyword_spacing.py` - If keywords lack spaces
+4. `clean_pdf_artifacts.py` - If from PDF
+5. `clean_post_end.py` - Remove unreachable code
 
 ## 🚨 CRITICAL: Running Real MBASIC Comparisons
 

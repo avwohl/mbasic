@@ -17,11 +17,11 @@ description: Complete guide to MBASIC 5.21 compatibility and differences from CP
 
 ## Our MBASIC vs Original 8080 MBASIC-80
 
-This document describes compatibility between this MBASIC implementation and the original MBASIC 5.21 for CP/M-80 (Intel 8080/Z80).
+This document describes compatibility between **MBASIC-2025** (this implementation) and the original MBASIC 5.21 for CP/M-80 (Intel 8080/Z80).
 
 ## Compatibility Level
 
-This interpreter provides **100% compatibility** for standard MBASIC 5.21 programs.
+This interpreter provides **100% compatibility** for standard MBASIC 5.21 programs, plus [modern extensions](extensions.md) for development.
 
 ### What This Means
 
@@ -322,6 +322,20 @@ QuickBASIC is significantly more advanced:
 - Use GOSUB instead of SUB
 - Use IF/THEN/ELSE instead of SELECT CASE
 - Use WHILE/WEND instead of DO/LOOP
+
+## Modern Extensions
+
+**MBASIC-2025** includes optional modern features that are **NOT in MBASIC 5.21**:
+
+- **Debugging Commands**: BREAK, STEP, WATCH, STACK (CLI only)
+- **GUI Interfaces**: Curses, Tk, Web UIs
+- **Visual Debugging**: Breakpoints, variable inspection, step visualization
+- **Editor Features**: Syntax highlighting, find/replace, undo/redo
+- **Enhanced File Handling**: Long filenames, paths, Unicode
+
+See [Extensions Guide](extensions.md) for complete details.
+
+**Important**: Using these extensions makes your program incompatible with original MBASIC 5.21.
 
 ## Error Messages
 

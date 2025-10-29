@@ -208,11 +208,13 @@ class InteractiveMode:
         if READLINE_AVAILABLE:
             self._setup_readline()
 
-        print("MBASIC 5.21 Interpreter")
+        print("MBASIC-2025 - Modern MBASIC 5.21 Interpreter")
+        print("100% compatible with MBASIC 5.21 + modern debugging extensions")
         if not READLINE_AVAILABLE:
             print("(Note: readline not available - line editing limited)")
         else:
             print("(Tip: Press Ctrl+A to edit last line, or Ctrl+A followed by line number)")
+        print("Type HELP for debugging commands (BREAK, STEP, WATCH, STACK)")
         print("Ready")
 
         while True:

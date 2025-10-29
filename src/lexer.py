@@ -4,23 +4,23 @@ Based on BASIC-80 Reference Manual Version 5.21
 """
 from typing import List, Optional
 from src.tokens import Token, TokenType, KEYWORDS
-from src.keyword_case_manager import KeywordCaseManager
+from src.simple_keyword_case import SimpleKeywordCase
 
 
-def create_keyword_case_manager() -> KeywordCaseManager:
+def create_keyword_case_manager() -> SimpleKeywordCase:
     """
-    Create a KeywordCaseManager configured from settings.
+    Create a SimpleKeywordCase handler configured from settings.
 
     Returns:
-        KeywordCaseManager with policy from settings, or default policy
+        SimpleKeywordCase with policy from settings, or default policy
     """
     try:
         from src.settings import get
         policy = get("keywords.case_style", "force_lower")
-        return KeywordCaseManager(policy=policy)
+        return SimpleKeywordCase(policy=policy)
     except Exception:
         # If settings unavailable, use default
-        return KeywordCaseManager(policy="force_lower")
+        return SimpleKeywordCase(policy="force_lower")
 
 
 class LexerError(Exception):
@@ -34,15 +34,15 @@ class LexerError(Exception):
 class Lexer:
     """Tokenizes MBASIC 5.21 source code"""
 
-    def __init__(self, source: str, keyword_case_manager: Optional[KeywordCaseManager] = None):
+    def __init__(self, source: str, keyword_case_manager: Optional[SimpleKeywordCase] = None):
         self.source = source
         self.pos = 0
         self.line = 1
         self.column = 1
         self.tokens: List[Token] = []
 
-        # Keyword case manager - builds table during tokenization
-        self.keyword_case_manager = keyword_case_manager or KeywordCaseManager(policy="force_lower")
+        # Keyword case manager - simple policy-based handler
+        self.keyword_case_manager = keyword_case_manager or SimpleKeywordCase(policy="force_lower")
 
     def current_char(self) -> Optional[str]:
         """Return the current character or None if at end"""
@@ -207,13 +207,13 @@ class Lexer:
 
     def read_identifier(self) -> Token:
         """
-        Read an identifier or keyword
+        Read an identifier or keyword.
         Identifiers can contain letters, digits, and end with type suffix $ % ! #
-        In MBASIC, $ % ! # are considered part of the identifier
+        In MBASIC, $ % ! # are considered part of the identifier.
 
-        Special handling: In old BASIC, keywords can run together with identifiers
-        without spaces. E.g., "NEXTI" should be parsed as "NEXT" + "I".
-        This method checks for statement keywords at the start of identifiers.
+        This lexer parses properly-formed MBASIC 5.21 which requires spaces
+        between keywords and identifiers. Old BASIC with NEXTI instead of NEXT I
+        should be preprocessed before parsing.
         """
         start_line = self.line
         start_column = self.column
@@ -246,63 +246,28 @@ class Lexer:
             token.original_case_keyword = display_case  # Use policy-determined case
             return token
 
-        # Special handling for file I/O statements with # (file number follows)
-        # In MBASIC, "PRINT#1,A" should be tokenized as PRINT + # + 1
-        # But our lexer reads "PRINT#" as identifier because # is a type suffix
-        # We need to split these specifically (use lowercase)
-        FILE_IO_KEYWORDS = {
-            'print#': TokenType.PRINT,
-            'lprint#': TokenType.LPRINT,
-            'input#': TokenType.INPUT,
-            'write#': TokenType.WRITE,
-            'field#': TokenType.FIELD,
-            'get#': TokenType.GET,
-            'put#': TokenType.PUT,
-            'close#': TokenType.CLOSE,
-        }
+        # Special case: File I/O keywords followed by # (e.g., PRINT#1)
+        # The # is NOT a type suffix here - it's part of the file I/O syntax.
+        # MBASIC allows "PRINT#1" with no space, which should tokenize as:
+        #   PRINT (keyword) + # (operator) + 1 (number)
+        # Since we read "PRINT#" as one identifier, we need to split it.
+        if ident_lower.endswith('#') and ident_lower[:-1] in KEYWORDS:
+            keyword_part = ident_lower[:-1]
+            # Check if this is a file I/O keyword that can be followed by #
+            if keyword_part in ['print', 'lprint', 'input', 'write', 'field', 'get', 'put', 'close']:
+                # Put the # back to be tokenized separately
+                self.pos -= 1
+                self.column -= 1
+                # Return the keyword token without the #
+                token = Token(KEYWORDS[keyword_part], keyword_part, start_line, start_column)
+                # Apply keyword case policy
+                display_case = self.keyword_case_manager.register_keyword(keyword_part, ident[:-1], start_line, start_column)
+                token.original_case_keyword = display_case
+                return token
 
-        if ident_lower in FILE_IO_KEYWORDS:
-            # Put the # back into the source
-            self.pos -= 1
-            self.column -= 1
-            # Return the keyword token without the #
-            keyword = ident_lower[:-1]  # Remove the #
-            token = Token(FILE_IO_KEYWORDS[ident_lower], keyword, start_line, start_column)
-            # Register keyword and get display case
-            display_case = self.keyword_case_manager.register_keyword(keyword, ident[:-1], start_line, start_column)
-            token.original_case_keyword = display_case  # Use policy-determined case
-            return token
-
-        # Check if identifier starts with a statement keyword (MBASIC compatibility)
-        # In old BASIC, keywords could run together: "NEXTI" = "NEXT I", "FORI" = "FOR I"
-        # We check for common statement keywords that might be concatenated
-        # Note: Only include keywords that can START a statement or commonly appear before identifiers
-        # Exclude TO and STEP as they're clause keywords, not statement starters (use lowercase)
-        STATEMENT_KEYWORDS = ['next', 'for', 'if', 'then', 'else', 'goto', 'gosub',
-                             'print', 'input', 'let', 'dim', 'read', 'data', 'end',
-                             'stop', 'return', 'on']
-
-        for keyword in STATEMENT_KEYWORDS:
-            if ident_lower.startswith(keyword) and len(ident_lower) > len(keyword):
-                # Check if character after keyword is valid identifier start (must be LETTER)
-                # Don't split if followed by digit (e.g., STEP1 should stay as STEP1)
-                next_char = ident_lower[len(keyword)]
-                if next_char.isalpha():  # Only split if next char is a letter
-                    # Split: return keyword token, put rest back in buffer
-                    keyword_part = ident[:len(keyword)]
-                    rest_part = ident[len(keyword):]
-
-                    # Put the rest back into the source
-                    for i in range(len(rest_part) - 1, -1, -1):
-                        self.pos -= 1
-                        self.column -= 1
-
-                    # Return the keyword token
-                    token = Token(KEYWORDS[keyword], keyword, start_line, start_column)
-                    # Register keyword and get display case
-                    display_case = self.keyword_case_manager.register_keyword(keyword, keyword_part, start_line, start_column)
-                    token.original_case_keyword = display_case  # Use policy-determined case
-                    return token
+        # NOTE: We do NOT handle old BASIC where keywords run together (NEXTI, FORI).
+        # This is properly-formed MBASIC 5.21 which requires spaces.
+        # Old BASIC files should be preprocessed with conversion scripts.
 
         # Otherwise it's an identifier
         # Normalize to lowercase (BASIC is case-insensitive) but preserve original case

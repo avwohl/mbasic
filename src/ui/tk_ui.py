@@ -110,6 +110,15 @@ class TkBackend(UIBackend):
         self.input_submit_btn = None
         self.input_queue = None  # Queue for coordinating INPUT with interpreter
 
+        # Find/Replace state
+        self.find_dialog = None
+        self.replace_dialog = None
+        self.find_text = ""
+        self.replace_text = ""
+        self.find_case_sensitive = False
+        self.find_whole_word = False
+        self.find_position = "1.0"  # Current search position in editor
+
     def start(self) -> None:
         """Start the Tkinter GUI.
 
@@ -121,7 +130,7 @@ class TkBackend(UIBackend):
 
         # Create main window
         self.root = tk.Tk()
-        self.root.title("MBASIC 5.21 Interpreter")
+        self.root.title("MBASIC-2025 - Modern MBASIC 5.21 Interpreter")
         self.root.geometry("1000x600")
 
         # Create menu bar
@@ -352,6 +361,10 @@ class TkBackend(UIBackend):
         edit_menu.add_command(label="Copy", command=self._menu_copy, accelerator="Ctrl+C")
         edit_menu.add_command(label="Paste", command=self._menu_paste, accelerator="Ctrl+V")
         edit_menu.add_separator()
+        edit_menu.add_command(label="Find...", command=self._menu_find, accelerator="Ctrl+F")
+        edit_menu.add_command(label="Find Next", command=self._find_next, accelerator="F3")
+        edit_menu.add_command(label="Replace...", command=self._menu_replace, accelerator="Ctrl+H")
+        edit_menu.add_separator()
         edit_menu.add_command(label="Insert Line", command=self._smart_insert_line, accelerator="Ctrl+I")
         edit_menu.add_separator()
         edit_menu.add_command(label="Toggle Breakpoint", command=self._toggle_breakpoint, accelerator="Ctrl+B")
@@ -398,6 +411,9 @@ class TkBackend(UIBackend):
 
         # Additional keyboard shortcuts not in config
         self.root.bind('<Control-b>', lambda e: self._toggle_breakpoint())
+        self.root.bind('<Control-f>', lambda e: self._menu_find())
+        self.root.bind('<Control-h>', lambda e: self._menu_replace())
+        self.root.bind('<F3>', lambda e: self._find_next())
         # Note: Ctrl+I is bound in start() after editor is created
 
     def _create_toolbar(self):
@@ -1712,15 +1728,19 @@ class TkBackend(UIBackend):
         self.output_text.config(state=tk.DISABLED)
 
     def _menu_help(self):
-        """Help > Help Topics (F1)"""
+        """Help > Help Topics (F1) - Opens in web browser"""
+        import webbrowser
         from pathlib import Path
-        from .tk_help_browser import TkHelpBrowser
 
-        # Get help root directory
-        help_root = Path(__file__).parent.parent.parent / "docs" / "help"
-
-        # Create and show help browser window
-        TkHelpBrowser(self.root, str(help_root), "ui/tk/index.md")
+        # Option 1: Use web browser launcher (recommended)
+        try:
+            from .web_help_launcher import open_help_in_browser
+            open_help_in_browser(topic="ui/tk/index", ui_type="tk")
+        except ImportError:
+            # Fallback to old help browser if new launcher not available
+            from .tk_help_browser import TkHelpBrowser
+            help_root = Path(__file__).parent.parent.parent / "docs" / "help"
+            TkHelpBrowser(self.root, str(help_root), "ui/tk/index.md")
 
     def _menu_about(self):
         """Help > About"""
@@ -1732,9 +1752,11 @@ class TkBackend(UIBackend):
         help_key_text = ' or '.join(help_keys) if help_keys else 'Ctrl+?'
 
         messagebox.showinfo(
-            "About MBASIC 5.21",
-            "MBASIC 5.21 Interpreter\n\n"
-            "A Python implementation of MBASIC 5.21\n\n"
+            "About MBASIC-2025",
+            "MBASIC-2025\n"
+            "Modern MBASIC 5.21 Interpreter\n\n"
+            "100% compatible with Microsoft BASIC-80 5.21\n"
+            "Plus modern debugging and UI features\n\n"
             "Tkinter GUI Backend\n\n"
             f"Press {help_key_text} for help"
         )
@@ -1745,6 +1767,206 @@ class TkBackend(UIBackend):
 
         # Create and show settings dialog
         SettingsDialog(self.root)
+
+    def _menu_find(self):
+        """Edit > Find... (Ctrl+F)"""
+        import tkinter as tk
+        from tkinter import ttk
+
+        # Close any existing find dialog
+        if self.find_dialog and self.find_dialog.winfo_exists():
+            self.find_dialog.destroy()
+
+        # Create find dialog
+        self.find_dialog = tk.Toplevel(self.root)
+        self.find_dialog.title("Find")
+        self.find_dialog.geometry("400x150")
+        self.find_dialog.transient(self.root)
+
+        # Find text entry
+        tk.Label(self.find_dialog, text="Find what:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        find_entry = tk.Entry(self.find_dialog, width=30)
+        find_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        find_entry.insert(0, self.find_text)
+        find_entry.focus_set()
+        find_entry.select_range(0, tk.END)
+
+        # Options frame
+        options_frame = ttk.LabelFrame(self.find_dialog, text="Options")
+        options_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+
+        case_var = tk.BooleanVar(value=self.find_case_sensitive)
+        tk.Checkbutton(options_frame, text="Case sensitive", variable=case_var).grid(row=0, column=0, sticky="w", padx=5)
+
+        word_var = tk.BooleanVar(value=self.find_whole_word)
+        tk.Checkbutton(options_frame, text="Whole word", variable=word_var).grid(row=0, column=1, sticky="w", padx=5)
+
+        # Buttons
+        button_frame = tk.Frame(self.find_dialog)
+        button_frame.grid(row=2, column=0, columnspan=2, pady=10)
+
+        def do_find():
+            self.find_text = find_entry.get()
+            self.find_case_sensitive = case_var.get()
+            self.find_whole_word = word_var.get()
+            self.find_position = "1.0"  # Start from beginning
+            self._find_next()
+            self.find_dialog.destroy()
+
+        ttk.Button(button_frame, text="Find Next", command=do_find).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Cancel", command=self.find_dialog.destroy).pack(side=tk.LEFT, padx=5)
+
+        # Enter key triggers find
+        find_entry.bind('<Return>', lambda e: do_find())
+
+    def _find_next(self):
+        """Find next occurrence (F3)"""
+        import tkinter as tk
+
+        if not self.find_text:
+            self._menu_find()
+            return
+
+        # Remove any existing highlighting
+        self.editor_text.text.tag_remove("find_highlight", "1.0", tk.END)
+
+        # Search options
+        search_kwargs = {}
+        if not self.find_case_sensitive:
+            search_kwargs['nocase'] = True
+
+        # Search from current position
+        pos = self.editor_text.text.search(
+            self.find_text,
+            self.find_position,
+            tk.END,
+            **search_kwargs
+        )
+
+        if pos:
+            # Found - highlight and scroll to it
+            end_pos = f"{pos}+{len(self.find_text)}c"
+            self.editor_text.text.tag_add("find_highlight", pos, end_pos)
+            self.editor_text.text.tag_config("find_highlight", background="yellow", foreground="black")
+            self.editor_text.text.see(pos)
+            self.editor_text.text.mark_set("insert", end_pos)
+            self.editor_text.text.focus_set()
+
+            # Update position for next search
+            self.find_position = end_pos
+        else:
+            # Not found - wrap to beginning
+            if self.find_position != "1.0":
+                self.find_position = "1.0"
+                self._find_next()  # Try again from beginning
+            else:
+                # Really not found
+                self._set_status(f"'{self.find_text}' not found")
+
+    def _menu_replace(self):
+        """Edit > Replace... (Ctrl+H)"""
+        import tkinter as tk
+        from tkinter import ttk
+
+        # Close any existing replace dialog
+        if self.replace_dialog and self.replace_dialog.winfo_exists():
+            self.replace_dialog.destroy()
+
+        # Create replace dialog
+        self.replace_dialog = tk.Toplevel(self.root)
+        self.replace_dialog.title("Replace")
+        self.replace_dialog.geometry("400x200")
+        self.replace_dialog.transient(self.root)
+
+        # Find text entry
+        tk.Label(self.replace_dialog, text="Find what:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        find_entry = tk.Entry(self.replace_dialog, width=30)
+        find_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        find_entry.insert(0, self.find_text)
+        find_entry.focus_set()
+        find_entry.select_range(0, tk.END)
+
+        # Replace text entry
+        tk.Label(self.replace_dialog, text="Replace with:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        replace_entry = tk.Entry(self.replace_dialog, width=30)
+        replace_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        replace_entry.insert(0, self.replace_text)
+
+        # Options frame
+        options_frame = ttk.LabelFrame(self.replace_dialog, text="Options")
+        options_frame.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+
+        case_var = tk.BooleanVar(value=self.find_case_sensitive)
+        tk.Checkbutton(options_frame, text="Case sensitive", variable=case_var).grid(row=0, column=0, sticky="w", padx=5)
+
+        word_var = tk.BooleanVar(value=self.find_whole_word)
+        tk.Checkbutton(options_frame, text="Whole word", variable=word_var).grid(row=0, column=1, sticky="w", padx=5)
+
+        # Buttons
+        button_frame = tk.Frame(self.replace_dialog)
+        button_frame.grid(row=3, column=0, columnspan=2, pady=10)
+
+        def do_find():
+            self.find_text = find_entry.get()
+            self.replace_text = replace_entry.get()
+            self.find_case_sensitive = case_var.get()
+            self.find_whole_word = word_var.get()
+            self.find_position = "1.0"
+            self._find_next()
+
+        def do_replace():
+            # Replace current selection if it matches
+            try:
+                sel_text = self.editor_text.text.get("sel.first", "sel.last")
+                if sel_text == self.find_text or (not self.find_case_sensitive and sel_text.lower() == self.find_text.lower()):
+                    self.editor_text.text.delete("sel.first", "sel.last")
+                    self.editor_text.text.insert("sel.first", self.replace_text)
+            except tk.TclError:
+                pass  # No selection
+            do_find()
+
+        def do_replace_all():
+            self.find_text = find_entry.get()
+            self.replace_text = replace_entry.get()
+            self.find_case_sensitive = case_var.get()
+            self.find_whole_word = word_var.get()
+
+            # Count replacements
+            count = 0
+            self.find_position = "1.0"
+
+            while True:
+                # Search for next occurrence
+                search_kwargs = {}
+                if not self.find_case_sensitive:
+                    search_kwargs['nocase'] = True
+
+                pos = self.editor_text.text.search(
+                    self.find_text,
+                    self.find_position,
+                    tk.END,
+                    **search_kwargs
+                )
+
+                if not pos:
+                    break
+
+                # Replace it
+                end_pos = f"{pos}+{len(self.find_text)}c"
+                self.editor_text.text.delete(pos, end_pos)
+                self.editor_text.text.insert(pos, self.replace_text)
+
+                # Move past this replacement
+                self.find_position = f"{pos}+{len(self.replace_text)}c"
+                count += 1
+
+            self._set_status(f"Replaced {count} occurrences")
+            self.replace_dialog.destroy()
+
+        ttk.Button(button_frame, text="Find Next", command=do_find).pack(side=tk.LEFT, padx=2)
+        ttk.Button(button_frame, text="Replace", command=do_replace).pack(side=tk.LEFT, padx=2)
+        ttk.Button(button_frame, text="Replace All", command=do_replace_all).pack(side=tk.LEFT, padx=2)
+        ttk.Button(button_frame, text="Cancel", command=self.replace_dialog.destroy).pack(side=tk.LEFT, padx=2)
 
     # Helper methods
 

@@ -53,10 +53,38 @@ Complete reference for all keyboard shortcuts in the Tk graphical interface.
 |----------|--------|
 | **Ctrl+I** | Smart insert - insert blank line at midpoint between current and next line |
 | **Ctrl+E** | Renumber program lines (opens dialog) |
-| **Ctrl+F** | Find text in editor |
-| **Ctrl+H** | Find and replace |
+| **Ctrl+F** | Find text in editor (opens Find dialog) |
+| **F3** | Find next occurrence |
+| **Ctrl+H** | Find and replace (opens Replace dialog) |
 | **Ctrl+Z** | Undo last edit |
 | **Ctrl+Y** | Redo undone edit |
+
+### Find and Replace (Ctrl+F, Ctrl+H)
+
+The Tk UI includes full Find and Replace functionality:
+
+**Find (Ctrl+F):**
+- Opens Find dialog
+- Enter search text
+- Options: Case sensitive, Whole word
+- Press Enter or "Find Next" to search
+- **F3** to find next occurrence without reopening dialog
+- Search wraps around to beginning when reaching end
+
+**Replace (Ctrl+H):**
+- Opens Replace dialog
+- Enter find text and replacement text
+- Same search options as Find
+- Buttons:
+  - **Find Next** - locate next match
+  - **Replace** - replace current match and find next
+  - **Replace All** - replace all occurrences at once
+- Shows count of replacements made
+
+**Visual Feedback:**
+- Found text highlighted in yellow
+- Editor auto-scrolls to show matches
+- Status bar shows "not found" if no matches
 
 ### Smart Insert (Ctrl+I)
 

@@ -47,6 +47,10 @@ class CLIBackend(UIBackend):
         # This allows programmatic loading before start()
         self.interactive.program = program_manager
 
+        # Add debugging capabilities
+        from .cli_debug import add_debug_commands
+        self.debugger = add_debug_commands(self.interactive)
+
     def start(self) -> None:
         """Start the CLI REPL loop.
 
