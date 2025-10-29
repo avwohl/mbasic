@@ -337,7 +337,7 @@ class Interpreter:
                     # Check if we have an error handler
                     if self.runtime.error_handler is not None and not self.runtime.in_error_handler:
                         error_code = self._map_exception_to_error_code(e)
-                        self._invoke_error_handler(error_code, pc.line_num, pc.stmt_offset)
+                        self._invoke_error_handler(error_code, pc)
                         # Error handler set npc, loop will handle it
                         continue
                     else:
@@ -756,7 +756,8 @@ class Interpreter:
                         error_code = self._map_exception_to_error_code(e)
                         if os.environ.get('DEBUG'):
                             self.io.debug(f"Caught error: {e}, handler={self.runtime.error_handler}, error_code={error_code}")
-                        self._invoke_error_handler(error_code, line_node.line_number, self.runtime.current_stmt_index)
+                        error_pc = PC(line_node.line_number, self.runtime.current_stmt_index)
+                        self._invoke_error_handler(error_code, error_pc)
 
                         # Break out of statement loop - we're jumping to error handler
                         if os.environ.get('DEBUG'):
@@ -843,26 +844,26 @@ class Interpreter:
         # Default to illegal function call
         return 5  # Illegal function call
 
-    def _invoke_error_handler(self, error_code, error_line, error_stmt_index):
+    def _invoke_error_handler(self, error_code, error_pc):
         """Invoke the error handler"""
         # Set error state
         self.runtime.error_occurred = True
-        self.runtime.error_line = error_line
-        self.runtime.error_stmt_index = error_stmt_index
         self.runtime.in_error_handler = True
 
-        # Set ERR% and ERL% system variables
+        # Set ERR%, ERL%, and ERS% system variables
         self.runtime.set_variable_raw('err%', error_code)
-        self.runtime.set_variable_raw('erl%', error_line)
+        self.runtime.set_variable_raw('erl%', error_pc.line_num)
+        self.runtime.set_variable_raw('ers%', error_pc.stmt_offset)
 
         # Jump to error handler
         if self.runtime.error_handler_is_gosub:
-            # ON ERROR GOSUB - push return address
-            self.runtime.push_gosub(error_line, error_stmt_index + 1)
+            # ON ERROR GOSUB - push return address (next statement after error)
+            next_pc = self.runtime.statement_table.next_pc(error_pc)
+            if not next_pc.halted():
+                self.runtime.push_gosub(next_pc.line_num, next_pc.stmt_offset)
 
         # Jump to error handler line
-        self.runtime.next_line = self.runtime.error_handler
-        self.runtime.next_stmt_index = 0
+        self.runtime.npc = PC.from_line(self.runtime.error_handler)
 
     def find_matching_wend(self, start_line, start_stmt):
         """Find the matching WEND for a WHILE statement
@@ -1505,6 +1506,12 @@ class Interpreter:
         if not self.runtime.error_occurred:
             raise RuntimeError("RESUME without error")
 
+        # Get error PC from ErrorInfo
+        if not self.state.error_info or not self.state.error_info.pc:
+            raise RuntimeError("No error position to resume from")
+
+        error_pc = self.state.error_info.pc
+
         # Clear error state
         self.runtime.error_occurred = False
         self.runtime.in_error_handler = False
@@ -1513,49 +1520,18 @@ class Interpreter:
         # Determine where to resume
         if stmt.line_number is None or stmt.line_number == 0:
             # RESUME or RESUME 0 - retry the statement that caused the error
-            if self.runtime.error_line is None:
-                raise RuntimeError("No error line to resume to")
-            self.runtime.next_line = self.runtime.error_line
-            self.runtime.next_stmt_index = self.runtime.error_stmt_index
+            self.runtime.npc = error_pc
         elif stmt.line_number == -1:
             # RESUME NEXT - continue at statement after the error
-            if self.runtime.error_line is None:
-                raise RuntimeError("No error line to resume from")
-
-            # Check if there's another statement on the same line
-            error_line = self.runtime.line_table[self.runtime.error_line]
-            import os
-            if os.environ.get('DEBUG'):
-                self.io.debug(f"RESUME NEXT from error_line={self.runtime.error_line}, error_stmt_index={self.runtime.error_stmt_index}, line has {len(error_line.statements)} statements")
-            if self.runtime.error_stmt_index + 1 < len(error_line.statements):
-                # There's another statement on the same line
-                self.runtime.next_line = self.runtime.error_line
-                self.runtime.next_stmt_index = self.runtime.error_stmt_index + 1
-                if os.environ.get('DEBUG'):
-                    self.io.debug(f"RESUME NEXT to line {self.runtime.next_line} stmt {self.runtime.next_stmt_index}")
+            next_pc = self.runtime.statement_table.next_pc(error_pc)
+            if next_pc.halted():
+                # No next statement, program ends
+                self.runtime.halted = True
             else:
-                # No more statements on this line, go to next line
-                try:
-                    error_line_index = self.runtime.line_order.index(self.runtime.error_line)
-                    if os.environ.get('DEBUG'):
-                        self.io.debug(f"error_line_index={error_line_index}, len(line_order)={len(self.runtime.line_order)}, line_order={self.runtime.line_order}")
-                    if error_line_index + 1 < len(self.runtime.line_order):
-                        next_line_num = self.runtime.line_order[error_line_index + 1]
-                        self.runtime.next_line = next_line_num
-                        self.runtime.next_stmt_index = 0
-                        if os.environ.get('DEBUG'):
-                            self.io.debug(f"RESUME NEXT to next line {self.runtime.next_line}")
-                    else:
-                        # No next line, program ends
-                        self.runtime.halted = True
-                        if os.environ.get('DEBUG'):
-                            self.io.debug(f"RESUME NEXT - no next line, halting")
-                except ValueError:
-                    raise RuntimeError(f"Error line {self.runtime.error_line} not found")
+                self.runtime.npc = next_pc
         else:
             # RESUME line_number - jump to specific line
-            self.runtime.next_line = stmt.line_number
-            self.runtime.next_stmt_index = 0
+            self.runtime.npc = PC.from_line(stmt.line_number)
 
     def execute_end(self, stmt):
         """Execute END statement"""
@@ -1749,8 +1725,10 @@ class Interpreter:
         self.runtime.set_variable_raw('err%', error_code)
         if not self.runtime.pc.halted():
             self.runtime.set_variable_raw('erl%', self.runtime.pc.line_num)
+            self.runtime.set_variable_raw('ers%', self.runtime.pc.stmt_offset)
         else:
             self.runtime.set_variable_raw('erl%', 0)
+            self.runtime.set_variable_raw('ers%', 0)
 
         # Raise the error
         raise RuntimeError(f"ERROR {error_code}")
@@ -2040,7 +2018,7 @@ class Interpreter:
         # RUN can optionally specify a line number or filename
         if hasattr(stmt, 'line_number') and stmt.line_number:
             # RUN line_number - start at specific line
-            self.runtime.next_line = stmt.line_number
+            self.runtime.npc = PC.from_line(stmt.line_number)
         elif hasattr(stmt, 'filename') and stmt.filename:
             # RUN "filename" - load and run file
             filename = self.evaluate_expression(stmt.filename)
