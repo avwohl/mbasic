@@ -8,7 +8,7 @@
     "load": {
       "keys": ["Ctrl+L"],
       "primary": "Ctrl+L",
-      "description": "Load BASIC file"
+      "description": "Load BASIC file (when editing) / Step Line (when debugging)"
     },
     "new": {
       "keys": ["Ctrl+N"],
@@ -43,12 +43,17 @@
     "step": {
       "keys": ["Ctrl+T"],
       "primary": "Ctrl+T",
-      "description": "Step execution"
+      "description": "Step statement (execute one statement)"
     },
     "continue": {
       "keys": ["Ctrl+C"],
       "primary": "Ctrl+C",
       "description": "Continue execution"
+    },
+    "stop": {
+      "keys": ["Ctrl+X"],
+      "primary": "Ctrl+X",
+      "description": "Stop program execution"
     },
     "quit": {
       "keys": ["Ctrl+Q"],

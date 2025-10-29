@@ -1941,6 +1941,18 @@ class CursesBackend(UIBackend):
         except Exception as e:
             self.status_bar.set_text(f"Stop error: {e}")
 
+    def _menu_step_line(self):
+        """Menu/button handler for Step Line command."""
+        self._debug_step_line()
+
+    def _menu_step(self):
+        """Menu/button handler for Step Statement command."""
+        self._debug_step()
+
+    def _menu_continue(self):
+        """Menu/button handler for Continue command."""
+        self._debug_continue()
+
     def _delete_current_line(self):
         """Delete the current line where the cursor is."""
         # Get current cursor position
