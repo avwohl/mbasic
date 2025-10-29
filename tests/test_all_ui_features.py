@@ -1647,6 +1647,52 @@ class WebFeatureTests(UIFeatureTest):
         except:
             return False
 
+    # File Operations
+    def test_has_new_program(self):
+        """Test has New Program feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                return '_menu_new' in source
+        except:
+            return False
+
+    def test_has_open_file(self):
+        """Test has Open/Load File feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                return '_menu_open' in source
+        except:
+            return False
+
+    def test_has_save_file(self):
+        """Test has Save File feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                return '_menu_save' in source
+        except:
+            return False
+
+    def test_has_save_as(self):
+        """Test has Save As feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                return '_menu_save_as' in source
+        except:
+            return False
+
+    def test_has_stop_interrupt(self):
+        """Test has Stop/Interrupt feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                return '_menu_stop' in source
+        except:
+            return False
+
     def run_all(self):
         """Run all Web tests"""
         print(f"\n{'='*60}")
@@ -1657,36 +1703,42 @@ class WebFeatureTests(UIFeatureTest):
             print(f"✗ {self.ui_name} cannot launch (nicegui not installed) - skipping")
             return self.summary()
 
-        print("\n1. EXECUTION")
+        print("\n1. FILE OPERATIONS")
+        self.test("New Program", self.test_has_new_program)
+        self.test("Open/Load File", self.test_has_open_file)
+        self.test("Save File", self.test_has_save_file)
+        self.test("Save As", self.test_has_save_as)
+        self.test("Recent Files", self.test_has_recent_files)
+
+        print("\n2. EXECUTION & CONTROL")
         self.test("Run Program", self.test_has_run)
-        self.test("Stop Program", self.test_has_stop)
+        self.test("Stop/Interrupt", self.test_has_stop_interrupt)
         self.test("Continue", self.test_has_continue)
         self.test("Step Line", self.test_has_step_line)
         self.test("Step Statement", self.test_has_step_stmt)
         self.test("List Program", self.test_has_list_program)
         self.test("Clear Output", self.test_has_clear_output)
 
-        print("\n2. DEBUGGING")
+        print("\n3. DEBUGGING")
         self.test("Breakpoints", self.test_has_breakpoint)
         self.test("Clear All Breakpoints", self.test_has_clear_breakpoints)
         self.test("Breakpoints Wired", self.test_breakpoints_wired)
         self.test("Multi-Statement Debug", self.test_has_multi_statement_debug)
         self.test("Current Line Highlight", self.test_has_current_line_highlight)
 
-        print("\n3. VARIABLE INSPECTION")
+        print("\n4. VARIABLE INSPECTION")
         self.test("Variables Window", self.test_has_variables)
         self.test("Execution Stack", self.test_has_stack)
         self.test("Edit Variable Value", self.test_has_edit_variable)
         self.test("Variable Filtering", self.test_has_variable_filtering)
         self.test("Variable Sorting", self.test_has_variable_sorting)
 
-        print("\n4. EDITOR FEATURES")
+        print("\n5. EDITOR FEATURES")
         self.test("Sort Lines", self.test_has_sort_lines)
-        self.test("Recent Files", self.test_has_recent_files)
         self.test("Multi-Line Edit", self.test_has_multi_line_edit)
         self.test("Syntax Checking", self.test_has_syntax_checking)
 
-        print("\n5. HELP")
+        print("\n6. HELP")
         self.test("Help Command", self.test_has_help)
 
         return self.summary()
