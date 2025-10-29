@@ -584,8 +584,18 @@ class Interpreter:
                     # Update state for UI
                     self.state.current_line = pc.line_num
 
-                # Check for breakpoint
-                if mode == 'run' and pc.line_num in self.state.breakpoints:
+                # Check for breakpoint (supports both line-level and statement-level)
+                # Check exact PC first (statement-level), then line-level
+                at_breakpoint = False
+                if mode == 'run':
+                    if pc in self.state.breakpoints:
+                        # Exact PC match (statement-level breakpoint)
+                        at_breakpoint = True
+                    elif pc.line_num in self.state.breakpoints:
+                        # Line-level breakpoint (backwards compatible)
+                        at_breakpoint = True
+
+                if at_breakpoint:
                     if not self.state.skip_next_breakpoint_check:
                         self.state.status = 'at_breakpoint'
                         self.state.skip_next_breakpoint_check = True
@@ -601,7 +611,11 @@ class Interpreter:
 
                 # Trace output
                 if self.runtime.trace_on:
-                    if pc.line_num != last_traced_line:
+                    if self.runtime.trace_detail == 'statement':
+                        # Statement-level trace: show [10.0], [10.1], [10.2]
+                        self.io.output(f"[{pc}]")
+                    elif pc.line_num != last_traced_line:
+                        # Line-level trace: show [10] only once per line
                         self.io.output(f"[{pc.line_num}]")
                         last_traced_line = pc.line_num
 
@@ -748,21 +762,35 @@ class Interpreter:
         """
         return self.state
 
-    def set_breakpoint(self, line: int):
-        """Add a breakpoint at the specified line number.
+    def set_breakpoint(self, line: int, stmt_offset: int = None):
+        """Add a breakpoint at the specified line or statement.
 
         Args:
             line: Line number for breakpoint
+            stmt_offset: Optional statement offset (0-based). If None, breaks on entire line.
         """
-        self.state.breakpoints.add(line)
+        if stmt_offset is not None:
+            # Statement-level breakpoint
+            pc = PC(line, stmt_offset)
+            self.state.breakpoints.add(pc)
+        else:
+            # Line-level breakpoint (backwards compatible)
+            self.state.breakpoints.add(line)
 
-    def clear_breakpoint(self, line: int):
-        """Remove a breakpoint at the specified line number.
+    def clear_breakpoint(self, line: int, stmt_offset: int = None):
+        """Remove a breakpoint at the specified line or statement.
 
         Args:
             line: Line number to remove breakpoint from
+            stmt_offset: Optional statement offset. If None, removes line-level breakpoint.
         """
-        self.state.breakpoints.discard(line)
+        if stmt_offset is not None:
+            # Statement-level breakpoint
+            pc = PC(line, stmt_offset)
+            self.state.breakpoints.discard(pc)
+        else:
+            # Line-level breakpoint
+            self.state.breakpoints.discard(line)
 
     # ========================================================================
     # Legacy Execution Methods (kept for backward compatibility)

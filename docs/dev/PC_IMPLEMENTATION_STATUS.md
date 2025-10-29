@@ -51,37 +51,36 @@
 - New `pc/npc` fields are populated but not yet driving execution
 - No breakage - everything backwards compatible
 
-### ⏸️ Phase 2: PC-Based Execution Loop (PENDING)
+### ✅ Phase 2: PC-Based Execution Loop (COMPLETED - v1.0.277)
 
-**What needs to be done:**
+**What was done:**
 
-1. **Refactor `interpreter.tick()` to use PC:**
-   ```python
-   # Current (line-based):
-   while line_index < len(line_order):
-       line = line_table[line_order[line_index]]
-       for stmt_index in range(len(line.statements)):
-           ...
+1. ✅ **Created `tick_pc()` method** - New PC-based execution loop
+   - Single while loop: `while not pc.halted()`
+   - Check for NPC jump at loop start
+   - Execute statement, advance with `next_pc()`
+   - Handle breakpoints, step modes, trace output
 
-   # Target (PC-based):
-   pc = runtime.pc
-   while not pc.halted():
-       if npc is not None:
-           pc = npc
-           npc = None
-       stmt = statement_table.get(pc)
-       execute_statement(stmt)
-       pc = statement_table.next_pc(pc)
-   ```
+2. ✅ **Updated all statement executors** to use `runtime.pc`:
+   - `execute_gosub()` - Calculate return PC with `next_pc()`
+   - `execute_for()` - Store FOR PC for loop jumps
+   - `execute_next()` - Use `next_pc()` to handle cross-line jumps properly
+   - `execute_while()`/`execute_wend()` - Set NPC for loop jumps
+   - `execute_error()` - Set ERL% from `pc.line_num`
 
-2. **Update `runtime.pc` during execution:**
-   - Set `runtime.pc` before executing each statement
-   - This allows error messages, ERL%, breakpoints to use current PC
+3. ✅ **Redirected `tick()` to `tick_pc()`**:
+   - Old implementation saved as `tick_old()` for reference
+   - All execution now uses PC-based loop
 
-3. **Simplify control flow:**
-   - Remove nested line/statement loops
-   - Remove `advance_to_next_statement()` complexity
-   - Single simple loop with PC navigation
+**Tests passed:**
+- ✅ Sequential execution
+- ✅ GOTO jumps
+- ✅ GOSUB/RETURN
+- ✅ FOR/NEXT loops (including cross-line)
+- ✅ Multiple statements per line (colons)
+- ✅ Variable assignments and expressions
+
+**Key achievement**: Single simple execution loop, no more nested line/statement iteration!
 
 ### ⏸️ Phase 3: Statement-Level Breakpoints (PENDING)
 

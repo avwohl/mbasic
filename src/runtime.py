@@ -134,6 +134,7 @@ class Runtime:
 
         # Trace flag (TRON/TROFF)
         self.trace_on = False             # True if execution trace is enabled
+        self.trace_detail = 'line'        # 'line' or 'statement' - controls trace output format
 
         # Initialize system variables (ERR% and ERL%)
         self.set_variable_raw('err%', 0)
