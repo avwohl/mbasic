@@ -31,7 +31,7 @@ class CallFrame:
 class ErrorInfo:
     """Information about a runtime error"""
     error_code: int
-    error_line: int
+    pc: PC
     error_message: str
 
 
@@ -211,7 +211,7 @@ class Interpreter:
             self.state.status = 'error'
             self.state.error_info = ErrorInfo(
                 error_code=5,  # Illegal function call (generic error)
-                error_line=0,
+                pc=PC.halted_pc(),  # No valid PC during setup
                 error_message=str(e)
             )
             return self.state
@@ -345,7 +345,7 @@ class Interpreter:
                         self.state.status = 'error'
                         self.state.error_info = ErrorInfo(
                             error_code=self._map_exception_to_error_code(e),
-                            error_line=pc.line_num,
+                            pc=pc,
                             error_message=str(e)
                         )
                         self._restore_break_handler()
@@ -382,7 +382,7 @@ class Interpreter:
                 self.state.status = 'error'
                 self.state.error_info = ErrorInfo(
                     error_code=5,
-                    error_line=self.runtime.pc.line_num if not self.runtime.pc.halted() else 0,
+                    pc=self.runtime.pc if not self.runtime.pc.halted() else PC.halted_pc(),
                     error_message=str(e)
                 )
             raise
@@ -1169,7 +1169,6 @@ class Interpreter:
             # Execute THEN clause
             if stmt.then_line_number is not None:
                 # THEN line_number
-                self.runtime.next_line = stmt.then_line_number
                 self.runtime.npc = PC.from_line(stmt.then_line_number)
             elif stmt.then_statements:
                 # THEN statement(s)
@@ -1181,7 +1180,6 @@ class Interpreter:
             # Execute ELSE clause
             if stmt.else_line_number is not None:
                 # ELSE line_number
-                self.runtime.next_line = stmt.else_line_number
                 self.runtime.npc = PC.from_line(stmt.else_line_number)
             elif stmt.else_statements:
                 # ELSE statement(s)
@@ -1197,7 +1195,6 @@ class Interpreter:
             self.runtime.in_error_handler = False
             self.runtime.error_occurred = False
         # Set both old and new PC
-        self.runtime.next_line = stmt.line_number
         self.runtime.npc = PC.from_line(stmt.line_number)
 
     def execute_gosub(self, stmt):
@@ -1214,7 +1211,6 @@ class Interpreter:
         )
 
         # Jump to subroutine
-        self.runtime.next_line = stmt.line_number
         self.runtime.npc = PC.from_line(stmt.line_number)
 
     def execute_ongoto(self, stmt):
@@ -1238,7 +1234,6 @@ class Interpreter:
             if self.runtime.in_error_handler:
                 self.runtime.in_error_handler = False
                 self.runtime.error_occurred = False
-            self.runtime.next_line = stmt.line_numbers[index - 1]
             self.runtime.npc = PC.from_line(stmt.line_numbers[index - 1])
         # If index is out of range, just continue to next statement (no jump)
 
@@ -1269,7 +1264,6 @@ class Interpreter:
                 return_pc.stmt_offset if not return_pc.halted() else 0
             )
             # Jump to subroutine
-            self.runtime.next_line = stmt.line_numbers[index - 1]
             self.runtime.npc = PC.from_line(stmt.line_numbers[index - 1])
         # If index is out of range, just continue to next statement (no jump)
 
@@ -1297,9 +1291,6 @@ class Interpreter:
             raise RuntimeError(f"RETURN error: statement {return_stmt} in line {return_line} no longer exists")
 
         # Jump back to the line and statement after GOSUB
-        self.runtime.next_line = return_line
-        self.runtime.next_stmt_index = return_stmt
-        # Also set NPC for new PC-based execution
         self.runtime.npc = PC(return_line, return_stmt)
 
     def execute_for(self, stmt):
@@ -1440,9 +1431,6 @@ class Interpreter:
 
             # Continue loop - update variable and jump to statement AFTER the FOR
             self.runtime.set_variable(base_name, type_suffix, new_value, token=token, limits=self.limits)
-            self.runtime.next_line = return_line
-            # Resume at the statement AFTER the FOR statement
-            self.runtime.next_stmt_index = return_stmt + 1
             # Calculate proper next PC (may be next line if FOR is last statement on its line)
             for_pc = PC(return_line, return_stmt)
             next_pc = self.runtime.statement_table.next_pc(for_pc)
@@ -1472,8 +1460,6 @@ class Interpreter:
             wend_line, wend_stmt = wend_pos
 
             # Jump to the statement AFTER the WEND
-            self.runtime.next_line = wend_line
-            self.runtime.next_stmt_index = wend_stmt + 1
             self.runtime.npc = PC(wend_line, wend_stmt + 1)
         else:
             # Condition is true - enter the loop
@@ -1496,8 +1482,6 @@ class Interpreter:
 
         # Jump back to the WHILE statement to re-evaluate the condition
         # The WHILE will either continue the loop or exit and pop the loop
-        self.runtime.next_line = loop_info['while_line']
-        self.runtime.next_stmt_index = loop_info['while_stmt']
         self.runtime.npc = PC(loop_info['while_line'], loop_info['while_stmt'])
 
         # Remove the loop from the stack since we're jumping back to WHILE

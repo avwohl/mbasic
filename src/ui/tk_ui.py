@@ -682,7 +682,7 @@ class TkBackend(UIBackend):
                 self._clear_statement_highlight()
             elif state.status == 'error':
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
-                line_num = state.error_info.error_line if state.error_info else "?"
+                line_num = state.error_info.pc.line_num if state.error_info else "?"
                 self._add_output(f"\n--- Error at line {line_num}: {error_msg} ---\n")
                 self._set_status("Error")
                 self._clear_statement_highlight()
@@ -727,7 +727,7 @@ class TkBackend(UIBackend):
                 self._clear_statement_highlight()
             elif state.status == 'error':
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
-                line_num = state.error_info.error_line if state.error_info else "?"
+                line_num = state.error_info.pc.line_num if state.error_info else "?"
                 self._add_output(f"\n--- Error at line {line_num}: {error_msg} ---\n")
                 self._set_status("Error")
                 self._clear_statement_highlight()
@@ -2666,7 +2666,7 @@ class TkBackend(UIBackend):
                 self.running = False
                 self.paused_at_breakpoint = True  # Allow Continue to work after error
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
-                line_num = state.error_info.error_line if state.error_info else "?"
+                line_num = state.error_info.pc.line_num if state.error_info else "?"
                 self._add_output(f"\n--- Execution error: {error_msg} ---\n")
                 self._add_output("(Edit the line and click Continue to retry, or Stop to end)\n")
                 self._set_status(f"Error at line {line_num} - Edit and Continue, or Stop")
@@ -2746,7 +2746,7 @@ class TkBackend(UIBackend):
                 context['current_line'] = state.current_line
                 context['status'] = state.status
                 if state.error_info:
-                    context['error_line'] = state.error_info.error_line
+                    context['error_line'] = state.error_info.pc.line_num
 
             # Log error (outputs to stderr in debug mode)
             error_msg = debug_log_error(

@@ -1828,7 +1828,7 @@ class CursesBackend(UIBackend):
                     # Clear highlighting on error
                     self.editor._update_display()
                     error_msg = state.error_info.error_message if state.error_info else "Unknown error"
-                    line_num = state.error_info.error_line if state.error_info else "?"
+                    line_num = state.error_info.pc.line_num if state.error_info else "?"
                     self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
                     self._update_output()
                     self.status_bar.set_text("Error during step")
@@ -1898,7 +1898,7 @@ class CursesBackend(UIBackend):
                 elif state.status == 'error':
                     self.editor._update_display()
                     error_msg = state.error_info.error_message if state.error_info else "Unknown error"
-                    line_num = state.error_info.error_line if state.error_info else "?"
+                    line_num = state.error_info.pc.line_num if state.error_info else "?"
                     self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
                     self._update_output()
                     self.status_bar.set_text("Error during step")
@@ -3148,7 +3148,7 @@ Run                           Debug Windows
 
                 # Format error with context
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
-                line_num = state.error_info.error_line if state.error_info else "?"
+                line_num = state.error_info.pc.line_num if state.error_info else "?"
 
                 # Build error display with box and context
                 self.output_buffer.append("")
@@ -3192,7 +3192,7 @@ Run                           Debug Windows
                 context['current_line'] = state.current_line
                 context['status'] = state.status
                 if state.error_info:
-                    context['error_line'] = state.error_info.error_line
+                    context['error_line'] = state.error_info.pc.line_num
 
             # Log error (outputs to stderr in debug mode)
             error_msg = debug_log_error(
