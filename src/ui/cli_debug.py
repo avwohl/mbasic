@@ -3,7 +3,6 @@
 Adds debugging capabilities to the CLI including:
 - BREAK command to set/clear breakpoints
 - STEP command for single-stepping
-- WATCH command for variable inspection
 - STACK command for call stack viewing
 """
 
@@ -19,7 +18,6 @@ class CLIDebugger:
         self.interactive = interactive_mode
         self.breakpoints = set()  # Set of line numbers
         self.stepping = False  # Single-step mode
-        self.watching = set()  # Variable names to watch
 
         # Add debug commands to interactive mode
         self._register_commands()
@@ -127,9 +125,6 @@ class CLIDebugger:
                     line_num = self.interactive.program_runtime.current_line.line_number
                     self.interactive.io_handler.output(f"[{line_num}]")
 
-                    # Show watched variables
-                    self._show_watched_variables()
-
                 # Check if program ended
                 if self.interactive.program_interpreter.state.program_ended:
                     self.interactive.io_handler.output("Program ended")
@@ -140,48 +135,6 @@ class CLIDebugger:
                 self.interactive.io_handler.output(f"Error during step: {e}")
                 self.stepping = False
                 break
-
-    def cmd_watch(self, args=""):
-        """WATCH command - add/remove variable watch.
-
-        Usage:
-            WATCH           - List watched variables
-            WATCH A         - Add variable A to watch list
-            WATCH A-        - Remove variable A from watch list
-            WATCH CLEAR     - Clear all watches
-        """
-        args = args.strip().upper()
-
-        if not args:
-            # List watches
-            if self.watching:
-                self.interactive.io_handler.output("Watching variables:")
-                for var_name in sorted(self.watching):
-                    value = self._get_variable_value(var_name)
-                    self.interactive.io_handler.output(f"  {var_name} = {value}")
-            else:
-                self.interactive.io_handler.output("No variables being watched")
-
-        elif args == "CLEAR":
-            # Clear all watches
-            self.watching.clear()
-            self.interactive.io_handler.output("All watches cleared")
-
-        elif args.endswith("-"):
-            # Remove watch
-            var_name = args[:-1]
-            if var_name in self.watching:
-                self.watching.discard(var_name)
-                self.interactive.io_handler.output(f"Stopped watching {var_name}")
-            else:
-                self.interactive.io_handler.output(f"Not watching {var_name}")
-
-        else:
-            # Add watch
-            var_name = args
-            self.watching.add(var_name)
-            value = self._get_variable_value(var_name)
-            self.interactive.io_handler.output(f"Watching {var_name} = {value}")
 
     def cmd_stack(self, args=""):
         """STACK command - show call stack.
@@ -225,23 +178,6 @@ class CLIDebugger:
                 # Fallback to execute_next
                 self.interactive.program_interpreter.execute_next()
 
-    def _get_variable_value(self, var_name):
-        """Get current value of a variable"""
-        if not self.interactive.program_runtime:
-            return "N/A"
-
-        try:
-            return self.interactive.program_runtime.get_variable(var_name)
-        except:
-            return "undefined"
-
-    def _show_watched_variables(self):
-        """Display all watched variables"""
-        if self.watching:
-            for var_name in sorted(self.watching):
-                value = self._get_variable_value(var_name)
-                self.interactive.io_handler.output(f"  {var_name} = {value}")
-
     def enhance_run_command(self):
         """Enhance RUN command to support breakpoints"""
         # Store original cmd_run
@@ -281,9 +217,6 @@ class CLIDebugger:
                             line_text = self.interactive.program.lines[line_num].original_text
                             self.interactive.io_handler.output(f"  {line_num} {line_text}")
 
-                        # Show watched variables
-                        self._show_watched_variables()
-
                         # Enter stepping mode
                         self.stepping = True
                         return  # Pause execution
@@ -309,7 +242,6 @@ def add_debug_commands(interactive_mode):
     # Add commands as methods
     interactive_mode.cmd_break = debugger.cmd_break
     interactive_mode.cmd_step = debugger.cmd_step
-    interactive_mode.cmd_watch = debugger.cmd_watch
     interactive_mode.cmd_stack = debugger.cmd_stack
 
     # Enhance RUN command
