@@ -58,7 +58,7 @@ class ImmediateExecutor:
         self.def_type_map = {}
 
         # Initialize default type map
-        from parser import TypeInfo
+        from src.parser import TypeInfo
         for letter in 'abcdefghijklmnopqrstuvwxyz':
             self.def_type_map[letter] = TypeInfo.SINGLE
 
