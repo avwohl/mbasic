@@ -37,30 +37,30 @@ Complete three-tier help system with web deployment and comprehensive metadata.
 Location: `docs/help/ui/{backend}/`
 
 **Curses UI (8 files):**
-- getting-started.md - First steps
-- quick-reference.md - Keyboard shortcuts
-- keyboard-commands.md - Complete command reference
-- editing.md - Program editing
-- running.md - Execution and debugging
-- files.md - File operations
-- help-navigation.md - Help system usage
-- index.md - Unified entry point
+- `getting-started.md` - First steps
+- `quick-reference.md` - Keyboard shortcuts
+- `keyboard-commands.md` - Complete command reference
+- `editing.md` - Program editing
+- `running.md` - Execution and debugging
+- `files.md` - File operations
+- `help-navigation.md` - Help system usage
+- `index.md` - Unified entry point
 
 **CLI (1 file):**
-- index.md - Command-line interface guide
+- `index.md` - Command-line interface guide
 
 **Tkinter (1 file):**
-- index.md - GUI interface guide
+- `index.md` - GUI interface guide
 
 ### Tier 2: MBASIC Implementation (📗)
 Location: `docs/help/mbasic/`
 
 **Documentation (5 files):**
-- getting-started.md - Installation and first program
-- features.md - Complete feature list (50+ functions, 63 statements, 18 optimizations)
-- compatibility.md - MBASIC 5.21 compatibility (what works, what doesn't, porting guide)
-- architecture.md - Interpreter vs compiler, semantic analyzer
-- index.md - Overview and navigation
+- `getting-started.md` - Installation and first program
+- `features.md` - Complete feature list (50+ functions, 63 statements, 18 optimizations)
+- `compatibility.md` - MBASIC 5.21 compatibility (what works, what doesn't, porting guide)
+- `architecture.md` - Interpreter vs compiler, semantic analyzer
+- `index.md` - Overview and navigation
 
 ### Tier 3: BASIC-80 Language Reference (📕)
 Location: `docs/help/common/language/`
@@ -80,13 +80,13 @@ Location: `docs/help/common/language/`
 - System: INKEY$, FRE, POS, PEEK, POKE, etc.
 
 **Appendices (3 files):**
-- error-codes.md - All 68 error codes
-- ascii-codes.md - ASCII character table
-- math-functions.md - Derived mathematical functions
+- `error-codes.md` - All 68 error codes
+- `ascii-codes.md` - ASCII character table
+- `math-functions.md` - Derived mathematical functions
 
 **Other (2 files):**
-- operators.md - Arithmetic, relational, logical operators
-- index.md - Language overview
+- `operators.md` - Arithmetic, relational, logical operators
+- `index.md` - Language overview
 
 ## Search Functionality
 

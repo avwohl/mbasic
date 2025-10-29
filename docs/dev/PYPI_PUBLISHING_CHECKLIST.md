@@ -345,7 +345,7 @@ python3 -c "import sys; sys.path.insert(0, 'src'); from runtime import Runtime"
 - ✅ `pyproject.toml` - Complete with optional dependencies
 - ✅ `MANIFEST.in` - Updated to include all necessary files
 - ✅ `src/ui/web/__init__.py` - Created
-- ✅ README.md - Updated with PyPI installation instructions
+- ✅ `README.md` - Updated with PyPI installation instructions
 - ✅ `--list-backends` command - Implemented
 - ✅ Error messages - Improved with installation help
 - ✅ Documentation - Complete in `docs/dev/`
