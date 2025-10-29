@@ -36,7 +36,7 @@ Complete three-tier help system with web deployment and comprehensive metadata.
 ## Three-Tier Architecture
 
 ### Tier 1: UI-Specific Documentation (📘)
-Location: `docs/help/ui/{backend}/`
+Location: `docs/help/ui/` (per-backend subdirectories: `curses/`, `cli/`, `tk/`)
 
 **Curses UI (10 files):**
 - [getting-started.md](../help/ui/curses/getting-started.md) - First steps
