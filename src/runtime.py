@@ -126,8 +126,9 @@ class Runtime:
 
         # STOP/CONT state preservation
         self.stopped = False              # True if program stopped via STOP or Break
-        self.stop_line = None             # Line where STOP occurred
-        self.stop_stmt_index = None       # Statement index where STOP occurred
+        self.stop_pc = None               # PC where STOP occurred (NEW - for CONT)
+        self.stop_line = None             # Line where STOP occurred (OLD - will be removed)
+        self.stop_stmt_index = None       # Statement index where STOP occurred (OLD - will be removed)
 
         # Break handling (Ctrl+C)
         self.break_requested = False      # True when Ctrl+C pressed during execution

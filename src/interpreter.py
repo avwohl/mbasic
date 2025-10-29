@@ -2663,11 +2663,18 @@ class Interpreter:
         # Save the current execution position
         # We need to resume from the NEXT statement after STOP
         self.runtime.stopped = True
+
+        # Save PC position for CONT (use npc which points to next statement)
+        self.runtime.stop_pc = self.runtime.npc
+
+        # Also save old fields for backwards compatibility (will be removed in Phase 3)
         self.runtime.stop_line = self.runtime.current_line
         self.runtime.stop_stmt_index = self.runtime.current_stmt_index + 1
 
         # Print "Break in <line>" message
-        if self.runtime.current_line:
+        if self.runtime.pc and self.runtime.pc.line_num:
+            self.io.output(f"Break in {self.runtime.pc.line_num}")
+        elif self.runtime.current_line:
             self.io.output(f"Break in {self.runtime.current_line.line_number}")
         else:
             self.io.output("Break")

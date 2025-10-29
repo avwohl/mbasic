@@ -247,10 +247,10 @@ class CLIDebugger:
         # Store original cmd_run
         original_run = self.interactive.cmd_run
 
-        def enhanced_run(starting_line=None):
+        def enhanced_run():
             """Enhanced RUN with breakpoint support"""
             # Call original to set up runtime/interpreter
-            original_run(starting_line)
+            original_run()
 
             # If we have breakpoints, modify interpreter behavior
             if self.breakpoints and self.interactive.program_interpreter:

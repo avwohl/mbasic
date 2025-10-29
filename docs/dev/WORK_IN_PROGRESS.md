@@ -1,15 +1,41 @@
 # Work in Progress
 
-## No Active Work
+## PC_OLD_EXECUTION_METHODS Refactoring - In Progress
 
-Last session completed: 2025-10-29 - Multiple improvements (v1.0.299)
+**Task:** Remove old execution methods and complete PC/NPC migration
+**Status:** Phase 1 - Updating CONT command
+**Version:** 1.0.299
 
-All work committed and pushed to GitHub.
+### Current Work
 
-### Available TODOs
-- `PC_OLD_EXECUTION_METHODS_TODO.md` - Large refactoring (~8 hours)
-- `INTERPRETER_REFACTOR_METHODS_NOT_VARIABLES_TODO.md` - Deferred
-- `DE_NONEIFY_TODO.md` - Partially complete (phases 1-3 done)
+Removing dual-mode execution and old runtime fields to complete PC migration.
+
+**Progress:**
+1. ✅ Phase 1: Update CONT command to use PC-based execution (COMPLETE)
+   - Added stop_pc field to Runtime
+   - Updated execute_stop() to save stop_pc
+   - Updated CONT command to use tick-based loop
+   - Fixed cli_debug.py enhanced_run signature bug
+2. ✅ Phase 2: Remove dual-mode from execute_* methods (ALREADY DONE!)
+   - Analysis shows all execute_* methods only set npc, not next_line
+   - Dual-mode removal was completed in previous PC refactoring
+3. ⏳ Phase 3: Remove old execution methods (IN PROGRESS)
+   - run_from_current() (line 545-569)
+   - _run_loop() (line 654-803)
+   - step_once() (line 571-652)
+4. Phase 4: Remove old runtime fields
+5. Phase 5: Comprehensive testing
+
+### Files Modified
+- ✅ src/interpreter.py - execute_stop uses stop_pc
+- ✅ src/interactive.py - CONT uses PC and tick()
+- ✅ src/runtime.py - Added stop_pc field
+- ✅ src/ui/cli_debug.py - Fixed enhanced_run signature
+
+### Next Steps
+1. Remove run_from_current(), _run_loop(), step_once()
+2. Remove old runtime fields (current_line, next_line, stop_line, stop_stmt_index)
+3. Comprehensive testing
 
 ---
 

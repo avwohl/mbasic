@@ -141,8 +141,9 @@ class InteractiveMode:
             self.program_runtime.for_loops.clear()
             # Also clear STOP state since line edits invalidate the stop position
             self.program_runtime.stopped = False
-            self.program_runtime.stop_line = None
-            self.program_runtime.stop_stmt_index = None
+            self.program_runtime.stop_pc = None
+            self.program_runtime.stop_line = None  # OLD - will be removed in Phase 3
+            self.program_runtime.stop_stmt_index = None  # OLD - will be removed in Phase 3
 
     def _setup_readline(self):
         """Configure readline for better line editing"""
@@ -379,16 +380,37 @@ class InteractiveMode:
         try:
             # Clear stopped flag
             self.program_runtime.stopped = False
-
-            # Restore execution position
-            self.program_runtime.current_line = self.program_runtime.stop_line
-            self.program_runtime.current_stmt_index = self.program_runtime.stop_stmt_index
             self.program_runtime.halted = False
 
-            # Resume execution - we need to continue from where we stopped,
-            # not restart from the beginning. We'll use run_from_current()
-            # which doesn't call setup() and continues from current position.
-            self.program_interpreter.run_from_current()
+            # Restore execution position from PC (NEW)
+            if self.program_runtime.stop_pc:
+                self.program_runtime.pc = self.program_runtime.stop_pc
+            else:
+                # Fallback to old fields for backwards compatibility
+                self.program_runtime.current_line = self.program_runtime.stop_line
+                self.program_runtime.current_stmt_index = self.program_runtime.stop_stmt_index
+
+            # Resume execution using tick-based loop (same as run())
+            state = self.program_interpreter.state
+            while state.status not in ('done', 'error'):
+                state = self.program_interpreter.tick(mode='run', max_statements=10000)
+
+                # Handle input synchronously for CLI
+                if state.status == 'waiting_for_input':
+                    try:
+                        value = input()
+                        state = self.program_interpreter.provide_input(value)
+                    except KeyboardInterrupt:
+                        self.io.output("")
+                        self.io.output(f"Break in {state.current_line or '?'}")
+                        return
+                    except EOFError:
+                        self.io.output("")
+                        return
+
+            # Handle final errors
+            if state.status == 'error' and state.error_info:
+                raise RuntimeError(state.error_info.error_message)
 
         except Exception as e:
             print_error(e, self.program_runtime)
