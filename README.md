@@ -9,7 +9,7 @@ A modern implementation of Microsoft BASIC-80 5.21 (CP/M era) with optional deve
 - ✅ **Modern Extensions**: Optional debugging commands (BREAK, STEP, WATCH, STACK)
 - ✅ **Multiple UIs**: CLI (classic), Curses, Tk (GUI), Web (browser)
 
-See [STATUS.md](STATUS.md) for implementation details and [Extensions](docs/help/mbasic/extensions.md) for modern features.
+See [STATUS.md](STATUS.md) for implementation details, [Extensions](docs/help/mbasic/extensions.md) for modern features, and [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for current project health and metrics.
 
 ## Installation
 
