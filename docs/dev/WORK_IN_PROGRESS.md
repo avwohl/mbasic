@@ -2,21 +2,29 @@
 
 ## No Active Work
 
-Last session completed: 2025-10-29 - line_order redundancy removal (v1.0.299)
+Last session completed: 2025-10-29 - error state redundancy removal (v1.0.300)
 
 All work committed and pushed.
 
 ### Session Summary
-Removed redundant `line_order` field from Runtime. It was just maintaining `sorted(line_table.keys())`, causing unnecessary data duplication and sync overhead.
+Removed redundant `error_occurred` and `in_error_handler` boolean flags from Runtime. Both were duplicating state already tracked by `state.error_info`.
 
-- Eliminated ~22 references across 5 files
-- Replaced with on-demand `sorted(line_table.keys())` calls
-- Fixed execute_while() to use statement_table.next_pc()
-- All tests passing (FOR, WHILE/WEND, GOSUB/RETURN)
+**Changes:**
+- Replaced all `error_occurred` checks with `state.error_info is not None`
+- Replaced all `in_error_handler` checks with `state.error_info is not None`
+- Fixed error handler invocation logic - check for existing error_info BEFORE setting new one
+- Removed error_occurred and in_error_handler fields from Runtime.__init__
+- Updated 6 locations in interpreter.py to use state.error_info instead
+- All error handling tests passing (ON ERROR GOTO, RESUME, ERL%, ERR%, ERS%)
+
+**Impact:**
+- Eliminated redundant state tracking - error_info is now single source of truth
+- Prevented potential sync bugs between the 3 pieces of state
+- Simplified error state management
 
 ### Next Session Recommendations
-- Consider other data redundancy optimizations
-- Review remaining TODOs
+- Continue looking for other redundant state tracking patterns
+- Review other opportunities for state consolidation
 
 ---
 

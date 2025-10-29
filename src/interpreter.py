@@ -327,6 +327,9 @@ class Interpreter:
                     return self.state
 
                 except Exception as e:
+                    # Check if we're already in an error handler (prevent recursive errors)
+                    already_in_error_handler = (self.state.error_info is not None)
+
                     # Set ErrorInfo for both handler and no-handler cases (needed by RESUME)
                     error_code = self._map_exception_to_error_code(e)
                     self.state.error_info = ErrorInfo(
@@ -335,13 +338,13 @@ class Interpreter:
                         error_message=str(e)
                     )
 
-                    # Check if we have an error handler
-                    if self.runtime.has_error_handler() and not self.runtime.in_error_handler:
+                    # Check if we have an error handler and not already handling an error
+                    if self.runtime.has_error_handler() and not already_in_error_handler:
                         self._invoke_error_handler(error_code, pc)
                         # Error handler set npc, loop will handle it
                         continue
                     else:
-                        # No error handler - set error state and raise
+                        # No error handler (or recursive error) - set error state and raise
                         self.state.status = 'error'
                         self._restore_break_handler()
                         raise
@@ -588,9 +591,8 @@ class Interpreter:
 
     def _invoke_error_handler(self, error_code, error_pc):
         """Invoke the error handler"""
-        # Set error state
-        self.runtime.error_occurred = True
-        self.runtime.in_error_handler = True
+        # Note: error_info is already set by caller (in tick_pc exception handler)
+        # We're now in the error handler
 
         # Set ERR%, ERL%, and ERS% system variables
         self.runtime.set_variable_raw('err%', error_code)
@@ -919,9 +921,9 @@ class Interpreter:
     def execute_goto(self, stmt):
         """Execute GOTO statement"""
         # If we're in an error handler and GOTOing out, clear the error state
-        if self.runtime.in_error_handler:
-            self.runtime.in_error_handler = False
-            self.runtime.error_occurred = False
+        if self.state.error_info is not None:
+            self.state.error_info = None
+            self.runtime.set_variable_raw('err%', 0)
         # Set both old and new PC
         self.runtime.npc = PC.from_line(stmt.line_number)
 
@@ -959,9 +961,9 @@ class Interpreter:
         # Check if index is valid (1-based indexing)
         if 1 <= index <= len(stmt.line_numbers):
             # If we're in an error handler and GOTOing out, clear the error state
-            if self.runtime.in_error_handler:
-                self.runtime.in_error_handler = False
-                self.runtime.error_occurred = False
+            if self.state.error_info is not None:
+                self.state.error_info = None
+                self.runtime.set_variable_raw('err%', 0)
             self.runtime.npc = PC.from_line(stmt.line_numbers[index - 1])
         # If index is out of range, just continue to next statement (no jump)
 
@@ -1004,9 +1006,9 @@ class Interpreter:
         return_line, return_stmt = self.runtime.pop_gosub()
 
         # If returning from error handler, clear error state
-        if self.runtime.in_error_handler:
-            self.runtime.in_error_handler = False
-            self.runtime.error_occurred = False
+        if self.state.error_info is not None:
+            self.state.error_info = None
+            self.runtime.set_variable_raw('err%', 0)
 
         # Validate that the return address still exists
         if not self.runtime.statement_table.line_exists(return_line):
@@ -1236,18 +1238,17 @@ class Interpreter:
 
     def execute_resume(self, stmt):
         """Execute RESUME statement"""
-        if not self.runtime.error_occurred:
+        if self.state.error_info is None:
             raise RuntimeError("RESUME without error")
 
         # Get error PC from ErrorInfo
-        if not self.state.error_info or not self.state.error_info.pc:
+        if not self.state.error_info.pc:
             raise RuntimeError("No error position to resume from")
 
         error_pc = self.state.error_info.pc
 
         # Clear error state
-        self.runtime.error_occurred = False
-        self.runtime.in_error_handler = False
+        self.state.error_info = None
         self.runtime.set_variable_raw('err%', 0)
 
         # Determine where to resume

@@ -105,10 +105,11 @@ class Runtime:
         # Error handling
         self.error_handler = None     # Line number for ON ERROR GOTO/GOSUB
         self.error_handler_is_gosub = False  # True if ON ERROR GOSUB, False if ON ERROR GOTO
-        self.error_occurred = False
-        self.in_error_handler = False # True if currently executing error handler
-        # Note: Error PC is stored in ErrorInfo (interpreter.py), not here
-        # ERL% and ERS% system variables are set from ErrorInfo.pc
+        # Note: Error state tracking removed - use state.error_info instead
+        # error_occurred = (state.error_info is not None)
+        # in_error_handler = (state.error_info is not None)
+        # Error PC and details are stored in ErrorInfo (interpreter.py state)
+        # ERL%, ERS%, and ERR% system variables are set from ErrorInfo
 
         # ERR and ERL are system variables (integer type), not functions
         # Initialize them in the variable table with % suffix (lowercase)
