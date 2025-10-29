@@ -41,22 +41,23 @@ You must pipe the program content to MBASIC as if it's being typed:
 
 ```bash
 cd /home/wohl/cl/mbasic/tests
-(cat test.bas && echo "RUN") | timeout 1 tnylpo ../com/mbasic
+(cat test.bas && printf "RUN\nSYSTEM\nSYSTEM\nSYSTEM\n") | timeout 1 tnylpo ../com/mbasic
 ```
 
 This:
 1. Cats the .bas file (types the program lines)
-2. Echoes "RUN" command
+2. Sends RUN command followed by multiple SYSTEM commands
 3. Pipes everything to tnylpo running MBASIC
-4. Uses timeout to prevent hanging (use 1 second for faster test feedback)
+4. Multiple SYSTEM commands ensure exit even if syntax errors garble input
+5. Uses timeout as final fallback (rarely needed with multiple SYSTEM)
 
-**Note on Timeout**: If the program has syntax errors, MBASIC will show the error and wait at "Ok" prompt until timeout expires. Use `timeout 1` for faster feedback during testing.
+**Why Multiple SYSTEM?** When a program has syntax errors, MBASIC returns to "Ok" prompt and input can get garbled. Sending multiple SYSTEM commands ensures at least one gets through cleanly, causing immediate exit (~0.1s) instead of waiting for timeout (~1s).
 
 ### Example: Running hello.bas
 
 ```bash
 cd /home/wohl/cl/mbasic/tests
-(cat hello.bas && echo "RUN") | timeout 1 tnylpo ../com/mbasic
+(cat hello.bas && printf "RUN\nSYSTEM\nSYSTEM\nSYSTEM\n") | timeout 1 tnylpo ../com/mbasic
 ```
 
 Output:
@@ -76,7 +77,7 @@ Hello from MBASIC!
 ### Capturing Output to File
 
 ```bash
-(cat test.bas && echo "RUN") | timeout 1 tnylpo ../com/mbasic 2>&1 | tee output.txt
+(cat test.bas && printf "RUN\nSYSTEM\nSYSTEM\nSYSTEM\n") | timeout 1 tnylpo ../com/mbasic 2>&1 | tee output.txt
 ```
 
 ## Common Issues
@@ -122,8 +123,8 @@ cd /home/wohl/cl/mbasic/tests
 # Run on our implementation
 python3 ../mbasic.py mytest.bas > /tmp/our_output.txt 2>&1
 
-# Run on real MBASIC (use timeout 1 for faster feedback)
-(cat mytest.bas && echo "RUN") | timeout 1 tnylpo ../com/mbasic > /tmp/real_output.txt 2>&1
+# Run on real MBASIC (multiple SYSTEM for instant exit on errors)
+(cat mytest.bas && printf "RUN\nSYSTEM\nSYSTEM\nSYSTEM\n") | timeout 1 tnylpo ../com/mbasic > /tmp/real_output.txt 2>&1
 
 # Compare
 diff /tmp/our_output.txt /tmp/real_output.txt
