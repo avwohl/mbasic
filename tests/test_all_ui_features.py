@@ -1723,6 +1723,26 @@ class WebFeatureTests(UIFeatureTest):
         except:
             return False
 
+    def test_has_auto_line_numbers(self):
+        """Test has Auto Line Numbers feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                # Check for auto-numbering logic
+                return 'auto_number_enabled' in source and '_on_enter_key' in source
+        except:
+            return False
+
+    def test_has_renumber(self):
+        """Test has Renumber feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                # Check for renumber functionality
+                return '_menu_renumber' in source
+        except:
+            return False
+
     def run_all(self):
         """Run all Web tests"""
         print(f"\n{'='*60}")
@@ -1744,9 +1764,11 @@ class WebFeatureTests(UIFeatureTest):
         self.test("Run Program", self.test_has_run)
         self.test("Stop/Interrupt", self.test_has_stop_interrupt)
         self.test("Continue", self.test_has_continue)
+        self.test("List Program", self.test_has_list_program)
+        self.test("Renumber", self.test_has_renumber)
+        self.test("Auto Line Numbers", self.test_has_auto_line_numbers)
         self.test("Step Line", self.test_has_step_line)
         self.test("Step Statement", self.test_has_step_stmt)
-        self.test("List Program", self.test_has_list_program)
         self.test("Clear Output", self.test_has_clear_output)
 
         print("\n3. DEBUGGING")

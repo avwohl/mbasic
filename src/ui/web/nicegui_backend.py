@@ -279,6 +279,12 @@ class NiceGUIBackend(UIBackend):
                     ui.separator()
                     ui.menu_item('Exit', on_click=self._menu_exit)
 
+            # Edit menu
+            with ui.button('Edit', icon='menu').props('flat color=white'):
+                with ui.menu():
+                    ui.menu_item('Renumber...', on_click=self._menu_renumber)
+                    ui.menu_item('Sort Lines', on_click=self._menu_sort_lines)
+
             # Run menu
             with ui.button('Run', icon='menu').props('flat color=white'):
                 with ui.menu():
@@ -873,6 +879,61 @@ class NiceGUIBackend(UIBackend):
             self._set_status('Lines sorted by line number')
         except Exception as e:
             log_web_error("_menu_sort_lines", e)
+            self._notify(f'Error: {e}', type='negative')
+
+    def _menu_renumber(self):
+        """Renumber program lines with new start and increment."""
+        try:
+            # Show dialog for renumber parameters
+            with ui.dialog() as dialog, ui.card():
+                ui.label('Renumber Program').classes('text-lg font-bold')
+
+                start_input = ui.number(label='Start Line', value=10, min=1, max=65529).classes('w-32')
+                increment_input = ui.number(label='Increment', value=10, min=1, max=100).classes('w-32')
+
+                def do_renumber():
+                    try:
+                        start = int(start_input.value)
+                        increment = int(increment_input.value)
+
+                        # Get existing lines
+                        lines = self.program.get_lines()
+                        if not lines:
+                            self._notify('No program to renumber', type='warning')
+                            dialog.close()
+                            return
+
+                        # Renumber lines
+                        renumbered = []
+                        new_line_num = start
+                        for old_line_num, old_line_text in lines:
+                            # Extract the statement part (after line number)
+                            match = re.match(r'^\d+\s*(.*)', old_line_text)
+                            if match:
+                                statement = match.group(1)
+                                renumbered.append(f'{new_line_num} {statement}')
+                                new_line_num += increment
+
+                        # Update editor
+                        self.editor.value = '\n'.join(renumbered)
+
+                        # Reload into program
+                        self._save_editor_to_program()
+
+                        dialog.close()
+                        self._notify(f'Renumbered {len(renumbered)} lines', type='positive')
+                        self._set_status('Program renumbered')
+                    except Exception as ex:
+                        self._notify(f'Error: {ex}', type='negative')
+
+                with ui.row():
+                    ui.button('Renumber', on_click=do_renumber).classes('bg-blue-500')
+                    ui.button('Cancel', on_click=dialog.close)
+
+            dialog.open()
+
+        except Exception as e:
+            log_web_error("_menu_renumber", e)
             self._notify(f'Error: {e}', type='negative')
 
     def _show_variables_window(self):
