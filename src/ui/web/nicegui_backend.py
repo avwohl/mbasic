@@ -275,6 +275,9 @@ class NiceGUIBackend(UIBackend):
                     ui.menu_item('Step Statement', on_click=self._menu_step_stmt)
                     ui.menu_item('Continue', on_click=self._menu_continue)
                     ui.separator()
+                    ui.menu_item('Toggle Breakpoint', on_click=self._toggle_breakpoint)
+                    ui.menu_item('Clear All Breakpoints', on_click=self._clear_all_breakpoints)
+                    ui.separator()
                     ui.menu_item('List Program', on_click=self._menu_list)
                     ui.separator()
                     ui.menu_item('Show Variables', on_click=self._show_variables_window)
@@ -429,6 +432,19 @@ class NiceGUIBackend(UIBackend):
             self._notify('Please enter a valid line number', type='warning')
         except Exception as e:
             log_web_error("_do_toggle_breakpoint", e)
+            self._notify(f'Error: {e}', type='negative')
+
+    def _clear_all_breakpoints(self):
+        """Clear all breakpoints."""
+        try:
+            count = len(self.breakpoints)
+            self.breakpoints.clear()
+            if self.interpreter:
+                self.interpreter.clear_breakpoints()
+            self._notify(f'Cleared {count} breakpoint(s)', type='info')
+            self._set_status('All breakpoints cleared')
+        except Exception as e:
+            log_web_error("_clear_all_breakpoints", e)
             self._notify(f'Error: {e}', type='negative')
 
     # =========================================================================
@@ -595,6 +611,10 @@ class NiceGUIBackend(UIBackend):
             # Wire up interpreter to use this UI's methods
             self.interpreter.interactive_mode = self
 
+            # Set breakpoints
+            for line_num in self.breakpoints:
+                self.interpreter.set_breakpoint(line_num)
+
             # Start interpreter
             state = self.interpreter.start()
             if state.status == 'error':
@@ -688,6 +708,10 @@ class NiceGUIBackend(UIBackend):
                 # Wire up interpreter
                 self.interpreter.interactive_mode = self
 
+                # Set breakpoints
+                for line_num in self.breakpoints:
+                    self.interpreter.set_breakpoint(line_num)
+
                 # Start interpreter
                 state = self.interpreter.start()
                 if state.status == 'error':
@@ -735,6 +759,10 @@ class NiceGUIBackend(UIBackend):
 
                 # Wire up interpreter
                 self.interpreter.interactive_mode = self
+
+                # Set breakpoints
+                for line_num in self.breakpoints:
+                    self.interpreter.set_breakpoint(line_num)
 
                 # Start interpreter
                 state = self.interpreter.start()
