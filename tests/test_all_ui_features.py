@@ -268,13 +268,13 @@ class CLIFeatureTests(UIFeatureTest):
         """STEP command"""
         # STEP command is mentioned in help but not yet implemented in CLI
         # Error: "Unexpected token in statement: STEP"
-        return None  # Skip - not implemented
+        return False  # FAIL - not implemented
 
     def test_watch(self):
         """WATCH command (variable inspection)"""
         # WATCH command is mentioned in help but not yet implemented in CLI
         # Error: "Unknown statement or command: 'watch'"
-        return None  # Skip - not implemented
+        return False  # FAIL - not implemented
 
     def test_stack(self):
         """STACK command"""
@@ -822,7 +822,7 @@ class WebFeatureTests(UIFeatureTest):
     def test_has_sort_lines(self):
         """Test has sort lines"""
         # Sort lines not implemented in Web UI yet
-        return None  # Skip - not implemented
+        return False  # FAIL - not implemented
 
     def run_all(self):
         """Run all Web tests"""
