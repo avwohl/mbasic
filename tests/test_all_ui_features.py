@@ -465,13 +465,13 @@ class CLIFeatureTests(UIFeatureTest):
         # File Operations
         print("\n1. FILE OPERATIONS")
         self.test("New Program", self.test_new_program)
-        self.test("Load File", self.test_load_file)
+        self.test("Open/Load File", self.test_load_file)
         self.test("Save File", self.test_save_file)
-        self.test("Delete Line", self.test_delete_line)
+        self.test("Delete Lines", self.test_delete_line)
         self.test("Merge Files", self.test_merge_files)
 
-        # Program Execution
-        print("\n2. PROGRAM EXECUTION & CONTROL")
+        # Execution & Control
+        print("\n2. EXECUTION & CONTROL")
         self.test("Run Program", self.test_run_program)
         self.test("Stop/Interrupt", self.test_stop)
         self.test("Continue", self.test_continue)
@@ -480,17 +480,17 @@ class CLIFeatureTests(UIFeatureTest):
         self.test("Auto Line Numbers", self.test_auto_line_numbers)
 
         # Debugging
-        print("\n3. DEBUGGING FEATURES")
-        self.test("Breakpoint", self.test_breakpoint)
-        self.test("Step", self.test_step)
+        print("\n3. DEBUGGING")
+        self.test("Breakpoints", self.test_breakpoint)
+        self.test("Step Statement", self.test_step)
 
         # Variable Inspection
         print("\n4. VARIABLE INSPECTION")
-        self.test("Watch Variables", self.test_watch)
-        self.test("Stack", self.test_stack)
+        self.test("Variables Window", self.test_watch)
+        self.test("Execution Stack", self.test_stack)
 
-        # Help
-        print("\n5. HELP SYSTEM")
+        # Help System
+        print("\n6. HELP SYSTEM")
         self.test("Help Command", self.test_help)
 
         return self.summary()
