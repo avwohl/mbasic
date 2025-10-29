@@ -169,10 +169,6 @@ Standard browser text editing shortcuts work in the editor:
 | **Ctrl+X** | Cut |
 | **Ctrl+C** | Copy |
 | **Ctrl+V** | Paste |
-| **Ctrl+Z** | Undo |
-| **Ctrl+Y** or **Ctrl+Shift+Z** | Redo |
-
-**Note:** Undo/Redo availability depends on your browser.
 
 ## Debugging Workflow
 

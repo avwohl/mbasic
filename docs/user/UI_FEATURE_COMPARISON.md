@@ -51,7 +51,6 @@ This guide helps you choose the right UI for your needs and understand the featu
 | **Full-screen editor** | ❌ | ✅ | ✅ | ✅ | CLI is line-based |
 | **Syntax highlighting** | ❌ | ⚠️ | ✅ | ✅ | Curses: basic |
 | **Cut/Copy/Paste** | ❌ | ❌ | ✅ | ✅ | GUI clipboard support |
-| **Undo/Redo** | ❌ | ❌ | ✅ | ✅ | Multiple levels |
 | **Find/Replace** | ❌ | ❌ | ✅ | ❌ | Tk only (new feature) |
 | **Auto-complete** | ❌ | ❌ | ❌ | ✅ | Web suggests keywords |
 | **Smart Insert** | ❌ | ❌ | ✅ | ❌ | Tk exclusive feature |

@@ -56,8 +56,6 @@ Complete reference for all keyboard shortcuts in the Tk graphical interface.
 | **Ctrl+F** | Find text in editor (opens Find dialog) |
 | **F3** | Find next occurrence |
 | **Ctrl+H** | Find and replace (opens Replace dialog) |
-| **Ctrl+Z** | Undo last edit |
-| **Ctrl+Y** | Redo undone edit |
 
 ### Find and Replace (Ctrl+F, Ctrl+H)
 

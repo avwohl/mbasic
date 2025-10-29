@@ -58,7 +58,6 @@ Complete reference of all features available in the MBASIC Web UI.
 - Replace single
 - Replace all
 - Preview changes
-- Undo support
 
 ## File Management
 
@@ -182,7 +181,6 @@ Complete reference of all features available in the MBASIC Web UI.
 - Double-click edit
 - Type validation
 - Immediate update
-- Undo changes
 
 ### Execution Control
 
@@ -254,7 +252,6 @@ Complete reference of all features available in the MBASIC Web UI.
 
 **Version Control:**
 - Local history
-- Undo/redo stack
 - Snapshot saves
 - Diff viewer
 

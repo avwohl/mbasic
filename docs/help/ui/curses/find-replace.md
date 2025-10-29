@@ -55,7 +55,6 @@ Find/Replace is planned with these features:
 - Replace single occurrence
 - Replace all
 - Confirmation prompts
-- Undo support
 
 **Navigation:**
 - F3 for Find Next
