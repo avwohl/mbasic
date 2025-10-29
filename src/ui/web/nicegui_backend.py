@@ -144,6 +144,12 @@ class NiceGUIBackend(UIBackend):
         self.recent_files = []  # List of recent file names
         self.max_recent_files = 10
 
+        # Auto-save configuration
+        self.auto_save_enabled = True       # Enable auto-save
+        self.auto_save_interval = 30        # Auto-save every 30 seconds
+        self.auto_save_timer = None         # Timer for auto-save
+        self.last_save_content = ''         # Last saved content (to detect changes)
+
         # Execution state
         self.running = False
         self.paused = False
@@ -261,6 +267,9 @@ class NiceGUIBackend(UIBackend):
                         self.resource_usage_label = ui.label('').classes('text-gray-600')
                         ui.label(f'v{VERSION}').classes('text-gray-600')
 
+            # Start auto-save timer
+            self._start_auto_save()
+
     def _create_menu(self):
         """Create menu bar."""
         with ui.row().classes('w-full bg-gray-800 text-white p-2 gap-4'):
@@ -272,6 +281,8 @@ class NiceGUIBackend(UIBackend):
                     ui.menu_item('Save', on_click=self._menu_save)
                     ui.menu_item('Save As...', on_click=self._menu_save_as)
                     ui.separator()
+                    ui.menu_item('Merge...', on_click=self._menu_merge)
+                    ui.separator()
                     # Recent Files submenu
                     with ui.menu_item('Recent Files'):
                         with ui.menu() as self.recent_files_menu:
@@ -282,9 +293,12 @@ class NiceGUIBackend(UIBackend):
             # Edit menu
             with ui.button('Edit', icon='menu').props('flat color=white'):
                 with ui.menu():
+                    ui.menu_item('Find/Replace...', on_click=self._menu_find_replace)
+                    ui.separator()
                     ui.menu_item('Delete Lines...', on_click=self._menu_delete_lines)
                     ui.menu_item('Renumber...', on_click=self._menu_renumber)
                     ui.menu_item('Sort Lines', on_click=self._menu_sort_lines)
+                    ui.menu_item('Smart Insert...', on_click=self._menu_smart_insert)
 
             # Run menu
             with ui.button('Run', icon='menu').props('flat color=white'):
@@ -597,6 +611,80 @@ class NiceGUIBackend(UIBackend):
         """File > Exit - Quit application."""
         app.shutdown()
 
+    def _menu_merge(self):
+        """File > Merge - Merge another BASIC file into current program."""
+        try:
+            # Create merge dialog
+            with ui.dialog() as dialog, ui.card().classes('w-[600px]'):
+                ui.label('Merge File').classes('text-lg font-bold')
+                ui.label('Upload a BASIC file to merge with the current program').classes('text-sm text-gray-600')
+
+                # File upload area
+                file_content = {'data': None}
+
+                def handle_upload(e):
+                    """Handle file upload."""
+                    try:
+                        # Read uploaded file content
+                        content = e.content.read().decode('utf-8')
+                        file_content['data'] = content
+                        upload_label.text = f'Uploaded: {e.name}'
+                    except Exception as ex:
+                        self._notify(f'Error reading file: {ex}', type='negative')
+
+                ui.upload(on_upload=handle_upload, auto_upload=True).classes('w-full')
+                upload_label = ui.label('No file selected').classes('text-sm text-gray-500')
+
+                def do_merge():
+                    try:
+                        if not file_content['data']:
+                            self._notify('Please select a file to merge', type='warning')
+                            return
+
+                        # Parse the file to extract lines
+                        merge_lines = file_content['data'].strip().split('\n')
+
+                        # Get current editor content
+                        current_text = self.editor.value
+                        current_lines = current_text.strip().split('\n') if current_text else []
+
+                        # Combine lines
+                        all_lines = current_lines + merge_lines
+
+                        # Parse line numbers and sort
+                        numbered_lines = []
+                        for line in all_lines:
+                            match = re.match(r'^(\d+)\s+(.*)', line.strip())
+                            if match:
+                                line_num = int(match.group(1))
+                                statement = match.group(2)
+                                numbered_lines.append((line_num, statement))
+
+                        # Sort by line number
+                        numbered_lines.sort(key=lambda x: x[0])
+
+                        # Rebuild editor text
+                        merged_text = '\n'.join(f'{num} {stmt}' for num, stmt in numbered_lines)
+                        self.editor.value = merged_text
+
+                        # Reload into program
+                        self._save_editor_to_program()
+
+                        dialog.close()
+                        self._notify(f'Merged {len(merge_lines)} lines', type='positive')
+                        self._set_status(f'Merged {len(merge_lines)} lines')
+                    except Exception as ex:
+                        self._notify(f'Error merging: {ex}', type='negative')
+
+                with ui.row():
+                    ui.button('Merge', on_click=do_merge, icon='merge_type').props('color=primary')
+                    ui.button('Cancel', on_click=dialog.close)
+
+            dialog.open()
+        except Exception as e:
+            log_web_error("_menu_merge", e)
+            self._notify(f'Error: {e}', type='negative')
+
     def _menu_run(self):
         """Run > Run Program - Execute program."""
         if self.running:
@@ -882,6 +970,170 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_menu_sort_lines", e)
             self._notify(f'Error: {e}', type='negative')
 
+    def _menu_find_replace(self):
+        """Find and replace text in the program."""
+        try:
+            # Show dialog for find/replace
+            with ui.dialog() as dialog, ui.card().classes('w-[500px]'):
+                ui.label('Find & Replace').classes('text-lg font-bold')
+
+                find_input = ui.input(label='Find', placeholder='Text to find...').classes('w-full')
+                replace_input = ui.input(label='Replace with', placeholder='Replacement text...').classes('w-full')
+                case_sensitive = ui.checkbox('Case sensitive', value=False)
+
+                result_label = ui.label('').classes('text-sm text-gray-600')
+
+                def do_find_next():
+                    try:
+                        find_text = find_input.value
+                        if not find_text:
+                            result_label.text = 'Enter text to find'
+                            return
+
+                        editor_text = self.editor.value
+                        if case_sensitive.value:
+                            index = editor_text.find(find_text)
+                        else:
+                            index = editor_text.lower().find(find_text.lower())
+
+                        if index >= 0:
+                            result_label.text = f'Found at position {index}'
+                        else:
+                            result_label.text = 'Not found'
+                    except Exception as ex:
+                        result_label.text = f'Error: {ex}'
+
+                def do_replace():
+                    try:
+                        find_text = find_input.value
+                        replace_text = replace_input.value
+
+                        if not find_text:
+                            result_label.text = 'Enter text to find'
+                            return
+
+                        editor_text = self.editor.value
+                        if case_sensitive.value:
+                            if find_text in editor_text:
+                                new_text = editor_text.replace(find_text, replace_text, 1)
+                                self.editor.value = new_text
+                                result_label.text = 'Replaced 1 occurrence'
+                            else:
+                                result_label.text = 'Not found'
+                        else:
+                            # Case-insensitive replace (replace first occurrence)
+                            import re
+                            pattern = re.compile(re.escape(find_text), re.IGNORECASE)
+                            match = pattern.search(editor_text)
+                            if match:
+                                new_text = editor_text[:match.start()] + replace_text + editor_text[match.end():]
+                                self.editor.value = new_text
+                                result_label.text = 'Replaced 1 occurrence'
+                            else:
+                                result_label.text = 'Not found'
+                    except Exception as ex:
+                        result_label.text = f'Error: {ex}'
+
+                def do_replace_all():
+                    try:
+                        find_text = find_input.value
+                        replace_text = replace_input.value
+
+                        if not find_text:
+                            result_label.text = 'Enter text to find'
+                            return
+
+                        editor_text = self.editor.value
+                        if case_sensitive.value:
+                            count = editor_text.count(find_text)
+                            new_text = editor_text.replace(find_text, replace_text)
+                        else:
+                            import re
+                            pattern = re.compile(re.escape(find_text), re.IGNORECASE)
+                            count = len(pattern.findall(editor_text))
+                            new_text = pattern.sub(replace_text, editor_text)
+
+                        self.editor.value = new_text
+                        result_label.text = f'Replaced {count} occurrence(s)'
+                        self._notify(f'Replaced {count} occurrence(s)', type='positive')
+                    except Exception as ex:
+                        result_label.text = f'Error: {ex}'
+
+                with ui.row().classes('gap-2'):
+                    ui.button('Find Next', on_click=do_find_next).classes('bg-blue-500')
+                    ui.button('Replace', on_click=do_replace).classes('bg-green-500')
+                    ui.button('Replace All', on_click=do_replace_all).classes('bg-orange-500')
+                    ui.button('Close', on_click=dialog.close)
+
+            dialog.open()
+
+        except Exception as e:
+            log_web_error("_menu_find_replace", e)
+            self._notify(f'Error: {e}', type='negative')
+
+    def _menu_smart_insert(self):
+        """Insert a line number between two existing lines."""
+        try:
+            # Show dialog
+            with ui.dialog() as dialog, ui.card():
+                ui.label('Smart Insert').classes('text-lg font-bold')
+                ui.label('Insert a line between two existing line numbers').classes('text-sm text-gray-600')
+
+                after_input = ui.number(label='After Line', value=10, min=1, max=65529).classes('w-32')
+
+                def do_insert():
+                    try:
+                        after_line = int(after_input.value)
+
+                        # Get existing lines
+                        lines = self.program.get_lines()
+                        if not lines:
+                            self._notify('No program loaded', type='warning')
+                            dialog.close()
+                            return
+
+                        # Find the line after the specified line
+                        line_numbers = [ln for ln, _ in lines]
+
+                        # Find next line number
+                        next_line = None
+                        for ln in sorted(line_numbers):
+                            if ln > after_line:
+                                next_line = ln
+                                break
+
+                        # Calculate midpoint
+                        if next_line:
+                            new_line_num = (after_line + next_line) // 2
+                            if new_line_num == after_line:
+                                new_line_num = after_line + 1
+                        else:
+                            # No line after, just add 10
+                            new_line_num = after_line + 10
+
+                        # Add to editor
+                        current_text = self.editor.value
+                        if current_text:
+                            self.editor.value = current_text + f'\n{new_line_num} '
+                        else:
+                            self.editor.value = f'{new_line_num} '
+
+                        dialog.close()
+                        self._notify(f'Inserted line {new_line_num}', type='positive')
+                        self._set_status(f'Inserted line {new_line_num}')
+                    except Exception as ex:
+                        self._notify(f'Error: {ex}', type='negative')
+
+                with ui.row():
+                    ui.button('Insert', on_click=do_insert).classes('bg-blue-500')
+                    ui.button('Cancel', on_click=dialog.close)
+
+            dialog.open()
+
+        except Exception as e:
+            log_web_error("_menu_smart_insert", e)
+            self._notify(f'Error: {e}', type='negative')
+
     def _menu_delete_lines(self):
         """Delete a range of line numbers from the program."""
         try:
@@ -1150,6 +1402,66 @@ class NiceGUIBackend(UIBackend):
     def _menu_about(self):
         """Help > About."""
         self._notify('MBASIC 5.21 Web IDE\nBuilt with NiceGUI', type='info')
+
+    def _start_auto_save(self):
+        """Start auto-save timer."""
+        if self.auto_save_enabled and not self.auto_save_timer:
+            # Create async timer that calls auto-save periodically
+            self.auto_save_timer = ui.timer(
+                self.auto_save_interval,
+                self._auto_save_tick,
+                active=True
+            )
+
+    def _stop_auto_save(self):
+        """Stop auto-save timer."""
+        if self.auto_save_timer:
+            self.auto_save_timer.cancel()
+            self.auto_save_timer = None
+
+    def _auto_save_tick(self):
+        """Periodic auto-save check."""
+        try:
+            if not self.auto_save_enabled:
+                return
+
+            # Check if editor content has changed
+            current_content = self.editor.value if self.editor else ''
+
+            if current_content and current_content != self.last_save_content:
+                # Content has changed, save to browser localStorage
+                self._auto_save_to_storage(current_content)
+                self.last_save_content = current_content
+                # Update status briefly
+                if self.status_label:
+                    old_status = self.status_label.text
+                    self.status_label.text = 'Auto-saved'
+                    # Reset status after 2 seconds
+                    ui.timer(2.0, lambda: setattr(self.status_label, 'text', old_status), once=True)
+        except Exception as e:
+            # Log but don't crash on auto-save errors
+            log_web_error("_auto_save_tick", e)
+
+    def _auto_save_to_storage(self, content):
+        """Save content to browser localStorage."""
+        try:
+            # In NiceGUI, we can use JavaScript to save to localStorage
+            # This creates a backup that persists across page refreshes
+            ui.run_javascript(f'''
+                localStorage.setItem('mbasic_autosave', {repr(content)});
+                localStorage.setItem('mbasic_autosave_time', new Date().toISOString());
+            ''')
+        except Exception as e:
+            log_web_error("_auto_save_to_storage", e)
+
+    def _load_auto_save(self):
+        """Load auto-saved content from localStorage if available."""
+        try:
+            # This would typically be called on startup
+            # For now, it's a placeholder for future enhancement
+            pass
+        except Exception as e:
+            log_web_error("_load_auto_save", e)
 
     def _check_syntax(self):
         """Check syntax of current program."""

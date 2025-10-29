@@ -1753,6 +1753,42 @@ class WebFeatureTests(UIFeatureTest):
         except:
             return False
 
+    def test_has_find_replace(self):
+        """Test has Find/Replace feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                return '_menu_find_replace' in source
+        except:
+            return False
+
+    def test_has_smart_insert(self):
+        """Test has Smart Insert feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                return '_menu_smart_insert' in source
+        except:
+            return False
+
+    def test_has_auto_save(self):
+        """Test has Auto-Save feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                return 'auto_save' in source.lower()
+        except:
+            return False
+
+    def test_has_merge_files(self):
+        """Test has Merge Files feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                return '_menu_merge' in source
+        except:
+            return False
+
     def run_all(self):
         """Run all Web tests"""
         print(f"\n{'='*60}")
@@ -1769,7 +1805,9 @@ class WebFeatureTests(UIFeatureTest):
         self.test("Save File", self.test_has_save_file)
         self.test("Save As", self.test_has_save_as)
         self.test("Recent Files", self.test_has_recent_files)
+        self.test("Auto-Save", self.test_has_auto_save)
         self.test("Delete Lines", self.test_has_delete_lines)
+        self.test("Merge Files", self.test_has_merge_files)
 
         print("\n2. EXECUTION & CONTROL")
         self.test("Run Program", self.test_has_run)
@@ -1801,6 +1839,8 @@ class WebFeatureTests(UIFeatureTest):
         self.test("Line Editing", self.test_has_line_editing)
         self.test("Multi-Line Edit", self.test_has_multi_line_edit)
         self.test("Cut/Copy/Paste", self.test_has_cut_copy_paste)
+        self.test("Find/Replace", self.test_has_find_replace)
+        self.test("Smart Insert", self.test_has_smart_insert)
         self.test("Sort Lines", self.test_has_sort_lines)
         self.test("Syntax Checking", self.test_has_syntax_checking)
 
