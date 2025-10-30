@@ -306,6 +306,16 @@ class NiceGUIBackend(UIBackend):
         """Set current session's exec_timer."""
         self._get_session_state()['exec_timer'] = value
 
+    @property
+    def auto_save_timer(self):
+        """Get current session's auto_save_timer."""
+        return self._get_session_state()['auto_save_timer']
+
+    @auto_save_timer.setter
+    def auto_save_timer(self, value):
+        """Set current session's auto_save_timer."""
+        self._get_session_state()['auto_save_timer'] = value
+
     def build_ui(self):
         """Build the NiceGUI interface.
 
