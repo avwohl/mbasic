@@ -167,7 +167,7 @@ REM Include another source file
 1000 END
 
 REM =====================================================
-REM MIGRATION TIPS: Interpreter → Compiler
+REM MIGRATION TIPS: Interpreter b Compiler
 REM =====================================================
 REM
 REM 1. Move all DEFINT/DEFSNG/DEFDBL/DEFSTR to top of program

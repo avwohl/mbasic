@@ -366,7 +366,7 @@ E 6p safely used is NoR ;" A.W.t(B&
       IF ANS$=nES"HEN GOTO 1010 ESE .Ft"(>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>=1200     REM  PartrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrtttttttttttttttttttttttttttttttttIT                                                                                                             
 U2iW ls
 
-      PRINT;yseR6 ueiRnEO2Re6HTRANSMêmGRNnH sz1LCULATIONS****   XUNtrrA IN "2ieil8EI*NtW
+      PRINT;yseR6 ueiRnEO2Re6HTRANSMmGRNnH sz1LCULATIONS****   XUNtrrA IN "2ieil8EI*NtW
 TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTing frequs8A11111111111111111111111111111111122222222222222222222222222222222222222222
 z)";RINPUT "Wil8EISp l nsmittin frhuenc? (ine T
 R                                  =      GO RbX
