@@ -1,37 +1,37 @@
 # MBASIC Educational Programs
 
-Educational programs for learning math, science, and programming concepts
+Learning and educational programs
 
 ## Available Educational Programs
 
-### Math Test
+### Astrnmy2
 
-Practice basic math skills with timed tests.
 
-**Year:** 1980s
-**Tags:** education, math, quiz
-
-**[Download mathtest.bas](mathtest.bas)**
-
----
-
-### Astronomy
-
-Learn about astronomy with calculations and demonstrations.
 
 **Year:** 1980s
-**Tags:** education, science, astronomy
+**Tags:** 
 
 **[Download astrnmy2.bas](astrnmy2.bas)**
 
 ---
 
-### Wind Chill Calculator
+### Mathtest
 
-Calculate wind chill factor and learn about weather.
+
 
 **Year:** 1980s
-**Tags:** education, science, weather, calculator
+**Tags:** test
+
+**[Download mathtest.bas](mathtest.bas)**
+
+---
+
+### Windchil
+
+
+
+**Year:** 1980s
+**Tags:** 
 
 **[Download windchil.bas](windchil.bas)**
 

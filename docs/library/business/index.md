@@ -1,72 +1,72 @@
 # MBASIC Business Programs
 
-Financial calculators, budgeting tools, and productivity applications
+Business applications and tools
 
 ## Available Business Programs
 
-### Budget Tracker
+### Budget
 
-Track your budget and expenses.
+
 
 **Year:** 1980s
-**Tags:** finance, budget, productivity
+**Tags:** 
 
 **[Download budget.bas](budget.bas)**
 
 ---
 
-### Mortgage Calculator
+### Cpm-Pert
 
-Calculate mortgage payments and amortization schedules.
 
-**Year:** 1980s
-**Tags:** finance, calculator, mortgage
-
-**[Download mortgage.bas](mortgage.bas)**
-
----
-
-### Finance Tools
-
-Financial calculation tools for business.
 
 **Year:** 1980s
-**Tags:** finance, calculator, business
-
-**[Download finance.bas](finance.bas)**
-
----
-
-### Interest Calculator
-
-Calculate simple and compound interest.
-
-**Year:** 1980s
-**Tags:** finance, calculator, interest
-
-**[Download interest.bas](interest.bas)**
-
----
-
-### CPM/PERT Chart
-
-Critical Path Method and PERT chart tool for project management.
-
-**Year:** 1980s
-**Tags:** project-management, business, planning
+**Tags:** 
 
 **[Download cpm-pert.bas](cpm-pert.bas)**
 
 ---
 
-### Log 10K
+### Finance
 
-Business logging and tracking tool.
+
 
 **Year:** 1980s
-**Tags:** business, logging, tracking
+**Tags:** 
+
+**[Download finance.bas](finance.bas)**
+
+---
+
+### Interest
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download interest.bas](interest.bas)**
+
+---
+
+### Log10K
+
+
+
+**Year:** 1980s
+**Tags:** 
 
 **[Download log10k.bas](log10k.bas)**
+
+---
+
+### Mortgage
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download mortgage.bas](mortgage.bas)**
 
 ---
 

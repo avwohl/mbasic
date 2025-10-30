@@ -1,83 +1,50 @@
-# MBASIC Data Management Programs
+# MBASIC Data Management
 
-Bibliography systems, database tools, file managers, and data organization programs
+Database and file management programs
 
 ## Available Data Management
 
-### Bibliography Builder
+### Mfil
 
-Build and manage bibliographic databases.
 
-**Year:** 1980s
-**Tags:** database, bibliography, research
-
-**[Download bibbld.bas](bibbld.bas)**
-
----
-
-### Bibliography Search
-
-Search through bibliography databases.
 
 **Year:** 1980s
-**Tags:** database, bibliography, search
-
-**[Download bibsrch.bas](bibsrch.bas)**
-
----
-
-### Bibliography Manager
-
-Complete bibliography management system.
-
-**Year:** 1980s
-**Tags:** database, bibliography, management
-
-**[Download biblio.bas](biblio.bas)**
-
----
-
-### Database Editor
-
-Edit records in database files.
-
-**Year:** 1980s
-**Tags:** database, editor, data
-
-**[Download cbasedit.bas](cbasedit.bas)**
-
----
-
-### File Manager
-
-Manage and organize data files.
-
-**Year:** 1980s
-**Tags:** database, files, management
+**Tags:** 
 
 **[Download mfil.bas](mfil.bas)**
 
 ---
 
-### Vocabulary Builder
+### Sfamove
 
-Build vocabulary or glossary databases.
+
 
 **Year:** 1980s
-**Tags:** database, vocabulary, education
+**Tags:** 
 
-**[Download vocbld.bas](vocbld.bas)**
+**[Download sfamove.bas](sfamove.bas)**
 
 ---
 
-### Vocabulary List
+### Sfavoc
 
-List and display vocabulary entries.
+
 
 **Year:** 1980s
-**Tags:** database, vocabulary, report
+**Tags:** 
 
-**[Download voclst.bas](voclst.bas)**
+**[Download sfavoc.bas](sfavoc.bas)**
+
+---
+
+### Xlabels
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download xlabels.bas](xlabels.bas)**
 
 ---
 

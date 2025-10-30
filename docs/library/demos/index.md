@@ -1,28 +1,61 @@
 # MBASIC Demos & Tests
 
-Test programs, benchmarks, and demonstration code
+Demonstration programs and test suites
 
 ## Available Demos & Tests
 
-### Interpreter Benchmark
+### Benchmk
 
-Benchmark comparing interpreter vs compiler performance.
+
 
 **Year:** 1980s
-**Tags:** benchmark, performance, test
+**Tags:** 
 
-**[Download interpreter-vs-compiler.bas](interpreter-vs-compiler.bas)**
+**[Download benchmk.bas](benchmk.bas)**
 
 ---
 
-### System Benchmark
+### Test Curses Features
 
-Test and benchmark your BASIC system.
+
 
 **Year:** 1980s
-**Tags:** benchmark, test, performance
+**Tags:** test
 
-**[Download benchmk.bas](benchmk.bas)**
+**[Download test_curses_features.bas](test_curses_features.bas)**
+
+---
+
+### Test Curses Input
+
+
+
+**Year:** 1980s
+**Tags:** test
+
+**[Download test_curses_input.bas](test_curses_input.bas)**
+
+---
+
+### Test Curses Simple
+
+
+
+**Year:** 1980s
+**Tags:** test
+
+**[Download test_curses_simple.bas](test_curses_simple.bas)**
+
+---
+
+### Test Immediate Input
+
+
+
+**Year:** 1980s
+**Tags:** test
+
+**[Download test_immediate_input.bas](test_immediate_input.bas)**
 
 ---
 

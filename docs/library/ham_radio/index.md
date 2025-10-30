@@ -1,72 +1,61 @@
 # MBASIC Ham Radio Programs
 
-Amateur radio utilities including QSO loggers, callsign lookups, and radio tools
+Amateur radio utilities and tools
 
 ## Available Ham Radio
 
-### QSO Logger
+### Boka-Ei
 
-Log amateur radio contacts (QSOs) with callsign, frequency, and time.
+
 
 **Year:** 1980s
-**Tags:** ham-radio, logging, qso
+**Tags:** 
 
-**[Download qso.bas](qso.bas)**
+**[Download boka-ei.bas](boka-ei.bas)**
 
 ---
 
-### QSO Editor
+### Qsoedit
 
-Edit and manage your QSO log entries.
+
 
 **Year:** 1980s
-**Tags:** ham-radio, logging, qso, editor
+**Tags:** 
 
 **[Download qsoedit.bas](qsoedit.bas)**
 
 ---
 
-### QSO Finder
+### Qsofind
 
-Search through QSO logs for specific contacts.
+
 
 **Year:** 1980s
-**Tags:** ham-radio, logging, qso, search
+**Tags:** 
 
 **[Download qsofind.bas](qsofind.bas)**
 
 ---
 
-### QSO List
+### Rbsutl31
 
-Generate formatted lists of QSO contacts.
 
-**Year:** 1980s
-**Tags:** ham-radio, logging, qso, report
-
-**[Download qsolist.bas](qsolist.bas)**
-
----
-
-### RBS Utilities
-
-Utilities for the Remote Base System (amateur radio).
 
 **Year:** 1980s
-**Tags:** ham-radio, utility, remote
+**Tags:** 
 
 **[Download rbsutl31.bas](rbsutl31.bas)**
 
 ---
 
-### RBS Purge
+### Rsj
 
-Clean up old entries from Remote Base System logs.
+
 
 **Year:** 1980s
-**Tags:** ham-radio, utility, maintenance
+**Tags:** 
 
-**[Download rbspurge.bas](rbspurge.bas)**
+**[Download rsj.bas](rsj.bas)**
 
 ---
 

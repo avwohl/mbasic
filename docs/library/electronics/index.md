@@ -1,94 +1,94 @@
 # MBASIC Electronics Programs
 
-Circuit design calculators, IC timers, assembly language listers, and electronic engineering tools
+Hardware interfacing and electronics tools
 
 ## Available Electronics
 
-### 555 IC Timer Calculator
+### 555-Ic
 
-Calculate component values for 555 timer IC circuits.
+
 
 **Year:** 1980s
-**Tags:** electronics, calculator, 555, timer
+**Tags:** 
 
 **[Download 555-ic.bas](555-ic.bas)**
 
 ---
 
-### 567 IC Tone Decoder Calculator
+### 567-Ic
 
-Calculate component values for 567 tone decoder IC circuits.
+
 
 **Year:** 1980s
-**Tags:** electronics, calculator, 567, tone-decoder
+**Tags:** 
 
 **[Download 567-ic.bas](567-ic.bas)**
 
 ---
 
-### 555 Timer Design
+### Atten
 
-Design 555 timer circuits with component calculations.
 
-**Year:** 1980s
-**Tags:** electronics, calculator, 555, timer
-
-**[Download timer555.bas](timer555.bas)**
-
----
-
-### Attenuator Calculator
-
-Calculate resistor values for attenuator circuits.
 
 **Year:** 1980s
-**Tags:** electronics, calculator, attenuator
+**Tags:** 
 
 **[Download atten.bas](atten.bas)**
 
 ---
 
-### Bearing Calculator
+### Bearing
 
-Calculate bearing and navigation values.
+
 
 **Year:** 1980s
-**Tags:** electronics, calculator, navigation
+**Tags:** 
 
 **[Download bearing.bas](bearing.bas)**
 
 ---
 
-### 8085 Assembly Lister
+### Lst8085
 
-List and format 8085 assembly language programs.
+
 
 **Year:** 1980s
-**Tags:** electronics, assembly, 8085, programming
+**Tags:** 
 
 **[Download lst8085.bas](lst8085.bas)**
 
 ---
 
-### Intel Assembly Lister
+### Lstintel
 
-List and format Intel assembly language programs.
+
 
 **Year:** 1980s
-**Tags:** electronics, assembly, intel, programming
+**Tags:** 
 
 **[Download lstintel.bas](lstintel.bas)**
 
 ---
 
-### 8085 Opcode Table
+### Lsttdl
 
-Display 8085 instruction opcodes and mnemonics.
+
 
 **Year:** 1980s
-**Tags:** electronics, assembly, 8085, reference
+**Tags:** 
 
-**[Download tab8085.bas](tab8085.bas)**
+**[Download lsttdl.bas](lsttdl.bas)**
+
+---
+
+### Timer555
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download timer555.bas](timer555.bas)**
 
 ---
 

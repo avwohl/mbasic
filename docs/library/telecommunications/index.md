@@ -1,61 +1,50 @@
-# MBASIC Telecommunications Programs
+# MBASIC Telecommunications
 
-Modem programs, BBS utilities, and communication tools from the dial-up era
+Modem, terminal, and BBS programs
 
 ## Available Telecommunications
 
-### BModem
+### Bmodem
 
-Modem communication program with file transfer protocols.
+
 
 **Year:** 1980s
-**Tags:** modem, telecommunications, file-transfer
+**Tags:** 
 
 **[Download bmodem.bas](bmodem.bas)**
 
 ---
 
-### BModem 1.0
+### Bmodem1
 
-Early version of BModem communication program.
+
 
 **Year:** 1980s
-**Tags:** modem, telecommunications, file-transfer
+**Tags:** 
 
 **[Download bmodem1.bas](bmodem1.bas)**
 
 ---
 
-### BBS Exit Utility
+### Command
 
-Utility for managing BBS (Bulletin Board System) exits.
 
-**Year:** 1980s
-**Tags:** bbs, telecommunications, utility
-
-**[Download exitbbs1.bas](exitbbs1.bas)**
-
----
-
-### Dialog System
-
-Interactive dialog system for telecommunications.
 
 **Year:** 1980s
-**Tags:** telecommunications, dialog, interactive
-
-**[Download dialog11.bas](dialog11.bas)**
-
----
-
-### Command Processor
-
-Command processor for modem or BBS systems.
-
-**Year:** 1980s
-**Tags:** telecommunications, command, utility
+**Tags:** 
 
 **[Download command.bas](command.bas)**
+
+---
+
+### Xtel
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download xtel.bas](xtel.bas)**
 
 ---
 

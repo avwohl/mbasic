@@ -4,59 +4,136 @@ Classic BASIC games from the CP/M era
 
 ## Available Games
 
-### Blackjack
+### Bacarrat
 
-Classic casino card game. Try to beat the dealer by getting as close to 21 as possible without going over.
+
 
 **Year:** 1980s
-**Tags:** card, casino, strategy
+**Tags:** 
 
-**[Download blackjack.bas](blackjack.bas)**
+**[Download bacarrat.bas](bacarrat.bas)**
+
+---
+
+### Blkjk
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download blkjk.bas](blkjk.bas)**
+
+---
+
+### Feesten
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download feesten.bas](feesten.bas)**
+
+---
+
+### Kalfeest
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download kalfeest.bas](kalfeest.bas)**
+
+---
+
+### Lifscore
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download lifscore.bas](lifscore.bas)**
+
+---
+
+### Massa
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download massa.bas](massa.bas)**
+
+---
+
+### Ozdot
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download ozdot.bas](ozdot.bas)**
+
+---
+
+### Roulette
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download roulette.bas](roulette.bas)**
 
 ---
 
 ### Spacewar
 
-Classic space combat game. Battle in space with realistic physics.
+
 
 **Year:** 1980s
-**Tags:** action, space, arcade
+**Tags:** 
 
 **[Download spacewar.bas](spacewar.bas)**
 
 ---
 
-### Robot Nim
+### Star
 
-Strategy game where you remove robots from the screen. The goal is to remove the last robot.
 
-**Author:** Richard Musgrave
+
 **Year:** 1980s
-**Tags:** strategy, puzzle, robot
+**Tags:** 
 
-**[Download nim.bas](nim.bas)**
+**[Download star.bas](star.bas)**
 
 ---
 
-### Poker
+### Startrek
 
-Five-card draw poker game. Test your poker skills against the computer.
+
 
 **Year:** 1980s
-**Tags:** card, casino, strategy
+**Tags:** 
 
-**[Download poker.bas](poker.bas)**
+**[Download startrek.bas](startrek.bas)**
 
 ---
 
-### Battle
+### Survival
 
-Strategic battle simulation game.
 
-**Year:** 1980s
-**Tags:** strategy, simulation, war
 
-**[Download battle.bas](battle.bas)**
+**Author:** R Logan & Ian Lycholm CBASIC 2 VER
+**Year:** 1982
+**Tags:** 
+
+**[Download survival.bas](survival.bas)**
 
 ---
 
