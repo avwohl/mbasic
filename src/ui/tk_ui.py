@@ -398,6 +398,7 @@ class TkBackend(UIBackend):
         menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label="Help Topics", command=self._menu_help,
                              accelerator=self.keybindings.get_tk_accelerator('menu', 'help_topics'))
+        help_menu.add_command(label="Games Library", command=self._menu_games_library)
         help_menu.add_separator()
         help_menu.add_command(label="About", command=self._menu_about)
 
@@ -1730,6 +1731,11 @@ class TkBackend(UIBackend):
         # Open help documentation in web browser
         from .web_help_launcher import open_help_in_browser
         open_help_in_browser(topic="help/ui/tk/", ui_type="tk")
+
+    def _menu_games_library(self):
+        """Help > Games Library - Opens games library in browser"""
+        from .web_help_launcher import open_help_in_browser
+        open_help_in_browser(topic="library/games/", ui_type="tk")
 
     def _context_help(self):
         """Show context-sensitive help for keyword at cursor"""

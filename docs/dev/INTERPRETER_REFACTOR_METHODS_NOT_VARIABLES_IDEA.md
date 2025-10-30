@@ -1,7 +1,7 @@
-# ⏳ TODO: Refactor Interpreter to Use Methods Instead of Instance Variables
+# 💡 IDEA: Refactor Interpreter to Use Methods Instead of Instance Variables
 
 ## Status
-⏳ TODO - Deferred until web UI is working
+💡 IDEA - Not sure if this is a good approach yet
 
 ## Problem
 

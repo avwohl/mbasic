@@ -322,6 +322,7 @@ class NiceGUIBackend(UIBackend):
             with ui.button('Help', icon='menu').props('flat color=white'):
                 with ui.menu():
                     ui.menu_item('Help Topics', on_click=self._menu_help)
+                    ui.menu_item('Games Library', on_click=self._menu_games_library)
                     ui.separator()
                     ui.menu_item('About', on_click=self._menu_about)
 
@@ -1398,6 +1399,12 @@ class NiceGUIBackend(UIBackend):
         from ..web_help_launcher import open_help_in_browser
         open_help_in_browser(topic="help/ui/web/", ui_type="web")
         self._notify('Opening help in browser...', type='info')
+
+    def _menu_games_library(self):
+        """Help > Games Library - Opens games library in browser."""
+        from ..web_help_launcher import open_help_in_browser
+        open_help_in_browser(topic="library/games/", ui_type="web")
+        self._notify('Opening games library in browser...', type='info')
 
     def _menu_about(self):
         """Help > About."""

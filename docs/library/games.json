@@ -1,0 +1,47 @@
+{
+  "title": "MBASIC Games Library",
+  "description": "Classic BASIC games from the CP/M era",
+  "games": [
+    {
+      "filename": "blackjack.bas",
+      "source_path": "basic/blkjk.bas",
+      "title": "Blackjack",
+      "description": "Classic casino card game. Try to beat the dealer by getting as close to 21 as possible without going over.",
+      "year": "1980s",
+      "tags": ["card", "casino", "strategy"]
+    },
+    {
+      "filename": "spacewar.bas",
+      "source_path": "basic/spacewar.bas",
+      "title": "Spacewar",
+      "description": "Classic space combat game. Battle in space with realistic physics.",
+      "year": "1980s",
+      "tags": ["action", "space", "arcade"]
+    },
+    {
+      "filename": "nim.bas",
+      "source_path": "basic/bas_tests/nim.bas",
+      "title": "Robot Nim",
+      "description": "Strategy game where you remove robots from the screen. The goal is to remove the last robot.",
+      "author": "Richard Musgrave",
+      "year": "1980s",
+      "tags": ["strategy", "puzzle", "robot"]
+    },
+    {
+      "filename": "poker.bas",
+      "source_path": "basic/bas_tests/poker.bas",
+      "title": "Poker",
+      "description": "Five-card draw poker game. Test your poker skills against the computer.",
+      "year": "1980s",
+      "tags": ["card", "casino", "strategy"]
+    },
+    {
+      "filename": "battle.bas",
+      "source_path": "basic/bas_tests/battle.bas",
+      "title": "Battle",
+      "description": "Strategic battle simulation game.",
+      "year": "1980s",
+      "tags": ["strategy", "simulation", "war"]
+    }
+  ]
+}

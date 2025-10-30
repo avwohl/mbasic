@@ -1,10 +1,10 @@
 # Library Browser Feature - TODO
 
-⏳ **Status:** TODO - Not yet started
+✅ **Status:** DONE - Games library implemented (2025-10-29)
 
 ## Overview
 
-Add a library browser feature that allows users to browse and load example BASIC programs, games, and utilities from within the UI. Originally intended for the Web UI to send programs from the server, but would be useful for any visual UI (Tkinter, Web, future GUIs).
+Add a library browser feature that allows users to browse and load example BASIC programs, games, and utilities from within the UI. Implemented using static HTML documentation approach instead of API.
 
 ## Motivation
 
@@ -32,103 +32,71 @@ Each UI has its own file loading:
 - **Tkinter**: File → Open menu, file browser dialog
 - **Web**: Open button uploads file from user's computer (cannot access server files)
 
-## Proposed Implementation
+## Implemented Solution
 
-### Architecture
+### Architecture (Static HTML Approach)
 
-**Server-Side:**
-1. Create `basic/library/` directory with curated examples
-2. Organize into categories:
-   - `games/` - Interactive games
-   - `demos/` - Visual demonstrations
-   - `tutorials/` - Learning examples with comments
-   - `utilities/` - Useful tools (calendar, converters, etc.)
-   - `classic/` - Historical CP/M programs
-3. Create `library_index.json` with metadata:
-   ```json
-   {
-     "games": [
-       {
-         "filename": "blackjack.bas",
-         "title": "Blackjack",
-         "description": "Classic card game",
-         "author": "Unknown",
-         "year": "1981",
-         "lines": 250,
-         "tags": ["game", "card", "interactive"]
-       }
-     ]
-   }
-   ```
+**Documentation-Based:**
+1. Create `docs/library/games.json` with metadata pointing to source files
+2. Use `utils/build_library_docs.py` to generate static HTML
+3. Generated files go to `docs/library/games/`:
+   - `index.md` - Main page with game descriptions
+   - `*.bas` files - Copied from source during build
+4. Published to web docs site (http://localhost/mbasic_docs)
 
 **UI Integration:**
 
-**Web UI (Priority 1):**
-- Add "Examples" button to toolbar or File menu
-- Dialog shows categorized list of programs
-- Click to load into editor (replaces current program, with warning)
-- Server endpoint: `GET /api/library` returns index
-- Server endpoint: `GET /api/library/{category}/{filename}` returns program text
+**Web UI (✅ Done):**
+- Added "Games Library" menu item to Help menu
+- Opens library at `library/games/` in browser
+- Uses existing `open_help_in_browser()` infrastructure
 
-**Tkinter UI (Priority 2):**
-- Add File → Load Example submenu
-- Hierarchical menu with categories
-- Loads directly from `basic/library/` filesystem
+**Tkinter UI (✅ Done):**
+- Added "Games Library" menu item to Help menu
+- Opens library in default browser
 
-**Curses UI (Priority 3):**
-- Add Ctrl+E (Examples) keybinding
-- Text-based menu browser (similar to help browser)
-- Loads directly from `basic/library/` filesystem
+**Build Process:**
+- `utils/build_library_docs.py` generates docs from metadata
+- Copies .bas files from source (always current version)
+- Generated during doc build / deployment
 
-**CLI (Priority 4):**
-- Add EXAMPLES command to list available programs
-- EXAMPLE "name" to load one
-- EXAMPLE LIST "category" to list by category
+### Advantages of Static Approach
 
-### Security Considerations
+- ✅ No API needed - just static files
+- ✅ Reuses existing web deployment (MkDocs)
+- ✅ Works with existing file upload in Web UI
+- ✅ Can be browsed independently
+- ✅ Search works automatically (MkDocs feature)
+- ✅ .bas files always current (copied during build)
+- ✅ No security concerns (read-only static files)
 
-**Web UI:**
-- Only serve files from `basic/library/` directory (sandboxed)
-- Validate filenames to prevent path traversal attacks
-- Read-only access (users can't modify server files)
-- Rate limiting on library endpoints
+## Implementation (Completed)
 
-**All UIs:**
-- Confirm before replacing current program
-- Show preview/description before loading
+### Phase 1: Games Library (✅ Done)
+- [x] Created `docs/library/games.json` with metadata
+- [x] Curated 5 games from existing collection:
+  - blackjack.bas (from basic/blkjk.bas)
+  - spacewar.bas (from basic/spacewar.bas)
+  - nim.bas (from basic/bas_tests/nim.bas)
+  - poker.bas (from basic/bas_tests/poker.bas)
+  - battle.bas (from basic/bas_tests/battle.bas)
 
-## Implementation Plan
+### Phase 2: Build System (✅ Done)
+- [x] Created `utils/build_library_docs.py`
+- [x] Generates `docs/library/games/index.md` from metadata
+- [x] Copies .bas files from source during build
+- [x] Auto-generates download links
 
-### Phase 1: Organization (1-2 hours)
-- [ ] Create `basic/library/` directory structure
-- [ ] Curate 20-30 best programs from existing collection
-- [ ] Move to organized categories
-- [ ] Add header comments explaining what each program does
-- [ ] Test that all programs parse and run correctly
+### Phase 3: UI Integration (✅ Done)
+- [x] Web UI: Added "Games Library" to Help menu
+- [x] Tkinter UI: Added "Games Library" to Help menu
+- [x] Both open library at `library/games/` in browser
 
-### Phase 2: Metadata (1 hour)
-- [ ] Create `library_index.json` with all program metadata
-- [ ] Write utility script to auto-generate basic metadata (line count, etc.)
-- [ ] Manually add descriptions, tags, categories
-
-### Phase 3: Web UI (2-3 hours)
-- [ ] Add `/api/library` endpoint to nicegui_backend.py
-- [ ] Add `/api/library/{category}/{filename}` endpoint
-- [ ] Create library browser dialog in Web UI
-- [ ] Add "Examples" button to toolbar
-- [ ] Test loading programs
-
-### Phase 4: Other UIs (2-4 hours)
-- [ ] Tkinter: Add File → Load Example menu
-- [ ] Curses: Add Ctrl+E examples browser
-- [ ] CLI: Add EXAMPLES and EXAMPLE commands
-- [ ] Update UI documentation
-
-### Phase 5: Testing & Documentation (1-2 hours)
-- [ ] Test library browser in all UIs
-- [ ] Update help documentation
-- [ ] Add library browser to feature parity tracking
-- [ ] Create user guide for finding examples
+### Future Enhancements (Optional)
+- [ ] Add more categories (demos, tutorials, utilities)
+- [ ] Add more games from the 372+ available
+- [ ] Curses: Add Ctrl+E examples browser (optional)
+- [ ] CLI: Add EXAMPLES command (optional)
 
 ## Example Programs to Include
 
