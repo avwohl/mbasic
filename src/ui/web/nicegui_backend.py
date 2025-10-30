@@ -1402,10 +1402,10 @@ class NiceGUIBackend(UIBackend):
         self._notify('Opening help in browser...', type='info')
 
     def _menu_games_library(self):
-        """Help > Games Library - Opens games library in browser."""
+        """Help > Games Library - Opens program library in browser."""
         from ..web_help_launcher import open_help_in_browser
-        open_help_in_browser(topic="library/games/", ui_type="web")
-        self._notify('Opening games library in browser...', type='info')
+        open_help_in_browser(topic="library/", ui_type="web")
+        self._notify('Opening program library in browser...', type='info')
 
     def _menu_settings(self):
         """Edit > Settings - Open settings dialog."""

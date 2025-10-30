@@ -1099,7 +1099,7 @@ class TypeInfo:
             VarType enum value
         """
         # Import here to avoid circular dependency
-        from tokens import TokenType
+        from src.tokens import TokenType
 
         if token_type == TokenType.DEFINT:
             return VarType.INTEGER

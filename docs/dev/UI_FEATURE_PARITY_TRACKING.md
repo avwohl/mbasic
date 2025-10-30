@@ -105,7 +105,7 @@ Example: **[✅|📚|🧪]** = Fully implemented, documented, and tested
 
 | Feature | CLI | Curses | Tk | Web | Visual | Notes |
 |---------|-----|--------|----|-----|--------|-------|
-| **Settings Dialog** | [✅\|📄\|⚡] | [✅\|📄\|👁️] | [✅\|📄\|👁️] | [✅\|📄\|⚡] | [❌\|❓\|⚡] | CLI via SHOWSETTINGS/SETSETTING 2025-10-30 |
+| **Settings Dialog** | [✅\|📄\|🧪] | [✅\|📄\|🔬] | [✅\|📄\|🔬] | [✅\|📄\|🔬] | [❌\|❓\|⚡] | All UIs tested 2025-10-30. CLI via SHOWSETTINGS/SETSETTING |
 
 ---
 
@@ -135,6 +135,11 @@ Example: **[✅|📚|🧪]** = Fully implemented, documented, and tested
 - `tests/manual/test_tk_settings_ui.py` - Settings dialog
 - `tests/test_tk_input_manual.md` - Manual test procedures
 - No automated testing framework
+
+**Settings Testing (All UIs):**
+- `tests/regression/ui/test_settings.py` - Automated settings test suite ✅
+- `tests/manual/test_settings_manual.md` - Comprehensive manual test procedures ✅
+- Tests cover: TK, Curses, Web, CLI commands, validation, persistence
 
 **Web Testing:**
 - `tests/playwright/test_web_ui.py` - Browser automation

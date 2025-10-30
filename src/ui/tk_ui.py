@@ -1733,9 +1733,9 @@ class TkBackend(UIBackend):
         open_help_in_browser(topic="help/ui/tk/", ui_type="tk")
 
     def _menu_games_library(self):
-        """Help > Games Library - Opens games library in browser"""
+        """Help > Games Library - Opens program library in browser"""
         from .web_help_launcher import open_help_in_browser
-        open_help_in_browser(topic="library/games/", ui_type="tk")
+        open_help_in_browser(topic="library/", ui_type="tk")
 
     def _context_help(self):
         """Show context-sensitive help for keyword at cursor"""

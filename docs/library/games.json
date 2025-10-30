@@ -4,7 +4,7 @@
   "games": [
     {
       "filename": "blackjack.bas",
-      "source_path": "basic/blkjk.bas",
+      "source_path": "basic/games/blkjk.bas",
       "title": "Blackjack",
       "description": "Classic casino card game. Try to beat the dealer by getting as close to 21 as possible without going over.",
       "year": "1980s",
@@ -12,7 +12,7 @@
     },
     {
       "filename": "spacewar.bas",
-      "source_path": "basic/spacewar.bas",
+      "source_path": "basic/games/spacewar.bas",
       "title": "Spacewar",
       "description": "Classic space combat game. Battle in space with realistic physics.",
       "year": "1980s",
