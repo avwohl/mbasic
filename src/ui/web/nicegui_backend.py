@@ -882,9 +882,13 @@ class NiceGUIBackend(UIBackend):
         # Don't check self.running - it seems to not persist correctly in NiceGUI callbacks
         # Just check if we have an interpreter
         if not self.interpreter:
+            from src.debug_logger import debug_log
+            debug_log("_execute_tick", "No interpreter found in session")
             return
 
         try:
+            from src.debug_logger import debug_log
+            debug_log("_execute_tick", f"Executing tick, running={self.running}, status={self.interpreter.state.status if self.interpreter else 'no interpreter'}")
             # Execute one tick (up to 1000 statements)
             state = self.interpreter.tick(mode='run', max_statements=1000)
 
