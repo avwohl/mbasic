@@ -1,6 +1,6 @@
 # MBASIC UI Feature Parity Tracking Spreadsheet
 
-**Last Updated:** 2025-10-29
+**Last Updated:** 2025-10-30
 **Purpose:** Track implementation, documentation, and testing status for features across all UIs
 
 ## Status Legend
@@ -99,6 +99,13 @@ Example: **[✅|📚|🧪]** = Fully implemented, documented, and tested
 | **Integrated Docs** | [✅\|📚\|⚡] | [✅\|📚\|🧪] | [✅\|📚\|👁️] | [✅\|📝\|👁️] | [❌\|❓\|⚡] | |
 | **Search Help** | [✅\|📚\|⚡] | [✅\|📚\|🧪] | [✅\|📝\|👁️] | [✅\|📝\|👁️] | [❌\|❓\|⚡] | |
 | **Context Help** | [❌\|❓\|⚡] | [⚠️\|📄\|👁️] | [⚠️\|📄\|👁️] | [⚠️\|📄\|👁️] | [❌\|❓\|⚡] | |
+| **Games Library** | [❌\|❓\|⚡] | [❌\|❓\|⚡] | [✅\|📄\|👁️] | [✅\|📄\|👁️] | [❌\|❓\|⚡] | Help menu opens browser |
+
+### 7. SETTINGS / CONFIGURATION
+
+| Feature | CLI | Curses | Tk | Web | Visual | Notes |
+|---------|-----|--------|----|-----|--------|-------|
+| **Settings Dialog** | [✅\|📄\|⚡] | [✅\|📄\|👁️] | [✅\|📄\|👁️] | [✅\|📄\|⚡] | [❌\|❓\|⚡] | CLI via SHOWSETTINGS/SETSETTING 2025-10-30 |
 
 ---
 
