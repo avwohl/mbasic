@@ -1,5 +1,103 @@
 {
   "title": "MBASIC Games Library",
   "description": "Classic BASIC games from the CP/M era",
-  "programs": []
+  "programs": [
+    {
+      "filename": "bacarrat.bas",
+      "source_path": "basic/games/bacarrat.bas",
+      "title": "Bacarrat",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "blkjk.bas",
+      "source_path": "basic/games/blkjk.bas",
+      "title": "Blkjk",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "feesten.bas",
+      "source_path": "basic/games/feesten.bas",
+      "title": "Feesten",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "kalfeest.bas",
+      "source_path": "basic/games/kalfeest.bas",
+      "title": "Kalfeest",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "lifscore.bas",
+      "source_path": "basic/games/lifscore.bas",
+      "title": "Lifscore",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "massa.bas",
+      "source_path": "basic/games/massa.bas",
+      "title": "Massa",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "ozdot.bas",
+      "source_path": "basic/games/ozdot.bas",
+      "title": "Ozdot",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "roulette.bas",
+      "source_path": "basic/games/roulette.bas",
+      "title": "Roulette",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "spacewar.bas",
+      "source_path": "basic/games/spacewar.bas",
+      "title": "Spacewar",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "star.bas",
+      "source_path": "basic/games/star.bas",
+      "title": "Star",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "startrek.bas",
+      "source_path": "basic/games/startrek.bas",
+      "title": "Startrek",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "survival.bas",
+      "source_path": "basic/games/survival.bas",
+      "title": "Survival",
+      "description": "",
+      "year": "1982",
+      "tags": [],
+      "author": "R Logan & Ian Lycholm CBASIC 2 VER"
+    }
+  ]
 }

@@ -1,5 +1,54 @@
 {
   "title": "MBASIC Business Programs",
   "description": "Business applications and tools",
-  "programs": []
+  "programs": [
+    {
+      "filename": "budget.bas",
+      "source_path": "basic/business/budget.bas",
+      "title": "Budget",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "cpm-pert.bas",
+      "source_path": "basic/business/cpm-pert.bas",
+      "title": "Cpm-Pert",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "finance.bas",
+      "source_path": "basic/business/finance.bas",
+      "title": "Finance",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "interest.bas",
+      "source_path": "basic/business/interest.bas",
+      "title": "Interest",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "log10k.bas",
+      "source_path": "basic/business/log10k.bas",
+      "title": "Log10K",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "mortgage.bas",
+      "source_path": "basic/business/mortgage.bas",
+      "title": "Mortgage",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    }
+  ]
 }

@@ -3,9 +3,33 @@
   "description": "Amateur radio utilities and tools",
   "programs": [
     {
+      "filename": "boka-ei.bas",
+      "source_path": "basic/ham_radio/boka-ei.bas",
+      "title": "Boka-Ei",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
       "filename": "qsoedit.bas",
       "source_path": "basic/ham_radio/qsoedit.bas",
       "title": "Qsoedit",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "qsofind.bas",
+      "source_path": "basic/ham_radio/qsofind.bas",
+      "title": "Qsofind",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "rbsutl31.bas",
+      "source_path": "basic/ham_radio/rbsutl31.bas",
+      "title": "Rbsutl31",
       "description": "",
       "year": "1980s",
       "tags": []

@@ -3,9 +3,113 @@
   "description": "Utility programs for file management, conversion, and system tools",
   "programs": [
     {
+      "filename": "bigcal2.bas",
+      "source_path": "basic/utilities/bigcal2.bas",
+      "title": "Bigcal2",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "calendar.bas",
+      "source_path": "basic/utilities/calendar.bas",
+      "title": "Calendar",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "calendr5.bas",
+      "source_path": "basic/utilities/calendr5.bas",
+      "title": "Calendr5",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "charfreq.bas",
+      "source_path": "basic/utilities/charfreq.bas",
+      "title": "Charfreq",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
       "filename": "convert.bas",
       "source_path": "basic/utilities/convert.bas",
       "title": "Convert",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "dow.bas",
+      "source_path": "basic/utilities/dow.bas",
+      "title": "Dow",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "fprime.bas",
+      "source_path": "basic/utilities/fprime.bas",
+      "title": "Fprime",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "hex2data.bas",
+      "source_path": "basic/utilities/hex2data.bas",
+      "title": "Remarks:  This program will con",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "million.bas",
+      "source_path": "basic/utilities/million.bas",
+      "title": "Million",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "search.bas",
+      "source_path": "basic/utilities/search.bas",
+      "title": "Search",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "sort.bas",
+      "source_path": "basic/utilities/sort.bas",
+      "title": "Sort",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "ucase.bas",
+      "source_path": "basic/utilities/ucase.bas",
+      "title": "Ucase",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "unprotct.bas",
+      "source_path": "basic/utilities/unprotct.bas",
+      "title": "Unprotct",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "uudecode.bas",
+      "source_path": "basic/utilities/uudecode.bas",
+      "title": "Uudecode",
       "description": "",
       "year": "1980s",
       "tags": []

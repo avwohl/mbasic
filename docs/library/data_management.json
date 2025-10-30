@@ -3,6 +3,14 @@
   "description": "Database and file management programs",
   "programs": [
     {
+      "filename": "mfil.bas",
+      "source_path": "basic/data_management/mfil.bas",
+      "title": "Mfil",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
       "filename": "sfamove.bas",
       "source_path": "basic/data_management/sfamove.bas",
       "title": "Sfamove",

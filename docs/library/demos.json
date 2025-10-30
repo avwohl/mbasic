@@ -21,6 +21,16 @@
       ]
     },
     {
+      "filename": "test_curses_input.bas",
+      "source_path": "basic/demos/test_curses_input.bas",
+      "title": "Test Curses Input",
+      "description": "",
+      "year": "1980s",
+      "tags": [
+        "test"
+      ]
+    },
+    {
       "filename": "test_curses_simple.bas",
       "source_path": "basic/demos/test_curses_simple.bas",
       "title": "Test Curses Simple",

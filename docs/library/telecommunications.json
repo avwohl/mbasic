@@ -3,6 +3,30 @@
   "description": "Modem, terminal, and BBS programs",
   "programs": [
     {
+      "filename": "bmodem.bas",
+      "source_path": "basic/telecommunications/bmodem.bas",
+      "title": "Bmodem",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "bmodem1.bas",
+      "source_path": "basic/telecommunications/bmodem1.bas",
+      "title": "Bmodem1",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "command.bas",
+      "source_path": "basic/telecommunications/command.bas",
+      "title": "Command",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
       "filename": "xtel.bas",
       "source_path": "basic/telecommunications/xtel.bas",
       "title": "Xtel",

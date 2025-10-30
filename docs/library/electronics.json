@@ -3,6 +3,38 @@
   "description": "Hardware interfacing and electronics tools",
   "programs": [
     {
+      "filename": "555-ic.bas",
+      "source_path": "basic/electronics/555-ic.bas",
+      "title": "555-Ic",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "567-ic.bas",
+      "source_path": "basic/electronics/567-ic.bas",
+      "title": "567-Ic",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "atten.bas",
+      "source_path": "basic/electronics/atten.bas",
+      "title": "Atten",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "bearing.bas",
+      "source_path": "basic/electronics/bearing.bas",
+      "title": "Bearing",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
       "filename": "lst8085.bas",
       "source_path": "basic/electronics/lst8085.bas",
       "title": "Lst8085",
@@ -22,6 +54,14 @@
       "filename": "lsttdl.bas",
       "source_path": "basic/electronics/lsttdl.bas",
       "title": "Lsttdl",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "timer555.bas",
+      "source_path": "basic/electronics/timer555.bas",
+      "title": "Timer555",
       "description": "",
       "year": "1980s",
       "tags": []

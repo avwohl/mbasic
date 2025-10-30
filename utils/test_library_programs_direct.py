@@ -63,19 +63,23 @@ def test_program(filepath: Path) -> tuple[str, str]:
 
         # Try to run it (with timeout-like behavior)
         try:
-            # Create runtime and interpreter
-            runtime = Runtime(program)
-            runtime.setup()
+            # Suppress program output by redirecting stdout/stderr
+            devnull = io.StringIO()
 
-            interp = Interpreter(runtime)
+            with redirect_stdout(devnull), redirect_stderr(devnull):
+                # Create runtime and interpreter
+                runtime = Runtime(program)
+                runtime.setup()
 
-            # Run with step limit to avoid infinite loops
-            ticks = 0
-            max_ticks = 100  # Each tick can execute up to 100 statements
+                interp = Interpreter(runtime)
 
-            while not interp.state.status in ('done', 'error', 'waiting_for_input') and ticks < max_ticks:
-                interp.tick()
-                ticks += 1
+                # Run with step limit to avoid infinite loops
+                ticks = 0
+                max_ticks = 100  # Each tick can execute up to 100 statements
+
+                while not interp.state.status in ('done', 'error', 'waiting_for_input') and ticks < max_ticks:
+                    interp.tick()
+                    ticks += 1
 
             if ticks >= max_ticks:
                 return "ran_to_input", f"Parsed OK, likely waiting for INPUT (stopped after {ticks} ticks)"
