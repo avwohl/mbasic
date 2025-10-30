@@ -883,12 +883,13 @@ class NiceGUIBackend(UIBackend):
         # Just check if we have an interpreter
         if not self.interpreter:
             from src.debug_logger import debug_log
-            debug_log("_execute_tick", "No interpreter found in session")
+            debug_log("_execute_tick: No interpreter found in session")
             return
 
         try:
             from src.debug_logger import debug_log
-            debug_log("_execute_tick", f"Executing tick, running={self.running}, status={self.interpreter.state.status if self.interpreter else 'no interpreter'}")
+            status = self.interpreter.state.status if self.interpreter else 'no interpreter'
+            debug_log(f"_execute_tick: running={self.running}, status={status}")
             # Execute one tick (up to 1000 statements)
             state = self.interpreter.tick(mode='run', max_statements=1000)
 
