@@ -1,6 +1,6 @@
-# Library Browser Feature - TODO
+# Library Browser Feature - DONE
 
-✅ **Status:** DONE - Games library implemented (2025-10-29)
+✅ **Status:** COMPLETE - Games library fully implemented and integrated (2025-10-30)
 
 ## Overview
 
@@ -91,6 +91,12 @@ Each UI has its own file loading:
 - [x] Web UI: Added "Games Library" to Help menu
 - [x] Tkinter UI: Added "Games Library" to Help menu
 - [x] Both open library at `library/games/` in browser
+
+### Phase 4: Build Integration (✅ Done)
+- [x] Integrated into `utils/build_docs.py`
+- [x] Added to GitHub Actions workflow
+- [x] Auto-builds before mkdocs deployment
+- [x] Triggers on .bas file changes
 
 ### Future Enhancements (Optional)
 - [ ] Add more categories (demos, tutorials, utilities)
