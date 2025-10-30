@@ -80,6 +80,12 @@
 - **`build_help_indexes.py`** - Build help system search indexes
   - Run after modifying docs/help/
 
+- **`build_library_docs.py`** - Generate games library documentation
+  - Reads docs/library/games.json metadata
+  - Generates docs/library/games/index.md
+  - Copies .bas files from source to docs/library/games/
+  - Run before deploying documentation
+
 - **`build_docs.py`** - Build documentation
 
 - **`check_help_links.py`** - Verify help documentation links
