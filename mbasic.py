@@ -281,7 +281,13 @@ Examples:
     from editing import ProgramManager
     program_manager = ProgramManager(create_default_def_type_map())
 
-    # Load backend dynamically
+    # Web backend uses per-client architecture
+    if args.backend == 'web':
+        from src.ui.web.nicegui_backend import start_web_ui
+        start_web_ui()
+        return
+
+    # Load other backends dynamically
     try:
         backend = load_backend(args.backend, io_handler, program_manager)
     except (ImportError, AttributeError) as e:

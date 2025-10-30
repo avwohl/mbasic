@@ -130,11 +130,11 @@ class NiceGUIBackend(UIBackend):
         """
         super().__init__(io_handler, program_manager)
 
-        # Settings manager (shared across all sessions)
+        # Settings manager
         from src.settings import get_settings_manager
         self.settings_manager = get_settings_manager()
 
-        # Shared configuration
+        # Configuration
         self.max_recent_files = 10
         self.auto_save_enabled = True       # Enable auto-save
         self.auto_save_interval = 30        # Auto-save every 30 seconds
@@ -154,167 +154,21 @@ class NiceGUIBackend(UIBackend):
         self.input_field = None
         self.input_submit_btn = None
 
-    def _get_session_state(self):
-        """Get or create session-specific state.
-
-        Returns a dict with session-specific runtime, interpreter, and UI state.
-        Uses NiceGUI's app.storage.client for per-client isolation.
-        """
-        # Use NiceGUI's client storage for per-session state
-        if 'mbasic_state' not in app.storage.client:
-            # Initialize session state
-            from src.runtime import Runtime
-            app.storage.client['mbasic_state'] = {
-                'program_lines': [],  # List of program lines for display
-                'output_lines': [],   # Output text lines
-                'current_file': None,  # Currently open file path
-                'recent_files': [],   # List of recent file names
-                'auto_save_timer': None,  # Timer for auto-save
-                'last_save_content': '',  # Last saved content
-                'running': False,  # Execution state
-                'paused': False,
-                'breakpoints': set(),  # Line numbers with breakpoints
-                'interpreter': None,  # Per-session interpreter
-                'runtime': Runtime({}, {}),  # Per-session runtime
-                'exec_io': None,
-                'tick_task': None,
-                'exec_timer': None,  # Timer for program execution
-                'output_text': 'MBASIC 5.21 Web IDE\nReady\n',
-                'input_future': None,  # Future for async input coordination
-            }
-
-        return app.storage.client['mbasic_state']
-
-    # Session-specific state properties (for backward compatibility and convenience)
-    @property
-    def runtime(self):
-        """Get current session's runtime."""
-        return self._get_session_state()['runtime']
-
-    @runtime.setter
-    def runtime(self, value):
-        """Set current session's runtime."""
-        self._get_session_state()['runtime'] = value
-
-    @property
-    def interpreter(self):
-        """Get current session's interpreter."""
-        return self._get_session_state()['interpreter']
-
-    @interpreter.setter
-    def interpreter(self, value):
-        """Set current session's interpreter."""
-        self._get_session_state()['interpreter'] = value
-
-    @property
-    def running(self):
-        """Get current session's running state."""
-        return self._get_session_state()['running']
-
-    @running.setter
-    def running(self, value):
-        """Set current session's running state."""
-        self._get_session_state()['running'] = value
-
-    @property
-    def paused(self):
-        """Get current session's paused state."""
-        return self._get_session_state()['paused']
-
-    @paused.setter
-    def paused(self, value):
-        """Set current session's paused state."""
-        self._get_session_state()['paused'] = value
-
-    @property
-    def breakpoints(self):
-        """Get current session's breakpoints."""
-        return self._get_session_state()['breakpoints']
-
-    @breakpoints.setter
-    def breakpoints(self, value):
-        """Set current session's breakpoints."""
-        self._get_session_state()['breakpoints'] = value
-
-    @property
-    def output_text(self):
-        """Get current session's output text."""
-        return self._get_session_state()['output_text']
-
-    @output_text.setter
-    def output_text(self, value):
-        """Set current session's output text."""
-        self._get_session_state()['output_text'] = value
-
-    @property
-    def current_file(self):
-        """Get current session's current file."""
-        return self._get_session_state()['current_file']
-
-    @current_file.setter
-    def current_file(self, value):
-        """Set current session's current file."""
-        self._get_session_state()['current_file'] = value
-
-    @property
-    def recent_files(self):
-        """Get current session's recent files."""
-        return self._get_session_state()['recent_files']
-
-    @recent_files.setter
-    def recent_files(self, value):
-        """Set current session's recent files."""
-        self._get_session_state()['recent_files'] = value
-
-    @property
-    def exec_io(self):
-        """Get current session's exec_io."""
-        return self._get_session_state()['exec_io']
-
-    @exec_io.setter
-    def exec_io(self, value):
-        """Set current session's exec_io."""
-        self._get_session_state()['exec_io'] = value
-
-    @property
-    def input_future(self):
-        """Get current session's input_future."""
-        return self._get_session_state()['input_future']
-
-    @input_future.setter
-    def input_future(self, value):
-        """Set current session's input_future."""
-        self._get_session_state()['input_future'] = value
-
-    @property
-    def last_save_content(self):
-        """Get current session's last_save_content."""
-        return self._get_session_state()['last_save_content']
-
-    @last_save_content.setter
-    def last_save_content(self, value):
-        """Set current session's last_save_content."""
-        self._get_session_state()['last_save_content'] = value
-
-    @property
-    def exec_timer(self):
-        """Get current session's exec_timer."""
-        return self._get_session_state()['exec_timer']
-
-    @exec_timer.setter
-    def exec_timer(self, value):
-        """Set current session's exec_timer."""
-        self._get_session_state()['exec_timer'] = value
-
-    @property
-    def auto_save_timer(self):
-        """Get current session's auto_save_timer."""
-        return self._get_session_state()['auto_save_timer']
-
-    @auto_save_timer.setter
-    def auto_save_timer(self, value):
-        """Set current session's auto_save_timer."""
-        self._get_session_state()['auto_save_timer'] = value
+        # Per-client state (now instance variables instead of session storage)
+        from src.runtime import Runtime
+        self.runtime = Runtime({}, {})
+        self.interpreter = None
+        self.running = False
+        self.paused = False
+        self.breakpoints = set()
+        self.output_text = 'MBASIC 5.21 Web IDE\nReady\n'
+        self.current_file = None
+        self.recent_files = []
+        self.exec_io = None
+        self.input_future = None
+        self.last_save_content = ''
+        self.exec_timer = None
+        self.auto_save_timer = None
 
     def build_ui(self):
         """Build the NiceGUI interface.
@@ -326,76 +180,72 @@ class NiceGUIBackend(UIBackend):
         - Output pane
         - Status bar
         """
+        # Set page title
+        ui.page_title('MBASIC 5.21 - Web IDE')
 
-        # Main page
-        @ui.page('/')
-        def main_page():
-            # Set page title
-            ui.page_title('MBASIC 5.21 - Web IDE')
+        # Menu bar
+        self._create_menu()
 
-            # Menu bar
-            self._create_menu()
+        # Toolbar
+        with ui.row().classes('w-full bg-gray-100 p-2 gap-2'):
+            ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
+            ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
+            ui.button('Step', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
+            ui.button('Stmt', on_click=self._menu_step_stmt, icon='redo').mark('btn_step_stmt')
+            ui.button('Cont', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
+            ui.separator().props('vertical')
+            ui.button(icon='check_circle', on_click=self._check_syntax).mark('btn_check_syntax').props('flat').tooltip('Check Syntax')
 
-            # Toolbar
-            with ui.row().classes('w-full bg-gray-100 p-2 gap-2'):
-                ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
-                ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
-                ui.button('Step', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
-                ui.button('Stmt', on_click=self._menu_step_stmt, icon='redo').mark('btn_step_stmt')
-                ui.button('Cont', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
-                ui.separator().props('vertical')
-                ui.button(icon='check_circle', on_click=self._check_syntax).mark('btn_check_syntax').props('flat').tooltip('Check Syntax')
+        # Main content area
+        with ui.element('div').style('width: 100%; display: flex; flex-direction: column;'):
+            # Editor
+            self.editor = ui.textarea(
+                value='',
+                placeholder='Program Editor'
+            ).style('width: 100%;').props('outlined dense rows=10').mark('editor')
+            self.editor.on('keydown.enter', self._on_enter_key)
 
-            # Main content area
-            with ui.element('div').style('width: 100%; display: flex; flex-direction: column;'):
-                # Editor
-                self.editor = ui.textarea(
+            # Current line indicator
+            self.current_line_label = ui.label('').classes('text-sm font-mono bg-yellow-100 p-1')
+            self.current_line_label.visible = False
+
+            # Syntax error indicator
+            self.syntax_error_label = ui.label('').classes('text-sm font-mono bg-red-100 text-red-700 p-1')
+            self.syntax_error_label.visible = False
+
+            # Output
+            self.output = ui.textarea(
+                value='MBASIC 5.21 Web IDE\nReady\n',
+                placeholder='Output'
+            ).style('width: 100%;').props('readonly outlined dense rows=10').mark('output')
+
+            # INPUT row (hidden by default)
+            self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm')
+            with self.input_row:
+                self.input_label = ui.label('').classes('font-bold text-blue-600')
+                self.input_field = ui.input(placeholder='Enter value...').classes('flex-grow').mark('input_field')
+                self.input_field.on('keydown.enter', self._submit_input)
+                self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
+            self.input_row.visible = False
+
+            # Immediate
+            with ui.row().style('width: 100%;'):
+                self.immediate_entry = ui.textarea(
                     value='',
-                    placeholder='Program Editor'
-                ).style('width: 100%;').props('outlined dense rows=10').mark('editor')
-                self.editor.on('keydown.enter', self._on_enter_key)
+                    placeholder='Command'
+                ).style('width: 100%;').props('outlined dense rows=3').mark('immediate_entry')
+                self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
+                ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
-                # Current line indicator
-                self.current_line_label = ui.label('').classes('text-sm font-mono bg-yellow-100 p-1')
-                self.current_line_label.visible = False
+            # Status
+            with ui.row().classes('w-full bg-gray-200 q-pa-xs').style('justify-content: space-between;'):
+                self.status_label = ui.label('Ready').mark('status')
+                with ui.row().classes('gap-4'):
+                    self.resource_usage_label = ui.label('').classes('text-gray-600')
+                    ui.label(f'v{VERSION}').classes('text-gray-600')
 
-                # Syntax error indicator
-                self.syntax_error_label = ui.label('').classes('text-sm font-mono bg-red-100 text-red-700 p-1')
-                self.syntax_error_label.visible = False
-
-                # Output
-                self.output = ui.textarea(
-                    value='MBASIC 5.21 Web IDE\nReady\n',
-                    placeholder='Output'
-                ).style('width: 100%;').props('readonly outlined dense rows=10').mark('output')
-
-                # INPUT row (hidden by default)
-                self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm')
-                with self.input_row:
-                    self.input_label = ui.label('').classes('font-bold text-blue-600')
-                    self.input_field = ui.input(placeholder='Enter value...').classes('flex-grow').mark('input_field')
-                    self.input_field.on('keydown.enter', self._submit_input)
-                    self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
-                self.input_row.visible = False
-
-                # Immediate
-                with ui.row().style('width: 100%;'):
-                    self.immediate_entry = ui.textarea(
-                        value='',
-                        placeholder='Command'
-                    ).style('width: 100%;').props('outlined dense rows=3').mark('immediate_entry')
-                    self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
-                    ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
-
-                # Status
-                with ui.row().classes('w-full bg-gray-200 q-pa-xs').style('justify-content: space-between;'):
-                    self.status_label = ui.label('Ready').mark('status')
-                    with ui.row().classes('gap-4'):
-                        self.resource_usage_label = ui.label('').classes('text-gray-600')
-                        ui.label(f'v{VERSION}').classes('text-gray-600')
-
-            # Start auto-save timer
-            self._start_auto_save()
+        # Start auto-save timer
+        self._start_auto_save()
 
     def _create_menu(self):
         """Create menu bar."""
@@ -1824,6 +1674,11 @@ class NiceGUIBackend(UIBackend):
 
     def _append_output(self, text):
         """Append text to output pane and auto-scroll to bottom."""
+        from src.debug_logger import debug_log
+
+        # Debug: log which backend is appending output
+        debug_log(f"_append_output called on backend {id(self)}, output UI element: {id(self.output) if self.output else 'None'}, text: {text[:50]}")
+
         # Update our internal buffer
         self.output_text += text
 
@@ -2072,3 +1927,61 @@ class NiceGUIBackend(UIBackend):
     def stop(self):
         """Stop the UI."""
         app.shutdown()
+
+
+# Module-level function for proper multi-user web architecture
+def start_web_ui():
+    """Start the NiceGUI web server with per-client backend instances.
+
+    This is the proper architecture for multi-user web apps:
+    - Each page load creates a NEW backend instance for that client
+    - No shared state between clients
+    - UI elements naturally isolated per client
+    """
+    # Log version to debug output
+    sys.stderr.write(f"\n{'='*70}\n")
+    sys.stderr.write(f"MBASIC Web UI Starting - Version {VERSION}\n")
+    sys.stderr.write(f"{'='*70}\n\n")
+    sys.stderr.flush()
+
+    @ui.page('/')
+    def main_page():
+        """Create a new backend instance for each client."""
+        from src.editing.manager import ProgramManager
+        from src.ast_nodes import TypeInfo
+
+        # Create default DEF type map (all SINGLE precision)
+        def_type_map = {}
+        for letter in 'abcdefghijklmnopqrstuvwxyz':
+            def_type_map[letter] = TypeInfo.SINGLE
+
+        # Create new program manager for this client
+        program_manager = ProgramManager(def_type_map)
+
+        # Create new backend instance for this client
+        # Pass None for io_handler - it's not used in the web backend
+        backend = NiceGUIBackend(None, program_manager)
+
+        # Debug: log backend creation
+        import sys
+        sys.stderr.write(f"DEBUG: Created new backend {id(backend)} for client\n")
+        sys.stderr.flush()
+
+        # Store backend in app.storage.client to keep it alive for this client's session
+        # This is the ONLY thing we store in app.storage - the backend instance itself
+        app.storage.client['backend'] = backend
+
+        # Build the UI for this client
+        backend.build_ui()
+
+        # Debug: log output UI element after build
+        sys.stderr.write(f"DEBUG: Backend {id(backend)} has output UI element {id(backend.output)}\n")
+        sys.stderr.flush()
+
+    # Start NiceGUI server
+    ui.run(
+        title='MBASIC 5.21 - Web IDE',
+        port=8080,
+        reload=False,
+        show=True
+    )

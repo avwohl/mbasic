@@ -214,21 +214,15 @@ class ImmediateExecutor:
             if ast.lines and len(ast.lines) > 0:
                 line_node = ast.lines[0]
 
-                # Save current execution position
-                old_line = runtime.current_line
-                old_index = runtime.current_stmt_index
-
-                # Update runtime's current line
-                runtime.current_line = line_node
-                runtime.current_stmt_index = 0
+                # Save current execution position (program counter)
+                old_pc = runtime.pc
 
                 # Execute each statement on line 0
                 for stmt in line_node.statements:
                     interpreter.execute_statement(stmt)
 
                 # Restore previous position
-                runtime.current_line = old_line
-                runtime.current_stmt_index = old_index
+                runtime.pc = old_pc
 
             # Get captured output
             output = self.io.get_output() if self.io else ""
