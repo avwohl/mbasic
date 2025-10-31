@@ -12,30 +12,42 @@ When work is complete, this file is deleted or shows "No active work".
 
 ---
 
-**Last Updated:** 2025-10-30
+**Last Updated:** 2025-10-31
 
-**Current Status:** Language testing infrastructure complete + 5 new tests added
+**Current Status:** All recent work completed
 
-**Recent Completions (Web UI Fixes):**
-- Fixed Ctrl+C signal handling for web UI (can now cleanly stop server)
-- Fixed output console hang after ~500 lines (batched updates + reduced buffer)
-- Fixed ALL menus requiring double-click (converted handlers to async)
-- Fixed Find/Replace - now jumps to results with proper state management
-- Fixed auto-numbering JavaScript timeout (increased timeout, simplified JS)
-- Fixed INPUT statement blocking (now properly handles waiting_for_input state)
-- Fixed STOP button interrupt (cancels timer and pauses interpreter)
+**Recent Completions (October 31 - Variable Sorting Refactoring):**
+- ✅ Created common variable sorting helper (src/ui/variable_sorting.py)
+- ✅ Refactored Tk UI to use common helper (~30 lines removed)
+- ✅ Refactored Curses UI to use common helper
+- ✅ Refactored Web UI to use common helper
+- ✅ Implemented Tk-style variable column header in web UI
+- ✅ Removed silly type/value sorting from all UIs (4 useful modes remain)
+- ✅ Fixed web UI layout confusion (dynamic column header)
+- ✅ Documentation: VARIABLE_SORT_REFACTORING_DONE.md
 
-**Recent Completions (Language Testing):**
-- Created automated test runner (utils/run_tests.py) - 12 tests, 100% pass rate
-- Created test coverage matrix (docs/dev/TEST_COVERAGE_MATRIX.md)
-- Added test_if_then_else.bas (8 test cases)
-- Added test_goto.bas (4 test cases)
-- Added test_dim_arrays.bas (4 test cases covering 1D, 2D, string arrays)
-- Added test_string_functions.bas (10 functions: LEFT$, RIGHT$, MID$, LEN, ASC, CHR$, STR$, VAL, INSTR, SPACE$, STRING$)
-- Added test_math_functions.bas (10 functions: ABS, SGN, INT, FIX, SQR, ^, SIN, COS, TAN, EXP, LOG, ATN, CINT)
-- Verified DEFINT/DEFSNG/DEFDBL/DEFSTR work correctly (not broken as TODO stated)
+**Recent Completions (October 29-30 - Web UI):**
+- ✅ Fixed all NiceGUI dialog double-click bugs (proper pattern: create once, reuse)
+- ✅ Refactored all 10 dialogs to use proper NiceGUI pattern
+- ✅ Added web UI feature parity: variables window, stack window, sortable columns
+- ✅ Fixed paste handling to remove blank lines
+- ✅ Fixed default variable sort order
+- ✅ Reverted broken Ctrl+C signal handling
+- ✅ Documentation: NICEGUI_DIALOG_PATTERN.md
 
-For active TODO items, see:
-- `docs/dev/LANGUAGE_TESTING_TODO.md` - Language testing improvements
-- `docs/dev/WEB_UI_CRITICAL_BUGS_TODO.md` - Web UI bugs
-- `docs/dev/INSTALLATION_TESTING_TODO.md` - Installation testing
+**Recent Completions (October 28 - Documentation & Web UI):**
+- ✅ Fixed web UI output display (removed polling, push-based architecture)
+- ✅ Fixed all broken documentation links
+- ✅ Re-enabled mkdocs strict mode validation
+- ✅ Auto-generated "See Also" sections for 75+ help files
+- ✅ Improved help browser (3-tier welcome page)
+- ✅ Added mkdocs validation to checkpoint.sh
+
+**Project Status:**
+- Version: 1.0.316
+- All UIs working: CLI, Curses, Tk, Web
+- Documentation: 75+ help files, fully cross-referenced
+- Variable sorting: Common helper, consistent across all UIs
+- Tests: All passing
+
+For active TODO items, see `docs/dev/*_TODO.md` files.
