@@ -4,7 +4,7 @@
 - **On EVERY startup**: Check if `docs/dev/WORK_IN_PROGRESS.md` exists → Read it and ask user to continue or start new
 - **After ANY UI changes**: Update `docs/dev/UI_FEATURE_PARITY_TRACKING.md`
 - **When adding a feature**: Read `docs/dev/FEATURE_COMPLETION_REQUIREMENTS.md` for 5 requirements checklist
-- **Before committing**: Use `./checkpoint.sh "message"` - auto-increments version, rebuilds indexes, commits, pushes
+- **Before committing**: Use `./utils/checkpoint.sh "message"` - auto-increments version, rebuilds indexes, commits, pushes
 
 ## Utility Scripts
 - **Before writing a utility script**: Check `utils/UTILITY_SCRIPTS_INDEX.md` - one may already exist

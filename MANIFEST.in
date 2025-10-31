@@ -1,6 +1,6 @@
 # Include root documentation files
 include README.md
-include INSTALL.md
+include docs/user/INSTALL.md
 include LICENSE
 include requirements.txt
 

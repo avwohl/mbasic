@@ -45,7 +45,7 @@ pip install mbasic[dev]
 
 ### From Source
 
-For detailed installation instructions including virtual environment setup, see **[INSTALL.md](INSTALL.md)**.
+For detailed installation instructions including virtual environment setup, see **[INSTALL.md](docs/user/INSTALL.md)**.
 
 **Quick install:**
 
