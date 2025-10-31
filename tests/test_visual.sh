@@ -4,7 +4,7 @@
 # Use script to capture terminal output
 script -q -c "expect << 'EOF'
 set timeout 10
-spawn python3 mbasic.py --backend curses test_program.bas
+spawn python3 mbasic --backend curses test_program.bas
 sleep 3
 send \"\x12\"
 sleep 2

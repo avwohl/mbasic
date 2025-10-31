@@ -55,7 +55,7 @@ Files configured for distribution:
 mbasic/
 ├── pyproject.toml      # ✓ Package metadata and dependencies
 ├── MANIFEST.in         # ✓ Non-Python files to include
-├── mbasic.py           # ✓ Entry point with main() function
+├── mbasic           # ✓ Entry point with main() function
 ├── src/                # ✓ All source packages
 │   ├── *.py
 │   ├── ui/
@@ -176,7 +176,7 @@ pip install dist/mbasic-1.0.147-py3-none-any.whl
 pip show -f mbasic | head -50
 
 # Verify critical files are included:
-# - mbasic.py (entry point)
+# - mbasic (entry point)
 # - src/*.py (interpreter core)
 # - src/ui/*.py (UI backends)
 # - docs/help/**/*.md (help system)

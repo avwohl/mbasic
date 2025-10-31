@@ -20,7 +20,7 @@ read -p "Press ENTER to start the IDE..."
 echo
 
 # Run with debug
-DEBUG_BP=1 python3 mbasic.py --backend curses test_continue.bas 2> /tmp/clear_test.log
+DEBUG_BP=1 python3 mbasic --backend curses test_continue.bas 2> /tmp/clear_test.log
 
 echo
 echo "=========================================="

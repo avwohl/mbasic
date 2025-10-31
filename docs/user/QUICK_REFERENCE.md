@@ -2,7 +2,7 @@
 
 ## Starting the IDE
 ```bash
-python3 mbasic.py --backend curses [filename.bas]
+python3 mbasic --backend curses [filename.bas]
 ```
 
 ## Editor Commands

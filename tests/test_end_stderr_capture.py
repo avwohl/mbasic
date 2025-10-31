@@ -25,7 +25,7 @@ master, slave = pty.openpty()
 
 # Start process
 proc = subprocess.Popen(
-    ['python3', 'mbasic.py', '--backend', 'curses', 'test_end_stderr.bas'],
+    ['python3', 'mbasic', '--backend', 'curses', 'test_end_stderr.bas'],
     stdin=slave,
     stdout=slave,
     stderr=subprocess.PIPE,  # Capture stderr separately

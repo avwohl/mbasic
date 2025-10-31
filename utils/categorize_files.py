@@ -10,7 +10,7 @@ def test_file(filepath):
     """Test if a file parses correctly"""
     try:
         result = subprocess.run(
-            ['python3', 'mbasic.py', filepath],
+            ['python3', 'mbasic', filepath],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,

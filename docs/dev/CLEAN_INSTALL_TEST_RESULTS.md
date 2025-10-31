@@ -202,7 +202,7 @@ If missing:
   • macOS/Windows: Reinstall Python from python.org
 
 Alternative: Use --backend cli or --backend curses
-Run 'python3 mbasic.py --list-backends' to see all available backends.
+Run 'python3 mbasic --list-backends' to see all available backends.
 ```
 
 ---
@@ -213,7 +213,7 @@ Run 'python3 mbasic.py --list-backends' to see all available backends.
 
 ```
 /usr/local/lib/python3.X/site-packages/
-├── mbasic.py                    # Entry point
+├── mbasic                    # Entry point
 ├── src/                         # All modules
 │   ├── runtime.py
 │   ├── parser.py
@@ -269,7 +269,7 @@ mbasic --help
 ```bash
 git clone https://github.com/avwohl/mbasic.git
 cd mbasic
-python3 mbasic.py --backend cli
+python3 mbasic --backend cli
 ```
 
 ### After (from PyPI):

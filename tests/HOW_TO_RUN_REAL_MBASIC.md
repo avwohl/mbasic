@@ -121,7 +121,7 @@ To compare our MBASIC vs real MBASIC:
 cd /home/wohl/cl/mbasic/tests
 
 # Run on our implementation
-python3 ../mbasic.py mytest.bas > /tmp/our_output.txt 2>&1
+python3 ../mbasic mytest.bas > /tmp/our_output.txt 2>&1
 
 # Run on real MBASIC (multiple SYSTEM for instant exit on errors)
 (cat mytest.bas && printf "RUN\nSYSTEM\nSYSTEM\nSYSTEM\n") | timeout 1 tnylpo ../com/mbasic > /tmp/real_output.txt 2>&1

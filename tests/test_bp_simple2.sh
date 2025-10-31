@@ -15,7 +15,7 @@ echo "This test will add DEBUG output to see if breakpoints are being checked"
 echo
 
 # Run with debug enabled
-DEBUG=1 python3 mbasic.py /tmp/test_bp.bas <<< 'RUN
+DEBUG=1 python3 mbasic /tmp/test_bp.bas <<< 'RUN
 ' 2>&1 | tee /tmp/bp_test_output.txt
 
 echo

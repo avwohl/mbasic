@@ -10,7 +10,7 @@ timeout 10 expect << 'EXPECT_EOF' 2>&1 | tee /tmp/help_test.log
 log_user 1
 set timeout 5
 
-spawn python3 -u mbasic.py --backend curses /tmp/test_help.bas
+spawn python3 -u mbasic --backend curses /tmp/test_help.bas
 sleep 2
 
 # Open menu
@@ -43,7 +43,7 @@ timeout 10 expect << 'EXPECT_EOF' 2>&1 | tee /tmp/help_ctrlp_test.log
 log_user 1
 set timeout 5
 
-spawn python3 -u mbasic.py --backend curses /tmp/test_help.bas
+spawn python3 -u mbasic --backend curses /tmp/test_help.bas
 sleep 2
 
 # Try Ctrl+P

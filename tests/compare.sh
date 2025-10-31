@@ -3,9 +3,9 @@
 cd "$(dirname "$0")"
 
 echo "======================================"
-echo "Running with mbasic.py"
+echo "Running with mbasic"
 echo "======================================"
-python3 ../mbasic.py prtusing.bas
+python3 ../mbasic prtusing.bas
 
 echo ""
 echo ""

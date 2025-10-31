@@ -15,7 +15,7 @@ echo
 rm -f /tmp/test_random.dat /tmp/students.dat /tmp/testrand.dat /tmp/testrand2.dat
 
 echo "--- Running OUR MBASIC ---"
-timeout 10 python3 ../mbasic.py "$TEST_FILE" 2>&1 > /tmp/our_random_output.txt
+timeout 10 python3 ../mbasic "$TEST_FILE" 2>&1 > /tmp/our_random_output.txt
 cat /tmp/our_random_output.txt
 echo
 echo

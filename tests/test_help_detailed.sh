@@ -8,7 +8,7 @@ EOF
 # Use expect with full logging to see what happens
 expect -d << 'EXPECT_EOF' 2>&1 | grep -E "(send|expect|Help|Ctrl|OK|exit)"
 set timeout 10
-spawn python3 mbasic.py --backend curses /tmp/test_help.bas
+spawn python3 mbasic --backend curses /tmp/test_help.bas
 
 # Wait for UI to load
 sleep 2

@@ -22,7 +22,7 @@ timeout 15 expect << 'EXPECT_EOF' 2>&1 | tee /tmp/bp_status_test.log
 log_user 1
 set timeout 5
 
-spawn python3 mbasic.py --backend curses /tmp/test_bp_status.bas
+spawn python3 mbasic --backend curses /tmp/test_bp_status.bas
 sleep 1
 
 # Move to line 2 (line 20)

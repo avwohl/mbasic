@@ -176,7 +176,7 @@ This document provides a comprehensive timeline of development work on the MBASI
 
 **Key Files Modified**:
 - src/ui/web/nicegui_backend.py (paste handler, sort fixes)
-- mbasic.py (reverted signal handling)
+- mbasic (reverted signal handling)
 
 **Achievements**:
 - ✅ Web UI feature parity with Tk UI

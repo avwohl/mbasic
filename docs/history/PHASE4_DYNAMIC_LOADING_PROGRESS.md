@@ -11,7 +11,7 @@ Implemented dynamic backend loading using Python's `importlib` and added command
 
 ### 1. Command-Line Argument Parsing ✅
 
-**Refactored mbasic.py** (170 lines, was 85 lines):
+**Refactored mbasic** (170 lines, was 85 lines):
 
 **New features:**
 - `--backend {cli,visual}` - Select UI backend (default: cli)
@@ -21,12 +21,12 @@ Implemented dynamic backend loading using Python's `importlib` and added command
 
 **Usage examples:**
 ```bash
-python3 mbasic.py                    # Interactive mode (CLI) - backward compatible
-python3 mbasic.py program.bas        # Run program - backward compatible
-python3 mbasic.py --backend cli      # Explicitly use CLI backend
-python3 mbasic.py --backend visual   # Use visual backend (stub)
-python3 mbasic.py --debug            # Enable debug output
-python3 mbasic.py --backend cli --debug tests/program.bas  # Combined options
+python3 mbasic                    # Interactive mode (CLI) - backward compatible
+python3 mbasic program.bas        # Run program - backward compatible
+python3 mbasic --backend cli      # Explicitly use CLI backend
+python3 mbasic --backend visual   # Use visual backend (stub)
+python3 mbasic --debug            # Enable debug output
+python3 mbasic --backend cli --debug tests/program.bas  # Combined options
 ```
 
 **Key code:**
@@ -43,7 +43,7 @@ parser.add_argument('--debug', action='store_true', help='Enable debug output')
 
 ### 2. Dynamic Backend Loading ✅
 
-**Created load_backend() function** (mbasic.py:33-62):
+**Created load_backend() function** (mbasic:33-62):
 
 **Implementation:**
 - Uses `importlib.import_module()` to load backends dynamically
@@ -76,7 +76,7 @@ def load_backend(backend_name, io_handler, program_manager):
 **Features:**
 - Supports any backend that implements UIBackend interface
 - Clear error messages for missing backends or classes
-- Extensible: Add new backends without modifying mbasic.py
+- Extensible: Add new backends without modifying mbasic
 
 ### 3. Refactored main() Function ✅
 
@@ -117,8 +117,8 @@ def main():
 ### 4. Backward Compatibility ✅
 
 **Maintained 100% backward compatibility:**
-- ✅ `python3 mbasic.py` - Works exactly as before (default CLI)
-- ✅ `python3 mbasic.py program.bas` - Loads and runs program unchanged
+- ✅ `python3 mbasic` - Works exactly as before (default CLI)
+- ✅ `python3 mbasic program.bas` - Loads and runs program unchanged
 - ✅ All existing test files work
 - ✅ No changes required to existing BASIC programs
 - ✅ InteractiveMode still functions via CLIBackend wrapper
@@ -140,10 +140,10 @@ def main():
 
 **Example error output:**
 ```bash
-$ python3 mbasic.py --backend invalid
+$ python3 mbasic --backend invalid
 Error loading backend: Failed to load backend 'invalid': No module named 'ui.invalid'
 
-$ python3 mbasic.py nonexistent.bas
+$ python3 mbasic nonexistent.bas
 Error: File not found: nonexistent.bas
 ```
 
@@ -155,8 +155,8 @@ Error: File not found: nonexistent.bas
 
 1. **Help output**:
 ```bash
-$ python3 mbasic.py --help
-usage: mbasic.py [-h] [--backend {cli,visual}] [--debug] [program]
+$ python3 mbasic --help
+usage: mbasic [-h] [--backend {cli,visual}] [--debug] [program]
 
 MBASIC 5.21 Interpreter
 ...
@@ -164,7 +164,7 @@ MBASIC 5.21 Interpreter
 
 2. **Default CLI mode** (backward compatible):
 ```bash
-$ python3 mbasic.py tests/test_deffn.bas
+$ python3 mbasic tests/test_deffn.bas
 FND(10) = 17
 FNA(5) = 10
 FNB = 42
@@ -173,7 +173,7 @@ Ready
 
 3. **Explicit CLI backend**:
 ```bash
-$ python3 mbasic.py --backend cli tests/test_fn_shadow.bas
+$ python3 mbasic --backend cli tests/test_fn_shadow.bas
 Before DEF FN:
 X = 100
 Y = 200
@@ -183,7 +183,7 @@ Ready
 
 4. **Visual backend (stub)**:
 ```bash
-$ python3 mbasic.py --backend visual
+$ python3 mbasic --backend visual
 Note: Visual backend is a stub, using console I/O
 VisualBackend.start() - Override this method
 Create your UI here and start event loop
@@ -191,7 +191,7 @@ Create your UI here and start event loop
 
 5. **Interactive mode** (unchanged):
 ```bash
-$ python3 mbasic.py
+$ python3 mbasic
 MBASIC 5.21 Interpreter
 Ready
 ```
@@ -210,7 +210,7 @@ Ready
 
 ```
 ┌─────────────────────────────────────────────────┐
-│              mbasic.py (main)                   │
+│              mbasic (main)                   │
 │  1. Parse args (backend, debug, program)        │
 │  2. Create IOHandler (ConsoleIOHandler)         │
 │  3. Create ProgramManager (default DEF types)   │
@@ -243,7 +243,7 @@ Ready
 ### Benefits of Dynamic Loading ✅
 
 **Extensibility:**
-- Add new backends without modifying mbasic.py
+- Add new backends without modifying mbasic
 - Create custom backends in separate modules
 - Load backends by name at runtime
 
@@ -259,7 +259,7 @@ Ready
 
 ## Files Modified
 
-### mbasic.py (refactored, 170 lines)
+### mbasic (refactored, 170 lines)
 
 **Changes:**
 - Added `argparse` for command-line argument parsing
@@ -339,7 +339,7 @@ class WebBackend(UIBackend):
         pass
 ```
 
-**2. Update mbasic.py choices:**
+**2. Update mbasic choices:**
 ```python
 parser.add_argument(
     '--backend',
@@ -350,7 +350,7 @@ parser.add_argument(
 
 **3. Use it:**
 ```bash
-python3 mbasic.py --backend web
+python3 mbasic --backend web
 ```
 
 **That's it!** No other changes needed. The `load_backend()` function automatically loads `ui.web.WebBackend`.
@@ -361,46 +361,46 @@ python3 mbasic.py --backend web
 
 ```bash
 # Interactive mode (default CLI)
-python3 mbasic.py
+python3 mbasic
 
 # Run a program
-python3 mbasic.py program.bas
+python3 mbasic program.bas
 
 # Show help
-python3 mbasic.py --help
+python3 mbasic --help
 ```
 
 ### Backend Selection
 
 ```bash
 # Explicitly use CLI backend
-python3 mbasic.py --backend cli
+python3 mbasic --backend cli
 
 # Use visual backend (stub)
-python3 mbasic.py --backend visual
+python3 mbasic --backend visual
 
 # Load program with specific backend
-python3 mbasic.py --backend cli program.bas
+python3 mbasic --backend cli program.bas
 ```
 
 ### Debug Mode
 
 ```bash
 # Enable debug output
-python3 mbasic.py --debug
+python3 mbasic --debug
 
 # Debug mode with program
-python3 mbasic.py --debug program.bas
+python3 mbasic --debug program.bas
 
 # Debug mode with specific backend
-python3 mbasic.py --backend cli --debug program.bas
+python3 mbasic --backend cli --debug program.bas
 ```
 
 ### Combined Options
 
 ```bash
 # All options together
-python3 mbasic.py --backend visual --debug program.bas
+python3 mbasic --backend visual --debug program.bas
 ```
 
 ## Impact
@@ -412,7 +412,7 @@ python3 mbasic.py --backend visual --debug program.bas
 
 ### For Visual UI Developers ✅
 - **Easy Integration**: Just create a UIBackend subclass
-- **No Core Changes**: No need to modify mbasic.py
+- **No Core Changes**: No need to modify mbasic
 - **Clear API**: UIBackend interface well-documented
 - **Examples Available**: VisualBackend provides template
 
@@ -441,7 +441,7 @@ All tests passing. Phases 1-4 complete.
 
 ## Statistics
 
-**Lines Modified**: ~85 lines changed/added in mbasic.py
+**Lines Modified**: ~85 lines changed/added in mbasic
 **New Features**: 3 (--backend, --debug, dynamic loading)
 **Breaking Changes**: 0 (100% backward compatible)
 **Time Spent**: ~1 hour

@@ -30,7 +30,7 @@ echo "Press ENTER to start..."
 read
 
 # Run with stderr redirected to a file
-python3 mbasic.py --backend curses test_end_manual.bas 2>test_end_manual_stderr.log
+python3 mbasic --backend curses test_end_manual.bas 2>test_end_manual_stderr.log
 
 echo ""
 echo "==================================="

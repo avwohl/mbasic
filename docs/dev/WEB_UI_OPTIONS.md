@@ -69,7 +69,7 @@ def handle_connect():
     # Start MBASIC interpreter in PTY
     master, slave = pty.openpty()
     process = subprocess.Popen(
-        ['python3', 'mbasic.py', '--backend', 'cli'],
+        ['python3', 'mbasic', '--backend', 'cli'],
         stdin=slave, stdout=slave, stderr=slave
     )
     # Stream output to browser

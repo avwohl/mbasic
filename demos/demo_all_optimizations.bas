@@ -6,7 +6,7 @@
 60 REM This program demonstrates every optimization implemented in
 70 REM the MBASIC compiler's semantic analysis phase.
 80 REM
-90 REM Run with: python3 mbasic.py demo_all_optimizations.bas
+90 REM Run with: python3 mbasic demo_all_optimizations.bas
 100 REM
 110 REM ================================================================
 120 REM OPTIMIZATION 1: Constant Folding

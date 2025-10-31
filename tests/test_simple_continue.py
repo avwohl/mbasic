@@ -20,7 +20,7 @@ with open('test_cont.bas', 'w') as f:
 30 PRINT "Done!"
 """)
 
-child = pexpect.spawn('python3 mbasic.py --backend curses-npyscreen test_cont.bas',
+child = pexpect.spawn('python3 mbasic --backend curses-npyscreen test_cont.bas',
                       encoding='utf-8', dimensions=(24, 80), timeout=10)
 
 try:

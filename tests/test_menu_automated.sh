@@ -11,7 +11,7 @@ timeout 10 expect << 'EXPECT_EOF' 2>&1 | tee /tmp/menu_test.log
 log_user 1
 set timeout 3
 
-spawn python3 mbasic.py --backend curses /tmp/test_menu_auto.bas
+spawn python3 mbasic --backend curses /tmp/test_menu_auto.bas
 sleep 1
 
 # Run the program with Ctrl+R

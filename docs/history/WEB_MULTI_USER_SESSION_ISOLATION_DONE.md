@@ -116,7 +116,7 @@ Need to implement **session-based isolation** where each browser session/tab get
 Automated test: `python3 utils/test_web_session_isolation.py`
 
 Manual testing:
-1. Start web UI: `python3 mbasic.py --backend web`
+1. Start web UI: `python3 mbasic --backend web`
 2. Open http://localhost:8080 in two browser tabs
 3. Load different programs in each tab
 4. Verify each tab maintains its own program state

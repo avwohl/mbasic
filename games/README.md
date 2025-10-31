@@ -36,7 +36,7 @@ If you find issues with any game, you can:
 To play a game:
 
 ```bash
-python3 mbasic.py games/gamename.bas
+python3 mbasic games/gamename.bas
 ```
 
 ## Feedback

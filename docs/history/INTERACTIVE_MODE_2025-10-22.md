@@ -20,7 +20,7 @@ The MBASIC interpreter now supports full interactive mode, allowing you to:
 ### Starting Interactive Mode
 
 ```bash
-python3 mbasic.py
+python3 mbasic
 ```
 
 You'll see:
@@ -33,7 +33,7 @@ Ready
 ### Running a File Directly
 
 ```bash
-python3 mbasic.py program.bas
+python3 mbasic program.bas
 ```
 
 ---
@@ -165,7 +165,7 @@ Output: ` 4`
 ## Example Session
 
 ```
-$ python3 mbasic.py
+$ python3 mbasic
 MBASIC 5.21 Interpreter
 Ready
 
@@ -202,7 +202,7 @@ Goodbye
 ### Files
 
 - **src/interactive.py** (305 lines) - Interactive REPL implementation
-- **mbasic.py** - Updated to support both file and interactive modes
+- **mbasic** - Updated to support both file and interactive modes
 
 ### InteractiveMode Class
 

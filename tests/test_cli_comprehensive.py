@@ -38,7 +38,7 @@ class TestCLI:
         print(f"Test directory: {self.test_dir}")
 
         # Start MBASIC in CLI mode
-        self.proc = pexpect.spawn('python3 mbasic.py --backend cli',
+        self.proc = pexpect.spawn('python3 mbasic --backend cli',
                                   cwd=str(Path(__file__).parent.parent),
                                   timeout=5,
                                   encoding='utf-8')

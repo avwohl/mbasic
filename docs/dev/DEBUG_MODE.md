@@ -13,10 +13,10 @@ Set the `MBASIC_DEBUG` environment variable to enable debug output:
 export MBASIC_DEBUG=1
 
 # Run MBASIC
-python3 mbasic.py program.bas
+python3 mbasic program.bas
 
 # Or inline:
-MBASIC_DEBUG=1 python3 mbasic.py program.bas
+MBASIC_DEBUG=1 python3 mbasic program.bas
 ```
 
 Accepted values for `MBASIC_DEBUG`:

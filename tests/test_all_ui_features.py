@@ -90,7 +90,7 @@ class CLIFeatureTests(UIFeatureTest):
         """Test if CLI can launch"""
         try:
             proc = subprocess.Popen(
-                [sys.executable, "mbasic.py", "--backend", "cli"],
+                [sys.executable, "mbasic", "--backend", "cli"],
                 cwd=self.project_root,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -108,7 +108,7 @@ class CLIFeatureTests(UIFeatureTest):
         """NEW command"""
         try:
             proc = subprocess.Popen(
-                [sys.executable, "mbasic.py", "--backend", "cli"],
+                [sys.executable, "mbasic", "--backend", "cli"],
                 cwd=self.project_root,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -129,7 +129,7 @@ class CLIFeatureTests(UIFeatureTest):
         """RUN command"""
         try:
             proc = subprocess.Popen(
-                [sys.executable, "mbasic.py", "--backend", "cli"],
+                [sys.executable, "mbasic", "--backend", "cli"],
                 cwd=self.project_root,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -149,7 +149,7 @@ class CLIFeatureTests(UIFeatureTest):
         """LIST command"""
         try:
             proc = subprocess.Popen(
-                [sys.executable, "mbasic.py", "--backend", "cli"],
+                [sys.executable, "mbasic", "--backend", "cli"],
                 cwd=self.project_root,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -169,7 +169,7 @@ class CLIFeatureTests(UIFeatureTest):
         """DELETE line by number"""
         try:
             proc = subprocess.Popen(
-                [sys.executable, "mbasic.py", "--backend", "cli"],
+                [sys.executable, "mbasic", "--backend", "cli"],
                 cwd=self.project_root,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -194,7 +194,7 @@ class CLIFeatureTests(UIFeatureTest):
             try:
                 test_file = Path(tmpdir) / "test.bas"
                 proc = subprocess.Popen(
-                    [sys.executable, "mbasic.py", "--backend", "cli"],
+                    [sys.executable, "mbasic", "--backend", "cli"],
                     cwd=self.project_root,
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
@@ -218,7 +218,7 @@ class CLIFeatureTests(UIFeatureTest):
                 test_file.write_text("10 PRINT \"LOADED\"\n")
 
                 proc = subprocess.Popen(
-                    [sys.executable, "mbasic.py", "--backend", "cli"],
+                    [sys.executable, "mbasic", "--backend", "cli"],
                     cwd=self.project_root,
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
@@ -238,7 +238,7 @@ class CLIFeatureTests(UIFeatureTest):
         """RENUM command"""
         try:
             proc = subprocess.Popen(
-                [sys.executable, "mbasic.py", "--backend", "cli"],
+                [sys.executable, "mbasic", "--backend", "cli"],
                 cwd=self.project_root,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -260,7 +260,7 @@ class CLIFeatureTests(UIFeatureTest):
         """BREAK command"""
         try:
             proc = subprocess.Popen(
-                [sys.executable, "mbasic.py", "--backend", "cli"],
+                [sys.executable, "mbasic", "--backend", "cli"],
                 cwd=self.project_root,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -285,7 +285,7 @@ class CLIFeatureTests(UIFeatureTest):
         """STEP command"""
         try:
             proc = subprocess.Popen(
-                [sys.executable, "mbasic.py", "--backend", "cli"],
+                [sys.executable, "mbasic", "--backend", "cli"],
                 cwd=self.project_root,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -307,7 +307,7 @@ class CLIFeatureTests(UIFeatureTest):
         """STACK command"""
         try:
             proc = subprocess.Popen(
-                [sys.executable, "mbasic.py", "--backend", "cli"],
+                [sys.executable, "mbasic", "--backend", "cli"],
                 cwd=self.project_root,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -333,7 +333,7 @@ class CLIFeatureTests(UIFeatureTest):
         """HELP command"""
         try:
             proc = subprocess.Popen(
-                [sys.executable, "mbasic.py", "--backend", "cli"],
+                [sys.executable, "mbasic", "--backend", "cli"],
                 cwd=self.project_root,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -352,7 +352,7 @@ class CLIFeatureTests(UIFeatureTest):
         """CONT command"""
         try:
             proc = subprocess.Popen(
-                [sys.executable, "mbasic.py", "--backend", "cli"],
+                [sys.executable, "mbasic", "--backend", "cli"],
                 cwd=self.project_root,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -389,7 +389,7 @@ class CLIFeatureTests(UIFeatureTest):
                 merge_file.write_text("100 PRINT \"MERGED\"\n")
 
                 proc = subprocess.Popen(
-                    [sys.executable, "mbasic.py", "--backend", "cli"],
+                    [sys.executable, "mbasic", "--backend", "cli"],
                     cwd=self.project_root,
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
@@ -411,7 +411,7 @@ class CLIFeatureTests(UIFeatureTest):
         try:
             # Test that AUTO command is recognized (doesn't produce "Unknown statement")
             proc = subprocess.Popen(
-                [sys.executable, "mbasic.py", "--backend", "cli"],
+                [sys.executable, "mbasic", "--backend", "cli"],
                 cwd=self.project_root,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,

@@ -33,4 +33,4 @@ echo
 echo "Press ENTER to start the test..."
 read
 
-python3 mbasic.py --backend curses test_continue.bas
+python3 mbasic --backend curses test_continue.bas

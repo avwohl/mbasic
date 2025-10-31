@@ -3,7 +3,7 @@
 ## Current (Broken) Architecture
 
 ```
-mbasic.py (line 286):
+mbasic (line 286):
     backend = NiceGUIBackend(io, program_mgr)  # ONE instance
     backend.start()                            # Calls ui.run()
 
@@ -21,7 +21,7 @@ NiceGUIBackend.build_ui():
 ## Correct Architecture
 
 ```
-mbasic.py:
+mbasic:
     # DON'T create backend here for web!
     if backend_name == 'web':
         # Just start NiceGUI with a page factory function
@@ -49,7 +49,7 @@ def start_web_ui():
 
 ### Phase 1: Refactor Web UI Entry Point
 
-**File:** `mbasic.py`
+**File:** `mbasic`
 
 Change web backend initialization:
 
@@ -153,7 +153,7 @@ def main_page():
 
 ## Files to Modify
 
-1. `mbasic.py` - Change web backend initialization
+1. `mbasic` - Change web backend initialization
 2. `src/ui/web/nicegui_backend.py` - Add `start_web_ui()`, remove session storage
 3. Update tests to work with new architecture
 

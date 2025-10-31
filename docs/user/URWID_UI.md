@@ -18,14 +18,14 @@ pip install -r requirements.txt
 
 ```bash
 # Start with new urwid UI (default)
-python3 mbasic.py
+python3 mbasic
 
 # Or explicitly specify curses backend
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 
 # Load a program file
-python3 mbasic.py program.bas
-python3 mbasic.py --backend curses program.bas
+python3 mbasic program.bas
+python3 mbasic --backend curses program.bas
 ```
 
 ## Features
@@ -1081,7 +1081,7 @@ cat > test.bas << 'EOF'
 EOF
 
 # Run with urwid UI
-python3 mbasic.py --backend curses test.bas
+python3 mbasic --backend curses test.bas
 ```
 
 ### Debug Mode
@@ -1089,7 +1089,7 @@ python3 mbasic.py --backend curses test.bas
 To see error details:
 
 ```bash
-python3 mbasic.py --backend curses --debug
+python3 mbasic --backend curses --debug
 ```
 
 Errors will appear in the output window with full tracebacks.

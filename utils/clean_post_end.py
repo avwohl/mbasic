@@ -83,7 +83,7 @@ def test_file(filepath):
     """Test if a BASIC file parses without errors."""
     try:
         result = subprocess.run(
-            ['python3', 'mbasic.py', filepath],
+            ['python3', 'mbasic', filepath],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

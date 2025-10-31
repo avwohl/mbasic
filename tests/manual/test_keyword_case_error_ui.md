@@ -39,7 +39,7 @@ When loading or running this program with `keywords.case_style = error`:
 
 ### Test 1: TK UI - Load Program
 
-1. Launch TK UI: `python3 mbasic.py --tk`
+1. Launch TK UI: `python3 mbasic --tk`
 2. Set policy: Menu → Commands → type `SET keywords.case_style error`
 3. File → Open → select `test_case_error.bas`
 4. **Expected:** Error displayed in output area:
@@ -48,7 +48,7 @@ When loading or running this program with `keywords.case_style = error`:
 
 ### Test 2: TK UI - Type Program
 
-1. Launch TK UI: `python3 mbasic.py --tk`
+1. Launch TK UI: `python3 mbasic --tk`
 2. Set policy: `SET keywords.case_style error`
 3. Type the test program line by line
 4. Try to run (Run → Run or F5)
@@ -56,7 +56,7 @@ When loading or running this program with `keywords.case_style = error`:
 
 ### Test 3: Curses UI - Load Program
 
-1. Launch curses UI: `python3 mbasic.py --curses`
+1. Launch curses UI: `python3 mbasic --curses`
 2. Set policy: `SET keywords.case_style error`
 3. Load program
 4. **Expected:** Error displayed appropriately in curses UI

@@ -12,7 +12,7 @@ The legacy `curses-npyscreen` backend has been completely removed from MBASIC. T
 
 ### 2. Code Updates
 
-#### `mbasic.py`
+#### `mbasic`
 - Removed `curses-npyscreen` from backend map
 - Removed `curses-npyscreen` from argparse choices
 - Updated help text examples
@@ -132,12 +132,12 @@ The urwid backend now provides all essential features:
 
 **Old command:**
 ```bash
-python3 mbasic.py --backend curses-npyscreen
+python3 mbasic --backend curses-npyscreen
 ```
 
 **New command:**
 ```bash
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 ```
 
 The urwid-based curses backend provides all the same basic functionality (program editing, execution, INPUT, file operations).
@@ -165,7 +165,7 @@ All functionality verified:
 
 ### Curses Backend (urwid)
 ```bash
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 ```
 - Full-screen terminal UI
 - Program editor
@@ -176,7 +176,7 @@ python3 mbasic.py --backend curses
 
 ### CLI Backend
 ```bash
-python3 mbasic.py --backend cli  # or just: python3 mbasic.py
+python3 mbasic --backend cli  # or just: python3 mbasic
 ```
 - Command-line interface
 - Interactive BASIC prompt
@@ -185,7 +185,7 @@ python3 mbasic.py --backend cli  # or just: python3 mbasic.py
 
 ### Tkinter Backend
 ```bash
-python3 mbasic.py --backend tk
+python3 mbasic --backend tk
 ```
 - Graphical user interface
 - Cross-platform GUI

@@ -20,10 +20,10 @@ The curses UI backend has been migrated from npyscreen to urwid. The old npyscre
 
 ```bash
 # New urwid UI (requires: pip install urwid)
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 
 # Legacy npyscreen UI (requires: pip install npyscreen)
-python3 mbasic.py --backend curses-npyscreen
+python3 mbasic --backend curses-npyscreen
 ```
 
 ### Graceful Fallback
@@ -158,18 +158,18 @@ All tests pass with the npyscreen backend.
 1. **Test urwid UI** (requires urwid):
    ```bash
    pip install urwid
-   python3 mbasic.py --backend curses
+   python3 mbasic --backend curses
    ```
 
 2. **Test npyscreen UI**:
    ```bash
-   python3 mbasic.py --backend curses-npyscreen
+   python3 mbasic --backend curses-npyscreen
    ```
 
 3. **Test fallback** (without urwid):
    ```bash
    pip uninstall urwid
-   python3 mbasic.py --backend curses
+   python3 mbasic --backend curses
    # Should fall back to npyscreen
    ```
 

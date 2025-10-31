@@ -55,7 +55,7 @@ python -m mbasic
 git clone https://github.com/avwohl/mbasic.git
 cd mbasic
 pip install -r requirements.txt
-python mbasic.py
+python mbasic
 ```
 
 **Pros:**
@@ -75,16 +75,16 @@ python mbasic.py
 
 **Python has built-in single-file support:**
 ```bash
-python -m zipapp mbasic -o mbasic.pyz -p "/usr/bin/env python3"
+python -m zipapp mbasic -o mbasicz -p "/usr/bin/env python3"
 ```
 
-Creates `mbasic.pyz` - entire app in one executable file!
+Creates `mbasicz` - entire app in one executable file!
 
 **Users run:**
 ```bash
-./mbasic.pyz
+./mbasicz
 # or
-python mbasic.pyz
+python mbasicz
 ```
 
 **Pros:**
@@ -118,7 +118,7 @@ wget https://github.com/avwohl/mbasic/releases/download/v1.0.112/mbasic-v1.0.112
 unzip mbasic-v1.0.112.zip
 cd mbasic
 pip install -r requirements.txt
-python mbasic.py
+python mbasic
 ```
 
 ---
@@ -200,7 +200,7 @@ Issues = "https://github.com/avwohl/mbasic/issues"
 mbasic = "mbasic:main"
 ```
 
-### Step 2: Create Entry Point in `mbasic.py`
+### Step 2: Create Entry Point in `mbasic`
 
 ```python
 def main():
@@ -256,7 +256,7 @@ mbasic
 git clone https://github.com/avwohl/mbasic.git
 cd mbasic
 pip install -r requirements.txt
-python mbasic.py
+python mbasic
 ```
 
 ### Better (PyPI Package) ⭐ RECOMMENDED
@@ -283,7 +283,7 @@ mbasic
 ### For PyPI Distribution (30 minutes of work)
 
 - [ ] Create `pyproject.toml`
-- [ ] Add `main()` entry point to `mbasic.py`
+- [ ] Add `main()` entry point to `mbasic`
 - [ ] Register PyPI account
 - [ ] Install: `pip install build twine`
 - [ ] Build: `python -m build`

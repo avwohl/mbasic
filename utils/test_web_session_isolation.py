@@ -9,7 +9,7 @@ Usage:
     python3 utils/test_web_session_isolation.py
 
 Manual Testing:
-    1. Start the web UI: python3 mbasic.py --backend web
+    1. Start the web UI: python3 mbasic --backend web
     2. Open http://localhost:8080 in two different browser tabs/windows
     3. In Tab 1: Enter program "10 PRINT 'TAB 1'"
     4. In Tab 2: Enter program "10 PRINT 'TAB 2'"
@@ -113,7 +113,7 @@ def main():
     if passed == total:
         print("\n✓ All tests passed!")
         print("\nManual Testing Instructions:")
-        print("  1. Start web UI: python3 mbasic.py --backend web")
+        print("  1. Start web UI: python3 mbasic --backend web")
         print("  2. Open http://localhost:8080 in two browser tabs")
         print("  3. Load different programs in each tab")
         print("  4. Verify each tab maintains its own program state")

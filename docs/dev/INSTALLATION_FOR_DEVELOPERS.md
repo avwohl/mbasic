@@ -24,7 +24,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Test installation
-python3 mbasic.py
+python3 mbasic
 ```
 
 ## Detailed Installation
@@ -91,7 +91,7 @@ pip install mkdocs mkdocs-material mkdocs-awesome-pages-plugin
 
 **Test the interpreter:**
 ```bash
-python3 mbasic.py
+python3 mbasic
 ```
 
 You should see:
@@ -105,7 +105,7 @@ Type `PRINT "Hello"` and press Enter. You should see `Hello` printed.
 
 **Test the curses UI:**
 ```bash
-python3 mbasic.py --ui curses
+python3 mbasic --ui curses
 ```
 
 Press `Ctrl+Q` to exit.
@@ -134,7 +134,7 @@ python3 utils/test_curses_comprehensive.py
 pip install urwid>=2.0.0
 ```
 
-Used by: `python3 mbasic.py --ui curses`
+Used by: `python3 mbasic --ui curses`
 
 #### Testing
 
@@ -192,7 +192,7 @@ source venv/bin/activate
 # Make changes to code...
 
 # Test changes
-python3 mbasic.py test_program.bas
+python3 mbasic test_program.bas
 
 # Run tests
 python3 utils/test_curses_comprehensive.py
@@ -346,7 +346,7 @@ mbasic/
 │   └── ...           # Core interpreter modules
 ├── tests/             # Test files
 ├── utils/             # Utility scripts
-├── mbasic.py          # Main interpreter
+├── mbasic          # Main interpreter
 ├── requirements.txt   # Python dependencies
 └── README.md          # Project README
 ```
@@ -374,7 +374,7 @@ After installation:
 ```bash
 git clone https://github.com/avwohl/mbasic.git
 cd mbasic
-python3 mbasic.py
+python3 mbasic
 ```
 
 **Full development setup:**

@@ -44,7 +44,7 @@ Every client shows **one integrated help system** with three clearly labeled sec
 
 ### CLI Client Integration
 
-**Entry Point**: `python3 mbasic.py --help` or in-REPL `HELP`
+**Entry Point**: `python3 mbasic --help` or in-REPL `HELP`
 
 **Implementation**:
 
@@ -165,7 +165,7 @@ Type "HELP SEARCH <keyword>" to search all help.
 
 **User Experience**:
 ```bash
-$ python3 mbasic.py
+$ python3 mbasic
 MBASIC 5.21
 
 Ok

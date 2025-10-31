@@ -77,13 +77,13 @@ Note: Since this project has no external dependencies, this step mainly verifies
 #### Step 5: Run the interpreter
 
 ```bash
-python3 mbasic.py
+python3 mbasic
 ```
 
 Or run a BASIC program:
 
 ```bash
-python3 mbasic.py basic/bas_tests1/hello.bas
+python3 mbasic basic/bas_tests1/hello.bas
 ```
 
 #### Deactivating the virtual environment
@@ -103,7 +103,7 @@ If you don't want to use a virtual environment, you can run the interpreter dire
 cd mbasic
 
 # Run the interpreter
-python3 mbasic.py
+python3 mbasic
 ```
 
 This method works fine since the project has no external dependencies.
@@ -126,7 +126,7 @@ After this, you can run `mbasic` from anywhere on your system.
 Run the interpreter without arguments:
 
 ```bash
-python3 mbasic.py
+python3 mbasic
 ```
 
 You should see:
@@ -151,7 +151,7 @@ You should see the output immediately.
 Run one of the included test programs:
 
 ```bash
-python3 mbasic.py basic/tests_with_results/test_operator_precedence.bas
+python3 mbasic basic/tests_with_results/test_operator_precedence.bas
 ```
 
 You should see:
@@ -168,7 +168,7 @@ Try using `python` instead of `python3`:
 
 ```bash
 python --version
-python mbasic.py
+python mbasic
 ```
 
 ### Permission Denied on Linux/Mac
@@ -176,8 +176,8 @@ python mbasic.py
 Make sure the script is executable:
 
 ```bash
-chmod +x mbasic.py
-./mbasic.py
+chmod +x mbasic
+./mbasic
 ```
 
 ### Virtual Environment Not Activating on Windows
@@ -192,7 +192,7 @@ Then try activating again.
 
 ### "Module not found" errors
 
-Make sure you're in the correct directory (the `mbasic` folder containing `mbasic.py`).
+Make sure you're in the correct directory (the `mbasic` folder containing `mbasic`).
 
 ## Feature Status
 
@@ -244,7 +244,7 @@ If you encounter issues:
 2. Make sure you're in the project directory
 3. Try running with `DEBUG=1` for more detailed error messages:
    ```bash
-   DEBUG=1 python3 mbasic.py yourprogram.bas
+   DEBUG=1 python3 mbasic yourprogram.bas
    ```
 
 Happy BASIC programming!

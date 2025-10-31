@@ -8,7 +8,7 @@ EOF
 echo "=== Test 1: Opening help from menu ==="
 expect << 'EXPECT_EOF'
 set timeout 10
-spawn python3 mbasic.py --backend curses /tmp/test_help.bas
+spawn python3 mbasic --backend curses /tmp/test_help.bas
 
 # Wait for UI to load
 sleep 2
@@ -49,7 +49,7 @@ echo ""
 echo "=== Test 2: Opening help with ^P shortcut ==="
 expect << 'EXPECT_EOF'
 set timeout 10
-spawn python3 mbasic.py --backend curses /tmp/test_help.bas
+spawn python3 mbasic --backend curses /tmp/test_help.bas
 
 # Wait for UI to load
 sleep 2

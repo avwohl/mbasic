@@ -54,10 +54,10 @@ Full-screen terminal-based UI using Python's curses library. Provides a classic 
 
 ```bash
 # Start curses UI
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 
 # Load and run a program in curses UI
-python3 mbasic.py --backend curses program.bas
+python3 mbasic --backend curses program.bas
 ```
 
 ### File Location
@@ -149,10 +149,10 @@ Graphical desktop UI using Python's tkinter library. Provides a modern IDE-style
 
 ```bash
 # Start Tkinter GUI
-python3 mbasic.py --backend tk
+python3 mbasic --backend tk
 
 # Load and run a program in Tk GUI
-python3 mbasic.py --backend tk program.bas
+python3 mbasic --backend tk program.bas
 ```
 
 ### File Location
@@ -209,33 +209,33 @@ class TkBackend(UIBackend):
 
 ```bash
 # Default CLI (backward compatible)
-python3 mbasic.py
+python3 mbasic
 
 # Curses full-screen terminal UI
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 
 # Tkinter graphical UI
-python3 mbasic.py --backend tk
+python3 mbasic --backend tk
 
 # Generic visual template
-python3 mbasic.py --backend visual
+python3 mbasic --backend visual
 
 # Load program with specific backend
-python3 mbasic.py --backend tk program.bas
+python3 mbasic --backend tk program.bas
 
 # Enable debug output with backend
-python3 mbasic.py --backend curses --debug
+python3 mbasic --backend curses --debug
 ```
 
 ### Help
 
 ```bash
-python3 mbasic.py --help
+python3 mbasic --help
 ```
 
 Output:
 ```
-usage: mbasic.py [-h] [--backend {cli,visual,curses,tk}] [--debug] [program]
+usage: mbasic [-h] [--backend {cli,visual,curses,tk}] [--debug] [program]
 
 MBASIC 5.21 Interpreter
 
@@ -310,7 +310,7 @@ from .web_ui import WebBackend
 __all__ = [..., 'WebBackend']
 ```
 
-**3. Update `mbasic.py` backend_map**:
+**3. Update `mbasic` backend_map**:
 ```python
 backend_map = {
     ...
@@ -318,7 +318,7 @@ backend_map = {
 }
 ```
 
-**4. Update `mbasic.py` choices**:
+**4. Update `mbasic` choices**:
 ```python
 parser.add_argument(
     '--backend',
@@ -409,7 +409,7 @@ OK
 
 CLI backend still works (backward compatibility):
 ```bash
-$ python3 mbasic.py --backend cli tests/test_deffn.bas
+$ python3 mbasic --backend cli tests/test_deffn.bas
 FND(10) = 17
 FNA(5) = 10
 FNB = 42
@@ -418,7 +418,7 @@ Ready
 
 Help shows all backends:
 ```bash
-$ python3 mbasic.py --help
+$ python3 mbasic --help
 ...
 --backend {cli,visual,curses,tk}
 ...
@@ -432,7 +432,7 @@ $ python3 mbasic.py --help
 
 **Files Modified:**
 - `src/ui/__init__.py`: +2 imports, +2 exports
-- `mbasic.py`: Updated backend_map, choices, help text
+- `mbasic`: Updated backend_map, choices, help text
 
 **Total Lines Added**: ~750 lines
 

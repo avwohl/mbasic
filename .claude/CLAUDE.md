@@ -41,7 +41,7 @@
 ## Directory Structure
 - **Utility scripts**: `utils/` - NEVER create in root directory
 - **BASIC programs**: `basic/` (working), `basic/bad_syntax/` (broken), `basic/bas_tests/` (tests)
-- **Source code**: `mbasic.py` and core files in root (parser.py, lexer.py, etc.)
+- **Source code**: `mbasic` and core files in root (parser.py, lexer.py, etc.)
 - **Documentation**: `docs/` - NEVER create .md files in root (except README.md)
   - `docs/dev/` - Current work, implementation notes, fixes, work-in-progress
   - `docs/help/` - In-UI help system (common/ for language, ui/{backend}/ for UI-specific)
@@ -57,6 +57,6 @@
 
 ## Testing
 - **Test files**: `basic/bas_tests/` - MBASIC 5.21 syntax only
-- **Run tests**: `python3 mbasic.py <program.bas>`
+- **Run tests**: `python3 mbasic <program.bas>`
 - **Testing with real MBASIC**: See `tests/HOW_TO_RUN_REAL_MBASIC.md`
 - **Testing curses UI**: `python3 utils/test_curses_comprehensive.py` (see `docs/dev/CURSES_UI_TESTING.md` for details)

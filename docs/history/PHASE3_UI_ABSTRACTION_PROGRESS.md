@@ -142,14 +142,14 @@ class MyGUIBackend(VisualBackend):
 
 **No breaking changes:**
 - InteractiveMode unchanged (still works)
-- mbasic.py unchanged (still uses InteractiveMode)
+- mbasic unchanged (still uses InteractiveMode)
 - CLIBackend wraps InteractiveMode
 - All existing code continues to work
 
 **Migration path:**
-- Current: mbasic.py → InteractiveMode
-- Future: mbasic.py → CLIBackend → InteractiveMode
-- Eventually: mbasic.py → CLIBackend (pure implementation)
+- Current: mbasic → InteractiveMode
+- Future: mbasic → CLIBackend → InteractiveMode
+- Eventually: mbasic → CLIBackend (pure implementation)
 
 ## Git Commits
 

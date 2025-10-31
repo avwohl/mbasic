@@ -91,7 +91,7 @@ def test_curses_with_pyte():
     try:
         # Start the curses UI
         print("Starting curses UI...")
-        term.start_process(['python3', 'mbasic.py', '--backend', 'curses'])
+        term.start_process(['python3', 'mbasic', '--backend', 'curses'])
 
         # Wait for startup
         print("Waiting for UI to initialize...")

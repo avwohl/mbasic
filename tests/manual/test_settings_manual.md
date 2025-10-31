@@ -18,7 +18,7 @@ Verify that the TK (Tkinter) settings dialog opens, displays settings, saves cha
 
 1. **Launch TK UI**
    ```bash
-   python3 mbasic.py --ui tk
+   python3 mbasic --ui tk
    ```
 
 2. **Open Settings Dialog**
@@ -49,7 +49,7 @@ Verify that the TK (Tkinter) settings dialog opens, displays settings, saves cha
 
 6. **Verify Persistence**
    - Close MBASIC
-   - Reopen MBASIC (`python3 mbasic.py --ui tk`)
+   - Reopen MBASIC (`python3 mbasic --ui tk`)
    - Open Settings → Editor tab
    - ✓ Auto Number Step still shows 100
 
@@ -83,7 +83,7 @@ Verify that the Curses (terminal) settings widget works correctly.
 
 1. **Launch Curses UI**
    ```bash
-   python3 mbasic.py --ui curses
+   python3 mbasic --ui curses
    ```
 
 2. **Open Settings Widget**
@@ -147,7 +147,7 @@ Verify that the Web (NiceGUI) settings dialog works correctly.
 
 1. **Launch Web UI**
    ```bash
-   python3 mbasic.py --ui web
+   python3 mbasic --ui web
    ```
    - Open browser to `http://localhost:8080`
 
@@ -204,7 +204,7 @@ Verify that SHOWSETTINGS and SETSETTING commands work in CLI mode.
 
 1. **Launch CLI Mode**
    ```bash
-   python3 mbasic.py
+   python3 mbasic
    ```
 
 2. **Test SHOWSETTINGS (All)**
@@ -456,7 +456,7 @@ Verify that settings set in one UI are available in another.
 
 1. **Set in CLI**
    ```bash
-   python3 mbasic.py
+   python3 mbasic
    ```
    ```basic
    SETSETTING editor.auto_number_step 100
@@ -465,7 +465,7 @@ Verify that settings set in one UI are available in another.
 
 2. **Check in TK UI**
    ```bash
-   python3 mbasic.py --ui tk
+   python3 mbasic --ui tk
    ```
    - Open Settings → Editor
    - ✓ Auto Number Step shows 100
@@ -477,7 +477,7 @@ Verify that settings set in one UI are available in another.
 
 4. **Check in CLI**
    ```bash
-   python3 mbasic.py
+   python3 mbasic
    ```
    ```basic
    SHOWSETTINGS editor.auto_number_step
@@ -486,7 +486,7 @@ Verify that settings set in one UI are available in another.
 
 5. **Check in Web UI**
    ```bash
-   python3 mbasic.py --ui web
+   python3 mbasic --ui web
    ```
    - Open Settings
    - ✓ Shows 50 (if using same settings file, not localStorage)

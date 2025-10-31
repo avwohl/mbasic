@@ -6,7 +6,7 @@ cat > /tmp/test_help.bas << 'EOF'
 EOF
 
 # Use script command to run in a real PTY and capture all output
-script -q -c "python3 -u mbasic.py --backend curses /tmp/test_help.bas 2>&1" /tmp/curses_output.log &
+script -q -c "python3 -u mbasic --backend curses /tmp/test_help.bas 2>&1" /tmp/curses_output.log &
 SCRIPT_PID=$!
 
 # Wait for it to start

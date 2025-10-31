@@ -80,7 +80,7 @@ backend._handle_input('ctrl h')
 ```python
 import pexpect
 
-child = pexpect.spawn('python3 mbasic.py --backend curses',
+child = pexpect.spawn('python3 mbasic --backend curses',
                       encoding='utf-8',
                       dimensions=(24, 80))
 child.send('\x12')  # Ctrl+R

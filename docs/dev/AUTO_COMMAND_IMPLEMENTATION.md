@@ -73,7 +73,7 @@ When AUTO generates a line number that already exists:
 ### Example 1: Basic AUTO
 
 ```
-$ python3 mbasic.py
+$ python3 mbasic
 MBASIC 5.21 Interpreter
 Ready
 

@@ -68,7 +68,7 @@ grep "version =" pyproject.toml
 # Should match src/version.py
 
 # Verify all tests pass
-python3 mbasic.py --list-backends
+python3 mbasic --list-backends
 # Should show all backends available
 
 # Check imports work

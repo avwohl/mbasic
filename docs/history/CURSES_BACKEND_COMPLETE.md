@@ -55,10 +55,10 @@ The curses backend is now **fully functional** and provides a complete full-scre
 
 ```bash
 # Start with empty program
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 
 # Load a program
-python3 mbasic.py --backend curses tests/test_curses_hello.bas
+python3 mbasic --backend curses tests/test_curses_hello.bas
 ```
 
 ### Keyboard Commands
@@ -96,7 +96,7 @@ python3 mbasic.py --backend curses tests/test_curses_hello.bas
 
 ```
 Start curses IDE:
-$ python3 mbasic.py --backend curses
+$ python3 mbasic --backend curses
 
 Type program:
 10 PRINT "Hello, World!"
@@ -199,7 +199,7 @@ Programs are saved as plain text BASIC files:
 ### Hello World
 
 ```bash
-$ python3 mbasic.py --backend curses
+$ python3 mbasic --backend curses
 
 10 PRINT "Hello from curses!"
 20 END
@@ -209,14 +209,14 @@ $ python3 mbasic.py --backend curses
 ### Load and Run Existing Program
 
 ```bash
-$ python3 mbasic.py --backend curses tests/test_deffn.bas
+$ python3 mbasic --backend curses tests/test_deffn.bas
 [F2 to run]
 ```
 
 ### Create, Save, and Run
 
 ```bash
-$ python3 mbasic.py --backend curses
+$ python3 mbasic --backend curses
 
 10 FOR I = 1 TO 5
 20 PRINT "Count: "; I
@@ -257,7 +257,7 @@ Filename: count.bas
 
 ### Run Test:
 ```bash
-python3 mbasic.py --backend curses tests/test_curses_hello.bas
+python3 mbasic --backend curses tests/test_curses_hello.bas
 ```
 
 Then press F2 to run the program.

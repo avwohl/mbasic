@@ -85,7 +85,7 @@ Successfully completed the core infrastructure for I/O abstraction layer, enabli
 
 ### Backward Compatibility ✅
 - Interpreter defaults to ConsoleIOHandler if no io_handler provided
-- Existing code (InteractiveMode, mbasic.py) continues to work without changes
+- Existing code (InteractiveMode, mbasic) continues to work without changes
 - All print()/input() behavior preserved
 
 ### Visual UI Support ✅

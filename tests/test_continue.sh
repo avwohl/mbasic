@@ -31,7 +31,7 @@ def test_continue():
 
     # Start mbasic with curses backend
     proc = subprocess.Popen(
-        ['python3', 'mbasic.py', '--backend', 'curses', '/tmp/test_continue.bas'],
+        ['python3', 'mbasic', '--backend', 'curses', '/tmp/test_continue.bas'],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

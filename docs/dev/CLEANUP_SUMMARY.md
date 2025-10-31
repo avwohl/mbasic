@@ -35,7 +35,7 @@ The top-level directory has been cleaned and organized according to standard pro
 ## Files Remaining in Root (Correct)
 
 ### Essential Python Files
-- **mbasic.py** - Main entry point (must be in root)
+- **mbasic** - Main entry point (must be in root)
 - **setup.py** - Package installation script (must be in root)
 
 ### Essential Documentation
@@ -47,7 +47,7 @@ The top-level directory has been cleaned and organized according to standard pro
 
 ```
 /home/wohl/cl/mbasic/
-├── mbasic.py                    ✅ Main entry point
+├── mbasic                    ✅ Main entry point
 ├── setup.py                     ✅ Package setup
 ├── README.md                    ✅ Project README
 ├── INSTALL.md                   ✅ Installation guide
@@ -99,7 +99,7 @@ All files successfully moved:
 $ ls *.py *.md *.txt
 INSTALL.md
 README.md
-mbasic.py
+mbasic
 requirements.txt
 setup.py
 
@@ -121,7 +121,7 @@ docs/dev/VARIABLE_TRACKING_CHANGES.md
 All file moves preserve functionality:
 - ✅ Tests still work (relative paths maintained)
 - ✅ Documentation still accessible
-- ✅ mbasic.py still runs from root
+- ✅ mbasic still runs from root
 - ✅ Import paths unchanged (source in `src/`)
 
 ## Cleanup Complete

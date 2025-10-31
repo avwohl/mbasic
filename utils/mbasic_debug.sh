@@ -6,4 +6,4 @@
 > /tmp/mbasic_debug.log
 
 # Run mbasic with stderr piped through tee (visible + logged)
-./mbasic.py "$@" 2>&1 | tee /tmp/mbasic_debug.log
+./mbasic "$@" 2>&1 | tee /tmp/mbasic_debug.log

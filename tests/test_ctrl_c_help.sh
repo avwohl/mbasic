@@ -8,7 +8,7 @@ EOF
 # Create expect script to test Ctrl+C in help dialog
 expect << 'EXPECT_SCRIPT'
 set timeout 5
-spawn python3 mbasic.py --ui curses /tmp/test_help_ctrl_c.bas
+spawn python3 mbasic --ui curses /tmp/test_help_ctrl_c.bas
 
 # Wait for UI to load
 sleep 1

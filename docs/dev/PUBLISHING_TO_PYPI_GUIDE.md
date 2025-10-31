@@ -48,7 +48,7 @@ mbasic/
 │       ├── runtime.py
 │       ├── interpreter.py
 │       └── ...
-├── mbasic.py               # Entry point script
+├── mbasic               # Entry point script
 └── requirements.txt        # Dependencies (already have)
 ```
 
@@ -131,9 +131,9 @@ package-dir = {"" = "src"}
 
 ---
 
-## Step 2: Update mbasic.py Entry Point
+## Step 2: Update mbasic Entry Point
 
-PyPI needs a `main()` function to call. Update `mbasic.py`:
+PyPI needs a `main()` function to call. Update `mbasic`:
 
 ```python
 #!/usr/bin/env python3
@@ -153,14 +153,14 @@ def main():
     # Your existing code here (all the if __name__ == "__main__" stuff)
     # Just move it into this main() function
 
-    # ... rest of your mbasic.py code ...
+    # ... rest of your mbasic code ...
 
 if __name__ == "__main__":
     main()
 ```
 
 This allows both:
-- `python mbasic.py` (current method)
+- `python mbasic` (current method)
 - `mbasic` (after pip install)
 
 ---
@@ -473,7 +473,7 @@ package-dir = {"" = "src"}
 
 **Cause:** `main()` function not found
 
-**Solution:** Ensure `mbasic.py` has `main()` and it's in correct location
+**Solution:** Ensure `mbasic` has `main()` and it's in correct location
 
 ---
 
@@ -564,7 +564,7 @@ twine upload dist/*
 **What you need to do:**
 
 1. ✅ Create `pyproject.toml` (template above)
-2. ✅ Update `mbasic.py` with `main()` function
+2. ✅ Update `mbasic` with `main()` function
 3. ✅ Create PyPI account
 4. ✅ Install: `pip install build twine`
 5. ✅ Build: `python -m build`

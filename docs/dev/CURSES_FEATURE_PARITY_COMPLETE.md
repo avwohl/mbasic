@@ -223,7 +223,7 @@ The curses UI is production-ready and provides a full-featured BASIC IDE in the 
 ## Testing
 
 ### Manual Testing Recommended
-1. Start curses UI: `python3 mbasic.py --curses`
+1. Start curses UI: `python3 mbasic --curses`
 2. Test toolbar buttons (New, Open, Save, Run, Stop, Step, Stmt, Cont)
 3. Test Clear Output (Ctrl+Y)
 4. Test error count in status bar (create syntax error, observe status)

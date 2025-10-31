@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Test script to compare PRINT USING between mbasic.py and mbasic521
+# Test script to compare PRINT USING between mbasic and mbasic521
 
 TEST_FILE="tests/print_using_test.bas"
 
 echo "======================================"
-echo "Running with mbasic.py"
+echo "Running with mbasic"
 echo "======================================"
-python3 mbasic.py "$TEST_FILE"
+python3 mbasic "$TEST_FILE"
 
 echo ""
 echo ""

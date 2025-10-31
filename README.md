@@ -62,13 +62,13 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Run the interpreter
-python3 mbasic.py
+python3 mbasic
 ```
 
 ### Check Available Backends
 
 ```bash
-python3 mbasic.py --list-backends
+python3 mbasic --list-backends
 ```
 
 This shows which UI backends are available on your system.
@@ -111,13 +111,13 @@ This shows which UI backends are available on your system.
 ### Run a BASIC program
 
 ```bash
-python3 mbasic.py myprogram.bas
+python3 mbasic myprogram.bas
 ```
 
 ### Start interactive mode (Curses Screen Editor)
 
 ```bash
-python3 mbasic.py
+python3 mbasic
 ```
 
 The **curses screen editor** (default) provides a full-screen terminal interface:
@@ -154,7 +154,7 @@ See **[Curses Editor Documentation](docs/user/URWID_UI.md)** for complete guide.
 ### CLI Mode (Line-by-line REPL)
 
 ```bash
-python3 mbasic.py --backend cli
+python3 mbasic --backend cli
 ```
 
 Then enter your program:
@@ -177,7 +177,7 @@ SAVE "hello.bas"
 
 ```
 mbasic/
-├── mbasic.py              # Main entry point
+├── mbasic              # Main entry point
 ├── src/
 │   ├── lexer.py           # Tokenizer
 │   ├── parser.py          # Parser (generates AST)
@@ -262,12 +262,12 @@ Test BASIC programs live in `basic/bas_tests/`:
 
 ```bash
 # Run any BASIC test program
-python3 mbasic.py basic/bas_tests/test_operator_precedence.bas
+python3 mbasic basic/bas_tests/test_operator_precedence.bas
 ```
 
 Self-checking tests verify correctness and report results:
 ```bash
-python3 mbasic.py basic/tests_with_results/test_operator_precedence.bas
+python3 mbasic basic/tests_with_results/test_operator_precedence.bas
 # Result: All 20 tests PASS
 ```
 

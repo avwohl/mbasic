@@ -58,7 +58,7 @@ The MBASIC 5.21 interpreter has been successfully refactored to support multiple
 - Implemented load_backend() using importlib for dynamic loading
 - Added `--backend {cli,visual}` option
 - Added `--debug` option for debug output
-- Refactored mbasic.py to use UIBackend architecture
+- Refactored mbasic to use UIBackend architecture
 
 **Result**: Users can select backends at runtime without code changes
 
@@ -70,7 +70,7 @@ The MBASIC 5.21 interpreter has been successfully refactored to support multiple
 
 ```
 mbasic/
-├── mbasic.py                      # Entry point (refactored, 170 lines)
+├── mbasic                      # Entry point (refactored, 170 lines)
 ├── src/
 │   ├── iohandler/                 # Phase 1: I/O abstraction
 │   │   ├── base.py                # IOHandler interface
@@ -104,7 +104,7 @@ mbasic/
 
 ```
 ┌──────────────────────────────────────────────┐
-│          mbasic.py (main entry)              │
+│          mbasic (main entry)              │
 │  - Parse arguments (--backend, --debug)      │
 │  - Create IOHandler (ConsoleIOHandler)       │
 │  - Create ProgramManager                     │
@@ -163,25 +163,25 @@ mbasic/
 
 ```bash
 # Interactive mode (default CLI backend)
-python3 mbasic.py
+python3 mbasic
 
 # Run a program
-python3 mbasic.py program.bas
+python3 mbasic program.bas
 
 # Explicitly use CLI backend
-python3 mbasic.py --backend cli
+python3 mbasic --backend cli
 
 # Use visual backend (stub)
-python3 mbasic.py --backend visual
+python3 mbasic --backend visual
 
 # Enable debug output
-python3 mbasic.py --debug
+python3 mbasic --debug
 
 # Combined options
-python3 mbasic.py --backend cli --debug program.bas
+python3 mbasic --backend cli --debug program.bas
 
 # Show help
-python3 mbasic.py --help
+python3 mbasic --help
 ```
 
 ### Programmatic Embedding
@@ -253,8 +253,8 @@ ui.start()
 ### All Tests Passing ✅
 
 **Backward compatibility:**
-- ✅ `python3 mbasic.py` - Works exactly as before
-- ✅ `python3 mbasic.py program.bas` - Loads and runs programs
+- ✅ `python3 mbasic` - Works exactly as before
+- ✅ `python3 mbasic program.bas` - Loads and runs programs
 - ✅ All existing test files pass (test_deffn.bas, test_fn_shadow.bas, etc.)
 - ✅ No changes required to existing BASIC programs
 
@@ -269,13 +269,13 @@ ui.start()
 
 **Test output:**
 ```bash
-$ python3 mbasic.py tests/test_deffn.bas
+$ python3 mbasic tests/test_deffn.bas
 FND(10) = 17
 FNA(5) = 10
 FNB = 42
 Ready
 
-$ python3 mbasic.py --backend visual
+$ python3 mbasic --backend visual
 Note: Visual backend is a stub, using console I/O
 VisualBackend.start() - Override this method
 Create your UI here and start event loop

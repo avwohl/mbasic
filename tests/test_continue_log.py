@@ -24,7 +24,7 @@ with open('test_continue_log.bas', 'w') as f:
 """)
 
 print("\n[1] Starting mbasic...")
-child = pexpect.spawn('python3 mbasic.py --backend curses test_continue_log.bas',
+child = pexpect.spawn('python3 mbasic --backend curses test_continue_log.bas',
                       encoding='utf-8',
                       dimensions=(24, 80),
                       timeout=10)

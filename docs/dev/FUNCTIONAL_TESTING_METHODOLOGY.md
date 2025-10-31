@@ -127,7 +127,7 @@ Status: Not applicable
 **Curses:**
 ```
 Test Steps:
-1. Launch: python3 mbasic.py --backend curses
+1. Launch: python3 mbasic --backend curses
 2. In editor, type: PRINT "HELLO"
 3. Press Enter
 4. Verify: Line becomes "10 PRINT "HELLO""
@@ -145,7 +145,7 @@ Edge Cases:
 **Web:**
 ```
 Test Steps:
-1. Launch: python3 mbasic.py --backend web
+1. Launch: python3 mbasic --backend web
 2. Open browser to localhost:8080
 3. Click in **Program Editor** (top large textarea)
 4. Type: PRINT "HELLO"
@@ -170,7 +170,7 @@ Critical: Document where feature works, not just that it exists
 **Tkinter:**
 ```
 Test Steps:
-1. Launch: python3 mbasic.py --backend tk
+1. Launch: python3 mbasic --backend tk
 2. Enter program:
    10 X=1: Y=2: PRINT X+Y
    20 END
@@ -189,7 +189,7 @@ If both buttons do the same thing: ❌ Bug or mislabeled button
 **Web:**
 ```
 Test Steps:
-1. Launch: python3 mbasic.py --backend web
+1. Launch: python3 mbasic --backend web
 2. Enter program (in Editor area):
    10 X=1: Y=2: PRINT X+Y
    20 END

@@ -76,7 +76,7 @@ def test_program(filepath: Path, timeout_secs: int = 5) -> tuple[str, str]:
 
     try:
         # Run the program with timeout
-        cmd = [sys.executable, str(ROOT / "mbasic.py"), str(filepath)]
+        cmd = [sys.executable, str(ROOT / "mbasic"), str(filepath)]
 
         with open(input_file, 'r') as stdin:
             result = subprocess.run(

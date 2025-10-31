@@ -9,7 +9,7 @@ def test_ui():
     print("Starting mbasic with curses backend...")
 
     # Start the process
-    child = pexpect.spawn('python3 mbasic.py --backend curses test_program.bas',
+    child = pexpect.spawn('python3 mbasic --backend curses test_program.bas',
                           encoding='utf-8',
                           timeout=10)
 

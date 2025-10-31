@@ -24,7 +24,7 @@ def start(self):
 ```
 
 **This means:**
-- ✅ Importing mbasic.py does NOT import tkinter
+- ✅ Importing mbasic does NOT import tkinter
 - ✅ Using CLI backend does NOT import tkinter
 - ✅ Using curses backend does NOT import tkinter
 - ✅ Only using `--backend tk` imports tkinter
@@ -33,7 +33,7 @@ def start(self):
 ### Backend Loading is Dynamic
 
 ```python
-# mbasic.py uses importlib.import_module()
+# mbasic uses importlib.import_module()
 def load_backend(backend_name, io_handler, program_manager):
     backend_module = importlib.import_module(module_name)  # Dynamic!
 ```
@@ -226,19 +226,19 @@ except ImportError:
 **Problem:** X11 not available
 
 **Solutions:**
-1. Use CLI backend: `python3 mbasic.py --backend cli`
-2. Use curses backend: `python3 mbasic.py --backend curses`
+1. Use CLI backend: `python3 mbasic --backend cli`
+2. Use curses backend: `python3 mbasic --backend curses`
 3. Virtual X server (Xvfb) if TK needed:
    ```bash
    sudo apt-get install xvfb
-   xvfb-run python3 mbasic.py --backend tk
+   xvfb-run python3 mbasic --backend tk
    ```
 
 ---
 
 ## Recommended Changes
 
-### 1. Update mbasic.py with Better Error Messages
+### 1. Update mbasic with Better Error Messages
 
 ```python
 def load_backend(backend_name, io_handler, program_manager):
@@ -427,7 +427,7 @@ deactivate
 ### 3. Headless Simulation
 ```bash
 # Simulate headless by blocking tkinter
-python3 -c "import sys; sys.modules['tkinter'] = None; exec(open('mbasic.py').read())" --backend cli
+python3 -c "import sys; sys.modules['tkinter'] = None; exec(open('mbasic').read())" --backend cli
 ```
 
 ### 4. Backend Detection

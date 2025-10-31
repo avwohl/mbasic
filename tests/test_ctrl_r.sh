@@ -6,7 +6,7 @@ rm -f /tmp/mbasic_output_debug.txt
 # Use expect to automate the interaction
 expect << 'EOF'
 set timeout 10
-spawn python3 mbasic.py --backend curses test_program.bas
+spawn python3 mbasic --backend curses test_program.bas
 
 # Wait for UI to load
 sleep 3

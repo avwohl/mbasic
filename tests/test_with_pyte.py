@@ -13,7 +13,7 @@ def test_ui_with_screen():
     stream = pyte.ByteStream(screen)
 
     # Start process
-    child = pexpect.spawn('python3 mbasic.py --backend curses test_program.bas',
+    child = pexpect.spawn('python3 mbasic --backend curses test_program.bas',
                           encoding='utf-8',
                           timeout=10,
                           dimensions=(24, 80))

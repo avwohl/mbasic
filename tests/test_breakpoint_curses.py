@@ -27,7 +27,7 @@ def test_breakpoint_ui():
     master, slave = pty.openpty()
 
     proc = subprocess.Popen(
-        ['python3', 'mbasic.py', '--backend', 'curses', 'test_continue.bas'],
+        ['python3', 'mbasic', '--backend', 'curses', 'test_continue.bas'],
         stdin=slave,
         stdout=slave,
         stderr=subprocess.PIPE,

@@ -9,7 +9,7 @@ from pathlib import Path
 
 def run_test(test_file):
     """Run a single test and return output."""
-    cmd = ['python3', 'mbasic.py', '--backend', 'cli', str(test_file)]
+    cmd = ['python3', 'mbasic', '--backend', 'cli', str(test_file)]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
 
     # Filter out the interactive prompt lines

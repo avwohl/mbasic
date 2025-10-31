@@ -8,7 +8,7 @@ EOF
 # Use expect to test Ctrl+C in help dialog
 expect << 'EXPECT_EOF'
 set timeout 10
-spawn python3 mbasic.py --backend curses /tmp/test_help.bas
+spawn python3 mbasic --backend curses /tmp/test_help.bas
 log_user 0
 
 # Wait for UI to load

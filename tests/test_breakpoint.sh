@@ -17,4 +17,4 @@ echo "3. When breakpoint hits, press 'c' to continue or 's' to stop"
 echo "4. Press ^Q to quit"
 echo ""
 
-python3 mbasic.py --backend curses /tmp/test_breakpoint.bas
+python3 mbasic --backend curses /tmp/test_breakpoint.bas

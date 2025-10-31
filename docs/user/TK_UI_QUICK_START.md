@@ -3,19 +3,19 @@
 ## Starting the Tk UI
 
 ```bash
-python3 mbasic.py --backend tk [filename.bas]
+python3 mbasic --backend tk [filename.bas]
 ```
 
 Or simply:
 ```bash
-python3 mbasic.py [filename.bas]
+python3 mbasic [filename.bas]
 ```
 
 The Tk UI is the default graphical interface for MBASIC.
 
 ## First Program - Hello World
 
-1. Start the Tk UI: `python3 mbasic.py --backend tk`
+1. Start the Tk UI: `python3 mbasic --backend tk`
 2. In the editor window, type:
    ```basic
    10 PRINT "HELLO, WORLD!"
@@ -263,7 +263,7 @@ Large program with repeated code?
 
 ```bash
 # Start with existing file
-python3 mbasic.py --backend tk myprogram.bas
+python3 mbasic --backend tk myprogram.bas
 
 # Or load from menu
 1. Press Ctrl+O
@@ -580,9 +580,9 @@ Try both and use whichever feels faster!
 Start with simple examples in `basic/` directory:
 
 ```bash
-python3 mbasic.py --backend tk basic/hello.bas
-python3 mbasic.py --backend tk basic/loops.bas
-python3 mbasic.py --backend tk basic/arrays.bas
+python3 mbasic --backend tk basic/hello.bas
+python3 mbasic --backend tk basic/loops.bas
+python3 mbasic --backend tk basic/arrays.bas
 ```
 
 ### Master These Skills

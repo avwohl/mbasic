@@ -8,7 +8,7 @@ EOF
 # Run with Python error tracebacks visible
 expect << 'EXPECT_EOF' 2>&1 | tee /tmp/help_test_output.txt
 set timeout 10
-spawn python3 -u mbasic.py --backend curses /tmp/test_help.bas
+spawn python3 -u mbasic --backend curses /tmp/test_help.bas
 log_user 1
 
 # Wait for UI to load

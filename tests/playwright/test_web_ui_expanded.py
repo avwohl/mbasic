@@ -27,7 +27,7 @@ def web_server():
     env['PYTHONPATH'] = '/home/wohl/cl/mbasic'
 
     process = subprocess.Popen(
-        [venv_python, '/home/wohl/cl/mbasic/mbasic.py', '--backend', 'web'],
+        [venv_python, '/home/wohl/cl/mbasic/mbasic', '--backend', 'web'],
         env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

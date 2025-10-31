@@ -19,7 +19,7 @@ echo ""
 echo "Starting in 3 seconds..."
 sleep 3
 
-python3 mbasic.py --backend curses /tmp/test_menu.bas
+python3 mbasic --backend curses /tmp/test_menu.bas
 
 echo ""
 echo "Menu structure test completed!"

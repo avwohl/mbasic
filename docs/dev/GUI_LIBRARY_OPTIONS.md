@@ -136,7 +136,7 @@ pyside6>=6.0.0  # Optional: Modern Qt6 GUI
 ### 2. Detect at Runtime
 
 ```python
-# In mbasic.py
+# In mbasic
 try:
     from PySide6 import QtWidgets
     QT_AVAILABLE = True

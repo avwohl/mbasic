@@ -28,7 +28,7 @@ wrapper_script = 'run_with_stderr.sh'
 with open(wrapper_script, 'w') as f:
     f.write(f'''#!/bin/bash
 exec 2>{stderr_file}
-python3 mbasic.py --backend curses test_end_stderr.bas
+python3 mbasic --backend curses test_end_stderr.bas
 ''')
 os.chmod(wrapper_script, 0o755)
 

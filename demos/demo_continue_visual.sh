@@ -115,7 +115,7 @@ echo -n "Press ENTER to launch the IDE with demo program..."
 read
 
 # Launch the actual IDE
-python3 mbasic.py --backend curses demo_continue.bas
+python3 mbasic --backend curses demo_continue.bas
 
 # After they exit
 clear

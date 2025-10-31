@@ -23,14 +23,14 @@ See detailed progress documents:
 
 ## Goal
 
-Refactor mbasic.py to enable embedding the interpreter in a visual UI while keeping the command-line tool functional. The architecture should use dynamic imports (importlib) and allow customizable I/O handlers.
+Refactor mbasic to enable embedding the interpreter in a visual UI while keeping the command-line tool functional. The architecture should use dynamic imports (importlib) and allow customizable I/O handlers.
 
 ## Current Architecture Analysis
 
 ### Current Structure
 
 ```
-mbasic.py (85 lines)
+mbasic (85 lines)
 ├── Imports: lexer, parser, runtime, interpreter, interactive
 ├── run_file() - Loads and executes a BASIC file
 ├── main() - Entry point, starts InteractiveMode
@@ -109,7 +109,7 @@ src/basic_builtins.py
 
 ```
 mbasic/
-├── mbasic.py                   # Main entry point (refactored)
+├── mbasic                   # Main entry point (refactored)
 ├── src/
 │   ├── core/                   # NEW: Core interpreter (no I/O)
 │   │   ├── __init__.py
@@ -614,7 +614,7 @@ print(f"Breakpoints: {state.breakpoints}")
 
 **Goal**: Use importlib to load backends dynamically
 
-1. **Refactor mbasic.py**
+1. **Refactor mbasic**
    - Add --backend argument (cli/visual)
    - Use importlib.import_module() to load backend
    - Pass IOHandler and ProgramManager to backend
@@ -669,9 +669,9 @@ After Phase 4, we'll create a separate document (MOBILE_UI_EVALUATION.md) analyz
 ### Migration Strategy
 
 **Backward Compatibility:**
-- Keep `mbasic.py` working exactly as before (default CLI)
-- `python3 mbasic.py` → CLI mode (no changes for users)
-- `python3 mbasic.py --backend visual` → Visual mode
+- Keep `mbasic` working exactly as before (default CLI)
+- `python3 mbasic` → CLI mode (no changes for users)
+- `python3 mbasic --backend visual` → Visual mode
 
 **Gradual Migration:**
 1. Phase 1-3: Refactor internal structure (no API changes)
@@ -681,8 +681,8 @@ After Phase 4, we'll create a separate document (MOBILE_UI_EVALUATION.md) analyz
 
 **Testing:**
 - After each phase, run existing test suite
-- Ensure `python3 mbasic.py` still works
-- Ensure `python3 mbasic.py program.bas` still works
+- Ensure `python3 mbasic` still works
+- Ensure `python3 mbasic program.bas` still works
 
 ## API for Visual UI Developers
 
@@ -855,7 +855,7 @@ This example shows how a visual UI can:
 - **Clean API**: IOHandler and UIBackend interfaces
 - **Flexible I/O**: Custom handlers for any UI framework
 - **Embeddable**: Drop interpreter into existing apps
-- **Dynamic Loading**: No need to modify mbasic.py
+- **Dynamic Loading**: No need to modify mbasic
 - **Full Debugging Support**: Variable inspection, call stacks, stepping, breakpoints
 - **Real-time State Access**: Query runtime state at any time during execution
 - **Step Callbacks**: UI updates automatically during stepping
@@ -907,7 +907,7 @@ This example shows how a visual UI can:
 - VisualBackend provides complete template for GUI developers
 
 ### Phase 4: Dynamic Loading ✅ COMPLETE
-- [x] Add importlib loading to mbasic.py
+- [x] Add importlib loading to mbasic
 - [x] Add --backend command line argument (cli/visual)
 - [x] Add --debug command line argument
 - [x] Create load_backend() function using importlib

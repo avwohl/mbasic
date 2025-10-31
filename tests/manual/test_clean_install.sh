@@ -239,10 +239,10 @@ echo ""
 echo "Step 11: Check file structure"
 echo "------------------------------"
 SITE_PACKAGES=$(python3 -c "import site; print(site.getsitepackages()[0])")
-if [ -f "$SITE_PACKAGES/mbasic.py" ]; then
-    test_passed "mbasic.py installed"
+if [ -f "$SITE_PACKAGES/mbasic" ]; then
+    test_passed "mbasic installed"
 else
-    test_failed "mbasic.py not found"
+    test_failed "mbasic not found"
 fi
 
 if [ -d "$SITE_PACKAGES/src" ]; then

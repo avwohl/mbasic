@@ -143,12 +143,12 @@ class Interpreter:
 - Number formatting with spaces for positive values
 - PRINT zone width = 14 characters (MBASIC standard)
 
-### 4. Entry Point (`mbasic.py`)
+### 4. Entry Point (`mbasic`)
 
 Simple command-line interface:
 
 ```bash
-python3 mbasic.py program.bas
+python3 mbasic program.bas
 ```
 
 **Features:**
@@ -275,7 +275,7 @@ The interpreter executes BASIC programs at reasonable speed:
 | src/runtime.py | 337 | Runtime state management |
 | src/basic_builtins.py | 366 | Built-in functions |
 | src/interpreter.py | 484 | Main interpreter |
-| mbasic.py | 50 | Entry point |
+| mbasic | 50 | Entry point |
 | **Total** | **1,237** | **Complete interpreter** |
 
 ---
@@ -293,7 +293,7 @@ The interpreter executes BASIC programs at reasonable speed:
 ```
 
 ```bash
-$ python3 mbasic.py hello.bas
+$ python3 mbasic hello.bas
 Hello, MBASIC!
 A + B = 15
 ```

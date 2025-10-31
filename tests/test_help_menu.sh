@@ -8,7 +8,7 @@ EOF
 # Use expect to test the help menu
 expect << 'EXPECT_EOF'
 set timeout 10
-spawn python3 mbasic.py --backend curses /tmp/test_help.bas
+spawn python3 mbasic --backend curses /tmp/test_help.bas
 
 # Wait for UI to load
 sleep 2

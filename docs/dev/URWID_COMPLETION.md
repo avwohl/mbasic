@@ -38,7 +38,7 @@ def _get_input_dialog(self, prompt):
 - Prompts for filename
 - Loads program from file
 - Updates editor with loaded content
-- Can also load via command line: `python3 mbasic.py --backend curses file.bas`
+- Can also load via command line: `python3 mbasic --backend curses file.bas`
 
 **Implementation:**
 ```python
@@ -138,7 +138,7 @@ All operations wrapped in try/except:
 
 1. **Test INPUT:**
    ```bash
-   python3 mbasic.py --backend curses tests/test_input.bas
+   python3 mbasic --backend curses tests/test_input.bas
    # Press Ctrl+R to run
    # Enter name and age when prompted
    ```
@@ -271,7 +271,7 @@ Would enable:
 
 ### Hello World
 ```bash
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 # Type:
 10 PRINT "Hello, World!"
 20 END
@@ -280,7 +280,7 @@ python3 mbasic.py --backend curses
 
 ### Interactive Program
 ```bash
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 # Type:
 10 INPUT "Name"; N$
 20 PRINT "Hello, "; N$

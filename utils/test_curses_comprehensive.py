@@ -211,7 +211,7 @@ class CursesUITester:
 
         try:
             child = pexpect.spawn(
-                'python3 mbasic.py --backend curses',
+                'python3 mbasic --backend curses',
                 encoding='utf-8',
                 timeout=5,
                 dimensions=(24, 80)

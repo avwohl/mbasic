@@ -27,6 +27,6 @@ time.sleep(2)
 
 # Start with the test program
 import subprocess
-subprocess.run(['python3', 'mbasic.py', '--backend', 'curses', 'test_hello_urwid.bas'])
+subprocess.run(['python3', 'mbasic', '--backend', 'curses', 'test_hello_urwid.bas'])
 
 print("\nTest complete!")

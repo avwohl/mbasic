@@ -29,7 +29,7 @@ def test_breakpoint_ui():
 
     # Start mbasic with curses backend
     print("Starting mbasic with curses backend...")
-    child = pexpect.spawn('python3 mbasic.py --backend curses-npyscreen test_continue.bas',
+    child = pexpect.spawn('python3 mbasic --backend curses-npyscreen test_continue.bas',
                           encoding='utf-8',
                           dimensions=(24, 80),
                           timeout=10)

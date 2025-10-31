@@ -131,7 +131,7 @@ Create a file `hello.bas`:
 
 Run it:
 ```bash
-python3 mbasic.py hello.bas
+python3 mbasic hello.bas
 ```
 
 ## Choose Your Interface

@@ -35,7 +35,7 @@ def test_continue():
 40 PRINT "Done!"
 """)
 
-    child = pexpect.spawn('python3 mbasic.py --backend curses-npyscreen test_continue.bas',
+    child = pexpect.spawn('python3 mbasic --backend curses-npyscreen test_continue.bas',
                           encoding='utf-8', dimensions=(24, 80), timeout=10)
 
     try:
@@ -92,7 +92,7 @@ def test_step():
 40 PRINT "Done!"
 """)
 
-    child = pexpect.spawn('python3 mbasic.py --backend curses-npyscreen test_step.bas',
+    child = pexpect.spawn('python3 mbasic --backend curses-npyscreen test_step.bas',
                           encoding='utf-8', dimensions=(24, 80), timeout=10)
 
     try:
@@ -154,7 +154,7 @@ def test_end():
 40 PRINT "Done!"
 """)
 
-    child = pexpect.spawn('python3 mbasic.py --backend curses-npyscreen test_end.bas',
+    child = pexpect.spawn('python3 mbasic --backend curses-npyscreen test_end.bas',
                           encoding='utf-8', dimensions=(24, 80), timeout=10)
 
     try:
@@ -214,7 +214,7 @@ def test_normal_editing():
         f.write("""10 PRINT "Test"
 """)
 
-    child = pexpect.spawn('python3 mbasic.py --backend curses-npyscreen test_edit.bas',
+    child = pexpect.spawn('python3 mbasic --backend curses-npyscreen test_edit.bas',
                           encoding='utf-8', dimensions=(24, 80), timeout=10)
 
     try:

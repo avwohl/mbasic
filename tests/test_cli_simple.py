@@ -9,7 +9,7 @@ def test_cli():
     print("Starting CLI test...")
 
     # Start CLI mode
-    proc = pexpect.spawn('python3 mbasic.py --backend cli',
+    proc = pexpect.spawn('python3 mbasic --backend cli',
                         encoding='utf-8', timeout=5)
 
     # Enable logging to see what's happening

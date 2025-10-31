@@ -21,7 +21,7 @@ File: `tests/test_curses_input.bas`
 
 1. Launch TK UI:
    ```bash
-   python3 mbasic.py --backend tk
+   python3 mbasic --backend tk
    ```
 
 2. Load the test program using File > Open, or type lines manually

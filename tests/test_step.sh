@@ -13,7 +13,7 @@ timeout 20 expect << 'EXPECT_EOF' 2>&1 | tee /tmp/step_test.log
 log_user 1
 set timeout 5
 
-spawn python3 mbasic.py --backend curses /tmp/test_step.bas
+spawn python3 mbasic --backend curses /tmp/test_step.bas
 sleep 1
 
 # Set breakpoint on line 10

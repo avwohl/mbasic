@@ -105,7 +105,7 @@ def main():
     if all(results):
         print("\n✓ All component tests passed")
         print("\nTo test the full UI:")
-        print("1. Run: python3 mbasic.py")
+        print("1. Run: python3 mbasic")
         print("2. Click Edit > Settings...")
         print("3. Verify all settings appear in tabs")
         print("4. Change some settings and click Apply")

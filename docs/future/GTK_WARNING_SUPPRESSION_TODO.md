@@ -21,7 +21,7 @@ Gtk-Message: 11:06:24.119: Not loading module "atk-bridge": The functionality is
 Multiple approaches were attempted (versions 1.0.189-1.0.192):
 
 1. **Setting `NO_AT_BRIDGE=1` environment variable**
-   - At top of mbasic.py before imports
+   - At top of mbasic before imports
    - Before dynamic backend loading
    - At top of nicegui_backend.py before NiceGUI import
    - Result: No effect
@@ -49,7 +49,7 @@ The GTK message comes from:
 Create `mbasic-web` wrapper script:
 ```bash
 #!/bin/bash
-NO_AT_BRIDGE=1 exec python3 /path/to/mbasic.py --backend web "$@" 2>&1 | \
+NO_AT_BRIDGE=1 exec python3 /path/to/mbasic --backend web "$@" 2>&1 | \
   grep -v "Gtk-Message" | grep -v "atk-bridge"
 ```
 
@@ -84,7 +84,7 @@ Report to NiceGUI project - they might be able to suppress it internally.
 
 ## Related Files
 
-- `mbasic.py` - Main entry point
+- `mbasic` - Main entry point
 - `src/ui/web/nicegui_backend.py` - Web UI implementation
 
 ## Notes

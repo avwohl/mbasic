@@ -86,7 +86,7 @@ Ok
 
 ### File Execution Mode
 
-When running from a file with `python3 mbasic.py program.bas`, pressing Ctrl+C during INPUT will:
+When running from a file with `python3 mbasic program.bas`, pressing Ctrl+C during INPUT will:
 1. Print a newline
 2. Print "Break in {line}"
 3. Return control (program exits since there's no interactive prompt)
@@ -136,7 +136,7 @@ Python's `input()` function behavior with signals:
 50 END
 ```
 
-1. Run the program: `python3 mbasic.py`
+1. Run the program: `python3 mbasic`
 2. Load it: `LOAD "tests/test_break_input.bas"`
 3. Execute: `RUN`
 4. At the INPUT prompt, press Ctrl+C

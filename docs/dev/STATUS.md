@@ -341,7 +341,7 @@ To check if your MBASIC program will work:
 
 1. **Parser test:**
    ```bash
-   python3 mbasic.py yourprogram.bas
+   python3 mbasic yourprogram.bas
    ```
    If it parses without errors, the syntax is valid.
 
@@ -353,7 +353,7 @@ To check if your MBASIC program will work:
 3. **Run tests:**
    ```bash
    # Run self-checking tests
-   python3 mbasic.py basic/tests_with_results/test_operator_precedence.bas
+   python3 mbasic basic/tests_with_results/test_operator_precedence.bas
    ```
 
 ## Contributing

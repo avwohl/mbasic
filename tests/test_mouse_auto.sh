@@ -18,7 +18,7 @@ timeout 10 expect << 'EXPECT_EOF' 2>&1 | tee /tmp/mouse_test.log
 log_user 1
 set timeout 3
 
-spawn python3 mbasic.py --backend curses /tmp/test_mouse.bas
+spawn python3 mbasic --backend curses /tmp/test_mouse.bas
 sleep 1
 
 # Move to line 10 (first line) and toggle breakpoint with 'b'

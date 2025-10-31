@@ -87,7 +87,7 @@ Test file: `tests/test_curses_input.bas`
 
 **Manual Testing:** User can test with:
 ```bash
-python3 mbasic.py --backend curses tests/test_curses_input.bas
+python3 mbasic --backend curses tests/test_curses_input.bas
 ```
 
 ## Conclusion

@@ -287,7 +287,7 @@ TimeoutError: JavaScript did not respond within 1.0 s
 **Severity:** CRITICAL - cannot stop development server cleanly
 
 **Problem:**
-- Running `python3 mbasic.py --ui web` starts server
+- Running `python3 mbasic --ui web` starts server
 - Pressing Ctrl+C does NOT kill the process
 - Process continues running in background
 - Must use `kill -9` to terminate
@@ -296,7 +296,7 @@ TimeoutError: JavaScript did not respond within 1.0 s
 
 **Test case:**
 ```bash
-$ python3 mbasic.py --ui web
+$ python3 mbasic --ui web
 # Server starts, browser opens
 # Press Ctrl+C
 # Expected: Process exits cleanly
@@ -360,7 +360,7 @@ $ kill -9 <pid>
 ## Investigation Plan
 
 ### Step 1: Reproduce Issues
-1. Launch web UI: `python3 mbasic.py --ui web`
+1. Launch web UI: `python3 mbasic --ui web`
 2. Test INPUT:
    ```basic
    10 INPUT "Name"; N$
@@ -490,7 +490,7 @@ This suggests web UI has unique architecture issues.
 
 ### Bug 1: INPUT doesn't work
 ```bash
-python3 mbasic.py --ui web
+python3 mbasic --ui web
 # In browser, type:
 10 INPUT "Name"; N$
 20 PRINT N$
@@ -501,7 +501,7 @@ RUN
 
 ### Bug 2: STOP doesn't work
 ```bash
-python3 mbasic.py --ui web
+python3 mbasic --ui web
 # In browser, type:
 10 FOR I = 1 TO 100000
 20 PRINT I
@@ -514,7 +514,7 @@ RUN
 
 ### Bug 3: Auto-numbering broken
 ```bash
-python3 mbasic.py --ui web
+python3 mbasic --ui web
 # In browser, type:
 k=2
 # Press Enter
@@ -524,7 +524,7 @@ k=2
 
 ### Bug 4: ALL menus broken - Every item needs two clicks
 ```bash
-python3 mbasic.py --ui web
+python3 mbasic --ui web
 
 # File menu broken:
 # 1. Click "File" → "Open" → Nothing happens
@@ -539,7 +539,7 @@ python3 mbasic.py --ui web
 
 ### Bug 5: Find/Replace completely broken
 ```bash
-python3 mbasic.py --ui web
+python3 mbasic --ui web
 # Type code:
 10 PRINT "HELLO"
 20 PRINT "HELLO"
@@ -565,7 +565,7 @@ python3 mbasic.py --ui web
 
 ### Bug 6: Output console hangs after ~500 lines
 ```bash
-python3 mbasic.py --ui web
+python3 mbasic --ui web
 # Type:
 10 FOR I = 0 TO 9999999
 20 PRINT I
@@ -583,7 +583,7 @@ RUN
 
 ### Bug 7: Ctrl+C doesn't kill web UI process
 ```bash
-$ python3 mbasic.py --ui web
+$ python3 mbasic --ui web
 # Server starts on port 8080, browser opens
 
 # Press Ctrl+C
@@ -592,11 +592,11 @@ $ python3 mbasic.py --ui web
 
 # Must manually kill:
 $ ps aux | grep mbasic
-wohl     12345  ...  python3 mbasic.py --ui web
+wohl     12345  ...  python3 mbasic --ui web
 $ kill -9 12345
 
 # Or port becomes blocked:
-$ python3 mbasic.py --ui web
+$ python3 mbasic --ui web
 # Error: Address already in use
 ```
 

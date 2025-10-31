@@ -151,9 +151,9 @@ def serialize_expression(expr, config=None):
 
 **Command-line option:**
 ```bash
-python mbasic.py --format=compact program.bas
-python mbasic.py --format=normal program.bas
-python mbasic.py --format=spacious program.bas
+python mbasic --format=compact program.bas
+python mbasic --format=normal program.bas
+python mbasic --format=spacious program.bas
 ```
 
 ### 4. Apply to RENUM Command

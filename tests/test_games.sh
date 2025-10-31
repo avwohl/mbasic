@@ -8,7 +8,7 @@ echo
 
 for game in games/*.bas; do
     basename=$(basename "$game" .bas)
-    output=$(timeout 2 python3 mbasic.py "$game" 2>&1)
+    output=$(timeout 2 python3 mbasic "$game" 2>&1)
 
     if echo "$output" | grep -q "Syntax error\|RuntimeError\|Error:"; then
         error=$(echo "$output" | grep "Syntax error\|RuntimeError\|Error:" | head -1)

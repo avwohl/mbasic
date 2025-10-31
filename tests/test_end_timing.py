@@ -18,7 +18,7 @@ def test_with_timing(delay_after_breakpoint, delay_after_e):
 40 PRINT "Done!"
 """)
 
-    child = pexpect.spawn('python3 mbasic.py --backend curses test_end_timing.bas',
+    child = pexpect.spawn('python3 mbasic --backend curses test_end_timing.bas',
                           encoding='utf-8', dimensions=(24, 80), timeout=10)
 
     try:

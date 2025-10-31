@@ -28,7 +28,7 @@ print("  - Press 'e' to end")
 print("  - Should NOT see 'Done!' (lines 30, 40 should not execute)")
 print()
 
-child = pexpect.spawn('python3 mbasic.py --backend curses test_end_debug.bas',
+child = pexpect.spawn('python3 mbasic --backend curses test_end_debug.bas',
                       encoding='utf-8', dimensions=(24, 80), timeout=10)
 
 # Log stderr to see debug messages

@@ -168,7 +168,7 @@ ALL of the above features need at least 1-2 more tests for edge cases.
    - Tests should run to completion automatically
 
 6. **Expected output:**
-   - Generate with: `python3 mbasic.py --backend cli test.bas > test.txt`
+   - Generate with: `python3 mbasic --backend cli test.bas > test.txt`
    - Strip out prompt lines (MBASIC-, Ready, etc.) - run_tests.py does this
    - Verify output is correct before committing
 

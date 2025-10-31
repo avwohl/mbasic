@@ -101,7 +101,7 @@ mbasic = "mbasic:main"
 
 [tool.setuptools]
 # Include both the entry point module and the src package
-py-modules = ["mbasic"]  # Entry point: mbasic.py
+py-modules = ["mbasic"]  # Entry point: mbasic
 packages = ["src", "src.ui", "src.ui.web", "src.editing", "src.filesystem", "src.iohandler"]  # All src packages
 
 # Tell setuptools not to look for __init__.py in src (flat namespace)

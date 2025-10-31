@@ -44,13 +44,13 @@ Do you need a graphical interface?
 # Automation
 echo "10 PRINT \"Hello\"
 20 END
-RUN" | python3 mbasic.py
+RUN" | python3 mbasic
 
 # Testing
-python3 mbasic.py test.bas > output.txt
+python3 mbasic test.bas > output.txt
 
 # Debugging
-python3 mbasic.py --debug program.bas
+python3 mbasic --debug program.bas
 ```
 
 **Real-world use cases:**
@@ -88,11 +88,11 @@ python3 mbasic.py --debug program.bas
 ```bash
 # SSH sessions
 ssh server
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 
 # Terminal multiplexers
 tmux new
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 
 # Console-only systems
 # (no GUI installed)
@@ -134,7 +134,7 @@ python3 mbasic.py --backend curses
 **Tk is perfect for:**
 ```bash
 # Desktop development
-python3 mbasic.py --backend tk
+python3 mbasic --backend tk
 
 # Teaching/presentations
 # (full visual interface)
@@ -180,7 +180,7 @@ python3 mbasic.py --backend tk
 **Web is perfect for:**
 ```bash
 # Start server
-python3 mbasic.py --backend web
+python3 mbasic --backend web
 
 # Open browser
 http://localhost:8080
@@ -229,7 +229,7 @@ Why:
 Setup:
 ```bash
 # Teacher's machine
-python3 mbasic.py --backend web --host 0.0.0.0
+python3 mbasic --backend web --host 0.0.0.0
 
 # Students browse to teacher's IP
 http://teacher-ip:8080
@@ -249,7 +249,7 @@ Setup:
 ```bash
 ssh myserver
 cd mbasic
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 ```
 
 ### Scenario 3: Automated Testing
@@ -266,7 +266,7 @@ Setup:
 ```bash
 #!/bin/bash
 for test in tests/*.bas; do
-    python3 mbasic.py "$test" > "${test}.out"
+    python3 mbasic "$test" > "${test}.out"
     diff "${test}.out" "${test}.expected"
 done
 ```
@@ -283,7 +283,7 @@ Why:
 
 Setup:
 ```bash
-python3 mbasic.py --backend tk
+python3 mbasic --backend tk
 # Or create desktop shortcut
 ```
 
@@ -293,12 +293,12 @@ python3 mbasic.py --backend tk
 
 CLI for speed:
 ```bash
-python3 mbasic.py test.bas
+python3 mbasic test.bas
 ```
 
 Web for convenience:
 ```bash
-python3 mbasic.py --backend web --open
+python3 mbasic --backend web --open
 ```
 
 ## Performance Comparison
@@ -332,14 +332,14 @@ All UIs use the same interpreter core, so execution speed is identical. Differen
 ### CLI
 ```bash
 # Just Python 3.8+
-python3 mbasic.py
+python3 mbasic
 ```
 
 ### Curses
 ```bash
 # Requires urwid
 pip install urwid
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 ```
 
 ### Tk
@@ -347,14 +347,14 @@ python3 mbasic.py --backend curses
 # Requires tkinter (usually pre-installed)
 # Ubuntu/Debian:
 sudo apt-get install python3-tk
-python3 mbasic.py --backend tk
+python3 mbasic --backend tk
 ```
 
 ### Web
 ```bash
 # Optional: for auto-open browser
 pip install webbrowser
-python3 mbasic.py --backend web
+python3 mbasic --backend web
 ```
 
 ## Migration Guide
@@ -407,13 +407,13 @@ Many users combine UIs:
 Yes! Run different UIs in separate terminals:
 ```bash
 # Terminal 1
-python3 mbasic.py --backend tk
+python3 mbasic --backend tk
 
 # Terminal 2
-python3 mbasic.py --backend curses
+python3 mbasic --backend curses
 
 # Terminal 3
-python3 mbasic.py --backend web
+python3 mbasic --backend web
 ```
 
 ### Which UI is most compatible with original MBASIC?
@@ -435,7 +435,7 @@ SAVE "myprogram.bas"
 SYSTEM
 
 # Switch to Tk
-python3 mbasic.py --backend tk
+python3 mbasic --backend tk
 # Then: File → Open → myprogram.bas
 ```
 
@@ -476,10 +476,10 @@ Try them all and see what fits your workflow!
 
 ```bash
 # Try each UI for 5 minutes:
-python3 mbasic.py --backend cli
-python3 mbasic.py --backend curses
-python3 mbasic.py --backend tk
-python3 mbasic.py --backend web
+python3 mbasic --backend cli
+python3 mbasic --backend curses
+python3 mbasic --backend tk
+python3 mbasic --backend web
 
 # Your favorite will become clear quickly!
 ```

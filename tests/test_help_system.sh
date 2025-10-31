@@ -17,7 +17,7 @@ timeout 15 expect << 'EXPECT_EOF' 2>&1 | tee /tmp/help_system_test.log
 log_user 1
 set timeout 10
 
-spawn python3 mbasic.py --backend curses /tmp/test_help.bas
+spawn python3 mbasic --backend curses /tmp/test_help.bas
 sleep 2
 
 # Open help with ^P

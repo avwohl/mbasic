@@ -119,7 +119,7 @@ def main():
     if all(results):
         print("\n✓ All component tests passed")
         print("\nTo test the full UI:")
-        print("1. Run: python3 mbasic.py --backend curses")
+        print("1. Run: python3 mbasic --backend curses")
         print("2. Press Ctrl+P to open settings")
         print("3. Navigate with arrow keys, Tab to switch fields")
         print("4. Change some settings and press Tab to OK button, Enter to apply")

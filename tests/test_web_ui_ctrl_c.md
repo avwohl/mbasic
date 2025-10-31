@@ -1,7 +1,7 @@
 # Test for Web UI Ctrl+C Bug
 
 ## Problem
-After running programs in the web UI for a while, `Ctrl+C` stops working in the shell that launched `./mbasic.py --backend web`. User has to use `Ctrl+Z` and `kill`.
+After running programs in the web UI for a while, `Ctrl+C` stops working in the shell that launched `./mbasic --backend web`. User has to use `Ctrl+Z` and `kill`.
 
 ## Symptoms
 - **Short sessions**: `Ctrl+C` works immediately after startup
@@ -28,7 +28,7 @@ The signal handler in `start_web_ui()` (nicegui_backend.py:2190) is correct, but
 
 ## Manual Test Procedure
 
-1. Start web UI: `./mbasic.py --backend web`
+1. Start web UI: `./mbasic --backend web`
 2. Load a long-running program:
    ```basic
    10 FOR I=1 TO 1000000

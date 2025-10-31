@@ -228,7 +228,7 @@ Run tests:
 ```bash
 cd tests/
 # Test with our MBASIC
-python3 ../mbasic.py testeof.bas
+python3 ../mbasic testeof.bas
 
 # Test with real MBASIC 5.21 (requires tnylpo)
 (cat testeof.bas && echo "RUN") | tnylpo ../com/mbasic.com
