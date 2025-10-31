@@ -30,7 +30,7 @@ This document serves as the authoritative reference for what the TK UI currently
 - "(No recent files)" placeholder when empty
 - "Clear Recent Files" option at bottom
 - Auto-removes deleted/missing files on access
-- Managed by `RecentFilesManager` class
+- Managed by `RecentFilesManager` class (in src/ui/recent_files.py)
 
 ### 1.2 Edit Menu
 | Menu Item | Keyboard Shortcut | Function | Method |
@@ -664,7 +664,7 @@ Toolbar provides quick access to common operations:
 - Bold, italic (limited)
 - Code blocks (```...```)
 - Inline code (`...`)
-- Links ([text](url))
+- Links `[text](url)` syntax
 - Bullet lists
 
 **Macros:**

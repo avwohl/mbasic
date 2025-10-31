@@ -6,63 +6,63 @@ Welcome to the MBASIC Program Library! Browse our collection of classic BASIC pr
 
 ## Categories
 
-### 🎮 [Games](games/)
+### 🎮 [Games](games/index.md)
 Card games, arcade games, strategy games, and more classic entertainment from the 1980s.
 
 **Featured programs:** Blackjack, Spacewar, Star Trek, Hangman, Roulette
 
 ---
 
-### 🛠️ [Utilities](utilities/)
+### 🛠️ [Utilities](utilities/index.md)
 Calculators, converters, tools, and helpful programs for everyday computing.
 
 **Featured programs:** Calendar, Unit Converter, Sort, Search, Day of Week Calculator
 
 ---
 
-### 📚 [Education](education/)
+### 📚 [Education](education/index.md)
 Educational programs for learning math, science, and programming concepts.
 
 **Featured programs:** Math Test, Astronomy, Wind Chill Calculator
 
 ---
 
-### 💼 [Business](business/)
+### 💼 [Business](business/index.md)
 Financial calculators, budgeting tools, calendars, and productivity applications.
 
 **Featured programs:** Budget Tracker, Mortgage Calculator, Finance Tools, PERT Charts
 
 ---
 
-### 🔌 [Electronics](electronics/)
+### 🔌 [Electronics](electronics/index.md)
 Circuit design calculators, IC timers, assembly language listers, and electronic engineering tools.
 
 **Featured programs:** 555 Timer Calculator, Attenuator Calculator, 8085 Assembly Lister
 
 ---
 
-### 📡 [Ham Radio](ham_radio/)
+### 📡 [Ham Radio](ham_radio/index.md)
 Amateur radio utilities including QSO loggers, callsign lookups, and radio tools.
 
 **Featured programs:** QSO Logger, QSO Editor, RBS Utilities
 
 ---
 
-### 💾 [Data Management](data_management/)
+### 💾 [Data Management](data_management/index.md)
 Bibliography systems, database tools, file managers, and data organization programs.
 
 **Featured programs:** Bibliography Builder, Database Editor, File Manager
 
 ---
 
-### 📞 [Telecommunications](telecommunications/)
+### 📞 [Telecommunications](telecommunications/index.md)
 Modem programs, BBS utilities, and communication tools from the dial-up era.
 
 **Featured programs:** Modem Programs, BBS Exit Utilities, Dialog Systems
 
 ---
 
-### 🧪 [Demos & Tests](demos/)
+### 🧪 [Demos & Tests](demos/index.md)
 Test programs, benchmarks, and demonstration code.
 
 **Featured programs:** Interpreter Benchmark, Curses Tests, Sample Programs

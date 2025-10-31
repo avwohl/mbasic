@@ -30,7 +30,7 @@ Welcome to the MBASIC developer documentation! This index organizes all develope
 - **[UI Feature Parity Tracking](UI_FEATURE_PARITY_TRACKING.md)** - What features each UI supports
 
 ### File I/O
-- **[File Operations](../help/common/language/file-operations/)** - How file I/O works
+- **File Operations** - See help/common/language/statements/ for file I/O documentation
 
 ### Help System
 - **[Help System](HELP_MIGRATION_PLAN.md)** - Documentation and help infrastructure

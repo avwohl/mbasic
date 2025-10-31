@@ -258,6 +258,6 @@ Large arrays:
 ## See Also
 
 - [Keyboard Commands](keyboard-commands.md) - All shortcuts
-- [Debugging](running.md#debugging) - Debug features
-- [Windows](getting-started.md#windows) - Window management
+- [Running Programs](running.md) - Running and debugging programs
+- [Getting Started](getting-started.md) - Curses UI basics
 - [CLI Variables](../cli/variables.md) - CLI comparison

@@ -16,13 +16,15 @@ CURRENT_VERSION=$(grep 'VERSION = ' $VERSION_FILE | cut -d'"' -f2)
 echo "Current version: $CURRENT_VERSION"
 
 # Increment patch version (X.Y.Z -> X.Y.Z+1)
+# NOTE: This happens IMMEDIATELY so version increments even on failed validation
+# This way version count > commit count, showing how many attempts were made
 IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
 NEW_PATCH=$((patch + 1))
 NEW_VERSION="$major.$minor.$NEW_PATCH"
 
 echo "New version: $NEW_VERSION"
 
-# Update version file
+# Update version file immediately
 sed -i "s/VERSION = \"$CURRENT_VERSION\"/VERSION = \"$NEW_VERSION\"/" $VERSION_FILE
 
 # Check if help documentation was modified
@@ -30,11 +32,13 @@ HELP_CHANGED=$(git diff --name-only docs/help/ 2>/dev/null || echo "")
 
 if [ -n "$HELP_CHANGED" ]; then
     echo "Help documentation changed - rebuilding indexes..."
-    python3 utils/build_help_indexes.py
+    PYTHONPATH=$(pwd) python3 utils/build_help_indexes.py
     if [ $? -eq 0 ]; then
         echo "✓ Help indexes rebuilt successfully"
     else
-        echo "⚠ Warning: Help index build failed"
+        echo "❌ ERROR: Help index build failed"
+        echo "Fix the help index errors before committing"
+        exit 1
     fi
 fi
 
@@ -44,20 +48,34 @@ DOCS_CHANGED=$(git diff --name-only docs/ mkdocs.yml 2>/dev/null || echo "")
 if [ -n "$DOCS_CHANGED" ]; then
     echo "Documentation changed - validating mkdocs build..."
     if command -v mkdocs &> /dev/null; then
-        # Run mkdocs build in strict mode and capture output
+        # Run mkdocs build in strict mode and capture both output and exit code
         BUILD_OUTPUT=$(mkdocs build --strict 2>&1)
+        BUILD_EXIT_CODE=$?
 
-        # Check for warnings or errors (actual WARNING/ERROR lines, not filenames)
-        if echo "$BUILD_OUTPUT" | grep -E "^WARNING|^ERROR" > /dev/null; then
-            echo "❌ ERROR: mkdocs build has warnings or errors in strict mode!"
+        # Check if mkdocs failed
+        if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "❌ ERROR: mkdocs build failed in strict mode!"
             echo ""
-            echo "$BUILD_OUTPUT" | grep -E "^WARNING|^ERROR"
+            echo "$BUILD_OUTPUT"
+            echo ""
+            echo "Fix the errors above before committing"
+            exit 1
+        fi
+
+        # Also check for strict mode warnings (unrecognized links, missing anchors)
+        # These are the issues that fail on GitHub but may not fail locally
+        if echo "$BUILD_OUTPUT" | grep -E "contains an unrecognized relative link|does not contain an anchor|contains an absolute link" > /dev/null; then
+            echo "❌ ERROR: mkdocs build has strict mode warnings!"
+            echo ""
+            echo "The following warnings will cause GitHub deployment to fail:"
+            echo ""
+            echo "$BUILD_OUTPUT" | grep -E "contains an unrecognized relative link|does not contain an anchor|contains an absolute link"
             echo ""
             echo "Run 'mkdocs build --strict' to see full details"
             exit 1
-        else
-            echo "✓ mkdocs build validation passed (no warnings or errors)"
         fi
+
+        echo "✓ mkdocs build validation passed (no warnings or errors)"
     else
         echo "⚠ Warning: mkdocs not installed, skipping build validation"
     fi
