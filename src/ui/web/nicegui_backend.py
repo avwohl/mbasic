@@ -216,8 +216,9 @@ class NiceGUIBackend(UIBackend):
                 placeholder='Program Editor'
             ).style('width: 100%;').props('outlined dense rows=10').mark('editor')
 
-            # Add auto-numbering handler
-            self.editor.on('keydown.enter', self._on_enter_key, throttle=0.0)
+            # Add auto-numbering handler with JS args
+            # Pass the event so we can prevent default behavior
+            self.editor.on('keydown.enter', self._on_enter_key, [':event'], throttle=0.0)
 
             # Add handler to prevent blank lines
             self.editor.on('blur', self._remove_blank_lines)
@@ -1494,10 +1495,8 @@ class NiceGUIBackend(UIBackend):
                 self._notify('No program running', type='warning')
                 return
 
-            # Get call stack from runtime
-            stack = []
-            if hasattr(self.runtime, 'gosub_stack'):
-                stack = self.runtime.gosub_stack
+            # Get execution stack from runtime using the correct method
+            stack = self.runtime.get_execution_stack()
 
             if not stack:
                 self._notify('Stack is empty', type='info')
@@ -1507,12 +1506,21 @@ class NiceGUIBackend(UIBackend):
             with ui.dialog() as dialog, ui.card().classes('w-[600px]'):
                 ui.label('Execution Stack').classes('text-xl font-bold')
 
-                # Show stack entries
+                # Show stack entries (each entry is a dict with 'type', 'return_pc', etc.)
                 ui.label(f'{len(stack)} entries').classes('text-sm text-gray-600 mb-2')
                 for i, entry in enumerate(reversed(stack)):
                     with ui.row().classes('w-full p-2 bg-gray-100 rounded mb-1'):
                         ui.label(f'#{i+1}:').classes('font-bold w-12')
-                        ui.label(f'Line {entry}').classes('font-mono')
+                        # Display entry type and location
+                        entry_type = entry.get('type', 'UNKNOWN')
+                        if 'return_pc' in entry:
+                            pc = entry['return_pc']
+                            ui.label(f'{entry_type} (return to line {pc.line_num})').classes('font-mono')
+                        elif 'pc' in entry:
+                            pc = entry['pc']
+                            ui.label(f'{entry_type} (at line {pc.line_num})').classes('font-mono')
+                        else:
+                            ui.label(f'{entry_type}').classes('font-mono')
 
                 ui.button('Close', on_click=dialog.close).classes('mt-4').props('no-caps')
             dialog.open()
@@ -1806,6 +1814,9 @@ class NiceGUIBackend(UIBackend):
 
         If auto-numbering is enabled and current line has no line number,
         automatically add one.
+
+        Args:
+            e: Event args from NiceGUI, should contain 'event' with preventDefault method
         """
         # Get auto-number settings
         auto_number_enabled = self.settings_manager.get('editor.auto_number')
@@ -1813,10 +1824,6 @@ class NiceGUIBackend(UIBackend):
             return  # Allow default behavior
 
         try:
-            import sys
-            sys.stderr.write("DEBUG: _on_enter_key called\n")
-            sys.stderr.flush()
-
             # Get current editor content
             current_text = self.editor.value or ''
 
@@ -1837,50 +1844,46 @@ class NiceGUIBackend(UIBackend):
             else:
                 next_line_num = 10  # Default start
 
-            sys.stderr.write(f"DEBUG: Auto-numbering to line {next_line_num}\n")
-            sys.stderr.flush()
-
-            # Run JavaScript to insert newline and line number at cursor
+            # Now that we know what line number to insert, do it via JavaScript
+            # We need to prevent the default Enter and manually insert newline + line number
             ui.run_javascript(f'''
-                (function() {{
+                (async function() {{
                     try {{
-                        // Find editor textarea by marker
+                        // Get the textarea element
                         const textarea = document.querySelector('[data-marker="editor"] textarea');
                         if (!textarea) {{
                             console.error('Editor textarea not found');
-                            return false;
+                            return;
                         }}
 
-                        // Prevent default enter
-                        event.preventDefault();
-
+                        // Get cursor position BEFORE any changes
                         const cursorPos = textarea.selectionStart;
                         const currentValue = textarea.value;
 
-                        // Insert newline and line number at cursor
+                        // Insert newline and line number at cursor position
                         const newValue = currentValue.substring(0, cursorPos) +
                                        "\\n{next_line_num} " +
                                        currentValue.substring(cursorPos);
 
+                        // Update textarea value
                         textarea.value = newValue;
-                        const newCursorPos = cursorPos + {len(str(next_line_num)) + 2};  // +2 for newline and space
+
+                        // Position cursor after the line number and space
+                        const newCursorPos = cursorPos + {len(str(next_line_num)) + 2};  // +2 for \\n and space
                         textarea.setSelectionRange(newCursorPos, newCursorPos);
 
-                        // Trigger input event to sync with Vue/Quasar
-                        const inputEvent = new Event('input', {{ bubbles: true, cancelable: true }});
-                        textarea.dispatchEvent(inputEvent);
+                        // Trigger input event so NiceGUI knows the value changed
+                        textarea.dispatchEvent(new Event('input', {{ bubbles: true }}));
 
-                        return true;
+                        console.log('Auto-numbered to line {next_line_num}');
                     }} catch (error) {{
                         console.error('Auto-number error:', error);
-                        return false;
                     }}
-                }})()
-            ''', timeout=3.0)
+                }})();
+            ''', timeout=1.0)
 
         except Exception as ex:
             log_web_error("_on_enter_key", ex)
-            # Don't prevent Enter if auto-numbering fails
 
     def _clear_output(self):
         """Clear output pane."""

@@ -193,7 +193,7 @@ async def test_auto_numbering_increments(user: User):
 
 
 def test_variables_bug_analysis():
-    """Document the exact bug in _show_variables_window.
+    """Verify that _show_variables_window uses get_all_variables().
 
     This is a pure code analysis test - no UI needed.
     """
@@ -203,22 +203,22 @@ def test_variables_bug_analysis():
     # Get the source code
     source = inspect.getsource(NiceGUIBackend._show_variables_window)
 
-    # The bug is on these lines:
+    # The CORRECT code should be:
+    #     variables = self.runtime.get_all_variables()
+
+    # The WRONG code was:
     # if hasattr(self.runtime, 'variables'):
     #     variables = self.runtime.variables
 
-    # It should be:
-    #     variables = self.runtime.get_all_variables()
+    # Check that the fix is in place
+    assert 'get_all_variables()' in source, \
+        "BUG: _show_variables_window should use runtime.get_all_variables()"
 
-    assert 'hasattr(self.runtime' in source, "Method should check runtime"
-
-    # This test documents that the WRONG code exists
-    # After fix, this line should NOT be present:
-    if "'variables')" in source and "self.runtime.variables" in source:
+    # Make sure the OLD buggy code is NOT there
+    if "hasattr(self.runtime, 'variables')" in source:
         pytest.fail(
-            "BUG STILL EXISTS: _show_variables_window uses runtime.variables "
-            "instead of runtime.get_all_variables(). "
-            "Variables will always show as empty!"
+            "BUG STILL EXISTS: _show_variables_window still checks hasattr for 'variables'. "
+            "Should use get_all_variables() directly!"
         )
 
 
