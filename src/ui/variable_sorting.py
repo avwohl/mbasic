@@ -18,8 +18,6 @@ def get_variable_sort_modes():
         {'key': 'written', 'label': 'Last Written', 'default_reverse': True},
         {'key': 'read', 'label': 'Last Read', 'default_reverse': True},
         {'key': 'name', 'label': 'Name', 'default_reverse': False},
-        {'key': 'type', 'label': 'Type', 'default_reverse': False},
-        {'key': 'value', 'label': 'Value', 'default_reverse': False},
     ]
 
 
@@ -50,16 +48,13 @@ def get_sort_key_function(sort_mode):
     """Get the sort key function for a given sort mode.
 
     Args:
-        sort_mode: One of 'accessed', 'written', 'read', 'name', 'type', 'value'
+        sort_mode: One of 'accessed', 'written', 'read', 'name'
 
     Returns:
         function: Sort key function that takes a variable dict
     """
     if sort_mode == 'name':
         return lambda v: v['name'].lower()
-
-    elif sort_mode == 'type':
-        return lambda v: v['type_suffix']
 
     elif sort_mode == 'accessed':
         # Sort by most recent access (read OR write)
@@ -77,27 +72,8 @@ def get_sort_key_function(sort_mode):
         # Sort by most recent read
         return lambda v: v['last_read']['timestamp'] if v.get('last_read') else 0
 
-    elif sort_mode == 'value':
-        # Complex sorting: arrays last, then numeric/string values
-        def value_key(v):
-            if v['is_array']:
-                # Arrays sort last
-                return (1, '', 0)
-
-            value = v.get('value', '')
-
-            # Try to sort numerically if possible
-            try:
-                # For numeric values, sort numerically
-                return (0, '', float(value))
-            except (ValueError, TypeError):
-                # For strings or other types, sort as string
-                return (0, str(value).lower(), 0)
-
-        return value_key
-
     else:
-        # Default to name sorting
+        # Default to name sorting (includes old 'type' and 'value' for backwards compatibility)
         return lambda v: v['name'].lower()
 
 
@@ -106,7 +82,7 @@ def sort_variables(variables, sort_mode='accessed', reverse=True):
 
     Args:
         variables: List of variable dicts from runtime.get_all_variables()
-        sort_mode: One of 'accessed', 'written', 'read', 'name', 'type', 'value'
+        sort_mode: One of 'accessed', 'written', 'read', 'name'
         reverse: If True, sort descending (default True for timestamp modes)
 
     Returns:

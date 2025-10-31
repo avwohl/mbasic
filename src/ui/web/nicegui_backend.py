@@ -164,26 +164,25 @@ class VariablesDialog(ui.dialog):
             ui.label('Program Variables').classes('text-xl font-bold')
             ui.label('Double-click a variable to edit its value').classes('text-sm text-gray-500 mb-2')
 
-            # Tk-style sort controls
-            with ui.row().classes('w-full items-center gap-2 mb-2'):
-                ui.label('Sort:').classes('text-sm font-bold')
-
-                # Arrow button - toggle direction
-                arrow = '↓' if self.sort_reverse else '↑'
-                ui.button(arrow, on_click=lambda: self._toggle_direction()).props('dense flat').classes('text-lg')
-
-                # Mode label - click to cycle
-                mode_label = get_sort_mode_label(self.sort_mode)
-                ui.button(f'Variable ({mode_label})', on_click=lambda: self._cycle_mode()).props('dense flat no-caps')
-
             # Add search/filter box
             filter_input = ui.input(placeholder='Filter variables...').classes('w-full mb-2')
 
-            # Create table with sortable columns
+            # Sort controls - compact row
+            arrow = '↓' if self.sort_reverse else '↑'
+            mode_label = get_sort_mode_label(self.sort_mode)
+            with ui.row().classes('w-full items-center gap-1 mb-2'):
+                ui.label('Click arrow to toggle direction, label to change sort:').classes('text-xs text-gray-500')
+                ui.button(arrow, on_click=lambda: self._toggle_direction()).props('dense flat size=sm').classes('text-base')
+                ui.button(f'({mode_label})', on_click=lambda: self._cycle_mode()).props('dense flat size=sm no-caps')
+
+            # Build column header
+            name_header = f'{arrow} Variable ({mode_label})'
+
+            # Create table - columns not sortable (we handle sorting via buttons above)
             columns = [
-                {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left', 'sortable': True},
-                {'name': 'type', 'label': 'Type', 'field': 'type', 'align': 'left', 'sortable': True},
-                {'name': 'value', 'label': 'Value', 'field': 'value', 'align': 'left', 'sortable': True},
+                {'name': 'name', 'label': name_header, 'field': 'name', 'align': 'left', 'sortable': False},
+                {'name': 'type', 'label': 'Type', 'field': 'type', 'align': 'left', 'sortable': False},
+                {'name': 'value', 'label': 'Value', 'field': 'value', 'align': 'left', 'sortable': False},
             ]
 
             rows = []

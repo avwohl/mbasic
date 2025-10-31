@@ -1018,12 +1018,9 @@ class TkBackend(UIBackend):
         if col_x < ARROW_CLICK_WIDTH:
             self._toggle_variable_sort_direction()
         else:
-            if column == '#0':  # Variable column
+            if column == '#0':  # Variable column - only sortable column
                 self._cycle_variable_sort()
-            elif column == '#1':  # Value column (swapped)
-                self._sort_variables_by('value')
-            elif column == '#2':  # Type column (swapped)
-                self._sort_variables_by('type')
+            # Type and Value columns are not sortable
 
     def _on_variable_double_click(self, event):
         """Handle double-click on variable to edit its value."""
@@ -1383,41 +1380,17 @@ class TkBackend(UIBackend):
         self._update_variable_headings()
         self._update_variables()
 
-    def _sort_variables_by(self, column):
-        """Set the sort column to the specified column.
-
-        Does not change sort direction - use arrow click for that.
-
-        Args:
-            column: 'type' or 'value'
-        """
-        # Just set the column, don't change direction
-        self.variables_sort_column = column
-
-        # Update headers and display
-        self._update_variable_headings()
-        self._update_variables()
-
     def _update_variable_headings(self):
         """Update all variable window column headings to show current sort state."""
         # Determine arrow character based on sort direction
         arrow = '↓' if self.variables_sort_reverse else '↑'
 
-        # Update Variable column heading (shows which sub-field we're sorting by)
-        if self.variables_sort_column in ['accessed', 'written', 'read', 'name']:
-            mode_label = get_sort_mode_label(self.variables_sort_column)
-            var_text = f'{arrow} Variable ({mode_label})'
-            self.variables_tree.heading('#0', text=var_text)
-            self.variables_tree.heading('Value', text='  Value')
-            self.variables_tree.heading('Type', text='  Type')
-        elif self.variables_sort_column == 'type':
-            self.variables_tree.heading('#0', text='  Variable')
-            self.variables_tree.heading('Value', text='  Value')
-            self.variables_tree.heading('Type', text=f'{arrow} Type')
-        elif self.variables_sort_column == 'value':
-            self.variables_tree.heading('#0', text='  Variable')
-            self.variables_tree.heading('Value', text=f'{arrow} Value')
-            self.variables_tree.heading('Type', text='  Type')
+        # Update Variable column heading to show current sort mode
+        mode_label = get_sort_mode_label(self.variables_sort_column)
+        var_text = f'{arrow} Variable ({mode_label})'
+        self.variables_tree.heading('#0', text=var_text)
+        self.variables_tree.heading('Value', text='  Value')
+        self.variables_tree.heading('Type', text='  Type')
 
     def _update_variables(self):
         """Update variables window from runtime."""

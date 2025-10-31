@@ -2584,13 +2584,13 @@ Run                           Debug Windows
 
     def _cycle_variables_sort_mode(self):
         """Cycle through variable sort modes (triggered by 's' key)."""
-        # Curses UI includes all sort modes in the cycle (no separate column headers)
-        modes = ['name', 'accessed', 'written', 'read', 'type', 'value']
+        # Cycle through the 4 useful sort modes
+        modes = ['accessed', 'written', 'read', 'name']
         try:
             current_idx = modes.index(self.variables_sort_mode)
             next_idx = (current_idx + 1) % len(modes)
         except ValueError:
-            next_idx = 0
+            next_idx = 0  # Default to 'accessed'
 
         self.variables_sort_mode = modes[next_idx]
 
