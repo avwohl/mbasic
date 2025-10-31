@@ -931,6 +931,9 @@ class NiceGUIBackend(UIBackend):
             # Add handler to prevent blank lines
             self.editor.on('blur', self._remove_blank_lines)
 
+            # Add handler to remove blank lines after paste
+            self.editor.on('paste', self._on_paste)
+
             # Current line indicator
             self.current_line_label = ui.label('').classes('text-sm font-mono bg-yellow-100 p-1')
             self.current_line_label.visible = False
@@ -1971,6 +1974,21 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as ex:
             log_web_error("_remove_blank_lines", ex)
+
+    def _on_paste(self, e=None):
+        """Handle paste event - remove blank lines after paste completes."""
+        try:
+            # Use a short delay to let the paste complete before cleaning
+            async def clean_after_paste():
+                import asyncio
+                await asyncio.sleep(0.05)  # 50ms delay
+                self._remove_blank_lines()
+
+            import asyncio
+            asyncio.create_task(clean_after_paste())
+
+        except Exception as ex:
+            log_web_error("_on_paste", ex)
 
     def _on_enter_key(self, e):
         """Handle Enter key in editor for auto-numbering.
