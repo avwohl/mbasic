@@ -8,7 +8,8 @@ Usage:
     python3 mbasic.py --backend curses        # Curses text UI (urwid, full-screen terminal) (default)
     python3 mbasic.py --backend cli           # CLI backend (line-based)
     python3 mbasic.py --backend tk            # Tkinter GUI (graphical)
-    python3 mbasic.py --backend visual        # Generic visual stub
+    python3 mbasic.py --backend web           # Web UI (browser-based)
+    python3 mbasic.py --backend web --port 3000  # Web UI on custom port
     python3 mbasic.py --debug                 # Enable debug output
 """
 
@@ -247,6 +248,13 @@ Examples:
         help='List available backends and exit'
     )
 
+    parser.add_argument(
+        '--port',
+        type=int,
+        default=8080,
+        help='Port for web backend (default: 8080)'
+    )
+
     args = parser.parse_args()
 
     # Handle --list-backends first (exit after showing)
@@ -285,7 +293,7 @@ Examples:
     if args.backend == 'web':
         from src.ui.web.nicegui_backend import start_web_ui
         try:
-            start_web_ui()
+            start_web_ui(port=args.port)
         except KeyboardInterrupt:
             print("\n\nShutting down web server (Ctrl+C)...")
             sys.exit(0)

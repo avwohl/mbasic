@@ -2190,6 +2190,21 @@ class NiceGUIBackend(UIBackend):
 
             if success:
                 self._set_status('Immediate command executed')
+
+                # Check if command was NEW or other program-modifying commands
+                # Sync editor with program state
+                if command.upper().strip() in ('NEW', 'CLEAR'):
+                    # Program was cleared - update editor
+                    self.editor.value = ''
+                    self.current_file = None
+                else:
+                    # For other commands that might modify the program (numbered lines),
+                    # sync editor with current program state
+                    lines = self.program.get_lines()
+                    if lines:
+                        editor_text = '\n'.join(line_text for line_num, line_text in lines)
+                        if editor_text != self.editor.value:
+                            self.editor.value = editor_text
             else:
                 self._set_status('Immediate command error')
 
@@ -2246,21 +2261,10 @@ class NiceGUIBackend(UIBackend):
     def start(self):
         """Start the UI.
 
-        This builds the UI and starts the NiceGUI server.
+        NOTE: For web backend, use start_web_ui() module function instead.
+        This method is not used for the web backend.
         """
-        # Log version to debug output
-        sys.stderr.write(f"\n{'='*70}\n")
-        sys.stderr.write(f"MBASIC Web UI Starting - Version {VERSION}\n")
-        sys.stderr.write(f"{'='*70}\n\n")
-        sys.stderr.flush()
-
-        self.build_ui()
-        ui.run(
-            title='MBASIC 5.21 - Web IDE',
-            port=8080,
-            reload=False,
-            show=True
-        )
+        raise NotImplementedError("Web backend uses start_web_ui() function, not backend.start()")
 
     def stop(self):
         """Stop the UI."""
@@ -2268,8 +2272,11 @@ class NiceGUIBackend(UIBackend):
 
 
 # Module-level function for proper multi-user web architecture
-def start_web_ui():
+def start_web_ui(port=8080):
     """Start the NiceGUI web server with per-client backend instances.
+
+    Args:
+        port: Port number for web server (default: 8080)
 
     This is the proper architecture for multi-user web apps:
     - Each page load creates a NEW backend instance for that client
@@ -2335,7 +2342,7 @@ def start_web_ui():
     # Start NiceGUI server
     ui.run(
         title='MBASIC 5.21 - Web IDE',
-        port=8080,
+        port=port,
         reload=False,
         show=True
     )
