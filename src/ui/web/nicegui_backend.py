@@ -1385,10 +1385,8 @@ class NiceGUIBackend(UIBackend):
             # Update resource usage
             self._update_resource_usage()
 
-            # Get all variables from runtime
-            variables = {}
-            if hasattr(self.runtime, 'variables'):
-                variables = self.runtime.variables
+            # Get all variables from runtime using the correct method
+            variables = self.runtime.get_all_variables()
 
             if not variables:
                 self._notify('No variables defined yet', type='info')
