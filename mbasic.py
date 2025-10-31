@@ -292,11 +292,7 @@ Examples:
     # Web backend uses per-client architecture
     if args.backend == 'web':
         from src.ui.web.nicegui_backend import start_web_ui
-        try:
-            start_web_ui(port=args.port)
-        except KeyboardInterrupt:
-            print("\n\nShutting down web server (Ctrl+C)...")
-            sys.exit(0)
+        start_web_ui(port=args.port)
         return
 
     # Load other backends dynamically

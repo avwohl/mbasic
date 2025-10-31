@@ -2349,31 +2349,6 @@ def start_web_ui(port=8080):
     - No shared state between clients
     - UI elements naturally isolated per client
     """
-    # Setup signal handler that works with asyncio event loop
-    # NiceGUI runs uvicorn which uses asyncio, so we need to handle signals in the loop
-    def setup_signal_handlers():
-        """Setup signal handlers in the asyncio event loop."""
-        import asyncio
-        loop = asyncio.get_event_loop()
-
-        def signal_handler(sig):
-            sys.stderr.write(f"\n\nReceived signal {sig} - shutting down web server...\n")
-            sys.stderr.flush()
-            # Stop all running timers and tasks
-            for client_id in list(client_states.keys()):
-                state = client_states[client_id]
-                if state.get('exec_timer'):
-                    state['exec_timer'].cancel()
-            # Stop the event loop
-            loop.stop()
-
-        # Add signal handlers to the event loop
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            loop.add_signal_handler(sig, lambda s=sig: signal_handler(s))
-
-    # Register the setup function to run after server starts
-    app.on_startup(setup_signal_handlers)
-
     # Log version to debug output
     sys.stderr.write(f"\n{'='*70}\n")
     sys.stderr.write(f"MBASIC Web UI Starting - Version {VERSION}\n")
