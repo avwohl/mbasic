@@ -30,9 +30,10 @@ export default {
                     color: black;
                 }
 
-                /* Breakpoint line - light red background */
-                .cm-breakpoint-line {
-                    background-color: #ffcccc !important;
+                /* Breakpoint marker - light red background */
+                .cm-breakpoint-marker {
+                    background-color: #ffcccc;
+                    border-bottom: 2px solid #cc0000;
                 }
 
                 /* Current statement during step debugging - light green background */
@@ -110,7 +111,7 @@ export default {
             this.findMarkers = [];
         },
 
-        addBreakpoint(lineNum) {
+        addBreakpoint(lineNum, charStart = null, charEnd = null) {
             if (!this.editor) return;
 
             // Find the actual editor line with this BASIC line number
@@ -121,9 +122,31 @@ export default {
                 const lineText = doc.getLine(i);
                 const match = lineText.match(/^\s*(\d+)\s/);
                 if (match && parseInt(match[1]) === lineNum) {
-                    // Add line class for red background
-                    this.editor.addLineClass(i, 'background', 'cm-breakpoint-line');
-                    this.breakpointMarkers.push({line: i, basicLineNum: lineNum});
+                    // Create text marker for specific statement or whole line
+                    let marker;
+                    if (charStart !== null && charEnd !== null && charStart >= 0 && charEnd > charStart) {
+                        // Adjust charStart to include preceding space or colon
+                        let adjustedStart = charStart;
+                        if (charStart > 0 && lineText[charStart - 1] === ' ') {
+                            adjustedStart = charStart - 1;  // Include space before statement
+                        } else if (charStart > 0 && lineText[charStart - 1] === ':') {
+                            adjustedStart = charStart - 1;  // Include colon before statement
+                        }
+                        // Highlight specific statement
+                        marker = this.editor.markText(
+                            {line: i, ch: adjustedStart},
+                            {line: i, ch: charEnd},
+                            {className: 'cm-breakpoint-marker'}
+                        );
+                    } else {
+                        // Highlight entire line
+                        marker = this.editor.markText(
+                            {line: i, ch: 0},
+                            {line: i, ch: lineText.length},
+                            {className: 'cm-breakpoint-marker'}
+                        );
+                    }
+                    this.breakpointMarkers.push({marker: marker, basicLineNum: lineNum});
                     break;
                 }
             }
@@ -135,7 +158,7 @@ export default {
             // Find and remove the breakpoint marker
             this.breakpointMarkers = this.breakpointMarkers.filter(bp => {
                 if (bp.basicLineNum === lineNum) {
-                    this.editor.removeLineClass(bp.line, 'background', 'cm-breakpoint-line');
+                    bp.marker.clear();
                     return false;
                 }
                 return true;
@@ -146,7 +169,7 @@ export default {
             if (!this.editor) return;
 
             this.breakpointMarkers.forEach(bp => {
-                this.editor.removeLineClass(bp.line, 'background', 'cm-breakpoint-line');
+                bp.marker.clear();
             });
             this.breakpointMarkers = [];
         },

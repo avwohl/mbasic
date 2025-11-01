@@ -1457,8 +1457,27 @@ class NiceGUIBackend(UIBackend):
             for item in self.runtime.breakpoints:
                 # Handle both PC objects and plain integers
                 if isinstance(item, PC):
-                    self.editor.add_breakpoint(item.line_num)
+                    # Get character positions from statement table for statement-level highlighting
+                    stmt = self.runtime.statement_table.get(item)
+                    if stmt and hasattr(stmt, 'char_start') and hasattr(stmt, 'char_end'):
+                        # Use the same logic as current_statement_char_end for consistency
+                        char_start = stmt.char_start
+                        # Check for next statement to calculate proper char_end
+                        next_pc = PC(item.line_num, item.stmt_offset + 1)
+                        next_stmt = self.runtime.statement_table.get(next_pc)
+                        if next_stmt and hasattr(next_stmt, 'char_start') and next_stmt.char_start > 0:
+                            char_end = max(stmt.char_end, next_stmt.char_start - 1)
+                        elif item.line_num in self.runtime.line_text_map:
+                            line_text = self.runtime.line_text_map[item.line_num]
+                            char_end = len(line_text)
+                        else:
+                            char_end = stmt.char_end
+                        self.editor.add_breakpoint(item.line_num, char_start, char_end)
+                    else:
+                        # No statement info - highlight whole line
+                        self.editor.add_breakpoint(item.line_num)
                 else:
+                    # Plain integer - highlight whole line
                     self.editor.add_breakpoint(item)
 
         except Exception as e:
@@ -2266,6 +2285,11 @@ class NiceGUIBackend(UIBackend):
                 self._notify(error_msg, type='warning')
                 self._set_status(f'Parse errors: {len(errors)}')
                 return False
+
+            # Update runtime statement table so breakpoints can show character positions
+            # This allows setting breakpoints before running the program
+            if self.program.lines:
+                self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
             self._set_status(f'Program loaded: {len(self.program.lines)} lines')
             return True

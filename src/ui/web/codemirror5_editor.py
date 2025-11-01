@@ -83,13 +83,18 @@ class CodeMirror5Editor(ui.element, component='codemirror5_editor.js'):
         """Clear all find highlights."""
         self.run_method('clearFindHighlights')
 
-    def add_breakpoint(self, line_num: int) -> None:
+    def add_breakpoint(self, line_num: int, char_start: Optional[int] = None, char_end: Optional[int] = None) -> None:
         """Add breakpoint marker (red background) to BASIC line number.
 
         Args:
             line_num: BASIC line number (e.g., 10, 20, 30)
+            char_start: Optional character start position for statement-level breakpoint
+            char_end: Optional character end position for statement-level breakpoint
         """
-        self.run_method('addBreakpoint', line_num)
+        if char_start is not None and char_end is not None:
+            self.run_method('addBreakpoint', line_num, char_start, char_end)
+        else:
+            self.run_method('addBreakpoint', line_num)
 
     def remove_breakpoint(self, line_num: int) -> None:
         """Remove breakpoint marker from BASIC line number.
