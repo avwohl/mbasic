@@ -2795,6 +2795,12 @@ class NiceGUIBackend(UIBackend):
                 # TODO: Future architecture: parse lines immediately into AST,
                 # text only kept for syntax errors
 
+                # If statement set NPC (like RUN/GOTO), move it to PC
+                # This is what the tick loop does after executing a statement
+                if self.runtime.npc is not None:
+                    self.runtime.pc = self.runtime.npc
+                    self.runtime.npc = None
+
                 # Check if interpreter has work to do (after RUN statement)
                 # No state checking - just ask the interpreter
                 has_work = self.interpreter.has_work() if self.interpreter else False
