@@ -2017,14 +2017,9 @@ class NiceGUIBackend(UIBackend):
     def _on_paste(self, e=None):
         """Handle paste event - remove blank lines after paste completes."""
         try:
-            # Use a short delay to let the paste complete before cleaning
-            async def clean_after_paste():
-                import asyncio
-                await asyncio.sleep(0.05)  # 50ms delay
-                self._remove_blank_lines()
-
-            import asyncio
-            asyncio.create_task(clean_after_paste())
+            # Use a timer to let the paste complete before cleaning
+            # This ensures it runs in the UI context
+            ui.timer(0.1, self._remove_blank_lines, once=True)
 
         except Exception as ex:
             log_web_error("_on_paste", ex)
@@ -2122,7 +2117,9 @@ class NiceGUIBackend(UIBackend):
 
             # Update editor and tracking if we made changes
             if modified:
-                new_content = '\n'.join(lines)
+                # Remove blank lines when updating
+                non_blank_lines = [line for line in lines if line.strip()]
+                new_content = '\n'.join(non_blank_lines)
                 self.editor.value = new_content
                 self.last_edited_line_text = new_content
             else:
