@@ -2121,6 +2121,48 @@ class NiceGUIBackend(UIBackend):
         """Help > About."""
         self.about_dialog.show()
 
+    # ========================================================================
+    # BASIC Statement Command Methods (called by interpreter)
+    # These are temporary - eventually these statements should be 100% in
+    # the interpreter, not delegated to UI. See MOVE_STATEMENTS_TO_INTERPRETER_TODO.md
+    # ========================================================================
+
+    def cmd_files(self, filespec: str = "") -> None:
+        """Execute FILES command - display directory listing.
+
+        FILES - List all files in current directory
+        FILES "*.BAS" - List files matching pattern
+        """
+        from src.ui.ui_helpers import list_files
+
+        try:
+            files = list_files(filespec)
+            pattern = filespec if filespec else "*"
+
+            if not files:
+                self._append_output(f"No files matching: {pattern}\n")
+                return
+
+            # Display files (one per line with size)
+            self._append_output(f"\nDirectory listing for: {pattern}\n")
+            self._append_output("-" * 50 + "\n")
+            for filename, size, is_dir in files:
+                if is_dir:
+                    self._append_output(f"{filename:<30}        <DIR>\n")
+                elif size is not None:
+                    self._append_output(f"{filename:<30} {size:>12} bytes\n")
+                else:
+                    self._append_output(f"{filename:<30}            ?\n")
+
+            self._append_output(f"\n{len(files)} file(s)\n")
+
+        except Exception as e:
+            self._append_output(f"?Error listing files: {e}\n")
+
+    # ========================================================================
+    # End BASIC Statement Command Methods
+    # ========================================================================
+
     def _start_auto_save(self):
         """Start auto-save timer."""
         if self.auto_save_enabled and not self.auto_save_timer:
