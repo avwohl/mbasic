@@ -2278,6 +2278,29 @@ class NiceGUIBackend(UIBackend):
     # Editor Actions
     # =========================================================================
 
+    def _sync_program_to_runtime(self):
+        """Sync program to runtime without resetting PC.
+
+        Updates runtime's statement_table and line_text_map from self.program,
+        but preserves current PC/execution state. This allows LIST and other
+        commands to see the current program without starting execution.
+        """
+        # Clear and rebuild statement table
+        self.runtime.statement_table.statements.clear()
+        self.runtime.statement_table._keys_cache = None
+
+        # Update line text map
+        self.runtime.line_text_map = dict(self.program.lines)
+
+        # Rebuild statement table from program ASTs
+        for line_num in sorted(self.program.line_asts.keys()):
+            line_ast = self.program.line_asts[line_num]
+            for stmt_offset, stmt in enumerate(line_ast.statements):
+                pc = PC(line_num, stmt_offset)
+                self.runtime.statement_table.add(pc, stmt)
+
+        # Don't touch PC/NPC - preserve current execution state
+
     def _save_editor_to_program(self):
         """Save editor content to program.
 
@@ -2728,10 +2751,12 @@ class NiceGUIBackend(UIBackend):
             interpreter = self.interpreter
 
             # Parse editor content into program (in case user typed lines directly)
+            # This updates self.program but doesn't affect runtime yet
             self._save_editor_to_program()
 
-            # Make sure runtime has current program loaded
-            runtime.reset_for_run(self.program.line_asts, self.program.lines)
+            # Sync program to runtime (but don't reset PC - keep current execution state)
+            # This allows LIST to work, but doesn't start execution
+            self._sync_program_to_runtime()
 
             # Create immediate executor (runtime, interpreter, io_handler)
             immediate_executor = ImmediateExecutor(
