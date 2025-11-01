@@ -959,7 +959,7 @@ class NiceGUIBackend(UIBackend):
 
             # Use keyup to detect when user has finished typing/moving
             # This captures Enter, arrow keys, etc.
-            self.editor.on('keyup', self._on_key_released, throttle=0.05)
+            self.editor.on('keyup', self._on_key_released, throttle=0.0)
 
             # Also check on mouse clicks
             self.editor.on('click', self._on_editor_click, throttle=0.05)
@@ -2025,8 +2025,10 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_on_paste", ex)
 
     def _on_key_released(self, e):
-        """Handle key release - schedule auto-number check."""
-        # Schedule check with small delay to let cursor settle
+        """Handle key release - remove blank lines and schedule auto-number check."""
+        # Immediately remove blank lines (no throttle, no delay)
+        self._remove_blank_lines()
+        # Then schedule auto-number check with small delay
         ui.timer(0.05, self._check_auto_number, once=True)
 
     def _on_editor_click(self, e):
