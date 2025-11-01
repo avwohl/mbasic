@@ -419,7 +419,7 @@ class OpenFileDialog(ui.dialog):
                 with ui.row().classes('gap-2'):
                     ui.button('Cancel', on_click=self.close).props('outline no-caps')
                     ui.button('Open',
-                             on_click=lambda: self._open_selected(),
+                             on_click=self._open_selected,
                              icon='folder_open').props('no-caps').bind_enabled_from(self, 'selected_file', backward=lambda x: x is not None)
 
         self._refresh_file_list()
@@ -467,8 +467,9 @@ class OpenFileDialog(ui.dialog):
 
                     # Click handler for file selection
                     file_row.on('click', lambda p=file_path: self._select_file(p))
-                    # Double-click handler to open file directly
-                    file_row.on('dblclick', lambda p=file_path: self._handle_file_doubleclick(p))
+
+                    # Double-click handler - directly bind the async method
+                    file_row.on('dblclick', self._open_selected)
 
         except PermissionError:
             with self.file_list:
@@ -519,6 +520,10 @@ class OpenFileDialog(ui.dialog):
 
         try:
             content = self.selected_file.read_text()
+
+            # Normalize line endings and remove CP/M EOF markers
+            # \r\n -> \n (Windows), \r -> \n (old Mac), \x1a (CP/M EOF marker)
+            content = content.replace('\r\n', '\n').replace('\r', '\n').replace('\x1a', '')
 
             # Remove blank lines
             lines = content.split('\n')
@@ -1333,6 +1338,9 @@ class NiceGUIBackend(UIBackend):
     async def _toggle_breakpoint(self):
         """Toggle breakpoint on current line."""
         try:
+            from src.debug_logger import debug_log
+            debug_log("Toggle breakpoint called", level=1)
+
             # Get line number from cursor position using JavaScript
             result = await ui.run_javascript('''
                 const textarea = document.querySelector('[data-ref="editor"] textarea');
@@ -1354,9 +1362,12 @@ class NiceGUIBackend(UIBackend):
                 return null;
             ''', timeout=5.0)
 
+            debug_log(f"JavaScript result: {result}", level=1)
+
             if result:
                 # Toggle the breakpoint directly
                 line_num = int(result)
+                debug_log(f"Line number extracted: {line_num}", level=1)
                 if line_num in self.breakpoints:
                     self.breakpoints.remove(line_num)
                     self._notify(f'❌ Breakpoint removed: line {line_num}', type='info')
@@ -1367,7 +1378,7 @@ class NiceGUIBackend(UIBackend):
                     self._set_status(f'Breakpoint at {line_num}')
 
                 # Update editor to show breakpoint markers
-                self._update_breakpoint_display()
+                await self._update_breakpoint_display()
             else:
                 # Cursor not on a BASIC line number, show dialog
                 with ui.dialog() as dialog, ui.card():
@@ -1383,14 +1394,17 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_toggle_breakpoint", e)
             self._notify(f'Error: {e}', type='negative')
 
-    def _update_breakpoint_display(self):
+    async def _update_breakpoint_display(self):
         """Update the editor to show breakpoint markers."""
         try:
+            from src.debug_logger import debug_log
+            debug_log(f"Updating breakpoint display: {self.breakpoints}", level=1)
+
             if not self.breakpoints:
                 return
 
             # Add visual markers using JavaScript
-            ui.run_javascript(f'''
+            await ui.run_javascript(f'''
                 const breakpoints = new Set({list(self.breakpoints)});
                 const textarea = document.querySelector('[data-ref="editor"] textarea');
                 if (textarea) {{
@@ -2148,6 +2162,12 @@ class NiceGUIBackend(UIBackend):
                 self._set_status('Program cleared')
                 return True
 
+            # Normalize line endings and remove CP/M EOF markers
+            # \r\n -> \n (Windows line endings)
+            # \r -> \n (old Mac line endings)
+            # \x1a (Ctrl+Z, CP/M EOF marker)
+            text = text.replace('\r\n', '\n').replace('\r', '\n').replace('\x1a', '')
+
             # Parse each line
             lines = text.split('\n')
             errors = []
@@ -2160,6 +2180,11 @@ class NiceGUIBackend(UIBackend):
                 # Parse line number
                 match = re.match(r'^(\d+)(?:\s|$)', line_text)
                 if not match:
+                    # Show hex representation of weird characters for debugging
+                    hex_repr = ' '.join(f'{ord(c):02x}' for c in line_text[:30])
+                    # Write to stderr so it shows up in the terminal
+                    import sys
+                    print(f'Parse error: {repr(line_text[:30])} hex: {hex_repr}', file=sys.stderr)
                     errors.append(f'Line must start with number: {line_text[:30]}...')
                     continue
 

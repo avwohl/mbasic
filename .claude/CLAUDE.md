@@ -31,6 +31,7 @@
 - **When debugging**: Check debug link for stderr output (user may say "check your debug link")
 - **Debug mode details**: Read `docs/dev/DEBUG_MODE.md` for levels and usage
 - **In code**: Use `from src.debug_logger import debug_log` not print statements
+- **NEVER write to /tmp/debug.log** - this file is reserved for user's error reports to Claude
 
 ## Developer Setup
 - **For setup instructions**: Read `docs/dev/INSTALLATION_FOR_DEVELOPERS.md`
