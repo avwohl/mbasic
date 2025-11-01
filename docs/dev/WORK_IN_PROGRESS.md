@@ -209,9 +209,23 @@ No more delegation to UI, just output directly.
 - v1.0.376 - Added RUN/NEW/LIST special handling to immediate executor (WRONG - removed)
 - v1.0.376 - Reverted to remove special handling from immediate executor
 
+## Progress (v1.0.377)
+
+**Implemented:**
+- ✅ Added `interpreter.has_work()` method - returns `not runtime.halted()`
+- ✅ Fixed `execute_new()` - modifies AST directly (clears line_asts, statement_table, lines)
+- ✅ Fixed `execute_list()` - outputs via `self.io.output()`, no UI delegation
+- ✅ Fixed `execute_delete()` - modifies AST directly (removes lines from dictionaries)
+- ✅ RENUM marked as TODO (complex - needs GOTO/GOSUB target updates)
+- ✅ Web UI immediate execution - serializes AST→text after commands, checks `has_work()`
+
+**Remaining:**
+- Some interactive_mode references still exist (LOAD, SAVE, RUN, CHAIN, SYSTEM, MERGE, CONT)
+- Need to test if RUN 120 now works
+
 ## Next Step
 
-**STOP and get user input on architecture before making more changes.**
+Test `RUN 120` in web UI.
 
 ---
 

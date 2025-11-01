@@ -1048,8 +1048,19 @@ class NiceGUIBackend(UIBackend):
 
         # Per-client state (now instance variables instead of session storage)
         from src.runtime import Runtime
+        from src.resource_limits import create_local_limits
+        from src.file_io import SandboxedFileIO
+
         self.runtime = Runtime({}, {})
-        self.interpreter = None
+
+        # Create one interpreter for the session - don't create multiple!
+        # Create IO handler for immediate mode
+        immediate_io = SimpleWebIOHandler(self._append_output, self._get_input)
+        sandboxed_file_io = SandboxedFileIO(self)
+        self.interpreter = Interpreter(self.runtime, immediate_io,
+                                      limits=create_local_limits(),
+                                      file_io=sandboxed_file_io)
+
         self.running = False
         self.paused = False
         self.output_text = f'MBASIC 5.21 Web IDE - {VERSION}\n'
@@ -1732,31 +1743,15 @@ class NiceGUIBackend(UIBackend):
             # Get program AST
             program_ast = self.program.get_program_ast()
 
-            # Create or reset runtime - RUN = CLEAR + GOTO first line
+            # Reset runtime with current program - RUN = CLEAR + GOTO first line
             # This preserves breakpoints but clears variables
-            from src.resource_limits import create_local_limits
-            if self.runtime is None:
-                # First run - create new Runtime
-                self.runtime = Runtime(self.program.line_asts, self.program.lines)
-                self.runtime.setup()
-            else:
-                # Subsequent run - reset Runtime (RUN = CLEAR + restart)
-                self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
+            self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
-            # Create IO handler that outputs to our output pane
+            # Update interpreter's IO handler to output to execution pane
             self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
+            self.interpreter.io = self.exec_io
 
-            # Create sandboxed file I/O for web UI (uses browser localStorage)
-            from src.file_io import SandboxedFileIO
-            sandboxed_file_io = SandboxedFileIO(self)
-
-            # Create interpreter with sandboxed file I/O
-            self.interpreter = Interpreter(self.runtime, self.exec_io, limits=create_local_limits(), file_io=sandboxed_file_io)
-
-            # Wire up interpreter to use this UI's methods
-            self.interpreter.interactive_mode = self
-
-            # Start interpreter
+            # Start interpreter (sets up statement table, etc.)
             state = self.interpreter.start()
             if state.status == 'error':
                 error_msg = state.error_info.error_message if state.error_info else 'Unknown'
@@ -2725,20 +2720,10 @@ class NiceGUIBackend(UIBackend):
             # Create output capturing IO handler
             output_io = OutputCapturingIOHandler()
 
-            # Ensure we have a runtime - create temporary one if needed
+            # Use the session's single interpreter and runtime
+            # Don't create temporary ones!
             runtime = self.runtime
             interpreter = self.interpreter
-
-            if runtime is None:
-                # Create a temporary runtime for immediate mode
-                runtime = Runtime({}, {})
-
-            if interpreter is None:
-                # Create a temporary interpreter for immediate mode with sandboxed file I/O
-                from src.resource_limits import create_local_limits
-                from src.file_io import SandboxedFileIO
-                sandboxed_file_io = SandboxedFileIO(self)
-                interpreter = Interpreter(runtime, output_io, limits=create_local_limits(), file_io=sandboxed_file_io)
 
             # Create immediate executor (runtime, interpreter, io_handler)
             immediate_executor = ImmediateExecutor(
