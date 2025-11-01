@@ -1,20 +1,65 @@
-# Work in Progress
+# Work in Progress: CodeMirror 6 Migration for Web UI
 
-**Status:** No active multi-step work
+**Status:** IN PROGRESS - Implementing CodeMirror 6 editor
 
-This file tracks ongoing multi-step work that spans multiple sessions. When work is in progress, this file contains:
-- Current task and status
-- Files being modified
-- Next steps
-- Blockers
+**Task:** Replace plain `ui.textarea()` with CodeMirror 6 to enable proper text highlighting for find results, breakpoints, and step debugging.
 
-When work is complete, this file is deleted or shows "No active work".
+**Last Updated:** 2025-11-01
+
+## Current Status
+
+Starting CodeMirror 6 integration to solve fundamental text highlighting limitations.
+
+## Files Being Modified
+
+- `src/ui/web/nicegui_backend.py` - Replace textarea with CodeMirror
+- Possibly new: `src/ui/web/codemirror_wrapper.py` - CodeMirror component wrapper (TBD)
+
+## Implementation Plan (from WEB_UI_TEXT_HIGHLIGHTING_TODO.md)
+
+### Part 1: CodeMirror Integration - IN PROGRESS
+- [ ] Load CodeMirror 6 via CDN
+- [ ] Create minimal editor instance
+- [ ] Wire up basic text editing (get/set content)
+- [ ] Event handlers for content changes
+- [ ] Replace textarea in nicegui_backend.py
+
+### Part 2: Find Highlighting - TODO
+- [ ] Create yellow highlight decoration type
+- [ ] Apply to found text ranges
+- [ ] Persist across dialog open/close
+- [ ] Remove flicker/scroll issues
+
+### Part 3: Breakpoint Markers - TODO
+- [ ] Add line gutter for breakpoints
+- [ ] Show red circle/dot markers
+- [ ] Click gutter to toggle breakpoint
+- [ ] Update when breakpoints added/removed
+
+### Part 4: Current Statement Highlighting - TODO
+- [ ] Green/blue background for executing line
+- [ ] Update during step/next/continue
+- [ ] Clear when program finishes
+
+### Part 5: Testing - TODO
+- [ ] Test find + highlight
+- [ ] Test breakpoint gutter markers
+- [ ] Test step debugging highlight
+- [ ] Test all features together
+
+## Next Steps
+
+1. Research CodeMirror 6 basic setup with NiceGUI
+2. Create minimal working editor
+3. Test basic editing operations
+
+## Blockers
+
+None currently
 
 ---
 
-**Last Updated:** 2025-10-31
-
-**Current Status:** All recent work completed
+**Previous Work Completed**
 
 **Recent Completions (October 31 - Language Testing):**
 - ✅ Expanded test suite from 7 to 31 tests (343% increase)

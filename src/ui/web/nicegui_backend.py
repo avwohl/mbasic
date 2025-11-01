@@ -15,6 +15,8 @@ from src.runtime import Runtime
 from src.interpreter import Interpreter
 from src.iohandler.base import IOHandler
 from src.version import VERSION
+from src.pc import PC
+import re
 
 
 def log_web_error(context: str, exception: Exception):
@@ -1364,9 +1366,9 @@ class NiceGUIBackend(UIBackend):
     # =========================================================================
 
     async def _toggle_breakpoint(self):
-        """Toggle breakpoint on current line."""
+        """Toggle statement-level breakpoint at current cursor position."""
         try:
-            # Get line number from cursor position using JavaScript
+            # Get line text and cursor position using JavaScript
             result = await ui.run_javascript('''
                 // Find the editor textarea (first non-readonly textarea)
                 let textarea = null;
@@ -1381,40 +1383,81 @@ class NiceGUIBackend(UIBackend):
                 if (textarea) {
                     const text = textarea.value;
                     const cursorPos = textarea.selectionStart;
-                    // Count newlines before cursor to get line number
+                    // Count newlines before cursor to get line index
                     const textBeforeCursor = text.substring(0, cursorPos);
                     const lineIndex = textBeforeCursor.split('\\n').length - 1;
                     // Get the line text
                     const lines = text.split('\\n');
                     const lineText = lines[lineIndex];
-                    // Extract BASIC line number if present
-                    const match = lineText.match(/^\\s*(\\d+)/);
-                    if (match) {
-                        return parseInt(match[1]);
-                    }
+
+                    // Calculate cursor position within the line
+                    const lineStart = text.lastIndexOf('\\n', cursorPos - 1) + 1;
+                    const cursorInLine = cursorPos - lineStart;
+
+                    return {lineText: lineText, cursorInLine: cursorInLine};
                 }
                 return null;
             ''', timeout=5.0)
 
-            if result:
-                # Toggle the breakpoint directly
-                line_num = int(result)
-                if line_num in self.breakpoints:
-                    self.breakpoints.remove(line_num)
-                    self._notify(f'❌ Breakpoint removed: line {line_num}', type='info')
-                    self._set_status(f'Removed breakpoint at {line_num}')
+            if result and result.get('lineText'):
+                line_text = result['lineText']
+                cursor_in_line = result['cursorInLine']
+
+                # Extract BASIC line number from text
+                match = re.match(r'^\s*(\d+)', line_text)
+                if not match:
+                    # Cursor not on a BASIC line number, show dialog
+                    with ui.dialog() as dialog, ui.card():
+                        ui.label('Toggle Breakpoint').classes('text-h6')
+                        ui.label('Cursor is not on a line with a line number.').classes('text-caption mb-2')
+                        line_input = ui.input('Line number:', placeholder='10').classes('w-full')
+                        with ui.row():
+                            ui.button('Toggle', on_click=lambda: self._do_toggle_breakpoint(line_input.value, dialog)).props('no-caps')
+                            ui.button('Cancel', on_click=dialog.close).props('no-caps')
+                    dialog.open()
+                    return
+
+                line_num = int(match.group(1))
+
+                # Query the statement table to find which statement the cursor is in
+                stmt_offset = 0
+                if self.runtime and self.runtime.statement_table:
+                    # Get all statements for this line from the statement table
+                    for pc, stmt_node in self.runtime.statement_table.statements.items():
+                        if pc.line_num == line_num:
+                            # Check if cursor is within this statement's character range
+                            if stmt_node.char_start <= cursor_in_line <= stmt_node.char_end:
+                                stmt_offset = pc.stmt_offset
+                                break
+
+                # Create PC object for this statement
+                pc = PC(line_num, stmt_offset)
+
+                # Toggle the breakpoint
+                if pc in self.breakpoints:
+                    self.breakpoints.discard(pc)
+                    if stmt_offset > 0:
+                        self._notify(f'❌ Breakpoint removed: line {line_num} statement {stmt_offset + 1}', type='info')
+                        self._set_status(f'Removed breakpoint at {line_num}.{stmt_offset}')
+                    else:
+                        self._notify(f'❌ Breakpoint removed: line {line_num}', type='info')
+                        self._set_status(f'Removed breakpoint at {line_num}')
                 else:
-                    self.breakpoints.add(line_num)
-                    self._notify(f'🔴 Breakpoint set: line {line_num}', type='positive')
-                    self._set_status(f'Breakpoint at {line_num}')
+                    self.breakpoints.add(pc)
+                    if stmt_offset > 0:
+                        self._notify(f'🔴 Breakpoint set: line {line_num} statement {stmt_offset + 1}', type='positive')
+                        self._set_status(f'Breakpoint at {line_num}.{stmt_offset}')
+                    else:
+                        self._notify(f'🔴 Breakpoint set: line {line_num}', type='positive')
+                        self._set_status(f'Breakpoint at {line_num}')
 
                 # Update editor to show breakpoint markers
                 await self._update_breakpoint_display()
             else:
-                # Cursor not on a BASIC line number, show dialog
+                # Could not get line info
                 with ui.dialog() as dialog, ui.card():
                     ui.label('Toggle Breakpoint').classes('text-h6')
-                    ui.label('Cursor is not on a line with a line number.').classes('text-caption mb-2')
+                    ui.label('Could not determine cursor position.').classes('text-caption mb-2')
                     line_input = ui.input('Line number:', placeholder='10').classes('w-full')
                     with ui.row():
                         ui.button('Toggle', on_click=lambda: self._do_toggle_breakpoint(line_input.value, dialog)).props('no-caps')
