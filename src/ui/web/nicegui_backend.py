@@ -1765,6 +1765,15 @@ class NiceGUIBackend(UIBackend):
                 self.running = False  # For display only (spinner)
                 return
 
+            # Check if RUN was called with a line number (e.g., RUN 120)
+            # This is set by immediate_executor when user types "RUN 120"
+            if hasattr(self, '_run_start_line') and self._run_start_line:
+                # Set PC to start at the specified line
+                from src.pc import PC
+                self.runtime.npc = PC.from_line(self._run_start_line)
+                # Clear the temporary attribute
+                self._run_start_line = None
+
             # If empty program, just show Ready (variables cleared, nothing to execute)
             if not self.program.lines:
                 self._set_status('Ready')

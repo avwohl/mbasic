@@ -143,6 +143,66 @@ class ImmediateExecutor:
         if statement.upper() in ('HELP', 'HELP()', '?HELP'):
             return self._show_help()
 
+        # Special case: Commands that must be handled by UI, not executed as statements
+        # These commands control program execution/editing and need UI interaction
+        statement_upper = statement.upper().strip()
+
+        # NEW - clear program and variables
+        if statement_upper == 'NEW':
+            if hasattr(self.interpreter, 'interactive_mode') and self.interpreter.interactive_mode:
+                self.interpreter.interactive_mode.cmd_new()
+                return (True, "")
+            return (False, "NEW not available in this context\n")
+
+        # RUN [line_number] - start/restart program execution
+        import re
+        run_match = re.match(r'^RUN(?:\s+(\d+))?$', statement_upper)
+        if run_match:
+            if hasattr(self.interpreter, 'interactive_mode') and self.interpreter.interactive_mode:
+                ui = self.interpreter.interactive_mode
+                line_num_str = run_match.group(1)
+
+                # RUN with line number: clear variables and set start PC
+                if line_num_str:
+                    self.runtime.clear_variables()
+                    from src.pc import PC
+                    # Store the start line for _menu_run to use
+                    ui._run_start_line = int(line_num_str)
+
+                # Call UI's run method to actually start execution
+                # For async UIs (web), this returns immediately and execution happens asynchronously
+                if hasattr(ui, '_menu_run'):
+                    # NiceGUI async method - call it and let it handle async
+                    import asyncio
+                    # Check if we're already in an async context
+                    try:
+                        loop = asyncio.get_running_loop()
+                        # We're in async context - create task
+                        asyncio.create_task(ui._menu_run())
+                    except RuntimeError:
+                        # Not in async context - this shouldn't happen in NiceGUI
+                        # but handle it gracefully
+                        pass
+                    return (True, "")
+                elif hasattr(ui, 'cmd_run'):
+                    # Sync UI (TK, Curses, CLI)
+                    ui.cmd_run()
+                    return (True, "")
+                return (False, "RUN not available\n")
+            return (False, "RUN not available in this context\n")
+
+        # LIST - list program
+        if statement_upper.startswith('LIST'):
+            if hasattr(self.interpreter, 'interactive_mode') and self.interpreter.interactive_mode:
+                ui = self.interpreter.interactive_mode
+                if hasattr(ui, 'program') and ui.program:
+                    lines = ui.program.get_lines()
+                    output = []
+                    for line_num, line_text in lines:
+                        output.append(line_text + '\n')
+                    return (True, ''.join(output))
+            return (False, "LIST not available in this context\n")
+
         # Special case: Numbered line - this is a program edit, not immediate execution
         # In real MBASIC, typing a numbered line in immediate mode adds/edits that line
         import re
