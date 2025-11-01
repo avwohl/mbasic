@@ -2304,13 +2304,16 @@ class NiceGUIBackend(UIBackend):
                 pc = PC(line_num, stmt_offset)
                 self.runtime.statement_table.add(pc, stmt)
 
-        # Restore PC if execution was in progress, otherwise ensure halted
-        if old_pc.halted() or old_halted:
-            self.runtime.pc = PC.halted_pc()
-            self.runtime.halted = True
-        else:
+        # Restore PC only if execution timer is actually running
+        # Otherwise ensure halted (don't accidentally start execution)
+        if self.exec_timer and self.exec_timer.active:
+            # Timer is running - preserve execution state
             self.runtime.pc = old_pc
             self.runtime.halted = old_halted
+        else:
+            # No execution in progress - ensure halted
+            self.runtime.pc = PC.halted_pc()
+            self.runtime.halted = True
 
     def _save_editor_to_program(self):
         """Save editor content to program.
