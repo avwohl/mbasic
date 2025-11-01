@@ -10,7 +10,7 @@
 	together very quickly and has been tested
 	only minimally.
 1030 '*****   Bill Norris, 12/13/81    *****
-
+
 1040 INPUT "Type complete INPUT filename : ",IFIL$
 1050 INPUT "Type complete OUTPUT filename : ",OFIL$
 1060 OPEN "I",#1,IFIL$ : OPEN "O",#2,OFIL$ : PRINT
@@ -21,16 +21,16 @@
 1110 IF X=2 THEN GOTO 1190
 
 
-
+
 1120 INPUT "What is the record length? ",RL
 1130 PRINT "Only";RL-2;" bytes available for fields, as"
 1140 INPUT "<cr/lf> occupies 2 bytes.  Retype ? ",X$
 1150 IF ASC(X$)=89 OR ASC(X$)=121 THEN PRINT : GOTO 1120
-
+
 1160 LINE INPUT #1,A$:B$=A$+SPACE$(RL-LEN(A$)):
      PRINT #2,B$:IF EOF(1) THEN GOTO 1170 ELSE GOTO 1160
 1170 GOTO 9000
-
+
 1190 INPUT "How many fields per record? ",NUMF : WIDTH 78
 1195 INPUT "Do you want commas inserted between fields? ",X$
 1198 IF ASC(X$)=89 OR ASC(X$) THEN COM$=","
@@ -43,5 +43,5 @@
 	NEXT I:INPUT #1,X$:Y$=Y$+X$+SPACE$(FL(NUMF)-LEN(X$)):
 	X$=Y$+CHR$(13)+CHR$(10):PRINT #2,X$;
 1220 IF EOF(1) THEN GOTO 9000 ELSE PRINT "*"; : GOTO 1210
-
+
 9000 CLOSE : PRINT : PRINT "Fin" : END

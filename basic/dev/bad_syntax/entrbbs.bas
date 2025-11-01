@@ -1,4 +1,4 @@
-5 '     -------------->> ENT)B' = B s)s17/Ju 1s<)"o
+5 '     -------------->> ENT)B' = B s)s17/Ju 1s<)"o
 VG)=o96ft on S $ware ToU"doM, Australia lR8lo-997-183o
 12 '5.-o: En2A gme-loggin"RBT tln1B)esi 
 rfd2.2,     (r cRLM$from Hoard Mou02BE  or  "al t 5=
@@ -475,7 +475,7 @@ osT":
 	A1e	Whii do you want ?":t                                                                                                    50dr2(A	C=1:
 	G   :/5,h n	C=0,0d:ObtIN" T
 N 
- Kp( o "MINIRBBS"iFiIIF B$="NEW" THEN		22220     ' RG callers    do everthin,16aalleas   
+ Kp( o "MINIRBBS"iFiIIF B$="NEW" THEN		22220     ' RG callers    do everthin,16aalleas   
 2145	IF B$="C$" THEN		2230                                                                   2N   2 	i 81  the SPE	AL file
 BLIIFM="OF	 wlTt m  4132E"
 215Ge-r2 = COUu3yr1;	F C 0o=Togh3e99$uE		GOTO 18080

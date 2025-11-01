@@ -6,6 +6,7 @@ External user-facing documentation and guides.
 
 - **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick command reference
 - **[URWID_UI.md](URWID_UI.md)** - Urwid/curses UI guide
+- **[FILE_FORMAT_COMPATIBILITY.md](FILE_FORMAT_COMPATIBILITY.md)** - File format, line endings, CP/M compatibility
 
 ## Purpose
 

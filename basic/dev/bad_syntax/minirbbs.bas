@@ -1286,7 +1286,7 @@ I	2160 '
 130000	1="Use Ctl-S to UusE 
 peat r----------------------------------K's to Abort"
 13020 '
-130N'  BiRU tring from A$ on console O0Tg
+130N'  BiRU tring from A$ on console O0Tg
 13080	IF SAV$<>""	BP61$$
 Z	EsHEN 
 		A1$=":o
@@ -1305,8 +1305,8 @@ BP 0 T3D5RlB
 13T0431
 02 	N=0
 13A0i 
-":eI aL g
-13 G '  Acei TBing into B7om console 1O0g
+":eI aL g
+13 G '  Acei TBing into B7om console 1O0g
 13320	IF BE61BPAV""2,N 
 		PRINT SR$(7)9 13340	B""E K=0
 1OT0F S  1$
@@ -1735,7 +1735,7 @@ n9U'
 	GO0 29380
 2954PW$ =	=:E
 0Y0N363IHAOE:580 ''
-T0g
+T0g
 29620 '300000 '	
 310 '	CHECK FORXIG 0 aSER NOR 0:)
 30020 '
@@ -1765,7 +1765,7 @@ tter check 3e spelling.":
 30100	R URN
 31
 a '
-31 g	CHECK USER(Nd' 3: g
+31 g	CHECK USER(Nd' 3: g
 3100PEN "R",1,"2:G0Q8)#U)PS1"Ei0fc0da
 1(&HA0'HS 1G UEN 0 SRnH  haP
 N0

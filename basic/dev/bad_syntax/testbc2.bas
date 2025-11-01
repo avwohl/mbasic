@@ -28,7 +28,7 @@ S0$="*"
 1 eeM;Mt   J"THEN IF HO>0HEN HO=H0I25umt0 I 0="M"THEN IF VE<VM THEN VEe EIS25uT
 g"o!:="S"THEN 1380U360 IF VE=""ANIrO=HM THEN 13
 1370 GOTO 0
-
+
 T GOSUB 100:PRIPpnatehpnomen dat het scherm scrol
 OeSD2tP eMte:PRINr5iO018 pTItie uiter0hehiesr"Pt00 PRINT:PRINliet g"loT "I 
 1410 GOSUB 900000000000000
@@ -46,7 +46,7 @@ VR UB 260:$w0d   Rc
  "a17R t:GOSUpIN ete" ";SR$" p0
  o0e: U1eT VEU550 PRIN"De g1r=Tteo"TVTnetjes ond=RnRar"
  d88888888888888888888888888888888888888888888888888888888888n N eMte"in kolommen staa I
-1570  5AVN 
+1570  5AVN 
  $ IF IN$="P"  INb  THEN 100000
 15eaeMte"Als er een getaliet ps0Fn het veld"
 1600 PRINT:PRIN:rnTH keknrR(ierr$7Ig l0N29eO moeteNjd58aUn N eMtTr bv stele 5Tsn soTiTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT".IR 
@@ -76,7 +76,7 @@ I1 9 ur IUiIE9 eMte"Huk O4ReVl..Re"0, 1830
 1820 M              U830 FOR I=0 TO 2PR 5AVN0eii IN$="S"THEN I=10jde40 IF IN$=""TEj680
 1850 V
 1GOSUU10G"1n  PIEP!                ":GOSUB c 16e: U1111111111111111111111111111111111111111111111111111111111111111111111111111111jde70 IF IN  uII SSIE5N5N28rPN EP
-
+
 e90 IF IN$="P"  INb  THEN 100000
 19 P:n  VngeeH 3e1or
 van Uw subroIne is noOeSI8rPN EPe 20:S"iRe"5B 300
@@ -90,7 +90,7 @@ d1
 $01k e"0Te5 
 20"GOSUB 350e"5B 3698I8aUn N eMtrNIN1
 ^ol d02"
-2020  5AVN 
+2020  5AVN 
 mttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt I 1e0="P"OR IN$="IeHj$9t9830eaeMtus e te0Fs nu afgelopen. Op dit"0eRPRINT:PRINp"Ps8SeooT0E
 verS=;TDTTRne"
 20eaeMte:PRINT"preHamR's OoBe te testen. We z

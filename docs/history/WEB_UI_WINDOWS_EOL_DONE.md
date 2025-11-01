@@ -75,9 +75,38 @@ content = content.replace('\r\n', '\n').replace('\r', '\n').replace('\x1a', '')
 - `src/input_sanitizer.py:54` - Allows CR (13) in input validation
 - `src/editing/manager.py:244` - File loading in Tk/Curses (uses Python's universal newlines)
 
+## Decision (2025-11-01)
+
+**Always use Unix-style EOL (LF) for all files.**
+
+### Rationale:
+1. **Modern editor compatibility**: All modern Windows editors (Notepad since Win10 1809, VS Code, Notepad++, etc.) handle LF-only files correctly
+2. **Browser/server independence**: Web UI may run on different OS than browser - consistent LF avoids issues
+3. **Simplicity**: No need to detect, store, or convert EOL styles
+4. **Standard practice**: Web applications typically use LF regardless of platform
+5. **BASIC portability**: Files can be moved between Windows/Linux/Mac without EOL issues
+
+### Implementation:
+- **File loading**: Continue normalizing to LF (already done in `_save_editor_to_program()`)
+- **File saving**: Python's text mode write will use LF on all platforms
+- **No changes needed**: Current code already implements this correctly
+
+### If Issues Arise:
+If a user on Windows reports problems:
+- Check their text editor (suggest modern editor if using old Notepad)
+- Most Windows users won't notice - LF is widely supported
+- Could add "Convert to CRLF" utility if actually needed (unlikely)
+
+## Status
+
+**RESOLVED** - Decision: Unix-style EOL (LF) for all files. No code changes needed.
+
 ## Priority
 
-Low - Modern editors handle LF-only files. Only matters if users on Windows report issues.
+None - Issue resolved by policy decision.
 
 ## Date Created
+2025-11-01
+
+## Date Resolved
 2025-11-01

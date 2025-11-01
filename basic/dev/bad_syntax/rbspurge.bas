@@ -139,7 +139,7 @@ e3 M(,10u740 PURGED=-1 RNB W0:RETURN
 1tGLUeYS 7$I THAMZ=MZ-1:GOTOS00 1880 GET#=u#T:C
 6, $tccccccccccccccccccccccccccccccccccccc):MX=++M(MZe L0FsuR$' 1R5O 1r 0u900 M(,6"1URN
 1920 '                                                unpack record
-1B0:,tB(R1$uD196/H6000000000000000000000000000000000000000000000000000000000ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss$,Z.)2r(l0LAtBiVU11:IFENu THEN S
+1B0:,tB(R1$uD196/H6000000000000000000000000000000000000000000000000000000000ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss$,Z.)2r(l0LAtBiVU11:IFENu THEN S
 20000 WEND 0r1KL$=LEFT$p4mEHr N0"1UrnX3VR,tBps"SEH 0nPOg"B"
 fO 1360
 130FLM

@@ -105,6 +105,23 @@
 
 - **`frontmatter_utils.py`** - Utilities for YAML frontmatter
 
+### File Format Conversion
+
+- **`convert_eol_to_lf.py`** - Convert BASIC files to Unix LF line endings
+  - Converts CRLF (\r\n) → LF (\n)
+  - Converts CR (\r) → LF (\n)
+  - Processes all .bas files in basic/ directory
+
+- **`convert_docs_eol_to_lf.py`** - Convert docs/ files to Unix LF line endings
+  - Converts .md, .txt, .bas, .json, .sh, .py, .pl, .css files
+  - Skips .pdf (binary) and .mac (need CRLF for CP/M M80 assembler)
+
+- **`convert_to_cpm.py`** - Convert files to CP/M format (CRLF + EOF marker)
+  - Converts LF (\n) → CRLF (\r\n)
+  - Adds CP/M EOF marker (\x1a)
+  - Use for transferring files to CP/M emulators (tnylpo, etc.)
+  - Usage: `python3 utils/convert_to_cpm.py input.bas [output.bas]`
+
 ### Duplicate/Cleanup
 
 - **`remove_duplicates.py`** - Remove duplicate BASIC files
