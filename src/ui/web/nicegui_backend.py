@@ -402,25 +402,21 @@ class OpenFileDialog(ui.dialog):
                 ui.label('Path:').classes('font-bold')
                 self.path_label = ui.label(str(self.path)).classes('flex-grow font-mono text-sm')
 
-            # AG Grid file browser
-            self.grid = ui.aggrid({
-                'columnDefs': [
-                    {'field': 'name', 'headerName': 'File'},
-                    {'field': 'size', 'headerName': 'Size', 'width': 100}
-                ],
-                'rowSelection': {'mode': 'singleRow'},
-                'domLayout': 'autoHeight',
-            }, html_columns=[0]).classes('w-full').on('cellDoubleClicked', self._handle_double_click)
+            # AG Grid file browser in fixed-height scrollable container
+            with ui.element('div').classes('w-full').style('height: 400px; overflow-y: auto'):
+                self.grid = ui.aggrid({
+                    'columnDefs': [
+                        {'field': 'name', 'headerName': 'File'},
+                        {'field': 'size', 'headerName': 'Size', 'width': 100}
+                    ],
+                    'rowSelection': {'mode': 'singleRow'},
+                    'domLayout': 'autoHeight',
+                }, html_columns=[0]).classes('w-full').on('cellDoubleClicked', self._handle_double_click)
 
-            # Action buttons
-            with ui.row().classes('w-full justify-between mt-4'):
-                with ui.row().classes('gap-2'):
-                    ui.button('Upload File',
-                             on_click=lambda: self._show_upload_option(),
-                             icon='upload').props('outline no-caps')
-                with ui.row().classes('gap-2'):
-                    ui.button('Cancel', on_click=self.close).props('outline no-caps')
-                    ui.button('Open', on_click=self._handle_ok, icon='folder_open').props('no-caps')
+            # Action buttons - fixed at bottom
+            with ui.row().classes('w-full justify-end gap-2 mt-4'):
+                ui.button('Cancel', on_click=self.close).props('outline no-caps')
+                ui.button('Open', on_click=self._handle_ok, icon='folder_open').props('no-caps')
 
         # Populate grid with initial data
         self._update_grid()
