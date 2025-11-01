@@ -468,8 +468,17 @@ class OpenFileDialog(ui.dialog):
                     # Click handler for file selection
                     file_row.on('click', lambda p=file_path: self._select_file(p))
 
-                    # Double-click handler - directly bind the async method
-                    file_row.on('dblclick', self._open_selected)
+                    # Double-click handler - must select file first before opening
+                    # Create a closure that captures the file path
+                    def create_dblclick_handler(p):
+                        async def handler():
+                            import sys
+                            print(f"Double-click on: {p.name}", file=sys.stderr)
+                            self._select_file(p)
+                            await self._open_selected()
+                        return handler
+
+                    file_row.on('dblclick', create_dblclick_handler(file_path))
 
         except PermissionError:
             with self.file_list:
