@@ -1781,26 +1781,14 @@ class Interpreter:
             raise RuntimeError("SAVE not available in this context")
 
     def execute_run(self, stmt):
-        """Execute RUN statement"""
-        # RUN can optionally specify a line number or filename
-        if hasattr(stmt, 'line_number') and stmt.line_number:
-            # RUN line_number - start at specific line
-            self.runtime.npc = PC.from_line(stmt.line_number)
-        elif hasattr(stmt, 'filename') and stmt.filename:
-            # RUN "filename" - load and run file
-            filename = self.evaluate_expression(stmt.filename)
-            if hasattr(self, 'interactive_mode') and self.interactive_mode:
-                self.interactive_mode.cmd_load(filename)
-                self.interactive_mode.cmd_run()
-            else:
-                raise RuntimeError("RUN filename not available in this context")
-        else:
-            # RUN without arguments - restart from beginning
-            if hasattr(self, 'interactive_mode') and self.interactive_mode:
-                self.interactive_mode.cmd_run()
-            else:
-                # In non-interactive context, just restart
-                self.runtime.halted = True
+        """Execute RUN statement - can't be called from running program.
+
+        RUN statement should only be executed in immediate mode by UI.
+        If encountered in a running program, it's an error.
+        """
+        # This should never be called during program execution
+        # RUN is handled by the UI in immediate mode
+        raise RuntimeError("RUN statement cannot be used inside a program")
 
     def execute_common(self, stmt):
         """Execute COMMON statement
