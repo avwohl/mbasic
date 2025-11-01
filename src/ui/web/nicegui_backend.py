@@ -1738,13 +1738,6 @@ class NiceGUIBackend(UIBackend):
                 self.running = False  # For display only (spinner)
                 return
 
-            # Check if RUN was called with a line number (e.g., RUN 120)
-            if hasattr(self, '_run_start_line') and self._run_start_line:
-                # Set PC to start at the specified line
-                self.runtime.npc = PC.from_line(self._run_start_line)
-                # Clear the temporary attribute
-                self._run_start_line = None
-
             # If empty program, just show Ready (variables cleared, nothing to execute)
             if not self.program.lines:
                 self._set_status('Ready')
@@ -2133,47 +2126,6 @@ class NiceGUIBackend(UIBackend):
     def _menu_about(self):
         """Help > About."""
         self.about_dialog.show()
-
-    # ========================================================================
-    # BASIC Statement Command Methods (called by interpreter)
-    # TODO: Move these to interpreter - see MOVE_STATEMENTS_TO_INTERPRETER_TODO.md
-    # ========================================================================
-
-    def cmd_list(self, args: str = "") -> None:
-        """Execute LIST command - list program lines to output."""
-        lines = self.program.get_lines()
-        for line_num, line_text in lines:
-            self._append_output(line_text + "\n")
-
-    def cmd_new(self) -> None:
-        """Execute NEW command - clear program and variables."""
-        # Clear the program
-        self.program.clear()
-
-        # Clear the editor
-        self.editor.value = ''
-
-        # Clear runtime if it exists
-        if self.runtime:
-            self.runtime.clear_variables()
-
-        # Reset current file
-        self.current_file = None
-
-        # Stop any running execution
-        if self.exec_timer:
-            self.exec_timer.cancel()
-            self.exec_timer = None
-
-        self.running = False
-        self.paused = False
-
-        self._set_status('Ready')
-        self._append_output("New\n")
-
-    # ========================================================================
-    # End BASIC Statement Command Methods
-    # ========================================================================
 
     def _start_auto_save(self):
         """Start auto-save timer."""
@@ -2730,38 +2682,6 @@ class NiceGUIBackend(UIBackend):
 
             # Show command in output
             self._append_output(f'> {command}\n')
-
-            # Handle special commands that must be processed by UI, not interpreter
-            command_upper = command.upper().strip()
-
-            # NEW command - clear program and variables
-            if command_upper == 'NEW':
-                self.cmd_new()
-                return
-
-            # RUN command - with optional line number
-            import re
-            run_match = re.match(r'^RUN(?:\s+(\d+))?$', command_upper)
-            if run_match:
-                line_num_str = run_match.group(1)
-                if line_num_str:
-                    # RUN line_number - CLEAR variables then start from that line
-                    # This is equivalent to CLEAR : GOTO line_number
-                    self.runtime.clear_variables()
-                    # Set the starting line number temporarily
-                    self._run_start_line = int(line_num_str)
-                    self._menu_run()
-                else:
-                    # RUN without arguments - normal RUN
-                    self._menu_run()
-                return
-
-            # LIST command - list program lines
-            if command_upper.startswith('LIST'):
-                # Extract arguments if any (e.g., LIST 100-200)
-                args = command[4:].strip() if len(command) > 4 else ""
-                self.cmd_list(args)
-                return
 
             # Execute the command
             from src.immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
