@@ -429,15 +429,12 @@ class OpenFileDialog(ui.dialog):
 
     def _build_row_data(self):
         """Build row data for the current directory."""
-        import sys
         try:
             # Get all items in directory
             paths = list(self.path.glob('*'))
-            print(f"DEBUG: Found {len(paths)} items in {self.path}", file=sys.stderr)
 
             # Filter to only show directories and .bas/.txt files
             paths = [p for p in paths if p.is_dir() or p.suffix.lower() in ['.bas', '.txt']]
-            print(f"DEBUG: After filter: {len(paths)} items", file=sys.stderr)
 
             # Sort: directories first (case-insensitive), then files
             paths.sort(key=lambda p: p.name.lower())
@@ -463,28 +460,21 @@ class OpenFileDialog(ui.dialog):
                     'is_dir': True
                 })
 
-            print(f"DEBUG: Built {len(row_data)} rows", file=sys.stderr)
             return row_data
 
         except PermissionError:
             self.backend._notify('Permission denied', type='negative')
             return []
         except Exception as e:
-            print(f"DEBUG ERROR: {e}", file=sys.stderr)
-            import traceback
-            traceback.print_exc(file=sys.stderr)
             self.backend._notify(f'Error: {e}', type='negative')
             return []
 
     def _update_grid(self) -> None:
         """Update the grid with files from current directory."""
-        import sys
         self.path_label.set_text(str(self.path))
         row_data = self._build_row_data()
-        print(f"DEBUG: Setting {len(row_data)} rows in grid", file=sys.stderr)
         self.grid.options['rowData'] = row_data
         self.grid.update()
-        print(f"DEBUG: Grid updated", file=sys.stderr)
 
     def _handle_double_click(self, e) -> None:
         """Handle double-click: navigate directories or open files."""
