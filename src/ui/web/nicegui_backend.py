@@ -2746,15 +2746,9 @@ class NiceGUIBackend(UIBackend):
             if success:
                 self._set_status('Immediate command executed')
 
-                # Serialize AST back to text (in case NEW/DELETE modified it)
-                # AST is source of truth, text is just a view
-                lines = self.program.get_lines()
-                if lines:
-                    editor_text = '\n'.join(line_text for line_num, line_text in lines)
-                    self.editor.value = editor_text
-                else:
-                    # Empty program (after NEW)
-                    self.editor.value = ''
+                # Don't sync editor from AST - editor text is the source!
+                # TODO: Future architecture: parse lines immediately into AST,
+                # text only kept for syntax errors
 
                 # Check if interpreter has work to do (after RUN statement)
                 # No state checking - just ask the interpreter
