@@ -1810,8 +1810,8 @@ class Interpreter:
                 # RUN line_number - CLEAR variables then GOTO line
                 self.runtime.clear_variables()
                 line_num = int(target_value)
-                # Set PC to target line so tick() executes from there
-                self.runtime.pc = PC.from_line(line_num)
+                # Set NPC to target line (like GOTO)
+                # On next tick(), NPC will be moved to PC
                 self.runtime.npc = PC.from_line(line_num)
                 self.runtime.halted = False
         else:

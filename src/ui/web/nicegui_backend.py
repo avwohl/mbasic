@@ -2285,6 +2285,11 @@ class NiceGUIBackend(UIBackend):
         but preserves current PC/execution state. This allows LIST and other
         commands to see the current program without starting execution.
         """
+        # Preserve current PC if it's valid (execution in progress)
+        # Otherwise ensure it stays halted
+        old_pc = self.runtime.pc
+        old_halted = self.runtime.halted
+
         # Clear and rebuild statement table
         self.runtime.statement_table.statements.clear()
         self.runtime.statement_table._keys_cache = None
@@ -2299,7 +2304,13 @@ class NiceGUIBackend(UIBackend):
                 pc = PC(line_num, stmt_offset)
                 self.runtime.statement_table.add(pc, stmt)
 
-        # Don't touch PC/NPC - preserve current execution state
+        # Restore PC if execution was in progress, otherwise ensure halted
+        if old_pc.halted() or old_halted:
+            self.runtime.pc = PC.halted_pc()
+            self.runtime.halted = True
+        else:
+            self.runtime.pc = old_pc
+            self.runtime.halted = old_halted
 
     def _save_editor_to_program(self):
         """Save editor content to program.
@@ -2756,7 +2767,9 @@ class NiceGUIBackend(UIBackend):
 
             # Sync program to runtime (but don't reset PC - keep current execution state)
             # This allows LIST to work, but doesn't start execution
+            self._append_output(f"DEBUG: Before sync - PC={self.runtime.pc}, halted={self.runtime.halted}\n")
             self._sync_program_to_runtime()
+            self._append_output(f"DEBUG: After sync - PC={self.runtime.pc}, halted={self.runtime.halted}\n")
 
             # Create immediate executor (runtime, interpreter, io_handler)
             immediate_executor = ImmediateExecutor(
