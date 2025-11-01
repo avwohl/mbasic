@@ -1161,6 +1161,7 @@ class NiceGUIBackend(UIBackend):
             # Editor - using CodeMirror 6
             self.editor = CodeMirrorEditor(
                 value='',
+                on_change=self._on_editor_change
             ).style('width: 100%; height: 300px; border: 1px solid #ccc;').mark('editor')
 
             # Add auto-numbering handlers
@@ -1170,19 +1171,15 @@ class NiceGUIBackend(UIBackend):
             self.auto_numbering_in_progress = False  # Prevent recursive calls
             self.editor_has_been_used = False  # Track if user has typed anything
 
-            # TODO: Migrate these event handlers to CodeMirror
-            # Use keyup to detect when user has finished typing/moving
-            # This captures Enter, arrow keys, etc.
-            self.editor.on('keyup', self._on_key_released, throttle=0.0)
+            # Event handlers now handled through CodeMirror's on_change callback
+            # The _on_editor_change method (defined below) handles:
+            # - Removing blank lines
+            # - Auto-numbering
+            # - Placeholder clearing
 
-            # Also check on mouse clicks
+            # Note: click and blur handlers can still work with CodeMirror
             self.editor.on('click', self._on_editor_click, throttle=0.05)
-
-            # Add handler to prevent blank lines and check auto-number on blur
             self.editor.on('blur', self._on_editor_blur)
-
-            # Add handler to remove blank lines after paste
-            self.editor.on('paste', self._on_paste)
 
             # Current line indicator
             self.current_line_label = ui.label('').classes('text-sm font-mono bg-yellow-100 p-1')
@@ -2349,6 +2346,29 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as ex:
             log_web_error("_remove_blank_lines", ex)
+
+    def _on_editor_change(self, e):
+        """Handle CodeMirror editor content changes.
+
+        This replaces the old keyup and paste handlers, handling:
+        - Clearing placeholder on first edit
+        - Removing blank lines
+        - Auto-numbering lines
+        """
+        try:
+            # Clear placeholder once user starts typing (no longer needed for CodeMirror)
+            # CodeMirror doesn't use placeholder prop like textarea
+            if not self.editor_has_been_used and self.editor.value:
+                self.editor_has_been_used = True
+
+            # Immediately remove blank lines
+            self._remove_blank_lines()
+
+            # Schedule auto-number check with small delay
+            ui.timer(0.05, self._check_auto_number, once=True)
+
+        except Exception as ex:
+            log_web_error("_on_editor_change", ex)
 
     def _on_paste(self, e=None):
         """Handle paste event - remove blank lines after paste completes."""
