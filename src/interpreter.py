@@ -1961,13 +1961,19 @@ class Interpreter:
     def execute_new(self, stmt):
         """Execute NEW statement - clear program and variables.
 
-        Clears the AST (line_asts, statement_table) and all variables.
+        Clears the AST (statement_table) and all variables.
         UI should serialize the empty AST back to text after this executes.
         """
-        # Clear the AST
-        self.runtime.line_asts.clear()
-        self.runtime.statement_table.clear()
-        self.runtime.lines.clear()
+        # Clear the statement table
+        self.runtime.statement_table.statements.clear()
+        self.runtime.statement_table._keys_cache = None
+
+        # Clear the line text map
+        self.runtime.line_text_map.clear()
+
+        # Clear the internal AST storage
+        if isinstance(self.runtime._ast_or_line_table, dict):
+            self.runtime._ast_or_line_table.clear()
 
         # Clear variables and arrays
         self.runtime.clear_variables()
@@ -1996,8 +2002,8 @@ class Interpreter:
         if stmt.end:
             end_line = int(self.evaluate_expression(stmt.end))
 
-        # Get all line numbers from AST
-        all_line_nums = list(self.runtime.line_asts.keys())
+        # Get all line numbers from statement table
+        all_line_nums = list(set(pc.line_num for pc in self.runtime.statement_table.statements.keys() if pc.line_num is not None))
 
         # Determine which lines to delete
         lines_to_delete = []
@@ -2011,20 +2017,19 @@ class Interpreter:
 
             lines_to_delete.append(line_num)
 
-        # Delete the lines from AST
+        # Delete the lines
         for line_num in lines_to_delete:
-            # Remove from line_asts
-            if line_num in self.runtime.line_asts:
-                del self.runtime.line_asts[line_num]
-            # Remove from lines
-            if line_num in self.runtime.lines:
-                del self.runtime.lines[line_num]
+            # Remove from line_text_map
+            if line_num in self.runtime.line_text_map:
+                del self.runtime.line_text_map[line_num]
+
+            # Remove from internal AST storage if it's a dict
+            if isinstance(self.runtime._ast_or_line_table, dict):
+                if line_num in self.runtime._ast_or_line_table:
+                    del self.runtime._ast_or_line_table[line_num]
+
             # Remove statements from statement_table
-            # (statements have PCs that reference this line)
-            pcs_to_remove = [pc for pc in self.runtime.statement_table.keys()
-                           if pc.line_num == line_num]
-            for pc in pcs_to_remove:
-                del self.runtime.statement_table[pc]
+            self.runtime.statement_table.delete_line(line_num)
 
     def execute_renum(self, stmt):
         """Execute RENUM statement - renumber program lines.
@@ -2500,8 +2505,8 @@ class Interpreter:
         if stmt.end:
             end_line = int(self.evaluate_expression(stmt.end))
 
-        # Get all line numbers from AST, sorted
-        all_line_nums = sorted(self.runtime.line_asts.keys())
+        # Get all line numbers from statement table (which comes from AST)
+        all_line_nums = sorted(set(pc.line_num for pc in self.runtime.statement_table.statements.keys() if pc.line_num is not None))
 
         # Filter by range
         lines_to_list = []
@@ -2520,9 +2525,9 @@ class Interpreter:
 
         # Output the lines
         for line_num in lines_to_list:
-            # Get the line text from runtime.lines
-            if line_num in self.runtime.lines:
-                line_text = self.runtime.lines[line_num]
+            # Get the line text from runtime.line_text_map
+            if line_num in self.runtime.line_text_map:
+                line_text = self.runtime.line_text_map[line_num]
                 self.io.output(line_text)
 
     def execute_stop(self, stmt):
