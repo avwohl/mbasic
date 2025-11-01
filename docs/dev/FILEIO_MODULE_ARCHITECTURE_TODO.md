@@ -1,5 +1,21 @@
 # TODO: FileIO Module Architecture for Sandboxing
 
+## Status: PARTIAL - RealFileIO works, SandboxedFileIO is stub
+
+**Implemented (v1.0.370-1.0.372):**
+- ✅ FileIO interface created
+- ✅ RealFileIO works (tested, all tests pass)
+- ✅ Interpreter integration works
+- ✅ FILES statement works in local UIs (TK/Curses/CLI)
+
+**Not Working (v1.0.373):**
+- ❌ SandboxedFileIO is stub - returns empty results
+- ❌ FILES doesn't work in web UI
+- ❌ Web UI still has security issue (no sandboxing yet)
+
+**Root Cause:**
+`ui.run_javascript()` returns `AwaitableResponse` which MUST be awaited. Can't use from synchronous interpreter code.
+
 ## Problem
 
 Currently, FILES/LOAD/SAVE/etc statements access the filesystem directly via `glob.glob()` and Python's `open()`. This creates a **security issue for the web UI**:
@@ -405,10 +421,87 @@ class SandboxedFileIO(FileIO):
 - Standard filesystem permissions apply
 - No change from current behavior
 
+## Async/Await Problem - Solutions
+
+### Problem
+`ui.run_javascript()` in NiceGUI returns `AwaitableResponse` that MUST be awaited:
+```python
+# This doesn't work (synchronous):
+result = ui.run_javascript('localStorage.getItem("key")')  # Returns AwaitableResponse object
+
+# This works (async):
+result = await ui.run_javascript('localStorage.getItem("key")')  # Returns actual value
+```
+
+But the interpreter is synchronous and can't await.
+
+### Solution Options
+
+**Option 1: Make Interpreter Async**
+- Make all execute_* methods async
+- Make tick() async
+- All UIs would need to await interpreter calls
+- **Pros:** Clean, proper async/await
+- **Cons:** MASSIVE refactor, breaks all UIs
+
+**Option 2: Use asyncio.run() in SandboxedFileIO**
+- Wrap async calls in `asyncio.run()`
+- Run event loop from sync code
+- **Pros:** Minimal changes to interpreter
+- **Cons:** Might conflict with NiceGUI's event loop, risky
+
+**Option 3: Pre-fetch and Cache**
+- Backend fetches localStorage on page load
+- Cache results in backend.file_cache dict
+- SandboxedFileIO reads from cache
+- **Pros:** Synchronous, no async issues
+- **Cons:** Cache can get stale, need to invalidate
+
+**Option 4: Use Different JavaScript Bridge**
+- Find/create synchronous JavaScript execution method
+- Might not exist in NiceGUI
+- **Pros:** Clean sync code
+- **Cons:** Might be impossible
+
+**Option 5: Wait/Poll Pattern**
+- Start JavaScript execution (don't await)
+- Poll for result in loop with timeout
+- **Pros:** Works with sync code
+- **Cons:** Hacky, inefficient
+
+### Recommended: Option 3 (Pre-fetch and Cache)
+
+Implement a cache in the backend:
+```python
+class NiceGUIBackend:
+    def __init__(self):
+        self.localStorage_cache = {}  # filename -> content cache
+
+    async def refresh_localStorage_cache(self):
+        """Called periodically to refresh cache from browser."""
+        files_json = await ui.run_javascript('''...get localStorage...''')
+        self.localStorage_cache = {...parse results...}
+
+class SandboxedFileIO:
+    def list_files(self, filespec):
+        # Read from backend.localStorage_cache (synchronous)
+        return [f for f in self.backend.localStorage_cache.keys()]
+```
+
+**Implementation:**
+1. Add `localStorage_cache` dict to NiceGUIBackend
+2. Add async method to refresh cache from browser
+3. Call refresh before running programs
+4. SandboxedFileIO reads from cache (sync)
+
 ## Priority
 
-High - this is a **security issue** for web UI
+High - this is a **security issue** for web UI (currently using RealFileIO which exposes server filesystem)
 
 ## Date Created
 
 2025-11-01
+
+## Date Updated
+
+2025-11-01 - Discovered async/await issue, converted SandboxedFileIO to stub

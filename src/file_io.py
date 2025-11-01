@@ -149,6 +149,10 @@ class SandboxedFileIO(FileIO):
     Uses browser localStorage for file storage.
     Files are stored per-user session with 'mbasic_file_' prefix.
     No access to server filesystem - all files are client-side only.
+
+    NOTE: This is a STUB implementation. ui.run_javascript() requires async/await
+    which can't be used from synchronous interpreter code. For now, returns empty
+    results. Full implementation needs refactoring to use async context.
     """
 
     def __init__(self, backend):
@@ -162,111 +166,42 @@ class SandboxedFileIO(FileIO):
     def list_files(self, filespec: str = "") -> List[Tuple[str, int, bool]]:
         """List files in browser localStorage.
 
-        Returns list of files stored in this user's session.
-        Pattern matching is done client-side.
+        STUB: Returns empty list because ui.run_javascript() requires async/await.
+        TODO: Needs refactoring to work with async context.
         """
-        import fnmatch
-
-        pattern = filespec.strip().strip('"').strip("'") if filespec else "*"
-        if not pattern:
-            pattern = "*"
-
-        # Get all files from localStorage via JavaScript
-        try:
-            # Use ui.run_javascript to execute in browser
-            from nicegui import ui
-            files_json = ui.run_javascript('''
-                (() => {
-                    const files = [];
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i);
-                        if (key.startsWith('mbasic_file_')) {
-                            const filename = key.substring(12);  // Remove 'mbasic_file_' prefix
-                            const content = localStorage.getItem(key);
-                            files.push({
-                                name: filename,
-                                size: content ? content.length : 0
-                            });
-                        }
-                    }
-                    return files;
-                })()
-            ''', timeout=5.0)
-
-            # Filter by pattern
-            result = []
-            if files_json:
-                for file_info in files_json:
-                    filename = file_info['name']
-                    if fnmatch.fnmatch(filename, pattern):
-                        result.append((filename, file_info['size'], False))
-
-            return sorted(result)
-
-        except Exception:
-            # If JavaScript fails, return empty list
-            return []
+        # TODO: This needs to be refactored to use async/await
+        # ui.run_javascript() returns AwaitableResponse which must be awaited
+        # Can't await from synchronous interpreter code
+        # Need to either:
+        # 1. Make interpreter async (big refactor)
+        # 2. Use a different approach (sync JavaScript bridge)
+        # 3. Pre-fetch files in backend and cache them
+        return []
 
     def load_file(self, filename: str) -> str:
-        """Load file from browser localStorage."""
-        from nicegui import ui
+        """Load file from browser localStorage.
 
-        try:
-            content = ui.run_javascript(f'''
-                localStorage.getItem('mbasic_file_{filename}')
-            ''', timeout=5.0)
-
-            if content is None:
-                raise FileNotFoundError(f"File not found: {filename}")
-
-            return content
-
-        except Exception as e:
-            if "not found" in str(e).lower():
-                raise FileNotFoundError(f"File not found: {filename}")
-            raise IOError(f"Error loading file: {e}")
+        STUB: Raises error because ui.run_javascript() requires async/await.
+        """
+        raise IOError("LOAD not yet implemented in web UI - requires async refactor")
 
     def save_file(self, filename: str, content: str) -> None:
-        """Save file to browser localStorage."""
-        from nicegui import ui
+        """Save file to browser localStorage.
 
-        try:
-            # Escape content for JavaScript
-            escaped_content = content.replace('\\', '\\\\').replace("'", "\\'").replace('\n', '\\n')
-
-            ui.run_javascript(f'''
-                localStorage.setItem('mbasic_file_{filename}', '{escaped_content}')
-            ''', timeout=5.0)
-
-        except Exception as e:
-            raise IOError(f"Error saving file: {e}")
+        STUB: Raises error because ui.run_javascript() requires async/await.
+        """
+        raise IOError("SAVE not yet implemented in web UI - requires async refactor")
 
     def delete_file(self, filename: str) -> None:
-        """Delete file from browser localStorage."""
-        from nicegui import ui
+        """Delete file from browser localStorage.
 
-        try:
-            if not self.file_exists(filename):
-                raise FileNotFoundError(f"File not found: {filename}")
-
-            ui.run_javascript(f'''
-                localStorage.removeItem('mbasic_file_{filename}')
-            ''', timeout=5.0)
-
-        except Exception as e:
-            if "not found" in str(e).lower():
-                raise
-            raise IOError(f"Error deleting file: {e}")
+        STUB: Raises error because ui.run_javascript() requires async/await.
+        """
+        raise IOError("DELETE not yet implemented in web UI - requires async refactor")
 
     def file_exists(self, filename: str) -> bool:
-        """Check if file exists in browser localStorage."""
-        from nicegui import ui
+        """Check if file exists in browser localStorage.
 
-        try:
-            exists = ui.run_javascript(f'''
-                localStorage.getItem('mbasic_file_{filename}') !== null
-            ''', timeout=5.0)
-            return bool(exists)
-
-        except Exception:
-            return False
+        STUB: Returns False because ui.run_javascript() requires async/await.
+        """
+        return False
