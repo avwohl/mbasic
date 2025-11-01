@@ -16,6 +16,7 @@ from src.iohandler.base import IOHandler
 from src.input_sanitizer import sanitize_and_clear_parity, is_valid_input_char
 from src.debug_logger import debug_log_error, is_debug_mode, debug_log
 from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode, get_default_reverse_for_mode
+from src.pc import PC
 
 
 class TkBackend(UIBackend):
@@ -874,7 +875,7 @@ class TkBackend(UIBackend):
             self._set_status("Error")
 
     def _toggle_breakpoint(self):
-        """Toggle breakpoint on current line (Ctrl+B)."""
+        """Toggle breakpoint on current statement (Ctrl+B)."""
         # Get current BASIC line number from cursor position
         line_number = self.editor_text.get_current_line_number()
 
@@ -882,15 +883,43 @@ class TkBackend(UIBackend):
             self._set_status("No line number at cursor")
             return
 
+        # Get cursor position within the line to determine which statement
+        cursor_pos = self.editor_text.text.index('insert')
+        cursor_column = int(cursor_pos.split('.')[1])
+
+        # Get the line text to determine character offset
+        tk_line_num = int(cursor_pos.split('.')[0])
+        line_text = self.editor_text.text.get(f'{tk_line_num}.0', f'{tk_line_num}.end')
+
+        # Query the statement table to find which statement the cursor is in
+        stmt_offset = 0
+        if self.runtime and self.runtime.statement_table:
+            # Get all statements for this line from the statement table
+            for pc, stmt_node in self.runtime.statement_table.statements.items():
+                if pc.line_num == line_number:
+                    # Check if cursor is within this statement's character range
+                    if stmt_node.char_start <= cursor_column <= stmt_node.char_end:
+                        stmt_offset = pc.stmt_offset
+                        break
+
+        # Create PC object for this statement
+        pc = PC(line_number, stmt_offset)
+
         # Toggle in breakpoints set
-        if line_number in self.breakpoints:
-            self.breakpoints.remove(line_number)
+        if pc in self.breakpoints:
+            self.breakpoints.remove(pc)
             self.editor_text.set_breakpoint(line_number, False)
-            self._set_status(f"Breakpoint removed from line {line_number}")
+            if stmt_offset > 0:
+                self._set_status(f"Breakpoint removed from line {line_number}, statement {stmt_offset + 1}")
+            else:
+                self._set_status(f"Breakpoint removed from line {line_number}")
         else:
-            self.breakpoints.add(line_number)
+            self.breakpoints.add(pc)
             self.editor_text.set_breakpoint(line_number, True)
-            self._set_status(f"Breakpoint set on line {line_number}")
+            if stmt_offset > 0:
+                self._set_status(f"Breakpoint set on line {line_number}, statement {stmt_offset + 1}")
+            else:
+                self._set_status(f"Breakpoint set on line {line_number}")
 
         # Update interpreter state if running
         if self.interpreter:
@@ -899,7 +928,16 @@ class TkBackend(UIBackend):
     def _clear_all_breakpoints(self):
         """Clear all breakpoints."""
         # Clear all breakpoints from editor
-        for line_number in list(self.breakpoints):
+        # Collect unique line numbers from PC objects
+        line_numbers = set()
+        for bp in list(self.breakpoints):
+            if isinstance(bp, PC):
+                line_numbers.add(bp.line_num)
+            else:
+                # Support legacy integer breakpoints
+                line_numbers.add(bp)
+
+        for line_number in line_numbers:
             self.editor_text.set_breakpoint(line_number, False)
 
         # Clear set
