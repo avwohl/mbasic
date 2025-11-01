@@ -1089,7 +1089,12 @@ class NiceGUIBackend(UIBackend):
   "imports": {
     "@codemirror/view": "https://cdn.jsdelivr.net/npm/@codemirror/view@6/dist/index.js",
     "@codemirror/state": "https://cdn.jsdelivr.net/npm/@codemirror/state@6/dist/index.js",
-    "@codemirror/commands": "https://cdn.jsdelivr.net/npm/@codemirror/commands@6/dist/index.js"
+    "@codemirror/commands": "https://cdn.jsdelivr.net/npm/@codemirror/commands@6/dist/index.js",
+    "style-mod": "https://cdn.jsdelivr.net/npm/style-mod@4/dist/style-mod.js",
+    "w3c-keyname": "https://cdn.jsdelivr.net/npm/w3c-keyname@2/index.js",
+    "@lezer/common": "https://cdn.jsdelivr.net/npm/@lezer/common@1/dist/index.js",
+    "@lezer/highlight": "https://cdn.jsdelivr.net/npm/@lezer/highlight@1/dist/index.js",
+    "crelt": "https://cdn.jsdelivr.net/npm/crelt@1/index.js"
   }
 }
 </script>

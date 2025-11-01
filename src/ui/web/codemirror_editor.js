@@ -16,6 +16,11 @@ import { Decoration, WidgetType } from "@codemirror/view";
 export default {
     template: '<div></div>',
 
+    props: {
+        value: String,
+        readonly: Boolean
+    },
+
     mounted() {
         // Extension for find highlights
         const findHighlightEffect = StateEffect.define();
