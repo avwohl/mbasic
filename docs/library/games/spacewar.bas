@@ -43,14 +43,14 @@
 430 FOR I=1 TO 10:PRINT DC$+CHR$(41)+CHR$(32);EP$
 440 FOR N=1 TO 10:NEXT N ' ring bell and flash message on screen
 450 PRINT CHR$(7);DC$+CHR$(41)+CHR$(32);
-    "        8 - Up, 2 - Down, 4 - Left, 6 - Right";
+    "        8 - Up, 2 - Down, 4 - Left, 6 - Right";
 460 FOR N=1 TO 10:NEXT N
 470 NEXT I
 480 FOR N=1 TO 2000:NEXT N:PRINT:PRINT
 490 FOR I=1 TO 10:PRINT DC$+CHR$(43)+CHR$(32);EP$
 500 FOR N=1 TO 10:NEXT N ' ring bell and flash message on screen
 510 PRINT CHR$(7);DC$+CHR$(43)+CHR$(32);
-    "Then  to fire on the alien space craft,  enter  '5'.";
+    "Then  to fire on the alien space craft,  enter  '5'.";
 520 FOR N=1 TO 10:NEXT N
 530 NEXT I
 540 FOR N=1 TO 2000:NEXT N:PRINT:PRINT
@@ -66,7 +66,7 @@
 640 FOR I=1 TO 10:PRINT DC$+CHR$(53)+CHR$(32);EP$
 650 FOR N=1 TO 10:NEXT N ' ring bell and flash message on screen
 660 PRINT CHR$(7);DC$+CHR$(53)+CHR$(35);
-    "N - Novice, H - Hotshot, E - Expert, A - Ace ?";
+    "N - Novice, H - Hotshot, E - Expert, A - Ace ?";
 670 FOR N=1 TO 10:NEXT N
 680 NEXT I
 690 V$=INKEY$:IF LEN(V$)=0 THEN GOTO 690 ' get keyboard input and create rating value
@@ -152,8 +152,8 @@
 1490 FOR I=1 TO 10:PRINT DC$+CHR$(54)+CHR$(32);EP$
 1500 FOR N=1 TO 50:NEXT N ' ring bell and flash message on screen
 1510 PRINT CHR$(7);DC$+CHR$(54)+CHR$(37);
-     UY$;"M A Y";UN$;"  ";UY$;"T H E";UN$;"  ";UY$;"F O R C E";UN$;"  ";
-     UY$;"B E";UN$;"  ";UY$;"W I T H";UN$;"  ";UY$;"Y O U";UN$;
+     UY$;"M A Y";UN$;"  ";UY$;"T H E";UN$;"  ";UY$;"F O R C E";UN$;"  ";
+     UY$;"B E";UN$;"  ";UY$;"W I T H";UN$;"  ";UY$;"Y O U";UN$;
 1520 FOR N=1 TO 50:NEXT N
 1530 NEXT I:PRINT DC$+CHR$(54)+CHR$(32);EP$ 
 1540 S=S+10:GOSUB 2020 ' add 10 to total score, and display total score
@@ -193,9 +193,9 @@
 1880 GOTO 1900
 1890 X=X+1:Y=Y-1:GOSUB 1790:GOSUB 1260:GOSUB 1230:GOTO 1900
 1900 IF X>45 OR X<1 THEN Y=12:X=19:V=V+10:GOSUB 1260:
-     PRINT CHR$(7);"You're shot down!":GOSUB 1990:GOTO 1700
+     PRINT CHR$(7);"You're shot down!":GOSUB 1990:GOTO 1700
 1910 IF Y<7 OR Y>18 THEN Y=12:X=19:V=V+10:GOSUB 1260:
-     PRINT CHR$(7);"You're destroyed!":GOSUB 1990:GOTO 1700
+     PRINT CHR$(7);"You're destroyed!":GOSUB 1990:GOTO 1700
 1920 T=0:RETURN
 1930 IF V<=5 THEN Q$="Rating = Ace Pilot":GOTO 1970 ' determine pilot rating
 1940 IF V<=10 THEN Q$="Rating = Expert Pilot":GOTO 1970

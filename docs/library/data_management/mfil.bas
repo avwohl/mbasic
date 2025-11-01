@@ -28,10 +28,10 @@
 10050 PRINT "files needed to test the SIGNON subsystem."
 10060 PRINT
 10061 IF PEEK(TESTADDRESS) <> &HC3 THEN 
-	PRINT "FATAL ERROR!":
-	PRINT "The driver test routines are not loaded at ";
-		HEX$(TESTADDRESS);"H.":
-	END
+	PRINT "FATAL ERROR!":
+	PRINT "The driver test routines are not loaded at ";
+		HEX$(TESTADDRESS);"H.":
+	END
 10070 PRINT "What user number should the files be stored in > ";
 10080 INPUT SETUSERNUMBER%
 10090 IF SETUSERNUMBER% > 15 THEN GOTO 10060

@@ -63,6 +63,12 @@ def build_category(category_key: str, items_key: str = "programs", category_name
     output_dir = ROOT / "docs/library" / category_key
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Clean up old .bas files (remove orphans from previous builds)
+    print(f"\nCleaning up old {category_name.lower()} files...")
+    for old_file in output_dir.glob("*.bas"):
+        old_file.unlink()
+        print(f"  ✗ Removed {old_file.name}")
+
     # Copy .bas files from source
     print(f"\nCopying {category_name.lower()} files...")
     items = data.get(items_key, data.get("games", []))  # Backwards compat with "games" key
