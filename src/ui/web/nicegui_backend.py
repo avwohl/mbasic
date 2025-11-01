@@ -429,8 +429,8 @@ class OpenFileDialog(ui.dialog):
                     ui.button('Cancel', on_click=self.close).props('outline no-caps')
                     ui.button('Open', on_click=self._handle_ok, icon='folder_open').props('no-caps')
 
-        self._update_grid()
         self.open()
+        self._update_grid()
 
     def _update_grid(self) -> None:
         """Update the grid with files from current directory."""
