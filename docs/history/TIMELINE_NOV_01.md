@@ -155,3 +155,97 @@ Works because:
 - Colon separator is at next_start - 1
 - Handles incorrect token char_end (especially strings)
 - Falls back to line length at end of line
+
+---
+
+## Version 1.0.366 - Convert All Files to Unix LF Line Endings
+
+**Problem:** Files in repository had mixed line endings (CRLF, CR, LF)
+
+**Solution:**
+- Converted 180 BASIC files in `basic/` to LF (178 CRLF→LF, 2 CR→LF)
+- Converted 35 docs files to LF
+- Skipped .mac files (need CRLF for CP/M M80 assembler)
+- Created `convert_to_cpm.py` utility for CP/M format conversion
+
+**Documentation:**
+- `docs/user/FILE_FORMAT_COMPATIBILITY.md` - User guide on line endings and CP/M compatibility
+- Updated utility scripts index
+
+**Files Modified:**
+- 215 files converted to LF
+- New utilities: `convert_eol_to_lf.py`, `convert_docs_eol_to_lf.py`, `convert_to_cpm.py`
+
+---
+
+## Version 1.0.367-1.0.369 - Fix RUN Command Semantics
+
+**Problem:** RUN command had incorrect checks preventing it from working properly
+- Web UI checked `if self.running: return` - prevented RUN at breakpoints
+- Web UI rejected empty programs - real MBASIC allows RUN on empty (just CLEAR)
+- Misunderstanding: RUN is NOT special, it's just `RUN = CLEAR + GOTO first line`
+
+**Solution:**
+- Removed `if self.running` check - RUN always works
+- Removed empty program error - RUN on empty is allowed
+- Added timer cancellation before RUN
+- Clarified: `self.running` is for DISPLAY only (spinner), NOT control logic
+
+**Documentation Created:**
+- `RUN_COMMAND_SEMANTICS_TODO.md` - Documents RUN semantics and `self.running` flag issues
+- `MOVE_STATEMENTS_TO_INTERPRETER_TODO.md` - Plan to move FILES/LOAD/SAVE to interpreter
+
+**Files Modified:**
+- `src/ui/web/nicegui_backend.py` - _menu_run() fixed
+
+---
+
+## Version 1.0.370 - FileIO Module Architecture for Sandboxed Web UI
+
+**Problem:** FILES statement had security issue in web UI
+- `cmd_files()` used `glob.glob()` - direct server filesystem access
+- Web users could list server directories: `FILES "../../etc/passwd"`
+- No sandboxing - web UI needs browser-only file access
+
+**Solution:** FileIO module architecture
+1. **Created `src/file_io.py`:**
+   - `FileIO` abstract interface
+   - `RealFileIO` - Direct filesystem (TK/Curses/CLI)
+   - `SandboxedFileIO` - Browser localStorage (Web UI)
+
+2. **Updated Interpreter:**
+   - Added `file_io` parameter to `__init__()`
+   - Defaults to `RealFileIO()` if `None` passed
+   - `execute_files()` uses `self.file_io.list_files()` - no UI delegation
+
+3. **Updated Web UI:**
+   - Creates `SandboxedFileIO(self)` and passes to Interpreter
+   - Removed insecure `cmd_files()` method
+   - Applied to both RUN mode and immediate mode
+
+**Key Design:**
+- Interpreter takes optional `file_io` parameter
+- `None` → creates `RealFileIO` (local filesystem)
+- Web UI passes `SandboxedFileIO` (browser localStorage)
+- It's a **sandbox issue** - web UI is responsible for sandboxing, not interpreter
+
+**Security Benefits:**
+- ✅ Web UI sandboxed - no server filesystem access
+- ✅ No path traversal attacks possible
+- ✅ Files scoped per-user session (localStorage)
+- ✅ Local UIs unchanged - real filesystem on user's machine
+
+**FILES Statement Now:**
+- Works in web UI (shows localStorage files)
+- Works in local UIs (shows real files)
+- 100% in interpreter - no UI delegation
+- Sandboxed automatically based on FileIO passed
+
+**Files Modified:**
+- `src/file_io.py` - NEW (318 lines)
+- `src/interpreter.py` - Added file_io parameter, updated execute_files()
+- `src/ui/web/nicegui_backend.py` - Pass SandboxedFileIO, removed cmd_files()
+
+**Documentation:**
+- Moved `FILEIO_MODULE_ARCHITECTURE_TODO.md` → `FILEIO_MODULE_ARCHITECTURE_DONE.md`
+- Updated `MOVE_STATEMENTS_TO_INTERPRETER_TODO.md` with FILES completion

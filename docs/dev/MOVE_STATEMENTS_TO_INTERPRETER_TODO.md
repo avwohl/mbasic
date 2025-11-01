@@ -54,11 +54,22 @@ This pattern is used for:
 - LIST → `cmd_list(args)`
 - CONT → `cmd_cont()`
 
+## Progress Update (2025-11-01)
+
+**✅ FILES - COMPLETE (v1.0.370)**
+- Implemented FileIO module architecture (see FILEIO_MODULE_ARCHITECTURE_DONE.md)
+- `Interpreter` now takes `file_io` parameter (defaults to `RealFileIO`)
+- Web UI passes `SandboxedFileIO` (browser localStorage)
+- Local UIs pass `None` (uses `RealFileIO` for direct filesystem)
+- `execute_files()` now uses `self.file_io.list_files()` - no UI delegation
+- Web UI is sandboxed - no server filesystem access
+- Works in all UIs, both immediate mode and in programs
+
 ## Missing cmd_* Methods in Web UI
 
-All 12 cmd_* methods are missing from `src/ui/web/nicegui_backend.py`:
+Remaining 11 cmd_* methods still missing from `src/ui/web/nicegui_backend.py`:
 ```
-✗ cmd_files - MISSING
+✅ cmd_files - COMPLETE (uses FileIO module)
 ✗ cmd_load - MISSING
 ✗ cmd_save - MISSING
 ✗ cmd_run - MISSING
@@ -78,23 +89,12 @@ Web UI has equivalent functionality as `_menu_*` methods, but interpreter can't 
 
 **These statements should be 100% in the interpreter (no UI delegation):**
 
-### 1. FILES - List Directory
-Already has fallback implementation (lines 2008-2019):
-```python
-import glob
-import os
-pattern = filespec if filespec else "*"
-files = sorted(glob.glob(pattern))
-if files:
-    for filename in files:
-        size = os.path.getsize(filename)
-        self.io.output(f"{filename:<20} {size:>8} bytes")
-    self.io.output(f"\n{len(files)} File(s)")
-else:
-    self.io.output(f"No files matching: {pattern}")
-```
-
-**Fix:** Remove delegation, always use direct implementation.
+### 1. ✅ FILES - List Directory (COMPLETE)
+**Status:** Implemented via FileIO module (v1.0.370)
+- Uses `self.file_io.list_files(filespec)`
+- Sandboxed for web UI (browser localStorage)
+- Real filesystem for local UIs
+- See: `src/file_io.py`, `FILEIO_MODULE_ARCHITECTURE_DONE.md`
 
 ### 2. LOAD - Load Program
 Should load program into ProgramManager directly:
