@@ -2752,11 +2752,14 @@ class NiceGUIBackend(UIBackend):
 
                 # Check if interpreter has work to do (after RUN statement)
                 # No state checking - just ask the interpreter
-                if self.interpreter and self.interpreter.has_work():
+                has_work = self.interpreter.has_work() if self.interpreter else False
+                self._append_output(f"DEBUG: has_work={has_work}, halted={self.runtime.halted}\n")
+                if self.interpreter and has_work:
                     # Start execution timer if not already running
                     if not self.exec_timer:
                         self._set_status('Running...')
                         self.exec_timer = ui.timer(0.01, self._execute_tick, once=False)
+                        self._append_output("DEBUG: Started timer\n")
             else:
                 self._set_status('Immediate command error')
 
