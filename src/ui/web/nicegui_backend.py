@@ -468,10 +468,7 @@ class OpenFileDialog(ui.dialog):
                     # Click handler for file selection
                     file_row.on('click', lambda p=file_path: self._select_file(p))
                     # Double-click handler to open file directly
-                    async def open_on_dblclick(p=file_path):
-                        self._select_file(p)
-                        await self._open_selected()
-                    file_row.on('dblclick', open_on_dblclick)
+                    file_row.on('dblclick', lambda p=file_path: self._handle_file_doubleclick(p))
 
         except PermissionError:
             with self.file_list:
@@ -509,6 +506,11 @@ class OpenFileDialog(ui.dialog):
                         row.classes(remove='bg-blue-200')
                 except:
                     pass
+
+    async def _handle_file_doubleclick(self, path: Path):
+        """Handle double-click on a file - select and open it."""
+        self._select_file(path)
+        await self._open_selected()
 
     async def _open_selected(self):
         """Open the selected file."""
