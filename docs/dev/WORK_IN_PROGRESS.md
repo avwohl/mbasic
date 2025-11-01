@@ -223,9 +223,49 @@ No more delegation to UI, just output directly.
 - Some interactive_mode references still exist (LOAD, SAVE, RUN, CHAIN, SYSTEM, MERGE, CONT)
 - Need to test if RUN 120 now works
 
-## Next Step
+## Status: COMPLETE ✅
 
-Test `RUN 120` in web UI.
+`RUN 120` now works correctly in web UI immediate mode!
+
+### What Was Fixed (v1.0.385 - v1.0.392)
+
+1. **execute_run() PC bug** - Was only setting NPC, not PC. Fixed to set NPC (like GOTO).
+2. **Runtime attributes** - execute_new/list/delete were accessing non-existent `line_asts`/`lines`. Fixed to use `statement_table`, `line_text_map`, `_ast_or_line_table`.
+3. **Program not loaded** - Editor text wasn't being parsed before immediate execution. Fixed by calling `_save_editor_to_program()`.
+4. **LIST starting execution** - Loading program was setting PC to first line. Fixed by creating `_sync_program_to_runtime()` that preserves halted state unless timer is running.
+5. **NPC not moved to PC** - Immediate executor didn't move NPC→PC after statement execution. Fixed by explicitly moving NPC→PC after immediate command completes.
+
+### Final Solution
+
+- **_save_editor_to_program()** - Parses editor text into program manager
+- **_sync_program_to_runtime()** - Rebuilds statement_table/line_text_map, preserves halted if no timer running
+- **execute_run()** - Sets NPC (not PC), clears variables, sets halted=False
+- **_execute_immediate()** - After command executes, moves NPC→PC if set, then checks has_work() and starts timer
+- **has_work()** - Returns `not self.runtime.halted`
+
+### Testing
+
+```
+100 print "100"
+110 end
+120 print "120"
+> list
+100 print "100"
+110 end
+120 print "120"
+> run 120
+120
+--- Program finished ---
+```
+
+✅ LIST shows program without executing
+✅ RUN 120 executes from line 120, prints "120"
+
+## Next Steps
+
+- Remove remaining `interactive_mode` references (LOAD, SAVE, RUN filename, CHAIN, SYSTEM, MERGE, CONT)
+- Consider eliminating `halted` flag entirely (just use `pc.halted()`?)
+- Implement immediate AST parsing (parse lines as typed, not on RUN)
 
 ---
 

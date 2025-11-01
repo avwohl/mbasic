@@ -1806,7 +1806,6 @@ class NiceGUIBackend(UIBackend):
 
         try:
             status = self.interpreter.state.status if self.interpreter else 'no interpreter'
-            self._append_output(f"DEBUG: tick status={status}, pc={self.runtime.pc}, npc={self.runtime.npc}\n")
 
             # If waiting for input, don't tick - wait for input to be provided
             if status == 'waiting_for_input':
@@ -1814,7 +1813,6 @@ class NiceGUIBackend(UIBackend):
 
             # Execute one tick (up to 1000 statements)
             state = self.interpreter.tick(mode='run', max_statements=1000)
-            self._append_output(f"DEBUG: after tick status={state.status}\n")
 
             # Handle state
             if state.status == 'done':
@@ -2770,9 +2768,7 @@ class NiceGUIBackend(UIBackend):
 
             # Sync program to runtime (but don't reset PC - keep current execution state)
             # This allows LIST to work, but doesn't start execution
-            self._append_output(f"DEBUG: Before sync - PC={self.runtime.pc}, halted={self.runtime.halted}\n")
             self._sync_program_to_runtime()
-            self._append_output(f"DEBUG: After sync - PC={self.runtime.pc}, halted={self.runtime.halted}\n")
 
             # Create immediate executor (runtime, interpreter, io_handler)
             immediate_executor = ImmediateExecutor(
@@ -2804,13 +2800,11 @@ class NiceGUIBackend(UIBackend):
                 # Check if interpreter has work to do (after RUN statement)
                 # No state checking - just ask the interpreter
                 has_work = self.interpreter.has_work() if self.interpreter else False
-                self._append_output(f"DEBUG: has_work={has_work}, halted={self.runtime.halted}\n")
                 if self.interpreter and has_work:
                     # Start execution timer if not already running
                     if not self.exec_timer:
                         self._set_status('Running...')
                         self.exec_timer = ui.timer(0.01, self._execute_tick, once=False)
-                        self._append_output("DEBUG: Started timer\n")
             else:
                 self._set_status('Immediate command error')
 
