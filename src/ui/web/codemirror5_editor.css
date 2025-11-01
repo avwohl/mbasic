@@ -1,0 +1,24 @@
+/* CodeMirror 5 Editor Custom Styles */
+
+/* Find highlight - yellow background */
+.cm-find-highlight {
+    background-color: yellow;
+    color: black;
+}
+
+/* Breakpoint line - light red background */
+.cm-breakpoint-line {
+    background-color: #ffcccc !important;
+}
+
+/* Current statement during step debugging - light green/blue background */
+.cm-current-statement {
+    background-color: #ccffcc !important;
+}
+
+/* Ensure CodeMirror fills its container */
+.CodeMirror {
+    height: 100%;
+    font-family: monospace;
+    font-size: 14px;
+}

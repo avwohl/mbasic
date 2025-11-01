@@ -16,7 +16,7 @@ from src.interpreter import Interpreter
 from src.iohandler.base import IOHandler
 from src.version import VERSION
 from src.pc import PC
-from src.ui.web.codemirror_editor import CodeMirrorEditor
+from src.ui.web.codemirror5_editor import CodeMirror5Editor
 import re
 
 
@@ -1082,26 +1082,9 @@ class NiceGUIBackend(UIBackend):
         - Output pane
         - Status bar
         """
-        # Add CodeMirror 6 import map for ES modules
-        ui.add_head_html('''
-<script type="importmap">
-{
-  "imports": {
-    "@codemirror/view": "https://cdn.jsdelivr.net/npm/@codemirror/view@6/dist/index.js",
-    "@codemirror/state": "https://cdn.jsdelivr.net/npm/@codemirror/state@6/dist/index.js",
-    "@codemirror/commands": "https://cdn.jsdelivr.net/npm/@codemirror/commands@6/dist/index.js",
-    "style-mod": "https://cdn.jsdelivr.net/npm/style-mod@4/dist/style-mod.js",
-    "w3c-keyname": "https://cdn.jsdelivr.net/npm/w3c-keyname@2/index.js",
-    "@lezer/common": "https://cdn.jsdelivr.net/npm/@lezer/common@1/dist/index.js",
-    "@lezer/highlight": "https://cdn.jsdelivr.net/npm/@lezer/highlight@1/dist/index.js",
-    "crelt": "https://cdn.jsdelivr.net/npm/crelt@1/index.js"
-  }
-}
-</script>
-        ''')
-
-        # Add CodeMirror CSS
-        ui.add_head_html('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@codemirror/view@6/dist/codemirror.css">')
+        # Use CodeMirror 5 (legacy) - simple script tags, no ES6 modules
+        ui.add_head_html('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">')
+        ui.add_head_html('<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>')
 
         # Set page title
         ui.page_title('MBASIC 5.21 - Web IDE')
@@ -1133,8 +1116,8 @@ class NiceGUIBackend(UIBackend):
 
         # Main content area
         with ui.element('div').style('width: 100%; display: flex; flex-direction: column;'):
-            # Editor - using CodeMirror 6
-            self.editor = CodeMirrorEditor(
+            # Editor - using CodeMirror 5 (legacy, no ES6 modules)
+            self.editor = CodeMirror5Editor(
                 value='',
                 on_change=self._on_editor_change
             ).style('width: 100%; height: 300px; border: 1px solid #ccc;').mark('editor')
