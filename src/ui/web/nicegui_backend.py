@@ -1111,6 +1111,22 @@ class NiceGUIBackend(UIBackend):
         - Output pane
         - Status bar
         """
+        # Add CodeMirror 6 import map for ES modules
+        ui.add_head_html('''
+<script type="importmap">
+{
+  "imports": {
+    "@codemirror/view": "https://cdn.jsdelivr.net/npm/@codemirror/view@6/dist/index.js",
+    "@codemirror/state": "https://cdn.jsdelivr.net/npm/@codemirror/state@6/dist/index.js",
+    "@codemirror/commands": "https://cdn.jsdelivr.net/npm/@codemirror/commands@6/dist/index.js"
+  }
+}
+</script>
+        ''')
+
+        # Add CodeMirror CSS
+        ui.add_head_html('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@codemirror/view@6/dist/codemirror.css">')
+
         # Set page title
         ui.page_title('MBASIC 5.21 - Web IDE')
 
