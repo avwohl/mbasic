@@ -27,6 +27,20 @@ echo "New version: $NEW_VERSION"
 # Update version file immediately
 sed -i "s/VERSION = \"$CURRENT_VERSION\"/VERSION = \"$NEW_VERSION\"/" $VERSION_FILE
 
+# Check if dev docs were modified - regenerate index
+DEV_CHANGED=$(git diff --name-only docs/dev/ 2>/dev/null | grep -v "docs/dev/index.md" || echo "")
+
+if [ -n "$DEV_CHANGED" ]; then
+    echo "Dev documentation changed - regenerating index..."
+    python3 utils/generate_dev_index.py
+    if [ $? -eq 0 ]; then
+        echo "✓ Dev index regenerated"
+    else
+        echo "❌ ERROR: Dev index generation failed"
+        exit 1
+    fi
+fi
+
 # Check if help documentation was modified
 HELP_CHANGED=$(git diff --name-only docs/help/ 2>/dev/null || echo "")
 
