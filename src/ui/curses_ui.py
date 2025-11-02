@@ -1386,6 +1386,11 @@ class CursesBackend(UIBackend):
         """Start the urwid-based curses UI main loop."""
         # UI already created in __init__, just start the loop
 
+        # Sync any pre-loaded program to the editor
+        # (e.g., when loading a file from command line)
+        if self.program.has_lines() and not self.editor_lines:
+            self._sync_program_to_editor()
+
         # Set up signal handling for clean exit
         import signal
 
@@ -3530,19 +3535,35 @@ Run                           Debug Windows
             lines.append(f"{line_num} {self.editor_lines[line_num]}")
         return '\n'.join(lines)
 
+    def _sync_program_to_editor(self):
+        """Sync program from ProgramManager to editor display.
+
+        This is used when a program is loaded externally (e.g., from command line)
+        before the UI starts, and we need to populate the editor.
+        """
+        import re
+        self.editor_lines = {}
+        for line_num, line_text in sorted(self.program.lines.items()):
+            # Extract just the code part (without line number)
+            # The line_text includes the line number, e.g., "10 PRINT \"HELLO\""
+            # We want to store just: PRINT "HELLO"
+            match = re.match(r'^\d+\s+(.*)', line_text)
+            if match:
+                self.editor_lines[line_num] = match.group(1)
+            else:
+                # Fallback: store the whole line
+                self.editor_lines[line_num] = line_text
+
+        # Update editor display
+        self.editor.set_edit_text(self._get_editor_text())
+
     def _load_program_file(self, filename):
         """Load a program from a file."""
         try:
             self.program.load_from_file(filename)
 
-            # Convert program to editor lines
-            self.editor_lines = {}
-            for line_num, line_obj in sorted(self.program.lines.items()):
-                # Get the original text for the line
-                self.editor_lines[line_num] = line_obj.original_text
-
-            # Update editor display
-            self.editor.set_edit_text(self._get_editor_text())
+            # Sync program to editor
+            self._sync_program_to_editor()
 
             # Add to recent files
             self.recent_files.add_file(filename)
