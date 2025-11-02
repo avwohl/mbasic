@@ -38,6 +38,7 @@ class HelpWidget(urwid.WidgetWrap):
         self.current_links = []  # List of (line_num, text, target) for current page
         self.link_positions = []  # List of line numbers with links (for navigation)
         self.current_link_index = 0  # Which link is selected
+        self.current_rendered_lines = []  # Cache of rendered lines for re-rendering
 
         # Search state
         self.search_indexes = self._load_search_indexes()
@@ -192,15 +193,27 @@ class HelpWidget(urwid.WidgetWrap):
         self.footer.set_text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
         self._load_topic(self.current_topic)
 
-    def _create_text_markup_with_links(self, lines: List[str]) -> List:
+    def _refresh_display(self):
+        """Re-render the current display with updated link highlighting."""
+        # Re-render using cached lines (preserves scroll position)
+        if self.current_rendered_lines:
+            text_markup = self._create_text_markup_with_links(
+                self.current_rendered_lines,
+                self.current_link_index
+            )
+            self.text_widget.set_text(text_markup)
+
+    def _create_text_markup_with_links(self, lines: List[str], current_link_index: int = 0) -> List:
         """
         Convert plain text lines to urwid markup with link highlighting.
 
         Links are marked with [text] in the rendered output. This method
-        converts them to use the 'link' attribute for highlighting.
+        converts them to use the 'link' attribute for highlighting, and
+        the 'focus' attribute for the currently selected link.
 
         Args:
             lines: List of plain text lines with links marked as [text]
+            current_link_index: Index of the currently selected link (for highlighting)
 
         Returns:
             Urwid text markup (list of tuples or strings)
@@ -208,6 +221,7 @@ class HelpWidget(urwid.WidgetWrap):
         import re
 
         markup = []
+        link_counter = 0  # Track which link we're on
 
         for line in lines:
             # Find all [text] patterns (links)
@@ -222,10 +236,16 @@ class HelpWidget(urwid.WidgetWrap):
                 if match.start() > last_end:
                     line_markup.append(line[last_end:match.start()])
 
-                # Add the link with 'link' attribute
+                # Add the link with appropriate attribute
                 link_text = match.group(0)  # Keep the brackets
-                line_markup.append(('link', link_text))
 
+                # Use 'focus' attribute for current link, 'link' for others
+                if link_counter == current_link_index:
+                    line_markup.append(('focus', link_text))
+                else:
+                    line_markup.append(('link', link_text))
+
+                link_counter += 1
                 last_end = match.end()
 
             # Add remaining text after last link
@@ -268,8 +288,11 @@ class HelpWidget(urwid.WidgetWrap):
 
             lines, links = self.renderer.render(markdown)
 
+            # Cache the rendered lines for later re-rendering
+            self.current_rendered_lines = lines
+
             # Create text markup with link highlighting
-            text_markup = self._create_text_markup_with_links(lines)
+            text_markup = self._create_text_markup_with_links(lines, self.current_link_index)
 
             # Set the content
             self.text_widget.set_text(text_markup)
@@ -376,12 +399,16 @@ class HelpWidget(urwid.WidgetWrap):
             # Move to next link
             if self.link_positions:
                 self.current_link_index = (self.current_link_index + 1) % len(self.link_positions)
+                # Re-render to update highlighting
+                self._refresh_display()
                 return None
 
         elif key == 'shift tab':
             # Move to previous link
             if self.link_positions:
                 self.current_link_index = (self.current_link_index - 1) % len(self.link_positions)
+                # Re-render to update highlighting
+                self._refresh_display()
                 return None
 
         # Pass other keys to listbox for scrolling

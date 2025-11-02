@@ -13,6 +13,7 @@ from .keybindings import (
     BREAKPOINT_KEY, CLEAR_BREAKPOINTS_KEY,
     DELETE_LINE_KEY, INSERT_LINE_KEY, RENUMBER_KEY,
     CONTINUE_KEY, STEP_KEY, STOP_KEY, CLEAR_OUTPUT_KEY, TAB_KEY, SETTINGS_KEY,
+    MAXIMIZE_OUTPUT_KEY,
     STATUS_BAR_SHORTCUTS, EDITOR_STATUS, OUTPUT_STATUS
 )
 from .markdown_renderer import MarkdownRenderer
@@ -1383,14 +1384,15 @@ class CursesBackend(UIBackend):
         self.interpreter = Interpreter(self.runtime, immediate_io, limits=create_unlimited_limits())
 
         # Initialize immediate mode executor to use the session interpreter
-        self.immediate_executor = OutputCapturingIOHandler()  # Placeholder, will be replaced
+        # Create a proper ImmediateExecutor (will be re-initialized in start() and _run_program())
+        self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
 
         # Immediate mode UI widgets
-        self.immediate_walker = None
-        self.immediate_window = None
         self.immediate_input = None
         self.immediate_status = None
-        self.immediate_frame = None
+
+        # Output maximize state (for full-screen games)
+        self.output_maximized = False
 
         # Create the UI layout immediately so widgets exist
         # (but don't start the loop yet - that happens in start())
@@ -1399,6 +1401,10 @@ class CursesBackend(UIBackend):
     def start(self):
         """Start the urwid-based curses UI main loop."""
         # UI already created in __init__, just start the loop
+
+        # Initialize immediate mode executor
+        immediate_io = OutputCapturingIOHandler()
+        self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
 
         # Sync any pre-loaded program to the editor
         # (e.g., when loading a file from command line)
@@ -1568,49 +1574,39 @@ class CursesBackend(UIBackend):
 
         # Create output frame with top/left border only (no bottom/right space reserved)
         # ListBox doesn't need Filler since it handles its own scrolling
-        self.output_frame = TopLeftBox(
-            self.output,
-            title="Output"
-        )
-
-        # Create immediate mode window (history + status + input)
-        self.immediate_walker = urwid.SimpleFocusListWalker([])
-        self.immediate_window = urwid.ListBox(self.immediate_walker)
-
         # Create immediate mode input field with Enter handler
         self.immediate_input = ImmediateInput("Ok > ", self._execute_immediate)
-
-        # Create immediate mode status indicator
-        self.immediate_status = urwid.Text(('immediate_ok', "Ok"))
 
         # Create help hint
         help_hint = urwid.Text(('dim', "Type HELP for commands"), align='right')
 
-        # Create immediate mode panel (status + history + input)
-        immediate_content = urwid.Pile([
-            ('pack', self.immediate_status),
-            ('weight', 1, self.immediate_window),
+        # Merge output and immediate mode into single pane
+        # This matches real BASIC where everything appears in one output area
+        self.output_and_immediate_pile = urwid.Pile([
+            ('weight', 1, self.output),  # Scrollable output (program + immediate history)
             ('pack', help_hint),
             ('pack', self.immediate_input)
         ])
+        # Set focus to immediate input by default when in output pane
+        self.output_and_immediate_pile.focus_position = 2
 
-        self.immediate_frame = TopLeftBox(
-            immediate_content,
-            title="Immediate Mode"
+        self.output_frame = TopLeftBox(
+            self.output_and_immediate_pile,
+            title="Output"
         )
 
-        # Create layout - menu bar at top, editor, output, immediate, status bar at bottom
+        # Create layout - menu bar at top, editor, output (with immediate at bottom), status bar at bottom
         # Store as instance variable so we can modify it when toggling variables window
         self.pile = urwid.Pile([
             ('pack', self.menu_bar),
-            ('weight', 4, self.editor_frame),
-            ('weight', 3, self.output_frame),
-            ('weight', 3, self.immediate_frame),
+            ('weight', 1, self.editor_frame),
+            ('weight', 1, self.output_frame),
             ('pack', self.status_bar)
         ])
 
-        # Set focus to the editor (second item in pile, after menu bar)
-        self.pile.focus_position = 1
+        # Set focus to the output/immediate pane by default (like real BASIC)
+        # This allows immediate commands to be typed right away
+        self.pile.focus_position = 2
 
         # Create main widget with keybindings
         main_widget = urwid.AttrMap(self.pile, 'body')
@@ -1656,7 +1652,7 @@ class CursesBackend(UIBackend):
             # Toggle between editor (position 1) and output (position 2)
             pile = self.loop.widget.base_widget
             if pile.focus_position == 1:
-                # Switch to output for scrolling
+                # Switch to output/immediate
                 pile.focus_position = 2
                 self.status_bar.set_text(OUTPUT_STATUS)
             else:
@@ -1676,6 +1672,10 @@ class CursesBackend(UIBackend):
         elif key == SETTINGS_KEY:
             # Show settings
             self._show_settings()
+
+        elif key == MAXIMIZE_OUTPUT_KEY:
+            # Toggle output maximize (for full-screen games)
+            self._toggle_output_maximize()
 
         elif key == RUN_KEY:
             # Run program
@@ -1791,7 +1791,7 @@ class CursesBackend(UIBackend):
             plural = "s" if error_count > 1 else ""
             self.status_bar.set_text(f"{base_message} - {error_count} syntax error{plural} in program")
         else:
-            self.status_bar.set_text(f"{base_message} - Press ? for help, Ctrl+U for menu")
+            self.status_bar.set_text(f"{base_message} - ^F help  ^U menu")
 
     def _debug_continue(self):
         """Continue execution from paused/breakpoint state."""
@@ -2450,8 +2450,7 @@ class CursesBackend(UIBackend):
         if self.watch_window_visible:
             # Add variables window to the pile (position 2, between editor and output)
             # Layout: menu (0), editor (1), variables (2), output (3), status (4)
-            self.pile.contents.insert(2, (self.variables_frame, ('weight', 2)))
-            self.status_bar.set_text("Variables window shown - Ctrl+W to hide")
+            self.pile.contents.insert(2, (self.variables_frame, ('weight', 1)))
 
             # Update variables display if we have a runtime
             if self.runtime:
@@ -2463,7 +2462,6 @@ class CursesBackend(UIBackend):
                 if widget is self.variables_frame:
                     self.pile.contents.pop(i)
                     break
-            self.status_bar.set_text("Variables window hidden - Ctrl+W to show")
 
         # Redraw screen
         if hasattr(self, 'loop') and self.loop and self.loop_running:
@@ -2877,6 +2875,32 @@ class CursesBackend(UIBackend):
         if self.loop_running:
             self.loop.draw_screen()
 
+    def _toggle_output_maximize(self):
+        """Toggle output window maximize (for full-screen games)."""
+        self.output_maximized = not self.output_maximized
+
+        if self.output_maximized:
+            # Hide editor, give all space to output
+            # Find editor in pile and set weight to 0 (hidden)
+            for i, (widget, options) in enumerate(self.pile.contents):
+                if widget is self.editor_frame:
+                    self.pile.contents[i] = (widget, ('weight', 0))
+                elif widget is self.output_frame:
+                    self.pile.contents[i] = (widget, ('weight', 1))
+            self.status_bar.set_text("Output maximized - ^O to restore")
+        else:
+            # Restore normal layout
+            for i, (widget, options) in enumerate(self.pile.contents):
+                if widget is self.editor_frame:
+                    self.pile.contents[i] = (widget, ('weight', 1))
+                elif widget is self.output_frame:
+                    self.pile.contents[i] = (widget, ('weight', 1))
+            self.status_bar.set_text(STATUS_BAR_SHORTCUTS)
+
+        # Redraw
+        if self.loop_running:
+            self.loop.draw_screen()
+
     def _toggle_stack_window(self):
         """Toggle visibility of the execution stack window."""
         self.stack_window_visible = not self.stack_window_visible
@@ -2885,8 +2909,7 @@ class CursesBackend(UIBackend):
             # Determine insertion position based on whether variables window is visible
             # Layout: menu (0), editor (1), [variables (2)], [stack (2 or 3)], output, status
             insert_pos = 3 if self.watch_window_visible else 2
-            self.pile.contents.insert(insert_pos, (self.stack_frame, ('weight', 2)))
-            self.status_bar.set_text("Stack window shown - Ctrl+K to hide")
+            self.pile.contents.insert(insert_pos, (self.stack_frame, ('weight', 1)))
 
             # Update stack display if we have a runtime
             if self.runtime:
@@ -2897,7 +2920,6 @@ class CursesBackend(UIBackend):
                 if widget is self.stack_frame:
                     self.pile.contents.pop(i)
                     break
-            self.status_bar.set_text("Stack window hidden - Ctrl+K to show")
 
         # Redraw screen
         if hasattr(self, 'loop') and self.loop and self.loop_running:
@@ -3180,7 +3202,7 @@ class CursesBackend(UIBackend):
                 self.output_buffer.append("└──────────────────────────────────────────────────┘")
 
                 self._update_output()
-                self.status_bar.set_text("Error - Press ? for help, Ctrl+U for menu")
+                self.status_bar.set_text("Error - ^F help  ^U menu")
                 self._update_immediate_status()
 
             elif state.status == 'paused' or state.status == 'at_breakpoint':
@@ -3811,7 +3833,7 @@ class CursesBackend(UIBackend):
 
     def _execute_immediate(self):
         """Execute immediate mode command."""
-        if not self.immediate_executor or not self.immediate_input or not self.immediate_walker:
+        if not self.immediate_executor or not self.immediate_input:
             return
 
         command = self.immediate_input.get_edit_text().strip()
@@ -3820,7 +3842,7 @@ class CursesBackend(UIBackend):
 
         # Check if safe to execute
         if not self.immediate_executor.can_execute_immediate():
-            self.immediate_walker.append(SelectableText("Cannot execute while program is running"))
+            self.output_walker.append(make_output_line("Cannot execute while program is running"))
             self.immediate_input.set_edit_text("")
             return
 
@@ -3838,26 +3860,26 @@ class CursesBackend(UIBackend):
         # This allows LIST to work, but doesn't start execution
         self._sync_program_to_runtime()
 
-        # Log the command
-        self.immediate_walker.append(SelectableText(f"> {command}"))
+        # Log the command to output window (not separate immediate history)
+        self.output_walker.append(make_output_line(f"> {command}"))
 
         # Execute
         success, output = self.immediate_executor.execute(command)
 
-        # Log the result
+        # Log the result to output window
         if output:
             for line in output.rstrip().split('\n'):
-                self.immediate_walker.append(SelectableText(line))
+                self.output_walker.append(make_output_line(line))
 
         if success:
-            self.immediate_walker.append(SelectableText("Ok"))
+            self.output_walker.append(make_output_line("Ok"))
 
         # Clear input
         self.immediate_input.set_edit_text("")
 
-        # Scroll to bottom of immediate history
-        if len(self.immediate_walker) > 0:
-            self.immediate_window.set_focus(len(self.immediate_walker) - 1)
+        # Scroll to bottom of output
+        if len(self.output_walker) > 0:
+            self.output.set_focus(len(self.output_walker) - 1)
 
         # If statement set NPC (like RUN/GOTO), move it to PC
         # This is what the tick loop does after executing a statement

@@ -28,38 +28,38 @@ class InteractiveMenuBar(urwid.WidgetWrap):
         # Define menu structure: {menu_name: [(label, callback_name), ...]}
         self.menus = {
             'File': [
-                ('New', '_new_program'),
-                ('Open...', '_load_program'),
+                ('New            ^N', '_new_program'),
+                ('Open...        ^L', '_load_program'),
                 ('Recent Files...', '_show_recent_files'),
-                ('Save', '_save_program'),
+                ('Save           ^S', '_save_program'),
                 ('Save As...', '_save_as_program'),
                 ('---', None),  # Separator
-                ('Quit', 'quit'),
+                ('Quit           ^Q', 'quit'),
             ],
             'Edit': [
-                ('Delete Line', '_delete_current_line'),
-                ('Insert Line', '_insert_line'),
-                ('Renumber...', '_renumber_program'),
+                ('Delete Line    ^D', '_delete_current_line'),
+                ('Insert Line    ^I', '_insert_line'),
+                ('Renumber...    ^E', '_renumber_program'),
                 ('---', None),
-                ('Toggle Breakpoint', '_toggle_breakpoint_current_line'),
+                ('Toggle Breakpoint ^B', '_toggle_breakpoint_current_line'),
                 ('Clear All Breakpoints', '_clear_all_breakpoints'),
             ],
             'Run': [
-                ('Run Program', '_run_program'),
-                ('Continue', '_debug_continue'),
-                ('Step Line', '_debug_step_line'),
-                ('Step Statement', '_debug_step_statement'),
-                ('Stop', '_debug_stop'),
+                ('Run Program    ^R', '_run_program'),
+                ('Continue       ^G', '_debug_continue'),
+                ('Step Line      ^L', '_debug_step_line'),
+                ('Step Statement ^T', '_debug_step_statement'),
+                ('Stop           ^X', '_debug_stop'),
                 ('---', None),
-                ('Clear Output', '_clear_output'),
+                ('Clear Output   ^Y', '_clear_output'),
             ],
             'Debug': [
-                ('Variables Window', '_toggle_variables_window'),
-                ('Execution Stack', '_toggle_stack_window'),
+                ('Variables Window ^W', '_toggle_variables_window'),
+                ('Execution Stack  ^K', '_toggle_stack_window'),
             ],
             'Help': [
-                ('Help', '_show_help'),
-                ('Settings', '_show_settings'),
+                ('Help           ^F', '_show_help'),
+                ('Settings       ^P', '_show_settings'),
             ],
         }
 
@@ -110,15 +110,33 @@ class InteractiveMenuBar(urwid.WidgetWrap):
         menu_name = self.menu_names[self.current_menu_index]
         items = self.menus[menu_name]
 
-        # Build menu text
+        # Build menu text with proper spacing for shortcuts
         menu_lines = []
+        menu_width = 24  # Width for the menu content
 
         for i, (label, callback) in enumerate(items):
             if label == '---':
-                menu_lines.append("─" * 18)
+                menu_lines.append("─" * (menu_width - 2))
             else:
                 prefix = '>' if i == self.current_item_index else ' '
-                menu_lines.append(f"{prefix} {label}")
+
+                # Split label and shortcut (if present)
+                # Format: "Command      ^K" where shortcut is right-aligned
+                if '^' in label:
+                    # Has shortcut - split on last occurrence of space before ^
+                    parts = label.rsplit(' ', 1)
+                    if len(parts) == 2 and parts[1].startswith('^'):
+                        cmd = parts[0]
+                        shortcut = parts[1]
+                        # Right-align shortcut
+                        spacing = menu_width - 4 - len(cmd) - len(shortcut)
+                        menu_lines.append(f"{prefix} {cmd}{' ' * spacing}{shortcut}")
+                    else:
+                        # Couldn't parse, just use as-is
+                        menu_lines.append(f"{prefix} {label}")
+                else:
+                    # No shortcut
+                    menu_lines.append(f"{prefix} {label}")
 
         menu_text = '\n'.join(menu_lines)
 
@@ -146,12 +164,12 @@ class InteractiveMenuBar(urwid.WidgetWrap):
             dropdown_widget,
             base_with_bg,
             align='left',
-            width=20,  # Narrow fixed width
+            width=menu_width + 2,  # Menu width + border
             valign='top',
             height='pack',
             left=x_offset,
             top=1,  # Below menu bar
-            min_width=20,
+            min_width=menu_width + 2,
             min_height=1
         )
 

@@ -189,6 +189,11 @@ SETTINGS_KEY = 'ctrl p'
 SETTINGS_CHAR = '\x10'  # Ctrl+P
 SETTINGS_DISPLAY = 'Ctrl+P'
 
+# Maximize output (for games/full-screen programs) - Ctrl+O for Output
+MAXIMIZE_OUTPUT_KEY = 'ctrl o'
+MAXIMIZE_OUTPUT_CHAR = '\x0f'  # Ctrl+O
+MAXIMIZE_OUTPUT_DISPLAY = '^O'
+
 # =============================================================================
 # Navigation
 # =============================================================================
@@ -244,9 +249,9 @@ KEYBINDINGS_BY_CATEGORY = {
 }
 
 # Quick reference for status bar - use compact ^ notation instead of Ctrl+
-STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K stack  ^Q quit"
-EDITOR_STATUS = "Editor - ^F help  ^U menu"
-OUTPUT_STATUS = "Output - Up/Down scroll  Tab editor"
+STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K stack  Tab cycle  ^Q quit"
+EDITOR_STATUS = "Editor - ^F help  ^U menu  Tab cycle"
+OUTPUT_STATUS = "Output - Up/Down scroll  Tab cycle"
 
 # =============================================================================
 # Character Code Reference (for testing and documentation)
