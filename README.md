@@ -455,6 +455,6 @@ These limitations are inherent to running vintage BASIC in a modern environment 
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+GPLv3 License - see [LICENSE](LICENSE) file for details.
 
 This project is an independent implementation created for educational and historical preservation purposes. It is not affiliated with, endorsed by, or supported by Microsoft Corporation. MBASIC and Microsoft BASIC are historical products of Microsoft Corporation.
