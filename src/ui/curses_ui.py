@@ -19,6 +19,7 @@ from .markdown_renderer import MarkdownRenderer
 from .help_widget import HelpWidget
 from .recent_files import RecentFilesManager
 from .auto_save import AutoSaveManager
+from .interactive_menu import InteractiveMenuBar
 from src.runtime import Runtime
 from src.interpreter import Interpreter
 from src.lexer import Lexer
@@ -94,15 +95,6 @@ def make_output_line(text):
         Selectable text widget for scrolling in ListBox
     """
     return SelectableText(text if text else "")
-
-
-class MenuBar(urwid.Text):
-    """Simple menu bar showing available menu categories."""
-
-    def __init__(self):
-        """Initialize menu bar."""
-        menu_text = " File   Edit   Run   Help "
-        super().__init__(menu_text, align='left')
 
 
 class ProgramEditorWidget(urwid.WidgetWrap):
@@ -1512,7 +1504,7 @@ class CursesBackend(UIBackend):
     def _create_ui(self):
         """Create the urwid UI layout."""
         # Create widgets
-        self.menu_bar = urwid.AttrMap(MenuBar(), 'header')
+        self.menu_bar = InteractiveMenuBar(self)
         self.toolbar = self._create_toolbar()
         self.editor = ProgramEditorWidget()
         self.editor._parent_ui = self  # Give editor access to parent UI for dialogs
@@ -1651,8 +1643,8 @@ class CursesBackend(UIBackend):
             return None
 
         elif key == MENU_KEY:
-            # Show menu
-            self._show_menu()
+            # Activate interactive menu bar
+            self._activate_menu()
 
         elif key == HELP_KEY:
             # Show help
@@ -2359,65 +2351,29 @@ class CursesBackend(UIBackend):
         self.loop.widget = overlay
         self.loop.unhandled_input = help_input
 
-    def _show_menu(self):
-        """Show menu with all available commands."""
-        menu_text = """
-══════════════════════════════════════════════════════════════
+    def _activate_menu(self):
+        """Activate the interactive menu bar."""
+        # Get the dropdown overlay from menu bar
+        overlay = self.menu_bar.activate()
 
-                     MBASIC 5.21 MENU
-
-══════════════════════════════════════════════════════════════
-
-File                          Edit
-────────────────────          ───────────────────────────
-  New             Ctrl+N        Delete Line       Ctrl+D
-  Open...         Ctrl+O        Insert Line       Ctrl+I
-  Recent Files... Ctrl+Shift+O  Renumber...       Ctrl+E
-  Save            Ctrl+S        Toggle Break      Ctrl+B
-  Quit            Ctrl+Q        Clear Breaks      Ctrl+Shift+B
-
-Run                           Debug Windows
-────────────────────          ────────────────────
-  Run             Ctrl+R        Variables       Ctrl+W
-  Step Line       Ctrl+L          Sort: s (mode) d (dir)
-  Step Statement  Ctrl+T        Stack           Ctrl+K
-  Continue        Ctrl+G        Clear Output    Ctrl+Y
-  Stop            Ctrl+X
-                                Help
-                                ────────────────────
-                                  Show Help     ?
-                                  About         (see help)
-
-══════════════════════════════════════════════════════════════
-
-                  Press ESC to close
-
-══════════════════════════════════════════════════════════════
-"""
-        # Create menu dialog
-        text = urwid.Text(menu_text)
-        fill = urwid.Filler(text, valign='middle')
-        box = urwid.LineBox(fill, title="Menu")
-        overlay = urwid.Overlay(
-            urwid.AttrMap(box, 'body'),
-            self.loop.widget,
-            align='center',
-            width=('relative', 70),
-            valign='middle',
-            height=('relative', 70)
-        )
-
-        # Store original widget BEFORE replacing it
+        # Store original widget
         main_widget = self.loop.widget
 
-        # Set up a one-time keypress handler to close the dialog
-        def close_menu(key):
-            self.loop.widget = main_widget
-            self.loop.unhandled_input = self._handle_input
+        # Set up keypress handler for menu navigation
+        def menu_input(key):
+            result = self.menu_bar.handle_key(key)
+            if result == 'close':
+                # Close menu and return to main UI
+                self.loop.widget = main_widget
+                self.loop.unhandled_input = self._handle_input
+            elif result == 'refresh':
+                # Refresh dropdown
+                self.loop.widget = self.menu_bar._show_dropdown()
+            # Otherwise continue with menu navigation
 
         # Show overlay and set handler
         self.loop.widget = overlay
-        self.loop.unhandled_input = close_menu
+        self.loop.unhandled_input = menu_input
 
     def _show_settings(self):
         """Show settings editor."""

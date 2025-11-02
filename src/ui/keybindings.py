@@ -65,6 +65,8 @@ HELP_CHAR = '?'
 HELP_DISPLAY = '?'
 
 # Menu system (not in JSON, hardcoded)
+# Ctrl+U activates the interactive menu bar at the top
+# Use arrow keys to navigate, Enter to select, ESC to close
 MENU_KEY = 'ctrl u'
 MENU_CHAR = '\x15'
 MENU_DISPLAY = 'Ctrl+U'
@@ -206,7 +208,7 @@ KEYBINDINGS_BY_CATEGORY = {
     'Global Commands': [
         (QUIT_DISPLAY, 'Quit'),
         (QUIT_ALT_DISPLAY, 'Quit (alternative)'),
-        (MENU_DISPLAY, 'Show menu'),
+        (MENU_DISPLAY, 'Activate menu bar (arrows navigate, Enter selects)'),
         (HELP_DISPLAY, 'This help'),
         (SETTINGS_DISPLAY, 'Settings'),
         (VARIABLES_DISPLAY, 'Toggle variables watch window'),
