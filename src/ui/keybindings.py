@@ -58,11 +58,10 @@ def _get_key(section, action):
 # Global Commands (loaded from JSON)
 # =============================================================================
 
-# Help system - Note: Ctrl+? is actually Ctrl+Shift+/ which terminals send as '?'
-# We use '?' key which works universally without conflicting with backspace (Ctrl+H)
-HELP_KEY = '?'
-HELP_CHAR = '?'
-HELP_DISPLAY = '?'
+# Help system - use Ctrl+F (F for help/Find help)
+HELP_KEY = 'ctrl f'
+HELP_CHAR = '\x06'
+HELP_DISPLAY = '^F'
 
 # Menu system (not in JSON, hardcoded)
 # Ctrl+U activates the interactive menu bar at the top
@@ -245,8 +244,8 @@ KEYBINDINGS_BY_CATEGORY = {
 }
 
 # Quick reference for status bar - use compact ^ notation instead of Ctrl+
-STATUS_BAR_SHORTCUTS = "MBASIC - ? help  ^U menu  ^W vars  ^K stack  ^Q quit"
-EDITOR_STATUS = "Editor - ? help  ^U menu"
+STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K stack  ^Q quit"
+EDITOR_STATUS = "Editor - ^F help  ^U menu"
 OUTPUT_STATUS = "Output - Up/Down scroll  Tab editor"
 
 # =============================================================================

@@ -122,7 +122,7 @@ class InteractiveMenuBar(urwid.WidgetWrap):
 
         menu_text = '\n'.join(menu_lines)
 
-        # Create dropdown widget
+        # Create dropdown widget with explicit black background
         text_widget = urwid.Text(menu_text)
         fill = urwid.Filler(text_widget, valign='top')
         box = urwid.LineBox(fill)
@@ -135,15 +135,20 @@ class InteractiveMenuBar(urwid.WidgetWrap):
         if base_widget is None:
             base_widget = self.parent_ui.loop.widget
 
+        # Wrap entire dropdown in AttrMap with body style (white on black)
+        dropdown_widget = urwid.AttrMap(box, 'body')
+
         overlay = urwid.Overlay(
-            urwid.AttrMap(box, 'body'),
+            dropdown_widget,
             base_widget,
             align='left',
             width=20,  # Narrow fixed width
             valign='top',
             height='pack',
             left=x_offset,
-            top=1  # Below menu bar
+            top=1,  # Below menu bar
+            min_width=20,
+            min_height=1
         )
 
         return overlay

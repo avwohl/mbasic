@@ -2391,7 +2391,9 @@ class CursesBackend(UIBackend):
                 self.loop.unhandled_input = self._handle_input
             elif result == 'refresh':
                 # Refresh dropdown - rebuild overlay from scratch using main widget
-                # Pass main_widget so it doesn't overlay on the old overlay
+                # First restore main widget to clear old overlay, then show new one
+                self.loop.widget = main_widget
+                self.loop.draw_screen()  # Force redraw to clear old overlay
                 new_overlay = self.menu_bar._show_dropdown(base_widget=main_widget)
                 self.loop.widget = new_overlay
             # Otherwise continue with menu navigation
