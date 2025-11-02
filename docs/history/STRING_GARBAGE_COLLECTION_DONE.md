@@ -9,3 +9,5 @@ basic.
 file docs/history/original_mbasic_src/bistrs.mac is the source code
 from the real mbasic.  Function garbag does the actual string garbage
 collection.
+
+We will be compiling to intel 8080 and need a dimilar garbage collector.
