@@ -2050,6 +2050,45 @@ class TkBackend(UIBackend):
 
         return not had_errors
 
+    def _sync_program_to_runtime(self):
+        """Sync program to runtime without resetting PC.
+
+        Updates runtime's statement_table and line_text_map from self.program,
+        but preserves current PC/execution state. This allows LIST and other
+        commands to see the current program without starting execution.
+        """
+        from src.pc import PC
+
+        # Preserve current PC if it's valid (execution in progress)
+        # Otherwise ensure it stays halted
+        old_pc = self.runtime.pc
+        old_halted = self.runtime.halted
+
+        # Clear and rebuild statement table
+        self.runtime.statement_table.statements.clear()
+        self.runtime.statement_table._keys_cache = None
+
+        # Update line text map
+        self.runtime.line_text_map = dict(self.program.lines)
+
+        # Rebuild statement table from program ASTs
+        for line_num in sorted(self.program.line_asts.keys()):
+            line_ast = self.program.line_asts[line_num]
+            for stmt_offset, stmt in enumerate(line_ast.statements):
+                pc = PC(line_num, stmt_offset)
+                self.runtime.statement_table.add(pc, stmt)
+
+        # Restore PC only if execution is actually running
+        # Otherwise ensure halted (don't accidentally start execution)
+        if self.running and not self.paused_at_breakpoint:
+            # Execution is running - preserve execution state
+            self.runtime.pc = old_pc
+            self.runtime.halted = old_halted
+        else:
+            # No execution in progress - ensure halted
+            self.runtime.pc = PC.halted_pc()
+            self.runtime.halted = True
+
     def _validate_editor_syntax(self):
         """Validate syntax of all lines in editor and update error markers.
 
@@ -3042,8 +3081,12 @@ class TkBackend(UIBackend):
 
     # UIBackend interface methods
 
-    def cmd_run(self) -> None:
-        """Execute RUN command - run the program."""
+    def cmd_run(self, start_line=None) -> None:
+        """Execute RUN command - run the program.
+
+        Args:
+            start_line: Optional line number to start execution at (for RUN line_number)
+        """
         try:
             # Clear output
             self._menu_clear_output()
@@ -3052,23 +3095,41 @@ class TkBackend(UIBackend):
             # Get program AST
             program_ast = self.program.get_program_ast()
 
-            # Create runtime and interpreter with local limits
-            from resource_limits import create_local_limits
-            self.runtime = Runtime(self.program.line_asts, self.program.lines)
+            # Reset runtime with current program - RUN = CLEAR + GOTO first line
+            # This preserves breakpoints but clears variables
+            self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
-            # Create Tk-specific IOHandler that outputs to output pane
+            # Update interpreter's IO handler to output to execution pane
+            # (reuse existing interpreter - don't create new one!)
             tk_io = TkIOHandler(self._add_output, self.root, backend=self)
-            self.interpreter = Interpreter(self.runtime, tk_io, limits=create_local_limits())
+            self.interpreter.io = tk_io
 
-            # Wire up interpreter to use Tk UI's command methods (MERGE, LOAD, FILES, etc.)
-            self.interpreter.interactive_mode = self
-
-            # Start tick-based execution
+            # Start interpreter (sets up statement table, etc.)
             state = self.interpreter.start()
             if state.status == 'error':
                 self._add_output(f"\n--- Setup error: {state.error_info.error_message if state.error_info else 'Unknown'} ---\n")
                 self._set_status("Error")
+                self.running = False
                 return
+
+            # If empty program, just show Ready (variables cleared, nothing to execute)
+            if not self.program.lines:
+                self._set_status('Ready')
+                self.running = False
+                return
+
+            # If start_line is specified, set PC AFTER start() has called setup()
+            # because setup() resets PC to first line
+            if start_line is not None:
+                from src.runtime import PC
+                # Verify the line exists
+                if start_line not in self.program.line_asts:
+                    self._add_output(f"?Undefined line {start_line}\n")
+                    self._set_status("Error")
+                    self.running = False
+                    return
+                # Set PC to start at the specified line (after start() has built statement table)
+                self.runtime.pc = PC.from_line(start_line)
 
             # Set breakpoints if any
             if self.breakpoints:
@@ -3499,6 +3560,14 @@ class TkBackend(UIBackend):
             messagebox.showwarning("Warning", "Cannot execute while program is running")
             return
 
+        # Parse editor content into program (in case user typed lines directly)
+        # This updates self.program but doesn't affect runtime yet
+        self._save_editor_to_program()
+
+        # Sync program to runtime (but don't reset PC - keep current execution state)
+        # This allows LIST to work, but doesn't start execution
+        self._sync_program_to_runtime()
+
         # Execute (don't echo the command or add "Ok" - just show results)
         success, output = self.immediate_executor.execute(command)
 
@@ -3512,6 +3581,44 @@ class TkBackend(UIBackend):
 
         # Clear input
         self.immediate_entry.delete(0, tk.END)
+
+        # If statement set NPC (like RUN/GOTO), move it to PC
+        # This is what the tick loop does after executing a statement
+        if self.runtime.npc is not None:
+            from src.debug_logger import debug_log
+            debug_log(f"[Immediate] Moving NPC {self.runtime.npc} to PC", level=1)
+            self.runtime.pc = self.runtime.npc
+            self.runtime.npc = None
+            debug_log(f"[Immediate] PC is now {self.runtime.pc}, halted={self.runtime.halted}", level=1)
+
+        # Check if interpreter has work to do (after RUN statement)
+        # No state checking - just ask the interpreter
+        has_work = self.interpreter.has_work() if self.interpreter else False
+        from src.debug_logger import debug_log
+        debug_log(f"[Immediate] has_work={has_work}, running={self.running}", level=1)
+        if self.interpreter and has_work:
+            # Start execution if not already running
+            if not self.running:
+                # Switch interpreter IO to output to main output pane (not immediate output)
+                from src.ui.tk_io_handler import TkIOHandler
+                tk_io = TkIOHandler(self._add_output, self.root, backend=self)
+                self.interpreter.io = tk_io
+
+                # Initialize interpreter state for execution
+                # NOTE: Don't call interpreter.start() because it resets PC!
+                # RUN 120 already set PC to line 120, so just set state to running
+                from src.interpreter import InterpreterState
+                from src.debug_logger import debug_log
+                debug_log(f"[Immediate] Initializing interpreter state for execution at PC={self.runtime.pc}", level=1)
+                if not hasattr(self.interpreter, 'state') or self.interpreter.state is None:
+                    self.interpreter.state = InterpreterState(_interpreter=self.interpreter)
+                self.interpreter.state.status = 'running'
+                self.interpreter.state.is_first_line = True
+
+                self._set_status('Running...')
+                self.running = True
+                debug_log(f"[Immediate] Starting tick loop", level=1)
+                self.root.after(10, self._execute_tick)
 
         # Update variables/stack windows if they exist
         if hasattr(self, 'variables_window') and self.variables_window:

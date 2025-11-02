@@ -1348,14 +1348,30 @@ class CursesBackend(UIBackend):
         self.current_filename = None  # Track current filename for Save vs Save As
 
         # Execution state
-        self.runtime = None
-        self.interpreter = None
         self.running = False
         self.paused_at_breakpoint = False
         self.output_buffer = []
 
-        # Immediate mode
-        self.immediate_executor = None
+        # Initialize runtime/interpreter for session (reused across runs)
+        from src.runtime import Runtime
+        from src.interpreter import Interpreter
+        from src.resource_limits import create_unlimited_limits
+        from src.immediate_executor import OutputCapturingIOHandler
+
+        self.runtime = Runtime({}, {})
+
+        # Create capturing IO handler for execution
+        self.io_handler = None  # Will be created fresh for each run
+
+        # Create one interpreter for the session - don't create multiple!
+        # Use unlimited limits for immediate mode (runs will use local limits)
+        immediate_io = OutputCapturingIOHandler()
+        self.interpreter = Interpreter(self.runtime, immediate_io, limits=create_unlimited_limits())
+
+        # Initialize immediate mode executor to use the session interpreter
+        self.immediate_executor = OutputCapturingIOHandler()  # Placeholder, will be replaced
+
+        # Immediate mode UI widgets
         self.immediate_walker = None
         self.immediate_window = None
         self.immediate_input = None
@@ -1932,9 +1948,12 @@ class CursesBackend(UIBackend):
             return
 
         try:
-            # Stop the interpreter
-            self.interpreter = None
-            self.runtime = None
+            # Stop the interpreter (but don't destroy it - reuse for next run)
+            if self.runtime:
+                self.runtime.halted = True
+            if self.interpreter:
+                self.interpreter.state.status = 'halted'
+            self.running = False
             self.output_buffer.append("Program stopped by user")
             self._update_output()
             self.status_bar.set_text("Program stopped - Ready")
@@ -2938,8 +2957,12 @@ Run                           Debug Windows
 
             self.stack_walker.append(make_output_line(line))
 
-    def _run_program(self):
-        """Run the current program using tick-based interpreter."""
+    def _run_program(self, start_line=None):
+        """Run the current program using tick-based interpreter.
+
+        Args:
+            start_line: Optional line number to start execution at (for RUN line_number)
+        """
         try:
             # Parse editor content into program
             self._parse_editor_content()
@@ -3026,13 +3049,38 @@ Run                           Debug Windows
                     if self.debug_enabled:
                         self.output(f"Debug: {message}")
 
-            # Create runtime and interpreter with local limits
-            from src.resource_limits import create_local_limits
+            # Reset runtime with current program - RUN = CLEAR + GOTO first line
+            # This preserves breakpoints but clears variables
+            self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
+
+            # Update interpreter's IO handler to output to execution pane
+            # (reuse existing interpreter - don't create new one!)
             io_handler = CapturingIOHandler()
-            runtime = Runtime(self.program.line_asts, self.program.lines)
-            self.interpreter = Interpreter(runtime, io_handler, limits=create_local_limits())
-            self.runtime = runtime
+            self.interpreter.io = io_handler
             self.io_handler = io_handler  # Keep reference to get output later
+
+            # Start interpreter (sets up statement table, etc.)
+            state = self.interpreter.start()
+
+            # If empty program, just show Ready (variables cleared, nothing to execute)
+            if not self.program.lines:
+                self.status_bar.set_text('Ready')
+                self.running = False
+                return
+
+            # If start_line is specified, set PC AFTER start() has called setup()
+            # because setup() resets PC to first line
+            if start_line is not None:
+                from src.runtime import PC
+                # Verify the line exists
+                if start_line not in self.program.line_asts:
+                    self.output_buffer.append(f"?Undefined line {start_line}")
+                    self._update_output()
+                    self.status_bar.set_text("Error")
+                    self.running = False
+                    return
+                # Set PC to start at the specified line (after start() has built statement table)
+                self.runtime.pc = PC.from_line(start_line)
 
             # Set breakpoints from editor
             for line_num in self.editor.breakpoints:
@@ -3042,9 +3090,6 @@ Run                           Debug Windows
             immediate_io = OutputCapturingIOHandler()
             self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
             self._update_immediate_status()
-
-            # Start execution
-            state = self.interpreter.start()
 
             if state.status == 'error':
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
@@ -3284,6 +3329,45 @@ Run                           Debug Windows
 
         # Also update the editor's internal lines dictionary for consistency
         self.editor.lines = self.editor_lines.copy()
+
+    def _sync_program_to_runtime(self):
+        """Sync program to runtime without resetting PC.
+
+        Updates runtime's statement_table and line_text_map from self.program,
+        but preserves current PC/execution state. This allows LIST and other
+        commands to see the current program without starting execution.
+        """
+        from src.pc import PC
+
+        # Preserve current PC if it's valid (execution in progress)
+        # Otherwise ensure it stays halted
+        old_pc = self.runtime.pc
+        old_halted = self.runtime.halted
+
+        # Clear and rebuild statement table
+        self.runtime.statement_table.statements.clear()
+        self.runtime.statement_table._keys_cache = None
+
+        # Update line text map
+        self.runtime.line_text_map = dict(self.program.lines)
+
+        # Rebuild statement table from program ASTs
+        for line_num in sorted(self.program.line_asts.keys()):
+            line_ast = self.program.line_asts[line_num]
+            for stmt_offset, stmt in enumerate(line_ast.statements):
+                pc = PC(line_num, stmt_offset)
+                self.runtime.statement_table.add(pc, stmt)
+
+        # Restore PC only if execution is actually running
+        # Otherwise ensure halted (don't accidentally start execution)
+        if self.running and not self.paused_at_breakpoint:
+            # Execution is running - preserve execution state
+            self.runtime.pc = old_pc
+            self.runtime.halted = old_halted
+        else:
+            # No execution in progress - ensure halted
+            self.runtime.pc = PC.halted_pc()
+            self.runtime.halted = True
 
     def _update_output(self):
         """Update the output window with buffered content."""
@@ -3737,6 +3821,20 @@ Run                           Debug Windows
             self.immediate_input.set_edit_text("")
             return
 
+        # Parse editor content into program (in case user typed lines directly)
+        # This updates self.program but doesn't affect runtime yet
+        self._parse_editor_content()
+
+        # Load program lines into program manager
+        self.program.clear()
+        for line_num in sorted(self.editor_lines.keys()):
+            line_text = f"{line_num} {self.editor_lines[line_num]}"
+            self.program.add_line(line_num, line_text)
+
+        # Sync program to runtime (but don't reset PC - keep current execution state)
+        # This allows LIST to work, but doesn't start execution
+        self._sync_program_to_runtime()
+
         # Log the command
         self.immediate_walker.append(SelectableText(f"> {command}"))
 
@@ -3757,6 +3855,73 @@ Run                           Debug Windows
         # Scroll to bottom of immediate history
         if len(self.immediate_walker) > 0:
             self.immediate_window.set_focus(len(self.immediate_walker) - 1)
+
+        # If statement set NPC (like RUN/GOTO), move it to PC
+        # This is what the tick loop does after executing a statement
+        if self.runtime and self.runtime.npc is not None:
+            self.runtime.pc = self.runtime.npc
+            self.runtime.npc = None
+
+        # Check if interpreter has work to do (after RUN statement)
+        # No state checking - just ask the interpreter
+        has_work = self.interpreter.has_work() if self.interpreter else False
+        if self.interpreter and has_work:
+            # Start execution if not already running
+            if not self.running:
+                # Switch interpreter IO to a capturing handler that outputs to the output pane
+                # (Create the same CapturingIOHandler that _run_program uses)
+                if not hasattr(self, 'io_handler') or self.io_handler is None:
+                    # Need to create the CapturingIOHandler class inline
+                    # (it's defined in _run_program, but we need it here too)
+                    class CapturingIOHandler:
+                        def __init__(self):
+                            self.output_buffer = []
+                            self.debug_enabled = False
+                        def output(self, text, end='\n'):
+                            if end == '\n':
+                                self.output_buffer.append(str(text))
+                            else:
+                                if self.output_buffer:
+                                    self.output_buffer[-1] += str(text) + end
+                                else:
+                                    self.output_buffer.append(str(text) + end)
+                        def get_and_clear_output(self):
+                            output = self.output_buffer[:]
+                            self.output_buffer.clear()
+                            return output
+                        def set_debug(self, enabled):
+                            self.debug_enabled = enabled
+                        def input(self, prompt=''):
+                            return ""
+                        def input_line(self, prompt=''):
+                            return ""
+                        def input_char(self, blocking=True):
+                            return ""
+                        def clear_screen(self):
+                            pass
+                        def error(self, message):
+                            self.output(f"Error: {message}")
+                        def debug(self, message):
+                            if self.debug_enabled:
+                                self.output(f"Debug: {message}")
+
+                    io_handler = CapturingIOHandler()
+                    self.interpreter.io = io_handler
+                    self.io_handler = io_handler
+
+                # Initialize interpreter state for execution
+                # NOTE: Don't call interpreter.start() because it resets PC!
+                # RUN 120 already set PC to line 120, so just set state to running
+                from src.interpreter import InterpreterState
+                if not hasattr(self.interpreter, 'state') or self.interpreter.state is None:
+                    self.interpreter.state = InterpreterState(_interpreter=self.interpreter)
+                self.interpreter.state.status = 'running'
+                self.interpreter.state.is_first_line = True
+
+                self.status_bar.set_text("Running program...")
+                self.running = True
+                # Start the tick loop
+                self.loop.set_alarm_in(0.01, lambda loop, user_data: self._execute_tick())
 
         # Update variables/stack windows if visible
         if self.watch_window_visible:
@@ -3779,9 +3944,13 @@ Run                           Debug Windows
 
     # Command implementations (inherited from UIBackend)
 
-    def cmd_run(self):
-        """Execute RUN command."""
-        self._run_program()
+    def cmd_run(self, start_line=None):
+        """Execute RUN command.
+
+        Args:
+            start_line: Optional line number to start execution at (for RUN line_number)
+        """
+        self._run_program(start_line=start_line)
 
     def cmd_list(self, args=""):
         """Execute LIST command."""

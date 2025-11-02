@@ -338,8 +338,12 @@ class InteractiveMode:
                 runtime = self.program_runtime if self.program_runtime else self.runtime
                 print_error(e, runtime)
 
-    def cmd_run(self):
-        """RUN - Execute the program"""
+    def cmd_run(self, start_line=None):
+        """RUN - Execute the program
+
+        Args:
+            start_line: Optional line number to start execution at (for RUN line_number)
+        """
         if not self.lines:
             print("?No program")
             return
@@ -358,7 +362,47 @@ class InteractiveMode:
             self.program_runtime = runtime
             self.program_interpreter = interpreter
 
-            interpreter.run()
+            # If start_line is specified, we need to handle it specially
+            # because interpreter.run() calls start() which calls setup() which resets PC
+            if start_line is not None:
+                from src.runtime import PC
+                # Verify the line exists
+                if start_line not in self.line_asts:
+                    print(f"?Undefined line {start_line}")
+                    return
+
+                # Clear variables (RUN line_number clears variables per MBASIC spec)
+                runtime.clear_variables()
+
+                # Start the interpreter (which calls setup() and resets PC to first line)
+                state = interpreter.start()
+                if state.status == 'error':
+                    if state.error_info:
+                        raise RuntimeError(state.error_info.error_message)
+                    return
+
+                # NOW set PC to the target line (after setup has built the statement table)
+                runtime.pc = PC.from_line(start_line)
+
+                # Run the tick loop manually (same as interpreter.run())
+                while state.status not in ('done', 'error'):
+                    state = interpreter.tick(mode='run', max_statements=10000)
+
+                    # Handle input synchronously for CLI
+                    if state.status == 'waiting_for_input':
+                        try:
+                            value = input()
+                            state = interpreter.provide_input(value)
+                        except KeyboardInterrupt:
+                            self.io.output("")
+                            self.io.output(f"Break in {state.current_line or '?'}")
+                            return
+                        except EOFError:
+                            self.io.output("")
+                            return
+            else:
+                # Normal RUN without line number - just call interpreter.run()
+                interpreter.run()
 
         except Exception as e:
             print_error(e, runtime)

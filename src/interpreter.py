@@ -1808,12 +1808,18 @@ class Interpreter:
                     raise RuntimeError("RUN filename not available in this context")
             else:
                 # RUN line_number - CLEAR variables then GOTO line
-                self.runtime.clear_variables()
                 line_num = int(target_value)
-                # Set NPC to target line (like GOTO)
-                # On next tick(), NPC will be moved to PC
-                self.runtime.npc = PC.from_line(line_num)
-                self.runtime.halted = False
+
+                # If in interactive mode, delegate to cmd_run with start line
+                if hasattr(self, 'interactive_mode') and self.interactive_mode:
+                    self.interactive_mode.cmd_run(start_line=line_num)
+                else:
+                    # In non-interactive context (running program), do inline
+                    self.runtime.clear_variables()
+                    # Set NPC to target line (like GOTO)
+                    # On next tick(), NPC will be moved to PC
+                    self.runtime.npc = PC.from_line(line_num)
+                    self.runtime.halted = False
         else:
             # RUN without arguments - CLEAR + restart from beginning
             if hasattr(self, 'interactive_mode') and self.interactive_mode:
