@@ -2356,8 +2356,8 @@ class CursesBackend(UIBackend):
         # Get the dropdown overlay from menu bar
         overlay = self.menu_bar.activate()
 
-        # Store original widget
-        main_widget = self.loop.widget
+        # Store original widget (the main UI without any overlays)
+        main_widget = self.loop.widget.base_widget if hasattr(self.loop.widget, 'base_widget') else self.loop.widget
 
         # Set up keypress handler for menu navigation
         def menu_input(key):
@@ -2367,8 +2367,18 @@ class CursesBackend(UIBackend):
                 self.loop.widget = main_widget
                 self.loop.unhandled_input = self._handle_input
             elif result == 'refresh':
-                # Refresh dropdown
-                self.loop.widget = self.menu_bar._show_dropdown()
+                # Refresh dropdown - rebuild overlay from scratch using main widget
+                new_overlay = urwid.Overlay(
+                    self.menu_bar._show_dropdown().top_w,  # Get the dropdown widget
+                    main_widget,  # Use original main widget, not current overlay
+                    align='left',
+                    width=('relative', 30),
+                    valign='top',
+                    height='pack',
+                    left=sum(len(self.menu_bar.menu_names[i]) + 3 for i in range(self.menu_bar.current_menu_index)) + 2,
+                    top=2
+                )
+                self.loop.widget = new_overlay
             # Otherwise continue with menu navigation
 
         # Show overlay and set handler
