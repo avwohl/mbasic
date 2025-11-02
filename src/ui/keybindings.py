@@ -58,11 +58,11 @@ def _get_key(section, action):
 # Global Commands (loaded from JSON)
 # =============================================================================
 
-# Help system
-_help_key = _get_key('editor', 'help') or 'Ctrl+H'
-HELP_KEY = _ctrl_key_to_urwid(_help_key)
-HELP_CHAR = _ctrl_key_to_char(_help_key)
-HELP_DISPLAY = _help_key
+# Help system - Note: Ctrl+? is actually Ctrl+Shift+/ which terminals send as '?'
+# We use '?' key which works universally without conflicting with backspace (Ctrl+H)
+HELP_KEY = '?'
+HELP_CHAR = '?'
+HELP_DISPLAY = '?'
 
 # Menu system (not in JSON, hardcoded)
 MENU_KEY = 'ctrl u'
@@ -243,8 +243,8 @@ KEYBINDINGS_BY_CATEGORY = {
 }
 
 # Quick reference for status bar
-STATUS_BAR_SHORTCUTS = f"MBASIC - {HELP_DISPLAY} help, {MENU_DISPLAY} menu, {VARIABLES_DISPLAY} vars, {STACK_DISPLAY} stack, {QUIT_DISPLAY} quit"
-EDITOR_STATUS = f"Editor - {HELP_DISPLAY} help"
+STATUS_BAR_SHORTCUTS = f"MBASIC - ? help, {MENU_DISPLAY} menu, {VARIABLES_DISPLAY} vars, {STACK_DISPLAY} stack, {QUIT_DISPLAY} quit"
+EDITOR_STATUS = f"Editor - ? help, {MENU_DISPLAY} menu"
 OUTPUT_STATUS = f"Output - Up/Down scroll, {TAB_DISPLAY} editor"
 
 # =============================================================================

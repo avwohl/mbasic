@@ -132,8 +132,8 @@ Real-time syntax validation as you type. Syntax errors are marked with a '?' sym
 
 ## Help System (4 features)
 
-### Help Command (Ctrl+H)
-Display the main help screen with keyboard shortcuts and feature overview.
+### Help Command (?)
+Display the main help screen with keyboard shortcuts and feature overview. Press ? to open help.
 
 ### Integrated Docs
 Complete MBASIC language reference and UI guide built into the help system.
@@ -142,7 +142,7 @@ Complete MBASIC language reference and UI guide built into the help system.
 Search the help system for specific topics, commands, or keywords.
 
 ### Context Help
-Press Ctrl+H with cursor on a BASIC keyword to get help for that specific command.
+Press ? with cursor on a BASIC keyword to get help for that specific command.
 
 ## Quick Reference
 
@@ -160,7 +160,7 @@ Press Ctrl+H with cursor on a BASIC keyword to get help for that specific comman
 | Ctrl+G | Continue |
 | Ctrl+W | Variables Window |
 | Ctrl+K | Execution Stack |
-| Ctrl+H | Help |
+| ? | Help |
 
 ### Status Bar Indicators
 - **●** - Breakpoint set on line

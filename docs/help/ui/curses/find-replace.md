@@ -38,7 +38,7 @@ For text replacement:
    - Reload in Curses UI
 
 3. **Use different UI**:
-   - Tk UI has full Find/Replace (Ctrl+F/Ctrl+H)
+   - Tk UI has full Find/Replace
    - Edit there and return to Curses
 
 ## Planned Implementation
@@ -51,7 +51,7 @@ Find/Replace is planned with these features:
 - Whole word matching
 - Regular expression support
 
-**Replace (Ctrl+H):**
+**Replace:**
 - Replace single occurrence
 - Replace all
 - Confirmation prompts
@@ -69,7 +69,7 @@ If you need Find/Replace now, use:
 ### Tk UI
 - Full Find/Replace dialogs
 - Ctrl+F for Find
-- Ctrl+H for Replace
+- Use Edit menu for Replace
 - F3 for Find Next
 - Case sensitive and whole word options
 

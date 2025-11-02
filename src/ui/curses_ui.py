@@ -1776,7 +1776,7 @@ class CursesBackend(UIBackend):
             plural = "s" if error_count > 1 else ""
             self.status_bar.set_text(f"{base_message} - {error_count} syntax error{plural} in program")
         else:
-            self.status_bar.set_text(f"{base_message} - Press Ctrl+H for help")
+            self.status_bar.set_text(f"{base_message} - Press ? for help, Ctrl+U for menu")
 
     def _debug_continue(self):
         """Continue execution from paused/breakpoint state."""
@@ -2385,7 +2385,7 @@ Run                           Debug Windows
   Stop            Ctrl+X
                                 Help
                                 ────────────────────
-                                  Show Help     Ctrl+H
+                                  Show Help     ?
                                   About         (see help)
 
 ══════════════════════════════════════════════════════════════
@@ -3198,7 +3198,7 @@ Run                           Debug Windows
                 self.output_buffer.append("└──────────────────────────────────────────────────┘")
 
                 self._update_output()
-                self.status_bar.set_text("Error - Press Ctrl+H for help")
+                self.status_bar.set_text("Error - Press ? for help, Ctrl+U for menu")
                 self._update_immediate_status()
 
             elif state.status == 'paused' or state.status == 'at_breakpoint':
