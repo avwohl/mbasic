@@ -7,7 +7,7 @@ You mentioned you only saw "step 4" from my instructions. This tells me the IDE 
 Please run this simple command and tell me what you see:
 
 ```bash
-python3 mbasic.py --ui curses test_continue.bas
+python3 mbasic --ui curses test_continue.bas
 ```
 
 **What should happen:**

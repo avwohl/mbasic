@@ -39,14 +39,14 @@ pip install nicegui>=3.2.0
 
 ### Launch Web UI
 ```bash
-python3 mbasic.py --ui web
+python3 mbasic --ui web
 ```
 
 This starts a local web server on `http://localhost:8080`. Open this URL in your browser.
 
 ### Load and Run a Program
 ```bash
-python3 mbasic.py --ui web program.bas
+python3 mbasic --ui web program.bas
 ```
 
 The program will be loaded and can be run from the web interface.
@@ -185,7 +185,7 @@ tests/nicegui/
 2. Wire up to UI element (button, menu item, etc.)
 3. Add test to `test_mbasic_web_ui.py`
 4. Run tests: `pytest tests/nicegui/test_mbasic_web_ui.py -v`
-5. Manual test: `python3 mbasic.py --ui web`
+5. Manual test: `python3 mbasic --ui web`
 
 ### Code Style
 - Follow existing NiceGUI patterns
@@ -199,7 +199,7 @@ tests/nicegui/
 - **v1.0.162** - Fixed ProgramManager imports, all tests passing
 - **v1.0.164** - Added program execution with tick-based interpreter
 - **v1.0.165** - Identified INPUT UX issue, created TODO
-- **v1.0.169** - Added web backend to main mbasic.py entry point
+- **v1.0.169** - Added web backend to main mbasic entry point
 
 ## Related Documentation
 

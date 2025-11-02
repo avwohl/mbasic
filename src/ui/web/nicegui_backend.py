@@ -1803,7 +1803,7 @@ class NiceGUIBackend(UIBackend):
         this can make Ctrl+C unresponsive because Python signal handlers only run
         between bytecode instructions, and the event loop stays busy.
 
-        The KeyboardInterrupt handling is done at the top level in mbasic.py,
+        The KeyboardInterrupt handling is done at the top level in mbasic,
         which wraps start_web_ui() in a try/except.
         """
         # Don't check self.running - it seems to not persist correctly in NiceGUI callbacks

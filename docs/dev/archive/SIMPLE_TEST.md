@@ -3,7 +3,7 @@
 Please run this command and tell me what you see:
 
 ```bash
-DEBUG_BP=1 python3 mbasic.py --ui curses test_continue.bas 2>&1 | tee /tmp/test_output.txt
+DEBUG_BP=1 python3 mbasic --ui curses test_continue.bas 2>&1 | tee /tmp/test_output.txt
 ```
 
 Then:

@@ -23,7 +23,7 @@ echo ""
     sleep 1
     # Quit
     echo -n $'\x11'  # Ctrl+Q
-) | python3 mbasic.py --ui curses
+) | python3 mbasic --ui curses
 
 echo ""
 echo "Test complete"

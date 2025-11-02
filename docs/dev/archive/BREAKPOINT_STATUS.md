@@ -74,7 +74,7 @@ This is the RIGHT way - no blocking, no callbacks during execution, UI stays in 
 
 When you run:
 ```bash
-python3 mbasic.py --ui curses test_continue.bas
+python3 mbasic --ui curses test_continue.bas
 ```
 
 1. Set breakpoint: Press 'b' on line 20 → See ●

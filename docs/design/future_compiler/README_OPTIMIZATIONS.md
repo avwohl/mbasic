@@ -41,7 +41,7 @@ python3 tests/semantic/test_constant_folding.py
 ### Try the Demo
 ```bash
 # Run the demo program
-python3 mbasic.py demo_all_optimizations.bas
+python3 mbasic demo_all_optimizations.bas
 
 # Analyze it
 python3 analyze_program.py demo_all_optimizations.bas --summary

@@ -54,7 +54,7 @@ Run the test script:
 
 Or manually:
 ```bash
-python3 mbasic.py --ui curses test_continue.bas
+python3 mbasic --ui curses test_continue.bas
 # Set breakpoint on line 20 (press 'b')
 # Press Ctrl+R to run
 # Verify you can see the code when breakpoint hits
@@ -96,7 +96,7 @@ If the screen is still blank after the fix, it may indicate:
 
 Debug by checking stderr:
 ```bash
-python3 mbasic.py --ui curses test_continue.bas 2> debug.log
+python3 mbasic --ui curses test_continue.bas 2> debug.log
 # Run and hit breakpoint
 # Check debug.log for errors
 ```

@@ -19,7 +19,7 @@ type: statement
 
 **Alternative**: Use [LIST](list.md) to display program to console or redirect console output to a file for printing:
 ```bash
-python3 mbasic.py yourprogram.bas > listing.txt
+python3 mbasic yourprogram.bas > listing.txt
 # Then print listing.txt using your OS print facilities
 ```
 

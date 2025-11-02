@@ -44,7 +44,7 @@ Automated tests confirm:
 ## Usage
 
 ```bash
-python3 mbasic.py --ui curses yourprogram.bas
+python3 mbasic --ui curses yourprogram.bas
 # Press ^P to open help
 # Use ↑/↓ to scroll
 # Press Enter on links to navigate

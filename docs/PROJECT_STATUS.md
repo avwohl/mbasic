@@ -180,7 +180,7 @@ None currently - all high priority tasks complete
 git clone https://github.com/avwohl/mbasic.git
 cd mbasic
 pip install -r requirements.txt
-python3 mbasic.py
+python3 mbasic
 ```
 
 ### Distribution

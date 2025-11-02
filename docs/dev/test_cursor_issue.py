@@ -11,7 +11,7 @@ print('  10 PRINT "a"')
 print('  20 PRINT "b"')
 print()
 
-child = pexpect.spawn('python3 mbasic.py --ui curses',
+child = pexpect.spawn('python3 mbasic --ui curses',
                       encoding='utf-8', dimensions=(24, 80), timeout=10)
 
 try:

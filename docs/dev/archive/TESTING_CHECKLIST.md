@@ -10,7 +10,7 @@
 
 ### 1. Start IDE
 ```bash
-python3 mbasic.py --ui curses test_continue.bas
+python3 mbasic --ui curses test_continue.bas
 ```
 
 ### 2. Set Breakpoint
@@ -80,7 +80,7 @@ When the breakpoint hits, verify you can see:
 
 1. **Check debug log**:
    ```bash
-   python3 mbasic.py --ui curses test_continue.bas 2> /tmp/debug.log
+   python3 mbasic --ui curses test_continue.bas 2> /tmp/debug.log
    # Hit breakpoint
    # Exit
    cat /tmp/debug.log

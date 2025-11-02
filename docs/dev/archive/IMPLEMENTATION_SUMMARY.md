@@ -68,7 +68,7 @@ Successfully migrated the MBASIC curses UI from npyscreen to urwid, creating a m
 ### Modified Files
 
 ```
-mbasic.py                       # Added urwid backend support
+mbasic                          # Added urwid backend support
 src/ui/__init__.py              # Conditional import with fallback
 requirements.txt                # Added urwid dependency
 docs/URWID_UI.md               # New user documentation
@@ -161,15 +161,15 @@ Total: 3/3 passed
 ### Manual Tests
 
 ```bash
-$ python3 mbasic.py
+$ python3 mbasic
 Ready
 PRINT 2+2
  4
 
-$ python3 mbasic.py --ui curses-npyscreen
+$ python3 mbasic --ui curses-npyscreen
 # Opens npyscreen full-screen UI ✓
 
-$ python3 mbasic.py --ui curses
+$ python3 mbasic --ui curses
 # Opens urwid full-screen UI ✓
 ```
 
@@ -191,7 +191,7 @@ $ python3 mbasic.py --ui curses
 For advanced features, use the npyscreen backend:
 
 ```bash
-python3 mbasic.py --ui curses-npyscreen
+python3 mbasic --ui curses-npyscreen
 ```
 
 The npyscreen backend has all features fully implemented.
@@ -267,16 +267,16 @@ Full backward compatibility maintained:
 
 ```bash
 # Default CLI backend (no dependencies)
-python3 mbasic.py
+python3 mbasic
 
 # New urwid UI (requires: pip install urwid)
-python3 mbasic.py --ui curses
+python3 mbasic --ui curses
 
 # Legacy npyscreen UI (for full features)
-python3 mbasic.py --ui curses-npyscreen
+python3 mbasic --ui curses-npyscreen
 
 # Load a program
-python3 mbasic.py --ui curses program.bas
+python3 mbasic --ui curses program.bas
 ```
 
 ### Testing
@@ -286,7 +286,7 @@ python3 mbasic.py --ui curses program.bas
 python3 tests/test_breakpoints_final.py
 
 # Test CLI
-echo 'PRINT 2+2' | python3 mbasic.py
+echo 'PRINT 2+2' | python3 mbasic
 
 # Manual urwid test
 python3 tests/test_urwid_ui.py

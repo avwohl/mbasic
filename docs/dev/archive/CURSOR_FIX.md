@@ -72,7 +72,7 @@ The fix was verified with:
    ```
 
 2. **Manual testing**: Users should test by:
-   - Starting the curses UI: `python3 mbasic.py --ui curses`
+   - Starting the curses UI: `python3 mbasic --ui curses`
    - Typing multiple program lines:
      ```
      10 PRINT "a"

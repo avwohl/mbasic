@@ -10,7 +10,7 @@ Press **'c'** at any breakpoint to continue execution until the next breakpoint 
 
 ```bash
 # 1. Start the IDE
-python3 mbasic.py --ui curses demo_continue.bas
+python3 mbasic --ui curses demo_continue.bas
 
 # 2. Set breakpoints (press 'b' on lines 100, 200, 300)
 
@@ -73,7 +73,7 @@ Guided walkthrough with instructions.
 
 ### Demo Program
 ```bash
-python3 mbasic.py --ui curses demo_continue.bas
+python3 mbasic --ui curses demo_continue.bas
 ```
 Shows multi-phase execution with strategic breakpoints.
 

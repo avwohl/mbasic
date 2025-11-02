@@ -17,13 +17,13 @@ The command-line interface (CLI) provides a traditional BASIC REPL experience.
 ## Starting the CLI
 
 ```bash
-python3 mbasic.py
+python3 mbasic
 ```
 
 Or run a program directly:
 
 ```bash
-python3 mbasic.py program.bas
+python3 mbasic program.bas
 ```
 
 ## Command Mode

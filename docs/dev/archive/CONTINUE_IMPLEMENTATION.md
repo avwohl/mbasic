@@ -73,7 +73,7 @@ Documentation and tests to demonstrate the feature:
 
 ```bash
 # Start IDE with demo program
-python3 mbasic.py --ui curses demo_continue.bas
+python3 mbasic --ui curses demo_continue.bas
 
 # In the IDE:
 1. Set breakpoints on lines 100, 200, 300 (press 'b' on each)
@@ -108,7 +108,7 @@ This provides an interactive walkthrough where you can:
 
 ### Quick Demo
 ```bash
-python3 mbasic.py --ui curses demo_continue.bas
+python3 mbasic --ui curses demo_continue.bas
 # Set breakpoints on lines 100, 200, 300
 # Run with Ctrl+R
 # Press 'c' at each breakpoint

@@ -12,7 +12,7 @@ I've added debug logging to both the interpreter AND the curses UI.
 ### Run This Test:
 
 ```bash
-DEBUG_BP=1 python3 mbasic.py --ui curses test_continue.bas 2> /tmp/full_debug.log
+DEBUG_BP=1 python3 mbasic --ui curses test_continue.bas 2> /tmp/full_debug.log
 ```
 
 Then:
@@ -66,7 +66,7 @@ Then:
 
 1. **Open terminal and run:**
    ```bash
-   DEBUG_BP=1 python3 mbasic.py --ui curses test_continue.bas 2> /tmp/full_debug.log &
+   DEBUG_BP=1 python3 mbasic --ui curses test_continue.bas 2> /tmp/full_debug.log &
    MBASIC_PID=$!
    ```
 

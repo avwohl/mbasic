@@ -25,7 +25,7 @@
 
 ### To Test Manually:
 ```bash
-python3 mbasic.py --ui curses test_curses_help.bas
+python3 mbasic --ui curses test_curses_help.bas
 # Press Ctrl+X to open menu
 # Navigate to Help with Tab
 # Press Enter to open help

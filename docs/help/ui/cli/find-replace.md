@@ -101,7 +101,7 @@ For built-in Find/Replace, use the Tk UI:
 
 ```bash
 # Start Tk UI instead of CLI
-python3 mbasic.py --ui tk
+python3 mbasic --ui tk
 ```
 
 Tk UI provides:

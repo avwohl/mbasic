@@ -65,7 +65,7 @@ When breakpoint hits:
 - ❌ NOT a blank screen!
 
 ### Test Steps
-1. Open test program: `python3 mbasic.py --ui curses test_continue.bas`
+1. Open test program: `python3 mbasic --ui curses test_continue.bas`
 2. Set breakpoint on line 20 (press 'b')
 3. Run with Ctrl+R
 4. **Verify**: Can you see the program code?

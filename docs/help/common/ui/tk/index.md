@@ -18,13 +18,13 @@ The Tkinter (Tk) interface provides a graphical IDE for MBASIC programming.
 ## Starting the Tk UI
 
 ```bash
-python3 mbasic.py --ui tk
+python3 mbasic --ui tk
 ```
 
 Or:
 
 ```bash
-python3 mbasic.py -t
+python3 mbasic -t
 ```
 
 ## Window Layout

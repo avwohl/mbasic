@@ -53,7 +53,7 @@ Complete BASIC-80 language documentation:
 
 **Start the GUI:**
 ```bash
-python3 mbasic.py --ui tk [filename.bas]
+python3 mbasic --ui tk [filename.bas]
 ```
 
 **Your First Program:**

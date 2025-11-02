@@ -12,7 +12,7 @@ The MBASIC IDE curses interface includes a full breakpoint debugger with **conti
 ### Setting Breakpoints
 1. Open a BASIC program in the curses IDE:
    ```bash
-   python3 mbasic.py --ui curses yourprogram.bas
+   python3 mbasic --ui curses yourprogram.bas
    ```
 
 2. Set breakpoints on the lines where you want to pause:
