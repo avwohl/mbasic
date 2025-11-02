@@ -345,7 +345,7 @@ The README.md lists comprehensive feature coverage including:
 
 ## References
 
-- **Main Testing Guide:** [tests/README.md](../../tests/README.md)
+- **Main Testing Guide:** `tests/README.md` (in repository root)
 - **Test Organization Plan:** See TEST_INVENTORY.md for historical test organization
 - **README Testing Section:** README.md lines 223-324
 - **Project Status:** [PROJECT_STATUS.md](../PROJECT_STATUS.md)
