@@ -1505,7 +1505,7 @@ class CursesBackend(UIBackend):
         """Create the urwid UI layout."""
         # Create widgets
         self.menu_bar = InteractiveMenuBar(self)
-        self.toolbar = self._create_toolbar()
+        # Toolbar removed - use Ctrl+U menu instead for keyboard navigation
         self.editor = ProgramEditorWidget()
         self.editor._parent_ui = self  # Give editor access to parent UI for dialogs
 
@@ -1577,19 +1577,18 @@ class CursesBackend(UIBackend):
             title="Immediate Mode"
         )
 
-        # Create layout - menu bar at top, toolbar, editor, output, immediate, status bar at bottom
+        # Create layout - menu bar at top, editor, output, immediate, status bar at bottom
         # Store as instance variable so we can modify it when toggling variables window
         self.pile = urwid.Pile([
             ('pack', self.menu_bar),
-            ('pack', self.toolbar),
             ('weight', 4, self.editor_frame),
             ('weight', 3, self.output_frame),
             ('weight', 3, self.immediate_frame),
             ('pack', self.status_bar)
         ])
 
-        # Set focus to the editor (third item in pile, after menu bar and toolbar)
-        self.pile.focus_position = 2
+        # Set focus to the editor (second item in pile, after menu bar)
+        self.pile.focus_position = 1
 
         # Create main widget with keybindings
         main_widget = urwid.AttrMap(self.pile, 'body')
