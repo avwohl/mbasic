@@ -1629,15 +1629,15 @@ class CursesBackend(UIBackend):
             raise urwid.ExitMainLoop()
 
         elif key == TAB_KEY:
-            # Toggle between editor (position 2) and output (position 3)
+            # Toggle between editor (position 1) and output (position 2)
             pile = self.loop.widget.base_widget
-            if pile.focus_position == 2:
+            if pile.focus_position == 1:
                 # Switch to output for scrolling
-                pile.focus_position = 3
+                pile.focus_position = 2
                 self.status_bar.set_text(OUTPUT_STATUS)
             else:
                 # Switch back to editor
-                pile.focus_position = 2
+                pile.focus_position = 1
                 self.status_bar.set_text(EDITOR_STATUS)
             return None
 

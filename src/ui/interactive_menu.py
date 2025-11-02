@@ -65,8 +65,8 @@ class InteractiveMenuBar(urwid.WidgetWrap):
 
         self.menu_names = list(self.menus.keys())
 
-        # Create the menu bar text
-        self.menu_text = urwid.Text(self._get_menu_bar_text(), align='left')
+        # Create the menu bar text (wrap='clip' prevents wrapping)
+        self.menu_text = urwid.Text(self._get_menu_bar_text(), align='left', wrap='clip')
         super().__init__(urwid.AttrMap(self.menu_text, 'header'))
 
     def _get_menu_bar_text(self):
