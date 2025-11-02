@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2025-11-02
-**Total Documents:** 154
+**Total Documents:** 153
 
 ## What's Here
 
@@ -63,7 +63,6 @@ If you're contributing to MBASIC:
 - [Ui Helpers Guide](UI_HELPERS_GUIDE.md)
 - [Visual Ui Editor Enhancement](VISUAL_UI_EDITOR_ENHANCEMENT.md)
 - [Web Architecture Refactor Todo](WEB_ARCHITECTURE_REFACTOR_TODO.md)
-- [Web Ui Critical Bugs Todo](WEB_UI_CRITICAL_BUGS_TODO.md)
 - [Web Ui Dialog Pattern](WEB_UI_DIALOG_PATTERN.md)
 - [Web Ui Editor Enhancements](WEB_UI_EDITOR_ENHANCEMENTS.md)
 - [Web Ui Feature Parity](WEB_UI_FEATURE_PARITY.md)

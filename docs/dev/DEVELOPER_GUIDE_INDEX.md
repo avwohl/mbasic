@@ -51,8 +51,6 @@ Welcome to the MBASIC developer documentation! This index organizes all develope
 ## Current Work
 
 - **[Work in Progress](WORK_IN_PROGRESS.md)** - Current multi-step tasks (if exists)
-- **TODO Files** - Future work items
-  - [Web UI Critical Bugs TODO](WEB_UI_CRITICAL_BUGS_TODO.md)
 
 ## Package Installation & Distribution
 
