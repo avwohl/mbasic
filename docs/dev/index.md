@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2025-11-02
-**Total Documents:** 158
+**Total Documents:** 155
 
 ## What's Here
 
@@ -119,7 +119,6 @@ If you're contributing to MBASIC:
 - [Codemirror6 Integration Issues](CODEMIRROR6_INTEGRATION_ISSUES.md)
 - [Compiler Memory Optimization](COMPILER_MEMORY_OPTIMIZATION.md)
 - [Def Fn Implementation](DEF_FN_IMPLEMENTATION.md)
-- [Docs Organization](DOCS_ORGANIZATION.md)
 - [File Io Implementation](FILE_IO_IMPLEMENTATION.md)
 - [Fileio Module Architecture Todo](FILEIO_MODULE_ARCHITECTURE_TODO.md)
 - [Filesystem Security](FILESYSTEM_SECURITY.md)
@@ -135,7 +134,6 @@ If you're contributing to MBASIC:
 - [Session 2025 10 28 Summary](SESSION_2025_10_28_SUMMARY.md)
 - [Statement Highlighting Implementation](STATEMENT_HIGHLIGHTING_IMPLEMENTATION.md)
 - [Urwid Completion](URWID_COMPLETION.md)
-- [Urwid Migration](URWID_MIGRATION.md)
 - [Variable Editing Standardization](VARIABLE_EDITING_STANDARDIZATION.md)
 - [Variable Type Suffix Behavior](VARIABLE_TYPE_SUFFIX_BEHAVIOR.md)
 - [While Loop Stack Behavior](WHILE_LOOP_STACK_BEHAVIOR.md)
@@ -191,7 +189,6 @@ If you're contributing to MBASIC:
 - [Keyword Case Scope Analysis](KEYWORD_CASE_SCOPE_ANALYSIS.md)
 - [Keyword Identifier Splitting](KEYWORD_IDENTIFIER_SPLITTING.md)
 - [Not Implemented](NOT_IMPLEMENTED.md)
-- [Npyscreen Removal](NPYSCREEN_REMOVAL.md)
 - [Resource Limits Design](RESOURCE_LIMITS_DESIGN.md)
 - [Status](STATUS.md)
 - [Variable Editing Feature](VARIABLE_EDITING_FEATURE.md)

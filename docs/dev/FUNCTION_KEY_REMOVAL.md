@@ -2,7 +2,7 @@
 
 ## Overview
 
-Removed all function key (F1-F12) references from both urwid and npyscreen curses UIs, replacing them with control character shortcuts for better terminal compatibility.
+Removed all function key (F1-F12) references from curses UIs, replacing them with control character shortcuts for better terminal compatibility.
 
 ## Motivation
 
@@ -41,7 +41,7 @@ Ctrl+S  - Save program (not yet implemented)
 Ctrl+O  - Open/Load program (not yet implemented)
 ```
 
-### npyscreen UI (`src/ui/curses_npyscreen.py`)
+### Legacy Curses UI
 
 **Removed:**
 - F9 for toggle breakpoint
@@ -134,7 +134,7 @@ These are handled properly in the code.
 
 ### Automated Tests
 
-All npyscreen backend tests pass:
+All curses backend tests pass:
 ```bash
 $ python3 tests/test_breakpoints_final.py
 Total: 3/3 passed
@@ -145,7 +145,7 @@ Total: 3/3 passed
 
 Verified in:
 - urwid UI - Ctrl+H shows help
-- npyscreen UI - 'b' toggles breakpoints
+- Curses UI - 'b' toggles breakpoints
 - No compilation errors
 - Documentation updated
 

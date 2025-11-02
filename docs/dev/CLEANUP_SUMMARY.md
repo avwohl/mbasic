@@ -24,11 +24,7 @@ The top-level directory has been cleaned and organized according to standard pro
 
 ### Development Documentation → `docs/dev/`
 
-1. **NPYSCREEN_REMOVAL.md**
-   - Documentation of npyscreen backend removal
-   - Now in: `docs/dev/NPYSCREEN_REMOVAL.md`
-
-2. **VARIABLE_TRACKING_CHANGES.md**
+1. **VARIABLE_TRACKING_CHANGES.md**
    - Documentation of variable tracking API changes
    - Now in: `docs/dev/VARIABLE_TRACKING_CHANGES.md`
 
