@@ -1636,11 +1636,12 @@ class CursesBackend(UIBackend):
 
     def _debug_step(self):
         """Execute one statement and pause (single-step debugging)."""
-        if not self.interpreter:
-            # No program running - start in step mode
+        if not self.interpreter or not hasattr(self.interpreter, 'state') or not self.interpreter.state:
+            # No program running - start it and step immediately
             self._run_program()
-            if not self.interpreter:
-                return  # Failed to start
+            # Program is now running async - halt it immediately and step
+            self.runtime.halted = True
+            # Now fall through to step below
 
         try:
             # If halted, clear it to resume execution (like a microprocessor)
@@ -1649,7 +1650,7 @@ class CursesBackend(UIBackend):
 
             # Execute one statement
             self.status_bar.set_text("Stepping...")
-            state = self.interpreter.tick(mode='step', max_statements=1)
+            state = self.interpreter.tick(mode='step_statement', max_statements=1)
 
             # Collect any output
             new_output = self.io_handler.get_and_clear_output()
@@ -1715,11 +1716,12 @@ class CursesBackend(UIBackend):
 
     def _debug_step_line(self):
         """Execute all statements on current line and pause (step by line)."""
-        if not self.interpreter:
-            # No program running - start in step mode
+        if not self.interpreter or not hasattr(self.interpreter, 'state') or not self.interpreter.state:
+            # No program running - start it and step immediately
             self._run_program()
-            if not self.interpreter:
-                return  # Failed to start
+            # Program is now running async - halt it immediately and step
+            self.runtime.halted = True
+            # Now fall through to step below
 
         try:
             # If halted, clear it to resume execution (like a microprocessor)
