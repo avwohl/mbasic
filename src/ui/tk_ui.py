@@ -682,6 +682,9 @@ class TkBackend(UIBackend):
         # Clear paused state to allow stepping through breakpoints
         self.paused_at_breakpoint = False
 
+        # Clear halted flag to allow execution (step will set it again after executing)
+        self.runtime.halted = False
+
         try:
             state = self.interpreter.tick(mode='step_line', max_statements=100)
 
@@ -736,6 +739,9 @@ class TkBackend(UIBackend):
 
         # Clear paused state to allow stepping through breakpoints
         self.paused_at_breakpoint = False
+
+        # Clear halted flag to allow execution (step will set it again after executing)
+        self.runtime.halted = False
 
         try:
             state = self.interpreter.tick(mode='step_statement', max_statements=1)
