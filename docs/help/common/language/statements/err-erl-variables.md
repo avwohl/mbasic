@@ -49,13 +49,7 @@ These variables are automatically set when an error occurs and can be used in er
 This example sets up an error handler that prints the error code and line number when an error occurs.
 
 ## See Also
-- [CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](cload.md) - To load a program or an array from cassette tape into memory
-- [CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](csave.md) - To save the program or an       array   currently     in memory on cassette tape
-- [CVI, CVS, CVD](../functions/cvi-cvs-cvd.md) - Convert string values to numeric values
-- [DEFINT/SNG/DBL/STR](defint-sng-dbl-str.md) - To declare variable types as integer,        single precision, double precision, or string
-- [INPUT#](input_hash.md) - To read data items from a sequential disk    file and assign them to program variables
-- [LINE INPUT](line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
-- [LPRINT AND LPRINT USING](lprint-lprint-using.md) - To print data at the line printer
-- [MKI$, MKS$, MKD$](../functions/mki_dollar-mks_dollar-mkd_dollar.md) - Convert numeric values to string values
-- [SPACE$](../functions/space_dollar.md) - Returns a string of spaces of length X
-- [TAB](../functions/tab.md) - Spaces to position I on the terminal
+- [ON ERROR GOTO](on-error-goto.md) - Set up error handling routine
+- [RESUME](resume.md) - Continue program execution after error handling
+- [ERROR](error.md) - Generate an error with specific code
+- [Error Codes](../appendices/error-codes.md) - Complete list of error codes

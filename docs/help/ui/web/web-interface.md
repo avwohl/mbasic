@@ -18,9 +18,9 @@ The Web UI has three main text areas:
 
 Write your BASIC program here.
 
-- **Automatic line numbering** when you press Enter
+- **Automatic line numbering** when you press Enter (configurable via Settings)
 - Example: Type `PRINT "HELLO"` and press Enter → becomes `10 PRINT "HELLO"`
-- Successive lines auto-increment: next line becomes 20, 30, 40, etc.
+- Successive lines auto-increment: next line becomes 20, 30, 40, etc. (increment is configurable)
 - **Manual numbering**: You can still type your own line numbers if desired
 
 **Example workflow:**
@@ -105,10 +105,11 @@ Access File, Edit, Run, and Help functions.
 
 The **Program Editor** automatically adds line numbers when you press Enter:
 
-- **First line**: Starts at 10
-- **Subsequent lines**: Increment by 10 (20, 30, 40...)
+- **First line**: Starts at 10 (configurable in Settings)
+- **Subsequent lines**: Increment by 10 (20, 30, 40...) - configurable in Settings
 - **Manual numbering**: You can still type your own line numbers if desired
 - **Only in Editor**: The Command area does NOT auto-number (it runs commands immediately)
+- **Configurable**: Use the Settings dialog (⚙️ icon) to change the increment or disable auto-numbering entirely
 
 ### Example Program
 

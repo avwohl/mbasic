@@ -27,45 +27,32 @@ type: statement
 
 ```basic
 LPRINT [<list of expressions>]
-LPRINT USING <string exp>i<list of expressions>
-LSET <string variable> = <string expression>
-RSET <string variable> = <string expression>
+LPRINT USING <string exp>;<list of expressions>
 ```
 
-**Versions:** Extended, Disk Disk
+**Versions:** Extended, Disk
 
 ## Purpose
 
-To print data at the line printer. To move data from memory to a random file buffer (in preparation for a PUT statement) •
+To print data at the line printer.
 
 ## Remarks
 
+LPRINT works exactly like the PRINT statement except that output goes to the line printer instead of the screen. LPRINT USING works exactly like PRINT USING except output goes to the line printer.
 
 ## Example
 
 ```basic
-150 LSET A$=MKS$(AMT)
-              160 LSET D$=DESC($~
-              See also Appendix B.
-NOTE:         LSET or RSET may also be used with a non-fielded
-              string variable to left-justify or right-justify
-              a string in a given field.    For example, the
-              program lines
-                      110 A$=SPACE$(20)
-                      120 RSET A$=N$
-              right-justify the string N$ in a 20-character
-              field.   This can be very handy for formatting
-              printed output.
+10 LPRINT "Sales Report for "; DATE$
+20 LPRINT
+30 LPRINT "Item", "Quantity", "Price"
+40 LPRINT USING "##: $$###.##"; ITEM, PRICE
 ```
 
 ## See Also
-- [CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](cload.md) - To load a program or an array from cassette tape into memory
-- [CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](csave.md) - To save the program or an       array   currently     in memory on cassette tape
-- [CVI, CVS, CVD](../functions/cvi-cvs-cvd.md) - Convert string values to numeric values
-- [DEFINT/SNG/DBL/STR](defint-sng-dbl-str.md) - To declare variable types as integer,        single precision, double precision, or string
-- [ERR AND ERL VARIABLES](err-erl-variables.md) - Error code and error line number variables used in error handling
-- [INPUT#](input_hash.md) - To read data items from a sequential disk    file and assign them to program variables
-- [LINE INPUT](line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
-- [MKI$, MKS$, MKD$](../functions/mki_dollar-mks_dollar-mkd_dollar.md) - Convert numeric values to string values
-- [SPACE$](../functions/space_dollar.md) - Returns a string of spaces of length X
-- [TAB](../functions/tab.md) - Spaces to position I on the terminal
+- [PRINT](print.md) - To output data to the screen
+- [PRINT USING](print.md) - Formatted output to the screen
+- [PRINT#](printi-printi-using.md) - To write data to a sequential disk file
+- [WIDTH](width.md) - To set the output line width
+- [LPOS](../functions/lpos.md) - Returns the current position of the line printer print head
+- [POS](../functions/pos.md) - Returns the current cursor position

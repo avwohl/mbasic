@@ -21,9 +21,9 @@ Quick reference for the curses text UI.
 
 | Key | Action |
 |-----|--------|
-| **{{kbd:quit}}** | Quit |
+| **Ctrl+Q** | Quit |
 | **Ctrl+U** | Show menu |
-| **{{kbd:help}}** | Help (with search) |
+| **?** | Help (with search) |
 | **Ctrl+W** | Toggle variables watch window |
 | **Menu only** | Toggle execution stack window |
 
@@ -31,17 +31,17 @@ Quick reference for the curses text UI.
 
 | Key | Action |
 |-----|--------|
-| **{{kbd:run}}** | Run program |
+| **Ctrl+R** | Run program |
 | **Menu only** | List program |
-| **{{kbd:new}}** | New program |
-| **{{kbd:save}}** | Save program |
+| **Ctrl+N** | New program |
+| **Ctrl+V** | Save program |
 | **Ctrl+O** | Open/Load program |
 
 ## Editing
 
 | Key | Action |
 |-----|--------|
-| **{{kbd:toggle_breakpoint}}** | Toggle breakpoint on current line |
+| **Ctrl+B** | Toggle breakpoint on current line |
 | **Ctrl+D** | Delete current line |
 | **Ctrl+E** | Renumber all lines (RENUM) |
 
@@ -49,10 +49,10 @@ Quick reference for the curses text UI.
 
 | Key | Action |
 |-----|--------|
-| **{{kbd:continue}}** | Continue execution |
-| **{{kbd:step_line}}** | Step Line - execute all statements on current line |
-| **{{kbd:step}}** | Step Statement - execute one statement at a time |
-| **{{kbd:stop}}** | Stop execution |
+| **Ctrl+G** | Continue execution |
+| **Ctrl+K** | Step Line - execute all statements on current line |
+| **Ctrl+T** | Step Statement - execute one statement at a time |
+| **Ctrl+X** | Stop execution |
 | **Ctrl+W** | Show/hide variables window |
 | **Menu only** | Show/hide execution stack window |
 

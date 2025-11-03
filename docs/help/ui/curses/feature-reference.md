@@ -1,6 +1,6 @@
 # Curses UI - Complete Feature Reference
 
-This document covers all 37 features available in the Curses UI.
+This document covers all 36 features available in the Curses UI.
 
 ## File Operations (8 features)
 
@@ -37,7 +37,7 @@ Execute the current BASIC program from the beginning.
 ### Stop/Interrupt (Ctrl+X)
 Stop a running program immediately.
 
-### Continue (Ctrl+C)
+### Continue (Ctrl+G)
 Resume execution after hitting a breakpoint or stepping.
 
 ### List Program (Menu only)
@@ -101,7 +101,7 @@ Helps understand program flow and nesting levels. Access through the menu bar.
 ### Resource Usage
 Monitor memory and variable usage in the status bar.
 
-## Editor Features (7 features)
+## Editor Features (6 features)
 
 ### Line Editing
 Edit BASIC code line-by-line with full cursor navigation.
@@ -115,11 +115,9 @@ Standard clipboard operations using system clipboard:
 - Copy: Ctrl+C
 - Paste: Ctrl+V
 
-### Find/Replace (Ctrl+F / Ctrl+H)
-Search for text in your program and optionally replace it.
-- Case-sensitive or insensitive search
-- Whole word matching
-- Replace single or replace all
+### Find/Replace (Not yet implemented)
+Find and Replace functionality is not yet available in Curses UI.
+See [Find/Replace Status](find-replace.md) for workarounds and alternatives.
 
 ### Smart Insert (Ctrl+I)
 Insert a new line number at the midpoint between the current line and the next line.
@@ -152,15 +150,15 @@ Press ? with cursor on a BASIC keyword to get help for that specific command.
 |----------|--------|
 | Ctrl+N | New Program |
 | Ctrl+O | Open File |
-| Ctrl+S | Save File |
+| Ctrl+V | Save File |
 | Ctrl+R | Run Program |
 | Ctrl+X | Stop Program |
 | Ctrl+B | Toggle Breakpoint |
 | Ctrl+T | Step Statement |
-| Ctrl+L | Step Line |
+| Ctrl+K | Step Line |
 | Ctrl+G | Continue |
 | Ctrl+W | Variables Window |
-| Ctrl+K | Execution Stack |
+| Menu only | Execution Stack |
 | ? | Help |
 
 ### Status Bar Indicators

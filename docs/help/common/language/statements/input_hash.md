@@ -32,13 +32,11 @@ See Appendix B.
 ```
 
 ## See Also
-- [CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](cload.md) - To load a program or an array from cassette tape into memory
-- [CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](csave.md) - To save the program or an       array   currently     in memory on cassette tape
-- [CVI, CVS, CVD](../functions/cvi-cvs-cvd.md) - Convert string values to numeric values
-- [DEFINT/SNG/DBL/STR](defint-sng-dbl-str.md) - To declare variable types as integer,        single precision, double precision, or string
-- [ERR AND ERL VARIABLES](err-erl-variables.md) - Error code and error line number variables used in error handling
-- [LINE INPUT](line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
-- [LPRINT AND LPRINT USING](lprint-lprint-using.md) - To print data at the line printer
-- [MKI$, MKS$, MKD$](../functions/mki_dollar-mks_dollar-mkd_dollar.md) - Convert numeric values to string values
-- [SPACE$](../functions/space_dollar.md) - Returns a string of spaces of length X
-- [TAB](../functions/tab.md) - Spaces to position I on the terminal
+- [OPEN](open.md) - Open a file for input/output
+- [CLOSE](close.md) - Close an open file
+- [PRINT#](printi-printi-using.md) - Write data to a sequential file
+- [LINE INPUT#](line-input.md) - Read an entire line from a file
+- [INPUT](input.md) - Read input from keyboard
+- [EOF](../functions/eof.md) - Test for end of file
+- [LOC](../functions/loc.md) - Get current file position
+- [LOF](../functions/lof.md) - Get length of file

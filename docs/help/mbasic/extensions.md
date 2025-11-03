@@ -63,7 +63,7 @@ The GUI interfaces (Curses, Tk, Web) are **NOT in MBASIC 5.21**.
 **Features NOT in original MBASIC 5.21:**
 - Full-screen editing (Curses, Tk, Web)
 - Syntax highlighting (Tk, Web)
-- Find/Replace (Tk only currently)
+- Find (Tk has Find, Replace planned for future)
 - Cut/Copy/Paste (Tk, Web)
 - Mouse support (Tk, Web)
 - Auto-save (Web)
@@ -134,7 +134,7 @@ To ensure compatibility with original MBASIC 5.21:
 | **STACK command** | ❌ | ✅ | Extension |
 | **GUI interfaces** | ❌ | ✅ | Extension |
 | **Syntax highlighting** | ❌ | ✅ | Extension |
-| **Find/Replace** | ❌ | ✅ | Extension |
+| **Find** | ❌ | ✅ (Tk) | Extension |
 | **Visual debugging** | ❌ | ✅ | Extension |
 | **Long filenames** | ❌ | ✅ | Enhancement |
 | **Unicode** | ❌ | ✅ | Enhancement |

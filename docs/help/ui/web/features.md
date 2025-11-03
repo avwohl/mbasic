@@ -158,13 +158,13 @@ Complete reference of all features available in the MBASIC Web UI.
 ### Breakpoints
 
 **Currently Implemented:**
-- Line breakpoints (toggle via Debug menu)
+- Line breakpoints (toggle via Run menu)
 - Clear all breakpoints
 - Visual indicators in editor
 
 **Management:**
-- Toggle via Debug menu → Toggle Breakpoint
-- Clear all via Debug menu → Clear All Breakpoints
+- Toggle via Run menu → Toggle Breakpoint
+- Clear all via Run menu → Clear All Breakpoints
 - Persistent within session
 
 ### Variable Inspector

@@ -260,10 +260,10 @@ Output shows: 1 2 3 4 5
 ### Breakpoints
 
 Set breakpoints to pause execution at specific lines:
-1. Use **Debug → Toggle Breakpoint** menu
+1. Use **Run → Toggle Breakpoint** menu option
 2. Enter the line number
 3. Program will pause when reaching that line
-4. Use **Debug → Clear All Breakpoints** to remove all
+4. Use **Run → Clear All Breakpoints** to remove all
 
 ### Step Execution
 
