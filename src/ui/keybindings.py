@@ -234,7 +234,7 @@ KEYBINDINGS_BY_CATEGORY = {
     'Editing': [
         (BREAKPOINT_DISPLAY, 'Toggle breakpoint on current line'),
         (DELETE_LINE_DISPLAY, 'Delete current line'),
-        (INSERT_LINE_DISPLAY, 'Smart insert line between current and next (^J - ^I unavailable)'),
+        (INSERT_LINE_DISPLAY, 'Insert line'),
         (RENUMBER_DISPLAY, 'Renumber all lines (RENUM)'),
     ],
     'Debugger (when program running)': [
