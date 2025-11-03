@@ -23,9 +23,9 @@ Every BASIC program is made of numbered lines:
 
 See your UI-specific help for how to type programs:
 
-- [Curses UI](ui/curses/editing.md) - Terminal interface
-- [Tkinter UI](ui/tk/index.md) - Graphical interface
-- [CLI](ui/cli/index.md) - Command-line REPL
+- [Curses UI](../ui/curses/editing.md) - Terminal interface
+- [Tkinter UI](../ui/tk/index.md) - Graphical interface
+- [CLI](../ui/cli/index.md) - Command-line REPL
 
 ## Basic Concepts
 

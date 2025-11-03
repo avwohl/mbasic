@@ -1,12 +1,12 @@
 # Documentation Fixes Tracking
 **Source**: docs/history/docs_inconsistencies_report1-v2.md
 **Total Issues**: 126
-**Last Updated**: 2025-11-03 (Session 4)
-**Status**: Active - 78/126 fixed
+**Last Updated**: 2025-11-03 (Session 5)
+**Status**: Active - 89/126 fixed
 
 ## Progress Summary
-- ✅ **Fixed**: 78 (61.9%)
-- ❌ **Remaining**: 48 (38.1%)
+- ✅ **Fixed**: 89 (70.6%)
+- ❌ **Remaining**: 37 (29.4%)
 
 ## High Severity (17/17 fixed - 100%)
 
@@ -29,7 +29,7 @@
 16. **contradictory_information** - File system handling Tk UI (verified uses native dialogs)
 17. **contradictory_information** - DEF FN function name length (fully documented)
 
-## Medium Severity (44/47 fixed - 93.6%)
+## Medium Severity (47/47 fixed - 100%) ✅ COMPLETE
 
 ### ✅ Fixed
 1. **incomplete_description** - SGN function
@@ -59,10 +59,10 @@
 - Added modern extensions to statements index
 - Fixed title issue in inputi.md
 
-### ❌ Remaining (3)
-[List continues with all medium severity issues...]
+### ❌ Remaining (0)
+All medium severity issues have been resolved!
 
-## Low Severity (17/62 fixed - 27.4%)
+## Low Severity (28/62 fixed - 45.2%)
 
 ### ✅ Fixed
 1. **missing_category** - TAB function → output-formatting
@@ -83,8 +83,20 @@
 - Fixed example formatting in left_dollar.md (moved "Also see" outside code block)
 - Fixed example formatting in mid_dollar.md (moved "Also see" and NOTE outside code block)
 - Fixed example formatting in right_dollar.md (removed page artifact, moved "Also see" outside)
+18-28. **Session 5 additions:**
+- Fixed UI documentation paths in getting-started.md
+- Fixed language reference path in index.md
+- Added Web UI backend to README.md
+- Standardized "Curses/Urwid" to "Curses" in README.md
+- Fixed "OSR function" to "USR function" in call.md
+- Fixed "Microsoft~s" to "Microsoft's" in call.md
+- Cleaned up extra spaces in call.md
+- Fixed hex value typo &HDOOO to &HD000 in call.md
+- Added debugging commands section to editor-commands.md
+- Verified shortcuts.md exists (false positive)
+- Verified math-functions.md exists (false positive)
 
-### ❌ Remaining (45)
+### ❌ Remaining (34)
 [List continues with all low severity issues...]
 
 ## Next Actions (Priority Order)

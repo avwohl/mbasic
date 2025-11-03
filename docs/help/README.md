@@ -16,8 +16,8 @@ This content is UI-agnostic and covers BASIC language features and general inter
 ### `/ui/cli` - CLI Backend Help
 Help specific to the command-line interface (CLI) backend.
 
-### `/ui/curses` - Curses/Urwid Backend Help
-Help specific to the full-screen terminal UI (urwid):
+### `/ui/curses` - Curses Backend Help
+Help specific to the full-screen terminal UI:
 - Keyboard commands
 - Editor features
 - Navigation
@@ -28,6 +28,9 @@ Help specific to the graphical Tkinter interface.
 
 ### `/ui/visual` - Visual Backend Help
 Help specific to the visual backend.
+
+### `/ui/web` - Web UI Backend Help
+Help specific to the web browser interface.
 
 ## Help System Design
 
@@ -44,3 +47,4 @@ UIs should:
 - **Curses Help**: [ui/curses/index.md](ui/curses/index.md)
 - **Tk Help**: [ui/tk/index.md](ui/tk/index.md)
 - **Visual Help**: [ui/visual/index.md](ui/visual/index.md)
+- **Web Help**: [ui/web/index.md](ui/web/index.md)

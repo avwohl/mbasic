@@ -13,7 +13,7 @@ Welcome to the MBASIC Interpreter IDE!
 
 [Keyboard Shortcuts](shortcuts.md)
 
-[BASIC Language Reference](language.md)
+[BASIC Language Reference](language/index.md)
 
 [Examples](examples.md)
 

@@ -46,7 +46,12 @@ When in help mode:
 - Press **ESC** anytime to clear error messages
 - The cursor shows where you're typing
 
+## Debugging Commands
+
+For debugging-specific commands like breakpoints and stepping, see [Debugging Features](debugging.md).
+
 ## See Also
 
 - [Getting Started](getting-started.md)
 - [BASIC Language Reference](language/index.md)
+- [Debugging Features](debugging.md)
