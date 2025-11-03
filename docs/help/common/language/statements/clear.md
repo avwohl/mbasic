@@ -15,7 +15,7 @@ type: statement
 CLEAR [,[<expression1>] [,<expression2>]]
 ```
 
-**Versions:** 8K, -Extended, Disk
+**Versions:** 8K, Extended, Disk
 
 ## Purpose
 

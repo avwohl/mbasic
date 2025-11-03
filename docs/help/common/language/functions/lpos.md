@@ -44,4 +44,7 @@ Returns the current position of the line printer print head within the line prin
 ## See Also
 - [POS](pos.md) - Get current cursor position
 - [LPRINT](../statements/lprint-lprint-using.md) - Print to line printer
+- [LPRINT USING](../statements/lprint-lprint-using.md) - Formatted print to line printer
 - [WIDTH LPRINT](../statements/width.md) - Set line printer width
+- [PRINT](../statements/print.md) - Print to console
+- [PRINT#](../statements/printi-printi-using.md) - Write to file

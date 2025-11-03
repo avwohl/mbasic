@@ -2,7 +2,7 @@
 category: file-management
 description: To save a program file on disk
 keywords: ['command', 'file', 'for', 'if', 'program', 'read', 'save', 'statement', 'string']
-syntax: SAVE <filename> [,A   I ,P]
+syntax: SAVE <filename> [,A][,P]
 title: SAVE
 type: statement
 ---
@@ -12,7 +12,7 @@ type: statement
 ## Syntax
 
 ```basic
-SAVE <filename> [,A   I ,P]
+SAVE <filename> [,A][,P]
 ```
 
 **Versions:** Disk
@@ -23,7 +23,13 @@ To save a program file on disk.
 
 ## Remarks
 
-<filename> is a quoted string that conforms to your   operating   system"'s   requirements  for filenames.  (With CP/M, the default extension .BAS is supplied.) If <filename> already exists, the file will be written over. Use the A option to save the file in ASCII format.   Otherwise, BASIC saves the file in a compressed binary format.   ASCII format takes more space on the disk, but some disk access requires that files be in ASCII format.      For instance, the MERGE command requires and ASCII format file, and some operating system commands such as LIST may require an ASCII format file. Use the P option to protect the file by saving it   in   an encoded binary format.    When a protected file is later RUN (or LOADed), any attempt to list or edit it will fail.
+`<filename>` is a quoted string that conforms to your operating system's requirements for filenames. (With CP/M, the default extension .BAS is supplied.) If `<filename>` already exists, the file will be written over.
+
+### Options
+
+- **,A** - Save the file in ASCII format. Otherwise, BASIC saves the file in a compressed binary format. ASCII format takes more space on the disk, but some disk access requires that files be in ASCII format. For instance, the MERGE command requires an ASCII format file, and some operating system commands such as LIST may require an ASCII format file.
+
+- **,P** - Protect the file by saving it in an encoded binary format. When a protected file is later RUN (or LOADed), any attempt to list or edit it will fail.
 
 ## Example
 

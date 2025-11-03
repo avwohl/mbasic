@@ -64,8 +64,8 @@ Output: 1 3 5 7 9
 ```
 
 ## See Also
-- [GOSUB •.. RETURN](gosub-return.md) - Branch to and return from a subroutine
+- [GOSUB...RETURN](gosub-return.md) - Branch to and return from a subroutine
 - [GOTO](goto.md) - Branch unconditionally to a specified line number
-- [IF ••• THEN[ ••• ELSE] AND IF ••• GOTO](if-then-else-if-goto.md) - Make decisions and control program flow based on conditional expressions
-- [ON ••• GOSUB AND ON ••• GOTO](on-gosub-on-goto.md) - To branch to one of several specified line numbers, depending on the value returned when an expression is evaluated
-- [WHILE ••• WEND](while-wend.md) - Execute statements in a loop while a condition is true
+- [IF...THEN...ELSE](if-then-else-if-goto.md) - Make decisions and control program flow based on conditional expressions
+- [ON...GOSUB/ON...GOTO](on-gosub-on-goto.md) - Branch to one of several line numbers based on an expression value
+- [WHILE...WEND](while-wend.md) - Execute statements in a loop while a condition is true
