@@ -1763,7 +1763,9 @@ class CursesBackend(UIBackend):
             if self.runtime.halted and not state.error_info:
                 pc = self.runtime.pc
                 stmt_info = f" statement {pc.stmt_offset + 1}" if pc and pc.stmt_offset > 0 else ""
-                self.output_buffer.append(f"→ Paused at line {state.current_line}{stmt_info}")
+                # Show current line with code
+                line_code = self.editor_lines.get(state.current_line, "")
+                self.output_buffer.append(f"→ Paused at line {state.current_line}{stmt_info}: {line_code}")
                 self._update_output()
                 self.status_bar.set_text(f"Paused at line {state.current_line}{stmt_info} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
                 self._update_immediate_status()

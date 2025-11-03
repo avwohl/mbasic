@@ -5,10 +5,10 @@
       "primary": "Ctrl+H",
       "description": "Open help browser"
     },
-    "load": {
-      "keys": ["Shift+Ctrl+L"],
-      "primary": "Shift+Ctrl+L",
-      "description": "Step Line (execute all statements on current line)"
+    "step_line": {
+      "keys": [],
+      "primary": "",
+      "description": "Step Line (execute all statements on current line) - Use menu (Ctrl+U)"
     },
     "open": {
       "keys": ["Ctrl+O"],

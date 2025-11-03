@@ -150,11 +150,11 @@ RUN_KEY = _ctrl_key_to_urwid(_run_key)
 RUN_CHAR = _ctrl_key_to_char(_run_key)
 RUN_DISPLAY = _run_key
 
-# Step Line (Ctrl+L) - execute all statements on current line
-_list_key = _get_key('editor', 'load') or 'Ctrl+L'
-LIST_KEY = _ctrl_key_to_urwid(_list_key)
-LIST_CHAR = _ctrl_key_to_char(_list_key)
-LIST_DISPLAY = _list_key
+# Step Line - execute all statements on current line (no keyboard shortcut - use menu)
+_list_key = _get_key('editor', 'step_line') or ''
+LIST_KEY = _ctrl_key_to_urwid(_list_key) if _list_key else ''
+LIST_CHAR = _ctrl_key_to_char(_list_key) if _list_key else ''
+LIST_DISPLAY = _list_key if _list_key else 'Menu only'
 
 # Open/Load program (Ctrl+O)
 _open_key = _get_key('editor', 'open') or 'Ctrl+O'
