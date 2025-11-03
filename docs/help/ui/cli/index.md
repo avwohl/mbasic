@@ -10,6 +10,12 @@ keywords: [help, cli, command-line, repl, interface]
 
 Command-line interface for MBASIC 5.21. Type `HELP <topic>` for specific help or `HELP SEARCH <keyword>` to search all content.
 
+## 🎮 Games Library
+
+Browse and run classic BASIC games:
+
+- **[Games Library](../../../library/games/index.md)** - 113 classic CP/M era games ready to run!
+
 ## 📘 CLI Interface
 
 The CLI provides a classic MBASIC command-line interface with direct mode and program mode.

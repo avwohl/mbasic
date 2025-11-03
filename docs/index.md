@@ -42,6 +42,14 @@ MBASIC 5.21 is a classic BASIC dialect from the CP/M era (late 1970s - early 198
 
     [:octicons-arrow-right-24: MBASIC Docs](help/mbasic/index.md)
 
+-   :material-gamepad-variant:{ .lg .middle } __Games Library__
+
+    ---
+
+    Browse 113 classic BASIC games from the CP/M era - ready to run!
+
+    [:octicons-arrow-right-24: Games Library](library/games/index.md)
+
 </div>
 
 ## Key Features

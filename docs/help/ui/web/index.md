@@ -10,6 +10,12 @@ keywords: [help, web, browser, ide, interface]
 
 Welcome to the MBASIC web-based IDE. This help system integrates documentation for the Web UI, the MBASIC interpreter, and the BASIC-80 language.
 
+## 🎮 Games Library
+
+Browse and run classic BASIC games:
+
+- **[Games Library](../../../library/games/index.md)** - 113 classic CP/M era games ready to run!
+
 ## 📘 Web IDE Guide
 
 Learn how to use the web interface:

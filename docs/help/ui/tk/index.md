@@ -10,6 +10,12 @@ keywords: [help, tk, tkinter, gui, graphical, interface]
 
 Welcome to the MBASIC graphical IDE. This help system integrates documentation for the Tkinter GUI, the MBASIC interpreter, and the BASIC-80 language.
 
+## 🎮 Games Library
+
+Browse and run classic BASIC games:
+
+- **[Games Library](../../../library/games/index.md)** - 113 classic CP/M era games ready to run!
+
 ## 📘 Tkinter GUI Guide
 
 Learn how to use the graphical interface:

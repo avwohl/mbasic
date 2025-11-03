@@ -10,6 +10,12 @@ keywords: [help, curses, terminal, ui, interface]
 
 Welcome to the MBASIC terminal-based IDE. This help system integrates documentation for the Curses UI, the MBASIC interpreter, and the BASIC-80 language.
 
+## 🎮 Games Library
+
+Browse and run classic BASIC games:
+
+- **[Games Library](../../../library/games/index.md)** - 113 classic CP/M era games ready to run!
+
 ## 📘 Curses UI Guide
 
 Learn how to use the terminal interface:
