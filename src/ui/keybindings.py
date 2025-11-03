@@ -146,11 +146,17 @@ RUN_KEY = _ctrl_key_to_urwid(_run_key)
 RUN_CHAR = _ctrl_key_to_char(_run_key)
 RUN_DISPLAY = _run_key
 
-# List program
+# Step Line (Ctrl+L) - execute all statements on current line
 _list_key = _get_key('editor', 'load') or 'Ctrl+L'
 LIST_KEY = _ctrl_key_to_urwid(_list_key)
 LIST_CHAR = _ctrl_key_to_char(_list_key)
 LIST_DISPLAY = _list_key
+
+# Open/Load program (Ctrl+O)
+_open_key = _get_key('editor', 'open') or 'Ctrl+O'
+OPEN_KEY = _ctrl_key_to_urwid(_open_key)
+OPEN_CHAR = _ctrl_key_to_char(_open_key)
+OPEN_DISPLAY = _open_key
 
 # New program
 _new_key = _get_key('editor', 'new') or 'Ctrl+N'
@@ -164,11 +170,6 @@ _save_key = _get_key('editor', 'save') or 'Ctrl+V'
 SAVE_KEY = _ctrl_key_to_urwid(_save_key)
 SAVE_CHAR = _ctrl_key_to_char(_save_key)
 SAVE_DISPLAY = _save_key
-
-# Open/Load program (same as load/list)
-OPEN_KEY = LIST_KEY
-OPEN_CHAR = LIST_CHAR
-OPEN_DISPLAY = LIST_DISPLAY
 
 # =============================================================================
 # Editing Commands (loaded from JSON where available)
@@ -266,11 +267,10 @@ KEYBINDINGS_BY_CATEGORY = {
     ],
     'Program Management': [
         (RUN_DISPLAY, 'Run program'),
-        (LIST_DISPLAY, 'List program'),
         (NEW_DISPLAY, 'New program'),
+        (OPEN_DISPLAY, 'Open/Load program'),
         (SAVE_DISPLAY, 'Save program'),
         ('Shift+Ctrl+V', 'Save As'),
-        (OPEN_DISPLAY, 'Open/Load program'),
         ('Shift+Ctrl+O', 'Recent files'),
     ],
     'Editing': [

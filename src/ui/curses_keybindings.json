@@ -8,7 +8,12 @@
     "load": {
       "keys": ["Ctrl+L"],
       "primary": "Ctrl+L",
-      "description": "Load BASIC file (when editing) / Step Line (when debugging)"
+      "description": "Step Line (execute all statements on current line)"
+    },
+    "open": {
+      "keys": ["Ctrl+O"],
+      "primary": "Ctrl+O",
+      "description": "Open/Load BASIC file"
     },
     "new": {
       "keys": ["Ctrl+N"],

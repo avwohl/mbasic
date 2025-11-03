@@ -1503,13 +1503,12 @@ class CursesBackend(UIBackend):
             self._run_program()
 
         elif key == LIST_KEY:
-            # Context-sensitive: Step Line when debugging, List program otherwise
-            if self.interpreter and self.interpreter.get_state().status in ('paused', 'at_breakpoint', 'running', 'idle'):
-                # Debugging: Ctrl+L = Step Line (or start in step mode if idle)
-                self._debug_step_line()
-            else:
-                # Editing: Ctrl+L = List program
-                self._list_program()
+            # Ctrl+L = Step Line (execute all statements on current line)
+            self._debug_step_line()
+
+        elif key == OPEN_KEY:
+            # Ctrl+O = Open/Load program
+            self._load_program()
 
         elif key == NEW_KEY:
             # New program
