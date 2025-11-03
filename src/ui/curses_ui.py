@@ -335,10 +335,42 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             cursor_pos = self.edit_widget.edit_pos
             # Get text after cursor
             text_after_cursor = current_text[cursor_pos:].lstrip()
-            # If text after cursor starts with a digit, it's likely pasted content with line numbers
-            # Just insert a plain newline without auto-numbering
-            if text_after_cursor and text_after_cursor[0].isdigit():
-                return super().keypress(size, key)
+
+            # Check if current line has user-pasted line number (to avoid double numbering)
+            # When pasting "10 PRINT", we might already have auto-number making it "?20 10 PRINT"
+            # OR the line might be " 10 PRINT" (no auto-number yet, just pasted content)
+            if line_num < len(lines):
+                current_line = lines[line_num]
+                status_char = current_line[0] if current_line else ' '
+                # Get content after status character
+                content_after_status = current_line[1:].lstrip()
+
+                # Check if content starts with digit (user pasted a line number)
+                if content_after_status and content_after_status[0].isdigit():
+                    # Check if we ALSO have an auto-generated line number (double numbering)
+                    line_num_parsed, code_start = self._parse_line_number(current_line)
+                    if code_start is not None and code_start > 0:
+                        code_part = current_line[code_start:].strip()
+                        # If code part ALSO starts with digit, we have double numbering
+                        if code_part and code_part[0].isdigit():
+                            # Remove auto-number, keep only pasted content
+                            fixed_line = f"{status_char}{code_part}"
+
+                            # Replace the current line
+                            current_text = self.edit_widget.get_edit_text()
+                            lines_list = current_text.split('\n')
+                            if line_num < len(lines_list):
+                                lines_list[line_num] = fixed_line
+                                new_text = '\n'.join(lines_list)
+                                self.edit_widget.set_edit_text(new_text)
+
+                    # Insert newline with just status character
+                    current_text = self.edit_widget.get_edit_text()
+                    cursor_pos = self.edit_widget.edit_pos
+                    new_text = current_text[:cursor_pos] + "\n " + current_text[cursor_pos:]
+                    self.edit_widget.set_edit_text(new_text)
+                    self.edit_widget.set_edit_pos(cursor_pos + 2)
+                    return None
 
             # Parse current line number (variable width)
             current_line_number = None
