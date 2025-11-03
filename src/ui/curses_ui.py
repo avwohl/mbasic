@@ -1702,10 +1702,10 @@ class CursesBackend(UIBackend):
             if self.runtime.halted and not state.error_info:
                 # Clear statement highlighting when continuing
                 self.editor._update_display()
-                # Continue from breakpoint
+                # Continue from breakpoint - just clear halted flag and resume tick execution
                 self.status_bar.set_text("Continuing execution...")
-                self.interpreter.cont()
-                # Schedule next tick
+                self.runtime.halted = False
+                # Schedule next tick to resume execution
                 self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
             else:
                 self.status_bar.set_text("Not paused")
