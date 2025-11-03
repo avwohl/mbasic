@@ -411,6 +411,13 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
             return None
 
+        # Check if this is a control key we don't handle - pass to unhandled_input
+        # Editor handles: arrows, backspace, delete, home, end, enter, tab
+        # Pass through: All ctrl keys except those handled above
+        if key.startswith('ctrl '):
+            # Let unhandled_input handle all control keys
+            return key
+
         # Let parent handle the key (allows arrows, backspace, etc.)
         return super().keypress(size, key)
 
@@ -1641,6 +1648,9 @@ class CursesBackend(UIBackend):
             self._run_program()
             # Program is now running async - halt it immediately and step
             self.runtime.halted = True
+            # _run_program() is async, so io_handler might not be ready yet
+            if not self.io_handler:
+                return  # Wait for next call
             # Now fall through to step below
 
         try:
@@ -1721,6 +1731,9 @@ class CursesBackend(UIBackend):
             self._run_program()
             # Program is now running async - halt it immediately and step
             self.runtime.halted = True
+            # _run_program() is async, so io_handler might not be ready yet
+            if not self.io_handler:
+                return  # Wait for next call
             # Now fall through to step below
 
         try:
