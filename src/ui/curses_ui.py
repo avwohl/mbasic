@@ -1644,7 +1644,7 @@ class CursesBackend(UIBackend):
 
         try:
             # If halted, clear it to resume execution (like a microprocessor)
-            if self.runtime and self.runtime.halted:
+            if self.runtime.halted:
                 self.runtime.halted = False
 
             # Execute one statement
@@ -1660,11 +1660,11 @@ class CursesBackend(UIBackend):
             # Update editor display with statement highlighting
             if self.runtime.halted and not state.error_info and state.current_line:
                 # Highlight the current statement in the editor
-                pc = self.runtime.pc if self.runtime else None
+                pc = self.runtime.pc
                 self.editor._update_display(
                     highlight_line=state.current_line,
                     highlight_stmt=pc.stmt_offset if pc else 0,
-                    statement_table=self.runtime.statement_table if self.runtime else None
+                    statement_table=self.runtime.statement_table
                 )
 
                 # Update variables window if visible
@@ -1677,7 +1677,7 @@ class CursesBackend(UIBackend):
 
             # Show where we halted (if not an error and not completed)
             if self.runtime.halted and not state.error_info:
-                pc = self.runtime.pc if self.runtime else None
+                pc = self.runtime.pc
                 stmt_info = f" statement {pc.stmt_offset + 1}" if pc and pc.stmt_offset > 0 else ""
                 self.output_buffer.append(f"→ Paused at line {state.current_line}{stmt_info}")
                 self._update_output()
@@ -1723,7 +1723,7 @@ class CursesBackend(UIBackend):
 
         try:
             # If halted, clear it to resume execution (like a microprocessor)
-            if self.runtime and self.runtime.halted:
+            if self.runtime.halted:
                 self.runtime.halted = False
 
             # Execute all statements on current line
@@ -1741,7 +1741,7 @@ class CursesBackend(UIBackend):
                 self.editor._update_display(
                     highlight_line=state.current_line,
                     highlight_stmt=0,  # Highlight whole line, not specific statement
-                    statement_table=self.runtime.statement_table if self.runtime else None
+                    statement_table=self.runtime.statement_table
                 )
 
                 # Update variables window if visible
@@ -1793,8 +1793,7 @@ class CursesBackend(UIBackend):
 
         try:
             # Stop the interpreter (but don't destroy it - reuse for next run)
-            if self.runtime:
-                self.runtime.halted = True
+            self.runtime.halted = True
             self.running = False
             self.output_buffer.append("Program stopped by user")
             self._update_output()
@@ -2357,9 +2356,8 @@ class CursesBackend(UIBackend):
             # Layout: menu (0), editor (1), variables (2), output (3), status (4)
             self.pile.contents.insert(2, (self.variables_frame, ('weight', 1)))
 
-            # Update variables display if we have a runtime
-            if self.runtime:
-                self._update_variables_window()
+            # Update variables display
+            self._update_variables_window()
         else:
             # Remove variables window from pile
             # Find and remove the variables frame
@@ -2374,9 +2372,6 @@ class CursesBackend(UIBackend):
 
     def _update_variables_window(self):
         """Update the variables window with current runtime state."""
-        if not self.runtime:
-            return
-
         # Clear current display
         self.variables_walker.clear()
 
@@ -2816,9 +2811,8 @@ class CursesBackend(UIBackend):
             insert_pos = 3 if self.watch_window_visible else 2
             self.pile.contents.insert(insert_pos, (self.stack_frame, ('weight', 1)))
 
-            # Update stack display if we have a runtime
-            if self.runtime:
-                self._update_stack_window()
+            # Update stack display
+            self._update_stack_window()
         else:
             # Remove stack window from pile
             for i, (widget, options) in enumerate(self.pile.contents):
@@ -2832,9 +2826,6 @@ class CursesBackend(UIBackend):
 
     def _update_stack_window(self):
         """Update the stack window with current execution stack."""
-        if not self.runtime:
-            return
-
         # Clear current display
         self.stack_walker.clear()
 
@@ -3128,7 +3119,7 @@ class CursesBackend(UIBackend):
             if self.interpreter and hasattr(self.interpreter, 'state'):
                 state = self.interpreter.state
                 context['current_line'] = state.current_line
-                context['halted'] = self.runtime.halted if self.runtime else None
+                context['halted'] = self.runtime.halted
                 if state.error_info:
                     context['error_line'] = state.error_info.pc.line_num
 
@@ -3806,7 +3797,7 @@ class CursesBackend(UIBackend):
 
         # If statement set NPC (like RUN/GOTO), move it to PC
         # This is what the tick loop does after executing a statement
-        if self.runtime and self.runtime.npc is not None:
+        if self.runtime.npc is not None:
             self.runtime.pc = self.runtime.npc
             self.runtime.npc = None
 
@@ -4026,8 +4017,8 @@ class CursesBackend(UIBackend):
 
     def cmd_cont(self):
         """Execute CONT command - continue after STOP."""
-        # Check if runtime exists and is in stopped state
-        if not hasattr(self, 'runtime') or not self.runtime or not self.runtime.stopped:
+        # Check if in stopped state
+        if not self.runtime.stopped:
             self._write_output("?Can't continue\n")
             return
 
