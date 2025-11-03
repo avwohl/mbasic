@@ -196,6 +196,12 @@ All BASIC-80 commands and statements are described in this reference.
 - [TRON/TROFF](tron-troff.md) - Trace mode
 - [WIDTH](width.md) - Set line width
 
+### Modern Extensions (MBASIC only)
+- [HELP SET](helpsetting.md) - Display help for settings
+- [LIMITS](limits.md) - Show interpreter limits
+- [SET](setsetting.md) - Configure interpreter settings
+- [SHOW SETTINGS](showsettings.md) - Display current settings
+
 ## See Also
 
 - [Functions](../functions/index.md) - BASIC-80 intrinsic functions

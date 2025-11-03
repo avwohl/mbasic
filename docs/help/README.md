@@ -40,4 +40,7 @@ UIs should:
 ## Entry Points
 
 - **Common Help**: [common/index.md](common/index.md)
+- **CLI Help**: [ui/cli/index.md](ui/cli/index.md)
 - **Curses Help**: [ui/curses/index.md](ui/curses/index.md)
+- **Tk Help**: [ui/tk/index.md](ui/tk/index.md)
+- **Visual Help**: [ui/visual/index.md](ui/visual/index.md)

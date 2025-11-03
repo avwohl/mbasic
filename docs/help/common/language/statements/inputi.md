@@ -2,17 +2,17 @@
 category: file-io
 description: To read an entire line (up to 254 characters), without delimiters, from a sequential disk data file to a string variable
 keywords: ['close', 'command', 'data', 'field', 'file', 'for', 'if', 'input', 'inputi', 'line']
-syntax: LINE INPUTi<file number>,<string variable>
-title: ~ INPUTi
+syntax: LINE INPUT#<file number>,<string variable>
+title: LINE INPUT#
 type: statement
 ---
 
-# ~   INPUTi
+# LINE INPUT#
 
 ## Syntax
 
 ```basic
-LINE INPUTi<file number>,<string variable>
+LINE INPUT#<file number>,<string variable>
 ```
 
 **Versions:** Disk
@@ -23,7 +23,7 @@ To read an entire line (up to 254 characters), without delimiters, from a sequen
 
 ## Remarks
 
-<file number> is the number under which the file was OPENed.    <string variable> is the variable name to which the 'line will be assigned.   LINE INPUTi reads all characters in the sequential file up to a carriage return.    It then skips over the carriage return/line feed sequence, and the next LINE INPUTi reads all characters up to the   next   carriage    return.    (If   a line feed/carriage return sequence is encountered, it is preserved.) LINE INPUTi is especially useful if each line of a data file has been broken into fields, or if a BASIC-SO program saved in ASCII mode is being read as data by another program.
+<file number> is the number under which the file was OPENed.    <string variable> is the variable name to which the 'line will be assigned.   LINE INPUT# reads all characters in the sequential file up to a carriage return.    It then skips over the carriage return/line feed sequence, and the next LINE INPUT# reads all characters up to the   next   carriage    return.    (If   a line feed/carriage return sequence is encountered, it is preserved.) LINE INPUT# is especially useful if each line of a data file has been broken into fields, or if a BASIC-SO program saved in ASCII mode is being read as data by another program.
 
 ## Example
 

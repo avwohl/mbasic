@@ -28,8 +28,9 @@ Returns a string comprised of the leftmost I characters of X$. I must be in the 
  30 PRINT B$
  BASIC
  Ok
- Also see the MID$ and RIGHT$ functions.
 ```
+
+Also see the MID$ and RIGHT$ functions.
 
 ## See Also
 - [ASC](asc.md) - Returns a numerical value that is the ASCII code of the first character of the string X$

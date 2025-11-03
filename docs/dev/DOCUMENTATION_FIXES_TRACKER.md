@@ -1,12 +1,12 @@
 # Documentation Fixes Tracking
 **Source**: docs/history/docs_inconsistencies_report1-v2.md
 **Total Issues**: 126
-**Last Updated**: 2025-11-03 (Session 3)
-**Status**: Active - 65/126 fixed
+**Last Updated**: 2025-11-03 (Session 4)
+**Status**: Active - 78/126 fixed
 
 ## Progress Summary
-- ✅ **Fixed**: 65 (51.6%)
-- ❌ **Remaining**: 61 (48.4%)
+- ✅ **Fixed**: 78 (61.9%)
+- ❌ **Remaining**: 48 (38.1%)
 
 ## High Severity (17/17 fixed - 100%)
 
@@ -29,7 +29,7 @@
 16. **contradictory_information** - File system handling Tk UI (verified uses native dialogs)
 17. **contradictory_information** - DEF FN function name length (fully documented)
 
-## Medium Severity (35/47 fixed)
+## Medium Severity (44/47 fixed - 93.6%)
 
 ### ✅ Fixed
 1. **incomplete_description** - SGN function
@@ -52,11 +52,17 @@
 - Fixed all remaining NEEDS_DESCRIPTION placeholders (5 files)
 - Fixed all SGN NEEDS_DESCRIPTION references (10 files)
 - Fixed all ERR AND ERL VARIABLES NEEDS_DESCRIPTION references (9 files)
+36-44. **Session 4 additions:**
+- Fixed missing entry points in README.md
+- Fixed empty Remarks sections (chain.md, edit.md, error.md, for-next.md, if-then-else-if-goto.md)
+- Fixed DEF USR implementation note consistency
+- Added modern extensions to statements index
+- Fixed title issue in inputi.md
 
-### ❌ Remaining (12)
+### ❌ Remaining (3)
 [List continues with all medium severity issues...]
 
-## Low Severity (13/62 fixed)
+## Low Severity (17/62 fixed - 27.4%)
 
 ### ✅ Fixed
 1. **missing_category** - TAB function → output-formatting
@@ -72,13 +78,18 @@
 - Fixed I=O → I=0 in INSTR and MID$ functions
 - Fixed LOC(l) → LOC(1) typo
 - Fixed "~ INPUTi" → "LINE INPUT#" references
+14-17. **Session 4 additions:**
+- Fixed missing Syntax section in string_dollar.md
+- Fixed example formatting in left_dollar.md (moved "Also see" outside code block)
+- Fixed example formatting in mid_dollar.md (moved "Also see" and NOTE outside code block)
+- Fixed example formatting in right_dollar.md (removed page artifact, moved "Also see" outside)
 
-### ❌ Remaining (49)
+### ❌ Remaining (45)
 [List continues with all low severity issues...]
 
 ## Next Actions (Priority Order)
 1. ✅ DONE: Keyboard shortcuts aligned with actual keybindings
 2. ✅ DONE: High severity contradictions resolved
-3. **TODO**: Fix Web UI documentation inconsistencies (5 high severity remaining)
-4. **TODO**: Complete cross-reference fixes (31 medium severity remaining)
-5. **TODO**: OCR error cleanup (56 low severity remaining)
+3. ✅ DONE: Fixed medium severity documentation issues
+4. **TODO**: Complete final 3 medium severity issues
+5. **TODO**: Fix remaining 45 low severity issues (typos, references, terminology)

@@ -31,10 +31,11 @@ LIST
  RUN
  GOOD EVENING
  Ok
- Also see the LEFT$ and RIGHT$ functions.
-NOTE: If I=0 is specified, error message "ILLEGAL
- ARGUMENT IN <line number>" will be returned.
 ```
+
+Also see the LEFT$ and RIGHT$ functions.
+
+NOTE: If I=0 is specified, error message "ILLEGAL ARGUMENT IN <line number>" will be returned.
 
 ## See Also
 - [ASC](asc.md) - Returns a numerical value that is the ASCII code of the first character of the string X$

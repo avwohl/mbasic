@@ -28,9 +28,9 @@ Returns the rightmost I characters of string X$. If I=LEN{X$), returns X$. If I=
  RUN
  BASIC-80
  Ok
- Also see the MID$ and LEFT$ functions.
-BASIC-SO FUNCTIONS Page 3-1S
 ```
+
+Also see the MID$ and LEFT$ functions.
 
 ## See Also
 - [ASC](asc.md) - Returns a numerical value that is the ASCII code of the first character of the string X$

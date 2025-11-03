@@ -24,6 +24,21 @@ To call a program and pass variables to it            from the current program.
 
 ## Remarks
 
+The CHAIN statement loads and runs another BASIC program, optionally passing variables to it.
+
+### Parameters:
+- **MERGE** - Merges the new program with the current one instead of replacing it
+- **filename** - Name of the program to chain to (with or without .BAS extension)
+- **line number exp** - Optional starting line number in the chained program
+- **ALL** - Pass all variables to the chained program (requires COMMON statement)
+- **DELETE range** - Delete specified lines before chaining (e.g., DELETE 1000-2000)
+
+### Variable Passing:
+Variables are only passed to the chained program if they are declared in a COMMON statement. Without ALL, only COMMON variables are passed. With ALL, all variables are passed.
+
+### Memory:
+The current program is removed from memory unless MERGE is specified. Open files remain open across the chain operation.
+
 ## See Also
 - [CLEAR](clear.md) - To set all numeric variables to zero and all string variables to null; and, optionally, 'to set the end of memory and the amount of stack space
 - [COMMON](common.md) - To pass variables to a CHAINed program

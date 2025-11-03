@@ -38,9 +38,17 @@ To specify the starting address of an assembly language subroutine.
 
 This example defines USR routine 0 to start at memory location 24000, then calls it with a calculated parameter.
 
-## Notes
+## Implementation Note
 
-**⚠️ Implementation Note:** In this Python implementation of MBASIC, assembly language subroutines are not supported. The DEF USR statement is parsed for compatibility but does not provide actual functionality.
+⚠️ **Not Implemented**: This feature defines the starting address of assembly language subroutines and is not implemented in this Python-based interpreter.
+
+**Behavior**: Statement is parsed but no operation is performed
+
+**Why**: Cannot execute machine code from a Python interpreter. DEF USR was used to specify memory addresses where hand-written assembly language routines were loaded for performance-critical operations or hardware access.
+
+**See Also**: [USR](../functions/usr.md) function (also not implemented), [CALL](call.md) statement (also not implemented)
+
+**Historical Reference**: The documentation above is preserved from the original MBASIC 5.21 manual for historical reference.
 
 ## See Also
 - [USR](../functions/usr.md) - Call assembly language subroutine

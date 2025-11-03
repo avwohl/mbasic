@@ -8,7 +8,14 @@ type: function
 
 # STRING$
 
-**Versions:** Extended, Disk-
+## Syntax
+
+```basic
+STRING$(I, J)
+STRING$(I, X$)
+```
+
+**Versions:** Extended, Disk
 
 ## Description
 
