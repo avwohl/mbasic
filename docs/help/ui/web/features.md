@@ -157,17 +157,15 @@ Complete reference of all features available in the MBASIC Web UI.
 
 ### Breakpoints
 
-**Types:**
-- Line breakpoints
-- Conditional breakpoints
-- Logpoints
-- Data breakpoints
+**Currently Implemented:**
+- Line breakpoints (toggle via Debug menu)
+- Clear all breakpoints
+- Visual indicators in editor
 
 **Management:**
-- Click to toggle
-- Bulk operations
-- Import/export
-- Persistent storage
+- Toggle via Debug menu → Toggle Breakpoint
+- Clear all via Debug menu → Clear All Breakpoints
+- Persistent within session
 
 ### Variable Inspector
 

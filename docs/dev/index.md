@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2025-11-03
-**Total Documents:** 154
+**Total Documents:** 155
 
 ## What's Here
 
@@ -99,6 +99,7 @@ If you're contributing to MBASIC:
 
 ### Help System
 
+- [Documentation Fixes Tracker](DOCUMENTATION_FIXES_TRACKER.md)
 - [Help Indexing Options](HELP_INDEXING_OPTIONS.md)
 - [Help Indexing Specification](HELP_INDEXING_SPECIFICATION.md)
 - [Help Integration Per Client](HELP_INTEGRATION_PER_CLIENT.md)

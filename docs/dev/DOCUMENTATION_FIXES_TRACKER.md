@@ -1,14 +1,14 @@
 # Documentation Fixes Tracking
 **Source**: docs/history/docs_inconsistencies_report1-v2.md
 **Total Issues**: 126
-**Last Updated**: 2025-11-03
-**Status**: Active - 35/126 fixed (see docs/history/documentation_fixes_final_report.md)
+**Last Updated**: 2025-11-03 (Session 2)
+**Status**: Active - 41/126 fixed
 
 ## Progress Summary
-- ✅ **Fixed**: 35 (27.8%)
-- ❌ **Remaining**: 91 (72.2%)
+- ✅ **Fixed**: 41 (32.5%)
+- ❌ **Remaining**: 85 (67.5%)
 
-## High Severity (12/17 fixed)
+## High Severity (17/17 fixed - 100%)
 
 ### ✅ Fixed
 1. **syntax_inconsistency** - ABS function typo (ASS → ABS)
@@ -23,13 +23,11 @@
 10. **keyboard_shortcut_inconsistency** - Execution stack (changed to Menu only, removed Ctrl+K)
 11. **contradictory_information** - Testing reference claims verification (test files exist, issue was incorrect)
 12. **feature_availability_conflict** - Debugging features (fixed CLI Only to UI-dependent)
-
-### ❌ Remaining (5)
-1. **contradictory_information** - DEF FN function name length (partially fixed)
-2. **contradictory_information** - File system handling Tk UI
-3. **feature_availability_conflict** - Tk vs Web settings dialog
-4. **feature_availability_conflict** - Web UI debugging features
-5. **contradictory_information** - Web UI file persistence
+13. **contradictory_information** - Web UI file persistence (fixed auto-save documentation)
+14. **feature_availability_conflict** - Tk vs Web settings dialog (clarified differences)
+15. **feature_availability_conflict** - Web UI debugging features (updated to reflect actual implementation)
+16. **contradictory_information** - File system handling Tk UI (verified uses native dialogs)
+17. **contradictory_information** - DEF FN function name length (fully documented)
 
 ## Medium Severity (16/47 fixed)
 

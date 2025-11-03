@@ -8,7 +8,7 @@ keywords: [settings, configuration, web, browser, preferences]
 
 # Web UI Settings Dialog
 
-The web UI provides a modern, tabbed settings dialog for configuring MBASIC.
+The web UI provides a simplified settings dialog for configuring essential MBASIC options. Unlike the Tk desktop interface which has extensive configuration options, the Web UI focuses on the most commonly used settings.
 
 ## Opening Settings
 

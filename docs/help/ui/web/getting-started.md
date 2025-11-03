@@ -213,7 +213,7 @@ END
 3. Enter a filename (default: `program.bas`)
 4. File downloads to your Downloads folder
 
-**Note:** The Web UI doesn't have a built-in filesystem. All saves are downloads to your computer.
+**Note:** The Web UI uses browser localStorage for auto-save functionality and downloads for explicit saves to your computer.
 
 **Save As:**
 - Use **Save As** to download with a different filename
@@ -221,7 +221,7 @@ END
 
 ### Recent Files
 
-File → Recent Files shows recently opened files in this session (not persistent across browser restarts).
+File → Recent Files shows recently opened files (saved in localStorage, persists across browser sessions).
 
 ## Using the Command Area
 
@@ -256,6 +256,14 @@ Output shows: 1 2 3 4 5
 - **Command area** - Quick calculations, testing ideas, checking values
 
 ## Debugging Features
+
+### Breakpoints
+
+Set breakpoints to pause execution at specific lines:
+1. Use **Debug → Toggle Breakpoint** menu
+2. Enter the line number
+3. Program will pause when reaching that line
+4. Use **Debug → Clear All Breakpoints** to remove all
 
 ### Step Execution
 
@@ -331,7 +339,7 @@ The Web UI works with modern browsers:
 1. **Auto-numbering:** Press Enter in Program Editor to get automatic line numbers
 2. **Quick test:** Use Command area to test expressions without changing your program
 3. **Clear output:** Run → Clear Output to empty the output area
-4. **Save often:** Click Save regularly - there's no auto-save
+4. **Auto-save enabled:** Your work is automatically saved to browser localStorage every 30 seconds
 5. **Check errors:** Red error messages in output show what went wrong
 
 ## Common Issues
@@ -352,7 +360,7 @@ The Web UI works with modern browsers:
 
 **Problem:** Refreshed browser and program is gone.
 
-**Solution:** The Web UI doesn't auto-save. Always **Save** your program before closing/refreshing.
+**Solution:** The Web UI auto-saves to browser localStorage every 30 seconds. Your program should be restored automatically on refresh. If not, check File → Recent Files or ensure your browser allows localStorage for this site.
 
 ### Input area not appearing
 

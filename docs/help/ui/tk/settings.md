@@ -8,7 +8,7 @@ keywords: [settings, configuration, tkinter, desktop, preferences, dialog]
 
 # Tk Settings Dialog
 
-The Tk (Tkinter) desktop GUI provides a comprehensive settings dialog with tabbed interface for all MBASIC settings.
+The Tk (Tkinter) desktop GUI provides the most comprehensive settings dialog with tabbed interface for all MBASIC settings. It offers more configuration options than the Web UI, including keyword display, variable case handling, interpreter settings, and UI themes.
 
 ## Opening the Settings Dialog
 
