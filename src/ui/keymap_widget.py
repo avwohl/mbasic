@@ -52,12 +52,8 @@ class KeymapWidget(urwid.WidgetWrap):
             self.listbox,
         ])
 
-        # Wrap in line box with black background
-        linebox = urwid.LineBox(
-            urwid.AttrMap(pile, 'body')
-        )
-
-        super().__init__(urwid.AttrMap(linebox, 'body'))
+        # Wrap with black background (no border to avoid blank title line)
+        super().__init__(urwid.AttrMap(pile, 'body'))
 
     def _build_keymap_content(self):
         """Build the keymap content from keybindings.
