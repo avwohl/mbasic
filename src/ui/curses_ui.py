@@ -329,6 +329,17 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Handle Enter key - commits line and moves to next with auto-numbering
         if key == 'enter' and self.auto_number_enabled:
+            # Check if next line already starts with a number (pasted content)
+            # If so, skip auto-numbering and just insert newline
+            current_text = self.edit_widget.get_edit_text()
+            cursor_pos = self.edit_widget.edit_pos
+            # Get text after cursor
+            text_after_cursor = current_text[cursor_pos:].lstrip()
+            # If text after cursor starts with a digit, it's likely pasted content with line numbers
+            # Just insert a plain newline without auto-numbering
+            if text_after_cursor and text_after_cursor[0].isdigit():
+                return super().keypress(size, key)
+
             # Parse current line number (variable width)
             current_line_number = None
             if line_num < len(lines):
