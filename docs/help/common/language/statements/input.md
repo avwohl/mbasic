@@ -22,6 +22,18 @@ To allow input from the terminal during      program execution.
 
 ## Remarks
 
+When an INPUT statement is executed, the program pauses and waits for the user to enter data from the keyboard. If no prompt string is provided, a question mark (?) is displayed. If a prompt string is included, it is displayed instead of or along with the question mark.
+
+The user enters values separated by commas (for multiple variables) and presses Enter to continue program execution. The entered values are assigned to the variables in the order specified.
+
+Key behaviors:
+- Multiple values must be separated by commas
+- String values may be entered with or without quotes (quotes are required if the string contains commas)
+- If too few values are entered, the prompt is repeated with ?? for the remaining values
+- If too many values are entered, the extras are ignored with a ?Redo from start message
+- The semicolon after INPUT suppresses the carriage return after the user presses Enter
+- A semicolon after the prompt string causes the prompt to be displayed without a question mark
+
 
 ## Example
 

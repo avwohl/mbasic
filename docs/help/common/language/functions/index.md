@@ -37,6 +37,7 @@ Intrinsic functions provided by BASIC-80. These functions may be called from any
 ### Type Conversion Functions
 - [CDBL](cdbl.md) - To double precision
 - [CINT](cint.md) - To integer
+- [CSNG](csng.md) - To single precision
 - [CVD, CVI, CVS](cvi-cvs-cvd.md) - String to number
 - [MKD$, MKI$, MKS$](mki_dollar-mks_dollar-mkd_dollar.md) - Number to string
 
@@ -58,7 +59,7 @@ Intrinsic functions provided by BASIC-80. These functions may be called from any
 
 ## Alphabetical Quick Reference
 
-[ABS](abs.md) | [ASC](asc.md) | [ATN](atn.md) | [CDBL](cdbl.md) | [CHR$](chr_dollar.md) | [CINT](cint.md) | [COS](cos.md) | [CVD/CVI/CVS](cvi-cvs-cvd.md) | [EOF](eof.md) | [EXP](exp.md) | [FIX](fix.md) | [FRE](fre.md) | [HEX$](hex_dollar.md) | [INKEY$](inkey_dollar.md) | [INP](inp.md) | [INPUT$](input_dollar.md) | [INSTR](instr.md) | [INT](int.md) | [LEFT$](left_dollar.md) | [LEN](len.md) | [LOC](loc.md) | [LOF](lof.md) | [LOG](log.md) | [LPOS](lpos.md) | [MID$](mid_dollar.md) | [MKD$/MKI$/MKS$](mki_dollar-mks_dollar-mkd_dollar.md) | [OCT$](oct_dollar.md) | [PEEK](peek.md) | [POS](pos.md) | [RIGHT$](right_dollar.md) | [RND](rnd.md) | [SGN](sgn.md) | [SIN](sin.md) | [SPACE$](space_dollar.md) | [SPC](spc.md) | [SQR](sqr.md) | [STR$](str_dollar.md) | [STRING$](string_dollar.md) | [TAB](tab.md) | [TAN](tan.md) | [USR](usr.md) | [VAL](val.md) | [VARPTR](varptr.md)
+[ABS](abs.md) | [ASC](asc.md) | [ATN](atn.md) | [CDBL](cdbl.md) | [CHR$](chr_dollar.md) | [CINT](cint.md) | [COS](cos.md) | [CSNG](csng.md) | [CVD/CVI/CVS](cvi-cvs-cvd.md) | [EOF](eof.md) | [EXP](exp.md) | [FIX](fix.md) | [FRE](fre.md) | [HEX$](hex_dollar.md) | [INKEY$](inkey_dollar.md) | [INP](inp.md) | [INPUT$](input_dollar.md) | [INSTR](instr.md) | [INT](int.md) | [LEFT$](left_dollar.md) | [LEN](len.md) | [LOC](loc.md) | [LOF](lof.md) | [LOG](log.md) | [LPOS](lpos.md) | [MID$](mid_dollar.md) | [MKD$/MKI$/MKS$](mki_dollar-mks_dollar-mkd_dollar.md) | [OCT$](oct_dollar.md) | [PEEK](peek.md) | [POS](pos.md) | [RIGHT$](right_dollar.md) | [RND](rnd.md) | [SGN](sgn.md) | [SIN](sin.md) | [SPACE$](space_dollar.md) | [SPC](spc.md) | [SQR](sqr.md) | [STR$](str_dollar.md) | [STRING$](string_dollar.md) | [TAB](tab.md) | [TAN](tan.md) | [USR](usr.md) | [VAL](val.md) | [VARPTR](varptr.md)
 
 ## See Also
 
