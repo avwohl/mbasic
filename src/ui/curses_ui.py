@@ -1620,8 +1620,8 @@ class CursesBackend(UIBackend):
             # Toggle variables window
             self._toggle_variables_window()
 
-        elif key == STACK_KEY:
-            # Toggle execution stack window
+        elif STACK_KEY and key == STACK_KEY:
+            # Toggle execution stack window (only if STACK_KEY is defined)
             self._toggle_stack_window()
 
         elif key == 's' and self.watch_window_visible:

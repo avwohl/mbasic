@@ -135,10 +135,10 @@ VARIABLES_KEY = 'ctrl w'
 VARIABLES_CHAR = '\x17'
 VARIABLES_DISPLAY = 'Ctrl+W'
 
-# Execution stack window (not in JSON, hardcoded)
-STACK_KEY = 'ctrl k'
-STACK_CHAR = '\x0b'
-STACK_DISPLAY = 'Ctrl+K'
+# Execution stack window (menu only - Ctrl+K reassigned to step line)
+STACK_KEY = ''  # No keyboard shortcut
+STACK_CHAR = ''
+STACK_DISPLAY = 'Menu only'
 
 # =============================================================================
 # Program Management (loaded from JSON)
@@ -150,11 +150,11 @@ RUN_KEY = _ctrl_key_to_urwid(_run_key)
 RUN_CHAR = _ctrl_key_to_char(_run_key)
 RUN_DISPLAY = _run_key
 
-# Step Line - execute all statements on current line (no keyboard shortcut - use menu)
-_list_key = _get_key('editor', 'step_line') or ''
-LIST_KEY = _ctrl_key_to_urwid(_list_key) if _list_key else ''
-LIST_CHAR = _ctrl_key_to_char(_list_key) if _list_key else ''
-LIST_DISPLAY = _list_key if _list_key else 'Menu only'
+# Step Line (Ctrl+K) - execute all statements on current line
+_list_key = _get_key('editor', 'step_line') or 'Ctrl+K'
+LIST_KEY = _ctrl_key_to_urwid(_list_key)
+LIST_CHAR = _ctrl_key_to_char(_list_key)
+LIST_DISPLAY = _list_key
 
 # Open/Load program (Ctrl+O)
 _open_key = _get_key('editor', 'open') or 'Ctrl+O'

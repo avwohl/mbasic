@@ -6,9 +6,9 @@
       "description": "Open help browser"
     },
     "step_line": {
-      "keys": [],
-      "primary": "",
-      "description": "Step Line (execute all statements on current line) - Use menu (Ctrl+U)"
+      "keys": ["Ctrl+K"],
+      "primary": "Ctrl+K",
+      "description": "Step Line (execute all statements on current line)"
     },
     "open": {
       "keys": ["Ctrl+O"],
