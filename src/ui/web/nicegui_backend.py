@@ -1841,8 +1841,7 @@ class NiceGUIBackend(UIBackend):
                 # Don't cancel timer - keep ticking to check when input is provided
             elif self.runtime.halted:
                 # Check if done or paused at breakpoint
-                pc = self.runtime.pc
-                if pc.halted() or not self.runtime.statement_table.get(pc):
+                if not self.runtime.is_paused_at_statement():
                     # Past end of program - done
                     self._append_output("\n--- Program finished ---\n")
                     self._set_status("Ready")
@@ -2022,8 +2021,7 @@ class NiceGUIBackend(UIBackend):
             self.editor.set_current_statement(None)
         elif self.runtime.halted:
             # Check if done or paused
-            pc = self.runtime.pc
-            if pc.halted() or not self.runtime.statement_table.get(pc):
+            if not self.runtime.is_paused_at_statement():
                 # Past end - done
                 self._append_output("\n--- Program finished ---\n")
                 self._set_status("Ready")

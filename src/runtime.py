@@ -177,6 +177,22 @@ class Runtime:
 
         return self
 
+    def is_paused_at_statement(self):
+        """Check if halted at a valid statement (not past end).
+
+        Returns:
+            bool: True if halted at a statement (paused/breakpoint), False if past end or not halted
+        """
+        if not self.halted:
+            return False
+
+        pc = self.pc
+        if pc.halted():
+            return False  # Past end of program
+
+        stmt = self.statement_table.get(pc)
+        return stmt is not None  # True if at a valid statement
+
     @staticmethod
     def _resolve_variable_name(name, type_suffix, def_type_map=None):
         """
