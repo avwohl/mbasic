@@ -117,7 +117,7 @@ BASIC automatically converts between numeric types when needed:
 | Function | Converts To | Description |
 |----------|-------------|-------------|
 | [CINT](functions/cint.md) | INTEGER | Rounds to nearest integer |
-| CSNG | SINGLE | Converts to single precision |
+| [CSNG](functions/csng.md) | SINGLE | Converts to single precision |
 | [CDBL](functions/cdbl.md) | DOUBLE | Converts to double precision |
 | [STR$](functions/str_dollar.md) | STRING | Converts number to string |
 | [VAL](functions/val.md) | Number | Converts string to number |
