@@ -376,20 +376,18 @@ class InteractiveMode:
 
                 # Start the interpreter (which calls setup() and resets PC to first line)
                 state = interpreter.start()
-                if state.status == 'error':
-                    if state.error_info:
-                        raise RuntimeError(state.error_info.error_message)
-                    return
+                if state.error_info:
+                    raise RuntimeError(state.error_info.error_message)
 
                 # NOW set PC to the target line (after setup has built the statement table)
                 runtime.pc = PC.from_line(start_line)
 
                 # Run the tick loop manually (same as interpreter.run())
-                while state.status not in ('done', 'error'):
+                while not runtime.halted and not state.error_info:
                     state = interpreter.tick(mode='run', max_statements=10000)
 
                     # Handle input synchronously for CLI
-                    if state.status == 'waiting_for_input':
+                    if state.input_prompt:
                         try:
                             value = input()
                             state = interpreter.provide_input(value)
@@ -423,11 +421,11 @@ class InteractiveMode:
 
             # Resume execution using tick-based loop (same as run())
             state = self.program_interpreter.state
-            while state.status not in ('done', 'error'):
+            while not self.program_runtime.halted and not state.error_info:
                 state = self.program_interpreter.tick(mode='run', max_statements=10000)
 
                 # Handle input synchronously for CLI
-                if state.status == 'waiting_for_input':
+                if state.input_prompt:
                     try:
                         value = input()
                         state = self.program_interpreter.provide_input(value)
@@ -440,7 +438,7 @@ class InteractiveMode:
                         return
 
             # Handle final errors
-            if state.status == 'error' and state.error_info:
+            if state.error_info:
                 raise RuntimeError(state.error_info.error_message)
 
         except Exception as e:
