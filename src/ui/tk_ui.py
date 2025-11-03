@@ -709,7 +709,7 @@ class TkBackend(UIBackend):
                 else:
                     # Get statement at PC to check if it's END or steppable
                     stmt = self.runtime.statement_table.get(pc)
-                    if stmt and hasattr(stmt, '__class__') and stmt.__class__.__name__ == 'EndStatementNode':
+                    if stmt and stmt.__class__.__name__ == 'EndStatementNode':
                         # Stopped at END statement - don't highlight
                         self._add_output("\n--- Program finished ---\n")
                         self._set_status("Ready")
@@ -767,7 +767,7 @@ class TkBackend(UIBackend):
                 else:
                     # Get statement at PC to check if it's END or steppable
                     stmt = self.runtime.statement_table.get(pc)
-                    if stmt and hasattr(stmt, '__class__') and stmt.__class__.__name__ == 'EndStatementNode':
+                    if stmt and stmt.__class__.__name__ == 'EndStatementNode':
                         # Stopped at END statement - don't highlight
                         self._add_output("\n--- Program finished ---\n")
                         self._set_status("Ready")
@@ -1444,7 +1444,7 @@ class TkBackend(UIBackend):
         interpreter = self.interpreter
 
         # Update resource usage
-        if interpreter and hasattr(interpreter, 'limits'):
+        if hasattr(interpreter, 'limits'):
             limits = interpreter.limits
 
             # Format memory usage
@@ -1646,9 +1646,7 @@ class TkBackend(UIBackend):
         # Show helpful message if stack is empty
         if not stack:
             # Get current line if available
-            current_line = None
-            if self.interpreter and hasattr(self.interpreter, 'state'):
-                current_line = self.interpreter.state.current_line
+            current_line = self.interpreter.state.current_line
 
             if current_line:
                 text = "(No active control structures)"
@@ -2975,7 +2973,7 @@ class TkBackend(UIBackend):
                 else:
                     # Get statement at PC to check if it's END or steppable
                     stmt = self.runtime.statement_table.get(pc)
-                    if stmt and hasattr(stmt, '__class__') and stmt.__class__.__name__ == 'EndStatementNode':
+                    if stmt and stmt.__class__.__name__ == 'EndStatementNode':
                         # Stopped at END statement - don't highlight
                         self._add_output("\n--- Program finished ---\n")
                         self._set_status("Ready")
@@ -3008,14 +3006,14 @@ class TkBackend(UIBackend):
             self.paused_at_breakpoint = True  # Allow Continue to work after exception
 
             # Gather context for debug logging
-            context = {}
-            if self.interpreter and hasattr(self.interpreter, 'state'):
-                state = self.interpreter.state
-                context['current_line'] = state.current_line
-                context['halted'] = self.runtime.halted
-                context['pc'] = str(self.runtime.pc)
-                if state.error_info:
-                    context['error_line'] = state.error_info.pc.line_num
+            state = self.interpreter.state
+            context = {
+                'current_line': state.current_line,
+                'halted': self.runtime.halted,
+                'pc': str(self.runtime.pc)
+            }
+            if state.error_info:
+                context['error_line'] = state.error_info.pc.line_num
 
             # Log error (outputs to stderr in debug mode)
             error_msg = debug_log_error(
@@ -3038,10 +3036,9 @@ class TkBackend(UIBackend):
             self._update_immediate_status()
 
             # Highlight the error statement (yellow highlight)
-            if self.interpreter and hasattr(self.interpreter, 'state'):
-                state = self.interpreter.state
-                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
-                    self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
+            state = self.interpreter.state
+            if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
+                self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
 
             # Mark the error line with red ? indicator
             if error_line and error_line != "?":
@@ -3470,11 +3467,10 @@ class TkBackend(UIBackend):
 
             # Resume tick-based execution
             # The interpreter will continue from the saved position
-            if self.interpreter:
-                # Start ticking again
-                self.is_running = True
-                self._set_status("Running")
-                self._tick()
+            # Start ticking again
+            self.is_running = True
+            self._set_status("Running")
+            self._tick()
 
         except Exception as e:
             self._write_output(f"?Error continuing: {e}")
@@ -3501,15 +3497,12 @@ class TkBackend(UIBackend):
         if can_execute:
             # Safe to execute - enable input
             # Update prompt label color based on current state using microprocessor model
-            if hasattr(self.interpreter, 'state') and self.interpreter.state:
-                state = self.interpreter.state
-                if state.error_info:
-                    self.immediate_prompt_label.config(text="Error >", fg="red")
-                elif self.runtime.halted:
-                    if self.paused_at_breakpoint:
-                        self.immediate_prompt_label.config(text="Paused >", fg="orange")
-                    else:
-                        self.immediate_prompt_label.config(text="Ok >", fg="green")
+            state = self.interpreter.state
+            if state.error_info:
+                self.immediate_prompt_label.config(text="Error >", fg="red")
+            elif self.runtime.halted:
+                if self.paused_at_breakpoint:
+                    self.immediate_prompt_label.config(text="Paused >", fg="orange")
                 else:
                     self.immediate_prompt_label.config(text="Ok >", fg="green")
             else:
@@ -3569,8 +3562,8 @@ class TkBackend(UIBackend):
 
         # Check if interpreter has work to do (after RUN statement)
         # No state checking - just ask the interpreter
-        has_work = self.interpreter.has_work() if self.interpreter else False
-        if self.interpreter and has_work:
+        has_work = self.interpreter.has_work()
+        if has_work:
             # Start execution if not already running
             if not self.running:
                 # Switch interpreter IO to output to main output pane (not immediate output)
@@ -3581,9 +3574,6 @@ class TkBackend(UIBackend):
                 # Initialize interpreter state for execution
                 # NOTE: Don't call interpreter.start() because it resets PC!
                 # RUN 120 already set PC to line 120, so just clear halted flag
-                from src.interpreter import InterpreterState
-                if not hasattr(self.interpreter, 'state') or self.interpreter.state is None:
-                    self.interpreter.state = InterpreterState(_interpreter=self.interpreter)
                 self.runtime.halted = False  # Clear halted flag to start execution
                 self.interpreter.state.is_first_line = True
 
