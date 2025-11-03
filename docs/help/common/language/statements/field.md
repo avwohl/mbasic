@@ -28,15 +28,17 @@ To get data out of a random buffer after a GET or to enter data before a PUT, a 
 ## Example
 
 ```basic
-See Appendix B.
-NOTE:            ~  !!2! ~ a FIELDed var iable name in an I.NPUT
-                 or LET statement.     Once a -viriable--name is
-                 FIELDed, it points to the correct place in the
-                 random file buffer.     If a subsequent INPUT or
-                 LET statement with that variable       name   is
-                 executed, the variable~s pointer is moved to
-                 string space.
+10 OPEN "R", 1, "CUSTOMER.DAT", 128
+20 FIELD #1, 30 AS NAME$, 20 AS ADDR$, 15 AS CITY$, 2 AS STATE$, 5 AS ZIP$
+30 ' Now the buffer is fielded:
+40 ' Positions 1-30: NAME$
+50 ' Positions 31-50: ADDR$
+60 ' Positions 51-65: CITY$
+70 ' Positions 66-67: STATE$
+80 ' Positions 68-72: ZIP$
 ```
+
+**Note:** Do not use a FIELDed variable name in an INPUT or LET statement. Once a variable name is FIELDed, it points to the correct place in the random file buffer. If a subsequent INPUT or LET statement with that variable name is executed, the variable's pointer is moved to string space.
 
 ## See Also
 - [OPEN](open.md) - Open a random access file

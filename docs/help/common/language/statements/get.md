@@ -28,11 +28,15 @@ To read a record from a random disk file into    a random buffer.
 ## Example
 
 ```basic
-See Appendix B.
-NOTE:         After a GET statement, INPUT# and LINE INPUT#
-              may be done to read characters from the random
-              file buffer.
+10 OPEN "R", 1, "INVENTORY.DAT", 128
+20 FIELD #1, 20 AS ITEM$, 4 AS PRICE$, 2 AS QTY$
+30 GET #1, 5  ' Read record 5 into buffer
+40 PRINT "Item: "; ITEM$
+50 PRINT "Price: "; CVS(PRICE$)
+60 PRINT "Quantity: "; CVI(QTY$)
 ```
+
+**Note:** After a GET statement, INPUT# and LINE INPUT# may be used to read characters from the random file buffer.
 
 ## See Also
 - [PUT](put.md) - Write a random file record
