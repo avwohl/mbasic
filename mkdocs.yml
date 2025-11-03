@@ -52,6 +52,7 @@ plugins:
 markdown_extensions:
   - admonition
   - attr_list
+  - md_in_html
   - codehilite:
       guess_lang: false
   - def_list
