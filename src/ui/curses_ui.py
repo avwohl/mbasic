@@ -1700,11 +1700,10 @@ class CursesBackend(UIBackend):
     def _debug_step(self):
         """Execute one statement and pause (single-step debugging)."""
         if not self.interpreter or not hasattr(self.interpreter, 'state') or not self.interpreter.state:
-            # No program running - start it and step immediately
-            self._run_program()
-            # Program is now running async - halt it immediately
-            self.runtime.halted = True
-            return  # Wait for setup to complete on next call
+            # No program running - set it up without starting async execution
+            if not self._setup_program():
+                return  # Setup failed (error already displayed)
+            # Fall through to execute first step
 
         try:
             # If halted, clear it to resume execution (like a microprocessor)
@@ -1780,11 +1779,10 @@ class CursesBackend(UIBackend):
     def _debug_step_line(self):
         """Execute all statements on current line and pause (step by line)."""
         if not self.interpreter or not hasattr(self.interpreter, 'state') or not self.interpreter.state:
-            # No program running - start it and step immediately
-            self._run_program()
-            # Program is now running async - halt it immediately
-            self.runtime.halted = True
-            return  # Wait for setup to complete on next call
+            # No program running - set it up without starting async execution
+            if not self._setup_program():
+                return  # Setup failed (error already displayed)
+            # Fall through to execute first step
 
         try:
             # If halted, clear it to resume execution (like a microprocessor)
@@ -2927,6 +2925,98 @@ class CursesBackend(UIBackend):
 
             self.stack_walker.append(make_output_line(line))
 
+    def _setup_program(self, start_line=None):
+        """Parse and initialize the program for execution.
+
+        Returns True if successful, False if there was an error.
+
+        Args:
+            start_line: Optional line number to start execution at
+        """
+        # Parse editor content into program
+        self._parse_editor_content()
+
+        if not self.editor_lines:
+            self.output_buffer.append("No program to run")
+            self._update_output()
+            return False
+
+        # Load program lines into program manager
+        self.program.clear()
+        for line_num in sorted(self.editor_lines.keys()):
+            line_text = f"{line_num} {self.editor_lines[line_num]}"
+            success, error = self.program.add_line(line_num, line_text)
+            if not success:
+                # Format parse error with context
+                self.output_buffer.append("")
+                self.output_buffer.append("┌─ Parse Error ────────────────────────────────────┐")
+                self.output_buffer.append(f"│ Line {line_num}:")
+                if line_num in self.editor_lines:
+                    code = self.editor_lines[line_num]
+                    self.output_buffer.append(f"│   {code}")
+                    self.output_buffer.append(f"│   ^^^^")
+                self.output_buffer.append(f"│ Error: {error}")
+                self.output_buffer.append("│")
+                self.output_buffer.append("│ Fix the syntax error and try running again.")
+                self.output_buffer.append("└──────────────────────────────────────────────────┘")
+                self._update_output()
+                self.status_bar.set_text("Parse error - Fix and try again")
+                return False
+
+        # Reset runtime with current program - RUN = CLEAR + GOTO first line
+        # This preserves breakpoints but clears variables
+        self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
+
+        # Clear any buffered output from previous run
+        self.io_handler.get_and_clear_output()
+
+        # Update interpreter to use the session's io_handler
+        self.interpreter.io = self.io_handler
+
+        # Start interpreter (sets up statement table, etc.)
+        state = self.interpreter.start()
+
+        # If empty program, just show Ready (variables cleared, nothing to execute)
+        if not self.program.lines:
+            self.status_bar.set_text('Ready')
+            self.running = False
+            return False
+
+        # If start_line is specified, set PC AFTER start() has called setup()
+        # because setup() resets PC to first line
+        if start_line is not None:
+            from src.runtime import PC
+            # Verify the line exists
+            if start_line not in self.program.line_asts:
+                self.output_buffer.append(f"?Undefined line {start_line}")
+                self._update_output()
+                self.status_bar.set_text("Error")
+                self.running = False
+                return False
+            # Set PC to start at the specified line (after start() has built statement table)
+            self.runtime.pc = PC.from_line(start_line)
+
+        # Set breakpoints from editor
+        for line_num in self.editor.breakpoints:
+            self.interpreter.set_breakpoint(line_num)
+
+        # Initialize immediate mode executor
+        immediate_io = OutputCapturingIOHandler()
+        self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
+        self._update_immediate_status()
+
+        if state.error_info:
+            error_msg = state.error_info.error_message
+            self.output_buffer.append("")
+            self.output_buffer.append("┌─ Startup Error ──────────────────────────────────┐")
+            self.output_buffer.append(f"│ Error: {error_msg}")
+            self.output_buffer.append("└──────────────────────────────────────────────────┘")
+            self._update_output()
+            self.status_bar.set_text("Startup error - Check program")
+            return False
+
+        return True
+
     def _run_program(self, start_line=None):
         """Run the current program using tick-based interpreter.
 
@@ -2934,91 +3024,12 @@ class CursesBackend(UIBackend):
             start_line: Optional line number to start execution at (for RUN line_number)
         """
         try:
-            # Parse editor content into program
-            self._parse_editor_content()
-
-            if not self.editor_lines:
-                self.output_buffer.append("No program to run")
-                self._update_output()
+            # Setup program (parse, load, initialize)
+            if not self._setup_program(start_line):
                 return
 
             # Update status
             self.status_bar.set_text("Running program...")
-            # Screen will update automatically when loop is running
-
-            # Load program lines into program manager
-            self.program.clear()
-            for line_num in sorted(self.editor_lines.keys()):
-                line_text = f"{line_num} {self.editor_lines[line_num]}"
-                success, error = self.program.add_line(line_num, line_text)
-                if not success:
-                    # Format parse error with context
-                    self.output_buffer.append("")
-                    self.output_buffer.append("┌─ Parse Error ────────────────────────────────────┐")
-                    self.output_buffer.append(f"│ Line {line_num}:")
-                    if line_num in self.editor_lines:
-                        code = self.editor_lines[line_num]
-                        self.output_buffer.append(f"│   {code}")
-                        self.output_buffer.append(f"│   ^^^^")
-                    self.output_buffer.append(f"│ Error: {error}")
-                    self.output_buffer.append("│")
-                    self.output_buffer.append("│ Fix the syntax error and try running again.")
-                    self.output_buffer.append("└──────────────────────────────────────────────────┘")
-                    self._update_output()
-                    self.status_bar.set_text("Parse error - Fix and try again")
-                    return
-
-            # Reset runtime with current program - RUN = CLEAR + GOTO first line
-            # This preserves breakpoints but clears variables
-            self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
-
-            # Clear any buffered output from previous run
-            self.io_handler.get_and_clear_output()
-
-            # Update interpreter to use the session's io_handler
-            self.interpreter.io = self.io_handler
-
-            # Start interpreter (sets up statement table, etc.)
-            state = self.interpreter.start()
-
-            # If empty program, just show Ready (variables cleared, nothing to execute)
-            if not self.program.lines:
-                self.status_bar.set_text('Ready')
-                self.running = False
-                return
-
-            # If start_line is specified, set PC AFTER start() has called setup()
-            # because setup() resets PC to first line
-            if start_line is not None:
-                from src.runtime import PC
-                # Verify the line exists
-                if start_line not in self.program.line_asts:
-                    self.output_buffer.append(f"?Undefined line {start_line}")
-                    self._update_output()
-                    self.status_bar.set_text("Error")
-                    self.running = False
-                    return
-                # Set PC to start at the specified line (after start() has built statement table)
-                self.runtime.pc = PC.from_line(start_line)
-
-            # Set breakpoints from editor
-            for line_num in self.editor.breakpoints:
-                self.interpreter.set_breakpoint(line_num)
-
-            # Initialize immediate mode executor
-            immediate_io = OutputCapturingIOHandler()
-            self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
-            self._update_immediate_status()
-
-            if state.error_info:
-                error_msg = state.error_info.error_message
-                self.output_buffer.append("")
-                self.output_buffer.append("┌─ Startup Error ──────────────────────────────────┐")
-                self.output_buffer.append(f"│ Error: {error_msg}")
-                self.output_buffer.append("└──────────────────────────────────────────────────┘")
-                self._update_output()
-                self.status_bar.set_text("Startup error - Check program")
-                return
 
             # Set up tick-based execution using urwid's alarm
             self._execute_tick()
