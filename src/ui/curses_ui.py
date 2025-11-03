@@ -3701,17 +3701,17 @@ class CursesBackend(UIBackend):
         text = urwid.Text(menu_text)
         fill = urwid.Filler(text, valign='middle')
         box = urwid.LineBox(fill, title="Recent Files")
+
+        # Use main_widget as base (not current loop.widget which might be a menu)
+        main_widget = self.main_widget
         overlay = urwid.Overlay(
             urwid.AttrMap(box, 'body'),
-            self.loop.widget,
+            main_widget,
             align='center',
             width=('relative', 70),
             valign='middle',
             height=('relative', 60)
         )
-
-        # Store original widget
-        main_widget = self.loop.widget
 
         # Set up keypress handler
         def handle_selection(key):
