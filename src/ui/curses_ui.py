@@ -1707,6 +1707,10 @@ class CursesBackend(UIBackend):
                 self.output_buffer.extend(new_output)
                 self._update_output()
 
+            # Debug: show what happened
+            self.output_buffer.append(f"[DEBUG: halted={self.runtime.halted}, error={state.error_info is not None}, line={state.current_line}]")
+            self._update_output()
+
             # Update editor display with statement highlighting
             if self.runtime.halted and not state.error_info and state.current_line:
                 # Highlight the current statement in the editor
