@@ -24,11 +24,13 @@ Returns a string of length I whose characters all have ASCII code J or the first
 ## Example
 
 ```basic
-10 X$ = STRING$(10,45)
- 20 PRINT X$ "MONTHLY REPORT" X$
- RUN
- ----------MONTHLY REPORT----------
- Ok
+10 X$ = STRING$(10, 45)
+20 PRINT X$ "MONTHLY REPORT" X$
+```
+
+Output:
+```
+----------MONTHLY REPORT----------
 ```
 
 ## See Also

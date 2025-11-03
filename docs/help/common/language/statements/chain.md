@@ -1,8 +1,8 @@
 ---
 category: program-control
-description: To call a program and pass variables to it            from the current program
+description: To call a program and pass variables to it from the current program
 keywords: ['chain', 'command', 'file', 'for', 'function', 'if', 'line', 'number', 'open', 'program']
-syntax: CHAIN [MERGE] <filename>[,[<line number exp>]
+syntax: CHAIN [MERGE] <filename>[,[<line number exp>][,ALL][,DELETE<range>]]
 title: CHAIN
 type: statement
 ---
@@ -12,15 +12,14 @@ type: statement
 ## Syntax
 
 ```basic
-CHAIN [MERGE] <filename>[,[<line number exp>]
-[,ALL] [,DELETE<range>]]
+CHAIN [MERGE] <filename>[,[<line number exp>][,ALL][,DELETE<range>]]
 ```
 
 **Versions:** Disk
 
 ## Purpose
 
-To call a program and pass variables to it            from the current program.
+To call a program and pass variables to it from the current program.
 
 ## Remarks
 
@@ -39,12 +38,39 @@ Variables are only passed to the chained program if they are declared in a COMMO
 ### Memory:
 The current program is removed from memory unless MERGE is specified. Open files remain open across the chain operation.
 
+## Example
+
+```basic
+10 REM Program 1 - PROG1.BAS
+20 COMMON A, B$, C()
+30 A = 100
+40 B$ = "Hello from PROG1"
+50 DIM C(10)
+60 C(1) = 42
+70 CHAIN "PROG2.BAS", 100
+```
+
+```basic
+100 REM Program 2 - PROG2.BAS
+110 COMMON A, B$, C()
+120 PRINT "Value of A:"; A
+130 PRINT "Value of B$:"; B$
+140 PRINT "Value of C(1):"; C(1)
+```
+
+Output when running PROG1.BAS:
+```
+Value of A: 100
+Value of B$: Hello from PROG1
+Value of C(1): 42
+```
+
 ## See Also
-- [CLEAR](clear.md) - To set all numeric variables to zero and all string variables to null; and, optionally, 'to set the end of memory and the amount of stack space
+- [CLEAR](clear.md) - To set all numeric variables to zero and all string variables to null; and, optionally, to set the end of memory and the amount of stack space
 - [COMMON](common.md) - To pass variables to a CHAINed program
 - [CONT](cont.md) - To continue program execution after a Control-C has been typed, or a STOP or END statement has been executed
 - [END](end.md) - To terminate program execution, close all files and return to command level
-- [NEW](new.md) - To delete the program currently   in   memory   and clear all variables
+- [NEW](new.md) - To delete the program currently in memory and clear all variables
 - [RUN](run.md) - Executes the current program or loads and runs a program from disk
-- [STOP](stop.md) - To terminate program      execution   and    return   to command level
+- [STOP](stop.md) - To terminate program execution and return to command level
 - [SYSTEM](system.md) - Exits MBASIC and returns to the operating system
