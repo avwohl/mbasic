@@ -206,7 +206,7 @@ Creates a new variable 1O (syntax error)!
 
 ## See Also
 
-- [Running Programs](../../../../ui/curses/running.md)
+- [Running Programs](../../../ui/curses/running.md)
 - [AUTO Command](../../language/statements/auto.md)
 - [DELETE Command](../../language/statements/delete.md)
 - [RENUM Command](../../language/statements/renum.md)

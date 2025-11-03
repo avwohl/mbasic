@@ -32,7 +32,7 @@ LIST
  GOOD EVENING
  Ok
  Also see the LEFT$ and RIGHT$ functions.
-NOTE: If I=O is specified, error message "ILLEGAL
+NOTE: If I=0 is specified, error message "ILLEGAL
  ARGUMENT IN <line number>" will be returned.
 ```
 

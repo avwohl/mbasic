@@ -24,7 +24,7 @@ With random disk files, LOC returns the next record number to be used if a GET o
 ## Example
 
 ```basic
-200 IF LOC(l) >50 THEN STOP
+200 IF LOC(1) > 50 THEN STOP
 ```
 
 ## See Also
@@ -44,4 +44,4 @@ With random disk files, LOC returns the next record number to be used if a GET o
 - [RESET](../statements/reset.md) - Closes all open files
 - [RSET](../statements/rset.md) - Right-justifies a string in a field for random file output
 - [WRITE #](../statements/writei.md) - Write data to a sequential file with delimiters
-- [~ INPUTi](../statements/inputi.md) - To read an entire line (up to 254 characters), without delimiters, from a sequential disk data file to a string variable
+- [LINE INPUT#](../statements/inputi.md) - To read an entire line (up to 254 characters), without delimiters, from a sequential disk data file to a string variable

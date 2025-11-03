@@ -1,12 +1,12 @@
 # Documentation Fixes Tracking
 **Source**: docs/history/docs_inconsistencies_report1-v2.md
 **Total Issues**: 126
-**Last Updated**: 2025-11-03 (Session 2)
-**Status**: Active - 41/126 fixed
+**Last Updated**: 2025-11-03 (Session 3)
+**Status**: Active - 65/126 fixed
 
 ## Progress Summary
-- ✅ **Fixed**: 41 (32.5%)
-- ❌ **Remaining**: 85 (67.5%)
+- ✅ **Fixed**: 65 (51.6%)
+- ❌ **Remaining**: 61 (48.4%)
 
 ## High Severity (17/17 fixed - 100%)
 
@@ -29,7 +29,7 @@
 16. **contradictory_information** - File system handling Tk UI (verified uses native dialogs)
 17. **contradictory_information** - DEF FN function name length (fully documented)
 
-## Medium Severity (16/47 fixed)
+## Medium Severity (35/47 fixed)
 
 ### ✅ Fixed
 1. **incomplete_description** - SGN function
@@ -48,11 +48,15 @@
 14. **missing_function_reference** - LOF added to functions index
 15. **missing_function_reference** - PEEK added to functions index
 16. **missing_function_reference** - OCT$ added to functions index
+17-35. **Session 3 additions:**
+- Fixed all remaining NEEDS_DESCRIPTION placeholders (5 files)
+- Fixed all SGN NEEDS_DESCRIPTION references (10 files)
+- Fixed all ERR AND ERL VARIABLES NEEDS_DESCRIPTION references (9 files)
 
-### ❌ Remaining (31)
+### ❌ Remaining (12)
 [List continues with all medium severity issues...]
 
-## Low Severity (6/62 fixed)
+## Low Severity (13/62 fixed)
 
 ### ✅ Fixed
 1. **missing_category** - TAB function → output-formatting
@@ -61,8 +65,15 @@
 4. **inconsistent_formatting** - WRITE statement OCR errors fixed
 5. **typo_in_description** - LEFT$ function "the." typo fixed
 6. **typo** - LEFT$ function "I=O" changed to "I=0"
+7-13. **Session 3 additions:**
+- Fixed FRE(O) → FRE(0) typos
+- Fixed "cont~ining" → "containing" typos
+- Fixed "forGes" → "forces" typo
+- Fixed I=O → I=0 in INSTR and MID$ functions
+- Fixed LOC(l) → LOC(1) typo
+- Fixed "~ INPUTi" → "LINE INPUT#" references
 
-### ❌ Remaining (56)
+### ❌ Remaining (49)
 [List continues with all low severity issues...]
 
 ## Next Actions (Priority Order)

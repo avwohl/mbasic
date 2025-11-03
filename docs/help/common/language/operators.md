@@ -1,5 +1,5 @@
 ---
-description: NEEDS_DESCRIPTION
+description: Reference guide for BASIC-80 operators including arithmetic, comparison, and logical operations
 keywords:
 - condition
 - data

@@ -1,5 +1,5 @@
 ---
-description: NEEDS_DESCRIPTION
+description: Quick reference for all mathematical functions in BASIC-80
 keywords:
 - for
 - function

@@ -1,5 +1,5 @@
 ---
-description: NEEDS_DESCRIPTION
+description: Technical overview of MBASIC's interpreter and compiler architecture
 keywords:
 - architecture
 - array

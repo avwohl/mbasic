@@ -12,7 +12,7 @@
       "title": "Operators and Expressions",
       "type": "guide",
       "category": "",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Reference guide for BASIC-80 operators including arithmetic, comparison, and logical operations"
     },
     {
       "path": "character-set.md",
@@ -26,21 +26,21 @@
       "title": "Error Codes and Messages",
       "type": "reference",
       "category": "",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Complete reference of BASIC-80 error codes and their meanings"
     },
     {
       "path": "appendices/ascii-codes.md",
       "title": "ASCII Character Codes",
       "type": "reference",
       "category": "",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Complete ASCII character code reference table for BASIC-80"
     },
     {
       "path": "appendices/math-functions.md",
       "title": "Mathematical Functions",
       "type": "reference",
       "category": "",
-      "description": "NEEDS_DESCRIPTION"
+      "description": "Quick reference for all mathematical functions in BASIC-80"
     },
     {
       "path": "statements/lset.md",

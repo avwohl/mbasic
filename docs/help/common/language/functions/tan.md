@@ -34,6 +34,6 @@ Returns the tangent of X in radians. TAN (X) is calculated in single preclslon. 
 - [INT](int.md) - Return the largest integer less than or equal to a number (floor function)
 - [LOG](log.md) - Returns the natural logarithm of X
 - [RND](rnd.md) - Returns a random number between 0 and 1
-- [SGN](sgn.md) - NEEDS_DESCRIPTION
+- [SGN](sgn.md) - Returns the sign of X (-1, 0, or 1)
 - [SIN](sin.md) - Returns the sine of X in radians
 - [SQR](sqr.md) - Returns the square root of X

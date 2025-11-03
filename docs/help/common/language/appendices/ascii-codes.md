@@ -1,5 +1,5 @@
 ---
-description: NEEDS_DESCRIPTION
+description: Complete ASCII character code reference table for BASIC-80
 keywords:
 - ascii
 - character

@@ -2,7 +2,7 @@
 category: system
 description: Arguments to FRE are dummy arguments
 keywords: ['for', 'fre', 'function', 'number', 'print', 'return']
-syntax: FRE(O) FRE (X$)
+syntax: FRE(0) FRE(X$)
 title: FRE
 type: function
 ---
@@ -12,24 +12,25 @@ type: function
 ## Syntax
 
 ```basic
-FRE(O) FRE (X$)
+FRE(0)
+FRE(X$)
 ```
 
 ## Description
 
-Arguments to FRE are dummy arguments. FRE returns the number of bytes in memory not being used by BASIC-80. FRE("") forGes a garbage collection before returning the number of free bytes. BE PATIENT: garbage collection may take 1 to 1-1/2 minutes. BASIC will not initiate garbage collection until all free memory has been used up. Therefore, using FRE("") periodically will result in shorter delays for each garbage collection.
+Arguments to FRE are dummy arguments. FRE returns the number of bytes in memory not being used by BASIC-80. FRE("") forces a garbage collection before returning the number of free bytes. BE PATIENT: garbage collection may take 1 to 1-1/2 minutes. BASIC will not initiate garbage collection until all free memory has been used up. Therefore, using FRE("") periodically will result in shorter delays for each garbage collection.
 
 ## Example
 
 ```basic
-PRINT FRE(O)
+PRINT FRE(0)
  14542
  Ok
 ```
 
 ## See Also
 - [HELP SET](../statements/helpsetting.md) - Display help for a specific setting
-- [INKEY$](inkey_dollar.md) - Returns either a one-character string cont~ining a character read from the terminal or a null string if no character is pending at the terminal
+- [INKEY$](inkey_dollar.md) - Returns either a one-character string containing a character read from the terminal or a null string if no character is pending at the terminal
 - [INP](inp.md) - Returns the byte read from port I
 - [LIMITS](../statements/limits.md) - Display resource usage and interpreter limits
 - [NULL](../statements/null.md) - To set the number of nulls to be printed at   the end of each line

@@ -47,7 +47,7 @@ A DEFtype statement declares that the variable names beginning with the 1etter(s
 - [CHR$](../functions/chr_dollar.md) - Returns a one-character string whose ASCII code is the specified value
 - [CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](csave.md) - To save the program or an       array   currently     in memory on cassette tape
 - [CVI, CVS, CVD](../functions/cvi-cvs-cvd.md) - Convert string values to numeric values
-- [ERR AND ERL VARIABLES](err-erl-variables.md) - NEEDS_DESCRIPTION
+- [ERR AND ERL VARIABLES](err-erl-variables.md) - Error code and error line number variables used in error handling
 - [INPUT#](input_hash.md) - To read data items from a sequential disk    file and assign them to program variables
 - [LINE INPUT](line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
 - [LPRINT AND LPRINT USING](lprint-lprint-using.md) - To print data at the line printer

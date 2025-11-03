@@ -15,7 +15,7 @@
       "title": "Operators and Expressions",
       "type": "guide",
       "category": "",
-      "description": "NEEDS_DESCRIPTION",
+      "description": "Reference guide for BASIC-80 operators including arithmetic, comparison, and logical operations",
       "tier": "language"
     },
     {
@@ -31,7 +31,7 @@
       "title": "Error Codes and Messages",
       "type": "reference",
       "category": "",
-      "description": "NEEDS_DESCRIPTION",
+      "description": "Complete reference of BASIC-80 error codes and their meanings",
       "tier": "language"
     },
     {
@@ -39,7 +39,7 @@
       "title": "ASCII Character Codes",
       "type": "reference",
       "category": "",
-      "description": "NEEDS_DESCRIPTION",
+      "description": "Complete ASCII character code reference table for BASIC-80",
       "tier": "language"
     },
     {
@@ -47,7 +47,7 @@
       "title": "Mathematical Functions",
       "type": "reference",
       "category": "",
-      "description": "NEEDS_DESCRIPTION",
+      "description": "Quick reference for all mathematical functions in BASIC-80",
       "tier": "language"
     },
     {

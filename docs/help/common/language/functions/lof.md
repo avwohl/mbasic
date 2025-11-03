@@ -65,4 +65,4 @@ Ok
 - [RESET](../statements/reset.md) - Closes all open files
 - [RSET](../statements/rset.md) - Right-justifies a string in a field for random file output
 - [WRITE #](../statements/writei.md) - Write data to a sequential file with delimiters
-- [~ INPUTi](../statements/inputi.md) - To read an entire line (up to 254 characters), without delimiters, from a sequential disk data file to a string variable
+- [LINE INPUT#](../statements/inputi.md) - To read an entire line (up to 254 characters), without delimiters, from a sequential disk data file to a string variable

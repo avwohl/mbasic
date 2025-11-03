@@ -1,5 +1,5 @@
 ---
-description: NEEDS_DESCRIPTION
+description: Complete reference of BASIC-80 error codes and their meanings
 keywords:
 - array
 - codes

@@ -30,7 +30,7 @@ Searches for the first occurrence of string Y$ in X$ and returns the position at
  RUN
  2 6
  Ok
-NOTE: If I=O is specified, error message "ILLEGAL
+NOTE: If I=0 is specified, error message "ILLEGAL
  ARGUMENT IN <line number>" will be returned.
 ```
 
