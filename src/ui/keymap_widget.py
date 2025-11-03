@@ -49,7 +49,6 @@ class KeymapWidget(urwid.WidgetWrap):
         # Build the layout
         pile = urwid.Pile([
             ('pack', urwid.AttrMap(instructions, 'help_text')),
-            ('pack', urwid.Divider()),
             self.listbox,
         ])
 
