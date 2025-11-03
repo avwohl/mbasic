@@ -50,6 +50,14 @@ MBASIC 5.21 is a classic BASIC dialect from the CP/M era (late 1970s - early 198
 
     [:octicons-arrow-right-24: Games Library](library/games/index.md)
 
+-   :fontawesome-brands-github:{ .lg .middle } __Source Code__
+
+    ---
+
+    View the source, report issues, and contribute on GitHub
+
+    [:octicons-arrow-right-24: GitHub Repository](https://github.com/avwohl/mbasic)
+
 </div>
 
 ## Key Features
