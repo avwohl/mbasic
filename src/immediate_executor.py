@@ -75,12 +75,17 @@ class ImmediateExecutor:
         if self.interpreter is None:
             return True
 
-        # Check interpreter state
-        if hasattr(self.interpreter, 'state'):
-            status = self.interpreter.state.status
-            # Safe states: idle, paused, at_breakpoint, done, error
-            safe_states = {'idle', 'paused', 'at_breakpoint', 'done', 'error'}
-            return status in safe_states
+        # Check interpreter state using microprocessor model
+        if hasattr(self.interpreter, 'state') and self.interpreter.state:
+            state = self.interpreter.state
+            # Safe to execute immediate commands when:
+            # - Program is halted (paused/done/breakpoint)
+            # - OR there's an error
+            # - OR waiting for input
+            # NOT safe when program is actively running
+            return (self.runtime.halted or
+                    state.error_info is not None or
+                    state.input_prompt is not None)
 
         # No state attribute - assume safe (non-tick-based)
         return True
@@ -131,8 +136,7 @@ class ImmediateExecutor:
         """
         # Check if safe to execute (for tick-based interpreters)
         if not self.can_execute_immediate():
-            status = self.interpreter.state.status if hasattr(self.interpreter, 'state') else 'unknown'
-            return (False, f"Cannot execute immediate mode while program is {status}\n")
+            return (False, "Cannot execute immediate mode while program is running\n")
 
         # Special case: empty statement
         statement = statement.strip()
@@ -174,7 +178,8 @@ class ImmediateExecutor:
                     # Restore yellow highlight if there's a current execution position
                     if hasattr(ui.interpreter, 'state') and ui.interpreter.state:
                         state = ui.interpreter.state
-                        if state.status in ('error', 'paused', 'at_breakpoint'):
+                        # Check if halted (paused/breakpoint) or has error
+                        if ui.runtime.halted or state.error_info:
                             # Get current PC directly from runtime
                             if hasattr(ui, '_highlight_current_statement') and hasattr(ui, 'runtime'):
                                 pc = ui.runtime.pc
