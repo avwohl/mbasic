@@ -1,5 +1,5 @@
 ---
-description: Compiler optimization techniques used in Compiled BASIC-80
+description: 27 compiler optimization techniques used in Compiled BASIC-80
 keywords:
 - compiler
 - optimization

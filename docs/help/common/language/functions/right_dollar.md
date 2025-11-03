@@ -18,7 +18,7 @@ RIGHT$(X$,I)
 
 ## Description
 
-Returns the rightmost I characters of string X$. If I=LEN{X$), returns X$. If I=O, the null string (length zero) is returned.
+Returns the rightmost I characters of string X$. If I=LEN(X$), returns X$. If I=0, the null string (length zero) is returned.
 
 ## Example
 

@@ -36,7 +36,7 @@ To write data to a sequential disk file.
 - [LSET](lset.md) - Left-justifies a string in a field for random file output
 - [OPEN](open.md) - To allow I/O to a disk file
 - [POS](../functions/pos.md) - Returns the current cursor position
-- [PUT](put.md) - To write a record from   a   random   buffer   to   a random
+- [PUT](put.md) - To write a record from a random buffer to a random file
 - [RESET](reset.md) - Closes all open files
 - [RSET](rset.md) - Right-justifies a string in a field for random file output
 - [WRITE #](writei.md) - Write data to a sequential file with delimiters

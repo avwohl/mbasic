@@ -24,7 +24,7 @@ Returns a string comprised of the leftmost I characters of X$. I must be in the 
 
 ```basic
 10 A$ = "BASIC-80"
- 20 B$ = LEFT$(A$,5}
+ 20 B$ = LEFT$(A$,5)
  30 PRINT B$
  BASIC
  Ok

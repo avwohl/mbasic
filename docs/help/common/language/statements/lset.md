@@ -65,7 +65,7 @@ LSET is typically used with field variables defined by the FIELD statement to pr
 - [OPEN](open.md) - To allow I/O to a disk file
 - [POS](../functions/pos.md) - Returns the current cursor position
 - [PRINTi AND PRINTi USING](printi-printi-using.md) - To write data to a sequential disk file
-- [PUT](put.md) - To write a record from   a   random   buffer   to   a random
+- [PUT](put.md) - To write a record from a random buffer to a random file
 - [RESET](reset.md) - Closes all open files
 - [RSET](rset.md) - Right-justifies a string in a field for random file output
 - [WRITE #](writei.md) - Write data to a sequential file with delimiters

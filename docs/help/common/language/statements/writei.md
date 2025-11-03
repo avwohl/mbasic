@@ -75,7 +75,7 @@ The file must be opened for sequential output before using WRITE #.
 - [POS](../functions/pos.md) - Returns the current cursor position
 - [PRINT](print.md) - Output text and values to the screen
 - [PRINTi AND PRINTi USING](printi-printi-using.md) - To write data to a sequential disk file
-- [PUT](put.md) - To write a record from   a   random   buffer   to   a random
+- [PUT](put.md) - To write a record from a random buffer to a random file
 - [RESET](reset.md) - Closes all open files
 - [RSET](rset.md) - Right-justifies a string in a field for random file output
 - [~ INPUTi](inputi.md) - To read an entire line (up to 254 characters), without delimiters, from a sequential disk data file to a string variable

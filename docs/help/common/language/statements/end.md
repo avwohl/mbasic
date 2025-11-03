@@ -1,6 +1,6 @@
 ---
 category: program-control
-description: To terminate program execution, close all   files and return to command level
+description: To terminate program execution, close all files and return to command level
 keywords: ['close', 'command', 'else', 'end', 'execute', 'file', 'goto', 'if', 'print', 'program']
 syntax: END
 title: END
@@ -19,7 +19,7 @@ END
 
 ## Purpose
 
-To terminate program execution, close all   files and return to command level.
+To terminate program execution, close all files and return to command level.
 
 ## Remarks
 

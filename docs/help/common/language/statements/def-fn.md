@@ -266,3 +266,8 @@ With A=20: FNX(5) = 25
 **Error:** "Type mismatch"
 
 **Fix:** Match argument types or remove type suffix
+
+## See Also
+- [DEF USR](def-usr.md) - Define assembly subroutine address
+- [USR](../functions/usr.md) - Call assembly language subroutine
+- [GOSUB-RETURN](gosub-return.md) - Branch to and return from a subroutine

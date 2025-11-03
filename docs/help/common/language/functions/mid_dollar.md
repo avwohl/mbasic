@@ -24,8 +24,8 @@ Returns a string of length J characters from X$ beginning with the Ith character
 
 ```basic
 LIST
- 10 A$=nGOOD n
- 20 B$=nMORNING EVENING AFTERNOON"
+ 10 A$="GOOD "
+ 20 B$="MORNING EVENING AFTERNOON"
  30 PRINT A$;MID$(B$,9,7)
  Ok
  RUN

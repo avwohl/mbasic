@@ -1,6 +1,6 @@
 ---
 category: file-io
-description: To write a record from   a   random   buffer   to   a random
+description: To write a record from a random buffer to a random file
 keywords: ['command', 'error', 'field', 'file', 'for', 'if', 'next', 'number', 'open', 'print']
 syntax: PUT (#]<file number>(,<record number>]
 title: PUT
@@ -19,7 +19,7 @@ PUT (#]<file number>(,<record number>]
 
 ## Purpose
 
-To write a record from   a   random   buffer   to   a random. disk file.
+To write a record from a random buffer to a random file. disk file.
 
 ## Remarks
 

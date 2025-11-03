@@ -44,7 +44,7 @@ Returns -1 (true) if the end of a sequential file has been reached. Use EOF to t
 - [OPEN](../statements/open.md) - To allow I/O to a disk file
 - [POS](pos.md) - Returns the current cursor position
 - [PRINTi AND PRINTi USING](../statements/printi-printi-using.md) - To write data to a sequential disk file
-- [PUT](../statements/put.md) - To write a record from   a   random   buffer   to   a random
+- [PUT](../statements/put.md) - To write a record from a random buffer to a random file
 - [RESET](../statements/reset.md) - Closes all open files
 - [RSET](../statements/rset.md) - Right-justifies a string in a field for random file output
 - [WRITE #](../statements/writei.md) - Write data to a sequential file with delimiters
