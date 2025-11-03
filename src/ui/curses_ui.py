@@ -1528,10 +1528,6 @@ class CursesBackend(UIBackend):
 
     def _handle_input(self, key):
         """Handle global keyboard shortcuts."""
-        # Debug: log all ctrl keys
-        if key.startswith('ctrl '):
-            self.status_bar.set_text(f"Got key: {repr(key)}")
-
         if key == QUIT_KEY or key == QUIT_ALT_KEY:
             # Quit
             raise urwid.ExitMainLoop()
@@ -1571,7 +1567,6 @@ class CursesBackend(UIBackend):
 
         elif key == LIST_KEY:
             # Ctrl+L = Step Line (execute all statements on current line)
-            self.status_bar.set_text(f"Got Ctrl+L, calling _debug_step_line...")
             self._debug_step_line()
 
         elif key == OPEN_KEY:
@@ -1726,10 +1721,6 @@ class CursesBackend(UIBackend):
                 self.output_buffer.extend(new_output)
                 self._update_output()
 
-            # Debug: show what happened
-            self.output_buffer.append(f"[DEBUG: halted={self.runtime.halted}, error={state.error_info is not None}, line={state.current_line}]")
-            self._update_output()
-
             # Update editor display with statement highlighting
             if self.runtime.halted and not state.error_info and state.current_line:
                 # Highlight the current statement in the editor
@@ -1788,13 +1779,8 @@ class CursesBackend(UIBackend):
 
     def _debug_step_line(self):
         """Execute all statements on current line and pause (step by line)."""
-        self.output_buffer.append(f"[DEBUG _debug_step_line: interpreter={self.interpreter is not None}, state={hasattr(self.interpreter, 'state') if self.interpreter else False}]")
-        self._update_output()
-
         if not self.interpreter or not hasattr(self.interpreter, 'state') or not self.interpreter.state:
             # No program running - start it and step immediately
-            self.output_buffer.append("[DEBUG: Starting program...]")
-            self._update_output()
             self._run_program()
             # Program is now running async - halt it immediately
             self.runtime.halted = True
