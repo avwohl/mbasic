@@ -3114,39 +3114,60 @@ class CursesBackend(UIBackend):
         except Exception as e:
             import traceback
 
-            # Gather context for debug logging
-            context = {}
-            if self.interpreter and hasattr(self.interpreter, 'state'):
-                state = self.interpreter.state
-                context['current_line'] = state.current_line
-                context['halted'] = self.runtime.halted
-                if state.error_info:
-                    context['error_line'] = state.error_info.pc.line_num
+            # Check if this is a user program error (error_info set) vs internal error
+            state = self.interpreter.state if self.interpreter and hasattr(self.interpreter, 'state') else None
+            is_user_error = state and state.error_info is not None
 
-            # Log error (outputs to stderr in debug mode)
-            error_msg = debug_log_error(
-                "Execution error",
-                exception=e,
-                context=context
-            )
+            if is_user_error:
+                # User program error (like FOR/NEXT nesting) - don't spam stderr
+                # Format nicely for the user
+                error_msg = state.error_info.error_message
+                line_num = state.error_info.pc.line_num
 
-            # Format unexpected tick error with box
-            self.output_buffer.append("")
-            self.output_buffer.append("┌─ Execution Error ────────────────────────────────┐")
-            self.output_buffer.append(f"│ {type(e).__name__}: {e}")
-            self.output_buffer.append("│")
-            if is_debug_mode():
-                self.output_buffer.append("│ (Full traceback sent to stderr - check console)")
+                self.output_buffer.append("")
+                self.output_buffer.append("┌─ Runtime Error ──────────────────────────────────┐")
+                if isinstance(line_num, int):
+                    self.output_buffer.append(f"│ Line {line_num}:")
+                    if line_num in self.editor_lines:
+                        code = self.editor_lines[line_num]
+                        self.output_buffer.append(f"│   {code}")
+                        self.output_buffer.append(f"│   ^^^^")
+                else:
+                    self.output_buffer.append(f"│ Line {line_num}:")
+                self.output_buffer.append(f"│ Error: {error_msg}")
+                self.output_buffer.append("└──────────────────────────────────────────────────┘")
+                self._update_output()
+                self.status_bar.set_text("Error - ^F help  ^U menu")
+                self._update_immediate_status()
             else:
-                self.output_buffer.append("│ An error occurred during program execution.")
-            self.output_buffer.append("└──────────────────────────────────────────────────┘")
-            self.output_buffer.append("")
-            # Add traceback for debugging (only if not in debug mode)
-            if not is_debug_mode():
-                for line in traceback.format_exc().split('\n'):
-                    self.output_buffer.append(line)
-            self._update_output()
-            self.status_bar.set_text("Execution error - See output")
+                # Internal/unexpected error - log it to stderr
+                context = {}
+                if state:
+                    context['current_line'] = state.current_line
+                    context['halted'] = self.runtime.halted
+
+                error_msg = debug_log_error(
+                    "Execution error",
+                    exception=e,
+                    context=context
+                )
+
+                # Format unexpected error with box
+                self.output_buffer.append("")
+                self.output_buffer.append("┌─ Execution Error ────────────────────────────────┐")
+                self.output_buffer.append(f"│ {type(e).__name__}: {e}")
+                self.output_buffer.append("│")
+                if is_debug_mode():
+                    self.output_buffer.append("│ (Full traceback sent to stderr - check console)")
+                else:
+                    self.output_buffer.append("│ An error occurred during program execution.")
+                self.output_buffer.append("└──────────────────────────────────────────────────┘")
+                self.output_buffer.append("")
+                if not is_debug_mode():
+                    for line in traceback.format_exc().split('\n'):
+                        self.output_buffer.append(line)
+                self._update_output()
+                self.status_bar.set_text("Execution error - See output")
 
     def _get_input_for_interpreter(self, prompt):
         """Show input dialog and provide input to interpreter."""
