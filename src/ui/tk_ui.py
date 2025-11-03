@@ -901,14 +901,13 @@ class TkBackend(UIBackend):
 
         # Query the statement table to find which statement the cursor is in
         stmt_offset = 0
-        if self.runtime and self.runtime.statement_table:
-            # Get all statements for this line from the statement table
-            for pc, stmt_node in self.runtime.statement_table.statements.items():
-                if pc.line_num == line_number:
-                    # Check if cursor is within this statement's character range
-                    if stmt_node.char_start <= cursor_column <= stmt_node.char_end:
-                        stmt_offset = pc.stmt_offset
-                        break
+        # Get all statements for this line from the statement table
+        for pc, stmt_node in self.runtime.statement_table.statements.items():
+            if pc.line_num == line_number:
+                # Check if cursor is within this statement's character range
+                if stmt_node.char_start <= cursor_column <= stmt_node.char_end:
+                    stmt_offset = pc.stmt_offset
+                    break
 
         # Create PC object for this statement
         pc = PC(line_number, stmt_offset)
@@ -930,8 +929,7 @@ class TkBackend(UIBackend):
                 self._set_status(f"Breakpoint set on line {line_number}")
 
         # Update runtime breakpoints
-        if self.runtime:
-            self.runtime.breakpoints = self.breakpoints.copy()
+        self.runtime.breakpoints = self.breakpoints.copy()
 
     def _clear_all_breakpoints(self):
         """Clear all breakpoints."""
@@ -952,8 +950,7 @@ class TkBackend(UIBackend):
         self.breakpoints.clear()
 
         # Update runtime breakpoints
-        if self.runtime:
-            self.runtime.breakpoints = self.breakpoints.copy()
+        self.runtime.breakpoints = self.breakpoints.copy()
 
         self._set_status("All breakpoints cleared")
 
@@ -3015,8 +3012,8 @@ class TkBackend(UIBackend):
             if self.interpreter and hasattr(self.interpreter, 'state'):
                 state = self.interpreter.state
                 context['current_line'] = state.current_line
-                context['halted'] = self.runtime.halted if self.runtime else None
-                context['pc'] = str(self.runtime.pc) if self.runtime else None
+                context['halted'] = self.runtime.halted
+                context['pc'] = str(self.runtime.pc)
                 if state.error_info:
                     context['error_line'] = state.error_info.pc.line_num
 
