@@ -77,6 +77,13 @@
 
 ### Documentation Tools
 
+- **`check_docs_consistency.py`** - Analyze docs for inconsistencies using Claude API
+  - Finds license conflicts, missing references, outdated info
+  - Requires: `pip install anthropic` and ANTHROPIC_API_KEY env var
+  - Generates report in `utils/docs_inconsistencies_report.md`
+  - Cross-analyzes all findings to identify patterns
+  - Groups issues by severity (high/medium/low)
+
 - **`regenerate_see_also_sections.py`** - Auto-generate "See Also" sections in help docs
   - Reads category metadata from all function/statement docs
   - Generates cross-references based on categories

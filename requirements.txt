@@ -24,3 +24,6 @@ python-frontmatter>=1.0.0  # For YAML front matter parsing in help files
 mkdocs>=1.5.0                    # Static site generator
 mkdocs-material>=9.4.0           # Material theme for MkDocs
 mkdocs-awesome-pages-plugin>=2.9.0  # Better page organization
+
+# Documentation consistency checking (optional)
+anthropic>=0.18.0                # Claude API for docs consistency analysis
