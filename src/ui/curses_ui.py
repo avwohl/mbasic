@@ -3290,9 +3290,7 @@ class CursesBackend(UIBackend):
         if len(self.output_walker) > 0:
             # Set focus on the walker (not the ListBox)
             self.output_walker.set_focus(len(self.output_walker) - 1)
-            # Force a screen update
-            if hasattr(self, 'loop') and self.loop and self.loop_running:
-                self.loop.draw_screen()
+            # Urwid will redraw automatically - no need to force draw_screen()
 
     def _update_output_with_lines(self, lines):
         """Update output window with specific lines."""
