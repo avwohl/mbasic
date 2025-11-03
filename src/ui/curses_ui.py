@@ -2240,8 +2240,12 @@ class CursesBackend(UIBackend):
             result = self.menu_bar.handle_key(key)
             if result == 'close':
                 # Close menu and return to main UI
-                # BUT: if settings/keymap overlay was just opened, don't overwrite it
-                if hasattr(self, '_settings_overlay') and self._settings_overlay:
+                # BUT: if an overlay was just opened, don't overwrite it
+                # Check if loop.widget changed (indicates a dialog/overlay was opened)
+                if self.loop.widget != overlay:
+                    # An overlay was opened from menu (recent files, etc.), it's already handling the widget
+                    pass
+                elif hasattr(self, '_settings_overlay') and self._settings_overlay:
                     # Settings was opened from menu, it's already handling the widget
                     pass
                 elif hasattr(self, '_keymap_overlay') and self._keymap_overlay:
