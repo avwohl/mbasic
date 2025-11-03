@@ -84,7 +84,7 @@ HELP SEARCH file
 
 **Run MBASIC:**
 ```bash
-python3 mbasic
+mbasic
 ```
 
 **Load and run a program:**

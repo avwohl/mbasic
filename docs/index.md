@@ -121,7 +121,7 @@ pip install -r requirements.txt
 Start the Curses UI:
 
 ```bash
-python3 mbasic
+mbasic
 ```
 
 Type your program:

@@ -47,7 +47,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Run MBASIC
-python3 mbasic
+mbasic
 ```
 
 ## Your First Program
@@ -57,7 +57,7 @@ python3 mbasic
 Start MBASIC without arguments for the full-screen editor:
 
 ```bash
-python3 mbasic
+mbasic
 ```
 
 Type your program:
@@ -81,7 +81,7 @@ Create a file `hello.bas`:
 Run it:
 
 ```bash
-python3 mbasic hello.bas
+mbasic hello.bas
 ```
 
 ### Method 3: CLI Mode
@@ -89,7 +89,7 @@ python3 mbasic hello.bas
 Start MBASIC in CLI mode:
 
 ```bash
-python3 mbasic --ui cli
+mbasic --ui cli
 ```
 
 Type your program at the `Ok` prompt:
@@ -109,8 +109,8 @@ MBASIC supports three interfaces:
 Full-screen terminal interface with split editor/output:
 
 ```bash
-python3 mbasic               # or
-python3 mbasic --ui curses
+mbasic               # or
+mbasic --ui curses
 ```
 
 **Best for:** Interactive program development, debugging
@@ -120,7 +120,7 @@ python3 mbasic --ui curses
 Classic MBASIC command-line interface:
 
 ```bash
-python3 mbasic --ui cli
+mbasic --ui cli
 ```
 
 **Best for:** Scripting, automation, authentic MBASIC experience
@@ -130,7 +130,7 @@ python3 mbasic --ui cli
 Graphical interface with menu bar and toolbar:
 
 ```bash
-python3 mbasic --ui tk
+mbasic --ui tk
 ```
 
 **Best for:** Users who prefer graphical interfaces
@@ -147,8 +147,8 @@ python3 mbasic --ui tk
 
 **Running programs:**
 ```bash
-python3 mbasic program.bas    # Run a file
-python3 mbasic                # Interactive mode
+mbasic program.bas    # Run a file
+mbasic                # Interactive mode
 ```
 
 **Common keyboard shortcuts (Curses UI):**

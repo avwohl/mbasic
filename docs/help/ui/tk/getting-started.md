@@ -13,12 +13,12 @@ Welcome to the MBASIC graphical IDE! This guide will help you get started quickl
 ## Starting the GUI
 
 ```bash
-python3 mbasic --ui tk [filename.bas]
+mbasic --ui tk [filename.bas]
 ```
 
-Or simply (tk is the default backend):
+Or to use the default curses UI:
 ```bash
-python3 mbasic [filename.bas]
+mbasic [filename.bas]
 ```
 
 ## Interface Layout

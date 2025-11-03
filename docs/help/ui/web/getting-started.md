@@ -17,7 +17,7 @@ Welcome to the MBASIC Web UI! This browser-based interface provides a BASIC prog
 From the command line:
 
 ```bash
-python3 mbasic --ui web
+mbasic --ui web
 ```
 
 Then open your browser to: **http://localhost:8080**
