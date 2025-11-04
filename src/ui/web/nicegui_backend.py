@@ -1188,14 +1188,14 @@ class NiceGUIBackend(UIBackend):
                 placeholder='Output'
             ).style('width: 100%; flex: 1; min-height: 150px;').props('readonly outlined dense spellcheck=false').mark('output')
 
-            # INPUT row (hidden by default)
-            self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm')
-            with self.input_row:
-                self.input_label = ui.label('').classes('font-bold text-blue-600')
-                self.input_field = ui.input(placeholder='Enter value...').classes('flex-grow').mark('input_field')
-                self.input_field.on('keydown.enter', self._submit_input)
-                self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
-            self.input_row.visible = False
+        # INPUT row (hidden by default) - outside main content area
+        self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm')
+        with self.input_row:
+            self.input_label = ui.label('').classes('font-bold text-blue-600')
+            self.input_field = ui.input(placeholder='Enter value...').classes('flex-grow').mark('input_field')
+            self.input_field.on('keydown.enter', self._submit_input)
+            self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
+        self.input_row.visible = False
 
         # Start auto-save timer
         self._start_auto_save()
