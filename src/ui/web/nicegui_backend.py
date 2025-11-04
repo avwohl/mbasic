@@ -2927,11 +2927,17 @@ class NiceGUIBackend(UIBackend):
 
         # Make output editable - use JavaScript to directly remove readonly attribute
         self.output.run_method('''() => {
+            console.log('_enable_inline_input: Trying to make output editable');
             const el = this.$el.querySelector('textarea');
+            console.log('_enable_inline_input: textarea element =', el);
             if (el) {
+                console.log('_enable_inline_input: readonly before =', el.hasAttribute('readonly'));
                 el.removeAttribute('readonly');
+                console.log('_enable_inline_input: readonly after =', el.hasAttribute('readonly'));
                 el.focus();
                 el.setSelectionRange(el.value.length, el.value.length);
+            } else {
+                console.error('_enable_inline_input: Could not find textarea element!');
             }
         }''')
 
