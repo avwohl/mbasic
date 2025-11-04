@@ -146,13 +146,13 @@ class RealFileIO(FileIO):
 class SandboxedFileIO(FileIO):
     """Sandboxed file operations for web UI.
 
-    Uses browser localStorage for file storage.
-    Files are stored per-user session with 'mbasic_file_' prefix.
+    Designed for browser localStorage file storage with 'mbasic_file_' prefix.
     No access to server filesystem - all files are client-side only.
 
-    NOTE: This is a STUB implementation. ui.run_javascript() requires async/await
-    which can't be used from synchronous interpreter code. For now, returns empty
-    results. Full implementation needs refactoring to use async context.
+    NOTE: Partially implemented. list_files() delegates to backend.sandboxed_fs,
+    but load_file(), save_file(), delete_file(), and file_exists() are STUBS that
+    raise IOError or return empty results. Full implementation needs async/await
+    refactoring since ui.run_javascript() cannot be called from synchronous code.
     """
 
     def __init__(self, backend):

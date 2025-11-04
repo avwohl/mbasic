@@ -467,13 +467,6 @@ class EndStatementNode:
 
 
 @dataclass
-class StopStatementNode:
-    """STOP statement - halt execution (for debugging)"""
-    line_num: int = 0
-    column: int = 0
-
-
-@dataclass
 class TronStatementNode:
     """TRON statement - enable execution trace (shows line numbers)"""
     line_num: int = 0

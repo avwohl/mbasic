@@ -101,13 +101,13 @@ class StatementTable:
     """
     Ordered collection of statements indexed by PC.
 
-    Uses Python 3.7+ ordered dict to maintain statement execution order.
+    Uses regular dict which maintains insertion order (Python 3.7+).
     Provides navigation methods (first_pc, next_pc) for sequential execution.
     """
 
     def __init__(self):
         """Initialize empty statement table"""
-        self.statements = {}  # PC -> stmt_node (ordered dict)
+        self.statements = {}  # PC -> stmt_node (insertion-ordered)
         self._keys_cache = None  # Cache for next_pc() lookups
 
     def add(self, pc, stmt_node):
