@@ -3041,7 +3041,7 @@ class CursesBackend(UIBackend):
                 self.status_bar.set_text("Parse error - Fix and try again")
                 return False
 
-        # Reset runtime with current program - RUN = CLEAR + GOTO first line
+        # Reset runtime with current program - RUN = CLEAR + GOTO first line (or start_line if specified)
         # This preserves breakpoints but clears variables
         self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
@@ -3389,7 +3389,8 @@ class CursesBackend(UIBackend):
                 pc = PC(line_num, stmt_offset)
                 self.runtime.statement_table.add(pc, stmt)
 
-        # Restore PC only if execution is actually running
+        # Restore PC only if execution is running AND not paused at breakpoint
+        # (paused programs need PC reset to current breakpoint location)
         # Otherwise ensure halted (don't accidentally start execution)
         if self.running and not self.paused_at_breakpoint:
             # Execution is running - preserve execution state
@@ -3896,13 +3897,13 @@ class CursesBackend(UIBackend):
         # This allows LIST to work, but doesn't start execution
         self._sync_program_to_runtime()
 
-        # Log the command to output window (not separate immediate history)
+        # Log the command to output pane (not separate immediate history)
         self.output_walker.append(make_output_line(f"> {command}"))
 
         # Execute
         success, output = self.immediate_executor.execute(command)
 
-        # Log the result to output window
+        # Log the result to output pane
         if output:
             for line in output.rstrip().split('\n'):
                 self.output_walker.append(make_output_line(line))
