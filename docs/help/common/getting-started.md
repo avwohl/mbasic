@@ -1,3 +1,7 @@
+---
+title: "Getting Started with BASIC Programming"
+---
+
 # Getting Started with MBASIC
 
 Learn the basics of BASIC programming!

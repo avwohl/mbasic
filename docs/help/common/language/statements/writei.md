@@ -3,7 +3,7 @@ category: file-io
 description: Write data to a sequential file with delimiters
 keywords: ['write', 'file', 'output', 'sequential', 'data', 'disk']
 syntax: WRITE #<file number>, <list of expressions>
-title: WRITE #
+title: "WRITE# (File)"
 type: statement
 related: ['print', 'input', 'open', 'close']
 ---

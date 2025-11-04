@@ -1,5 +1,5 @@
 ---
-title: Getting Started with MBASIC
+title: "Getting Started with MBASIC (Interpreter)"
 type: guide
 category: mbasic
 keywords:

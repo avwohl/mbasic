@@ -3,7 +3,7 @@ category: input-output
 description: To output data at the terminal
 keywords: ['command', 'data', 'for', 'if', 'line', 'print', 'put', 'return', 'statement', 'string']
 syntax: WRITE [<list of expressions>]
-title: WRITE
+title: "WRITE (Screen)"
 type: statement
 ---
 
