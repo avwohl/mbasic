@@ -101,12 +101,11 @@ class Runtime:
         self.files = {}               # file_number -> file_handle
         self.field_buffers = {}       # file_number -> buffer_dict
 
-        # Error handling
-        self.error_handler = None     # Line number for ON ERROR GOTO/GOSUB
+        # Error handling registration (ON ERROR GOTO/GOSUB)
+        self.error_handler = None     # Line number for registered error handler
         self.error_handler_is_gosub = False  # True if ON ERROR GOSUB, False if ON ERROR GOTO
-        # Note: Error state tracking removed - use state.error_info instead
-        # error_occurred = (state.error_info is not None)
-        # in_error_handler = (state.error_info is not None)
+        # Note: Actual error state (occurred/active) is tracked in state.error_info, not here
+        # Runtime only stores the registered handler location, not whether an error occurred
         # Error PC and details are stored in ErrorInfo (interpreter.py state)
         # ERL%, ERS%, and ERR% system variables are set from ErrorInfo
 
@@ -405,7 +404,7 @@ class Runtime:
             value: New value
             def_type_map: Optional DEF type mapping
             token: REQUIRED (unless debugger_set=True) - Token with line and position
-            debugger_set: True if this set is from debugger, not program execution
+            debugger_set: True if this set is from debugger/interactive prompt, not program execution
             limits: Optional ResourceLimits object for tracking
             original_case: Original case from source (for case preservation)
             settings_manager: Optional SettingsManager for case conflict handling
