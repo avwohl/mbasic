@@ -721,30 +721,61 @@ class InteractiveMode:
                     if ln in self.line_asts:
                         del self.line_asts[ln]
 
-            # Run the program
-            from resource_limits import create_unlimited_limits
-            runtime = Runtime(self.line_asts, self.lines)
-            interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits())
-            interpreter.interactive_mode = self
+            # CHAIN: Reuse existing runtime/interpreter to preserve UI references
+            # Clear execution state (GOSUB stack, FOR loops, etc.) but keep variables based on options
+            if self.program_runtime and self.program_interpreter:
+                # Reuse existing objects
+                runtime = self.program_runtime
+                interpreter = self.program_interpreter
 
-            # Restore variables if saved
-            if saved_variables:
-                runtime.update_variables(saved_variables)
+                # Reset runtime with new program (clears stacks, DATA, files, etc.)
+                runtime.reset_for_run(self.line_asts, self.lines)
 
-            # Preserve COMMON variable list from previous runtime
-            if self.program_runtime and self.program_runtime.common_vars:
-                runtime.common_vars = list(self.program_runtime.common_vars)
+                # Restore variables if saved (after reset which cleared them)
+                if saved_variables:
+                    runtime.update_variables(saved_variables)
 
-            # Save runtime for CONT
-            self.program_runtime = runtime
-            self.program_interpreter = interpreter
+                # Preserve COMMON variable list
+                if runtime.common_vars:
+                    # Keep the existing common_vars list
+                    pass
 
-            # Set starting line if specified
-            if start_line:
-                runtime.next_line = start_line
+                # Set starting line if specified
+                if start_line:
+                    runtime.next_line = start_line
+                else:
+                    # Start from beginning
+                    runtime.next_line = None
+                    runtime.pc = None
 
-            # Run the program
-            interpreter.run()
+                # Return to let existing interpreter.run() continue with new program
+                # Don't call interpreter.run() again - that would create recursion
+                return
+            else:
+                # First time running - create new objects
+                from resource_limits import create_unlimited_limits
+                runtime = Runtime(self.line_asts, self.lines)
+                interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits())
+                interpreter.interactive_mode = self
+
+                # Restore variables if saved
+                if saved_variables:
+                    runtime.update_variables(saved_variables)
+
+                # Preserve COMMON variable list from previous runtime
+                if self.program_runtime and self.program_runtime.common_vars:
+                    runtime.common_vars = list(self.program_runtime.common_vars)
+
+                # Save runtime for CONT
+                self.program_runtime = runtime
+                self.program_interpreter = interpreter
+
+                # Set starting line if specified
+                if start_line:
+                    runtime.next_line = start_line
+
+                # Run the program
+                interpreter.run()
 
         except FileNotFoundError:
             print(f"?File not found: {filename}")
