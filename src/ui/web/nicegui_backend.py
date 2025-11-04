@@ -1999,9 +1999,10 @@ class NiceGUIBackend(UIBackend):
                 else:
                     self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
-                # Create IO handler
+                # Update IO handler for execution (reuse existing interpreter to preserve session)
                 self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
-                self.interpreter = Interpreter(self.runtime, self.exec_io, limits=create_local_limits())
+                self.interpreter.io = self.exec_io
+                self.interpreter.limits = create_local_limits()
 
                 # Wire up interpreter
                 self.interpreter.interactive_mode = self
@@ -2062,9 +2063,10 @@ class NiceGUIBackend(UIBackend):
                 else:
                     self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
-                # Create IO handler
+                # Update IO handler for execution (reuse existing interpreter to preserve session)
                 self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
-                self.interpreter = Interpreter(self.runtime, self.exec_io, limits=create_local_limits())
+                self.interpreter.io = self.exec_io
+                self.interpreter.limits = create_local_limits()
 
                 # Wire up interpreter
                 self.interpreter.interactive_mode = self
@@ -2594,6 +2596,7 @@ class NiceGUIBackend(UIBackend):
         - Removing blank lines
         - Auto-numbering lines
         - Detecting Enter key (new line added)
+        - Detecting paste and clearing auto-number prompts
         """
         try:
             # Get current text
@@ -2602,6 +2605,24 @@ class NiceGUIBackend(UIBackend):
             # Track when editor has been used (for placeholder management)
             if not self.editor_has_been_used and current_text:
                 self.editor_has_been_used = True
+
+            # Detect paste: large content change (more than 1-2 chars difference from last tracked)
+            # This helps clear auto-number prompts before paste content merges with them
+            last_text = self.last_edited_line_text or ''
+            content_diff = abs(len(current_text) - len(last_text))
+
+            # If content changed significantly (>5 chars), likely a paste
+            if content_diff > 5:
+                # Check if first line is just an auto-number prompt (e.g., "10 ")
+                lines = current_text.split('\n')
+                if lines and re.match(r'^\d+\s+\d+\s+', lines[0]):
+                    # First line has format "10 100 ..." - double line number from paste
+                    # Extract the auto-number prompt and remove it
+                    match = re.match(r'^(\d+)\s+(.*)$', lines[0])
+                    if match:
+                        lines[0] = match.group(2)  # Keep only the pasted content
+                        self.editor.value = '\n'.join(lines)
+                        current_text = self.editor.value
 
             # Detect if a new line was added (Enter key pressed)
             current_line_count = len(current_text.split('\n'))

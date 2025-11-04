@@ -20,6 +20,11 @@ class BreakException(Exception):
     pass
 
 
+class ChainException(Exception):
+    """Raised by CHAIN to signal program change - caught by run() to restart execution"""
+    pass
+
+
 @dataclass
 class ErrorInfo:
     """Information about a runtime error"""
@@ -530,35 +535,47 @@ class Interpreter:
 
         This wraps the new tick-based API with synchronous input handling
         for backward compatibility with CLI usage.
+
+        Catches ChainException to restart execution with new program after CHAIN.
         """
-        # Start execution
-        state = self.start()
+        # Outer loop to handle CHAIN - restart execution when ChainException is raised
+        while True:
+            try:
+                # Start execution
+                state = self.start()
 
-        if state.error_info:
-            raise RuntimeError(state.error_info.error_message)
+                if state.error_info:
+                    raise RuntimeError(state.error_info.error_message)
 
-        # Run until done
-        while not self.runtime.halted and not state.error_info:
-            state = self.tick(mode='run', max_statements=10000)
+                # Run until done
+                while not self.runtime.halted and not state.error_info:
+                    state = self.tick(mode='run', max_statements=10000)
 
-            # Handle input synchronously for CLI
-            if state.input_prompt:
-                # Synchronous input for CLI
-                try:
-                    value = input()  # Use built-in input() for CLI
-                    state = self.provide_input(value)
-                except KeyboardInterrupt:
-                    # User pressed Ctrl+C during input
-                    self.io.output("")
-                    self.io.output(f"Break in {state.current_line or '?'}")
-                    return
-                except EOFError:
-                    self.io.output("")
-                    return
+                    # Handle input synchronously for CLI
+                    if state.input_prompt:
+                        # Synchronous input for CLI
+                        try:
+                            value = input()  # Use built-in input() for CLI
+                            state = self.provide_input(value)
+                        except KeyboardInterrupt:
+                            # User pressed Ctrl+C during input
+                            self.io.output(f"Break in {state.current_line or '?'}")
+                            return
+                        except EOFError:
+                            self.io.output("")
+                            return
 
-        # Handle final errors
-        if state.error_info:
-            raise RuntimeError(state.error_info.error_message)
+                # Handle final errors
+                if state.error_info:
+                    raise RuntimeError(state.error_info.error_message)
+
+                # Normal completion - exit the outer loop
+                break
+
+            except ChainException:
+                # CHAIN was called - restart execution with new program
+                # The runtime has already been reset by cmd_chain()
+                continue
 
 
     # OLD EXECUTION METHODS REMOVED (v1.0.300)

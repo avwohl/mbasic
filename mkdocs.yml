@@ -107,7 +107,6 @@ nav:
     - Data Management: library/data_management/index.md
     - Telecommunications: library/telecommunications/index.md
     - Demos: library/demos/index.md
-  - Developer Docs: dev/index.md
 
 extra:
   social:

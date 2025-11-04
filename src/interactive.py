@@ -15,7 +15,7 @@ from pathlib import Path
 from src.lexer import tokenize
 from src.parser import Parser
 from src.runtime import Runtime
-from src.interpreter import Interpreter
+from src.interpreter import Interpreter, ChainException
 import src.ast_nodes as ast_nodes
 from src.input_sanitizer import sanitize_and_clear_parity
 from src.debug_logger import debug_log_error, is_debug_mode
@@ -739,8 +739,16 @@ class InteractiveMode:
                 if runtime.common_vars:
                     # Keep the existing common_vars list
                     pass
+
+                # Set starting line if specified
+                if start_line:
+                    runtime.next_line = start_line
+
+                # Raise ChainException to signal run() loop to restart with new program
+                # This avoids recursive run() calls
+                raise ChainException()
             else:
-                # First time running - create new objects
+                # First time running (from command line, not during execution) - create new objects
                 from resource_limits import create_unlimited_limits
                 runtime = Runtime(self.line_asts, self.lines)
                 interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits())
@@ -758,15 +766,18 @@ class InteractiveMode:
                 self.program_runtime = runtime
                 self.program_interpreter = interpreter
 
-            # Set starting line if specified
-            if start_line:
-                runtime.next_line = start_line
+                # Set starting line if specified
+                if start_line:
+                    runtime.next_line = start_line
 
-            # Run the program
-            interpreter.run()
+                # Run the program (only for first-time from command line)
+                interpreter.run()
 
         except FileNotFoundError:
             print(f"?File not found: {filename}")
+        except ChainException:
+            # Re-raise ChainException so it can be caught by interpreter.run() loop
+            raise
         except Exception as e:
             print_error(e, self.program_runtime if hasattr(self, 'program_runtime') else None)
 
