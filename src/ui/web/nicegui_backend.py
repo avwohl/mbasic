@@ -1143,7 +1143,7 @@ class NiceGUIBackend(UIBackend):
         self._create_menu()
 
         # Toolbar
-        with ui.row().classes('w-full bg-gray-100 px-2 py-1 gap-2').style('align-items: center;'):
+        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 36px;'):
             ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
             ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
             ui.button('Step', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
@@ -1152,12 +1152,12 @@ class NiceGUIBackend(UIBackend):
             ui.separator().props('vertical')
             ui.button(icon='check_circle', on_click=self._check_syntax).mark('btn_check_syntax').props('flat').tooltip('Check Syntax')
 
-        # Command input row
-        with ui.row().classes('w-full bg-gray-100 px-2 py-1 gap-2').style('align-items: center;'):
-            ui.label('>').classes('text-lg font-mono')
-            self.immediate_entry = ui.input(placeholder='BASIC command...').classes('flex-grow').mark('immediate_entry')
+        # Command input row - single line like status bar
+        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 32px;'):
+            ui.label('>').classes('font-mono')
+            self.immediate_entry = ui.input(placeholder='BASIC command...').classes('flex-grow').props('dense outlined').mark('immediate_entry')
             self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
-            ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
+            ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').props('dense flat').mark('btn_immediate')
 
         # Status bar
         with ui.row().classes('w-full bg-gray-200 q-pa-xs').style('justify-content: space-between;'):
@@ -1236,7 +1236,7 @@ class NiceGUIBackend(UIBackend):
 
     def _create_menu(self):
         """Create menu bar."""
-        with ui.row().classes('w-full bg-gray-800 text-white px-2 py-1 gap-4'):
+        with ui.row().classes('w-full bg-gray-800 text-white px-2 gap-4').style('min-height: 36px; align-items: center;'):
             # File menu
             with ui.button('File', icon='menu').props('flat color=white'):
                 with ui.menu() as file_menu:
