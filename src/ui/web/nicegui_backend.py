@@ -2617,14 +2617,14 @@ class NiceGUIBackend(UIBackend):
         """Append text to output pane with batching for performance.
 
         Batches multiple rapid output calls to reduce DOM updates and improve performance.
-        Updates are flushed every 50ms or after 100 updates, whichever comes first.
+        Updates are flushed every 50ms or after 50 updates, whichever comes first.
         """
 
         # Add to batch
         self.output_batch.append(text)
         self.output_update_count += 1
 
-        # Flush immediately if batch is getting large (every 50 updates)
+        # Flush immediately if batch reaches 50 updates
         # This prevents lag spikes from huge batches
         if self.output_update_count >= 50:
             self._flush_output_batch()
@@ -2880,10 +2880,9 @@ class NiceGUIBackend(UIBackend):
     # =========================================================================
 
     def start(self):
-        """Start the UI.
+        """Not implemented - raises NotImplementedError.
 
-        NOTE: For web backend, use start_web_ui() module function instead.
-        This method is not used for the web backend.
+        Use start_web_ui() module function instead for web backend.
         """
         raise NotImplementedError("Web backend uses start_web_ui() function, not backend.start()")
 

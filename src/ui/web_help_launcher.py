@@ -208,9 +208,6 @@ class WebHelpLauncher_DEPRECATED:
             self.server_process = None
 
 
-# Duplicate function removed - the simple version above is used
-
-
 # Alternative: Use GitHub Pages or other hosted documentation
 def open_online_help(topic: Optional[str] = None):
     """Open online help documentation.
