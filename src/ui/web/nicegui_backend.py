@@ -1167,13 +1167,13 @@ class NiceGUIBackend(UIBackend):
                 self.resource_usage_label = ui.label('').classes('text-gray-600')
                 ui.label(f'v{VERSION}').classes('text-gray-600')
 
-        # Main content area - use flexbox with viewport height
-        with ui.element('div').style('width: 100%; height: calc(100vh - 160px); display: flex; flex-direction: column;'):
-            # Editor - using CodeMirror 5 (legacy, no ES6 modules) - 40% of available space
+        # Main content area - use flexbox to fill remaining space
+        with ui.element('div').style('width: 100%; flex: 1; display: flex; flex-direction: column; min-height: 0;'):
+            # Editor - using CodeMirror 5 (legacy, no ES6 modules) - fixed height
             self.editor = CodeMirror5Editor(
                 value='',
                 on_change=self._on_editor_change
-            ).style('width: 100%; height: 40%; min-height: 200px; border: 1px solid #ccc;').mark('editor')
+            ).style('width: 100%; height: 300px; flex-shrink: 0; border: 1px solid #ccc;').mark('editor')
 
             # Add auto-numbering handlers
             # Track last edited line for auto-numbering
@@ -1201,11 +1201,11 @@ class NiceGUIBackend(UIBackend):
             self.syntax_error_label = ui.label('').classes('text-sm font-mono bg-red-100 text-red-700 p-1')
             self.syntax_error_label.visible = False
 
-            # Output - flexible, takes remaining space (60% of available)
+            # Output - flexible, takes remaining space
             self.output = ui.textarea(
                 value=f'MBASIC 5.21 Web IDE - {VERSION}\n',
                 placeholder='Output'
-            ).style('width: 100%; flex: 1; min-height: 150px;').props('readonly outlined dense spellcheck=false').mark('output')
+            ).style('width: 100%; flex: 1; min-height: 0;').props('readonly outlined dense spellcheck=false').mark('output')
 
         # INPUT row (hidden by default) - outside main content area
         self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm')
@@ -3101,7 +3101,7 @@ def start_web_ui(port=8080):
     sys.stderr.write(f"{'='*70}\n\n")
     sys.stderr.flush()
 
-    @ui.page('/')
+    @ui.page('/', viewport='width=device-width, initial-scale=1.0')
     def main_page():
         """Create a new backend instance for each client."""
         from src.editing.manager import ProgramManager
