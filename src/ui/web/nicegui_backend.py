@@ -1112,16 +1112,18 @@ class NiceGUIBackend(UIBackend):
                     margin: 0 !important;
                     padding: 0 !important;
                     overflow: hidden !important;
-                    height: 100vh !important;
                 }
                 .q-page, .q-page-container, .nicegui-content {
                     padding: 0 !important;
                     margin: 0 !important;
-                    min-height: 100vh !important;
-                    display: flex !important;
-                    flex-direction: column !important;
                 }
                 .q-layout, .q-drawer-container {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+                /* Remove all gaps between rows */
+                .q-page > div {
+                    gap: 0 !important;
                     margin: 0 !important;
                     padding: 0 !important;
                 }
