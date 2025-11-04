@@ -1151,7 +1151,7 @@ class NiceGUIBackend(UIBackend):
         self._create_menu()
 
         # Toolbar
-        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 36px; margin-top: 2px; margin-bottom: 0;'):
+        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 36px; margin-top: 1px; margin-bottom: 0;'):
             ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
             ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
             ui.button('Step', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
@@ -1161,14 +1161,14 @@ class NiceGUIBackend(UIBackend):
             ui.button(icon='check_circle', on_click=self._check_syntax).mark('btn_check_syntax').props('flat').tooltip('Check Syntax')
 
         # Command input row - single line like status bar
-        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 32px; margin-bottom: 2px;'):
+        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 32px; margin-bottom: 1px;'):
             ui.label('>').classes('font-mono')
             self.immediate_entry = ui.input(placeholder='BASIC command...').classes('flex-grow').props('dense outlined').mark('immediate_entry')
             self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
             ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').props('dense flat').mark('btn_immediate')
 
         # Status bar
-        with ui.row().classes('w-full bg-gray-200 px-2').style('justify-content: space-between; min-height: 28px; align-items: center; margin-bottom: 2px;'):
+        with ui.row().classes('w-full bg-gray-200 px-2').style('justify-content: space-between; min-height: 28px; align-items: center; margin-bottom: 1px;'):
             self.status_label = ui.label('Ready').mark('status')
             with ui.row().classes('gap-4'):
                 self.auto_line_label = ui.label('').classes('text-gray-600 font-mono')
@@ -1243,7 +1243,7 @@ class NiceGUIBackend(UIBackend):
 
     def _create_menu(self):
         """Create menu bar."""
-        with ui.row().classes('w-full bg-gray-800 text-white px-2 gap-4').style('min-height: 36px; align-items: center;'):
+        with ui.row().classes('w-full bg-gray-800 text-white px-2 gap-4').style('min-height: 36px; align-items: center; margin-bottom: 1px;'):
             # File menu
             with ui.button('File', icon='menu').props('flat color=white'):
                 with ui.menu() as file_menu:
@@ -2368,7 +2368,10 @@ class NiceGUIBackend(UIBackend):
                     parser = Parser(tokens)
                     parser.parse_line()
                 except Exception as e:
-                    errors.append(f'Line {line_num}: {str(e)}')
+                    # Strip redundant "Syntax error in N:" prefix if present
+                    error_msg = str(e)
+                    error_msg = re.sub(r'^Syntax error in \d+:\s*', '', error_msg)
+                    errors.append(f'{line_num}: {error_msg}')
 
             # Display results
             if errors:
