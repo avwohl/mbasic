@@ -1472,7 +1472,8 @@ class CursesBackend(UIBackend):
         """Create the urwid UI layout."""
         # Create widgets
         self.menu_bar = InteractiveMenuBar(self)
-        # Toolbar removed - use Ctrl+U menu instead for keyboard navigation
+        # Toolbar removed from UI layout - use Ctrl+U menu instead for keyboard navigation
+        # (_create_toolbar method still exists but is not called)
         self.editor = ProgramEditorWidget()
         self.editor._parent_ui = self  # Give editor access to parent UI for dialogs
 
@@ -3934,7 +3935,7 @@ class CursesBackend(UIBackend):
                 # (Create the same CapturingIOHandler that _run_program uses)
                 if not hasattr(self, 'io_handler') or self.io_handler is None:
                     # Need to create the CapturingIOHandler class inline
-                    # (it's defined in _run_program, but we need it here too)
+                    # (duplicates definition in _run_program - consider extracting to shared location)
                     class CapturingIOHandler:
                         def __init__(self):
                             self.output_buffer = []
