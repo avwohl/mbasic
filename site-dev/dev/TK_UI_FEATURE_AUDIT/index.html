@@ -1,0 +1,2869 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/dev/TK_UI_FEATURE_AUDIT/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>TK UI Feature Audit - Comprehensive Reference - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tk-ui-feature-audit-comprehensive-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              TK UI Feature Audit - Comprehensive Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-menu-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. MENU SYSTEM
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. MENU SYSTEM">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-file-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 File Menu
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-edit-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.2 Edit Menu
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-run-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3 Run Menu
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-view-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.4 View Menu
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-help-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.5 Help Menu
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-toolbar" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. TOOLBAR
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-editor-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. EDITOR FEATURES
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. EDITOR FEATURES">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-core-editor-widget" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 Core Editor Widget
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-status-column-indicators" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 Status Column Indicators
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-auto-numbering-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.3 Auto-Numbering System
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-smart-insert-line-ctrli" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.4 Smart Insert Line (Ctrl+I)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-auto-sort-on-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.5 Auto-Sort on Navigation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36-syntax-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.6 Syntax Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#37-input-sanitization" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.7 Input Sanitization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#38-blank-line-prevention" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.8 Blank Line Prevention
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#39-context-menu-right-click" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.9 Context Menu (Right-Click)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-execution-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. EXECUTION FEATURES
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. EXECUTION FEATURES">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-tick-based-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1 Tick-Based Execution
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-breakpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.2 Breakpoints
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-stepping-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.3 Stepping Modes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-statement-highlighting" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.4 Statement Highlighting
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-execution-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.5 Execution States
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#46-error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.6 Error Handling
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-variables-window-ctrlw" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. VARIABLES WINDOW (Ctrl+W)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. VARIABLES WINDOW (Ctrl+W)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-window-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.1 Window Layout
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-variable-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.2 Variable Display
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-sorting-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.3 Sorting System
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.4 Filtering
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-variable-editing" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.5 Variable Editing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-resource-usage-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.6 Resource Usage Display
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-execution-stack-window-ctrlk" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. EXECUTION STACK WINDOW (Ctrl+K)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. EXECUTION STACK WINDOW (Ctrl+K)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-window-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.1 Window Layout
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-stack-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.2 Stack Display
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-output-pane" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. OUTPUT PANE
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. OUTPUT PANE">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      7.1 Features
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-context-menu-right-click" class="md-nav__link">
+    <span class="md-ellipsis">
+      7.2 Context Menu (Right-Click)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-output-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      7.3 Output Sources
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-immediate-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. IMMEDIATE MODE
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. IMMEDIATE MODE">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-ui-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.1 UI Layout
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-prompt-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.2 Prompt States
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.3 Features
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84-context-menu-right-click" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.4 Context Menu (Right-Click)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#85-immediate-executor" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.5 Immediate Executor
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-file-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. FILE MANAGEMENT
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. FILE MANAGEMENT">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-auto-save-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      9.1 Auto-Save System
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-recent-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      9.2 Recent Files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-file-dialogs" class="md-nav__link">
+    <span class="md-ellipsis">
+      9.3 File Dialogs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-settings-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. SETTINGS SYSTEM
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. SETTINGS SYSTEM">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-settings-dialog" class="md-nav__link">
+    <span class="md-ellipsis">
+      10.1 Settings Dialog
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102-setting-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      10.2 Setting Types
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#103-setting-scopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      10.3 Setting Scopes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-help-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      11. HELP SYSTEM
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. HELP SYSTEM">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111-help-browser" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.1 Help Browser
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112-three-tier-help-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.2 Three-Tier Help System
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#113-in-page-search-ctrlf" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.3 In-Page Search (Ctrl+F)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#114-markdown-rendering" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.4 Markdown Rendering
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-keyboard-shortcuts-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      12. KEYBOARD SHORTCUTS SUMMARY
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. KEYBOARD SHORTCUTS SUMMARY">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#121-configurable-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      12.1 Configurable Shortcuts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#122-fixed-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      12.2 Fixed Shortcuts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#123-special-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      12.3 Special Keys
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-advanced-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      13. ADVANCED FEATURES
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13. ADVANCED FEATURES">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#131-command-methods-inherited-from-uibackend" class="md-nav__link">
+    <span class="md-ellipsis">
+      13.1 Command Methods (Inherited from UIBackend)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#132-tkiohandler" class="md-nav__link">
+    <span class="md-ellipsis">
+      13.2 TkIOHandler
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#133-keybinding-loader" class="md-nav__link">
+    <span class="md-ellipsis">
+      13.3 Keybinding Loader
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-state-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      14. STATE MANAGEMENT
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="14. STATE MANAGEMENT">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#141-execution-state-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      14.1 Execution State Variables
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#142-variables-window-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      14.2 Variables Window State
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#143-editor-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      14.3 Editor State
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-widget-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      15. WIDGET HIERARCHY
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16-code-organization" class="md-nav__link">
+    <span class="md-ellipsis">
+      16. CODE ORGANIZATION
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16. CODE ORGANIZATION">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#161-main-sections" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.1 Main Sections
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#162-related-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.2 Related Files
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#17-notable-implementation-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      17. NOTABLE IMPLEMENTATION DETAILS
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="17. NOTABLE IMPLEMENTATION DETAILS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#171-auto-sort-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      17.1 Auto-Sort Philosophy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#172-blank-line-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      17.2 Blank Line Philosophy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#173-error-recovery-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      17.3 Error Recovery Design
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#174-tick-based-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      17.4 Tick-Based Execution
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#18-future-enhancements-not-yet-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      18. FUTURE ENHANCEMENTS (NOT YET IMPLEMENTED)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      CONCLUSION
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/dev/TK_UI_FEATURE_AUDIT.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="tk-ui-feature-audit-comprehensive-reference">TK UI Feature Audit - Comprehensive Reference<a class="headerlink" href="#tk-ui-feature-audit-comprehensive-reference" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2025-10-28<br />
+<strong>File:</strong> <code>src/ui/tk_ui.py</code> (3400+ lines)<br />
+<strong>Purpose:</strong> Complete inventory of all features in the TK UI implementation</p>
+<p>This document serves as the authoritative reference for what the TK UI currently supports. Use it when:
+- Updating the curses UI to match functionality
+- Writing documentation
+- Planning new features
+- Debugging issues</p>
+<hr />
+<h2 id="1-menu-system">1. MENU SYSTEM<a class="headerlink" href="#1-menu-system" title="Permanent link">&para;</a></h2>
+<h3 id="11-file-menu">1.1 File Menu<a class="headerlink" href="#11-file-menu" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Menu Item</th>
+<th>Keyboard Shortcut</th>
+<th>Function</th>
+<th>Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>New</td>
+<td>Ctrl+N (configurable)</td>
+<td>Clear program, start fresh</td>
+<td><code>_menu_new()</code></td>
+</tr>
+<tr>
+<td>Open...</td>
+<td>Ctrl+O (configurable)</td>
+<td>Open file dialog, load program</td>
+<td><code>_menu_open()</code></td>
+</tr>
+<tr>
+<td><strong>Recent Files</strong></td>
+<td>(submenu)</td>
+<td>List of recently opened files (max 10)</td>
+<td><code>_update_recent_files_menu()</code></td>
+</tr>
+<tr>
+<td>Save</td>
+<td>Ctrl+S (configurable)</td>
+<td>Save to current file or prompt</td>
+<td><code>_menu_save()</code></td>
+</tr>
+<tr>
+<td>Save As...</td>
+<td>None</td>
+<td>Save to new file</td>
+<td><code>_menu_save_as()</code></td>
+</tr>
+<tr>
+<td>Exit</td>
+<td>Ctrl+Q (configurable)</td>
+<td>Quit application</td>
+<td><code>_menu_exit()</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recent Files Features:</strong>
+- Displays up to 10 most recent files
+- Shows short filename with tooltip for full path
+- "(No recent files)" placeholder when empty
+- "Clear Recent Files" option at bottom
+- Auto-removes deleted/missing files on access
+- Managed by <code>RecentFilesManager</code> class (in src/ui/recent_files.py)</p>
+<h3 id="12-edit-menu">1.2 Edit Menu<a class="headerlink" href="#12-edit-menu" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Menu Item</th>
+<th>Keyboard Shortcut</th>
+<th>Function</th>
+<th>Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cut</td>
+<td>Ctrl+X</td>
+<td>Cut selected text</td>
+<td><code>_menu_cut()</code></td>
+</tr>
+<tr>
+<td>Copy</td>
+<td>Ctrl+C</td>
+<td>Copy selected text</td>
+<td><code>_menu_copy()</code></td>
+</tr>
+<tr>
+<td>Paste</td>
+<td>Ctrl+V</td>
+<td>Paste from clipboard</td>
+<td><code>_menu_paste()</code></td>
+</tr>
+<tr>
+<td>Insert Line</td>
+<td>Ctrl+I</td>
+<td>Smart insert blank line</td>
+<td><code>_smart_insert_line()</code></td>
+</tr>
+<tr>
+<td>Toggle Breakpoint</td>
+<td>Ctrl+B</td>
+<td>Toggle breakpoint on current line</td>
+<td><code>_toggle_breakpoint()</code></td>
+</tr>
+<tr>
+<td>Clear All Breakpoints</td>
+<td>None</td>
+<td>Remove all breakpoints</td>
+<td><code>_clear_all_breakpoints()</code></td>
+</tr>
+<tr>
+<td>Settings...</td>
+<td>None</td>
+<td>Open settings dialog</td>
+<td><code>_menu_settings()</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="13-run-menu">1.3 Run Menu<a class="headerlink" href="#13-run-menu" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Menu Item</th>
+<th>Keyboard Shortcut</th>
+<th>Function</th>
+<th>Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Run Program</td>
+<td>Ctrl+R (configurable)</td>
+<td>Parse and run program</td>
+<td><code>_menu_run()</code></td>
+</tr>
+<tr>
+<td>Step Line</td>
+<td>None</td>
+<td>Execute one full line</td>
+<td><code>_menu_step_line()</code></td>
+</tr>
+<tr>
+<td>Step Statement</td>
+<td>None</td>
+<td>Execute one statement</td>
+<td><code>_menu_step()</code></td>
+</tr>
+<tr>
+<td>Continue</td>
+<td>None</td>
+<td>Resume execution</td>
+<td><code>_menu_continue()</code></td>
+</tr>
+<tr>
+<td>Stop</td>
+<td>None</td>
+<td>Stop execution</td>
+<td><code>_menu_stop()</code></td>
+</tr>
+<tr>
+<td>List Program</td>
+<td>None</td>
+<td>Output program listing</td>
+<td><code>_menu_list()</code></td>
+</tr>
+<tr>
+<td>Clear Output</td>
+<td>None</td>
+<td>Clear output pane</td>
+<td><code>_menu_clear_output()</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="14-view-menu">1.4 View Menu<a class="headerlink" href="#14-view-menu" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Menu Item</th>
+<th>Keyboard Shortcut</th>
+<th>Function</th>
+<th>Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Variables</td>
+<td>Ctrl+W</td>
+<td>Toggle variables window</td>
+<td><code>_toggle_variables()</code></td>
+</tr>
+<tr>
+<td>Execution Stack</td>
+<td>Ctrl+K</td>
+<td>Toggle stack window</td>
+<td><code>_toggle_stack()</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="15-help-menu">1.5 Help Menu<a class="headerlink" href="#15-help-menu" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Menu Item</th>
+<th>Keyboard Shortcut</th>
+<th>Function</th>
+<th>Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Help Topics</td>
+<td>Ctrl+H (configurable)</td>
+<td>Open help browser</td>
+<td><code>_menu_help()</code></td>
+</tr>
+<tr>
+<td>About</td>
+<td>None</td>
+<td>Show about dialog</td>
+<td><code>_menu_about()</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-toolbar">2. TOOLBAR<a class="headerlink" href="#2-toolbar" title="Permanent link">&para;</a></h2>
+<p>Toolbar provides quick access to common operations:</p>
+<table>
+<thead>
+<tr>
+<th>Button</th>
+<th>Function</th>
+<th>Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>New</td>
+<td>Clear program</td>
+<td><code>_menu_new()</code></td>
+</tr>
+<tr>
+<td>Open</td>
+<td>Open file</td>
+<td><code>_menu_open()</code></td>
+</tr>
+<tr>
+<td>Save</td>
+<td>Save file</td>
+<td><code>_menu_save()</code></td>
+</tr>
+<tr>
+<td>Run</td>
+<td>Run program</td>
+<td><code>_menu_run()</code></td>
+</tr>
+<tr>
+<td>Stop</td>
+<td>Stop execution</td>
+<td><code>_menu_stop()</code></td>
+</tr>
+<tr>
+<td>Step</td>
+<td>Step one line</td>
+<td><code>_menu_step_line()</code></td>
+</tr>
+<tr>
+<td>Stmt</td>
+<td>Step one statement</td>
+<td><code>_menu_step()</code></td>
+</tr>
+<tr>
+<td>Cont</td>
+<td>Continue execution</td>
+<td><code>_menu_continue()</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-editor-features">3. EDITOR FEATURES<a class="headerlink" href="#3-editor-features" title="Permanent link">&para;</a></h2>
+<h3 id="31-core-editor-widget">3.1 Core Editor Widget<a class="headerlink" href="#31-core-editor-widget" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Type:</strong> <code>LineNumberedText</code> custom widget (<code>src/ui/tk_widgets.py</code>)</li>
+<li><strong>Layout:</strong> Status column (20px) + text editor + scrollbars</li>
+<li><strong>Font:</strong> Courier 10pt</li>
+<li><strong>Undo/Redo:</strong> Enabled (Tk native, unlimited)</li>
+</ul>
+<h3 id="32-status-column-indicators">3.2 Status Column Indicators<a class="headerlink" href="#32-status-column-indicators" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Meaning</th>
+<th>Color</th>
+<th>Priority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>●</td>
+<td>Breakpoint set</td>
+<td>Blue</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>?</td>
+<td>Parse/syntax error</td>
+<td>Red</td>
+<td>High</td>
+</tr>
+<tr>
+<td>(space)</td>
+<td>Normal line</td>
+<td>Gray</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Status Priority:</strong> Errors (?) always override breakpoints (●)</p>
+<p><strong>Interaction:</strong>
+- Click on ● or ? shows info popup
+- Use Ctrl+B to toggle breakpoints</p>
+<h3 id="33-auto-numbering-system">3.3 Auto-Numbering System<a class="headerlink" href="#33-auto-numbering-system" title="Permanent link">&para;</a></h3>
+<p><strong>Configuration:</strong>
+- <code>auto_number_enabled</code>: Default <code>True</code>
+- <code>auto_number_start</code>: Default <code>10</code>
+- <code>auto_number_increment</code>: Default <code>10</code></p>
+<p><strong>Behavior:</strong>
+- Press Enter on a line to auto-number and sort
+- If line has no number, validates as BASIC first
+- If invalid BASIC, moves to next line without numbering
+- Automatically sorts lines numerically after Enter
+- Calculates next line number intelligently:
+  - At end: current + increment
+  - In middle: tries current + increment if room
+  - No room: calculates midpoint
+  - No midpoint: offers to renumber program</p>
+<p><strong>Smart Features:</strong>
+- Blank lines (number only) are deleted on Enter
+- Validates syntax before adding number
+- Maintains cursor position after sort
+- Prevents creation of blank lines</p>
+<h3 id="34-smart-insert-line-ctrli">3.4 Smart Insert Line (Ctrl+I)<a class="headerlink" href="#34-smart-insert-line-ctrli" title="Permanent link">&para;</a></h3>
+<p><strong>Purpose:</strong> Insert a blank numbered line between current and next line</p>
+<p><strong>Algorithm:</strong>
+1. Parse current line number
+2. Find previous line number
+3. Calculate midpoint between prev and current
+4. If no room, offer to renumber
+5. Insert blank line with calculated number
+6. Position cursor ready for typing</p>
+<p><strong>Implementation:</strong> <code>_smart_insert_line()</code> uses <code>ui_helpers.calculate_midpoint()</code></p>
+<h3 id="35-auto-sort-on-navigation">3.5 Auto-Sort on Navigation<a class="headerlink" href="#35-auto-sort-on-navigation" title="Permanent link">&para;</a></h3>
+<p><strong>Triggers:</strong>
+- Arrow keys (Up/Down)
+- Page Up/Page Down
+- Mouse click
+- Focus out</p>
+<p><strong>Behavior:</strong>
+- Detects line change via <code>_check_line_change()</code>
+- Saves editor to program (filters blank lines)
+- Refreshes editor (sorted)
+- Attempts to restore cursor to same line number</p>
+<p><strong>Purpose:</strong> Ensures editor is always sorted when moving between lines</p>
+<h3 id="36-syntax-validation">3.6 Syntax Validation<a class="headerlink" href="#36-syntax-validation" title="Permanent link">&para;</a></h3>
+<p><strong>Real-Time Validation:</strong>
+- Triggered after cursor movement or mouse click
+- Validates each numbered line independently
+- Shows red ? indicator on error lines
+- Displays error message on status column click
+- Updates status bar with error count
+- Does NOT block editing (errors shown, not enforced)</p>
+<p><strong>Error Display:</strong>
+- Status column: Red ? on error lines
+- Status bar: "Syntax error(s) in program - cannot run"
+- Output pane: List of errors (when multiple)
+- Click on ?: Shows error detail popup</p>
+<p><strong>Implementation:</strong> <code>_validate_editor_syntax()</code>, <code>_check_line_syntax()</code></p>
+<h3 id="37-input-sanitization">3.7 Input Sanitization<a class="headerlink" href="#37-input-sanitization" title="Permanent link">&para;</a></h3>
+<p><strong>Paste Handling:</strong>
+- Intercepts all paste operations
+- Clears high-bit parity (8<sup>th</sup> bit)
+- Removes control characters
+- Shows status message if modified
+- Multi-line paste: Auto-numbers unnumbered lines
+- Single-line paste: Inline insertion</p>
+<p><strong>Key Press Filtering:</strong>
+- Validates each character with <code>is_valid_input_char()</code>
+- Blocks invalid control characters
+- Allows: printable ASCII, Tab, Enter, Backspace, Delete, arrows
+- Preserves Ctrl+key shortcuts</p>
+<p><strong>Implementation:</strong> <code>_on_paste()</code>, <code>_on_key_press()</code></p>
+<h3 id="38-blank-line-prevention">3.8 Blank Line Prevention<a class="headerlink" href="#38-blank-line-prevention" title="Permanent link">&para;</a></h3>
+<p><strong>Philosophy:</strong> Editor MUST NEVER contain blank lines</p>
+<p><strong>Enforcement:</strong>
+- Blank lines removed on cursor movement (<code>_on_cursor_move()</code>)
+- Blank lines removed when saving to program
+- Enter on blank numbered line deletes the line
+- Paste operations filter out blank lines</p>
+<h3 id="39-context-menu-right-click">3.9 Context Menu (Right-Click)<a class="headerlink" href="#39-context-menu-right-click" title="Permanent link">&para;</a></h3>
+<p><strong>On Editor:</strong>
+- Cut (when text selected)
+- Copy (when text selected)
+- Paste (always enabled)
+- Select All</p>
+<p><strong>Implementation:</strong> <code>_setup_editor_context_menu()</code></p>
+<hr />
+<h2 id="4-execution-features">4. EXECUTION FEATURES<a class="headerlink" href="#4-execution-features" title="Permanent link">&para;</a></h2>
+<h3 id="41-tick-based-execution">4.1 Tick-Based Execution<a class="headerlink" href="#41-tick-based-execution" title="Permanent link">&para;</a></h3>
+<p><strong>Architecture:</strong>
+- Uses <code>Interpreter.tick()</code> for non-blocking execution
+- Executes max 100 statements per tick
+- Schedules next tick with <code>root.after(1)</code>
+- Allows UI to remain responsive</p>
+<p><strong>State Machine:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&#39;running&#39; → &#39;paused&#39; / &#39;at_breakpoint&#39; / &#39;done&#39; / &#39;error&#39;
+</code></pre></div></p>
+<p><strong>Implementation:</strong> <code>_execute_tick()</code></p>
+<h3 id="42-breakpoints">4.2 Breakpoints<a class="headerlink" href="#42-breakpoints" title="Permanent link">&para;</a></h3>
+<p><strong>Features:</strong>
+- Toggle with Ctrl+B on any line
+- Visual indicator: Blue ● in status column
+- Stored in <code>self.breakpoints</code> set
+- Synced with interpreter state
+- Clear all breakpoints option</p>
+<p><strong>Breakpoint Behavior:</strong>
+- Execution pauses BEFORE statement on breakpoint line
+- Status: "Paused at line X"
+- Yellow highlight shows next statement
+- Variables and stack windows update</p>
+<h3 id="43-stepping-modes">4.3 Stepping Modes<a class="headerlink" href="#43-stepping-modes" title="Permanent link">&para;</a></h3>
+<p><strong>Step Line:</strong> Execute entire line (all statements)
+- Method: <code>_menu_step_line()</code>
+- Uses <code>interpreter.tick(mode='step_line')</code></p>
+<p><strong>Step Statement:</strong> Execute single statement
+- Method: <code>_menu_step()</code><br />
+- Uses <code>interpreter.tick(mode='step')</code></p>
+<p><strong>Both Modes:</strong>
+- Pause after step
+- Update variables/stack windows
+- Highlight next statement
+- Status shows "Paused at line X"</p>
+<h3 id="44-statement-highlighting">4.4 Statement Highlighting<a class="headerlink" href="#44-statement-highlighting" title="Permanent link">&para;</a></h3>
+<p><strong>Purpose:</strong> Show which statement is executing/next</p>
+<p><strong>Visual:</strong>
+- Yellow background (#ffeb3b)
+- Black text
+- Exact character range highlighted</p>
+<p><strong>When Active:</strong>
+- Stepping (line or statement)
+- Paused at breakpoint
+- At error (shows error statement)</p>
+<p><strong>Cleared When:</strong>
+- Execution resumes
+- Program stops
+- User clicks in editor (allows text selection)</p>
+<p><strong>Implementation:</strong> <code>_highlight_current_statement()</code>, <code>_clear_statement_highlight()</code></p>
+<h3 id="45-execution-states">4.5 Execution States<a class="headerlink" href="#45-execution-states" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Status Text</th>
+<th>Immediate Mode</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ready</td>
+<td>"Ready"</td>
+<td>Enabled (green)</td>
+<td>Can run program</td>
+</tr>
+<tr>
+<td>Running</td>
+<td>"Running..."</td>
+<td>Disabled (red)</td>
+<td>Program executing</td>
+</tr>
+<tr>
+<td>Paused</td>
+<td>"Paused at line X"</td>
+<td>Enabled (yellow)</td>
+<td>Can step/continue</td>
+</tr>
+<tr>
+<td>At Breakpoint</td>
+<td>"Paused at line X"</td>
+<td>Enabled (yellow)</td>
+<td>Can step/continue</td>
+</tr>
+<tr>
+<td>Error</td>
+<td>"Error at line X"</td>
+<td>Enabled (yellow)</td>
+<td>Can edit &amp; continue</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Prompt Color:</strong>
+- Green "Ok &gt;": Ready to execute
+- Red "Ok &gt;": Program running (immediate disabled)
+- Yellow "Ok &gt;": Paused/error (immediate enabled, program state accessible)</p>
+<h3 id="46-error-handling">4.6 Error Handling<a class="headerlink" href="#46-error-handling" title="Permanent link">&para;</a></h3>
+<p><strong>On Error:</strong>
+1. Stop execution (set <code>running = False</code>)
+2. Show error message in output
+3. Update status: "Error at line X - Edit and Continue, or Stop"
+4. Highlight error statement (yellow)
+5. Show red ? in status column
+6. Allow editing to fix error
+7. Continue button retries from error point</p>
+<p><strong>Error Recovery:</strong>
+- User can edit the error line
+- Press Continue to retry
+- Press Stop to end program
+- Variables/stack remain accessible</p>
+<hr />
+<h2 id="5-variables-window-ctrlw">5. VARIABLES WINDOW (Ctrl+W)<a class="headerlink" href="#5-variables-window-ctrlw" title="Permanent link">&para;</a></h2>
+<h3 id="51-window-layout">5.1 Window Layout<a class="headerlink" href="#51-window-layout" title="Permanent link">&para;</a></h3>
+<p><strong>Components:</strong>
+1. Resource usage label (top)
+2. Filter entry field
+3. Edit button
+4. Treeview with 3 columns: Variable, Value, Type</p>
+<p><strong>Geometry:</strong> 400x400px, resizable</p>
+<h3 id="52-variable-display">5.2 Variable Display<a class="headerlink" href="#52-variable-display" title="Permanent link">&para;</a></h3>
+<p><strong>Columns:</strong>
+- <strong>Variable:</strong> Name with type suffix (A%, NAME$, X)
+- <strong>Value:</strong> Current value (formatted by type)
+- <strong>Type:</strong> Integer, String, Single, Double, Array(dims)</p>
+<p><strong>Array Display:</strong>
+- Format: <code>A%(10x10) [5,3]=42</code>
+- Shows dimensions
+- Shows last accessed element and value</p>
+<h3 id="53-sorting-system">5.3 Sorting System<a class="headerlink" href="#53-sorting-system" title="Permanent link">&para;</a></h3>
+<p><strong>Sort Columns:</strong>
+- <code>'accessed'</code>: Last accessed timestamp (default)
+- <code>'written'</code>: Last written timestamp
+- <code>'read'</code>: Last read timestamp<br />
+- <code>'name'</code>: Alphabetical by name
+- <code>'type'</code>: By type suffix
+- <code>'value'</code>: By value (string comparison)</p>
+<p><strong>Sort Direction:</strong>
+- Default: Descending (newest first for timestamps)
+- Click arrow area (left 20px): Toggle direction
+- Click heading text: Change sort column</p>
+<p><strong>Visual Indicators:</strong>
+- ↓ : Descending
+- ↑ : Ascending
+- Appears in heading of current sort column</p>
+<p><strong>Column Cycling (Variable column only):</strong>
+1. Last Accessed (default)
+2. Last Written
+3. Last Read
+4. Name (alphabetical)</p>
+<p><strong>Implementation:</strong> <code>_on_variable_heading_click()</code>, <code>_sort_variables_by()</code>, <code>_cycle_variable_sort()</code></p>
+<h3 id="54-filtering">5.4 Filtering<a class="headerlink" href="#54-filtering" title="Permanent link">&para;</a></h3>
+<p><strong>Features:</strong>
+- Type in filter box to search
+- Filters variable names (case-insensitive)
+- Updates in real-time (KeyRelease)
+- Shows only matching variables</p>
+<p><strong>Implementation:</strong> <code>_on_variable_filter_change()</code></p>
+<h3 id="55-variable-editing">5.5 Variable Editing<a class="headerlink" href="#55-variable-editing" title="Permanent link">&para;</a></h3>
+<p><strong>Triggers:</strong>
+- Double-click on variable
+- Select variable + click Edit button</p>
+<p><strong>Simple Variables:</strong>
+- String: Text input dialog
+- Integer: Integer spinbox dialog
+- Float: Text input with validation</p>
+<p><strong>Array Variables:</strong>
+- Custom dialog with:
+  - Subscripts entry (e.g., "1,2,3")
+  - Current value display (updates on subscript change)
+  - New value entry
+  - Shows array dimensions</p>
+<p><strong>Implementation:</strong> <code>_edit_simple_variable()</code>, <code>_edit_array_element()</code>, <code>_edit_selected_variable()</code></p>
+<h3 id="56-resource-usage-display">5.6 Resource Usage Display<a class="headerlink" href="#56-resource-usage-display" title="Permanent link">&para;</a></h3>
+<p><strong>Shows:</strong>
+- Variable count
+- Array count
+- String space used
+- DATA pointer position (if applicable)</p>
+<p><strong>Format:</strong> "Vars: 5, Arrays: 2, Strings: 120 bytes, DATA: line 100"</p>
+<p><strong>Implementation:</strong> <code>_update_variables()</code></p>
+<hr />
+<h2 id="6-execution-stack-window-ctrlk">6. EXECUTION STACK WINDOW (Ctrl+K)<a class="headerlink" href="#6-execution-stack-window-ctrlk" title="Permanent link">&para;</a></h2>
+<h3 id="61-window-layout">6.1 Window Layout<a class="headerlink" href="#61-window-layout" title="Permanent link">&para;</a></h3>
+<p><strong>Components:</strong>
+- Treeview with 2 columns: Frame, Location</p>
+<p><strong>Geometry:</strong> 400x300px, resizable</p>
+<h3 id="62-stack-display">6.2 Stack Display<a class="headerlink" href="#62-stack-display" title="Permanent link">&para;</a></h3>
+<p><strong>Columns:</strong>
+- <strong>Frame:</strong> Type of stack frame
+- <strong>Location:</strong> Line number or description</p>
+<p><strong>Frame Types:</strong>
+- <code>GOSUB → line X</code>: Subroutine call
+- <code>FOR I = 1 TO 10</code>: FOR loop
+- <code>WHILE condition</code>: WHILE loop
+- <code>Function call</code>: User-defined functions (future)</p>
+<p><strong>Order:</strong> Most recent frame at top</p>
+<p><strong>Purpose:</strong>
+- Debug infinite loops
+- Understand call hierarchy
+- See FOR/WHILE nesting</p>
+<p><strong>Implementation:</strong> <code>_create_stack_window()</code>, <code>_update_stack()</code></p>
+<hr />
+<h2 id="7-output-pane">7. OUTPUT PANE<a class="headerlink" href="#7-output-pane" title="Permanent link">&para;</a></h2>
+<h3 id="71-features">7.1 Features<a class="headerlink" href="#71-features" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Widget:</strong> ScrolledText (read-only)</li>
+<li><strong>Font:</strong> Courier 10pt</li>
+<li><strong>Auto-scroll:</strong> Always shows latest output</li>
+<li><strong>Word wrap:</strong> Enabled</li>
+</ul>
+<h3 id="72-context-menu-right-click">7.2 Context Menu (Right-Click)<a class="headerlink" href="#72-context-menu-right-click" title="Permanent link">&para;</a></h3>
+<p><strong>Options:</strong>
+- Copy (when text selected)
+- Select All</p>
+<p><strong>Implementation:</strong> <code>_setup_output_context_menu()</code></p>
+<h3 id="73-output-sources">7.3 Output Sources<a class="headerlink" href="#73-output-sources" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Program PRINT statements</li>
+<li>Error messages</li>
+<li>Status messages (program start/stop/pause)</li>
+<li>Breakpoint notifications</li>
+<li>LIST command output</li>
+</ul>
+<hr />
+<h2 id="8-immediate-mode">8. IMMEDIATE MODE<a class="headerlink" href="#8-immediate-mode" title="Permanent link">&para;</a></h2>
+<h3 id="81-ui-layout">8.1 UI Layout<a class="headerlink" href="#81-ui-layout" title="Permanent link">&para;</a></h3>
+<p><strong>Components:</strong>
+- Prompt label: "Ok &gt;" (colored by state)
+- Entry field: Single-line input
+- Execute button</p>
+<p><strong>No History Display:</strong> History removed in favor of minimal design</p>
+<h3 id="82-prompt-states">8.2 Prompt States<a class="headerlink" href="#82-prompt-states" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Color</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Green</td>
+<td>Ready</td>
+<td>No program running, can execute</td>
+</tr>
+<tr>
+<td>Red</td>
+<td>Running</td>
+<td>Program running, immediate disabled</td>
+</tr>
+<tr>
+<td>Yellow</td>
+<td>Paused</td>
+<td>Program paused, can access program state</td>
+</tr>
+</tbody>
+</table>
+<h3 id="83-features">8.3 Features<a class="headerlink" href="#83-features" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Enter key executes command</li>
+<li>Uses same runtime as program</li>
+<li>Access to program variables when paused</li>
+<li>Tab completion (future)</li>
+</ul>
+<h3 id="84-context-menu-right-click">8.4 Context Menu (Right-Click)<a class="headerlink" href="#84-context-menu-right-click" title="Permanent link">&para;</a></h3>
+<p><strong>Options:</strong>
+- Cut
+- Copy<br />
+- Paste
+- Select All</p>
+<p><strong>Implementation:</strong> Inline in <code>start()</code></p>
+<h3 id="85-immediate-executor">8.5 Immediate Executor<a class="headerlink" href="#85-immediate-executor" title="Permanent link">&para;</a></h3>
+<p><strong>Architecture:</strong>
+- Separate <code>ImmediateExecutor</code> instance
+- Shares runtime with program interpreter
+- Uses <code>OutputCapturingIOHandler</code>
+- Results appear in output pane</p>
+<p><strong>Commands:</strong>
+- BASIC statements (PRINT, A=5, etc.)
+- System commands (LIST, FILES, etc.)
+- Can modify program state when paused</p>
+<hr />
+<h2 id="9-file-management">9. FILE MANAGEMENT<a class="headerlink" href="#9-file-management" title="Permanent link">&para;</a></h2>
+<h3 id="91-auto-save-system">9.1 Auto-Save System<a class="headerlink" href="#91-auto-save-system" title="Permanent link">&para;</a></h3>
+<p><strong>Features:</strong>
+- Auto-saves every 30 seconds (configurable)
+- Managed by <code>AutoSaveManager</code> class
+- Stores in user's cache directory
+- Recovery prompt on open if autosave newer
+- Cleans up old autosaves (7+ days) on exit</p>
+<p><strong>Recovery Dialog:</strong>
+- Shows modification times
+- Shows file sizes
+- Yes: Load autosave
+- No: Load original file</p>
+<p><strong>Implementation:</strong>
+- <code>AutoSaveManager</code> in <code>src/ui/auto_save.py</code>
+- <code>auto_save.start_autosave()</code>, <code>auto_save.stop_autosave()</code></p>
+<h3 id="92-recent-files">9.2 Recent Files<a class="headerlink" href="#92-recent-files" title="Permanent link">&para;</a></h3>
+<p><strong>Features:</strong>
+- Tracks up to 10 recent files
+- Stored in user's config directory
+- Displays in File &gt; Recent Files submenu
+- Auto-removes missing files on access
+- Clear recent files option</p>
+<p><strong>Implementation:</strong>
+- <code>RecentFilesManager</code> in <code>src/ui/recent_files.py</code>
+- <code>recent_files.add_file()</code>, <code>recent_files.get_recent_files()</code></p>
+<h3 id="93-file-dialogs">9.3 File Dialogs<a class="headerlink" href="#93-file-dialogs" title="Permanent link">&para;</a></h3>
+<p><strong>Open:</strong>
+- Native Tk file dialog
+- Filters: <em>.bas, *.</em>
+- Checks for autosave recovery</p>
+<p><strong>Save As:</strong>
+- Native Tk file dialog
+- Default extension: .bas
+- Filters: <em>.bas, *.</em></p>
+<hr />
+<h2 id="10-settings-system">10. SETTINGS SYSTEM<a class="headerlink" href="#10-settings-system" title="Permanent link">&para;</a></h2>
+<h3 id="101-settings-dialog">10.1 Settings Dialog<a class="headerlink" href="#101-settings-dialog" title="Permanent link">&para;</a></h3>
+<p><strong>Window:</strong> Modal dialog, 700x600px</p>
+<p><strong>Layout:</strong>
+- Notebook with category tabs
+- Scrollable settings per tab
+- Buttons: OK, Cancel, Apply, Reset to Defaults</p>
+<p><strong>Categories:</strong>
+- Editor
+- Interpreter
+- Keywords
+- Variables
+- UI</p>
+<p><strong>Implementation:</strong> <code>TkSettingsDialog</code> in <code>src/ui/tk_settings_dialog.py</code></p>
+<h3 id="102-setting-types">10.2 Setting Types<a class="headerlink" href="#102-setting-types" title="Permanent link">&para;</a></h3>
+<p><strong>Boolean:</strong>
+- Rendered as checkbox</p>
+<p><strong>Integer:</strong>
+- Rendered as spinbox (0-1000)</p>
+<p><strong>String:</strong>
+- Rendered as text entry</p>
+<p><strong>Enum:</strong>
+- Rendered as dropdown (read-only combobox)</p>
+<h3 id="103-setting-scopes">10.3 Setting Scopes<a class="headerlink" href="#103-setting-scopes" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>GLOBAL:</strong> Saved to config file</li>
+<li><strong>SESSION:</strong> Lost on exit</li>
+<li><strong>PROGRAM:</strong> Saved with program (future)</li>
+</ul>
+<hr />
+<h2 id="11-help-system">11. HELP SYSTEM<a class="headerlink" href="#11-help-system" title="Permanent link">&para;</a></h2>
+<h3 id="111-help-browser">11.1 Help Browser<a class="headerlink" href="#111-help-browser" title="Permanent link">&para;</a></h3>
+<p><strong>Window:</strong> 900x700px, non-modal</p>
+<p><strong>Features:</strong>
+- Back button (navigation history)
+- Home button
+- Search entry + Search button
+- In-page search (Ctrl+F)
+- Clickable links
+- Status bar</p>
+<p><strong>Implementation:</strong> <code>TkHelpBrowser</code> in <code>src/ui/tk_help_browser.py</code></p>
+<h3 id="112-three-tier-help-system">11.2 Three-Tier Help System<a class="headerlink" href="#112-three-tier-help-system" title="Permanent link">&para;</a></h3>
+<p><strong>Tiers:</strong>
+1. <strong>Language</strong> (📕): BASIC language reference
+2. <strong>MBASIC</strong> (📗): MBASIC-specific features
+3. <strong>UI</strong> (📘): UI-specific help</p>
+<p><strong>Search:</strong>
+- Searches all tiers
+- Ranks by tier and relevance
+- Fuzzy matching
+- Pre-built search indexes</p>
+<h3 id="113-in-page-search-ctrlf">11.3 In-Page Search (Ctrl+F)<a class="headerlink" href="#113-in-page-search-ctrlf" title="Permanent link">&para;</a></h3>
+<p><strong>Features:</strong>
+- Find next/previous
+- Match counter ("3/10")
+- Yellow highlight on matches
+- Orange highlight on current match
+- Escape to close</p>
+<p><strong>Implementation:</strong> <code>_inpage_search_show()</code>, <code>_inpage_find_next()</code>, etc.</p>
+<h3 id="114-markdown-rendering">11.4 Markdown Rendering<a class="headerlink" href="#114-markdown-rendering" title="Permanent link">&para;</a></h3>
+<p><strong>Supported:</strong>
+- Headers (# ## ###)
+- Bold, italic (limited)
+- Code blocks (<code>...</code>)
+- Inline code (<code>...</code>)
+- Links <code>[text](url)</code> syntax
+- Bullet lists</p>
+<p><strong>Macros:</strong>
+- <code>{{KEY(name)}}</code>: Keyboard shortcut display
+- <code>{{INCLUDE(file)}}</code>: Include another file</p>
+<hr />
+<h2 id="12-keyboard-shortcuts-summary">12. KEYBOARD SHORTCUTS SUMMARY<a class="headerlink" href="#12-keyboard-shortcuts-summary" title="Permanent link">&para;</a></h2>
+<h3 id="121-configurable-shortcuts">12.1 Configurable Shortcuts<a class="headerlink" href="#121-configurable-shortcuts" title="Permanent link">&para;</a></h3>
+<p>Loaded from <code>config/keybindings/tk.json</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Default</th>
+<th>Config Key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>File New</td>
+<td>Ctrl+N</td>
+<td>menu.file_new</td>
+</tr>
+<tr>
+<td>File Open</td>
+<td>Ctrl+O</td>
+<td>menu.file_open</td>
+</tr>
+<tr>
+<td>File Save</td>
+<td>Ctrl+S</td>
+<td>menu.file_save</td>
+</tr>
+<tr>
+<td>File Quit</td>
+<td>Ctrl+Q</td>
+<td>menu.file_quit</td>
+</tr>
+<tr>
+<td>Run Program</td>
+<td>Ctrl+R</td>
+<td>menu.run_program</td>
+</tr>
+<tr>
+<td>Help Topics</td>
+<td>Ctrl+H</td>
+<td>menu.help_topics</td>
+</tr>
+</tbody>
+</table>
+<h3 id="122-fixed-shortcuts">12.2 Fixed Shortcuts<a class="headerlink" href="#122-fixed-shortcuts" title="Permanent link">&para;</a></h3>
+<p>Not in config file:</p>
+<table>
+<thead>
+<tr>
+<th>Shortcut</th>
+<th>Action</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ctrl+X</td>
+<td>Cut</td>
+<td>Edit menu</td>
+</tr>
+<tr>
+<td>Ctrl+C</td>
+<td>Copy</td>
+<td>Edit menu</td>
+</tr>
+<tr>
+<td>Ctrl+V</td>
+<td>Paste</td>
+<td>Edit menu</td>
+</tr>
+<tr>
+<td>Ctrl+I</td>
+<td>Insert Line</td>
+<td>Edit menu, editor</td>
+</tr>
+<tr>
+<td>Ctrl+B</td>
+<td>Toggle Breakpoint</td>
+<td>Edit menu, editor</td>
+</tr>
+<tr>
+<td>Ctrl+W</td>
+<td>Variables Window</td>
+<td>View menu</td>
+</tr>
+<tr>
+<td>Ctrl+K</td>
+<td>Execution Stack</td>
+<td>View menu</td>
+</tr>
+<tr>
+<td>Ctrl+F</td>
+<td>Find in Page</td>
+<td>Help browser</td>
+</tr>
+<tr>
+<td>Enter</td>
+<td>Auto-number &amp; sort</td>
+<td>Editor</td>
+</tr>
+</tbody>
+</table>
+<h3 id="123-special-keys">12.3 Special Keys<a class="headerlink" href="#123-special-keys" title="Permanent link">&para;</a></h3>
+<p><strong>Editor:</strong>
+- Arrow keys: Navigate + auto-sort on line change
+- Page Up/Down: Navigate + auto-sort on line change
+- Enter: Auto-number current line, sort, move to next
+- Tab: Allowed (not intercepted)</p>
+<p><strong>Immediate Mode:</strong>
+- Enter: Execute command
+- Ctrl+C/X/V: Cut/copy/paste</p>
+<hr />
+<h2 id="13-advanced-features">13. ADVANCED FEATURES<a class="headerlink" href="#13-advanced-features" title="Permanent link">&para;</a></h2>
+<h3 id="131-command-methods-inherited-from-uibackend">13.1 Command Methods (Inherited from UIBackend)<a class="headerlink" href="#131-command-methods-inherited-from-uibackend" title="Permanent link">&para;</a></h3>
+<p>These implement system commands:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cmd_run()</code></td>
+<td>RUN - Execute program</td>
+</tr>
+<tr>
+<td><code>cmd_list(args)</code></td>
+<td>LIST - Show program listing</td>
+</tr>
+<tr>
+<td><code>cmd_new()</code></td>
+<td>NEW - Clear program</td>
+</tr>
+<tr>
+<td><code>cmd_save(filename)</code></td>
+<td>SAVE - Save to file</td>
+</tr>
+<tr>
+<td><code>cmd_load(filename)</code></td>
+<td>LOAD - Load from file</td>
+</tr>
+<tr>
+<td><code>cmd_merge(filename)</code></td>
+<td>MERGE - Merge program</td>
+</tr>
+<tr>
+<td><code>cmd_delete(args)</code></td>
+<td>DELETE - Delete line range</td>
+</tr>
+<tr>
+<td><code>cmd_renum(args)</code></td>
+<td>RENUM - Renumber lines</td>
+</tr>
+<tr>
+<td><code>cmd_cont()</code></td>
+<td>CONT - Continue execution</td>
+</tr>
+<tr>
+<td><code>cmd_files(filespec)</code></td>
+<td>FILES - List directory</td>
+</tr>
+</tbody>
+</table>
+<h3 id="132-tkiohandler">13.2 TkIOHandler<a class="headerlink" href="#132-tkiohandler" title="Permanent link">&para;</a></h3>
+<p><strong>Purpose:</strong> Bridge between interpreter and UI</p>
+<p><strong>Methods:</strong>
+- <code>print_line(text)</code>: Output to output pane
+- <code>input_line(prompt)</code>: Show input dialog
+- <code>input_char(blocking)</code>: Character input (future)</p>
+<p><strong>Implementation:</strong> <code>TkIOHandler</code> class at end of tk_ui.py</p>
+<h3 id="133-keybinding-loader">13.3 Keybinding Loader<a class="headerlink" href="#133-keybinding-loader" title="Permanent link">&para;</a></h3>
+<p><strong>Purpose:</strong> Load keyboard shortcuts from config</p>
+<p><strong>Features:</strong>
+- Per-UI configuration (tk.json, curses.json, etc.)
+- Fallback to defaults
+- Platform-specific modifiers (Cmd on Mac)
+- <code>get_tk_accelerator()</code>: Returns menu display string
+- <code>bind_all_to_tk()</code>: Binds shortcut to callback</p>
+<p><strong>Implementation:</strong> <code>KeybindingLoader</code> in <code>src/ui/keybinding_loader.py</code></p>
+<hr />
+<h2 id="14-state-management">14. STATE MANAGEMENT<a class="headerlink" href="#14-state-management" title="Permanent link">&para;</a></h2>
+<h3 id="141-execution-state-variables">14.1 Execution State Variables<a class="headerlink" href="#141-execution-state-variables" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="o">=</span> <span class="kc">False</span>              <span class="c1"># Program executing?</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">paused_at_breakpoint</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Paused?</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="bp">self</span><span class="o">.</span><span class="n">breakpoints</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>          <span class="c1"># Line numbers with breakpoints</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="bp">self</span><span class="o">.</span><span class="n">tick_timer_id</span> <span class="o">=</span> <span class="kc">None</span>         <span class="c1"># Pending tick callback</span>
+</code></pre></div>
+<h3 id="142-variables-window-state">14.2 Variables Window State<a class="headerlink" href="#142-variables-window-state" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="bp">self</span><span class="o">.</span><span class="n">variables_window</span> <span class="o">=</span> <span class="kc">None</span>      <span class="c1"># Toplevel window</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">variables_tree</span> <span class="o">=</span> <span class="kc">None</span>        <span class="c1"># Treeview widget</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="bp">self</span><span class="o">.</span><span class="n">variables_visible</span> <span class="o">=</span> <span class="kc">False</span>    <span class="c1"># Window shown?</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="bp">self</span><span class="o">.</span><span class="n">variables_sort_column</span> <span class="o">=</span> <span class="s1">&#39;accessed&#39;</span>  <span class="c1"># Current sort</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="bp">self</span><span class="o">.</span><span class="n">variables_sort_reverse</span> <span class="o">=</span> <span class="kc">True</span>       <span class="c1"># Sort direction</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="bp">self</span><span class="o">.</span><span class="n">variables_filter_text</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>   <span class="c1"># Filter string</span>
+</code></pre></div>
+<h3 id="143-editor-state">14.3 Editor State<a class="headerlink" href="#143-editor-state" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="bp">self</span><span class="o">.</span><span class="n">last_edited_line_index</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># For auto-sort</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">last_edited_line_text</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># For change detection</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="bp">self</span><span class="o">.</span><span class="n">auto_number_enabled</span> <span class="o">=</span> <span class="kc">True</span>     <span class="c1"># Auto-numbering on?</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="bp">self</span><span class="o">.</span><span class="n">auto_number_start</span> <span class="o">=</span> <span class="mi">10</span>         <span class="c1"># Starting number</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="bp">self</span><span class="o">.</span><span class="n">auto_number_increment</span> <span class="o">=</span> <span class="mi">10</span>     <span class="c1"># Increment</span>
+</code></pre></div>
+<hr />
+<h2 id="15-widget-hierarchy">15. WIDGET HIERARCHY<a class="headerlink" href="#15-widget-hierarchy" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>root (Tk)
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>├── menubar (Menu)
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>│   ├── File menu
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>│   ├── Edit menu
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>│   ├── Run menu
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>│   ├── View menu
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>│   └── Help menu
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>├── toolbar (Frame)
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>│   └── Buttons
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>├── paned (PanedWindow - vertical)
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>│   ├── editor_frame (60% weight)
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>│   │   └── editor_text (LineNumberedText)
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>│   │       ├── canvas (status column)
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>│   │       ├── text (Text widget)
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>│   │       ├── vsb (Scrollbar)
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>│   │       └── hsb (Scrollbar)
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>│   ├── output_frame (30% weight)
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>│   │   └── output_text (ScrolledText)
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>│   └── immediate_frame (10% weight)
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>│       └── input_frame
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>│           ├── immediate_prompt_label
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>│           ├── immediate_entry
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>│           └── execute_btn
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>└── status_label (Label)
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>variables_window (Toplevel - hidden by default)
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>├── resource_label (usage stats)
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>├── search_frame
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>│   ├── filter_entry
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>│   └── edit_button
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>└── variables_tree (Treeview)
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>stack_window (Toplevel - hidden by default)
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>└── stack_tree (Treeview)
+</code></pre></div>
+<hr />
+<h2 id="16-code-organization">16. CODE ORGANIZATION<a class="headerlink" href="#16-code-organization" title="Permanent link">&para;</a></h2>
+<h3 id="161-main-sections">16.1 Main Sections<a class="headerlink" href="#161-main-sections" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Initialization</strong> (lines 1-286): <code>__init__()</code>, <code>start()</code></li>
+<li><strong>Menu Creation</strong> (287-369): <code>_create_menu()</code></li>
+<li><strong>Toolbar</strong> (370-398): <code>_create_toolbar()</code></li>
+<li><strong>Menu Handlers</strong> (402-600): <code>_menu_*()</code> methods</li>
+<li><strong>Breakpoints</strong> (828-864): Toggle and clear</li>
+<li><strong>Variables Window</strong> (866-1564): Create, update, sort, edit</li>
+<li><strong>Stack Window</strong> (1565-1710): Create, update</li>
+<li><strong>Editor Events</strong> (1864-2244): Navigation, paste, key press</li>
+<li><strong>Auto-Numbering</strong> (1928-2106): Enter key handler</li>
+<li><strong>Smart Insert</strong> (2390-2513): Ctrl+I handler</li>
+<li><strong>Execution</strong> (2613-2764): Tick-based execution</li>
+<li><strong>Commands</strong> (2765-3128): cmd_* implementations</li>
+<li><strong>Immediate Mode</strong> (3203-3227): Execute immediate</li>
+<li><strong>Context Menus</strong> (3246-3360): Right-click menus</li>
+<li><strong>TkIOHandler</strong> (3397-end): I/O bridge</li>
+</ol>
+<h3 id="162-related-files">16.2 Related Files<a class="headerlink" href="#162-related-files" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>src/ui/tk_widgets.py</code>: LineNumberedText widget</li>
+<li><code>src/ui/tk_help_browser.py</code>: Help window</li>
+<li><code>src/ui/tk_settings_dialog.py</code>: Settings window</li>
+<li><code>src/ui/keybinding_loader.py</code>: Keyboard config</li>
+<li><code>src/ui/recent_files.py</code>: Recent files manager</li>
+<li><code>src/ui/auto_save.py</code>: Auto-save manager</li>
+<li><code>src/ui/ui_helpers.py</code>: Shared utilities</li>
+</ul>
+<hr />
+<h2 id="17-notable-implementation-details">17. NOTABLE IMPLEMENTATION DETAILS<a class="headerlink" href="#17-notable-implementation-details" title="Permanent link">&para;</a></h2>
+<h3 id="171-auto-sort-philosophy">17.1 Auto-Sort Philosophy<a class="headerlink" href="#171-auto-sort-philosophy" title="Permanent link">&para;</a></h3>
+<p>"Editor content should always be sorted when moving between lines."</p>
+<ul>
+<li>Triggered on cursor movement (arrows, mouse, page up/down)</li>
+<li>Triggered on focus out</li>
+<li>Saves to program (filtering blank lines)</li>
+<li>Refreshes from program (sorted)</li>
+<li>Attempts to restore cursor to same line number</li>
+</ul>
+<h3 id="172-blank-line-philosophy">17.2 Blank Line Philosophy<a class="headerlink" href="#172-blank-line-philosophy" title="Permanent link">&para;</a></h3>
+<p>"Editor must NEVER contain blank lines."</p>
+<ul>
+<li>Enforced in multiple places</li>
+<li>Blank lines removed on cursor movement</li>
+<li>Blank numbered lines deleted on Enter</li>
+<li>Paste operations filter blank lines</li>
+<li>Save to program filters blank lines</li>
+</ul>
+<h3 id="173-error-recovery-design">17.3 Error Recovery Design<a class="headerlink" href="#173-error-recovery-design" title="Permanent link">&para;</a></h3>
+<p>"Errors should not block editing or require restart."</p>
+<ul>
+<li>Execution stops but state preserved</li>
+<li>User can edit error line</li>
+<li>Continue retries from error point</li>
+<li>Variables and stack remain accessible</li>
+<li>Status shows helpful guidance</li>
+</ul>
+<h3 id="174-tick-based-execution">17.4 Tick-Based Execution<a class="headerlink" href="#174-tick-based-execution" title="Permanent link">&para;</a></h3>
+<p>"UI must remain responsive during execution."</p>
+<ul>
+<li>Execute max 100 statements per tick</li>
+<li>Schedule next tick with 1ms delay</li>
+<li>Allows UI updates between ticks</li>
+<li>Breakpoints checked between ticks</li>
+<li>Output flushed between ticks</li>
+</ul>
+<hr />
+<h2 id="18-future-enhancements-not-yet-implemented">18. FUTURE ENHANCEMENTS (NOT YET IMPLEMENTED)<a class="headerlink" href="#18-future-enhancements-not-yet-implemented" title="Permanent link">&para;</a></h2>
+<p>Based on TODO comments in code:</p>
+<ol>
+<li>Syntax highlighting (color coding)</li>
+<li>Tab completion in immediate mode</li>
+<li>Hover tooltips for variables</li>
+<li>Drag-and-drop file open</li>
+<li>Multi-file editing (tabs)</li>
+<li>Project management</li>
+<li>Visual debugger timeline</li>
+<li>Watch expressions</li>
+<li>Conditional breakpoints</li>
+<li>Performance profiling</li>
+</ol>
+<hr />
+<h2 id="conclusion">CONCLUSION<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
+<p>The TK UI is a feature-rich, production-ready IDE for MBASIC with:
+- 3400+ lines of well-organized code
+- 60+ methods for various features
+- Comprehensive debugging tools
+- Intelligent auto-numbering and sorting
+- Real-time syntax validation
+- Tick-based non-blocking execution
+- Auto-save and recovery
+- Recent files tracking
+- Searchable help system
+- Settings management
+- Context menus and keyboard shortcuts</p>
+<p>This document provides the complete reference for maintaining, documenting, and extending the TK UI.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

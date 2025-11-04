@@ -1,0 +1,1699 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/dev/VISUAL_UI_EDITOR_ENHANCEMENT/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Visual UI Editor Enhancement Project - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#visual-ui-editor-enhancement-project" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Visual UI Editor Enhancement Project
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#status-partial-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Status: PARTIAL IMPLEMENTATION
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problem Statement
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problem Statement">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#curses-ui-reference-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      Curses UI Reference Behavior
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Curses UI Reference Behavior">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#line-editing-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Line Editing Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Features
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-numbering-logic-curses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Auto-Numbering Logic (Curses)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proposed-solution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Proposed Solution
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Proposed Solution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#remove-separate-line-number-column" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remove Separate Line Number Column
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in-place-line-number-editing" class="md-nav__link">
+    <span class="md-ellipsis">
+      In-Place Line Number Editing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-sort-on-line-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      Auto-Sort on Line Change
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-scroll-to-position" class="md-nav__link">
+    <span class="md-ellipsis">
+      Auto-Scroll to Position
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-numbering" class="md-nav__link">
+    <span class="md-ellipsis">
+      Auto-Numbering
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#status-symbol-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Status Symbol Integration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Plan
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#task-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Task Tracking
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-tk-ui-refactoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Tk UI Refactoring
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-web-ui-refactoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Web UI Refactoring
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Testing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-documentation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: Documentation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technical-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      Technical Details
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technical Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#event-binding-strategy-tk" class="md-nav__link">
+    <span class="md-ellipsis">
+      Event Binding Strategy (Tk)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Considerations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#curses-ui-no-changes-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Curses UI - No Changes Needed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Future Enhancements
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Enhancements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#advanced-auto-numbering" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Auto-Numbering
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visual-feedback" class="md-nav__link">
+    <span class="md-ellipsis">
+      Visual Feedback
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#undo-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Undo Support
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#success-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      Success Criteria
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Open Questions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/dev/VISUAL_UI_EDITOR_ENHANCEMENT.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="visual-ui-editor-enhancement-project">Visual UI Editor Enhancement Project<a class="headerlink" href="#visual-ui-editor-enhancement-project" title="Permanent link">&para;</a></h1>
+<h2 id="status-partial-implementation">Status: PARTIAL IMPLEMENTATION<a class="headerlink" href="#status-partial-implementation" title="Permanent link">&para;</a></h2>
+<p><strong>What's Been Done:</strong>
+- ✅ Auto-numbering on Enter (src/ui/tk_ui.py:1305)
+- ✅ Smart Insert Line - Ctrl+I (src/ui/tk_ui.py:1469, bound at line 284)
+- ✅ Auto-sort on line change (src/ui/tk_ui.py:1395 _check_line_change)
+- ✅ LineNumberedText widget with status-only column (src/ui/tk_widgets.py:16, width=20)
+- ✅ Renumber dialog (Web UI: src/ui/web/web_ui.py:476)</p>
+<p><strong>What's NOT Done:</strong>
+- ❌ Complete removal of line number duplication (status column narrowed but numbers still may show)
+- ❌ Auto-scroll to sorted position (needs verification)
+- ❌ Full feature parity with curses UI (see TK_UI_ENHANCEMENT_PLAN.md)</p>
+<hr />
+<h2 id="problem-statement">Problem Statement<a class="headerlink" href="#problem-statement" title="Permanent link">&para;</a></h2>
+<p>The Tk and Web UI program editors have several usability issues compared to the curses UI:</p>
+<h3 id="current-issues">Current Issues<a class="headerlink" href="#current-issues" title="Permanent link">&para;</a></h3>
+<h4 id="1-line-number-duplication-tkweb">1. Line Number Duplication (Tk/Web)<a class="headerlink" href="#1-line-number-duplication-tkweb" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Problem</strong>: Users type line numbers in the text area (e.g., <code>10 PRINT "HELLO"</code>)</li>
+<li><strong>Problem</strong>: Line numbers are duplicated in a separate column on the left</li>
+<li><strong>Result</strong>: Confusing visual duplication</li>
+<li><strong>Example</strong>: <code>[10] 10 PRINT "HELLO"</code> (10 appears twice)</li>
+</ul>
+<h4 id="2-non-copyable-line-numbers-tkweb">2. Non-Copyable Line Numbers (Tk/Web)<a class="headerlink" href="#2-non-copyable-line-numbers-tkweb" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Problem</strong>: The separate line number column is not selectable/copyable</li>
+<li><strong>Curses behavior</strong>: Both columns are selectable (you can copy with line numbers)</li>
+<li><strong>Tk/Web behavior</strong>: Only the code text is copyable, not the line numbers</li>
+</ul>
+<h4 id="3-no-auto-sort-on-edit-tkweb">3. No Auto-Sort on Edit (Tk/Web)<a class="headerlink" href="#3-no-auto-sort-on-edit-tkweb" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Curses behavior</strong>: When you move off a line, it automatically sorts into line number order</li>
+<li><strong>Tk/Web behavior</strong>: Line stays in place where you edited it, no auto-sort</li>
+<li><strong>Impact</strong>: Lines get out of order, hard to navigate</li>
+</ul>
+<h4 id="4-no-auto-scroll-to-sorted-position-tkweb">4. No Auto-Scroll to Sorted Position (Tk/Web)<a class="headerlink" href="#4-no-auto-scroll-to-sorted-position-tkweb" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Curses behavior</strong>: After auto-sort, scrolls to show the line in its new sorted position</li>
+<li><strong>Tk/Web behavior</strong>: N/A (no auto-sort)</li>
+</ul>
+<h4 id="5-auto-numbering-not-working-tkweb">5. Auto-Numbering Not Working (Tk/Web)<a class="headerlink" href="#5-auto-numbering-not-working-tkweb" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Curses behavior</strong>: Press Enter, next line gets auto-numbered (10, 20, 30...)</li>
+<li><strong>Tk/Web behavior</strong>: Not implemented or broken</li>
+</ul>
+<h2 id="curses-ui-reference-behavior">Curses UI Reference Behavior<a class="headerlink" href="#curses-ui-reference-behavior" title="Permanent link">&para;</a></h2>
+<h3 id="line-editing-flow">Line Editing Flow<a class="headerlink" href="#line-editing-flow" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Type line</strong>: <code>10 PRINT "HELLO"</code></li>
+<li><strong>Move to next line</strong> (arrow down, Enter, etc.)</li>
+<li><strong>Auto-sort triggered</strong>: Line moves to correct position based on line number</li>
+<li><strong>Auto-scroll</strong>: View scrolls to show the line in its new position</li>
+<li><strong>Auto-number</strong>: If Enter pressed, next line gets auto-numbered</li>
+</ol>
+<h3 id="format">Format<a class="headerlink" href="#format" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>S#####_CODE
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│││││││└─── Code area (unlimited width)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>││││││└──── Space separator
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│││││└───── Line number digit 5
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>││││└────── Line number digit 4
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│││└─────── Line number digit 3
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>││└──────── Line number digit 2
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│└───────── Line number digit 1
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>└────────── Status (●=breakpoint, ?=error, space=normal)
+</code></pre></div>
+<h3 id="key-features">Key Features<a class="headerlink" href="#key-features" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Column 0</strong>: Status symbol (read-only, visual only)</li>
+<li><strong>Columns 1-5</strong>: Line number (5 digits, editable as part of text)</li>
+<li><strong>Column 6</strong>: Space separator</li>
+<li><strong>Columns 7+</strong>: Code</li>
+<li><strong>All text is selectable and copyable</strong> (including line numbers)</li>
+<li><strong>Auto-sort on navigation</strong>: Sort only when moving away from line (not on every keystroke)</li>
+<li><strong>Auto-scroll</strong>: Jump to line's new position after sort</li>
+<li><strong>Auto-numbering</strong>: Smart increment based on surrounding lines</li>
+</ul>
+<h3 id="auto-numbering-logic-curses">Auto-Numbering Logic (Curses)<a class="headerlink" href="#auto-numbering-logic-curses" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># On Enter key:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">current_line_number</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># Just edited line 100</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">increment</span> <span class="o">=</span> <span class="mi">10</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">next_num</span> <span class="o">=</span> <span class="n">current_line_number</span> <span class="o">+</span> <span class="n">increment</span>  <span class="c1"># 110</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># Find next existing line number</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">existing_lines</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">200</span><span class="p">]</span>  <span class="c1"># Sorted line numbers</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1"># Next line after 100 is 150</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># So next_num (110) must be &lt; 150</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1"># If 110 &gt;= 150, keep incrementing until it fits</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="k">while</span> <span class="n">next_num</span> <span class="ow">in</span> <span class="n">existing_lines</span> <span class="ow">or</span> <span class="n">next_num</span> <span class="o">&gt;=</span> <span class="n">max_allowed</span><span class="p">:</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">next_num</span> <span class="o">+=</span> <span class="n">increment</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="c1"># Insert new line: &quot; 110  &quot;</span>
+</code></pre></div>
+<h2 id="proposed-solution">Proposed Solution<a class="headerlink" href="#proposed-solution" title="Permanent link">&para;</a></h2>
+<h3 id="remove-separate-line-number-column">Remove Separate Line Number Column<a class="headerlink" href="#remove-separate-line-number-column" title="Permanent link">&para;</a></h3>
+<p><strong>For Tk and Web UIs</strong>:
+- Remove the Canvas/column that shows line numbers
+- Keep status symbols (●, ?) but integrate them differently
+- Line numbers are part of the editable text (like curses)</p>
+<h3 id="in-place-line-number-editing">In-Place Line Number Editing<a class="headerlink" href="#in-place-line-number-editing" title="Permanent link">&para;</a></h3>
+<p><strong>Users type line numbers directly</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>10 PRINT &quot;HELLO&quot;
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>20 FOR I=1 TO 10
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>30 PRINT I
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>40 NEXT I
+</code></pre></div></p>
+<p><strong>No duplication</strong> - what you see is what you type.</p>
+<h3 id="auto-sort-on-line-change">Auto-Sort on Line Change<a class="headerlink" href="#auto-sort-on-line-change" title="Permanent link">&para;</a></h3>
+<p><strong>Trigger</strong>: When cursor moves away from a line (via keyboard or mouse):
+- Detect line number change (compare before/after)
+- Sort all lines by line number
+- Update editor display with sorted lines
+- Scroll to show the edited line in its new position</p>
+<p><strong>Implementation</strong>:
+- Bind to cursor movement events
+- Track "last edited line"
+- On focus change, trigger sort+scroll</p>
+<h3 id="auto-scroll-to-position">Auto-Scroll to Position<a class="headerlink" href="#auto-scroll-to-position" title="Permanent link">&para;</a></h3>
+<p><strong>After sorting</strong>:
+- Find the line that was just edited
+- Calculate its new position in sorted order
+- Scroll the editor to make that line visible
+- Position cursor at start of code area (column 7)</p>
+<h3 id="auto-numbering">Auto-Numbering<a class="headerlink" href="#auto-numbering" title="Permanent link">&para;</a></h3>
+<p><strong>On Enter key</strong>:
+1. Parse current line to get line number
+2. Calculate next line number = current + increment
+3. Check if next number conflicts with existing lines
+4. Adjust if necessary (skip conflicts)
+5. Insert new line with auto-generated line number
+6. Position cursor at code area</p>
+<p><strong>Configuration</strong> (like curses):
+- <code>auto_number_start</code>: Starting line number (default: 10)
+- <code>auto_number_increment</code>: Increment between lines (default: 10)
+- <code>auto_number_enabled</code>: Enable/disable auto-numbering (default: True)</p>
+<h3 id="status-symbol-integration">Status Symbol Integration<a class="headerlink" href="#status-symbol-integration" title="Permanent link">&para;</a></h3>
+<p><strong>Options</strong>:</p>
+<h4 id="option-1-keep-separate-column-for-status-only">Option 1: Keep separate column for status only<a class="headerlink" href="#option-1-keep-separate-column-for-status-only" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Remove line number from column</li>
+<li>Show only ● or ? symbols</li>
+<li>Width: ~15px (just for symbol)</li>
+<li>Line numbers are in text</li>
+</ul>
+<h4 id="option-2-inline-status-symbols">Option 2: Inline status symbols<a class="headerlink" href="#option-2-inline-status-symbols" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Add status symbol at start of line text</li>
+<li>Format: <code>●10 PRINT "HELLO"</code> or <code>?10 PRINT "HELLO"</code></li>
+<li>Fully copyable</li>
+<li>More like classic BASIC editors</li>
+</ul>
+<h4 id="option-3-gutter-markers-modern">Option 3: Gutter markers (modern)<a class="headerlink" href="#option-3-gutter-markers-modern" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Show ● and ? in margin</li>
+<li>Like VS Code breakpoint gutter</li>
+<li>Clickable for toggle</li>
+<li>Not part of selectable text</li>
+</ul>
+<p><strong>Recommendation</strong>: Option 1 (status column only)
+- Maintains clean separation
+- Clickable for breakpoint toggle
+- Doesn't interfere with copying code</p>
+<h2 id="implementation-plan">Implementation Plan<a class="headerlink" href="#implementation-plan" title="Permanent link">&para;</a></h2>
+<h3 id="task-tracking">Task Tracking<a class="headerlink" href="#task-tracking" title="Permanent link">&para;</a></h3>
+<p><strong>Status Legend</strong>: ⬜ Not Started | 🟨 In Progress | ✅ Completed</p>
+<p><strong>Note</strong>: Curses UI feature parity (variables window, debugger controls) is tracked in separate document: <code>CURSES_UI_FEATURE_PARITY.md</code></p>
+<h4 id="phase-1-tk-ui-refactoring-editor">Phase 1: Tk UI Refactoring (Editor)<a class="headerlink" href="#phase-1-tk-ui-refactoring-editor" title="Permanent link">&para;</a></h4>
+<ul>
+<li>⬜ 1.1 Remove line number display from column (keep status only)</li>
+<li>⬜ 1.2 Implement auto-sort on line change</li>
+<li>⬜ 1.3 Implement auto-numbering on Enter key</li>
+<li>⬜ 1.4 Add auto-scroll to sorted position</li>
+<li>⬜ 1.5 Update LineNumberedText widget</li>
+<li>⬜ 1.6 Add event bindings for cursor movement tracking</li>
+</ul>
+<h4 id="phase-2-web-ui-refactoring-editor">Phase 2: Web UI Refactoring (Editor)<a class="headerlink" href="#phase-2-web-ui-refactoring-editor" title="Permanent link">&para;</a></h4>
+<ul>
+<li>⬜ 2.1 Remove line number gutter (keep status only)</li>
+<li>⬜ 2.2 Implement auto-sort on line change</li>
+<li>⬜ 2.3 Implement auto-numbering on Enter key</li>
+<li>⬜ 2.4 Add auto-scroll to sorted position</li>
+<li>⬜ 2.5 Add JavaScript event handlers</li>
+</ul>
+<h4 id="phase-3-testing-all-uis">Phase 3: Testing (All UIs)<a class="headerlink" href="#phase-3-testing-all-uis" title="Permanent link">&para;</a></h4>
+<ul>
+<li>⬜ 3.1 Test Tk UI line editing workflow</li>
+<li>⬜ 3.2 Test Web UI line editing workflow</li>
+<li>⬜ 3.3 Test auto-numbering in both UIs</li>
+<li>⬜ 3.4 Test auto-sort in both UIs</li>
+<li>⬜ 3.5 Test line number copying</li>
+<li>⬜ 3.6 Performance test with 1000+ line programs</li>
+<li>⬜ 3.7 Comparison test against curses UI (reference implementation)</li>
+</ul>
+<h4 id="phase-4-documentation">Phase 4: Documentation<a class="headerlink" href="#phase-4-documentation" title="Permanent link">&para;</a></h4>
+<ul>
+<li>⬜ 4.1 Update Tk UI help documentation</li>
+<li>⬜ 4.2 Update Web UI help documentation</li>
+<li>⬜ 4.3 Add screenshots showing new behavior</li>
+<li>⬜ 4.4 Update user guide</li>
+</ul>
+<p><strong>See also</strong>: <code>CURSES_UI_FEATURE_PARITY.md</code> for curses-specific enhancements (variables window sorting, array cell display, step commands)</p>
+<h3 id="phase-1-tk-ui-refactoring">Phase 1: Tk UI Refactoring<a class="headerlink" href="#phase-1-tk-ui-refactoring" title="Permanent link">&para;</a></h3>
+<h4 id="11-remove-line-number-display-from-column">1.1 Remove Line Number Display from Column<a class="headerlink" href="#11-remove-line-number-display-from-column" title="Permanent link">&para;</a></h4>
+<p><strong>File</strong>: <code>src/ui/tk_widgets.py</code></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">LineNumberedText</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_redraw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>        <span class="c1"># Remove line number drawing code</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="c1"># Keep only status symbol drawing</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="c1"># OLD:</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="c1"># self.canvas.create_text(20, y, text=f&#39;{basic_line_num:&gt;5}&#39;)</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="c1"># NEW:</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="c1"># (remove this code)</span>
+</code></pre></div>
+<p><strong>Change Canvas width</strong>: 70px → 20px (just for status symbol)</p>
+<h4 id="12-implement-auto-sort-on-line-change">1.2 Implement Auto-Sort on Line Change<a class="headerlink" href="#12-implement-auto-sort-on-line-change" title="Permanent link">&para;</a></h4>
+<p><strong>File</strong>: <code>src/ui/tk_ui.py</code></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">TkBackend</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>        <span class="c1"># Track last cursor position</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">last_cursor_line</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">last_line_content</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="c1"># Bind cursor movement events</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">editor_text</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s1">&#39;&lt;FocusOut&gt;&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_line_change</span><span class="p">)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">editor_text</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s1">&#39;&lt;KeyPress-Up&gt;&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_line_change</span><span class="p">)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">editor_text</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s1">&#39;&lt;KeyPress-Down&gt;&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_line_change</span><span class="p">)</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">editor_text</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s1">&#39;&lt;KeyPress-Return&gt;&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_enter_key</span><span class="p">)</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_on_line_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Called when cursor moves away from line.&quot;&quot;&quot;</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>        <span class="n">current_line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_current_line_index</span><span class="p">()</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_cursor_line</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>            <span class="c1"># Check if line number changed</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>            <span class="n">old_content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_line_content</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>            <span class="n">new_content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_line_content</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_cursor_line</span><span class="p">)</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>            <span class="n">old_num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_line_number</span><span class="p">(</span><span class="n">old_content</span><span class="p">)</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>            <span class="n">new_num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_line_number</span><span class="p">(</span><span class="n">new_content</span><span class="p">)</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>            <span class="k">if</span> <span class="n">old_num</span> <span class="o">!=</span> <span class="n">new_num</span><span class="p">:</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>                <span class="c1"># Line number changed, trigger sort</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_sort_and_scroll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_cursor_line</span><span class="p">,</span> <span class="n">new_num</span><span class="p">)</span>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>        <span class="c1"># Update tracking</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">last_cursor_line</span> <span class="o">=</span> <span class="n">current_line</span>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">last_line_content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_line_content</span><span class="p">(</span><span class="n">current_line</span><span class="p">)</span>
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_sort_and_scroll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">edited_line_index</span><span class="p">,</span> <span class="n">edited_line_num</span><span class="p">):</span>
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Sort lines and scroll to edited line&#39;s new position.&quot;&quot;&quot;</span>
+<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a>        <span class="c1"># Get all lines</span>
+<a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>        <span class="n">lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">editor_text</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;1.0&#39;</span><span class="p">,</span> <span class="s1">&#39;end&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a>
+<a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a>        <span class="c1"># Parse and sort</span>
+<a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a>        <span class="n">parsed</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-4-40" name="__codelineno-4-40" href="#__codelineno-4-40"></a>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lines</span><span class="p">):</span>
+<a id="__codelineno-4-41" name="__codelineno-4-41" href="#__codelineno-4-41"></a>            <span class="n">line_num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_line_number</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<a id="__codelineno-4-42" name="__codelineno-4-42" href="#__codelineno-4-42"></a>            <span class="k">if</span> <span class="n">line_num</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-4-43" name="__codelineno-4-43" href="#__codelineno-4-43"></a>                <span class="n">parsed</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">line_num</span><span class="p">,</span> <span class="n">line</span><span class="p">))</span>
+<a id="__codelineno-4-44" name="__codelineno-4-44" href="#__codelineno-4-44"></a>
+<a id="__codelineno-4-45" name="__codelineno-4-45" href="#__codelineno-4-45"></a>        <span class="n">parsed</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<a id="__codelineno-4-46" name="__codelineno-4-46" href="#__codelineno-4-46"></a>
+<a id="__codelineno-4-47" name="__codelineno-4-47" href="#__codelineno-4-47"></a>        <span class="c1"># Rebuild text</span>
+<a id="__codelineno-4-48" name="__codelineno-4-48" href="#__codelineno-4-48"></a>        <span class="n">sorted_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">parsed</span><span class="p">]</span>
+<a id="__codelineno-4-49" name="__codelineno-4-49" href="#__codelineno-4-49"></a>        <span class="n">new_text</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sorted_lines</span><span class="p">)</span>
+<a id="__codelineno-4-50" name="__codelineno-4-50" href="#__codelineno-4-50"></a>
+<a id="__codelineno-4-51" name="__codelineno-4-51" href="#__codelineno-4-51"></a>        <span class="c1"># Update editor</span>
+<a id="__codelineno-4-52" name="__codelineno-4-52" href="#__codelineno-4-52"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">editor_text</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s1">&#39;1.0&#39;</span><span class="p">,</span> <span class="s1">&#39;end&#39;</span><span class="p">)</span>
+<a id="__codelineno-4-53" name="__codelineno-4-53" href="#__codelineno-4-53"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">editor_text</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="s1">&#39;1.0&#39;</span><span class="p">,</span> <span class="n">new_text</span><span class="p">)</span>
+<a id="__codelineno-4-54" name="__codelineno-4-54" href="#__codelineno-4-54"></a>
+<a id="__codelineno-4-55" name="__codelineno-4-55" href="#__codelineno-4-55"></a>        <span class="c1"># Find new position of edited line</span>
+<a id="__codelineno-4-56" name="__codelineno-4-56" href="#__codelineno-4-56"></a>        <span class="n">new_index</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span> <span class="k">if</span> <span class="n">num</span> <span class="o">==</span> <span class="n">edited_line_num</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-4-57" name="__codelineno-4-57" href="#__codelineno-4-57"></a>
+<a id="__codelineno-4-58" name="__codelineno-4-58" href="#__codelineno-4-58"></a>        <span class="c1"># Scroll and position cursor</span>
+<a id="__codelineno-4-59" name="__codelineno-4-59" href="#__codelineno-4-59"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">editor_text</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">mark_set</span><span class="p">(</span><span class="s1">&#39;insert&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">new_index</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">.0&#39;</span><span class="p">)</span>
+<a id="__codelineno-4-60" name="__codelineno-4-60" href="#__codelineno-4-60"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">editor_text</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">see</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">new_index</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">.0&#39;</span><span class="p">)</span>
+</code></pre></div>
+<h4 id="13-implement-auto-numbering">1.3 Implement Auto-Numbering<a class="headerlink" href="#13-implement-auto-numbering" title="Permanent link">&para;</a></h4>
+<p><strong>File</strong>: <code>src/ui/tk_ui.py</code></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">TkBackend</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">auto_number_enabled</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">auto_number_start</span> <span class="o">=</span> <span class="mi">10</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">auto_number_increment</span> <span class="o">=</span> <span class="mi">10</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">next_auto_line_num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_number_start</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_on_enter_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle Enter key for auto-numbering.&quot;&quot;&quot;</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_number_enabled</span><span class="p">:</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>            <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># Let default handler run</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>        <span class="c1"># Get current line number</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>        <span class="n">current_line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_current_line</span><span class="p">()</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>        <span class="n">current_num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_line_number</span><span class="p">(</span><span class="n">current_line</span><span class="p">)</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>        <span class="k">if</span> <span class="n">current_num</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>            <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>        <span class="c1"># Calculate next number</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>        <span class="n">next_num</span> <span class="o">=</span> <span class="n">current_num</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_number_increment</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>        <span class="c1"># Get all existing line numbers</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>        <span class="n">existing_nums</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>        <span class="n">lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">editor_text</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;1.0&#39;</span><span class="p">,</span> <span class="s1">&#39;end&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>            <span class="n">num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_line_number</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>            <span class="k">if</span> <span class="n">num</span><span class="p">:</span>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>                <span class="n">existing_nums</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>        <span class="c1"># Find next line after current</span>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>        <span class="n">sorted_nums</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">existing_nums</span><span class="p">)</span>
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>        <span class="n">current_idx</span> <span class="o">=</span> <span class="n">sorted_nums</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">current_num</span><span class="p">)</span> <span class="k">if</span> <span class="n">current_num</span> <span class="ow">in</span> <span class="n">sorted_nums</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>        <span class="n">max_allowed</span> <span class="o">=</span> <span class="n">sorted_nums</span><span class="p">[</span><span class="n">current_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">current_idx</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_nums</span><span class="p">)</span> <span class="k">else</span> <span class="mi">99999</span>
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>        <span class="c1"># Adjust if conflict</span>
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>        <span class="k">while</span> <span class="n">next_num</span> <span class="ow">in</span> <span class="n">existing_nums</span> <span class="ow">or</span> <span class="n">next_num</span> <span class="o">&gt;=</span> <span class="n">max_allowed</span><span class="p">:</span>
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>            <span class="n">next_num</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_number_increment</span>
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>            <span class="k">if</span> <span class="n">next_num</span> <span class="o">&gt;=</span> <span class="mi">99999</span><span class="p">:</span>
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>                <span class="n">next_num</span> <span class="o">=</span> <span class="n">current_num</span> <span class="o">+</span> <span class="mi">1</span>
+<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>                <span class="k">break</span>
+<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>
+<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a>        <span class="c1"># Insert new line with number</span>
+<a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">editor_text</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="s1">&#39;insert&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="si">{</span><span class="n">next_num</span><span class="si">}</span><span class="s1"> &#39;</span><span class="p">)</span>
+<a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a>
+<a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a>        <span class="c1"># Update next auto number</span>
+<a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">next_auto_line_num</span> <span class="o">=</span> <span class="n">next_num</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_number_increment</span>
+<a id="__codelineno-5-48" name="__codelineno-5-48" href="#__codelineno-5-48"></a>
+<a id="__codelineno-5-49" name="__codelineno-5-49" href="#__codelineno-5-49"></a>        <span class="k">return</span> <span class="s1">&#39;break&#39;</span>  <span class="c1"># Prevent default Enter behavior</span>
+</code></pre></div>
+<h3 id="phase-2-web-ui-refactoring">Phase 2: Web UI Refactoring<a class="headerlink" href="#phase-2-web-ui-refactoring" title="Permanent link">&para;</a></h3>
+<p>Apply same changes to Web UI (CodeMirror/Monaco editor):
+- Remove line number gutter (use built-in gutter for status only)
+- Add keypress handlers for auto-sort
+- Implement auto-numbering on Enter
+- Add scroll-to-position after sort</p>
+<p><strong>File</strong>: <code>src/ui/web/web_ui.py</code></p>
+<p>Similar implementation using JavaScript event handlers in the web editor.</p>
+<h3 id="phase-3-testing">Phase 3: Testing<a class="headerlink" href="#phase-3-testing" title="Permanent link">&para;</a></h3>
+<h4 id="31-manual-testing">3.1 Manual Testing<a class="headerlink" href="#31-manual-testing" title="Permanent link">&para;</a></h4>
+<ol>
+<li><strong>Line editing</strong>: Type <code>10 PRINT</code>, move down, verify it sorts</li>
+<li><strong>Out of order</strong>: Type <code>30</code>, then <code>20</code>, then <code>10</code>, verify they sort on navigation</li>
+<li><strong>Auto-number</strong>: Type <code>10</code>, press Enter, verify <code>20</code> appears</li>
+<li><strong>Auto-number gaps</strong>: Lines <code>10, 30</code>, edit <code>10</code>, press Enter, verify <code>20</code> (not 30)</li>
+<li><strong>Copying</strong>: Select text including line numbers, copy, paste, verify format</li>
+<li><strong>Scrolling</strong>: Edit line <code>100</code> in program with many lines, verify scroll to position</li>
+</ol>
+<h4 id="32-comparison-test">3.2 Comparison Test<a class="headerlink" href="#32-comparison-test" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Edit same program in all three UIs (CLI, Curses, Tk, Web)</li>
+<li>Verify consistent behavior</li>
+<li>Document any differences</li>
+</ul>
+<h3 id="phase-4-documentation_1">Phase 4: Documentation<a class="headerlink" href="#phase-4-documentation_1" title="Permanent link">&para;</a></h3>
+<p>Update help files:
+- <code>docs/help/ui/tk/editing.md</code> - Document new editing behavior
+- <code>docs/help/ui/web/editing.md</code> - Document new editing behavior
+- Add screenshots showing before/after</p>
+<h2 id="technical-details">Technical Details<a class="headerlink" href="#technical-details" title="Permanent link">&para;</a></h2>
+<h3 id="event-binding-strategy-tk">Event Binding Strategy (Tk)<a class="headerlink" href="#event-binding-strategy-tk" title="Permanent link">&para;</a></h3>
+<p><strong>Problem</strong>: Need to detect when cursor moves away from a line</p>
+<p><strong>Solutions</strong>:
+1. <code>&lt;KeyPress-Up&gt;</code>, <code>&lt;KeyPress-Down&gt;</code> - Arrow keys
+2. <code>&lt;Button-1&gt;</code> - Mouse click on different line
+3. <code>&lt;FocusOut&gt;</code> - Focus leaves text widget
+4. Timer-based - Check every N milliseconds (not ideal)</p>
+<p><strong>Chosen</strong>: Combination of <a class="magiclink magiclink-github magiclink-issue" href="https://github.com/avwohl/mbasic/issues/1" title="GitHub Issue: avwohl/mbasic #1">#1</a>, <a class="magiclink magiclink-github magiclink-issue" href="https://github.com/avwohl/mbasic/issues/2" title="GitHub Issue: avwohl/mbasic #2">#2</a>, <a class="magiclink magiclink-github magiclink-issue" href="https://github.com/avwohl/mbasic/issues/3" title="GitHub Issue: avwohl/mbasic #3">#3</a></p>
+<h3 id="performance-considerations">Performance Considerations<a class="headerlink" href="#performance-considerations" title="Permanent link">&para;</a></h3>
+<p><strong>Concern</strong>: Sorting on every line change could be slow for large programs</p>
+<p><strong>Mitigation</strong>:
+- Only sort when line number actually changes
+- Only sort on navigation away (not every keystroke)
+- Cache parsed line numbers
+- Use efficient sorting algorithm</p>
+<p><strong>Benchmark target</strong>: &lt; 50ms for 1000-line program</p>
+<h3 id="curses-ui-no-changes-needed">Curses UI - No Changes Needed<a class="headerlink" href="#curses-ui-no-changes-needed" title="Permanent link">&para;</a></h3>
+<p>The curses UI already works correctly. This project is about bringing Tk and Web UIs to feature parity.</p>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<p>Add to user config (<code>.mbasic/config.toml</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">[editor]</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">auto_number_enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">auto_number_start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">auto_number_increment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">auto_sort_on_edit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w">  </span><span class="c1"># NEW: Enable/disable auto-sort</span>
+</code></pre></div>
+<h2 id="future-enhancements">Future Enhancements<a class="headerlink" href="#future-enhancements" title="Permanent link">&para;</a></h2>
+<h3 id="advanced-auto-numbering">Advanced Auto-Numbering<a class="headerlink" href="#advanced-auto-numbering" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Smart increment</strong>: Detect existing increment pattern (10, 20, 30 → increment=10)</li>
+<li><strong>Renumber</strong>: Command to renumber all lines with new start/increment</li>
+<li><strong>Insert mode</strong>: Auto-number between existing lines (10, 20 → insert 15)</li>
+</ul>
+<h3 id="visual-feedback">Visual Feedback<a class="headerlink" href="#visual-feedback" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Flash line</strong>: Briefly highlight line after sort to show new position</li>
+<li><strong>Animation</strong>: Smooth scroll animation to new position</li>
+<li><strong>Status bar</strong>: Show "Line sorted to position N"</li>
+</ul>
+<h3 id="undo-support">Undo Support<a class="headerlink" href="#undo-support" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Ensure auto-sort is undoable</li>
+<li>Single undo should revert both number change and sort</li>
+</ul>
+<h2 id="success-criteria">Success Criteria<a class="headerlink" href="#success-criteria" title="Permanent link">&para;</a></h2>
+<p>✅ Line numbers editable in-place (part of text)
+✅ No duplication in separate column
+✅ Line numbers copyable (select and copy text includes line numbers)
+✅ Auto-sort when navigating away from edited line
+✅ Auto-scroll to show line in new sorted position
+✅ Auto-numbering works on Enter key
+✅ Status symbols (●, ?) still visible and functional
+✅ Breakpoint toggle still works
+✅ Performance acceptable for large programs (1000+ lines)
+✅ Behavior consistent across Tk and Web UIs
+✅ Behavior matches curses UI reference implementation</p>
+<h2 id="open-questions">Open Questions<a class="headerlink" href="#open-questions" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Immediate sorting</strong>: Should we sort immediately on line number edit, or wait for navigation?</li>
+<li>
+<p><strong>Answer</strong>: Wait for navigation (like curses) - better performance</p>
+</li>
+<li>
+<p><strong>Partial line numbers</strong>: What if user types <code>1</code> (incomplete line number)?</p>
+</li>
+<li>
+<p><strong>Answer</strong>: Treat as line 1 (valid), sort accordingly</p>
+</li>
+<li>
+<p><strong>Invalid line numbers</strong>: What if user types <code>ABC PRINT</code> (no number)?</p>
+</li>
+<li>
+<p><strong>Answer</strong>: Leave at current position, don't sort (treat as comment/invalid)</p>
+</li>
+<li>
+<p><strong>Multiple edits</strong>: User edits 3 lines without navigating away, then navigates?</p>
+</li>
+<li><strong>Answer</strong>: Only last edited line triggers sort</li>
+</ol>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Curses UI implementation: <code>src/ui/curses_ui.py:109-223</code></li>
+<li>Current Tk widget: <code>src/ui/tk_widgets.py:16-220</code></li>
+<li>Auto-numbering logic: <code>src/ui/curses_ui.py:479-554</code></li>
+<li>Sort logic: <code>src/ui/curses_ui.py:1183-1222</code></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1718 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/design/future_compiler/TYPE_REBINDING_PHASE2_DESIGN/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Type Rebinding Phase 2: Promotion Analysis - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#type-rebinding-phase-2-promotion-analysis" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Type Rebinding Phase 2: Promotion Analysis
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../dev/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-problem-phase-2-solves" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Problem Phase 2 Solves
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Concepts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-type-promotion-vs-type-rebinding" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Type Promotion vs Type Rebinding
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-safe-promotion-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Safe Promotion Points
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-explicit-vs-implicit-promotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Explicit vs Implicit Promotion
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-capabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2 Capabilities
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 2 Capabilities">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tracking
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Strategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-extend-typebinding-with-promotion-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Extend TypeBinding with Promotion Info
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-add-promotion-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Add Promotion Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-promotion-safe-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Promotion-Safe Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-mixed-type-expression-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Mixed-Type Expression Analysis
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-generation-strategy-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Generation Strategy (Future)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Generation Strategy (Future)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#versioning-with-promotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Versioning with Promotion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optimization-opportunity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optimization Opportunity
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-1-simple-promotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 1: Simple Promotion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-2-promotion-in-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 2: Promotion in Loop
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-3-multiple-promotions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 3: Multiple Promotions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benefits-of-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benefits of Phase 2
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Benefits of Phase 2">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8080-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      8080 Performance
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Plan
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-2a-detection-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2A: Detection Only
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2b-mixed-type-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2B: Mixed-Type Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2c-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2C: Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2d-code-generation-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2D: Code Generation (Future)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Cases
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-1-simple-promotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 1: Simple Promotion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-2-no-promotion-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 2: No Promotion Needed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-3-multiple-promotions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 3: Multiple Promotions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-4-loop-with-promotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 4: Loop with Promotion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-5-explicit-type-suffix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test 5: Explicit Type Suffix
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Limitations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-phase-2-cannot-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      What Phase 2 Cannot Do
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edge Cases
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-vs-phase-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2 vs Phase 3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#success-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Success Metrics
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/design/future_compiler/TYPE_REBINDING_PHASE2_DESIGN.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="type-rebinding-phase-2-promotion-analysis">Type Rebinding Phase 2: Promotion Analysis<a class="headerlink" href="#type-rebinding-phase-2-promotion-analysis" title="Permanent link">&para;</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p><strong>Phase 2</strong> extends Phase 1 by allowing variables to be <strong>promoted</strong> from INTEGER to DOUBLE when needed, with explicit conversion tracking. This enables more aggressive optimization while maintaining correctness.</p>
+<h2 id="the-problem-phase-2-solves">The Problem Phase 2 Solves<a class="headerlink" href="#the-problem-phase-2-solves" title="Permanent link">&para;</a></h2>
+<p>Phase 1 detects when variables can safely <em>change</em> types between program points, but is conservative:</p>
+<p><strong>Problem Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nl">100</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w">        </span><span class="c1">&#39; X is INTEGER</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nl">110</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">1</span><span class="w">     </span><span class="c1">&#39; Y depends on X (INTEGER)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nl">120</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">10.5</span><span class="w">      </span><span class="c1">&#39; X becomes DOUBLE</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nl">130</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">X</span><span class="w">     </span><span class="c1">&#39; Y (INTEGER) + X (DOUBLE) - requires promotion!</span>
+</code></pre></div></p>
+<p><strong>Phase 1 behavior:</strong>
+- Detects X changes from INTEGER → DOUBLE
+- Detects Y depends on X
+- <strong>Conclusion</strong>: Cannot optimize (Y depends on old X value)</p>
+<p><strong>Phase 2 goal:</strong>
+- Detect that Y was computed from INTEGER X
+- Allow Y to be INTEGER at line 110
+- At line 130, explicitly promote Y to DOUBLE for the addition
+- Result: Y can be INTEGER (fast) until promotion needed</p>
+<h2 id="key-concepts">Key Concepts<a class="headerlink" href="#key-concepts" title="Permanent link">&para;</a></h2>
+<h3 id="1-type-promotion-vs-type-rebinding">1. Type Promotion vs Type Rebinding<a class="headerlink" href="#1-type-promotion-vs-type-rebinding" title="Permanent link">&para;</a></h3>
+<p><strong>Type Rebinding</strong> (Phase 1):
+- Variable completely changes type at a program point
+- Old value is NOT carried forward
+- Example: <code>I=22.1; FOR I=0 TO 10</code> - I is DOUBLE then INTEGER (fresh value)</p>
+<p><strong>Type Promotion</strong> (Phase 2):
+- Variable is widened (INT→DOUBLE) while keeping value
+- Old value IS carried forward
+- Example: <code>X=10; Y=X+0.5</code> - X is promoted from INT to DOUBLE</p>
+<h3 id="2-safe-promotion-points">2. Safe Promotion Points<a class="headerlink" href="#2-safe-promotion-points" title="Permanent link">&para;</a></h3>
+<p>A variable can be promoted from INTEGER to DOUBLE when:
+1. <strong>Mixed-type expression</strong>: INTEGER used in DOUBLE context
+2. <strong>Explicit conversion</strong>: INT(), FIX() remove fractional part
+3. <strong>Value-preserving</strong>: All integers fit exactly in DOUBLE</p>
+<p><strong>BASIC's type system guarantees:</strong>
+- Every INTEGER can be exactly represented as DOUBLE
+- DOUBLE has 64-bit mantissa, INTEGER is 16-bit
+- No precision loss on promotion</p>
+<h3 id="3-explicit-vs-implicit-promotion">3. Explicit vs Implicit Promotion<a class="headerlink" href="#3-explicit-vs-implicit-promotion" title="Permanent link">&para;</a></h3>
+<p><strong>Implicit promotion</strong> (automatic):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="vg">X</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w">         </span><span class="c1">&#39; X is INTEGER</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="o">%</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.5</span><span class="w">    </span><span class="c1">&#39; X promoted to DOUBLE for addition</span>
+</code></pre></div></p>
+<p><strong>Explicit promotion</strong> (tracked by compiler):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w">          </span><span class="c1">&#39; X is INTEGER</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">CDBL</span><span class="p">(</span><span class="vg">X</span><span class="p">)</span><span class="w">     </span><span class="c1">&#39; Explicit CDBL() conversion</span>
+</code></pre></div></p>
+<h2 id="phase-2-capabilities">Phase 2 Capabilities<a class="headerlink" href="#phase-2-capabilities" title="Permanent link">&para;</a></h2>
+<h3 id="detection">Detection<a class="headerlink" href="#detection" title="Permanent link">&para;</a></h3>
+<p><strong>What Phase 2 can detect:</strong>
+1. Variables that start as INTEGER and need promotion
+2. Program points where promotion occurs
+3. Whether promotion is safe (value-preserving)
+4. Expressions that trigger promotion</p>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nl">100</span><span class="w"> </span><span class="vg">N</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span><span class="w">                    </span><span class="c1">&#39; N is INTEGER</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nl">110</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="vg">N</span><span class="w">             </span><span class="c1">&#39; I is INTEGER</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nl">120</span><span class="w">   </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">                </span><span class="c1">&#39; X is INTEGER (2 is INTEGER)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nl">130</span><span class="w">   </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w">              </span><span class="c1">&#39; X promoted to DOUBLE (0.5 is DOUBLE)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="nl">140</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+</code></pre></div></p>
+<p><strong>Phase 2 analysis:</strong>
+- N: INTEGER (constant)
+- I: INTEGER (FOR loop bounds)
+- X: INTEGER at line 120, promoted to DOUBLE at line 130
+- Y: DOUBLE (result of DOUBLE addition)</p>
+<h3 id="tracking">Tracking<a class="headerlink" href="#tracking" title="Permanent link">&para;</a></h3>
+<p><strong>Promotion points:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">TypePromotion</span><span class="p">:</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">line</span><span class="p">:</span> <span class="nb">int</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">variable</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">from_type</span><span class="p">:</span> <span class="n">VarType</span>  <span class="c1"># INTEGER</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">to_type</span><span class="p">:</span> <span class="n">VarType</span>    <span class="c1"># DOUBLE</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span>         <span class="c1"># &quot;Mixed-type expression&quot;, &quot;Explicit conversion&quot;, etc.</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">expression</span><span class="p">:</span> <span class="nb">str</span>     <span class="c1"># The expression causing promotion</span>
+</code></pre></div></p>
+<p><strong>Example tracking:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Type Promotions Found:
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  X:
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    Line 130: INTEGER → DOUBLE
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    Reason: Mixed-type expression (INTEGER + DOUBLE)
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    Expression: X + 0.5
+</code></pre></div></p>
+<h2 id="implementation-strategy">Implementation Strategy<a class="headerlink" href="#implementation-strategy" title="Permanent link">&para;</a></h2>
+<h3 id="step-1-extend-typebinding-with-promotion-info">Step 1: Extend TypeBinding with Promotion Info<a class="headerlink" href="#step-1-extend-typebinding-with-promotion-info" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">TypeBinding</span><span class="p">:</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">line</span><span class="p">:</span> <span class="nb">int</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">variable</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">var_type</span><span class="p">:</span> <span class="n">VarType</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">context</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">depends_on_self</span><span class="p">:</span> <span class="nb">bool</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">promotion_from</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">VarType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># NEW: promoted from this type</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">promotion_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>                 <span class="c1"># NEW: why promoted</span>
+</code></pre></div>
+<h3 id="step-2-add-promotion-detection">Step 2: Add Promotion Detection<a class="headerlink" href="#step-2-add-promotion-detection" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_detect_type_promotions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">program</span><span class="p">:</span> <span class="n">ProgramNode</span><span class="p">):</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="sd">    Detect where INTEGER variables need promotion to DOUBLE.</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="sd">    Promotion occurs when:</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="sd">    1. INTEGER used in DOUBLE expression (X + 0.5)</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="sd">    2. INTEGER assigned to DOUBLE variable (Y# = X%)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="sd">    3. INTEGER passed to function expecting DOUBLE</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="n">program</span><span class="o">.</span><span class="n">statements</span><span class="p">:</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">AssignmentNode</span><span class="p">):</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_check_expression_for_promotions</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">expression</span><span class="p">,</span> <span class="n">stmt</span><span class="o">.</span><span class="n">line</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="step-3-promotion-safe-analysis">Step 3: Promotion-Safe Analysis<a class="headerlink" href="#step-3-promotion-safe-analysis" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_can_promote_safely</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">from_type</span><span class="p">:</span> <span class="n">VarType</span><span class="p">,</span> <span class="n">to_type</span><span class="p">:</span> <span class="n">VarType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="sd">    Check if promotion is safe (value-preserving).</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="sd">    INTEGER → DOUBLE: Always safe (all integers fit exactly)</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="sd">    SINGLE → DOUBLE: Always safe (DOUBLE has more precision)</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="sd">    DOUBLE → INTEGER: NOT safe (fractional part lost)</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="k">if</span> <span class="n">from_type</span> <span class="o">==</span> <span class="n">VarType</span><span class="o">.</span><span class="n">INTEGER</span> <span class="ow">and</span> <span class="n">to_type</span> <span class="o">==</span> <span class="n">VarType</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">:</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="k">if</span> <span class="n">from_type</span> <span class="o">==</span> <span class="n">VarType</span><span class="o">.</span><span class="n">SINGLE</span> <span class="ow">and</span> <span class="n">to_type</span> <span class="o">==</span> <span class="n">VarType</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">:</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>    <span class="k">return</span> <span class="kc">False</span>
+</code></pre></div>
+<h3 id="step-4-mixed-type-expression-analysis">Step 4: Mixed-Type Expression Analysis<a class="headerlink" href="#step-4-mixed-type-expression-analysis" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_analyze_mixed_type_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">ExpressionNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VarType</span><span class="p">:</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="sd">    Determine result type of mixed-type expression.</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="sd">    Rules (BASIC type coercion):</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="sd">    - INTEGER op INTEGER → INTEGER</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="sd">    - INTEGER op DOUBLE → DOUBLE (INTEGER promoted)</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="sd">    - DOUBLE op DOUBLE → DOUBLE</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="sd">    - STRING op STRING → STRING (concatenation)</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="n">left_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_infer_expression_type</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">left</span><span class="p">)</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    <span class="n">right_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_infer_expression_type</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">right</span><span class="p">)</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>    <span class="c1"># Promotion rule: wider type wins</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>    <span class="k">if</span> <span class="n">left_type</span> <span class="o">==</span> <span class="n">VarType</span><span class="o">.</span><span class="n">DOUBLE</span> <span class="ow">or</span> <span class="n">right_type</span> <span class="o">==</span> <span class="n">VarType</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">:</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>        <span class="c1"># Record promotion if needed</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>        <span class="k">if</span> <span class="n">left_type</span> <span class="o">==</span> <span class="n">VarType</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">:</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_record_promotion</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">VarType</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span> <span class="n">VarType</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">)</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>        <span class="k">if</span> <span class="n">right_type</span> <span class="o">==</span> <span class="n">VarType</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">:</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_record_promotion</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">VarType</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span> <span class="n">VarType</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">)</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>        <span class="k">return</span> <span class="n">VarType</span><span class="o">.</span><span class="n">DOUBLE</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>    <span class="k">return</span> <span class="n">VarType</span><span class="o">.</span><span class="n">INTEGER</span>
+</code></pre></div>
+<h2 id="code-generation-strategy-future">Code Generation Strategy (Future)<a class="headerlink" href="#code-generation-strategy-future" title="Permanent link">&para;</a></h2>
+<h3 id="versioning-with-promotion">Versioning with Promotion<a class="headerlink" href="#versioning-with-promotion" title="Permanent link">&para;</a></h3>
+<p><strong>Source:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nl">100</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w">        </span><span class="c1">&#39; X is INTEGER</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nl">110</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">1</span><span class="w">     </span><span class="c1">&#39; Y is INTEGER (from INTEGER X)</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nl">120</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">10.5</span><span class="w">      </span><span class="c1">&#39; X becomes DOUBLE</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="nl">130</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">X</span><span class="w">     </span><span class="c1">&#39; Promote Y to DOUBLE for addition</span>
+</code></pre></div></p>
+<p><strong>Generated code (conceptual):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">// Version 1: X as INTEGER</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kt">int16_t</span><span class="w"> </span><span class="n">X_v1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="kt">int16_t</span><span class="w"> </span><span class="n">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">X_v1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w">     </span><span class="c1">// INTEGER arithmetic (fast!)</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1">// Version 2: X as DOUBLE</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="kt">double</span><span class="w"> </span><span class="n">X_v2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">10.5</span><span class="p">;</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="c1">// Promote Y for mixed-type expression</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="kt">double</span><span class="w"> </span><span class="n">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">Y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">X_v2</span><span class="p">;</span><span class="w">  </span><span class="c1">// Explicit promotion</span>
+</code></pre></div></p>
+<p><strong>Key insight:</strong>
+- Y stays INTEGER (2 bytes, fast)
+- Only promoted when needed (line 130)
+- Promotion is explicit cast, not type change</p>
+<h3 id="optimization-opportunity">Optimization Opportunity<a class="headerlink" href="#optimization-opportunity" title="Permanent link">&para;</a></h3>
+<p><strong>Without promotion analysis:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kt">double</span><span class="w"> </span><span class="n">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="mi">10</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w">  </span><span class="c1">// Y is DOUBLE from start (8 bytes, slow)</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kt">double</span><span class="w"> </span><span class="n">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">10.5</span><span class="p">;</span>
+</code></pre></div></p>
+<p><strong>With promotion analysis:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kt">int16_t</span><span class="w"> </span><span class="n">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w">         </span><span class="c1">// Y is INTEGER (2 bytes, fast)</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kt">double</span><span class="w"> </span><span class="n">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">Y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">10.5</span><span class="p">;</span><span class="w"> </span><span class="c1">// Promote only when needed</span>
+</code></pre></div></p>
+<p><strong>Savings:</strong>
+- 6 bytes memory per variable
+- Fast integer arithmetic for Y
+- Only one conversion (INT→DOUBLE) instead of multiple DOUBLE ops</p>
+<h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
+<h3 id="example-1-simple-promotion">Example 1: Simple Promotion<a class="headerlink" href="#example-1-simple-promotion" title="Permanent link">&para;</a></h3>
+<p><strong>Source:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nl">100</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nl">110</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span>
+</code></pre></div></p>
+<p><strong>Phase 2 analysis:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>Type Bindings:
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>  X: INTEGER (line 100)
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>  Y: DOUBLE (line 110)
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>Type Promotions:
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>  X: INTEGER → DOUBLE at line 110
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>    Reason: Mixed-type expression (INTEGER + DOUBLE literal)
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>    Expression: X + 0.5
+</code></pre></div></p>
+<p><strong>Code generation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kt">int16_t</span><span class="w"> </span><span class="n">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kt">double</span><span class="w"> </span><span class="n">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span><span class="w">  </span><span class="c1">// Explicit promotion</span>
+</code></pre></div></p>
+<h3 id="example-2-promotion-in-loop">Example 2: Promotion in Loop<a class="headerlink" href="#example-2-promotion-in-loop" title="Permanent link">&para;</a></h3>
+<p><strong>Source:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nl">100</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">100</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="nl">110</span><span class="w">   </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">            </span><span class="c1">&#39; INTEGER</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="nl">120</span><span class="w">   </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w">          </span><span class="c1">&#39; Promotion needed</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="nl">130</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+</code></pre></div></p>
+<p><strong>Phase 2 analysis:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>Type Bindings:
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>  I: INTEGER (FOR loop)
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>  X: INTEGER (line 110)
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>Type Promotions:
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>  X: INTEGER → DOUBLE at line 120
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>    Reason: Mixed-type expression
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>    Expression: X + 0.5
+</code></pre></div></p>
+<p><strong>Code generation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int16_t</span><span class="w"> </span><span class="n">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">I</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">100</span><span class="p">;</span><span class="w"> </span><span class="n">I</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span><span class="kt">int16_t</span><span class="w"> </span><span class="n">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">I</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w">        </span><span class="c1">// Fast INTEGER multiply</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span><span class="w"> </span><span class="c1">// Promote only here</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="p">}</span>
+</code></pre></div></p>
+<h3 id="example-3-multiple-promotions">Example 3: Multiple Promotions<a class="headerlink" href="#example-3-multiple-promotions" title="Permanent link">&para;</a></h3>
+<p><strong>Source:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="nl">100</span><span class="w"> </span><span class="vg">A</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w">       </span><span class="c1">&#39; Explicit INTEGER</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="nl">110</span><span class="w"> </span><span class="vg">B</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span><span class="w">       </span><span class="c1">&#39; Explicit INTEGER</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="nl">120</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="o">%</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="o">%</span><span class="w">   </span><span class="c1">&#39; INTEGER result</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="nl">130</span><span class="w"> </span><span class="vg">D</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">3.14</span><span class="w">  </span><span class="c1">&#39; Promotion needed</span>
+</code></pre></div></p>
+<p><strong>Phase 2 analysis:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>Type Bindings:
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>  A%: INTEGER (explicit suffix)
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>  B%: INTEGER (explicit suffix)
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>  C: INTEGER (line 120 - INTEGER + INTEGER)
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>Type Promotions:
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>  C: INTEGER → DOUBLE at line 130
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>    Reason: Mixed-type expression
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>    Expression: C + 3.14
+</code></pre></div></p>
+<h2 id="benefits-of-phase-2">Benefits of Phase 2<a class="headerlink" href="#benefits-of-phase-2" title="Permanent link">&para;</a></h2>
+<h3 id="performance">Performance<a class="headerlink" href="#performance" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>More INTEGER usage</strong>: Variables stay INTEGER longer</li>
+<li><strong>Fewer conversions</strong>: Only promote when necessary</li>
+<li><strong>Better cache</strong>: Smaller data (2 bytes vs 8 bytes)</li>
+<li><strong>Fast arithmetic</strong>: INTEGER ops until promotion</li>
+</ol>
+<h3 id="memory">Memory<a class="headerlink" href="#memory" title="Permanent link">&para;</a></h3>
+<ul>
+<li>INTEGER: 2 bytes</li>
+<li>DOUBLE: 8 bytes</li>
+<li><strong>Savings: 6 bytes per variable</strong> that can be INTEGER</li>
+</ul>
+<p>For a program with 100 variables, 50 of which can be INTEGER:
+- Without Phase 2: 800 bytes (all DOUBLE)
+- With Phase 2: 500 bytes (50 INT + 50 DOUBLE)
+- <strong>Savings: 300 bytes (37.5%)</strong></p>
+<h3 id="8080-performance">8080 Performance<a class="headerlink" href="#8080-performance" title="Permanent link">&para;</a></h3>
+<p>On Intel 8080 (2 MHz):
+- INTEGER add: 10 cycles (5 microseconds)
+- DOUBLE add: 10,000 cycles (5 milliseconds)
+- <strong>1000x speedup</strong> for INTEGER arithmetic</p>
+<h2 id="implementation-plan">Implementation Plan<a class="headerlink" href="#implementation-plan" title="Permanent link">&para;</a></h2>
+<h3 id="phase-2a-detection-only">Phase 2A: Detection Only<a class="headerlink" href="#phase-2a-detection-only" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Extend <code>TypeBinding</code> with promotion fields</li>
+<li>Add <code>_detect_type_promotions()</code> method</li>
+<li>Track promotion points in analysis</li>
+<li>Add promotion section to report</li>
+</ol>
+<h3 id="phase-2b-mixed-type-analysis">Phase 2B: Mixed-Type Analysis<a class="headerlink" href="#phase-2b-mixed-type-analysis" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Implement <code>_analyze_mixed_type_expression()</code></li>
+<li>Add type coercion rules (INT+DOUBLE → DOUBLE)</li>
+<li>Detect implicit promotions</li>
+<li>Track promotion reasons</li>
+</ol>
+<h3 id="phase-2c-validation">Phase 2C: Validation<a class="headerlink" href="#phase-2c-validation" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Ensure all promotions are safe</li>
+<li>Check for precision loss warnings</li>
+<li>Verify promotion order (DAG)</li>
+<li>Test on real programs</li>
+</ol>
+<h3 id="phase-2d-code-generation-future">Phase 2D: Code Generation (Future)<a class="headerlink" href="#phase-2d-code-generation-future" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Generate explicit casts in C code</li>
+<li>Create promoted variable versions</li>
+<li>Insert conversions at promotion points</li>
+<li>Optimize away redundant promotions</li>
+</ol>
+<h2 id="test-cases">Test Cases<a class="headerlink" href="#test-cases" title="Permanent link">&para;</a></h2>
+<h3 id="test-1-simple-promotion">Test 1: Simple Promotion<a class="headerlink" href="#test-1-simple-promotion" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="o">:</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span>
+</code></pre></div>
+Expected: X is INTEGER, promoted to DOUBLE at Y assignment</p>
+<h3 id="test-2-no-promotion-needed">Test 2: No Promotion Needed<a class="headerlink" href="#test-2-no-promotion-needed" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="o">:</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">5</span>
+</code></pre></div>
+Expected: X is INTEGER, no promotion (all INTEGER)</p>
+<h3 id="test-3-multiple-promotions">Test 3: Multiple Promotions<a class="headerlink" href="#test-3-multiple-promotions" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="o">:</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">1</span><span class="o">:</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span>
+</code></pre></div>
+Expected: X INTEGER, Y INTEGER, Y promoted at Z assignment</p>
+<h3 id="test-4-loop-with-promotion">Test 4: Loop with Promotion<a class="headerlink" href="#test-4-loop-with-promotion" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span><span class="o">:</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="o">:</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="o">:</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+</code></pre></div>
+Expected: I INTEGER, X INTEGER (promoted each iteration)</p>
+<h3 id="test-5-explicit-type-suffix">Test 5: Explicit Type Suffix<a class="headerlink" href="#test-5-explicit-type-suffix" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="vg">X</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="o">:</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="o">%</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span>
+</code></pre></div>
+Expected: X% stays INTEGER, promoted at addition</p>
+<h2 id="limitations">Limitations<a class="headerlink" href="#limitations" title="Permanent link">&para;</a></h2>
+<h3 id="what-phase-2-cannot-do">What Phase 2 Cannot Do<a class="headerlink" href="#what-phase-2-cannot-do" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>DOUBLE → INTEGER demotion</strong>: Not safe (precision loss)</li>
+<li><strong>Cross-subroutine promotion</strong>: Phase 3 needed</li>
+<li><strong>Conditional promotion</strong>: IF-THEN-ELSE creates merge points</li>
+<li><strong>Array element promotion</strong>: Complex (need per-element tracking)</li>
+</ol>
+<h3 id="edge-cases">Edge Cases<a class="headerlink" href="#edge-cases" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Loss of precision</strong>: INT() truncates, affects promotion</li>
+<li><strong>Overflow</strong>: INTEGER is 16-bit (-32768 to 32767), can overflow</li>
+<li><strong>Type suffixes</strong>: X% must stay INTEGER, cannot promote</li>
+</ol>
+<h2 id="phase-2-vs-phase-3">Phase 2 vs Phase 3<a class="headerlink" href="#phase-2-vs-phase-3" title="Permanent link">&para;</a></h2>
+<p><strong>Phase 2</strong> (Promotion):
+- Single version per variable
+- Explicit promotions (casts)
+- Intra-procedural only
+- Focus: Keep variables INTEGER as long as possible</p>
+<p><strong>Phase 3</strong> (Specialization):
+- Multiple versions of subroutines
+- Call-site type matching
+- Inter-procedural optimization
+- Focus: Optimize across function boundaries</p>
+<h2 id="success-metrics">Success Metrics<a class="headerlink" href="#success-metrics" title="Permanent link">&para;</a></h2>
+<p>Phase 2 is successful if:
+1. ✅ Detects 50%+ more INTEGER opportunities than Phase 1
+2. ✅ All promotions are safe (no precision loss)
+3. ✅ Real programs show measurable speedup
+4. ✅ Memory usage decreases (more 2-byte vars)
+5. ✅ No false positives (incorrect promotions)</p>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Implement <code>TypePromotion</code> dataclass</li>
+<li>Add promotion detection to <code>_analyze_variable_type_bindings()</code></li>
+<li>Implement mixed-type expression analysis</li>
+<li>Add promotion tracking and reporting</li>
+<li>Test on real BASIC programs</li>
+<li>Measure performance improvement</li>
+</ol>
+<hr />
+<p><strong>Status</strong>: Design phase
+<strong>Priority</strong>: High (enables significant optimization)
+<strong>Complexity</strong>: Medium (type inference is tricky)
+<strong>Dependency</strong>: Phase 1 complete ✅</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

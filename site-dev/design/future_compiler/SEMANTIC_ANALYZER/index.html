@@ -1,0 +1,1951 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/design/future_compiler/SEMANTIC_ANALYZER/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>BASIC Compiler Semantic Analyzer - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#basic-compiler-semantic-analyzer" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              BASIC Compiler Semantic Analyzer
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../dev/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-runtime-constant-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Runtime Constant Evaluation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How It Works
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-constant-expression-evaluator" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Constant Expression Evaluator
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-compile-time-ifthenelse-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Compile-Time IF/THEN/ELSE Evaluation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-symbol-tables" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Symbol Tables
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-compiler-specific-validations" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Compiler-Specific Validations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-compilation-switch-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Compilation Switch Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-line-number-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Line Number Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#5-constant-folding-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Constant Folding Optimization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-common-subexpression-elimination-cse" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Common Subexpression Elimination (CSE)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-gosubsubroutine-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. GOSUB/Subroutine Analysis
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Example
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#detailed-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Detailed Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Detailed Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-1-basic-runtime-constants" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 1: Basic Runtime Constants
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-2-computed-constants" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 2: Computed Constants
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-3-constant-invalidation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 3: Constant Invalidation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-4-for-loop-invalidation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 4: FOR Loop Invalidation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparison-with-interpreter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comparison with Interpreter
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error Messages
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Messages">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#helpful-error-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Helpful Error Messages
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Notes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#runtime-constant-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Runtime Constant Tracking
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expression-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Expression Evaluation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-7-compile-time-math-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 7: Compile-Time Math Functions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-8-user-defined-function-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 8: User-Defined Function Evaluation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-9-compile-time-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 9: Compile-Time Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Future Enhancements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-optimizations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Optimizations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Optimizations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#loop-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Loop Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subroutine-side-effect-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Subroutine Side-Effect Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optimization-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optimization Report
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/design/future_compiler/SEMANTIC_ANALYZER.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="basic-compiler-semantic-analyzer">BASIC Compiler Semantic Analyzer<a class="headerlink" href="#basic-compiler-semantic-analyzer" title="Permanent link">&para;</a></h1>
+<p>The semantic analyzer performs static analysis on BASIC programs to validate compiler requirements and enable advanced features.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The semantic analyzer is a <strong>separate phase</strong> from the interpreter. While the interpreter executes programs dynamically, the semantic analyzer validates programs for <strong>compilation</strong> according to the 1980 MBASIC Compiler requirements.</p>
+<p><strong>Location</strong>: <code>src/semantic_analyzer.py</code></p>
+<h2 id="key-features">Key Features<a class="headerlink" href="#key-features" title="Permanent link">&para;</a></h2>
+<h3 id="1-runtime-constant-evaluation">1. Runtime Constant Evaluation<a class="headerlink" href="#1-runtime-constant-evaluation" title="Permanent link">&para;</a></h3>
+<p><strong>Major Enhancement</strong>: The semantic analyzer tracks variable values as the program is analyzed, allowing DIM statements to use variables as subscripts if those variables have known constant values.</p>
+<p><strong>Original 1980 Compiler</strong>: DIM subscripts must be integer constants only
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">10</span><span class="p">)</span><span class="w">              </span><span class="c1">&#39; OK</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">B</span><span class="p">(</span><span class="vg">N</span><span class="p">)</span><span class="w">               </span><span class="c1">&#39; ERROR - variable not allowed</span>
+</code></pre></div></p>
+<p><strong>Our Compiler</strong>: DIM subscripts can be constant expressions OR variables with known constant values
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w">             </span><span class="c1">&#39; N% is now a known constant</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">M</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">         </span><span class="c1">&#39; M% is now a known constant (20)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nl">30</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">N</span><span class="o">%</span><span class="p">),</span><span class="w"> </span><span class="vg">B</span><span class="p">(</span><span class="vg">M</span><span class="o">%</span><span class="p">)</span><span class="w">    </span><span class="c1">&#39; OK! A(10), B(20)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nl">40</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">C</span><span class="p">(</span><span class="vg">N</span><span class="o">%+</span><span class="vg">M</span><span class="o">%</span><span class="p">)</span><span class="w">        </span><span class="c1">&#39; OK! C(30)</span>
+</code></pre></div></p>
+<h3 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
+<p>The semantic analyzer maintains a <strong>runtime constant table</strong> that tracks which variables have known constant values at each point in the program:</p>
+<ol>
+<li><strong>Assignment tracking</strong>: When <code>N% = 10</code> is encountered, N% is marked as constant with value 10</li>
+<li><strong>Expression evaluation</strong>: When <code>M% = N% * 2</code> is encountered, the expression is evaluated using N%'s known value, and M% becomes constant = 20</li>
+<li><strong>Conditional evaluation</strong>: When <code>IF DEBUG% = 1 THEN N% = 10 ELSE N% = 5</code> is encountered:</li>
+<li>If DEBUG% has a known value, the condition is evaluated at compile time and only the taken branch is analyzed</li>
+<li>If DEBUG% is unknown, both branches are analyzed and constants are merged (only kept if same in both)</li>
+<li><strong>DIM validation</strong>: When <code>DIM A(N%)</code> is encountered, N%'s value (10) is used</li>
+<li><strong>Invalidation</strong>: Variables lose their constant status when:</li>
+<li>Reassigned to a non-constant expression</li>
+<li>Used as a FOR loop variable</li>
+<li>Read via INPUT or READ statements</li>
+</ol>
+<h3 id="2-constant-expression-evaluator">2. Constant Expression Evaluator<a class="headerlink" href="#2-constant-expression-evaluator" title="Permanent link">&para;</a></h3>
+<p>Evaluates expressions at compile time when all operands are constants or known-constant variables.</p>
+<p><strong>Supported Operations</strong>:
+- Arithmetic: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>\</code> (integer division), <code>^</code>, <code>MOD</code>
+- Relational: <code>=</code>, <code>&lt;&gt;</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code> (return -1 for true, 0 for false)
+- Logical: <code>AND</code>, <code>OR</code>, <code>XOR</code>, <code>EQV</code>, <code>IMP</code>
+- Unary: <code>-</code>, <code>+</code>, <code>NOT</code>
+- <strong>Math Functions</strong>: <code>ABS</code>, <code>SQR</code>, <code>SIN</code>, <code>COS</code>, <code>TAN</code>, <code>ATN</code>, <code>EXP</code>, <code>LOG</code>, <code>INT</code>, <code>FIX</code>, <code>SGN</code>, <code>CINT</code>, <code>CSNG</code>, <code>CDBL</code>
+- <strong>User-Defined Functions</strong>: <code>DEF FN</code> functions can be evaluated if all arguments are constants
+  - Supports nested function calls
+  - Can use built-in math functions in the body
+  - Parameters are bound to constant values during evaluation
+- <strong>Excluded (non-deterministic)</strong>:
+  - Random/Time: <code>RND</code>, <code>TIMER</code>
+  - File I/O: <code>EOF</code>, <code>LOC</code>, <code>LOF</code>, <code>INPUT$</code>, <code>INKEY$</code>
+  - System: <code>PEEK</code>, <code>INP</code>, <code>FRE</code>, <code>POS</code>, <code>CSRLIN</code>, <code>VARPTR</code></p>
+<p><strong>Examples</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">2</span><span class="o">+</span><span class="il">3</span><span class="p">)</span><span class="w">             </span><span class="c1">&#39; Evaluates to A(5)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">B</span><span class="p">(</span><span class="il">10</span><span class="o">*</span><span class="il">2</span><span class="o">+</span><span class="il">5</span><span class="p">)</span><span class="w">          </span><span class="c1">&#39; Evaluates to B(25)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">C</span><span class="p">(</span><span class="il">100</span><span class="o">\</span><span class="il">3</span><span class="p">)</span><span class="w">           </span><span class="c1">&#39; Evaluates to C(33)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">5</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">D</span><span class="p">(</span><span class="vg">N</span><span class="o">%*</span><span class="il">4</span><span class="p">)</span><span class="w">            </span><span class="c1">&#39; Evaluates to D(20)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">E</span><span class="p">(</span><span class="kr">INT</span><span class="p">(</span><span class="kr">SQR</span><span class="p">(</span><span class="il">100</span><span class="p">)))</span><span class="w">   </span><span class="c1">&#39; Evaluates to E(10)</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">F</span><span class="p">(</span><span class="kr">ABS</span><span class="p">(</span><span class="il">-25</span><span class="p">))</span><span class="w">        </span><span class="c1">&#39; Evaluates to F(25)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="kr">DEF FN</span><span class="w"> </span><span class="k">DOUBLE</span><span class="p">(</span><span class="vg">X</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">G</span><span class="p">(</span><span class="vg">FN</span><span class="w"> </span><span class="k">DOUBLE</span><span class="p">(</span><span class="il">5</span><span class="p">))</span><span class="w">    </span><span class="c1">&#39; Evaluates to G(10)</span>
+</code></pre></div></p>
+<h3 id="3-compile-time-ifthenelse-evaluation">3. Compile-Time IF/THEN/ELSE Evaluation<a class="headerlink" href="#3-compile-time-ifthenelse-evaluation" title="Permanent link">&para;</a></h3>
+<p>The semantic analyzer can evaluate IF conditions at compile time when all operands are known constants.</p>
+<p><strong>How It Works</strong>:</p>
+<p><strong>Case 1: Condition is compile-time constant (evaluates to known value)</strong>
+- Only the taken branch is analyzed for constant tracking
+- The other branch is completely ignored
+- Maximum optimization - dead code elimination</p>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">DEBUG</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">DEBUG</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">5</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nl">30</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">N</span><span class="o">%</span><span class="p">)</span><span class="w">                    </span><span class="c1">&#39; A(10) - only THEN branch taken</span>
+</code></pre></div></p>
+<p><strong>Case 2: Condition cannot be evaluated (contains unknown variables)</strong>
+- Both branches are analyzed separately
+- Constants are merged after the IF
+- A variable is only constant after IF if it has the <strong>same value in both branches</strong></p>
+<p><strong>Example - Merged to constant</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">X</span><span class="o">%</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">X</span><span class="o">%</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="il">5</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nl">30</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">N</span><span class="o">%</span><span class="p">)</span><span class="w">                    </span><span class="c1">&#39; A(10) - both branches set N% = 10</span>
+</code></pre></div></p>
+<p><strong>Example - Not constant</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">X</span><span class="o">%</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">X</span><span class="o">%</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="il">5</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">5</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nl">30</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">N</span><span class="o">%</span><span class="p">)</span><span class="w">                    </span><span class="c1">&#39; ERROR - N% has different values in branches</span>
+</code></pre></div></p>
+<p><strong>Benefits</strong>:
+- Enables configuration-based array sizing
+- Supports compile-time switches (like C's <code>#ifdef</code>)
+- Dead code elimination for unused branches
+- More flexible than original compiler</p>
+<h3 id="4-symbol-tables">4. Symbol Tables<a class="headerlink" href="#4-symbol-tables" title="Permanent link">&para;</a></h3>
+<p>Tracks all program symbols with detailed information:</p>
+<p><strong>Variables</strong>:
+- Name and type (INTEGER, SINGLE, DOUBLE, STRING)
+- Array dimensions (if array)
+- First use location (line number)</p>
+<p><strong>Functions</strong> (DEF FN):
+- Name and return type
+- Parameter list
+- Definition location
+- Function body expression</p>
+<p><strong>Line Numbers</strong>:
+- All line numbers in the program
+- Used for validating GOTO/GOSUB targets</p>
+<h3 id="5-compiler-specific-validations">5. Compiler-Specific Validations<a class="headerlink" href="#5-compiler-specific-validations" title="Permanent link">&para;</a></h3>
+<h4 id="unsupported-commands">Unsupported Commands<a class="headerlink" href="#unsupported-commands" title="Permanent link">&para;</a></h4>
+<p>Detects commands that don't work in compiled programs:
+- <code>LIST</code>, <code>LOAD</code>, <code>SAVE</code>, <code>MERGE</code>
+- <code>NEW</code>, <code>CONT</code>, <code>DELETE</code>, <code>RENUM</code>
+- <code>COMMON</code> (generates fatal error - not in 1980 compiler)
+- <code>ERASE</code> (generates fatal error - arrays cannot be redimensioned)</p>
+<h4 id="static-loop-nesting">Static Loop Nesting<a class="headerlink" href="#static-loop-nesting" title="Permanent link">&para;</a></h4>
+<p>Validates that FOR/NEXT and WHILE/WEND loops are properly nested:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nl">20</span><span class="w">   </span><span class="kr">WHILE</span><span class="w"> </span><span class="vg">J</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="il">5</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nl">30</span><span class="w">   </span><span class="kr">WEND</span><span class="w">             </span><span class="c1">&#39; OK - proper nesting</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nl">10</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="nl">20</span><span class="w">   </span><span class="kr">WHILE</span><span class="w"> </span><span class="vg">J</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="il">5</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="nl">30</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span><span class="w">             </span><span class="c1">&#39; ERROR - improper nesting</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="nl">40</span><span class="w"> </span><span class="kr">WEND</span>
+</code></pre></div></p>
+<h4 id="array-validation">Array Validation<a class="headerlink" href="#array-validation" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Detects redimensioning attempts</li>
+<li>Validates subscripts are constant expressions</li>
+<li>Checks for negative subscripts</li>
+</ul>
+<h3 id="6-compilation-switch-detection">6. Compilation Switch Detection<a class="headerlink" href="#6-compilation-switch-detection" title="Permanent link">&para;</a></h3>
+<p>Automatically detects when special compilation switches are needed:</p>
+<ul>
+<li><strong>/E</strong> - Required if program uses <code>ON ERROR GOTO</code> with <code>RESUME &lt;line&gt;</code></li>
+<li><strong>/X</strong> - Required if program uses <code>RESUME</code>, <code>RESUME NEXT</code>, or <code>RESUME 0</code></li>
+<li><strong>/D</strong> - Required if program uses <code>TRON</code> or <code>TROFF</code></li>
+</ul>
+<h3 id="7-line-number-validation">7. Line Number Validation<a class="headerlink" href="#7-line-number-validation" title="Permanent link">&para;</a></h3>
+<p>Validates all GOTO/GOSUB/ON...GOTO targets exist:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">100</span><span class="w">            </span><span class="c1">&#39; OK if line 100 exists</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">ON</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">100</span><span class="p">,</span><span class="il">200</span><span class="w">   </span><span class="c1">&#39; OK if lines 100 and 200 exist</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="il">5</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="il">100</span><span class="w">   </span><span class="c1">&#39; OK if line 100 exists</span>
+</code></pre></div></p>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">semantic_analyzer</span><span class="w"> </span><span class="kn">import</span> <span class="n">SemanticAnalyzer</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lexer</span><span class="w"> </span><span class="kn">import</span> <span class="n">tokenize</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parser</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># Parse program</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">tokens</span> <span class="o">=</span> <span class="n">tokenize</span><span class="p">(</span><span class="n">program_source</span><span class="p">)</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="n">program</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="c1"># Analyze</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="n">analyzer</span> <span class="o">=</span> <span class="n">SemanticAnalyzer</span><span class="p">()</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="n">success</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">analyze</span><span class="p">(</span><span class="n">program</span><span class="p">)</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">analyzer</span><span class="o">.</span><span class="n">get_report</span><span class="p">())</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    <span class="c1"># Proceed to code generation</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Errors found:&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>    <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">errors</span><span class="p">:</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="5-constant-folding-optimization">5. Constant Folding Optimization<a class="headerlink" href="#5-constant-folding-optimization" title="Permanent link">&para;</a></h3>
+<p><strong>Enhancement</strong>: The semantic analyzer identifies and evaluates all constant subexpressions at compile time, enabling significant optimization opportunities.</p>
+<p><strong>What is Constant Folding?</strong></p>
+<p>Constant folding is the process of evaluating expressions at compile time when all operands are constants. This eliminates runtime computation for constant expressions.</p>
+<p><strong>Examples of Constant Folding</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">3</span><span class="w">           </span><span class="c1">&#39; Folded to: X = 5</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="il">5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">6</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="il">1</span><span class="w">     </span><span class="c1">&#39; Folded to: Y = 29</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">SQR</span><span class="p">(</span><span class="il">64</span><span class="p">)</span><span class="w">         </span><span class="c1">&#39; Folded to: Z = 8</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nl">40</span><span class="w"> </span><span class="vg">W</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">SIN</span><span class="p">(</span><span class="il">0</span><span class="p">)</span><span class="w">          </span><span class="c1">&#39; Folded to: W = 0</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nl">50</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="nl">60</span><span class="w"> </span><span class="vg">M</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">         </span><span class="c1">&#39; Folded to: M% = 20 (using runtime constant)</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="nl">70</span><span class="w"> </span><span class="kr">DEF FN</span><span class="w"> </span><span class="k">DOUBLE</span><span class="p">(</span><span class="vg">X</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="nl">80</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">FN</span><span class="w"> </span><span class="k">DOUBLE</span><span class="p">(</span><span class="il">5</span><span class="p">)</span><span class="w">    </span><span class="c1">&#39; Folded to: A = 10</span>
+</code></pre></div>
+<p><strong>Types of Expressions Folded</strong>:
+- Arithmetic expressions: <code>(2 + 3) * 4</code>
+- Math function calls: <code>SQR(16)</code>, <code>INT(3.7)</code>, <code>SIN(0)</code>
+- Relational operations: <code>5 = 5</code>, <code>10 &gt; 5</code>
+- Logical operations: <code>-1 AND -1</code>, <code>NOT 0</code>
+- User-defined functions: <code>FN SQUARE(5)</code> where <code>DEF FN SQUARE(X) = X * X</code>
+- Runtime constant expressions: <code>N% + M%</code> where both have known values</p>
+<p><strong>Benefits</strong>:
+1. <strong>Reduced code size</strong>: Constant expressions become single values
+2. <strong>Faster execution</strong>: No runtime computation needed
+3. <strong>Better optimization</strong>: Enables further optimizations (e.g., dead code elimination)
+4. <strong>Analysis visibility</strong>: Report shows all folded expressions for review</p>
+<p><strong>Tracking and Reporting</strong>:</p>
+<p>The semantic analyzer tracks all constant folding optimizations and reports them in the analysis output. This helps developers understand what optimizations are being applied.</p>
+<h3 id="6-common-subexpression-elimination-cse">6. Common Subexpression Elimination (CSE)<a class="headerlink" href="#6-common-subexpression-elimination-cse" title="Permanent link">&para;</a></h3>
+<p><strong>Major Enhancement</strong>: The semantic analyzer identifies expressions that are computed multiple times with the same values and suggests opportunities to compute them once and reuse the result.</p>
+<p><strong>What is Common Subexpression Elimination?</strong></p>
+<p>CSE is an optimization that identifies expressions appearing multiple times in a program where the values haven't changed between uses. Instead of recomputing the expression each time, it can be computed once, stored in a temporary variable, and reused.</p>
+<p><strong>Examples of CSE</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">          </span><span class="c1">&#39; First computation of A + B</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">          </span><span class="c1">&#39; Same expression - can reuse!</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">          </span><span class="c1">&#39; Same expression again</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="c1">&#39; Optimized version:</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="nl">10</span><span class="w"> </span><span class="vg">T1#</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">        </span><span class="c1">&#39; Compute once</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="nl">20</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">T1#</span><span class="w">            </span><span class="c1">&#39; Reuse</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="nl">30</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">T1#</span><span class="w">            </span><span class="c1">&#39; Reuse</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="nl">40</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">T1#</span><span class="w">            </span><span class="c1">&#39; Reuse</span>
+</code></pre></div>
+<p><strong>CSE with Subexpressions</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">RESULT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">SQR</span><span class="p">(</span><span class="vg">X</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kr">SQR</span><span class="p">(</span><span class="vg">X</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kr">SQR</span><span class="p">(</span><span class="vg">X</span><span class="p">)</span><span class="w">  </span><span class="c1">&#39; SQR(X) computed 3 times</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">SQR</span><span class="p">(</span><span class="vg">X</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">                      </span><span class="c1">&#39; SQR(X) computed again</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1">&#39; CSE detects SQR(X) is computed 4 times total</span>
+</code></pre></div>
+<p><strong>Safety Analysis</strong>:</p>
+<p>The CSE implementation performs sophisticated safety analysis to ensure correctness:</p>
+<ol>
+<li>
+<p><strong>Variable Modification Tracking</strong>: Expressions are invalidated when any of their variables are modified
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">       </span><span class="c1">&#39; A * 2 is available</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">       </span><span class="c1">&#39; CSE: reuse A * 2</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w">          </span><span class="c1">&#39; A is modified - invalidate A * 2</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="nl">40</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">       </span><span class="c1">&#39; NEW computation, not a CSE</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>IF THEN ELSE Control Flow Analysis</strong>: CSE properly handles conditional branches</p>
+</li>
+</ol>
+<p><strong>Case 1: Expression available before IF and survives</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">       </span><span class="c1">&#39; A + B is available</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w"> </span><span class="c1">&#39; Neither A nor B modified</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">       </span><span class="c1">&#39; CSE: can reuse A + B</span>
+</code></pre></div></p>
+<p><strong>Case 2: Expression computed in both branches</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">M</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">E</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">F</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="vg">N</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">E</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">F</span><span class="w">  </span><span class="c1">&#39; E * F in both branches</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">P</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">E</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">F</span><span class="w">       </span><span class="c1">&#39; CSE: can reuse E * F (computed in both branches)</span>
+</code></pre></div></p>
+<p><strong>Case 3: Expression invalidated in one branch</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">       </span><span class="c1">&#39; A * 2 is available</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span><span class="w">  </span><span class="c1">&#39; A modified in THEN branch</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">       </span><span class="c1">&#39; NOT a CSE (A may have changed)</span>
+</code></pre></div></p>
+<p><strong>Case 4: Expression in only one branch</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">M</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">  </span><span class="c1">&#39; A + B only in THEN</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">N</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">       </span><span class="c1">&#39; May be CSE depending on implementation</span>
+</code></pre></div></p>
+<ol>
+<li><strong>INPUT/READ Invalidation</strong>: Expressions are invalidated when variables are read
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">N</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">       </span><span class="c1">&#39; N * 2 is available</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">N</span><span class="w">         </span><span class="c1">&#39; N is modified - invalidate N * 2</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">N</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">       </span><span class="c1">&#39; NEW computation, not a CSE</span>
+</code></pre></div></li>
+</ol>
+<p><strong>IF THEN ELSE Merging Logic</strong>:</p>
+<p>After analyzing both branches of an IF statement, the analyzer merges available expressions using these rules:</p>
+<ol>
+<li>An expression is available after the IF if it was available before AND is still available in both branches</li>
+<li>An expression is available after the IF if it was computed in BOTH branches (even if new)</li>
+<li>Expressions computed in only one branch are NOT available after (conservative approach)</li>
+</ol>
+<h3 id="7-gosubsubroutine-analysis">7. GOSUB/Subroutine Analysis<a class="headerlink" href="#7-gosubsubroutine-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Major Enhancement</strong>: The semantic analyzer performs multi-pass analysis to track subroutine effects on constants and available expressions.</p>
+<p><strong>The Challenge</strong>:</p>
+<p>GOSUB creates a challenge for optimization because we need to know what variables a subroutine modifies before we can safely propagate constants or CSEs across the call.</p>
+<p><strong>The Solution - Multi-Pass Analysis</strong>:</p>
+<ol>
+<li><strong>Pass 1</strong>: Identify all GOSUB targets</li>
+<li><strong>Pass 2</strong>: Analyze each subroutine to determine what variables it modifies</li>
+<li><strong>Pass 3</strong>: Use subroutine information during main program analysis</li>
+<li><strong>Pass 4</strong>: Validation</li>
+</ol>
+<p><strong>Subroutine Analysis</strong>:</p>
+<p>For each GOSUB target, the analyzer:
+- Scans from the target line until RETURN
+- Tracks all variable modifications (assignments, FOR loops, INPUT, READ, etc.)
+- Tracks nested GOSUB calls
+- Computes transitive closure of modifications (if sub A calls sub B, A inherits B's modifications)</p>
+<p><strong>Examples</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1">&#39; Example 1: CSE preserved across GOSUB</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">A</span><span class="p">,</span><span class="w"> </span><span class="vg">B</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="nl">20</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">        </span><span class="c1">&#39; First computation</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="nl">30</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">1000</span><span class="w">       </span><span class="c1">&#39; Subroutine doesn&#39;t modify A or B</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="nl">40</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">        </span><span class="c1">&#39; CSE: can reuse from line 20</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="nl">1000</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Hello&quot;</span><span class="w">  </span><span class="c1">&#39; Doesn&#39;t modify A or B</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="nl">1010</span><span class="w"> </span><span class="kr">RETURN</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="c1">&#39; CSE Analysis: A + B detected at lines 20, 40</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1">&#39; Example 2: CSE invalidated by GOSUB</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">A</span><span class="p">,</span><span class="w"> </span><span class="vg">B</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="nl">20</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">        </span><span class="c1">&#39; First computation</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="nl">30</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">2000</span><span class="w">       </span><span class="c1">&#39; Subroutine modifies B</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="nl">40</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">        </span><span class="c1">&#39; NOT a CSE (B may have changed)</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="nl">2000</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">1</span><span class="w">      </span><span class="c1">&#39; Modifies B</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="nl">2010</span><span class="w"> </span><span class="kr">RETURN</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="c1">&#39; CSE Analysis: A + B NOT detected as CSE across GOSUB</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1">&#39; Example 3: Transitive modification</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">C</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="nl">20</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">        </span><span class="c1">&#39; First computation</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="nl">30</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">3000</span><span class="w">       </span><span class="c1">&#39; Calls 4000, which modifies C</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="nl">40</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">        </span><span class="c1">&#39; NOT a CSE (C modified transitively)</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="nl">3000</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">4000</span><span class="w">     </span><span class="c1">&#39; Calls another subroutine</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="nl">3010</span><span class="w"> </span><span class="kr">RETURN</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="nl">4000</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">1</span><span class="w">      </span><span class="c1">&#39; Modifies C</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="nl">4010</span><span class="w"> </span><span class="kr">RETURN</span>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="c1">&#39; Subroutine Analysis:</span>
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a><span class="c1">&#39;   Sub 4000 modifies: C</span>
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a><span class="c1">&#39;   Sub 3000 modifies: C (transitively through 4000)</span>
+</code></pre></div>
+<p><strong>Benefits</strong>:</p>
+<ol>
+<li><strong>Accurate optimization</strong>: Only invalidates what's actually modified</li>
+<li><strong>Preserves opportunities</strong>: CSEs and constants survive across "safe" GOSUBs</li>
+<li><strong>Handles complexity</strong>: Correctly tracks transitive modifications through nested calls</li>
+<li><strong>Safe</strong>: Conservative fallback if subroutine can't be analyzed</li>
+</ol>
+<p><strong>Subroutine Information Tracked</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">SubroutineInfo</span><span class="p">:</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    <span class="n">start_line</span><span class="p">:</span> <span class="nb">int</span>                      <span class="c1"># Where subroutine begins</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="n">end_line</span><span class="p">:</span> <span class="nb">int</span>                        <span class="c1"># RETURN statement line</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="n">variables_modified</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>         <span class="c1"># Variables written by this sub</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>    <span class="n">calls_other_subs</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>          <span class="c1"># Nested GOSUB targets</span>
+</code></pre></div>
+<p><strong>Types of Expressions Tracked</strong>:
+- Arithmetic expressions: <code>A + B</code>, <code>X * Y</code>, etc.
+- Function calls: <code>SQR(X)</code>, <code>SIN(Y)</code>, etc.
+- Array accesses: <code>ARR(I + J)</code>
+- Complex nested expressions: <code>(A + B) * (C - D)</code>
+- User-defined functions: <code>FN CALC(X, Y)</code></p>
+<p><strong>Benefits</strong>:
+1. <strong>Performance</strong>: Eliminates redundant computations
+2. <strong>Optimization visibility</strong>: Shows developers where code can be optimized
+3. <strong>Suggested variable names</strong>: Provides temporary variable names (T1#, T2#, etc.)
+4. <strong>Safety</strong>: Conservative analysis ensures correctness</p>
+<p><strong>CSE Report Format</strong>:</p>
+<p>For each common subexpression, the report shows:
+- The expression being recomputed
+- Total number of computations
+- Line numbers where it appears
+- Variables used (for understanding invalidation)
+- Suggested temporary variable name</p>
+<h2 id="output-example">Output Example<a class="headerlink" href="#output-example" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>======================================================================
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>SEMANTIC ANALYSIS REPORT
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>======================================================================
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>Symbol Table Summary:
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>  Variables: 9
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>  Functions: 1
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>  Line Numbers: 19
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>Variables:
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>  A(10) : SINGLE (line 60)
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>  B(5,20) : SINGLE (line 60)
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>  C(5) : SINGLE (line 60)
+<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>  D(30) : SINGLE (line 80)
+<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a>  I : SINGLE (line 120)
+<a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a>  M : SINGLE (line 40)
+<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>  N : SINGLE (line 30)
+<a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a>  TOTAL : SINGLE (line 70)
+<a id="__codelineno-22-19" name="__codelineno-22-19" href="#__codelineno-22-19"></a>  X : SINGLE (line 100)
+<a id="__codelineno-22-20" name="__codelineno-22-20" href="#__codelineno-22-20"></a>
+<a id="__codelineno-22-21" name="__codelineno-22-21" href="#__codelineno-22-21"></a>Functions:
+<a id="__codelineno-22-22" name="__codelineno-22-22" href="#__codelineno-22-22"></a>  FNDOUBLE(X) : SINGLE (line 100)
+<a id="__codelineno-22-23" name="__codelineno-22-23" href="#__codelineno-22-23"></a>
+<a id="__codelineno-22-24" name="__codelineno-22-24" href="#__codelineno-22-24"></a>Constant Folding Optimizations:
+<a id="__codelineno-22-25" name="__codelineno-22-25" href="#__codelineno-22-25"></a>  Line 40: (n * 2.0) → 20
+<a id="__codelineno-22-26" name="__codelineno-22-26" href="#__codelineno-22-26"></a>  Line 70: (n + m) → 30
+<a id="__codelineno-22-27" name="__codelineno-22-27" href="#__codelineno-22-27"></a>  Line 160: SQR(16.0) → 4
+<a id="__codelineno-22-28" name="__codelineno-22-28" href="#__codelineno-22-28"></a>  Line 200: (((2.0 + 3.0) * 4.0) - 1.0) → 19
+<a id="__codelineno-22-29" name="__codelineno-22-29" href="#__codelineno-22-29"></a>
+<a id="__codelineno-22-30" name="__codelineno-22-30" href="#__codelineno-22-30"></a>Common Subexpression Elimination (CSE):
+<a id="__codelineno-22-31" name="__codelineno-22-31" href="#__codelineno-22-31"></a>  Found 2 common subexpression(s)
+<a id="__codelineno-22-32" name="__codelineno-22-32" href="#__codelineno-22-32"></a>
+<a id="__codelineno-22-33" name="__codelineno-22-33" href="#__codelineno-22-33"></a>  Expression: (a + b)
+<a id="__codelineno-22-34" name="__codelineno-22-34" href="#__codelineno-22-34"></a>    Computed 3 times total
+<a id="__codelineno-22-35" name="__codelineno-22-35" href="#__codelineno-22-35"></a>    First at line 20
+<a id="__codelineno-22-36" name="__codelineno-22-36" href="#__codelineno-22-36"></a>    Recomputed at lines: 30, 40
+<a id="__codelineno-22-37" name="__codelineno-22-37" href="#__codelineno-22-37"></a>    Variables used: A, B
+<a id="__codelineno-22-38" name="__codelineno-22-38" href="#__codelineno-22-38"></a>    Suggested temp variable: T1#
+<a id="__codelineno-22-39" name="__codelineno-22-39" href="#__codelineno-22-39"></a>
+<a id="__codelineno-22-40" name="__codelineno-22-40" href="#__codelineno-22-40"></a>  Expression: SQR(x)
+<a id="__codelineno-22-41" name="__codelineno-22-41" href="#__codelineno-22-41"></a>    Computed 3 times total
+<a id="__codelineno-22-42" name="__codelineno-22-42" href="#__codelineno-22-42"></a>    First at line 50
+<a id="__codelineno-22-43" name="__codelineno-22-43" href="#__codelineno-22-43"></a>    Recomputed at lines: 60, 70
+<a id="__codelineno-22-44" name="__codelineno-22-44" href="#__codelineno-22-44"></a>    Variables used: X
+<a id="__codelineno-22-45" name="__codelineno-22-45" href="#__codelineno-22-45"></a>    Suggested temp variable: T2#
+<a id="__codelineno-22-46" name="__codelineno-22-46" href="#__codelineno-22-46"></a>
+<a id="__codelineno-22-47" name="__codelineno-22-47" href="#__codelineno-22-47"></a>Required Compilation Switches:
+<a id="__codelineno-22-48" name="__codelineno-22-48" href="#__codelineno-22-48"></a>  /E
+<a id="__codelineno-22-49" name="__codelineno-22-49" href="#__codelineno-22-49"></a>
+<a id="__codelineno-22-50" name="__codelineno-22-50" href="#__codelineno-22-50"></a>Warnings:
+<a id="__codelineno-22-51" name="__codelineno-22-51" href="#__codelineno-22-51"></a>  Required compilation switches: /E
+<a id="__codelineno-22-52" name="__codelineno-22-52" href="#__codelineno-22-52"></a>======================================================================
+</code></pre></div>
+<h2 id="detailed-examples">Detailed Examples<a class="headerlink" href="#detailed-examples" title="Permanent link">&para;</a></h2>
+<h3 id="example-1-basic-runtime-constants">Example 1: Basic Runtime Constants<a class="headerlink" href="#example-1-basic-runtime-constants" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">ROWS</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">COLS</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="nl">30</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">MATRIX</span><span class="p">(</span><span class="vg">ROWS</span><span class="o">%</span><span class="p">,</span><span class="w"> </span><span class="vg">COLS</span><span class="o">%</span><span class="p">)</span><span class="w">     </span><span class="c1">&#39; Creates MATRIX(10,20)</span>
+</code></pre></div>
+<p><strong>Analysis</strong>:
+- Line 10: ROWS% becomes constant = 10
+- Line 20: COLS% becomes constant = 20
+- Line 30: Uses both constants to create 10×20 matrix</p>
+<h3 id="example-2-computed-constants">Example 2: Computed Constants<a class="headerlink" href="#example-2-computed-constants" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">5</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">M</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">TOTAL</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">M</span><span class="o">%</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="nl">40</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">N</span><span class="o">%</span><span class="p">),</span><span class="w"> </span><span class="vg">B</span><span class="p">(</span><span class="vg">M</span><span class="o">%</span><span class="p">),</span><span class="w"> </span><span class="vg">C</span><span class="p">(</span><span class="vg">TOTAL</span><span class="o">%</span><span class="p">)</span><span class="w">  </span><span class="c1">&#39; Creates A(5), B(10), C(15)</span>
+</code></pre></div>
+<p><strong>Analysis</strong>:
+- Line 10: N% = 5
+- Line 20: M% = 5 * 2 = 10
+- Line 30: TOTAL% = 5 + 10 = 15
+- Line 40: All subscripts evaluated from known constants</p>
+<h3 id="example-3-constant-invalidation">Example 3: Constant Invalidation<a class="headerlink" href="#example-3-constant-invalidation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="nl">20</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">N</span><span class="o">%</span><span class="p">)</span><span class="w">                    </span><span class="c1">&#39; OK - A(10)</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w">                     </span><span class="c1">&#39; N% no longer constant</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="nl">40</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">B</span><span class="p">(</span><span class="vg">N</span><span class="o">%</span><span class="p">)</span><span class="w">                    </span><span class="c1">&#39; ERROR - N% has no known value</span>
+</code></pre></div>
+<p><strong>Analysis</strong>:
+- Line 10: N% = 10 (constant)
+- Line 20: Uses N% = 10 ✓
+- Line 30: INPUT clears N%'s constant status
+- Line 40: ERROR - N% value unknown</p>
+<h3 id="example-4-for-loop-invalidation">Example 4: FOR Loop Invalidation<a class="headerlink" href="#example-4-for-loop-invalidation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="vg">N</span><span class="o">%</span><span class="w">             </span><span class="c1">&#39; OK - uses N% = 10</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span><span class="o">%</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="nl">40</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">I</span><span class="o">%</span><span class="p">)</span><span class="w">                    </span><span class="c1">&#39; ERROR - I% not constant (used in FOR)</span>
+</code></pre></div>
+<p><strong>Analysis</strong>:
+- Line 10: N% = 10 (constant)
+- Line 20: FOR uses N%, but I% loses constant status
+- Line 40: ERROR - I% was modified by FOR loop</p>
+<h2 id="comparison-with-interpreter">Comparison with Interpreter<a class="headerlink" href="#comparison-with-interpreter" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Interpreter</th>
+<th>Semantic Analyzer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>When executed</strong></td>
+<td>Runtime, dynamically</td>
+<td>Compile-time, static</td>
+</tr>
+<tr>
+<td><strong>DIM subscripts</strong></td>
+<td>Any expression (evaluated at runtime)</td>
+<td>Constant expressions or known-constant variables</td>
+</tr>
+<tr>
+<td><strong>Loop nesting</strong></td>
+<td>Dynamic validation</td>
+<td>Static validation required</td>
+</tr>
+<tr>
+<td><strong>ERASE</strong></td>
+<td>Supported</td>
+<td>Not supported (fatal error)</td>
+</tr>
+<tr>
+<td><strong>Type checking</strong></td>
+<td>Runtime</td>
+<td>Compile-time inference</td>
+</tr>
+<tr>
+<td><strong>Error reporting</strong></td>
+<td>Line numbers always available</td>
+<td>May report addresses unless /D switch used</td>
+</tr>
+</tbody>
+</table>
+<h2 id="error-messages">Error Messages<a class="headerlink" href="#error-messages" title="Permanent link">&para;</a></h2>
+<h3 id="helpful-error-messages">Helpful Error Messages<a class="headerlink" href="#helpful-error-messages" title="Permanent link">&para;</a></h3>
+<p>The analyzer provides detailed error messages:</p>
+<p><strong>Unknown variable in DIM</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>Line 30: Array subscript in A uses variable N which has no known constant value at this point
+</code></pre></div></p>
+<p><strong>Negative subscript</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>Line 40: Array subscript cannot be negative in B (evaluated to -5)
+</code></pre></div></p>
+<p><strong>Improper nesting</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>Line 50: NEXT found but current loop is WHILE (started at line 30)
+</code></pre></div></p>
+<p><strong>Undefined line</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>Line 60: Undefined line 1000 in ON...GOTO
+</code></pre></div></p>
+<h2 id="implementation-notes">Implementation Notes<a class="headerlink" href="#implementation-notes" title="Permanent link">&para;</a></h2>
+<h3 id="runtime-constant-tracking">Runtime Constant Tracking<a class="headerlink" href="#runtime-constant-tracking" title="Permanent link">&para;</a></h3>
+<p>The <code>ConstantEvaluator</code> class maintains a dictionary of known constant values:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="n">runtime_constants</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>    <span class="s1">&#39;N&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>    <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>    <span class="s1">&#39;TOTAL&#39;</span><span class="p">:</span> <span class="mi">30</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="p">}</span>
+</code></pre></div>
+<p>When a variable is assigned:
+1. Evaluate the expression
+2. If it evaluates to a constant, add to runtime_constants
+3. If it doesn't evaluate to a constant, remove from runtime_constants</p>
+<p>When a variable is used in FOR, INPUT, READ:
+1. Remove from runtime_constants</p>
+<h3 id="expression-evaluation">Expression Evaluation<a class="headerlink" href="#expression-evaluation" title="Permanent link">&para;</a></h3>
+<p>The evaluator recursively evaluates expressions:
+- Literals → return value
+- Variables → look up in runtime_constants
+- Binary ops → evaluate operands, apply operation
+- Unary ops → evaluate operand, apply operation
+- Cannot evaluate → return None</p>
+<h3 id="example-7-compile-time-math-functions">Example 7: Compile-Time Math Functions<a class="headerlink" href="#example-7-compile-time-math-functions" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="nl">10</span><span class="w"> </span><span class="c1">REM Math function evaluation at compile time</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">RADIUS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">PI</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">3.14159</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="nl">40</span><span class="w"> </span><span class="c1">REM Trigonometric calculations</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="nl">50</span><span class="w"> </span><span class="vg">ANGLE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">0</span>
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a><span class="nl">60</span><span class="w"> </span><span class="vg">SINE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">INT</span><span class="p">(</span><span class="kr">SIN</span><span class="p">(</span><span class="vg">ANGLE</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">100</span><span class="p">)</span>
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="nl">70</span><span class="w"> </span><span class="vg">COSINE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">INT</span><span class="p">(</span><span class="kr">COS</span><span class="p">(</span><span class="vg">ANGLE</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">100</span><span class="p">)</span>
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a><span class="nl">80</span><span class="w"> </span><span class="c1">REM Square root calculations</span>
+<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a><span class="nl">90</span><span class="w"> </span><span class="vg">PERFECT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">144</span>
+<a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a><span class="nl">100</span><span class="w"> </span><span class="vg">SIDE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">INT</span><span class="p">(</span><span class="kr">SQR</span><span class="p">(</span><span class="vg">PERFECT</span><span class="p">))</span>
+<a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a><span class="nl">110</span><span class="w"> </span><span class="c1">REM Absolute value and sign</span>
+<a id="__codelineno-32-12" name="__codelineno-32-12" href="#__codelineno-32-12"></a><span class="nl">120</span><span class="w"> </span><span class="vg">NEG</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">-50</span>
+<a id="__codelineno-32-13" name="__codelineno-32-13" href="#__codelineno-32-13"></a><span class="nl">130</span><span class="w"> </span><span class="vg">POSITIVE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">ABS</span><span class="p">(</span><span class="vg">NEG</span><span class="p">)</span>
+<a id="__codelineno-32-14" name="__codelineno-32-14" href="#__codelineno-32-14"></a><span class="nl">140</span><span class="w"> </span><span class="vg">SIGN</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">SGN</span><span class="p">(</span><span class="vg">NEG</span><span class="p">)</span>
+<a id="__codelineno-32-15" name="__codelineno-32-15" href="#__codelineno-32-15"></a><span class="nl">150</span><span class="w"> </span><span class="c1">REM Create arrays with computed sizes</span>
+<a id="__codelineno-32-16" name="__codelineno-32-16" href="#__codelineno-32-16"></a><span class="nl">160</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">TRIG</span><span class="p">(</span><span class="vg">SINE</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">COSINE</span><span class="p">),</span><span class="w"> </span><span class="vg">GEOM</span><span class="p">(</span><span class="vg">SIDE</span><span class="p">),</span><span class="w"> </span><span class="vg">VALUES</span><span class="p">(</span><span class="vg">POSITIVE</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Analysis</strong>:
+- Line 60: <code>SIN(0) * 100 = 0</code> (evaluated at compile time)
+- Line 70: <code>COS(0) * 100 = 100</code> (evaluated at compile time)
+- Line 100: <code>SQR(144) = 12</code> (evaluated at compile time)
+- Line 130: <code>ABS(-50) = 50</code> (evaluated at compile time)
+- Line 140: <code>SGN(-50) = -1</code> (evaluated at compile time)
+- Line 160: Creates <code>TRIG(100)</code>, <code>GEOM(12)</code>, <code>VALUES(50)</code></p>
+<p><strong>Note</strong>: Non-deterministic functions are NOT evaluated at compile time:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">N</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">INT</span><span class="p">(</span><span class="kr">RND</span><span class="p">(</span><span class="il">1</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">10</span><span class="p">)</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="nl">20</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">N</span><span class="p">)</span><span class="w">              </span><span class="c1">&#39; ERROR - RND cannot be evaluated at compile time</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="nl">10</span><span class="w"> </span><span class="kr">OPEN</span><span class="w"> </span><span class="s2">&quot;DATA&quot;</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="il">1</span>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="nl">20</span><span class="w"> </span><span class="vg">N</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">LOC</span><span class="p">(</span><span class="il">1</span><span class="p">)</span>
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a><span class="nl">30</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">N</span><span class="p">)</span><span class="w">              </span><span class="c1">&#39; ERROR - LOC depends on runtime file state</span>
+<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a>
+<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a><span class="nl">10</span><span class="w"> </span><span class="vg">N</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">PEEK</span><span class="p">(</span><span class="il">1000</span><span class="p">)</span>
+<a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a><span class="nl">20</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">N</span><span class="p">)</span><span class="w">              </span><span class="c1">&#39; ERROR - PEEK depends on runtime memory state</span>
+</code></pre></div></p>
+<p>These functions are excluded because their values:
+- Cannot be known until the program runs (file position, memory contents, random values)
+- May change during program execution (timer, file position)
+- Depend on external state (files, hardware ports, system memory)</p>
+<h3 id="example-8-user-defined-function-evaluation">Example 8: User-Defined Function Evaluation<a class="headerlink" href="#example-8-user-defined-function-evaluation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="nl">10</span><span class="w"> </span><span class="c1">REM User-defined functions with compile-time evaluation</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">DEF FN</span><span class="w"> </span><span class="k">DOUBLE</span><span class="p">(</span><span class="vg">X</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">DEF FN</span><span class="w"> </span><span class="vg">SQUARE</span><span class="p">(</span><span class="vg">Y</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">Y</span>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">DEF FN</span><span class="w"> </span><span class="vg">AREA</span><span class="p">(</span><span class="vg">R</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">INT</span><span class="p">(</span><span class="mf">3.14159</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">R</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">R</span><span class="p">)</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">DEF FN</span><span class="w"> </span><span class="vg">HYPOTENUSE</span><span class="p">(</span><span class="vg">A</span><span class="p">,</span><span class="w"> </span><span class="vg">B</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">INT</span><span class="p">(</span><span class="kr">SQR</span><span class="p">(</span><span class="vg">A</span><span class="o">*</span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="o">*</span><span class="vg">B</span><span class="p">))</span>
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="nl">60</span><span class="w"> </span><span class="kr">DEF FN</span><span class="w"> </span><span class="vg">COMBO</span><span class="p">(</span><span class="vg">Z</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">FN</span><span class="w"> </span><span class="k">DOUBLE</span><span class="p">(</span><span class="vg">Z</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">FN</span><span class="w"> </span><span class="vg">SQUARE</span><span class="p">(</span><span class="vg">Z</span><span class="p">)</span>
+<a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a><span class="nl">70</span><span class="w"> </span><span class="c1">REM Use functions with constants</span>
+<a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a><span class="nl">80</span><span class="w"> </span><span class="vg">SIZE1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">FN</span><span class="w"> </span><span class="k">DOUBLE</span><span class="p">(</span><span class="il">10</span><span class="p">)</span>
+<a id="__codelineno-34-9" name="__codelineno-34-9" href="#__codelineno-34-9"></a><span class="nl">90</span><span class="w"> </span><span class="vg">SIZE2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">FN</span><span class="w"> </span><span class="vg">AREA</span><span class="p">(</span><span class="il">5</span><span class="p">)</span>
+<a id="__codelineno-34-10" name="__codelineno-34-10" href="#__codelineno-34-10"></a><span class="nl">100</span><span class="w"> </span><span class="vg">SIZE3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">FN</span><span class="w"> </span><span class="vg">HYPOTENUSE</span><span class="p">(</span><span class="il">3</span><span class="p">,</span><span class="w"> </span><span class="il">4</span><span class="p">)</span>
+<a id="__codelineno-34-11" name="__codelineno-34-11" href="#__codelineno-34-11"></a><span class="nl">110</span><span class="w"> </span><span class="vg">SIZE4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">FN</span><span class="w"> </span><span class="vg">COMBO</span><span class="p">(</span><span class="il">6</span><span class="p">)</span>
+<a id="__codelineno-34-12" name="__codelineno-34-12" href="#__codelineno-34-12"></a><span class="nl">120</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">SIZE1</span><span class="p">),</span><span class="w"> </span><span class="vg">B</span><span class="p">(</span><span class="vg">SIZE2</span><span class="p">),</span><span class="w"> </span><span class="vg">C</span><span class="p">(</span><span class="vg">SIZE3</span><span class="p">),</span><span class="w"> </span><span class="vg">D</span><span class="p">(</span><span class="vg">SIZE4</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Analysis</strong>:
+- Line 80: <code>FN DOUBLE(10)</code> = 20
+- Line 90: <code>FN AREA(5)</code> = INT(3.14159 * 5 * 5) = 78
+- Line 100: <code>FN HYPOTENUSE(3, 4)</code> = INT(SQR(9 + 16)) = 5
+- Line 110: <code>FN COMBO(6)</code> = FN DOUBLE(6) + FN SQUARE(6) = 12 + 36 = 48
+- Line 120: Creates <code>A(20)</code>, <code>B(78)</code>, <code>C(5)</code>, <code>D(48)</code></p>
+<p><strong>Key Features</strong>:
+- DEF FN functions are evaluated if all arguments are constant
+- Nested function calls work (COMBO calls DOUBLE and SQUARE)
+- Can use built-in math functions (SQR, INT)
+- Parameters are substituted with constant values during evaluation</p>
+<p><strong>Limitations</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">DEF FN</span><span class="w"> </span><span class="vg">BADSUM</span><span class="p">(</span><span class="vg">X</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">GLOBAL</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">N</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">SIZE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">FN</span><span class="w"> </span><span class="vg">BADSUM</span><span class="p">(</span><span class="vg">N</span><span class="p">)</span>
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="nl">40</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">SIZE</span><span class="p">)</span><span class="w">          </span><span class="c1">&#39; ERROR - N is not constant (from INPUT)</span>
+</code></pre></div></p>
+<h3 id="example-9-compile-time-configuration">Example 9: Compile-Time Configuration<a class="headerlink" href="#example-9-compile-time-configuration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="nl">10</span><span class="w"> </span><span class="c1">REM Compile-time configuration</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">COMPILE</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span>
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">DEBUG</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">0</span>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="nl">40</span><span class="w"> </span><span class="vg">VERSION</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">3</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="nl">50</span><span class="w"> </span><span class="c1">REM Conditional sizing</span>
+<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a><span class="nl">60</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">COMPILE</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">BUFSIZE</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1024</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="vg">BUFSIZE</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">256</span>
+<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a><span class="nl">70</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">DEBUG</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">LOGSIZE</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="vg">LOGSIZE</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a><span class="nl">80</span><span class="w"> </span><span class="c1">REM Version-specific multiplier</span>
+<a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a><span class="nl">90</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">VERSION</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">MULT</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span>
+<a id="__codelineno-36-10" name="__codelineno-36-10" href="#__codelineno-36-10"></a><span class="nl">100</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">VERSION</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">2</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">MULT</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">2</span>
+<a id="__codelineno-36-11" name="__codelineno-36-11" href="#__codelineno-36-11"></a><span class="nl">110</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">VERSION</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">3</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">MULT</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">3</span>
+<a id="__codelineno-36-12" name="__codelineno-36-12" href="#__codelineno-36-12"></a><span class="nl">120</span><span class="w"> </span><span class="vg">TABLESIZE</span><span class="o">%</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">BUFSIZE</span><span class="o">%</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">MULT</span><span class="o">%</span>
+<a id="__codelineno-36-13" name="__codelineno-36-13" href="#__codelineno-36-13"></a><span class="nl">130</span><span class="w"> </span><span class="c1">REM Arrays with compile-time evaluated sizes</span>
+<a id="__codelineno-36-14" name="__codelineno-36-14" href="#__codelineno-36-14"></a><span class="nl">140</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">BUFFER</span><span class="p">(</span><span class="vg">BUFSIZE</span><span class="o">%</span><span class="p">),</span><span class="w"> </span><span class="vg">LOGTABLE</span><span class="p">(</span><span class="vg">LOGSIZE</span><span class="o">%</span><span class="p">),</span><span class="w"> </span><span class="vg">WORKTABLE</span><span class="p">(</span><span class="vg">TABLESIZE</span><span class="o">%</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Analysis</strong>:
+- Line 60: COMPILE% = 1 → BUFSIZE% = 1024 (THEN branch)
+- Line 70: DEBUG% = 0 → LOGSIZE% = 10 (ELSE branch)
+- Line 110: VERSION% = 3 → MULT% = 3
+- Line 120: TABLESIZE% = 1024 * 3 = 3072
+- Line 140: Creates BUFFER(1024), LOGTABLE(10), WORKTABLE(3072)</p>
+<p>This enables compile-time configuration similar to C preprocessor directives!</p>
+<h2 id="future-enhancements">Future Enhancements<a class="headerlink" href="#future-enhancements" title="Permanent link">&para;</a></h2>
+<p>Potential improvements:
+1. <del><strong>Flow analysis</strong>: Track constants through branches (IF/THEN/ELSE)</del> ✓ <strong>IMPLEMENTED</strong>
+2. <strong>Type checking</strong>: Detect type mismatches at compile time
+3. <strong>Dead code detection</strong>: Identify unreachable code
+4. <strong>Optimization hints</strong>: Suggest integer variables for performance
+5. <strong>Array bounds tracking</strong>: Validate array accesses at compile time
+6. <strong>GOTO/GOSUB flow analysis</strong>: Track constants across line jumps
+7. <strong>Multi-line IF/THEN/ELSE</strong>: Support structured IF blocks</p>
+<h2 id="advanced-optimizations">Advanced Optimizations<a class="headerlink" href="#advanced-optimizations" title="Permanent link">&para;</a></h2>
+<h3 id="loop-analysis">Loop Analysis<a class="headerlink" href="#loop-analysis" title="Permanent link">&para;</a></h3>
+<p>The semantic analyzer performs comprehensive analysis of all loop types:
+- <strong>FOR loops</strong>: Tracks iteration counts, control variables, and unrolling potential
+- <strong>WHILE loops</strong>: Analyzes loop structure and nesting
+- <strong>IF-GOTO loops</strong>: Detects backward jumps that form loops</p>
+<p><strong>Loop-Invariant Code Motion</strong>: Identifies expressions that are computed multiple times within a loop but don't depend on loop variables. These can be hoisted out of the loop for better performance.</p>
+<p>Example:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">A</span><span class="p">,</span><span class="w"> </span><span class="vg">B</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">100</span>
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="nl">30</span><span class="w">   </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">B</span><span class="w">    </span><span class="c1">&#39; Loop-invariant!</span>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="nl">40</span><span class="w">   </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">B</span><span class="w">    </span><span class="c1">&#39; Can be hoisted</span>
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a><span class="nl">50</span><span class="w">   </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">    </span><span class="c1">&#39; Not invariant (uses I)</span>
+<a id="__codelineno-37-6" name="__codelineno-37-6" href="#__codelineno-37-6"></a><span class="nl">60</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+</code></pre></div></p>
+<p>The analyzer will report that <code>A * B</code> can be hoisted out of the loop, while <code>I * 2</code> cannot.</p>
+<p><strong>Loop Unrolling Candidates</strong>: Identifies small loops (2-10 iterations) with constant bounds that are good candidates for unrolling.</p>
+<h3 id="subroutine-side-effect-analysis">Subroutine Side-Effect Analysis<a class="headerlink" href="#subroutine-side-effect-analysis" title="Permanent link">&para;</a></h3>
+<p>The analyzer tracks which variables are modified by each GOSUB subroutine, including:
+- Direct modifications within the subroutine
+- Transitive modifications through nested GOSUB calls</p>
+<p>This enables:
+- <strong>Smart CSE invalidation</strong>: Only invalidate expressions that use variables actually modified by the subroutine
+- <strong>Cross-subroutine optimization</strong>: Preserve constant values and CSEs across GOSUB calls when safe</p>
+<p>Example:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="o">:</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">       </span><span class="c1">&#39; X = 30</span>
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">1000</span><span class="w">      </span><span class="c1">&#39; Subroutine doesn&#39;t modify A or B</span>
+<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="nl">40</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">       </span><span class="c1">&#39; CSE! Same as line 20</span>
+<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">2000</span><span class="w">      </span><span class="c1">&#39; Subroutine modifies B</span>
+<a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a><span class="nl">60</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">       </span><span class="c1">&#39; NOT CSE (B changed)</span>
+<a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a><span class="nl">70</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a>
+<a id="__codelineno-38-9" name="__codelineno-38-9" href="#__codelineno-38-9"></a><span class="nl">1000</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">   </span><span class="c1">&#39; Read-only subroutine</span>
+<a id="__codelineno-38-10" name="__codelineno-38-10" href="#__codelineno-38-10"></a><span class="nl">1010</span><span class="w"> </span><span class="kr">RETURN</span>
+<a id="__codelineno-38-11" name="__codelineno-38-11" href="#__codelineno-38-11"></a>
+<a id="__codelineno-38-12" name="__codelineno-38-12" href="#__codelineno-38-12"></a><span class="nl">2000</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">1</span><span class="w">     </span><span class="c1">&#39; Modifies B</span>
+<a id="__codelineno-38-13" name="__codelineno-38-13" href="#__codelineno-38-13"></a><span class="nl">2010</span><span class="w"> </span><span class="kr">RETURN</span>
+</code></pre></div></p>
+<h3 id="optimization-report">Optimization Report<a class="headerlink" href="#optimization-report" title="Permanent link">&para;</a></h3>
+<p>The <code>get_report()</code> method generates a comprehensive optimization report including:
+- Constant folding opportunities
+- Common subexpressions with suggested temp variables
+- Loop analysis with hoisting opportunities
+- Loop unrolling candidates
+- Subroutine side-effect analysis</p>
+<p>Run any test with report generation to see detailed optimization opportunities.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../../history/COMPILER_VS_INTERPRETER_DIFFERENCES/">Compiler vs Interpreter Differences</a></li>
+<li>MBASIC Compiler User's Manual (1980)</li>
+<li>BASIC-80 Reference Manual Version 5.21</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,6 @@
+10 PRINT "Hello from MBASIC!"
+20 FOR I = 1 TO 5
+30   PRINT I
+40 NEXT I
+50 PRINT "Done"
+60 END

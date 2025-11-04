@@ -1,0 +1,180 @@
+{
+  "files": [
+    {
+      "path": "editing.md",
+      "title": "Editing Programs in Curses UI",
+      "type": "guide",
+      "category": "",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "files.md",
+      "title": "File Operations in Curses UI",
+      "type": "guide",
+      "category": "",
+      "description": "NEEDS_DESCRIPTION"
+    },
+    {
+      "path": "quick-reference.md",
+      "title": "MBASIC - Keyboard Shortcuts",
+      "type": "guide",
+      "category": "",
+      "description": "Quick reference card for all keyboard shortcuts in the Curses text UI"
+    },
+    {
+      "path": "help-navigation.md",
+      "title": "Using the Help System",
+      "type": "guide",
+      "category": "",
+      "description": "How to navigate and use the built-in help system in Curses UI"
+    },
+    {
+      "path": "running.md",
+      "title": "Running Programs in Curses UI",
+      "type": "guide",
+      "category": "",
+      "description": "How to execute BASIC programs and view output in the Curses UI"
+    },
+    {
+      "path": "getting-started.md",
+      "title": "Getting Started with Curses UI",
+      "type": "guide",
+      "category": "",
+      "description": "Introduction and first steps for using the MBASIC Curses text interface"
+    }
+  ],
+  "keywords": {
+    "command": [
+      "editing.md",
+      "files.md"
+    ],
+    "curses": [
+      "editing.md",
+      "files.md",
+      "getting-started.md"
+    ],
+    "editing": [
+      "editing.md"
+    ],
+    "execute": [
+      "editing.md",
+      "running.md"
+    ],
+    "file": [
+      "editing.md",
+      "files.md"
+    ],
+    "for": [
+      "editing.md",
+      "files.md"
+    ],
+    "if": [
+      "editing.md",
+      "files.md"
+    ],
+    "line": [
+      "editing.md",
+      "files.md"
+    ],
+    "next": [
+      "editing.md",
+      "files.md"
+    ],
+    "number": [
+      "editing.md",
+      "files.md"
+    ],
+    "error": [
+      "files.md"
+    ],
+    "operations": [
+      "files.md"
+    ],
+    "commands": [
+      "quick-reference.md"
+    ],
+    "function": [],
+    "keyboard": [
+      "quick-reference.md"
+    ],
+    "shortcuts": [
+      "quick-reference.md"
+    ],
+    "ctrl": [
+      "quick-reference.md"
+    ],
+    "hotkeys": [
+      "quick-reference.md"
+    ],
+    "quick reference": [
+      "quick-reference.md"
+    ],
+    "cheat sheet": [
+      "quick-reference.md"
+    ],
+    "help": [
+      "help-navigation.md"
+    ],
+    "navigation": [
+      "help-navigation.md"
+    ],
+    "browse": [
+      "help-navigation.md"
+    ],
+    "search": [
+      "help-navigation.md"
+    ],
+    "links": [
+      "help-navigation.md"
+    ],
+    "ctrl+p": [
+      "help-navigation.md"
+    ],
+    "run": [
+      "running.md"
+    ],
+    "output": [
+      "running.md"
+    ],
+    "ctrl+r": [
+      "running.md"
+    ],
+    "debug": [
+      "running.md"
+    ],
+    "breakpoint": [
+      "running.md"
+    ],
+    "step": [
+      "running.md"
+    ],
+    "getting started": [
+      "getting-started.md"
+    ],
+    "introduction": [
+      "getting-started.md"
+    ],
+    "tutorial": [
+      "getting-started.md"
+    ],
+    "first program": [
+      "getting-started.md"
+    ],
+    "hello world": [
+      "getting-started.md"
+    ]
+  },
+  "aliases": {},
+  "categories": {},
+  "by_type": {
+    "guide": [
+      "editing.md",
+      "files.md",
+      "keyboard-commands.md",
+      "quick-reference.md",
+      "help-navigation.md",
+      "running.md",
+      "getting-started.md"
+    ]
+  }
+}

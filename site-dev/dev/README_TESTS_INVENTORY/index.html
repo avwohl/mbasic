@@ -1,0 +1,1800 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/dev/README_TESTS_INVENTORY/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>README.md Test Inventory - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#readmemd-test-inventory" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              README.md Test Inventory
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#test-organization-from-readmemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Organization (from README.md)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Organization (from README.md)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Directory Structure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Categories
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-tests-from-readmemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running Tests (from README.md)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running Tests (from README.md)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-all-regression-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run All Regression Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-tests-by-category" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run Tests by Category
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-basic-test-programs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run BASIC Test Programs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-coverage-from-readmemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Coverage (from README.md)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#regression-tests-python" class="md-nav__link">
+    <span class="md-ellipsis">
+      Regression Tests (Python)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Regression Tests (Python)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#commands-testsregressioncommands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Commands (tests/regression/commands/)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugger-testsregressiondebugger" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debugger (tests/regression/debugger/)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editor-testsregressioneditor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Editor (tests/regression/editor/)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-system-testsregressionhelp" class="md-nav__link">
+    <span class="md-ellipsis">
+      Help System (tests/regression/help/)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-testsregressionintegration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration (tests/regression/integration/)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interpreter-testsregressioninterpreter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interpreter (tests/regression/interpreter/)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lexer-testsregressionlexer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lexer (tests/regression/lexer/)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parser-testsregressionparser" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parser (tests/regression/parser/)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#serializer-testsregressionserializer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Serializer (tests/regression/serializer/)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ui-testsregressionui" class="md-nav__link">
+    <span class="md-ellipsis">
+      UI (tests/regression/ui/)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#self-checking-basic-tests-basicdevtests_with_results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Self-Checking BASIC Tests (basic/dev/tests_with_results/)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Self-Checking BASIC Tests (basic/dev/tests_with_results/)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#array-and-memory-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Array and Memory Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#control-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Control Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-and-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data and I/O
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error Handling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#functions-and-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Functions and Operators
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#numeric-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Numeric Operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#program-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Program Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-and-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      System and I/O
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-declarations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Declarations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#utility-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Utility Operations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-test-programs-basicdevbas_tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      BASIC Test Programs (basic/dev/bas_tests/)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BASIC Test Programs (basic/dev/bas_tests/)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#games-and-interactive-programs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Games and Interactive Programs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gosub-stack-tests-20-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      GOSUB Stack Tests (20 files)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#utility-and-tool-programs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Utility and Tool Programs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calculation-and-science-programs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Calculation and Science Programs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visual-and-pattern-programs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Visual and Pattern Programs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-and-debug-programs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test and Debug Programs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-programs-28-more" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Programs (28 more)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-file-requirements-from-readmemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test File Requirements (from README.md)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test File Requirements (from README.md)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-test-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Test Structure
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary Statistics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Summary Statistics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-coverage-by-category" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Coverage by Category
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-status-tests-from-readmemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Status Tests (from README.md)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Status Tests (from README.md)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-interpreter-features-tested" class="md-nav__link">
+    <span class="md-ellipsis">
+      Core Interpreter Features Tested
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interactive-mode-features-tested" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interactive Mode Features Tested
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/dev/README_TESTS_INVENTORY.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="readmemd-test-inventory">README.md Test Inventory<a class="headerlink" href="#readmemd-test-inventory" title="Permanent link">&para;</a></h1>
+<p>This document lists all tests mentioned in README.md and provides a comprehensive inventory of the actual test suite.</p>
+<blockquote>
+<p><strong>Last Updated:</strong> 2025-11-02
+<strong>Source:</strong> README.md Testing section (lines 223-324)</p>
+</blockquote>
+<h2 id="test-organization-from-readmemd">Test Organization (from README.md)<a class="headerlink" href="#test-organization-from-readmemd" title="Permanent link">&para;</a></h2>
+<h3 id="test-directory-structure">Test Directory Structure<a class="headerlink" href="#test-directory-structure" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>tests/
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── regression/          # Automated regression tests
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│   ├── commands/       # REPL commands (RENUM, LIST, etc.)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│   ├── debugger/       # Debugger functionality
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   ├── editor/         # Editor behavior
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│   ├── integration/    # End-to-end tests
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   ├── interpreter/    # Core interpreter features
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── lexer/          # Tokenization and case handling
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   ├── parser/         # Parsing and AST generation
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   ├── serializer/     # Code formatting
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   └── ui/             # UI-specific tests
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>├── manual/             # Manual verification tests
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>└── run_regression.py   # Test runner script
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>basic/dev/
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>├── bas_tests/          # BASIC test programs (64 files)
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>└── tests_with_results/ # Self-checking BASIC tests (38 files)
+</code></pre></div>
+<h3 id="test-categories">Test Categories<a class="headerlink" href="#test-categories" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>regression/</strong> - Automated tests (deterministic, repeatable)</li>
+<li><strong>manual/</strong> - Tests requiring human verification</li>
+<li><strong>debug/</strong> - Temporary debugging tests (not tracked in git)</li>
+</ul>
+<h2 id="running-tests-from-readmemd">Running Tests (from README.md)<a class="headerlink" href="#running-tests-from-readmemd" title="Permanent link">&para;</a></h2>
+<h3 id="run-all-regression-tests">Run All Regression Tests<a class="headerlink" href="#run-all-regression-tests" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python3<span class="w"> </span>tests/run_regression.py
+</code></pre></div>
+<h3 id="run-tests-by-category">Run Tests by Category<a class="headerlink" href="#run-tests-by-category" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python3<span class="w"> </span>tests/run_regression.py<span class="w"> </span>--category<span class="w"> </span>lexer
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>python3<span class="w"> </span>tests/run_regression.py<span class="w"> </span>--category<span class="w"> </span>interpreter
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>python3<span class="w"> </span>tests/run_regression.py<span class="w"> </span>--category<span class="w"> </span>commands
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>python3<span class="w"> </span>tests/run_regression.py<span class="w"> </span>--category<span class="w"> </span>debugger
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>python3<span class="w"> </span>tests/run_regression.py<span class="w"> </span>--category<span class="w"> </span>editor
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>python3<span class="w"> </span>tests/run_regression.py<span class="w"> </span>--category<span class="w"> </span>integration
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>python3<span class="w"> </span>tests/run_regression.py<span class="w"> </span>--category<span class="w"> </span>parser
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>python3<span class="w"> </span>tests/run_regression.py<span class="w"> </span>--category<span class="w"> </span>serializer
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>python3<span class="w"> </span>tests/run_regression.py<span class="w"> </span>--category<span class="w"> </span>ui
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>python3<span class="w"> </span>tests/run_regression.py<span class="w"> </span>--category<span class="w"> </span><span class="nb">help</span>
+</code></pre></div>
+<h3 id="run-basic-test-programs">Run BASIC Test Programs<a class="headerlink" href="#run-basic-test-programs" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Run any BASIC test program</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>python3<span class="w"> </span>mbasic<span class="w"> </span>basic/dev/bas_tests/test_operator_precedence.bas
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Run self-checking tests (verify correctness automatically)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>python3<span class="w"> </span>mbasic<span class="w"> </span>basic/dev/tests_with_results/test_operator_precedence.bas
+</code></pre></div>
+<h2 id="test-coverage-from-readmemd">Test Coverage (from README.md)<a class="headerlink" href="#test-coverage-from-readmemd" title="Permanent link">&para;</a></h2>
+<p>✓ All statement types (FOR, WHILE, IF, GOSUB, etc.)
+✓ All built-in functions (ABS, INT, LEFT$, etc.)
+✓ All commands (RENUM, LIST, LOAD, SAVE, etc.)
+✓ Edge cases and error handling
+✓ Settings system
+✓ Help system
+✓ Editor features (case/spacing preservation)</p>
+<h2 id="regression-tests-python">Regression Tests (Python)<a class="headerlink" href="#regression-tests-python" title="Permanent link">&para;</a></h2>
+<p><strong>Total: 27 automated regression tests</strong></p>
+<h3 id="commands-testsregressioncommands">Commands (tests/regression/commands/)<a class="headerlink" href="#commands-testsregressioncommands" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_renum_spacing.py</code> - RENUM command spacing preservation</li>
+</ol>
+<h3 id="debugger-testsregressiondebugger">Debugger (tests/regression/debugger/)<a class="headerlink" href="#debugger-testsregressiondebugger" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_breakpoint_toggle.py</code> - Breakpoint toggle functionality</li>
+</ol>
+<h3 id="editor-testsregressioneditor">Editor (tests/regression/editor/)<a class="headerlink" href="#editor-testsregressioneditor" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_line_editing.py</code> - Line editing behavior</li>
+</ol>
+<h3 id="help-system-testsregressionhelp">Help System (tests/regression/help/)<a class="headerlink" href="#help-system-testsregressionhelp" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_help_integration.py</code> - Help system integration</li>
+<li><code>test_help_macros.py</code> - Help macro expansion</li>
+<li><code>test_help_search.py</code> - Help search functionality</li>
+<li><code>test_help_search_ranking.py</code> - Help search result ranking</li>
+</ol>
+<h3 id="integration-testsregressionintegration">Integration (tests/regression/integration/)<a class="headerlink" href="#integration-testsregressionintegration" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_chain_case_preservation.py</code> - CHAIN command case preservation</li>
+<li><code>test_integration_simple.py</code> - Simple end-to-end tests</li>
+</ol>
+<h3 id="interpreter-testsregressioninterpreter">Interpreter (tests/regression/interpreter/)<a class="headerlink" href="#interpreter-testsregressioninterpreter" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_gosub_circular.py</code> - Circular GOSUB detection</li>
+<li><code>test_gosub_stack.py</code> - GOSUB/RETURN stack management</li>
+</ol>
+<h3 id="lexer-testsregressionlexer">Lexer (tests/regression/lexer/)<a class="headerlink" href="#lexer-testsregressionlexer" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_keyword_case_display_consistency.py</code> - Keyword case display consistency</li>
+<li><code>test_keyword_case_policies.py</code> - Keyword case policy handling</li>
+<li><code>test_keyword_case_scope_isolation.py</code> - Keyword case scope isolation</li>
+<li><code>test_keyword_case_settings_integration.py</code> - Keyword case settings integration</li>
+</ol>
+<h3 id="parser-testsregressionparser">Parser (tests/regression/parser/)<a class="headerlink" href="#parser-testsregressionparser" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_syntax_checking.py</code> - Syntax validation</li>
+</ol>
+<h3 id="serializer-testsregressionserializer">Serializer (tests/regression/serializer/)<a class="headerlink" href="#serializer-testsregressionserializer" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_case_preservation.py</code> - Case preservation during serialization</li>
+<li><code>test_position_serializer.py</code> - Position-aware serialization</li>
+</ol>
+<h3 id="ui-testsregressionui">UI (tests/regression/ui/)<a class="headerlink" href="#ui-testsregressionui" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_curses_exit.py</code> - Curses UI exit handling</li>
+<li><code>test_curses_output_display.py</code> - Curses output display</li>
+<li><code>test_curses_pexpect.py</code> - Curses UI with pexpect</li>
+<li><code>test_keybinding_loader.py</code> - Keybinding configuration loading</li>
+<li><code>test_output_focus.py</code> - Output window focus management</li>
+<li><code>test_output_scroll.py</code> - Output scrolling behavior</li>
+<li><code>test_scrollable_output.py</code> - Scrollable output widget</li>
+<li><code>test_settings.py</code> - Settings system</li>
+<li><code>test_status_priority.py</code> - Status message priority</li>
+</ol>
+<h2 id="self-checking-basic-tests-basicdevtests_with_results">Self-Checking BASIC Tests (basic/dev/tests_with_results/)<a class="headerlink" href="#self-checking-basic-tests-basicdevtests_with_results" title="Permanent link">&para;</a></h2>
+<p><strong>Total: 38 self-checking BASIC tests</strong></p>
+<p>These tests verify correctness and report results automatically.</p>
+<h3 id="array-and-memory-management">Array and Memory Management<a class="headerlink" href="#array-and-memory-management" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_dim_arrays.bas</code> - DIM array declarations</li>
+<li><code>test_erase.bas</code> - ERASE array statement</li>
+<li><code>test_option_base.bas</code> - OPTION BASE 0/1 for array indexing</li>
+</ol>
+<h3 id="control-flow">Control Flow<a class="headerlink" href="#control-flow" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_for_next.bas</code> - FOR/NEXT loops</li>
+<li><code>test_gosub.bas</code> - GOSUB/RETURN statements</li>
+<li><code>test_goto.bas</code> - GOTO statement</li>
+<li><code>test_if_then_else.bas</code> - IF/THEN/ELSE conditionals</li>
+<li><code>test_on_goto_gosub.bas</code> - ON GOTO and ON GOSUB computed jumps</li>
+<li><code>test_while_wend.bas</code> - WHILE/WEND loops</li>
+</ol>
+<h3 id="data-and-io">Data and I/O<a class="headerlink" href="#data-and-io" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_binary_conversion.bas</code> - Binary data conversion (MKI$/CVI, etc.)</li>
+<li><code>test_data_read.bas</code> - DATA/READ/RESTORE statements</li>
+<li><code>test_file_io.bas</code> - Sequential file I/O operations</li>
+<li><code>test_input.bas</code> - INPUT statement</li>
+<li><code>test_print_using.bas</code> - PRINT USING formatted output</li>
+<li><code>test_random_files.bas</code> - Random file I/O (FIELD, GET, PUT, etc.)</li>
+<li><code>test_tab_spc.bas</code> - TAB and SPC functions</li>
+</ol>
+<h3 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_error_handling.bas</code> - ON ERROR GOTO/GOSUB, RESUME, ERL, ERR</li>
+</ol>
+<h3 id="functions-and-operators">Functions and Operators<a class="headerlink" href="#functions-and-operators" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_def_fn.bas</code> - DEF FN user-defined functions</li>
+<li><code>test_eqv_imp.bas</code> - EQV and IMP logical operators</li>
+<li><code>test_hex_oct.bas</code> - Hexadecimal and octal number literals</li>
+<li><code>test_logical_ops.bas</code> - AND, OR, NOT logical operators</li>
+<li><code>test_math_functions.bas</code> - Mathematical functions (SIN, COS, SQR, etc.)</li>
+<li><code>test_mid_assignment.bas</code> - MID$ assignment statement</li>
+<li><code>test_mod_intdiv.bas</code> - MOD and integer division ()</li>
+<li><code>test_operator_precedence.bas</code> - Operator precedence rules</li>
+<li><code>test_string_functions.bas</code> - String functions (LEFT<span class="arithmatex"><span class="MathJax_Preview">, RIGHT</span><script type="math/tex">, RIGHT</script></span>, MID$, etc.)</li>
+</ol>
+<h3 id="numeric-operations">Numeric Operations<a class="headerlink" href="#numeric-operations" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_randomize.bas</code> - RANDOMIZE statement</li>
+<li><code>test_rnd.bas</code> - RND random number function</li>
+<li><code>test_rounding.bas</code> - Numeric rounding behavior</li>
+<li><code>test_type_conversion.bas</code> - Type conversion functions</li>
+</ol>
+<h3 id="program-management">Program Management<a class="headerlink" href="#program-management" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_chain.bas</code> - CHAIN command</li>
+<li><code>test_merge.bas</code> - MERGE command</li>
+</ol>
+<h3 id="system-and-io">System and I/O<a class="headerlink" href="#system-and-io" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_inkey.bas</code> - INKEY$ non-blocking input</li>
+<li><code>test_peek.bas</code> - PEEK function</li>
+<li><code>test_tron_troff.bas</code> - TRON/TROFF execution tracing</li>
+</ol>
+<h3 id="type-declarations">Type Declarations<a class="headerlink" href="#type-declarations" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_deftypes.bas</code> - DEFINT/DEFSTR/DEFSNG/DEFDBL type declarations</li>
+</ol>
+<h3 id="utility-operations">Utility Operations<a class="headerlink" href="#utility-operations" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_simple.bas</code> - Simple basic operations</li>
+<li><code>test_swap.bas</code> - SWAP statement</li>
+</ol>
+<h2 id="basic-test-programs-basicdevbas_tests">BASIC Test Programs (basic/dev/bas_tests/)<a class="headerlink" href="#basic-test-programs-basicdevbas_tests" title="Permanent link">&para;</a></h2>
+<p><strong>Total: 64 BASIC test programs</strong></p>
+<p>General BASIC programs used for testing interpreter functionality.</p>
+<h3 id="games-and-interactive-programs">Games and Interactive Programs<a class="headerlink" href="#games-and-interactive-programs" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>battle.bas</code> - Battle game</li>
+<li><code>doodle.bas</code> - Drawing program</li>
+<li><code>hanoi.bas</code> - Tower of Hanoi</li>
+<li><code>krak.bas</code> - Krak game</li>
+<li><code>nim.bas</code> - Nim game</li>
+<li><code>poker.bas</code> - Poker game</li>
+</ol>
+<h3 id="gosub-stack-tests-20-files">GOSUB Stack Tests (20 files)<a class="headerlink" href="#gosub-stack-tests-20-files" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>gostk1.bas</code> - GOSUB stack test 1</li>
+<li><code>gosub10.bas</code> - GOSUB test (10 depth)</li>
+<li><code>gosub20.bas</code> - GOSUB test (20 depth)</li>
+<li><code>gosub30.bas</code> - GOSUB test (30 depth)</li>
+<li><code>gosub40.bas</code> - GOSUB test (40 depth)</li>
+<li><code>gosub50.bas</code> - GOSUB test (50 depth)</li>
+<li><code>gosub60.bas</code> - GOSUB test (60 depth)</li>
+<li><code>gosub70.bas</code> - GOSUB test (70 depth)</li>
+<li><code>gosub_stack_50.bas</code> - GOSUB stack test (50 depth)</li>
+<li><code>gosub_stack_100.bas</code> - GOSUB stack test (100 depth)</li>
+<li><code>gosub_stack_150.bas</code> - GOSUB stack test (150 depth)</li>
+<li><code>gosub_stack_200.bas</code> - GOSUB stack test (200 depth)</li>
+<li><code>gosub_stack_test_simple.bas</code> - Simple GOSUB stack test
+20-26. <em>(Additional GOSUB stack tests)</em></li>
+</ol>
+<h3 id="utility-and-tool-programs">Utility and Tool Programs<a class="headerlink" href="#utility-and-tool-programs" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>asciiart.bas</code> - ASCII art generation</li>
+<li><code>asm2mac.bas</code> - Assembly to macro conversion</li>
+<li><code>genielst.bas</code> - Genie list utility</li>
+<li><code>maptest.bas</code> - Map test</li>
+<li><code>menu.bas</code> - Menu system test</li>
+</ol>
+<h3 id="calculation-and-science-programs">Calculation and Science Programs<a class="headerlink" href="#calculation-and-science-programs" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>holtwint.bas</code> - Holt winter statistics</li>
+<li><code>mooncalc.bas</code> - Moon calculation</li>
+</ol>
+<h3 id="visual-and-pattern-programs">Visual and Pattern Programs<a class="headerlink" href="#visual-and-pattern-programs" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>pattern.bas</code> - Pattern generation</li>
+<li><code>pattern1.bas</code> - Pattern generation variant</li>
+</ol>
+<h3 id="test-and-debug-programs">Test and Debug Programs<a class="headerlink" href="#test-and-debug-programs" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>direct.bas</code> - Direct mode test</li>
+<li><code>hello_test.bas</code> - Hello world test</li>
+</ol>
+<h3 id="additional-programs-28-more">Additional Programs (28 more)<a class="headerlink" href="#additional-programs-28-more" title="Permanent link">&para;</a></h3>
+<p>38-64. <em>(Various other BASIC programs for comprehensive testing)</em></p>
+<h2 id="test-file-requirements-from-readmemd">Test File Requirements (from README.md)<a class="headerlink" href="#test-file-requirements-from-readmemd" title="Permanent link">&para;</a></h2>
+<p>Test files must:
+- Start with <code>test_</code> prefix
+- Use <code>src.</code> prefix for imports (<code>from src.lexer import Lexer</code>)
+- Exit with code 0 on success, 1 on failure
+- Include clear assertion messages</p>
+<h3 id="example-test-structure">Example Test Structure<a class="headerlink" href="#example-test-structure" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="ch">#!/usr/bin/env python3</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1"># Add project root to path (3 levels up from tests/regression/category/)</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;../../..&#39;</span><span class="p">))</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.lexer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Lexer</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_feature</span><span class="p">():</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">lexer</span> <span class="o">=</span> <span class="n">Lexer</span><span class="p">(</span><span class="s2">&quot;10 PRINT </span><span class="se">\&quot;</span><span class="s2">Hello</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    <span class="n">tokens</span> <span class="o">=</span> <span class="n">lexer</span><span class="o">.</span><span class="n">tokenize</span><span class="p">()</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Should tokenize code&quot;</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✓ Feature works&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>        <span class="n">test_feature</span><span class="p">()</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">✅ All tests passed&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>    <span class="k">except</span> <span class="ne">AssertionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">❌ Test failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="summary-statistics">Summary Statistics<a class="headerlink" href="#summary-statistics" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>27</strong> Python regression tests across 9 categories</li>
+<li><strong>38</strong> self-checking BASIC tests with automatic verification</li>
+<li><strong>64</strong> BASIC test programs for manual/interactive testing</li>
+<li><strong>129</strong> total test files</li>
+</ul>
+<h3 id="test-coverage-by-category">Test Coverage by Category<a class="headerlink" href="#test-coverage-by-category" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Python Tests</th>
+<th>BASIC Tests</th>
+<th>Total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Commands</td>
+<td>1</td>
+<td>-</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Debugger</td>
+<td>1</td>
+<td>-</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Editor</td>
+<td>1</td>
+<td>-</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Help</td>
+<td>4</td>
+<td>-</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Integration</td>
+<td>2</td>
+<td>-</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Interpreter</td>
+<td>2</td>
+<td>38</td>
+<td>40</td>
+</tr>
+<tr>
+<td>Lexer</td>
+<td>4</td>
+<td>-</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Parser</td>
+<td>1</td>
+<td>-</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Serializer</td>
+<td>2</td>
+<td>-</td>
+<td>2</td>
+</tr>
+<tr>
+<td>UI</td>
+<td>9</td>
+<td>-</td>
+<td>9</td>
+</tr>
+<tr>
+<td>General</td>
+<td>-</td>
+<td>64</td>
+<td>64</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>27</strong></td>
+<td><strong>102</strong></td>
+<td><strong>129</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="implementation-status-tests-from-readmemd">Implementation Status Tests (from README.md)<a class="headerlink" href="#implementation-status-tests-from-readmemd" title="Permanent link">&para;</a></h2>
+<p>The README.md lists comprehensive feature coverage including:</p>
+<h3 id="core-interpreter-features-tested">Core Interpreter Features Tested<a class="headerlink" href="#core-interpreter-features-tested" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Runtime state management</li>
+<li>Variable storage (all type suffixes)</li>
+<li>Array support with DIM</li>
+<li>Line number resolution</li>
+<li>GOSUB/RETURN stack</li>
+<li>FOR/NEXT loops</li>
+<li>WHILE/WEND loops</li>
+<li>ON GOTO/ON GOSUB (computed jumps)</li>
+<li>DATA/READ/RESTORE</li>
+<li>Expression evaluation</li>
+<li>All operators</li>
+<li>50+ built-in functions</li>
+<li>User-defined functions (DEF FN)</li>
+<li>Sequential file I/O</li>
+<li>Random file I/O</li>
+<li>Binary file I/O</li>
+<li>Error handling</li>
+<li>File system operations</li>
+<li>Non-blocking input (INKEY$)</li>
+<li>Execution tracing (TRON/TROFF)</li>
+<li>PRINT USING</li>
+<li>SWAP statement</li>
+<li>MID$ assignment</li>
+</ul>
+<h3 id="interactive-mode-features-tested">Interactive Mode Features Tested<a class="headerlink" href="#interactive-mode-features-tested" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Line entry and editing</li>
+<li>RUN command</li>
+<li>LIST command (with ranges)</li>
+<li>SAVE/LOAD commands</li>
+<li>NEW command</li>
+<li>DELETE command</li>
+<li>RENUM command</li>
+<li>Immediate mode</li>
+<li>Error recovery</li>
+<li>CONT (continue after STOP or Ctrl+C)</li>
+<li>EDIT command</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Main Testing Guide:</strong> <code>tests/README.md</code> (in repository root)</li>
+<li><strong>Test Organization Plan:</strong> See TEST_INVENTORY.md for historical test organization</li>
+<li><strong>README Testing Section:</strong> README.md lines 223-324</li>
+<li><strong>Project Status:</strong> <a href="../../PROJECT_STATUS/">PROJECT_STATUS.md</a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

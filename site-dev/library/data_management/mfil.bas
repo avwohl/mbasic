@@ -1,0 +1,65 @@
+1 '	signon subsystem -- make test versions of name files
+2 VERSION$="0.2 {4/25/82}"
+4 '	by dick lieber
+8 CRLF$=CHR$(&HA)+CHR$(&HD)
+10 '
+14 '	WARNING
+18 '
+22 ' If running this program with BASIC-80 the DRIVER.REL jump table
+26 ' must be located at 0F800H.  Unless you change the following
+30 ' location, the program will go away!
+34 '
+38 TESTADDRESS=&HF800
+42 '
+50 DATA "NOACC", "BULLETIN", "INSTRUCT", "SUCESS", "SPECIAL", "OPTION", "BYEBYE"
+53 DATA "the end"
+99 GOTO 10000
+300 '
+310 '	set user number
+320 '
+330 USERMD=TESTADDRESS+9
+340 CALL USERMD(SETUSERNUMBER%)
+350 RETURN
+10000 '
+10010 '	main program
+10020 '
+10030 PRINT:PRINT:PRINT
+10040 PRINT "This program will make test version of all of message text"
+10050 PRINT "files needed to test the SIGNON subsystem."
+10060 PRINT
+10061 IF PEEK(TESTADDRESS) <> &HC3 THEN 
+	PRINT "FATAL ERROR!":
+	PRINT "The driver test routines are not loaded at ";
+		HEX$(TESTADDRESS);"H.":
+	END
+10070 PRINT "What user number should the files be stored in > ";
+10080 INPUT SETUSERNUMBER%
+10090 IF SETUSERNUMBER% > 15 THEN GOTO 10060
+10100 GOSUB 300
+10110 STARS$=STRING$(25,"*")
+10120 MIDDLE$="*"+STRING$(23," ")+"*"
+10130 LEFTEND$="*        "
+10140 RIGHTEND$="       *"
+10150 PRINT "Making:"
+10160 PRINT
+10170 WHILE FILENAME$<> "the end"
+10180	READ FILENAME$
+10190	IF FILENAME$="the end" THEN GOTO 10320
+10200	OPEN "O",#1, FILENAME$
+10210	MIDDLEND$=STRING$(8," ")
+10220	LSET MIDDLEND$=FILENAME$
+10230	PRINT FILENAME$
+10235	PRINT #1,CRLF$
+10240	PRINT #1, STARS$
+10250	PRINT #1, MIDDLE$
+10260	PRINT #1, MIDDLE$
+10270	PRINT #1, LEFTEND$+MIDDLEND$+RIGHTEND$
+10280	PRINT #1, MIDDLE$
+10290	PRINT #1, MIDDLE$
+10300	PRINT #1, STARS$
+10310	CLOSE #1
+10320 WEND
+10330 PRINT
+10340 PRINT "These are the files:"
+10350 FILES "????????.   "
+10360 SETUSERNUMBER%=0: GOSUB 300

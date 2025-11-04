@@ -1,0 +1,46 @@
+{
+  "title": "MBASIC Data Management",
+  "description": "Database and file management programs",
+  "programs": [
+    {
+      "filename": "mfil.bas",
+      "source_path": "basic/data_management/mfil.bas",
+      "title": "Mfil",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "sfamove.bas",
+      "source_path": "basic/data_management/sfamove.bas",
+      "title": "Sfamove",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "sfaobdes.bas",
+      "source_path": "basic/data_management/sfaobdes.bas",
+      "title": "Sfaobdes",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "sfavoc.bas",
+      "source_path": "basic/data_management/sfavoc.bas",
+      "title": "Sfavoc",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "xlabels.bas",
+      "source_path": "basic/data_management/xlabels.bas",
+      "title": "Xlabels",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    }
+  ]
+}

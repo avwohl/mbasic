@@ -1,0 +1,1896 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/dev/MID_STATEMENT_COMMENTS_FIX/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Mid-Statement Comments Implementation - MBASIC 5.21 Compiler - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mid-statement-comments-implementation-mbasic-521-compiler" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Mid-Statement Comments Implementation - MBASIC 5.21 Compiler
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Date
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#problem-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problem Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problem Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-issue" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Issue
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-a-mid-statement-comment" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is a Mid-Statement Comment?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-modified" class="md-nav__link">
+    <span class="md-ellipsis">
+      File Modified
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Fix
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why This Works
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Results
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#before-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Before Implementation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      After Implementation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-reduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error Reduction
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#new-successfully-parsed-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      New Successfully Parsed Files
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples-of-what-now-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples of What Now Works
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples of What Now Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-mid-statement-comments" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Mid-Statement Comments
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comments-after-multiple-statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comments After Multiple Statements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comments-in-complex-expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comments in Complex Expressions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comments-with-string-literals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comments with String Literals
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#real-example-from-attenbas" class="md-nav__link">
+    <span class="md-ellipsis">
+      Real Example from atten.bas
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statement-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Statement Statistics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Statement Statistics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#before-fix-49-files-5739-statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Before Fix (49 files, 5,739 statements)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-fix-53-files-5974-statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      After Fix (53 files, 5,974 statements)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remaining-apostrophe-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remaining APOSTROPHE Error
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Remaining APOSTROPHE Error">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-last-file-entrbbsbas" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Last File: entrbbs.bas
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-doesnt-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why This Doesn't Count
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technical-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Technical Notes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technical Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design Philosophy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-apostrophe-is-like-newline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why APOSTROPHE is Like NEWLINE
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comment-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comment Processing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Impact Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Impact Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Changes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comparison-to-other-improvements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comparison to Other Improvements
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#session-progress-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Session Progress Summary
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Session Progress Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#timeline-cleaned-corpus" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timeline (Cleaned Corpus)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-session-from-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full Session (From Start)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#top-remaining-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Top Remaining Errors
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-usage-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Real-World Usage Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Real-World Usage Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#from-attenbas-attenuator-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      From atten.bas (Attenuator Design)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#from-prime1bas-prime-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      From prime1.bas (Prime Numbers)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Conclusions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-achievements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Achievements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-works-so-well" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why This Works So Well
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#design-lesson" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design Lesson
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Next Steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#priority-1-or-newline-got-identifier-24-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Priority 1: or newline, got IDENTIFIER (24 files)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#priority-2-hash-file-io-17-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Priority 2: HASH file I/O (17 files)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#priority-3-run-statement-11-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Priority 3: RUN statement (11 files)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Quality
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/dev/MID_STATEMENT_COMMENTS_FIX.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="mid-statement-comments-implementation-mbasic-521-compiler">Mid-Statement Comments Implementation - MBASIC 5.21 Compiler<a class="headerlink" href="#mid-statement-comments-implementation-mbasic-521-compiler" title="Permanent link">&para;</a></h1>
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<p>Fixed parser to support mid-statement comments (apostrophe <code>'</code> appearing after statements on the same line), eliminating 23 of 24 "got APOSTROPHE" errors and resulting in <strong>+4 files successfully parsed</strong> (20.9% → 22.6%, <strong>+1.7%</strong>).</p>
+<h2 id="implementation-date">Implementation Date<a class="headerlink" href="#implementation-date" title="Permanent link">&para;</a></h2>
+<p>2025-10-22</p>
+<h2 id="problem-analysis">Problem Analysis<a class="headerlink" href="#problem-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="the-issue">The Issue<a class="headerlink" href="#the-issue" title="Permanent link">&para;</a></h3>
+<p><strong>Error</strong>: "Expected : or newline, got APOSTROPHE"
+<strong>Affected files</strong>: 24 files</p>
+<p><strong>Example failing code</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nl">90</span><span class="w"> </span><span class="vg">DG</span><span class="o">=</span><span class="il">360</span><span class="o">/</span><span class="vg">PI2</span><span class="w"> </span><span class="c1">&#39;2 pi radians in 360 degrees</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nl">100</span><span class="w"> </span><span class="vg">X</span><span class="o">=</span><span class="il">5</span><span class="o">:</span><span class="vg">Y</span><span class="o">=</span><span class="il">10</span><span class="w"> </span><span class="c1">&#39;Initialize variables</span>
+</code></pre></div></p>
+<p><strong>Root cause</strong>: The parser's <code>at_end_of_line()</code> function only checked for NEWLINE or EOF tokens, but didn't recognize that an APOSTROPHE (<code>'</code>) starts a comment and effectively ends the statement.</p>
+<h3 id="what-is-a-mid-statement-comment">What is a Mid-Statement Comment?<a class="headerlink" href="#what-is-a-mid-statement-comment" title="Permanent link">&para;</a></h3>
+<p>In MBASIC 5.21, comments can appear:
+1. <strong>At the beginning of a line</strong>: <code>10 'This is a comment</code>
+2. <strong>After statements</strong>: <code>20 X=5 'Initialize X</code>
+3. <strong>After colons</strong>: <code>30 X=5:Y=10 'Initialize both</code></p>
+<p>The apostrophe <code>'</code> is equivalent to REM and starts a comment that runs to the end of the line.</p>
+<hr />
+<h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">&para;</a></h2>
+<h3 id="file-modified">File Modified<a class="headerlink" href="#file-modified" title="Permanent link">&para;</a></h3>
+<p><strong>parser.py</strong> (line 105-113)</p>
+<h3 id="the-fix">The Fix<a class="headerlink" href="#the-fix" title="Permanent link">&para;</a></h3>
+<p>Changed <code>at_end_of_line()</code> to recognize APOSTROPHE as an end-of-statement marker:</p>
+<p><strong>Before</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">at_end_of_line</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if at end of logical line (NEWLINE or COLON or EOF)&quot;&quot;&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="k">return</span> <span class="n">token</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">TokenType</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">,</span> <span class="n">TokenType</span><span class="o">.</span><span class="n">EOF</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>After</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">at_end_of_line</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if at end of logical line (NEWLINE or APOSTROPHE or EOF)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="sd">    Note: APOSTROPHE starts a comment, which effectively ends the statement</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="k">return</span> <span class="n">token</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">TokenType</span><span class="o">.</span><span class="n">NEWLINE</span><span class="p">,</span> <span class="n">TokenType</span><span class="o">.</span><span class="n">EOF</span><span class="p">,</span> <span class="n">TokenType</span><span class="o">.</span><span class="n">APOSTROPHE</span><span class="p">)</span>
+</code></pre></div></p>
+<h3 id="why-this-works">Why This Works<a class="headerlink" href="#why-this-works" title="Permanent link">&para;</a></h3>
+<p>The <code>at_end_of_line()</code> function is called throughout the parser to check if a statement is complete. By adding <code>TokenType.APOSTROPHE</code> to the list of end-of-line markers, the parser now correctly recognizes that:</p>
+<ol>
+<li>When parsing a statement (like <code>X=5</code>), if it encounters an apostrophe, the statement is done</li>
+<li>The apostrophe token itself will be consumed by the comment parser</li>
+<li>No additional syntax is needed beyond this one-line change</li>
+</ol>
+<p><strong>Impact</strong>: This single change affects every statement parser in the codebase, automatically fixing:
+- Assignments: <code>X=5 'comment</code>
+- PRINT: <code>PRINT X 'comment</code>
+- GOTO: <code>GOTO 100 'comment</code>
+- FOR loops: <code>FOR I=1 TO 10 'comment</code>
+- Every other statement type</p>
+<hr />
+<h2 id="test-results">Test Results<a class="headerlink" href="#test-results" title="Permanent link">&para;</a></h2>
+<h3 id="before-implementation">Before Implementation<a class="headerlink" href="#before-implementation" title="Permanent link">&para;</a></h3>
+<p><strong>Corpus</strong>: 235 MBASIC-compatible files
+- <strong>Successfully parsed</strong>: 49 files (20.9%)
+- <strong>Parser errors</strong>: 186 files (79.1%)</p>
+<p><strong>APOSTROPHE errors</strong>: 24 files</p>
+<h3 id="after-implementation">After Implementation<a class="headerlink" href="#after-implementation" title="Permanent link">&para;</a></h3>
+<p><strong>Corpus</strong>: 235 MBASIC-compatible files
+- <strong>Successfully parsed</strong>: 53 files (22.6%) ✓ <strong>+4 files</strong>
+- <strong>Parser errors</strong>: 182 files (77.4%) ✓ <strong>-4 errors</strong></p>
+<p><strong>APOSTROPHE errors</strong>: 1 file ✓ <strong>-23 files (95.8% reduction)</strong></p>
+<p><strong>Improvement</strong>: <strong>+1.7% success rate</strong></p>
+<h3 id="error-reduction">Error Reduction<a class="headerlink" href="#error-reduction" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✅ APOSTROPHE errors: 24 → 1 file (<strong>95.8% eliminated</strong>)</li>
+<li>The remaining 1 file (entrbbs.bas) has a different issue: missing RESET statement</li>
+</ul>
+<hr />
+<h2 id="new-successfully-parsed-files">New Successfully Parsed Files<a class="headerlink" href="#new-successfully-parsed-files" title="Permanent link">&para;</a></h2>
+<p>4 additional files now parse successfully:</p>
+<ol>
+<li><strong>atten.bas</strong> - 82 statements, 613 tokens (Attenuator design program)</li>
+<li><strong>prime1.bas</strong> - 77 statements, 499 tokens (Prime number generator)</li>
+<li><strong>ykw1.bas</strong> - 40 statements, 554 tokens (Unknown application)</li>
+<li><strong>ykw2.bas</strong> - 36 statements, 548 tokens (Unknown application)</li>
+</ol>
+<p><strong>Total new statements</strong>: 235 additional statements now parse successfully</p>
+<hr />
+<h2 id="examples-of-what-now-works">Examples of What Now Works<a class="headerlink" href="#examples-of-what-now-works" title="Permanent link">&para;</a></h2>
+<h3 id="basic-mid-statement-comments">Basic Mid-Statement Comments<a class="headerlink" href="#basic-mid-statement-comments" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="o">=</span><span class="il">5</span><span class="w"> </span><span class="c1">&#39;Initialize X</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">Y</span><span class="o">=</span><span class="il">10</span><span class="w"> </span><span class="c1">&#39;Initialize Y</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">X</span><span class="o">+</span><span class="vg">Y</span><span class="w"> </span><span class="c1">&#39;Display sum</span>
+</code></pre></div>
+<h3 id="comments-after-multiple-statements">Comments After Multiple Statements<a class="headerlink" href="#comments-after-multiple-statements" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nl">100</span><span class="w"> </span><span class="vg">X</span><span class="o">=</span><span class="il">0</span><span class="o">:</span><span class="vg">Y</span><span class="o">=</span><span class="il">0</span><span class="o">:</span><span class="vg">Z</span><span class="o">=</span><span class="il">0</span><span class="w"> </span><span class="c1">&#39;Clear all variables</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nl">110</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="o">=</span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span><span class="o">:</span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="c1">&#39;Quick loop</span>
+</code></pre></div>
+<h3 id="comments-in-complex-expressions">Comments in Complex Expressions<a class="headerlink" href="#comments-in-complex-expressions" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nl">200</span><span class="w"> </span><span class="vg">DG</span><span class="o">=</span><span class="il">360</span><span class="o">/</span><span class="vg">PI2</span><span class="w"> </span><span class="c1">&#39;2 pi radians in 360 degrees</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nl">210</span><span class="w"> </span><span class="vg">R</span><span class="o">=</span><span class="kr">SQR</span><span class="p">(</span><span class="vg">X</span><span class="o">*</span><span class="vg">X</span><span class="o">+</span><span class="vg">Y</span><span class="o">*</span><span class="vg">Y</span><span class="p">)</span><span class="w"> </span><span class="c1">&#39;Calculate radius</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nl">220</span><span class="w"> </span><span class="vg">A</span><span class="o">=</span><span class="kr">ATN</span><span class="p">(</span><span class="vg">Y</span><span class="o">/</span><span class="vg">X</span><span class="p">)</span><span class="o">*</span><span class="vg">DG</span><span class="w"> </span><span class="c1">&#39;Calculate angle in degrees</span>
+</code></pre></div>
+<h3 id="comments-with-string-literals">Comments with String Literals<a class="headerlink" href="#comments-with-string-literals" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nl">300</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Hello&quot;</span><span class="p">;</span><span class="w"> </span><span class="kr">NAME</span><span class="err">$</span><span class="w"> </span><span class="c1">&#39;Greet user</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nl">310</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="s2">&quot;Enter value&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="c1">&#39;Get input</span>
+</code></pre></div>
+<h3 id="real-example-from-attenbas">Real Example from atten.bas<a class="headerlink" href="#real-example-from-attenbas" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nl">90</span><span class="w"> </span><span class="vg">DG</span><span class="o">=</span><span class="il">360</span><span class="o">/</span><span class="vg">PI2</span><span class="w"> </span><span class="c1">&#39;2 pi radians in 360 degrees</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nl">100</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">1000</span><span class="w"> </span><span class="c1">&#39;Get user input</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nl">110</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="kr">TYPE</span><span class="err">$</span><span class="o">=</span><span class="s2">&quot;T&quot;</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">2000</span><span class="w"> </span><span class="c1">&#39;T-pad design</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="nl">120</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="kr">TYPE</span><span class="err">$</span><span class="o">=</span><span class="s2">&quot;P&quot;</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">3000</span><span class="w"> </span><span class="c1">&#39;Pi-pad design</span>
+</code></pre></div>
+<hr />
+<h2 id="statement-statistics">Statement Statistics<a class="headerlink" href="#statement-statistics" title="Permanent link">&para;</a></h2>
+<h3 id="before-fix-49-files-5739-statements">Before Fix (49 files, 5,739 statements)<a class="headerlink" href="#before-fix-49-files-5739-statements" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Statement Type</th>
+<th>Count</th>
+<th>Percentage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LET</td>
+<td>1482</td>
+<td>25.8%</td>
+</tr>
+<tr>
+<td>PRINT</td>
+<td>1223</td>
+<td>21.3%</td>
+</tr>
+<tr>
+<td>REM</td>
+<td>687</td>
+<td>12.0%</td>
+</tr>
+<tr>
+<td>IF</td>
+<td>558</td>
+<td>9.7%</td>
+</tr>
+<tr>
+<td>GOSUB</td>
+<td>519</td>
+<td>9.0%</td>
+</tr>
+<tr>
+<td>Others</td>
+<td>1270</td>
+<td>22.1%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="after-fix-53-files-5974-statements">After Fix (53 files, 5,974 statements)<a class="headerlink" href="#after-fix-53-files-5974-statements" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Statement Type</th>
+<th>Count</th>
+<th>Percentage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LET</td>
+<td>1525</td>
+<td>25.5%</td>
+</tr>
+<tr>
+<td>PRINT</td>
+<td>1251</td>
+<td>20.9%</td>
+</tr>
+<tr>
+<td>REM</td>
+<td>707</td>
+<td>11.8%</td>
+</tr>
+<tr>
+<td>IF</td>
+<td>574</td>
+<td>9.6%</td>
+</tr>
+<tr>
+<td>GOSUB</td>
+<td>534</td>
+<td>8.9%</td>
+</tr>
+<tr>
+<td>Others</td>
+<td>1383</td>
+<td>23.2%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>New statements parsed</strong>: 235 (+4.1%)</p>
+<hr />
+<h2 id="remaining-apostrophe-error">Remaining APOSTROPHE Error<a class="headerlink" href="#remaining-apostrophe-error" title="Permanent link">&para;</a></h2>
+<h3 id="the-last-file-entrbbsbas">The Last File: entrbbs.bas<a class="headerlink" href="#the-last-file-entrbbsbas" title="Permanent link">&para;</a></h3>
+<p><strong>Error</strong>: "Expected EQUAL, got APOSTROPHE"
+<strong>Line</strong>: <code>335 RESET '←----- In case disk was changed between calls</code></p>
+<p><strong>Issue</strong>: RESET is not a recognized statement, so the parser treats it as an identifier and expects an assignment (<code>RESET = ...</code>), but finds a comment instead.</p>
+<p><strong>This is NOT a mid-statement comment issue</strong> - it's a missing statement (RESET).</p>
+<h3 id="why-this-doesnt-count">Why This Doesn't Count<a class="headerlink" href="#why-this-doesnt-count" title="Permanent link">&para;</a></h3>
+<p>The fix successfully handles all 24 cases of mid-statement comments in the proper sense. The entrbbs.bas error is a different category:
+- Not a mid-statement comment problem
+- It's a missing statement implementation (RESET)
+- Would fail even without the comment</p>
+<hr />
+<h2 id="technical-notes">Technical Notes<a class="headerlink" href="#technical-notes" title="Permanent link">&para;</a></h2>
+<h3 id="design-philosophy">Design Philosophy<a class="headerlink" href="#design-philosophy" title="Permanent link">&para;</a></h3>
+<p>This is an excellent example of <strong>parser design done right</strong>:</p>
+<ol>
+<li><strong>Single point of change</strong>: One function (<code>at_end_of_line()</code>) controls end-of-statement detection</li>
+<li><strong>Cascading benefit</strong>: All statement parsers automatically benefit</li>
+<li><strong>No regression risk</strong>: Adding a valid end-of-line marker can't break existing code</li>
+<li><strong>Minimal code</strong>: 1 line changed (added <code>TokenType.APOSTROPHE</code>)</li>
+</ol>
+<h3 id="why-apostrophe-is-like-newline">Why APOSTROPHE is Like NEWLINE<a class="headerlink" href="#why-apostrophe-is-like-newline" title="Permanent link">&para;</a></h3>
+<p>Both tokens serve the same purpose from a parsing perspective:
+- <strong>NEWLINE</strong>: Physical end of line
+- <strong>APOSTROPHE</strong>: Logical end of statement (rest of line is comment)</p>
+<p>From the parser's view, once it sees either token, it's done with the current statement.</p>
+<h3 id="comment-processing">Comment Processing<a class="headerlink" href="#comment-processing" title="Permanent link">&para;</a></h3>
+<p>The apostrophe comment itself is still processed by <code>parse_remark()</code>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># In parse_statement():</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">TokenType</span><span class="o">.</span><span class="n">REM</span><span class="p">,</span> <span class="n">TokenType</span><span class="o">.</span><span class="n">REMARK</span><span class="p">,</span> <span class="n">TokenType</span><span class="o">.</span><span class="n">APOSTROPHE</span><span class="p">):</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_remark</span><span class="p">()</span>
+</code></pre></div></p>
+<p>The fix ensures that statements <em>end</em> when they hit an apostrophe, allowing the comment parser to take over.</p>
+<hr />
+<h2 id="impact-analysis">Impact Analysis<a class="headerlink" href="#impact-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="code-changes">Code Changes<a class="headerlink" href="#code-changes" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Lines modified</strong>: 1 line</li>
+<li><strong>Lines added</strong>: 2 lines (comment expansion)</li>
+<li><strong>Total change</strong>: 3 lines</li>
+</ul>
+<p><strong>Effort vs. Impact Ratio</strong>: Extremely high! 3 lines → +4 files (+1.7%)</p>
+<h3 id="comparison-to-other-improvements">Comparison to Other Improvements<a class="headerlink" href="#comparison-to-other-improvements" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Files Added</th>
+<th>Lines Changed</th>
+<th>Efficiency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>File I/O</td>
+<td>+0</td>
+<td>~350</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>DEF FN</td>
+<td>+1</td>
+<td>~70</td>
+<td>1.4% per 70 lines</td>
+</tr>
+<tr>
+<td>CALL</td>
+<td>+3</td>
+<td>~67</td>
+<td>4.5% per 67 lines</td>
+</tr>
+<tr>
+<td>Array fix</td>
+<td>+8</td>
+<td>~49</td>
+<td>16.3% per 49 lines</td>
+</tr>
+<tr>
+<td>INKEY$ + LPRINT</td>
+<td>+8</td>
+<td>~59</td>
+<td>13.6% per 59 lines</td>
+</tr>
+<tr>
+<td><strong>Mid-statement comments</strong></td>
+<td><strong>+4</strong></td>
+<td><strong>~3</strong></td>
+<td><strong>133% per 3 lines</strong> ✓</td>
+</tr>
+</tbody>
+</table>
+<p><strong>This is the most efficient fix yet!</strong></p>
+<hr />
+<h2 id="session-progress-summary">Session Progress Summary<a class="headerlink" href="#session-progress-summary" title="Permanent link">&para;</a></h2>
+<h3 id="timeline-cleaned-corpus">Timeline (Cleaned Corpus)<a class="headerlink" href="#timeline-cleaned-corpus" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Implementation</th>
+<th>Success Rate</th>
+<th>Files</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Corpus cleaned</td>
+<td>17.4%</td>
+<td>41</td>
+<td>baseline</td>
+</tr>
+<tr>
+<td>INKEY$ + LPRINT</td>
+<td>20.9%</td>
+<td>49</td>
+<td>+8</td>
+</tr>
+<tr>
+<td><strong>Mid-statement comments</strong></td>
+<td><strong>22.6%</strong></td>
+<td><strong>53</strong></td>
+<td><strong>+4</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total improvement on cleaned corpus</strong>: 17.4% → 22.6% (<strong>+5.2%</strong>)
+<strong>Total files</strong>: 41 → 53 (<strong>+12 files, +29.3%</strong>)</p>
+<h3 id="full-session-from-start">Full Session (From Start)<a class="headerlink" href="#full-session-from-start" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Success Rate</th>
+<th>Files</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Session start</td>
+<td>7.8%</td>
+<td>29</td>
+<td>Mixed corpus (373 files)</td>
+</tr>
+<tr>
+<td>Array fix</td>
+<td>11.0%</td>
+<td>41</td>
+<td>Mixed corpus</td>
+</tr>
+<tr>
+<td>Corpus cleaned</td>
+<td>17.4%</td>
+<td>41</td>
+<td>Removed 138 non-MBASIC files</td>
+</tr>
+<tr>
+<td>INKEY$ + LPRINT</td>
+<td>20.9%</td>
+<td>49</td>
+<td>Clean corpus (235 files)</td>
+</tr>
+<tr>
+<td><strong>Mid-statement comments</strong></td>
+<td><strong>22.6%</strong></td>
+<td><strong>53</strong></td>
+<td><strong>Current</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total improvement</strong>: 29 → 53 files (<strong>+24 files, +82.8%</strong>)</p>
+<hr />
+<h2 id="top-remaining-errors">Top Remaining Errors<a class="headerlink" href="#top-remaining-errors" title="Permanent link">&para;</a></h2>
+<p>After this fix, the top parser errors are:</p>
+<ol>
+<li><strong>or newline, got IDENTIFIER (24 files)</strong> - Incomplete statement parsing</li>
+<li><strong>HASH (17 files)</strong> - File I/O file numbers</li>
+<li><strong>Expected EQUAL, got NEWLINE (12 files)</strong> - LET statement edge cases</li>
+<li><strong>RUN (11 files)</strong> - RUN statement not implemented</li>
+<li><strong>BACKSLASH (10 files)</strong> - Line continuation</li>
+</ol>
+<hr />
+<h2 id="real-world-usage-examples">Real-World Usage Examples<a class="headerlink" href="#real-world-usage-examples" title="Permanent link">&para;</a></h2>
+<h3 id="from-attenbas-attenuator-design">From atten.bas (Attenuator Design)<a class="headerlink" href="#from-attenbas-attenuator-design" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nl">10</span><span class="w">  </span><span class="c1">&#39;ATTENUATOR DESIGN PROGRAM</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nl">90</span><span class="w">  </span><span class="vg">DG</span><span class="o">=</span><span class="il">360</span><span class="o">/</span><span class="vg">PI2</span><span class="w"> </span><span class="c1">&#39;2 pi radians in 360 degrees</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nl">100</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">1000</span><span class="w"> </span><span class="c1">&#39;Get user input</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nl">110</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="kr">TYPE</span><span class="err">$</span><span class="o">=</span><span class="s2">&quot;T&quot;</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">2000</span><span class="w"> </span><span class="c1">&#39;T-pad design</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nl">120</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="kr">TYPE</span><span class="err">$</span><span class="o">=</span><span class="s2">&quot;P&quot;</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">3000</span><span class="w"> </span><span class="c1">&#39;Pi-pad design</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="nl">130</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="kr">TYPE</span><span class="err">$</span><span class="o">=</span><span class="s2">&quot;M&quot;</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">4000</span><span class="w"> </span><span class="c1">&#39;Minimum loss design</span>
+</code></pre></div>
+<h3 id="from-prime1bas-prime-numbers">From prime1.bas (Prime Numbers)<a class="headerlink" href="#from-prime1bas-prime-numbers" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nl">100</span><span class="w"> </span><span class="vg">MAX</span><span class="o">=</span><span class="il">1000</span><span class="w"> </span><span class="c1">&#39;Find primes up to 1000</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nl">110</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">FLAGS</span><span class="p">(</span><span class="vg">MAX</span><span class="p">)</span><span class="w"> </span><span class="c1">&#39;Array to mark composites</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nl">120</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="o">=</span><span class="il">2</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="vg">MAX</span><span class="w"> </span><span class="c1">&#39;Check each number</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="nl">130</span><span class="w">   </span><span class="kr">IF</span><span class="w"> </span><span class="vg">FLAGS</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span><span class="o">=</span><span class="il">0</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="c1">&#39;Print if prime</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="nl">140</span><span class="w">   </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">J</span><span class="o">=</span><span class="vg">I</span><span class="o">*</span><span class="il">2</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="vg">MAX</span><span class="w"> </span><span class="k">STEP</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="c1">&#39;Mark multiples</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="nl">150</span><span class="w">     </span><span class="vg">FLAGS</span><span class="p">(</span><span class="vg">J</span><span class="p">)</span><span class="o">=</span><span class="il">1</span><span class="w"> </span><span class="c1">&#39;Not prime</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="nl">160</span><span class="w">   </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">J</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="nl">170</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+</code></pre></div>
+<p>These are typical BASIC programs from the 1980s with inline documentation.</p>
+<hr />
+<h2 id="conclusions">Conclusions<a class="headerlink" href="#conclusions" title="Permanent link">&para;</a></h2>
+<h3 id="key-achievements">Key Achievements<a class="headerlink" href="#key-achievements" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>22.6% success rate reached</strong> - Up from 20.9%</li>
+<li><strong>95.8% of APOSTROPHE errors eliminated</strong> - 24 → 1 file</li>
+<li><strong>Most efficient fix yet</strong> - 3 lines → +4 files</li>
+<li><strong>Zero regressions</strong> - All previous files still parse</li>
+<li><strong>Universal benefit</strong> - All statement types automatically fixed</li>
+</ol>
+<h3 id="why-this-works-so-well">Why This Works So Well<a class="headerlink" href="#why-this-works-so-well" title="Permanent link">&para;</a></h3>
+<p>Mid-statement comments are <strong>extremely common</strong> in real BASIC code:
+- Used for inline documentation
+- Explains complex calculations
+- Marks important sections
+- CP/M-era standard practice</p>
+<p>By fixing this one small function, we enabled parsing of many well-documented programs.</p>
+<h3 id="design-lesson">Design Lesson<a class="headerlink" href="#design-lesson" title="Permanent link">&para;</a></h3>
+<p>This demonstrates the power of <strong>abstraction in parser design</strong>:
+- Single function (<code>at_end_of_line()</code>) used everywhere
+- One-line change cascades to entire codebase
+- No need to modify individual statement parsers
+- Clean, maintainable solution</p>
+<p><strong>The best fixes are often the simplest.</strong></p>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<p>Based on remaining error frequency:</p>
+<h3 id="priority-1-or-newline-got-identifier-24-files">Priority 1: or newline, got IDENTIFIER (24 files)<a class="headerlink" href="#priority-1-or-newline-got-identifier-24-files" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Incomplete statement parsing</li>
+<li>Various edge cases</li>
+<li>Medium complexity</li>
+</ul>
+<h3 id="priority-2-hash-file-io-17-files">Priority 2: HASH file I/O (17 files)<a class="headerlink" href="#priority-2-hash-file-io-17-files" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>PRINT #1, ...</code> syntax</li>
+<li>File number parsing</li>
+<li>Medium complexity</li>
+</ul>
+<h3 id="priority-3-run-statement-11-files">Priority 3: RUN statement (11 files)<a class="headerlink" href="#priority-3-run-statement-11-files" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Simple statement</li>
+<li>Low complexity</li>
+<li>High impact per file</li>
+</ul>
+<p><strong>Estimated</strong>: Could reach 25% with 1-2 more features</p>
+<hr />
+<h2 id="code-quality">Code Quality<a class="headerlink" href="#code-quality" title="Permanent link">&para;</a></h2>
+<p>✅ <strong>Minimal change</strong> - Only 3 lines modified
+✅ <strong>Well-tested</strong> - 53 programs parse successfully
+✅ <strong>No regressions</strong> - All previous tests pass
+✅ <strong>Specification compliant</strong> - MBASIC 5.21 standard
+✅ <strong>Documented</strong> - Clear comments and analysis</p>
+<hr />
+<p><strong>Implementation Date</strong>: 2025-10-22
+<strong>Files Modified</strong>: 1 (parser.py)
+<strong>Lines Changed</strong>: 3
+<strong>Success Rate Improvement</strong>: 20.9% → 22.6% (+1.7%)
+<strong>Files Added</strong>: 4 (+8.2%)
+<strong>Errors Eliminated</strong>: 23 APOSTROPHE errors (95.8%)
+<strong>Efficiency</strong>: 133% per line changed
+<strong>Status</strong>: ✅ Complete and Tested</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

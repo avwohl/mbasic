@@ -1,0 +1,1484 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/history/planning/PHASE4_IMPROVEMENTS_2025-10-22/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Phase 4 Parser Improvements - WRITE# Statement Fix - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#phase-4-parser-improvements-write-statement-fix" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Phase 4 Parser Improvements - WRITE# Statement Fix
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../dev/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-identified" class="md-nav__link">
+    <span class="md-ellipsis">
+      Issue Identified
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Issue Identified">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#problem-write1-tokenization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problem: WRITE#1 Tokenization
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Solution
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added-write-to-file_io_keywords" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added WRITE# to FILE_IO_KEYWORDS
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#files-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files Fixed
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Files Fixed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-sfamovebas" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. sfamove.bas
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-sfaobdesbas" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. sfaobdes.bas
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-sfavocbas" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. sfavoc.bas
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#still-failing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Still Failing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Still Failing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#xformerbas" class="md-nav__link">
+    <span class="md-ellipsis">
+      xformer.bas
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Impact Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Impact Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Statistics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      Session Progress
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-this-fix-had-high-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why This Fix Had High Impact
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remaining-failures-41-files-255" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remaining Failures: 41 Files (25.5%)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Remaining Failures: 41 Files (25.5%)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#updated-error-counts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Updated Error Counts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      Categories
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technical-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      Technical Details
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technical Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file_io_keywords-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      FILE_IO_KEYWORDS Pattern
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lessons-learned" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lessons Learned
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Lessons Learned">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#systematic-error-analysis-pays-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      Systematic Error Analysis Pays Off
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lexer-issues-can-masquerade-as-parser-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lexer Issues Can Masquerade as Parser Errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#single-character-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Single Character Matters
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Next Steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#high-priority-investigations" class="md-nav__link">
+    <span class="md-ellipsis">
+      High-Priority Investigations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#potential-quick-wins" class="md-nav__link">
+    <span class="md-ellipsis">
+      Potential Quick Wins
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/history/planning/PHASE4_IMPROVEMENTS_2025-10-22.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="phase-4-parser-improvements-write-statement-fix">Phase 4 Parser Improvements - WRITE# Statement Fix<a class="headerlink" href="#phase-4-parser-improvements-write-statement-fix" title="Permanent link">&para;</a></h1>
+<p><strong>Date</strong>: 2025-10-22
+<strong>Action</strong>: Fixed WRITE# tokenization issue</p>
+<hr />
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<p><strong>Files fixed</strong>: 3 (sfamove.bas, sfaobdes.bas, sfavoc.bas)
+<strong>Before</strong>: 117/161 parsing (72.7%)
+<strong>After</strong>: 120/161 parsing (74.5%)
+<strong>Improvement</strong>: +1.8 percentage points</p>
+<hr />
+<h2 id="issue-identified">Issue Identified<a class="headerlink" href="#issue-identified" title="Permanent link">&para;</a></h2>
+<h3 id="problem-write1-tokenization">Problem: <a class="magiclink magiclink-github magiclink-issue" href="https://github.com/avwohl/WRITE/issues/1" title="GitHub Issue: avwohl/WRITE #1">WRITE#1</a> Tokenization<a class="headerlink" href="#problem-write1-tokenization" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom</strong>: Files using <code>WRITE#1,X,Y</code> were failing with "Expected EQUAL, got NUMBER"</p>
+<p><strong>Root Cause</strong>: The lexer was tokenizing <code>WRITE#</code> as a single IDENTIFIER instead of <code>WRITE</code> + <code>#</code></p>
+<p><strong>Why</strong>: The lexer uses longest-match for identifiers, and <code>#</code> is a valid type suffix character in BASIC (for double-precision: <code>X#</code>). So <code>WRITE#</code> looked like an identifier.</p>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kr">WRITE</span><span class="err">#</span><span class="il">1</span><span class="p">,</span><span class="vg">X</span><span class="p">,</span><span class="vg">N1</span><span class="p">,</span><span class="vg">N2</span><span class="p">,</span><span class="vg">N3</span><span class="w">     </span><span class="c1">&#39; Should be: WRITE + # + 1 + ...</span>
+</code></pre></div></p>
+<p>Lexer was producing:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>IDENTIFIER(&#39;WRITE#&#39;), NUMBER(1), COMMA, ...
+</code></pre></div></p>
+<p>Should be:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>WRITE, HASH, NUMBER(1), COMMA, ...
+</code></pre></div></p>
+<hr />
+<h2 id="solution">Solution<a class="headerlink" href="#solution" title="Permanent link">&para;</a></h2>
+<h3 id="added-write-to-file_io_keywords">Added WRITE# to FILE_IO_KEYWORDS<a class="headerlink" href="#added-write-to-file_io_keywords" title="Permanent link">&para;</a></h3>
+<p><strong>File</strong>: <code>src/lexer.py</code> line 229</p>
+<p><strong>Change</strong>: Added <code>'WRITE#': TokenType.WRITE</code> to the FILE_IO_KEYWORDS dictionary</p>
+<p><strong>Code</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">FILE_IO_KEYWORDS</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="s1">&#39;PRINT#&#39;</span><span class="p">:</span> <span class="n">TokenType</span><span class="o">.</span><span class="n">PRINT</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="s1">&#39;LPRINT#&#39;</span><span class="p">:</span> <span class="n">TokenType</span><span class="o">.</span><span class="n">LPRINT</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="s1">&#39;INPUT#&#39;</span><span class="p">:</span> <span class="n">TokenType</span><span class="o">.</span><span class="n">INPUT</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="s1">&#39;WRITE#&#39;</span><span class="p">:</span> <span class="n">TokenType</span><span class="o">.</span><span class="n">WRITE</span><span class="p">,</span>      <span class="c1"># &lt;-- ADDED</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="s1">&#39;FIELD#&#39;</span><span class="p">:</span> <span class="n">TokenType</span><span class="o">.</span><span class="n">FIELD</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="s1">&#39;GET#&#39;</span><span class="p">:</span> <span class="n">TokenType</span><span class="o">.</span><span class="n">GET</span><span class="p">,</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="s1">&#39;PUT#&#39;</span><span class="p">:</span> <span class="n">TokenType</span><span class="o">.</span><span class="n">PUT</span><span class="p">,</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="s1">&#39;CLOSE#&#39;</span><span class="p">:</span> <span class="n">TokenType</span><span class="o">.</span><span class="n">CLOSE</span><span class="p">,</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>How it works</strong>: When the lexer sees <code>WRITE#</code>, it:
+1. Recognizes it as a special file I/O keyword
+2. Returns <code>WRITE</code> token
+3. Puts the <code>#</code> back into the input stream
+4. Next token will be <code>HASH</code></p>
+<hr />
+<h2 id="files-fixed">Files Fixed<a class="headerlink" href="#files-fixed" title="Permanent link">&para;</a></h2>
+<h3 id="1-sfamovebas">1. sfamove.bas<a class="headerlink" href="#1-sfamovebas" title="Permanent link">&para;</a></h3>
+<p><strong>Purpose</strong>: Data file writer
+<strong>Lines</strong>: 5 lines
+<strong>Error was</strong>: Line 3 - <code>WRITE#1,X,N1,N2,N3,N4,N5,N6</code>
+<strong>Now parses</strong>: Successfully</p>
+<h3 id="2-sfaobdesbas">2. sfaobdes.bas<a class="headerlink" href="#2-sfaobdesbas" title="Permanent link">&para;</a></h3>
+<p><strong>Purpose</strong>: Object description data generator
+<strong>Lines</strong>: 4 lines (+ large DATA statements)
+<strong>Error was</strong>: Line 2 - <code>WRITE#1,X,OB$</code>
+<strong>Now parses</strong>: Successfully</p>
+<h3 id="3-sfavocbas">3. sfavoc.bas<a class="headerlink" href="#3-sfavocbas" title="Permanent link">&para;</a></h3>
+<p><strong>Purpose</strong>: Vocabulary data generator
+<strong>Lines</strong>: 4 lines (+ large DATA statements)
+<strong>Error was</strong>: Line 2 - <code>WRITE#1,X,OB$</code>
+<strong>Now parses</strong>: Successfully</p>
+<hr />
+<h2 id="still-failing">Still Failing<a class="headerlink" href="#still-failing" title="Permanent link">&para;</a></h2>
+<h3 id="xformerbas">xformer.bas<a class="headerlink" href="#xformerbas" title="Permanent link">&para;</a></h3>
+<p><strong>Current error</strong>: Line 300, column 10: Expected EQUAL, got NUMBER</p>
+<p><strong>Investigation</strong>: Line 300 is <code>954 DATR 1,.994,.0353,"R-103"</code></p>
+<p><strong>Issue</strong>: <code>DATR</code> appears to be a typo or custom statement (should be <code>DATA</code> or <code>READ</code>?)</p>
+<p><strong>Status</strong>: Likely a syntax error - should investigate or move to bad_syntax/</p>
+<hr />
+<h2 id="impact-analysis">Impact Analysis<a class="headerlink" href="#impact-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="code-statistics">Code Statistics<a class="headerlink" href="#code-statistics" title="Permanent link">&para;</a></h3>
+<p><strong>Successfully parsed programs now contain</strong>:
+- 14,586 lines of code (+28)
+- 17,614 statements (+48)
+- 149,841 tokens (+1,715)</p>
+<h3 id="session-progress">Session Progress<a class="headerlink" href="#session-progress" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Files</th>
+<th>Success Rate</th>
+<th>Improvement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Session Start</td>
+<td>113/163</td>
+<td>69.3%</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Phase 1 (Quick Wins)</td>
+<td>116/163</td>
+<td>71.2%</td>
+<td>+1.9%</td>
+</tr>
+<tr>
+<td>Phase 2 (Cleanup)</td>
+<td>116/161</td>
+<td>72.0%</td>
+<td>+0.8%</td>
+</tr>
+<tr>
+<td>Phase 3 (REM/Semicolon)</td>
+<td>117/161</td>
+<td>72.7%</td>
+<td>+0.7%</td>
+</tr>
+<tr>
+<td>Phase 4 (WRITE#)</td>
+<td>120/161</td>
+<td>74.5%</td>
+<td>+1.8%</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>120/161</strong></td>
+<td><strong>74.5%</strong></td>
+<td><strong>+5.2%</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="why-this-fix-had-high-impact">Why This Fix Had High Impact<a class="headerlink" href="#why-this-fix-had-high-impact" title="Permanent link">&para;</a></h2>
+<p>The WRITE# issue affected <strong>3 files</strong> with a <strong>single-line fix</strong> because:</p>
+<ol>
+<li><strong>Common pattern</strong>: All three files were data generators using WRITE# to output to files</li>
+<li><strong>Early failure</strong>: The error occurred very early (lines 2-3), preventing the entire file from parsing</li>
+<li><strong>Simple fix</strong>: Just adding one entry to a dictionary</li>
+</ol>
+<p>This demonstrates the value of systematic error analysis - finding common patterns can fix multiple files at once.</p>
+<hr />
+<h2 id="remaining-failures-41-files-255">Remaining Failures: 41 Files (25.5%)<a class="headerlink" href="#remaining-failures-41-files-255" title="Permanent link">&para;</a></h2>
+<h3 id="updated-error-counts">Updated Error Counts<a class="headerlink" href="#updated-error-counts" title="Permanent link">&para;</a></h3>
+<p>Top error types after Phase 4:
+- Expected EQUAL, got IDENTIFIER: 4 files
+- Expected THEN or GOTO after IF condition: 4 files
+- Expected EQUAL, got COLON: 2 files
+- Unexpected token in expression: NEWLINE: 2 files
+- Various other: 29 files</p>
+<h3 id="categories">Categories<a class="headerlink" href="#categories" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Complex IF conditions</strong> (4 files)</li>
+<li>Long/complex IF statements</li>
+<li>
+<p>May be parser limitations</p>
+</li>
+<li>
+<p><strong>Expected EQUAL errors</strong> (6 files)</p>
+</li>
+<li>Complex statement patterns</li>
+<li>
+<p>Possible syntax errors</p>
+</li>
+<li>
+<p><strong>Expression syntax</strong> (4 files)</p>
+</li>
+<li>Keywords in expressions</li>
+<li>
+<p>Expression parsing edge cases</p>
+</li>
+<li>
+<p><strong>Statement syntax</strong> (5 files)</p>
+</li>
+<li>Complex continuation</li>
+<li>
+<p>Edge cases</p>
+</li>
+<li>
+<p><strong>Other</strong> (22 files)</p>
+</li>
+<li>Various unique issues</li>
+<li>Many likely syntax errors</li>
+</ol>
+<hr />
+<h2 id="technical-details">Technical Details<a class="headerlink" href="#technical-details" title="Permanent link">&para;</a></h2>
+<h3 id="file_io_keywords-pattern">FILE_IO_KEYWORDS Pattern<a class="headerlink" href="#file_io_keywords-pattern" title="Permanent link">&para;</a></h3>
+<p>The lexer maintains a special list of keywords that can appear with <code>#</code> directly attached (no space):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kr">PRINT</span><span class="err">#</span><span class="il">1</span><span class="p">,</span><span class="vg">X</span><span class="w">     </span><span class="c1">&#39; Valid MBASIC syntax</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kr">INPUT</span><span class="err">#</span><span class="il">2</span><span class="p">,</span><span class="vg">A$</span><span class="w">    </span><span class="c1">&#39; Valid MBASIC syntax</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kr">WRITE</span><span class="err">#</span><span class="il">1</span><span class="p">,</span><span class="vg">A</span><span class="p">,</span><span class="vg">B</span><span class="w">   </span><span class="c1">&#39; Valid MBASIC syntax</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="kr">CLOSE</span><span class="err">#</span><span class="il">1</span><span class="w">       </span><span class="c1">&#39; Valid MBASIC syntax</span>
+</code></pre></div>
+<p>Without this special handling, these would be parsed as:
+- <code>PRINT#</code> (identifier with type suffix)
+- <code>1</code> (number)
+- Confusion ensues</p>
+<p>With special handling:
+- <code>PRINT</code> (keyword)
+- <code>#</code> (hash/file number indicator)
+- <code>1</code> (file number expression)
+- Parser happy!</p>
+<hr />
+<h2 id="lessons-learned">Lessons Learned<a class="headerlink" href="#lessons-learned" title="Permanent link">&para;</a></h2>
+<h3 id="systematic-error-analysis-pays-off">Systematic Error Analysis Pays Off<a class="headerlink" href="#systematic-error-analysis-pays-off" title="Permanent link">&para;</a></h3>
+<p>By grouping errors by pattern ("Expected EQUAL, got NUMBER" appeared 4 times), we identified that all 4 files had the same root cause. This is more efficient than investigating files one by one.</p>
+<h3 id="lexer-issues-can-masquerade-as-parser-errors">Lexer Issues Can Masquerade as Parser Errors<a class="headerlink" href="#lexer-issues-can-masquerade-as-parser-errors" title="Permanent link">&para;</a></h3>
+<p>The error message was "Expected EQUAL, got NUMBER" which sounds like a parser issue. But the real problem was in the lexer - it wasn't tokenizing the input correctly.</p>
+<h3 id="single-character-matters">Single Character Matters<a class="headerlink" href="#single-character-matters" title="Permanent link">&para;</a></h3>
+<p>The difference between <code>WRITE</code> and <code>WRITE#</code> is just one character (<code>#</code>), but it completely changes the tokenization. MBASIC's design allows <code>#</code> as both:
+- Type suffix for double-precision variables: <code>X#</code>
+- File number indicator: <code>PRINT#1</code></p>
+<p>This requires special handling in the lexer.</p>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<h3 id="high-priority-investigations">High-Priority Investigations<a class="headerlink" href="#high-priority-investigations" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Complex IF conditions</strong> (4 files)</li>
+<li>May need parser improvements</li>
+<li>
+<p>Or may be syntax errors</p>
+</li>
+<li>
+<p><strong>Remaining EQUAL errors</strong> (6 files)</p>
+</li>
+<li>Check for similar tokenization issues</li>
+<li>
+<p>Identify syntax errors</p>
+</li>
+<li>
+<p><strong>Expression parsing</strong> (4 files)</p>
+</li>
+<li>Keywords appearing where expressions expected</li>
+<li>May need better error recovery</li>
+</ol>
+<h3 id="potential-quick-wins">Potential Quick Wins<a class="headerlink" href="#potential-quick-wins" title="Permanent link">&para;</a></h3>
+<p>Many remaining files may have <strong>actual syntax errors</strong> that should be moved to <code>bad_syntax/</code>:
+- Typos like <code>DATR</code> instead of <code>DATA</code>
+- Concatenated keywords <code>CLEAR1000</code>
+- Invalid statement structures</p>
+<p>A sweep through remaining failures to identify obvious syntax errors could improve the "clean corpus" percentage significantly.</p>
+<hr />
+<h2 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h2>
+<p>✓ <a class="magiclink magiclink-github magiclink-issue" href="https://github.com/avwohl/WRITE/issues/1" title="GitHub Issue: avwohl/WRITE #1">WRITE#1</a> syntax now works correctly
+✓ sfamove.bas parses (5 lines)
+✓ sfaobdes.bas parses (large DATA file)
+✓ sfavoc.bas parses (large DATA file)
+✓ All existing tests still pass</p>
+<hr />
+<h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
+<p>Phase 4 achieved a <strong>1.8% improvement</strong> by fixing a single tokenization issue affecting WRITE# statements. This demonstrates the value of:
+- Systematic error pattern analysis
+- Understanding both lexer and parser behavior
+- Targeting high-frequency error patterns</p>
+<p>The parser has now reached <strong>74.5% success rate</strong>, up from 69.3% at session start. With 41 files remaining, we're approaching the point where most remaining failures are likely actual syntax errors rather than parser limitations.</p>
+<p>Total session improvement: <strong>+5.2 percentage points</strong> (+7 files parsing)</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

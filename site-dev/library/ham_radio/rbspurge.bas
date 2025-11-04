@@ -1,0 +1,103 @@
+100 DEFINT A-Z
+120 '
+140 VERS$="vers 1.0"
+160 '                          PURGE.BAS
+180 '                   Originally RBSUTL22.BSQ
+200 '                        BY Ron Fowler
+220 '
+240 ' Edited by Wayne Hammerly, LAUREL (Md)  RCPM/RBBS (301) 953-3753
+260 '
+280 ' 3/27/82   This program was originally written as a full utility
+300 ' for the RBBS message system.  Since I use the Purge feature 90%
+320 ' of the time,  and then use  a submit file,  I  edited this fine
+340 ' program down to the  'bare bones'  for that single purpose. See
+360 ' PURGE.DOC for further details.             --Wayne M. Hammerly
+380 '
+400 PRINT:PRINT:PRINT "           RBBS PURGE UTILITY ";VERS$
+420 DIM M(200,2)
+440 SEP$="==============================================="
+460 CRLF$=CHR$(13)+CHR$(10)
+480 PRINT SEP$
+500 PURGED=0:BACKUP=0
+520 GOSUB 1760                                      ' build msg index
+540 N$="SYSOP":O$=""
+560 MSGS=1:CALLS=MSGS+1:MNUM=CALLS+1
+580 PRINT:PRINT
+600 GOSUB 660
+620 '                                                 end of program
+640 PRINT:PRINT "++DONE++":END
+660 '                                                 purge killed messages
+680 '                                                 from files
+700 IF PURGED THEN PRINT "Files already purged.":RETURN
+720 DATE$="TODAY"
+740 OPEN "R",1,DATE$+".ARC"
+760 IF LOF(1)>0 THEN PRINT "Archive file: ";
+      DATE$+".ARC";" exists.":CLOSE:RETURN
+780 CLOSE
+800 PRINT "Purging summary file...":OPEN "R",1,"SUMMARY",30
+820 FIELD#1,30 AS R1$
+840 R1=1
+860 OPEN "R",2,"$SUMMARY.$$$",30
+880 FIELD#2,30 AS R2$
+900 R2=1
+920 PRINT SEP$:GET#1,R1:IF EOF(1) THEN 1140
+940 IF VAL(R1$)=0 THEN R1=R1+6:PRINT "Deletion":GOTO 920
+960 LSET R2$=R1$
+980 PUT #2,R2
+1000 PRINT LEFT$(R2$,28)
+1020 IF VAL(R1$)>9998 THEN 1140
+1040 FOR I=1 TO 5
+1060 R1=R1+1:R2=R2+1:GET#1,R1:LSET R2$=R1$:PUT#2,R2
+1080 PRINT LEFT$(R2$,28)
+1100 NEXT I
+1120 R1=R1+1:R2=R2+1:GOTO 920
+1140 CLOSE:OPEN "O",1,"SUMMARY.BAK":CLOSE:KILL "SUMMARY.BAK":
+      NAME "SUMMARY" AS "SUMMARY.BAK":NAME "$SUMMARY.$$$" AS "SUMMARY"
+1160 PRINT "Purging message file...":MSGN=VAL(MSG$)
+1180 OPEN "R",1,"MESSAGES",65:FIELD #1,65 AS R1$
+1200 OPEN "R",2,"$MESSAGS.$$$",65:FIELD #2,65 AS R2$
+1220 OPEN "O",3,DATE$+".ARC":R1=1:KIL=0
+1240 R1=1:R2=1
+1260 PRINT SEP$:GET #1,R1:IF EOF(1) THEN 1600
+1280 IF VAL(R1$)=0 THEN KIL=-1:PRINT "Archiving message":GOTO 1360
+1300 KIL=0
+1320 LSET R2$=R1$:PRINT LEFT$(R2$,6)
+1340 PUT #2,R2
+1360 IF KIL THEN GOSUB 1920:PRINT #3,KL$
+1380 IF VAL(R1$)>9998 THEN 1600
+1400 FOR I=1 TO 5
+1420 R1=R1+1:IF NOT KIL THEN R2=R2+1
+1440 GET #1,R1:IF KIL THEN GOSUB 1920:PRINT #3,KL$:GOTO 1480
+1460 LSET R2$=R1$:PUT #2,R2:PRINT LEFT$(R2$,63)
+1480 NEXT I
+1500 FOR I=1 TO VAL(R1$):R1=R1+1:IF NOT KIL THEN R2=R2+1
+1520 GET #1,R1:IF KIL THEN GOSUB 1920:PRINT #3,KL$:GOTO 1560
+1540 LSET R2$=R1$:PUT #2,R2:PRINT LEFT$(R2$,63)
+1560 NEXT I:R1=R1+1:IF NOT KIL THEN R2=R2+1
+1580 GOTO 1260
+1600 CLOSE:OPEN "O",1,"MESSAGES.BAK":CLOSE:KILL "MESSAGES.BAK":
+      NAME "MESSAGES" AS "MESSAGES.BAK":NAME "$MESSAGS.$$$" AS "MESSAGES"
+1620 PRINT "Updating counters..."
+1640 OPEN "O",1,"COUNTERS.BAK":CLOSE:KILL "COUNTERS.BAK"
+1660 OPEN "R",1,"COUNTERS",15:FIELD #1,10 AS C1$,5 AS C2$
+1680 OPEN "R",2,"COUNTERS.BAK",15:FIELD #2,15 AS R2$
+1700 GET #1,1:LSET R2$=C1$+C2$:PUT #2,1
+1720 CLOSE
+1740 PURGED=-1:GOSUB 1760:RETURN
+1760 '                                               build message index
+1780 MX=0:MZ=0
+1800 OPEN "R",1,"SUMMARY",30:RE=1:FIELD#1,28 AS RR$
+1820 GET#1,RE:IF EOF(1) THEN 1900
+1840 G=VAL(RR$):MZ=MZ+1:M(MZ,1)=G:IF G=0 THEN 1880
+1860 IF G>9998 THEN MZ=MZ-1:GOTO 1900
+1880 GET#1,RE+5:M(MZ,2)=VAL(RR$):MX=MX+M(MZ,2)+6:RE=RE+6:GOTO 1820
+1900 CLOSE:RETURN
+1920 '                                               unpack record
+1940 ZZ=LEN(R1$)-2
+1960 WHILE MID$(R1$,ZZ,1)=" "
+1980 ZZ=ZZ-1:IF ZZ=1 THEN 2020
+2000 WEND
+2020 KL$=LEFT$(R1$,ZZ)
+2040 RETURN
+ ZZ=LEN(R1$)-2
+1

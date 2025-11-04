@@ -122,6 +122,11 @@ docs_dir: docs
 site_dir: site
 
 # Exclude files that conflict or shouldn't be in the site
+# For end-user site: exclude dev docs from search index
 exclude_docs: |
   README.md
-  history/docs_inconsistencies_report*.md
+  history/
+  dev/
+  future/
+  design/
+  external/

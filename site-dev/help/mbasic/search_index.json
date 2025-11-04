@@ -1,0 +1,137 @@
+{
+  "files": [
+    {
+      "path": "compatibility.md",
+      "title": "MBASIC Compatibility Guide",
+      "type": "reference",
+      "category": "mbasic",
+      "description": "Complete guide to MBASIC 5.21 compatibility and differences from CP/M MBASIC"
+    },
+    {
+      "path": "getting-started.md",
+      "title": "Getting Started with MBASIC",
+      "type": "guide",
+      "category": "mbasic",
+      "description": "Introduction to MBASIC interpreter and how to get started"
+    },
+    {
+      "path": "features.md",
+      "title": "MBASIC Features",
+      "type": "reference",
+      "category": "mbasic",
+      "description": "Complete list of MBASIC interpreter features and capabilities"
+    },
+    {
+      "path": "architecture.md",
+      "title": "MBASIC Architecture: Interpreter and Compiler",
+      "type": "guide",
+      "category": "",
+      "description": "NEEDS_DESCRIPTION"
+    }
+  ],
+  "keywords": {
+    "compatibility": [
+      "compatibility.md"
+    ],
+    "differences": [
+      "compatibility.md"
+    ],
+    "limitations": [
+      "compatibility.md"
+    ],
+    "what works": [
+      "compatibility.md",
+      "features.md"
+    ],
+    "cpm": [
+      "compatibility.md"
+    ],
+    "mbasic 5.21": [
+      "compatibility.md"
+    ],
+    "portability": [
+      "compatibility.md"
+    ],
+    "getting started": [
+      "getting-started.md"
+    ],
+    "introduction": [
+      "getting-started.md"
+    ],
+    "installation": [
+      "getting-started.md"
+    ],
+    "quick start": [
+      "getting-started.md"
+    ],
+    "hello world": [
+      "getting-started.md"
+    ],
+    "first program": [
+      "getting-started.md"
+    ],
+    "features": [
+      "features.md"
+    ],
+    "capabilities": [
+      "features.md"
+    ],
+    "language support": [
+      "features.md"
+    ],
+    "file io": [
+      "features.md"
+    ],
+    "error handling": [
+      "features.md"
+    ],
+    "architecture": [
+      "architecture.md"
+    ],
+    "array": [
+      "architecture.md"
+    ],
+    "branch": [
+      "architecture.md"
+    ],
+    "command": [
+      "architecture.md"
+    ],
+    "compiler": [
+      "architecture.md"
+    ],
+    "condition": [
+      "architecture.md"
+    ],
+    "dim": [
+      "architecture.md"
+    ],
+    "error": [
+      "architecture.md"
+    ],
+    "execute": [
+      "architecture.md"
+    ],
+    "file": [
+      "architecture.md"
+    ]
+  },
+  "aliases": {},
+  "categories": {
+    "mbasic": [
+      "compatibility.md",
+      "getting-started.md",
+      "features.md"
+    ]
+  },
+  "by_type": {
+    "reference": [
+      "compatibility.md",
+      "features.md"
+    ],
+    "guide": [
+      "getting-started.md",
+      "architecture.md"
+    ]
+  }
+}

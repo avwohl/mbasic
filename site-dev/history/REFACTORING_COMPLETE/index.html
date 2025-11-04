@@ -1,0 +1,1643 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/history/REFACTORING_COMPLETE/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>MBASIC Visual UI Refactoring - COMPLETE ✅ - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mbasic-visual-ui-refactoring-complete" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MBASIC Visual UI Refactoring - COMPLETE ✅
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../dev/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#achievements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Achievements
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Achievements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-io-abstraction-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Phase 1: I/O Abstraction (COMPLETE)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-program-management-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Phase 2: Program Management (COMPLETE)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-ui-abstraction-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Phase 3: UI Abstraction (COMPLETE)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-dynamic-backend-loading-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Phase 4: Dynamic Backend Loading (COMPLETE)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture Overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#module-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Module Structure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Flow
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#command-line-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      Command-Line Interface
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#programmatic-embedding" class="md-nav__link">
+    <span class="md-ellipsis">
+      Programmatic Embedding
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-visual-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Visual UI
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Results
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#all-tests-passing" class="md-nav__link">
+    <span class="md-ellipsis">
+      All Tests Passing ✅
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Statistics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Statistics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Metrics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#git-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Git Commits
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-spent" class="md-nav__link">
+    <span class="md-ellipsis">
+      Time Spent
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benefits-achieved" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benefits Achieved
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Benefits Achieved">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#for-cli-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      For CLI Users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-visual-ui-developers" class="md-nav__link">
+    <span class="md-ellipsis">
+      For Visual UI Developers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-maintainers" class="md-nav__link">
+    <span class="md-ellipsis">
+      For Maintainers
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      What's Next?
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What&#39;s Next?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-mobilevisual-ui-deferred" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 5: Mobile/Visual UI (DEFERRED)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#future-possibilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      Future Possibilities
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      References
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/history/REFACTORING_COMPLETE.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="mbasic-visual-ui-refactoring-complete">MBASIC Visual UI Refactoring - COMPLETE ✅<a class="headerlink" href="#mbasic-visual-ui-refactoring-complete" title="Permanent link">&para;</a></h1>
+<p><strong>Date</strong>: 2025-10-24
+<strong>Status</strong>: Phases 1-4 COMPLETE ✅✅✅✅</p>
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<p>The MBASIC 5.21 interpreter has been successfully refactored to support multiple UI backends while maintaining 100% backward compatibility. The core interpreter is now fully embeddable, extensible, and ready for visual UI development (desktop, mobile, web).</p>
+<h2 id="achievements">Achievements<a class="headerlink" href="#achievements" title="Permanent link">&para;</a></h2>
+<h3 id="phase-1-io-abstraction-complete">✅ Phase 1: I/O Abstraction (COMPLETE)<a class="headerlink" href="#phase-1-io-abstraction-complete" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong>: Abstract all I/O operations to enable different UI types</p>
+<p><strong>Completed Work:</strong>
+- Created <code>src/iohandler/</code> module with IOHandler interface
+- Implemented ConsoleIOHandler for CLI
+- Refactored interpreter.py to use IOHandler (34 print→output conversions)
+- Added runtime inspection methods (variables, GOSUB stack, FOR loops)
+- All 34 print() calls converted to io.output()
+- All 2 input() calls converted to io.input()</p>
+<p><strong>Result</strong>: Any UI can now provide custom I/O without touching interpreter core</p>
+<p><strong>Documentation</strong>: <a href="../PHASE1_IO_ABSTRACTION_PROGRESS/">PHASE1_IO_ABSTRACTION_PROGRESS.md</a></p>
+<h3 id="phase-2-program-management-complete">✅ Phase 2: Program Management (COMPLETE)<a class="headerlink" href="#phase-2-program-management-complete" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong>: Extract program line/AST management into reusable component</p>
+<p><strong>Completed Work:</strong>
+- Created <code>src/editing/</code> module with ProgramManager class (355 lines)
+- Extracted line storage, parsing, SAVE/LOAD from InteractiveMode
+- Integrated into InteractiveMode with <a class="magiclink magiclink-github magiclink-mention" href="https://github.com/property" title="GitHub User: property">@property</a> delegation for compatibility
+- Support for load_from_file(), save_to_file(), renumber(), delete_range()</p>
+<p><strong>Result</strong>: Program management is now reusable across all UI backends</p>
+<p><strong>Documentation</strong>: <a href="../PHASE2_PROGRAM_MANAGEMENT_PROGRESS/">PHASE2_PROGRAM_MANAGEMENT_PROGRESS.md</a></p>
+<h3 id="phase-3-ui-abstraction-complete">✅ Phase 3: UI Abstraction (COMPLETE)<a class="headerlink" href="#phase-3-ui-abstraction-complete" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong>: Create pluggable UI backend architecture</p>
+<p><strong>Completed Work:</strong>
+- Created <code>src/ui/</code> module with UIBackend interface
+- Implemented CLIBackend wrapping InteractiveMode
+- Created VisualBackend template (175 lines) for GUI developers
+- Defined standard command methods (run, list, save, load, etc.)</p>
+<p><strong>Result</strong>: Multiple UIs can now share the same interpreter core</p>
+<p><strong>Documentation</strong>: <a href="../PHASE3_UI_ABSTRACTION_PROGRESS/">PHASE3_UI_ABSTRACTION_PROGRESS.md</a></p>
+<h3 id="phase-4-dynamic-backend-loading-complete">✅ Phase 4: Dynamic Backend Loading (COMPLETE)<a class="headerlink" href="#phase-4-dynamic-backend-loading-complete" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong>: Enable runtime backend selection via command line</p>
+<p><strong>Completed Work:</strong>
+- Added argparse for command-line argument parsing
+- Implemented load_backend() using importlib for dynamic loading
+- Added <code>--ui {cli,visual}</code> option
+- Added <code>--debug</code> option for debug output
+- Refactored mbasic to use UIBackend architecture</p>
+<p><strong>Result</strong>: Users can select backends at runtime without code changes</p>
+<p><strong>Documentation</strong>: <a href="../PHASE4_DYNAMIC_LOADING_PROGRESS/">PHASE4_DYNAMIC_LOADING_PROGRESS.md</a></p>
+<h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
+<h3 id="module-structure">Module Structure<a class="headerlink" href="#module-structure" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>mbasic/
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── mbasic                      # Entry point (refactored, 170 lines)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── src/
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│   ├── iohandler/                 # Phase 1: I/O abstraction
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   │   ├── base.py                # IOHandler interface
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│   │   ├── console.py             # ConsoleIOHandler (CLI)
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   │   └── gui.py                 # GUIIOHandler (stub)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   ├── editing/                   # Phase 2: Program management
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   │   └── manager.py             # ProgramManager class
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│   ├── ui/                        # Phase 3: UI backends
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│   │   ├── base.py                # UIBackend interface
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│   │   ├── cli.py                 # CLIBackend (wraps InteractiveMode)
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│   │   └── visual.py              # VisualBackend (template)
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│   │
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│   ├── interpreter.py             # Core (refactored to use IOHandler)
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│   ├── runtime.py                 # Runtime (added inspection methods)
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│   ├── parser.py                  # Parser (unchanged)
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│   ├── lexer.py                   # Lexer (unchanged)
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│   └── ...                        # Other core modules
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>└── doc/
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    ├── VISUAL_UI_REFACTORING_PLAN.md         # Overall plan (updated)
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    ├── PHASE1_IO_ABSTRACTION_PROGRESS.md     # Phase 1 details
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    ├── PHASE2_PROGRAM_MANAGEMENT_PROGRESS.md # Phase 2 details
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    ├── PHASE3_UI_ABSTRACTION_PROGRESS.md     # Phase 3 details
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    ├── PHASE4_DYNAMIC_LOADING_PROGRESS.md    # Phase 4 details
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>    └── REFACTORING_COMPLETE.md               # This document
+</code></pre></div>
+<h3 id="data-flow">Data Flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>┌──────────────────────────────────────────────┐
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>│          mbasic (main entry)              │
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│  - Parse arguments (--ui, --debug)      │
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│  - Create IOHandler (ConsoleIOHandler)       │
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│  - Create ProgramManager                     │
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│  - Load backend dynamically (importlib)      │
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>└─────────────────┬────────────────────────────┘
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>                  │
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>                  ▼
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>      ┌───────────────────────┐
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>      │   load_backend()      │
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>      │   (importlib)         │
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>      └───────┬───────────────┘
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>              │
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>   ┌──────────┴────────────┐
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>   │                       │
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>   ▼                       ▼
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>┌──────────┐        ┌──────────────┐
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│ CLIBack  │        │ VisualBack   │
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>│ (REPL)   │        │ (GUI/Mobile) │
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>└────┬─────┘        └──────┬───────┘
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>     │                     │
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>     └──────────┬──────────┘
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>                │
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>                ▼
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>    ┌───────────────────────┐
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>    │   UIBackend           │
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>    │   - io_handler        │
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>    │   - program_manager   │
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>    │   - cmd_run()         │
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>    │   - cmd_list()        │
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>    │   - start()           │
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>    └───────────────────────┘
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>                │
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>       ┌────────┴────────┐
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>       │                 │
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>       ▼                 ▼
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>┌──────────────┐   ┌─────────────┐
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>│ IOHandler    │   │ ProgramMgr  │
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>│ - output()   │   │ - lines     │
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>│ - input()    │   │ - line_asts │
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>│ - error()    │   │ - save()    │
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>└──────────────┘   └─────────────┘
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>       │                 │
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>       └────────┬────────┘
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>                │
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>                ▼
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>      ┌──────────────────┐
+<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>      │  Interpreter     │
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>      │  Runtime         │
+<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>      │  Parser          │
+<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>      └──────────────────┘
+</code></pre></div>
+<h2 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h2>
+<h3 id="command-line-interface">Command-Line Interface<a class="headerlink" href="#command-line-interface" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Interactive mode (default CLI backend)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>python3<span class="w"> </span>mbasic
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Run a program</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>python3<span class="w"> </span>mbasic<span class="w"> </span>program.bas
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Explicitly use CLI backend</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>python3<span class="w"> </span>mbasic<span class="w"> </span>--ui<span class="w"> </span>cli
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Use visual backend (stub)</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>python3<span class="w"> </span>mbasic<span class="w"> </span>--ui<span class="w"> </span>visual
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># Enable debug output</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>python3<span class="w"> </span>mbasic<span class="w"> </span>--debug
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="c1"># Combined options</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>python3<span class="w"> </span>mbasic<span class="w"> </span>--ui<span class="w"> </span>cli<span class="w"> </span>--debug<span class="w"> </span>program.bas
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="c1"># Show help</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>python3<span class="w"> </span>mbasic<span class="w"> </span>--help
+</code></pre></div>
+<h3 id="programmatic-embedding">Programmatic Embedding<a class="headerlink" href="#programmatic-embedding" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">iohandler.console</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConsoleIOHandler</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">editing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProgramManager</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ui.cli</span><span class="w"> </span><span class="kn">import</span> <span class="n">CLIBackend</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeInfo</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># Create default DEF type map</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">def_type_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">letter</span><span class="p">:</span> <span class="n">TypeInfo</span><span class="o">.</span><span class="n">SINGLE</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>                <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="s1">&#39;abcdefghijklmnopqrstuvwxyz&#39;</span><span class="p">}</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># Create components</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="n">io</span> <span class="o">=</span> <span class="n">ConsoleIOHandler</span><span class="p">(</span><span class="n">debug_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="n">program</span> <span class="o">=</span> <span class="n">ProgramManager</span><span class="p">(</span><span class="n">def_type_map</span><span class="p">)</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">CLIBackend</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">program</span><span class="p">)</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="c1"># Load a program</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="n">success</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="n">program</span><span class="o">.</span><span class="n">load_from_file</span><span class="p">(</span><span class="s1">&#39;test.bas&#39;</span><span class="p">)</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="c1"># Run it</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>    <span class="n">backend</span><span class="o">.</span><span class="n">cmd_run</span><span class="p">()</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="c1"># Enter interactive mode</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="n">backend</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</code></pre></div>
+<h3 id="custom-visual-ui">Custom Visual UI<a class="headerlink" href="#custom-visual-ui" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">iohandler.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">IOHandler</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ui.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">UIBackend</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyGUIIOHandler</span><span class="p">(</span><span class="n">IOHandler</span><span class="p">):</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_widget</span><span class="p">):</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">output_widget</span> <span class="o">=</span> <span class="n">output_widget</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">):</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">output_widget</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">text</span> <span class="o">+</span> <span class="n">end</span><span class="p">)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_input_dialog</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="c1"># ... implement other methods ...</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyGUIBackend</span><span class="p">(</span><span class="n">UIBackend</span><span class="p">):</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>        <span class="c1"># Initialize GUI framework</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>        <span class="c1"># Load program into visual editor</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>        <span class="c1"># Run event loop</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>        <span class="k">pass</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">cmd_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>        <span class="c1"># Execute program with visual debugging</span>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">cmd_run</span><span class="p">()</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="c1"># Usage</span>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a><span class="n">io</span> <span class="o">=</span> <span class="n">MyGUIIOHandler</span><span class="p">(</span><span class="n">my_text_widget</span><span class="p">)</span>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="n">program</span> <span class="o">=</span> <span class="n">ProgramManager</span><span class="p">(</span><span class="n">def_type_map</span><span class="p">)</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a><span class="n">ui</span> <span class="o">=</span> <span class="n">MyGUIBackend</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">program</span><span class="p">)</span>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a><span class="n">ui</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</code></pre></div>
+<h2 id="testing-results">Testing Results<a class="headerlink" href="#testing-results" title="Permanent link">&para;</a></h2>
+<h3 id="all-tests-passing">All Tests Passing ✅<a class="headerlink" href="#all-tests-passing" title="Permanent link">&para;</a></h3>
+<p><strong>Backward compatibility:</strong>
+- ✅ <code>python3 mbasic</code> - Works exactly as before
+- ✅ <code>python3 mbasic program.bas</code> - Loads and runs programs
+- ✅ All existing test files pass (test_deffn.bas, test_fn_shadow.bas, etc.)
+- ✅ No changes required to existing BASIC programs</p>
+<p><strong>New features:</strong>
+- ✅ <code>--ui cli</code> - Explicit CLI backend selection
+- ✅ <code>--ui visual</code> - Visual backend (stub) loads correctly
+- ✅ <code>--debug</code> - Debug output enabled
+- ✅ <code>--help</code> - Shows usage information
+- ✅ Dynamic loading works (importlib)
+- ✅ IOHandler abstraction works
+- ✅ ProgramManager integration works</p>
+<p><strong>Test output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>$<span class="w"> </span>python3<span class="w"> </span>mbasic<span class="w"> </span>tests/test_deffn.bas
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>FND<span class="o">(</span><span class="m">10</span><span class="o">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">17</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>FNA<span class="o">(</span><span class="m">5</span><span class="o">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nv">FNB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">42</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>Ready
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>$<span class="w"> </span>python3<span class="w"> </span>mbasic<span class="w"> </span>--ui<span class="w"> </span>visual
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>Note:<span class="w"> </span>Visual<span class="w"> </span>backend<span class="w"> </span>is<span class="w"> </span>a<span class="w"> </span>stub,<span class="w"> </span>using<span class="w"> </span>console<span class="w"> </span>I/O
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>VisualBackend.start<span class="o">()</span><span class="w"> </span>-<span class="w"> </span>Override<span class="w"> </span>this<span class="w"> </span>method
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>Create<span class="w"> </span>your<span class="w"> </span>UI<span class="w"> </span>here<span class="w"> </span>and<span class="w"> </span>start<span class="w"> </span>event<span class="w"> </span>loop
+</code></pre></div></p>
+<h2 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h2>
+<h3 id="code-metrics">Code Metrics<a class="headerlink" href="#code-metrics" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Lines Added</th>
+<th>Files Created</th>
+<th>Key Features</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Phase 1</strong></td>
+<td>~150</td>
+<td>3</td>
+<td>IOHandler interface, ConsoleIOHandler, inspection</td>
+</tr>
+<tr>
+<td><strong>Phase 2</strong></td>
+<td>~355</td>
+<td>1</td>
+<td>ProgramManager, line/AST management</td>
+</tr>
+<tr>
+<td><strong>Phase 3</strong></td>
+<td>~393</td>
+<td>4</td>
+<td>UIBackend, CLIBackend, VisualBackend</td>
+</tr>
+<tr>
+<td><strong>Phase 4</strong></td>
+<td>~85</td>
+<td>0</td>
+<td>Dynamic loading, argparse, refactored main()</td>
+</tr>
+<tr>
+<td><strong>TOTAL</strong></td>
+<td><strong>~983</strong></td>
+<td><strong>8</strong></td>
+<td>Complete embeddable architecture</td>
+</tr>
+</tbody>
+</table>
+<h3 id="git-commits">Git Commits<a class="headerlink" href="#git-commits" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>88f0081</strong> - Add I/O abstraction layer (Phase 1)</li>
+<li><strong>d82acc0</strong> - Refactor Interpreter to use IOHandler (Phase 1)</li>
+<li><strong>e1851c4</strong> - Add inspection methods to Runtime (Phase 1)</li>
+<li><strong>2d9ecf5</strong> - Update InteractiveMode to pass IOHandler (Phase 1)</li>
+<li><strong>8c2c076</strong> - Fix module naming conflict: io → iohandler (Phase 1)</li>
+<li><strong>06c7f37</strong> - Mark Phase 1 as COMPLETE (Phase 1)</li>
+<li><strong>582a6eb</strong> - Create ProgramManager class (Phase 2)</li>
+<li><strong>d3e8af0</strong> - Integrate ProgramManager into InteractiveMode (Phase 2)</li>
+<li><strong>de204a1</strong> - Document Phase 2 progress (Phase 2)</li>
+<li><strong>5deeef6</strong> - Move misplaced files to proper directories (Phase 3)</li>
+<li><strong>536b956</strong> - Create UI backend architecture (Phase 3)</li>
+<li><strong>c4708e0</strong> - Document Phase 3 completion (Phase 3)</li>
+<li><strong>1911a4c</strong> - Implement Phase 4: Dynamic backend loading (Phase 4)</li>
+<li><strong>4e6412a</strong> - Update VISUAL_UI_REFACTORING_PLAN with Phase 4 completion (Phase 4)</li>
+</ol>
+<p><strong>Total Commits</strong>: 14
+<strong>All commits pushed to</strong>: origin/main</p>
+<h3 id="time-spent">Time Spent<a class="headerlink" href="#time-spent" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Estimated</th>
+<th>Actual</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Phase 1</td>
+<td>3-4 hours</td>
+<td>~4 hours</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Phase 2</td>
+<td>2-3 hours</td>
+<td>~2 hours</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Phase 3</td>
+<td>3-4 hours</td>
+<td>~2 hours</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Phase 4</td>
+<td>2-3 hours</td>
+<td>~1 hour</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>10-14 hours</strong></td>
+<td><strong>~9 hours</strong></td>
+<td><strong>✅</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="benefits-achieved">Benefits Achieved<a class="headerlink" href="#benefits-achieved" title="Permanent link">&para;</a></h2>
+<h3 id="for-cli-users">For CLI Users<a class="headerlink" href="#for-cli-users" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✅ <strong>No Changes</strong>: Everything works exactly as before</li>
+<li>✅ <strong>Performance</strong>: No overhead from abstraction</li>
+<li>✅ <strong>New Options</strong>: Optional <code>--ui</code> and <code>--debug</code> flags</li>
+<li>✅ <strong>Backward Compatible</strong>: All existing scripts work</li>
+</ul>
+<h3 id="for-visual-ui-developers">For Visual UI Developers<a class="headerlink" href="#for-visual-ui-developers" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✅ <strong>Clean API</strong>: Well-documented IOHandler and UIBackend interfaces</li>
+<li>✅ <strong>Complete Template</strong>: VisualBackend provides working example</li>
+<li>✅ <strong>Flexible I/O</strong>: Custom IOHandlers for any UI framework</li>
+<li>✅ <strong>Embeddable</strong>: Drop interpreter into existing apps</li>
+<li>✅ <strong>No Core Changes</strong>: Implement UIBackend, done!</li>
+<li>✅ <strong>Debugging Support</strong>: Variable inspection, call stacks available</li>
+</ul>
+<h3 id="for-maintainers">For Maintainers<a class="headerlink" href="#for-maintainers" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✅ <strong>Separation of Concerns</strong>: UI, I/O, and core logic separated</li>
+<li>✅ <strong>Testable</strong>: Mock IOHandler for testing</li>
+<li>✅ <strong>Extensible</strong>: New backends without touching core</li>
+<li>✅ <strong>Clear Boundaries</strong>: Well-defined interfaces</li>
+<li>✅ <strong>Documentation</strong>: Comprehensive progress docs for each phase</li>
+</ul>
+<h2 id="whats-next">What's Next?<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
+<h3 id="phase-5-mobilevisual-ui-deferred">Phase 5: Mobile/Visual UI (DEFERRED)<a class="headerlink" href="#phase-5-mobilevisual-ui-deferred" title="Permanent link">&para;</a></h3>
+<p><strong>Status</strong>: Ready to begin when desired</p>
+<p><strong>Prerequisites (all complete):</strong>
+- ✅ IOHandler interface for custom I/O
+- ✅ ProgramManager for program management
+- ✅ UIBackend interface for pluggable UIs
+- ✅ Dynamic loading for easy backend switching
+- ✅ VisualBackend template for implementation guide</p>
+<p><strong>Recommended next steps:</strong>
+1. Create MOBILE_UI_EVALUATION.md
+2. Evaluate frameworks:
+   - <strong>Kivy</strong>: Pure Python, iOS/Android/Desktop, proven
+   - <strong>BeeWare</strong>: Native widgets, Python-native philosophy
+   - <strong>PWA</strong>: Web-based, easiest cross-platform
+   - <strong>PyQt/PySide</strong>: QML for mobile, mature framework
+   - <strong>React Native + Python bridge</strong>: Web tech, native performance
+   - <strong>Flutter + Python bridge</strong>: High-performance UIs</p>
+<ol>
+<li>Build proof-of-concept for top 2-3 choices</li>
+<li>Choose framework based on iOS/Android support</li>
+<li>Implement chosen backend (subclass VisualBackend)</li>
+<li>Test on mobile devices</li>
+<li>Deploy to app stores</li>
+</ol>
+<p><strong>Estimated time</strong>: 8-20 hours (depends on framework choice)</p>
+<h3 id="future-possibilities">Future Possibilities<a class="headerlink" href="#future-possibilities" title="Permanent link">&para;</a></h3>
+<p>With the completed architecture, these are now possible:</p>
+<ol>
+<li><strong>Web UI</strong>: Flask/Django backend with JavaScript frontend</li>
+<li><strong>Jupyter</strong>: Jupyter notebook integration</li>
+<li><strong>VS Code Extension</strong>: IDE plugin for BASIC editing</li>
+<li><strong>Headless Mode</strong>: Run BASIC programs as services</li>
+<li><strong>Testing Framework</strong>: Mock I/O for comprehensive testing</li>
+<li><strong>Network Mode</strong>: Remote BASIC execution (telnet-like)</li>
+<li><strong>Visual Debugger</strong>: Full debugging UI with breakpoints, stepping</li>
+<li><strong>Cloud IDE</strong>: Browser-based development environment</li>
+</ol>
+<h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
+<p><strong>All 4 core refactoring phases are COMPLETE</strong> ✅✅✅✅</p>
+<p>The MBASIC 5.21 interpreter has been successfully transformed from a monolithic CLI application into a flexible, embeddable, extensible architecture that supports:</p>
+<ul>
+<li><strong>Multiple UI backends</strong> (CLI, GUI, mobile, web)</li>
+<li><strong>Custom I/O handlers</strong> (console, GUI widgets, web sockets)</li>
+<li><strong>Dynamic backend loading</strong> (switch UIs at runtime)</li>
+<li><strong>100% backward compatibility</strong> (existing code works unchanged)</li>
+<li><strong>Comprehensive documentation</strong> (4 detailed progress docs)</li>
+</ul>
+<p>Visual UI developers can now create mobile apps, desktop GUIs, or web interfaces by simply implementing the UIBackend interface and providing a custom IOHandler. The interpreter core is completely UI-agnostic and ready for any platform.</p>
+<p><strong>The refactoring is production-ready!</strong> 🎉</p>
+<hr />
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../VISUAL_UI_REFACTORING_PLAN/">Visual UI Refactoring Plan</a> - Overall plan and architecture</li>
+<li><a href="../PHASE1_IO_ABSTRACTION_PROGRESS/">Phase 1 Progress</a> - I/O abstraction details</li>
+<li><a href="../PHASE2_PROGRAM_MANAGEMENT_PROGRESS/">Phase 2 Progress</a> - Program management details</li>
+<li><a href="../PHASE3_UI_ABSTRACTION_PROGRESS/">Phase 3 Progress</a> - UI backend details</li>
+<li><a href="../PHASE4_DYNAMIC_LOADING_PROGRESS/">Phase 4 Progress</a> - Dynamic loading details</li>
+</ul>
+<p><strong>For questions or contributions</strong>: See project README.md</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

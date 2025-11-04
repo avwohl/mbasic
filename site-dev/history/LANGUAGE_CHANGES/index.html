@@ -1,0 +1,1832 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/history/LANGUAGE_CHANGES/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Language Changes: Interpreted MBASIC → Compiled BASIC - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#language-changes-interpreted-mbasic-compiled-basic" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Language Changes: Interpreted MBASIC → Compiled BASIC
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../dev/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-variable-scoping" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Variable Scoping
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Variable Scoping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbasic-interpreter-1981" class="md-nav__link">
+    <span class="md-ellipsis">
+      MBASIC Interpreter (1981)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compiled-basic-quickbasic-era" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compiled BASIC (QuickBASIC Era)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-loop-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      FOR Loop Variables
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-control-flow-structures" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Control Flow Structures
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Control Flow Structures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbasic-flat-with-line-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      MBASIC - Flat with Line Numbers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compiled-basic-structured" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compiled BASIC - Structured
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-subroutines-vs-procedures" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Subroutines vs Procedures
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Subroutines vs Procedures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbasic-gosubreturn-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      MBASIC - GOSUB/RETURN Only
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compiled-basic-sub-and-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compiled BASIC - SUB and FUNCTION
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-array-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Array Handling
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Array Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbasic-dynamic-everything" class="md-nav__link">
+    <span class="md-ellipsis">
+      MBASIC - Dynamic Everything
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compiled-basic-static-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compiled BASIC - Static by Default
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-type-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Type System
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Type System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbasic-duck-typing-with-def" class="md-nav__link">
+    <span class="md-ellipsis">
+      MBASIC - Duck Typing with DEF
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compiled-basic-static-typing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compiled BASIC - Static Typing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-line-numbers-and-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Line Numbers and Labels
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Line Numbers and Labels">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbasic-line-numbers-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      MBASIC - Line Numbers Required
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compiled-basic-labels-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compiled BASIC - Labels Optional
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-string-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. String Handling
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. String Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbasic-fixed-or-variable" class="md-nav__link">
+    <span class="md-ellipsis">
+      MBASIC - Fixed or Variable
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compiled-basic-fixed-length-option" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compiled BASIC - Fixed Length Option
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-modular-programming" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Modular Programming
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Modular Programming">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbasic-single-monolithic-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      MBASIC - Single Monolithic File
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compiled-basic-multiple-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compiled BASIC - Multiple Modules
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. Error Handling
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Error Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbasic-basic-on-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      MBASIC - Basic ON ERROR
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compiled-basic-enhanced-error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compiled BASIC - Enhanced Error Handling
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-metacommands-and-compiler-directives" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. Metacommands and Compiler Directives
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Metacommands and Compiler Directives">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbasic-no-metacommands" class="md-nav__link">
+    <span class="md-ellipsis">
+      MBASIC - No Metacommands
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compiled-basic-rich-metacommands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compiled BASIC - Rich Metacommands
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-file-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      11. File I/O
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. File I/O">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbasic-sequential-and-random" class="md-nav__link">
+    <span class="md-ellipsis">
+      MBASIC - Sequential and Random
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compiled-basic-extended-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compiled BASIC - Extended I/O
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-optimization-opportunities" class="md-nav__link">
+    <span class="md-ellipsis">
+      12. Optimization Opportunities
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. Optimization Opportunities">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interpreted-mbasic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interpreted MBASIC
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compiled-basic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compiled BASIC
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-of-key-changes-for-our-compiler" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary of Key Changes for Our Compiler
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Summary of Key Changes for Our Compiler">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#must-implement-for-basic-compilation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Must Implement for Basic Compilation:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#should-implement-for-better-compiler" class="md-nav__link">
+    <span class="md-ellipsis">
+      Should Implement for Better Compiler:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#could-implement-for-advanced-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Could Implement for Advanced Features:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact-on-parser-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Impact on Parser Design
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/history/LANGUAGE_CHANGES.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="language-changes-interpreted-mbasic-compiled-basic">Language Changes: Interpreted MBASIC → Compiled BASIC<a class="headerlink" href="#language-changes-interpreted-mbasic-compiled-basic" title="Permanent link">&para;</a></h1>
+<p>Beyond DEFINT - A Comprehensive Analysis</p>
+<hr />
+<h2 id="1-variable-scoping">1. Variable Scoping<a class="headerlink" href="#1-variable-scoping" title="Permanent link">&para;</a></h2>
+<h3 id="mbasic-interpreter-1981">MBASIC Interpreter (1981)<a class="headerlink" href="#mbasic-interpreter-1981" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span><span class="w">                    </span><span class="c1">&#39; Global variable</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">1000</span><span class="w">                </span><span class="c1">&#39; Call subroutine</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">X</span><span class="w">                    </span><span class="c1">&#39; X = 200 (modified by subroutine)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nl">1000</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">200</span><span class="w">                  </span><span class="c1">&#39; Modifies global X</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nl">1010</span><span class="w"> </span><span class="kr">RETURN</span>
+</code></pre></div>
+<p><strong>Characteristics:</strong>
+- <strong>All variables are global</strong>
+- GOSUB subroutines share all variables with caller
+- No local variable support
+- No parameter passing mechanism
+- No way to hide implementation details</p>
+<h3 id="compiled-basic-quickbasic-era">Compiled BASIC (QuickBASIC Era)<a class="headerlink" href="#compiled-basic-quickbasic-era" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">&#39; Main program</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kd">DIM</span><span class="w"> </span><span class="nv">SHARED</span><span class="w"> </span><span class="vg">GlobalX</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">INTEGER</span><span class="w">    </span><span class="c1">&#39; Explicitly shared</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="vg">GlobalX</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="kr">CALL</span><span class="w"> </span><span class="vg">MySub</span><span class="p">(</span><span class="vg">GlobalX</span><span class="p">)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="kr">PRINT</span><span class="w"> </span><span class="vg">GlobalX</span><span class="w">                     </span><span class="c1">&#39; X = 200 (modified via parameter)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="kr">END</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="kr">SUB</span><span class="w"> </span><span class="vg">MySub</span><span class="p">(</span><span class="vg">X</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">INTEGER</span><span class="p">)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">LocalY</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">INTEGER</span><span class="w">          </span><span class="c1">&#39; Local to this SUB</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span><span class="vg">LocalY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="w">                 </span><span class="c1">&#39; LocalY not visible outside</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">  </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">200</span><span class="w">                        </span><span class="c1">&#39; Modifies parameter (BYREF)</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="kr">END</span><span class="w"> </span><span class="kr">SUB</span>
+</code></pre></div>
+<p><strong>Characteristics:</strong>
+- <strong>Lexically scoped local variables</strong> in SUB/FUNCTION
+- Parameters can be passed BYVAL or BYREF
+- Local variables don't affect caller's namespace
+- SHARED keyword makes variables explicitly global
+- STATIC keyword preserves local variable values between calls</p>
+<h3 id="for-loop-variables">FOR Loop Variables<a class="headerlink" href="#for-loop-variables" title="Permanent link">&para;</a></h3>
+<p><strong>MBASIC:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nl">20</span><span class="w">   </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">I</span><span class="w">                   </span><span class="c1">&#39; I = 11 (loop variable is global)</span>
+</code></pre></div></p>
+<p><strong>Compiled BASIC (could be):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1">&#39; I might not exist here, or be in its own scope</span>
+</code></pre></div></p>
+<p><strong>Key Difference:</strong> In interpreted MBASIC, loop variables are global and retain their final value. Modern compilers could make loop variables lexically scoped to the loop body.</p>
+<hr />
+<h2 id="2-control-flow-structures">2. Control Flow Structures<a class="headerlink" href="#2-control-flow-structures" title="Permanent link">&para;</a></h2>
+<h3 id="mbasic-flat-with-line-numbers">MBASIC - Flat with Line Numbers<a class="headerlink" href="#mbasic-flat-with-line-numbers" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="s2">&quot;Enter number: &quot;</span><span class="p">,</span><span class="w"> </span><span class="vg">N</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">N</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="il">0</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">100</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">N</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">0</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">200</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Positive&quot;</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">300</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="nl">100</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Negative&quot;</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="nl">110</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">300</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="nl">200</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Zero&quot;</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="nl">300</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Done&quot;</span>
+</code></pre></div>
+<h3 id="compiled-basic-structured">Compiled BASIC - Structured<a class="headerlink" href="#compiled-basic-structured" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kr">INPUT</span><span class="w"> </span><span class="s2">&quot;Enter number: &quot;</span><span class="p">,</span><span class="w"> </span><span class="vg">N</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kr">SELECT CASE</span><span class="w"> </span><span class="vg">N</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="k">CASE</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="il">0</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Negative&quot;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="k">CASE</span><span class="w"> </span><span class="il">0</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Zero&quot;</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span><span class="k">CASE</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="il">0</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Positive&quot;</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="kr">END</span><span class="w"> </span><span class="kr">SELECT</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Done&quot;</span>
+</code></pre></div>
+<p><strong>New Constructs in Compiled BASIC:</strong>
+- <code>SELECT CASE</code> / <code>CASE</code> / <code>END SELECT</code>
+- <code>DO WHILE</code> / <code>DO UNTIL</code> / <code>LOOP</code>
+- <code>EXIT FOR</code> / <code>EXIT DO</code> / <code>EXIT FUNCTION</code> / <code>EXIT SUB</code>
+- Optional line numbers (labels instead)
+- Block IF with proper END IF</p>
+<hr />
+<h2 id="3-subroutines-vs-procedures">3. Subroutines vs Procedures<a class="headerlink" href="#3-subroutines-vs-procedures" title="Permanent link">&para;</a></h2>
+<h3 id="mbasic-gosubreturn-only">MBASIC - GOSUB/RETURN Only<a class="headerlink" href="#mbasic-gosubreturn-only" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">1000</span><span class="w">                </span><span class="c1">&#39; No parameters</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">RESULT</span><span class="w">              </span><span class="c1">&#39; Must use global variables</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nl">1000</span><span class="w"> </span><span class="c1">REM Calculate something</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nl">1010</span><span class="w"> </span><span class="vg">RESULT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">Z</span><span class="w">      </span><span class="c1">&#39; All globals</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="nl">1020</span><span class="w"> </span><span class="kr">RETURN</span>
+</code></pre></div>
+<p><strong>Limitations:</strong>
+- No parameters
+- No return values (except via globals)
+- No local variables
+- Can't reuse names
+- Can't nest calls easily
+- Must remember to avoid name conflicts</p>
+<h3 id="compiled-basic-sub-and-function">Compiled BASIC - SUB and FUNCTION<a class="headerlink" href="#compiled-basic-sub-and-function" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">&#39; Main program</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">INTEGER</span><span class="p">,</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">INTEGER</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="kr">PRINT</span><span class="w"> </span><span class="vg">Calculate</span><span class="p">(</span><span class="vg">X</span><span class="p">,</span><span class="w"> </span><span class="vg">Y</span><span class="p">)</span><span class="w">        </span><span class="c1">&#39; Pass parameters, get return value</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="kr">END</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="kr">FUNCTION</span><span class="w"> </span><span class="vg">Calculate</span><span class="p">(</span><span class="vg">A</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">INTEGER</span><span class="p">,</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">INTEGER</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">INTEGER</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">Temp</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">INTEGER</span><span class="w">        </span><span class="c1">&#39; Local variable</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span><span class="vg">Temp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">5</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">  </span><span class="vg">Calculate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">Temp</span><span class="w">           </span><span class="c1">&#39; Return value</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="kr">END</span><span class="w"> </span><span class="kr">FUNCTION</span>
+</code></pre></div>
+<p><strong>Advantages:</strong>
+- Formal parameters
+- Return values (FUNCTION)
+- Local variables
+- Recursion possible
+- Cleaner namespace
+- Better code reuse</p>
+<hr />
+<h2 id="4-array-handling">4. Array Handling<a class="headerlink" href="#4-array-handling" title="Permanent link">&para;</a></h2>
+<h3 id="mbasic-dynamic-everything">MBASIC - Dynamic Everything<a class="headerlink" href="#mbasic-dynamic-everything" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="s2">&quot;How many elements&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">N</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nl">20</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">N</span><span class="p">)</span><span class="w">                   </span><span class="c1">&#39; Dynamic sizing at runtime</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="vg">N</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="nl">40</span><span class="w">   </span><span class="vg">A</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="nl">60</span><span class="w"> </span><span class="kr">ERASE</span><span class="w"> </span><span class="vg">A</span><span class="w">                    </span><span class="c1">&#39; Deallocate array</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="nl">70</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">N</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="p">)</span><span class="w">              </span><span class="c1">&#39; Reallocate with different size</span>
+</code></pre></div>
+<h3 id="compiled-basic-static-by-default">Compiled BASIC - Static by Default<a class="headerlink" href="#compiled-basic-static-by-default" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">&#39; Default: Static arrays</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kr">CONST</span><span class="w"> </span><span class="vg">MAXSIZE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1000</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">MAXSIZE</span><span class="p">)</span><span class="w">                </span><span class="c1">&#39; Fixed at compile time</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1">&#39; With metacommand:</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1">REM $DYNAMIC</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">B</span><span class="p">()</span><span class="w">                       </span><span class="c1">&#39; Declare without size</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="kr">INPUT</span><span class="w"> </span><span class="s2">&quot;How many&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">N</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="kr">REDIM</span><span class="w"> </span><span class="vg">B</span><span class="p">(</span><span class="vg">N</span><span class="p">)</span><span class="w">                    </span><span class="c1">&#39; Size at runtime (slower)</span>
+</code></pre></div>
+<p><strong>Compiler Restrictions:</strong>
+- Array dimensions must be constants (default mode)
+- <code>$DYNAMIC</code> metacommand allows runtime sizing (overhead)
+- OPTION BASE affects all arrays in module
+- Multi-dimensional array access optimized at compile time</p>
+<hr />
+<h2 id="5-type-system">5. Type System<a class="headerlink" href="#5-type-system" title="Permanent link">&para;</a></h2>
+<h3 id="mbasic-duck-typing-with-def">MBASIC - Duck Typing with DEF<a class="headerlink" href="#mbasic-duck-typing-with-def" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">5.5</span><span class="w">                   </span><span class="c1">&#39; X is single-precision</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">X</span><span class="w">                   </span><span class="c1">&#39; 5.5</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">DEFINT</span><span class="w"> </span><span class="vg">X</span><span class="w">                  </span><span class="c1">&#39; Now X is integer</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="nl">40</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">5.5</span><span class="w">                   </span><span class="c1">&#39; X becomes 6 (rounded)</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">X</span><span class="w">                   </span><span class="c1">&#39; 6</span>
+</code></pre></div>
+<h3 id="compiled-basic-static-typing">Compiled BASIC - Static Typing<a class="headerlink" href="#compiled-basic-static-typing" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">&#39; All DEFINT/DEFSNG/DEFDBL/DEFSTR collected first</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kr">DEFINT</span><span class="w"> </span><span class="vg">I</span><span class="o">-</span><span class="vg">N</span><span class="w">                   </span><span class="c1">&#39; Integer range</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="kr">DEFSNG</span><span class="w"> </span><span class="vg">A</span><span class="o">-</span><span class="vg">H</span><span class="p">,</span><span class="w"> </span><span class="vg">O</span><span class="o">-</span><span class="vg">Z</span><span class="w">             </span><span class="c1">&#39; Single precision ranges</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1">&#39; Variable types fixed at compile time throughout program</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">DOUBLE</span><span class="w">              </span><span class="c1">&#39; Explicit type declaration</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">STRING</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">20</span><span class="w">         </span><span class="c1">&#39; Fixed-length string</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="kr">TYPE</span><span class="w"> </span><span class="vg">PersonRecord</span><span class="w">            </span><span class="c1">&#39; User-defined types</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="w">  </span><span class="vg">Name</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">STRING</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">30</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">  </span><span class="vg">Age</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">INTEGER</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">  </span><span class="vg">Salary</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">SINGLE</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="kr">END</span><span class="w"> </span><span class="kr">TYPE</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">Employee</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="vg">PersonRecord</span>
+</code></pre></div>
+<p><strong>Compiler Features:</strong>
+- <code>AS type</code> explicit type declarations
+- User-defined TYPEs (records/structs)
+- Fixed-length strings (<code>STRING * n</code>)
+- Stricter type checking
+- Type conversion must be explicit</p>
+<hr />
+<h2 id="6-line-numbers-and-labels">6. Line Numbers and Labels<a class="headerlink" href="#6-line-numbers-and-labels" title="Permanent link">&para;</a></h2>
+<h3 id="mbasic-line-numbers-required">MBASIC - Line Numbers Required<a class="headerlink" href="#mbasic-line-numbers-required" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Start&quot;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="il">0</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">100</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;X is not positive&quot;</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">110</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="nl">100</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;X is positive&quot;</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="nl">110</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;End&quot;</span>
+</code></pre></div>
+<h3 id="compiled-basic-labels-optional">Compiled BASIC - Labels Optional<a class="headerlink" href="#compiled-basic-labels-optional" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Start&quot;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kr">IF</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="il">0</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">PositiveBranch</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;X is not positive&quot;</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="kr">GOTO</span><span class="w"> </span><span class="nl">Done</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="nl">PositiveBranch:</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">  </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;X is positive&quot;</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="nl">Done:</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">  </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;End&quot;</span>
+</code></pre></div>
+<p><strong>Advantages:</strong>
+- Meaningful label names
+- No need to renumber
+- Easier to maintain
+- Can still use line numbers if desired
+- Line numbers become optional</p>
+<hr />
+<h2 id="7-string-handling">7. String Handling<a class="headerlink" href="#7-string-handling" title="Permanent link">&para;</a></h2>
+<h3 id="mbasic-fixed-or-variable">MBASIC - Fixed or Variable<a class="headerlink" href="#mbasic-fixed-or-variable" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">A$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Hello&quot;</span><span class="w">              </span><span class="c1">&#39; Variable-length string</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">B$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;World is long&quot;</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">A$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A$</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s2">&quot; &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B$</span><span class="w">       </span><span class="c1">&#39; Concatenation, reallocation</span>
+</code></pre></div>
+<h3 id="compiled-basic-fixed-length-option">Compiled BASIC - Fixed Length Option<a class="headerlink" href="#compiled-basic-fixed-length-option" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">&#39; Variable-length (like MBASIC)</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">STRING</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Hello&quot;</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="c1">&#39; Fixed-length (more efficient in compiled code)</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">STRING</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">80</span><span class="w">         </span><span class="c1">&#39; Exactly 80 characters</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="vg">B</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Hello&quot;</span><span class="w">                  </span><span class="c1">&#39; Padded with spaces</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="c1">&#39; For record structures</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="kr">TYPE</span><span class="w"> </span><span class="vg">Buffer</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">  </span><span class="vg">Data</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">STRING</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">512</span><span class="w">       </span><span class="c1">&#39; Fixed allocation</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="kr">END</span><span class="w"> </span><span class="kr">TYPE</span>
+</code></pre></div>
+<p><strong>Compiler Advantages:</strong>
+- Fixed-length strings avoid heap allocation
+- Better for arrays of strings
+- Predictable memory layout
+- Useful for file I/O buffers</p>
+<hr />
+<h2 id="8-modular-programming">8. Modular Programming<a class="headerlink" href="#8-modular-programming" title="Permanent link">&para;</a></h2>
+<h3 id="mbasic-single-monolithic-file">MBASIC - Single Monolithic File<a class="headerlink" href="#mbasic-single-monolithic-file" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nl">10</span><span class="w"> </span><span class="c1">REM Everything in one file</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nl">20</span><span class="w"> </span><span class="c1">REM All code is sequential</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="nl">30</span><span class="w"> </span><span class="c1">REM All variables global</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="nl">40</span><span class="w"> </span><span class="c1">REM Hard to organize large programs</span>
+</code></pre></div>
+<h3 id="compiled-basic-multiple-modules">Compiled BASIC - Multiple Modules<a class="headerlink" href="#compiled-basic-multiple-modules" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1">&#39; Module1.BAS</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="c1">REM $INCLUDE: &#39;SharedDefs.bi&#39;</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="kd">DECLARE</span><span class="w"> </span><span class="nv">SUB</span><span class="w"> </span><span class="n">ProcessData()</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="kd">DIM</span><span class="w"> </span><span class="nv">SHARED</span><span class="w"> </span><span class="vg">AppData</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="vg">DataType</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="kr">SUB</span><span class="w"> </span><span class="nl">ProcessData</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">  </span><span class="c1">&#39; Implementation here</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="kr">END</span><span class="w"> </span><span class="kr">SUB</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="c1">&#39; Main.BAS</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="c1">REM $INCLUDE: &#39;SharedDefs.bi&#39;</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="kd">DECLARE</span><span class="w"> </span><span class="nv">SUB</span><span class="w"> </span><span class="n">ProcessData()</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="vg">ProcessData</span><span class="w">                  </span><span class="c1">&#39; Call from another module</span>
+</code></pre></div>
+<p><strong>Compiler Features:</strong>
+- <code>$INCLUDE</code> metacommand
+- Separate compilation units
+- DECLARE statements for forward references
+- Linker combines modules
+- Better organization for large projects</p>
+<hr />
+<h2 id="9-error-handling">9. Error Handling<a class="headerlink" href="#9-error-handling" title="Permanent link">&para;</a></h2>
+<h3 id="mbasic-basic-on-error">MBASIC - Basic ON ERROR<a class="headerlink" href="#mbasic-basic-on-error" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">ON ERROR</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">9000</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="s2">&quot;Enter number: &quot;</span><span class="p">,</span><span class="w"> </span><span class="vg">N</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="vg">N</span><span class="w">               </span><span class="c1">&#39; May cause divide by zero</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">X</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="nl">9000</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Error: &quot;</span><span class="p">;</span><span class="w"> </span><span class="kr">ERR</span><span class="p">,</span><span class="w"> </span><span class="kr">ERL</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="nl">9010</span><span class="w"> </span><span class="kr">RESUME</span><span class="w"> </span><span class="kr">NEXT</span>
+</code></pre></div>
+<h3 id="compiled-basic-enhanced-error-handling">Compiled BASIC - Enhanced Error Handling<a class="headerlink" href="#compiled-basic-enhanced-error-handling" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kr">ON ERROR</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">ErrorHandler</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="kr">INPUT</span><span class="w"> </span><span class="s2">&quot;Enter number: &quot;</span><span class="p">,</span><span class="w"> </span><span class="vg">N</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="vg">N</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="kr">PRINT</span><span class="w"> </span><span class="vg">X</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="kr">END</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="nl">ErrorHandler:</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="w">  </span><span class="kr">SELECT CASE</span><span class="w"> </span><span class="kr">ERR</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="w">    </span><span class="k">CASE</span><span class="w"> </span><span class="il">11</span><span class="w">                  </span><span class="c1">&#39; Division by zero</span>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="w">      </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Cannot divide by zero&quot;</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="w">      </span><span class="kr">RESUME</span><span class="w"> </span><span class="kr">NEXT</span>
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="w">    </span><span class="k">CASE</span><span class="w"> </span><span class="il">53</span><span class="w">                  </span><span class="c1">&#39; File not found</span>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="w">      </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;File missing&quot;</span>
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a><span class="w">      </span><span class="kr">RESUME</span>
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a><span class="w">    </span><span class="k">CASE</span><span class="w"> </span><span class="k">ELSE</span>
+<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a><span class="w">      </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Unexpected error: &quot;</span><span class="p">;</span><span class="w"> </span><span class="kr">ERR</span>
+<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a><span class="w">      </span><span class="kr">END</span>
+<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a><span class="w">  </span><span class="kr">END</span><span class="w"> </span><span class="kr">SELECT</span>
+</code></pre></div>
+<p><strong>Compiler Enhancements:</strong>
+- More error codes
+- Better error context
+- RESUME options (NEXT, line number, label)
+- Error handling compiled more efficiently
+- May require <code>/E</code> compiler flag</p>
+<hr />
+<h2 id="10-metacommands-and-compiler-directives">10. Metacommands and Compiler Directives<a class="headerlink" href="#10-metacommands-and-compiler-directives" title="Permanent link">&para;</a></h2>
+<h3 id="mbasic-no-metacommands">MBASIC - No Metacommands<a class="headerlink" href="#mbasic-no-metacommands" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1">REM Just regular comments</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1">REM No special compiler control</span>
+</code></pre></div>
+<h3 id="compiled-basic-rich-metacommands">Compiled BASIC - Rich Metacommands<a class="headerlink" href="#compiled-basic-rich-metacommands" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1">REM $STATIC                  &#39; Static array allocation (default)</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="c1">REM $DYNAMIC                 &#39; Dynamic array allocation</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="c1">REM $INCLUDE: &#39;file.bi&#39;     &#39; Include file</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1">REM $DEBUG                   &#39; Include debug info</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="c1">REM $NODEBUG                 &#39; Strip debug info</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="c1">REM $COMPILE                 &#39; Mark as compilable code</span>
+</code></pre></div>
+<p><strong>Purpose:</strong>
+- Control compilation behavior
+- Conditional compilation
+- Include external files
+- Optimize/debug modes
+- Module linking</p>
+<hr />
+<h2 id="11-file-io">11. File I/O<a class="headerlink" href="#11-file-io" title="Permanent link">&para;</a></h2>
+<h3 id="mbasic-sequential-and-random">MBASIC - Sequential and Random<a class="headerlink" href="#mbasic-sequential-and-random" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">OPEN</span><span class="w"> </span><span class="s2">&quot;DATA.TXT&quot;</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="k">OUTPUT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">#</span><span class="il">1</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="err">#</span><span class="il">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Hello&quot;</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">CLOSE</span><span class="w"> </span><span class="err">#</span><span class="il">1</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="nl">100</span><span class="w"> </span><span class="kr">OPEN</span><span class="w"> </span><span class="s2">&quot;R&quot;</span><span class="p">,</span><span class="w"> </span><span class="err">#</span><span class="il">2</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;RANDOM.DAT&quot;</span><span class="p">,</span><span class="w"> </span><span class="il">128</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="nl">110</span><span class="w"> </span><span class="kr">FIELD</span><span class="w"> </span><span class="err">#</span><span class="il">2</span><span class="p">,</span><span class="w"> </span><span class="il">80</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="vg">N$</span><span class="p">,</span><span class="w"> </span><span class="il">48</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="vg">A$</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="nl">120</span><span class="w"> </span><span class="kr">LSET</span><span class="w"> </span><span class="vg">N$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;John&quot;</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="nl">130</span><span class="w"> </span><span class="kr">PUT</span><span class="w"> </span><span class="err">#</span><span class="il">2</span><span class="p">,</span><span class="w"> </span><span class="il">1</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="nl">140</span><span class="w"> </span><span class="kr">CLOSE</span><span class="w"> </span><span class="err">#</span><span class="il">2</span>
+</code></pre></div>
+<h3 id="compiled-basic-extended-io">Compiled BASIC - Extended I/O<a class="headerlink" href="#compiled-basic-extended-io" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1">&#39; Sequential files (same as MBASIC)</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="kr">OPEN</span><span class="w"> </span><span class="s2">&quot;DATA.TXT&quot;</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="k">OUTPUT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">#</span><span class="il">1</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="kr">PRINT</span><span class="w"> </span><span class="err">#</span><span class="il">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Hello&quot;</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="kr">CLOSE</span><span class="w"> </span><span class="err">#</span><span class="il">1</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="c1">&#39; Random access with TYPE (easier)</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="kr">TYPE</span><span class="w"> </span><span class="vg">PersonRecord</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="w">  </span><span class="vg">Name</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">STRING</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">80</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="w">  </span><span class="vg">Address</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">STRING</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">48</span>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="kr">END</span><span class="w"> </span><span class="kr">TYPE</span>
+<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>
+<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a><span class="kd">DIM</span><span class="w"> </span><span class="vg">Person</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="vg">PersonRecord</span>
+<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a><span class="vg">Person</span><span class="o">.</span><span class="vg">Name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;John&quot;</span>
+<a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a>
+<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a><span class="kr">OPEN</span><span class="w"> </span><span class="s2">&quot;RANDOM.DAT&quot;</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="k">RANDOM</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">#</span><span class="il">2</span><span class="w"> </span><span class="vg">LEN</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">LEN</span><span class="p">(</span><span class="vg">Person</span><span class="p">)</span>
+<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a><span class="kr">PUT</span><span class="w"> </span><span class="err">#</span><span class="il">2</span><span class="p">,</span><span class="w"> </span><span class="il">1</span><span class="p">,</span><span class="w"> </span><span class="vg">Person</span>
+<a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a><span class="kr">CLOSE</span><span class="w"> </span><span class="err">#</span><span class="il">2</span>
+<a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a>
+<a id="__codelineno-23-19" name="__codelineno-23-19" href="#__codelineno-23-19"></a><span class="c1">&#39; Binary file access</span>
+<a id="__codelineno-23-20" name="__codelineno-23-20" href="#__codelineno-23-20"></a><span class="kr">OPEN</span><span class="w"> </span><span class="s2">&quot;BINARY.DAT&quot;</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="k">BINARY</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">#</span><span class="il">3</span>
+<a id="__codelineno-23-21" name="__codelineno-23-21" href="#__codelineno-23-21"></a><span class="kr">PUT</span><span class="w"> </span><span class="err">#</span><span class="il">3</span><span class="p">,</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="vg">Person</span><span class="w">              </span><span class="c1">&#39; Position auto-increments</span>
+<a id="__codelineno-23-22" name="__codelineno-23-22" href="#__codelineno-23-22"></a><span class="kr">CLOSE</span><span class="w"> </span><span class="err">#</span><span class="il">3</span>
+</code></pre></div>
+<p><strong>Compiler Improvements:</strong>
+- BINARY file mode
+- Direct TYPE support for records
+- Better integration with user-defined types
+- Automatic length calculation</p>
+<hr />
+<h2 id="12-optimization-opportunities">12. Optimization Opportunities<a class="headerlink" href="#12-optimization-opportunities" title="Permanent link">&para;</a></h2>
+<h3 id="interpreted-mbasic">Interpreted MBASIC<a class="headerlink" href="#interpreted-mbasic" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Each line tokenized but still interpreted</li>
+<li>Variable lookup every reference</li>
+<li>No type inference</li>
+<li>No dead code elimination</li>
+<li>No loop optimization</li>
+</ul>
+<h3 id="compiled-basic">Compiled BASIC<a class="headerlink" href="#compiled-basic" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Constant folding</strong>: <code>X = 5 * 10 + 3</code> → <code>X = 53</code> at compile time</li>
+<li><strong>Common subexpression elimination</strong>: Reuse computed values</li>
+<li><strong>Loop optimization</strong>: Hoist invariant code out of loops</li>
+<li><strong>Inline functions</strong>: Small functions inlined</li>
+<li><strong>Register allocation</strong>: Keep hot variables in registers</li>
+<li><strong>Dead code elimination</strong>: Remove unreachable code</li>
+<li><strong>Peephole optimization</strong>: Local instruction patterns</li>
+</ul>
+<hr />
+<h2 id="summary-of-key-changes-for-our-compiler">Summary of Key Changes for Our Compiler<a class="headerlink" href="#summary-of-key-changes-for-our-compiler" title="Permanent link">&para;</a></h2>
+<h3 id="must-implement-for-basic-compilation">Must Implement for Basic Compilation:<a class="headerlink" href="#must-implement-for-basic-compilation" title="Permanent link">&para;</a></h3>
+<ol>
+<li>✓ <strong>Global DEF type statements</strong> - First pass collection</li>
+<li>✓ <strong>Static array dimensions</strong> - Constant expressions only</li>
+<li>✓ <strong>Fixed variable types</strong> - Type determined at compile time</li>
+<li>✓ <strong>Remove interactive commands</strong> - Not applicable to compiled code</li>
+<li><strong>Line number to address mapping</strong> - For GOTO/GOSUB</li>
+<li><strong>Constant expression evaluation</strong> - For DIM and other compile-time needs</li>
+</ol>
+<h3 id="should-implement-for-better-compiler">Should Implement for Better Compiler:<a class="headerlink" href="#should-implement-for-better-compiler" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Named labels</strong> - Alternative to line numbers</li>
+<li><strong>Local variables in SUB/FUNCTION</strong> - Lexical scoping</li>
+<li><strong>Parameter passing</strong> - BYVAL and BYREF</li>
+<li><strong>SELECT CASE</strong> - Structured control flow</li>
+<li><strong>EXIT FOR/DO/SUB/FUNCTION</strong> - Early exit from blocks</li>
+<li><strong>User-defined TYPEs</strong> - Record structures</li>
+<li><strong>$INCLUDE metacommand</strong> - Modular compilation</li>
+<li><strong>Optimization passes</strong> - Constant folding, CSE, etc.</li>
+</ol>
+<h3 id="could-implement-for-advanced-features">Could Implement for Advanced Features:<a class="headerlink" href="#could-implement-for-advanced-features" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>$DYNAMIC mode</strong> - Runtime array sizing</li>
+<li><strong>Separate compilation</strong> - Multiple modules</li>
+<li><strong>DECLARE statements</strong> - Forward references</li>
+<li><strong>SHARED/STATIC keywords</strong> - Fine-grained scope control</li>
+<li><strong>Recursion support</strong> - For FUNCTION/SUB</li>
+<li><strong>Block IF/THEN/ELSE/ELSEIF/ENDIF</strong> - Nested conditionals</li>
+</ol>
+<hr />
+<h2 id="impact-on-parser-design">Impact on Parser Design<a class="headerlink" href="#impact-on-parser-design" title="Permanent link">&para;</a></h2>
+<p>Our parser must:</p>
+<ol>
+<li><strong>Two-pass minimum</strong>:</li>
+<li>Pass 1: Collect DEFINT/DEFSNG/DEFDBL/DEFSTR, build type map</li>
+<li>
+<p>Pass 2: Parse with type information available</p>
+</li>
+<li>
+<p><strong>Symbol table with type information</strong>:</p>
+</li>
+<li>Variable name → type mapping</li>
+<li>Array name → dimensions and type</li>
+<li>
+<p>Label/line number → code location</p>
+</li>
+<li>
+<p><strong>Constant expression evaluator</strong>:</p>
+</li>
+<li>For DIM array bounds</li>
+<li>For CONST declarations</li>
+<li>
+<p>For optimization</p>
+</li>
+<li>
+<p><strong>Scope stack (if implementing SUB/FUNCTION)</strong>:</p>
+</li>
+<li>Track current scope</li>
+<li>Local vs module-level variables</li>
+<li>
+<p>Parameter lists</p>
+</li>
+<li>
+<p><strong>Control flow graph</strong>:</p>
+</li>
+<li>All GOTO/GOSUB targets</li>
+<li>Reachable code analysis</li>
+<li>Loop structure identification</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

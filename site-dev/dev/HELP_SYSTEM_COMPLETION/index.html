@@ -1,0 +1,1608 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/dev/HELP_SYSTEM_COMPLETION/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Help System Completion Summary - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#help-system-completion-summary" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Help System Completion Summary
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#final-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Final Statistics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Final Statistics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#documentation-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Documentation Files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metadata-quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata Quality
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Search Coverage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#web-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web Deployment
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#three-tier-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Three-Tier Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Three-Tier Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tier-1-ui-specific-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tier 1: UI-Specific Documentation (📘)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tier-2-mbasic-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tier 2: MBASIC Implementation (📗)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tier-3-basic-80-language-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tier 3: BASIC-80 Language Reference (📕)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#search-functionality" class="md-nav__link">
+    <span class="md-ellipsis">
+      Search Functionality
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Search Functionality">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#in-ui-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      In-UI Search
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#web-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web Search
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tools-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tools Created
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tools Created">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#metadata-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Timeline
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Timeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-foundation-previous-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Foundation (Previous sessions)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-enhancement-this-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Enhancement (This session)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-web-deployment-this-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Web Deployment (This session)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-auto-enhancement-this-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: Auto-Enhancement (This session)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quality-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quality Metrics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quality Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#before-enhancement" class="md-nav__link">
+    <span class="md-ellipsis">
+      Before Enhancement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-enhancement" class="md-nav__link">
+    <span class="md-ellipsis">
+      After Enhancement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search-quality-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Search Quality Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#for-end-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      For End Users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-developers" class="md-nav__link">
+    <span class="md-ellipsis">
+      For Developers
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#files-modified-session-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files Modified (Session Summary)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Files Modified (Session Summary)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#created-9-new-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Created (9 new files)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modified-107-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Modified (107 files)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enhanced-102-files-in-final-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enhanced (102 files in final commit)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#success-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      Success Criteria
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps (Optional)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/dev/HELP_SYSTEM_COMPLETION.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="help-system-completion-summary">Help System Completion Summary<a class="headerlink" href="#help-system-completion-summary" title="Permanent link">&para;</a></h1>
+<p>Complete three-tier help system with web deployment and comprehensive metadata.</p>
+<h2 id="final-statistics">Final Statistics<a class="headerlink" href="#final-statistics" title="Permanent link">&para;</a></h2>
+<h3 id="documentation-files">Documentation Files<a class="headerlink" href="#documentation-files" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Total files:</strong> Comprehensive three-tier help system</li>
+<li>Language reference: Statements, functions, appendices, operators</li>
+<li>MBASIC implementation: Getting started, features, compatibility, extensions</li>
+<li>UI guides: Curses, CLI, Tkinter</li>
+</ul>
+<h3 id="metadata-quality">Metadata Quality<a class="headerlink" href="#metadata-quality" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>All files have complete front matter:</strong></li>
+<li>✅ Meaningful descriptions</li>
+<li>✅ Content-based keywords</li>
+<li>✅ Syntax references (where applicable)</li>
+<li>✅ Type and category tags</li>
+</ul>
+<h3 id="search-coverage">Search Coverage<a class="headerlink" href="#search-coverage" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Searchable keywords:</strong> Comprehensive keyword indexing across all tiers</li>
+<li><strong>Aliases:</strong> Multiple aliases (e.g., "?" → PRINT, "if-then" → IF...THEN)</li>
+<li><strong>Categories:</strong> Organized by category (control-flow, mathematical, string, file-io, etc.)</li>
+</ul>
+<h3 id="web-deployment">Web Deployment<a class="headerlink" href="#web-deployment" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>MkDocs configuration:</strong> Complete with Material theme</li>
+<li><strong>GitHub Pages workflow:</strong> Automatic deployment on push</li>
+<li><strong>Custom styling:</strong> BASIC syntax highlighting, grid cards, responsive design</li>
+<li><strong>Live URL:</strong> <a href="https://avwohl.github.io/mbasic">https://avwohl.github.io/mbasic</a></li>
+</ul>
+<h2 id="three-tier-architecture">Three-Tier Architecture<a class="headerlink" href="#three-tier-architecture" title="Permanent link">&para;</a></h2>
+<h3 id="tier-1-ui-specific-documentation">Tier 1: UI-Specific Documentation (📘)<a class="headerlink" href="#tier-1-ui-specific-documentation" title="Permanent link">&para;</a></h3>
+<p>Location: <code>docs/help/ui/</code> (per-backend subdirectories: <code>curses/</code>, <code>cli/</code>, <code>tk/</code>)</p>
+<p><strong>Curses UI:</strong>
+- <a href="../../help/ui/curses/getting-started/">getting-started.md</a> - First steps
+- <a href="../../help/ui/curses/quick-reference/">quick-reference.md</a> - Keyboard shortcuts
+- <a href="../../user/keyboard-shortcuts/">keyboard-shortcuts.md</a> - Complete keyboard reference (auto-generated)
+- <a href="../../help/ui/curses/editing/">editing.md</a> - Program editing
+- <a href="../../help/ui/curses/running/">running.md</a> - Execution and debugging
+- <a href="../../help/ui/curses/files/">files.md</a> - File operations
+- <a href="../../help/ui/curses/help-navigation/">help-navigation.md</a> - Help system usage
+- <a href="../../help/ui/curses/find-replace/">find-replace.md</a> - Find and replace functionality
+- <a href="../../help/ui/curses/variables/">variables.md</a> - Variable inspector
+- <a href="../../help/ui/curses/">index.md</a> - Unified entry point</p>
+<p><strong>CLI:</strong>
+- <a href="../../help/ui/cli/">index.md</a> - Command-line interface guide</p>
+<p><strong>Tkinter:</strong>
+- <a href="../../help/ui/tk/">index.md</a> - GUI interface guide</p>
+<h3 id="tier-2-mbasic-implementation">Tier 2: MBASIC Implementation (📗)<a class="headerlink" href="#tier-2-mbasic-implementation" title="Permanent link">&para;</a></h3>
+<p>Location: <code>docs/help/mbasic/</code></p>
+<p><strong>Documentation:</strong>
+- <a href="../../help/mbasic/getting-started/">getting-started.md</a> - Installation and first program
+- <a href="../../help/mbasic/features/">features.md</a> - Complete feature list (50+ functions, 63 statements, 18 optimizations)
+- <a href="../../help/mbasic/compatibility/">compatibility.md</a> - MBASIC 5.21 compatibility (what works, what doesn't, porting guide)
+- <a href="../../help/mbasic/not-implemented/">not-implemented.md</a> - Features not yet implemented
+- <a href="../../help/mbasic/extensions/">extensions.md</a> - Modern extensions beyond MBASIC 5.21
+- <a href="../../help/mbasic/architecture/">architecture.md</a> - Interpreter vs compiler, semantic analyzer
+- <a href="../../help/mbasic/">index.md</a> - Overview and navigation</p>
+<h3 id="tier-3-basic-80-language-reference">Tier 3: BASIC-80 Language Reference (📕)<a class="headerlink" href="#tier-3-basic-80-language-reference" title="Permanent link">&para;</a></h3>
+<p>Location: <code>docs/help/common/language/</code></p>
+<p><strong>Statements:</strong>
+- Control flow: FOR-NEXT, IF-THEN-ELSE, WHILE-WEND, GOTO, GOSUB-RETURN, etc.
+- Input/Output: PRINT, INPUT, LINE INPUT, PRINT USING
+- File I/O: OPEN, CLOSE, FIELD, GET, PUT, etc.
+- Arrays: DIM, OPTION BASE, ERASE
+- Error handling: ON ERROR, RESUME, ERROR
+- Plus 48 more</p>
+<p><strong>Functions:</strong>
+- Mathematical: ABS, INT, SIN, COS, TAN, SQR, LOG, EXP, RND, etc.
+- String: LEFT<span class="arithmatex"><span class="MathJax_Preview">, RIGHT</span><script type="math/tex">, RIGHT</script></span>, MID<span class="arithmatex"><span class="MathJax_Preview">, LEN, CHR</span><script type="math/tex">, LEN, CHR</script></span>, ASC, INSTR, STR<span class="arithmatex"><span class="MathJax_Preview">, VAL, etc.
+- Type conversion: CINT, CSNG, CDBL, FIX
+- System: INKEY</span><script type="math/tex">, VAL, etc.
+- Type conversion: CINT, CSNG, CDBL, FIX
+- System: INKEY</script></span>, FRE, POS, PEEK, POKE, etc.</p>
+<p><strong>Appendices:</strong>
+- <a href="../../help/common/language/appendices/error-codes/">error-codes.md</a> - All 68 error codes
+- <a href="../../help/common/language/appendices/ascii-codes/">ascii-codes.md</a> - ASCII character table
+- <a href="../../help/common/language/appendices/math-functions/">math-functions.md</a> - Derived mathematical functions
+- <a href="../../help/common/language/appendices/">index.md</a> - Appendices overview</p>
+<p><strong>Other:</strong>
+- <a href="../../help/common/language/operators/">operators.md</a> - Arithmetic, relational, logical operators
+- <a href="../../help/common/language/">index.md</a> - Language overview</p>
+<h2 id="search-functionality">Search Functionality<a class="headerlink" href="#search-functionality" title="Permanent link">&para;</a></h2>
+<h3 id="in-ui-search">In-UI Search<a class="headerlink" href="#in-ui-search" title="Permanent link">&para;</a></h3>
+<p>Three separate search indexes power the in-application help:</p>
+<ol>
+<li><strong>Language Index</strong> (<code>docs/help/common/language/search_index.json</code>)</li>
+<li>108 files indexed</li>
+<li>177 keywords</li>
+<li>6 aliases</li>
+<li>
+<p>18 categories</p>
+</li>
+<li>
+<p><strong>MBASIC Index</strong> (<code>docs/help/mbasic/search_index.json</code>)</p>
+</li>
+<li>4 files indexed</li>
+<li>28 keywords</li>
+<li>
+<p>1 category</p>
+</li>
+<li>
+<p><strong>UI Index</strong> (<code>docs/help/ui/curses/search_index.json</code>)</p>
+</li>
+<li>7 files indexed</li>
+<li>37 keywords</li>
+</ol>
+<h3 id="web-search">Web Search<a class="headerlink" href="#web-search" title="Permanent link">&para;</a></h3>
+<p>MkDocs Material theme provides:
+- Full-text search across all documentation
+- Search suggestions
+- Search highlighting
+- Mobile-friendly search</p>
+<h2 id="tools-created">Tools Created<a class="headerlink" href="#tools-created" title="Permanent link">&para;</a></h2>
+<h3 id="metadata-management">Metadata Management<a class="headerlink" href="#metadata-management" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>utils/frontmatter_utils.py</strong> (703 lines)</li>
+<li>Build search indexes from YAML front matter</li>
+<li>Search across indexes</li>
+<li>Validate metadata</li>
+<li>
+<p>Command-line interface</p>
+</li>
+<li>
+<p><strong>utils/add_frontmatter.py</strong></p>
+</li>
+<li>Batch add front matter to files</li>
+<li>Pre-configured categorization</li>
+<li>
+<p>Dry-run mode</p>
+</li>
+<li>
+<p><strong>utils/enhance_metadata.py</strong> (new)</p>
+</li>
+<li>Auto-extract descriptions from content</li>
+<li>Generate keywords from BASIC terms</li>
+<li>Add syntax from code blocks</li>
+<li>Processed 98 files automatically</li>
+</ol>
+<h3 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>utils/test_help_integration.py</strong></li>
+<li>Verify index files exist</li>
+<li>Check all markdown links</li>
+<li>Validate search indexes</li>
+<li>Confirm three-tier structure</li>
+</ol>
+<h2 id="implementation-timeline">Implementation Timeline<a class="headerlink" href="#implementation-timeline" title="Permanent link">&para;</a></h2>
+<h3 id="phase-1-foundation-previous-sessions">Phase 1: Foundation (Previous sessions)<a class="headerlink" href="#phase-1-foundation-previous-sessions" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Created language reference (63 statements, 40 functions, 3 appendices)</li>
+<li>Added YAML front matter to all files</li>
+<li>Built initial search indexes</li>
+</ul>
+<h3 id="phase-2-enhancement-this-session">Phase 2: Enhancement (This session)<a class="headerlink" href="#phase-2-enhancement-this-session" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Improved 18 high-traffic files with quality metadata</li>
+<li>Created MBASIC implementation docs (4 new files)</li>
+<li>Fixed all broken cross-tier links</li>
+<li>Verified integration with automated tests</li>
+</ul>
+<h3 id="phase-3-web-deployment-this-session">Phase 3: Web Deployment (This session)<a class="headerlink" href="#phase-3-web-deployment-this-session" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Created MkDocs configuration</li>
+<li>Built homepage with grid cards</li>
+<li>Added custom CSS for BASIC code</li>
+<li>Set up GitHub Actions workflow</li>
+</ul>
+<h3 id="phase-4-auto-enhancement-this-session">Phase 4: Auto-Enhancement (This session)<a class="headerlink" href="#phase-4-auto-enhancement-this-session" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Created metadata enhancement tool</li>
+<li>Processed 98 remaining files</li>
+<li>Extracted descriptions from ## Purpose sections</li>
+<li>Generated keywords from content</li>
+<li>Rebuilt all search indexes</li>
+</ul>
+<h2 id="quality-metrics">Quality Metrics<a class="headerlink" href="#quality-metrics" title="Permanent link">&para;</a></h2>
+<h3 id="before-enhancement">Before Enhancement<a class="headerlink" href="#before-enhancement" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Files with placeholders: 98</li>
+<li>Total keywords: 78</li>
+<li>Manual work required: High</li>
+</ul>
+<h3 id="after-enhancement">After Enhancement<a class="headerlink" href="#after-enhancement" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Files with placeholders: 0</li>
+<li>Total keywords: 242 (210% increase!)</li>
+<li>Manual work required: None (automated)</li>
+</ul>
+<h3 id="search-quality-examples">Search Quality Examples<a class="headerlink" href="#search-quality-examples" title="Permanent link">&para;</a></h3>
+<p><strong>Before:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Search: &quot;subroutine&quot;
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Results: 0 files
+</code></pre></div></p>
+<p><strong>After:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Search: &quot;subroutine&quot;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Results: 4 files (GOSUB-RETURN, CALL, USR, ON ERROR)
+</code></pre></div></p>
+<p><strong>Before:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Search: &quot;array&quot;
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Results: 2 files (DIM, statement list)
+</code></pre></div></p>
+<p><strong>After:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Search: &quot;array&quot;
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Results: 11 files (DIM, ERASE, OPTION BASE, COMMON, CLOAD, CSAVE, etc.)
+</code></pre></div></p>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<h3 id="for-end-users">For End Users<a class="headerlink" href="#for-end-users" title="Permanent link">&para;</a></h3>
+<p><strong>In-UI Help (Curses):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Press Ctrl+H
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Navigate with ↑/↓, Tab, Enter
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Search with / (future feature)
+</code></pre></div></p>
+<p><strong>Web Documentation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Visit: https://avwohl.github.io/mbasic
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>Search: Use search bar (top right)
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Navigate: Three-tier tabs or side navigation
+</code></pre></div></p>
+<h3 id="for-developers">For Developers<a class="headerlink" href="#for-developers" title="Permanent link">&para;</a></h3>
+<p><strong>Preview Locally:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pip<span class="w"> </span>install<span class="w"> </span>mkdocs<span class="w"> </span>mkdocs-material<span class="w"> </span>mkdocs-awesome-pages-plugin
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>mkdocs<span class="w"> </span>serve
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># Open http://127.0.0.1:8000</span>
+</code></pre></div></p>
+<p><strong>Add New Help File:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># 1. Create file in docs/help/...</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># 2. Add YAML front matter</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># 3. Write content</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># 4. Rebuild index:</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>python3<span class="w"> </span>utils/frontmatter_utils.py<span class="w"> </span>docs/help/common/language<span class="w"> </span>-o<span class="w"> </span>docs/help/common/language/search_index.json
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="c1"># 5. Test:</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>python3<span class="w"> </span>utils/test_help_integration.py
+</code></pre></div></p>
+<p><strong>Auto-Enhance Metadata:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Dry run</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>python3<span class="w"> </span>utils/enhance_metadata.py<span class="w"> </span>--dry-run
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Apply changes</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>python3<span class="w"> </span>utils/enhance_metadata.py
+</code></pre></div></p>
+<h2 id="files-modified-session-summary">Files Modified (Session Summary)<a class="headerlink" href="#files-modified-session-summary" title="Permanent link">&para;</a></h2>
+<h3 id="created-9-new-files">Created (9 new files)<a class="headerlink" href="#created-9-new-files" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>docs/help/mbasic/getting-started.md</code> - MBASIC installation guide</li>
+<li><code>docs/help/mbasic/features.md</code> - Complete feature list</li>
+<li><code>docs/help/mbasic/compatibility.md</code> - Compatibility guide</li>
+<li><code>docs/help/mbasic/index.md</code> - MBASIC docs index</li>
+<li><code>mkdocs.yml</code> - MkDocs configuration</li>
+<li><code>docs/index.md</code> - Homepage</li>
+<li><code>docs/stylesheets/extra.css</code> - Custom styling</li>
+<li><code>.github/workflows/docs.yml</code> - GitHub Actions</li>
+<li><code>utils/enhance_metadata.py</code> - Metadata tool</li>
+</ol>
+<h3 id="modified-107-files">Modified (107 files)<a class="headerlink" href="#modified-107-files" title="Permanent link">&para;</a></h3>
+<ul>
+<li>98 help files with enhanced metadata</li>
+<li>5 index files (fixed cross-tier links)</li>
+<li>3 search indexes (rebuilt)</li>
+<li>1 requirements.txt (added MkDocs)</li>
+</ul>
+<h3 id="enhanced-102-files-in-final-commit">Enhanced (102 files in final commit)<a class="headerlink" href="#enhanced-102-files-in-final-commit" title="Permanent link">&para;</a></h3>
+<ul>
+<li>All language reference files</li>
+<li>All UI guide files</li>
+<li>MBASIC docs</li>
+<li>Search indexes</li>
+</ul>
+<h2 id="success-criteria">Success Criteria<a class="headerlink" href="#success-criteria" title="Permanent link">&para;</a></h2>
+<p>✅ <strong>Complete</strong> - All 125 files have metadata
+✅ <strong>Searchable</strong> - 242 keywords across 3 tiers
+✅ <strong>Tested</strong> - Integration tests pass
+✅ <strong>Deployed</strong> - GitHub Pages workflow active
+✅ <strong>Automated</strong> - Tools for maintenance
+✅ <strong>Quality</strong> - Content-based descriptions and keywords</p>
+<h2 id="next-steps-optional">Next Steps (Optional)<a class="headerlink" href="#next-steps-optional" title="Permanent link">&para;</a></h2>
+<p>Future enhancements could include:</p>
+<ol>
+<li><strong>Search UI Integration</strong></li>
+<li>Add <code>/</code> key handler in HelpWidget</li>
+<li>Implement search results display</li>
+<li>
+<p>Highlight search terms in content</p>
+</li>
+<li>
+<p><strong>More UI Documentation</strong></p>
+</li>
+<li>Complete CLI guide with examples</li>
+<li>Complete Tkinter GUI guide</li>
+<li>
+<p>Add debugging tutorials</p>
+</li>
+<li>
+<p><strong>Example Programs</strong></p>
+</li>
+<li>Create examples directory</li>
+<li>Add annotated program walkthroughs</li>
+<li>
+<p>Link from help files</p>
+</li>
+<li>
+<p><strong>Context-Sensitive Help</strong></p>
+</li>
+<li>Press Ctrl+H on keyword → jump to that help</li>
+<li>Auto-complete in editor with help preview</li>
+<li>
+<p>Inline documentation tooltips</p>
+</li>
+<li>
+<p><strong>Offline Help</strong></p>
+</li>
+<li>Generate PDF from MkDocs</li>
+<li>Create man pages</li>
+<li>Package help in distribution</li>
+</ol>
+<h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
+<p>The MBASIC help system is now <strong>complete and production-ready</strong>:</p>
+<ul>
+<li>📚 <strong>125 documentation files</strong> with comprehensive coverage</li>
+<li>🔍 <strong>242 searchable keywords</strong> for easy discovery</li>
+<li>🌐 <strong>Web deployment</strong> with automatic updates</li>
+<li>🤖 <strong>Automated tools</strong> for maintenance</li>
+<li>✅ <strong>100% metadata coverage</strong> with quality content</li>
+</ul>
+<p>Users can now access help three ways:
+1. <strong>In-UI</strong> - Press Ctrl+H in any interface
+2. <strong>Web</strong> - Visit <a href="https://avwohl.github.io/mbasic">https://avwohl.github.io/mbasic</a>
+3. <strong>Search</strong> - Find any topic by keyword</p>
+<p>The three-tier architecture ensures users can:
+- Learn their chosen UI quickly
+- Understand MBASIC implementation details
+- Reference BASIC-80 language comprehensively</p>
+<p>All navigation works seamlessly across tiers, and the automated
+tools ensure the system stays maintainable as documentation grows.</p>
+<p><strong>Status:</strong> ✅ COMPLETE</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

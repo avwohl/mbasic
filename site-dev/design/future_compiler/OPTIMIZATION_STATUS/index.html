@@ -1,0 +1,2538 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/design/future_compiler/OPTIMIZATION_STATUS/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Compiler Optimization Status - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#compiler-optimization-status" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Compiler Optimization Status
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../dev/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#implemented-optimizations" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ IMPLEMENTED OPTIMIZATIONS
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="✅ IMPLEMENTED OPTIMIZATIONS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-constant-folding-compile-time-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Constant Folding (Compile-Time Evaluation)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-runtime-constant-propagation" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Runtime Constant Propagation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-common-subexpression-elimination-cse" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Common Subexpression Elimination (CSE)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-subroutine-side-effect-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Subroutine Side-Effect Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-loop-analysis-for-while-if-goto" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Loop Analysis (FOR, WHILE, IF-GOTO)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-loop-invariant-code-motion" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Loop-Invariant Code Motion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-multi-dimensional-array-flattening" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Multi-Dimensional Array Flattening
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-option-base-global-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. OPTION BASE Global Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-dead-code-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. Dead Code Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-strength-reduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. Strength Reduction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-copy-propagation" class="md-nav__link">
+    <span class="md-ellipsis">
+      11. Copy Propagation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-algebraic-simplification" class="md-nav__link">
+    <span class="md-ellipsis">
+      12. Algebraic Simplification
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-induction-variable-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      13. Induction Variable Optimization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-expression-reassociation" class="md-nav__link">
+    <span class="md-ellipsis">
+      14. Expression Reassociation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-boolean-simplification" class="md-nav__link">
+    <span class="md-ellipsis">
+      15. Boolean Simplification
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#16-forward-substitution" class="md-nav__link">
+    <span class="md-ellipsis">
+      16. Forward Substitution
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#17-branch-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      17. Branch Optimization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#18-uninitialized-variable-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      18. Uninitialized Variable Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#19-range-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      19. Range Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#20-live-variable-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      20. Live Variable Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#21-string-constant-pooling" class="md-nav__link">
+    <span class="md-ellipsis">
+      21. String Constant Pooling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-built-in-function-purity-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      22. Built-in Function Purity Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-array-bounds-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      23. Array Bounds Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-alias-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      24. Alias Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-available-expression-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      25. Available Expression Analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-string-concatenation-in-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      26. String Concatenation in Loops
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-type-rebinding-analysis-phase-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      27. Type Rebinding Analysis (Phase 1)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ready-to-implement-now-semantic-analysis-phase" class="md-nav__link">
+    <span class="md-ellipsis">
+      📋 READY TO IMPLEMENT NOW (Semantic Analysis Phase)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#needs-code-generation-later-phase" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔮 NEEDS CODE GENERATION (Later Phase)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔮 NEEDS CODE GENERATION (Later Phase)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-peephole-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Peephole Optimization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-register-allocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Register Allocation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-instruction-scheduling" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Instruction Scheduling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-loop-unrolling-actual-transformation" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Loop Unrolling (Actual Transformation)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-dead-code-elimination-actual-removal" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Dead Code Elimination (Actual Removal)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-code-motion-actual-transformation" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Code Motion (Actual Transformation)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-tail-call-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Tail Call Optimization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-inline-expansion" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Inline Expansion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-vectorization" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. Vectorization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-interprocedural-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. Interprocedural Optimization
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-weve-missed-could-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      🤔 WHAT WE'VE MISSED (Could Add)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🤔 WHAT WE&#39;VE MISSED (Could Add)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#detectionwarning-phase" class="md-nav__link">
+    <span class="md-ellipsis">
+      Detection/Warning Phase
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optimization-priority-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      📊 OPTIMIZATION PRIORITY MATRIX
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📊 OPTIMIZATION PRIORITY MATRIX">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#high-value-low-effort-do-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      High Value, Low Effort (Do First)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#high-value-high-effort" class="md-nav__link">
+    <span class="md-ellipsis">
+      High Value, High Effort
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#low-value-for-basic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Low Value for BASIC
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#already-optimal-for-basic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Already Optimal for BASIC
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommended-next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      🎯 RECOMMENDED NEXT STEPS
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🎯 RECOMMENDED NEXT STEPS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#immediate-semantic-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Immediate (Semantic Analysis)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#long-term-code-generation-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      Long Term (Code Generation Required)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparison-to-modern-compilers" class="md-nav__link">
+    <span class="md-ellipsis">
+      📈 COMPARISON TO MODERN COMPILERS
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📈 COMPARISON TO MODERN COMPILERS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-we-have-vs-modern-compilers" class="md-nav__link">
+    <span class="md-ellipsis">
+      What We Have (vs Modern Compilers)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-were-missing-that-modern-compilers-have" class="md-nav__link">
+    <span class="md-ellipsis">
+      What We're Missing (that modern compilers have)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-we-do-better-for-basic" class="md-nav__link">
+    <span class="md-ellipsis">
+      What We Do Better (for BASIC)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      💡 CONCLUSION
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/design/future_compiler/OPTIMIZATION_STATUS.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="compiler-optimization-status">Compiler Optimization Status<a class="headerlink" href="#compiler-optimization-status" title="Permanent link">&para;</a></h1>
+<p>This document tracks all optimizations implemented, planned, and possible for the MBASIC compiler.</p>
+<p><strong>Summary: 27 optimizations implemented</strong> (all in semantic analysis phase)</p>
+<h2 id="implemented-optimizations">✅ IMPLEMENTED OPTIMIZATIONS<a class="headerlink" href="#implemented-optimizations" title="Permanent link">&para;</a></h2>
+<h3 id="1-constant-folding-compile-time-evaluation">1. Constant Folding (Compile-Time Evaluation)<a class="headerlink" href="#1-constant-folding-compile-time-evaluation" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>ConstantEvaluator</code> class
+<strong>What it does:</strong>
+- Evaluates constant expressions at compile time
+- Example: <code>X = 10 + 20</code> → <code>X = 30</code>
+- Handles arithmetic, logical, relational operations
+- Works with integer and floating-point constants</p>
+<p><strong>Benefits:</strong>
+- Eliminates runtime calculations
+- Reduces code size
+- Enables further optimizations</p>
+<h3 id="2-runtime-constant-propagation">2. Runtime Constant Propagation<a class="headerlink" href="#2-runtime-constant-propagation" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>ConstantEvaluator.runtime_constants</code>
+<strong>What it does:</strong>
+- Tracks variable values through program flow
+- Example: <code>N% = 10</code> then <code>DIM A(N%)</code> → <code>DIM A(10)</code>
+- Handles IF-THEN-ELSE branching (merges constants)
+- Invalidates on reassignment or INPUT</p>
+<p><strong>Benefits:</strong>
+- Allows variable subscripts in DIM statements
+- More flexible than 1980 MBASIC compiler
+- Enables constant folding in more contexts</p>
+<h3 id="3-common-subexpression-elimination-cse">3. Common Subexpression Elimination (CSE)<a class="headerlink" href="#3-common-subexpression-elimination-cse" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_track_expression_for_cse()</code>
+<strong>What it does:</strong>
+- Detects repeated expression calculations
+- Example: <code>X = A + B</code> then <code>Y = A + B</code> → can reuse result
+- Tracks which variables each expression uses
+- Smart invalidation on variable modification</p>
+<p><strong>Benefits:</strong>
+- Eliminates redundant calculations
+- Suggests temporary variable names
+- Reports potential savings</p>
+<h3 id="4-subroutine-side-effect-analysis">4. Subroutine Side-Effect Analysis<a class="headerlink" href="#4-subroutine-side-effect-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>SubroutineInfo</code> class
+<strong>What it does:</strong>
+- Analyzes what variables each GOSUB modifies
+- Handles transitive modifications (nested GOSUBs)
+- Only invalidates CSEs/constants that are actually modified
+- Example: <code>GOSUB 1000</code> only clears variables that subroutine 1000 touches</p>
+<p><strong>Benefits:</strong>
+- More precise CSE across subroutine calls
+- Preserves more optimization opportunities
+- Better than conservative "clear everything" approach</p>
+<h3 id="5-loop-analysis-for-while-if-goto">5. Loop Analysis (FOR, WHILE, IF-GOTO)<a class="headerlink" href="#5-loop-analysis-for-while-if-goto" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>LoopAnalysis</code> class
+<strong>What it does:</strong>
+- Detects all three loop types
+- Calculates iteration counts for constant bounds
+- Tracks nested loop relationships
+- Identifies variables modified in loops
+- Marks loop unrolling candidates (2-10 iterations)</p>
+<p><strong>Benefits:</strong>
+- Enables loop optimizations
+- Identifies small loops for unrolling
+- Foundation for loop-invariant code motion</p>
+<h3 id="6-loop-invariant-code-motion">6. Loop-Invariant Code Motion<a class="headerlink" href="#6-loop-invariant-code-motion" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection only)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_analyze_loop_invariants()</code>
+<strong>What it does:</strong>
+- Identifies CSEs computed multiple times in a loop
+- Checks if expression variables are modified by loop
+- Marks expressions that can be hoisted out of loop
+- Example: In <code>FOR I=1 TO 100: X = A*B: Y = A*B</code>, <code>A*B</code> is invariant</p>
+<p><strong>Benefits:</strong>
+- Reduces calculations inside loops
+- Can move expensive operations outside loop
+- Significant performance gains for hot loops</p>
+<p><strong>TODO:</strong> Actual code transformation to hoist (needs code generation phase)</p>
+<h3 id="7-multi-dimensional-array-flattening">7. Multi-Dimensional Array Flattening<a class="headerlink" href="#7-multi-dimensional-array-flattening" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_flatten_array_subscripts()</code>
+<strong>What it does:</strong>
+- Converts <code>A(I, J)</code> to <code>A(I * stride + J)</code> at compile time
+- Calculates strides based on dimensions
+- Supports OPTION BASE 0 and 1
+- Row-major order (rightmost index varies fastest)</p>
+<p><strong>Benefits:</strong>
+- Simpler runtime array access (1D instead of multi-D)
+- Stride calculations are constants (can be folded)
+- Index calculations become CSE candidates
+- Better cache locality (sequential memory)</p>
+<h3 id="8-option-base-global-analysis">8. OPTION BASE Global Analysis<a class="headerlink" href="#8-option-base-global-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_collect_option_base()</code>
+<strong>What it does:</strong>
+- Treats OPTION BASE as global compile-time declaration
+- Validates consistency (multiple declarations must match)
+- Applies globally regardless of location
+- Detects conflicts at compile time</p>
+<p><strong>Benefits:</strong>
+- Prevents runtime array indexing errors
+- Enables better array flattening
+- Validates program correctness</p>
+<h3 id="9-dead-code-detection">9. Dead Code Detection<a class="headerlink" href="#9-dead-code-detection" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection &amp; Warnings)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>ReachabilityInfo</code> class
+<strong>What it does:</strong>
+- Control flow graph analysis
+- Detects code after GOTO, END, STOP, RETURN
+- Identifies orphaned code (no incoming flow)
+- Finds uncalled subroutines
+- Generates warnings</p>
+<p><strong>Benefits:</strong>
+- Identifies bugs (unreachable code often indicates logic errors)
+- Can eliminate dead code in compilation
+- Reduces code size</p>
+<p><strong>TODO:</strong> Actual code elimination (needs code generation phase)</p>
+<h3 id="10-strength-reduction">10. Strength Reduction<a class="headerlink" href="#10-strength-reduction" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_apply_strength_reduction()</code>
+<strong>What it does:</strong>
+- Replaces expensive operations with cheaper ones
+- <code>X * 2</code> → <code>X + X</code> (replace MUL with ADD)
+- <code>X * 2^n</code> → detected for shift optimization
+- <code>X / 1</code> → <code>X</code> (eliminate DIV)
+- <code>X * 1</code> → <code>X</code>, <code>X * 0</code> → <code>0</code> (algebraic identities)
+- <code>X + 0</code> → <code>X</code>, <code>X - 0</code> → <code>X</code>
+- <code>X - X</code> → <code>0</code>
+- <code>X ^ 2</code> → <code>X * X</code> (replace POW with MUL)
+- <code>X ^ 3</code>, <code>X ^ 4</code> → repeated MUL (replace POW)
+- <code>X ^ 1</code> → <code>X</code>, <code>X ^ 0</code> → <code>1</code></p>
+<p><strong>Benefits:</strong>
+- Faster runtime (addition cheaper than multiplication)
+- Power cheaper than exponentiation
+- Eliminates unnecessary operations
+- Detects opportunities for bit shifts (on modern hardware)</p>
+<h3 id="11-copy-propagation">11. Copy Propagation<a class="headerlink" href="#11-copy-propagation" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>active_copies</code>, <code>_analyze_assignment()</code>
+<strong>What it does:</strong>
+- Detects simple copy assignments (<code>Y = X</code>)
+- Tracks where copies can be propagated
+- Suggests replacing <code>Y</code> with <code>X</code> to eliminate copy
+- Invalidates copies when source or copy is modified
+- Handles INPUT, READ, GOSUB invalidation
+- Detects dead copies (never used)</p>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w">      </span><span class="c1">&#39; Copy detected</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">10</span><span class="w"> </span><span class="c1">&#39; Can replace Y with X</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nl">40</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">200</span><span class="w">    </span><span class="c1">&#39; Invalidates the copy</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nl">50</span><span class="w"> </span><span class="vg">W</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">Y</span><span class="w">      </span><span class="c1">&#39; Y is now independent</span>
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- Reduces register pressure
+- Eliminates unnecessary copy instructions
+- Enables further optimizations
+- Identifies dead code (unused copies)</p>
+<h3 id="12-algebraic-simplification">12. Algebraic Simplification<a class="headerlink" href="#12-algebraic-simplification" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_apply_strength_reduction()</code>, <code>_apply_algebraic_simplification()</code>
+<strong>What it does:</strong>
+- Boolean identities: <code>X AND 0</code> → <code>0</code>, <code>X AND -1</code> → <code>X</code>, <code>X OR 0</code> → <code>X</code>, <code>X OR -1</code> → <code>-1</code>
+- Boolean self-operations: <code>X AND X</code> → <code>X</code>, <code>X OR X</code> → <code>X</code>, <code>X XOR X</code> → <code>0</code>
+- XOR identities: <code>X XOR 0</code> → <code>X</code>
+- Double negation: <code>NOT(NOT X)</code> → <code>X</code>, <code>-(-X)</code> → <code>X</code>
+- NOT constants: <code>NOT 0</code> → <code>-1</code>, <code>NOT -1</code> → <code>0</code>
+- Negation of zero: <code>-(0)</code> → <code>0</code>
+- Arithmetic identities (from Strength Reduction): <code>X * 1</code>, <code>X + 0</code>, <code>X - 0</code>, <code>X / 1</code>, etc.</p>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="ow">AND</span><span class="w"> </span><span class="il">-1</span><span class="w">   </span><span class="c1">&#39; → X = A (eliminate AND)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">NOT</span><span class="p">(</span><span class="ow">NOT</span><span class="w"> </span><span class="vg">B</span><span class="p">)</span><span class="w"> </span><span class="c1">&#39; → Y = B (eliminate double NOT)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="ow">OR</span><span class="w"> </span><span class="il">0</span><span class="w">     </span><span class="c1">&#39; → Z = C (eliminate OR)</span>
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- Simplifies Boolean logic
+- Eliminates redundant operations
+- Constant folding for Boolean values
+- Cleaner generated code</p>
+<h3 id="13-induction-variable-optimization">13. Induction Variable Optimization<a class="headerlink" href="#13-induction-variable-optimization" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>InductionVariable</code> class, <code>_detect_derived_induction_variable()</code>, <code>_detect_iv_strength_reduction()</code>
+<strong>What it does:</strong>
+- Detects primary induction variables (FOR loop control variables)
+- Detects derived induction variables:
+  - <code>J = I</code> (copy of IV)
+  - <code>J = I * constant</code> (scaled IV)
+  - <code>J = I + constant</code> (offset IV)
+- Identifies strength reduction opportunities in array subscripts
+- Example: <code>A(I * 10)</code> → can use pointer increment by 10 instead of multiply each iteration</p>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">100</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nl">20</span><span class="w">   </span><span class="vg">J</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">5</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nl">30</span><span class="w">   </span><span class="vg">A</span><span class="p">(</span><span class="vg">J</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">I</span><span class="w">      </span><span class="c1">&#39; Can increment J by 5 instead of computing I*5</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nl">40</span><span class="w">   </span><span class="vg">B</span><span class="p">(</span><span class="vg">I</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">10</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="c1">&#39; Can use pointer increment by 10</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- Replace multiplication with addition in loop bodies
+- Use pointer arithmetic for array access
+- Eliminate redundant IV computations
+- Significant performance gain for array-intensive loops</p>
+<p><strong>TODO:</strong> Actual code transformation (needs code generation phase)</p>
+<h3 id="14-expression-reassociation">14. Expression Reassociation<a class="headerlink" href="#14-expression-reassociation" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_apply_expression_reassociation()</code>, <code>_collect_associative_chain()</code>
+<strong>What it does:</strong>
+- Rearranges associative operations (+ and *) to group constants together
+- Collects all terms/factors in associative chains
+- Separates constants from non-constants
+- Folds all constants into a single value
+- Rebuilds expression with optimal grouping</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">2</span><span class="w">    </span><span class="c1">&#39; → A + 3</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="vg">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">2</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">3</span><span class="w">    </span><span class="c1">&#39; → A * 6</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">3</span><span class="p">)</span><span class="w">    </span><span class="c1">&#39; → A + 5</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nl">40</span><span class="w"> </span><span class="vg">W</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">3</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">4</span><span class="w">  </span><span class="c1">&#39; → A * 24</span>
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- Exposes constant folding opportunities
+- Reduces number of runtime operations
+- Works with any length of associative chain
+- Handles both addition and multiplication
+- Enables further optimizations downstream</p>
+<h3 id="15-boolean-simplification">15. Boolean Simplification<a class="headerlink" href="#15-boolean-simplification" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_apply_algebraic_simplification()</code>, <code>_apply_strength_reduction()</code>
+<strong>What it does:</strong>
+- <strong>Relational operator inversion</strong>: Eliminates NOT by inverting comparison
+  - <code>NOT(A &gt; B)</code> → <code>A &lt;= B</code>
+  - <code>NOT(A &lt; B)</code> → <code>A &gt;= B</code>
+  - <code>NOT(A &gt;= B)</code> → <code>A &lt; B</code>
+  - <code>NOT(A &lt;= B)</code> → <code>A &gt; B</code>
+  - <code>NOT(A = B)</code> → <code>A &lt;&gt; B</code>
+  - <code>NOT(A &lt;&gt; B)</code> → <code>A = B</code>
+- <strong>De Morgan's laws</strong>: Distributes NOT over Boolean operators
+  - <code>NOT(A AND B)</code> → <code>(NOT A) OR (NOT B)</code>
+  - <code>NOT(A OR B)</code> → <code>(NOT A) AND (NOT B)</code>
+- <strong>Absorption laws</strong>: Eliminates redundant Boolean operations
+  - <code>(A AND B) OR A</code> → <code>A</code>
+  - <code>A OR (A AND B)</code> → <code>A</code>
+  - <code>(A OR B) AND A</code> → <code>A</code>
+  - <code>A AND (A OR B)</code> → <code>A</code>
+- <strong>Double negation</strong>: Already covered in algebraic simplification
+  - <code>NOT(NOT X)</code> → <code>X</code></p>
+<p><strong>Benefits:</strong>
+- Eliminates NOT operations when possible
+- Simplifies conditional expressions
+- Reduces Boolean operation overhead
+- More efficient conditional evaluation
+- Cleaner generated code</p>
+<h3 id="16-forward-substitution">16. Forward Substitution<a class="headerlink" href="#16-forward-substitution" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_analyze_forward_substitution()</code>, <code>_count_variable_uses_in_expr()</code>, <code>_has_side_effects()</code>
+<strong>What it does:</strong>
+- Analyzes variable assignments and usage patterns
+- Identifies single-use temporary variables
+- Detects dead stores (variables assigned but never used)
+- Checks for side effects (function calls)
+- Suggests eliminating temporaries by substituting expressions directly</p>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">TEMP</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">    </span><span class="c1">&#39; TEMP used only once</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">TEMP</span><span class="w">      </span><span class="c1">&#39; → Can substitute: PRINT A + B</span>
+</code></pre></div></p>
+<p><strong>Criteria for substitution:</strong>
+1. Variable assigned a non-trivial expression
+2. Variable used exactly once after assignment
+3. No side effects in expression (no function calls)
+4. Not a simple constant or variable copy</p>
+<p><strong>Benefits:</strong>
+- Reduces register pressure
+- Eliminates unnecessary temporary variables
+- Simplifies code
+- Detects dead stores (unused assignments)
+- Enables further optimizations</p>
+<p><strong>TODO:</strong> Actual code transformation (needs code generation phase)</p>
+<h3 id="17-branch-optimization">17. Branch Optimization<a class="headerlink" href="#17-branch-optimization" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_analyze_if()</code>
+<strong>What it does:</strong>
+- Detects IF conditions that can be evaluated at compile time
+- Identifies always-TRUE conditions (THEN branch always taken)
+- Identifies always-FALSE conditions (ELSE branch or fall-through)
+- Marks unreachable branches as dead code
+- Works with constant propagation to evaluate complex expressions</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="w">              </span><span class="c1">&#39; Always TRUE</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="il">0</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;B&quot;</span><span class="w">              </span><span class="c1">&#39; Always FALSE - THEN unreachable</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="il">5</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;C&quot;</span><span class="w">          </span><span class="c1">&#39; Constant propagation → always TRUE</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="p">(</span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">5</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="il">10</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;D&quot;</span><span class="w">   </span><span class="c1">&#39; Complex expression → always FALSE</span>
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- Eliminates impossible branches at compile time
+- Identifies dead code in conditional branches
+- Reduces runtime branching overhead
+- Works with constant propagation
+- Simplifies control flow</p>
+<p><strong>TODO:</strong> Actual branch elimination (needs code generation phase)</p>
+<h3 id="18-uninitialized-variable-detection">18. Uninitialized Variable Detection<a class="headerlink" href="#18-uninitialized-variable-detection" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection/Warning)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_analyze_expression()</code>
+<strong>What it does:</strong>
+- Tracks which variables have been assigned before use
+- Detects use-before-assignment errors
+- Warns about potential bugs from uninitialized variables
+- Handles special cases: FOR loops, INPUT, READ, LINE INPUT
+- DEF FN parameter scoping (parameters are initialized)</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">X</span><span class="w">       </span><span class="c1">&#39; Warning: X used before assignment</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nl">10</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span><span class="w">   </span><span class="c1">&#39; OK: FOR initializes loop variable</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nl">20</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nl">30</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">A</span><span class="w">       </span><span class="c1">&#39; OK: INPUT initializes variable</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="nl">20</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">A</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="nl">10</span><span class="w"> </span><span class="kr">DEF</span><span class="w"> </span><span class="vg">FNTEST</span><span class="p">(</span><span class="vg">X</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">Y</span><span class="w">   </span><span class="c1">&#39; Warning: Y uninitialized (X is a parameter)</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="nl">20</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- Catches common programming errors
+- Helps identify typos and logic bugs
+- Documents variable initialization requirements
+- Even though BASIC defaults to 0, explicit initialization is clearer
+- Improves code quality and maintainability</p>
+<p><strong>Note:</strong> BASIC automatically initializes all variables to 0, so this is a warning, not an error. However, it's still useful for catching bugs where the programmer forgot to initialize a variable or misspelled a variable name.</p>
+<hr />
+<h3 id="19-range-analysis">19. Range Analysis<a class="headerlink" href="#19-range-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_extract_range_from_condition()</code>, <code>_apply_ranges()</code>
+<strong>What it does:</strong>
+- Tracks possible value ranges of variables through conditional statements
+- Extracts ranges from relational operators in IF conditions
+- Example: <code>IF X &gt; 5 THEN...</code> means X ∈ (5, +∞) in THEN branch
+- Intersects ranges from nested conditions
+- Merges ranges conservatively at branch join points
+- Clears ranges when variables are reassigned</p>
+<p><strong>Range Extraction:</strong>
+- From THEN branch: X &gt; 5 → X ∈ (6, +∞), X &gt;= 5 → X ∈ [5, +∞), X &lt; 5 → X ∈ (-∞, 4), X &lt;= 5 → X ∈ (-∞, 5]
+- From ELSE branch: Inverts the condition (NOT(X &gt; 5) means X &lt;= 5)
+- Handles both orientations: X &gt; 5 and 5 &lt; X
+- Equality: X = 5 creates constant range [5, 5]</p>
+<p><strong>Enables Constant Propagation:</strong>
+- When range becomes constant (min = max), automatically promotes to runtime constant
+- Example: <code>IF X = 10 THEN Y = X + 5</code> → X is known to be 10, so Y = 15</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">X</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="il">5</span><span class="w"> </span><span class="kr">THEN</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nl">30</span><span class="w">   </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">X</span><span class="w">        </span><span class="c1">&#39; X ∈ (5, +∞)</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="nl">40</span><span class="w"> </span><span class="k">ELSE</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="nl">50</span><span class="w">   </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">X</span><span class="w">        </span><span class="c1">&#39; X ∈ (-∞, 5]</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="nl">60</span><span class="w"> </span><span class="kr">END</span><span class="w"> </span><span class="kr">IF</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">X</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="nl">20</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w"> </span><span class="kr">THEN</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="nl">30</span><span class="w">   </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">5</span><span class="w">      </span><span class="c1">&#39; X = 10 (constant!), Y = 15 via constant propagation</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="nl">40</span><span class="w"> </span><span class="kr">END</span><span class="w"> </span><span class="kr">IF</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">X</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="nl">20</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="il">10</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="il">20</span><span class="w"> </span><span class="kr">THEN</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="nl">30</span><span class="w">   </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">X</span><span class="w">        </span><span class="c1">&#39; X ∈ (10, 20) via range intersection</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="nl">40</span><span class="w"> </span><span class="kr">END</span><span class="w"> </span><span class="kr">IF</span>
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- Enables more aggressive constant propagation
+- Improves dead code detection (unreachable branches)
+- Provides better program understanding
+- Helps catch logic errors (impossible conditions)
+- Foundation for array bounds checking</p>
+<p><strong>TODO:</strong> Actual dead code elimination (needs code generation phase)</p>
+<hr />
+<h3 id="20-live-variable-analysis">20. Live Variable Analysis<a class="headerlink" href="#20-live-variable-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_analyze_live_variables()</code>, <code>_update_live_set_for_statement()</code>
+<strong>What it does:</strong>
+- Performs backward dataflow analysis to track which variables are "live" (will be used later)
+- Identifies dead writes: variables written but never read before program end or reassignment
+- Complements forward substitution and dead store detection</p>
+<p><strong>Algorithm:</strong>
+- Backward dataflow analysis (processes program in reverse order)
+- Iterates until fixpoint (no changes in live variable sets)
+- Tracks live variables at each program point
+- Propagates liveness information along control flow edges</p>
+<p><strong>Dead Write Detection:</strong>
+- Variable written but never read afterwards → dead write
+- Variable overwritten before being read → first write is dead
+- Works across control flow (GOTO, IF-THEN-ELSE, loops)</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1">&#39; Dead write: X assigned but never used</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="nl">20</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="nl">30</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">X</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1">&#39; Dead write at line 10: X overwritten before being read</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="nl">20</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="il">5</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="nl">30</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="c1">&#39; Dead write: Z assigned but never used (even though in conditional)</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">0</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="nl">30</span><span class="w">   </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="nl">40</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="nl">50</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">X</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="c1">&#39; No dead writes: X is live throughout</span>
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- Identifies unused variables and dead code
+- Helps programmers clean up their code
+- Detects logic errors (forgotten variable uses)
+- Foundational for register allocation in code generation
+- Improves code quality and maintainability</p>
+<p><strong>Limitations:</strong>
+- Approximates control flow (conservative analysis)
+- Doesn't track array elements individually (treats whole array as one variable)
+- May miss some dead writes in complex control flow</p>
+<p><strong>TODO:</strong> Use liveness information for register allocation (needs code generation phase)</p>
+<hr />
+<h3 id="21-string-constant-pooling">21. String Constant Pooling<a class="headerlink" href="#21-string-constant-pooling" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_analyze_string_constants()</code>, <code>StringConstantPool</code>
+<strong>What it does:</strong>
+- Detects duplicate string constants throughout the program
+- Identifies strings appearing 2+ times
+- Generates unique pool IDs (STR1<span class="arithmatex"><span class="MathJax_Preview">, STR2</span><script type="math/tex">, STR2</script></span>, etc.) for each duplicate string
+- Tracks all occurrences (line numbers) of each string
+- Calculates memory savings from pooling
+- Reports optimization opportunities</p>
+<p><strong>Algorithm:</strong>
+- Recursively collects all string constants from statements and expressions
+- Handles strings in PRINT, LET, IF, FOR, DATA, INPUT prompts
+- Only pools strings that appear multiple times
+- Case-sensitive string matching
+- Calculates size and occurrence count for each string</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Error&quot;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Success&quot;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Error&quot;</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Success&quot;</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Error&quot;</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="nl">60</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1">&#39; &quot;Error&quot; appears 3 times → pool as STR1$ (saves 10 bytes)</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1">&#39; &quot;Success&quot; appears 2 times → pool as STR2$ (saves 7 bytes)</span>
+</code></pre></div></p>
+<p><strong>Memory Savings Calculation:</strong>
+- For each string: <code>size * (occurrences - 1)</code> bytes saved
+- Example: "Error" (5 bytes) × 3 occurrences = 5 × 2 = 10 bytes saved</p>
+<p><strong>Benefits:</strong>
+- Reduces memory usage for string-heavy programs
+- Identifies repeated string constants
+- Suggests variable names for pooled strings
+- Particularly valuable for error messages, prompts, menu items
+- Historical context: Memory was precious in 1980s BASIC</p>
+<p><strong>Limitations:</strong>
+- Detection only (actual pooling requires code generation)
+- Doesn't pool strings appearing only once
+- Case-sensitive (different from some BASIC implementations)</p>
+<p><strong>TODO:</strong> Actual string pooling transformation (needs code generation phase)</p>
+<hr />
+<h3 id="22-built-in-function-purity-analysis">22. Built-in Function Purity Analysis<a class="headerlink" href="#22-built-in-function-purity-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_is_pure_builtin_function()</code>, <code>_analyze_function_purity()</code>
+<strong>What it does:</strong>
+- Classifies all built-in functions as pure or impure
+- Tracks all function calls throughout the program
+- Identifies optimization opportunities based on purity
+- Warns about impure functions that limit optimizations</p>
+<p><strong>Pure Functions (can be optimized):</strong>
+- <strong>Math</strong>: ABS, SIN, COS, TAN, ATN, EXP, LOG, SQR, INT, FIX, SGN
+- <strong>Type conversion</strong>: CINT, CSNG, CDBL
+- <strong>String</strong>: LEN, ASC, VAL, INSTR, CHR, STR, SPACE, STRING, HEX, OCT, LEFT, RIGHT, MID
+- <strong>Binary conversion</strong>: CVI, CVS, CVD, MKI, MKS, MKD</p>
+<p><strong>Impure Functions (cannot be optimized):</strong>
+- <strong>Random</strong>: RND - non-deterministic, maintains state
+- <strong>I/O</strong>: EOF, LOC, LOF - file operations, stateful
+- <strong>Input</strong>: INKEY, INPUT - reads user input, non-deterministic
+- <strong>Hardware</strong>: INP, PEEK, USR - I/O ports, memory, machine code
+- <strong>Screen</strong>: POS - cursor position, stateful</p>
+<p><strong>Algorithm:</strong>
+- Maintains comprehensive classification of all MBASIC built-in functions
+- Recursively analyzes all statements and expressions for function calls
+- Tracks call locations for each function
+- Reports optimization impact for pure vs impure calls</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">SIN</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kr">COS</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span><span class="w">  </span><span class="c1">&#39; Pure: can CSE, constant fold</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">RND</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">100</span><span class="w">             </span><span class="c1">&#39; Impure: cannot optimize</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">ABS</span><span class="p">(</span><span class="vg">X</span><span class="p">)</span><span class="w">                </span><span class="c1">&#39; Pure: can optimize</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="kr">RND</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="kr">THEN</span><span class="o">...</span><span class="w">      </span><span class="c1">&#39; Impure: limits branch optimization</span>
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- Enables more aggressive CSE for pure function calls
+- Allows constant folding of pure functions with constant arguments
+- Permits moving pure functions out of loops (if arguments loop-invariant)
+- Warns programmers about optimization limitations
+- Documents function behavior (deterministic vs non-deterministic)</p>
+<p><strong>Note:</strong>
+- DEF FN user-defined functions are <strong>always pure</strong> (single expression, no side effects)
+- This optimization focuses on built-in functions only</p>
+<p><strong>TODO:</strong> Actually leverage purity for more aggressive CSE and loop hoisting (needs code generation phase)</p>
+<hr />
+<h3 id="23-array-bounds-analysis">23. Array Bounds Analysis<a class="headerlink" href="#23-array-bounds-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection/Warning)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_analyze_array_bounds()</code>, <code>_check_array_access()</code>
+<strong>What it does:</strong>
+- Detects out-of-bounds array accesses with constant indices at compile time
+- Checks both read and write accesses
+- Validates against declared array dimensions
+- Respects OPTION BASE setting (0 or 1)
+- Works with multi-dimensional arrays</p>
+<p><strong>Algorithm:</strong>
+- Recursively analyzes all statements and expressions
+- For each array access, attempts to evaluate subscript as constant
+- If constant, compares against declared bounds (lower and upper)
+- Reports violations with detailed error information</p>
+<p><strong>Detects:</strong>
+- Indices below lower bound (0 or 1 depending on OPTION BASE)
+- Indices above declared upper bound
+- Violations in all contexts: assignments, expressions, INPUT, READ, IF conditions
+- Multi-dimensional array bounds violations (checks each dimension)</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nl">10</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">10</span><span class="p">)</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nl">20</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">11</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span><span class="w">        </span><span class="c1">&#39; ERROR: Index 11 &gt; upper bound 10</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">-1</span><span class="p">)</span><span class="w">              </span><span class="c1">&#39; ERROR: Index -1 &lt; lower bound 0</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="nl">40</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">5</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">6</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">50</span><span class="w">      </span><span class="c1">&#39; ERROR: 5+6=11 &gt; upper bound 10</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="nl">10</span><span class="w"> </span><span class="kr">OPTION BASE</span><span class="w"> </span><span class="il">1</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="nl">20</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">B</span><span class="p">(</span><span class="il">10</span><span class="p">)</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="nl">30</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">B</span><span class="p">(</span><span class="il">0</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">5</span><span class="w">           </span><span class="c1">&#39; ERROR: Index 0 &lt; lower bound 1</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="nl">10</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">C</span><span class="p">(</span><span class="il">5</span><span class="p">,</span><span class="w"> </span><span class="il">10</span><span class="p">)</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="nl">20</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">C</span><span class="p">(</span><span class="il">6</span><span class="p">,</span><span class="w"> </span><span class="il">5</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w">        </span><span class="c1">&#39; ERROR: First dimension 6 &gt; bound 5</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="nl">30</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">C</span><span class="p">(</span><span class="il">3</span><span class="p">,</span><span class="w"> </span><span class="il">11</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">2</span><span class="w">       </span><span class="c1">&#39; ERROR: Second dimension 11 &gt; bound 10</span>
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- Catches common programming errors at compile time
+- Prevents "Subscript out of range" runtime errors
+- Documents array access patterns
+- Helps programmers identify logic errors
+- Works with constant propagation to detect more errors</p>
+<p><strong>Limitations:</strong>
+- Only detects violations with constant indices
+- Variable indices cannot be checked at compile time (unless constant-propagated)
+- Runtime bounds checking still needed for variable indices</p>
+<p><strong>Note:</strong>
+- Works seamlessly with constant propagation and expression evaluation
+- If <code>I = 15</code> and array bound is 10, <code>A(I)</code> will be detected as out of bounds</p>
+<hr />
+<h3 id="24-alias-analysis">24. Alias Analysis<a class="headerlink" href="#24-alias-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_analyze_aliases()</code>, <code>AliasInfo</code>
+<strong>What it does:</strong>
+- Detects potential aliasing between array elements and variables
+- Classifies aliases as "definite", "possible", or "none"
+- Tracks array access patterns throughout the program
+- Identifies when optimizations might be unsafe due to aliasing</p>
+<p><strong>Algorithm:</strong>
+- Recursively analyzes all array accesses in statements and expressions
+- Creates pattern-based representations of array subscripts
+- Compares patterns to detect potential aliasing:
+  - <strong>Definite alias</strong>: Same constant index (e.g., A(5) and A(5))
+  - <strong>Definite alias</strong>: Same variable index (e.g., A(I) and A(I))
+  - <strong>Possible alias</strong>: Different variables that might equal (e.g., A(I) and A(J))
+  - <strong>No alias</strong>: Provably different constants (e.g., A(1) and A(2))
+- Reports impact on Common Subexpression Elimination and other optimizations</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nl">10</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">10</span><span class="p">)</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nl">20</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">5</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">5</span><span class="p">)</span><span class="w">           </span><span class="c1">&#39; Definite alias: A(5) and A(5)</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="nl">10</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">10</span><span class="p">)</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="nl">20</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="nl">30</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="nl">40</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="il">5</span><span class="w">       </span><span class="c1">&#39; Definite alias: A(I) and A(I) (same variable)</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="nl">50</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="nl">10</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">10</span><span class="p">)</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="nl">20</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">I</span><span class="p">,</span><span class="w"> </span><span class="vg">J</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="nl">30</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="nl">40</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="vg">J</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span><span class="w">      </span><span class="c1">&#39; Possible alias: I and J might be equal</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="nl">50</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="nl">10</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">10</span><span class="p">)</span>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="nl">20</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="nl">30</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">2</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span><span class="w">      </span><span class="c1">&#39; No alias: different constants</span>
+<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a><span class="nl">40</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>
+<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a><span class="nl">10</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">B</span><span class="p">(</span><span class="il">5</span><span class="p">,</span><span class="w"> </span><span class="il">10</span><span class="p">)</span>
+<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a><span class="nl">20</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">B</span><span class="p">(</span><span class="il">2</span><span class="p">,</span><span class="w"> </span><span class="il">3</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span>
+<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="nl">30</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">B</span><span class="p">(</span><span class="il">2</span><span class="p">,</span><span class="w"> </span><span class="il">3</span><span class="p">)</span><span class="w">        </span><span class="c1">&#39; Definite alias: multi-dimensional array</span>
+<a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a><span class="nl">40</span><span class="w"> </span><span class="kr">END</span>
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- Identifies when CSE is safe (definite alias = can reuse, possible alias = cannot)
+- Warns about potential optimization barriers
+- Documents array access patterns
+- Helps understand data dependencies
+- Conservative analysis ensures correctness</p>
+<p><strong>Limitations:</strong>
+- Pattern-based matching (doesn't solve subscript expressions algebraically)
+- Complex expressions like A(I+1) and A(J+1) may not be recognized as aliases
+- Treats different arrays as non-aliasing (correct for BASIC)
+- Conservative: "possible" aliasing prevents optimization even if unlikely</p>
+<p><strong>Note:</strong>
+- Works with constant propagation to recognize more definite aliases
+- If <code>I = 5</code> and code accesses A(I) and A(5), both become A(5) via propagation
+- BASIC doesn't have pointers, so aliasing is simpler than C/C++</p>
+<p><strong>TODO:</strong> Use alias information to enable/disable CSE more precisely (needs code generation phase)</p>
+<hr />
+<h3 id="25-available-expression-analysis">25. Available Expression Analysis<a class="headerlink" href="#25-available-expression-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_analyze_available_expressions()</code>, <code>AvailableExpression</code>
+<strong>What it does:</strong>
+- More sophisticated than basic CSE - tracks expressions computed on <strong>all</strong> paths
+- Identifies expressions available at program points for safe elimination
+- Detects when variables are modified between computations (kills availability)
+- Reports redundant computations that could be eliminated
+- Provides detailed availability information for optimization decisions</p>
+<p><strong>Algorithm:</strong>
+- First pass: Collect all expression computations throughout program
+- For each expression computed multiple times:
+  - Check if it's available at subsequent computation points
+  - Track variable modifications between computations
+  - Expression is "killed" if any operand is modified (LET, INPUT, READ, FOR)
+- Build control flow-aware availability sets
+- Report expressions that remain available despite control flow</p>
+<p><strong>Key Concepts:</strong>
+- <strong>Available</strong>: Expression computed on all paths and operands not modified
+- <strong>Killed</strong>: Expression invalidated by operand modification
+- <strong>Redundant</strong>: Expression recomputed when previous value still available</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nl">10</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">   </span><span class="c1">&#39; First computation</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nl">20</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">D</span><span class="w">   </span><span class="c1">&#39; Neither A nor B modified</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="nl">30</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">   </span><span class="c1">&#39; AVAILABLE: can reuse X (redundant computation)</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="nl">10</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">   </span><span class="c1">&#39; First computation</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="nl">20</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w">      </span><span class="c1">&#39; A is modified - KILLS the expression</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="nl">30</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w">   </span><span class="c1">&#39; NOT available: must recompute (not redundant)</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="nl">40</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="nl">10</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">B</span><span class="w">   </span><span class="c1">&#39; First computation</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="nl">20</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">B</span><span class="w">   </span><span class="c1">&#39; AVAILABLE: redundant #1</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="nl">30</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">Z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">D</span><span class="w">   </span><span class="c1">&#39; Neither A nor B modified</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="nl">40</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">W</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="vg">B</span><span class="w">   </span><span class="c1">&#39; AVAILABLE: redundant #2</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="nl">50</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="c1">&#39; Result: A*B has 2 redundant computations</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="nl">10</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">SIN</span><span class="p">(</span><span class="vg">A</span><span class="p">)</span><span class="w">  </span><span class="c1">&#39; First computation</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="nl">20</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">A</span><span class="w">         </span><span class="c1">&#39; A modified by INPUT - KILLS</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="nl">30</span><span class="w"> </span><span class="kd">LET</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">SIN</span><span class="p">(</span><span class="vg">A</span><span class="p">)</span><span class="w">  </span><span class="c1">&#39; NOT available (must recompute)</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="nl">40</span><span class="w"> </span><span class="kr">END</span>
+</code></pre></div></p>
+<p><strong>Compared to Basic CSE:</strong>
+- <strong>Basic CSE</strong>: Tracks expressions as encountered, clears on control flow
+- <strong>Available Expression</strong>: Considers all paths, tracks kills precisely
+- <strong>Basic CSE</strong>: "Have we seen this before?"
+- <strong>Available Expression</strong>: "Is this computed on ALL paths and still valid?"</p>
+<p><strong>Benefits:</strong>
+- More precise than simple CSE
+- Identifies truly redundant computations
+- Tracks expression killing by variable modifications
+- Considers control flow for safety
+- Enables code motion and hoisting opportunities
+- Reports optimization potential with redundancy counts</p>
+<p><strong>Limitations:</strong>
+- Simplified control flow (linear programs work best)
+- Doesn't handle complex branching (IF with multiple paths)
+- Conservative for loops (treats each iteration separately)
+- Detection only (actual elimination needs code generation)</p>
+<p><strong>Note:</strong>
+- Works with existing expression hashing and variable tracking
+- Integrates with constant propagation and CSE
+- Builds on Live Variable Analysis infrastructure
+- Particularly valuable for straight-line code</p>
+<p><strong>TODO:</strong> Use availability information for code motion and redundancy elimination (needs code generation phase)</p>
+<hr />
+<h3 id="26-string-concatenation-in-loops">26. String Concatenation in Loops<a class="headerlink" href="#26-string-concatenation-in-loops" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection/Warning)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_analyze_string_concat_in_loops()</code>, <code>StringConcatInLoop</code>
+<strong>What it does:</strong>
+- Detects inefficient string concatenation patterns inside loops
+- Identifies self-concatenation (S$ = S$ + "text")
+- Estimates memory allocations and performance impact
+- Warns about high-impact cases in large loops
+- Suggests alternative approaches for better performance</p>
+<p><strong>Algorithm:</strong>
+- Analyzes each detected loop (FOR, WHILE, IF-GOTO)
+- Scans loop body for string variable assignments
+- Detects pattern: <code>VAR$ = VAR$ + expression</code> (self-concatenation)
+- Counts occurrences and estimates allocations
+- Uses loop iteration count (when known) to calculate impact
+- Classifies impact as Low/Medium/HIGH based on iterations</p>
+<p><strong>Problem:</strong>
+In BASIC, string concatenation creates temporary allocations:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="vg">S$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s2">&quot;X&quot;</span><span class="w">  </span><span class="c1">&#39; Creates a new string, copies S$, appends &quot;X&quot;</span>
+</code></pre></div></p>
+<p>In a loop with N iterations:
+- Each concatenation allocates a new string
+- Total: N allocations × string size growth
+- Memory fragmentation increases
+- Performance degrades linearly with iterations</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">&#39; HIGH IMPACT: 1000 iterations = 1000 allocations</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nl">10</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">1000</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="nl">30</span><span class="w">   </span><span class="kd">LET</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s2">&quot;*&quot;</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="nl">40</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="nl">50</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="c1">&#39; MEDIUM IMPACT: 50 iterations = 50 allocations</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="nl">10</span><span class="w"> </span><span class="vg">RESULT$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">50</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="nl">30</span><span class="w">   </span><span class="kd">LET</span><span class="w"> </span><span class="vg">RESULT$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">RESULT$</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kr">STR$</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s2">&quot; &quot;</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="nl">40</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="nl">50</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="c1">&#39; LOW IMPACT: 5 iterations = 5 allocations</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="nl">10</span><span class="w"> </span><span class="kr">NAME</span><span class="err">$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">5</span>
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="nl">30</span><span class="w">   </span><span class="kd">LET</span><span class="w"> </span><span class="kr">NAME</span><span class="err">$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">NAME</span><span class="err">$</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kr">CHR$</span><span class="p">(</span><span class="il">65</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">I</span><span class="p">)</span>
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="nl">40</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a><span class="nl">50</span><span class="w"> </span><span class="kr">END</span>
+<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a>
+<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a><span class="c1">&#39; Multiple concatenations per iteration: 2×10 = 20 allocations</span>
+<a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a><span class="nl">10</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<a id="__codelineno-15-24" name="__codelineno-15-24" href="#__codelineno-15-24"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-15-25" name="__codelineno-15-25" href="#__codelineno-15-25"></a><span class="nl">30</span><span class="w">   </span><span class="kd">LET</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s2">&quot;A&quot;</span>
+<a id="__codelineno-15-26" name="__codelineno-15-26" href="#__codelineno-15-26"></a><span class="nl">40</span><span class="w">   </span><span class="kd">LET</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s2">&quot;B&quot;</span>
+<a id="__codelineno-15-27" name="__codelineno-15-27" href="#__codelineno-15-27"></a><span class="nl">50</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-15-28" name="__codelineno-15-28" href="#__codelineno-15-28"></a><span class="nl">60</span><span class="w"> </span><span class="kr">END</span>
+</code></pre></div></p>
+<p><strong>Impact Classification:</strong>
+- <strong>Low</strong>: ≤10 iterations
+- <strong>Medium</strong>: 11-100 iterations
+- <strong>HIGH</strong>: &gt;100 iterations
+- <strong>Unknown</strong>: Variable iteration count (WHILE, IF-GOTO)</p>
+<p><strong>Better Alternatives:</strong>
+1. <strong>Use array and JOIN</strong>: Store parts in array, concatenate once
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nl">10</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">PARTS$</span><span class="p">(</span><span class="il">100</span><span class="p">)</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">100</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="nl">30</span><span class="w">   </span><span class="vg">PARTS$</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;*&quot;</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="nl">50</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="nl">60</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">100</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="nl">70</span><span class="w">   </span><span class="vg">S$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">PARTS$</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span><span class="w">  </span><span class="c1">&#39; Only 100 allocations instead of nested</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="nl">80</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+</code></pre></div></p>
+<ol>
+<li>
+<p><strong>Pre-allocate with SPACE$</strong>: Reserve space upfront
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kr">SPACE$</span><span class="p">(</span><span class="il">100</span><span class="p">)</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">100</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="nl">30</span><span class="w">   </span><span class="kr">MID$</span><span class="p">(</span><span class="vg">S$</span><span class="p">,</span><span class="w"> </span><span class="vg">I</span><span class="p">,</span><span class="w"> </span><span class="il">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;*&quot;</span><span class="w">  </span><span class="c1">&#39; In-place modification</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Build outside loop</strong>: Avoid concatenation in loop body
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">PART$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;*&quot;</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">100</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="nl">40</span><span class="w">   </span><span class="vg">S$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">S$</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">PART$</span><span class="w">  </span><span class="c1">&#39; Same result, but makes pattern clear</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="c1">&#39; Better: S$ = STRING$(100, &quot;*&quot;)</span>
+</code></pre></div></p>
+</li>
+</ol>
+<p><strong>Benefits:</strong>
+- Identifies performance bottlenecks in string-heavy code
+- Warns about memory allocation overhead
+- Helps programmers understand hidden costs
+- Particularly important for vintage hardware (limited memory)
+- Suggests refactoring opportunities</p>
+<p><strong>Limitations:</strong>
+- Detection only (doesn't refactor code)
+- Doesn't detect all string operations (only self-concatenation)
+- Can't optimize string building automatically
+- Iteration count unknown for WHILE/IF-GOTO loops</p>
+<p><strong>Note:</strong>
+- Works with loop analysis to get iteration counts
+- Integrates with string constant pooling analysis
+- Only flags string variables (ending with <span class="arithmatex"><span class="MathJax_Preview">)
+- Detects concatenation on either side (S</span><script type="math/tex">)
+- Detects concatenation on either side (S</script></span> + X or X + S$)</p>
+<p><strong>TODO:</strong> Suggest specific STRING$() or array-based alternatives (needs code generation phase)</p>
+<hr />
+<h3 id="27-type-rebinding-analysis-phase-1">27. Type Rebinding Analysis (Phase 1)<a class="headerlink" href="#27-type-rebinding-analysis-phase-1" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> ✅ Complete (Detection)
+<strong>Location:</strong> <code>src/semantic_analyzer.py</code> - <code>_analyze_variable_type_bindings()</code>, <code>TypeBinding</code>
+<strong>What it does:</strong>
+- Detects variables that can change type at different program points
+- Identifies FOR loop variables that can re-bind from DOUBLE to INTEGER
+- Detects sequential independent assignments that can use different types
+- Tracks data dependencies to determine safe re-binding opportunities
+- Enables fast INTEGER arithmetic in loops even if variable was DOUBLE before</p>
+<p><strong>Algorithm:</strong>
+- Analyzes each assignment (LET, FOR) to infer expression type
+- Uses <code>_is_integer_valued_expression()</code> to detect INTEGER vs DOUBLE
+- Checks for integer literals (10 vs 10.0)
+- Checks for INTEGER operations (+, -, *, \, MOD, bitwise)
+- Detects FOR loops with integer bounds (re-binds loop variable)
+- Tracks data dependencies (X = X + 1 depends on previous X)
+- Marks bindings as "can rebind" if no dependency on previous value</p>
+<p><strong>Key Example (from doc/TYPE_REBINDING_STRATEGY.md):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="nl">100</span><span class="w"> </span><span class="vg">I</span><span class="o">=</span><span class="mf">22.1</span><span class="w">                </span><span class="c1">&#39; I is DOUBLE</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="nl">110</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="o">=</span><span class="il">0</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span><span class="w">         </span><span class="c1">&#39; I re-binds as INTEGER (fast!)</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="nl">120</span><span class="w">   </span><span class="vg">J</span><span class="o">=</span><span class="vg">J</span><span class="o">+</span><span class="vg">I</span><span class="w">               </span><span class="c1">&#39; INTEGER + INTEGER (fast!)</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="nl">130</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+</code></pre></div></p>
+<p><strong>Analysis Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>Type Rebinding Analysis (Phase 1):
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>  Found 2 variable(s) with type bindings
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>  Variables that can be re-bound (1):
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    I!:
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>      Line 100: DOUBLE - Assignment from DOUBLE expression
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>      Line 110: INTEGER - FOR loop with INTEGER bounds
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>      Type sequence: DOUBLE → INTEGER
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>      ✓ Can optimize with type re-binding
+</code></pre></div></p>
+<p><strong>Benefits:</strong>
+- <strong>Fast loop arithmetic</strong>: Loop variables with integer bounds compile as INTEGER
+  - On 8080: INTEGER is 10-50 cycles, DOUBLE is 8000-15000 cycles (500-800x faster!)
+  - On modern CPUs: Still benefits from smaller data size and integer ALU
+- <strong>Memory efficient</strong>: INTEGER uses 2 bytes vs 8 bytes for DOUBLE (4x savings)
+- <strong>Flexible</strong>: Same variable can be DOUBLE before loop, INTEGER in loop
+- <strong>No programmer burden</strong>: Automatic detection, no type annotations required</p>
+<p><strong>Detection Rules:</strong></p>
+<ol>
+<li><strong>Integer Literal</strong>: <code>10</code> is INTEGER, <code>10.0</code> is DOUBLE (checks literal field)</li>
+<li><strong>Integer Operations</strong>: <code>A + B</code> is INTEGER if A and B are both INTEGER</li>
+<li><strong>FOR Loop Bounds</strong>: <code>FOR I=1 TO 100</code> → I is INTEGER (bounds are integer)</li>
+<li><strong>Built-in Functions</strong>: <code>LEN()</code>, <code>ASC()</code>, <code>INT()</code>, <code>FIX()</code> return INTEGER</li>
+<li><strong>Array Subscripts</strong>: Variables used as subscripts are typically INTEGER</li>
+<li><strong>Comparison Results</strong>: <code>X &lt; Y</code> returns INTEGER (-1 or 0 in BASIC)</li>
+</ol>
+<p><strong>Phase 1 Limitations:</strong>
+- FOR loops and sequential assignments only (no complex control flow)
+- Doesn't handle subroutines with multiple call sites yet
+- Doesn't handle IF-THEN-ELSE branches (would need SSA/phi nodes)
+- Detection only (code generation not implemented yet)</p>
+<p><strong>Current Capabilities:</strong>
+- ✅ FOR loop variable re-binding (I=22.1 then FOR I=0 TO 10)
+- ✅ Sequential independent assignments (X=10; PRINT X; X=10.5)
+- ✅ Dependency tracking (X=X+1 cannot rebind because depends on previous X)
+- ✅ Integer detection distinguishes <code>10</code> from <code>10.0</code>
+- ❌ Subroutine specialization (too complex for Phase 1)
+- ❌ Control flow merges (too complex for Phase 1)</p>
+<p><strong>Future Phases:</strong></p>
+<p><strong>Phase 2</strong>: Simple promotion analysis
+- Allow re-binding with INT→DOUBLE promotion
+- Example: <code>X=10; Y=X+1; X=10.5</code> (promote Y to DOUBLE for <code>X+Y</code>)</p>
+<p><strong>Phase 3</strong>: Subroutine analysis (optional)
+- Detect if subroutine needs specialization
+- Generate multiple versions for different type combinations
+- Trade-off: code size vs performance</p>
+<p><strong>Related Documents:</strong>
+- <code>doc/DYNAMIC_TYPE_CHANGE_PROBLEM.md</code> - Problem analysis
+- <code>doc/COMPILATION_STRATEGIES_COMPARISON.md</code> - Strategy comparison
+- <code>doc/INTEGER_INFERENCE_STRATEGY.md</code> - Pure inference approach
+- <code>doc/TYPE_INFERENCE_WITH_ERRORS.md</code> - Error-based approach
+- <code>doc/TYPE_REBINDING_STRATEGY.md</code> - <strong>Current implementation</strong> (Phase 1)</p>
+<p><strong>Note:</strong>
+This optimization addresses the fundamental challenge of compiling BASIC's dynamic typing:
+- Interpreter can change variable types at runtime (C=1 then C=1.1)
+- Compiler must choose types at compile time
+- This analysis finds "safe rebinding points" where types can change
+- Enables performance optimization (fast INTEGER loops) without breaking semantics</p>
+<hr />
+<h2 id="ready-to-implement-now-semantic-analysis-phase">📋 READY TO IMPLEMENT NOW (Semantic Analysis Phase)<a class="headerlink" href="#ready-to-implement-now-semantic-analysis-phase" title="Permanent link">&para;</a></h2>
+<p>These optimizations can be implemented in the semantic analyzer without requiring code generation:</p>
+<p><strong>All semantic analyses are complete!</strong> The semantic analysis phase is feature-complete.</p>
+<hr />
+<h2 id="needs-code-generation-later-phase">🔮 NEEDS CODE GENERATION (Later Phase)<a class="headerlink" href="#needs-code-generation-later-phase" title="Permanent link">&para;</a></h2>
+<p>These require actual code generation/transformation, not just analysis:</p>
+<h3 id="1-peephole-optimization">1. Peephole Optimization<a class="headerlink" href="#1-peephole-optimization" title="Permanent link">&para;</a></h3>
+<p><strong>Complexity:</strong> Medium
+<strong>Phase:</strong> Code Generation
+<strong>What it does:</strong>
+- Pattern matching on generated code
+- Replace sequences with better ones
+- Example: <code>LOAD A; STORE A</code> → eliminate
+- <code>PUSH X; POP X</code> → eliminate
+- Adjacent memory operations</p>
+<p><strong>Why Later:</strong> Needs actual instruction stream</p>
+<h3 id="2-register-allocation">2. Register Allocation<a class="headerlink" href="#2-register-allocation" title="Permanent link">&para;</a></h3>
+<p><strong>Complexity:</strong> Hard
+<strong>Phase:</strong> Code Generation
+<strong>What it does:</strong>
+- Assign variables to CPU registers
+- Graph coloring algorithm (or SSA-based for chordal graphs)
+- Minimize memory accesses
+- Spill to memory when necessary</p>
+<p><strong>Why Later:</strong> Needs target architecture knowledge</p>
+<h3 id="3-instruction-scheduling">3. Instruction Scheduling<a class="headerlink" href="#3-instruction-scheduling" title="Permanent link">&para;</a></h3>
+<p><strong>Complexity:</strong> Hard
+<strong>Phase:</strong> Code Generation
+<strong>What it does:</strong>
+- Reorder instructions to avoid pipeline stalls
+- Fill instruction slots efficiently
+- Respect dependencies</p>
+<p><strong>Why Later:</strong> Needs target CPU pipeline knowledge</p>
+<h3 id="4-loop-unrolling-actual-transformation">4. Loop Unrolling (Actual Transformation)<a class="headerlink" href="#4-loop-unrolling-actual-transformation" title="Permanent link">&para;</a></h3>
+<p><strong>Complexity:</strong> Medium
+<strong>Phase:</strong> Code Generation
+<strong>What it does:</strong>
+- Replicate loop body N times
+- Reduce loop overhead
+- Enable instruction-level parallelism
+- We detect candidates; this actually transforms</p>
+<p><strong>Why Later:</strong> Needs code generation</p>
+<h3 id="5-dead-code-elimination-actual-removal">5. Dead Code Elimination (Actual Removal)<a class="headerlink" href="#5-dead-code-elimination-actual-removal" title="Permanent link">&para;</a></h3>
+<p><strong>Complexity:</strong> Easy-Medium
+<strong>Phase:</strong> Code Generation
+<strong>What it does:</strong>
+- Actually remove unreachable code
+- We detect it; this eliminates it</p>
+<p><strong>Why Later:</strong> Needs code generation</p>
+<h3 id="6-code-motion-actual-transformation">6. Code Motion (Actual Transformation)<a class="headerlink" href="#6-code-motion-actual-transformation" title="Permanent link">&para;</a></h3>
+<p><strong>Complexity:</strong> Medium
+<strong>Phase:</strong> Code Generation
+<strong>What it does:</strong>
+- Actually move loop-invariant code out of loops
+- We detect candidates; this transforms</p>
+<p><strong>Why Later:</strong> Needs code generation</p>
+<h3 id="7-tail-call-optimization">7. Tail Call Optimization<a class="headerlink" href="#7-tail-call-optimization" title="Permanent link">&para;</a></h3>
+<p><strong>Complexity:</strong> Medium
+<strong>Phase:</strong> Code Generation
+<strong>What it does:</strong>
+- Convert recursive calls in tail position to jumps
+- Eliminates stack growth
+- BASIC rarely uses recursion (no native support)</p>
+<p><strong>Why Later:</strong> Needs code generation, less relevant for BASIC</p>
+<h3 id="8-inline-expansion">8. Inline Expansion<a class="headerlink" href="#8-inline-expansion" title="Permanent link">&para;</a></h3>
+<p><strong>Complexity:</strong> Medium
+<strong>Phase:</strong> Code Generation
+<strong>What it does:</strong>
+- Replace subroutine calls with subroutine body
+- Eliminates call overhead
+- Can expose more optimizations</p>
+<p><strong>Why Later:</strong> Needs code transformation</p>
+<h3 id="9-vectorization">9. Vectorization<a class="headerlink" href="#9-vectorization" title="Permanent link">&para;</a></h3>
+<p><strong>Complexity:</strong> Very Hard
+<strong>Phase:</strong> Code Generation
+<strong>What it does:</strong>
+- Use SIMD instructions for array operations
+- Process multiple elements per instruction</p>
+<p><strong>Why Later:</strong> Needs modern CPU, vector code generation</p>
+<h3 id="10-interprocedural-optimization">10. Interprocedural Optimization<a class="headerlink" href="#10-interprocedural-optimization" title="Permanent link">&para;</a></h3>
+<p><strong>Complexity:</strong> Hard
+<strong>Phase:</strong> Whole Program Analysis
+<strong>What it does:</strong>
+- Optimize across file boundaries
+- We handle single files, but could extend</p>
+<p><strong>Why Later:</strong> Less relevant for BASIC</p>
+<hr />
+<h2 id="what-weve-missed-could-add">🤔 WHAT WE'VE MISSED (Could Add)<a class="headerlink" href="#what-weve-missed-could-add" title="Permanent link">&para;</a></h2>
+<h3 id="detectionwarning-phase">Detection/Warning Phase<a class="headerlink" href="#detectionwarning-phase" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Type-Based Optimizations</strong></li>
+<li>BASIC has weak typing but could detect mismatches</li>
+<li>
+<p>Suggest INTEGER for loop counters (performance)</p>
+</li>
+<li>
+<p><strong>Memory Access Pattern Analysis</strong></p>
+</li>
+<li>Detect non-sequential array access</li>
+<li>Could suggest array layout changes</li>
+</ol>
+<hr />
+<h2 id="optimization-priority-matrix">📊 OPTIMIZATION PRIORITY MATRIX<a class="headerlink" href="#optimization-priority-matrix" title="Permanent link">&para;</a></h2>
+<h3 id="high-value-low-effort-do-first">High Value, Low Effort (Do First)<a class="headerlink" href="#high-value-low-effort-do-first" title="Permanent link">&para;</a></h3>
+<ol>
+<li>✅ Constant Folding - DONE</li>
+<li>✅ CSE - DONE</li>
+<li>✅ Strength Reduction - DONE</li>
+<li>✅ Copy Propagation - DONE</li>
+<li>✅ Algebraic Simplification - DONE (Boolean + arithmetic identities)</li>
+<li>✅ Expression Reassociation - DONE</li>
+<li>✅ Boolean Simplification - DONE (relational inversion, De Morgan, absorption)</li>
+</ol>
+<h3 id="high-value-high-effort">High Value, High Effort<a class="headerlink" href="#high-value-high-effort" title="Permanent link">&para;</a></h3>
+<ol>
+<li>✅ Loop-Invariant Detection - DONE (transformation needs codegen)</li>
+<li>✅ Array Flattening - DONE</li>
+<li>✅ Induction Variable Optimization - DONE (detection complete, transformation needs codegen)</li>
+<li>Register Allocation - Needs codegen, critical for performance</li>
+</ol>
+<h3 id="low-value-for-basic">Low Value for BASIC<a class="headerlink" href="#low-value-for-basic" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Tail Call Optimization - BASIC has no recursion</li>
+<li>Vectorization - Too modern for vintage BASIC</li>
+<li>Interprocedural - Single-file programs</li>
+</ol>
+<h3 id="already-optimal-for-basic">Already Optimal for BASIC<a class="headerlink" href="#already-optimal-for-basic" title="Permanent link">&para;</a></h3>
+<ol>
+<li>✅ Dead Code Detection - DONE</li>
+<li>✅ Subroutine Analysis - DONE (BASIC's GOSUB is simple)</li>
+</ol>
+<hr />
+<h2 id="recommended-next-steps">🎯 RECOMMENDED NEXT STEPS<a class="headerlink" href="#recommended-next-steps" title="Permanent link">&para;</a></h2>
+<h3 id="immediate-semantic-analysis">Immediate (Semantic Analysis)<a class="headerlink" href="#immediate-semantic-analysis" title="Permanent link">&para;</a></h3>
+<ol>
+<li>✅ <strong>Expression Reassociation</strong> - DONE (Exposes constant folding)</li>
+<li>✅ <strong>Boolean Simplification</strong> - DONE (NOT inversion, De Morgan, absorption)</li>
+<li>✅ <strong>Forward Substitution</strong> - DONE (Detects single-use temporaries and dead stores)</li>
+<li>✅ <strong>Branch Optimization</strong> - DONE (Constant condition detection, unreachable branch identification)</li>
+<li>✅ <strong>Uninitialized Variable Detection</strong> - DONE (Warns about use-before-assignment)</li>
+<li>✅ <strong>Range Analysis</strong> - DONE (Tracks value ranges, enables constant propagation)</li>
+<li>✅ <strong>Live Variable Analysis</strong> - DONE (Detects dead writes, foundational for register allocation)</li>
+<li>✅ <strong>String Constant Pooling</strong> - DONE (Detects duplicate strings, suggests pooling)</li>
+<li>✅ <strong>Built-in Function Purity Analysis</strong> - DONE (Classifies pure vs impure, enables optimization)</li>
+<li>✅ <strong>Array Bounds Analysis</strong> - DONE (Detects out-of-bounds access at compile time)</li>
+<li>✅ <strong>Alias Analysis</strong> - DONE (Detects potential aliasing between array elements)</li>
+<li>✅ <strong>Available Expression Analysis</strong> - DONE (Tracks expressions available on all paths)</li>
+<li>✅ <strong>String Concatenation in Loops</strong> - DONE (Detects inefficient string building patterns)</li>
+</ol>
+<h3 id="long-term-code-generation-required">Long Term (Code Generation Required)<a class="headerlink" href="#long-term-code-generation-required" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Peephole Optimization</strong> - Foundation for codegen</li>
+<li><strong>Register Allocation</strong> - Core of codegen</li>
+<li><strong>Actual Code Motion</strong> - Apply loop-invariant transformation</li>
+</ol>
+<hr />
+<h2 id="comparison-to-modern-compilers">📈 COMPARISON TO MODERN COMPILERS<a class="headerlink" href="#comparison-to-modern-compilers" title="Permanent link">&para;</a></h2>
+<h3 id="what-we-have-vs-modern-compilers">What We Have (vs Modern Compilers)<a class="headerlink" href="#what-we-have-vs-modern-compilers" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✅ Constant folding - <strong>Standard</strong></li>
+<li>✅ CSE - <strong>Standard</strong></li>
+<li>✅ Loop analysis - <strong>Standard</strong></li>
+<li>✅ Dead code detection - <strong>Standard</strong></li>
+<li>✅ Array flattening - <strong>Standard</strong> (LLVM does this)</li>
+<li>✅ Subroutine analysis - <strong>Standard</strong> (interprocedural)</li>
+<li>✅ Strength reduction - <strong>Standard</strong> (critical optimization)</li>
+<li>✅ Copy propagation - <strong>Standard</strong> (dataflow analysis)</li>
+<li>✅ Algebraic simplification - <strong>Standard</strong> (Boolean + arithmetic)</li>
+<li>✅ Induction variable optimization - <strong>Standard</strong> (IV detection and SR opportunities)</li>
+<li>✅ Expression reassociation - <strong>Standard</strong> (enables constant folding)</li>
+<li>✅ Boolean simplification - <strong>Standard</strong> (relational inversion, De Morgan, absorption)</li>
+<li>✅ Forward substitution - <strong>Standard</strong> (temporary elimination, dead store detection)</li>
+<li>✅ Branch optimization - <strong>Standard</strong> (constant condition evaluation, unreachable code)</li>
+<li>✅ Uninitialized variable detection - <strong>Standard</strong> (use-before-definition analysis)</li>
+<li>✅ Range analysis - <strong>Standard</strong> (value range propagation)</li>
+<li>✅ Live variable analysis - <strong>Standard</strong> (backward dataflow, dead write detection)</li>
+<li>✅ String constant pooling - <strong>Standard</strong> (duplicate string detection, memory optimization)</li>
+<li>✅ Function purity analysis - <strong>Standard</strong> (pure/impure classification, optimization enabling)</li>
+<li>✅ Array bounds checking - <strong>Standard</strong> (compile-time bounds violation detection)</li>
+<li>✅ Alias analysis - <strong>Standard</strong> (array aliasing detection, optimization safety)</li>
+<li>✅ Available expression analysis - <strong>Standard</strong> (dataflow analysis, redundancy elimination)</li>
+<li>✅ String concatenation in loops - <strong>Standard</strong> (inefficient pattern detection, performance warnings)</li>
+</ul>
+<h3 id="what-were-missing-that-modern-compilers-have">What We're Missing (that modern compilers have)<a class="headerlink" href="#what-were-missing-that-modern-compilers-have" title="Permanent link">&para;</a></h3>
+<ul>
+<li>❌ SSA form - Not needed for BASIC's simplicity</li>
+<li>❌ Vectorization - Overkill for vintage target</li>
+<li>❌ Profile-guided optimization - No runtime feedback</li>
+<li>❌ Link-time optimization - Single-file programs</li>
+</ul>
+<h3 id="what-we-do-better-for-basic">What We Do Better (for BASIC)<a class="headerlink" href="#what-we-do-better-for-basic" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✅ Runtime constant propagation - More flexible than 1980 compiler</li>
+<li>✅ Global OPTION BASE - Cleaner than most</li>
+<li>✅ Comprehensive loop detection - IF-GOTO loops included</li>
+</ul>
+<hr />
+<h2 id="conclusion">💡 CONCLUSION<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
+<p>We've implemented a <strong>strong foundation</strong> of compiler optimizations that are:
+1. <strong>Appropriate for BASIC</strong> - Not over-engineering
+2. <strong>Valuable for the era</strong> - Exceeds 1980s compiler quality
+3. <strong>Complete for analysis</strong> - Detection and transformation done
+4. <strong>Modern-quality analysis</strong> - Comparable to modern compilers' semantic phase</p>
+<p><strong>Current Status: 26 optimizations implemented!</strong></p>
+<p><strong>Semantic analysis phase:</strong> ✅ COMPLETE</p>
+<p><strong>What needs code generation:</strong>
+- Peephole optimization
+- Register allocation
+- Actual code motion/unrolling/elimination</p>
+<p>The semantic analysis phase is <strong>very strong</strong> and ready for code generation!</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

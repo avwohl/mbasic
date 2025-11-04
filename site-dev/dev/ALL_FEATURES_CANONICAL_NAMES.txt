@@ -1,0 +1,39 @@
+Auto Line Numbers
+Auto-Save
+Breakpoints
+Clear All Breakpoints
+Context Help
+Continue
+Current Line Highlight
+Cut/Copy/Paste
+Delete Lines
+Edit Variable Value
+Execution Stack
+Find/Replace
+Games Library
+Help Command
+Integrated Docs
+Line Editing
+List Program
+Merge Files
+Multi-Line Edit
+Multi-Statement Debug
+New Program
+Open/Load File
+Recent Files
+Renumber
+Resource Usage
+Run Program
+Save As
+Save File
+Search Help
+Settings Dialog
+Smart Insert
+Sort Lines
+Step Line
+Step Statement
+Stop/Interrupt
+Syntax Checking
+Variable Filtering
+Variable Sorting
+Variables Window

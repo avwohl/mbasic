@@ -1,0 +1,1568 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/history/FAILURE_CATEGORIZATION_CURRENT/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Current Parser Failure Categorization - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#current-parser-failure-categorization" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Current Parser Failure Categorization
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../dev/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Executive Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#category-1-mbasic-521-features-to-implement-16-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Category 1: MBASIC 5.21 Features to Implement (16 files)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Category 1: MBASIC 5.21 Features to Implement (16 files)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-eof-function-7-files-highest-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 EOF() Function - 7 files ⭐ HIGHEST PRIORITY
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-hex-function-3-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.2 HEX$() Function - 3 files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-else-edge-cases-3-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3 ELSE Edge Cases - 3 files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-name-statement-1-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.4 NAME Statement - 1 file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-chain-statement-1-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.5 CHAIN Statement - 1 file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#16-save-statement-1-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.6 SAVE Statement - 1 file
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#category-2-non-mbasic-521-dialects-25-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Category 2: Non-MBASIC 5.21 Dialects (25 files)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Category 2: Non-MBASIC 5.21 Dialects (25 files)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-multiline-ifthen-7-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1 Multiline IF/THEN - 7 files ✗
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-wrong-comparison-operators-5-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.2 Wrong Comparison Operators - 5 files ✗
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-decimal-line-numbers-6-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.3 Decimal Line Numbers - 6 files ✗
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-atari-open-syntax-4-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.4 Atari OPEN Syntax - 4 files ✗
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-input-syntax-3-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.5 INPUT; Syntax - 3 files ⚠️
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#category-3-source-file-errors-25-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Category 3: Source File Errors (25 files)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Category 3: Source File Errors (25 files)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-corruptedmalformed-source-14-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 Corrupted/Malformed Source - 14 files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-invalid-def-syntax-3-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 Invalid DEF Syntax - 3 files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-concatenated-keywords-8-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.3 Concatenated Keywords - 8 files
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#category-4-complexneed-investigation-45-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Category 4: Complex/Need Investigation (45 files)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-win-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Win Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Win Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#implementing-top-3-features-13-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementing Top 3 Features (13 files)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleaning-non-mbasic-dialects-22-files-certain-3-uncertain" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cleaning Non-MBASIC Dialects (22 files certain + 3 uncertain)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommended-action-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommended Action Plan
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommended Action Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-quick-wins-high-impact-low-effort" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Quick Wins (High Impact, Low Effort)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-corpus-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Corpus Cleanup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-low-hanging-fruit" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Low-Hanging Fruit
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-source-error-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: Source Error Cleanup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-deep-dive" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 5: Deep Dive
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Statistics
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/history/FAILURE_CATEGORIZATION_CURRENT.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="current-parser-failure-categorization">Current Parser Failure Categorization<a class="headerlink" href="#current-parser-failure-categorization" title="Permanent link">&para;</a></h1>
+<p><strong>Date</strong>: 2025-10-22 (Latest)
+<strong>Test Run</strong>: After all cleanup and reorganization
+<strong>Success Rate</strong>: 104/215 files (48.4%)
+<strong>Remaining Failures</strong>: 111 files (51.6%)</p>
+<hr />
+<h2 id="executive-summary">Executive Summary<a class="headerlink" href="#executive-summary" title="Permanent link">&para;</a></h2>
+<p>The 111 remaining parser failures break down as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Count</th>
+<th>Percentage</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Implement MBASIC 5.21 Features</strong></td>
+<td>16 files</td>
+<td>14%</td>
+<td>Implement missing features</td>
+</tr>
+<tr>
+<td><strong>Non-MBASIC 5.21 Dialects</strong></td>
+<td>25 files</td>
+<td>23%</td>
+<td>Move to bad_not521/</td>
+</tr>
+<tr>
+<td><strong>Source File Errors</strong></td>
+<td>25 files</td>
+<td>23%</td>
+<td>Fix or move to bad_not521/</td>
+</tr>
+<tr>
+<td><strong>Complex/Needs Investigation</strong></td>
+<td>45 files</td>
+<td>40%</td>
+<td>Individual review needed</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="category-1-mbasic-521-features-to-implement-16-files">Category 1: MBASIC 5.21 Features to Implement (16 files)<a class="headerlink" href="#category-1-mbasic-521-features-to-implement-16-files" title="Permanent link">&para;</a></h2>
+<h3 id="11-eof-function-7-files-highest-priority">1.1 EOF() Function - 7 files ⭐ <strong>HIGHEST PRIORITY</strong><a class="headerlink" href="#11-eof-function-7-files-highest-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>:
+- direct.bas
+- genielst.bas
+- rbbent27.bas
+- rbbmin27.bas
+- rbspurge.bas
+- rbsutl31.bas
+- simcvt.bas</p>
+<p><strong>Syntax</strong>: <code>EOF(filenum)</code> - Returns -1 if at end of file, 0 otherwise</p>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nl">200</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="kr">EOF</span><span class="p">(</span><span class="il">1</span><span class="p">)</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">240</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nl">150</span><span class="w"> </span><span class="kr">WHILE</span><span class="w"> </span><span class="ow">NOT</span><span class="w"> </span><span class="kr">EOF</span><span class="p">(</span><span class="il">1</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nl">430</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="kr">EOF</span><span class="p">(</span><span class="il">1</span><span class="p">)</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="il">450</span>
+</code></pre></div></p>
+<p><strong>Error</strong>: "Unexpected token in expression: EOF_FUNC"</p>
+<p><strong>Implementation</strong>: Add EOF as built-in function token, handle in expression parser</p>
+<p><strong>Impact</strong>: 7 files → would reach 111/215 (51.6%)</p>
+<hr />
+<h3 id="12-hex-function-3-files">1.2 HEX$() Function - 3 files<a class="headerlink" href="#12-hex-function-3-files" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>:
+- disasmb.bas
+- rsj.bas
+- xref.bas</p>
+<p><strong>Syntax</strong>: <code>HEX$(number)</code> - Converts number to hexadecimal string</p>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">180</span><span class="w"> </span><span class="kr">DEF</span><span class="w"> </span><span class="vg">FNZHEX2</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span><span class="o">=</span><span class="kr">RIGHT$</span><span class="p">(</span><span class="s2">&quot;00&quot;</span><span class="o">+</span><span class="kr">HEX$</span><span class="p">(</span><span class="vg">I</span><span class="p">),</span><span class="il">2</span><span class="p">)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nl">740</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;configured for &quot;</span><span class="p">;</span><span class="kr">HEX$</span><span class="p">(</span><span class="vg">P</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Error</strong>: "Unexpected token in expression: HEX"</p>
+<p><strong>Implementation</strong>: Add HEX$ as string function token</p>
+<p><strong>Impact</strong>: +3 files → would reach 114/215 (53.0%)</p>
+<hr />
+<h3 id="13-else-edge-cases-3-files">1.3 ELSE Edge Cases - 3 files<a class="headerlink" href="#13-else-edge-cases-3-files" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>:
+- header6.bas
+- holtwint.bas
+- ozdot.bas</p>
+<p><strong>Issue</strong>: Complex ELSE patterns not yet handled</p>
+<p><strong>Example</strong> (header6.bas line 23):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kr">IF</span><span class="w"> </span><span class="vg">condition</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="vg">stmt</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="vg">stmt2</span><span class="w">  </span><span class="c1">&#39; Specific pattern causing issue</span>
+</code></pre></div></p>
+<p><strong>Error</strong>: "Expected : or newline, got ELSE"</p>
+<p><strong>Implementation</strong>: Extend IF parser for remaining edge cases</p>
+<p><strong>Impact</strong>: +3 files → would reach 117/215 (54.4%)</p>
+<hr />
+<h3 id="14-name-statement-1-file">1.4 NAME Statement - 1 file<a class="headerlink" href="#14-name-statement-1-file" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: pckget.bas</p>
+<p><strong>Syntax</strong>: <code>NAME oldfile$ AS newfile$</code> - Rename file</p>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kr">NAME</span><span class="w"> </span><span class="vg">L$</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="vg">L$</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kr">NAME</span><span class="w"> </span><span class="s2">&quot;TEMP.DAT&quot;</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="s2">&quot;FINAL.DAT&quot;</span>
+</code></pre></div></p>
+<p><strong>Error</strong>: "Expected COMMA, got AS"</p>
+<p><strong>Implementation</strong>: Parse AS keyword with two filename expressions</p>
+<hr />
+<h3 id="15-chain-statement-1-file">1.5 CHAIN Statement - 1 file<a class="headerlink" href="#15-chain-statement-1-file" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: e-sketch.bas</p>
+<p><strong>Syntax</strong>: <code>CHAIN filename$</code> - Chain to another program</p>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kr">CHAIN</span><span class="w"> </span><span class="s2">&quot;MENU&quot;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kr">CHAIN</span><span class="w"> </span><span class="vg">FIL$</span>
+</code></pre></div></p>
+<p><strong>Error</strong>: "Unexpected token in statement: CHAIN"</p>
+<p><strong>Implementation</strong>: Parse CHAIN keyword with filename expression</p>
+<hr />
+<h3 id="16-save-statement-1-file">1.6 SAVE Statement - 1 file<a class="headerlink" href="#16-save-statement-1-file" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: krakinst.bas</p>
+<p><strong>Syntax</strong>: <code>SAVE filename$</code> - Save program to disk</p>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="vg">SAVE</span><span class="w"> </span><span class="s2">&quot;PROGRAM.BAS&quot;</span>
+</code></pre></div></p>
+<p><strong>Error</strong>: "Unexpected token in statement: SAVE"</p>
+<p><strong>Implementation</strong>: Parse SAVE keyword with filename expression</p>
+<hr />
+<h2 id="category-2-non-mbasic-521-dialects-25-files">Category 2: Non-MBASIC 5.21 Dialects (25 files)<a class="headerlink" href="#category-2-non-mbasic-521-dialects-25-files" title="Permanent link">&para;</a></h2>
+<h3 id="21-multiline-ifthen-7-files">2.1 Multiline IF/THEN - 7 files ✗<a class="headerlink" href="#21-multiline-ifthen-7-files" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>:
+- exitrbbs.bas
+- fprod.bas
+- fprod1.bas
+- mfil.bas
+- minirbbs.bas
+- timeout.bas
+- un-prot.bas</p>
+<p><strong>Pattern</strong>: Structured BASIC with multiline IF blocks</p>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nl">370</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">F$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;TW&quot;</span><span class="w"> </span><span class="kr">THEN</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nl">380</span><span class="w">     </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Something&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nl">390</span><span class="w"> </span><span class="kr">END</span><span class="w"> </span><span class="kr">IF</span>
+</code></pre></div></p>
+<p><strong>Why Non-MBASIC</strong>: This is QuickBASIC/GW-BASIC structured syntax, not MBASIC 5.21</p>
+<p><strong>Action</strong>: <strong>MOVE to bad_not521/</strong></p>
+<hr />
+<h3 id="22-wrong-comparison-operators-5-files">2.2 Wrong Comparison Operators - 5 files ✗<a class="headerlink" href="#22-wrong-comparison-operators-5-files" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>:
+- ACEY.bas
+- acey.bas
+- birthday.bas
+- rose.bas
+- unigrid2.bas</p>
+<p><strong>Pattern</strong>: Using <code>=&gt;</code> and <code>=&lt;</code> instead of <code>&gt;=</code> and <code>&lt;=</code></p>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nl">1070</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">MO</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="il">25000</span><span class="w"> </span><span class="ow">OR</span><span class="w"> </span><span class="vg">MO</span><span class="w"> </span><span class="o">=&lt;</span><span class="w"> </span><span class="il">-25000</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="il">5900</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nl">900</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">W</span><span class="o">=&gt;</span><span class="w"> </span><span class="vg">V</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">920</span>
+</code></pre></div></p>
+<p><strong>Error</strong>: "Unexpected token in expression: GREATER_THAN"</p>
+<p><strong>Why Non-MBASIC</strong>: Invalid operator syntax (some BASIC dialects allowed this)</p>
+<p><strong>Action</strong>: <strong>MOVE to bad_not521/</strong></p>
+<hr />
+<h3 id="23-decimal-line-numbers-6-files">2.3 Decimal Line Numbers - 6 files ✗<a class="headerlink" href="#23-decimal-line-numbers-6-files" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>:
+- airmiles.bas
+- cbasedit.bas
+- cmprbib.bas
+- commo1.bas
+- journal.bas
+- voclst.bas</p>
+<p><strong>Pattern</strong>: Floating-point line numbers</p>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nl">1</span><span class="mf">.02</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">NUM</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nl">5</span><span class="mf">.2</span><span class="vg">E1</span><span class="w"> </span><span class="vg">R</span><span class="o">.</span><span class="vg">REC</span><span class="o">%=</span><span class="vg">R</span><span class="o">.</span><span class="vg">REC</span><span class="o">%+</span><span class="il">1</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nl">90</span><span class="mf">.01</span><span class="w"> </span><span class="kr">REM</span><span class="w"> </span><span class="vg">COMMENT</span>
+</code></pre></div></p>
+<p><strong>Error</strong>: "Unexpected token in statement: NUMBER"</p>
+<p><strong>Why Non-MBASIC</strong>: Line numbers must be integers (0-65529) in MBASIC 5.21</p>
+<p><strong>Action</strong>: <strong>MOVE to bad_not521/</strong></p>
+<hr />
+<h3 id="24-atari-open-syntax-4-files">2.4 Atari OPEN Syntax - 4 files ✗<a class="headerlink" href="#24-atari-open-syntax-4-files" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>:
+- aut850.bas
+- auto850.bas
+- gammonb.bas
+- pckexe.bas</p>
+<p><strong>Pattern</strong>: Atari BASIC file I/O syntax</p>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nl">20</span><span class="w"> </span><span class="kr">OPEN</span><span class="w"> </span><span class="err">#</span><span class="il">1</span><span class="p">,</span><span class="il">8</span><span class="p">,</span><span class="il">0</span><span class="p">,</span><span class="s2">&quot;D:AUTORUN.SYS&quot;</span><span class="w">  </span><span class="c1">&#39; Atari syntax</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1">&#39; vs MBASIC 5.21:</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="kr">OPEN</span><span class="w"> </span><span class="s2">&quot;I&quot;</span><span class="p">,</span><span class="err">#</span><span class="il">1</span><span class="p">,</span><span class="s2">&quot;FILENAME&quot;</span>
+</code></pre></div></p>
+<p><strong>Error</strong>: "Unexpected token in expression: HASH"</p>
+<p><strong>Why Non-MBASIC</strong>: Atari BASIC specific</p>
+<p><strong>Action</strong>: <strong>MOVE to bad_not521/</strong></p>
+<hr />
+<h3 id="25-input-syntax-3-files">2.5 INPUT; Syntax - 3 files ⚠️<a class="headerlink" href="#25-input-syntax-3-files" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>:
+- cpkhex.bas
+- rc5%.bas
+- rc5.bas</p>
+<p><strong>Pattern</strong>: INPUT with semicolon for prompt separator</p>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nl">200</span><span class="w"> </span><span class="kr">INPUT</span><span class="p">;</span><span class="s2">&quot;Input hex file &quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">F$</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nl">1640</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">I$</span><span class="p">;</span><span class="vg">I</span><span class="p">;</span><span class="s2">&quot;=&quot;</span><span class="o">:</span><span class="kr">INPUT</span><span class="p">;</span><span class="w"> </span><span class="vg">V</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Error</strong>: "Expected IDENTIFIER, got SEMICOLON"</p>
+<p><strong>Status</strong>: <strong>NEEDS RESEARCH</strong> - Verify if valid MBASIC 5.21 syntax</p>
+<p><strong>Action</strong>: Check MBASIC 5.21 manual, then decide: implement or move</p>
+<hr />
+<h2 id="category-3-source-file-errors-25-files">Category 3: Source File Errors (25 files)<a class="headerlink" href="#category-3-source-file-errors-25-files" title="Permanent link">&para;</a></h2>
+<h3 id="31-corruptedmalformed-source-14-files">3.1 Corrupted/Malformed Source - 14 files<a class="headerlink" href="#31-corruptedmalformed-source-14-files" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>:
+- bibbld.bas
+- digiklok.bas
+- doodle.bas
+- scenecar.bas
+- tankie.bas
+- vocbld.bas
+- (8 more)</p>
+<p><strong>Examples</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">&#39; bibbld.bas:30</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nl">30</span><span class="w"> </span><span class="c1">REM    &#39; Incomplete REM statement</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1">&#39; digiklok.bas:111</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="nl">111</span><span class="w"> </span><span class="vg">A</span><span class="o">=</span><span class="w">     </span><span class="c1">&#39; Expression cut off mid-line</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1">&#39; doodle.bas:2</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="nl">2</span><span class="w"> </span><span class="vg">A</span><span class="o">=</span><span class="vg">B</span><span class="o">-</span><span class="w">     </span><span class="c1">&#39; Missing right operand</span>
+</code></pre></div></p>
+<p><strong>Errors</strong>: Various ("Expected EQUAL, got REM", "Expected EQUAL, got EOF", etc.)</p>
+<p><strong>Action</strong>: <strong>MOVE to bad_not521/</strong> - Not valid parseable code</p>
+<hr />
+<h3 id="32-invalid-def-syntax-3-files">3.2 Invalid DEF Syntax - 3 files<a class="headerlink" href="#32-invalid-def-syntax-3-files" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>:
+- sink.bas
+- surround.bas
+- tanks.bas</p>
+<p><strong>Pattern</strong>: DEF statement without FN prefix</p>
+<p><strong>Example</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kr">DEF</span><span class="w"> </span><span class="vg">SOMETHING</span><span class="p">(</span><span class="vg">X</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="o">+</span><span class="il">1</span><span class="w">  </span><span class="c1">&#39; Invalid</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1">&#39; Should be:</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="kr">DEF</span><span class="w"> </span><span class="vg">FNSOMETHING</span><span class="p">(</span><span class="vg">X</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="o">+</span><span class="il">1</span><span class="w">  </span><span class="c1">&#39; Valid MBASIC 5.21</span>
+</code></pre></div></p>
+<p><strong>Error</strong>: "DEF function name must start with FN"</p>
+<p><strong>Why Invalid</strong>: MBASIC 5.21 requires FN prefix for user-defined functions</p>
+<p><strong>Action</strong>: <strong>MOVE to bad_not521/</strong> - Source syntax error</p>
+<hr />
+<h3 id="33-concatenated-keywords-8-files">3.3 Concatenated Keywords - 8 files<a class="headerlink" href="#33-concatenated-keywords-8-files" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>:
+- ONECHECK.bas
+- aircraft.bas
+- bigtime.bas
+- directry.bas
+- hangman.bas
+- m100lf.bas
+- onecheck.bas
+- simcvt2.bas</p>
+<p><strong>Pattern</strong>: Keywords without proper spacing (typos)</p>
+<p><strong>Examples</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="vg">GOTO1500</span><span class="w">          </span><span class="c1">&#39; Should be: GOTO 1500</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="vg">CLEAR1000</span><span class="w">         </span><span class="c1">&#39; Should be: CLEAR ,1000</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="kr">IF</span><span class="o">...</span><span class="vg">GOTO1500</span><span class="w">     </span><span class="c1">&#39; Should be: IF...GOTO 1500</span>
+</code></pre></div></p>
+<p><strong>Error</strong>: "Expected EQUAL, got NEWLINE"</p>
+<p><strong>Note</strong>: Lexer already handles some cases (NEXTI → NEXT I)</p>
+<p><strong>Action</strong>: <strong>Could implement broader splitting</strong> OR treat as syntax errors</p>
+<hr />
+<h2 id="category-4-complexneed-investigation-45-files">Category 4: Complex/Need Investigation (45 files)<a class="headerlink" href="#category-4-complexneed-investigation-45-files" title="Permanent link">&para;</a></h2>
+<p>These files have various unique errors that need individual examination:</p>
+<p><strong>Major subcategories</strong>:
+- Expression/statement boundary errors: ~10 files
+- Unknown statement/keyword errors: ~10 files
+- Function call syntax errors: ~3 files
+- Various unique patterns: ~22 files</p>
+<p><strong>Examples</strong>:
+- BACKGAMM.bas: Expected EQUAL, got COLON
+- OTHELLO.bas: Expected THEN or GOTO after IF
+- battle.bas: Expected EQUAL, got IDENTIFIER
+- etc.</p>
+<p><strong>Action</strong>: Requires individual file review and analysis</p>
+<hr />
+<h2 id="quick-win-analysis">Quick Win Analysis<a class="headerlink" href="#quick-win-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="implementing-top-3-features-13-files">Implementing Top 3 Features (13 files)<a class="headerlink" href="#implementing-top-3-features-13-files" title="Permanent link">&para;</a></h3>
+<ol>
+<li>EOF() function: 7 files</li>
+<li>HEX$() function: 3 files</li>
+<li>ELSE edge cases: 3 files</li>
+</ol>
+<p><strong>Impact</strong>: 104 → <strong>117/215 (54.4%)</strong> success rate</p>
+<hr />
+<h3 id="cleaning-non-mbasic-dialects-22-files-certain-3-uncertain">Cleaning Non-MBASIC Dialects (22 files certain + 3 uncertain)<a class="headerlink" href="#cleaning-non-mbasic-dialects-22-files-certain-3-uncertain" title="Permanent link">&para;</a></h3>
+<p>Moving definite non-MBASIC 5.21 files:
+- Multiline IF/THEN: 7 files
+- Wrong operators: 5 files
+- Decimal line numbers: 6 files
+- Atari OPEN: 4 files</p>
+<p><strong>New corpus</strong>: 215 - 22 = 193 files
+<strong>Success rate</strong>: 104/193 = <strong>53.9%</strong> (before implementing features)</p>
+<p>With features implemented:
+<strong>Success rate</strong>: 117/193 = <strong>60.6%</strong></p>
+<hr />
+<h2 id="recommended-action-plan">Recommended Action Plan<a class="headerlink" href="#recommended-action-plan" title="Permanent link">&para;</a></h2>
+<h3 id="phase-1-quick-wins-high-impact-low-effort">Phase 1: Quick Wins (High Impact, Low Effort)<a class="headerlink" href="#phase-1-quick-wins-high-impact-low-effort" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Implement EOF() function</strong> - 7 files</li>
+<li><strong>Implement HEX$() function</strong> - 3 files</li>
+<li><strong>Fix ELSE edge cases</strong> - 3 files</li>
+</ol>
+<p><strong>Estimated time</strong>: 2-3 hours
+<strong>Result</strong>: 117/215 (54.4%)</p>
+<hr />
+<h3 id="phase-2-corpus-cleanup">Phase 2: Corpus Cleanup<a class="headerlink" href="#phase-2-corpus-cleanup" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Move non-MBASIC dialects</strong> - 22 files definite</li>
+<li>Multiline IF/THEN</li>
+<li>Wrong operators</li>
+<li>Decimal line numbers</li>
+<li>
+<p>Atari OPEN</p>
+</li>
+<li>
+<p><strong>Research INPUT; syntax</strong> - 3 files (move if not valid)</p>
+</li>
+</ol>
+<p><strong>Result</strong>: 117/193 (60.6%) on clean corpus</p>
+<hr />
+<h3 id="phase-3-low-hanging-fruit">Phase 3: Low-Hanging Fruit<a class="headerlink" href="#phase-3-low-hanging-fruit" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Implement NAME statement</strong> - 1 file</li>
+<li><strong>Implement CHAIN statement</strong> - 1 file</li>
+<li><strong>Implement SAVE statement</strong> - 1 file</li>
+</ol>
+<p><strong>Result</strong>: 120/193 (62.2%)</p>
+<hr />
+<h3 id="phase-4-source-error-cleanup">Phase 4: Source Error Cleanup<a class="headerlink" href="#phase-4-source-error-cleanup" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Move corrupted files</strong> - 14 files</li>
+<li><strong>Move invalid DEF files</strong> - 3 files</li>
+<li><strong>Handle/move concatenated keyword files</strong> - 8 files</li>
+</ol>
+<p><strong>New corpus</strong>: 193 - 25 = 168 files
+<strong>Result</strong>: 120/168 (71.4%)</p>
+<hr />
+<h3 id="phase-5-deep-dive">Phase 5: Deep Dive<a class="headerlink" href="#phase-5-deep-dive" title="Permanent link">&para;</a></h3>
+<p>Investigate remaining 45 complex cases individually</p>
+<p><strong>Potential result</strong>: 70-75% success rate</p>
+<hr />
+<h2 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h2>
+<p><strong>Current State</strong>:
+- Total files: 215
+- Parsing: 104 (48.4%)
+- Failing: 111 (51.6%)</p>
+<p><strong>After Quick Wins (Phase 1)</strong>:
+- Parsing: 117 (54.4%)</p>
+<p><strong>After Cleanup (Phases 1-2)</strong>:
+- Total: 193 files (clean corpus)
+- Parsing: 117 (60.6%)</p>
+<p><strong>After Phase 3</strong>:
+- Parsing: 120/193 (62.2%)</p>
+<p><strong>After Phase 4</strong>:
+- Total: 168 files (very clean corpus)
+- Parsing: 120 (71.4%)</p>
+<p><strong>Realistic Goal</strong>: 70-75% on clean MBASIC 5.21 corpus</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

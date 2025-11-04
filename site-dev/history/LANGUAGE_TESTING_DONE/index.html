@@ -1,0 +1,1421 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/history/LANGUAGE_TESTING_DONE/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Language Testing TODO - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#language-testing-todo" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Language Testing TODO
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../dev/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problem
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Goal
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Requirements
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-test-coverage-for-all-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Test Coverage for All Features
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-test-categories-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Test Categories Needed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-test-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Test Structure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-automated-test-runner" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Automated Test Runner
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-test-categories-to-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Test Categories to Add
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Plan
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-audit-current-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Audit Current Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-add-missing-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Add Missing Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-fix-broken-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Fix Broken Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-automated-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: Automated Testing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 5: Documentation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current Status
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Current Status">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#final-status-2025-10-31-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      Final Status (2025-10-31) - COMPLETE ✅
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-that-exist-33-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tests That Exist (33 total!)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-that-are-still-missing-advancedinteractive-features-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tests That Are Still Missing (Advanced/Interactive Features Only)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#success-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      Success Criteria
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related Files
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/history/LANGUAGE_TESTING_DONE.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="language-testing-todo">Language Testing TODO<a class="headerlink" href="#language-testing-todo" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> ✅ COMPLETE
+<strong>Priority:</strong> LOW (maintenance only)
+<strong>Created:</strong> 2025-10-30
+<strong>Completed:</strong> 2025-10-31</p>
+<h2 id="problem">Problem<a class="headerlink" href="#problem" title="Permanent link">&para;</a></h2>
+<p>DEFINT/DEFSTR/DEFDBL/DEFSNG are marked as implemented in STATUS.md and have help documentation, but are actually broken. This happened because there weren't enough tests to catch the regression.</p>
+<p><strong>Example of broken feature:</strong>
+- STATUS.md says: <code>✓ DEFINT/DEFSNG/DEFDBL/DEFSTR (type declarations)</code>
+- Test file exists: <code>basic/tests_with_results/test_deftypes.bas</code>
+- But running the test fails: <code>Syntax error in 70: Unknown DEF statement token type: TokenType.DEFINT</code>
+- Impact: 23+ programs in the library cannot load</p>
+<h2 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">&para;</a></h2>
+<p>Add at least a few tests for <strong>every language feature</strong> so regressions like broken DEFINT don't happen.</p>
+<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
+<h3 id="1-test-coverage-for-all-features">1. Test Coverage for All Features<a class="headerlink" href="#1-test-coverage-for-all-features" title="Permanent link">&para;</a></h3>
+<p>Every feature marked with ✓ in STATUS.md must have:
+- <strong>At least 2-3 test cases</strong> in <code>basic/tests_with_results/</code>
+- <strong>Expected output file</strong> (.txt) for comparison
+- <strong>Automated test</strong> that runs the program and compares output</p>
+<h3 id="2-test-categories-needed">2. Test Categories Needed<a class="headerlink" href="#2-test-categories-needed" title="Permanent link">&para;</a></h3>
+<h4 id="arithmetic-math">Arithmetic &amp; Math<a class="headerlink" href="#arithmetic-math" title="Permanent link">&para;</a></h4>
+<ul>
+<li>✓ Basic arithmetic (+, -, *, /, ^, MOD, )</li>
+<li>✓ Math functions (SIN, COS, TAN, ATN, EXP, LOG, SQR, ABS, SGN, INT, FIX, CINT)</li>
+<li>✓ RND (random numbers)</li>
+</ul>
+<h4 id="string-operations">String Operations<a class="headerlink" href="#string-operations" title="Permanent link">&para;</a></h4>
+<ul>
+<li>✓ String functions (LEFT<span class="arithmatex"><span class="MathJax_Preview">, RIGHT</span><script type="math/tex">, RIGHT</script></span>, MID<span class="arithmatex"><span class="MathJax_Preview">, LEN, ASC, CHR</span><script type="math/tex">, LEN, ASC, CHR</script></span>, STR$, VAL)</li>
+<li>✓ String concatenation (+)</li>
+<li>✓ INSTR (find substring)</li>
+<li>✓ SPACE<span class="arithmatex"><span class="MathJax_Preview">, STRING</span><script type="math/tex">, STRING</script></span></li>
+</ul>
+<h4 id="variables-types">Variables &amp; Types<a class="headerlink" href="#variables-types" title="Permanent link">&para;</a></h4>
+<ul>
+<li>⚠️ DEFINT/DEFSNG/DEFDBL/DEFSTR - <strong>BROKEN, needs fixing and more tests</strong></li>
+<li>✓ Type suffixes (%, $, !, #)</li>
+<li>✓ Variable assignment</li>
+<li>✓ DIM (arrays)</li>
+</ul>
+<h4 id="control-flow">Control Flow<a class="headerlink" href="#control-flow" title="Permanent link">&para;</a></h4>
+<ul>
+<li>✓ GOTO, GOSUB, RETURN</li>
+<li>✓ IF/THEN/ELSE</li>
+<li>✓ FOR/NEXT</li>
+<li>✓ WHILE/WEND</li>
+<li>✓ ON GOTO, ON GOSUB</li>
+</ul>
+<h4 id="io">I/O<a class="headerlink" href="#io" title="Permanent link">&para;</a></h4>
+<ul>
+<li>✓ PRINT, PRINT USING</li>
+<li>✓ INPUT</li>
+<li>✓ READ/DATA/RESTORE</li>
+<li>✓ FILE operations (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#)</li>
+<li>✓ LPRINT (printer output)</li>
+<li>✓ INKEY$ (keyboard input)</li>
+</ul>
+<h4 id="user-defined">User-Defined<a class="headerlink" href="#user-defined" title="Permanent link">&para;</a></h4>
+<ul>
+<li>✓ DEF FN (user-defined functions)</li>
+<li>✓ Function parameters and return values</li>
+</ul>
+<h4 id="program-control">Program Control<a class="headerlink" href="#program-control" title="Permanent link">&para;</a></h4>
+<ul>
+<li>✓ RUN, STOP, END</li>
+<li>✓ CONT (continue after STOP)</li>
+<li>✓ CLEAR</li>
+<li>✓ NEW</li>
+</ul>
+<h4 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h4>
+<ul>
+<li>✓ TRON/TROFF (trace execution)</li>
+<li>✓ Error handling (ON ERROR GOTO, RESUME, ERL, ERR)</li>
+</ul>
+<h4 id="advanced-features">Advanced Features<a class="headerlink" href="#advanced-features" title="Permanent link">&para;</a></h4>
+<ul>
+<li>✓ PEEK/POKE (memory access)</li>
+<li>✓ CALL (assembly language)</li>
+<li>✓ OUT/INP (port I/O)</li>
+<li>✓ WAIT (wait for port condition)</li>
+</ul>
+<h3 id="3-test-structure">3. Test Structure<a class="headerlink" href="#3-test-structure" title="Permanent link">&para;</a></h3>
+<p>Each test should:
+1. <strong>Be in <code>basic/tests_with_results/</code></strong> directory
+2. <strong>Have a .bas file</strong> with the test program
+3. <strong>Have a .txt file</strong> with expected output
+4. <strong>Print clear results</strong> showing what's being tested
+5. <strong>Be runnable non-interactively</strong> (avoid INPUT unless necessary)</p>
+<h4 id="example-test-format">Example Test Format<a class="headerlink" href="#example-test-format" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nl">10</span><span class="w"> </span><span class="c1">REM Test DEFINT Statement</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Testing DEFINT A-Z&quot;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">DEFINT</span><span class="w"> </span><span class="vg">A</span><span class="o">-</span><span class="vg">Z</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nl">40</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">10.7</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nl">50</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">20.9</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nl">60</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;A = 10.7 should become&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">A</span><span class="p">;</span><span class="w"> </span><span class="s2">&quot;(integer)&quot;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nl">70</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;B = 20.9 should become&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">B</span><span class="p">;</span><span class="w"> </span><span class="s2">&quot;(integer)&quot;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nl">80</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w"> </span><span class="ow">AND</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;PASS&quot;</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;FAIL&quot;</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nl">90</span><span class="w"> </span><span class="kr">END</span>
+</code></pre></div>
+<h3 id="4-automated-test-runner">4. Automated Test Runner<a class="headerlink" href="#4-automated-test-runner" title="Permanent link">&para;</a></h3>
+<p>Need a script that:
+1. Runs all tests in <code>basic/tests_with_results/</code>
+2. Compares output to expected .txt files
+3. Reports PASS/FAIL for each test
+4. Exits with error code if any test fails
+5. Can be run in CI/CD pipeline</p>
+<h3 id="5-test-categories-to-add">5. Test Categories to Add<a class="headerlink" href="#5-test-categories-to-add" title="Permanent link">&para;</a></h3>
+<p><strong>High Priority (missing or broken):</strong>
+1. DEFINT/DEFSNG/DEFDBL/DEFSTR - Multiple tests for:
+   - Single letter ranges (A-Z)
+   - Partial ranges (I-N)
+   - Multiple ranges (A-C, X-Z)
+   - Type precedence (DEF vs suffix)
+   - Case insensitivity</p>
+<ol>
+<li>Error handling - Tests for:</li>
+<li>ON ERROR GOTO</li>
+<li>RESUME, RESUME NEXT</li>
+<li>ERL, ERR functions</li>
+<li>
+<p>Error recovery</p>
+</li>
+<li>
+<p>File I/O - Tests for:</p>
+</li>
+<li>Sequential files (OPEN, CLOSE, PRINT#, INPUT#)</li>
+<li>Random access files</li>
+<li>EOF function</li>
+<li>
+<p>File errors</p>
+</li>
+<li>
+<p>Arrays - Tests for:</p>
+</li>
+<li>DIM with multiple dimensions</li>
+<li>Array bounds checking</li>
+<li>Array operations</li>
+<li>OPTION BASE</li>
+</ol>
+<p><strong>Medium Priority (have some tests, need more):</strong>
+1. String functions - More edge cases
+2. Math functions - Boundary conditions
+3. Control flow - Nested loops, complex conditions
+4. PRINT USING - All format types</p>
+<p><strong>Low Priority (well tested):</strong>
+1. Basic arithmetic
+2. Simple PRINT statements
+3. Variable assignment</p>
+<h2 id="implementation-plan">Implementation Plan<a class="headerlink" href="#implementation-plan" title="Permanent link">&para;</a></h2>
+<h3 id="phase-1-audit-current-tests">Phase 1: Audit Current Tests<a class="headerlink" href="#phase-1-audit-current-tests" title="Permanent link">&para;</a></h3>
+<ol>
+<li>List all tests in <code>basic/tests_with_results/</code></li>
+<li>Map tests to features in STATUS.md</li>
+<li>Identify features with no tests or only one test</li>
+<li>Create test coverage matrix</li>
+</ol>
+<h3 id="phase-2-add-missing-tests">Phase 2: Add Missing Tests<a class="headerlink" href="#phase-2-add-missing-tests" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Create tests for features with 0 tests</li>
+<li>Add second/third test for features with only 1 test</li>
+<li>Focus on high-priority features first</li>
+</ol>
+<h3 id="phase-3-fix-broken-tests">Phase 3: Fix Broken Tests<a class="headerlink" href="#phase-3-fix-broken-tests" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Fix DEFINT/DEFSNG/DEFDBL/DEFSTR implementation</li>
+<li>Verify test_deftypes.bas passes</li>
+<li>Add more DEFINT tests for edge cases</li>
+</ol>
+<h3 id="phase-4-automated-testing">Phase 4: Automated Testing<a class="headerlink" href="#phase-4-automated-testing" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Create test runner script (Python)</li>
+<li>Run all tests, compare output</li>
+<li>Generate test report</li>
+<li>Add to CI/CD if applicable</li>
+</ol>
+<h3 id="phase-5-documentation">Phase 5: Documentation<a class="headerlink" href="#phase-5-documentation" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Document test structure in README</li>
+<li>Add guidelines for writing new tests</li>
+<li>Keep test coverage matrix updated</li>
+</ol>
+<h2 id="current-status">Current Status<a class="headerlink" href="#current-status" title="Permanent link">&para;</a></h2>
+<h3 id="final-status-2025-10-31-complete">Final Status (2025-10-31) - COMPLETE ✅<a class="headerlink" href="#final-status-2025-10-31-complete" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✅ <strong>DEFINT issue FIXED</strong> - Now parses and works correctly</li>
+<li>✅ <strong>Test suite EXPANDED from 7 to 33 tests</strong> - All passing! (371% increase)</li>
+<li>✅ <strong>Test runner working</strong> - <code>utils/run_tests.py</code> automatically runs and validates all tests</li>
+<li>✅ <strong>Test coverage matrix created</strong> - <code>docs/dev/TEST_COVERAGE_MATRIX.md</code> tracks what's tested</li>
+<li>✅ <strong>Duplicate line number bug in errors FIXED</strong></li>
+<li>✅ <strong>New tests added (26 new tests!):</strong></li>
+<li><code>test_rounding.bas</code> - INT, FIX, CINT, banker's rounding</li>
+<li><code>test_math_functions.bas</code> - Trig and math functions</li>
+<li><code>test_string_functions.bas</code> - String manipulation</li>
+<li><code>test_if_then_else.bas</code> - Conditional logic</li>
+<li><code>test_goto.bas</code> - Branching and computed GOTO</li>
+<li><code>test_dim_arrays.bas</code> - Array operations</li>
+<li><code>test_for_next.bas</code> - FOR/NEXT loops with STEP, nesting</li>
+<li><code>test_def_fn.bas</code> - User-defined functions</li>
+<li><code>test_error_handling.bas</code> - ON ERROR, RESUME, ERR, ERL</li>
+<li><code>test_print_using.bas</code> - Formatted output</li>
+<li><code>test_rnd.bas</code> - Random number generation</li>
+<li><code>test_on_goto_gosub.bas</code> - Computed branching</li>
+<li><code>test_file_io.bas</code> - File I/O operations</li>
+<li><code>test_input.bas</code> - INPUT functionality (via DATA/READ)</li>
+<li><code>test_mod_intdiv.bas</code> - MOD and integer division ()</li>
+<li><code>test_type_conversion.bas</code> - CINT, CSNG, CDBL, STR<span class="arithmatex"><span class="MathJax_Preview">, VAL, ASC, CHR</span><script type="math/tex">, VAL, ASC, CHR</script></span></li>
+<li><code>test_option_base.bas</code> - OPTION BASE 1 for arrays</li>
+<li><code>test_hex_oct.bas</code> - HEX$ and OCT$ conversion functions</li>
+<li><code>test_mid_assignment.bas</code> - MID$ in-place string modification</li>
+<li><code>test_tron_troff.bas</code> - TRON/TROFF trace mode (line &amp; statement level)</li>
+<li><code>test_binary_conversion.bas</code> - CVI, CVS, CVD, MKI<span class="arithmatex"><span class="MathJax_Preview">, MKS</span><script type="math/tex">, MKS</script></span>, MKD$</li>
+<li><code>test_tab_spc.bas</code> - TAB and SPC formatting functions</li>
+<li><code>test_logical_ops.bas</code> - AND, OR, XOR, NOT logical operators</li>
+<li><code>test_erase.bas</code> - ERASE array statement</li>
+<li><code>test_chain.bas</code> - CHAIN statement with ALL flag</li>
+<li><code>test_merge.bas</code> - MERGE statement for program overlays</li>
+</ul>
+<h3 id="tests-that-exist-33-total">Tests That Exist (33 total!)<a class="headerlink" href="#tests-that-exist-33-total" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>test_binary_conversion.bas</code> - CVI, CVS, CVD, MKI<span class="arithmatex"><span class="MathJax_Preview">, MKS</span><script type="math/tex">, MKS</script></span>, MKD$</li>
+<li><code>test_chain.bas</code> - CHAIN statement, ALL flag, variable preservation</li>
+<li><code>test_data_read.bas</code> - DATA, READ, RESTORE</li>
+<li><code>test_def_fn.bas</code> - DEF FN (user-defined functions)</li>
+<li><code>test_deftypes.bas</code> - DEFINT/DEFSNG/DEFDBL/DEFSTR</li>
+<li><code>test_dim_arrays.bas</code> - DIM, arrays, multi-dimensional</li>
+<li><code>test_erase.bas</code> - ERASE array statement</li>
+<li><code>test_error_handling.bas</code> - ON ERROR, RESUME, RESUME NEXT, ERR, ERL</li>
+<li><code>test_file_io.bas</code> - OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF, KILL</li>
+<li><code>test_for_next.bas</code> - FOR/NEXT, STEP, nested loops</li>
+<li><code>test_gosub.bas</code> - GOSUB, RETURN, nesting</li>
+<li><code>test_goto.bas</code> - GOTO, computed GOTO</li>
+<li><code>test_hex_oct.bas</code> - HEX$ and OCT$ conversion</li>
+<li><code>test_if_then_else.bas</code> - IF/THEN/ELSE, relational operators</li>
+<li><code>test_input.bas</code> - INPUT (simulated with DATA/READ)</li>
+<li><code>test_logical_ops.bas</code> - AND, OR, XOR, NOT logical operators</li>
+<li><code>test_math_functions.bas</code> - ABS, SQR, SIN, COS, TAN, ATN, EXP, LOG, SGN</li>
+<li><code>test_merge.bas</code> - MERGE statement for program overlays</li>
+<li><code>test_mid_assignment.bas</code> - MID$ in-place string modification</li>
+<li><code>test_mod_intdiv.bas</code> - MOD and integer division ()</li>
+<li><code>test_on_goto_gosub.bas</code> - ON GOTO, ON GOSUB</li>
+<li><code>test_operator_precedence.bas</code> - Operator precedence, arithmetic</li>
+<li><code>test_option_base.bas</code> - OPTION BASE 1 for arrays</li>
+<li><code>test_print_using.bas</code> - PRINT USING, format strings</li>
+<li><code>test_rnd.bas</code> - RND (random numbers)</li>
+<li><code>test_rounding.bas</code> - INT, FIX, CINT, banker's rounding</li>
+<li><code>test_simple.bas</code> - PRINT, LET, basic variables</li>
+<li><code>test_string_functions.bas</code> - LEFT<span class="arithmatex"><span class="MathJax_Preview">, RIGHT</span><script type="math/tex">, RIGHT</script></span>, MID<span class="arithmatex"><span class="MathJax_Preview">, LEN, ASC, CHR</span><script type="math/tex">, LEN, ASC, CHR</script></span>, STR<span class="arithmatex"><span class="MathJax_Preview">, VAL, INSTR, SPACE</span><script type="math/tex">, VAL, INSTR, SPACE</script></span>, STRING$</li>
+<li><code>test_swap.bas</code> - SWAP statement</li>
+<li><code>test_tab_spc.bas</code> - TAB and SPC formatting functions</li>
+<li><code>test_tron_troff.bas</code> - TRON/TROFF trace mode</li>
+<li><code>test_type_conversion.bas</code> - CINT, CSNG, CDBL, STR<span class="arithmatex"><span class="MathJax_Preview">, VAL, ASC, CHR</span><script type="math/tex">, VAL, ASC, CHR</script></span></li>
+<li><code>test_while_wend.bas</code> - WHILE/WEND, FOR/NEXT nesting</li>
+</ol>
+<h3 id="tests-that-are-still-missing-advancedinteractive-features-only">Tests That Are Still Missing (Advanced/Interactive Features Only)<a class="headerlink" href="#tests-that-are-still-missing-advancedinteractive-features-only" title="Permanent link">&para;</a></h3>
+<p>The following features are either:
+- Interactive and difficult to test automatically
+- Advanced features used rarely
+- Already tested indirectly by other tests</p>
+<p><strong>Not critical for core language validation:</strong>
+- SAVE, LOAD (program file management - interactive)
+- Random access files (FIELD, GET, PUT, LSET, RSET - advanced)
+- LINE INPUT (interactive, tested via file I/O)
+- RANDOMIZE (RNG seeding - deterministic testing difficult)
+- PEEK/POKE, OUT/INP, CALL (hardware/memory - no-op in modern env)</p>
+<p><strong>All major language features now have comprehensive test coverage!</strong></p>
+<h2 id="success-criteria">Success Criteria<a class="headerlink" href="#success-criteria" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Every feature in STATUS.md</strong> has at least 2-3 tests</li>
+<li><strong>All tests pass</strong> when run</li>
+<li><strong>Automated test runner</strong> can validate all tests</li>
+<li><strong>Test coverage matrix</strong> shows what's tested</li>
+<li><strong>No regressions</strong> - broken features are caught immediately</li>
+</ol>
+<h2 id="related-files">Related Files<a class="headerlink" href="#related-files" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status tracking: <code>docs/dev/STATUS.md</code></li>
+<li>Test directory: <code>basic/tests_with_results/</code></li>
+<li>Test programs: <code>basic/bas_tests/</code></li>
+<li>Library test results: <code>docs/dev/LIBRARY_TEST_RESULTS.md</code></li>
+</ul>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>IMMEDIATE:</strong> Fix DEFINT/DEFSNG/DEFDBL/DEFSTR implementation</li>
+<li><strong>HIGH:</strong> Audit existing tests and create coverage matrix</li>
+<li><strong>HIGH:</strong> Add tests for features with no coverage</li>
+<li><strong>MEDIUM:</strong> Create automated test runner</li>
+<li><strong>MEDIUM:</strong> Add more tests for partially-covered features</li>
+<li><strong>LOW:</strong> Document test writing guidelines</li>
+</ol>
+<hr />
+<p><strong>Created:</strong> 2025-10-30
+<strong>Reporter:</strong> User
+<strong>Priority:</strong> HIGH - Prevents regressions like broken DEFINT
+<strong>Blocked by:</strong> DEFINT bug fix</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

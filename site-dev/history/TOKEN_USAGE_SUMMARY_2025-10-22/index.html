@@ -1,0 +1,1576 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/history/TOKEN_USAGE_SUMMARY_2025-10-22/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Token Usage Analysis - MBASIC 5.21 Parser - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#token-usage-analysis-mbasic-521-parser" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Token Usage Analysis - MBASIC 5.21 Parser
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../dev/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unused-tokens-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unused Tokens (10)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Unused Tokens (10)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#analysis-of-unused-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analysis of Unused Tokens
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#top-20-most-used-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      Top 20 Most Used Tokens
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#least-used-tokens-that-are-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      Least Used Tokens (that ARE used)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#token-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token Categories
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Token Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-language-1000-uses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Core Language (&gt;1000 uses)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#string-functions-well-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      String Functions (well used)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#math-functions-moderate-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      Math Functions (moderate use)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-io-specialized" class="md-nav__link">
+    <span class="md-ellipsis">
+      File I/O (specialized)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logical-operators-rarely-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      Logical Operators (rarely used)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coverage-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Coverage Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Coverage Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#well-covered-areas-100-uses-each" class="md-nav__link">
+    <span class="md-ellipsis">
+      Well-Covered Areas (&gt;100 uses each)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#moderately-covered-10-100-uses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Moderately Covered (10-100 uses)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lightly-covered-1-9-uses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lightly Covered (1-9 uses)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-covered-0-uses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Not Covered (0 uses)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implications-for-parser-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implications for Parser Development
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implications for Parser Development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#strong-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Strong Coverage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Gaps
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommendations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommendations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#for-additional-test-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      For Additional Test Coverage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-parser-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      For Parser Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statistics-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Statistics Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tool-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tool Usage
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/history/TOKEN_USAGE_SUMMARY_2025-10-22.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="token-usage-analysis-mbasic-521-parser">Token Usage Analysis - MBASIC 5.21 Parser<a class="headerlink" href="#token-usage-analysis-mbasic-521-parser" title="Permanent link">&para;</a></h1>
+<p><strong>Date</strong>: 2025-10-22
+<strong>Corpus</strong>: 121 BASIC files (120 from bas_tests1, 1 from tests_with_results)
+<strong>Tool</strong>: <code>utils/analyze_token_usage.py</code></p>
+<hr />
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<p>Analyzed token usage across all successfully parsing BASIC files to understand:
+- Which tokens are actually used in real MBASIC programs
+- How frequently each token appears
+- Which tokens are defined but never used</p>
+<p><strong>Results</strong>:
+- <strong>150,456 total tokens</strong> processed
+- <strong>132 of 142 token types</strong> used (93.0% coverage)
+- <strong>10 token types</strong> never used in any test file</p>
+<hr />
+<h2 id="unused-tokens-10">Unused Tokens (10)<a class="headerlink" href="#unused-tokens-10" title="Permanent link">&para;</a></h2>
+<p>The following tokens are defined in the lexer but never appear in any test program:</p>
+<ol>
+<li><strong>AMPERSAND</strong> (<code>&amp;</code>) - Used for hex literals or string concatenation in some BASIC dialects</li>
+<li><strong>CONT</strong> - Continue execution after break</li>
+<li><strong>DEFSNG</strong> - Define variables as single-precision</li>
+<li><strong>EDIT</strong> - Interactive line editor command</li>
+<li><strong>LLIST</strong> - List to printer</li>
+<li><strong>MERGE</strong> - Merge program from disk</li>
+<li><strong>NEW</strong> - Clear program from memory</li>
+<li><strong>QUESTION</strong> (<code>?</code>) - Shorthand for PRINT</li>
+<li><strong>RENUM</strong> - Renumber program lines</li>
+<li><strong>RSET</strong> - Right-justify string in field</li>
+</ol>
+<h3 id="analysis-of-unused-tokens">Analysis of Unused Tokens<a class="headerlink" href="#analysis-of-unused-tokens" title="Permanent link">&para;</a></h3>
+<p><strong>Direct Commands</strong> (not typically in program files):
+- <code>CONT</code>, <code>EDIT</code>, <code>LLIST</code>, <code>MERGE</code>, <code>NEW</code>, <code>RENUM</code> are typically used in direct mode, not in saved programs
+- Makes sense they don't appear in .bas files</p>
+<p><strong>Alternate Syntax</strong>:
+- <code>QUESTION</code> (<code>?</code>) is shorthand for <code>PRINT</code> - programs typically use full <code>PRINT</code> keyword
+- <code>AMPERSAND</code> (<code>&amp;</code>) for hex literals - our corpus uses <code>&amp;H</code> prefix which may be tokenized differently</p>
+<p><strong>File I/O</strong>:
+- <code>RSET</code> - Right-justify in field buffer (complement to LSET which IS used 33 times)</p>
+<p><strong>Type Declarations</strong>:
+- <code>DEFSNG</code> - Define single-precision (we have DEFINT:20, DEFDBL:3, DEFSTR:9, but no DEFSNG)</p>
+<hr />
+<h2 id="top-20-most-used-tokens">Top 20 Most Used Tokens<a class="headerlink" href="#top-20-most-used-tokens" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Rank</th>
+<th>Token</th>
+<th>Count</th>
+<th>Percent</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>IDENTIFIER</td>
+<td>22,942</td>
+<td>15.25%</td>
+<td>Variable/function names</td>
+</tr>
+<tr>
+<td>2</td>
+<td>NUMBER</td>
+<td>21,498</td>
+<td>14.29%</td>
+<td>Numeric literals</td>
+</tr>
+<tr>
+<td>3</td>
+<td>NEWLINE</td>
+<td>16,157</td>
+<td>10.74%</td>
+<td>End of statements</td>
+</tr>
+<tr>
+<td>4</td>
+<td>LINE_NUMBER</td>
+<td>14,709</td>
+<td>9.78%</td>
+<td>Start of lines</td>
+</tr>
+<tr>
+<td>5</td>
+<td>COMMA</td>
+<td>8,915</td>
+<td>5.93%</td>
+<td>Separators</td>
+</tr>
+<tr>
+<td>6</td>
+<td>EQUAL</td>
+<td>8,210</td>
+<td>5.46%</td>
+<td>Assignment &amp; comparison</td>
+</tr>
+<tr>
+<td>7</td>
+<td>STRING</td>
+<td>6,609</td>
+<td>4.39%</td>
+<td>String literals</td>
+</tr>
+<tr>
+<td>8</td>
+<td>LPAREN</td>
+<td>6,436</td>
+<td>4.28%</td>
+<td>Open parenthesis</td>
+</tr>
+<tr>
+<td>9</td>
+<td>RPAREN</td>
+<td>6,434</td>
+<td>4.28%</td>
+<td>Close parenthesis</td>
+</tr>
+<tr>
+<td>10</td>
+<td>COLON</td>
+<td>5,125</td>
+<td>3.41%</td>
+<td>Statement separator</td>
+</tr>
+<tr>
+<td>11</td>
+<td>PRINT</td>
+<td>4,364</td>
+<td>2.90%</td>
+<td>Output statement</td>
+</tr>
+<tr>
+<td>12</td>
+<td>SEMICOLON</td>
+<td>3,035</td>
+<td>2.02%</td>
+<td>Print separator</td>
+</tr>
+<tr>
+<td>13</td>
+<td>PLUS</td>
+<td>2,787</td>
+<td>1.85%</td>
+<td>Addition</td>
+</tr>
+<tr>
+<td>14</td>
+<td>IF</td>
+<td>2,567</td>
+<td>1.71%</td>
+<td>Conditional</td>
+</tr>
+<tr>
+<td>15</td>
+<td>THEN</td>
+<td>2,449</td>
+<td>1.63%</td>
+<td>IF/THEN pair</td>
+</tr>
+<tr>
+<td>16</td>
+<td>REM</td>
+<td>1,479</td>
+<td>0.98%</td>
+<td>Comments</td>
+</tr>
+<tr>
+<td>17</td>
+<td>MINUS</td>
+<td>1,405</td>
+<td>0.93%</td>
+<td>Subtraction</td>
+</tr>
+<tr>
+<td>18</td>
+<td>GOTO</td>
+<td>1,322</td>
+<td>0.88%</td>
+<td>Unconditional jump</td>
+</tr>
+<tr>
+<td>19</td>
+<td>DATA</td>
+<td>1,284</td>
+<td>0.85%</td>
+<td>Data statements</td>
+</tr>
+<tr>
+<td>20</td>
+<td>GOSUB</td>
+<td>1,200</td>
+<td>0.80%</td>
+<td>Subroutine call</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Observations</strong>:
+- Top 4 tokens account for ~50% of all tokens
+- Basic syntax elements (identifiers, numbers, delimiters) dominate
+- Control flow (IF/THEN, GOTO, GOSUB) heavily used
+- PRINT used 4,364 times - core I/O operation</p>
+<hr />
+<h2 id="least-used-tokens-that-are-used">Least Used Tokens (that ARE used)<a class="headerlink" href="#least-used-tokens-that-are-used" title="Permanent link">&para;</a></h2>
+<p>Tokens that appear only once in the entire corpus:</p>
+<ul>
+<li><strong>WAIT</strong> - Wait for input port condition</li>
+<li><strong>USR</strong> - Call user-defined machine language routine</li>
+<li><strong>TAN</strong> - Tangent function</li>
+<li><strong>POS</strong> - Current print position</li>
+<li><strong>OUTPUT</strong> - OPEN FOR OUTPUT</li>
+<li><strong>OPTION</strong> - OPTION BASE (array indexing)</li>
+<li><strong>OCT</strong> - Octal string function</li>
+<li><strong>LOAD</strong> - Load program from disk</li>
+<li><strong>LIST</strong> - List program lines</li>
+<li><strong>IMP</strong> - Logical implication operator</li>
+</ul>
+<p>These are rare/specialized features that happen to appear in at least one program.</p>
+<hr />
+<h2 id="token-categories">Token Categories<a class="headerlink" href="#token-categories" title="Permanent link">&para;</a></h2>
+<h3 id="core-language-1000-uses">Core Language (&gt;1000 uses)<a class="headerlink" href="#core-language-1000-uses" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Tokens</th>
+<th>Total Uses</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Identifiers/Literals</td>
+<td>IDENTIFIER, NUMBER, STRING</td>
+<td>51,049</td>
+</tr>
+<tr>
+<td>Line Structure</td>
+<td>NEWLINE, LINE_NUMBER, COLON</td>
+<td>35,991</td>
+</tr>
+<tr>
+<td>Delimiters</td>
+<td>COMMA, LPAREN, RPAREN, SEMICOLON</td>
+<td>24,820</td>
+</tr>
+<tr>
+<td>Operators</td>
+<td>EQUAL, PLUS, MINUS, MULTIPLY, DIVIDE</td>
+<td>12,843</td>
+</tr>
+<tr>
+<td>Control Flow</td>
+<td>IF, THEN, GOTO, GOSUB, FOR, NEXT, TO</td>
+<td>8,964</td>
+</tr>
+<tr>
+<td>I/O</td>
+<td>PRINT, DATA, INPUT, REM</td>
+<td>7,574</td>
+</tr>
+</tbody>
+</table>
+<h3 id="string-functions-well-used">String Functions (well used)<a class="headerlink" href="#string-functions-well-used" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>CHR$</strong>: 591 uses (most common string function)</li>
+<li><strong>MID$</strong>: 174 uses</li>
+<li><strong>LEFT$</strong>: 153 uses</li>
+<li><strong>LEN</strong>: 108 uses</li>
+<li><strong>ASC</strong>: 61 uses</li>
+<li><strong>STR$</strong>: 59 uses</li>
+<li><strong>RIGHT$</strong>: 58 uses</li>
+<li><strong>STRING$</strong>: 57 uses</li>
+<li><strong>VAL</strong>: 51 uses</li>
+</ul>
+<h3 id="math-functions-moderate-use">Math Functions (moderate use)<a class="headerlink" href="#math-functions-moderate-use" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>INT</strong>: 347 uses (most common math function)</li>
+<li><strong>RND</strong>: 125 uses (random numbers)</li>
+<li><strong>ABS</strong>: 41 uses</li>
+<li><strong>SIN</strong>: 40 uses</li>
+<li><strong>SQR</strong>: 30 uses</li>
+<li><strong>COS</strong>: 24 uses</li>
+<li><strong>ATN</strong>: 12 uses</li>
+<li><strong>LOG</strong>: 8 uses</li>
+<li><strong>TAN</strong>: 1 use</li>
+</ul>
+<h3 id="file-io-specialized">File I/O (specialized)<a class="headerlink" href="#file-io-specialized" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>OPEN</strong>: 75 uses</li>
+<li><strong>CLOSE</strong>: 64 uses</li>
+<li><strong>AS</strong>: 62 uses</li>
+<li><strong>LINE INPUT</strong>: 51 uses</li>
+<li><strong>LSET</strong>: 33 uses</li>
+<li><strong>PUT</strong>: 32 uses</li>
+<li><strong>GET</strong>: 30 uses</li>
+<li><strong>FIELD</strong>: 27 uses</li>
+<li><strong>WRITE</strong>: 7 uses</li>
+<li><strong>KILL</strong>: 7 uses</li>
+</ul>
+<h3 id="logical-operators-rarely-used">Logical Operators (rarely used)<a class="headerlink" href="#logical-operators-rarely-used" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>OR</strong>: 225 uses</li>
+<li><strong>AND</strong>: 205 uses</li>
+<li><strong>NOT</strong>: 10 uses</li>
+<li><strong>XOR</strong>: 5 uses</li>
+<li><strong>EQV</strong>: 1 use</li>
+<li><strong>IMP</strong>: 1 use</li>
+</ul>
+<p>Most programs use relational operators (<code>&gt;</code>, <code>&lt;</code>, <code>=</code>) rather than complex logical expressions.</p>
+<hr />
+<h2 id="coverage-analysis">Coverage Analysis<a class="headerlink" href="#coverage-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="well-covered-areas-100-uses-each">Well-Covered Areas (&gt;100 uses each)<a class="headerlink" href="#well-covered-areas-100-uses-each" title="Permanent link">&para;</a></h3>
+<p>✓ <strong>Basic syntax</strong>: Variables, numbers, strings, delimiters
+✓ <strong>Control flow</strong>: IF/THEN/ELSE, FOR/NEXT, GOTO/GOSUB
+✓ <strong>I/O</strong>: PRINT, INPUT, DATA/READ
+✓ <strong>String manipulation</strong>: CHR<span class="arithmatex"><span class="MathJax_Preview">, MID</span><script type="math/tex">, MID</script></span>, LEFT<span class="arithmatex"><span class="MathJax_Preview">, RIGHT</span><script type="math/tex">, RIGHT</script></span>, LEN
+✓ <strong>Basic math</strong>: +, -, *, /, INT, RND</p>
+<h3 id="moderately-covered-10-100-uses">Moderately Covered (10-100 uses)<a class="headerlink" href="#moderately-covered-10-100-uses" title="Permanent link">&para;</a></h3>
+<p>△ <strong>Advanced math</strong>: SIN, COS, SQR, ABS, ATN
+△ <strong>File I/O</strong>: OPEN, CLOSE, FIELD, GET, PUT
+△ <strong>System</strong>: PEEK, POKE, OUT, INP
+△ <strong>Advanced control</strong>: WHILE/WEND, DEF FN
+△ <strong>Type definitions</strong>: DEFINT, DEFSTR, DEFDBL</p>
+<h3 id="lightly-covered-1-9-uses">Lightly Covered (1-9 uses)<a class="headerlink" href="#lightly-covered-1-9-uses" title="Permanent link">&para;</a></h3>
+<p>◇ <strong>Advanced logical</strong>: XOR, EQV, IMP
+◇ <strong>Rare functions</strong>: TAN, OCT$, USR, WAIT
+◇ <strong>Rare statements</strong>: OPTION BASE, COMMON, CHAIN
+◇ <strong>Direct commands</strong>: LIST, LOAD, SAVE, AUTO, DELETE</p>
+<h3 id="not-covered-0-uses">Not Covered (0 uses)<a class="headerlink" href="#not-covered-0-uses" title="Permanent link">&para;</a></h3>
+<p>✗ <strong>Direct mode only</strong>: CONT, EDIT, NEW, RENUM, LLIST, MERGE
+✗ <strong>Alternate syntax</strong>: QUESTION mark (? for PRINT)
+✗ <strong>Type specifier</strong>: DEFSNG
+✗ <strong>File I/O</strong>: RSET
+✗ <strong>Hex/concatenation</strong>: AMPERSAND (depends on usage context)</p>
+<hr />
+<h2 id="implications-for-parser-development">Implications for Parser Development<a class="headerlink" href="#implications-for-parser-development" title="Permanent link">&para;</a></h2>
+<h3 id="strong-coverage">Strong Coverage<a class="headerlink" href="#strong-coverage" title="Permanent link">&para;</a></h3>
+<p>The test corpus provides excellent coverage of:
+- Core language features (98%+ of uses)
+- Common programming patterns
+- String manipulation
+- File I/O basics
+- Control structures</p>
+<h3 id="testing-gaps">Testing Gaps<a class="headerlink" href="#testing-gaps" title="Permanent link">&para;</a></h3>
+<p>To achieve 100% token coverage, we would need programs that use:
+- <code>?</code> as PRINT shorthand
+- <code>DEFSNG</code> type declaration
+- <code>RSET</code> for field buffer formatting
+- Direct mode commands (CONT, EDIT, NEW, RENUM, LLIST, MERGE)
+- <code>&amp;</code> operator for hex literals or string concatenation</p>
+<p><strong>However</strong>: Many of these are direct-mode commands that wouldn't normally appear in saved program files, so their absence is expected.</p>
+<hr />
+<h2 id="recommendations">Recommendations<a class="headerlink" href="#recommendations" title="Permanent link">&para;</a></h2>
+<h3 id="for-additional-test-coverage">For Additional Test Coverage<a class="headerlink" href="#for-additional-test-coverage" title="Permanent link">&para;</a></h3>
+<p>If we want to test the unused tokens:</p>
+<ol>
+<li><strong>QUESTION mark</strong> - Add test using <code>? "Hello"</code> instead of <code>PRINT "Hello"</code></li>
+<li><strong>DEFSNG</strong> - Add test with single-precision type declarations</li>
+<li><strong>RSET</strong> - Add file I/O test using RSET for field formatting</li>
+<li><strong>AMPERSAND</strong> - Add test using <code>&amp;</code> for hex literals or concatenation</li>
+</ol>
+<h3 id="for-parser-validation">For Parser Validation<a class="headerlink" href="#for-parser-validation" title="Permanent link">&para;</a></h3>
+<p>The current corpus is excellent for validating:
+- ✓ Core language constructs
+- ✓ Real-world programming patterns
+- ✓ Most MBASIC 5.21 features</p>
+<p>The unused tokens are either:
+- Direct-mode only (not relevant for parser)
+- Rare features (low priority)
+- Alternative syntax forms (QUESTION vs PRINT)</p>
+<p><strong>Conclusion</strong>: 93% token coverage is very good for a real-world corpus. The missing 7% are mostly expected gaps.</p>
+<hr />
+<h2 id="statistics-summary">Statistics Summary<a class="headerlink" href="#statistics-summary" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Total tokens processed:  150,456
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Unique token types used: 132/142
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Token types unused:      10/142
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Coverage:                93.0%
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>Files analyzed:          121
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Success rate:            100%
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>Top token: IDENTIFIER (22,942 uses, 15.25%)
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>Rarest used token: Multiple with 1 use each
+</code></pre></div>
+<hr />
+<h2 id="tool-usage">Tool Usage<a class="headerlink" href="#tool-usage" title="Permanent link">&para;</a></h2>
+<p>To regenerate this analysis:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python3<span class="w"> </span>utils/analyze_token_usage.py
+</code></pre></div>
+<p>The tool automatically:
+1. Finds all .bas files in bas_tests1/ and tests_with_results/
+2. Parses each file to verify it's valid
+3. Counts token usage across all successfully parsing files
+4. Reports unused tokens, usage frequency, and statistics</p>
+<hr />
+<h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
+<p>The token usage analysis shows that our test corpus has excellent coverage of MBASIC 5.21 features:</p>
+<ul>
+<li><strong>93% of defined tokens</strong> are used in real programs</li>
+<li><strong>Top 20 tokens</strong> account for 85% of all token occurrences</li>
+<li><strong>Unused tokens</strong> are primarily direct-mode commands and rare features</li>
+<li><strong>Coverage is comprehensive</strong> for core language features</li>
+</ul>
+<p>This validates that the test corpus is representative of real MBASIC 5.21 programs and provides thorough testing of the parser.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

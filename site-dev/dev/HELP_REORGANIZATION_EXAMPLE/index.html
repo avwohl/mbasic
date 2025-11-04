@@ -1,0 +1,1703 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/dev/HELP_REORGANIZATION_EXAMPLE/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Help System Reorganization - Concrete Example - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#help-system-reorganization-concrete-example" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Help System Reorganization - Concrete Example
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#current-file-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current File Mapping
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Current File Mapping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#files-that-move-to-docshelplanguage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files That Move to docs/help/language/
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-that-move-to-docshelpmbasic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files That Move to docs/help/mbasic/
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-that-stay-in-docshelpuibackend" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files That Stay in docs/help/ui/{backend}/
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-that-are-removedconsolidated" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files That Are Removed/Consolidated
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-content-transformation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Content Transformation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example Content Transformation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-1-getting-startedmd-split-into-two-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 1: getting-started.md (Split into Two Tiers)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choose-your-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      Choose Your Interface
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#learning-basic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Learning BASIC
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#line-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Line Numbers
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variables
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#variable-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variable Types
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#your-first-program" class="md-nav__link">
+    <span class="md-ellipsis">
+      Your First Program
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Next Steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-3-language-function-with-cross-tier-link" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 3: Language Function with Cross-Tier Link
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-4-new-mbasic-compatibility-docs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example 4: New MBASIC Compatibility Docs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#randomize" class="md-nav__link">
+    <span class="md-ellipsis">
+      RANDOMIZE
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#not-implemented-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Not Implemented Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Not Implemented Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hardware-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hardware Access
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#machine-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Machine Code
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cassette-tape" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cassette Tape
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#partially-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      Partially Implemented
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Partially Implemented">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      LPRINT
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full Compatibility
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Script
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps-after-reorganization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps After Reorganization
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/dev/HELP_REORGANIZATION_EXAMPLE.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="help-system-reorganization-concrete-example">Help System Reorganization - Concrete Example<a class="headerlink" href="#help-system-reorganization-concrete-example" title="Permanent link">&para;</a></h1>
+<p>This document shows exactly how existing content would be reorganized into the three-tier structure.</p>
+<h2 id="current-file-mapping">Current File Mapping<a class="headerlink" href="#current-file-mapping" title="Permanent link">&para;</a></h2>
+<h3 id="files-that-move-to-docshelplanguage">Files That Move to <code>docs/help/language/</code><a class="headerlink" href="#files-that-move-to-docshelplanguage" title="Permanent link">&para;</a></h3>
+<p><strong>Already in correct location!</strong>
+- <code>docs/help/common/language/</code> → <code>docs/help/language/</code>
+  - ✅ <code>index.md</code> - Language reference landing page
+  - ✅ <code>operators.md</code> - Operators reference
+  - ✅ <code>functions/</code> - 40 function references (already migrated)
+  - ✅ <code>statements/</code> - 63 statement references (already migrated)
+  - ✅ <code>appendices/</code> - 3 appendices (error codes, ASCII, math)</p>
+<p><strong>Action</strong>: Just rename directory
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>mv<span class="w"> </span>docs/help/common/language<span class="w"> </span>docs/help/language
+</code></pre></div></p>
+<h3 id="files-that-move-to-docshelpmbasic">Files That Move to <code>docs/help/mbasic/</code><a class="headerlink" href="#files-that-move-to-docshelpmbasic" title="Permanent link">&para;</a></h3>
+<p><strong>Currently in <code>docs/help/common/</code></strong>, need to move:</p>
+<ol>
+<li><strong>getting-started.md</strong> → <code>docs/help/mbasic/getting-started.md</code></li>
+<li>About using MBASIC interpreter</li>
+<li>File formats, running programs</li>
+<li>
+<p>Currently mixes UI and implementation</p>
+</li>
+<li>
+<p><strong>examples.md</strong> → <code>docs/help/mbasic/examples/index.md</code></p>
+</li>
+<li>Sample programs to run</li>
+<li>Implementation-specific examples</li>
+</ol>
+<p><strong>New files to create</strong>:
+- <code>docs/help/mbasic/index.md</code> - MBASIC overview
+- <code>docs/help/mbasic/architecture.md</code> - ✅ <strong>CREATED</strong> Interpreter vs compiler
+- <code>docs/help/mbasic/features.md</code> - What's implemented
+- <code>docs/help/mbasic/compatibility.md</code> - Compatibility implementations
+- <code>docs/help/mbasic/not-implemented.md</code> - What's not implemented
+- <code>docs/help/mbasic/file-formats.md</code> - .BAS files, encoding
+- <code>docs/help/mbasic/optimizations.md</code> - Semantic analyzer guide</p>
+<h3 id="files-that-stay-in-docshelpuibackend">Files That Stay in <code>docs/help/ui/{backend}/</code><a class="headerlink" href="#files-that-stay-in-docshelpuibackend" title="Permanent link">&para;</a></h3>
+<p><strong>Already in correct location!</strong>
+- <code>docs/help/ui/curses/</code> - All curses UI docs (8 files)
+- <code>docs/help/ui/cli/</code> - CLI docs (to be created)
+- <code>docs/help/ui/tk/</code> - Tk docs (to be created)</p>
+<h3 id="files-that-are-removedconsolidated">Files That Are Removed/Consolidated<a class="headerlink" href="#files-that-are-removedconsolidated" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong><code>docs/help/common/editor-commands.md</code></strong> - DELETE</li>
+<li>UI-specific, doesn't belong in common</li>
+<li>
+<p>Content already in <code>ui/curses/keyboard-commands.md</code></p>
+</li>
+<li>
+<p><strong><code>docs/help/common/shortcuts.md</code></strong> - DELETE</p>
+</li>
+<li>UI-specific, doesn't belong in common</li>
+<li>
+<p>Content already in <code>ui/curses/quick-reference.md</code></p>
+</li>
+<li>
+<p><strong><code>docs/help/common/language.md</code></strong> - DELETE</p>
+</li>
+<li>Duplicate of <code>language/index.md</code></li>
+<li>
+<p>Outdated quick reference</p>
+</li>
+<li>
+<p><strong><code>docs/help/common/index.md</code></strong> - DELETE</p>
+</li>
+<li>Just a redirect, not needed</li>
+<li>
+<p>Each UI has its own index</p>
+</li>
+<li>
+<p><strong><code>docs/help/language/functions/</code></strong> (old location) - DELETE</p>
+</li>
+<li>Orphaned duplicate</li>
+<li>Real content is in <code>common/language/functions/</code></li>
+</ol>
+<h2 id="example-content-transformation">Example Content Transformation<a class="headerlink" href="#example-content-transformation" title="Permanent link">&para;</a></h2>
+<h3 id="example-1-getting-startedmd-split-into-two-tiers">Example 1: getting-started.md (Split into Two Tiers)<a class="headerlink" href="#example-1-getting-startedmd-split-into-two-tiers" title="Permanent link">&para;</a></h3>
+<p><strong>BEFORE</strong> (<code>docs/help/common/getting-started.md</code>):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gh"># Getting Started with MBASIC</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="gu">## What is BASIC?</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>BASIC (Beginner&#39;s All-purpose Symbolic Instruction Code)...
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="gu">## Your First Program</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>10 PRINT &quot;Hello, World!&quot;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>20 END
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="gu">## How to Enter Programs</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>See your UI-specific help for how to type programs:
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Curses UI</span>](<span class="na">ui/curses/editing.md</span>) - Terminal interface
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Tkinter UI</span>](<span class="na">ui/tk/index.md</span>) - Graphical interface
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="gu">## Basic Concepts</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="gu">### Line Numbers</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>Every line starts with a number...
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="gu">### Variables</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>A = 5...
+</code></pre></div></p>
+<p><strong>AFTER</strong> - Split into two files:</p>
+<p><strong>Tier 2</strong>: <code>docs/help/mbasic/getting-started.md</code> (Implementation)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gh"># Getting Started with MBASIC</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Welcome! MBASIC is a Python-based interpreter for MBASIC-80.
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="gu">## What is MBASIC?</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>MBASIC is a faithful implementation of MBASIC-80 (version 5.21),
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>the BASIC interpreter used on CP/M systems in the 1980s.
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="gu">## Features</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="k">-</span><span class="w"> </span>✅ Full BASIC-80 language support
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="k">-</span><span class="w"> </span>✅ Multiple user interfaces (CLI, Curses, Tk)
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="k">-</span><span class="w"> </span>✅ File I/O (.BAS format)
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="k">-</span><span class="w"> </span>⚠️ Compatibility implementations for some features
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="k">-</span><span class="w"> </span>❌ No hardware access (PEEK, POKE, INP, OUT)
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>See [<span class="nt">Features</span>](<span class="na">../help/mbasic/features.md</span>) for complete list.
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="gu">## Your First Program</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>Create a file <span class="sb">`hello.bas`</span>:
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>```basic
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>10 PRINT &quot;Hello, World!&quot;
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>20 END
+</code></pre></div></p>
+<p>Run it:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python3<span class="w"> </span>mbasic<span class="w"> </span>hello.bas
+</code></pre></div></p>
+<h2 id="choose-your-interface">Choose Your Interface<a class="headerlink" href="#choose-your-interface" title="Permanent link">&para;</a></h2>
+<p>MBASIC supports multiple interfaces:
+- <a href="../../help/ui/cli/">CLI</a> - Command-line REPL
+- <a href="../../help/ui/curses/">Curses</a> - Terminal IDE
+- <a href="../../help/ui/tk/">Tk</a> - Graphical IDE</p>
+<h2 id="learning-basic">Learning BASIC<a class="headerlink" href="#learning-basic" title="Permanent link">&para;</a></h2>
+<p>For BASIC language basics, see:
+- BASIC-80 Tutorial - Learn the language (tutorial content in help/common/language/)
+- <a href="../../help/common/language/">Language Reference</a> - Complete syntax reference
+- Example Programs - Working examples (in basic/ directory)</p>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="../../help/ui/cli/">Choose your interface</a></li>
+<li>Learn BASIC syntax (see help/common/language/)</li>
+<li>Try example programs (in basic/ directory)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>**Tier 1**: `docs/help/language/tutorial/basics.md` (New - Language)
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>```markdown
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a># BASIC Language Basics
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>Learn fundamental BASIC programming concepts.
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>## Program Structure
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>BASIC programs consist of numbered lines:
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>```basic
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>10 REM This is a comment
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>20 PRINT &quot;Hello, World!&quot;
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>30 END
+</code></pre></div></li>
+</ol>
+<h2 id="line-numbers">Line Numbers<a class="headerlink" href="#line-numbers" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Every line starts with a number (1-65535)</li>
+<li>Lines execute in numerical order</li>
+<li>Common practice: increment by 10</li>
+</ul>
+<h2 id="variables">Variables<a class="headerlink" href="#variables" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">5</span><span class="w">          </span><span class="c1">&#39; Numeric variable</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">B$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Hello&quot;</span><span class="w">   </span><span class="c1">&#39; String variable ($ suffix)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">A</span><span class="p">,</span><span class="w"> </span><span class="vg">B$</span>
+</code></pre></div>
+<h3 id="variable-types">Variable Types<a class="headerlink" href="#variable-types" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Numeric</strong>: A, COUNT, X1</li>
+<li>Integer: A% (% suffix)</li>
+<li>Single precision: A! (! suffix, default)</li>
+<li>Double precision: A# (# suffix)</li>
+<li><strong>String</strong>: A<span class="arithmatex"><span class="MathJax_Preview">, NAME</span><script type="math/tex">, NAME</script></span>, TEXT$ ($ suffix required)</li>
+</ul>
+<p>See <a href="../../help/common/language/data-types/">Data Types</a> for details.</p>
+<h2 id="your-first-program">Your First Program<a class="headerlink" href="#your-first-program" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Hello, World!&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">END</span>
+</code></pre></div>
+<ul>
+<li>Line 10: Outputs text to screen</li>
+<li>Line 20: Ends program</li>
+</ul>
+<h2 id="next-steps_1">Next Steps<a class="headerlink" href="#next-steps_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Control Flow - IF, FOR, WHILE (see help/common/language/statements/)</li>
+<li>Input/Output - INPUT, PRINT (see help/common/language/statements/)</li>
+<li>Subroutines - GOSUB, DEF FN (see help/common/language/statements/)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>### Example 2: Curses Index (Add Cross-Tier Links)
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>**BEFORE** (`docs/help/ui/curses/index.md`):
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>```markdown
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a># MBASIC Curses UI Help
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>## Getting Started
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>- [Quick Reference](quick-reference.md)
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>- [Getting Started](getting-started.md)
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>## Language Reference
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>- [BASIC Language](../help/common/language/index.md)
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>- [Examples](../help/common/examples.md)
+</code></pre></div></li>
+</ul>
+<p><strong>AFTER</strong> (<code>docs/help/ui/curses/index.md</code>):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gh"># MBASIC Curses UI Help</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Welcome to the MBASIC terminal-based IDE!
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="gu">## 📘 Curses UI Guide</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>Learn how to use the curses interface:
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Quick Reference</span>](<span class="na">quick-reference.md</span>) - All keyboard shortcuts
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Getting Started</span>](<span class="na">getting-started.md</span>) - First time using curses UI
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Keyboard Commands</span>](<span class="na">keyboard-commands.md</span>) - Complete keyboard reference
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Editing Programs</span>](<span class="na">editing.md</span>) - How to write and edit
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Running Programs</span>](<span class="na">running.md</span>) - Execute and debug
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">File Operations</span>](<span class="na">files.md</span>) - Save and load
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="gu">## 📗 MBASIC Interpreter</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>About this BASIC interpreter:
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">About MBASIC</span>](<span class="na">../help/mbasic/index.md</span>) - What is MBASIC?
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Getting Started</span>](<span class="na">../help/mbasic/getting-started.md</span>) - First steps
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Features</span>](<span class="na">../help/mbasic/features.md</span>) - What&#39;s implemented
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="k">-</span><span class="w"> </span>Example Programs - Working examples (in basic/ directory)
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="k">-</span><span class="w"> </span>Tutorial - Learn BASIC (see help/common/language/)
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="gu">## 📕 BASIC-80 Language Reference</span>
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>Complete BASIC-80 language documentation:
+<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Language Overview</span>](<span class="na">../help/common/language/index.md</span>) - Language reference home
+<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Statements</span>](<span class="na">../help/common/language/statements/index.md</span>) - 63 statements
+<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Functions</span>](<span class="na">../help/common/language/functions/index.md</span>) - 40 functions
+<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Operators</span>](<span class="na">../help/common/language/operators.md</span>) - Arithmetic, logical, relational
+<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a><span class="k">-</span><span class="w"> </span>[<span class="nt">Appendices</span>](<span class="na">../help/common/language/appendices/index.md</span>) - Error codes, ASCII, math
+<a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a>
+<a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a><span class="gu">## Help Navigation</span>
+<a id="__codelineno-8-34" name="__codelineno-8-34" href="#__codelineno-8-34"></a>
+<a id="__codelineno-8-35" name="__codelineno-8-35" href="#__codelineno-8-35"></a>| Key | Action |
+<a id="__codelineno-8-36" name="__codelineno-8-36" href="#__codelineno-8-36"></a>|-----|--------|
+<a id="__codelineno-8-37" name="__codelineno-8-37" href="#__codelineno-8-37"></a>| <span class="gs">**↑/↓**</span> | Scroll |
+<a id="__codelineno-8-38" name="__codelineno-8-38" href="#__codelineno-8-38"></a>| <span class="gs">**Tab**</span> | Next link |
+<a id="__codelineno-8-39" name="__codelineno-8-39" href="#__codelineno-8-39"></a>| <span class="gs">**Enter**</span> | Follow link |
+<a id="__codelineno-8-40" name="__codelineno-8-40" href="#__codelineno-8-40"></a>| <span class="gs">**U**</span> | Go back |
+<a id="__codelineno-8-41" name="__codelineno-8-41" href="#__codelineno-8-41"></a>| <span class="gs">**ESC/Q**</span> | Close help |
+</code></pre></div></p>
+<h3 id="example-3-language-function-with-cross-tier-link">Example 3: Language Function with Cross-Tier Link<a class="headerlink" href="#example-3-language-function-with-cross-tier-link" title="Permanent link">&para;</a></h3>
+<p><strong>BEFORE</strong> (<code>docs/help/common/language/functions/peek.md</code>):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="gh"># PEEK</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="gu">## Implementation Note</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>ℹ️ <span class="gs">**Compatibility Implementation**</span>: PEEK returns random value 0-255.
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="gs">**Historical Reference**</span>: Documentation below is from MBASIC 5.21 manual.
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>---
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="gu">## Syntax</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>PEEK(I)
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>...
+</code></pre></div></p>
+<p><strong>AFTER</strong> (<code>docs/help/language/functions/peek.md</code>):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gh"># PEEK</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="gu">## Implementation Note</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>ℹ️ <span class="gs">**Compatibility Implementation**</span>: This Python-based interpreter cannot
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>access memory addresses. PEEK returns a random value (0-255) to support
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>programs that use PEEK for random number seeding.
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>See [<span class="nt">MBASIC Compatibility Notes</span>](<span class="na">../help/mbasic/compatibility.md#peek</span>) for details.
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="gs">**Historical Reference**</span>: The documentation below is preserved from the
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>original MBASIC 5.21 manual for historical reference.
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>---
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="gu">## Syntax</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>PEEK(I)
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="gu">## Purpose</span>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>
+<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>To examine a memory location.
+<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>...
+</code></pre></div></p>
+<h3 id="example-4-new-mbasic-compatibility-docs">Example 4: New MBASIC Compatibility Docs<a class="headerlink" href="#example-4-new-mbasic-compatibility-docs" title="Permanent link">&para;</a></h3>
+<p><strong>NEW FILE</strong>: <code>docs/help/mbasic/compatibility.md</code>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="gh"># MBASIC Compatibility Notes</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>This Python-based interpreter cannot access hardware directly. Some BASIC-80
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>features have compatibility implementations or are not implemented.
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="gu">## Compatibility Implementations</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>Features that work differently but provide reasonable compatibility:
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="gu">### PEEK(addr) {#peek}</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="gs">**Original behavior**</span>: Read byte from memory address
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="gs">**MBASIC behavior**</span>: Returns random value (0-255)
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="gs">**Why**</span>: Most BASIC programs use PEEK to seed random number generators
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>(e.g., <span class="sb">`RANDOMIZE PEEK(0)`</span>). Returning random values provides reasonable
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>compatibility for this use case.
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="gs">**Example**</span>:
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>```basic
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>10 RANDOMIZE PEEK(0)    &#39; Seed RNG with &quot;random&quot; value
+<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a>20 PRINT RND
+</code></pre></div></p>
+<p>See also: <a href="../../help/common/language/functions/peek/">PEEK function reference</a></p>
+<h3 id="randomize">RANDOMIZE<a class="headerlink" href="#randomize" title="Permanent link">&para;</a></h3>
+<p><strong>Original behavior</strong>: Seed with real-time clock or user input</p>
+<p><strong>MBASIC behavior</strong>: Seeds with system time</p>
+<p><strong>Why</strong>: Provides reasonable random seeding without user interaction.</p>
+<h2 id="not-implemented-features">Not Implemented Features<a class="headerlink" href="#not-implemented-features" title="Permanent link">&para;</a></h2>
+<p>Features that are parsed but perform no operation:</p>
+<h3 id="hardware-access">Hardware Access<a class="headerlink" href="#hardware-access" title="Permanent link">&para;</a></h3>
+<p>Cannot access hardware from Python interpreter:</p>
+<ul>
+<li><strong>POKE addr, value</strong> - Write to memory (no-op)</li>
+<li><strong>OUT port, value</strong> - Write to I/O port (no-op)</li>
+<li><strong>WAIT port, mask[, xor]</strong> - Wait on I/O port (no-op)</li>
+<li><strong>INP(port)</strong> - Read from I/O port (returns 0)</li>
+</ul>
+<p>See also: <a href="../../help/mbasic/not-implemented/">Not Implemented Features</a></p>
+<h3 id="machine-code">Machine Code<a class="headerlink" href="#machine-code" title="Permanent link">&para;</a></h3>
+<p>Cannot execute machine code from Python:</p>
+<ul>
+<li><strong>CALL addr[(args)]</strong> - Call machine code subroutine (no-op)</li>
+<li><strong>USR(x)</strong> - Call machine code function (returns 0)</li>
+</ul>
+<h3 id="cassette-tape">Cassette Tape<a class="headerlink" href="#cassette-tape" title="Permanent link">&para;</a></h3>
+<p>Obsolete hardware not implemented:</p>
+<ul>
+<li><strong>CLOAD</strong> - Load from cassette tape</li>
+<li><strong>CSAVE</strong> - Save to cassette tape</li>
+</ul>
+<p>These were explicitly excluded in some MBASIC 5.21 variants (e.g., DEC VT180).</p>
+<h2 id="partially-implemented">Partially Implemented<a class="headerlink" href="#partially-implemented" title="Permanent link">&para;</a></h2>
+<p>Features with limited implementation:</p>
+<h3 id="lprint">LPRINT<a class="headerlink" href="#lprint" title="Permanent link">&para;</a></h3>
+<p><strong>Original behavior</strong>: Print to line printer (parallel port)</p>
+<p><strong>MBASIC behavior</strong>: Prints to stdout or file (depending on UI)</p>
+<p><strong>Note</strong>: No actual printer support, but output can be redirected.</p>
+<h2 id="full-compatibility">Full Compatibility<a class="headerlink" href="#full-compatibility" title="Permanent link">&para;</a></h2>
+<p>Most BASIC-80 features work exactly as in the original:</p>
+<ul>
+<li>✅ All control flow (FOR, WHILE, IF, GOSUB)</li>
+<li>✅ All mathematical functions</li>
+<li>✅ String manipulation</li>
+<li>✅ File I/O (sequential and random)</li>
+<li>✅ Arrays and variables</li>
+<li>✅ Error handling (ON ERROR GOTO, RESUME)</li>
+</ul>
+<p>See <a href="../../help/mbasic/features/">Features</a> for complete list.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>## File Organization After Reorganization
+</code></pre></div>
+docs/help/
+├── language/                      # TIER 1: Language Reference
+│   ├── index.md                  # ✅ Already exists (move from common/language/)
+│   ├── operators.md              # ✅ Already exists
+│   ├── functions/                # ✅ Already exists (40 files)
+│   ├── statements/               # ✅ Already exists (63 files)
+│   └── appendices/               # ✅ Already exists (3 files)
+│
+├── mbasic/                        # TIER 2: MBASIC Implementation
+│   ├── index.md                  # 🆕 Create new
+│   ├── getting-started.md        # ✏️ Move from common/, rewrite
+│   ├── architecture.md           # ✅ CREATED - Interpreter vs compiler
+│   ├── features.md               # 🆕 Create new
+│   ├── compatibility.md          # 🆕 Create new (content from NOT_IMPLEMENTED.md)
+│   ├── not-implemented.md        # ✏️ Move from docs/dev/NOT_IMPLEMENTED.md
+│   ├── file-formats.md           # 🆕 Create new
+│   ├── optimizations.md          # 🆕 Create new (from compiler docs)
+│   ├── examples/
+│   │   └── index.md              # ✏️ Move from common/examples.md
+│   └── tutorial/
+│       ├── index.md              # 🆕 Create new
+│       ├── basics.md             # 🆕 Create new (content from getting-started.md)
+│       ├── control-flow.md       # 🆕 Create new
+│       └── input-output.md       # 🆕 Create new
+│
+└── ui/                            # TIER 3: UI-Specific
+    ├── cli/                       # 🆕 Create directory
+    │   ├── index.md              # 🆕 Create new
+    │   ├── commands.md           # 🆕 Create new
+    │   └── editing.md            # 🆕 Create new
+    │
+    ├── curses/                    # ✅ Already exists
+    │   ├── index.md              # ✏️ Update with 3-tier links
+    │   ├── getting-started.md    # ✅ Keep
+    │   ├── keyboard-commands.md  # ✅ Keep
+    │   ├── editing.md            # ✅ Keep
+    │   ├── running.md            # ✅ Keep
+    │   ├── debugger.md           # ✅ Keep
+    │   ├── files.md              # ✅ Keep
+    │   └── quick-reference.md    # ✅ Keep
+    │
+    └── tk/                        # 🆕 Create directory
+        ├── index.md              # 🆕 Create new
+        ├── menu-reference.md     # 🆕 Create new
+        └── toolbar.md            # 🆕 Create new
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>**Legend**:
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>- ✅ Already exists, no changes needed
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>- ✏️ Move and update
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>- 🆕 Create new
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>- ❌ Delete
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>## Files to Delete
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>```bash
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a># Delete UI-specific content from common/
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>rm docs/help/common/editor-commands.md
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>rm docs/help/common/shortcuts.md
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>rm docs/help/common/language.md
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>rm docs/help/common/index.md
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a># Delete orphaned old structure
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>rm -rf docs/help/language/  # Old location, duplicate
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a># Delete examples directory (move to mbasic/)
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>rm -rf docs/help/examples/
+</code></pre></div></p>
+<h2 id="migration-script">Migration Script<a class="headerlink" href="#migration-script" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="c1"># migrate_help_structure.sh</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># 1. Move language reference to top level</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>mv<span class="w"> </span>docs/help/common/language<span class="w"> </span>docs/help/language
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1"># 2. Create MBASIC docs directory</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>docs/help/mbasic/<span class="o">{</span>examples,tutorial<span class="o">}</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="c1"># 3. Move implementation-specific content</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>mv<span class="w"> </span>docs/help/common/getting-started.md<span class="w"> </span>docs/help/mbasic/getting-started.md.old
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>mv<span class="w"> </span>docs/help/common/examples.md<span class="w"> </span>docs/help/mbasic/examples/index.md.old
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="c1"># 4. Create CLI docs directory</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>docs/help/ui/cli
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="c1"># 5. Delete duplicates and UI-specific content from common/</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>rm<span class="w"> </span>docs/help/common/editor-commands.md
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>rm<span class="w"> </span>docs/help/common/shortcuts.md
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>rm<span class="w"> </span>docs/help/common/language.md
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>rm<span class="w"> </span>docs/help/common/index.md
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>
+<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a><span class="c1"># 6. Delete orphaned directories</span>
+<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a>rm<span class="w"> </span>-rf<span class="w"> </span>docs/help/language/functions<span class="w">  </span><span class="c1"># Old duplicate</span>
+<a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a>rm<span class="w"> </span>-rf<span class="w"> </span>docs/help/examples/<span class="w">           </span><span class="c1"># Move to mbasic/</span>
+<a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a>
+<a id="__codelineno-14-27" name="__codelineno-14-27" href="#__codelineno-14-27"></a><span class="c1"># 7. Delete common/ directory (should be empty now)</span>
+<a id="__codelineno-14-28" name="__codelineno-14-28" href="#__codelineno-14-28"></a>rmdir<span class="w"> </span>docs/help/common/
+<a id="__codelineno-14-29" name="__codelineno-14-29" href="#__codelineno-14-29"></a>
+<a id="__codelineno-14-30" name="__codelineno-14-30" href="#__codelineno-14-30"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Migration complete! Now create new content files.&quot;</span>
+</code></pre></div>
+<h2 id="next-steps-after-reorganization">Next Steps After Reorganization<a class="headerlink" href="#next-steps-after-reorganization" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Create MBASIC tier content</strong> (Tier 2):</li>
+<li>Write <code>mbasic/index.md</code></li>
+<li>Write <code>mbasic/features.md</code></li>
+<li>Write <code>mbasic/compatibility.md</code></li>
+<li>Rewrite <code>mbasic/getting-started.md</code></li>
+<li>
+<p>Create tutorial files</p>
+</li>
+<li>
+<p><strong>Create CLI docs</strong> (Tier 3):</p>
+</li>
+<li>Write <code>ui/cli/index.md</code></li>
+<li>Write <code>ui/cli/commands.md</code></li>
+<li>
+<p>Write <code>ui/cli/editing.md</code></p>
+</li>
+<li>
+<p><strong>Update curses docs</strong> (Tier 3):</p>
+</li>
+<li>Update <code>ui/curses/index.md</code> with 3-tier structure</li>
+<li>
+<p>Update links throughout</p>
+</li>
+<li>
+<p><strong>Update HelpWidget</strong>:</p>
+</li>
+<li>Add multi-context support</li>
+<li>
+<p>Test navigation between tiers</p>
+</li>
+<li>
+<p><strong>Update all backends</strong>:</p>
+</li>
+<li>Update CLI to use 3-tier help</li>
+<li>Update curses to use 3-tier help</li>
+<li>Update Tk to use 3-tier help</li>
+</ol>
+<p>This reorganization provides clear separation while maintaining all existing content!</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

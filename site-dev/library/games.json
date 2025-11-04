@@ -1,0 +1,911 @@
+{
+  "title": "MBASIC Games Library",
+  "description": "Classic BASIC games from the CP/M era",
+  "programs": [
+    {
+      "filename": "23matches.bas",
+      "source_path": "basic/games/23matches.bas",
+      "title": "23Matches",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "3dplot.bas",
+      "source_path": "basic/games/3dplot.bas",
+      "title": "3Dplot",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "aceyducey.bas",
+      "source_path": "basic/games/aceyducey.bas",
+      "title": "Aceyducey",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "amazing.bas",
+      "source_path": "basic/games/amazing.bas",
+      "title": "Amazing",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "animal.bas",
+      "source_path": "basic/games/animal.bas",
+      "title": "Animal",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "awari.bas",
+      "source_path": "basic/games/awari.bas",
+      "title": "Awari",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "bacarrat.bas",
+      "source_path": "basic/games/bacarrat.bas",
+      "title": "Bacarrat",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "bagels.bas",
+      "source_path": "basic/games/bagels.bas",
+      "title": "Bagels",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "banner.bas",
+      "source_path": "basic/games/banner.bas",
+      "title": "Banner",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "basketball.bas",
+      "source_path": "basic/games/basketball.bas",
+      "title": "Basketball",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "batnum.bas",
+      "source_path": "basic/games/batnum.bas",
+      "title": "Batnum",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "battle.bas",
+      "source_path": "basic/games/battle.bas",
+      "title": "Battle",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "blackjack.bas",
+      "source_path": "basic/games/blackjack.bas",
+      "title": "Blackjack",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "blkjk.bas",
+      "source_path": "basic/games/blkjk.bas",
+      "title": "Blkjk",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "bombardment.bas",
+      "source_path": "basic/games/bombardment.bas",
+      "title": "Bombardment",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "bombsaway.bas",
+      "source_path": "basic/games/bombsaway.bas",
+      "title": "Bombsaway",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "bounce.bas",
+      "source_path": "basic/games/bounce.bas",
+      "title": "Bounce",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "bowling.bas",
+      "source_path": "basic/games/bowling.bas",
+      "title": "Bowling",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "boxing.bas",
+      "source_path": "basic/games/boxing.bas",
+      "title": "Boxing",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "bug.bas",
+      "source_path": "basic/games/bug.bas",
+      "title": "Bug",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "bullfight.bas",
+      "source_path": "basic/games/bullfight.bas",
+      "title": "Bullfight",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "bullseye.bas",
+      "source_path": "basic/games/bullseye.bas",
+      "title": "Bullseye",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "bunny.bas",
+      "source_path": "basic/games/bunny.bas",
+      "title": "Bunny",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "buzzword.bas",
+      "source_path": "basic/games/buzzword.bas",
+      "title": "Buzzword",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "calendar.bas",
+      "source_path": "basic/games/calendar.bas",
+      "title": "Calendar",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "change.bas",
+      "source_path": "basic/games/change.bas",
+      "title": "Change",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "checkers.bas",
+      "source_path": "basic/games/checkers.bas",
+      "title": "Checkers",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "chemist.bas",
+      "source_path": "basic/games/chemist.bas",
+      "title": "Chemist",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "chief.bas",
+      "source_path": "basic/games/chief.bas",
+      "title": "Chief",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "chomp.bas",
+      "source_path": "basic/games/chomp.bas",
+      "title": "Chomp",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "civilwar.bas",
+      "source_path": "basic/games/civilwar.bas",
+      "title": "Civilwar",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "combat.bas",
+      "source_path": "basic/games/combat.bas",
+      "title": "Combat",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "craps.bas",
+      "source_path": "basic/games/craps.bas",
+      "title": "Craps",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "cube.bas",
+      "source_path": "basic/games/cube.bas",
+      "title": "Cube",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "depthcharge.bas",
+      "source_path": "basic/games/depthcharge.bas",
+      "title": "Depthcharge",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "diamond.bas",
+      "source_path": "basic/games/diamond.bas",
+      "title": "Diamond",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "dice.bas",
+      "source_path": "basic/games/dice.bas",
+      "title": "Dice",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "digits.bas",
+      "source_path": "basic/games/digits.bas",
+      "title": "Digits",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "evenwins.bas",
+      "source_path": "basic/games/evenwins.bas",
+      "title": "Evenwins",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "feesten.bas",
+      "source_path": "basic/games/feesten.bas",
+      "title": "Feesten",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "flipflop.bas",
+      "source_path": "basic/games/flipflop.bas",
+      "title": "Flipflop",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "football.bas",
+      "source_path": "basic/games/football.bas",
+      "title": "Football",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "ftball.bas",
+      "source_path": "basic/games/ftball.bas",
+      "title": "Ftball",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "furtrader.bas",
+      "source_path": "basic/games/furtrader.bas",
+      "title": "Furtrader",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "gameofevenwins.bas",
+      "source_path": "basic/games/gameofevenwins.bas",
+      "title": "Gameofevenwins",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "golf.bas",
+      "source_path": "basic/games/golf.bas",
+      "title": "Golf",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "gomoko.bas",
+      "source_path": "basic/games/gomoko.bas",
+      "title": "Gomoko",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "guess.bas",
+      "source_path": "basic/games/guess.bas",
+      "title": "Guess",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "gunner.bas",
+      "source_path": "basic/games/gunner.bas",
+      "title": "Gunner",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "hammurabi.bas",
+      "source_path": "basic/games/hammurabi.bas",
+      "title": "Hammurabi",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "hangman.bas",
+      "source_path": "basic/games/hangman.bas",
+      "title": "\\t\\tHANGMAN.BAS\\tDEMO",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "hangman1.bas",
+      "source_path": "basic/games/hangman1.bas",
+      "title": "Hangman1",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "hello.bas",
+      "source_path": "basic/games/hello.bas",
+      "title": "Hello",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "hi-lo.bas",
+      "source_path": "basic/games/hi-lo.bas",
+      "title": "Hi-Lo",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "highiq.bas",
+      "source_path": "basic/games/highiq.bas",
+      "title": "Highiq",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "hockey.bas",
+      "source_path": "basic/games/hockey.bas",
+      "title": "Hockey",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "horserace.bas",
+      "source_path": "basic/games/horserace.bas",
+      "title": "Horserace",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "hurkle.bas",
+      "source_path": "basic/games/hurkle.bas",
+      "title": "Hurkle",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "kalfeest.bas",
+      "source_path": "basic/games/kalfeest.bas",
+      "title": "Kalfeest",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "kinema.bas",
+      "source_path": "basic/games/kinema.bas",
+      "title": "Kinema",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "king.bas",
+      "source_path": "basic/games/king.bas",
+      "title": "King",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "lem.bas",
+      "source_path": "basic/games/lem.bas",
+      "title": "Lem",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "letter.bas",
+      "source_path": "basic/games/letter.bas",
+      "title": "Letter",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "life.bas",
+      "source_path": "basic/games/life.bas",
+      "title": "Life",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "lifefortwo.bas",
+      "source_path": "basic/games/lifefortwo.bas",
+      "title": "Lifefortwo",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "lifscore.bas",
+      "source_path": "basic/games/lifscore.bas",
+      "title": "Lifscore",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "litquiz.bas",
+      "source_path": "basic/games/litquiz.bas",
+      "title": "Litquiz",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "love.bas",
+      "source_path": "basic/games/love.bas",
+      "title": "Love",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "lunar.bas",
+      "source_path": "basic/games/lunar.bas",
+      "title": "Lunar",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "massa.bas",
+      "source_path": "basic/games/massa.bas",
+      "title": "Massa",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "mastermind.bas",
+      "source_path": "basic/games/mastermind.bas",
+      "title": "Mastermind",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "mathdice.bas",
+      "source_path": "basic/games/mathdice.bas",
+      "title": "Mathdice",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "mugwump.bas",
+      "source_path": "basic/games/mugwump.bas",
+      "title": "Mugwump",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "name.bas",
+      "source_path": "basic/games/name.bas",
+      "title": "Name",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "nicomachus.bas",
+      "source_path": "basic/games/nicomachus.bas",
+      "title": "Nicomachus",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "nim.bas",
+      "source_path": "basic/games/nim.bas",
+      "title": "Nim",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "number.bas",
+      "source_path": "basic/games/number.bas",
+      "title": "Number",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "onecheck.bas",
+      "source_path": "basic/games/onecheck.bas",
+      "title": "Onecheck",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "orbit.bas",
+      "source_path": "basic/games/orbit.bas",
+      "title": "Orbit",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "ozdot.bas",
+      "source_path": "basic/games/ozdot.bas",
+      "title": "Ozdot",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "pizza.bas",
+      "source_path": "basic/games/pizza.bas",
+      "title": "Pizza",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "poetry.bas",
+      "source_path": "basic/games/poetry.bas",
+      "title": "Poetry",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "poker.bas",
+      "source_path": "basic/games/poker.bas",
+      "title": "Poker",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "qubit.bas",
+      "source_path": "basic/games/qubit.bas",
+      "title": "Qubit",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "queen.bas",
+      "source_path": "basic/games/queen.bas",
+      "title": "Queen",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "reverse.bas",
+      "source_path": "basic/games/reverse.bas",
+      "title": "Reverse",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "rocket.bas",
+      "source_path": "basic/games/rocket.bas",
+      "title": "Rocket",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "rockscissors.bas",
+      "source_path": "basic/games/rockscissors.bas",
+      "title": "Rockscissors",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "roulette.bas",
+      "source_path": "basic/games/roulette.bas",
+      "title": "Roulette",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "russianroulette.bas",
+      "source_path": "basic/games/russianroulette.bas",
+      "title": "Russianroulette",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "salvo.bas",
+      "source_path": "basic/games/salvo.bas",
+      "title": "Salvo",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "slalom.bas",
+      "source_path": "basic/games/slalom.bas",
+      "title": "Slalom",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "slots.bas",
+      "source_path": "basic/games/slots.bas",
+      "title": "Slots",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "spacewar.bas",
+      "source_path": "basic/games/spacewar.bas",
+      "title": "Spacewar",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "splat.bas",
+      "source_path": "basic/games/splat.bas",
+      "title": "Splat",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "star.bas",
+      "source_path": "basic/games/star.bas",
+      "title": "Star",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "stars.bas",
+      "source_path": "basic/games/stars.bas",
+      "title": "Stars",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "startrek.bas",
+      "source_path": "basic/games/startrek.bas",
+      "title": "Startrek",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "stockmarket.bas",
+      "source_path": "basic/games/stockmarket.bas",
+      "title": "Stockmarket",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "suite.bas",
+      "source_path": "basic/games/suite.bas",
+      "title": "Suite",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "superstartrek.bas",
+      "source_path": "basic/games/superstartrek.bas",
+      "title": "Superstartrek",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "superstartrekins.bas",
+      "source_path": "basic/games/superstartrekins.bas",
+      "title": "Superstartrekins",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "survival.bas",
+      "source_path": "basic/games/survival.bas",
+      "title": "Survival",
+      "description": "",
+      "year": "1982",
+      "tags": [],
+      "author": "R Logan & Ian Lycholm CBASIC 2 VER"
+    },
+    {
+      "filename": "synonym.bas",
+      "source_path": "basic/games/synonym.bas",
+      "title": "Synonym",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "target.bas",
+      "source_path": "basic/games/target.bas",
+      "title": "Target",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "tictactoe1.bas",
+      "source_path": "basic/games/tictactoe1.bas",
+      "title": "Tictactoe1",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "tictactoe2.bas",
+      "source_path": "basic/games/tictactoe2.bas",
+      "title": "Tictactoe2",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "tower.bas",
+      "source_path": "basic/games/tower.bas",
+      "title": "Tower",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "train.bas",
+      "source_path": "basic/games/train.bas",
+      "title": "Train",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "trap.bas",
+      "source_path": "basic/games/trap.bas",
+      "title": "Trap",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "war.bas",
+      "source_path": "basic/games/war.bas",
+      "title": "War",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "weekday.bas",
+      "source_path": "basic/games/weekday.bas",
+      "title": "Weekday",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "word.bas",
+      "source_path": "basic/games/word.bas",
+      "title": "Word",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    }
+  ]
+}

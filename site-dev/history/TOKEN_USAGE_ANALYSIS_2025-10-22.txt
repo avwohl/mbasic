@@ -1,0 +1,198 @@
+======================================================================
+Token Usage Analysis
+======================================================================
+
+Analyzing 121 BASIC files...
+
+Successfully analyzed: 121/121 files
+
+======================================================================
+UNUSED TOKENS (10 tokens never used)
+======================================================================
+
+  AMPERSAND
+  CONT
+  DEFSNG
+  EDIT
+  LLIST
+  MERGE
+  NEW
+  QUESTION
+  RENUM
+  RSET
+
+======================================================================
+TOKEN USAGE BY FREQUENCY (132 tokens used)
+======================================================================
+
+Token Type                          Count  Percent
+----------------------------------------------------------------------
+IDENTIFIER                         22,942   15.25%
+NUMBER                             21,498   14.29%
+NEWLINE                            16,157   10.74%
+LINE_NUMBER                        14,709    9.78%
+COMMA                               8,915    5.93%
+EQUAL                               8,210    5.46%
+STRING                              6,609    4.39%
+LPAREN                              6,436    4.28%
+RPAREN                              6,434    4.28%
+COLON                               5,125    3.41%
+PRINT                               4,364    2.90%
+SEMICOLON                           3,035    2.02%
+PLUS                                2,787    1.85%
+IF                                  2,567    1.71%
+THEN                                2,449    1.63%
+REM                                 1,479    0.98%
+MINUS                               1,405    0.93%
+GOTO                                1,322    0.88%
+DATA                                1,284    0.85%
+GOSUB                               1,200    0.80%
+APOSTROPHE                          1,110    0.74%
+MULTIPLY                              831    0.55%
+TO                                    712    0.47%
+FOR                                   711    0.47%
+NEXT                                  703    0.47%
+CHR                                   591    0.39%
+RETURN                                529    0.35%
+INPUT                                 447    0.30%
+DIVIDE                                440    0.29%
+GREATER_THAN                          430    0.29%
+LESS_THAN                             385    0.26%
+INT                                   347    0.23%
+NOT_EQUAL                             305    0.20%
+LET                                   226    0.15%
+OR                                    225    0.15%
+HASH                                  219    0.15%
+AND                                   205    0.14%
+MID                                   174    0.12%
+LEFT                                  153    0.10%
+LPRINT                                145    0.10%
+RND                                   125    0.08%
+EOF                                   121    0.08%
+ELSE                                  110    0.07%
+LEN                                   108    0.07%
+END                                    92    0.06%
+DIM                                    87    0.06%
+REMARK                                 85    0.06%
+LESS_EQUAL                             83    0.06%
+OPEN                                   75    0.05%
+READ                                   75    0.05%
+CLOSE                                  64    0.04%
+AS                                     62    0.04%
+ASC                                    61    0.04%
+STEP                                   60    0.04%
+STR                                    59    0.04%
+RIGHT                                  58    0.04%
+GREATER_EQUAL                          57    0.04%
+STRING_FUNC                            57    0.04%
+OUT                                    55    0.04%
+ON                                     53    0.04%
+LINE_INPUT                             51    0.03%
+POWER                                  51    0.03%
+VAL                                    51    0.03%
+INP                                    48    0.03%
+ABS                                    41    0.03%
+SIN                                    40    0.03%
+FN                                     39    0.03%
+MOD                                    38    0.03%
+POKE                                   38    0.03%
+INKEY                                  35    0.02%
+PEEK                                   35    0.02%
+INPUT_FUNC                             33    0.02%
+LSET                                   33    0.02%
+PUT                                    32    0.02%
+BACKSLASH                              31    0.02%
+GET                                    30    0.02%
+SQR                                    30    0.02%
+STOP                                   28    0.02%
+FIELD                                  27    0.02%
+DEF                                    25    0.02%
+COS                                    24    0.02%
+CLEAR                                  21    0.01%
+DEFINT                                 20    0.01%
+WIDTH                                  20    0.01%
+ERROR                                  18    0.01%
+INSTR                                  17    0.01%
+RUN                                    16    0.01%
+WEND                                   16    0.01%
+WHILE                                  16    0.01%
+SWAP                                   15    0.01%
+SYSTEM                                 14    0.01%
+ATN                                    12    0.01%
+EOF_FUNC                               12    0.01%
+NOT                                    10    0.01%
+DEFSTR                                  9    0.01%
+RESUME                                  9    0.01%
+SGN                                     9    0.01%
+CHAIN                                   8    0.01%
+LOG                                     8    0.01%
+RESTORE                                 8    0.01%
+KILL                                    7    0.00%
+WRITE                                   7    0.00%
+NAME                                    6    0.00%
+RANDOMIZE                               6    0.00%
+CALL                                    5    0.00%
+SPACE                                   5    0.00%
+XOR                                     5    0.00%
+EXP                                     4    0.00%
+DEFDBL                                  3    0.00%
+AUTO                                    2    0.00%
+ERASE                                   2    0.00%
+HEX                                     2    0.00%
+RESET                                   2    0.00%
+SAVE                                    2    0.00%
+BASE                                    1    0.00%
+CDBL                                    1    0.00%
+CINT                                    1    0.00%
+COMMON                                  1    0.00%
+CSNG                                    1    0.00%
+DELETE                                  1    0.00%
+EQV                                     1    0.00%
+FIX                                     1    0.00%
+IMP                                     1    0.00%
+LIST                                    1    0.00%
+LOAD                                    1    0.00%
+OCT                                     1    0.00%
+OPTION                                  1    0.00%
+OUTPUT                                  1    0.00%
+POS                                     1    0.00%
+TAN                                     1    0.00%
+USR                                     1    0.00%
+WAIT                                    1    0.00%
+----------------------------------------------------------------------
+TOTAL                             150,456  100.00%
+
+======================================================================
+SUMMARY STATISTICS
+======================================================================
+
+Total tokens processed:  150,456
+Unique token types used: 132/142
+Token types unused:      10/142
+Coverage:                93.0%
+
+Top 10 Most Used Tokens:
+   1. IDENTIFIER                    22,942 times
+   2. NUMBER                        21,498 times
+   3. NEWLINE                       16,157 times
+   4. LINE_NUMBER                   14,709 times
+   5. COMMA                          8,915 times
+   6. EQUAL                          8,210 times
+   7. STRING                         6,609 times
+   8. LPAREN                         6,436 times
+   9. RPAREN                         6,434 times
+  10. COLON                          5,125 times
+
+10 Least Used Tokens (that are used):
+   1. WAIT                               1 times
+   2. USR                                1 times
+   3. TAN                                1 times
+   4. POS                                1 times
+   5. OUTPUT                             1 times
+   6. OPTION                             1 times
+   7. OCT                                1 times
+   8. LOAD                               1 times
+   9. LIST                               1 times
+  10. IMP                                1 times
+
+======================================================================

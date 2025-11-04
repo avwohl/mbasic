@@ -1,0 +1,32 @@
+{
+  "title": "MBASIC Educational Programs",
+  "description": "Learning and educational programs",
+  "programs": [
+    {
+      "filename": "astrnmy2.bas",
+      "source_path": "basic/education/astrnmy2.bas",
+      "title": "Astrnmy2",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "mathtest.bas",
+      "source_path": "basic/education/mathtest.bas",
+      "title": "Mathtest",
+      "description": "",
+      "year": "1980s",
+      "tags": [
+        "test"
+      ]
+    },
+    {
+      "filename": "windchil.bas",
+      "source_path": "basic/education/windchil.bas",
+      "title": "Windchil",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    }
+  ]
+}

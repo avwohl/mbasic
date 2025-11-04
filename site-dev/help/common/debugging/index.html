@@ -1,0 +1,1741 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete guide to debugging BASIC programs with breakpoints, stepping, and statement-level execution">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/help/common/debugging/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Debugging Features - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#debugging-features" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Debugging Features
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../dev/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#breakpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Breakpoints
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Breakpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-are-breakpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      What are Breakpoints?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#setting-breakpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setting Breakpoints
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-breakpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Removing Breakpoints
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#priority-indicators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Priority Indicators
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stepping-through-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stepping Through Code
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stepping Through Code">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step Types
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-step-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Step Commands
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statement-highlighting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Statement Highlighting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Statement Highlighting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-statement-highlighting" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is Statement Highlighting?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How It Works
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visual-indicators-by-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      Visual Indicators by UI
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#continue-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Continue Execution
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variables-window" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variables Window
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Variables Window">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#opening-variables-window" class="md-nav__link">
+    <span class="md-ellipsis">
+      Opening Variables Window
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-it-shows" class="md-nav__link">
+    <span class="md-ellipsis">
+      What It Shows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variable Types
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editing-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Editing Variables
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#array-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Array Variables
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sorting-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sorting Variables
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execution-stack-window" class="md-nav__link">
+    <span class="md-ellipsis">
+      Execution Stack Window
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Execution Stack Window">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#opening-stack-window" class="md-nav__link">
+    <span class="md-ellipsis">
+      Opening Stack Window
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-it-shows_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      What It Shows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stack-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stack Display
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-debugging-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Debugging Workflows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Debugging Workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-a-bug" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding a Bug
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#understanding-complex-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Understanding Complex Code
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-a-subroutine" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing a Subroutine
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-and-tricks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tips and Tricks
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tips and Tricks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-statement-lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-Statement Lines
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infinite-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      Infinite Loops
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable-inspection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variable Inspection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gotogosub-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      GOTO/GOSUB Tracking
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-markers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error Markers
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Markers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parse-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse Errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixing-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixing Errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#background-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Background Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keyboard-shortcuts-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keyboard Shortcuts Summary
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Keyboard Shortcuts Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#all-uis" class="md-nav__link">
+    <span class="md-ellipsis">
+      All UIs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tk-ui-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tk UI Only
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#curses-ui-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      Curses UI Only
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#web-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web UI
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-statement-highlighting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Statement Highlighting
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/help/common/debugging.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="debugging-features">Debugging Features<a class="headerlink" href="#debugging-features" title="Permanent link">&para;</a></h1>
+<p>MBASIC includes a full-featured debugger with breakpoints, single-stepping, variable inspection, and statement-level execution tracking.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The debugger helps you:
+- Find and fix bugs in your programs
+- Understand how your code executes
+- Inspect variable values during execution
+- Step through code line by line or statement by statement
+- Track subroutine calls and loop state</p>
+<h2 id="breakpoints">Breakpoints<a class="headerlink" href="#breakpoints" title="Permanent link">&para;</a></h2>
+<h3 id="what-are-breakpoints">What are Breakpoints?<a class="headerlink" href="#what-are-breakpoints" title="Permanent link">&para;</a></h3>
+<p>Breakpoints pause program execution at specific lines, allowing you to inspect the program state.</p>
+<h3 id="setting-breakpoints">Setting Breakpoints<a class="headerlink" href="#setting-breakpoints" title="Permanent link">&para;</a></h3>
+<p><strong>Tk UI:</strong>
+- Click the line number gutter next to the line
+- Or position cursor on the line and press <strong>Ctrl+B</strong>
+- Breakpoints show with a <strong>●</strong> indicator</p>
+<p><strong>Curses UI:</strong>
+- Position cursor on the line and press <strong>b</strong>
+- Breakpoints show with a <strong>●</strong> indicator</p>
+<p><strong>Web UI:</strong>
+- Click the line number to toggle breakpoint
+- Use the "Breakpoint" button in the toolbar
+- Breakpoints show with a <strong>●</strong> indicator and pink background</p>
+<h3 id="removing-breakpoints">Removing Breakpoints<a class="headerlink" href="#removing-breakpoints" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Click/press again on the same line to remove the breakpoint</li>
+<li>The <strong>●</strong> indicator will disappear</li>
+</ul>
+<h3 id="priority-indicators">Priority Indicators<a class="headerlink" href="#priority-indicators" title="Permanent link">&para;</a></h3>
+<p>Line number indicators follow this priority:
+1. <strong>? (Question mark)</strong> - Parse error (highest priority)
+2. <strong>● (Bullet)</strong> - Breakpoint
+3. <strong>(Space)</strong> - Normal line</p>
+<p>If a line has both an error and a breakpoint, the <strong>?</strong> error indicator is shown.</p>
+<h2 id="stepping-through-code">Stepping Through Code<a class="headerlink" href="#stepping-through-code" title="Permanent link">&para;</a></h2>
+<h3 id="step-types">Step Types<a class="headerlink" href="#step-types" title="Permanent link">&para;</a></h3>
+<p><strong>Step Line</strong> - Execute one entire line, then pause
+- Even if the line has multiple statements (separated by <code>:</code>), all statements execute
+- Useful for quick navigation through code
+- Shortcuts: Tk/Curses/Web: <strong>Ctrl+T</strong> or Step button</p>
+<p><strong>Step Statement</strong> - Execute one statement, then pause
+- If a line has multiple statements (e.g., <code>A=1 : B=2 : C=3</code>), each statement executes separately
+- Allows fine-grained control for debugging complex lines
+- The current statement is highlighted (see Statement Highlighting below)
+- Shortcuts: Same as Step Line, but advances statement-by-statement</p>
+<h3 id="using-step-commands">Using Step Commands<a class="headerlink" href="#using-step-commands" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Set a breakpoint</strong> or start execution</li>
+<li>When paused at a breakpoint:</li>
+<li>Press <strong>Ctrl+T</strong> or click <strong>Step</strong> to advance one statement</li>
+<li>Press <strong>Ctrl+G</strong> or click <strong>Continue</strong> to run to next breakpoint</li>
+<li>Press <strong>Ctrl+Q</strong> or click <strong>Stop</strong> to halt execution</li>
+</ol>
+<h2 id="statement-highlighting">Statement Highlighting<a class="headerlink" href="#statement-highlighting" title="Permanent link">&para;</a></h2>
+<h3 id="what-is-statement-highlighting">What is Statement Highlighting?<a class="headerlink" href="#what-is-statement-highlighting" title="Permanent link">&para;</a></h3>
+<p>BASIC allows multiple statements on one line, separated by colons:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nl">100</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">2</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span>
+</code></pre></div></p>
+<p>Statement highlighting shows exactly which statement is currently executing within a multi-statement line.</p>
+<h3 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
+<p>When stepping through code, the debugger:
+1. Highlights the current line being executed
+2. If the line has multiple statements, highlights the specific statement
+3. Updates the highlight as you step through each statement</p>
+<h3 id="visual-indicators-by-ui">Visual Indicators by UI<a class="headerlink" href="#visual-indicators-by-ui" title="Permanent link">&para;</a></h3>
+<p><strong>Tk UI:</strong>
+- Current statement highlighted with <strong>yellow background</strong>
+- Highlight covers just the executing statement, not the whole line
+- Auto-scrolls to keep the statement visible</p>
+<p><strong>Curses UI:</strong>
+- Shows statement index in status bar: <code>Line 100 statement 2</code>
+- Current statement passed to editor for highlighting
+- Compact display for terminal environment</p>
+<p><strong>Web UI:</strong>
+- Shows statement index in status label: <code>Paused at line 100 statement 2</code>
+- Status updates as you step through statements
+- Also shows <code>[stmt N]</code> during continuous execution</p>
+<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">10</span><span class="w"> </span><span class="c1">REM Multi-statement line example</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">5</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;C=&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">C</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">END</span>
+</code></pre></div>
+<p>When you step through line 20:
+1. First step: <code>A = 5</code> highlighted
+2. Second step: <code>B = 10</code> highlighted
+3. Third step: <code>C = A + B</code> highlighted
+4. Fourth step: <code>PRINT "C="; C</code> highlighted
+5. Fifth step: Advances to line 30</p>
+<h2 id="continue-execution">Continue Execution<a class="headerlink" href="#continue-execution" title="Permanent link">&para;</a></h2>
+<p>After pausing at a breakpoint:
+- Press <strong>Ctrl+G</strong> or click <strong>Continue</strong>
+- Program runs until:
+  - Next breakpoint is hit
+  - Program ends
+  - Runtime error occurs</p>
+<h2 id="variables-window">Variables Window<a class="headerlink" href="#variables-window" title="Permanent link">&para;</a></h2>
+<h3 id="opening-variables-window">Opening Variables Window<a class="headerlink" href="#opening-variables-window" title="Permanent link">&para;</a></h3>
+<p><strong>Tk UI:</strong> Debug → Variables or <strong>Ctrl+V</strong>
+<strong>Curses UI:</strong> <strong>Ctrl+V</strong> during execution
+<strong>Web UI:</strong> Debug → Variables Window or Variables button</p>
+<h3 id="what-it-shows">What It Shows<a class="headerlink" href="#what-it-shows" title="Permanent link">&para;</a></h3>
+<ul>
+<li>All variables currently defined in your program</li>
+<li>Variable names, types, and current values</li>
+<li>Array elements with subscript access tracking</li>
+<li>Last modified timestamp</li>
+</ul>
+<h3 id="variable-types">Variable Types<a class="headerlink" href="#variable-types" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Integer (%):</strong> Whole numbers (e.g., <code>COUNT%</code>)</li>
+<li><strong>Single (!):</strong> Single-precision floating point (default for numbers)</li>
+<li><strong>Double (#):</strong> Double-precision floating point (e.g., <code>PI#</code>)</li>
+<li><strong>String ($):</strong> Text values (e.g., <code>NAME$</code>)</li>
+</ul>
+<h3 id="editing-variables">Editing Variables<a class="headerlink" href="#editing-variables" title="Permanent link">&para;</a></h3>
+<p>You can change variable values during debugging:</p>
+<p><strong>Tk UI:</strong>
+- Double-click variable in the table
+- Enter new value in the dialog
+- Click OK to update</p>
+<p><strong>Curses UI:</strong>
+- Press <strong>e</strong> or <strong>Enter</strong> on selected variable
+- Type new value
+- Press Enter to confirm</p>
+<p><strong>Web UI:</strong>
+- Click "Edit Selected" button
+- Or double-click the variable row
+- Enter new value in the dialog
+- Click OK to update</p>
+<h3 id="array-variables">Array Variables<a class="headerlink" href="#array-variables" title="Permanent link">&para;</a></h3>
+<p>Arrays show with their dimensions:
+- <code>A(10)</code> - One-dimensional array, 10 elements
+- <code>B(5,5)</code> - Two-dimensional array, 5×5
+- Last accessed subscript tracked
+- Can edit individual array elements</p>
+<h3 id="sorting-variables">Sorting Variables<a class="headerlink" href="#sorting-variables" title="Permanent link">&para;</a></h3>
+<p>Click column headers to sort by:
+- Name (alphabetical)
+- Type (grouped by %, !, #, $)
+- Value (numerical/alphabetical)
+- Modified (most recent first)</p>
+<h2 id="execution-stack-window">Execution Stack Window<a class="headerlink" href="#execution-stack-window" title="Permanent link">&para;</a></h2>
+<h3 id="opening-stack-window">Opening Stack Window<a class="headerlink" href="#opening-stack-window" title="Permanent link">&para;</a></h3>
+<p><strong>Tk UI:</strong> Debug → Execution Stack or <strong>Ctrl+K</strong>
+<strong>Curses UI:</strong> <strong>Ctrl+K</strong> during execution
+<strong>Web UI:</strong> Debug → Stack Window or Stack button</p>
+<h3 id="what-it-shows_1">What It Shows<a class="headerlink" href="#what-it-shows_1" title="Permanent link">&para;</a></h3>
+<p>The execution stack tracks:
+- Active FOR loops (variable, current value, target, step)
+- GOSUB subroutine calls (return address)
+- Nested loop state
+- Call hierarchy</p>
+<h3 id="stack-display">Stack Display<a class="headerlink" href="#stack-display" title="Permanent link">&para;</a></h3>
+<p><strong>FOR Loops:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>FOR I = 1 TO 10 STEP 2
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  Variable: I
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  Current: 5
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  To: 10
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  Step: 2
+</code></pre></div></p>
+<p><strong>GOSUB Calls:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>GOSUB 1000
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  Return to: 500
+</code></pre></div></p>
+<p><strong>Nested Items:</strong>
+- Innermost items at top
+- Outer items below
+- Shows full nesting structure</p>
+<h2 id="common-debugging-workflows">Common Debugging Workflows<a class="headerlink" href="#common-debugging-workflows" title="Permanent link">&para;</a></h2>
+<h3 id="finding-a-bug">Finding a Bug<a class="headerlink" href="#finding-a-bug" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Reproduce the error</strong> - Run the program and see it fail</li>
+<li><strong>Set breakpoints</strong> - Put breakpoints near where you think the bug is</li>
+<li><strong>Run to breakpoint</strong> - Let the program run until it pauses</li>
+<li><strong>Inspect variables</strong> - Check variable values in the Variables window</li>
+<li><strong>Step through code</strong> - Use Step Statement to see each operation</li>
+<li><strong>Fix and retest</strong> - Modify the code and try again</li>
+</ol>
+<h3 id="understanding-complex-code">Understanding Complex Code<a class="headerlink" href="#understanding-complex-code" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Set breakpoint at start</strong> - Put a breakpoint on the first line</li>
+<li><strong>Step statement-by-statement</strong> - Use Step Statement to see each operation</li>
+<li><strong>Watch the variables</strong> - Keep Variables window open</li>
+<li><strong>Track the flow</strong> - Follow execution through GOTOs and GOSUBs</li>
+<li><strong>Check the stack</strong> - Use Execution Stack for loops and subroutines</li>
+</ol>
+<h3 id="testing-a-subroutine">Testing a Subroutine<a class="headerlink" href="#testing-a-subroutine" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Set breakpoint at GOSUB</strong> - Pause before calling the subroutine</li>
+<li><strong>Step into subroutine</strong> - Use Step to enter the GOSUB</li>
+<li><strong>Watch the stack</strong> - See the return address in Execution Stack</li>
+<li><strong>Inspect changes</strong> - Check what the subroutine modifies</li>
+<li><strong>Verify return</strong> - Ensure it returns to the right place</li>
+</ol>
+<h2 id="tips-and-tricks">Tips and Tricks<a class="headerlink" href="#tips-and-tricks" title="Permanent link">&para;</a></h2>
+<h3 id="multi-statement-lines">Multi-Statement Lines<a class="headerlink" href="#multi-statement-lines" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use <strong>Step Statement</strong> instead of <strong>Step Line</strong> for fine control</li>
+<li>Watch the statement highlighting to see what's executing</li>
+<li>Set breakpoints before multi-statement lines to pause at the start</li>
+</ul>
+<h3 id="infinite-loops">Infinite Loops<a class="headerlink" href="#infinite-loops" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Press <strong>Ctrl+C</strong> or <strong>Stop</strong> button to interrupt</li>
+<li>Set a breakpoint inside the loop to inspect state</li>
+<li>Check loop counters in the Variables window</li>
+</ul>
+<h3 id="variable-inspection">Variable Inspection<a class="headerlink" href="#variable-inspection" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Edit variables to test "what if" scenarios</li>
+<li>Watch array subscripts to see access patterns</li>
+<li>Sort by "Modified" to see what changed recently</li>
+</ul>
+<h3 id="gotogosub-tracking">GOTO/GOSUB Tracking<a class="headerlink" href="#gotogosub-tracking" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use breakpoints to catch unexpected jumps</li>
+<li>Check Execution Stack to see where you came from</li>
+<li>Verify GOSUB/RETURN pairs match up</li>
+</ul>
+<h2 id="error-markers">Error Markers<a class="headerlink" href="#error-markers" title="Permanent link">&para;</a></h2>
+<h3 id="parse-errors">Parse Errors<a class="headerlink" href="#parse-errors" title="Permanent link">&para;</a></h3>
+<p>Lines with syntax errors show with a <strong>?</strong> marker:
+- Appears in line number gutter
+- Takes priority over breakpoint markers
+- Red color/background in Tk and Web UIs
+- Shown on all lines that fail to parse</p>
+<h3 id="fixing-errors">Fixing Errors<a class="headerlink" href="#fixing-errors" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Identify error lines</strong> - Look for <strong>?</strong> markers</li>
+<li><strong>Read error message</strong> - Check the output window for details</li>
+<li><strong>Fix the syntax</strong> - Correct the BASIC code</li>
+<li><strong>Verify fix</strong> - The <strong>?</strong> marker disappears when syntax is valid</li>
+</ol>
+<h3 id="background-validation">Background Validation<a class="headerlink" href="#background-validation" title="Permanent link">&para;</a></h3>
+<p><strong>Tk UI:</strong> Validates syntax automatically as you type (100ms delay after cursor movement)
+<strong>Web UI:</strong> Validates when you load files, sort, or renumber
+<strong>Curses UI:</strong> Validates when you save or run</p>
+<h2 id="keyboard-shortcuts-summary">Keyboard Shortcuts Summary<a class="headerlink" href="#keyboard-shortcuts-summary" title="Permanent link">&para;</a></h2>
+<h3 id="all-uis">All UIs<a class="headerlink" href="#all-uis" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Shortcut</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Run program</td>
+<td><strong>Ctrl+R</strong></td>
+<td>Start from beginning</td>
+</tr>
+<tr>
+<td>Step</td>
+<td><strong>Ctrl+T</strong></td>
+<td>One statement at a time</td>
+</tr>
+<tr>
+<td>Continue</td>
+<td><strong>Ctrl+G</strong></td>
+<td>Run to next breakpoint</td>
+</tr>
+<tr>
+<td>Stop</td>
+<td><strong>Ctrl+Q</strong></td>
+<td>Halt execution</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tk-ui-only">Tk UI Only<a class="headerlink" href="#tk-ui-only" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Shortcut</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Toggle breakpoint</td>
+<td><strong>Ctrl+B</strong></td>
+<td>On current line</td>
+</tr>
+<tr>
+<td>Variables window</td>
+<td><strong>Ctrl+V</strong></td>
+<td>Show/hide variables</td>
+</tr>
+<tr>
+<td>Stack window</td>
+<td><strong>Ctrl+K</strong></td>
+<td>Show/hide stack</td>
+</tr>
+</tbody>
+</table>
+<h3 id="curses-ui-only">Curses UI Only<a class="headerlink" href="#curses-ui-only" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Shortcut</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Toggle breakpoint</td>
+<td><strong>b</strong></td>
+<td>On current line</td>
+</tr>
+<tr>
+<td>Variables window</td>
+<td><strong>Ctrl+V</strong></td>
+<td>During execution</td>
+</tr>
+<tr>
+<td>Stack window</td>
+<td><strong>Ctrl+K</strong></td>
+<td>During execution</td>
+</tr>
+<tr>
+<td>Edit variable</td>
+<td><strong>e</strong> or <strong>Enter</strong></td>
+<td>In variables window</td>
+</tr>
+</tbody>
+</table>
+<h3 id="web-ui">Web UI<a class="headerlink" href="#web-ui" title="Permanent link">&para;</a></h3>
+<p>Most actions use buttons or menus. Execution shortcuts (Ctrl+R, Ctrl+T, Ctrl+G, Ctrl+Q) work.</p>
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../shortcuts/">Keyboard Shortcuts</a> - Complete shortcut reference</li>
+<li><a href="../editor-commands/">Editor Commands</a> - Editing features</li>
+<li><a href="../getting-started/">Getting Started</a> - Your first program</li>
+<li><a href="../language/">Language Reference</a> - BASIC-80 language</li>
+</ul>
+<h2 id="testing-statement-highlighting">Testing Statement Highlighting<a class="headerlink" href="#testing-statement-highlighting" title="Permanent link">&para;</a></h2>
+<p>Try this test program:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nl">10</span><span class="w"> </span><span class="c1">REM Multi-statement test</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="p">;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;B&quot;</span><span class="p">;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;C&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nl">30</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">2</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">A</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">B</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;A=&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">A</span><span class="p">;</span><span class="w"> </span><span class="s2">&quot; B=&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">B</span><span class="p">;</span><span class="w"> </span><span class="s2">&quot; C=&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">C</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">3</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">I</span><span class="p">;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="nl">60</span><span class="w"> </span><span class="kr">END</span>
+</code></pre></div>
+<p>Set a breakpoint on line 20 and use <strong>Step Statement</strong> to see each statement highlight individually.</p>
+<hr />
+<p><strong>Pro tip:</strong> Master the Step Statement command and Variables window - they're your most powerful debugging tools!</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

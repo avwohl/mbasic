@@ -1,0 +1,1707 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/history/snapshots/PARSE_ERROR_CATEGORIES_2025-10-22/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Parser Error Categories - Unsolved Parse Problems - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#parser-error-categories-unsolved-parse-problems" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Parser Error Categories - Unsolved Parse Problems
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../dev/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Executive Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#category-breakdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      Category Breakdown
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Category Breakdown">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-def-statement-without-fn-assignment-issues-high-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. DEF Statement Without FN / Assignment Issues ⚠️ HIGH PRIORITY
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-statement-continuation-line-ending-issues-medium-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Statement Continuation / Line Ending Issues ⚠️ MEDIUM PRIORITY
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-invalid-expression-syntax-medium-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Invalid Expression Syntax ⚠️ MEDIUM PRIORITY
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-if-without-thengoto-multiline-if-medium-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. IF Without THEN/GOTO (Multiline IF) ⚠️ MEDIUM PRIORITY
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-invalid-statement-syntax-low-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Invalid Statement Syntax ⚠️ LOW PRIORITY
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-expected-variable-name-line-input-issues-high-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Expected Variable Name (LINE INPUT Issues) ⚠️ HIGH PRIORITY
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-for-loop-to-issues-low-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. FOR Loop / TO Issues ⚠️ LOW PRIORITY
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-missing-comma-wrong-syntax-low-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Missing Comma / Wrong Syntax ⚠️ LOW PRIORITY
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-line-number-issues-medium-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. Line Number Issues ⚠️ MEDIUM PRIORITY
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-on-statement-syntax-low-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. ON Statement Syntax ⚠️ LOW PRIORITY
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-save-statement-syntax-low-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      11. SAVE Statement Syntax ⚠️ LOW PRIORITY
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-missing-closing-parenthesis-low-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      12. Missing Closing Parenthesis ⚠️ LOW PRIORITY
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#priority-recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Priority Recommendations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Priority Recommendations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#high-priority-quick-wins-38-of-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      HIGH PRIORITY (Quick Wins - 38% of failures)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#medium-priority-moderate-complexity-34-of-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      MEDIUM PRIORITY (Moderate Complexity - 34% of failures)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#low-priority-complexedge-cases-28-of-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      LOW PRIORITY (Complex/Edge Cases - 28% of failures)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-roadmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Roadmap
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Roadmap">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-quick-wins-38-of-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Quick Wins (38% of failures)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-medium-complexity-28-of-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Medium Complexity (28% of failures)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-edge-cases-28-of-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Edge Cases (28% of failures)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statistics-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Statistics Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#expected-success-rates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Expected Success Rates
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#files-by-category" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files by Category
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Files by Category">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#category-1-assignmentdef-issues-16-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Category 1: Assignment/DEF Issues (16 files)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#category-2-statement-continuation-7-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Category 2: Statement Continuation (7 files)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#category-3-expression-syntax-6-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Category 3: Expression Syntax (6 files)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#category-4-if-without-thengoto-5-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Category 4: IF Without THEN/GOTO (5 files)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#category-5-invalid-statement-4-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Category 5: Invalid Statement (4 files)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#category-6-variable-name-issues-3-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Category 6: Variable Name Issues (3 files)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#categories-7-12-remaining-15-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Categories 7-12: Remaining (15 files)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/history/snapshots/PARSE_ERROR_CATEGORIES_2025-10-22.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="parser-error-categories-unsolved-parse-problems">Parser Error Categories - Unsolved Parse Problems<a class="headerlink" href="#parser-error-categories-unsolved-parse-problems" title="Permanent link">&para;</a></h1>
+<p><strong>Date</strong>: 2025-10-22
+<strong>Total Failures</strong>: 50 files (30.7% of 163 file corpus)
+<strong>Successfully Parsing</strong>: 113 files (69.3%)</p>
+<hr />
+<h2 id="executive-summary">Executive Summary<a class="headerlink" href="#executive-summary" title="Permanent link">&para;</a></h2>
+<p>The 50 remaining parser failures fall into 12 distinct categories. The top 3 categories account for 58% of all failures:</p>
+<ol>
+<li><strong>Assignment/DEF statement issues</strong> (32.0%) - Missing RESET statement, concatenated keywords</li>
+<li><strong>Statement continuation issues</strong> (14.0%) - Empty colon statements, statement after semicolon</li>
+<li><strong>Invalid expression syntax</strong> (12.0%) - Keywords in expressions, expression parsing edge cases</li>
+</ol>
+<hr />
+<h2 id="category-breakdown">Category Breakdown<a class="headerlink" href="#category-breakdown" title="Permanent link">&para;</a></h2>
+<h3 id="1-def-statement-without-fn-assignment-issues-high-priority">1. DEF Statement Without FN / Assignment Issues ⚠️ HIGH PRIORITY<a class="headerlink" href="#1-def-statement-without-fn-assignment-issues-high-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: 16 (32.0%)</p>
+<p><strong>Root Causes</strong>:</p>
+<p><strong>A. RESET Statement</strong> (10+ files)
+- <strong>Issue</strong>: Parser doesn't recognize <code>RESET</code> statement
+- <strong>Syntax</strong>: <code>RESET</code> - closes all files
+- <strong>Examples</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nl">80</span><span class="w"> </span><span class="kr">RESET</span><span class="o">:</span><span class="vg">EF</span><span class="o">=</span><span class="il">0</span><span class="o">:</span><span class="vg">RC</span><span class="o">=</span><span class="il">0</span><span class="o">:</span><span class="kr">OPEN</span><span class="w"> </span><span class="s2">&quot;I&quot;</span><span class="p">,</span><span class="il">1</span><span class="p">,</span><span class="vg">NI$</span><span class="w">       </span><span class="c1">&#39; asm2mac.bas L8</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nl">7</span><span class="w"> </span><span class="kr">RESET</span><span class="o">:</span><span class="w"> </span><span class="vg">SAVE</span><span class="w"> </span><span class="s2">&quot;FXPARMS.BAS&quot;</span><span class="p">,</span><span class="nl">A:</span><span class="w"> </span><span class="kr">STOP</span><span class="w">     </span><span class="c1">&#39; fxparms.bas L5</span>
+</code></pre></div>
+- <strong>Fix</strong>: Add RESET statement to parser (simple statement, no arguments)</p>
+<p><strong>B. Concatenated Keywords</strong> (3 files)
+- <strong>Issue</strong>: Keywords run together with numbers (OCR error or typo)
+- <strong>Examples</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">60</span><span class="w"> </span><span class="nl">CLEAR1000:</span><span class="vg">PK</span><span class="o">=</span><span class="il">12</span><span class="w">                      </span><span class="c1">&#39; backgamm.bas L8</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nl">25</span><span class="w"> </span><span class="vg">CLEAR25</span><span class="p">,,,</span><span class="il">8000</span><span class="w">                       </span><span class="c1">&#39; satelite.bas L25</span>
+</code></pre></div>
+- <strong>Fix</strong>: These are syntax errors, should move to bad_syntax/ (but CLEAR 1000 is valid)</p>
+<p><strong>C. DIM with # (File Numbers)</strong> (3 files)
+- <strong>Issue</strong>: OPEN statement uses <a class="magiclink magiclink-github magiclink-issue" href="https://github.com/avwohl/mbasic/issues/1" title="GitHub Issue: avwohl/mbasic #1">#1</a> syntax
+- <strong>Examples</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">OPEN</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="err">#</span><span class="il">1</span><span class="p">,</span><span class="s2">&quot;SFAMOVE.0&quot;</span><span class="w">               </span><span class="c1">&#39; sfamove.bas L3</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nl">5</span><span class="w"> </span><span class="kr">OPEN</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="err">#</span><span class="il">1</span><span class="p">,</span><span class="s2">&quot;SFAOBDES.0&quot;</span><span class="w">               </span><span class="c1">&#39; sfaobdes.bas L2</span>
+</code></pre></div>
+- <strong>Fix</strong>: Parser needs to allow optional <code>#</code> before file number in OPEN/CLOSE/PRINT/etc</p>
+<p><strong>D. Other Assignment Edge Cases</strong>
+- Multi-variable assignments
+- Complex LET statement patterns</p>
+<p><strong>Files</strong>:
+- asm2mac.bas, backgamm.bas, bibsr2.bas, blackbox.bas, cpkhex.bas
+- fxparms.bas, othello.bas, qsolist.bas, rbsutl31.bas, rc5.bas
+- satelite.bas, sfamove.bas, sfaobdes.bas, sfavoc.bas, xformer.bas, xref.bas</p>
+<hr />
+<h3 id="2-statement-continuation-line-ending-issues-medium-priority">2. Statement Continuation / Line Ending Issues ⚠️ MEDIUM PRIORITY<a class="headerlink" href="#2-statement-continuation-line-ending-issues-medium-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: 7 (14.0%)</p>
+<p><strong>Root Causes</strong>:</p>
+<p><strong>A. Empty Colon Statement</strong>
+- <strong>Issue</strong>: Lone <code>:</code> used as empty statement or label
+- <strong>Examples</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nl">70</span><span class="w"> </span><span class="o">:</span><span class="w">                                    </span><span class="c1">&#39; Empty statement line</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nl">770</span><span class="w"> </span><span class="vg">TM</span><span class="o">=</span><span class="vg">FM</span><span class="o">-</span><span class="vg">D</span><span class="p">(</span><span class="vg">M</span><span class="p">)</span><span class="o">:</span><span class="nl">GOSUB2880:</span><span class="vg">FM</span><span class="o">=</span><span class="nl">TM:</span><span class="vg">TM</span><span class="o">=</span><span class="nl">N:</span><span class="o">:</span><span class="vg">GOSUB2880</span><span class="w">  </span><span class="c1">&#39; Double colon</span>
+</code></pre></div>
+- <strong>Fix</strong>: Allow empty statement between colons</p>
+<p><strong>B. Statement After Semicolon in PRINT</strong>
+- <strong>Issue</strong>: Semicolon in GOSUB followed by newline
+- <strong>Example</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nl">2950</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">3750</span><span class="p">;</span><span class="w">                        </span><span class="c1">&#39; handplot.bas L447</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nl">2960</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;HIT RETURN&quot;</span><span class="w">                 </span><span class="c1">&#39; Next line</span>
+</code></pre></div>
+- <strong>Fix</strong>: Trailing semicolon on GOSUB should be allowed (no-op)</p>
+<p><strong>C. Statement After Closing Paren</strong>
+- <strong>Issue</strong>: Complex statement continuation patterns
+- <strong>Example</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nl">20</span><span class="w"> </span><span class="kr">DEF FN</span><span class="o">...</span><span class="p">(</span><span class="o">...</span><span class="p">)</span><span class="o">:</span><span class="vg">X</span><span class="o">=</span><span class="nl">Y:</span><span class="kr">RETURN</span><span class="w">           </span><span class="c1">&#39; ic-timer.bas L29</span>
+</code></pre></div></p>
+<p><strong>D. Multiple Statements on Line (complex)</strong>
+- REM after other statements
+- MOD in complex expression contexts</p>
+<p><strong>Files</strong>:
+- handplot.bas, ic-timer.bas, oldroute.bas, qubic.bas
+- sdir.bas, survival.bas, trade.bas</p>
+<hr />
+<h3 id="3-invalid-expression-syntax-medium-priority">3. Invalid Expression Syntax ⚠️ MEDIUM PRIORITY<a class="headerlink" href="#3-invalid-expression-syntax-medium-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: 6 (12.0%)</p>
+<p><strong>Root Causes</strong>:</p>
+<p><strong>A. Keywords in Expression Context</strong>
+- <strong>Issue</strong>: DATA, LPRINT, COMMA appearing where expression expected
+- <strong>Examples</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">&#39; DATA in expression (likely string parsing issue)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nl">58</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="kd">DATA</span><span class="w"> </span><span class="o">...</span><span class="w">                        </span><span class="c1">&#39; clock-m.bas L58</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1">&#39; LPRINT as expression</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nl">2</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="kr">LPRINT</span><span class="w"> </span><span class="o">...</span><span class="w">                       </span><span class="c1">&#39; pcat.bas L2</span>
+</code></pre></div>
+- <strong>Fix</strong>: Likely multi-statement parsing or string literal issues</p>
+<p><strong>B. Expression Termination</strong>
+- NEWLINE appearing unexpectedly in expression
+- EQUAL sign in wrong context</p>
+<p><strong>Files</strong>:
+- clock-m.bas, deprec.bas, header6.bas, mbasedit.bas, pcat.bas, proset.bas</p>
+<hr />
+<h3 id="4-if-without-thengoto-multiline-if-medium-priority">4. IF Without THEN/GOTO (Multiline IF) ⚠️ MEDIUM PRIORITY<a class="headerlink" href="#4-if-without-thengoto-multiline-if-medium-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: 5 (10.0%)</p>
+<p><strong>Root Causes</strong>:</p>
+<p><strong>A. Line Continuation in IF</strong>
+- <strong>Issue</strong>: IF condition spans line in some dialects, or complex condition
+- <strong>Examples</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nl">288</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="p">[</span><span class="vg">condition</span><span class="w"> </span><span class="vg">at</span><span class="w"> </span><span class="vg">column</span><span class="w"> </span><span class="il">56</span><span class="p">]</span><span class="w">    </span><span class="c1">&#39; disasmb.bas</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nl">24</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="p">[</span><span class="vg">condition</span><span class="w"> </span><span class="vg">at</span><span class="w"> </span><span class="vg">column</span><span class="w"> </span><span class="il">42</span><span class="p">]</span><span class="w">     </span><span class="c1">&#39; fndtble.bas</span>
+</code></pre></div>
+- <strong>Fix</strong>: May be implicit line continuation or missing THEN</p>
+<p><strong>B. Complex Boolean Expressions</strong>
+- Very long conditions that may have parsing issues
+- Nested parentheses in conditions</p>
+<p><strong>Files</strong>:
+- disasmb.bas, fndtble.bas, sortuser.bas, wordpuzl.bas, xref19.bas</p>
+<hr />
+<h3 id="5-invalid-statement-syntax-low-priority">5. Invalid Statement Syntax ⚠️ LOW PRIORITY<a class="headerlink" href="#5-invalid-statement-syntax-low-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: 4 (8.0%)</p>
+<p><strong>Root Causes</strong>:</p>
+<p><strong>A. STRING$ Function in Wrong Context</strong>
+- <strong>Example</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nl">163</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="k">STRING</span><span class="w"> </span><span class="o">...</span><span class="w">                     </span><span class="c1">&#39; goldmine.bas L163</span>
+</code></pre></div></p>
+<p><strong>B. ELSE Without Matching IF</strong>
+- <strong>Example</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nl">153</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="o">...</span><span class="w">                       </span><span class="c1">&#39; tricks.bas L153</span>
+</code></pre></div></p>
+<p><strong>C. Statement Starting with LPAREN or COMMA</strong>
+- Syntax errors or unusual patterns</p>
+<p><strong>Files</strong>:
+- goldmine.bas, lanes.bas, tricks.bas, unpro2.bas</p>
+<hr />
+<h3 id="6-expected-variable-name-line-input-issues-high-priority">6. Expected Variable Name (LINE INPUT Issues) ⚠️ HIGH PRIORITY<a class="headerlink" href="#6-expected-variable-name-line-input-issues-high-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: 3 (6.0%)</p>
+<p><strong>Root Causes</strong>:</p>
+<p><strong>A. LINE INPUT Without #</strong>
+- <strong>Issue</strong>: Parser expects file number syntax but finds keyword
+- <strong>Example</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nl">60</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="s2">&quot;DATE &lt;MMDDYY&gt; &quot;</span><span class="p">;</span><span class="kr">LINE</span><span class="w"> </span><span class="vg">A$</span><span class="w">      </span><span class="c1">&#39; dow.bas L10</span>
+</code></pre></div>
+- <strong>Fix</strong>: This is actually <code>INPUT</code> with <code>;LINE</code> modifier, not <code>LINE INPUT</code>
+  - <code>;LINE</code> suppresses the <code>?</code> and newline
+  - Should parse as: <code>INPUT "prompt"; LINE A$</code></p>
+<p><strong>B. IF as Variable Name</strong>
+- Keyword used where variable expected</p>
+<p><strong>Files</strong>:
+- dow.bas, scatpad.bas, sleuth.bas</p>
+<hr />
+<h3 id="7-for-loop-to-issues-low-priority">7. FOR Loop / TO Issues ⚠️ LOW PRIORITY<a class="headerlink" href="#7-for-loop-to-issues-low-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: 2 (4.0%)</p>
+<p><strong>Root Causes</strong>:</p>
+<p><strong>A. Missing TO in FOR Loop</strong>
+- Likely line continuation or syntax error
+- <strong>Example</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nl">315</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="o">=</span><span class="il">1</span><span class="w"> </span><span class="p">[</span><span class="vg">expecting</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="vg">at</span><span class="w"> </span><span class="vg">column</span><span class="w"> </span><span class="il">17</span><span class="p">]</span><span class="w"> </span><span class="c1">&#39; bigtime.bas</span>
+</code></pre></div></p>
+<p><strong>B. Complex FOR Syntax</strong>
+- May involve expressions that confuse parser</p>
+<p><strong>Files</strong>:
+- bigtime.bas, winning.bas</p>
+<hr />
+<h3 id="8-missing-comma-wrong-syntax-low-priority">8. Missing Comma / Wrong Syntax ⚠️ LOW PRIORITY<a class="headerlink" href="#8-missing-comma-wrong-syntax-low-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: 2 (4.0%)</p>
+<p><strong>Root Causes</strong>:</p>
+<p><strong>A. AS Keyword in Wrong Context</strong>
+- <strong>Example</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nl">6</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="o">...</span><span class="w">                           </span><span class="c1">&#39; pckget.bas L6</span>
+</code></pre></div>
+- May be <code>OPEN ... AS #1</code> syntax from other dialects</p>
+<p><strong>B. Missing Comma in Statement</strong></p>
+<p><strong>Files</strong>:
+- directio.bas, pckget.bas</p>
+<hr />
+<h3 id="9-line-number-issues-medium-priority">9. Line Number Issues ⚠️ MEDIUM PRIORITY<a class="headerlink" href="#9-line-number-issues-medium-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: 2 (4.0%)</p>
+<p><strong>Root Causes</strong>:</p>
+<p><strong>A. GOTO with Statement Instead of Line Number</strong>
+- <strong>Issue</strong>: GOTO followed by statement
+- <strong>Example</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nl">28</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">PRINT</span><span class="w"> </span><span class="o">...</span><span class="w">               </span><span class="c1">&#39; division.bas L28</span>
+</code></pre></div>
+- <strong>Fix</strong>: This is a syntax error - GOTO needs line number</p>
+<p><strong>B. Complex ON GOTO with Expression</strong>
+- ON GOTO list parsing issues</p>
+<p><strong>Files</strong>:
+- division.bas, rbbmin27.bas</p>
+<hr />
+<h3 id="10-on-statement-syntax-low-priority">10. ON Statement Syntax ⚠️ LOW PRIORITY<a class="headerlink" href="#10-on-statement-syntax-low-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: 1 (2.0%)</p>
+<p><strong>Root Cause</strong>:
+- ON expression parsing expecting GOTO or GOSUB</p>
+<p><strong>Files</strong>:
+- el-e.bas</p>
+<hr />
+<h3 id="11-save-statement-syntax-low-priority">11. SAVE Statement Syntax ⚠️ LOW PRIORITY<a class="headerlink" href="#11-save-statement-syntax-low-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: 1 (2.0%)</p>
+<p><strong>Root Cause</strong>:
+- <strong>Issue</strong>: SAVE with ,A parameter
+- <strong>Example</strong>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nl">32</span><span class="w"> </span><span class="vg">SAVE</span><span class="w"> </span><span class="s2">&quot;file&quot;</span><span class="p">,</span><span class="vg">A</span><span class="w">                       </span><span class="c1">&#39; krakinst.bas L32</span>
+</code></pre></div>
+- <strong>Fix</strong>: Parser needs to support <code>,A</code> (ASCII format) parameter</p>
+<p><strong>Files</strong>:
+- krakinst.bas</p>
+<hr />
+<h3 id="12-missing-closing-parenthesis-low-priority">12. Missing Closing Parenthesis ⚠️ LOW PRIORITY<a class="headerlink" href="#12-missing-closing-parenthesis-low-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Files</strong>: 1 (2.0%)</p>
+<p><strong>Root Cause</strong>:
+- Likely complex nested expression or function call</p>
+<p><strong>Files</strong>:
+- speech.bas</p>
+<hr />
+<h2 id="priority-recommendations">Priority Recommendations<a class="headerlink" href="#priority-recommendations" title="Permanent link">&para;</a></h2>
+<h3 id="high-priority-quick-wins-38-of-failures">HIGH PRIORITY (Quick Wins - 38% of failures)<a class="headerlink" href="#high-priority-quick-wins-38-of-failures" title="Permanent link">&para;</a></h3>
+<p><strong>1. Add RESET Statement</strong> (affects ~10+ files in category 1)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">parse_reset_statement</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;RESET - Close all open files.&quot;&quot;&quot;</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>  <span class="c1"># consume RESET</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="k">return</span> <span class="n">ResetNode</span><span class="p">()</span>
+</code></pre></div></p>
+<p><strong>2. Support # in File Numbers</strong> (affects 3+ files)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># In OPEN, CLOSE, PRINT #, etc:</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">TokenType</span><span class="o">.</span><span class="n">HASH</span><span class="p">):</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="n">file_num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_expression</span><span class="p">()</span>
+</code></pre></div></p>
+<p><strong>3. Fix INPUT ;LINE Syntax</strong> (affects 3 files)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># In INPUT parsing:</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">TokenType</span><span class="o">.</span><span class="n">SEMICOLON</span><span class="p">):</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">TokenType</span><span class="o">.</span><span class="n">LINE</span><span class="p">):</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>  <span class="c1"># LINE modifier</span>
+</code></pre></div></p>
+<p><strong>4. Support SAVE with ,A Parameter</strong> (affects 1 file)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># In SAVE statement:</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">TokenType</span><span class="o">.</span><span class="n">COMMA</span><span class="p">):</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_token</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s1">&#39;A&#39;</span><span class="p">:</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>        <span class="n">ascii_mode</span> <span class="o">=</span> <span class="kc">True</span>
+</code></pre></div></p>
+<p><strong>Estimated Impact</strong>: Fixing these 4 issues could resolve 19 files (38% of failures)</p>
+<hr />
+<h3 id="medium-priority-moderate-complexity-34-of-failures">MEDIUM PRIORITY (Moderate Complexity - 34% of failures)<a class="headerlink" href="#medium-priority-moderate-complexity-34-of-failures" title="Permanent link">&para;</a></h3>
+<p><strong>5. Allow Empty Colon Statements</strong> (affects 7 files)
+- Support <code>:</code> as empty statement
+- Support <code>::</code> (double colon)</p>
+<p><strong>6. Fix Multiline IF Detection</strong> (affects 5 files)
+- Better handling of complex IF conditions
+- Implicit line continuation</p>
+<p><strong>7. Fix Line Number in GOTO/ON GOTO</strong> (affects 2 files)
+- Better error messages
+- Some may be actual syntax errors to move to bad_syntax/</p>
+<p><strong>Estimated Impact</strong>: 14 files (28% of failures)</p>
+<hr />
+<h3 id="low-priority-complexedge-cases-28-of-failures">LOW PRIORITY (Complex/Edge Cases - 28% of failures)<a class="headerlink" href="#low-priority-complexedge-cases-28-of-failures" title="Permanent link">&para;</a></h3>
+<p><strong>8. Expression Parsing Edge Cases</strong> (affects 6 files)
+- Keywords appearing in expressions
+- Complex expression termination</p>
+<p><strong>9. Statement Syntax Issues</strong> (affects 4 files)
+- STRING$ function contexts
+- ELSE without IF
+- Complex statement patterns</p>
+<p><strong>10. Other Edge Cases</strong> (affects 4 files)
+- FOR loop edge cases
+- Missing commas
+- ON statement variants
+- Parenthesis matching</p>
+<p><strong>Estimated Impact</strong>: 14 files (28% of failures)</p>
+<hr />
+<h2 id="implementation-roadmap">Implementation Roadmap<a class="headerlink" href="#implementation-roadmap" title="Permanent link">&para;</a></h2>
+<h3 id="phase-1-quick-wins-38-of-failures">Phase 1: Quick Wins (38% of failures)<a class="headerlink" href="#phase-1-quick-wins-38-of-failures" title="Permanent link">&para;</a></h3>
+<ol>
+<li>✓ Add RESET statement support</li>
+<li>✓ Add # in file numbers (OPEN <a class="magiclink magiclink-github magiclink-issue" href="https://github.com/avwohl/mbasic/issues/1" title="GitHub Issue: avwohl/mbasic #1">#1</a>, PRINT <a class="magiclink magiclink-github magiclink-issue" href="https://github.com/avwohl/mbasic/issues/1" title="GitHub Issue: avwohl/mbasic #1">#1</a>, etc)</li>
+<li>✓ Fix INPUT ;LINE syntax</li>
+<li>✓ Support SAVE ,A parameter</li>
+</ol>
+<p><strong>Expected Result</strong>: 69.3% → 81% success rate (+19 files)</p>
+<h3 id="phase-2-medium-complexity-28-of-failures">Phase 2: Medium Complexity (28% of failures)<a class="headerlink" href="#phase-2-medium-complexity-28-of-failures" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Allow empty colon statements and ::</li>
+<li>Improve IF condition parsing (multiline detection)</li>
+<li>Better GOTO/ON GOTO error handling</li>
+</ol>
+<p><strong>Expected Result</strong>: 81% → 89% success rate (+14 files)</p>
+<h3 id="phase-3-edge-cases-28-of-failures">Phase 3: Edge Cases (28% of failures)<a class="headerlink" href="#phase-3-edge-cases-28-of-failures" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Fix expression parsing edge cases</li>
+<li>Handle complex statement syntax</li>
+<li>Resolve remaining edge cases</li>
+</ol>
+<p><strong>Expected Result</strong>: 89% → 97%+ success rate (+14 files)</p>
+<hr />
+<h2 id="statistics-summary">Statistics Summary<a class="headerlink" href="#statistics-summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Files</th>
+<th>Percentage</th>
+<th>Priority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Assignment/DEF issues</td>
+<td>16</td>
+<td>32.0%</td>
+<td>HIGH</td>
+</tr>
+<tr>
+<td>Statement continuation</td>
+<td>7</td>
+<td>14.0%</td>
+<td>MEDIUM</td>
+</tr>
+<tr>
+<td>Expression syntax</td>
+<td>6</td>
+<td>12.0%</td>
+<td>MEDIUM</td>
+</tr>
+<tr>
+<td>IF without THEN/GOTO</td>
+<td>5</td>
+<td>10.0%</td>
+<td>MEDIUM</td>
+</tr>
+<tr>
+<td>Invalid statement</td>
+<td>4</td>
+<td>8.0%</td>
+<td>LOW</td>
+</tr>
+<tr>
+<td>Variable name issues</td>
+<td>3</td>
+<td>6.0%</td>
+<td>HIGH</td>
+</tr>
+<tr>
+<td>FOR/TO issues</td>
+<td>2</td>
+<td>4.0%</td>
+<td>LOW</td>
+</tr>
+<tr>
+<td>Missing comma</td>
+<td>2</td>
+<td>4.0%</td>
+<td>LOW</td>
+</tr>
+<tr>
+<td>Line number issues</td>
+<td>2</td>
+<td>4.0%</td>
+<td>MEDIUM</td>
+</tr>
+<tr>
+<td>ON statement</td>
+<td>1</td>
+<td>2.0%</td>
+<td>LOW</td>
+</tr>
+<tr>
+<td>SAVE syntax</td>
+<td>1</td>
+<td>2.0%</td>
+<td>HIGH</td>
+</tr>
+<tr>
+<td>Missing paren</td>
+<td>1</td>
+<td>2.0%</td>
+<td>LOW</td>
+</tr>
+<tr>
+<td><strong>TOTAL</strong></td>
+<td><strong>50</strong></td>
+<td><strong>100%</strong></td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="expected-success-rates">Expected Success Rates<a class="headerlink" href="#expected-success-rates" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Action</th>
+<th>Files Fixed</th>
+<th>Success Rate</th>
+<th>Improvement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Current</td>
+<td>-</td>
+<td>113/163</td>
+<td>69.3%</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Phase 1</td>
+<td>Quick wins</td>
+<td>+19</td>
+<td>81.0%</td>
+<td>+11.7%</td>
+</tr>
+<tr>
+<td>Phase 2</td>
+<td>Medium</td>
+<td>+14</td>
+<td>88.8%</td>
+<td>+7.8%</td>
+</tr>
+<tr>
+<td>Phase 3</td>
+<td>Edge cases</td>
+<td>+14</td>
+<td>97.5%</td>
+<td>+8.7%</td>
+</tr>
+<tr>
+<td>Complete</td>
+<td>All fixes</td>
+<td>+46</td>
+<td>97.5%</td>
+<td>+28.2%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note</strong>: Some files may remain unparseable due to actual syntax errors that should be moved to bad_syntax/.</p>
+<hr />
+<h2 id="files-by-category">Files by Category<a class="headerlink" href="#files-by-category" title="Permanent link">&para;</a></h2>
+<h3 id="category-1-assignmentdef-issues-16-files">Category 1: Assignment/DEF Issues (16 files)<a class="headerlink" href="#category-1-assignmentdef-issues-16-files" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>asm2mac.bas backgamm.bas bibsr2.bas blackbox.bas cpkhex.bas
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>fxparms.bas othello.bas qsolist.bas rbsutl31.bas rc5.bas
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>satelite.bas sfamove.bas sfaobdes.bas sfavoc.bas xformer.bas xref.bas
+</code></pre></div>
+<h3 id="category-2-statement-continuation-7-files">Category 2: Statement Continuation (7 files)<a class="headerlink" href="#category-2-statement-continuation-7-files" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>handplot.bas ic-timer.bas oldroute.bas qubic.bas sdir.bas
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>survival.bas trade.bas
+</code></pre></div>
+<h3 id="category-3-expression-syntax-6-files">Category 3: Expression Syntax (6 files)<a class="headerlink" href="#category-3-expression-syntax-6-files" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>clock-m.bas deprec.bas header6.bas mbasedit.bas pcat.bas proset.bas
+</code></pre></div>
+<h3 id="category-4-if-without-thengoto-5-files">Category 4: IF Without THEN/GOTO (5 files)<a class="headerlink" href="#category-4-if-without-thengoto-5-files" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>disasmb.bas fndtble.bas sortuser.bas wordpuzl.bas xref19.bas
+</code></pre></div>
+<h3 id="category-5-invalid-statement-4-files">Category 5: Invalid Statement (4 files)<a class="headerlink" href="#category-5-invalid-statement-4-files" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>goldmine.bas lanes.bas tricks.bas unpro2.bas
+</code></pre></div>
+<h3 id="category-6-variable-name-issues-3-files">Category 6: Variable Name Issues (3 files)<a class="headerlink" href="#category-6-variable-name-issues-3-files" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>dow.bas scatpad.bas sleuth.bas
+</code></pre></div>
+<h3 id="categories-7-12-remaining-15-files">Categories 7-12: Remaining (15 files)<a class="headerlink" href="#categories-7-12-remaining-15-files" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>bigtime.bas winning.bas directio.bas pckget.bas division.bas
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>rbbmin27.bas el-e.bas krakinst.bas speech.bas
+</code></pre></div>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Implement Phase 1 fixes</strong> (RESET, #, INPUT ;LINE, SAVE ,A)</li>
+<li><strong>Retest corpus</strong> to verify improvements</li>
+<li><strong>Analyze remaining failures</strong> to refine categories</li>
+<li><strong>Implement Phase 2 fixes</strong> (empty colon, multiline IF)</li>
+<li><strong>Move actual syntax errors to bad_syntax/</strong> as appropriate</li>
+</ol>
+<p>With systematic implementation of these fixes, we can achieve 80%+ success rate in Phase 1, and potentially 90%+ after Phase 2.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

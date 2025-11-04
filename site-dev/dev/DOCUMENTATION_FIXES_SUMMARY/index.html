@@ -1,0 +1,1909 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/dev/DOCUMENTATION_FIXES_SUMMARY/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Documentation Fixes Summary - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#documentation-fixes-summary" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Documentation Fixes Summary
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#high-severity-issues-11-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      High Severity Issues (11 Fixed) ✅
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="High Severity Issues (11 Fixed) ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-product-name-consistency" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Product Name Consistency
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-open-statement-corruption" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. OPEN Statement Corruption
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-print-statement-corruption" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. PRINT Statement Corruption
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-showsettingssetsetting-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. SHOWSETTINGS/SETSETTING Documentation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-keyboard-shortcut-conflicts" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Keyboard Shortcut Conflicts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-file-loading-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. File Loading Shortcuts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-variable-editing-contradictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Variable Editing Contradictions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-web-ui-breakpoint-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Web UI Breakpoint Documentation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-web-ui-file-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. Web UI File Access
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-findreplace-availability" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. Find/Replace Availability
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-syntax-highlighting-availability" class="md-nav__link">
+    <span class="md-ellipsis">
+      11. Syntax Highlighting Availability
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#medium-severity-issues-10-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Medium Severity Issues (10+ Fixed) ✅
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Medium Severity Issues (10+ Fixed) ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#missing-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      Missing References
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-format-inconsistencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Version Format Inconsistencies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#see-also-sections" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also Sections
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formatting-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Formatting Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cross-reference-inconsistencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cross-Reference Inconsistencies
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#low-severity-issues-5-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Low Severity Issues (5+ Fixed) ✅
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Low Severity Issues (5+ Fixed) ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#typography-corrections" class="md-nav__link">
+    <span class="md-ellipsis">
+      Typography Corrections
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Formatting
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-readability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Improved Readability
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation-standards-applied" class="md-nav__link">
+    <span class="md-ellipsis">
+      Documentation Standards Applied
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-fixes-round-2-14-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Fixes Round 2 (14+ Fixed) ✅
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Additional Fixes Round 2 (14+ Fixed) ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      DATA Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      READ Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chain-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      CHAIN Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#string-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      STRING$ Function
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inkey-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      INKEY$ Function
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Cleanup
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-fixes-round-3-20-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Fixes Round 3 (20+ Fixed) ✅
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Additional Fixes Round 3 (20+ Fixed) ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#error-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      ERROR Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resume-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      RESUME Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      INPUT Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#field-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      FIELD Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#line-input-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      LINE INPUT Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tab-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      TAB Function
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#whilewend-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      WHILE...WEND Statement
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-fixes-round-4-10-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Fixes Round 4 (10+ Fixed) ✅
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Additional Fixes Round 4 (10+ Fixed) ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ongosubongoto-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      ON...GOSUB/ON...GOTO Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ifthenelse-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      IF...THEN...ELSE Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#defintsngdblstr-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      DEFINT/SNG/DBL/STR Statement
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-fixes-round-5-15-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Fixes Round 5 (15+ Fixed) ✅
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Additional Fixes Round 5 (15+ Fixed) ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spc-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      SPC Function
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pos-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      POS Function
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-error-goto-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      ON ERROR GOTO Statement
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-fixes-round-6-10-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Fixes Round 6 (10+ Fixed) ✅
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Additional Fixes Round 6 (10+ Fixed) ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stop-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      STOP Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#width-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      WIDTH Statement
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remaining-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remaining Work
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#files-modified-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files Modified (Summary)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Files Modified (Summary)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#high-priority-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      High Priority Files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#medium-priority-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Medium Priority Files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-files-round-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Files - Round 1
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-files-round-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Files - Round 2
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-files-round-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Files - Round 3
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-files-round-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Files - Round 4
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-files-round-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Files - Round 5
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-files-round-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Files - Round 6
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verification
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/dev/DOCUMENTATION_FIXES_SUMMARY.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="documentation-fixes-summary">Documentation Fixes Summary<a class="headerlink" href="#documentation-fixes-summary" title="Permanent link">&para;</a></h1>
+<p>Date: 2025-11-03
+Report Reference: <code>docs/history/docs_inconsistencies_report-v4.md</code></p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>Fixed documentation inconsistencies identified in the v4 report, addressing <strong>40+ issues</strong> across all severity levels. This represents a comprehensive documentation cleanup effort.</p>
+<h2 id="high-severity-issues-11-fixed">High Severity Issues (11 Fixed) ✅<a class="headerlink" href="#high-severity-issues-11-fixed" title="Permanent link">&para;</a></h2>
+<h3 id="1-product-name-consistency">1. Product Name Consistency<a class="headerlink" href="#1-product-name-consistency" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Files:</strong> <code>math-functions.md</code></li>
+<li><strong>Fix:</strong> Standardized to use "BASIC-80" for original language, "MBASIC" for modern implementation</li>
+</ul>
+<h3 id="2-open-statement-corruption">2. OPEN Statement Corruption<a class="headerlink" href="#2-open-statement-corruption" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>docs/help/common/language/statements/open.md</code></li>
+<li><strong>Fix:</strong> Completely reformatted Remarks section, fixed mode descriptions, removed garbled text</li>
+</ul>
+<h3 id="3-print-statement-corruption">3. PRINT Statement Corruption<a class="headerlink" href="#3-print-statement-corruption" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>docs/help/common/language/statements/print.md</code></li>
+<li><strong>Fix:</strong> Completely rewrote documentation with clean formatting, removed corrupted PRINT USING text</li>
+</ul>
+<h3 id="4-showsettingssetsetting-documentation">4. SHOWSETTINGS/SETSETTING Documentation<a class="headerlink" href="#4-showsettingssetsetting-documentation" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Files:</strong> Already existed at <code>showsettings.md</code> and <code>setsetting.md</code></li>
+<li><strong>Fix:</strong> Verified files exist and are properly linked (report was incorrect)</li>
+</ul>
+<h3 id="5-keyboard-shortcut-conflicts">5. Keyboard Shortcut Conflicts<a class="headerlink" href="#5-keyboard-shortcut-conflicts" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Files:</strong> <code>docs/help/ui/curses/feature-reference.md</code>, <code>quick-reference.md</code></li>
+<li><strong>Fix:</strong> Clarified Ctrl+X is for "Stop execution" only, removed incorrect Cut/Copy/Paste claims</li>
+</ul>
+<h3 id="6-file-loading-shortcuts">6. File Loading Shortcuts<a class="headerlink" href="#6-file-loading-shortcuts" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>docs/help/ui/curses/files.md</code></li>
+<li><strong>Fix:</strong> Changed "Press b" typo to correct "Press Ctrl+O"</li>
+</ul>
+<h3 id="7-variable-editing-contradictions">7. Variable Editing Contradictions<a class="headerlink" href="#7-variable-editing-contradictions" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>docs/help/ui/curses/quick-reference.md</code></li>
+<li><strong>Fix:</strong> Removed incorrect claim about 'e' or 'Enter' editing variables, clarified limitations</li>
+</ul>
+<h3 id="8-web-ui-breakpoint-documentation">8. Web UI Breakpoint Documentation<a class="headerlink" href="#8-web-ui-breakpoint-documentation" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>docs/help/ui/web/debugging.md</code></li>
+<li><strong>Fix:</strong> Clarified basic implementation vs planned features, marked advanced features as "Future"</li>
+</ul>
+<h3 id="9-web-ui-file-access">9. Web UI File Access<a class="headerlink" href="#9-web-ui-file-access" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Files:</strong> <code>docs/help/ui/web/web-interface.md</code>, <code>docs/library/index.md</code></li>
+<li><strong>Fix:</strong> Clarified browser file picker access, updated limitations accurately</li>
+</ul>
+<h3 id="10-findreplace-availability">10. Find/Replace Availability<a class="headerlink" href="#10-findreplace-availability" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Files:</strong> <code>docs/help/mbasic/extensions.md</code>, <code>features.md</code></li>
+<li><strong>Fix:</strong> Corrected to show both Find AND Replace are implemented in Tk UI</li>
+</ul>
+<h3 id="11-syntax-highlighting-availability">11. Syntax Highlighting Availability<a class="headerlink" href="#11-syntax-highlighting-availability" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>docs/help/mbasic/features.md</code></li>
+<li><strong>Fix:</strong> Clarified syntax highlighting IS available in both Tk and Web UIs</li>
+</ul>
+<h2 id="medium-severity-issues-10-fixed">Medium Severity Issues (10+ Fixed) ✅<a class="headerlink" href="#medium-severity-issues-10-fixed" title="Permanent link">&para;</a></h2>
+<h3 id="missing-references">Missing References<a class="headerlink" href="#missing-references" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>docs/help/common/language/functions/index.md</code></li>
+<li><strong>Fix:</strong> Added missing TAB function to String Functions category</li>
+</ul>
+<h3 id="version-format-inconsistencies">Version Format Inconsistencies<a class="headerlink" href="#version-format-inconsistencies" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Files:</strong> <code>clear.md</code>, <code>end.md</code></li>
+<li><strong>Fix:</strong> Standardized "Extended" (removed hyphen from "-Extended")</li>
+</ul>
+<h3 id="see-also-sections">See Also Sections<a class="headerlink" href="#see-also-sections" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>lpos.md</code></li>
+<li><strong>Fix:</strong> Expanded See Also section with additional relevant references</li>
+</ul>
+<h3 id="formatting-issues">Formatting Issues<a class="headerlink" href="#formatting-issues" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Files:</strong> <code>inkey_dollar.md</code>, <code>save.md</code>, <code>gosub-return.md</code>, <code>for-next.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed "Contro1-C" → "Control-C" typos</li>
+<li>Fixed "cont~ining" → "containing"</li>
+<li>Fixed irregular spacing in syntax definitions</li>
+<li>Cleaned up garbled text and formatting</li>
+</ul>
+<h3 id="cross-reference-inconsistencies">Cross-Reference Inconsistencies<a class="headerlink" href="#cross-reference-inconsistencies" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Files:</strong> <code>for-next.md</code>, <code>gosub-return.md</code></li>
+<li><strong>Fix:</strong> Standardized references using "..." instead of bullet characters (•••)</li>
+</ul>
+<h2 id="low-severity-issues-5-fixed">Low Severity Issues (5+ Fixed) ✅<a class="headerlink" href="#low-severity-issues-5-fixed" title="Permanent link">&para;</a></h2>
+<h3 id="typography-corrections">Typography Corrections<a class="headerlink" href="#typography-corrections" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>end.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>"anywbere" → "anywhere"</li>
+<li>"BASIC-aO" → "BASIC-80"</li>
+</ul>
+<h3 id="example-formatting">Example Formatting<a class="headerlink" href="#example-formatting" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>gosub-return.md</code></li>
+<li><strong>Fix:</strong> Removed incorrect indentation, added proper output sections</li>
+</ul>
+<h3 id="improved-readability">Improved Readability<a class="headerlink" href="#improved-readability" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>save.md</code></li>
+<li><strong>Fix:</strong> Reorganized Remarks section with Options subsection for clarity</li>
+</ul>
+<h2 id="documentation-standards-applied">Documentation Standards Applied<a class="headerlink" href="#documentation-standards-applied" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Accuracy First</strong> - Clearly distinguished implemented vs planned features</li>
+<li><strong>Consistency</strong> - Ensured all related documents agree on feature availability</li>
+<li><strong>Clarity</strong> - Removed ambiguous language like "if available"</li>
+<li><strong>Completeness</strong> - Added missing UI sections and cross-references</li>
+<li><strong>Formatting</strong> - Standardized spacing, punctuation, and reference styles</li>
+</ol>
+<h2 id="additional-fixes-round-2-14-fixed">Additional Fixes Round 2 (14+ Fixed) ✅<a class="headerlink" href="#additional-fixes-round-2-14-fixed" title="Permanent link">&para;</a></h2>
+<h3 id="data-statement">DATA Statement<a class="headerlink" href="#data-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/data.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed tilde in "program~s" → "program's"</li>
+<li>Removed section references</li>
+<li>Cleaned up extensive spacing issues in Remarks</li>
+<li>Added proper example with output</li>
+</ul>
+<h3 id="read-statement">READ Statement<a class="headerlink" href="#read-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/read.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed Purpose section reference</li>
+<li>Added complete Remarks section (was empty)</li>
+<li>Added proper example with output</li>
+<li>Fixed tilde in See Also description</li>
+</ul>
+<h3 id="chain-statement">CHAIN Statement<a class="headerlink" href="#chain-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/chain.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Removed excessive spaces in description</li>
+<li>Fixed syntax formatting</li>
+<li>Cleaned up See Also descriptions</li>
+<li>Added comprehensive example</li>
+</ul>
+<h3 id="string-function">STRING$ Function<a class="headerlink" href="#string-function" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>functions/string_dollar.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed indentation in example code</li>
+<li>Separated output from code</li>
+<li>Improved formatting</li>
+</ul>
+<h3 id="inkey-function">INKEY$ Function<a class="headerlink" href="#inkey-function" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>functions/inkey_dollar.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed "cont~ining" → "containing"</li>
+<li>Fixed "Contro1-C" → "Control-C"</li>
+<li>Fixed "~TlMED" → "REM TIMED"</li>
+<li>Fixed "I%=l" → "I%=1"</li>
+<li>Fixed "A<span class="arithmatex"><span class="MathJax_Preview">=O" → "A</span><script type="math/tex">=O" → "A</script></span>=0"</li>
+</ul>
+<h3 id="additional-cleanup">Additional Cleanup<a class="headerlink" href="#additional-cleanup" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Files:</strong> Multiple statement and function files</li>
+<li><strong>Fixes:</strong></li>
+<li>Standardized ellipsis usage (... instead of •••)</li>
+<li>Fixed version format inconsistencies</li>
+<li>Expanded minimal See Also sections</li>
+<li>Improved example formatting throughout</li>
+</ul>
+<h2 id="additional-fixes-round-3-20-fixed">Additional Fixes Round 3 (20+ Fixed) ✅<a class="headerlink" href="#additional-fixes-round-3-20-fixed" title="Permanent link">&para;</a></h2>
+<h3 id="error-statement">ERROR Statement<a class="headerlink" href="#error-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/error.md</code></li>
+<li><strong>Fix:</strong> Removed extra spaces in See Also description</li>
+</ul>
+<h3 id="resume-statement">RESUME Statement<a class="headerlink" href="#resume-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/resume.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed "error1" → "error"</li>
+<li>Removed excessive spaces</li>
+<li>Added ERR/ERL reference</li>
+</ul>
+<h3 id="input-statement">INPUT Statement<a class="headerlink" href="#input-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/input.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed "during      program" spacing</li>
+<li>Fixed X"'2 and R"'2 → X^2 and R^2</li>
+<li>Reorganized examples with proper output</li>
+<li>Fixed "to   a string" spacing</li>
+</ul>
+<h3 id="field-statement">FIELD Statement<a class="headerlink" href="#field-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/field.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed "und~r" → "under"</li>
+<li>Fixed "the·" → "the"</li>
+<li>Fixed "l28" → "128"</li>
+<li>Removed excessive spaces throughout</li>
+<li>Improved formatting with code tags</li>
+</ul>
+<h3 id="line-input-statement">LINE INPUT Statement<a class="headerlink" href="#line-input-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/line-input.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed "BASIC-SO" → "BASIC-80"</li>
+<li>Removed excessive spaces</li>
+<li>Added proper example with output</li>
+</ul>
+<h3 id="tab-function">TAB Function<a class="headerlink" href="#tab-function" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>functions/tab.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed example formatting</li>
+<li>Completely rewrote corrupted See Also section</li>
+<li>Removed unrelated references</li>
+</ul>
+<h3 id="whilewend-statement">WHILE...WEND Statement<a class="headerlink" href="#whilewend-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/while-wend.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed bullet characters (•••) → ellipsis (...)</li>
+<li>Fixed "Le." → "i.e."</li>
+<li>Fixed "nWHILE without WENDn" → "WHILE without WEND"</li>
+<li>Fixed OCR errors in example (l→1, O→0, »→&gt;, TaRU→through)</li>
+<li>Removed excessive spaces</li>
+</ul>
+<h2 id="additional-fixes-round-4-10-fixed">Additional Fixes Round 4 (10+ Fixed) ✅<a class="headerlink" href="#additional-fixes-round-4-10-fixed" title="Permanent link">&para;</a></h2>
+<h3 id="ongosubongoto-statement">ON...GOSUB/ON...GOTO Statement<a class="headerlink" href="#ongosubongoto-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/on-gosub-on-goto.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Standardized title format (removed "AND")</li>
+<li>Fixed bullet characters (•••) → ellipsis (...)</li>
+<li>Removed excessive spaces</li>
+<li>Updated See Also references</li>
+</ul>
+<h3 id="ifthenelse-statement">IF...THEN...ELSE Statement<a class="headerlink" href="#ifthenelse-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/if-then-else-if-goto.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Standardized title format</li>
+<li>Fixed corrupted syntax section</li>
+<li>Fixed bullet characters throughout</li>
+<li>Cleaned up extra spaces</li>
+<li>Fixed version notes formatting</li>
+</ul>
+<h3 id="defintsngdblstr-statement">DEFINT/SNG/DBL/STR Statement<a class="headerlink" href="#defintsngdblstr-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/defint-sng-dbl-str.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed "1etter" → "letter" typo</li>
+<li>Fixed "BASIC-SO" → "BASIC-80"</li>
+<li>Removed excessive spaces</li>
+<li>Completely rewrote example section with proper formatting</li>
+<li>Added clear comments and demonstrations</li>
+</ul>
+<h2 id="additional-fixes-round-5-15-fixed">Additional Fixes Round 5 (15+ Fixed) ✅<a class="headerlink" href="#additional-fixes-round-5-15-fixed" title="Permanent link">&para;</a></h2>
+<h3 id="spc-function">SPC Function<a class="headerlink" href="#spc-function" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>functions/spc.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed corrupted example output "OVER ~ERE" → proper spacing</li>
+<li>Removed misplaced note from example</li>
+<li>Simplified See Also to relevant functions only</li>
+</ul>
+<h3 id="pos-function">POS Function<a class="headerlink" href="#pos-function" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>functions/pos.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed parameter mismatch (X vs I)</li>
+<li>Added proper example with output</li>
+<li>Replaced unrelated file I/O references with cursor-related functions</li>
+</ul>
+<h3 id="on-error-goto-statement">ON ERROR GOTO Statement<a class="headerlink" href="#on-error-goto-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/on-error-goto.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed "BASIC-SO" → "BASIC-80"</li>
+<li>Fixed "~TO O" → "GOTO 0"</li>
+<li>Removed excessive spaces throughout</li>
+<li>Fixed "error1" typo in See Also</li>
+<li>Added comprehensive example</li>
+</ul>
+<h2 id="additional-fixes-round-6-10-fixed">Additional Fixes Round 6 (10+ Fixed) ✅<a class="headerlink" href="#additional-fixes-round-6-10-fixed" title="Permanent link">&para;</a></h2>
+<h3 id="stop-statement">STOP Statement<a class="headerlink" href="#stop-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/stop.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed excessive spacing in description and remarks</li>
+<li>Fixed "AA2" → "A^2" and "B A3" → "B^3" in example</li>
+<li>Fixed "RON" → "RUN" typo</li>
+<li>Added proper output section</li>
+<li>Simplified and corrected See Also section</li>
+</ul>
+<h3 id="width-statement">WIDTH Statement<a class="headerlink" href="#width-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>File:</strong> <code>statements/width.md</code></li>
+<li><strong>Fixes:</strong></li>
+<li>Fixed spacing in description</li>
+<li>Cleaned up remarks section</li>
+<li>Fixed "BASIC-SO" reference removal</li>
+<li>Removed page footer from example</li>
+<li>Reorganized example with clear sections</li>
+</ul>
+<h2 id="remaining-work">Remaining Work<a class="headerlink" href="#remaining-work" title="Permanent link">&para;</a></h2>
+<p>Of the original 133 inconsistencies:
+- <strong>Fixed:</strong> 95+ issues across all severity levels (71% complete)
+- <strong>Remaining:</strong> ~38 lower priority issues (29% remaining)</p>
+<p>The critical documentation problems have been resolved, ensuring users get accurate information about MBASIC's capabilities.</p>
+<h2 id="files-modified-summary">Files Modified (Summary)<a class="headerlink" href="#files-modified-summary" title="Permanent link">&para;</a></h2>
+<h3 id="high-priority-files">High Priority Files<a class="headerlink" href="#high-priority-files" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>/docs/help/common/language/statements/open.md</code></li>
+<li><code>/docs/help/common/language/statements/print.md</code></li>
+<li><code>/docs/help/ui/curses/feature-reference.md</code></li>
+<li><code>/docs/help/ui/curses/quick-reference.md</code></li>
+<li><code>/docs/help/ui/web/debugging.md</code></li>
+<li><code>/docs/help/ui/web/web-interface.md</code></li>
+<li><code>/docs/help/mbasic/extensions.md</code></li>
+<li><code>/docs/help/mbasic/features.md</code></li>
+</ul>
+<h3 id="medium-priority-files">Medium Priority Files<a class="headerlink" href="#medium-priority-files" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>/docs/help/common/language/functions/index.md</code></li>
+<li><code>/docs/help/common/language/functions/inkey_dollar.md</code></li>
+<li><code>/docs/help/common/language/functions/lpos.md</code></li>
+<li><code>/docs/help/common/language/statements/clear.md</code></li>
+<li><code>/docs/help/common/language/statements/end.md</code></li>
+<li><code>/docs/help/common/language/statements/save.md</code></li>
+<li><code>/docs/help/common/language/statements/gosub-return.md</code></li>
+<li><code>/docs/help/common/language/statements/for-next.md</code></li>
+</ul>
+<h3 id="additional-files-round-1">Additional Files - Round 1<a class="headerlink" href="#additional-files-round-1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>/docs/library/index.md</code></li>
+<li><code>/docs/help/common/language/appendices/math-functions.md</code></li>
+<li><code>/docs/help/ui/curses/files.md</code></li>
+<li><code>/docs/help/ui/curses/variables.md</code></li>
+</ul>
+<h3 id="additional-files-round-2">Additional Files - Round 2<a class="headerlink" href="#additional-files-round-2" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>/docs/help/common/language/statements/data.md</code></li>
+<li><code>/docs/help/common/language/statements/read.md</code></li>
+<li><code>/docs/help/common/language/statements/chain.md</code></li>
+<li><code>/docs/help/common/language/functions/string_dollar.md</code></li>
+<li><code>/docs/help/common/language/functions/inkey_dollar.md</code></li>
+</ul>
+<h3 id="additional-files-round-3">Additional Files - Round 3<a class="headerlink" href="#additional-files-round-3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>/docs/help/common/language/statements/error.md</code></li>
+<li><code>/docs/help/common/language/statements/resume.md</code></li>
+<li><code>/docs/help/common/language/statements/input.md</code></li>
+<li><code>/docs/help/common/language/statements/field.md</code></li>
+<li><code>/docs/help/common/language/statements/line-input.md</code></li>
+<li><code>/docs/help/common/language/functions/tab.md</code></li>
+<li><code>/docs/help/common/language/statements/while-wend.md</code></li>
+</ul>
+<h3 id="additional-files-round-4">Additional Files - Round 4<a class="headerlink" href="#additional-files-round-4" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>/docs/help/common/language/statements/on-gosub-on-goto.md</code></li>
+<li><code>/docs/help/common/language/statements/if-then-else-if-goto.md</code></li>
+<li><code>/docs/help/common/language/statements/defint-sng-dbl-str.md</code></li>
+</ul>
+<h3 id="additional-files-round-5">Additional Files - Round 5<a class="headerlink" href="#additional-files-round-5" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>/docs/help/common/language/functions/spc.md</code></li>
+<li><code>/docs/help/common/language/functions/pos.md</code></li>
+<li><code>/docs/help/common/language/statements/on-error-goto.md</code></li>
+</ul>
+<h3 id="additional-files-round-6">Additional Files - Round 6<a class="headerlink" href="#additional-files-round-6" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>/docs/help/common/language/statements/stop.md</code></li>
+<li><code>/docs/help/common/language/statements/width.md</code></li>
+</ul>
+<h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
+<p>All fixes have been applied and verified. The documentation now provides:
+- Accurate feature descriptions matching actual implementation
+- Consistent terminology and formatting
+- Clear distinction between implemented and planned features
+- Proper cross-references and See Also sections</p>
+<hr />
+<p><em>Report generated after fixing issues from <code>docs/history/docs_inconsistencies_report-v4.md</code></em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1448 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/history/COMPILER_VS_INTERPRETER_DIFFERENCES/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>MBASIC Compiler vs Interpreter Differences - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mbasic-compiler-vs-interpreter-differences" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MBASIC Compiler vs Interpreter Differences
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../dev/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-operational-differences" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. OPERATIONAL DIFFERENCES
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. OPERATIONAL DIFFERENCES">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-no-direct-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 No Direct Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-commands-not-implemented-in-compiler" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.2 Commands Not Implemented in Compiler
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-program-creation-and-editing" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3 Program Creation and Editing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-physical-line-length" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.4 Physical Line Length
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-line-numbers-in-object-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.5 Line Numbers in Object Code
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#16-error-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.6 Error Reporting
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-language-differences" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. LANGUAGE DIFFERENCES
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. LANGUAGE DIFFERENCES">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-call-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1 CALL Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-common-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.2 COMMON Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-chain-and-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.3 CHAIN and RUN
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-defintsngdblstr" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.4 DEFINT/SNG/DBL/STR
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-usrn-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.5 USRn Functions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-dim-and-erase" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.6 DIM and ERASE
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-end-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.7 END Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28-on-error-gotoresume" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.8 ON ERROR GOTO/RESUME
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#29-rem-statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.9 REM Statements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#210-stop-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.10 STOP Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#211-trontroff" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.11 TRON/TROFF
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#212-fornext-and-whilewend" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.12 FOR/NEXT and WHILE/WEND
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#213-double-precision-transcendental-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.13 Double Precision Transcendental Functions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#214-include-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.14 %INCLUDE Statement
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-expression-evaluation-differences" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. EXPRESSION EVALUATION DIFFERENCES
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. EXPRESSION EVALUATION DIFFERENCES">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-type-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 Type Conversion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-numeric-overflow-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 Numeric Overflow Handling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-algebraic-transformations" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.3 Algebraic Transformations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-compilation-switches" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. COMPILATION SWITCHES
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. PERFORMANCE CONSIDERATIONS
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. PERFORMANCE CONSIDERATIONS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-integer-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.1 Integer Variables
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-code-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.2 Code Size
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-development-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. DEVELOPMENT WORKFLOW
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. DEVELOPMENT WORKFLOW">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommended Approach:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debugging:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-file-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. FILE FORMATS
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/history/COMPILER_VS_INTERPRETER_DIFFERENCES.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="mbasic-compiler-vs-interpreter-differences">MBASIC Compiler vs Interpreter Differences<a class="headerlink" href="#mbasic-compiler-vs-interpreter-differences" title="Permanent link">&para;</a></h1>
+<p>This document outlines the key differences between the MBASIC-80 5.x Interpreter and the MBASIC Compiler (BASCOM), based on the MBASIC Compiler 1980 documentation.</p>
+<h2 id="1-operational-differences">1. OPERATIONAL DIFFERENCES<a class="headerlink" href="#1-operational-differences" title="Permanent link">&para;</a></h2>
+<h3 id="11-no-direct-mode">1.1 No Direct Mode<a class="headerlink" href="#11-no-direct-mode" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: No direct mode or interactive command level. The compiler only reads compiler commands to specify files to compile.</li>
+<li><strong>Interpreter</strong>: Has both direct mode (for immediate execution) and indirect mode (for program entry).</li>
+</ul>
+<h3 id="12-commands-not-implemented-in-compiler">1.2 Commands Not Implemented in Compiler<a class="headerlink" href="#12-commands-not-implemented-in-compiler" title="Permanent link">&para;</a></h3>
+<p>The following commands are NOT available in the compiled environment:
+- <code>AUTO</code> - Auto line numbering
+- <code>CLEAR</code> - Clear memory
+- <code>CLOAD</code> - Load from cassette
+- <code>COMMON</code> - Common variables (generates fatal error)
+- <code>CONT</code> - Continue execution
+- <code>CSAVE</code> - Save to cassette
+- <code>DELETE</code> - Delete program lines
+- <code>EDIT</code> - Edit program lines
+- <code>LIST</code> - List program
+- <code>LLIST</code> - List program to printer
+- <code>LOAD</code> - Load program
+- <code>MERGE</code> - Merge programs
+- <code>NEW</code> - Clear program from memory
+- <code>RENUM</code> - Renumber program lines
+- <code>SAVE</code> - Save program</p>
+<h3 id="13-program-creation-and-editing">1.3 Program Creation and Editing<a class="headerlink" href="#13-program-creation-and-editing" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: Must use Microsoft's EDIT-80 Text Editor or the BASIC-80 interpreter to create and edit programs. Files must be saved in ASCII format (using the <code>A</code> option with SAVE).</li>
+<li><strong>Interpreter</strong>: Built-in editing capabilities with EDIT command.</li>
+</ul>
+<h3 id="14-physical-line-length">1.4 Physical Line Length<a class="headerlink" href="#14-physical-line-length" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: Maximum physical line length is 127 characters (logical statements can span multiple physical lines using line feed).</li>
+<li><strong>Interpreter</strong>: Different line length limitations.</li>
+</ul>
+<h3 id="15-line-numbers-in-object-code">1.5 Line Numbers in Object Code<a class="headerlink" href="#15-line-numbers-in-object-code" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: Line numbers are NOT included in object code by default (to reduce size). Line numbers only included if <code>/D</code>, <code>/X</code>, or <code>/E</code> compilation switches are used.</li>
+<li><strong>Interpreter</strong>: Line numbers always available for debugging.</li>
+</ul>
+<h3 id="16-error-reporting">1.6 Error Reporting<a class="headerlink" href="#16-error-reporting" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: Runtime errors report memory addresses instead of line numbers (unless debug switches used). Requires compiler listing and LINK-80 map to identify error location.</li>
+<li><strong>Interpreter</strong>: Errors always report line numbers.</li>
+</ul>
+<h2 id="2-language-differences">2. LANGUAGE DIFFERENCES<a class="headerlink" href="#2-language-differences" title="Permanent link">&para;</a></h2>
+<h3 id="21-call-statement">2.1 CALL Statement<a class="headerlink" href="#21-call-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: <code>&lt;variable name&gt;</code> must contain an External symbol recognized by LINK-80 as a global symbol. Must be supplied as assembly language subroutine or FORTRAN-80 library routine.</li>
+<li><strong>Interpreter</strong>: Different calling mechanism.</li>
+</ul>
+<h3 id="22-common-statement">2.2 COMMON Statement<a class="headerlink" href="#22-common-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: NOT implemented - generates fatal error. Future versions will implement it similar to FORTRAN's COMMON statement.</li>
+<li><strong>Interpreter</strong>: Fully implemented.</li>
+</ul>
+<h3 id="23-chain-and-run">2.3 CHAIN and RUN<a class="headerlink" href="#23-chain-and-run" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: Only simplest form implemented (<code>CHAIN filename$</code>). For CP/M, default extension is <code>.COM</code>. Programs can chain to any COM file, but command line information is not automatically passed (must use POKE).</li>
+<li><strong>Interpreter</strong>: Full implementation with parameter passing.</li>
+</ul>
+<h3 id="24-defintsngdblstr">2.4 DEFINT/SNG/DBL/STR<a class="headerlink" href="#24-defintsngdblstr" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: DEFxxx statements are NOT executed - compiler reacts to static occurrence regardless of execution order. Takes effect when line is encountered during compilation. Type remains in effect until end of program or different DEFxxx statement.</li>
+<li><strong>Interpreter</strong>: DEFxxx statements are executed dynamically during runtime.</li>
+</ul>
+<h3 id="25-usrn-functions">2.5 USRn Functions<a class="headerlink" href="#25-usrn-functions" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: Significantly different - argument is ignored, integer result returned in HL registers. Recommended to replace with CALL statement.</li>
+<li><strong>Interpreter</strong>: Full implementation with argument passing.</li>
+</ul>
+<h3 id="26-dim-and-erase">2.6 DIM and ERASE<a class="headerlink" href="#26-dim-and-erase" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>:</li>
+<li>DIM is scanned rather than executed (like DEFxxx)</li>
+<li>Takes effect when line is encountered during compilation</li>
+<li>Subscript values must be integer constants (no variables, expressions, or floating point)</li>
+<li>Cannot redimension arrays - generates "Redimensioned array" error</li>
+<li>ERASE statement NOT implemented - generates fatal error</li>
+<li><strong>Interpreter</strong>:</li>
+<li>DIM executed dynamically</li>
+<li>ERASE allows arrays to be erased and redimensioned</li>
+<li>Subscripts can be variables or expressions</li>
+</ul>
+<h3 id="27-end-statement">2.7 END Statement<a class="headerlink" href="#27-end-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: Closes files and returns control to operating system. Compiler assumes END at end of program, so "running off the end" produces proper termination.</li>
+<li><strong>Interpreter</strong>: Different behavior.</li>
+</ul>
+<h3 id="28-on-error-gotoresume">2.8 ON ERROR GOTO/RESUME<a class="headerlink" href="#28-on-error-gotoresume" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>:</li>
+<li>Requires <code>/E</code> switch if program contains ON ERROR GOTO and RESUME <line number></li>
+<li>Requires <code>/X</code> switch if program uses RESUME NEXT, RESUME, or RESUME 0</li>
+<li><code>/E</code> generates extra code for GOSUB/RETURN</li>
+<li><code>/X</code> relinquishes certain optimizations</li>
+<li><strong>Interpreter</strong>: No special switches required.</li>
+</ul>
+<h3 id="29-rem-statements">2.9 REM Statements<a class="headerlink" href="#29-rem-statements" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: REM statements and remarks (starting with single quote) take NO time or space during execution. Can be used freely.</li>
+<li><strong>Interpreter</strong>: REMs consume some runtime resources.</li>
+</ul>
+<h3 id="210-stop-statement">2.10 STOP Statement<a class="headerlink" href="#210-stop-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: Identical to END - closes files and returns to operating system.</li>
+<li><strong>Interpreter</strong>: Halts execution but allows CONT to resume.</li>
+</ul>
+<h3 id="211-trontroff">2.11 TRON/TROFF<a class="headerlink" href="#211-trontroff" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: Requires <code>/D</code> compilation switch. Without it, TRON/TROFF are ignored and warning message generated.</li>
+<li><strong>Interpreter</strong>: Always available.</li>
+</ul>
+<h3 id="212-fornext-and-whilewend">2.12 FOR/NEXT and WHILE/WEND<a class="headerlink" href="#212-fornext-and-whilewend" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: Loops must be statically nested (proper nesting determined at compile time).</li>
+<li><strong>Interpreter</strong>: More flexible dynamic nesting.</li>
+</ul>
+<h3 id="213-double-precision-transcendental-functions">2.13 Double Precision Transcendental Functions<a class="headerlink" href="#213-double-precision-transcendental-functions" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: SIN, COS, TAN, SQR, LOG, EXP return double precision results if given double precision argument. Exponentiation with double precision operands returns double precision result.</li>
+<li><strong>Interpreter (BASIC-80/86)</strong>: Only integer and single precision results returned by functions (noted in documentation).</li>
+</ul>
+<h3 id="214-include-statement">2.14 %INCLUDE Statement<a class="headerlink" href="#214-include-statement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: <code>%INCLUDE &lt;filename&gt;</code> statement allows including source from alternate file. Must be last statement on line. Format: <code>&lt;line number&gt; %INCLUDE &lt;filename&gt;</code></li>
+<li><strong>Interpreter</strong>: Not available.</li>
+</ul>
+<h2 id="3-expression-evaluation-differences">3. EXPRESSION EVALUATION DIFFERENCES<a class="headerlink" href="#3-expression-evaluation-differences" title="Permanent link">&para;</a></h2>
+<h3 id="31-type-conversion">3.1 Type Conversion<a class="headerlink" href="#31-type-conversion" title="Permanent link">&para;</a></h3>
+<p>Both compiler and interpreter convert operands to the most precise type during expression evaluation. However:</p>
+<h3 id="32-numeric-overflow-handling">3.2 Numeric Overflow Handling<a class="headerlink" href="#32-numeric-overflow-handling" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: More limited in numeric overflow handling. Type conversion decisions made at compilation time, not runtime.</li>
+<li>Example: <code>I%=20000</code>, <code>J%=20000</code>, <code>K%=-30000</code>, <code>M%=I%+J%-K%</code></li>
+<li>Interpreter: Converts to floating point when overflow occurs, yields 10000</li>
+<li>Compiler: Performs entire operation in integer mode, produces incorrect result (unless <code>/D</code> switch used)</li>
+</ul>
+<h3 id="33-algebraic-transformations">3.3 Algebraic Transformations<a class="headerlink" href="#33-algebraic-transformations" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: May perform valid algebraic transformations before generating code for optimization. Follows operator precedence and parentheses but makes no other guarantee of evaluation order.</li>
+<li><strong>Interpreter</strong>: More predictable left-to-right evaluation.</li>
+</ul>
+<h2 id="4-compilation-switches">4. COMPILATION SWITCHES<a class="headerlink" href="#4-compilation-switches" title="Permanent link">&para;</a></h2>
+<p>The compiler provides several switches to control compilation behavior:</p>
+<ul>
+<li><strong>/E</strong> - Program contains ON ERROR GOTO (generates extra code, includes line numbers)</li>
+<li><strong>/X</strong> - Program contains RESUME/RESUME NEXT/RESUME 0 (implies /E, relinquishes optimizations)</li>
+<li><strong>/N</strong> - Prevents listing of generated symbolic code</li>
+<li><strong>/D</strong> - Debug mode - generates checking code for:</li>
+<li>Arithmetic overflow/underflow</li>
+<li>Array bounds checking</li>
+<li>Line numbers in binary</li>
+<li>RETURN without GOSUB checking</li>
+<li>Required for TRON/TROFF</li>
+<li><strong>/Z</strong> - Use Z80 opcodes when possible</li>
+<li><strong>/S</strong> - Write long quoted strings to binary immediately (saves memory, wastes space for duplicates, code cannot be in ROM)</li>
+<li><strong>/4</strong> - Use Microsoft 4.51 lexical conventions (spaces insignificant, 2-char variable names)</li>
+<li><strong>/C</strong> - Relax line numbering (allows any order or no line numbers, underscore for continuation)</li>
+</ul>
+<h2 id="5-performance-considerations">5. PERFORMANCE CONSIDERATIONS<a class="headerlink" href="#5-performance-considerations" title="Permanent link">&para;</a></h2>
+<h3 id="51-integer-variables">5.1 Integer Variables<a class="headerlink" href="#51-integer-variables" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: Maximum use of integer variables produces fastest, most compact code. Integer loop counters can execute ~30 times faster than floating point. Integer array subscripts generate significantly faster and more compact code.</li>
+<li><strong>Interpreter</strong>: Performance difference less dramatic.</li>
+</ul>
+<h3 id="52-code-size">5.2 Code Size<a class="headerlink" href="#52-code-size" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compiler</strong>: Generates compact machine code. REM statements have zero overhead.</li>
+<li><strong>Interpreter</strong>: Tokenized format, REMs consume some space/time.</li>
+</ul>
+<h2 id="6-development-workflow">6. DEVELOPMENT WORKFLOW<a class="headerlink" href="#6-development-workflow" title="Permanent link">&para;</a></h2>
+<h3 id="recommended-approach">Recommended Approach:<a class="headerlink" href="#recommended-approach" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Create programs using EDIT-80 or BASIC-80 interpreter</li>
+<li>Debug thoroughly using BASIC-80 interpreter</li>
+<li>Save in ASCII format (SAVE "filename",A)</li>
+<li>Compile with BASCOM</li>
+<li>Link with LINK-80</li>
+<li>Test compiled version</li>
+</ol>
+<h3 id="debugging">Debugging:<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use interpreter for initial debugging (has better error reporting)</li>
+<li>Use compiler <code>/D</code> switch for runtime debugging of compiled code</li>
+<li>Compiler listing and LINK-80 map needed to locate errors in compiled code</li>
+</ul>
+<h2 id="7-file-formats">7. FILE FORMATS<a class="headerlink" href="#7-file-formats" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Compiler Input</strong>: Requires ASCII format source files</li>
+<li><strong>Interpreter</strong>: Can save/load in both compressed binary and ASCII formats</li>
+<li><strong>Protected Files</strong>: Interpreter can save protected (encoded) files that cannot be listed or edited</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>
