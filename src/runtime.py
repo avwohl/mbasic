@@ -110,11 +110,6 @@ class Runtime:
         # Error PC and details are stored in ErrorInfo (interpreter.py state)
         # ERL%, ERS%, and ERR% system variables are set from ErrorInfo
 
-        # ERR and ERL are system variables (integer type), not functions
-        # Initialize them in the variable table with % suffix (lowercase)
-        # Note: Must do this after _variables is created but before methods are called
-        # We'll initialize these after other attributes are set up
-
         # Random number seed
         self.rnd_last = 0.5
 
@@ -132,7 +127,8 @@ class Runtime:
         self.trace_on = False             # True if execution trace is enabled
         self.trace_detail = 'line'        # 'line' or 'statement' - controls trace output format
 
-        # Initialize system variables (ERR% and ERL%)
+        # Initialize system variables ERR% and ERL% to 0
+        # These are integer type variables set by error handling code
         self.set_variable_raw('err%', 0)
         self.set_variable_raw('erl%', 0)
 
@@ -1286,8 +1282,9 @@ class Runtime:
                  For GOSUB calls:
                  {
                      'type': 'GOSUB',
-                     'from_line': 50,
-                     'return_line': 60
+                     'from_line': 60,      # Line to return to (despite misleading name)
+                     'return_line': 60,    # Line to return to
+                     'return_stmt': 0      # Statement offset to return to
                  }
 
                  For FOR loops:
@@ -1309,12 +1306,12 @@ class Runtime:
                  Example with nested control flow:
                  [
                      {'type': 'FOR', 'var': 'I', 'current': 1, 'end': 10, 'step': 1, 'line': 100},
-                     {'type': 'GOSUB', 'from_line': 120, 'return_line': 130},
+                     {'type': 'GOSUB', 'from_line': 130, 'return_line': 130},
                      {'type': 'WHILE', 'line': 500}
                  ]
 
-                 This shows: FOR I at 100, then GOSUB from 120, then WHILE at 500 (innermost).
-                 Proper unwinding would be: WEND, RETURN, NEXT I.
+                 This shows: FOR I at 100, then GOSUB (will return to 130), then WHILE at 500 (innermost).
+                 Proper unwinding would be: WEND, RETURN (to line 130), NEXT I.
 
         Note: The order reflects nesting level based on execution order (when each
               structure was entered), not source line order.
