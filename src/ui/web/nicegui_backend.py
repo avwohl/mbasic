@@ -1108,11 +1108,17 @@ class NiceGUIBackend(UIBackend):
         # Remove body margins/padding to eliminate space around top menu
         ui.add_head_html('''
             <style>
-                body {
+                body, html {
                     margin: 0 !important;
                     padding: 0 !important;
+                    overflow: hidden !important;
                 }
-                .q-page {
+                .q-page, .q-page-container, .nicegui-content {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+                .q-layout, .q-drawer-container {
+                    margin: 0 !important;
                     padding: 0 !important;
                 }
             </style>
@@ -1162,7 +1168,7 @@ class NiceGUIBackend(UIBackend):
                 ui.label(f'v{VERSION}').classes('text-gray-600')
 
         # Main content area - use flexbox with viewport height
-        with ui.element('div').style('width: 100%; height: calc(100vh - 120px); display: flex; flex-direction: column;'):
+        with ui.element('div').style('width: 100%; height: calc(100vh - 160px); display: flex; flex-direction: column;'):
             # Editor - using CodeMirror 5 (legacy, no ES6 modules) - 40% of available space
             self.editor = CodeMirror5Editor(
                 value='',
