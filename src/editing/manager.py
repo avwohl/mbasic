@@ -365,7 +365,7 @@ class ProgramManager:
         except Exception as e:
             # Strip "Parse error at line X, " from parser error messages
             error_msg = str(e)
-            # Remove "Parse error at line N, " prefix since we show the BASIC line number
+            # Remove "Parse error at line N, " prefix if present (we show BASIC line number)
             error_msg = re.sub(r'^Parse error at line \d+, ', '', error_msg)
 
             if basic_line_num is not None:

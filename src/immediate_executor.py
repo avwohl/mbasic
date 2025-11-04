@@ -48,8 +48,8 @@ class ImmediateExecutor:
         Initialize immediate executor.
 
         Args:
-            runtime: Runtime instance (always available in TK UI)
-            interpreter: Interpreter instance (always available in TK UI)
+            runtime: Runtime instance (typically available in TK UI, may be None)
+            interpreter: Interpreter instance (typically available in TK UI, may be None)
             io_handler: IOHandler instance for capturing output
         """
         self.runtime = runtime
@@ -204,7 +204,7 @@ class ImmediateExecutor:
             parser = Parser(tokens, self.def_type_map)
             ast = parser.parse()
 
-            # Use the runtime and interpreter (always available in TK UI)
+            # Check runtime and interpreter availability (defensive check)
             if self.runtime is None or self.interpreter is None:
                 return (False, "Runtime not initialized\n")
 
@@ -332,7 +332,7 @@ LIMITATIONS:
   • Multi-statement lines (: separator) work but are not recommended
   • GOTO, GOSUB, and control flow statements are not supported
   • DEF FN works, but FN calls may fail without proper program context
-  • Cannot execute during INPUT or program running state
+  • Cannot execute while program is actively running (paused/input/breakpoint OK)
 
 SPECIAL COMMANDS:
 ───────────────────────────────────────────────────────────────────
