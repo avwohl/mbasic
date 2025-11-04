@@ -320,47 +320,33 @@ OUTPUT REQUIREMENTS:
             try:
                 response_text = self._api_call_with_retry(prompt)
 
-                # Try to extract JSON from response
-                file_conflicts = None
-
-                # Strip markdown code block formatting if present (line-by-line approach)
+                # Parse JSON response robustly (handles markdown code blocks)
                 import re
                 cleaned_text = response_text.strip()
+
+                file_conflicts = None
 
                 # Try direct parsing first
                 try:
                     file_conflicts = json.loads(cleaned_text)
                 except json.JSONDecodeError:
-                    # Try stripping markdown code blocks
-                    if cleaned_text.startswith("```"):
-                        lines = cleaned_text.split('\n')
-                        # Remove first line if it starts with ```
-                        if lines[0].startswith("```"):
-                            lines = lines[1:]
-                        # Remove last line if it's just ```
-                        if lines and lines[-1].strip() == "```":
-                            lines = lines[:-1]
-                        cleaned_text = '\n'.join(lines)
+                    # Try to find JSON array in the text using regex
+                    # Look for [ ... ] pattern, allowing for markdown blocks
+                    json_match = re.search(r'(\[[\s\S]*\])', cleaned_text)
+                    if json_match:
+                        try:
+                            file_conflicts = json.loads(json_match.group(1))
+                        except json.JSONDecodeError:
+                            pass
 
-                    # Try parsing cleaned text
-                    try:
-                        file_conflicts = json.loads(cleaned_text)
-                    except json.JSONDecodeError:
-                        # Last resort: try to extract JSON array using regex
-                        json_match = re.search(r'\[.*\]', cleaned_text, re.DOTALL)
-                        if json_match:
-                            try:
-                                file_conflicts = json.loads(json_match.group())
-                            except json.JSONDecodeError:
-                                pass
-
-                if not file_conflicts:
+                if file_conflicts is None:
                     # Show what we got for debugging
                     print(f"Warning: Could not parse Claude's response for {filepath}")
                     if len(response_text) < 200:
                         print(f"  Response was: {response_text}")
                     else:
                         print(f"  Response started with: {response_text[:200]}...")
+                    file_conflicts = []
 
                 # Add found conflicts if any
                 if file_conflicts:
@@ -524,7 +510,7 @@ Return ONLY the raw JSON array, no markdown formatting (no ``` or ```json), no o
         try:
             response_text = self._api_call_with_retry(prompt)
 
-            # Strip markdown code block formatting if present (line-by-line approach)
+            # Parse JSON response robustly (handles markdown code blocks)
             import re
             cleaned_text = response_text.strip()
 
@@ -532,32 +518,22 @@ Return ONLY the raw JSON array, no markdown formatting (no ``` or ```json), no o
             try:
                 return json.loads(cleaned_text)
             except json.JSONDecodeError:
-                # Try stripping markdown code blocks
-                if cleaned_text.startswith("```"):
-                    lines = cleaned_text.split('\n')
-                    # Remove first line if it starts with ```
-                    if lines[0].startswith("```"):
-                        lines = lines[1:]
-                    # Remove last line if it's just ```
-                    if lines and lines[-1].strip() == "```":
-                        lines = lines[:-1]
-                    cleaned_text = '\n'.join(lines)
+                # Try to find JSON array in the text using regex
+                # Look for [ ... ] pattern, allowing for markdown blocks
+                json_match = re.search(r'(\[[\s\S]*\])', cleaned_text)
+                if json_match:
+                    try:
+                        return json.loads(json_match.group(1))
+                    except json.JSONDecodeError:
+                        pass
 
-                # Try parsing cleaned text
-                try:
-                    return json.loads(cleaned_text)
-                except json.JSONDecodeError:
-                    # Last resort: try to extract JSON array using regex
-                    json_match = re.search(r'\[.*\]', cleaned_text, re.DOTALL)
-                    if json_match:
-                        try:
-                            return json.loads(json_match.group())
-                        except json.JSONDecodeError:
-                            print(f"Warning: Could not parse JSON from response")
-                            return []
-                    else:
-                        print(f"Warning: Could not parse JSON from response")
-                        return []
+            # If we get here, parsing failed
+            print(f"Warning: Could not parse JSON from response")
+            if len(response_text) < 200:
+                print(f"  Response was: {response_text}")
+            else:
+                print(f"  Response started with: {response_text[:200]}...")
+            return []
 
         except Exception as e:
             print(f"Error analyzing chunk: {e}")
