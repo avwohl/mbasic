@@ -1621,11 +1621,15 @@ class Interpreter:
         CP/M and MBASIC used 8-bit characters; latin-1 maps bytes 0-255 to
         Unicode U+0000-U+00FF, allowing round-trip byte preservation.
 
-        Behavior:
-        - Byte value 26 (^Z) triggers EOF immediately
-        - If ^Z is mid-line, returns partial line up to ^Z
-        - Data after ^Z is never read
-        - Matches MBASIC 5.21 behavior exactly (tested with tnylpo)
+        EOF Detection (three methods):
+        1. EOF flag already set (file_info['eof'] == True) → returns None immediately
+        2. read() returns empty bytes (physical EOF) → sets EOF flag, returns partial line or None
+        3. Byte value 26 (^Z) encountered → sets EOF flag, returns partial line or None
+
+        Line Ending Handling:
+        - LF (byte 10): Line complete, return
+        - CR+LF (bytes 13+10): Line complete, consume both, return
+        - CR alone (byte 13): Line complete (old Mac format), return
 
         Returns: line string or None if EOF
         """

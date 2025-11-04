@@ -17,11 +17,14 @@ This design:
 
 class PC:
     """
-    Immutable program counter - identifies a statement by (line, offset).
+    Immutable program counter - identifies a statement by (line_num, stmt_offset).
+
+    The stmt_offset is a 0-based index into the statements list for a line.
+    Multiple statements can appear on one line, separated by colons.
 
     Examples:
         PC(10, 0)  - First statement on line 10
-        PC(10, 2)  - Third statement on line 10 (after two colons)
+        PC(10, 2)  - Third statement on line 10 (offset 2 = index 2)
         PC(None, 0) - Halted (no valid line)
     """
 
@@ -31,7 +34,7 @@ class PC:
 
         Args:
             line_num: Line number, or None for halted state
-            stmt_offset: Statement index within line (0-based)
+            stmt_offset: Statement offset within line (0-based index into statements list)
         """
         self.line_num = line_num
         self.stmt_offset = stmt_offset
