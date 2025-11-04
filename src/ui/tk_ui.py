@@ -1508,7 +1508,7 @@ class TkBackend(UIBackend):
             type_name = type_map.get(var['type_suffix'], 'Unknown')
 
             if var['is_array']:
-                # Enforce 4 dimension display limit
+                # Display up to 4 dimensions, show "..." if more
                 dims = var['dimensions'][:4] if len(var['dimensions']) <= 4 else var['dimensions'][:4] + ['...']
                 dims_str = 'x'.join(str(d) for d in dims)
 
@@ -2203,9 +2203,10 @@ class TkBackend(UIBackend):
         self._validate_editor_syntax()
 
     def _remove_blank_lines(self):
-        """Remove all blank lines from the editor.
+        """Remove all blank lines from the editor (except final line).
 
-        This ensures the editor can NEVER contain blank lines.
+        Removes blank lines to keep program clean, but preserves the final
+        line which is always blank in Tk Text widget (internal Tk behavior).
         Called after any modification (typing, pasting, etc.)
         """
         import tkinter as tk
@@ -3333,7 +3334,7 @@ class TkBackend(UIBackend):
                 self.program,
                 args,
                 self._renum_statement,
-                runtime=None  # Tk UI doesn't have a persistent runtime
+                runtime=None  # RENUM doesn't need runtime (operates on program structure)
             )
 
             # Refresh the editor display
