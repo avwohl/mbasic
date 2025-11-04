@@ -1121,6 +1121,16 @@ class NiceGUIBackend(UIBackend):
                     margin: 0 !important;
                     padding: 0 !important;
                 }
+                /* Remove all gaps between rows */
+                .q-page > div {
+                    gap: 0 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+                /* Target NiceGUI's column wrapper */
+                .nicegui-content > .q-pa-md {
+                    padding: 0 !important;
+                }
             </style>
         ''')
 
@@ -1160,7 +1170,7 @@ class NiceGUIBackend(UIBackend):
             ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').props('dense flat').mark('btn_immediate')
 
         # Status bar
-        with ui.row().classes('w-full bg-gray-200 q-pa-xs').style('justify-content: space-between;'):
+        with ui.row().classes('w-full bg-gray-200 px-2').style('justify-content: space-between; min-height: 28px; align-items: center;'):
             self.status_label = ui.label('Ready').mark('status')
             with ui.row().classes('gap-4'):
                 self.auto_line_label = ui.label('').classes('text-gray-600 font-mono')
