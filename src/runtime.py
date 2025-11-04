@@ -198,7 +198,9 @@ class Runtime:
         """
         Resolve the full variable name with type suffix.
 
-        This is the ONLY correct way to determine the storage key for a variable.
+        This is the standard method for determining the storage key for a variable,
+        applying BASIC type resolution rules (explicit suffix > DEF type > default).
+        For special cases like system variables (ERR%, ERL%), see set_variable_raw().
 
         Args:
             name: Variable base name (e.g., 'x', 'foo')

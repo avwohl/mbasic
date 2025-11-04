@@ -225,7 +225,8 @@ class PositionSerializer:
         var_text = self.serialize_expression(stmt.variable)
         result += var_text
 
-        # Equals sign (TODO: track operator position)
+        # Equals sign (operator position not tracked - using None for column)
+        # Operators are not stored as separate tokens in AST, so position is inferred
         result += self.emit_token("=", None, "LetOperator")
 
         # Expression
