@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mbasic"
-version = "1.0.148"
+version = "1.0.629"
 description = "MBASIC 5.21 (BASIC-80) interpreter - Independent open-source implementation"
 readme = "README.md"
 requires-python = ">=3.8"

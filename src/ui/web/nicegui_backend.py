@@ -68,14 +68,9 @@ class SimpleWebIOHandler(IOHandler):
         and async web UI. The input field appears below the output pane,
         allowing users to see all previous output while typing.
         """
-        # DEBUG: Log that input() is being called
-        print(f"DEBUG: SimpleWebIOHandler.input() called with prompt='{prompt}'", flush=True)
-
         # Don't print prompt here - _enable_inline_input will add it
         # Get input from UI (this will block until user enters input)
         result = self.input_callback(prompt)
-
-        print(f"DEBUG: SimpleWebIOHandler.input() got result='{result}'", flush=True)
 
         # The inline input handler already echoes the input with newline
         # So we don't need to echo it again here
@@ -1860,6 +1855,15 @@ class NiceGUIBackend(UIBackend):
             # If waiting for input, don't tick - wait for input to be provided
             if state.input_prompt:
                 self._set_status("Waiting for input...")
+                # Show prompt and focus the immediate mode input box
+                if not self.waiting_for_input:
+                    self.waiting_for_input = True
+                    self.input_prompt_text = state.input_prompt
+                    # Don't append prompt - interpreter already printed it via io.output()
+                    # Change placeholder text to indicate we're waiting for input
+                    self.immediate_entry.props('placeholder="Input: "')
+                    # Focus the immediate input box for user to type
+                    self.immediate_entry.run_method('focus')
                 return
 
             # Execute one tick (up to 1000 statements)
@@ -1880,6 +1884,15 @@ class NiceGUIBackend(UIBackend):
             elif state.input_prompt:
                 # Pause execution until input is provided
                 self._set_status("Waiting for input...")
+                # Show prompt and focus the immediate mode input box
+                if not self.waiting_for_input:
+                    self.waiting_for_input = True
+                    self.input_prompt_text = state.input_prompt
+                    # Don't append prompt - interpreter already printed it via io.output()
+                    # Change placeholder text to indicate we're waiting for input
+                    self.immediate_entry.props('placeholder="Input: "')
+                    # Focus the immediate input box for user to type
+                    self.immediate_entry.run_method('focus')
                 # Don't cancel timer - keep ticking to check when input is provided
             elif self.runtime.halted:
                 # Check if done or paused at breakpoint
@@ -2895,12 +2908,7 @@ class NiceGUIBackend(UIBackend):
         self.output.value = current_text + '\n'
 
         # Make output readonly again - use JavaScript to set readonly attribute
-        self.output.run_method('''() => {
-            const el = this.$el.querySelector('textarea');
-            if (el) {
-                el.setAttribute('readonly', 'readonly');
-            }
-        }''')
+        self.output.run_method('() => { const el = this.$el.querySelector("textarea"); if (el) { el.setAttribute("readonly", "readonly"); } }')
 
         # Mark that we're no longer waiting
         self.waiting_for_input = False
@@ -2931,20 +2939,8 @@ class NiceGUIBackend(UIBackend):
         self.waiting_for_input = True
 
         # Make output editable - use JavaScript to directly remove readonly attribute
-        self.output.run_method('''() => {
-            console.log('_enable_inline_input: Trying to make output editable');
-            const el = this.$el.querySelector('textarea');
-            console.log('_enable_inline_input: textarea element =', el);
-            if (el) {
-                console.log('_enable_inline_input: readonly before =', el.hasAttribute('readonly'));
-                el.removeAttribute('readonly');
-                console.log('_enable_inline_input: readonly after =', el.hasAttribute('readonly'));
-                el.focus();
-                el.setSelectionRange(el.value.length, el.value.length);
-            } else {
-                console.error('_enable_inline_input: Could not find textarea element!');
-            }
-        }''')
+        # Use single line to avoid line break issues
+        self.output.run_method('() => { const el = this.$el.querySelector("textarea"); if (el) { el.removeAttribute("readonly"); el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }')
 
     async def _get_input_async(self, prompt):
         """Get input from user (async version).
@@ -2971,13 +2967,8 @@ class NiceGUIBackend(UIBackend):
         when the user submits input via _handle_output_enter(), it will call
         interpreter.provide_input() to continue execution.
         """
-        # DEBUG: Log that we're being called
-        print(f"DEBUG: _get_input() called with prompt='{prompt}'", flush=True)
-
         # Enable inline input in output textarea
         self._enable_inline_input(prompt)
-
-        print(f"DEBUG: _enable_inline_input() completed", flush=True)
 
         # Return empty string - signals interpreter to transition to 'waiting_for_input'
         # state (state transition happens in interpreter when it receives empty string
@@ -2986,6 +2977,25 @@ class NiceGUIBackend(UIBackend):
 
     def _on_immediate_enter(self, e):
         """Handle Enter key in immediate mode input."""
+        # Check if we're waiting for LINE INPUT
+        if self.waiting_for_input and self.interpreter and self.interpreter.state.input_prompt:
+            # Submit the input to the running program
+            user_input = self.immediate_entry.value
+            self.immediate_entry.value = ''
+
+            # Echo the input to output
+            self._append_output(user_input + '\n')
+
+            # Provide input to interpreter
+            self.interpreter.provide_input(user_input)
+
+            # Clear waiting state and restore placeholder
+            self.waiting_for_input = False
+            self.input_prompt_text = None
+            self.immediate_entry.props('placeholder="BASIC command..."')
+            return
+
+        # Normal immediate mode command
         self._execute_immediate()
 
     def _execute_immediate(self):

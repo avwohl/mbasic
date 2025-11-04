@@ -73,16 +73,41 @@
 5. 🔄 If spacing fix doesn't work, ask user for screenshot or browser inspector info
 
 ## Status Update (Latest)
-**v1.0.619** - User reports inline INPUT still broken:
-- Status still says "execute" (not changing to "Waiting for input")
-- No input echo
-- No ? prompt visible
-- No highlight/indication for input area
-- Spacing still all at top (margins to 1px didn't help)
 
-**Root cause investigation needed**: The `_get_input()` method isn't being called, or `_enable_inline_input()` isn't working.
+**v1.0.630** - ✅ LINE INPUT COMPLETE! Fixed duplicate prompt and placeholder text
+
+**Breakthrough approach (v1.0.628)**: User suggested "how about taking over the immediate box for input?"
+- MUCH simpler than making output editable!
+- When state.input_prompt detected: focus immediate_entry, change placeholder to "Input: "
+- On Enter: check waiting_for_input flag → submit to interpreter.provide_input() or execute as immediate command
+- After input submitted: restore placeholder to "BASIC command..."
+
+**Fixed in v1.0.630**:
+1. ✅ Removed duplicate prompt (interpreter already prints it via io.output() at line 1733)
+2. ✅ Changed placeholder from "BASIC command..." to "Input: " when waiting for input
+3. ✅ Restored placeholder after input submitted
+
+**Fixed in v1.0.629**:
+- Fixed AttributeError: changed immediate_input → immediate_entry
+
+**Fixed in v1.0.628**:
+- User-suggested approach: take over immediate mode input box for LINE INPUT
+- Added waiting_for_input flag and input_prompt_text tracking
+- Modified _on_immediate_enter() to intercept Enter when waiting for input
+
+**Fixed in v1.0.627**:
+- JavaScript syntax error (unescaped line breaks in run_method calls)
+- Changed multi-line JavaScript strings to single-line
+
+**Fixed in v1.0.626**:
+1. Status updates to "Waiting for input..." ✓ (already working from v1.0.620)
+2. Attempted to make output editable (abandoned approach)
+
+**Still broken**:
+- Spacing - too much gap between top rows (NEXT PRIORITY)
+
+## Status: LINE INPUT ✅ COMPLETE - User confirmed "that works great"
 
 ## Next Steps (IN ORDER)
-1. **NOW**: Debug why `_get_input()` isn't being called or why `_enable_inline_input()` isn't working
-2. **THEN**: Fix spacing issue (may need to remove ALL margins, or check NiceGUI's page wrapper)
-3. **LATER**: Fix lexer line:column reporting
+1. **NEXT**: Fix spacing issue - too much gap between top rows
+2. **LATER**: Fix lexer line:column reporting
