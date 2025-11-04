@@ -302,20 +302,23 @@ File: {filepath}
 For each conflict found, return a JSON object with:
 - "type": "code_bug" or "comment_outdated" or "unclear" (if you can't determine which)
 - "line": approximate line number
-- "code_snippet": the relevant code
-- "comment": the conflicting comment/docstring
+- "code_snippet": the relevant code (escape newlines as \\n, tabs as \\t, quotes as \\")
+- "comment": the conflicting comment/docstring (escape newlines as \\n)
 - "explanation": why they conflict
 - "suggested_fix": your recommendation (or "NEEDS_HUMAN_REVIEW" if unclear)
 
 Return a JSON array of conflicts. Return empty array [] if no conflicts found.
 IMPORTANT: If you cannot determine whether the code or comment is correct, mark type as "unclear" and suggested_fix as "NEEDS_HUMAN_REVIEW".
 
-OUTPUT REQUIREMENTS:
+CRITICAL JSON FORMAT REQUIREMENTS:
+- Return ONLY valid JSON - test it before returning
+- In string values: escape newlines as \\n, tabs as \\t, quotes as \\"
+- Example: "code_snippet": "if x:\\n    print(\\"hello\\")"
 - Return ONLY the raw JSON array starting with [ and ending with ]
 - DO NOT wrap the JSON in markdown code blocks (no ``` or ```json)
 - No markdown formatting whatsoever
 - No explanatory text before or after the JSON
-- Just the pure JSON array text"""
+- Just the pure, valid JSON array text"""
 
             try:
                 response_text = self._api_call_with_retry(prompt)
@@ -330,14 +333,22 @@ OUTPUT REQUIREMENTS:
                 try:
                     file_conflicts = json.loads(cleaned_text)
                 except json.JSONDecodeError:
-                    # Try to find JSON array in the text using regex
-                    # Look for [ ... ] pattern, allowing for markdown blocks
-                    json_match = re.search(r'(\[[\s\S]*\])', cleaned_text)
-                    if json_match:
-                        try:
-                            file_conflicts = json.loads(json_match.group(1))
-                        except json.JSONDecodeError:
-                            pass
+                    # Strip markdown code blocks first (```json ... ``` or ``` ... ```)
+                    # Match from start of line to handle multiline blocks
+                    markdown_stripped = re.sub(r'^```(?:json)?\s*\n', '', cleaned_text, flags=re.MULTILINE)
+                    markdown_stripped = re.sub(r'\n```\s*$', '', markdown_stripped)
+
+                    try:
+                        file_conflicts = json.loads(markdown_stripped)
+                    except json.JSONDecodeError:
+                        # Last resort: Look for JSON array in the cleaned (non-markdown) text
+                        # This handles cases like "Here are the results: [...]"
+                        json_match = re.search(r'(\[[\s\S]*\])', markdown_stripped)
+                        if json_match:
+                            try:
+                                file_conflicts = json.loads(json_match.group(1))
+                            except json.JSONDecodeError:
+                                pass
 
                 if file_conflicts is None:
                     # Show what we got for debugging
@@ -501,11 +512,19 @@ Format your response as a JSON array. Each item should have:
 - "severity": "high", "medium", or "low"
 - "files": list of affected files
 - "description": clear description of the inconsistency
-- "details": specific quotes or code examples
+- "details": specific quotes or code examples (escape newlines as \\n)
 - "conflict_type": (for code/comment conflicts) "code_bug", "comment_outdated", or "unclear"
 - "needs_clarification": true if human review needed to determine which is correct
 
-Return ONLY the raw JSON array, no markdown formatting (no ``` or ```json), no other text. Empty array [] if no issues."""
+CRITICAL JSON FORMAT REQUIREMENTS:
+- Return ONLY valid JSON - test it before returning
+- In ALL string values: escape newlines as \\n, tabs as \\t, quotes as \\"
+- Example: "details": "Line 1\\nLine 2"
+- Return ONLY the raw JSON array starting with [ and ending with ]
+- DO NOT wrap the JSON in markdown code blocks (no ``` or ```json)
+- No markdown formatting, no explanatory text
+- Just the pure, valid JSON array text
+- Empty array [] if no issues found"""
 
         try:
             response_text = self._api_call_with_retry(prompt)
@@ -518,14 +537,22 @@ Return ONLY the raw JSON array, no markdown formatting (no ``` or ```json), no o
             try:
                 return json.loads(cleaned_text)
             except json.JSONDecodeError:
-                # Try to find JSON array in the text using regex
-                # Look for [ ... ] pattern, allowing for markdown blocks
-                json_match = re.search(r'(\[[\s\S]*\])', cleaned_text)
-                if json_match:
-                    try:
-                        return json.loads(json_match.group(1))
-                    except json.JSONDecodeError:
-                        pass
+                # Strip markdown code blocks first (```json ... ``` or ``` ... ```)
+                # Match from start of line to handle multiline blocks
+                markdown_stripped = re.sub(r'^```(?:json)?\s*\n', '', cleaned_text, flags=re.MULTILINE)
+                markdown_stripped = re.sub(r'\n```\s*$', '', markdown_stripped)
+
+                try:
+                    return json.loads(markdown_stripped)
+                except json.JSONDecodeError:
+                    # Last resort: Look for JSON array in the cleaned (non-markdown) text
+                    # This handles cases like "Here are the results: [...]"
+                    json_match = re.search(r'(\[[\s\S]*\])', markdown_stripped)
+                    if json_match:
+                        try:
+                            return json.loads(json_match.group(1))
+                        except json.JSONDecodeError:
+                            pass
 
             # If we get here, parsing failed
             print(f"Warning: Could not parse JSON from response")
