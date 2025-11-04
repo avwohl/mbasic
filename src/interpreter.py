@@ -1243,11 +1243,11 @@ class Interpreter:
             raise RuntimeError(f"WEND without matching WHILE at line {self.runtime.pc.line_num}")
 
         # Jump back to the WHILE statement to re-evaluate the condition
-        # The WHILE will either continue the loop or exit and pop the loop
         self.runtime.npc = PC(loop_info['while_line'], loop_info['while_stmt'])
 
-        # Remove the loop from the stack since we're jumping back to WHILE
-        # which will re-push if the condition is still true
+        # Pop the loop from the stack BEFORE jumping back to WHILE.
+        # The WHILE will re-push if the condition is still true, or skip the
+        # loop body if the condition is now false. This ensures clean stack state.
         self.limits.pop_while_loop()
         self.runtime.pop_while_loop()
 
@@ -2173,7 +2173,9 @@ class Interpreter:
         if file_num in self.runtime.files:
             raise RuntimeError(f"File #{file_num} already open")
 
-        # Open file with appropriate mode using filesystem provider
+        # Validate and open file with appropriate mode using filesystem provider
+        # Valid modes: I (input), O (output), A (append), R (random access)
+        # Any other mode raises "Invalid OPEN mode" error
         try:
             if mode == "I":
                 # Open for input - binary mode so we can detect ^Z
@@ -2243,6 +2245,10 @@ class Interpreter:
 
         Defines the layout of a record buffer for random file access.
         Each variable is mapped to a position and width in the buffer.
+
+        The file must be opened in "R" (random) mode first.
+        After FIELD, use GET/PUT to read/write records, and LSET/RSET to
+        modify field variable values before PUT.
         """
         file_num = int(self.evaluate_expression(stmt.file_number))
 

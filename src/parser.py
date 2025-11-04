@@ -78,7 +78,15 @@ class Parser:
         return None
 
     def peek(self, offset: int = 1) -> Optional[Token]:
-        """Look ahead at token without advancing"""
+        """Look ahead at token without advancing position.
+
+        Args:
+            offset: Number of positions to look ahead (default 1 = next token)
+                    peek(1) returns next token, peek(2) returns token after that, etc.
+
+        Returns:
+            Token at position + offset, or None if past end
+        """
         pos = self.position + offset
         if pos < len(self.tokens):
             return self.tokens[pos]
@@ -3503,7 +3511,18 @@ class Parser:
         )
 
     def parse_width(self) -> WidthStatementNode:
-        """Parse WIDTH statement - Syntax: WIDTH width [, device]"""
+        """Parse WIDTH statement.
+
+        Syntax: WIDTH width [, device]
+
+        Sets output width for the specified device. Both parameters are parsed
+        but the statement is a no-op in execution (see execute_width).
+        Modern terminals handle line width automatically.
+
+        Args:
+            width: Column width expression (typically 40 or 80)
+            device: Optional device expression (typically screen or printer)
+        """
         token = self.advance()
 
         width = self.parse_expression()
