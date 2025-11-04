@@ -956,7 +956,7 @@ class Interpreter:
 
         # Push return address using PC
         return_pc = self.runtime.statement_table.next_pc(self.runtime.pc)
-        # Use old-style stack for compatibility (stores line, offset from PC)
+        # Store return address as (line_number, statement_offset) for RETURN
         self.runtime.push_gosub(
             return_pc.line_num if not return_pc.halted() else 0,
             return_pc.stmt_offset if not return_pc.halted() else 0
@@ -1037,8 +1037,9 @@ class Interpreter:
             raise RuntimeError(f"RETURN error: line {return_line} no longer exists")
 
         line_statements = self.runtime.statement_table.get_line_statements(return_line)
-        # return_stmt can be == len(statements), meaning "past the end, go to next line"
-        # but it can't be > len(statements)
+        # return_stmt is 0-indexed offset. Valid values are 0 to len(statements).
+        # return_stmt == len(statements) means "continue at next line" (GOSUB was last statement).
+        # return_stmt > len(statements) is invalid (statement was deleted).
         if return_stmt > len(line_statements):
             raise RuntimeError(f"RETURN error: statement {return_stmt} in line {return_line} no longer exists")
 
@@ -1082,11 +1083,13 @@ class Interpreter:
         Syntax: NEXT [variable [, variable ...]]
 
         NEXT I, J, K is equivalent to: NEXT I: NEXT J: NEXT K
-        If any loop continues (not finished), we jump back and stop processing.
+        Variables are processed left-to-right. If any loop continues (not
+        finished), execution jumps back to the loop body and remaining
+        variables are not processed.
         """
         # Determine which variables to process
         if stmt.variables:
-            # Process variables in order: NEXT I, J means close I first, then J
+            # Process variables in order: NEXT I, J, K closes I first, then J, then K
             var_list = stmt.variables
         else:
             # NEXT without variable - use innermost loop
@@ -1176,8 +1179,9 @@ class Interpreter:
                 raise RuntimeError(f"NEXT error: FOR loop line {return_line} no longer exists")
 
             line_statements = self.runtime.statement_table.get_line_statements(return_line)
-            # return_stmt can be == len(statements), meaning the FOR is the last statement
-            # but it can't be > len(statements)
+            # return_stmt is 0-indexed offset. Valid values are 0 to len(statements).
+            # return_stmt == len(statements) means FOR was last statement (continue at next line).
+            # return_stmt > len(statements) is invalid (statement was deleted).
             if return_stmt > len(line_statements):
                 raise RuntimeError(f"NEXT error: FOR statement in line {return_line} no longer exists")
 
@@ -1473,13 +1477,17 @@ class Interpreter:
     def execute_optionbase(self, stmt):
         """Execute OPTION BASE statement
 
-        Sets the lower bound for array indices.
-        Must be executed BEFORE any arrays are DIM'd (MBASIC 5.21 behavior).
+        Sets the lower bound for array indices (0 or 1).
+
+        MBASIC 5.21 restrictions (strictly enforced):
+        - OPTION BASE can only be executed once per program run
+        - Must be executed BEFORE any arrays are dimensioned (implicit or explicit)
+        - Violating either condition raises "Duplicate Definition" error
 
         Syntax: OPTION BASE 0 | 1
 
         Raises:
-            RuntimeError: If OPTION BASE has already been executed OR if any arrays exist
+            RuntimeError: "Duplicate Definition" if OPTION BASE already executed OR if any arrays exist
         """
         # MBASIC 5.21 gives "Duplicate Definition" if:
         # 1. OPTION BASE has already been executed, OR
@@ -1607,6 +1615,11 @@ class Interpreter:
         On CP/M 1.x and 2.x, files were stored in 128-byte sectors. When a text
         file didn't end on a sector boundary, a ^Z (Control-Z, ASCII 26) character
         was used to mark the actual end of file.
+
+        Encoding:
+        Uses latin-1 (ISO-8859-1) to preserve byte values 128-255 unchanged.
+        CP/M and MBASIC used 8-bit characters; latin-1 maps bytes 0-255 to
+        Unicode U+0000-U+00FF, allowing round-trip byte preservation.
 
         Behavior:
         - Byte value 26 (^Z) triggers EOF immediately
