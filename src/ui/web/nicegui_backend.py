@@ -1854,6 +1854,7 @@ class NiceGUIBackend(UIBackend):
 
             # If waiting for input, don't tick - wait for input to be provided
             if state.input_prompt:
+                self._set_status("Waiting for input...")
                 return
 
             # Execute one tick (up to 1000 statements)

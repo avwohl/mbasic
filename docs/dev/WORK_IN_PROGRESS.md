@@ -72,9 +72,17 @@
 4. 🔄 Test ONE fix at a time, get user feedback before moving to next
 5. 🔄 If spacing fix doesn't work, ask user for screenshot or browser inspector info
 
+## Status Update (Latest)
+**v1.0.619** - User reports inline INPUT still broken:
+- Status still says "execute" (not changing to "Waiting for input")
+- No input echo
+- No ? prompt visible
+- No highlight/indication for input area
+- Spacing still all at top (margins to 1px didn't help)
+
+**Root cause investigation needed**: The `_get_input()` method isn't being called, or `_enable_inline_input()` isn't working.
+
 ## Next Steps (IN ORDER)
-1. **FIRST**: Check manual for LINE INPUT syntax - is it `:` or `;`?
-2. **SECOND**: Verify variable syntax - is it `$a` or `A$`?
-3. **THIRD**: Fix spacing issue properly (may need browser debugging)
-4. **FOURTH**: Fix error reporting (duplicate line numbers)
-5. **FIFTH**: Fix lexer line:column reporting
+1. **NOW**: Debug why `_get_input()` isn't being called or why `_enable_inline_input()` isn't working
+2. **THEN**: Fix spacing issue (may need to remove ALL margins, or check NiceGUI's page wrapper)
+3. **LATER**: Fix lexer line:column reporting

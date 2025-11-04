@@ -2,8 +2,8 @@
 
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
-**Last Updated:** 2025-11-03
-**Total Documents:** 155
+**Last Updated:** 2025-11-04
+**Total Documents:** 157
 
 ## What's Here
 
@@ -99,6 +99,7 @@ If you're contributing to MBASIC:
 
 ### Help System
 
+- [Documentation Fixes Summary](DOCUMENTATION_FIXES_SUMMARY.md)
 - [Documentation Fixes Tracker](DOCUMENTATION_FIXES_TRACKER.md)
 - [Help Indexing Options](HELP_INDEXING_OPTIONS.md)
 - [Help Indexing Specification](HELP_INDEXING_SPECIFICATION.md)
@@ -175,6 +176,7 @@ If you're contributing to MBASIC:
 
 - [Runtime Interpreter Split Todo](RUNTIME_INTERPRETER_SPLIT_TODO.md)
 - [Work In Progress Template](WORK_IN_PROGRESS_TEMPLATE.md)
+- [Work In Progress](WORK_IN_PROGRESS.md)
 
 ### Other
 
