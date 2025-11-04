@@ -3109,14 +3109,10 @@ def start_web_ui(port=8080):
         # Build the UI for this client
         backend.build_ui()
 
-    # Start NiceGUI server with cleaner Ctrl+C handling
-    try:
-        ui.run(
-            title='MBASIC 5.21 - Web IDE',
-            port=port,
-            reload=False,
-            show=True
-        )
-    except KeyboardInterrupt:
-        print("\n\nMBASIC Web UI: Exiting due to Ctrl+C\n")
-        sys.exit(0)
+    # Start NiceGUI server
+    ui.run(
+        title='MBASIC 5.21 - Web IDE',
+        port=port,
+        reload=False,
+        show=True
+    )
