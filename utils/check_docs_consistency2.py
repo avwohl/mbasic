@@ -69,8 +69,8 @@ class EnhancedConsistencyAnalyzer:
         # Directories to scan for source code
         code_dirs = [
             (self.src_dir, "src"),
-            (self.utils_dir, "utils"),
-            (self.tests_dir, "tests"),
+#            (self.utils_dir, "utils"),
+#            (self.tests_dir, "tests"),
             (self.project_root, "root")  # For root-level .py files
         ]
 
@@ -241,6 +241,7 @@ class EnhancedConsistencyAnalyzer:
         for filepath, content in source_files.items():
             if not filepath.endswith('.py'):
                 continue
+            print(f"Read {filepath}")
 
             # Prepare prompt for Claude
             prompt = f"""Analyze this Python file for conflicts between code and comments.
