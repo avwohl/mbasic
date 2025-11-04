@@ -84,6 +84,20 @@
   - Cross-analyzes all findings to identify patterns
   - Groups issues by severity (high/medium/low)
 
+- **`check_docs_consistency1.py`** - Limited scope documentation consistency checker
+  - Scans only help, library, stylesheets, user directories
+  - Finds documentation inconsistencies
+  - Generates report in `utils/docs_inconsistencies_report1.md`
+
+- **`check_docs_consistency2.py`** - Enhanced consistency checker for code AND documentation
+  - Analyzes Python source files (.py) and JSON files (.json)
+  - Scans src/, utils/, tests/ directories before docs/
+  - Detects code vs comment conflicts (outdated comments, code bugs)
+  - Interactive mode: asks for clarification when conflicts are unclear
+  - Identifies documentation vs implementation mismatches
+  - Generates comprehensive report in `utils/consistency_report2.md`
+  - Requires: `pip install anthropic` and ANTHROPIC_API_KEY env var
+
 - **`regenerate_see_also_sections.py`** - Auto-generate "See Also" sections in help docs
   - Reads category metadata from all function/statement docs
   - Generates cross-references based on categories
