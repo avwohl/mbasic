@@ -2755,9 +2755,12 @@ class Parser:
         Syntax:
             COMMON variable1, variable2, array1(), string$, ...
 
+        The empty parentheses () indicate an array variable (all elements shared).
+        This is just a marker - no subscripts are specified or stored.
+
         Examples:
-            COMMON A, B, C
-            COMMON X, Y(), NAME$
+            COMMON A, B, C           - Simple variables
+            COMMON X, Y(), NAME$     - Mix of simple var, array, and string
         """
         token = self.advance()
 

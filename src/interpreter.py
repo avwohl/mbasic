@@ -697,7 +697,18 @@ class Interpreter:
     # ========================================================================
 
     def execute_let(self, stmt):
-        """Execute LET (assignment) statement"""
+        """Execute LET (assignment) statement.
+
+        Handles both simple variables and array element assignment:
+        - LET X = 5 (simple variable)
+        - LET A(I) = 10 (array element)
+        - X = 5 (implicit LET, no keyword)
+
+        Type coercion is performed based on the variable's type suffix:
+        - % (integer): truncates to integer
+        - $ (string): converts to string
+        - !, # or no suffix (float): ensures numeric type
+        """
         value = self.evaluate_expression(stmt.expression)
 
         # Type coercion based on type suffix
@@ -1047,7 +1058,18 @@ class Interpreter:
         self.runtime.npc = PC(return_line, return_stmt)
 
     def execute_for(self, stmt):
-        """Execute FOR statement"""
+        """Execute FOR statement - initialize loop variable and register loop.
+
+        Syntax: FOR variable = start TO end [STEP step]
+
+        The loop variable can have any type suffix (%, $, !, #) and the variable
+        type determines how values are stored, but the loop arithmetic always uses
+        the evaluated numeric values. String variables in FOR loops are uncommon
+        but technically allowed (though not meaningful).
+
+        After FOR, the variable is set to start value and the loop is registered.
+        NEXT will increment/decrement and check the end condition.
+        """
         # Evaluate start, end, step
         start = self.evaluate_expression(stmt.start_expr)
         end = self.evaluate_expression(stmt.end_expr)
