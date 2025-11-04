@@ -2297,11 +2297,12 @@ class NiceGUIBackend(UIBackend):
     # =========================================================================
 
     def _sync_program_to_runtime(self):
-        """Sync program to runtime without resetting PC.
+        """Sync program to runtime, conditionally preserving PC.
 
-        Updates runtime's statement_table and line_text_map from self.program,
-        but preserves current PC/execution state. This allows LIST and other
-        commands to see the current program without starting execution.
+        Updates runtime's statement_table and line_text_map from self.program.
+        Preserves current PC/execution state only if exec_timer is active;
+        otherwise resets PC to halted. This allows LIST and other commands to
+        see the current program without starting execution.
         """
         # Preserve current PC if it's valid (execution in progress)
         # Otherwise ensure it stays halted
@@ -2749,9 +2750,9 @@ class NiceGUIBackend(UIBackend):
         # Show the input row for user to enter data
         self._show_input_row(prompt)
 
-        # Return empty string - the interpreter will handle this by transitioning
-        # to 'waiting_for_input' state, and execution will pause until
-        # the user provides input via _submit_input()
+        # Return empty string - signals interpreter to transition to 'waiting_for_input'
+        # state (state transition happens in interpreter when it receives empty string
+        # from input()). Execution pauses until _submit_input() calls provide_input().
         return ""
 
     def _on_immediate_enter(self, e):
@@ -2790,7 +2791,7 @@ class NiceGUIBackend(UIBackend):
             # This allows LIST to work, but doesn't start execution
             self._sync_program_to_runtime()
 
-            # Create immediate executor (runtime, interpreter, io_handler)
+            # Create immediate executor (runtime, interpreter, output_io)
             immediate_executor = ImmediateExecutor(
                 runtime,
                 interpreter,
@@ -2807,7 +2808,9 @@ class NiceGUIBackend(UIBackend):
             if success:
                 self._set_status('Immediate command executed')
 
-                # Don't sync editor from AST - editor text is the source!
+                # Don't sync editor from AST after immediate command - editor text is the source!
+                # Current flow: editor text → parsed to AST → execution
+                # (Never reverse: AST → text, as that would lose user's exact text/formatting)
                 # TODO: Future architecture: parse lines immediately into AST,
                 # text only kept for syntax errors
 
