@@ -268,7 +268,11 @@ For each conflict found, return a JSON object with:
 Return a JSON array of conflicts. Return empty array [] if no conflicts found.
 IMPORTANT: If you cannot determine whether the code or comment is correct, mark type as "unclear" and suggested_fix as "NEEDS_HUMAN_REVIEW".
 
-Return ONLY the JSON array, no other text."""
+OUTPUT REQUIREMENTS:
+- Return ONLY the JSON array starting with [ and ending with ]
+- No markdown formatting, no ```json tags
+- No explanatory text before or after
+- Just the raw JSON array"""
 
             try:
                 response = self.client.messages.create(
@@ -280,14 +284,34 @@ Return ONLY the JSON array, no other text."""
 
                 response_text = response.content[0].text.strip()
 
+                # Try to extract JSON from response
+                file_conflicts = None
                 try:
+                    # First try direct JSON parsing
                     file_conflicts = json.loads(response_text)
-                    if file_conflicts:
-                        for conflict in file_conflicts:
-                            conflict['file'] = filepath
-                        conflicts.extend(file_conflicts)
                 except json.JSONDecodeError:
-                    print(f"Warning: Could not parse JSON for {filepath}")
+                    # Try to extract JSON array from response text
+                    import re
+                    json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+                    if json_match:
+                        try:
+                            file_conflicts = json.loads(json_match.group())
+                        except json.JSONDecodeError:
+                            pass
+
+                    if not file_conflicts:
+                        # Show what we got for debugging
+                        print(f"Warning: Could not parse Claude's response for {filepath}")
+                        if len(response_text) < 200:
+                            print(f"  Response was: {response_text}")
+                        else:
+                            print(f"  Response started with: {response_text[:200]}...")
+
+                # Add found conflicts if any
+                if file_conflicts:
+                    for conflict in file_conflicts:
+                        conflict['file'] = filepath
+                    conflicts.extend(file_conflicts)
 
             except Exception as e:
                 print(f"Error analyzing {filepath}: {e}")
