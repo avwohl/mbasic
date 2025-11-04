@@ -40,7 +40,7 @@ class ConsoleIOHandler(IOHandler):
     def input_line(self, prompt: str = '') -> str:
         """Input a complete line from console.
 
-        For console, this is identical to input().
+        For console, this delegates to self.input() (same behavior).
         """
         return self.input(prompt)
 
