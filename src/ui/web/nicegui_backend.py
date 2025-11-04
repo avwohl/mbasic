@@ -1124,7 +1124,7 @@ class NiceGUIBackend(UIBackend):
         self._create_menu()
 
         # Toolbar
-        with ui.row().classes('w-full bg-gray-100 p-2 gap-2'):
+        with ui.row().classes('w-full bg-gray-100 p-2 gap-2').style('align-items: center;'):
             ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
             ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
             ui.button('Step', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
@@ -1132,14 +1132,19 @@ class NiceGUIBackend(UIBackend):
             ui.button('Cont', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
             ui.separator().props('vertical')
             ui.button(icon='check_circle', on_click=self._check_syntax).mark('btn_check_syntax').props('flat').tooltip('Check Syntax')
+            ui.separator().props('vertical')
+            ui.label('Command:').classes('text-sm')
+            self.immediate_entry = ui.input(placeholder='BASIC command...').classes('flex-grow').mark('immediate_entry')
+            self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
+            ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
         # Main content area - use flexbox with viewport height
-        with ui.element('div').style('width: 100%; height: calc(100vh - 120px); display: flex; flex-direction: column;'):
-            # Editor - using CodeMirror 5 (legacy, no ES6 modules) - 40% of viewport
+        with ui.element('div').style('width: 100%; height: calc(100vh - 160px); display: flex; flex-direction: column;'):
+            # Editor - using CodeMirror 5 (legacy, no ES6 modules) - 50% of viewport
             self.editor = CodeMirror5Editor(
                 value='',
                 on_change=self._on_editor_change
-            ).style('width: 100%; height: 35vh; min-height: 200px; border: 1px solid #ccc;').mark('editor')
+            ).style('width: 100%; height: 50vh; min-height: 250px; border: 1px solid #ccc;').mark('editor')
 
             # Add auto-numbering handlers
             # Track last edited line for auto-numbering
@@ -1167,11 +1172,11 @@ class NiceGUIBackend(UIBackend):
             self.syntax_error_label = ui.label('').classes('text-sm font-mono bg-red-100 text-red-700 p-1')
             self.syntax_error_label.visible = False
 
-            # Output - 30% of viewport
+            # Output - flexible, takes remaining space
             self.output = ui.textarea(
                 value=f'MBASIC 5.21 Web IDE - {VERSION}\n',
                 placeholder='Output'
-            ).style('width: 100%; height: 25vh; min-height: 150px;').props('readonly outlined dense spellcheck=false').mark('output')
+            ).style('width: 100%; flex: 1; min-height: 200px;').props('readonly outlined dense spellcheck=false').mark('output')
 
             # INPUT row (hidden by default)
             self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm')
@@ -1181,15 +1186,6 @@ class NiceGUIBackend(UIBackend):
                 self.input_field.on('keydown.enter', self._submit_input)
                 self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
             self.input_row.visible = False
-
-            # Immediate - flexible, takes remaining space
-            with ui.row().style('width: 100%; flex: 1; min-height: 80px;'):
-                self.immediate_entry = ui.textarea(
-                    value='',
-                    placeholder='Command'
-                ).style('width: 100%; height: 100%;').props('outlined dense spellcheck=false').mark('immediate_entry')
-                self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
-                ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
             # Status
             with ui.row().classes('w-full bg-gray-200 q-pa-xs').style('justify-content: space-between;'):
