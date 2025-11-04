@@ -1,3 +1,8 @@
+---
+search:
+  exclude: true
+---
+
 # BASIC-80 Language Reference
 
 Complete language reference for MBASIC 5.21 (BASIC-80).

@@ -1,3 +1,8 @@
+---
+search:
+  exclude: true
+---
+
 # Appendices
 
 Additional reference material for BASIC-80 programming.

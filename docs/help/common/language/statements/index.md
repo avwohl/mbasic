@@ -1,3 +1,8 @@
+---
+search:
+  exclude: true
+---
+
 # BASIC-80 Commands and Statements
 
 All BASIC-80 commands and statements are described in this reference.

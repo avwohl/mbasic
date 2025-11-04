@@ -1,3 +1,8 @@
+---
+search:
+  exclude: true
+---
+
 # BASIC-80 Functions
 
 Intrinsic functions provided by BASIC-80. These functions may be called from any program without further definition.
