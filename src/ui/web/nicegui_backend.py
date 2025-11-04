@@ -1121,12 +1121,6 @@ class NiceGUIBackend(UIBackend):
                     margin: 0 !important;
                     padding: 0 !important;
                 }
-                /* Remove all gaps between rows */
-                .q-page > div {
-                    gap: 0 !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                }
                 /* Target NiceGUI's column wrapper */
                 .nicegui-content > .q-pa-md {
                     padding: 0 !important;
