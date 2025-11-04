@@ -1105,6 +1105,19 @@ class NiceGUIBackend(UIBackend):
         ui.add_head_html('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">')
         ui.add_head_html('<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>')
 
+        # Remove body margins/padding to eliminate space around top menu
+        ui.add_head_html('''
+            <style>
+                body {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+                .q-page {
+                    padding: 0 !important;
+                }
+            </style>
+        ''')
+
         # Set page title
         ui.page_title('MBASIC 5.21 - Web IDE')
 
@@ -1149,7 +1162,7 @@ class NiceGUIBackend(UIBackend):
                 ui.label(f'v{VERSION}').classes('text-gray-600')
 
         # Main content area - use flexbox with viewport height
-        with ui.element('div').style('width: 100%; height: calc(100vh - 140px); display: flex; flex-direction: column;'):
+        with ui.element('div').style('width: 100%; height: calc(100vh - 120px); display: flex; flex-direction: column;'):
             # Editor - using CodeMirror 5 (legacy, no ES6 modules) - 40% of available space
             self.editor = CodeMirror5Editor(
                 value='',
