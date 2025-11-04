@@ -1959,8 +1959,18 @@ class NiceGUIBackend(UIBackend):
             else:
                 # Already running - step one line
                 if self.interpreter:
-                    state = self.interpreter.tick(mode='step_line', max_statements=100)
-                    self._handle_step_result(state, 'line')
+                    try:
+                        state = self.interpreter.tick(mode='step_line', max_statements=100)
+                        self._handle_step_result(state, 'line')
+                    except Exception as e:
+                        log_web_error("_menu_step_line tick", e)
+                        self._append_output(f"\n--- Step error: {e} ---\n")
+                        self._set_status('Error')
+                        self.running = False
+                        self.paused = False
+                else:
+                    log_web_error("_menu_step_line", "No interpreter")
+                    self._notify('No interpreter - program not started', type='warning')
 
         except Exception as e:
             log_web_error("_menu_step_line", e)
@@ -2011,8 +2021,18 @@ class NiceGUIBackend(UIBackend):
             else:
                 # Already running - step one statement
                 if self.interpreter:
-                    state = self.interpreter.tick(mode='step_statement', max_statements=1)
-                    self._handle_step_result(state, 'statement')
+                    try:
+                        state = self.interpreter.tick(mode='step_statement', max_statements=1)
+                        self._handle_step_result(state, 'statement')
+                    except Exception as e:
+                        log_web_error("_menu_step_stmt tick", e)
+                        self._append_output(f"\n--- Step error: {e} ---\n")
+                        self._set_status('Error')
+                        self.running = False
+                        self.paused = False
+                else:
+                    log_web_error("_menu_step_stmt", "No interpreter")
+                    self._notify('No interpreter - program not started', type='warning')
 
         except Exception as e:
             log_web_error("_menu_step_stmt", e)
