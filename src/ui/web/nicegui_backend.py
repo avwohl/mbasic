@@ -1121,6 +1121,10 @@ class NiceGUIBackend(UIBackend):
                     margin: 0 !important;
                     padding: 0 !important;
                 }
+                /* Remove NiceGUI's default column gap completely */
+                .nicegui-content > .column {
+                    gap: 0 !important;
+                }
                 /* Target NiceGUI's column wrapper */
                 .nicegui-content > .q-pa-md {
                     padding: 0 !important;
@@ -1147,7 +1151,7 @@ class NiceGUIBackend(UIBackend):
         self._create_menu()
 
         # Toolbar
-        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 36px; margin-top: 2px; margin-bottom: 2px;'):
+        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 36px; margin-top: 2px; margin-bottom: 0;'):
             ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
             ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
             ui.button('Step', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
@@ -1157,14 +1161,14 @@ class NiceGUIBackend(UIBackend):
             ui.button(icon='check_circle', on_click=self._check_syntax).mark('btn_check_syntax').props('flat').tooltip('Check Syntax')
 
         # Command input row - single line like status bar
-        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 32px;'):
+        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 32px; margin-bottom: 2px;'):
             ui.label('>').classes('font-mono')
             self.immediate_entry = ui.input(placeholder='BASIC command...').classes('flex-grow').props('dense outlined').mark('immediate_entry')
             self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
             ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').props('dense flat').mark('btn_immediate')
 
         # Status bar
-        with ui.row().classes('w-full bg-gray-200 px-2').style('justify-content: space-between; min-height: 28px; align-items: center;'):
+        with ui.row().classes('w-full bg-gray-200 px-2').style('justify-content: space-between; min-height: 28px; align-items: center; margin-bottom: 2px;'):
             self.status_label = ui.label('Ready').mark('status')
             with ui.row().classes('gap-4'):
                 self.auto_line_label = ui.label('').classes('text-gray-600 font-mono')
