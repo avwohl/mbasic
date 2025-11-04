@@ -130,10 +130,11 @@ QUIT_ALT_KEY = _ctrl_key_to_urwid(_quit_alt_key)
 QUIT_ALT_CHAR = _ctrl_key_to_char(_quit_alt_key)
 QUIT_ALT_DISPLAY = _quit_alt_key
 
-# Variables watch window (not in JSON, hardcoded)
-VARIABLES_KEY = 'ctrl w'
-VARIABLES_CHAR = '\x17'
-VARIABLES_DISPLAY = 'Ctrl+W'
+# Variables watch window
+_variables_key = _get_key('editor', 'variables') or 'Ctrl+W'
+VARIABLES_KEY = _ctrl_key_to_urwid(_variables_key)
+VARIABLES_CHAR = _ctrl_key_to_char(_variables_key)
+VARIABLES_DISPLAY = _variables_key
 
 # Execution stack window (menu only - Ctrl+K reassigned to step line)
 STACK_KEY = ''  # No keyboard shortcut
@@ -240,10 +241,11 @@ SETTINGS_KEY = 'ctrl p'
 SETTINGS_CHAR = '\x10'  # Ctrl+P
 SETTINGS_DISPLAY = 'Ctrl+P'
 
-# Maximize output (for games/full-screen programs) - Ctrl+O for Output
-MAXIMIZE_OUTPUT_KEY = 'ctrl o'
-MAXIMIZE_OUTPUT_CHAR = '\x0f'  # Ctrl+O
-MAXIMIZE_OUTPUT_DISPLAY = '^O'
+# Maximize output (for games/full-screen programs)
+# Note: Changed from Ctrl+O to Ctrl+Shift+M to avoid conflict with Open (Ctrl+O)
+MAXIMIZE_OUTPUT_KEY = 'ctrl shift m'
+MAXIMIZE_OUTPUT_CHAR = ''  # No single char for Shift+Ctrl+M
+MAXIMIZE_OUTPUT_DISPLAY = 'Ctrl+Shift+M'
 
 # =============================================================================
 # Navigation
