@@ -48,7 +48,7 @@ class LineNumberedText(tk.Frame if tk else object):
         self.grid_columnconfigure(1, weight=1)
 
         # Create canvas for status symbols only
-        # Width: ~20px for one status character (●, ?, or space)
+        # Width: 20px for one status character (●, ?, or space)
         self.canvas = tk.Canvas(
             self,
             width=20,
@@ -303,7 +303,7 @@ class LineNumberedText(tk.Frame if tk else object):
         return None
 
     def _on_status_click(self, event):
-        """Handle click on status column (show error message if clicked on ?)."""
+        """Handle click on status column (show error for ?, breakpoint info for ●)."""
         import tkinter.messagebox as messagebox
 
         # Calculate which line was clicked based on Y coordinate

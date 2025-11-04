@@ -1021,8 +1021,7 @@ def serialize_line(line_node):
                 # Check if this is an inline comment (REM or apostrophe)
                 # Comments should have spacing before them, not colon separator
                 if type(stmt).__name__ == 'RemarkStatementNode':
-                    # Inline comment - preserve spacing, no colon
-                    # Use 4 spaces before comment as default
+                    # Inline comment - use standard spacing (4 spaces), no colon
                     parts.append('    ' + stmt_text)
                 else:
                     parts.append(' : ' + stmt_text)
