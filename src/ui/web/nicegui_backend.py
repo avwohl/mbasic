@@ -1764,7 +1764,7 @@ class NiceGUIBackend(UIBackend):
                 error_msg = state.error_info.error_message
                 self._append_output(f"\n--- Setup error: {error_msg} ---\n")
                 self._set_status('Error')
-                self.running = False  # For display only (spinner)
+                self.running = False  # Mark as not running (updates UI spinner/status)
                 return
 
             # Check if RUN was called with a line number (e.g., RUN 120)
@@ -1779,11 +1779,10 @@ class NiceGUIBackend(UIBackend):
             # If empty program, just show Ready (variables cleared, nothing to execute)
             if not self.program.lines:
                 self._set_status('Ready')
-                self.running = False  # For display only (spinner)
+                self.running = False  # Mark as not running (updates UI spinner/status)
                 return
 
-            # Mark as running (for display only - spinner, status indicator)
-            # This should NOT control program logic - RUN is always valid
+            # Mark as running (for display and state tracking - spinner, status, continue/step logic)
             self.running = True
 
             # Start async execution - store timer handle so we can cancel it

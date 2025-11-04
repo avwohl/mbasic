@@ -87,16 +87,13 @@ class VisualBackend(UIBackend):
         """Execute RUN command - run the program.
 
         Override or use this implementation:
-        1. Get program AST from ProgramManager
-        2. Create Runtime and Interpreter
-        3. Run the program
-        4. Handle errors and display output
+        1. Create Runtime and Interpreter from ProgramManager
+        2. Run the program
+        3. Handle errors and display output
         """
         try:
-            # Get program AST
-            program_ast = self.program.get_program_ast()
-
             # Create runtime and interpreter with local limits
+            # (Runtime accesses program.line_asts directly, no need for program_ast variable)
             from resource_limits import create_local_limits
             self.runtime = Runtime(self.program.line_asts, self.program.lines)
             self.interpreter = Interpreter(self.runtime, self.io, limits=create_local_limits())

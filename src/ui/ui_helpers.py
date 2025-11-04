@@ -501,7 +501,7 @@ def delete_lines_from_program(program_manager, args: str, runtime=None):
     Args:
         program_manager: ProgramManager instance with .lines and .line_asts
         args: DELETE command arguments (e.g., "40", "40-100", "-40", "40-")
-        runtime: Optional runtime object with line_table and line_order to update
+        runtime: Optional runtime object with statement_table to update
 
     Returns:
         List of deleted line numbers, or None if error
@@ -1258,7 +1258,8 @@ def serialize_expression(expr):
         return f"{op_str}{operand}"
 
     elif expr_type == 'FunctionCallNode':
-        # ERR and ERL are special - they're not functions and don't use ()
+        # ERR and ERL are system variables (not functions) - serialize without ()
+        # In BASIC: ERR returns error code, ERL returns error line (no parentheses)
         if expr.name in ('ERR', 'ERL') and len(expr.arguments) == 0:
             return expr.name
         args = ','.join(serialize_expression(arg) for arg in expr.arguments)
