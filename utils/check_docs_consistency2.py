@@ -291,14 +291,14 @@ OUTPUT REQUIREMENTS:
 
                 # First, strip markdown code block formatting if present
                 import re
-                # Remove ```json at start and ``` at end
-                cleaned_text = response_text
+                # Remove ```json or ``` at start and ``` at end
+                cleaned_text = response_text.strip()
                 if cleaned_text.startswith('```json'):
-                    cleaned_text = cleaned_text[7:]  # Remove ```json
+                    cleaned_text = cleaned_text[7:].lstrip('\n')  # Remove ```json and newline
                 elif cleaned_text.startswith('```'):
-                    cleaned_text = cleaned_text[3:]  # Remove ```
+                    cleaned_text = cleaned_text[3:].lstrip('\n')  # Remove ``` and newline
                 if cleaned_text.endswith('```'):
-                    cleaned_text = cleaned_text[:-3]  # Remove trailing ```
+                    cleaned_text = cleaned_text[:-3].rstrip('\n')  # Remove trailing ``` and newline
                 cleaned_text = cleaned_text.strip()
 
                 try:
@@ -492,13 +492,13 @@ Return ONLY the raw JSON array, no markdown formatting (no ``` or ```json), no o
 
             # Strip markdown code block formatting if present
             import re
-            cleaned_text = response_text
+            cleaned_text = response_text.strip()
             if cleaned_text.startswith('```json'):
-                cleaned_text = cleaned_text[7:]  # Remove ```json
+                cleaned_text = cleaned_text[7:].lstrip('\n')  # Remove ```json and newline
             elif cleaned_text.startswith('```'):
-                cleaned_text = cleaned_text[3:]  # Remove ```
+                cleaned_text = cleaned_text[3:].lstrip('\n')  # Remove ``` and newline
             if cleaned_text.endswith('```'):
-                cleaned_text = cleaned_text[:-3]  # Remove trailing ```
+                cleaned_text = cleaned_text[:-3].rstrip('\n')  # Remove trailing ``` and newline
             cleaned_text = cleaned_text.strip()
 
             try:
