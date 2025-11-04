@@ -1104,10 +1104,10 @@ class Interpreter:
 
         Syntax: NEXT [variable [, variable ...]]
 
-        NEXT I, J, K is equivalent to: NEXT I: NEXT J: NEXT K
-        Variables are processed left-to-right. If any loop continues (not
-        finished), execution jumps back to the loop body and remaining
-        variables are not processed.
+        NEXT I, J, K processes variables left-to-right: I first, then J, then K.
+        If any loop continues (not finished), execution jumps back to the loop body
+        and remaining variables are not processed. This differs from separate
+        statements (NEXT I: NEXT J: NEXT K) which would always execute sequentially.
         """
         # Determine which variables to process
         if stmt.variables:

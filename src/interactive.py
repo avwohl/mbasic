@@ -85,7 +85,7 @@ class InteractiveMode:
         self.program = ProgramManager(self.def_type_map)
 
         # For backward compatibility, provide direct access to lines/line_asts
-        # (These are now properties that delegate to program manager)
+        # (These are now properties that return references to program manager's dictionaries)
         self.current_file = None  # Maintained for compatibility
 
         self.runtime = None  # Persistent runtime for immediate mode
@@ -168,8 +168,9 @@ class InteractiveMode:
         # Use emacs-style keybindings (default, but be explicit)
         readline.parse_and_bind('set editing-mode emacs')
 
-        # Bind Ctrl+A to insert itself (so we can detect it in input)
-        # This overrides the default Ctrl+A (beginning-of-line) for MBASIC compatibility
+        # Bind Ctrl+A to insert literal \x01 character instead of moving cursor
+        # This overrides default Ctrl+A (beginning-of-line). The literal character
+        # appears in input string where it's detected for edit mode (see start() method)
         readline.parse_and_bind('Control-a: self-insert')
 
     def _completer(self, text, state):
@@ -406,7 +407,14 @@ class InteractiveMode:
             print_error(e, runtime)
 
     def cmd_cont(self):
-        """CONT - Continue execution after STOP or Break"""
+        """CONT - Continue execution after STOP or Break
+
+        State management:
+        - Clears stopped/halted flags in runtime
+        - Restores PC from stop_pc (saved execution position)
+        - Resumes tick-based execution loop
+        - Handles input prompts and errors during execution
+        """
         if not self.program_runtime or not self.program_runtime.stopped:
             print("?Can't continue")
             return
@@ -773,10 +781,10 @@ class InteractiveMode:
     def cmd_renum(self, args):
         """RENUM [new_start][,[old_start][,increment]] - Renumber program lines and update references
 
-        Uses AST-based approach:
+        Delegates to renum_program() from ui_helpers, which uses an AST-based approach:
         1. Parse program to AST
         2. Build line number mapping (old -> new)
-        3. Walk AST and update all line number references
+        3. Walk AST and update all line number references (via _renum_statement callback)
         4. Serialize AST back to source
 
         Args format: "new_start,old_start,increment"
@@ -869,16 +877,15 @@ class InteractiveMode:
                 stmt.line_number = line_map[stmt.line_number]
 
     def _renum_erl_comparison(self, expr, line_map):
-        """Handle ERL = line_number patterns in expressions
+        """Handle ERL binary operations in expressions (intended for comparison patterns)
 
-        According to MBASIC manual: if ERL appears on the left side of a comparison
-        operator (=, <>, <, >, <=, >=), the number on the right is treated as a line
-        number reference and should be renumbered.
+        MBASIC manual specifies: if ERL appears on left side of comparison operator
+        (=, <>, <, >, <=, >=), the right-hand number is a line number reference.
 
-        Note: This currently renumbers for ANY binary operator involving ERL, not just
-        comparisons. This means expressions like "ERL + 100" would also be renumbered,
-        which may not be desired behavior. Consider adding operator type checking if
-        this becomes an issue.
+        Current implementation: Renumbers for ANY binary operator with ERL on left,
+        including arithmetic (ERL + 100, ERL * 2). This is broader than the manual
+        specifies but avoids missing valid comparison patterns. Consider adding
+        operator type checking if arithmetic expressions cause issues.
 
         Args:
             expr: Expression node to check
@@ -942,20 +949,20 @@ class InteractiveMode:
 
         EDIT 100 - Edit line 100 using edit subcommands
 
-        Edit mode subcommands:
-        - Space: Move cursor right, printing characters
-        - [n]D: Delete n characters
+        Edit mode subcommands (implemented subset of MBASIC EDIT):
+        - Space: Move cursor right, printing character
+        - D: Delete character at cursor
+        - C: Change character at cursor
         - I<text>$: Insert text ($ = Escape)
         - X: Extend line (go to end and insert)
         - H: Delete to end and insert
-        - [n]S<ch>: Search for nth occurrence of ch
-        - [n]K<ch>: Kill (delete) up to nth occurrence of ch
-        - [n]C: Change next n characters
-        - L: List rest of line, go to start
+        - L: List rest of line, return to start
         - E: End and save (don't print rest)
         - Q: Quit without saving
         - A: Abort and restart
         - <CR>: End and save
+
+        Note: Count prefixes ([n]D, [n]C) and search commands ([n]S, [n]K) are not yet implemented.
         """
         if not args or not args.strip():
             print("?Syntax error - specify line number")
@@ -1244,9 +1251,10 @@ class InteractiveMode:
     def execute_immediate(self, statement):
         """Execute a statement in immediate mode (no line number)
 
-        Uses persistent runtime so variables persist between statements.
-        If a program has been run (or stopped), use the program runtime
-        so immediate mode can examine/modify program variables.
+        Runtime selection:
+        - If program_runtime exists (from RUN), use it so immediate mode can
+          examine/modify program variables (works for stopped OR finished programs)
+        - Otherwise use persistent immediate mode runtime for variable isolation
         """
         # Build a minimal program with line 0
         program_text = "0 " + statement
