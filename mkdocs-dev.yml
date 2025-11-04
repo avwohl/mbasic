@@ -1,0 +1,127 @@
+site_name: MBASIC 5.21 Documentation (Full)
+site_description: Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)
+site_author: MBASIC Project Contributors
+site_url: https://avwohl.github.io/mbasic
+
+repo_name: avwohl/mbasic
+repo_url: https://github.com/avwohl/mbasic
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.action.edit
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  - awesome-pages:
+      filename: .pages
+      collapse_single_pages: false
+      strict: false
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - codehilite:
+      guess_lang: false
+  - def_list
+  - footnotes
+  - meta
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: avwohl
+      repo: mbasic
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+# Documentation structure - FULL INDEX for developers
+# Using awesome-pages plugin to auto-discover pages
+nav:
+  - Home: index.md
+  - Getting Started:
+    - help/mbasic/getting-started.md
+    - help/mbasic/features.md
+    - help/mbasic/compatibility.md
+  - Library:
+    - library/index.md
+    - Games: library/games/index.md
+    - Utilities: library/utilities/index.md
+    - Education: library/education/index.md
+    - Business: library/business/index.md
+    - Electronics: library/electronics/index.md
+    - Ham Radio: library/ham_radio/index.md
+    - Data Management: library/data_management/index.md
+    - Telecommunications: library/telecommunications/index.md
+    - Demos: library/demos/index.md
+  - Developer Docs: dev/index.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/avwohl/mbasic
+  generator: false
+
+# Extra CSS for BASIC code highlighting
+extra_css:
+  - stylesheets/extra.css
+
+docs_dir: docs
+site_dir: site-dev
+
+# Exclude files that conflict or shouldn't be in the site
+exclude_docs: |
+  README.md
+  history/docs_inconsistencies_report*.md

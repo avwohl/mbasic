@@ -69,9 +69,10 @@ if [ -n "$DOCS_CHANGED" ]; then
         exit 1
     fi
 
-    echo "Documentation changed - validating mkdocs build..."
+    echo "Documentation changed - validating mkdocs builds..."
     if command -v mkdocs &> /dev/null; then
-        # Run mkdocs build in strict mode and capture both output and exit code
+        # Build user docs (limited search indexing)
+        echo "Building user documentation (site/)..."
         BUILD_OUTPUT=$(mkdocs build --strict 2>&1)
         BUILD_EXIT_CODE=$?
 
@@ -98,7 +99,34 @@ if [ -n "$DOCS_CHANGED" ]; then
             exit 1
         fi
 
-        echo "✓ mkdocs build validation passed (no warnings or errors)"
+        echo "✓ User docs build validation passed (no warnings or errors)"
+
+        # Build developer docs (full search indexing)
+        echo "Building developer documentation (site-dev/)..."
+        BUILD_OUTPUT_DEV=$(mkdocs build --strict -f mkdocs-dev.yml 2>&1)
+        BUILD_EXIT_CODE_DEV=$?
+
+        if [ $BUILD_EXIT_CODE_DEV -ne 0 ]; then
+            echo "❌ ERROR: mkdocs-dev build failed in strict mode!"
+            echo ""
+            echo "$BUILD_OUTPUT_DEV"
+            echo ""
+            echo "Fix the errors above before committing"
+            exit 1
+        fi
+
+        if echo "$BUILD_OUTPUT_DEV" | grep -E "contains an unrecognized relative link|does not contain an anchor|contains an absolute link" > /dev/null; then
+            echo "❌ ERROR: mkdocs-dev build has strict mode warnings!"
+            echo ""
+            echo "The following warnings will cause GitHub deployment to fail:"
+            echo ""
+            echo "$BUILD_OUTPUT_DEV" | grep -E "contains an unrecognized relative link|does not contain an anchor|contains an absolute link"
+            echo ""
+            echo "Run 'mkdocs build --strict -f mkdocs-dev.yml' to see full details"
+            exit 1
+        fi
+
+        echo "✓ Developer docs build validation passed (no warnings or errors)"
     else
         echo "⚠ Warning: mkdocs not installed, skipping build validation"
     fi
