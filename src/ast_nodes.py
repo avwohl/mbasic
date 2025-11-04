@@ -37,7 +37,16 @@ class Node:
 
 @dataclass
 class ProgramNode:
-    """Root node of the AST - represents entire program"""
+    """Root node of the AST - represents entire program.
+
+    Contains a list of LineNode objects. Each LineNode represents one
+    numbered line in the BASIC program and contains a list of statements
+    (since multiple statements can appear on one line, separated by colons).
+
+    Attributes:
+        lines: List of LineNode objects
+        def_type_statements: Global DEF type mappings (DEFINT/DEFSNG/DEFDBL/DEFSTR)
+    """
     lines: List['LineNode']
     def_type_statements: dict  # Global DEF type mappings
     line_num: int = 0

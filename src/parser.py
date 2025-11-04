@@ -1239,11 +1239,16 @@ class Parser:
         Syntax:
             PRINT USING format$; expr1; expr2
             PRINT #filenum, USING format$; expr1
+
+        The format string is parsed as an expression, allowing:
+        - String literals: PRINT USING "###.##"; X
+        - String variables: PRINT USING F$; X
+        - Any expression that evaluates to a string
         """
         # Advance past USING keyword
         self.advance()
 
-        # Parse format string expression
+        # Parse format string as an expression (literal, variable, or computed)
         format_string = self.parse_expression()
 
         # Expect semicolon after format string
