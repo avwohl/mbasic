@@ -2393,16 +2393,26 @@ class NiceGUIBackend(UIBackend):
                 # Try to parse the line
                 try:
                     from src.parser import Parser
-                    from src.lexer import Lexer
+                    from src.lexer import Lexer, LexerError
                     lexer = Lexer(line_text)
                     tokens = lexer.tokenize()
                     parser = Parser(tokens)
                     parser.parse_line()
+                except LexerError as e:
+                    # Lexer reports token position (1:col), replace with BASIC line number
+                    error_msg = str(e).replace(f'at {e.line}:', f'at {line_num}:')
+                    # Check if error already contains "in {line_num}"
+                    if f' in {line_num}' in error_msg or f'in {line_num}:' in error_msg:
+                        errors.append(error_msg)
+                    else:
+                        errors.append(f'{line_num}: {error_msg}')
                 except Exception as e:
-                    # Strip redundant "Syntax error in N:" prefix if present
                     error_msg = str(e)
-                    error_msg = re.sub(r'^Syntax error in \d+:\s*', '', error_msg)
-                    errors.append(f'{line_num}: {error_msg}')
+                    # If error already contains "in {line_num}", don't add duplicate prefix
+                    if f' in {line_num}' in error_msg or f'in {line_num}:' in error_msg:
+                        errors.append(error_msg)
+                    else:
+                        errors.append(f'{line_num}: {error_msg}')
 
             # Display results
             if errors:
