@@ -66,8 +66,15 @@ export default {
             mode: 'text/plain'  // No syntax highlighting for now
         });
 
+        // Flag to skip change events during programmatic updates
+        this.skipNextChange = false;
+
         // Handle changes
         this.editor.on('change', () => {
+            // Skip if this is a programmatic update
+            if (this.skipNextChange) {
+                return;
+            }
             const newValue = this.editor.getValue();
             this.$emit('change', newValue);
         });
@@ -231,6 +238,28 @@ export default {
                 line: cursor.line,
                 column: cursor.ch
             };
+        },
+
+        setCursor(line, column) {
+            if (this.editor) {
+                this.editor.setCursor({line: line, ch: column});
+                this.editor.focus();
+            }
+        },
+
+        setValueAndCursor(text, line, column) {
+            if (this.editor) {
+                // Temporarily disable change event to prevent recursive updates
+                this.skipNextChange = true;
+                this.editor.setValue(text);
+                this.editor.setCursor({line: line, ch: column});
+                this.editor.focus();
+                // Re-enable immediately after setValue completes
+                // Using nextTick to ensure setValue is done but user typing works immediately
+                this.$nextTick(() => {
+                    this.skipNextChange = false;
+                });
+            }
         },
 
         setReadonly(readonly) {

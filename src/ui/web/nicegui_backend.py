@@ -1035,6 +1035,7 @@ class NiceGUIBackend(UIBackend):
         self.editor = None
         self.output = None
         self.status_label = None
+        self.auto_line_label = None  # Auto line number indicator
         self.current_line_label = None  # Current line indicator
         self.immediate_entry = None  # Immediate mode command input
         self.recent_files_menu = None  # Recent files submenu
@@ -1142,6 +1143,7 @@ class NiceGUIBackend(UIBackend):
             # Track last edited line for auto-numbering
             self.last_edited_line_index = None
             self.last_edited_line_text = None
+            self.last_line_count = 0  # Track number of lines to detect Enter
             self.auto_numbering_in_progress = False  # Prevent recursive calls
             self.editor_has_been_used = False  # Track if user has typed anything
 
@@ -1191,14 +1193,27 @@ class NiceGUIBackend(UIBackend):
             with ui.row().classes('w-full bg-gray-200 q-pa-xs').style('justify-content: space-between;'):
                 self.status_label = ui.label('Ready').mark('status')
                 with ui.row().classes('gap-4'):
+                    self.auto_line_label = ui.label('').classes('text-gray-600 font-mono')
                     self.resource_usage_label = ui.label('').classes('text-gray-600')
                     ui.label(f'v{VERSION}').classes('text-gray-600')
 
         # Start auto-save timer
         self._start_auto_save()
 
-        # Set initial focus to program editor
-        self.editor.run_method('focus')
+        # Initialize editor with line number prompt if auto-numbering is enabled
+        auto_number_enabled = self.settings_manager.get('editor.auto_number')
+        if auto_number_enabled and not self.editor.value:
+            # Set initial line number with cursor positioned after it
+            self.editor.run_method('setValueAndCursor', '10 ', 0, 3)
+            self.editor._value = '10 '
+            self.last_line_count = 1  # Initialize line count
+        else:
+            # Set initial focus to program editor
+            self.editor.run_method('focus')
+            self.last_line_count = 0
+
+        # Update auto-line indicator
+        self._update_auto_line_indicator()
 
     def _create_menu(self):
         """Create menu bar."""
@@ -2343,8 +2358,9 @@ class NiceGUIBackend(UIBackend):
             # Clear existing program
             self.program.clear()
 
-            # Get editor content
+            # Get editor content - always use the property which handles dict conversion
             text = self.editor.value
+
             if not text:
                 self._set_status('Program cleared')
                 return True
@@ -2453,14 +2469,30 @@ class NiceGUIBackend(UIBackend):
         - Clearing placeholder on first edit
         - Removing blank lines
         - Auto-numbering lines
+        - Detecting Enter key (new line added)
         """
         try:
+            # Get current text
+            current_text = self.editor.value
+
             # Track when editor has been used (for placeholder management)
-            if not self.editor_has_been_used and self.editor.value:
+            if not self.editor_has_been_used and current_text:
                 self.editor_has_been_used = True
 
-            # Immediately remove blank lines
+            # Detect if a new line was added (Enter key pressed)
+            current_line_count = len(current_text.split('\n'))
+
+            if current_line_count > self.last_line_count:
+                # New line was added - add line number prompt
+                ui.timer(0.1, self._add_next_line_number, once=True)
+
+            self.last_line_count = current_line_count
+
+            # Immediately remove blank lines (but not the last one where cursor is)
             self._remove_blank_lines()
+
+            # Update auto-line indicator
+            self._update_auto_line_indicator()
 
             # Schedule auto-number check with small delay
             ui.timer(0.05, self._check_auto_number, once=True)
@@ -2503,6 +2535,65 @@ class NiceGUIBackend(UIBackend):
     def _on_editor_blur(self):
         """Handle editor blur - check auto-number and remove blank lines."""
         ui.timer(0.05, self._check_and_autonumber_on_blur, once=True)
+
+    async def _add_next_line_number(self):
+        """Add next line number to the new line created by Enter.
+
+        Also auto-numbers the previous line if it doesn't have a line number.
+        """
+        try:
+            # Get current editor content
+            current_text = self.editor.value or ''
+            lines = current_text.split('\n')
+
+            if len(lines) < 2:
+                return  # Need at least 2 lines (previous + new)
+
+            # Find highest line number and check if previous line needs numbering
+            highest_line_num = 0
+            prev_line_needs_number = False
+
+            for i, line in enumerate(lines):
+                match = re.match(r'^\s*(\d+)', line.strip())
+                if match:
+                    highest_line_num = max(highest_line_num, int(match.group(1)))
+                elif i == len(lines) - 2 and line.strip():  # Previous line (before last)
+                    prev_line_needs_number = True
+
+            # Calculate next line numbers
+            auto_number_step = self.settings_manager.get('editor.auto_number_step')
+            if highest_line_num > 0:
+                next_line_num = highest_line_num + auto_number_step
+            else:
+                next_line_num = 10  # Default start
+
+            # Auto-number previous line if it needs it
+            if prev_line_needs_number:
+                prev_line = lines[-2].strip()
+                lines[-2] = f'{next_line_num} {prev_line}'
+                next_line_num += auto_number_step
+
+            # Add line number to the new blank line
+            if lines[-1].strip() == '':
+                line_num_prompt = f'{next_line_num} '
+                lines[-1] = line_num_prompt
+                new_content = '\n'.join(lines)
+
+                # Position cursor at end of line number (after the space)
+                # Line is 0-based, last line is len(lines) - 1
+                cursor_line = len(lines) - 1
+                cursor_col = len(line_num_prompt)
+
+                # Set value and cursor together (JavaScript will skip change event to avoid interference)
+                await self.editor.run_method('setValueAndCursor', new_content, cursor_line, cursor_col)
+
+                # Update internal Python state (since JavaScript skipped change event)
+                self.editor._value = new_content
+                self.last_line_count = len(lines)  # Update line count to prevent re-triggering
+                self._update_auto_line_indicator()
+
+        except Exception as ex:
+            log_web_error("_add_next_line_number", ex)
 
     async def _check_and_autonumber_on_blur(self):
         """Check auto-number then remove blank lines on blur."""
@@ -2874,6 +2965,39 @@ class NiceGUIBackend(UIBackend):
                 self.resource_usage_label.text = f'{var_count} vars, {array_count} arrays'
             except:
                 pass
+
+    def _update_auto_line_indicator(self):
+        """Update auto line number indicator to show next line number."""
+        if not hasattr(self, 'auto_line_label') or not self.auto_line_label:
+            return
+
+        auto_number_enabled = self.settings_manager.get('editor.auto_number')
+        if not auto_number_enabled:
+            self.auto_line_label.text = ''
+            return
+
+        try:
+            # Calculate next line number
+            current_text = self.editor.value or ''
+            lines = current_text.split('\n')
+
+            # Find highest line number
+            highest_line_num = 0
+            for line in lines:
+                match = re.match(r'^\s*(\d+)', line.strip())
+                if match:
+                    highest_line_num = max(highest_line_num, int(match.group(1)))
+
+            # Calculate next line number
+            auto_number_step = self.settings_manager.get('editor.auto_number_step')
+            if highest_line_num > 0:
+                next_line_num = highest_line_num + auto_number_step
+            else:
+                next_line_num = 10  # Default start
+
+            self.auto_line_label.text = f'Auto {next_line_num}'
+        except Exception as ex:
+            log_web_error("_update_auto_line_indicator", ex)
 
     # =========================================================================
     # UIBackend Interface

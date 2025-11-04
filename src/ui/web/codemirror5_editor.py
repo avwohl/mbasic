@@ -59,8 +59,14 @@ class CodeMirror5Editor(ui.element, component='codemirror5_editor.js'):
 
     @property
     def value(self) -> str:
-        """Get current editor content."""
-        return self._value
+        """Get current editor content.
+
+        Always returns a string, even if internal value is dict or None.
+        """
+        if isinstance(self._value, dict):
+            # Sometimes event args are dict - return empty string
+            return ''
+        return self._value or ''
 
     @value.setter
     def value(self, text: str) -> None:
