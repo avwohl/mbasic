@@ -68,15 +68,12 @@ class SimpleWebIOHandler(IOHandler):
         and async web UI. The input field appears below the output pane,
         allowing users to see all previous output while typing.
         """
-        # Show prompt in output
-        if prompt:
-            self.print(prompt, end='')
-
+        # Don't print prompt here - _enable_inline_input will add it
         # Get input from UI (this will block until user enters input)
         result = self.input_callback(prompt)
 
-        # Echo input to output
-        self.print(result)
+        # The inline input handler already echoes the input with newline
+        # So we don't need to echo it again here
 
         return result
 
