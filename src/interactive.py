@@ -74,7 +74,7 @@ class InteractiveMode:
     def __init__(self, io_handler=None):
         # Initialize DEF type map (like Parser does)
         # Import TypeInfo here to avoid circular dependency
-        from parser import TypeInfo
+        from src.parser import TypeInfo
         self.def_type_map = {}
         # Default type is SINGLE for all letters (use lowercase)
         for letter in 'abcdefghijklmnopqrstuvwxyz':
@@ -321,8 +321,8 @@ class InteractiveMode:
         args = parts[1] if len(parts) > 1 else ""
 
         # Meta-commands (editor commands that manipulate program source)
-        # Only AUTO and EDIT are true meta-commands that can't be parsed
-        # Everything else (LIST, DELETE, RENUM, FILES, LOAD, SAVE, etc.) goes through parser
+        # Only AUTO and EDIT are true meta-commands that can't be parsed - they're
+        # handled specially below. Everything else goes through parser as immediate mode.
         if command == "AUTO":
             self.cmd_auto(args)
         elif command == "EDIT":
@@ -1114,7 +1114,7 @@ class InteractiveMode:
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         except:
-            # Fallback for non-TTY (piped input)
+            # Fallback for non-TTY/piped input or any terminal errors (bare except)
             ch = sys.stdin.read(1)
             return ch if ch else None
 
