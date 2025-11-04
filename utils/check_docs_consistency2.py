@@ -62,6 +62,47 @@ class EnhancedConsistencyAnalyzer:
         self.code_context = {}
         self.comment_conflicts = []
 
+    def _api_call_with_retry(self, prompt: str, max_retries: int = 5, initial_delay: float = 2.0) -> str:
+        """Make an API call with exponential backoff retry on overload errors.
+
+        Args:
+            prompt: The prompt to send to Claude
+            max_retries: Maximum number of retry attempts (default 5)
+            initial_delay: Initial delay in seconds before first retry (default 2.0)
+
+        Returns:
+            Response text from Claude
+
+        Raises:
+            Exception: If all retries are exhausted or non-retryable error occurs
+        """
+        delay = initial_delay
+
+        for attempt in range(max_retries + 1):
+            try:
+                response = self.client.messages.create(
+                    model=USE_MODEL,
+                    max_tokens=4000,
+                    temperature=0,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                return response.content[0].text.strip()
+
+            except Exception as e:
+                error_str = str(e)
+
+                # Check if it's an overload error (500 or 'Overloaded')
+                is_overload = ('500' in error_str or 'Overloaded' in error_str or
+                              'overloaded' in error_str.lower())
+
+                if is_overload and attempt < max_retries:
+                    print(f"  API overloaded, retrying in {delay:.1f}s (attempt {attempt + 1}/{max_retries})...")
+                    time.sleep(delay)
+                    delay *= 2  # Exponential backoff
+                else:
+                    # Either not an overload error, or we've exhausted retries
+                    raise
+
     def collect_source_files(self) -> Dict[str, str]:
         """Collect Python and JSON files from src tree and other directories."""
         source_files = {}
@@ -277,49 +318,49 @@ OUTPUT REQUIREMENTS:
 - Just the pure JSON array text"""
 
             try:
-                response = self.client.messages.create(
-                    model=USE_MODEL,
-                    max_tokens=4000,
-                    temperature=0,
-                    messages=[{"role": "user", "content": prompt}]
-                )
-
-                response_text = response.content[0].text.strip()
+                response_text = self._api_call_with_retry(prompt)
 
                 # Try to extract JSON from response
                 file_conflicts = None
 
-                # First, strip markdown code block formatting if present
+                # Strip markdown code block formatting if present (line-by-line approach)
                 import re
-                # Remove ```json or ``` at start and ``` at end
                 cleaned_text = response_text.strip()
-                if cleaned_text.startswith('```json'):
-                    cleaned_text = cleaned_text[7:].lstrip('\n')  # Remove ```json and newline
-                elif cleaned_text.startswith('```'):
-                    cleaned_text = cleaned_text[3:].lstrip('\n')  # Remove ``` and newline
-                if cleaned_text.endswith('```'):
-                    cleaned_text = cleaned_text[:-3].rstrip('\n')  # Remove trailing ``` and newline
-                cleaned_text = cleaned_text.strip()
 
+                # Try direct parsing first
                 try:
-                    # Try direct JSON parsing on cleaned text
                     file_conflicts = json.loads(cleaned_text)
                 except json.JSONDecodeError:
-                    # Try to extract JSON array from response text
-                    json_match = re.search(r'\[.*\]', cleaned_text, re.DOTALL)
-                    if json_match:
-                        try:
-                            file_conflicts = json.loads(json_match.group())
-                        except json.JSONDecodeError:
-                            pass
+                    # Try stripping markdown code blocks
+                    if cleaned_text.startswith("```"):
+                        lines = cleaned_text.split('\n')
+                        # Remove first line if it starts with ```
+                        if lines[0].startswith("```"):
+                            lines = lines[1:]
+                        # Remove last line if it's just ```
+                        if lines and lines[-1].strip() == "```":
+                            lines = lines[:-1]
+                        cleaned_text = '\n'.join(lines)
 
-                    if not file_conflicts:
-                        # Show what we got for debugging
-                        print(f"Warning: Could not parse Claude's response for {filepath}")
-                        if len(response_text) < 200:
-                            print(f"  Response was: {response_text}")
-                        else:
-                            print(f"  Response started with: {response_text[:200]}...")
+                    # Try parsing cleaned text
+                    try:
+                        file_conflicts = json.loads(cleaned_text)
+                    except json.JSONDecodeError:
+                        # Last resort: try to extract JSON array using regex
+                        json_match = re.search(r'\[.*\]', cleaned_text, re.DOTALL)
+                        if json_match:
+                            try:
+                                file_conflicts = json.loads(json_match.group())
+                            except json.JSONDecodeError:
+                                pass
+
+                if not file_conflicts:
+                    # Show what we got for debugging
+                    print(f"Warning: Could not parse Claude's response for {filepath}")
+                    if len(response_text) < 200:
+                        print(f"  Response was: {response_text}")
+                    else:
+                        print(f"  Response started with: {response_text[:200]}...")
 
                 # Add found conflicts if any
                 if file_conflicts:
@@ -481,40 +522,42 @@ Format your response as a JSON array. Each item should have:
 Return ONLY the raw JSON array, no markdown formatting (no ``` or ```json), no other text. Empty array [] if no issues."""
 
         try:
-            response = self.client.messages.create(
-                model=USE_MODEL,
-                max_tokens=4000,
-                temperature=0,
-                messages=[{"role": "user", "content": prompt}]
-            )
+            response_text = self._api_call_with_retry(prompt)
 
-            response_text = response.content[0].text.strip()
-
-            # Strip markdown code block formatting if present
+            # Strip markdown code block formatting if present (line-by-line approach)
             import re
             cleaned_text = response_text.strip()
-            if cleaned_text.startswith('```json'):
-                cleaned_text = cleaned_text[7:].lstrip('\n')  # Remove ```json and newline
-            elif cleaned_text.startswith('```'):
-                cleaned_text = cleaned_text[3:].lstrip('\n')  # Remove ``` and newline
-            if cleaned_text.endswith('```'):
-                cleaned_text = cleaned_text[:-3].rstrip('\n')  # Remove trailing ``` and newline
-            cleaned_text = cleaned_text.strip()
 
+            # Try direct parsing first
             try:
-                result = json.loads(cleaned_text)
-                return result
+                return json.loads(cleaned_text)
             except json.JSONDecodeError:
-                json_match = re.search(r'\[.*\]', cleaned_text, re.DOTALL)
-                if json_match:
-                    try:
-                        return json.loads(json_match.group())
-                    except json.JSONDecodeError:
+                # Try stripping markdown code blocks
+                if cleaned_text.startswith("```"):
+                    lines = cleaned_text.split('\n')
+                    # Remove first line if it starts with ```
+                    if lines[0].startswith("```"):
+                        lines = lines[1:]
+                    # Remove last line if it's just ```
+                    if lines and lines[-1].strip() == "```":
+                        lines = lines[:-1]
+                    cleaned_text = '\n'.join(lines)
+
+                # Try parsing cleaned text
+                try:
+                    return json.loads(cleaned_text)
+                except json.JSONDecodeError:
+                    # Last resort: try to extract JSON array using regex
+                    json_match = re.search(r'\[.*\]', cleaned_text, re.DOTALL)
+                    if json_match:
+                        try:
+                            return json.loads(json_match.group())
+                        except json.JSONDecodeError:
+                            print(f"Warning: Could not parse JSON from response")
+                            return []
+                    else:
                         print(f"Warning: Could not parse JSON from response")
                         return []
-                else:
-                    print(f"Warning: Could not parse JSON from response")
-                    return []
 
         except Exception as e:
             print(f"Error analyzing chunk: {e}")
