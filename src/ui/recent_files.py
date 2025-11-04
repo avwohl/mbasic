@@ -140,17 +140,16 @@ class RecentFilesManager:
 
         # Filter out files that no longer exist
         existing = []
+        existing_items = []
         for item in recent:
             path = item.get('path')
             if path and Path(path).exists():
                 existing.append(path)
+                existing_items.append(item)
 
         # Update file if we removed any non-existent files
         if len(existing) < len(recent):
-            self._save_recent_files([
-                {'path': path, 'timestamp': item.get('timestamp', '')}
-                for item, path in zip(recent, existing)
-            ])
+            self._save_recent_files(existing_items)
 
         # Apply max_count if specified
         if max_count is not None:

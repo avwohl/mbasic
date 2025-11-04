@@ -36,7 +36,7 @@ class SettingsDialog(tk.Toplevel):
         # Create UI
         self._create_widgets()
 
-        # Make modal
+        # Make modal (grab input focus, but non-blocking - no wait_window())
         self.transient(parent)
         self.grab_set()
 
@@ -175,7 +175,7 @@ class SettingsDialog(tk.Toplevel):
                                  command=lambda k=key, d=defn: self._show_help(k, d))
             help_btn.pack(side=tk.LEFT, padx=(5, 0))
         else:
-            # Show short help as tooltip-style label
+            # Show short help as inline label (not a hover tooltip, just a gray label)
             if defn.help_text:
                 help_label = ttk.Label(frame, text=defn.help_text,
                                       foreground='gray', font=('TkDefaultFont', 9))
