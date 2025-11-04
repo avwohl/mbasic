@@ -56,7 +56,7 @@ class EnhancedConsistencyAnalyzer:
         self.cache_file = Path(__file__).parent / ".consistency_cache.json"
 
         # Scan these doc subdirectories
-        self.scan_subdirs = ['help', 'library', 'stylesheets', 'user', 'dev']
+        self.scan_subdirs = ['help', 'library', 'stylesheets', 'user']
 
         # Track code context for better analysis
         self.code_context = {}
