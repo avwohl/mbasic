@@ -2966,8 +2966,13 @@ class NiceGUIBackend(UIBackend):
         when the user submits input via _handle_output_enter(), it will call
         interpreter.provide_input() to continue execution.
         """
+        # DEBUG: Log that we're being called
+        print(f"DEBUG: _get_input() called with prompt='{prompt}'", flush=True)
+
         # Enable inline input in output textarea
         self._enable_inline_input(prompt)
+
+        print(f"DEBUG: _enable_inline_input() completed", flush=True)
 
         # Return empty string - signals interpreter to transition to 'waiting_for_input'
         # state (state transition happens in interpreter when it receives empty string
