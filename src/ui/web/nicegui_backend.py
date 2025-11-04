@@ -1140,6 +1140,14 @@ class NiceGUIBackend(UIBackend):
             self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
             ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
+        # Status bar
+        with ui.row().classes('w-full bg-gray-200 q-pa-xs').style('justify-content: space-between;'):
+            self.status_label = ui.label('Ready').mark('status')
+            with ui.row().classes('gap-4'):
+                self.auto_line_label = ui.label('').classes('text-gray-600 font-mono')
+                self.resource_usage_label = ui.label('').classes('text-gray-600')
+                ui.label(f'v{VERSION}').classes('text-gray-600')
+
         # Main content area - use flexbox with viewport height
         with ui.element('div').style('width: 100%; height: calc(100vh - 200px); display: flex; flex-direction: column;'):
             # Editor - using CodeMirror 5 (legacy, no ES6 modules) - 40% of available space
@@ -1188,14 +1196,6 @@ class NiceGUIBackend(UIBackend):
                 self.input_field.on('keydown.enter', self._submit_input)
                 self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
             self.input_row.visible = False
-
-            # Status
-            with ui.row().classes('w-full bg-gray-200 q-pa-xs').style('justify-content: space-between;'):
-                self.status_label = ui.label('Ready').mark('status')
-                with ui.row().classes('gap-4'):
-                    self.auto_line_label = ui.label('').classes('text-gray-600 font-mono')
-                    self.resource_usage_label = ui.label('').classes('text-gray-600')
-                    ui.label(f'v{VERSION}').classes('text-gray-600')
 
         # Start auto-save timer
         self._start_auto_save()
