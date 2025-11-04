@@ -1153,7 +1153,7 @@ class NiceGUIBackend(UIBackend):
         self._create_menu()
 
         # Toolbar
-        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 36px;'):
+        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 36px; margin-top: 2px; margin-bottom: 2px;'):
             ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
             ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
             ui.button('Step', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
