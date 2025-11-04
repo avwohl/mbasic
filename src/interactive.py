@@ -871,16 +871,20 @@ class InteractiveMode:
     def _renum_erl_comparison(self, expr, line_map):
         """Handle ERL = line_number patterns in expressions
 
-        According to MBASIC manual: if ERL appears on the left side of =,
-        the number on the right side is treated as a line number reference.
+        According to MBASIC manual: if ERL appears on the left side of a comparison
+        operator (=, <>, <, >, <=, >=), the number on the right is treated as a line
+        number reference and should be renumbered.
 
-        Also handles: ERL <> line, ERL < line, ERL > line, etc.
+        Note: This currently renumbers for ANY binary operator involving ERL, not just
+        comparisons. This means expressions like "ERL + 100" would also be renumbered,
+        which may not be desired behavior. Consider adding operator type checking if
+        this becomes an issue.
 
         Args:
             expr: Expression node to check
             line_map: dict mapping old line numbers to new line numbers
         """
-        # Check if this is a binary operation (comparison)
+        # Check if this is a binary operation
         if type(expr).__name__ != 'BinaryOpNode':
             return
 

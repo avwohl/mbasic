@@ -1366,21 +1366,20 @@ class Parser:
 
         # Optional prompt string (only for keyboard input, not file input)
         prompt = None
-        prompt_separator = None
         if file_number is None and self.match(TokenType.STRING):
             prompt = StringNode(
                 value=self.advance().value,
                 line_num=token.line,
                 column=token.column
             )
-            # Check separator after prompt (comma or semicolon both show "?")
-            # Note: In real MBASIC, both comma and semicolon after prompt show "?"
-            # The only way to suppress "?" is INPUT; (semicolon immediately after INPUT)
+            # Check separator after prompt
+            # Note: In MBASIC, both comma and semicolon after prompt show "?" prompt.
+            # The separator type doesn't affect behavior (both display "?"), so we just
+            # consume it without tracking. The only way to suppress "?" is INPUT;
+            # (semicolon immediately after INPUT keyword, handled by suppress_question above).
             if self.match(TokenType.SEMICOLON):
-                prompt_separator = ';'
                 self.advance()
             elif self.match(TokenType.COMMA):
-                prompt_separator = ','
                 self.advance()
 
         # Check for LINE modifier after semicolon: INPUT "prompt";LINE var$
@@ -2540,9 +2539,9 @@ class Parser:
         Syntax:
             ERASE array1, array2, ...
 
-        Example:
+        Examples:
             ERASE A, B$, C
-            ERASE M:DIM M(64)
+            ERASE M : DIM M(64)   (two statements on one line, separated by colon)
         """
         token = self.advance()
 
