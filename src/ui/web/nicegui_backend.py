@@ -1931,8 +1931,13 @@ class NiceGUIBackend(UIBackend):
         if self.waiting_for_input:
             self.waiting_for_input = False
             self.input_prompt_text = None
-            # Make output readonly again
-            self.output.props('readonly outlined dense spellcheck=false')
+            # Make output readonly again - use JavaScript to set readonly attribute
+            self.output.run_method('''() => {
+                const el = this.$el.querySelector('textarea');
+                if (el) {
+                    el.setAttribute('readonly', 'readonly');
+                }
+            }''')
 
         # Update UI
         self._set_status('Stopped')
@@ -2884,8 +2889,13 @@ class NiceGUIBackend(UIBackend):
         # Add newline after input to move to next line
         self.output.value = current_text + '\n'
 
-        # Make output readonly again
-        self.output.props('readonly outlined dense spellcheck=false')
+        # Make output readonly again - use JavaScript to set readonly attribute
+        self.output.run_method('''() => {
+            const el = this.$el.querySelector('textarea');
+            if (el) {
+                el.setAttribute('readonly', 'readonly');
+            }
+        }''')
 
         # Mark that we're no longer waiting
         self.waiting_for_input = False
@@ -2915,16 +2925,12 @@ class NiceGUIBackend(UIBackend):
         self.input_prompt_text = prompt
         self.waiting_for_input = True
 
-        # Make output editable by removing readonly from props
-        # Note: Can't use props(remove='readonly') because it's part of a space-separated list
-        # Must replace entire props string
-        self.output.props('outlined dense spellcheck=false')
-
-        # Focus and position cursor at end
-        self.output.run_method('focus')
+        # Make output editable - use JavaScript to directly remove readonly attribute
         self.output.run_method('''() => {
             const el = this.$el.querySelector('textarea');
             if (el) {
+                el.removeAttribute('readonly');
+                el.focus();
                 el.setSelectionRange(el.value.length, el.value.length);
             }
         }''')
