@@ -23,7 +23,7 @@ To terminate program execution, close all files and return to command level.
 
 ## Remarks
 
-END statements may be placed anywhere in the program to terminate execution. Unlike the STOP statement, END does not cause a BREAK message to be printed. An END statement at the end of a program is optional. BASIC-80 always returns to command level after an END is executed.
+END statements may be placed anywhere in the program to terminate execution. Unlike the STOP statement, END closes all open files and does not cause a BREAK message to be printed. An END statement at the end of a program is optional. BASIC-80 always returns to command level after an END is executed.
 
 ## Example
 

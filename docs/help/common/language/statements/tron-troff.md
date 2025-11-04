@@ -3,11 +3,11 @@ category: system
 description: To trace the execution of program statements
 keywords: ['close', 'command', 'execute', 'for', 'line', 'next', 'number', 'print', 'program', 'statement']
 syntax: TRON
-title: TRON/TROFF
+title: TRON-TROFF
 type: statement
 ---
 
-# TRON/TROFF
+# TRON-TROFF
 
 ## Syntax
 
