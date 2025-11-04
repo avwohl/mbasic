@@ -41,7 +41,8 @@ class Lexer:
         self.column = 1
         self.tokens: List[Token] = []
 
-        # Keyword case manager - simple policy-based handler
+        # Keyword case handler - uses SimpleKeywordCase (simple force-based policies only)
+        # Note: KeywordCaseManager class exists for more complex policies (first_wins, preserve)
         self.keyword_case_manager = keyword_case_manager or SimpleKeywordCase(policy="force_lower")
 
     def current_char(self) -> Optional[str]:

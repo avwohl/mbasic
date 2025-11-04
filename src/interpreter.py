@@ -2551,6 +2551,9 @@ class Interpreter:
         LIST 10-50     - List lines 10 through 50
         LIST 10-       - List lines 10 to end
         LIST -50       - List lines from beginning to 50
+
+        Note: Outputs from line_text_map (original source text), not regenerated from AST.
+        This preserves formatting but requires line_text_map to stay in sync with AST.
         """
         # Evaluate start and end expressions
         start_line = None
@@ -2603,7 +2606,8 @@ class Interpreter:
         # We need to resume from the NEXT statement after STOP
         self.runtime.stopped = True
 
-        # Save PC position for CONT (use npc which points to next statement)
+        # Save PC position for CONT
+        # npc is set by statement execution flow to point to next statement
         self.runtime.stop_pc = self.runtime.npc
 
         # Print "Break in <line>" message
@@ -2651,8 +2655,10 @@ class Interpreter:
     def execute_cont(self, stmt):
         """Execute CONT statement
 
-        CONT resumes execution after a STOP or Break (Ctrl+C).
+        CONT resumes execution after a STOP statement.
         Only works in interactive mode.
+
+        Note: Ctrl+C (Break) does not set stopped flag, so CONT cannot resume after Break.
         """
         if not hasattr(self, 'interactive_mode') or not self.interactive_mode:
             raise RuntimeError("CONT only available in interactive mode")
@@ -2666,8 +2672,8 @@ class Interpreter:
     def execute_step(self, stmt):
         """Execute STEP statement (debug command)
 
-        STEP executes one or more statements, then pauses.
-        This is a minimal implementation that just prints a message.
+        STEP is intended to execute one or more statements, then pause.
+        Current implementation: Placeholder that prints a message (not yet functional).
         Full implementation would require debugger integration.
         """
         count = stmt.count if stmt.count else 1
