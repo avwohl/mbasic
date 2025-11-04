@@ -328,7 +328,8 @@ class Parser:
         line_number = int(line_num_token.value)
 
         # Parse statements on this line
-        # Note: We don't store source_text - AST is the single source of truth
+        # Note: We don't store source_text itself - AST is the source of truth
+        # (but we do track char positions for highlighting)
         statements: List[StatementNode] = []
 
         while not self.at_end_of_line():

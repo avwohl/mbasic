@@ -139,8 +139,7 @@ class WebIOHandler(IOHandler):
         Returns:
             Single character string, or "" if not available
 
-        Note: Not yet implemented for web UI.
-        Returns empty string.
+        Note: Character input not supported in web UI (always returns empty string).
         """
         return ""
 
@@ -185,7 +184,7 @@ class WebIOHandler(IOHandler):
             row: Row number (1-based)
             col: Column number (1-based)
 
-        Note: Not applicable for log-based output.
+        Note: Not applicable for log-based output (no-op for compatibility).
         """
         pass
 
