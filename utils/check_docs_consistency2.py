@@ -31,6 +31,14 @@ import hashlib
 import time
 import ast
 
+# Import the robust JSON extractor
+try:
+    from json_extractor import extract_json_from_markdown
+except ImportError:
+    print("Error: json_extractor module not found")
+    print("Make sure json_extractor.py is in the same directory as this script")
+    sys.exit(1)
+
 USE_MODEL='claude-sonnet-4-5'
 
 try:
@@ -323,32 +331,8 @@ CRITICAL JSON FORMAT REQUIREMENTS:
             try:
                 response_text = self._api_call_with_retry(prompt)
 
-                # Parse JSON response robustly (handles markdown code blocks)
-                import re
-                cleaned_text = response_text.strip()
-
-                file_conflicts = None
-
-                # Try direct parsing first
-                try:
-                    file_conflicts = json.loads(cleaned_text)
-                except json.JSONDecodeError:
-                    # Strip markdown code blocks first (```json ... ``` or ``` ... ```)
-                    # Match from start of line to handle multiline blocks
-                    markdown_stripped = re.sub(r'^```(?:json)?\s*\n', '', cleaned_text, flags=re.MULTILINE)
-                    markdown_stripped = re.sub(r'\n```\s*$', '', markdown_stripped)
-
-                    try:
-                        file_conflicts = json.loads(markdown_stripped)
-                    except json.JSONDecodeError:
-                        # Last resort: Look for JSON array in the cleaned (non-markdown) text
-                        # This handles cases like "Here are the results: [...]"
-                        json_match = re.search(r'(\[[\s\S]*\])', markdown_stripped)
-                        if json_match:
-                            try:
-                                file_conflicts = json.loads(json_match.group(1))
-                            except json.JSONDecodeError:
-                                pass
+                # Parse JSON response using robust markdown-aware extractor
+                file_conflicts = extract_json_from_markdown(response_text, verbose=False)
 
                 if file_conflicts is None:
                     # Show what we got for debugging
@@ -529,38 +513,19 @@ CRITICAL JSON FORMAT REQUIREMENTS:
         try:
             response_text = self._api_call_with_retry(prompt)
 
-            # Parse JSON response robustly (handles markdown code blocks)
-            import re
-            cleaned_text = response_text.strip()
+            # Parse JSON response using robust markdown-aware extractor
+            result = extract_json_from_markdown(response_text, verbose=False)
 
-            # Try direct parsing first
-            try:
-                return json.loads(cleaned_text)
-            except json.JSONDecodeError:
-                # Strip markdown code blocks first (```json ... ``` or ``` ... ```)
-                # Match from start of line to handle multiline blocks
-                markdown_stripped = re.sub(r'^```(?:json)?\s*\n', '', cleaned_text, flags=re.MULTILINE)
-                markdown_stripped = re.sub(r'\n```\s*$', '', markdown_stripped)
+            if result is None:
+                # If we get here, parsing failed
+                print(f"Warning: Could not parse JSON from response")
+                if len(response_text) < 200:
+                    print(f"  Response was: {response_text}")
+                else:
+                    print(f"  Response started with: {response_text[:200]}...")
+                return []
 
-                try:
-                    return json.loads(markdown_stripped)
-                except json.JSONDecodeError:
-                    # Last resort: Look for JSON array in the cleaned (non-markdown) text
-                    # This handles cases like "Here are the results: [...]"
-                    json_match = re.search(r'(\[[\s\S]*\])', markdown_stripped)
-                    if json_match:
-                        try:
-                            return json.loads(json_match.group(1))
-                        except json.JSONDecodeError:
-                            pass
-
-            # If we get here, parsing failed
-            print(f"Warning: Could not parse JSON from response")
-            if len(response_text) < 200:
-                print(f"  Response was: {response_text}")
-            else:
-                print(f"  Response started with: {response_text[:200]}...")
-            return []
+            return result
 
         except Exception as e:
             print(f"Error analyzing chunk: {e}")
