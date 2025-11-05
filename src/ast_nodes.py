@@ -140,9 +140,10 @@ class InputStatementNode:
         INPUT #filenum, var1       - Read from file
 
     Note: The semicolon has different meanings depending on its position:
-    - After a prompt string: INPUT "prompt"; var  → shows "prompt? "
-    - Immediately after INPUT keyword: INPUT; var → suppresses "?" (no prompt)
-    The suppress_question field is True only for the second case (INPUT; without prompt).
+    - After a prompt string: INPUT "prompt"; var  → shows "prompt? " (question mark still appears)
+    - Immediately after INPUT keyword: INPUT; var → suppresses "?" completely (no prompt at all)
+    The suppress_question field is True only for the second case (INPUT; without prompt),
+    not for the first case (prompt with semicolon still shows "?").
     """
     prompt: Optional['ExpressionNode']
     variables: List['VariableNode']

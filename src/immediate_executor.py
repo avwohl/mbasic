@@ -349,6 +349,7 @@ variables in immediate mode:
 LIMITATIONS:
 ───────────────────────────────────────────────────────────────────
 
+  • INPUT statement is not allowed in immediate mode (use direct assignment instead)
   • Multi-statement lines (: separator) work but are not recommended
   • GOTO, GOSUB, and control flow statements are not recommended
     (they will execute but may produce unexpected results)
