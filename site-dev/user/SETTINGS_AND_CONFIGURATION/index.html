@@ -1376,6 +1376,9 @@
 
 
 <h1 id="settings-and-configuration">Settings and Configuration<a class="headerlink" href="#settings-and-configuration" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Status:</strong> The settings system is FULLY IMPLEMENTED and available in all UIs. All commands (SET, SHOW SETTINGS, HELP SET) work as documented. Settings files are automatically created in ~/.mbasic/settings.json (Linux/Mac) or %APPDATA%/mbasic/settings.json (Windows).</p>
+</blockquote>
 <p>MBASIC includes a comprehensive settings system that allows you to customize its behavior. Settings can be configured globally, per-project, or per-file.</p>
 <h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
 <h3 id="view-all-settings">View All Settings<a class="headerlink" href="#view-all-settings" title="Permanent link">&para;</a></h3>
@@ -1396,7 +1399,9 @@
 <li><strong>Default</strong> - Built-in defaults</li>
 </ol>
 <h3 id="global-settings-file">Global Settings File<a class="headerlink" href="#global-settings-file" title="Permanent link">&para;</a></h3>
-<p>Location: <code>~/.mbasic/settings.json</code></p>
+<p><strong>Location:</strong>
+- <strong>Linux/Mac:</strong> <code>~/.mbasic/settings.json</code>
+- <strong>Windows:</strong> <code>%APPDATA%/mbasic/settings.json</code> (typically <code>C:\Users\YourName\AppData\Roaming\mbasic\settings.json</code>)</p>
 <p>Example:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;variables.case_conflict&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;first_wins&quot;</span><span class="p">,</span>
@@ -1508,13 +1513,14 @@ Variable window shows: <code>MyVar = 30</code></p>
 <hr />
 <h2 id="interpreter-settings">Interpreter Settings<a class="headerlink" href="#interpreter-settings" title="Permanent link">&para;</a></h2>
 <h3 id="interpreterstrict_mode">interpreter.strict_mode<a class="headerlink" href="#interpreterstrict_mode" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> 🔧 PLANNED - Not yet implemented</p>
 <p><strong>Controls:</strong> Enable strict error checking</p>
 <p><strong>Type:</strong> Boolean</p>
 <p><strong>Default:</strong> <code>false</code></p>
-<p><strong>When enabled:</strong>
+<p><strong>When enabled (future):</strong>
 - Additional error checks
-- Undefined variable warnings (future)
-- Type mismatch warnings (future)</p>
+- Undefined variable warnings
+- Type mismatch warnings</p>
 <h3 id="interpretermax_execution_time">interpreter.max_execution_time<a class="headerlink" href="#interpretermax_execution_time" title="Permanent link">&para;</a></h3>
 <p><strong>Controls:</strong> Maximum program execution time in seconds</p>
 <p><strong>Type:</strong> Integer (1-3600)</p>
@@ -1525,29 +1531,32 @@ Variable window shows: <code>MyVar = 30</code></p>
 </code></pre></div></p>
 <p>Set to <code>0</code> for unlimited execution time (use with caution).</p>
 <h3 id="interpreterdebug_mode">interpreter.debug_mode<a class="headerlink" href="#interpreterdebug_mode" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> 🔧 PLANNED - Not yet implemented</p>
 <p><strong>Controls:</strong> Enable debug output</p>
 <p><strong>Type:</strong> Boolean</p>
 <p><strong>Default:</strong> <code>false</code></p>
-<p><strong>When enabled:</strong>
+<p><strong>When enabled (future):</strong>
 - Detailed execution traces
 - Variable access tracking
 - Performance metrics</p>
 <hr />
 <h2 id="ui-settings">UI Settings<a class="headerlink" href="#ui-settings" title="Permanent link">&para;</a></h2>
 <h3 id="uitheme">ui.theme<a class="headerlink" href="#uitheme" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> 🔧 PLANNED - Not yet implemented</p>
 <p><strong>Controls:</strong> Color theme for UI</p>
 <p><strong>Type:</strong> Choice (enum)</p>
 <p><strong>Default:</strong> <code>"default"</code></p>
-<p><strong>Options:</strong>
+<p><strong>Options (future):</strong>
 - <code>"default"</code> - Standard theme
 - <code>"dark"</code> - Dark background
 - <code>"light"</code> - Light background
 - <code>"classic"</code> - Retro BASIC terminal style</p>
 <h3 id="uifont_size">ui.font_size<a class="headerlink" href="#uifont_size" title="Permanent link">&para;</a></h3>
+<p><strong>Status:</strong> 🔧 PLANNED - Not yet implemented</p>
 <p><strong>Controls:</strong> UI font size in points</p>
 <p><strong>Type:</strong> Integer (8-32)</p>
 <p><strong>Default:</strong> <code>12</code></p>
-<p><strong>Example:</strong>
+<p><strong>Example (when implemented):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;ui.font_size&quot;</span><span class="w"> </span><span class="il">14</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="c1">&#39; Increases font size for better readability</span>
 </code></pre></div></p>
@@ -1729,8 +1738,9 @@ Variable window shows: <code>MyVar = 30</code></p>
 3. Choose a policy that picks one: <code>"prefer_upper"</code>, <code>"prefer_lower"</code>, etc.</p>
 <h3 id="settings-not-persisting">Settings not persisting?<a class="headerlink" href="#settings-not-persisting" title="Permanent link">&para;</a></h3>
 <p>Check that you're editing the right file:
-- Global: <code>~/.mbasic/settings.json</code>
-- Project: <code>.mbasic/settings.json</code> (create directory if needed)</p>
+- <strong>Global (Linux/Mac):</strong> <code>~/.mbasic/settings.json</code>
+- <strong>Global (Windows):</strong> <code>%APPDATA%/mbasic/settings.json</code>
+- <strong>Project:</strong> <code>.mbasic/settings.json</code> (create directory if needed)</p>
 <p>Settings in files persist across sessions. Settings via <code>SET</code> command only affect current session.</p>
 <h3 id="which-setting-is-being-used">Which setting is being used?<a class="headerlink" href="#which-setting-is-being-used" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span>

@@ -14,7 +14,7 @@ except ImportError:
 
 
 class LineNumberedText(tk.Frame if tk else object):
-    """Text widget with status column.
+    """Text widget with status column and automatic blank line removal.
 
     Layout: [Status (●/?/ )][ Code with line numbers ]
 
@@ -26,6 +26,11 @@ class LineNumberedText(tk.Frame if tk else object):
     Status priority (when both error and breakpoint):
     - ? takes priority (error shown)
     - After fixing error, ● becomes visible
+
+    Automatic blank line removal:
+    - When cursor moves away from a blank line, that line is automatically deleted
+    - This helps keep BASIC programs clean by removing accidental blank lines
+    - Implemented via _on_cursor_move() tracking cursor movement
 
     Note: BASIC line numbers are part of the text content (not drawn separately in the canvas).
     Line numbers are parsed from the text using _parse_line_number() to map status indicators
@@ -49,7 +54,7 @@ class LineNumberedText(tk.Frame if tk else object):
         self.grid_columnconfigure(1, weight=1)
 
         # Create canvas for status symbols only
-        # Width: 20px for one status character (●, ?, or space)
+        # Width: 20 (pixels in Tkinter) for one status character (●, ?, or space)
         self.canvas = tk.Canvas(
             self,
             width=20,
@@ -156,7 +161,8 @@ class LineNumberedText(tk.Frame if tk else object):
         """Delete a line from the text widget.
 
         Args:
-            line_num: Text widget line number (1-based)
+            line_num: Tkinter text widget line number (1-based sequential index),
+                     not BASIC line number (e.g., 10, 20, 30)
         """
         # Check if line still exists and is still blank
         try:

@@ -924,13 +924,14 @@
 
 <h1 id="peek">PEEK<a class="headerlink" href="#peek" title="Permanent link">&para;</a></h1>
 <h2 id="implementation-note">Implementation Note<a class="headerlink" href="#implementation-note" title="Permanent link">&para;</a></h2>
-<p>ℹ️ <strong>Emulated with Random Values</strong>: PEEK returns a random value between 0-255 (inclusive).</p>
+<p>ℹ️ <strong>Emulated with Random Values</strong>: PEEK does NOT read actual memory. Instead, it returns a random value between 0-255 (inclusive).</p>
 <p><strong>Behavior</strong>: Each call to PEEK returns a new random integer in the range 0-255. This value is NOT related to any POKE operation.</p>
 <p><strong>Why</strong>: Most legacy BASIC programs used PEEK to seed random number generators (e.g., <code>RANDOMIZE PEEK(0)</code>). Since we cannot read actual memory addresses in a Python interpreter, returning random values provides compatibility for this common use case.</p>
-<p><strong>Note</strong>:
-- PEEK does NOT return values written by POKE (POKE is a no-op)
+<p><strong>Important Limitations</strong>:
+- <strong>PEEK does NOT return values written by POKE</strong> (POKE is a no-op that does nothing)
 - Memory-mapped I/O operations will not work
-- Each PEEK call returns a different random value</p>
+- Each PEEK call returns a different random value
+- Cannot be used for actual memory inspection or hardware control</p>
 <p><strong>Recommendation</strong>: Use <a href="../../statements/randomize/">RANDOMIZE</a> and <a href="../rnd/">RND</a> instead of PEEK for random number generation.</p>
 <hr />
 <h2 id="syntax">Syntax<a class="headerlink" href="#syntax" title="Permanent link">&para;</a></h2>
@@ -965,7 +966,7 @@
 <li><a href="../inkey_dollar/">INKEY$</a> - Returns either a one-character string cont~ining a character read from the terminal or a null string if no character is pending at the terminal</li>
 <li><a href="../inp/">INP</a> - Returns the byte read from port I</li>
 <li><a href="../../statements/limits/">LIMITS</a> - Display resource usage and interpreter limits</li>
-<li><a href="../../statements/null/">NULL</a> - To set the number of nulls to be printed at   the end of each line</li>
+<li><a href="../../statements/null/">NULL</a> - To set the number of nulls to be printed at the end of each line</li>
 <li><a href="../../statements/randomize/">RANDOMIZE</a> - To reseed the random number generator</li>
 <li><a href="../../statements/rem/">REM</a> - To allow explanatory remarks to be inserted in a program</li>
 <li><a href="../../statements/setsetting/">SET (setting)</a> - Configure interpreter settings at runtime</li>
@@ -973,7 +974,7 @@
 <li><a href="../../statements/tron-troff/">TRON/TROFF</a> - To trace the execution of program statements</li>
 <li><a href="../usr/">USR</a> - Calls the user's assembly language subroutine with the argument X</li>
 <li><a href="../varptr/">VARPTR</a> - Returns the memory address of a variable</li>
-<li><a href="../../statements/width/">WIDTH</a> - To set the printed line width in number        of characters for the terminal or line printer</li>
+<li><a href="../../statements/width/">WIDTH</a> - To set the printed line width in number of characters for the terminal or line printer</li>
 </ul>
 
 

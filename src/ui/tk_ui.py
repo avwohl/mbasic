@@ -51,6 +51,7 @@ class TkBackend(UIBackend):
         from src.ui.tk_ui import TkBackend
 
         io = ConsoleIOHandler()
+        def_type_map = {}  # Type suffix defaults for variables (DEFINT, DEFSNG, etc.)
         program = ProgramManager(def_type_map)
         backend = TkBackend(io, program)
         backend.start()  # Runs Tk mainloop until window closed
@@ -286,8 +287,9 @@ class TkBackend(UIBackend):
         execute_btn = ttk.Button(input_frame, text="Execute", command=self._execute_immediate)
         execute_btn.pack(side=tk.LEFT)
 
-        # Create dummy immediate_history and immediate_status for compatibility
-        # (some code still references these)
+        # Set immediate_history and immediate_status to None
+        # These attributes are not currently used but are set to None for defensive programming
+        # in case future code tries to access them (will get None instead of AttributeError)
         self.immediate_history = None
         self.immediate_status = None
 
@@ -434,7 +436,8 @@ class TkBackend(UIBackend):
         self.root.bind('<Control-f>', lambda e: self._menu_find())
         self.root.bind('<Control-h>', lambda e: self._menu_replace())
         self.root.bind('<F3>', lambda e: self._find_next())
-        # Note: Ctrl+I is bound in start() after editor is created
+        # Note: Ctrl+I is bound directly to editor text widget in start() (not root window)
+        # to prevent tab key interference - see editor_text.text.bind('<Control-i>', ...)
 
     def _create_toolbar(self):
         """Create toolbar with common actions."""
@@ -461,10 +464,11 @@ class TkBackend(UIBackend):
         ttk.Button(toolbar, text="Cont", command=self._menu_continue).pack(side=tk.LEFT, padx=2, pady=2)
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
 
-        # Utility buttons removed - use menus instead:
-        # - List → Run > List Program
-        # - Clear Prog → File > New
-        # - Clear Out → Run > Clear Output
+        # Note: Toolbar has been simplified to show only essential execution controls.
+        # Additional features are accessible via menus:
+        # - List Program → Run > List Program
+        # - New Program (clear) → File > New
+        # - Clear Output → Run > Clear Output
 
     # Menu handlers
 
@@ -1070,9 +1074,10 @@ class TkBackend(UIBackend):
         else:
             return
 
-        # Click on arrow area (left 20 pixels) = toggle sort direction
-        # Click on rest = cycle/set sort column
-        ARROW_CLICK_WIDTH = 20
+        # Determine click action based on horizontal position within column header:
+        # - Left 20 pixels (arrow area) = toggle sort direction
+        # - Rest of header = cycle/set sort column
+        ARROW_CLICK_WIDTH = 20  # Width of clickable arrow area in pixels
         if col_x < ARROW_CLICK_WIDTH:
             self._toggle_variable_sort_direction()
         else:
@@ -1202,6 +1207,9 @@ class TkBackend(UIBackend):
 
     def _edit_array_element(self, variable_name, type_suffix, value_display):
         """Edit any array element by typing subscripts.
+
+        The dialog pre-fills with the last accessed subscripts and value if available,
+        extracted from value_display (e.g., "[5,3]=42" portion).
 
         Args:
             variable_name: Array name with type suffix (e.g., "A%")
@@ -2019,8 +2027,9 @@ class TkBackend(UIBackend):
 
         self.editor_text.text.delete(1.0, tk.END)
         for line_num, line_text in self.program.get_lines():
-            # Insert line exactly as stored - no formatting
-            # This preserves compatibility with real MBASIC
+            # Insert line exactly as stored from program manager - no formatting applied here
+            # Note: Some formatting may occur elsewhere (e.g., variable display, stack display)
+            # This preserves compatibility with real MBASIC for program text
             self.editor_text.text.insert(tk.END, line_text + "\n")
 
         # Clear error indicators
@@ -2065,11 +2074,13 @@ class TkBackend(UIBackend):
         return not had_errors
 
     def _sync_program_to_runtime(self):
-        """Sync program to runtime without resetting PC.
+        """Sync program to runtime, preserving PC only if execution is running.
 
-        Updates runtime's statement_table and line_text_map from self.program,
-        but preserves current PC/execution state. This allows LIST and other
-        commands to see the current program without starting execution.
+        Updates runtime's statement_table and line_text_map from self.program.
+        If execution is currently running (self.running=True and not paused),
+        the PC is preserved. Otherwise, PC is set to halted state to prevent
+        accidental execution. This allows LIST and other commands to see the
+        current program state.
         """
         from src.pc import PC
 
@@ -2120,7 +2131,9 @@ class TkBackend(UIBackend):
         # Collect errors to show in output
         errors_found = []
 
-        # Check each line independently (immediate per-line validation)
+        # Check each line independently (per-line validation)
+        # Note: This method is called with a delay (100ms) after cursor movement/clicks
+        # to avoid excessive validation during rapid editing
         for line in editor_content.split('\n'):
             line_stripped = line.strip()
             if not line_stripped:
@@ -2587,7 +2600,8 @@ class TkBackend(UIBackend):
             'break' to prevent character insertion, None to allow it
         """
         # Clear yellow statement highlight when user starts editing
-        # This prevents the "half yellow line" issue when editing error/breakpoint lines
+        # This prevents visual artifact where statement highlight remains on part of a line
+        # after text is modified (occurs because highlight is tag-based and editing shifts positions)
         if self.paused_at_breakpoint:
             self._clear_statement_highlight()
 
@@ -2671,10 +2685,13 @@ class TkBackend(UIBackend):
         old_line_num = int(old_match.group(1)) if old_match else None
         new_line_num = int(new_match.group(1)) if new_match else None
 
-        # Trigger sort if:
+        # Determine if program needs to be re-sorted:
         # 1. Line number changed on existing line (both old and new are not None), OR
         # 2. Line number was removed (old was not None, new is None and line has content)
-        # DON'T sort if just clicking around without editing (old is None means we're just tracking)
+        #
+        # Don't trigger sort when:
+        # - old_line_num is None: First time tracking this line (cursor just moved here, no editing yet)
+        # - This prevents unnecessary re-sorting when user clicks around without making changes
         should_sort = False
 
         if old_line_num != new_line_num:
@@ -3571,7 +3588,8 @@ class TkBackend(UIBackend):
         # This allows LIST to work, but doesn't start execution
         self._sync_program_to_runtime()
 
-        # Execute (don't echo the command or add "Ok" - just show results)
+        # Execute without echoing (GUI design choice: command is visible in entry field,
+        # and "Ok" prompt is unnecessary in GUI context - only results are shown)
         success, output = self.immediate_executor.execute(command)
 
         # Show output if any
@@ -3841,8 +3859,10 @@ class TkIOHandler(IOHandler):
     def input(self, prompt: str = '') -> str:
         """Input from user via inline input field (with fallback to modal dialog).
 
-        Used by INPUT statement to read user input (raw string).
-        Comma-separated parsing happens at interpreter level.
+        Used by INPUT statement to read user input.
+
+        Returns the raw string entered by user. The interpreter handles parsing
+        of comma-separated values for INPUT statements with multiple variables.
         Prefers inline input field below output pane when backend is available,
         but falls back to modal dialog if backend is not available.
         """
@@ -3937,7 +3957,12 @@ class TkIOHandler(IOHandler):
         return result[0] if result else ""
     
     def clear_screen(self) -> None:
-        """Clear screen - no-op for Tk UI (GUI output not clearable like terminal)."""
+        """Clear screen - no-op for Tk UI.
+
+        Design decision: GUI output is persistent for review. Users can manually
+        clear output via Run > Clear Output menu if desired. CLS command is ignored
+        to preserve output history during program execution.
+        """
         pass
     
     def error(self, message: str) -> None:

@@ -29,7 +29,7 @@ INP (I)
 
 ## Description
 
-Returns the byte read from port I. I must be in the range 0 to 255. INP is the complementary function to the OUT statement, Section 2.47.
+Returns the byte read from port I. I must be in the range 0 to 255. INP is the complementary function to the [OUT](../statements/out.md) statement.
 
 ## Example
 

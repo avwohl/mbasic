@@ -94,7 +94,7 @@ The Tkinter GUI provides:
 - **Smart Insert ({{kbd:smart_insert}})** - Essential for efficient editing
 - **Variables Window ({{kbd:toggle_variables}})** - See what your program is doing
 - **Breakpoints ({{kbd:toggle_breakpoint}})** - Stop at critical points
-- **Save Often ({{kbd:save_file}})** - Protect your work
+- **Save Often ({{kbd:file_save}})** - Protect your work
 
 ---
 

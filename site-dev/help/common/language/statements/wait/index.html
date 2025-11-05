@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="To suspend program execution while      monitoring the status of a machine input port">
+        <meta name="description" content="To suspend program execution while monitoring the status of a machine input port">
       
       
         <meta name="author" content="MBASIC Project Contributors">
@@ -910,7 +910,7 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="vg">where</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="vg">and</span><span class="w"> </span><span class="vg">J</span><span class="w"> </span><span class="vg">are</span><span class="w"> </span><span class="vg">integer</span><span class="w"> </span><span class="vg">expressions</span>
 </code></pre></div>
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
-<p>To suspend program execution while      monitoring the status of a machine input port.</p>
+<p>To suspend program execution while monitoring the status of a machine input port.</p>
 <h2 id="remarks">Remarks<a class="headerlink" href="#remarks" title="Permanent link">&para;</a></h2>
 <p>The WAIT statement causes execution to       be suspended until a specified machine input port develops a specified bit pattern. The data read at the port is exclusive OR~ed with the integer expression J, and then AND~ed with 1.   If the result is zero, BASIC-80 loops back and reads the data at the port again. If the result is nonzero,   execution continues with the next statement. If J is omitted, it is assumed to be zero CAUTION:      It is possible to enter an infinite loop with the WAIT statement, in which case it will be necessary to manually restart the machine.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>

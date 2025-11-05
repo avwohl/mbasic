@@ -1065,9 +1065,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#edit-variable-value-limited-not-fully-implemented" class="md-nav__link">
+  <a href="#edit-variable-value-not-implemented" class="md-nav__link">
     <span class="md-ellipsis">
-      Edit Variable Value (Limited - Not fully implemented)
+      Edit Variable Value (Not implemented)
     </span>
   </a>
   
@@ -1351,23 +1351,28 @@ Note: Uses Ctrl+V because Ctrl+S is reserved for terminal flow control.</p>
 <h2 id="variable-inspection-6-features">Variable Inspection (6 features)<a class="headerlink" href="#variable-inspection-6-features" title="Permanent link">&para;</a></h2>
 <h3 id="variables-window-ctrlw">Variables Window (Ctrl+W)<a class="headerlink" href="#variables-window-ctrlw" title="Permanent link">&para;</a></h3>
 <p>Open/close the variables inspection window showing all program variables and their current values.</p>
-<h3 id="edit-variable-value-limited-not-fully-implemented">Edit Variable Value (Limited - Not fully implemented)<a class="headerlink" href="#edit-variable-value-limited-not-fully-implemented" title="Permanent link">&para;</a></h3>
-<p>⚠️ Variable editing is currently limited in Curses UI. You cannot directly edit values in the variables window. Use immediate mode commands to modify variable values instead.</p>
+<h3 id="edit-variable-value-not-implemented">Edit Variable Value (Not implemented)<a class="headerlink" href="#edit-variable-value-not-implemented" title="Permanent link">&para;</a></h3>
+<p>⚠️ Variable editing is not available in Curses UI. You cannot directly edit values in the variables window. Use immediate mode commands to modify variable values instead.</p>
 <h3 id="variable-filtering-f-key-in-variables-window">Variable Filtering (f key in variables window)<a class="headerlink" href="#variable-filtering-f-key-in-variables-window" title="Permanent link">&para;</a></h3>
 <p>Filter the variables list to show only variables matching a search term.</p>
 <h3 id="variable-sorting-s-key-in-variables-window">Variable Sorting (s key in variables window)<a class="headerlink" href="#variable-sorting-s-key-in-variables-window" title="Permanent link">&para;</a></h3>
 <p>Cycle through different sort orders:
-- By name (alphabetical)
-- By type (Integer, Single, Double, String)
-- By value
-- By last modified</p>
-<p>Press 'd' to reverse sort direction.</p>
+- <strong>Accessed</strong>: Most recently accessed (read or written) - newest first
+- <strong>Written</strong>: Most recently written to - newest first
+- <strong>Read</strong>: Most recently read from - newest first
+- <strong>Name</strong>: Alphabetically by variable name</p>
+<p>Press 'd' to toggle sort direction (ascending/descending).</p>
 <h3 id="execution-stack-menu-only">Execution Stack (Menu only)<a class="headerlink" href="#execution-stack-menu-only" title="Permanent link">&para;</a></h3>
 <p>View the call stack showing:
 - Active GOSUB calls
 - FOR/NEXT loops
 - WHILE loops
-Helps understand program flow and nesting levels. Access through the menu bar.</p>
+Helps understand program flow and nesting levels.</p>
+<p><strong>How to access:</strong>
+1. Press Ctrl+U to open the menu bar
+2. Navigate to the Debug menu
+3. Select "Execution Stack" option</p>
+<p>Note: There is no dedicated keyboard shortcut to avoid conflicts with editor typing.</p>
 <h3 id="resource-usage">Resource Usage<a class="headerlink" href="#resource-usage" title="Permanent link">&para;</a></h3>
 <p>Monitor memory and variable usage in the status bar.</p>
 <h2 id="editor-features-6-features">Editor Features (6 features)<a class="headerlink" href="#editor-features-6-features" title="Permanent link">&para;</a></h2>
@@ -1381,7 +1386,7 @@ Note: Ctrl+X is used for Stop/Interrupt, Ctrl+C exits the program, and Ctrl+V is
 Use your terminal's native copy/paste functions instead (typically Shift+Ctrl+C/V or mouse selection).</p>
 <h3 id="findreplace-not-yet-implemented">Find/Replace (Not yet implemented)<a class="headerlink" href="#findreplace-not-yet-implemented" title="Permanent link">&para;</a></h3>
 <p>Find and Replace functionality is not yet available in Curses UI.
-See <a href="../find-replace/">Find/Replace Status</a> for workarounds and alternatives.</p>
+See <a href="../find-replace/">Find/Replace</a> (available via menu) for workarounds and alternatives.</p>
 <h3 id="smart-insert-ctrli">Smart Insert (Ctrl+I)<a class="headerlink" href="#smart-insert-ctrli" title="Permanent link">&para;</a></h3>
 <p>Insert a new line number at the midpoint between the current line and the next line.
 Example: Between lines 10 and 20, inserts line 15.</p>

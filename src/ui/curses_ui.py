@@ -479,7 +479,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             statements: Optional list of statement nodes for line (needed for highlight)
 
         Returns:
-            Formatted string or urwid markup: "SNNNNN CODE" with optional highlighting
+            Formatted string or urwid markup: "S<num> CODE" where S is status (1 char),
+            <num> is the line number (variable width, not padded), and CODE is the program text.
+            May include urwid markup tuples for statement highlighting.
         """
         # Status column (1 char)
         if line_num in self.breakpoints:
@@ -542,7 +544,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         """
         if not self.lines:
             # Empty program - show line with auto-number prompt
-            # Format: "SNN " where S=status (1 space), NN=line# (variable), space (1)
+            # Format: "S<num> " where S=status (1 char space), <num>=line# (variable width), space (1)
             display_text = f" {self.next_auto_line_num} "
             # DON'T increment counter here - that happens only on Enter
             # This was the bug causing "0    1" issue
@@ -957,6 +959,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         - Lines with column structure: " [space]     10 PRINT"
         - Raw pasted lines: "10 PRINT"
 
+        Note: When reformatting pasted content, line numbers are right-justified to 5 characters
+        for consistent alignment. This differs from the variable-width formatting used in
+        _format_line() for display. The fixed 5-char width (lines 991, 1024) helps maintain
+        alignment when pasting multiple lines with different line number lengths.
+
         Args:
             text: Current editor text
 
@@ -1122,7 +1129,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         Args:
             lines: List of text lines
             current_line_index: Index of line that triggered the sort
-            target_column: Column to position cursor at (default: 7 for code area)
+            target_column: Column to position cursor at (default: 7). This value is an
+                          approximation for typical line numbers. Since line numbers have
+                          variable width, the actual code area start position varies.
+                          The cursor will be positioned at this column or adjusted based
+                          on actual line content.
         """
         if current_line_index >= len(lines):
             return
@@ -1336,6 +1347,9 @@ class CursesBackend(UIBackend):
         # will be recreated in start() with a fresh OutputCapturingIOHandler, but
         # this same interpreter instance will be reused with the new executor.
         # Use unlimited limits for immediate mode (runs will use local limits)
+        # Rationale: Immediate mode commands (PRINT, LIST, etc.) should not be artificially
+        # constrained by resource limits. Program execution (RUN) uses separate runtime state
+        # with configurable limits applied at runtime setup in _setup_program().
         immediate_io = OutputCapturingIOHandler()
         self.interpreter = Interpreter(self.runtime, immediate_io, limits=create_unlimited_limits())
 
@@ -1361,6 +1375,9 @@ class CursesBackend(UIBackend):
         # UI already created in __init__, just start the loop
 
         # Initialize immediate mode executor
+        # Immediate mode: executes single BASIC statements/commands without line numbers,
+        # used for interactive commands at the immediate input field (bottom of UI).
+        # This is separate from program execution (RUN command), which runs numbered lines.
         immediate_io = OutputCapturingIOHandler()
         self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
 
@@ -1444,7 +1461,12 @@ class CursesBackend(UIBackend):
                 pass
 
     def _create_toolbar(self):
-        """Create toolbar with common action buttons."""
+        """Create toolbar with common action buttons.
+
+        Note: This method is no longer used (toolbar removed from UI in favor of Ctrl+U menu
+        for better keyboard navigation). The method is retained for reference and potential
+        future re-enablement, but can be safely removed if the toolbar is not planned to return.
+        """
         # Create button widgets - use urwid.Button with callback
         new_btn = urwid.Button("New", on_press=lambda _btn: self._menu_new())
         open_btn = urwid.Button("Open", on_press=lambda _btn: self._menu_load())
@@ -3111,8 +3133,10 @@ class CursesBackend(UIBackend):
             self.running = False
             return False
 
-        # If start_line is specified, set PC AFTER start() has called setup()
-        # because setup() resets PC to first line
+        # If start_line is specified (e.g., RUN 100), set PC to that line
+        # This must happen AFTER interpreter.start() because start() calls setup()
+        # which resets PC to the first line in the program. By setting PC here,
+        # we override that default and begin execution at the requested line.
         if start_line is not None:
             from src.runtime import PC
             # Verify the line exists

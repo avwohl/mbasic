@@ -38,11 +38,11 @@ In traditional MBASIC, EDIT mode provided special single-character commands:
 - **Space** - Move cursor forward
 - **Enter** - Accept changes
 
-### Note:
-Modern MBASIC implementations often provide full-screen editing capabilities instead of the traditional line editor.
+### Implementation Note:
+This implementation provides full-screen editing capabilities through the integrated editor (when using the Tk, Curses, or Web UI). The traditional single-character edit mode commands are not implemented. Use the full-screen editor to modify program lines.
 
 ## See Also
-- [AUTO](auto.md) - To generate a line number   automatically     after every carriage return
+- [AUTO](auto.md) - To generate a line number automatically after every carriage return
 - [DELETE](delete.md) - To delete program lines
 - [LIST](list.md) - To list all or part of the program currently in memory at the terminal
 - [LLIST](llist.md) - To list all or part of the program currently in memory at the line printer

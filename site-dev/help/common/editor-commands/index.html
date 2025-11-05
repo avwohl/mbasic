@@ -830,6 +830,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#debugging-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debugging Commands
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#editing-commands" class="md-nav__link">
     <span class="md-ellipsis">
       Editing Commands
@@ -851,15 +860,6 @@
   <a href="#tips" class="md-nav__link">
     <span class="md-ellipsis">
       Tips
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#debugging-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      Debugging Commands
     </span>
   </a>
   
@@ -948,6 +948,53 @@
 <td><strong>Q</strong></td>
 <td></td>
 <td>Quit IDE</td>
+</tr>
+</tbody>
+</table>
+<h2 id="debugging-commands">Debugging Commands<a class="headerlink" href="#debugging-commands" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Alternative</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Ctrl+R</strong></td>
+<td></td>
+<td>Run program from beginning</td>
+</tr>
+<tr>
+<td><strong>Ctrl+T</strong></td>
+<td></td>
+<td>Step (execute one statement)</td>
+</tr>
+<tr>
+<td><strong>Ctrl+G</strong></td>
+<td></td>
+<td>Continue (run to next breakpoint)</td>
+</tr>
+<tr>
+<td><strong>Ctrl+Q</strong></td>
+<td></td>
+<td>Stop execution</td>
+</tr>
+<tr>
+<td><strong>Ctrl+V</strong></td>
+<td></td>
+<td>Open Variables window</td>
+</tr>
+<tr>
+<td><strong>Ctrl+K</strong></td>
+<td></td>
+<td>Open Execution Stack window</td>
+</tr>
+<tr>
+<td><strong>b</strong></td>
+<td><strong>Ctrl+B</strong></td>
+<td>Toggle breakpoint (Curses: <strong>b</strong>, Tk: <strong>Ctrl+B</strong>)</td>
 </tr>
 </tbody>
 </table>
@@ -1045,8 +1092,7 @@
 <li>Press <strong>ESC</strong> anytime to clear error messages</li>
 <li>The cursor shows where you're typing</li>
 </ul>
-<h2 id="debugging-commands">Debugging Commands<a class="headerlink" href="#debugging-commands" title="Permanent link">&para;</a></h2>
-<p>For debugging-specific commands like breakpoints and stepping, see <a href="../debugging/">Debugging Features</a>.</p>
+<p>For more detailed information about debugging features and workflows, see <a href="../debugging/">Debugging Features</a>.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../getting-started/">Getting Started</a></li>

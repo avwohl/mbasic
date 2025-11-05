@@ -24,9 +24,13 @@ Returns a string representation of the value of X.
 
 ```basic
 5 REM ARITHMETIC FOR KIDS
- 10 INPUT "TYPE A NUMBER";N
- 20 ON LEN(STR$(N» GOSUB 30,100,200,300,400,500
- Also see the VAL function.
+10 INPUT "TYPE A NUMBER"; N
+20 ON LEN(STR$(N)) GOSUB 30, 100, 200, 300, 400, 500
+30 PRINT "Single digit"
+40 RETURN
+100 PRINT "Two digits"
+110 RETURN
+' ... (additional subroutines at 200, 300, 400, 500)
 ```
 
 ## See Also

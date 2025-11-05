@@ -24,10 +24,13 @@ Returns the sign of a number. If X>0, SGN(X) returns 1. If X=0, SGN(X) returns 0
 ## Example
 
 ```basic
-ON SGN(X)+2 GOTO 100,200,300 branches to 100 if
- X is negative, 200 if X is 0 and 300 if X is
- positive.
+ON SGN(X) + 2 GOTO 100, 200, 300
 ```
+
+This branches to:
+- Line 100 if X is negative (SGN returns -1, so -1+2=1, first GOTO target)
+- Line 200 if X is 0 (SGN returns 0, so 0+2=2, second GOTO target)
+- Line 300 if X is positive (SGN returns 1, so 1+2=3, third GOTO target)
 
 ## See Also
 - [ABS](abs.md) - Return the absolute value of a number (removes negative sign)

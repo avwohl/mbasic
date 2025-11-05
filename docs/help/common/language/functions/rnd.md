@@ -19,7 +19,7 @@ RND [ (X) ]
 
 ## Description
 
-Returns a random number between 0 and 1. The same sequence of random numbers is generated each time the program is RUN unless the random number generator is reseeded (see RANDOMIZE, Section 2.53). However, X<O always restarts the same sequence for any given X. X>O or X omitted generates the next random number in the sequence. x=o repeats the last number generated.
+Returns a random number between 0 and 1. The same sequence of random numbers is generated each time the program is run unless the random number generator is reseeded (see [RANDOMIZE](../statements/randomize.md)). However, X<0 always restarts the same sequence for any given X. X>0 or X omitted generates the next random number in the sequence. X=0 repeats the last number generated.
 
 ## Example
 

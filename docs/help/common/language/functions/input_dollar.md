@@ -21,7 +21,9 @@ INPUT$(X[,[#]Y])
 
 Returns a string of X characters, read from the terminal or from file number Y.
 
-If the terminal is used for input, no characters will be echoed and all control characters are passed through except Control-C, which is used to interrupt the execution of the INPUT$ function.
+If the terminal is used for input, no characters will be echoed and all control characters are passed through.
+
+**Note**: In original MBASIC, Control-C would interrupt the INPUT$ function. This implementation passes Control-C through to the program (it can be detected and handled).
 
 ## Example
 

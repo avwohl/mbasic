@@ -4,6 +4,11 @@ Position-Aware AST Serialization
 Serializes AST nodes back to source text while attempting to preserve original
 token positions and spacing. Tracks position conflicts when actual output column
 doesn't match expected token column (conflicts occur during AST modifications).
+
+Key principle: AST is the single source of truth for CONTENT (what tokens exist
+and their values). Original token positions are HINTS for formatting (where to
+place tokens). When positions conflict with content, content wins and a
+PositionConflict is recorded.
 """
 
 from typing import List, Optional, Tuple, Dict
@@ -67,9 +72,9 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
         return keyword.capitalize()
 
     elif policy == "preserve":
-        # Preserve is handled by caller passing in original case - caller should not call this function
-        # However, we handle it defensively: if called with "preserve", return capitalize as fallback
-        # This allows the code to work even if caller incorrectly passes "preserve" policy
+        # The "preserve" policy should be handled by the caller passing in the original case
+        # rather than calling this function. However, we provide a defensive fallback
+        # (capitalize) in case this function is called with "preserve" policy.
         return keyword.capitalize()
 
     else:
@@ -178,8 +183,8 @@ class PositionSerializer:
         self.reset()
         self.current_line = line_node.line_number
 
-        # AST is the source of truth for content - serialize from AST while
-        # attempting to preserve original token positions/spacing
+        # AST is the source of truth for content (what tokens exist) - serialize from AST
+        # while attempting to preserve original token positions/spacing as formatting hints
         # Start with line number
         line_num_text = str(line_node.line_number)
         output = self.emit_token(line_num_text, 0, "LineNumber")
@@ -224,11 +229,14 @@ class PositionSerializer:
             return " " + serialize_statement(stmt)
 
     def serialize_let_statement(self, stmt: ast_nodes.LetStatementNode) -> str:
-        """Serialize LET statement (LetStatementNode).
+        """Serialize LET or assignment statement.
 
         Note: LetStatementNode represents both explicit LET statements (LET A=5)
         and implicit assignments (A=5) in MBASIC. The node name 'LetStatementNode'
-        is used consistently throughout the codebase (not 'AssignmentStatementNode').
+        is used consistently throughout the codebase.
+
+        In _adjust_statement_positions(), 'AssignmentStatementNode' was used historically
+        but has been replaced by 'LetStatementNode' for consistency.
         """
         result = ""
 
@@ -457,7 +465,8 @@ def renumber_with_spacing_preservation(program_lines: dict, start: int, step: in
     1. Updates line numbers in the AST
     2. Updates all line number references (GOTO, GOSUB, etc.)
     3. Adjusts token column positions to account for line number length changes
-    4. Text is regenerated from AST by position_serializer
+    4. Text can then be regenerated from updated AST using position_serializer
+       (caller must call position_serializer separately)
 
     Args:
         program_lines: Dict of line_number -> LineNode

@@ -915,27 +915,27 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#variables-panel" class="md-nav__link">
+  <a href="#variables-panel-planned" class="md-nav__link">
     <span class="md-ellipsis">
-      Variables Panel
+      Variables Panel (Planned)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
+  <a href="#features-planned" class="md-nav__link">
     <span class="md-ellipsis">
-      Features
+      Features (Planned)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#watch-expressions" class="md-nav__link">
+  <a href="#watch-expressions-planned" class="md-nav__link">
     <span class="md-ellipsis">
-      Watch Expressions
+      Watch Expressions (Planned)
     </span>
   </a>
   
@@ -957,18 +957,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#stack-panel" class="md-nav__link">
+  <a href="#stack-panel-planned" class="md-nav__link">
     <span class="md-ellipsis">
-      Stack Panel
+      Stack Panel (Planned)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#for-loop-stack" class="md-nav__link">
+  <a href="#for-loop-stack-planned" class="md-nav__link">
     <span class="md-ellipsis">
-      FOR Loop Stack
+      FOR Loop Stack (Planned)
     </span>
   </a>
   
@@ -990,27 +990,27 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#current-line-highlighting" class="md-nav__link">
+  <a href="#current-line-highlighting-planned" class="md-nav__link">
     <span class="md-ellipsis">
-      Current Line Highlighting
+      Current Line Highlighting (Planned)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#execution-trace" class="md-nav__link">
+  <a href="#execution-trace-planned" class="md-nav__link">
     <span class="md-ellipsis">
-      Execution Trace
+      Execution Trace (Planned)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#flow-visualization" class="md-nav__link">
+  <a href="#flow-visualization-planned" class="md-nav__link">
     <span class="md-ellipsis">
-      Flow Visualization
+      Flow Visualization (Planned)
     </span>
   </a>
   
@@ -1092,9 +1092,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#options-menu" class="md-nav__link">
+  <a href="#options-menu-planned" class="md-nav__link">
     <span class="md-ellipsis">
-      Options Menu
+      Options Menu (Planned)
     </span>
   </a>
   
@@ -1227,18 +1227,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#browser-devtools" class="md-nav__link">
+  <a href="#browser-devtools-standard-browser-features" class="md-nav__link">
     <span class="md-ellipsis">
-      Browser DevTools
+      Browser DevTools (Standard Browser Features)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#browser-console-commands" class="md-nav__link">
+  <a href="#browser-console-commands-planned" class="md-nav__link">
     <span class="md-ellipsis">
-      Browser Console Commands
+      Browser Console Commands (Planned)
     </span>
   </a>
   
@@ -1312,23 +1312,26 @@
 <h2 id="starting-debug-session">Starting Debug Session<a class="headerlink" href="#starting-debug-session" title="Permanent link">&para;</a></h2>
 <h3 id="debug-mode">Debug Mode<a class="headerlink" href="#debug-mode" title="Permanent link">&para;</a></h3>
 <ol>
-<li><strong>Set breakpoints</strong> where needed</li>
-<li>Click <strong>Debug</strong> button or press <code>F5</code></li>
+<li><strong>Set breakpoints</strong> where needed (via Run menu)</li>
+<li>Use <strong>Run → Run Program</strong> or press <code>Ctrl+R</code> to start</li>
 <li>Program runs until first breakpoint</li>
-<li>Debugger panel activates</li>
+<li>Use <strong>Run → Continue</strong> or <code>Ctrl+G</code> to continue</li>
+<li>Use <strong>Run → Stop</strong> or <code>Ctrl+Q</code> to stop</li>
 </ol>
 <h3 id="debug-controls">Debug Controls<a class="headerlink" href="#debug-controls" title="Permanent link">&para;</a></h3>
-<p>When paused at breakpoint:</p>
+<p><strong>Currently implemented:</strong></p>
 <ul>
-<li><strong>Continue (F5)</strong> - Run to next breakpoint</li>
-<li><strong>Step Over (F10)</strong> - Execute current line</li>
-<li><strong>Step Into (F11)</strong> - Enter subroutine</li>
-<li><strong>Step Out (Shift+F11)</strong> - Exit current subroutine</li>
-<li><strong>Stop (Shift+F5)</strong> - End debug session</li>
+<li><strong>Run (Ctrl+R)</strong> - Start program from beginning</li>
+<li><strong>Continue (Ctrl+G)</strong> - Run to next breakpoint</li>
+<li><strong>Step Statement (Ctrl+T)</strong> - Execute one statement</li>
+<li><strong>Step Line (Ctrl+K)</strong> - Execute one line (all statements on line)</li>
+<li><strong>Stop (Ctrl+Q)</strong> - End execution</li>
 </ul>
+<p><strong>Note:</strong> Function key shortcuts (F5, F10, F11, etc.) are not implemented in the Web UI.</p>
 <h2 id="variable-inspector">Variable Inspector<a class="headerlink" href="#variable-inspector" title="Permanent link">&para;</a></h2>
-<h3 id="variables-panel">Variables Panel<a class="headerlink" href="#variables-panel" title="Permanent link">&para;</a></h3>
-<p>Located in right sidebar during debugging:</p>
+<p><strong>Implementation Status:</strong> Basic variable viewing via Debug menu is currently available. The detailed variable inspector panels, watch expressions, and interactive editing features described below are <strong>planned for future releases</strong> and not yet implemented.</p>
+<h3 id="variables-panel-planned">Variables Panel (Planned)<a class="headerlink" href="#variables-panel-planned" title="Permanent link">&para;</a></h3>
+<p>The following features are planned for future implementation and would be located in right sidebar during debugging:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Variables
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├─ Scalars
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  ├─ A = 42 (Integer)
@@ -1341,25 +1344,25 @@
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>   ├─ ERL = 100 (Error Line)
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>   └─ ERR = 0 (Error Code)
 </code></pre></div>
-<h3 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h3>
-<p><strong>Variable Display:</strong>
+<h3 id="features-planned">Features (Planned)<a class="headerlink" href="#features-planned" title="Permanent link">&para;</a></h3>
+<p><strong>Variable Display (Planned):</strong>
 - Name, value, and type shown
 - Arrays show dimensions and elements
 - Strings shown with quotes
 - Numbers formatted appropriately</p>
-<p><strong>Interactive Editing:</strong>
+<p><strong>Interactive Editing (Planned):</strong>
 1. <strong>Double-click</strong> any variable value
 2. Edit dialog appears
 3. Enter new value
 4. Press Enter to apply
 5. Press Esc to cancel</p>
-<p><strong>Filtering:</strong>
+<p><strong>Filtering (Planned):</strong>
 - Search box to find variables
 - Filter by type (scalar/array/string)
 - Show only modified variables
 - Hide system variables</p>
-<h3 id="watch-expressions">Watch Expressions<a class="headerlink" href="#watch-expressions" title="Permanent link">&para;</a></h3>
-<p>Add custom expressions to monitor:</p>
+<h3 id="watch-expressions-planned">Watch Expressions (Planned)<a class="headerlink" href="#watch-expressions-planned" title="Permanent link">&para;</a></h3>
+<p>Planned feature to add custom expressions to monitor:</p>
 <ol>
 <li>Click <strong>Add Watch</strong> button</li>
 <li>Enter expression (e.g., <code>A + B</code>, <code>LEN(S$)</code>)</li>
@@ -1367,20 +1370,21 @@
 <li>Remove with X button</li>
 </ol>
 <h2 id="call-stack">Call Stack<a class="headerlink" href="#call-stack" title="Permanent link">&para;</a></h2>
-<h3 id="stack-panel">Stack Panel<a class="headerlink" href="#stack-panel" title="Permanent link">&para;</a></h3>
-<p>Shows execution path:</p>
+<p><strong>Note:</strong> The call stack panel described below is a planned feature and not yet implemented in the Web UI.</p>
+<h3 id="stack-panel-planned">Stack Panel (Planned)<a class="headerlink" href="#stack-panel-planned" title="Permanent link">&para;</a></h3>
+<p>Planned feature that would show execution path:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Call Stack
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├─ Line 150 (current)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>├─ GOSUB from Line 50
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>├─ GOSUB from Line 20
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>└─ Main Program
 </code></pre></div>
-<p><strong>Features:</strong>
+<p><strong>Features (Planned):</strong>
 - Click to view source location
 - Shows line numbers
 - Indicates subroutine calls
 - Displays FOR loop contexts</p>
-<h3 id="for-loop-stack">FOR Loop Stack<a class="headerlink" href="#for-loop-stack" title="Permanent link">&para;</a></h3>
+<h3 id="for-loop-stack-planned">FOR Loop Stack (Planned)<a class="headerlink" href="#for-loop-stack-planned" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>FOR Loops
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>├─ I = 3 of 10 (Line 100)
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>└─ J = 5 of 5 (Line 120)
@@ -1391,13 +1395,14 @@
 - Limit value
 - Source line</p>
 <h2 id="execution-flow">Execution Flow<a class="headerlink" href="#execution-flow" title="Permanent link">&para;</a></h2>
-<h3 id="current-line-highlighting">Current Line Highlighting<a class="headerlink" href="#current-line-highlighting" title="Permanent link">&para;</a></h3>
+<p><strong>Note:</strong> The execution flow features described below are planned for future releases.</p>
+<h3 id="current-line-highlighting-planned">Current Line Highlighting (Planned)<a class="headerlink" href="#current-line-highlighting-planned" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Yellow highlight</strong> - Next line to execute</li>
 <li><strong>Green highlight</strong> - Just executed</li>
 <li><strong>Gray highlight</strong> - Skipped line (IF/THEN)</li>
 </ul>
-<h3 id="execution-trace">Execution Trace<a class="headerlink" href="#execution-trace" title="Permanent link">&para;</a></h3>
+<h3 id="execution-trace-planned">Execution Trace (Planned)<a class="headerlink" href="#execution-trace-planned" title="Permanent link">&para;</a></h3>
 <p>Enable trace mode to see:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>[10] PRINT &quot;Start&quot;
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>[20] A = 10
@@ -1406,7 +1411,7 @@
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>[50] PRINT &quot;A &lt;= B&quot;
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>[60] END
 </code></pre></div></p>
-<h3 id="flow-visualization">Flow Visualization<a class="headerlink" href="#flow-visualization" title="Permanent link">&para;</a></h3>
+<h3 id="flow-visualization-planned">Flow Visualization (Planned)<a class="headerlink" href="#flow-visualization-planned" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Arrows show jump targets</li>
 <li>GOSUB/RETURN paths highlighted</li>
@@ -1441,7 +1446,8 @@
 - Performance hotspot identification
 - Memory usage tracking</p>
 <h2 id="debug-settings">Debug Settings<a class="headerlink" href="#debug-settings" title="Permanent link">&para;</a></h2>
-<h3 id="options-menu">Options Menu<a class="headerlink" href="#options-menu" title="Permanent link">&para;</a></h3>
+<p><strong>Note:</strong> The debug settings described below are planned for future releases. See <a href="../settings/">Settings</a> for currently available settings.</p>
+<h3 id="options-menu-planned">Options Menu (Planned)<a class="headerlink" href="#options-menu-planned" title="Permanent link">&para;</a></h3>
 <p><strong>Display Options:</strong>
 - Show line numbers
 - Show execution counts
@@ -1506,24 +1512,18 @@
 <li>Check edge cases (0)</li>
 </ol>
 <h2 id="keyboard-shortcuts">Keyboard Shortcuts<a class="headerlink" href="#keyboard-shortcuts" title="Permanent link">&para;</a></h2>
-<p><strong>Debug Control:</strong>
+<p><strong>Currently Implemented:</strong>
+- <code>Ctrl+R</code> - Run program
+- <code>Ctrl+G</code> - Continue (run to next breakpoint)
+- <code>Ctrl+T</code> - Step statement
+- <code>Ctrl+K</code> - Step line
+- <code>Ctrl+Q</code> - Stop execution</p>
+<p><strong>Planned for Future Releases:</strong>
 - <code>F5</code> - Start/Continue debugging
-- <code>Shift+F5</code> - Stop debugging
 - <code>F9</code> - Toggle breakpoint
-- <code>Ctrl+F9</code> - Clear all breakpoints
 - <code>F10</code> - Step over
 - <code>F11</code> - Step into
-- <code>Shift+F11</code> - Step out</p>
-<p><strong>Navigation:</strong>
-- <code>Ctrl+G</code> - Go to line
-- <code>Alt+Left</code> - Go back
-- <code>Alt+Right</code> - Go forward
-- <code>Ctrl+Shift+F</code> - Find in files</p>
-<p><strong>Inspector:</strong>
-- <code>Ctrl+Alt+V</code> - Toggle variables panel
-- <code>Ctrl+Alt+C</code> - Toggle call stack
-- <code>Ctrl+Alt+W</code> - Add watch
-- <code>Ctrl+Alt+D</code> - Toggle debug console</p>
+- Navigation and inspector shortcuts</p>
 <h2 id="tips-and-best-practices">Tips and Best Practices<a class="headerlink" href="#tips-and-best-practices" title="Permanent link">&para;</a></h2>
 <ol>
 <li><strong>Start Simple:</strong> Set one breakpoint first</li>
@@ -1556,7 +1556,8 @@
 <li>Disable execution counting</li>
 </ul>
 <h2 id="integration-with-browser-tools">Integration with Browser Tools<a class="headerlink" href="#integration-with-browser-tools" title="Permanent link">&para;</a></h2>
-<h3 id="browser-devtools">Browser DevTools<a class="headerlink" href="#browser-devtools" title="Permanent link">&para;</a></h3>
+<p><strong>Note:</strong> The browser integration features described below are planned for future releases.</p>
+<h3 id="browser-devtools-standard-browser-features">Browser DevTools (Standard Browser Features)<a class="headerlink" href="#browser-devtools-standard-browser-features" title="Permanent link">&para;</a></h3>
 <p>Press <code>F12</code> to open browser tools:</p>
 <p><strong>Console Tab:</strong>
 - View debug output
@@ -1569,18 +1570,19 @@
 - Inspect localStorage
 - View session storage
 - Check cookies</p>
-<h3 id="browser-console-commands">Browser Console Commands<a class="headerlink" href="#browser-console-commands" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">// Get current program</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nx">mbasic</span><span class="p">.</span><span class="nx">getProgram</span><span class="p">()</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1">// Set variable value</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="nx">mbasic</span><span class="p">.</span><span class="nx">setVariable</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span><span class="w"> </span><span class="mf">100</span><span class="p">)</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1">// Get all variables</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="nx">mbasic</span><span class="p">.</span><span class="nx">getVariables</span><span class="p">()</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1">// Export debug state</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="nx">mbasic</span><span class="p">.</span><span class="nx">exportDebugState</span><span class="p">()</span>
+<h3 id="browser-console-commands-planned">Browser Console Commands (Planned)<a class="headerlink" href="#browser-console-commands-planned" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">// These commands are planned for future releases:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1">// Get current program</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nx">mbasic</span><span class="p">.</span><span class="nx">getProgram</span><span class="p">()</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1">// Set variable value</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="nx">mbasic</span><span class="p">.</span><span class="nx">setVariable</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span><span class="w"> </span><span class="mf">100</span><span class="p">)</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="c1">// Get all variables</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="nx">mbasic</span><span class="p">.</span><span class="nx">getVariables</span><span class="p">()</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="c1">// Export debug state</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="nx">mbasic</span><span class="p">.</span><span class="nx">exportDebugState</span><span class="p">()</span>
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>

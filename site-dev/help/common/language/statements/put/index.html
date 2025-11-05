@@ -895,9 +895,9 @@
 </code></pre></div>
 <p><strong>Versions:</strong> Disk</p>
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
-<p>To write a record from a random buffer to a random file. disk file.</p>
+<p>To write a record from a random buffer to a random file.</p>
 <h2 id="remarks">Remarks<a class="headerlink" href="#remarks" title="Permanent link">&para;</a></h2>
-<p><file number> is the number under which the file was OPENed. If <record number> is omitted, the record will have the next available record number   (after the last PUT).      The largest possible record number is 32767.   The smallest record number is 1.</p>
+<p><file number> is the number under which the file was OPENed. If <record number> is omitted, the record will have the next available record number (after the last PUT). The largest possible record number is 32767. The smallest record number is 1.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">OPEN</span><span class="w"> </span><span class="s2">&quot;R&quot;</span><span class="p">,</span><span class="w"> </span><span class="il">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;INVENTORY.DAT&quot;</span><span class="p">,</span><span class="w"> </span><span class="il">128</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FIELD</span><span class="w"> </span><span class="err">#</span><span class="il">1</span><span class="p">,</span><span class="w"> </span><span class="il">20</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="vg">ITEM$</span><span class="p">,</span><span class="w"> </span><span class="il">4</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="vg">PRICE$</span><span class="p">,</span><span class="w"> </span><span class="il">2</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="vg">QTY$</span>

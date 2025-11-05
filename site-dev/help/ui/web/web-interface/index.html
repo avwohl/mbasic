@@ -989,6 +989,30 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#language-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Language Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Language Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#settings-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Settings Commands
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#security-privacy" class="md-nav__link">
     <span class="md-ellipsis">
       Security &amp; Privacy
@@ -1155,9 +1179,9 @@
 <ul>
 <li><strong>New</strong> - Clear the editor and start a new program</li>
 <li><strong>Open</strong> - Load a .bas file from your computer (via browser file picker)</li>
-<li><strong>Load Example</strong> - Choose from sample BASIC programs</li>
 <li><strong>Clear Output</strong> - Clear the output area</li>
 </ul>
+<p><strong>Note:</strong> A "Load Example" feature to choose from sample BASIC programs is planned for a future release.</p>
 <h3 id="edit-menu">Edit Menu<a class="headerlink" href="#edit-menu" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Copy</strong> - Copy selected text to clipboard</li>
@@ -1168,6 +1192,11 @@
 <ul>
 <li><strong>Run Program</strong> - Parse and execute the current program</li>
 <li><strong>Stop</strong> - Stop a running program</li>
+<li><strong>Toggle Breakpoint</strong> - Set or remove a breakpoint at a specific line number</li>
+<li><strong>Clear All Breakpoints</strong> - Remove all breakpoints</li>
+<li><strong>Continue</strong> - Resume execution after a breakpoint or step</li>
+<li><strong>Step Line</strong> - Execute all statements on the current line, then pause</li>
+<li><strong>Step Statement</strong> - Execute one statement, then pause</li>
 </ul>
 <h3 id="help-menu">Help Menu<a class="headerlink" href="#help-menu" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1201,9 +1230,10 @@
 <ul>
 <li>Files are stored in browser memory only</li>
 <li>Each user has their own isolated filesystem</li>
-<li>Files persist during your session</li>
+<li>Files persist during your session (but are cleared when session ends)</li>
 <li>No access to the server's real filesystem (security)</li>
 </ul>
+<p><strong>Important:</strong> Programs and data created via BASIC file I/O commands (OPEN, PRINT #, etc.) exist only in memory during your browser session. To save your BASIC program source code permanently, use File → Save to download it to your computer.</p>
 <h3 id="file-limits">File Limits<a class="headerlink" href="#file-limits" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Maximum 20 files per user</li>
@@ -1220,6 +1250,20 @@
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="nl">80</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Read: &quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">A$</span>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="nl">90</span><span class="w"> </span><span class="kr">CLOSE</span><span class="w"> </span><span class="err">#</span><span class="il">1</span>
 </code></pre></div>
+<h2 id="language-features">Language Features<a class="headerlink" href="#language-features" title="Permanent link">&para;</a></h2>
+<p>The Web UI supports all MBASIC 5.21 language features, including:</p>
+<h3 id="settings-commands">Settings Commands<a class="headerlink" href="#settings-commands" title="Permanent link">&para;</a></h3>
+<p>You can configure interpreter behavior using BASIC commands in your program or the Command area:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">REM Configure case handling for variables</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1">REM Configure keyword capitalization</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;keywords.case_style&quot;</span><span class="w"> </span><span class="s2">&quot;force_capitalize&quot;</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1">REM View all current settings</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span>
+</code></pre></div>
+<p>For complete details on case handling and other language settings, see the <a href="../../../../user/CASE_HANDLING_GUIDE/">Case Handling Guide</a>.</p>
 <h2 id="security-privacy">Security &amp; Privacy<a class="headerlink" href="#security-privacy" title="Permanent link">&para;</a></h2>
 <p>The web UI is designed for safe multi-user access:</p>
 <ul>

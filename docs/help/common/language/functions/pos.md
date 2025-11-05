@@ -23,13 +23,11 @@ Returns the current cursor position. The leftmost position is 1. I is a dummy ar
 
 ```basic
 10 PRINT "Hello";
-20 PRINT "Position:"; POS(0)
+20 PRINT " Position:"; POS(0)
 30 IF POS(0) > 60 THEN PRINT CHR$(13)  ' New line if past column 60
-```
-
-Output:
-```
-HelloPosition: 6
+RUN
+Hello Position: 7
+Ok
 ```
 
 ## See Also

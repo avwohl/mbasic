@@ -58,8 +58,10 @@ class LineNode:
     """A single line in a BASIC program (line_number + statements)
 
     The AST is the single source of truth. Text is always regenerated from
-    the AST using token positions. Never store source_text - it creates
-    a duplicate copy that gets out of sync.
+    the AST using token positions and formatting information.
+
+    Note: Do not add a source_text field - it would create a duplicate copy
+    that gets out of sync with the AST.
     """
     line_number: int
     statements: List['StatementNode']
@@ -137,13 +139,15 @@ class InputStatementNode:
         INPUT; var1                - Read without prompt (no "?")
         INPUT #filenum, var1       - Read from file
 
-    Note: Both comma and semicolon after prompt show "?" in real MBASIC.
-    Only INPUT; (semicolon immediately after INPUT) suppresses the "?".
+    Note: The semicolon has different meanings depending on its position:
+    - After a prompt string: INPUT "prompt"; var  → shows "prompt? "
+    - Immediately after INPUT keyword: INPUT; var → suppresses "?" (no prompt)
+    The suppress_question field is True only for the second case (INPUT; without prompt).
     """
     prompt: Optional['ExpressionNode']
     variables: List['VariableNode']
     file_number: Optional['ExpressionNode'] = None  # For INPUT #n, ...
-    suppress_question: bool = False  # True if INPUT; (semicolon immediately after INPUT)
+    suppress_question: bool = False  # True if INPUT; (semicolon immediately after INPUT, no prompt)
     line_num: int = 0
     column: int = 0
 
@@ -256,7 +260,7 @@ class DimStatementNode:
     arrays: List['ArrayDeclNode']
     line_num: int = 0
     column: int = 0
-    token: Optional[Any] = None  # Token for tracking access time
+    token: Optional[Any] = None  # Reserved for future use (currently unused)
 
 
 @dataclass
@@ -523,9 +527,8 @@ class LimitsStatementNode:
     column: int = 0
 
 
-# NOTE: SetSettingStatementNode and ShowSettingsStatementNode are defined later in the file
-# in the "Settings Commands" section (around line 1005-1038) with the correct field names.
-# These earlier definitions were removed to eliminate duplicates.
+# NOTE: SetSettingStatementNode and ShowSettingsStatementNode are defined
+# in the "Settings Commands" section below (see line ~980+).
 
 
 @dataclass
@@ -789,12 +792,13 @@ class CallStatementNode:
         CALL A                 - Call address in variable
         CALL DIO+1             - Call computed address
 
-    Note: Parser also accepts extended syntax for compatibility with
-    other BASIC dialects (e.g., CALL ROUTINE(args)), but this is not
-    standard MBASIC 5.21.
+    Note: The 'arguments' field exists for potential future compatibility with
+    other BASIC dialects (e.g., CALL ROUTINE(args)), but extended syntax is
+    not currently supported by the parser. Standard MBASIC 5.21 only accepts
+    a single address expression.
     """
     target: 'ExpressionNode'  # Memory address expression
-    arguments: List['ExpressionNode']  # Arguments (non-standard, for compatibility)
+    arguments: List['ExpressionNode']  # Reserved for future extended syntax (not currently parsed)
     line_num: int = 0
     column: int = 0
 
@@ -933,9 +937,18 @@ class StringNode:
 
 @dataclass
 class VariableNode:
-    """Variable reference"""
+    """Variable reference
+
+    Type suffix handling:
+    - type_suffix: The actual suffix ($, %, !, #) - may be explicit or inferred
+    - explicit_type_suffix: Whether type_suffix came from source code (True) or
+      was inferred from a DEF statement (False)
+
+    Both fields work together: type_suffix stores the value, explicit_type_suffix
+    tracks its origin. This is needed to regenerate source code accurately.
+    """
     name: str  # Normalized lowercase name for lookups
-    type_suffix: Optional[str] = None  # $, %, !, #
+    type_suffix: Optional[str] = None  # $, %, !, # (explicit from source OR inferred from DEF)
     subscripts: Optional[List['ExpressionNode']] = None  # For array access
     original_case: Optional[str] = None  # Original case as typed by user (for display)
     explicit_type_suffix: bool = False  # True if type_suffix was in original source, False if inferred from DEF
@@ -1033,8 +1046,12 @@ class HelpSettingStatementNode:
 class TypeInfo:
     """Type information utilities for variables
 
-    Note: This class provides convenience methods for working with VarType enum.
-    Kept for backwards compatibility but could be refactored away.
+    Provides convenience methods for working with VarType enum and converting
+    between type suffixes, DEF statement tokens, and VarType enum values.
+
+    This class wraps VarType with static helper methods. New code may use
+    VarType directly, but TypeInfo provides backwards compatibility and
+    convenient conversion utilities.
     """
     # Expose enum values as class attributes for compatibility
     INTEGER = VarType.INTEGER

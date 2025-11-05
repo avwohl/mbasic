@@ -24,13 +24,12 @@ Returns a string comprised of the leftmost I characters of X$. I must be in the 
 
 ```basic
 10 A$ = "BASIC-80"
- 20 B$ = LEFT$(A$,5)
- 30 PRINT B$
- BASIC
- Ok
+20 B$ = LEFT$(A$, 5)
+30 PRINT B$
+RUN
+BASIC
+Ok
 ```
-
-Also see the MID$ and RIGHT$ functions.
 
 ## See Also
 - [ASC](asc.md) - Returns a numerical value that is the ASCII code of the first character of the string X$

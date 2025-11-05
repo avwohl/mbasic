@@ -1527,7 +1527,7 @@
 <p>This implementation:
 - POKE: Parsed and executes successfully, but performs no operation (no-op)
 - PEEK: Returns random integer 0-255 (for RNG seeding compatibility)
-- PEEK does NOT return values written by POKE
+- <strong>PEEK does NOT return values written by POKE</strong> - no memory state is maintained
 - No access to actual system memory</p>
 <p><strong>Why:</strong> Programs often used <code>RANDOMIZE PEEK(0)</code> to seed random numbers. Since we cannot access real memory, PEEK returns random values to support this common pattern.</p>
 <p><strong>Rationale:</strong> Direct memory access is not portable across modern operating systems.</p>
@@ -1565,18 +1565,21 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kr">OPEN</span><span class="w"> </span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="w"> </span><span class="err">#</span><span class="il">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;DATA.TXT&quot;</span><span class="w">      </span><span class="c1">&#39; Simple filename only</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kr">OPEN</span><span class="w"> </span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="w"> </span><span class="err">#</span><span class="il">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;GAME.BAS&quot;</span><span class="w">      </span><span class="c1">&#39; No paths allowed</span>
 </code></pre></div>
-<p><strong>Limitations:</strong>
-- Files stored in browser memory (not browser localStorage)
-- No path support - simple filenames only
-- Filenames converted to UPPERCASE automatically
-- No directories (paths like "folder/file.txt" not supported)
-- Files persist only during browser session
+<p><strong>Storage and persistence:</strong>
+- Files stored in Python-side memory (not browser localStorage)
+- Files persist only during browser session - lost on page refresh
+- No persistent storage across sessions
 - 50 file limit, 1MB per file</p>
-<p><strong>File names:</strong>
+<p><strong>File naming:</strong>
 - Must be simple names (no slashes, no paths)
-- Automatically uppercased (CP/M style)
+- Automatically uppercased by the virtual filesystem (CP/M style)
 - 8.3 format recommended but not required
-- Examples: DATA.TXT, PROGRAM.BAS, OUTPUT.DAT</p>
+- Examples: DATA.TXT, PROGRAM.BAS, OUTPUT.DAT
+- The uppercasing is a programmatic transformation for CP/M compatibility, not evidence of persistent storage</p>
+<p><strong>Limitations:</strong>
+- No path support - simple filenames only
+- No directories (paths like "folder/file.txt" not supported)
+- Cannot save/load files to user's local disk (security restriction)</p>
 <p><strong>Why different:</strong>
 - Security: No access to user's real filesystem
 - Multi-user: Per-session isolation

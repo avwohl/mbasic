@@ -948,15 +948,16 @@
 
 <h1 id="find-and-replace-curses-ui">Find and Replace (Curses UI)<a class="headerlink" href="#find-and-replace-curses-ui" title="Permanent link">&para;</a></h1>
 <h2 id="current-status">Current Status<a class="headerlink" href="#current-status" title="Permanent link">&para;</a></h2>
-<p>The Curses UI currently <strong>does not have</strong> Find/Replace functionality. This feature is planned for future implementation.</p>
+<p>The Curses UI currently <strong>does not have</strong> Find/Replace functionality for the editor. This feature is planned for future implementation.</p>
+<p><strong>Note:</strong> Search IS available in the Variables Window (press <code>/</code> while in the variables window to search for a variable by name). This document is specifically about Find/Replace in the program editor.</p>
 <h2 id="workarounds">Workarounds<a class="headerlink" href="#workarounds" title="Permanent link">&para;</a></h2>
 <h3 id="finding-text">Finding Text<a class="headerlink" href="#finding-text" title="Permanent link">&para;</a></h3>
 <p>While there's no built-in find feature, you can:</p>
 <ol>
 <li><strong>Use line numbers</strong> to navigate directly:</li>
-<li>Press <code>Ctrl+G</code> to go to a specific line</li>
+<li>In immediate mode, type a line number to view that line</li>
 <li>
-<p>Type the line number and press Enter</p>
+<p>Use arrow keys to move between lines</p>
 </li>
 <li>
 <p><strong>Visual scanning</strong>:</p>
@@ -968,9 +969,9 @@
 <li>
 <p><strong>Export and search</strong>:</p>
 </li>
-<li>Save the program: <code>Ctrl+S</code></li>
+<li>Save the program: <code>^V</code></li>
 <li>Use external editor with find feature</li>
-<li>Reload with <code>Ctrl+O</code></li>
+<li>Reload with <code>^O</code></li>
 </ol>
 <h3 id="replacing-text">Replacing Text<a class="headerlink" href="#replacing-text" title="Permanent link">&para;</a></h3>
 <p>For text replacement:</p>
@@ -979,7 +980,7 @@
 <li>Navigate to each occurrence</li>
 <li>Edit line by line</li>
 <li>
-<p>Use <code>Ctrl+K</code> to clear line and retype</p>
+<p>Use <code>^D</code> to delete line and retype</p>
 </li>
 <li>
 <p><strong>External editor</strong>:</p>
@@ -997,7 +998,7 @@
 </ol>
 <h2 id="planned-implementation">Planned Implementation<a class="headerlink" href="#planned-implementation" title="Permanent link">&para;</a></h2>
 <p>Find/Replace is planned with these features:</p>
-<p><strong>Find (Ctrl+F):</strong>
+<p><strong>Find:</strong>
 - Search forward/backward
 - Case sensitive option
 - Whole word matching
@@ -1007,8 +1008,7 @@
 - Replace all
 - Confirmation prompts</p>
 <p><strong>Navigation:</strong>
-- F3 for Find Next
-- Shift+F3 for Find Previous
+- Next/Previous match navigation
 - Highlight all matches
 - Match counter</p>
 <h2 id="alternative-uis-with-findreplace">Alternative UIs with Find/Replace<a class="headerlink" href="#alternative-uis-with-findreplace" title="Permanent link">&para;</a></h2>
@@ -1016,9 +1016,7 @@
 <h3 id="tk-ui">Tk UI<a class="headerlink" href="#tk-ui" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Full Find/Replace dialogs</li>
-<li>Ctrl+F for Find</li>
-<li>Use Edit menu for Replace</li>
-<li>F3 for Find Next</li>
+<li>Use Edit menu for Find/Replace</li>
 <li>Case sensitive and whole word options</li>
 </ul>
 <h3 id="command-to-switch">Command to switch:<a class="headerlink" href="#command-to-switch" title="Permanent link">&para;</a></h3>

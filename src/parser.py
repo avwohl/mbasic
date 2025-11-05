@@ -12,7 +12,7 @@ Key differences from interpreter:
 
 Expression parsing notes:
 - Functions generally require parentheses: SIN(X), CHR$(65)
-- Exception: RND and INKEY$ can be called without parentheses (MBASIC 5.21 compatibility)
+- Exception: RND and INKEY$ can be called without parentheses (standard BASIC)
 """
 
 from typing import List, Optional, Dict, Tuple
@@ -100,7 +100,7 @@ class Parser:
         """Consume and return current token"""
         token = self.current()
         if self.at_end_of_tokens():
-            raise ParseError("Unexpected end of input")
+            raise ParseError("Unexpected end of tokens")
         self.position += 1
         return token
 
@@ -108,7 +108,7 @@ class Parser:
         """Consume token of expected type or raise error"""
         token = self.current()
         if self.at_end_of_tokens():
-            raise ParseError(f"Expected {token_type.name}, got end of input")
+            raise ParseError(f"Expected {token_type.name}, got end of tokens")
         if token.type != token_type:
             raise ParseError(f"Expected {token_type.name}, got {token.type.name}", token)
         return self.advance()
@@ -1392,8 +1392,9 @@ class Parser:
             elif self.match(TokenType.COMMA):
                 self.advance()
 
-        # Check for LINE modifier after semicolon: INPUT "prompt";LINE var$
+        # Check for LINE modifier (e.g., INPUT "prompt";LINE var$)
         # LINE allows input of entire line including commas
+        # Note: The lexer tokenizes LINE INPUT as LINE_INPUT regardless of position
         line_mode = False
         if self.match(TokenType.LINE_INPUT):
             line_mode = True
@@ -2068,10 +2069,12 @@ class Parser:
         Syntax variations:
         - IF condition THEN statement
         - IF condition THEN line_number
-        - IF condition THEN line_number :ELSE line_number
+        - IF condition THEN line_number ELSE line_number (or :ELSE with lookahead)
         - IF condition THEN statement : statement
         - IF condition THEN statement ELSE statement
         - IF condition GOTO line_number
+
+        Note: :ELSE syntax requires lookahead to distinguish from statement separator colon
         """
         token = self.advance()
 
@@ -2488,7 +2491,8 @@ class Parser:
 
         Syntax: DIM array1(dims), array2(dims), ...
 
-        Note: In compiled BASIC, dimensions must be constant expressions
+        Note: MBASIC 5.21 allows any expression for dimensions (evaluated at runtime).
+        Some compiled BASICs require constant expressions, but we accept any expression.
         """
         token = self.advance()
 
@@ -2592,10 +2596,11 @@ class Parser:
             MID$(A$, 3, 5) = "HELLO"
             MID$(P$(I), J, 1) = " "
 
-        Note: MID$ is tokenized as a single MID token
+        Note: The lexer tokenizes 'MID$' in source as a single MID token (the $ is part
+        of the keyword, not a separate token).
         """
-        token = self.current()  # MID token
-        self.advance()  # Skip MID (which includes the $)
+        token = self.current()  # MID token (represents 'MID$' from source)
+        self.advance()  # Skip MID token
 
         # Expect opening parenthesis
         self.expect(TokenType.LPAREN)
@@ -2636,9 +2641,10 @@ class Parser:
     def parse_deftype(self) -> DefTypeStatementNode:
         """Parse DEFINT/DEFSNG/DEFDBL/DEFSTR statement
 
-        Note: In batch mode, type collection already happened in first pass.
-        In interactive mode, this updates the def_type_map.
-        This creates the AST node for documentation purposes.
+        Note: This method always updates def_type_map during parsing.
+        In batch mode (two-pass), first pass collects types, second pass uses them.
+        In interactive mode (single-pass), this immediately updates the type map.
+        The AST node is created for program serialization/documentation.
         """
         token = self.advance()
         var_type = TypeInfo.from_def_statement(token.type)
@@ -2708,7 +2714,7 @@ class Parser:
                 raw_name = raw_name[:-1]
             function_name = "fn" + raw_name  # Use lowercase 'fn' to match function calls
         elif fn_name_token and fn_name_token.type == TokenType.IDENTIFIER:
-            # "DEF FNR" without space - identifier is "fnr" (normalized to lowercase)
+            # "DEF FNR" without space - identifier is "fnr" (lexer already normalized to lowercase)
             if not fn_name_token.value.startswith("fn"):
                 raise ParseError("DEF function name must start with FN", fn_name_token)
             self.advance()
@@ -2717,6 +2723,7 @@ class Parser:
             type_suffix = self.get_type_suffix(raw_name)
             if type_suffix:
                 raw_name = raw_name[:-1]
+            # raw_name already starts with lowercase 'fn' from lexer normalization
             function_name = raw_name
         else:
             raise ParseError("Expected function name after DEF", fn_name_token)
@@ -2793,8 +2800,8 @@ class Parser:
             self.advance()
 
             # Check for array indicator ()
-            # (we don't need to do anything special with arrays in COMMON,
-            # just note the variable name)
+            # We consume the parentheses but don't need to store array dimension info
+            # (COMMON shares the entire array, not specific subscripts)
             if self.match(TokenType.LPAREN):
                 self.advance()
                 if not self.match(TokenType.RPAREN):
@@ -3199,11 +3206,12 @@ class Parser:
         - LINE INPUT "prompt"; variable$
         - LINE INPUT #n, variable$
 
-        Note: Lexer produces LINE_INPUT token, but INPUT keyword may follow
+        LINE INPUT reads an entire line including commas (unlike INPUT which treats
+        commas as field separators).
         """
         token = self.advance()
 
-        # The lexer may produce INPUT as next token - consume it if present
+        # Handle tokenization quirk: lexer may produce separate INPUT token after LINE
         if self.match(TokenType.INPUT):
             self.advance()
 
@@ -3597,18 +3605,20 @@ class Parser:
         """
         Parse CALL statement - call machine language routine
 
-        MBASIC 5.21 standard syntax:
+        MBASIC 5.21 syntax:
             CALL address           - Call machine code at numeric address
 
-        Extended syntax (other BASIC dialects):
-            CALL ROUTINE(X,Y)      - Call with arguments (fully parsed/supported)
+        Extended syntax (also supported for compatibility with other BASIC dialects):
+            CALL ROUTINE(X,Y)      - Call with arguments
+
+        Both forms are fully supported by this parser.
 
         Examples:
             CALL 16384             - Call decimal address
             CALL &HC000            - Call hex address
             CALL A                 - Call address in variable
             CALL DIO+1             - Call computed address
-            CALL MYSUB(X,Y)        - Call with arguments (extended)
+            CALL MYSUB(X,Y)        - Call with arguments (extended syntax)
         """
         token = self.advance()
 
@@ -3676,7 +3686,8 @@ class Parser:
             self.advance()
             line_number = -1  # -1 sentinel means RESUME NEXT
         elif self.match(TokenType.LINE_NUMBER, TokenType.NUMBER):
-            # Note: RESUME 0 is valid BASIC syntax meaning "retry error statement" (same as RESUME)
+            # Note: RESUME 0 means "retry error statement" (interpreter treats 0 and None equivalently)
+            # We store the actual value (0 or other line number) for the AST
             line_number = int(self.advance().value)
 
         return ResumeStatementNode(

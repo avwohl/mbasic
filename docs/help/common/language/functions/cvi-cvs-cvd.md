@@ -24,11 +24,9 @@ Convert string values to numeric values. Numeric values that are read in from a 
 ## Example
 
 ```basic
-70 FIELD #1,4 AS N$, 12 AS B$, •••
- 80 GET #1
- 90 Y=CVS (N$)
- See also MKI$r MKS$, MKD$, Section 3.25 and
- Appendix B.
+70 FIELD #1, 4 AS N$, 12 AS B$
+80 GET #1
+90 Y = CVS(N$)
 ```
 
 ## See Also

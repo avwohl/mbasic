@@ -17,7 +17,9 @@ INKEY$
 
 ## Description
 
-Returns either a one-character string containing a character read from the terminal or a null string if no character is pending at the terminal. No characters will be echoed and all characters are passed through to the program except for Control-C, which terminates the program. (With the BASIC Compiler, Control-C is also passed through to the program.)
+Returns either a one-character string containing a character read from the terminal or a null string if no character is pending at the terminal. No characters will be echoed and all characters are passed through to the program.
+
+**Note**: In original MBASIC, Control-C would terminate the program. In the BASIC Compiler, Control-C was passed through. This implementation passes Control-C through to the program (it can be detected and handled).
 
 ## Example
 

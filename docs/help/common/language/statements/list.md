@@ -8,7 +8,14 @@ type: statement
 
 # LIST
 
-**Versions:** 8K, Extended, Disk Format 2:     LIST [<line number>[-[<line number>]]] Extended, Disk
+**Versions:** 8K, Extended, Disk
+
+## Syntax
+
+```basic
+Format 1: LIST [<line number>]           (8K version)
+Format 2: LIST [<line number>[-[<line number>]]]  (Extended, Disk)
+```
 
 ## Purpose
 
@@ -38,7 +45,7 @@ Format 1:
 ```
 
 ## See Also
-- [AUTO](auto.md) - To generate a line number   automatically     after every carriage return
+- [AUTO](auto.md) - To generate a line number automatically after every carriage return
 - [DELETE](delete.md) - To delete program lines
 - [EDIT](edit.md) - To enter Edit Mode at the specified line
 - [LLIST](llist.md) - To list all or part of the program currently in memory at the line printer

@@ -908,8 +908,10 @@
 <li>ERR is reset to 0 when:</li>
 <li>RESUME statement is executed</li>
 <li>A new RUN command is issued</li>
-<li>An error handling routine ends normally</li>
+<li>An error handling routine ends normally (without error)</li>
 <li>ERL returns 0 if the error occurred in direct mode (no line number)</li>
+<li>ERROR statement sets both ERR (to the specified code) and ERL (to the line where ERROR was executed)</li>
+<li>Both ERR and ERL persist after an error handler completes, until the next error or RESUME</li>
 </ul>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">ON ERROR</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">1000</span>

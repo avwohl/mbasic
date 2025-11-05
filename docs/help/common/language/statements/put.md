@@ -19,11 +19,11 @@ PUT [#]<file number>[,<record number>]
 
 ## Purpose
 
-To write a record from a random buffer to a random file. disk file.
+To write a record from a random buffer to a random file.
 
 ## Remarks
 
-<file number> is the number under which the file was OPENed. If <record number> is omitted, the record will have the next available record number   (after the last PUT).      The largest possible record number is 32767.   The smallest record number is 1.
+<file number> is the number under which the file was OPENed. If <record number> is omitted, the record will have the next available record number (after the last PUT). The largest possible record number is 32767. The smallest record number is 1.
 
 ## Example
 

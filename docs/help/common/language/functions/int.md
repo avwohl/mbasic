@@ -34,8 +34,6 @@ PRINT INT(-12.11)
 Ok
 ```
 
-See the FIX and CINT functions which also return integer values.
-
 ## See Also
 - [ABS](abs.md) - Return the absolute value of a number (removes negative sign)
 - [ATN](atn.md) - Returns the arctangent of X in radians

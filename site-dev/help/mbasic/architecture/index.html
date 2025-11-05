@@ -858,6 +858,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#hardware-compatibility-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hardware Compatibility Notes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#benefits" class="md-nav__link">
     <span class="md-ellipsis">
       Benefits
@@ -1189,6 +1198,13 @@
 <li>Dynamic typing, dynamic array sizing</li>
 <li>Immediate execution of parsed code</li>
 </ol>
+<h3 id="hardware-compatibility-notes">Hardware Compatibility Notes<a class="headerlink" href="#hardware-compatibility-notes" title="Permanent link">&para;</a></h3>
+<p><strong>PEEK/POKE</strong> - Emulated for compatibility:
+- POKE: Parsed and executes successfully, but performs no operation (no-op)
+- PEEK: Returns random integer 0-255 (for RNG seeding compatibility)
+- <strong>PEEK does NOT return values written by POKE</strong> - no memory state is maintained
+- No access to actual system memory</p>
+<p>See <a href="../compatibility/">Compatibility Guide</a> for full details on hardware-specific features.</p>
 <h3 id="benefits">Benefits<a class="headerlink" href="#benefits" title="Permanent link">&para;</a></h3>
 <p>✅ <strong>Fast startup</strong>: No compilation delay
 ✅ <strong>Full compatibility</strong>: Supports all BASIC-80 dynamic features

@@ -65,8 +65,8 @@ class SimpleWebIOHandler(IOHandler):
     def input(self, prompt=""):
         """Get input from user via inline input field.
 
-        Uses asyncio.Future for coordination between synchronous interpreter
-        and async web UI. The input field appears below the output pane,
+        The input_callback handles asyncio.Future coordination between synchronous
+        interpreter and async web UI. The input field appears below the output pane,
         allowing users to see all previous output while typing.
         """
         # Don't print prompt here - the input_callback (backend._get_input) handles
@@ -74,8 +74,8 @@ class SimpleWebIOHandler(IOHandler):
         # Get input from UI (this will block until user enters input)
         result = self.input_callback(prompt)
 
-        # The inline input handler already echoes the input with newline
-        # So we don't need to echo it again here
+        # Note: The input echoing (displaying what user typed) is handled by the
+        # inline input handler in the NiceGUIBackend class, not here.
 
         return result
 
@@ -120,7 +120,7 @@ class VariablesDialog(ui.dialog):
         """
         super().__init__()
         self.backend = backend
-        # Sort state (matches Tk UI defaults)
+        # Sort state (matches Tk UI defaults: see src/ui/tk_ui.py lines 91-92)
         self.sort_mode = 'accessed'  # Current sort mode
         self.sort_reverse = True  # Sort direction
 
@@ -1006,7 +1006,7 @@ class NiceGUIBackend(UIBackend):
     - File management
     - Execution controls
     - Variables window
-    - Breakpoint support
+    - Breakpoint support (planned - not yet implemented)
 
     Based on TK UI feature set (see docs/dev/TK_UI_FEATURE_AUDIT.md).
     """
@@ -1200,7 +1200,7 @@ class NiceGUIBackend(UIBackend):
                 self.editor_has_been_used = False  # Track if user has typed anything
 
                 # Content change handlers via CodeMirror's on_change callback
-                # The _on_editor_change method (defined below) handles:
+                # The _on_editor_change method (defined at line ~2609) handles:
                 # - Removing blank lines
                 # - Auto-numbering
                 # - Placeholder clearing
@@ -1223,14 +1223,14 @@ class NiceGUIBackend(UIBackend):
                     placeholder='Output'
                 ).style('width: 100%; flex: 1; min-height: 0;').props('readonly outlined dense spellcheck=false').mark('output')
 
-        # INPUT handling: Output textarea is readonly by default (see props above),
-        # but becomes temporarily editable via JavaScript when INPUT statement executes
-        # (see _enable_inline_input() which removes readonly attribute dynamically)
-        # Store state for inline input handling
-        self.input_prompt_text = None  # Track where prompt starts for inline input
+        # INPUT handling: When INPUT statement executes, the immediate_entry input box
+        # is focused for user input (see _execute_tick() lines ~1886-1888).
+        # The output textarea remains readonly.
+        # Store state for input handling
+        self.input_prompt_text = None  # Track current input prompt
         self.waiting_for_input = False
 
-        # Set up Enter key handler for inline input in output textarea
+        # Set up Enter key handler for output textarea (for future inline input feature)
         self.output.on('keydown.enter', self._handle_output_enter)
 
         # Start auto-save timer
@@ -1881,7 +1881,8 @@ class NiceGUIBackend(UIBackend):
                 if not self.waiting_for_input:
                     self.waiting_for_input = True
                     self.input_prompt_text = state.input_prompt
-                    # Don't append prompt - interpreter already printed it via io.output()
+                    # Note: We don't append the prompt to output here because the interpreter
+                    # has already printed it via io.output() before setting input_prompt state
                     # Change placeholder text to indicate we're waiting for input
                     self.immediate_entry.props('placeholder="Input: "')
                     # Focus the immediate input box for user to type
@@ -1910,7 +1911,8 @@ class NiceGUIBackend(UIBackend):
                 if not self.waiting_for_input:
                     self.waiting_for_input = True
                     self.input_prompt_text = state.input_prompt
-                    # Don't append prompt - interpreter already printed it via io.output()
+                    # Note: We don't append the prompt to output here because the interpreter
+                    # has already printed it via io.output() before setting input_prompt state
                     # Change placeholder text to indicate we're waiting for input
                     self.immediate_entry.props('placeholder="Input: "')
                     # Focus the immediate input box for user to type
@@ -2010,9 +2012,10 @@ class NiceGUIBackend(UIBackend):
                     self.runtime = Runtime(self.program.line_asts, self.program.lines)
                     self.runtime.setup()
                 else:
+                    # Reset runtime for fresh execution (clears variables but preserves breakpoints)
                     self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
-                # Create new IO handler for execution (interpreter/runtime reused to preserve session state)
+                # Create new IO handler for execution
                 self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
                 self.interpreter.io = self.exec_io
                 self.interpreter.limits = create_local_limits()
@@ -2510,9 +2513,9 @@ class NiceGUIBackend(UIBackend):
                 return True
 
             # Normalize line endings and remove CP/M EOF markers
-            # \r\n -> \n (Windows line endings)
-            # \r -> \n (old Mac line endings)
-            # \x1a (Ctrl+Z, CP/M EOF marker)
+            # \r\n -> \n (Windows line endings, may appear if user pastes text)
+            # \r -> \n (old Mac line endings, may appear if user pastes text)
+            # \x1a (Ctrl+Z, CP/M EOF marker - included for consistency with file loading)
             text = text.replace('\r\n', '\n').replace('\r', '\n').replace('\x1a', '')
 
             # Parse each line
@@ -2578,9 +2581,12 @@ class NiceGUIBackend(UIBackend):
             self._notify(f'Error: {e}', type='negative')
 
     def _remove_blank_lines(self, e=None):
-        """Remove blank lines from editor except the current line where cursor is.
+        """Remove blank lines from editor except the last line.
 
-        This prevents removing the blank line user just created with Enter.
+        The last line is preserved even if blank, since it's likely where the cursor
+        is after pressing Enter. This prevents removing the blank line user just created.
+        Note: This assumes cursor is at the end, which may not always be true if user
+        clicks elsewhere.
         """
         try:
             if not self.editor:
@@ -3112,12 +3118,11 @@ class NiceGUIBackend(UIBackend):
             if success:
                 self._set_status('Immediate command executed')
 
-                # Don't sync editor from AST after immediate command - editor text is the source!
-                # Current architecture: editor text → parsed to AST → execution
-                # We never reverse (AST → text) because that would lose user's exact text/formatting.
-                # This design preserves user's original syntax, spacing, and comments.
-                # Note: This is the current design. A future architecture might parse lines immediately
-                # into AST and only keep text for display/editing, but that would require major refactoring.
+                # Architecture note: We do NOT sync editor from AST after immediate commands.
+                # This preserves the one-way data flow: editor text → AST → execution.
+                # Syncing AST → editor would lose user's exact text, spacing, and comments.
+                # Some immediate commands (like RENUM) modify the AST directly, but we rely
+                # on those commands to update the editor text themselves, not via automatic sync.
 
                 # If statement set NPC (like RUN/GOTO), move it to PC
                 # This is what the tick loop does after executing a statement

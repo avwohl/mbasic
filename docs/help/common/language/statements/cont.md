@@ -21,7 +21,7 @@ To continue program execution after a Control-C has been typed, or a STOP or END
 
 ## Remarks
 
-Execution resumes at the point where the break occurred.   If the break occurred after a prompt from an INPUT statement, execution continues with the reprinting of the prompt (7 or prompt string) • CONT is usually used in conjunction with STOP for   debugging.   When execution is stopped, intermediate values may be examined and changed using direct mode statements. Execution may be. resumed with CONT or a direct mode GOTO, which resumes execution at a specified line number. With the Extended and Disk versions, CONT may be used to continue execution after an error. CONT is invalid if the program has been edited during the break.     In 8K BASIC-80, execution cannot be CONTinued if a direct mode error, has occurred during the break.
+Execution resumes at the point where the break occurred. If the break occurred after a prompt from an INPUT statement, execution continues with the reprinting of the prompt (? or prompt string). CONT is usually used in conjunction with STOP for debugging. When execution is stopped, intermediate values may be examined and changed using direct mode statements. Execution may be resumed with CONT or a direct mode GOTO, which resumes execution at a specified line number. With the Extended and Disk versions, CONT may be used to continue execution after an error. CONT is invalid if the program has been edited during the break. In 8K BASIC-80, execution cannot be CONTinued if a direct mode error has occurred during the break.
 
 ## Example
 

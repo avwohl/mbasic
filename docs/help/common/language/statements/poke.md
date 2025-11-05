@@ -36,7 +36,7 @@ To write a byte into a memory location.
 
 ## Remarks
 
-The integer expression I is the address of the memory   location to be POKEd.      The integer expression J is the data to be POKEd. J must be in the range 0 to 255. In the 8K version, I must be less than 32768.  In the Extended and Disk versions, I must be in the range 0 to 65536. With the 8K version, data may be POKEd into memory locations above 32768 by supplying a negative number for I.     The value of I is computed by subtracting 65536 from the desired address.   For example, to POKE      data   into location 45000, I = 45000-65536, or -20536. The complementary function to POKE is PEEK. The argument to PEEK is an address from which a byte is to be read. See Section 3.27. POKE and PEEK are useful for efficient data storage, loading assembly language subroutines, and passing arguments and results to and from assembly language subroutines.
+The integer expression I is the address of the memory location to be POKEd. The integer expression J is the data to be POKEd. J must be in the range 0 to 255. In the 8K version, I must be less than 32768. In the Extended and Disk versions, I must be in the range 0 to 65536. With the 8K version, data may be POKEd into memory locations above 32768 by supplying a negative number for I. The value of I is computed by subtracting 65536 from the desired address. For example, to POKE data into location 45000, I = 45000-65536, or -20536. The complementary function to POKE is PEEK. The argument to PEEK is an address from which a byte is to be read. See Section 3.27. POKE and PEEK are useful for efficient data storage, loading assembly language subroutines, and passing arguments and results to and from assembly language subroutines.
 
 ## Example
 

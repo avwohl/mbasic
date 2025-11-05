@@ -21,13 +21,14 @@ To conclude I/O to a disk file.
 
 ## Remarks
 
-<file number> is the number under which the file was OPENed.     A CLOSE with no arguments closes all open files. The association between a particular file and file number terminates upon execution of a CLOSE. The file may then be reOPENed using the same or a different file number; likewise, that file number may now be reused to OPEN any file. A CLOSE for a sequential output file writes       the final buffer of output. The END statement and the NEW command always CLOSE all disk files automatically. (STOP does not close disk files.)
+<file number> is the number under which the file was OPENed. A CLOSE with no arguments closes all open files. The association between a particular file and file number terminates upon execution of a CLOSE. The file may then be reOPENed using the same or a different file number; likewise, that file number may now be reused to OPEN any file. A CLOSE for a sequential output file writes the final buffer of output. The END statement and the NEW command always CLOSE all disk files automatically. (STOP does not close disk files.)
 
 ## Example
 
 ```basic
-See PART II, Chapter 3, MBASIC       Disk
-              I/O, of the MBASIC User's Guide.
+10 OPEN "O", 1, "OUTPUT.TXT"
+20 PRINT #1, "Hello, World!"
+30 CLOSE 1
 ```
 
 ## See Also

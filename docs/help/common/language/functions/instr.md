@@ -25,14 +25,14 @@ Searches for the first occurrence of string Y$ in X$ and returns the position at
 
 ```basic
 10 X$ = "ABCDEB"
- 20 Y$ = "B"
- 30 PRINT INSTR(X$,Y$) ;INSTR(4,X$,Y$)
- RUN
- 2 6
- Ok
-NOTE: If I=0 is specified, error message "ILLEGAL
- ARGUMENT IN <line number>" will be returned.
+20 Y$ = "B"
+30 PRINT INSTR(X$, Y$); INSTR(4, X$, Y$)
+RUN
+2 6
+Ok
 ```
+
+**Note**: If I=0 is specified, an "Illegal function call" error will occur.
 
 ## See Also
 - [ASC](asc.md) - Returns a numerical value that is the ASCII code of the first character of the string X$

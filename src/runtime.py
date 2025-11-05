@@ -61,6 +61,7 @@ class Runtime:
         self._arrays = {}             # name_with_suffix -> {'dims': [...], 'data': [...]}
 
         # Case tracking for conflict detection (settings.variables.case_conflict)
+        # Stored separately from variable entries for efficient tracking:
         # Maps normalized name (lowercase) to list of all case variants seen: {'targetangle': [('TargetAngle', line, col), ('targetangle', line, col)]}
         self._variable_case_variants = {}
 
@@ -97,8 +98,9 @@ class Runtime:
         # User-defined functions
         self.user_functions = {}      # fn_name -> DefFnStatementNode
 
-        # Note: Type defaults (DEFINT, DEFSNG, etc.) are handled by parser's def_type_map
-        # at parse time (Parser class), not at runtime
+        # Note: Type defaults (DEFINT, DEFSNG, etc.) are collected by parser's def_type_map
+        # at parse time (Parser class), but runtime also uses def_type_map via
+        # _resolve_variable_name() to determine variable types when no explicit suffix is present
 
         # File I/O
         self.files = {}               # file_number -> file_handle
@@ -633,7 +635,7 @@ class Runtime:
 
     def get_array_element(self, name, type_suffix, subscripts, def_type_map=None, token=None):
         """
-        Get array element value, optionally tracking read access.
+        Get array element value, tracking read access if token is provided.
 
         Auto-dimensioning: If the array has not been explicitly dimensioned via DIM,
         it will be automatically dimensioned to (10, 10, ...) with one dimension
@@ -1280,9 +1282,11 @@ class Runtime:
             list: Tuples of (line_number, stmt_offset) where GOSUB was called
                  Example: [(100, 0), (500, 2), (1000, 1)]
                  This represents GOSUB called from:
-                   - line 100, statement 0 (first statement on line 100)
-                   - line 500, statement 2 (third statement on line 500)
-                   - line 1000, statement 1 (second statement on line 1000)
+                   - line 100, offset 0 (1st statement on line 100)
+                   - line 500, offset 2 (3rd statement on line 500)
+                   - line 1000, offset 1 (2nd statement on line 1000)
+
+                 Note: stmt_offset is a 0-based index where 0 = 1st statement, 1 = 2nd statement, etc.
 
         Note: The first element is the oldest GOSUB, the last is the most recent.
         """
@@ -1334,12 +1338,13 @@ class Runtime:
 
                  Example with nested control flow:
                  [
-                     {'type': 'FOR', 'var': 'I', 'current': 1, 'end': 10, 'step': 1, 'line': 100},
-                     {'type': 'GOSUB', 'from_line': 130, 'return_line': 130},
-                     {'type': 'WHILE', 'line': 500}
+                     {'type': 'FOR', 'var': 'I', 'current': 1, 'end': 10, 'step': 1, 'line': 100, 'stmt': 0},
+                     {'type': 'GOSUB', 'from_line': 130, 'return_line': 130, 'return_stmt': 0},
+                     {'type': 'WHILE', 'line': 500, 'stmt': 0}
                  ]
 
-                 This shows: FOR I at 100, then GOSUB (will return to 130), then WHILE at 500 (innermost).
+                 This shows: FOR I at line 100, statement 0 (1st statement), then GOSUB (will return to line 130, statement 0),
+                 then WHILE at line 500, statement 0 (innermost).
                  Proper unwinding would be: WEND, RETURN (to line 130), NEXT I.
 
         Note: The order reflects nesting level based on execution order (when each
@@ -1393,12 +1398,13 @@ class Runtime:
 
         Args:
             line_or_pc: Line number (int) or PC object for breakpoint
-            stmt_offset: Optional statement offset (0-based). If None, breaks on entire line.
+            stmt_offset: Optional statement offset (0-based index). If None, breaks on entire line.
                         Ignored if line_or_pc is a PC object.
+                        Note: offset 0 = 1st statement, offset 1 = 2nd statement, offset 2 = 3rd statement, etc.
 
         Examples:
-            set_breakpoint(100)           # Line-level
-            set_breakpoint(100, 2)        # Statement-level (line 100, 3rd statement)
+            set_breakpoint(100)           # Line-level (entire line)
+            set_breakpoint(100, 2)        # Statement-level (line 100, offset 2 = 3rd statement on line)
             set_breakpoint(PC(100, 2))    # PC object (preferred)
         """
         if isinstance(line_or_pc, PC):

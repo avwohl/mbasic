@@ -26,21 +26,11 @@ Convert numeric values to string values. Any numeric value that is placed in a r
 ## Example
 
 ```basic
-90 AMT= (K+T)
- 100 FIELD #1, 8 AS D$, 20 AS N$
- 110 LSET D$ = MKS$(AMT)
- 120 LSET N$ = A$
- 130 PUT #1
- See also CVI, CVS, CVD, Section 3.9 and Appendix
- B.
- 3.27 OCT$
-PRINT OCT$ (24)
- 30
- Ok
- See the HEX $ function for hexadecimal
- conversion.
-3.2S PEEK
-A=PEEK (&H5AOO)
+90 AMT = (K + T)
+100 FIELD #1, 8 AS D$, 20 AS N$
+110 LSET D$ = MKS$(AMT)
+120 LSET N$ = A$
+130 PUT #1
 ```
 
 ## See Also

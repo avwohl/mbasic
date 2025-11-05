@@ -38,9 +38,13 @@ class InterpreterState:
     """Complete execution state of the interpreter at any point in time
 
     Primary execution states (check these to determine current status):
-    - error_info: Non-None if an error occurred (check FIRST - highest priority)
-    - input_prompt: Non-None if waiting for input (check SECOND)
-    - runtime.halted: True if stopped (paused/done/at breakpoint) (check LAST)
+    Note: The suggested checking order below is for UI code that examines state AFTER
+    execution completes. During execution (in tick_pc()), the actual checking order is:
+    1. pause_requested, 2. halted, 3. break_requested, 4. breakpoints, 5. input_prompt,
+    6. errors (handled via exceptions). For UI/callers checking completed state:
+    - error_info: Non-None if an error occurred (highest priority for display)
+    - input_prompt: Non-None if waiting for input (blocks until user provides input)
+    - runtime.halted: True if stopped (paused/done/at breakpoint)
 
     Also tracks: input buffering, debugging flags, performance metrics, and
     provides computed properties for current line/statement position.
@@ -582,9 +586,10 @@ class Interpreter:
                 continue
 
 
-    # OLD EXECUTION METHODS REMOVED (internal version v1.0.300 - this is the mbasic implementation
-    # version, not the MBASIC 5.21 language version)
-    # run_from_current(), _run_loop(), step_once() removed
+    # OLD EXECUTION METHODS REMOVED
+    # Note: The project has an internal implementation version (tracked in src/version.py)
+    # which is separate from the MBASIC 5.21 language version being implemented.
+    # Old methods: run_from_current(), _run_loop(), step_once() (removed)
     # These used old current_line/next_line fields
     # Replaced by tick_pc() and PC-based execution
     # CONT command now uses tick() directly
@@ -1332,8 +1337,9 @@ class Interpreter:
         # Determine where to resume
         if stmt.line_number is None or stmt.line_number == 0:
             # RESUME or RESUME 0 - retry the statement that caused the error
-            # Parser treats these differently (None vs 0) as separate AST representations,
-            # but they have identical runtime behavior (both retry the error statement)
+            # Note: Parser creates different AST representations (None vs 0) to preserve
+            # the original source syntax for round-trip serialization, but the interpreter
+            # treats both identically at runtime (both retry the error statement).
             self.runtime.npc = error_pc
         elif stmt.line_number == -1:
             # RESUME NEXT - continue at statement after the error
@@ -1627,9 +1633,11 @@ class Interpreter:
                     full_prompt = "? "
 
                 # Set input prompt - execution will pause
+                # Sets: input_prompt (prompt text), input_variables (var list),
+                #       input_file_number (None for keyboard input, file # for file input)
                 self.state.input_prompt = full_prompt
                 self.state.input_variables = stmt.variables  # Save variables for resumption
-                self.state.input_file_number = None
+                self.state.input_file_number = None  # None indicates keyboard input (not file)
 
                 # Save statement for resumption
                 # We'll need to re-execute this statement when input is provided
@@ -1686,6 +1694,8 @@ class Interpreter:
         Uses latin-1 (ISO-8859-1) to preserve byte values 128-255 unchanged.
         CP/M and MBASIC used 8-bit characters; latin-1 maps bytes 0-255 to
         Unicode U+0000-U+00FF, allowing round-trip byte preservation.
+        Note: Files using non-English code pages (other than standard ASCII/latin-1)
+        may require conversion before reading for accurate character display.
 
         EOF Detection (three methods):
         1. EOF flag already set (file_info['eof'] == True) → returns None immediately
@@ -2480,8 +2490,10 @@ class Interpreter:
 
         if not found:
             # If not a field variable, fall back to normal assignment.
-            # Note: In strict MBASIC 5.21, LSET/RSET are only for field variables.
-            # This fallback is a compatibility extension.
+            # Compatibility note: In strict MBASIC 5.21, LSET/RSET are only for field
+            # variables (used with FIELD statement for random file access). This fallback
+            # is a deliberate extension for compatibility with code that uses LSET for
+            # general string formatting. This is documented behavior, not a bug.
             self.runtime.set_variable_raw(var_name, value)
 
     def execute_rset(self, stmt):
@@ -2517,8 +2529,10 @@ class Interpreter:
 
         if not found:
             # If not a field variable, fall back to normal assignment.
-            # Note: In strict MBASIC 5.21, LSET/RSET are only for field variables.
-            # This fallback is a compatibility extension.
+            # Compatibility note: In strict MBASIC 5.21, LSET/RSET are only for field
+            # variables (used with FIELD statement for random file access). This fallback
+            # is a deliberate extension for compatibility with code that uses RSET for
+            # general string formatting. This is documented behavior, not a bug.
             self.runtime.set_variable_raw(var_name, value)
 
     def execute_midassignment(self, stmt):
@@ -2733,17 +2747,17 @@ class Interpreter:
         """Execute STEP statement (debug command)
 
         STEP is intended to execute one or more statements, then pause.
-        Current implementation: Placeholder that prints a message (not yet functional).
-        Full implementation would require debugger integration.
+        Current implementation: Placeholder (not yet functional - no actual stepping occurs).
+
+        Status: The tick() method supports step_statement and step_line modes, but this
+        immediate STEP command is not yet connected to that infrastructure. Full
+        implementation would require:
+        - Integration with tick(mode='step_statement')
+        - State tracking for multi-step commands
+        - UI coordination for displaying position between steps
         """
         count = stmt.count if stmt.count else 1
         self.io.output(f"STEP {count} - Debug stepping not fully implemented")
-        # For now, just acknowledge the command
-        # Full implementation would involve:
-        # - Setting step mode flag
-        # - Executing N statements
-        # - Pausing after each one
-        # - Showing current position
 
     # ========================================================================
     # Expression Evaluation
@@ -2906,9 +2920,12 @@ class Interpreter:
         call_token = self._make_token_info(expr)
 
         # Save parameter values (function parameters shadow variables)
-        # Note: Use get_variable_for_debugger to avoid triggering variable access tracking.
-        # We ARE using the value (to save/restore), but this is implementation detail,
-        # not program-level variable access.
+        # Note: get_variable_for_debugger() and debugger_set=True are used to avoid
+        # triggering variable access tracking. This save/restore is internal function
+        # call machinery, not user-visible variable access. The tracking system
+        # (if enabled) distinguishes between:
+        # - User code variable access (tracked for debugging/variables window)
+        # - Internal implementation details (not tracked)
         saved_vars = {}
         for i, param in enumerate(func_def.parameters):
             param_name = param.name + (param.type_suffix or "")
@@ -2920,9 +2937,7 @@ class Interpreter:
         # Evaluate function expression
         result = self.evaluate_expression(func_def.expression)
 
-        # Restore parameter values
-        # Use debugger_set=True to avoid tracking this as program-level assignment.
-        # This is function call implementation (save/restore params), not user code.
+        # Restore parameter values (use debugger_set=True to avoid tracking)
         for param_name, saved_value in saved_vars.items():
             base_name = param_name.rstrip('$%!#')
             type_suffix = param_name[-1] if param_name[-1] in '$%!#' else None

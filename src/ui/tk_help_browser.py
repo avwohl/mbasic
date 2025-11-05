@@ -4,7 +4,7 @@ Tkinter-based help browser for navigating markdown documentation.
 Provides:
 - Scrollable help content display
 - Clickable links
-- Search across three-tier help system with ranking and fuzzy matching
+- Search across multi-tier help system with ranking and fuzzy matching
 - In-page search (Ctrl+F) with match highlighting
 - Navigation history (back button)
 """
@@ -95,6 +95,8 @@ class TkHelpBrowser(tk.Toplevel):
         self.inpage_search_entry = ttk.Entry(self.inpage_search_bar, width=30)
         self.inpage_search_entry.pack(side=tk.LEFT, padx=2)
         self.inpage_search_entry.bind('<Return>', lambda e: self._inpage_find_next())
+        # Note: ESC closes search bar - this is not documented in tk_keybindings.json
+        # as it's a local widget binding rather than a global application keybinding
         self.inpage_search_entry.bind('<Escape>', lambda e: self._inpage_search_close())
 
         ttk.Button(self.inpage_search_bar, text="▲ Prev", command=self._inpage_find_prev, width=8).pack(side=tk.LEFT, padx=2)
@@ -710,7 +712,7 @@ class TkHelpBrowser(tk.Toplevel):
             # Always offer select all
             menu.add_command(label="Select All", command=self._select_all)
 
-            # Allow menu to be dismissed
+            # Define dismiss_menu helper for ESC/FocusOut bindings (below)
             def dismiss_menu():
                 try:
                     menu.unpost()
@@ -720,7 +722,8 @@ class TkHelpBrowser(tk.Toplevel):
             try:
                 menu.tk_popup(event.x_root, event.y_root)
             finally:
-                # Release grab immediately (tk_popup handles menu interaction)
+                # Release grab after menu is shown. Note: tk_popup handles menu interaction,
+                # but we explicitly release the grab to ensure clean state.
                 menu.grab_release()
 
             # Bind ESC and clicks outside to dismiss
@@ -775,7 +778,11 @@ class TkHelpBrowser(tk.Toplevel):
             new_browser = TkHelpBrowser(self.master, str(self.help_root), resolved_url)
 
     def _format_table_row(self, line: str) -> str:
-        """Format a markdown table row for display."""
+        """Format a markdown table row for display.
+
+        Note: This implementation is duplicated in src/ui/markdown_renderer.py.
+        Consider extracting to a shared utility module if additional changes are needed.
+        """
         # Strip and split by |
         parts = [p.strip() for p in line.strip().split('|')]
         parts = [p for p in parts if p]

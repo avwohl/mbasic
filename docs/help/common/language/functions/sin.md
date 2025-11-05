@@ -17,7 +17,9 @@ SIN(X)
 
 ## Description
 
-Returns the sine of X in radians. SIN (X) is calculated in single precision. COS(X)=SIN(X+3.l4l59/2) •
+Returns the sine of X in radians. SIN(X) is calculated in single precision.
+
+**Note**: COS(X) = SIN(X + 3.14159/2)
 
 ## Example
 

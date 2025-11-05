@@ -24,18 +24,16 @@ Returns a string of length J characters from X$ beginning with the Ith character
 
 ```basic
 LIST
- 10 A$="GOOD "
- 20 B$="MORNING EVENING AFTERNOON"
- 30 PRINT A$;MID$(B$,9,7)
- Ok
- RUN
- GOOD EVENING
- Ok
+10 A$ = "GOOD "
+20 B$ = "MORNING EVENING AFTERNOON"
+30 PRINT A$; MID$(B$, 9, 7)
+Ok
+RUN
+GOOD EVENING
+Ok
 ```
 
-Also see the LEFT$ and RIGHT$ functions.
-
-NOTE: If I=0 is specified, error message "ILLEGAL ARGUMENT IN <line number>" will be returned.
+**Note**: If I=0 is specified, an "Illegal function call" error will occur.
 
 ## See Also
 - [ASC](asc.md) - Returns a numerical value that is the ASCII code of the first character of the string X$

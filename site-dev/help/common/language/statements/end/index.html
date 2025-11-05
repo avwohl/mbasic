@@ -845,6 +845,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Remarks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#difference-from-stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      Difference from STOP
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -897,19 +912,31 @@
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
 <p>To terminate program execution, close all files and return to command level.</p>
 <h2 id="remarks">Remarks<a class="headerlink" href="#remarks" title="Permanent link">&para;</a></h2>
-<p>END statements may be placed anywhere in the program to terminate execution. Unlike the STOP statement, END closes all open files and does not cause a BREAK message to be printed. An END statement at the end of a program is optional. BASIC-80 always returns to command level after an END is executed.</p>
+<p>END statements may be placed anywhere in the program to terminate execution. Unlike the STOP statement, END closes all open files and does not cause a BREAK message to be printed. An END statement at the end of a program is optional.</p>
+<h3 id="difference-from-stop">Difference from STOP<a class="headerlink" href="#difference-from-stop" title="Permanent link">&para;</a></h3>
+<p><strong>END:</strong>
+- Closes all open files
+- Returns to command level
+- No "Break" message printed
+- Can be continued with CONT (execution resumes at next statement after END)</p>
+<p><strong>STOP:</strong>
+- Does NOT close files
+- Returns to command level
+- Prints "Break in line nnnnn" message
+- Can be continued with CONT (execution resumes at statement after STOP)</p>
+<p>Both END and STOP allow continuation with CONT, but END closes files first.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">520</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">K</span><span class="o">&gt;</span><span class="vg">lOOO</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">END</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">20</span>
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../chain/">CHAIN</a> - To call a program and pass variables to it            from the current program</li>
+<li><a href="../chain/">CHAIN</a> - To call a program and pass variables to it from the current program</li>
 <li><a href="../clear/">CLEAR</a> - To set all numeric variables to zero and all string variables to null; and, optionally, 'to set the end of memory and the amount of stack space</li>
 <li><a href="../common/">COMMON</a> - To pass variables to a CHAINed program</li>
 <li><a href="../cont/">CONT</a> - To continue program execution after a Control-C has been typed, or a STOP or END statement has been executed</li>
-<li><a href="../new/">NEW</a> - To delete the program currently   in   memory   and clear all variables</li>
+<li><a href="../new/">NEW</a> - To delete the program currently in memory and clear all variables</li>
 <li><a href="../run/">RUN</a> - Executes the current program or loads and runs a program from disk</li>
-<li><a href="../stop/">STOP</a> - To terminate program      execution   and    return   to command level</li>
+<li><a href="../stop/">STOP</a> - To terminate program execution and return to command level</li>
 <li><a href="../system/">SYSTEM</a> - Exits MBASIC and returns to the operating system</li>
 </ul>
 

@@ -939,7 +939,7 @@
 </code></pre></div>
 <p><strong>Versions:</strong> 8K, Extended, Disk</p>
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
-<p>To allow a series of instructions        to         be performed in a loop a given number of times.</p>
+<p>To allow a series of instructions to be performed in a loop a given number of times.</p>
 <h2 id="remarks">Remarks<a class="headerlink" href="#remarks" title="Permanent link">&para;</a></h2>
 <p>The FOR...NEXT loop executes a block of statements a specified number of times, automatically incrementing a counter variable.</p>
 <h3 id="parameters">Parameters:<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h3>
@@ -952,7 +952,7 @@
 <h3 id="operation">Operation:<a class="headerlink" href="#operation" title="Permanent link">&para;</a></h3>
 <ol>
 <li>Variable is set to the starting value (x)</li>
-<li>If variable exceeds ending value (y), loop terminates</li>
+<li>If variable exceeds ending value (y) considering STEP direction, loop terminates</li>
 <li>Statements in loop body execute</li>
 <li>Variable increments by step value (z)</li>
 <li>Process repeats from step 2</li>
@@ -960,8 +960,9 @@
 <h3 id="features">Features:<a class="headerlink" href="#features" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>STEP</strong> can be positive, negative, or fractional</li>
-<li>Negative STEP counts backward</li>
-<li>Loop always executes at least once if start equals end</li>
+<li>Negative STEP counts backward (loop terminates when variable &lt; end)</li>
+<li>Positive STEP counts forward (loop terminates when variable &gt; end)</li>
+<li>Loop executes at least once if start equals end (regardless of STEP value)</li>
 <li>Multiple variables can be specified in NEXT for nested loops</li>
 </ul>
 <h3 id="example">Example:<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>

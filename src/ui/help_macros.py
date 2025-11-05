@@ -5,7 +5,8 @@ Provides template variable replacement in markdown help files.
 Macros use the format: {{macro_name}} or {{macro_name:context}}
 
 Example:
-  {{kbd:help}} → looks up 'help' key in keybindings for current UI
+  {{kbd:help}} → looks up 'help' action in keybindings (searches all sections)
+                  and returns the primary keybinding for that action
   {{version}} → MBASIC version string
 """
 
@@ -78,7 +79,8 @@ class HelpMacros:
         if name == 'kbd':
             return self._expand_kbd(arg)
         elif name == 'version':
-            return "5.21"  # MBASIC version
+            # TODO: Import version from src.version module instead of hardcoding
+            return "5.21"  # MBASIC version (hardcoded)
         elif name == 'ui':
             return self.ui_name.capitalize()
         else:
@@ -87,13 +89,18 @@ class HelpMacros:
 
     def _expand_kbd(self, key_name: Optional[str]) -> str:
         """
-        Expand keyboard shortcut macro.
+        Expand keyboard shortcut macro by searching for action name across all sections.
 
         Args:
-            key_name: Name of key action (e.g., 'help', 'save', 'run')
+            key_name: Name of key action (e.g., 'help', 'save', 'run').
+                     This is searched across all keybinding sections (editor, help_browser, etc.)
 
         Returns:
-            Primary key combination or original macro
+            Primary key combination or original macro if not found
+
+        Example:
+            _expand_kbd('help') searches all sections for an action named 'help'
+            and returns its primary keybinding (e.g., '^H')
         """
         if not key_name:
             return "{{kbd}}"

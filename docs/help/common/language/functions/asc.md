@@ -23,12 +23,10 @@ Returns a numerical value that is the ASCII code of the first character of the s
 
 ```basic
 10 X$ = "TEST"
- 20 PRINT ASC (X$)
- RUN
- 84
- Ok
- See the CHR$ function for ASCII-to-string
- conversion.
+20 PRINT ASC(X$)
+RUN
+84
+Ok
 ```
 
 ## See Also

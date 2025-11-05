@@ -907,13 +907,11 @@
 <hr />
 <h2 id="syntax">Syntax<a class="headerlink" href="#syntax" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kr">OUT</span><span class="w"> </span><span class="vg">I</span><span class="p">,</span><span class="vg">J</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="vg">where</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="vg">and</span><span class="w"> </span><span class="vg">J</span><span class="w"> </span><span class="vg">are</span><span class="w">    </span><span class="vg">integer</span><span class="w">   </span><span class="vg">expressions</span><span class="w">     </span><span class="vg">in</span><span class="w">   </span><span class="vg">the</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="vg">range</span><span class="w"> </span><span class="il">0</span><span class="w"> </span><span class="vg">to</span><span class="w"> </span><span class="il">255</span><span class="o">.</span>
 </code></pre></div>
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
 <p>To send a byte to a machine output port.</p>
 <h2 id="remarks">Remarks<a class="headerlink" href="#remarks" title="Permanent link">&para;</a></h2>
-<p>The integer expression I is the port number, and the integer expression J is the data to be transmitted.</p>
+<p>I and J are integer expressions in the range 0 to 255. The integer expression I is the port number, and the integer expression J is the data to be transmitted.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">100</span><span class="w"> </span><span class="kr">OUT</span><span class="w"> </span><span class="il">32</span><span class="p">,</span><span class="il">100</span>
 </code></pre></div>
@@ -921,7 +919,7 @@
 <ul>
 <li><a href="../call/">CALL</a> - To call an assembly language subroutine</li>
 <li><a href="../poke/">POKE</a> - To write a byte into a memory location</li>
-<li><a href="../wait/">WAIT</a> - To suspend program execution while      monitoring the status of a machine input port</li>
+<li><a href="../wait/">WAIT</a> - To suspend program execution while monitoring the status of a machine input port</li>
 </ul>
 
 

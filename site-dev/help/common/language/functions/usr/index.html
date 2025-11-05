@@ -888,7 +888,7 @@
 <p><strong>Historical Reference</strong>: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.</p>
 <hr />
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<p>Calls the user's assembly language subroutine with the argument X. <digit> is allowed in the Extended and Disk versions only. <digit> is in the range 0 to 9 and corresponds to the digit supplied with the DEF USR statement for that routine. If <digit> is omitted, USRO is assumed. See Appendix x.</p>
+<p>Calls the user's assembly language subroutine with the argument X. <digit> is allowed in the Extended and Disk versions only. <digit> is in the range 0 to 9 and corresponds to the digit supplied with the DEF USR statement for that routine. If <digit> is omitted, USR0 is assumed.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nl">40</span><span class="w"> </span><span class="vg">B</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">T</span><span class="o">*</span><span class="kr">SIN</span><span class="w"> </span><span class="p">(</span><span class="vg">Y</span><span class="p">)</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w"> </span><span class="il">50</span><span class="w"> </span><span class="vg">C</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">USR</span><span class="w"> </span><span class="p">(</span><span class="vg">B</span><span class="o">/</span><span class="il">2</span><span class="p">)</span>
@@ -901,7 +901,7 @@
 <li><a href="../inkey_dollar/">INKEY$</a> - Returns either a one-character string cont~ining a character read from the terminal or a null string if no character is pending at the terminal</li>
 <li><a href="../inp/">INP</a> - Returns the byte read from port I</li>
 <li><a href="../../statements/limits/">LIMITS</a> - Display resource usage and interpreter limits</li>
-<li><a href="../../statements/null/">NULL</a> - To set the number of nulls to be printed at   the end of each line</li>
+<li><a href="../../statements/null/">NULL</a> - To set the number of nulls to be printed at the end of each line</li>
 <li><a href="../peek/">PEEK</a> - Returns the byte (decimal integer in the range 0 to 255) read from memory location I</li>
 <li><a href="../../statements/randomize/">RANDOMIZE</a> - To reseed the random number generator</li>
 <li><a href="../../statements/rem/">REM</a> - To allow explanatory remarks to be inserted in a program</li>
@@ -909,7 +909,7 @@
 <li><a href="../../statements/showsettings/">SHOW SETTINGS</a> - Display current interpreter settings</li>
 <li><a href="../../statements/tron-troff/">TRON/TROFF</a> - To trace the execution of program statements</li>
 <li><a href="../varptr/">VARPTR</a> - Returns the memory address of a variable</li>
-<li><a href="../../statements/width/">WIDTH</a> - To set the printed line width in number        of characters for the terminal or line printer</li>
+<li><a href="../../statements/width/">WIDTH</a> - To set the printed line width in number of characters for the terminal or line printer</li>
 </ul>
 
 

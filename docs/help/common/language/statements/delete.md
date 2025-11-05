@@ -27,14 +27,12 @@ BASIC-80 always returns to command level after a DELETE is executed. If <line nu
 
 ```basic
 DELETE 40         Deletes line 40
-                DELETE 40-100     Deletes lines 40 through
-                                  100, inclusive
-                DELETE-40         Deletes all lines up to
-                                  and including line 40
+DELETE 40-100     Deletes lines 40 through 100, inclusive
+DELETE-40         Deletes all lines up to and including line 40
 ```
 
 ## See Also
-- [AUTO](auto.md) - To generate a line number   automatically     after every carriage return
+- [AUTO](auto.md) - To generate a line number automatically after every carriage return
 - [EDIT](edit.md) - To enter Edit Mode at the specified line
 - [LIST](list.md) - To list all or part of the program currently in memory at the terminal
 - [LLIST](llist.md) - To list all or part of the program currently in memory at the line printer

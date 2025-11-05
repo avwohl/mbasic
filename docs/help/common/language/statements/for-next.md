@@ -22,7 +22,7 @@ where x, y and z are numeric expressions.
 
 ## Purpose
 
-To allow a series of instructions        to         be performed in a loop a given number of times.
+To allow a series of instructions to be performed in a loop a given number of times.
 
 ## Remarks
 
@@ -36,15 +36,16 @@ The FOR...NEXT loop executes a block of statements a specified number of times, 
 
 ### Operation:
 1. Variable is set to the starting value (x)
-2. If variable exceeds ending value (y), loop terminates
+2. If variable exceeds ending value (y) considering STEP direction, loop terminates
 3. Statements in loop body execute
 4. Variable increments by step value (z)
 5. Process repeats from step 2
 
 ### Features:
 - **STEP** can be positive, negative, or fractional
-- Negative STEP counts backward
-- Loop always executes at least once if start equals end
+- Negative STEP counts backward (loop terminates when variable < end)
+- Positive STEP counts forward (loop terminates when variable > end)
+- Loop executes at least once if start equals end (regardless of STEP value)
 - Multiple variables can be specified in NEXT for nested loops
 
 ### Example:

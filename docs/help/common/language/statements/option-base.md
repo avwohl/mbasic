@@ -1,6 +1,6 @@
 ---
 category: arrays
-description: To declare      the     minimum   value   for   array subscripts
+description: To declare the minimum value for array subscripts
 keywords: ['array', 'base', 'command', 'execute', 'for', 'if', 'option', 'statement', 'the']
 syntax: OPTION BASE n
 title: OPTION BASE
@@ -13,7 +13,6 @@ type: statement
 
 ```basic
 OPTION BASE n
-where n is 1 or 0
 ```
 
 ## Purpose
@@ -22,7 +21,7 @@ To declare the minimum value for array subscripts.
 
 ## Remarks
 
-OPTION BASE sets the default lower bound for array subscripts. If OPTION BASE is not used, the default lower bound is 0.
+Where n is 1 or 0. OPTION BASE sets the default lower bound for array subscripts. If OPTION BASE is not used, the default lower bound is 0.
 
 - **OPTION BASE 0**: Arrays start at index 0 (default)
 - **OPTION BASE 1**: Arrays start at index 1

@@ -896,19 +896,19 @@
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
 <p>To continue program execution after a Control-C has been typed, or a STOP or END statement has been executed.</p>
 <h2 id="remarks">Remarks<a class="headerlink" href="#remarks" title="Permanent link">&para;</a></h2>
-<p>Execution resumes at the point where the break occurred.   If the break occurred after a prompt from an INPUT statement, execution continues with the reprinting of the prompt (7 or prompt string) • CONT is usually used in conjunction with STOP for   debugging.   When execution is stopped, intermediate values may be examined and changed using direct mode statements. Execution may be. resumed with CONT or a direct mode GOTO, which resumes execution at a specified line number. With the Extended and Disk versions, CONT may be used to continue execution after an error. CONT is invalid if the program has been edited during the break.     In 8K BASIC-80, execution cannot be CONTinued if a direct mode error, has occurred during the break.</p>
+<p>Execution resumes at the point where the break occurred. If the break occurred after a prompt from an INPUT statement, execution continues with the reprinting of the prompt (? or prompt string). CONT is usually used in conjunction with STOP for debugging. When execution is stopped, intermediate values may be examined and changed using direct mode statements. Execution may be resumed with CONT or a direct mode GOTO, which resumes execution at a specified line number. With the Extended and Disk versions, CONT may be used to continue execution after an error. CONT is invalid if the program has been edited during the break. In 8K BASIC-80, execution cannot be CONTinued if a direct mode error has occurred during the break.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="vg">See</span><span class="w"> </span><span class="vg">example</span><span class="w"> </span><span class="vg">Section</span><span class="w"> </span><span class="mf">2.61</span><span class="p">,</span><span class="w"> </span><span class="kr">STOP</span><span class="o">.</span>
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../chain/">CHAIN</a> - To call a program and pass variables to it            from the current program</li>
+<li><a href="../chain/">CHAIN</a> - To call a program and pass variables to it from the current program</li>
 <li><a href="../clear/">CLEAR</a> - To set all numeric variables to zero and all string variables to null; and, optionally, 'to set the end of memory and the amount of stack space</li>
 <li><a href="../common/">COMMON</a> - To pass variables to a CHAINed program</li>
 <li><a href="../end/">END</a> - To terminate program execution, close all files and return to command level</li>
-<li><a href="../new/">NEW</a> - To delete the program currently   in   memory   and clear all variables</li>
+<li><a href="../new/">NEW</a> - To delete the program currently in memory and clear all variables</li>
 <li><a href="../run/">RUN</a> - Executes the current program or loads and runs a program from disk</li>
-<li><a href="../stop/">STOP</a> - To terminate program      execution   and    return   to command level</li>
+<li><a href="../stop/">STOP</a> - To terminate program execution and return to command level</li>
 <li><a href="../system/">SYSTEM</a> - Exits MBASIC and returns to the operating system</li>
 </ul>
 

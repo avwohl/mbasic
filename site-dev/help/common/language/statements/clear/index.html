@@ -923,28 +923,32 @@
 <h2 id="remarks">Remarks<a class="headerlink" href="#remarks" title="Permanent link">&para;</a></h2>
 <p>CLEAR resets all variables to their initial values (0 for numbers, empty for strings) and optionally configures memory usage.</p>
 <h3 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h3>
+<p><strong>In MBASIC 5.21 (BASIC-80 release 5.0 and later):</strong></p>
 <ul>
 <li><strong>expression1</strong>: If specified, sets the highest memory location available for BASIC to use</li>
 <li><strong>expression2</strong>: Sets the stack space reserved for BASIC (default: 256 bytes or &#8539; of available memory, whichever is smaller)</li>
 </ul>
 <h3 id="memory-management">Memory Management<a class="headerlink" href="#memory-management" title="Permanent link">&para;</a></h3>
-<p><strong>Note about string space:</strong> In BASIC-80 release 5.0 and later (including MBASIC 5.21), string space is allocated dynamically. You'll only get an "Out of string space" error if there's no free memory left.</p>
-<p><strong>Historical note:</strong> In earlier versions of BASIC-80, expression1 set the amount of string space and expression2 set the end of memory. This behavior changed in release 5.0.</p>
+<p><strong>Note about string space:</strong> In BASIC-80 release 5.0 and later (including MBASIC 5.21), string space is allocated dynamically from available memory. You'll only get an "Out of string space" error if there's no free memory left. The expression1 parameter does NOT control string space in MBASIC 5.21.</p>
+<p><strong>Historical note:</strong> In earlier versions of BASIC-80 (before release 5.0), the parameters had different meanings:
+- expression1 set the amount of string space
+- expression2 set the end of memory</p>
+<p>This behavior changed in release 5.0 to support dynamic string allocation.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kr">CLEAR</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">                </span><span class="kr">CLEAR</span><span class="w"> </span><span class="p">,</span><span class="il">32768</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">                </span><span class="kr">CLEAR</span><span class="w"> </span><span class="p">,,</span><span class="il">2000</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">                </span><span class="kr">CLEAR</span><span class="w"> </span><span class="p">,</span><span class="il">32768</span><span class="p">,</span><span class="il">2000</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kr">CLEAR</span><span class="w"> </span><span class="p">,</span><span class="il">32768</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kr">CLEAR</span><span class="w"> </span><span class="p">,,</span><span class="il">2000</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="kr">CLEAR</span><span class="w"> </span><span class="p">,</span><span class="il">32768</span><span class="p">,</span><span class="il">2000</span>
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../chain/">CHAIN</a> - To call a program and pass variables to it            from the current program</li>
+<li><a href="../chain/">CHAIN</a> - To call a program and pass variables to it from the current program</li>
 <li><a href="../common/">COMMON</a> - To pass variables to a CHAINed program</li>
 <li><a href="../cont/">CONT</a> - To continue program execution after a Control-C has been typed, or a STOP or END statement has been executed</li>
 <li><a href="../end/">END</a> - To terminate program execution, close all files and return to command level</li>
-<li><a href="../new/">NEW</a> - To delete the program currently   in   memory   and clear all variables</li>
+<li><a href="../new/">NEW</a> - To delete the program currently in memory and clear all variables</li>
 <li><a href="../run/">RUN</a> - Executes the current program or loads and runs a program from disk</li>
-<li><a href="../stop/">STOP</a> - To terminate program      execution   and    return   to command level</li>
+<li><a href="../stop/">STOP</a> - To terminate program execution and return to command level</li>
 <li><a href="../system/">SYSTEM</a> - Exits MBASIC and returns to the operating system</li>
 </ul>
 

@@ -27,7 +27,7 @@ The CHAIN statement loads and runs another BASIC program, optionally passing var
 
 ### Parameters:
 - **MERGE** - Merges the new program with the current one instead of replacing it
-- **filename** - Name of the program to chain to (with or without .BAS extension)
+- **filename** - Name of the program to chain to. If no extension is provided, .BAS is assumed
 - **line number exp** - Optional starting line number in the chained program
 - **ALL** - Pass all variables to the chained program (requires COMMON statement)
 - **DELETE range** - Delete specified lines before chaining (e.g., DELETE 1000-2000)

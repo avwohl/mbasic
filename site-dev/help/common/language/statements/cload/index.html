@@ -22,7 +22,7 @@
     
     
       
-        <title>CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION - MBASIC 5.21 Documentation (Full)</title>
+        <title>CLOAD - THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION - MBASIC 5.21 Documentation (Full)</title>
       
     
     
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
+              CLOAD - THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
             
           </span>
         </div>
@@ -880,23 +880,23 @@
   
 
 
-<h1 id="cload-this-command-is-not-included-in-the-dec-vt180-version">CLOAD     THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION<a class="headerlink" href="#cload-this-command-is-not-included-in-the-dec-vt180-version" title="Permanent link">&para;</a></h1>
+<h1 id="cload-this-command-is-not-included-in-the-dec-vt180-version">CLOAD - THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION<a class="headerlink" href="#cload-this-command-is-not-included-in-the-dec-vt180-version" title="Permanent link">&para;</a></h1>
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
 <p>To load a program or an array from cassette tape into memory.</p>
 <h2 id="remarks">Remarks<a class="headerlink" href="#remarks" title="Permanent link">&para;</a></h2>
-<p>CLOAD executes a NEW command before it loads the program from cassette tape. <filename> is, the string expression or the first character of the string expression that was specified when the program was CSAVEd. CLOAD? verifies tapes by comparing the program currently in memory with the file on tape that has the same filename. If they are the same, BASIC prints Ok. If not, BASIC prints NO GOOD. CLOAD* loads a numeric array that has been saved on tape.    The data on tape is loaded into the array called <array name> specified when the array was CSAVE*ed. CLOAD and CLOAD? are always entered at command level as direct· mode commands. CLOAD* may be entered at command level or used as a program statement.    Make   sure the array has been DIMensioned before it is loaded.   BASIC always returns to COmmand level after a CLOAD, CLOAD? or CLOAD* is executed.      Before a CLOAD is executed, make sure the cassette recorder is properly connected and in the Play mode, and the tape is possitioned correctly. See also CSAVE, Section 2.9. NOTE:           CLOAD and CSAVE are not           included      in    all implementations of BASIC.</p>
+<p>CLOAD executes a NEW command before it loads the program from cassette tape. <filename> is the string expression or the first character of the string expression that was specified when the program was CSAVEd. CLOAD? verifies tapes by comparing the program currently in memory with the file on tape that has the same filename. If they are the same, BASIC prints Ok. If not, BASIC prints NO GOOD. CLOAD* loads a numeric array that has been saved on tape. The data on tape is loaded into the array called <array name> specified when the array was CSAVE*ed. CLOAD and CLOAD? are always entered at command level as direct mode commands. CLOAD* may be entered at command level or used as a program statement. Make sure the array has been DIMensioned before it is loaded. BASIC always returns to command level after a CLOAD, CLOAD? or CLOAD* is executed. Before a CLOAD is executed, make sure the cassette recorder is properly connected and in the Play mode, and the tape is positioned correctly. See also CSAVE, Section 2.9. NOTE: CLOAD and CSAVE are not included in all implementations of BASIC.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="vg">CLOAD</span><span class="w"> </span><span class="s2">&quot;MAX2&quot;</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">                </span><span class="vg">Loads</span><span class="w"> </span><span class="vg">file</span><span class="w"> </span><span class="s2">&quot;M&quot;</span><span class="w"> </span><span class="vg">into</span><span class="w"> </span><span class="vg">memory</span><span class="o">.</span>
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../csave/">CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION</a> - To save the program or an       array   currently     in memory on cassette tape</li>
+<li><a href="../csave/">CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION</a> - To save the program or an array currently in memory on cassette tape</li>
 <li><a href="../../functions/cvi-cvs-cvd/">CVI, CVS, CVD</a> - Convert string values to numeric values</li>
-<li><a href="../defint-sng-dbl-str/">DEFINT/SNG/DBL/STR</a> - To declare variable types as integer,        single precision, double precision, or string</li>
+<li><a href="../defint-sng-dbl-str/">DEFINT/SNG/DBL/STR</a> - To declare variable types as integer, single precision, double precision, or string</li>
 <li><a href="../err-erl-variables/">ERR AND ERL VARIABLES</a> - Error code and error line number variables used in error handling</li>
-<li><a href="../input_hash/">INPUT#</a> - To read data items from a sequential disk    file and assign them to program variables</li>
-<li><a href="../line-input/">LINE INPUT</a> - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters</li>
+<li><a href="../input_hash/">INPUT#</a> - To read data items from a sequential disk file and assign them to program variables</li>
+<li><a href="../line-input/">LINE INPUT</a> - To input an entire line (up to 254 characters) to a string variable, without the use of delimiters</li>
 <li><a href="../lprint-lprint-using/">LPRINT AND LPRINT USING</a> - To print data at the line printer</li>
 <li><a href="../../functions/mki_dollar-mks_dollar-mkd_dollar/">MKI<span class="arithmatex"><span class="MathJax_Preview">, MKS</span><script type="math/tex">, MKS</script></span>, MKD$</a> - Convert numeric values to string values</li>
 <li><a href="../../functions/space_dollar/">SPACE$</a> - Returns a string of spaces of length X</li>

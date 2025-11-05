@@ -897,14 +897,15 @@
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
 <p>To load a file from disk into memory.</p>
 <h2 id="remarks">Remarks<a class="headerlink" href="#remarks" title="Permanent link">&para;</a></h2>
-<p><filename> is the name that was used when the file   was   SAVEd.   (With CP/M, the default extension .BAS is supplied.) LOAD closes all open files and deletes all variables and program lines currently residing in memory before it loads       the   designated program.   However, if the nRn option is used with LOAD, the program is RUN after it is LOADed, and all open data files are kept open. Thus, LOAD with the nRn option may be used to chain several programs (or segments of the same program). Information may be passed between the programs using their disk data files.</p>
+<p><filename> is the name that was used when the file was SAVEd. (With CP/M, the default extension .BAS is supplied.) LOAD closes all open files and deletes all variables and program lines currently residing in memory before it loads the designated program. However, if the ,R option is used with LOAD, the program is RUN after it is LOADed, and all open data files are kept open. Thus, LOAD with the ,R option may be used to chain several programs (or segments of the same program). Information may be passed between the programs using their disk data files.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="vg">LOAD</span><span class="w"> </span><span class="vg">nSTRTRKn</span><span class="p">,</span><span class="vg">R</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="vg">LOAD</span><span class="w"> </span><span class="s2">&quot;STRTRK&quot;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="vg">LOAD</span><span class="w"> </span><span class="s2">&quot;STRTRK&quot;</span><span class="p">,</span><span class="vg">R</span><span class="w">    </span><span class="c1">&#39;Load and run immediately</span>
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../kill/">KILL</a> - To delete a file from disk</li>
-<li><a href="../merge/">MERGE</a> - To merge a specified disk file into the      program currently in memory</li>
+<li><a href="../merge/">MERGE</a> - To merge a specified disk file into the program currently in memory</li>
 <li><a href="../name/">NAME</a> - To change the name of a disk file</li>
 <li><a href="../save/">SAVE</a> - To save a program file on disk</li>
 </ul>

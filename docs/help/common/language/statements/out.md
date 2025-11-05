@@ -25,8 +25,6 @@ type: statement
 
 ```basic
 OUT I,J
-where I and J are    integer   expressions     in   the
-range 0 to 255.
 ```
 
 ## Purpose
@@ -35,7 +33,7 @@ To send a byte to a machine output port.
 
 ## Remarks
 
-The integer expression I is the port number, and the integer expression J is the data to be transmitted.
+I and J are integer expressions in the range 0 to 255. The integer expression I is the port number, and the integer expression J is the data to be transmitted.
 
 ## Example
 

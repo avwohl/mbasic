@@ -24,11 +24,12 @@ Returns -1 (true) if the end of a sequential file has been reached. Use EOF to t
 ## Example
 
 ```basic
-10 OPEN "I",l,"DATA"
- 20 C=O
- 30 IF EOF(l) THEN 100
- 40 INPUT #l,M(C)
- 50 C=C+l:GOTO 30
+10 OPEN "I", 1, "DATA"
+20 C = 0
+30 IF EOF(1) THEN 100
+40 INPUT #1, M(C)
+50 C = C + 1 : GOTO 30
+100 CLOSE #1
 ```
 
 ## See Also

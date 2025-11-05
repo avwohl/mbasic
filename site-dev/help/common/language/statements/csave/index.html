@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="To save the program or an       array   currently     in memory on cassette tape">
+        <meta name="description" content="To save the program or an array currently in memory on cassette tape">
       
       
         <meta name="author" content="MBASIC Project Contributors">
@@ -22,7 +22,7 @@
     
     
       
-        <title>CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION - MBASIC 5.21 Documentation (Full)</title>
+        <title>CSAVE - THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION - MBASIC 5.21 Documentation (Full)</title>
       
     
     
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
+              CSAVE - THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
             
           </span>
         </div>
@@ -880,12 +880,12 @@
   
 
 
-<h1 id="csave-this-command-is-not-included-in-the-dec-vt180-version">CSAVE      THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION<a class="headerlink" href="#csave-this-command-is-not-included-in-the-dec-vt180-version" title="Permanent link">&para;</a></h1>
+<h1 id="csave-this-command-is-not-included-in-the-dec-vt180-version">CSAVE - THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION<a class="headerlink" href="#csave-this-command-is-not-included-in-the-dec-vt180-version" title="Permanent link">&para;</a></h1>
 <p><strong>Versions:</strong> 8K (cassette), Extended (cassette)</p>
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
-<p>To save the program or an       array   currently     in memory on cassette tape.</p>
+<p>To save the program or an array currently in memory on cassette tape.</p>
 <h2 id="remarks">Remarks<a class="headerlink" href="#remarks" title="Permanent link">&para;</a></h2>
-<p>Each program or array saved         on    tape    is identified by a filename.        When the command CSAVE <string expression> is executed, BASIC-80 saves the program currently in memory on tape and uses the first       character     in   <string expression>    as    the     filename.      <string expression> may be more than one character, but only   the first character is used for the filename. When the command CSAVE* <array variable name> is executed, BASIC-80saves the specified array on tape. The array must be a numeric array.      The elements of a multidimensional array are saved with the leftmost subscript changing fastest. CSAVE may be used as a program statement or as a direct mode command. Before a CSAVE or CSAVE* is executed, make sure the cassette recorder is properly connected and in the Record mode. See also CLOAD, Section 2.5. NOTE:           CSAVE and CLOAD are not included               in   all implementations of BASIC-80.</p>
+<p>Each program or array saved on tape is identified by a filename. When the command CSAVE <string expression> is executed, BASIC-80 saves the program currently in memory on tape and uses the first character in <string expression> as the filename. <string expression> may be more than one character, but only the first character is used for the filename. When the command CSAVE* <array variable name> is executed, BASIC-80 saves the specified array on tape. The array must be a numeric array. The elements of a multidimensional array are saved with the leftmost subscript changing fastest. CSAVE may be used as a program statement or as a direct mode command. Before a CSAVE or CSAVE* is executed, make sure the cassette recorder is properly connected and in the Record mode. See also CLOAD, Section 2.5. NOTE: CSAVE and CLOAD are not included in all implementations of BASIC-80.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="vg">CSAVE</span><span class="w"> </span><span class="s2">&quot;TIMER&quot;</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">                </span><span class="vg">Saves</span><span class="w"> </span><span class="vg">the</span><span class="w"> </span><span class="vg">program</span><span class="w"> </span><span class="vg">currently</span><span class="w"> </span><span class="vg">in</span><span class="w"> </span><span class="vg">memory</span><span class="w"> </span><span class="vg">on</span>
@@ -895,10 +895,10 @@
 <ul>
 <li><a href="../cload/">CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION</a> - To load a program or an array from cassette tape into memory</li>
 <li><a href="../../functions/cvi-cvs-cvd/">CVI, CVS, CVD</a> - Convert string values to numeric values</li>
-<li><a href="../defint-sng-dbl-str/">DEFINT/SNG/DBL/STR</a> - To declare variable types as integer,        single precision, double precision, or string</li>
+<li><a href="../defint-sng-dbl-str/">DEFINT/SNG/DBL/STR</a> - To declare variable types as integer, single precision, double precision, or string</li>
 <li><a href="../err-erl-variables/">ERR AND ERL VARIABLES</a> - Error code and error line number variables used in error handling</li>
-<li><a href="../input_hash/">INPUT#</a> - To read data items from a sequential disk    file and assign them to program variables</li>
-<li><a href="../line-input/">LINE INPUT</a> - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters</li>
+<li><a href="../input_hash/">INPUT#</a> - To read data items from a sequential disk file and assign them to program variables</li>
+<li><a href="../line-input/">LINE INPUT</a> - To input an entire line (up to 254 characters) to a string variable, without the use of delimiters</li>
 <li><a href="../lprint-lprint-using/">LPRINT AND LPRINT USING</a> - To print data at the line printer</li>
 <li><a href="../../functions/mki_dollar-mks_dollar-mkd_dollar/">MKI<span class="arithmatex"><span class="MathJax_Preview">, MKS</span><script type="math/tex">, MKS</script></span>, MKD$</a> - Convert numeric values to string values</li>
 <li><a href="../../functions/space_dollar/">SPACE$</a> - Returns a string of spaces of length X</li>

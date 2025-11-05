@@ -2,7 +2,8 @@
 UI Helper Functions - Portable logic for all UIs
 
 This module contains UI-agnostic helper functions that can be used by
-any UI (CLI, Tk, Web, Curses). No UI-specific dependencies allowed.
+any UI (CLI, Tk, Web, Curses). No UI-framework dependencies (Tk, curses, web)
+are allowed, though standard library modules (os, glob, re) are permitted.
 
 Functions for:
 - Line renumbering with GOTO/GOSUB reference updates
@@ -200,9 +201,9 @@ def update_line_references(code: str, line_mapping: Dict[int, int]) -> str:
         >>> update_line_references("ON X GOTO 10,20", mapping)
         'ON X GOTO 100,200'
     """
-    # Two-pass regex approach:
-    # Pass 1: Match keyword + first line number (GOTO/GOSUB/THEN/ELSE/ON...GOTO/ON...GOSUB)
-    # Pass 2: Match comma-separated line numbers (for ON...GOTO/GOSUB lists)
+    # Two-pass approach using different regex patterns:
+    # Pattern 1: Match keyword + first line number (GOTO/GOSUB/THEN/ELSE/ON...GOTO/ON...GOSUB)
+    # Pattern 2: Match comma-separated line numbers (for ON...GOTO/GOSUB lists)
 
     def replace_line_ref(match):
         keyword = match.group(1)
@@ -1002,7 +1003,7 @@ def serialize_line(line_node):
     # This ensures indentation survives RENUM when line numbers change width
     if line_node.statements:
         # Try to calculate relative indentation from source_text if available
-        relative_indent = 1  # Default: single space
+        relative_indent = 1  # Default: single space (fallback if source_text unavailable)
 
         if hasattr(line_node, 'source_text') and line_node.source_text:
             # Extract original line number and count spaces after it
@@ -1010,6 +1011,8 @@ def serialize_line(line_node):
             if match:
                 # Spaces after line number in original
                 relative_indent = len(match.group(2))
+            # Note: If source_text doesn't match pattern, falls back to relative_indent=1
+            # This can cause inconsistent indentation for programmatically inserted lines
 
         # Apply the relative indentation
         parts.append(' ' * relative_indent)
@@ -1147,8 +1150,9 @@ def serialize_statement(stmt):
     # For other statement types, use a generic approach
     # This is a fallback - ideally all statement types should be handled explicitly
     else:
-        # Try to reconstruct from the original source if possible
-        # For now, return a placeholder
+        # Fallback for unhandled statement types: return a placeholder REM comment.
+        # WARNING: This could create invalid BASIC code during RENUM if new statement
+        # types are added but not handled here. Ensure all statement types are supported.
         return f"REM {stmt_type}"
 
 

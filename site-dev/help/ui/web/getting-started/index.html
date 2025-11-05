@@ -1263,11 +1263,11 @@
 <li><strong>Open</strong> - Upload a .BAS file from your computer</li>
 <li><strong>Save</strong> - Download current program (triggers Save As if not yet named)</li>
 <li><strong>Save As</strong> - Download program with custom filename</li>
-<li><strong>Run</strong> - Parse and execute the program (▶️ green button)</li>
-<li><strong>Stop</strong> - Stop running program (⏹️ red button)</li>
-<li><strong>Step Line</strong> - Execute all statements on current line, then pause (⏭️ button)</li>
-<li><strong>Step Stmt</strong> - Execute one statement, then pause (↻ button)</li>
-<li><strong>Continue</strong> - Resume normal execution after stepping (▶️⏸️ button)</li>
+<li><strong>Run</strong> - Parse and execute the program (▶️ green button, Ctrl+R)</li>
+<li><strong>Stop</strong> - Stop running program (⏹️ red button, Ctrl+Q)</li>
+<li><strong>Step Line</strong> - Execute all statements on current line, then pause (⏭️ button, Ctrl+K)</li>
+<li><strong>Step Stmt</strong> - Execute one statement, then pause (↻ button, Ctrl+T)</li>
+<li><strong>Continue</strong> - Resume normal execution after stepping (▶️⏸️ button, Ctrl+G)</li>
 </ul>
 <h3 id="3-program-editor">3. Program Editor<a class="headerlink" href="#3-program-editor" title="Permanent link">&para;</a></h3>
 <p><strong>Large text area labeled "Program Editor"</strong> - This is where you write your BASIC program.</p>
@@ -1381,7 +1381,7 @@ When this runs, the blue input area appears with "Your name" as the prompt.</p>
 2. Browser download dialog appears
 3. Enter a filename (default: <code>program.bas</code>)
 4. File downloads to your Downloads folder</p>
-<p><strong>Note:</strong> The Web UI uses browser localStorage for auto-save functionality and downloads for explicit saves to your computer.</p>
+<p><strong>Note:</strong> The Web UI uses browser downloads for saving files to your computer. Auto-save to browser localStorage is planned for a future release.</p>
 <p><strong>Save As:</strong>
 - Use <strong>Save As</strong> to download with a different filename
 - File → Save As opens browser save dialog</p>
@@ -1472,7 +1472,7 @@ When this runs, the blue input area appears with "Your name" as the prompt.</p>
 <li><strong>Auto-numbering:</strong> Press Enter in Program Editor to get automatic line numbers</li>
 <li><strong>Quick test:</strong> Use Command area to test expressions without changing your program</li>
 <li><strong>Clear output:</strong> Run → Clear Output to empty the output area</li>
-<li><strong>Auto-save enabled:</strong> Your work is automatically saved to browser localStorage every 30 seconds</li>
+<li><strong>Save often:</strong> Use File → Save to download your program regularly (auto-save to localStorage is planned for a future release)</li>
 <li><strong>Check errors:</strong> Red error messages in output show what went wrong</li>
 </ol>
 <h2 id="common-issues">Common Issues<a class="headerlink" href="#common-issues" title="Permanent link">&para;</a></h2>
@@ -1484,7 +1484,7 @@ When this runs, the blue input area appears with "Your name" as the prompt.</p>
 <p><strong>Solution:</strong> Click the red <strong>Stop</strong> button (or Run → Stop).</p>
 <h3 id="lost-my-program">Lost my program<a class="headerlink" href="#lost-my-program" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Refreshed browser and program is gone.</p>
-<p><strong>Solution:</strong> The Web UI auto-saves to browser localStorage every 30 seconds. Your program should be restored automatically on refresh. If not, check File → Recent Files or ensure your browser allows localStorage for this site.</p>
+<p><strong>Solution:</strong> Auto-save to localStorage is planned for a future release. Currently, you need to manually save your programs using File → Save. Make sure to save your work regularly to avoid losing changes.</p>
 <h3 id="input-area-not-appearing">Input area not appearing<a class="headerlink" href="#input-area-not-appearing" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Program has <code>INPUT</code> but nothing happens.</p>
 <p><strong>Solution:</strong> Make sure program is running (click Run first). Input area appears when program needs input.</p>

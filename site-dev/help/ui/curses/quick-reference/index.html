@@ -996,12 +996,16 @@
 <td>Show menu</td>
 </tr>
 <tr>
-<td><strong>?</strong></td>
+<td><strong>^F</strong> (Ctrl+F)</td>
 <td>Help (with search)</td>
 </tr>
 <tr>
 <td><strong>Ctrl+W</strong></td>
 <td>Toggle variables watch window</td>
+</tr>
+<tr>
+<td><strong>Ctrl+,</strong></td>
+<td>Settings</td>
 </tr>
 <tr>
 <td><strong>Menu only</strong></td>
@@ -1031,8 +1035,8 @@
 <td>New program</td>
 </tr>
 <tr>
-<td><strong>Ctrl+V</strong></td>
-<td>Save program</td>
+<td><strong>^V</strong> (Ctrl+V)</td>
+<td>Save program (Ctrl+S unavailable - terminal flow control)</td>
 </tr>
 <tr>
 <td><strong>Ctrl+O</strong></td>
@@ -1063,6 +1067,7 @@
 </tr>
 </tbody>
 </table>
+<p><strong>Note:</strong> Find/Replace is not yet available in Curses UI. See <a href="../find-replace/">Find/Replace</a> for workarounds.</p>
 <h2 id="debugger-when-program-running">Debugger (when program running)<a class="headerlink" href="#debugger-when-program-running" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1109,7 +1114,7 @@
 <tbody>
 <tr>
 <td><strong>s</strong></td>
-<td>Cycle sort mode (Name → Accessed → Written → Read → Type → Value)</td>
+<td>Cycle sort mode (Accessed → Written → Read → Name)</td>
 </tr>
 <tr>
 <td><strong>d</strong></td>
@@ -1117,7 +1122,7 @@
 </tr>
 <tr>
 <td><strong>f</strong></td>
-<td>Filter variables (All/Scalars/Arrays/Modified)</td>
+<td>Cycle filter mode (All → Scalars → Arrays → Modified)</td>
 </tr>
 <tr>
 <td><strong>/</strong></td>
@@ -1126,12 +1131,10 @@
 </tbody>
 </table>
 <p><strong>Sort Modes:</strong>
-- <strong>Name</strong>: Alphabetically by variable name
-- <strong>Accessed</strong>: Most recently accessed (read or written)
-- <strong>Written</strong>: Most recently written to
-- <strong>Read</strong>: Most recently read from
-- <strong>Type</strong>: By type suffix ($, %, !, #)
-- <strong>Value</strong>: By value (numbers, strings, arrays)</p>
+- <strong>Accessed</strong>: Most recently accessed (read or written) - default, newest first
+- <strong>Written</strong>: Most recently written to - newest first
+- <strong>Read</strong>: Most recently read from - newest first
+- <strong>Name</strong>: Alphabetically by variable name - A to Z</p>
 <h2 id="navigation">Navigation<a class="headerlink" href="#navigation" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

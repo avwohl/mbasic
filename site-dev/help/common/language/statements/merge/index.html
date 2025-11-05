@@ -897,7 +897,10 @@
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
 <p>To merge a specified disk file into the      program currently in memory.</p>
 <h2 id="remarks">Remarks<a class="headerlink" href="#remarks" title="Permanent link">&para;</a></h2>
-<p><filename> is the name used when the file was SAVEd.    (With CP/M, the default extension .BAS is supplied.) The file must have been SAVEd in ASCII format.   (If not, a "Bad file mode" error occurs. ) If any lines in the disk file have the same line numbers as lines in the program in memory, the lines from the file on disk will replace the corresponding lines in memory.   (MERGEing may be thought of as "inserting" the program lines on disk into the program in memory.) BASIC-80 always returns to command   level     after executing a MERGE command.</p>
+<p><filename> is the name used when the file was SAVEd. (With CP/M, the default extension .BAS is supplied if none is specified.) The file must have been SAVEd in ASCII format. (If not, a "Bad file mode" error occurs.)</p>
+<p>If any lines in the disk file have the same line numbers as lines in the program in memory, the lines from the file on disk will replace the corresponding lines in memory. (MERGEing may be thought of as "inserting" the program lines on disk into the program in memory.)</p>
+<p><strong>Open files</strong>: Unlike LOAD, MERGE does NOT close open files. Files that are open before MERGE remain open after MERGE completes.</p>
+<p>BASIC-80 always returns to command level after executing a MERGE command.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="vg">MERGE</span><span class="w"> </span><span class="s2">&quot;NUMBRS&quot;</span>
 </code></pre></div>

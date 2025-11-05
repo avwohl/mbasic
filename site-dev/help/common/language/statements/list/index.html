@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="To list all or part of the program currently            in memory at the terminal">
+        <meta name="description" content="To list all or part of the program currently in memory at the terminal">
       
       
         <meta name="author" content="MBASIC Project Contributors">
@@ -821,6 +821,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#purpose" class="md-nav__link">
     <span class="md-ellipsis">
       Purpose
@@ -881,33 +890,37 @@
 
 
 <h1 id="list">LIST<a class="headerlink" href="#list" title="Permanent link">&para;</a></h1>
-<p><strong>Versions:</strong> 8K, Extended, Disk Format 2:     LIST [<line number>[-[<line number>]]] Extended, Disk</p>
+<p><strong>Versions:</strong> 8K, Extended, Disk</p>
+<h2 id="syntax">Syntax<a class="headerlink" href="#syntax" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="vg">Format</span><span class="w"> </span><span class="il">1</span><span class="o">:</span><span class="w"> </span><span class="k">LIST</span><span class="w"> </span><span class="p">[</span><span class="o">&lt;</span><span class="vg">line</span><span class="w"> </span><span class="vg">number</span><span class="o">&gt;</span><span class="p">]</span><span class="w">           </span><span class="p">(</span><span class="il">8</span><span class="vg">K</span><span class="w"> </span><span class="vg">version</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="vg">Format</span><span class="w"> </span><span class="il">2</span><span class="o">:</span><span class="w"> </span><span class="k">LIST</span><span class="w"> </span><span class="p">[</span><span class="o">&lt;</span><span class="vg">line</span><span class="w"> </span><span class="vg">number</span><span class="o">&gt;</span><span class="p">[</span><span class="o">-</span><span class="p">[</span><span class="o">&lt;</span><span class="vg">line</span><span class="w"> </span><span class="vg">number</span><span class="o">&gt;</span><span class="p">]]]</span><span class="w">  </span><span class="p">(</span><span class="vg">Extended</span><span class="p">,</span><span class="w"> </span><span class="vg">Disk</span><span class="p">)</span>
+</code></pre></div>
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
-<p>To list all or part of the program currently            in memory at the terminal.</p>
+<p>To list all or part of the program currently in memory at the terminal.</p>
 <h2 id="remarks">Remarks<a class="headerlink" href="#remarks" title="Permanent link">&para;</a></h2>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="vg">Format</span><span class="w"> </span><span class="il">1</span><span class="o">:</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">            </span><span class="k">LIST</span><span class="w">            </span><span class="vg">Lists</span><span class="w"> </span><span class="vg">the</span><span class="w"> </span><span class="vg">program</span><span class="w"> </span><span class="vg">currently</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">                            </span><span class="vg">in</span><span class="w"> </span><span class="vg">memory</span><span class="o">.</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">            </span><span class="k">LIST</span><span class="w"> </span><span class="il">500</span><span class="w">        </span><span class="vg">In</span><span class="w"> </span><span class="vg">the</span><span class="w"> </span><span class="il">8</span><span class="vg">K</span><span class="w"> </span><span class="vg">version</span><span class="p">,</span><span class="w"> </span><span class="vg">lists</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">                            </span><span class="vg">all</span><span class="w"> </span><span class="vg">programs</span><span class="w"> </span><span class="vg">lines</span><span class="w"> </span><span class="vg">from</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">                            </span><span class="il">500</span><span class="w"> </span><span class="vg">to</span><span class="w"> </span><span class="vg">the</span><span class="w"> </span><span class="vg">end</span><span class="o">.</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">                            </span><span class="vg">In</span><span class="w"> </span><span class="vg">Extended</span><span class="w"> </span><span class="vg">and</span><span class="w"> </span><span class="vg">Disk</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">                            </span><span class="vg">lists</span><span class="w"> </span><span class="vg">line</span><span class="w"> </span><span class="il">500</span><span class="o">.</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">            </span><span class="vg">Format</span><span class="w"> </span><span class="il">2</span><span class="o">:</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">            </span><span class="k">LIST</span><span class="w"> </span><span class="il">150</span><span class="o">-</span><span class="w">       </span><span class="vg">Lists</span><span class="w"> </span><span class="vg">all</span><span class="w"> </span><span class="vg">lines</span><span class="w"> </span><span class="vg">from</span><span class="w"> </span><span class="il">150</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">                            </span><span class="vg">to</span><span class="w"> </span><span class="vg">the</span><span class="w"> </span><span class="vg">end</span><span class="o">.</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">            </span><span class="k">LIST</span><span class="w"> </span><span class="il">-1000</span><span class="w">      </span><span class="vg">Lists</span><span class="w"> </span><span class="vg">all</span><span class="w"> </span><span class="vg">lines</span><span class="w"> </span><span class="vg">from</span><span class="w"> </span><span class="vg">the</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">                            </span><span class="vg">lowest</span><span class="w"> </span><span class="vg">number</span><span class="w"> </span><span class="vg">through</span><span class="w"> </span><span class="il">1000</span><span class="o">.</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">            </span><span class="k">LIST</span><span class="w"> </span><span class="il">150-1000</span><span class="w">   </span><span class="vg">Lists</span><span class="w"> </span><span class="vg">lines</span><span class="w"> </span><span class="il">150</span><span class="w"> </span><span class="vg">through</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">                            </span><span class="il">1000</span><span class="p">,</span><span class="w"> </span><span class="vg">inclusive</span><span class="o">.</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="vg">Format</span><span class="w"> </span><span class="il">1</span><span class="o">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">            </span><span class="k">LIST</span><span class="w">            </span><span class="vg">Lists</span><span class="w"> </span><span class="vg">the</span><span class="w"> </span><span class="vg">program</span><span class="w"> </span><span class="vg">currently</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">                            </span><span class="vg">in</span><span class="w"> </span><span class="vg">memory</span><span class="o">.</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">            </span><span class="k">LIST</span><span class="w"> </span><span class="il">500</span><span class="w">        </span><span class="vg">In</span><span class="w"> </span><span class="vg">the</span><span class="w"> </span><span class="il">8</span><span class="vg">K</span><span class="w"> </span><span class="vg">version</span><span class="p">,</span><span class="w"> </span><span class="vg">lists</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">                            </span><span class="vg">all</span><span class="w"> </span><span class="vg">programs</span><span class="w"> </span><span class="vg">lines</span><span class="w"> </span><span class="vg">from</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">                            </span><span class="il">500</span><span class="w"> </span><span class="vg">to</span><span class="w"> </span><span class="vg">the</span><span class="w"> </span><span class="vg">end</span><span class="o">.</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">                            </span><span class="vg">In</span><span class="w"> </span><span class="vg">Extended</span><span class="w"> </span><span class="vg">and</span><span class="w"> </span><span class="vg">Disk</span><span class="p">,</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">                            </span><span class="vg">lists</span><span class="w"> </span><span class="vg">line</span><span class="w"> </span><span class="il">500</span><span class="o">.</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">            </span><span class="vg">Format</span><span class="w"> </span><span class="il">2</span><span class="o">:</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">            </span><span class="k">LIST</span><span class="w"> </span><span class="il">150</span><span class="o">-</span><span class="w">       </span><span class="vg">Lists</span><span class="w"> </span><span class="vg">all</span><span class="w"> </span><span class="vg">lines</span><span class="w"> </span><span class="vg">from</span><span class="w"> </span><span class="il">150</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">                            </span><span class="vg">to</span><span class="w"> </span><span class="vg">the</span><span class="w"> </span><span class="vg">end</span><span class="o">.</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">            </span><span class="k">LIST</span><span class="w"> </span><span class="il">-1000</span><span class="w">      </span><span class="vg">Lists</span><span class="w"> </span><span class="vg">all</span><span class="w"> </span><span class="vg">lines</span><span class="w"> </span><span class="vg">from</span><span class="w"> </span><span class="vg">the</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">                            </span><span class="vg">lowest</span><span class="w"> </span><span class="vg">number</span><span class="w"> </span><span class="vg">through</span><span class="w"> </span><span class="il">1000</span><span class="o">.</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">            </span><span class="k">LIST</span><span class="w"> </span><span class="il">150-1000</span><span class="w">   </span><span class="vg">Lists</span><span class="w"> </span><span class="vg">lines</span><span class="w"> </span><span class="il">150</span><span class="w"> </span><span class="vg">through</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">                            </span><span class="il">1000</span><span class="p">,</span><span class="w"> </span><span class="vg">inclusive</span><span class="o">.</span>
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../auto/">AUTO</a> - To generate a line number   automatically     after every carriage return</li>
+<li><a href="../auto/">AUTO</a> - To generate a line number automatically after every carriage return</li>
 <li><a href="../delete/">DELETE</a> - To delete program lines</li>
 <li><a href="../edit/">EDIT</a> - To enter Edit Mode at the specified line</li>
-<li><a href="../llist/">LLIST</a> - To list all or part of the program currently     in memory at the line printer</li>
+<li><a href="../llist/">LLIST</a> - To list all or part of the program currently in memory at the line printer</li>
 <li><a href="../renum/">RENUM</a> - Renumber program lines and update line references</li>
 </ul>
 

@@ -25,9 +25,10 @@ Returns the number of characters in X$. Non-printing characters and blanks are c
 
 ```basic
 10 X$ = "PORTLAND, OREGON"
- 20 PRINT LEN (X$)
- 16
- Ok
+20 PRINT LEN(X$)
+RUN
+16
+Ok
 ```
 
 ## See Also

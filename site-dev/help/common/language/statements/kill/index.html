@@ -897,7 +897,8 @@
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
 <p>To delete a file from disk.</p>
 <h2 id="remarks">Remarks<a class="headerlink" href="#remarks" title="Permanent link">&para;</a></h2>
-<p>If a KILL statement is given for a file that is currently OPEN, a RFile already open R error occurs. KILL is used for all types of disk files: program files, random data files and sequential data files.</p>
+<p>If a KILL statement is given for a file that is currently OPEN, a "File already open" error occurs (error code 55). KILL is used for all types of disk files: program files, random data files and sequential data files.</p>
+<p><strong>Note</strong>: CP/M automatically adds .BAS extension if none is specified when deleting BASIC program files.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">KILL</span><span class="w"> </span><span class="s2">&quot;TEMP.DAT&quot;</span><span class="w">        </span><span class="c1">&#39; Delete temporary file</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">KILL</span><span class="w"> </span><span class="s2">&quot;OLD_DATA.TXT&quot;</span><span class="w">    </span><span class="c1">&#39; Delete old data file</span>
