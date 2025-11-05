@@ -949,7 +949,7 @@ class VariableNode:
     tracks its origin. This is needed to regenerate source code accurately.
     """
     name: str  # Normalized lowercase name for lookups
-    type_suffix: Optional[str] = None  # $, %, !, # (explicit from source OR inferred from DEF)
+    type_suffix: Optional[str] = None  # $, %, !, # - The actual suffix (see explicit_type_suffix for origin)
     subscripts: Optional[List['ExpressionNode']] = None  # For array access
     original_case: Optional[str] = None  # Original case as typed by user (for display)
     explicit_type_suffix: bool = False  # True if type_suffix was in original source, False if inferred from DEF

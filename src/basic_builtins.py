@@ -1,7 +1,7 @@
 """
 Built-in functions for MBASIC 5.21.
 
-All BASIC built-in functions (SIN, CHR$, INT, etc.)
+BASIC built-in functions (SIN, CHR$, INT, etc.) and formatting utilities (TAB, SPC, USING).
 """
 
 import math
