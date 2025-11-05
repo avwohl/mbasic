@@ -21,7 +21,7 @@ External user-facing documentation and guides.
 - **[SETTINGS_AND_CONFIGURATION.md](SETTINGS_AND_CONFIGURATION.md)** - Settings guide
 - **[CASE_HANDLING_GUIDE.md](CASE_HANDLING_GUIDE.md)** - Variable and keyword case handling
 
-### Compatibility
+### File Operations
 - **[FILE_FORMAT_COMPATIBILITY.md](FILE_FORMAT_COMPATIBILITY.md)** - File format, line endings, CP/M compatibility
 - **[sequential-files.md](sequential-files.md)** - Sequential file I/O guide
 

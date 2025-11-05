@@ -151,7 +151,7 @@ Hardware interfacing and electronics tools
 
 1. **Download** the .bas file you want to use
 2. **Open MBASIC** in your preferred UI (Web, Tkinter, Curses, or CLI)
-3. **Load the file:**
+3. **Open the file:**
    - **Web/Tkinter UI:** Click File → Open, select the downloaded file
    - **CLI:** Type `LOAD "filename.bas"`
 4. **Run:** Type `RUN` or press the Run button

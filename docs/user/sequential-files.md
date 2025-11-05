@@ -261,4 +261,4 @@ Both should produce identical output.
 - [INPUT# Statement](../help/common/language/statements/input_hash.md) - Reading from sequential files
 - [LINE INPUT# Statement](../help/common/language/statements/line-input.md) - Reading lines from sequential files
 - [EOF Function](../help/common/language/functions/eof.md) - Checking for end of file
-- [Compatibility Guide](../help/mbasic/compatibility.md) - Overall compatibility with MBASIC 5.21
+- [File Format Compatibility](FILE_FORMAT_COMPATIBILITY.md) - Line endings and file format compatibility

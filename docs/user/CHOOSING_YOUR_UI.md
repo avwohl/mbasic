@@ -121,7 +121,7 @@ python3 mbasic --ui curses
 - Partial variable editing
 - No clipboard integration
 - Terminal color limits
-- No Find/Replace yet
+- No Find/Replace
 
 ### 🪟 Tk (Desktop GUI)
 
@@ -453,10 +453,10 @@ Features are typically added to:
 
 | Factor | CLI | Curses | Tk | Web |
 |--------|-----|--------|----|-----|
-| **No installation** | ✅ | ❌ | ❌ | ✅ |
+| **No dependencies** | ✅ | ❌ | ❌ | ❌ |
 | **Remote access** | ✅ | ✅ | ❌ | ✅ |
 | **Visual editing** | ❌ | ✅ | ✅ | ✅ |
-| **Mouse support** | ❌ | ⚠️ | ✅ | ✅ |
+| **Mouse support** | ❌ | ⚠️ Limited | ✅ | ✅ |
 | **Find/Replace** | ❌ | ❌ | ✅ | ❌ |
 | **Debugging** | ✅ | ✅ | ✅ | ✅ |
 | **Automation** | ✅ | ❌ | ❌ | ❌ |

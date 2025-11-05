@@ -16,6 +16,21 @@ python3 --version
 
 If you see a version number like `Python 3.9.x` or higher, you're good to go! If not, download Python from [python.org](https://www.python.org/downloads/).
 
+## Dependencies
+
+MBASIC's dependencies depend on which UI mode you plan to use:
+
+| UI Mode | External Dependencies |
+|---------|----------------------|
+| **CLI** | None (Python standard library only) |
+| **Curses** | `urwid` (install via pip) |
+| **Tk** | `tkinter` (usually pre-installed with Python) |
+| **Web** | `nicegui` (install via pip) |
+
+**If you only want CLI mode**, you can skip all dependency installation steps. Just run `python3 mbasic` and you're ready to go!
+
+**For other UIs**, use `pip install -r requirements.txt` to install the necessary dependencies.
+
 ## Installation Methods
 
 ### Method 1: Using Virtual Environment (Recommended)
@@ -72,7 +87,13 @@ You should see `(venv)` appear at the beginning of your command prompt, indicati
 pip install -r requirements.txt
 ```
 
-Note: Since this project has no external dependencies, this step mainly verifies your Python environment is working correctly.
+This installs optional dependencies for specific UIs:
+- **CLI mode**: No dependencies needed (Python standard library only)
+- **Curses mode**: Requires `urwid` for terminal UI
+- **Tk mode**: Requires `tkinter` (usually pre-installed with Python)
+- **Web mode**: Requires `nicegui` for browser-based UI
+
+If you only plan to use CLI mode, you can skip this step.
 
 #### Step 5: Run the interpreter
 
@@ -102,11 +123,11 @@ If you don't want to use a virtual environment, you can run the interpreter dire
 # Navigate to the project directory
 cd mbasic
 
-# Run the interpreter
+# Run the interpreter (CLI mode - no dependencies required)
 python3 mbasic
 ```
 
-This method works fine since the project has no external dependencies.
+**Note**: CLI mode uses only Python's standard library and requires no external dependencies. For other UIs (Curses, Tk, Web), you'll need to install their dependencies via `pip install -r requirements.txt`.
 
 ### Method 3: Install as a Python Package
 
@@ -164,10 +185,15 @@ All 20 tests PASS
 
 ### "python3: command not found"
 
-Try using `python` instead of `python3`:
+On some systems, Python 3 is available as `python` instead of `python3`:
 
 ```bash
 python --version
+```
+
+If this shows Python 3.8 or later, you can use `python` instead of `python3`:
+
+```bash
 python mbasic
 ```
 

@@ -1348,12 +1348,12 @@
 <td>NEW command</td>
 </tr>
 <tr>
-<td><strong>Load file</strong></td>
+<td><strong>Open file</strong></td>
 <td>✅</td>
 <td>✅</td>
 <td>✅</td>
 <td>✅</td>
-<td>LOAD "filename"</td>
+<td>LOAD "filename" command or File → Open</td>
 </tr>
 <tr>
 <td><strong>Save (interactive)</strong></td>
@@ -1574,7 +1574,7 @@
 <td>✅</td>
 <td>✅</td>
 <td>✅</td>
-<td>F1 or hover</td>
+<td>Curses/Web: F1; Tk: menu</td>
 </tr>
 <tr>
 <td><strong>Searchable help</strong></td>
@@ -1613,7 +1613,7 @@
 <td>⚠️</td>
 <td>✅</td>
 <td>✅</td>
-<td>Curses: limited</td>
+<td>Curses: limited, terminal-dependent</td>
 </tr>
 <tr>
 <td><strong>Menus</strong></td>
@@ -1773,7 +1773,7 @@
 <td><strong>Run</strong></td>
 <td>RUN</td>
 <td>Ctrl+R</td>
-<td>Ctrl+R/F5</td>
+<td>Ctrl+R</td>
 <td>Ctrl+R/F5</td>
 </tr>
 <tr>
@@ -1798,7 +1798,7 @@
 <td>Ctrl+N</td>
 </tr>
 <tr>
-<td><strong>Load</strong></td>
+<td><strong>Open</strong></td>
 <td>LOAD "file"</td>
 <td>Ctrl+O</td>
 <td>Ctrl+O</td>
@@ -1808,7 +1808,7 @@
 <td><strong>Help</strong></td>
 <td>HELP</td>
 <td>Ctrl+H/F1</td>
-<td>F1</td>
+<td>Ctrl+?</td>
 <td>F1</td>
 </tr>
 <tr>
@@ -1836,28 +1836,28 @@
 <td><strong>Toggle Breakpoint</strong></td>
 <td>BREAK line</td>
 <td>F9</td>
-<td>F9</td>
+<td>Ctrl+B</td>
 <td>F9</td>
 </tr>
 <tr>
 <td><strong>Step</strong></td>
 <td>STEP</td>
 <td>F10</td>
-<td>F10</td>
+<td>Menu/Toolbar</td>
 <td>F10</td>
 </tr>
 <tr>
 <td><strong>Continue</strong></td>
 <td>CONT</td>
 <td>F5</td>
-<td>F5</td>
+<td>Menu/Toolbar</td>
 <td>F5</td>
 </tr>
 <tr>
 <td><strong>Variables</strong></td>
 <td>WATCH</td>
 <td>Ctrl+W</td>
-<td>Ctrl+V</td>
+<td>Ctrl+W</td>
 <td>Ctrl+Alt+V</td>
 </tr>
 </tbody>
@@ -1955,7 +1955,7 @@
 <ul>
 <li><strong>CLI:</strong> Type <code>HELP</code> or <code>HELP &lt;topic&gt;</code></li>
 <li><strong>Curses:</strong> Press F1 or Ctrl+H</li>
-<li><strong>Tk:</strong> Press F1 or use Help menu</li>
+<li><strong>Tk:</strong> Press Ctrl+? or use Help menu</li>
 <li><strong>Web:</strong> Press F1 or click Help</li>
 </ul>
 <h2 id="reporting-issues">Reporting Issues<a class="headerlink" href="#reporting-issues" title="Permanent link">&para;</a></h2>

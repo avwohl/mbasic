@@ -1019,13 +1019,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#variable-case-preservation-new-in-october-2025" class="md-nav__link">
+  <a href="#variable-case-preservation" class="md-nav__link">
     <span class="md-ellipsis">
-      Variable Case Preservation (New in October 2025)
+      Variable Case Preservation
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Variable Case Preservation (New in October 2025)">
+    <nav class="md-nav" aria-label="Variable Case Preservation">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1061,13 +1061,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#improved-debugging-features-october-2025" class="md-nav__link">
+  <a href="#improved-debugging-features" class="md-nav__link">
     <span class="md-ellipsis">
-      Improved Debugging Features (October 2025)
+      Improved Debugging Features
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Improved Debugging Features (October 2025)">
+    <nav class="md-nav" aria-label="Improved Debugging Features">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1325,28 +1325,12 @@
 <td>Renumber program</td>
 </tr>
 <tr>
-<td><strong>Ctrl+V</strong></td>
-<td>Show/hide Variables window</td>
-</tr>
-<tr>
 <td><strong>Ctrl+W</strong></td>
-<td>Show/hide Variables &amp; Resources window</td>
+<td>Show/hide Variables window</td>
 </tr>
 <tr>
 <td><strong>Ctrl+K</strong></td>
 <td>Show/hide Execution Stack window</td>
-</tr>
-<tr>
-<td><strong>Ctrl+T</strong></td>
-<td>Step through code (next statement)</td>
-</tr>
-<tr>
-<td><strong>Ctrl+L</strong></td>
-<td>Step through code (next line)</td>
-</tr>
-<tr>
-<td><strong>Ctrl+G</strong></td>
-<td>Continue execution (go)</td>
 </tr>
 <tr>
 <td><strong>Ctrl+B</strong></td>
@@ -1358,6 +1342,7 @@
 </tr>
 </tbody>
 </table>
+<p><strong>Note:</strong> Step, Continue, and Stop are available via toolbar buttons or the Run menu (no keyboard shortcuts).</p>
 <h2 id="screen-layout">Screen Layout<a class="headerlink" href="#screen-layout" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>┌────────────────────────────────────────────────────┐
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>│ Menu Bar                                           │
@@ -1490,13 +1475,13 @@
 <p>Notice: GOTO 10 automatically became GOTO 100!</p>
 <h3 id="4-debug-with-breakpoints-and-variables">4. Debug with Breakpoints and Variables<a class="headerlink" href="#4-debug-with-breakpoints-and-variables" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>1. Click line number gutter to set breakpoint (● appears)
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>2. Press Ctrl+V to open Variables window
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>2. Press Ctrl+W to open Variables window
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>3. Press Ctrl+R to run
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>4. Program stops at breakpoint
 <a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>5. Check variable values in Variables window
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>6. Press Ctrl+T to step through code
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>6. Click &quot;Step&quot; or &quot;Stmt&quot; toolbar button to step through code
 <a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>7. Watch variables update in real-time
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>8. Press Ctrl+G to continue running
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>8. Click &quot;Cont&quot; toolbar button to continue running
 </code></pre></div>
 <p><strong>Variables Window Features:</strong>
 - Click column headers to sort (Name, Value, Type)
@@ -1560,8 +1545,8 @@
 <a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">5</span><span class="p">)</span>
 <a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="nl">60</span><span class="w"> </span><span class="kr">END</span>
 </code></pre></div>
-<p>Run with <strong>Ctrl+R</strong>, then check Variables window (<strong>Ctrl+V</strong>) to see array contents!</p>
-<h2 id="variable-case-preservation-new-in-october-2025">Variable Case Preservation (New in October 2025)<a class="headerlink" href="#variable-case-preservation-new-in-october-2025" title="Permanent link">&para;</a></h2>
+<p>Run with <strong>Ctrl+R</strong>, then check Variables window (<strong>Ctrl+W</strong>) to see array contents!</p>
+<h2 id="variable-case-preservation">Variable Case Preservation<a class="headerlink" href="#variable-case-preservation" title="Permanent link">&para;</a></h2>
 <p>MBASIC now preserves the original case of your variables while maintaining case-insensitive behavior!</p>
 <h3 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">TargetAngle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">45</span>
@@ -1597,7 +1582,7 @@
 <p>With error mode enabled, MBASIC catches the typo at line 30 immediately!</p>
 <p><strong>Learn more:</strong> See <code>docs/user/SETTINGS_AND_CONFIGURATION.md</code> for complete settings guide.</p>
 <hr />
-<h2 id="improved-debugging-features-october-2025">Improved Debugging Features (October 2025)<a class="headerlink" href="#improved-debugging-features-october-2025" title="Permanent link">&para;</a></h2>
+<h2 id="improved-debugging-features">Improved Debugging Features<a class="headerlink" href="#improved-debugging-features" title="Permanent link">&para;</a></h2>
 <p>The TK UI now provides enhanced debugging with intuitive statement highlighting.</p>
 <h3 id="next-statement-highlighting">Next-Statement Highlighting<a class="headerlink" href="#next-statement-highlighting" title="Permanent link">&para;</a></h3>
 <p>When stepping through code or hitting a breakpoint, MBASIC highlights <strong>what will execute next</strong>, not what just executed.</p>
@@ -1630,13 +1615,13 @@
 <p>For lines with multiple statements (colon-separated), stepping shows exactly which statement will execute:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="o">:</span><span class="w"> </span><span class="vg">X</span><span class="o">=</span><span class="il">5</span><span class="o">:</span><span class="w"> </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">100:</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;B&quot;</span><span class="o">:</span><span class="w"> </span><span class="kr">END</span>
 </code></pre></div>
-<p>Use <strong>Ctrl+T</strong> (step statement) to move through each part:
+<p>Click the <strong>Stmt</strong> toolbar button (step statement) to move through each part:
 1. <code>PRINT "A"</code> ← First
 2. <code>X=5</code> ← Second
 3. <code>GOSUB 100</code> ← Third (jumps to subroutine)
 4. After RETURN: <code>PRINT "B"</code> ← Resumes here (not at start of line)
 5. <code>END</code> ← Last</p>
-<p>Use <strong>Ctrl+L</strong> (step line) to execute the entire line at once.</p>
+<p>Click the <strong>Step</strong> toolbar button (step line) to execute the entire line at once.</p>
 <h3 id="execution-stack-window">Execution Stack Window<a class="headerlink" href="#execution-stack-window" title="Permanent link">&para;</a></h3>
 <p>Press <strong>Ctrl+K</strong> to see the execution stack showing active loops and subroutine calls:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">3</span>
@@ -1703,7 +1688,7 @@
 <a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="nl">30</span><span class="w">   </span><span class="kr">INPUT</span><span class="w"> </span><span class="s2">&quot;Score&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">SCORES</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span>
 <a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
 </code></pre></div>
-<p>Run this with <strong>Ctrl+V</strong> window open - you'll see each array element as it's filled!</p>
+<p>Run this with <strong>Ctrl+W</strong> window open - you'll see each array element as it's filled!</p>
 <h3 id="5-execution-stack-for-loops">5. Execution Stack for Loops<a class="headerlink" href="#5-execution-stack-for-loops" title="Permanent link">&para;</a></h3>
 <p>Press <strong>Ctrl+K</strong> to see Execution Stack while stepping through nested loops:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">3</span>
@@ -1744,8 +1729,8 @@
 <p>In order of importance:</p>
 <ol>
 <li><strong>Smart Insert (Ctrl+I)</strong> - Essential for efficient editing</li>
-<li><strong>Run/Step/Continue (Ctrl+R/T/G)</strong> - Core debugging workflow</li>
-<li><strong>Variables Window (Ctrl+V)</strong> - See what your program is doing</li>
+<li><strong>Run (Ctrl+R)</strong> and toolbar buttons (Step/Stmt/Cont) - Core debugging workflow</li>
+<li><strong>Variables Window (Ctrl+W)</strong> - See what your program is doing</li>
 <li><strong>Renumber (Ctrl+E)</strong> - Keep code organized</li>
 <li><strong>Breakpoints (Ctrl+B)</strong> - Stop at critical points</li>
 <li><strong>Save Often (Ctrl+S)</strong> - Protect your work</li>
@@ -1758,7 +1743,7 @@
 ❌ <strong>Stepping through entire program</strong> → Set breakpoints, use Continue</p>
 <h2 id="getting-help">Getting Help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>In-app help</strong>: Press <strong>F1</strong> or use Help menu</li>
+<li><strong>In-app help</strong>: Press <strong>Ctrl+?</strong> or use Help menu</li>
 <li><strong>Online docs</strong>: See <code>docs/</code> directory</li>
 <li><strong>Examples</strong>: Check <code>basic/</code> directory</li>
 <li><strong>Issues</strong>: Report at GitHub repository</li>

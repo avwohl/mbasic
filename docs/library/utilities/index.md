@@ -6,10 +6,11 @@ Utility programs for file management, conversion, and system tools
 
 ### Bigcal2
 
+Extended precision calculator with up to 100-digit precision for arithmetic operations
 
-
+**Author:** Judson D. McClendon, modified by R.J. Sandel
 **Year:** 1980s
-**Tags:** 
+**Tags:** calculator, math, precision
 
 **[Download bigcal2.bas](bigcal2.bas)**
 
@@ -17,21 +18,25 @@ Utility programs for file management, conversion, and system tools
 
 ### Calendar
 
+Simple calendar generator - prints a formatted calendar for any month/year (1900-2099)
 
-
-**Year:** 1980s
-**Tags:** 
+**Source:** Dr Dobbs Nov 1981
+**Year:** 1982
+**Tags:** date, calendar, utility
 
 **[Download calendar.bas](calendar.bas)**
+
+**Note:** A different calendar program is also available in the [Games Library](../games/index.md#calendar)
 
 ---
 
 ### Calendr5
 
+Gregorian calendar utilities - compute day of week, days between dates, and astronomical Julian dates
 
-
+**Author:** D. Mc Lanahan
 **Year:** 1980s
-**Tags:** 
+**Tags:** calendar, date, astronomy, julian
 
 **[Download calendr5.bas](calendr5.bas)**
 
@@ -39,10 +44,10 @@ Utility programs for file management, conversion, and system tools
 
 ### Charfreq
 
-
+Character frequency analyzer - counts occurrence of each character in text
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** text, analysis, frequency
 
 **[Download charfreq.bas](charfreq.bas)**
 
@@ -50,10 +55,11 @@ Utility programs for file management, conversion, and system tools
 
 ### Convert
 
+Convert BASICODE2 programs to MBASIC format
 
-
+**Author:** Henk Wevers, Dutch Hobby Computerclub
 **Year:** 1980s
-**Tags:** 
+**Tags:** conversion, basicode, translator
 
 **[Download convert.bas](convert.bas)**
 
@@ -61,10 +67,10 @@ Utility programs for file management, conversion, and system tools
 
 ### Dow
 
-
+Day of Week calculator - determine what day of the week any date falls on
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** date, calendar, dow
 
 **[Download dow.bas](dow.bas)**
 
@@ -72,21 +78,22 @@ Utility programs for file management, conversion, and system tools
 
 ### Fprime
 
-
+Prime number generator - finds and prints all prime numbers up to 1000
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** math, prime, numbers
 
 **[Download fprime.bas](fprime.bas)**
 
 ---
 
-### Remarks:  This program will con
+### Hex2Data
 
+Convert Intel Hex Format data files to BASIC DATA statements
 
-
-**Year:** 1980s
-**Tags:** 
+**Author:** Ian Cottrell, Ottawa, Ontario
+**Year:** 1983
+**Tags:** conversion, assembly, hex
 
 **[Download hex2data.bas](hex2data.bas)**
 
@@ -94,10 +101,12 @@ Utility programs for file management, conversion, and system tools
 
 ### Million
 
+Millionaire life simulation game - make financial decisions to accumulate wealth
 
-
+**Author:** Craig Gunnett
+**Source:** Creative Computing
 **Year:** 1980s
-**Tags:** 
+**Tags:** simulation, financial, game
 
 **[Download million.bas](million.bas)**
 
@@ -105,10 +114,10 @@ Utility programs for file management, conversion, and system tools
 
 ### Rotate
 
-
+Letter rotation puzzle game - order letters A-P by rotating groups clockwise
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** puzzle, game, logic
 
 **[Download rotate.bas](rotate.bas)**
 
@@ -116,10 +125,10 @@ Utility programs for file management, conversion, and system tools
 
 ### Search
 
-
+Library search system - search computer journals and general files by keywords
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** database, search, library
 
 **[Download search.bas](search.bas)**
 
@@ -127,10 +136,11 @@ Utility programs for file management, conversion, and system tools
 
 ### Sort
 
+BASICODE 2 utility routines collection
 
-
+**Author:** Henk Wevers
 **Year:** 1980s
-**Tags:** 
+**Tags:** basicode, utilities, routines
 
 **[Download sort.bas](sort.bas)**
 
@@ -138,10 +148,10 @@ Utility programs for file management, conversion, and system tools
 
 ### Ucase
 
-
+Convert lowercase characters to uppercase using bit masking function
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** string, conversion, uppercase
 
 **[Download ucase.bas](ucase.bas)**
 
@@ -160,10 +170,10 @@ Fixup for ** UN.COM **
 
 ### Unprotct
 
-
+Self-unprotecting program for MBASIC 5.21 protected files
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** utility, unprotect, mbasic
 
 **[Download unprotct.bas](unprotct.bas)**
 
@@ -171,10 +181,10 @@ Fixup for ** UN.COM **
 
 ### Uudecode
 
-
+Decode uuencoded files back to binary format
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** decode, uuencode, conversion
 
 **[Download uudecode.bas](uudecode.bas)**
 

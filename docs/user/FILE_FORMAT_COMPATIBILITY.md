@@ -7,9 +7,9 @@ MBASIC saves all program files using **Unix-style line endings** (`\n`, also cal
 ### What This Means
 
 - **Loading files**: MBASIC automatically handles files with any line ending style:
-  - Unix/Linux (`\n` / LF)
+  - Unix (`\n` / LF)
   - Windows (`\r\n` / CRLF)
-  - Old Mac (`\r` / CR)
+  - Classic Mac (`\r` / CR)
 
 - **Saving files**: MBASIC always saves with Unix line endings (`\n`)
 
@@ -22,7 +22,7 @@ MBASIC saves all program files using **Unix-style line endings** (`\n`, also cal
 
 ### Using Files with CP/M Emulators
 
-If you want to transfer saved BASIC files to a **CP/M emulator** (such as `tnylpo`), you may need to convert the line endings from LF (`\n`) to CRLF (`\r\n`), as CP/M systems expect DOS/Windows-style line endings.
+If you want to transfer saved BASIC files to a **CP/M emulator** (such as `tnylpo`), you may need to convert the line endings from LF (`\n`) to CRLF (`\r\n`), as CP/M systems expect CRLF line endings.
 
 #### Converting to CP/M Format
 

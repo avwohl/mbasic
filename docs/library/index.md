@@ -107,7 +107,5 @@ Have a classic BASIC program to add? See our contribution guidelines in the proj
 ---
 
 **Library Statistics:**
-- Total Programs: 114+
-- Categories: 9
-- Era: 1970s-1980s
+- 202 programs from the 1970s-1980s
 - Sources: OAK, Simtel, CP/M CD-ROMs, and other historical archives

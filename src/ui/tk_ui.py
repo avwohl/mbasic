@@ -3021,7 +3021,7 @@ class TkBackend(UIBackend):
                         # Paused at steppable statement - highlight it
                         self.paused_at_breakpoint = True
                         self._add_output(f"\n→ Paused at line {state.current_line}\n")
-                        self._set_status(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                        self._set_status(f"Paused at line {state.current_line} - Use toolbar: Step/Stmt/Cont/Stop")
                         self._update_immediate_status()
                         # Highlight current statement when paused
                         if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:

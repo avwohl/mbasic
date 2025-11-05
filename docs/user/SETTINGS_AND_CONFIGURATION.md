@@ -12,9 +12,22 @@ SHOW SETTINGS
 ```
 
 ### Change a Setting
+
+**Using SET command (in BASIC):**
 ```basic
 SET "variables.case_conflict" "error"
+SET "editor.auto_number" true
 ```
+
+**Using JSON file (in settings.json):**
+```json
+{
+  "variables.case_conflict": "error",
+  "editor.auto_number": true
+}
+```
+
+Note: Both methods are equivalent. SET commands affect the current session; JSON files persist across sessions.
 
 ### Get Help on a Setting
 ```basic
@@ -305,7 +318,7 @@ SET "editor.show_line_numbers" true
 **Type Conversion:**
 - Strings: `"value"` (with quotes)
 - Numbers: `5` (without quotes)
-- Booleans: `true` or `false` (lowercase, no quotes)
+- Booleans: `true` or `false` (lowercase, no quotes in commands; use true/false in JSON files)
 
 ### SHOW SETTINGS Command
 

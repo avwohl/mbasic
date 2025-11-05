@@ -42,7 +42,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 | Feature | CLI | Curses | Tk | Web | Notes |
 |---------|-----|--------|----|-----|-------|
 | **New program** | ✅ | ✅ | ✅ | ✅ | NEW command |
-| **Load file** | ✅ | ✅ | ✅ | ✅ | LOAD "filename" |
+| **Open file** | ✅ | ✅ | ✅ | ✅ | LOAD "filename" command or File → Open |
 | **Save (interactive)** | ❌ | ✅ | ✅ | ✅ | Ctrl+S prompts for filename |
 | **Save (command)** | ✅ | ✅ | ✅ | ✅ | SAVE "filename" command |
 | **Recent files** | ❌ | ❌ | ✅ | ⚠️ | Tk: menu, Web: localStorage |
@@ -79,7 +79,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 | Feature | CLI | Curses | Tk | Web | Notes |
 |---------|-----|--------|----|-----|-------|
 | **Built-in help** | ✅ | ✅ | ✅ | ✅ | All have help |
-| **Context help** | ❌ | ✅ | ✅ | ✅ | F1 or hover |
+| **Context help** | ❌ | ✅ | ✅ | ✅ | Curses/Web: F1; Tk: menu |
 | **Searchable help** | ✅ | ✅ | ✅ | ✅ | HELP SEARCH |
 | **External browser** | ❌ | ❌ | ✅ | N/A | Tk opens browser |
 
@@ -87,7 +87,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 
 | Feature | CLI | Curses | Tk | Web | Notes |
 |---------|-----|--------|----|-----|-------|
-| **Mouse support** | ❌ | ⚠️ | ✅ | ✅ | Curses: limited |
+| **Mouse support** | ❌ | ⚠️ | ✅ | ✅ | Curses: limited, terminal-dependent |
 | **Menus** | ❌ | ✅ | ✅ | ✅ | CLI: commands only |
 | **Keyboard shortcuts** | ⚠️ | ✅ | ✅ | ✅ | CLI: limited |
 | **Resizable panels** | ❌ | ⚠️ | ✅ | ✅ | |
@@ -218,22 +218,22 @@ This guide helps you choose the right UI for your needs and understand the featu
 
 | Action | CLI | Curses | Tk | Web |
 |--------|-----|--------|----|----|
-| **Run** | RUN | Ctrl+R | Ctrl+R/F5 | Ctrl+R/F5 |
+| **Run** | RUN | Ctrl+R | Ctrl+R | Ctrl+R/F5 |
 | **Stop** | Ctrl+C | Ctrl+C/Esc | Esc | Esc |
 | **Save** | SAVE "file" | Ctrl+S | Ctrl+S | Ctrl+S |
 | **New** | NEW | Ctrl+N | Ctrl+N | Ctrl+N |
-| **Load** | LOAD "file" | Ctrl+O | Ctrl+O | Ctrl+O |
-| **Help** | HELP | Ctrl+H/F1 | F1 | F1 |
+| **Open** | LOAD "file" | Ctrl+O | Ctrl+O | Ctrl+O |
+| **Help** | HELP | Ctrl+H/F1 | Ctrl+? | F1 |
 | **Quit** | SYSTEM | Ctrl+Q | Ctrl+Q | N/A |
 
 ### Debugging Shortcuts
 
 | Action | CLI | Curses | Tk | Web |
 |--------|-----|--------|----|----|
-| **Toggle Breakpoint** | BREAK line | F9 | F9 | F9 |
-| **Step** | STEP | F10 | F10 | F10 |
-| **Continue** | CONT | F5 | F5 | F5 |
-| **Variables** | WATCH | Ctrl+W | Ctrl+V | Ctrl+Alt+V |
+| **Toggle Breakpoint** | BREAK line | F9 | Ctrl+B | F9 |
+| **Step** | STEP | F10 | Menu/Toolbar | F10 |
+| **Continue** | CONT | F5 | Menu/Toolbar | F5 |
+| **Variables** | WATCH | Ctrl+W | Ctrl+W | Ctrl+Alt+V |
 
 ## Performance Comparison
 
@@ -298,7 +298,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 
 - **CLI:** Type `HELP` or `HELP <topic>`
 - **Curses:** Press F1 or Ctrl+H
-- **Tk:** Press F1 or use Help menu
+- **Tk:** Press Ctrl+? or use Help menu
 - **Web:** Press F1 or click Help
 
 ## Reporting Issues

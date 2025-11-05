@@ -100,7 +100,7 @@ Then open: **http://localhost:8080**
 | Visual Editor | ✓ | ✗ | ✓ | ✓ |
 | Split View | ✓ | ✗ | ✓ | ✓ |
 | Debugger | ✓ | ✗ | ✓ | Limited |
-| Variables Window | ✓ | ✗ | ✓ | ✗ |
+| Variables Window | ✓ | ✗ | ✓ | ✓ |
 | Remote Access | ✗ | ✗ | ✗ | ✓ |
 | Syntax Highlighting | ✓ | ✗ | ✓ | ✓ |
 | Terminal Required | ✓ | ✓ | ✗ | ✗ |

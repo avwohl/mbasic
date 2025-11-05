@@ -20,7 +20,7 @@ Get the most out of the MBASIC Tkinter GUI.
 300 END
 ```
 
-Use **Ctrl+I** (Smart Insert) to add details under each section without calculating line numbers!
+Use **Ctrl+I** (Smart Insert) to insert blank lines under each section without calculating line numbers!
 
 ## Variables Window for Arrays
 
@@ -68,6 +68,6 @@ Add comments with **Ctrl+I** (Smart Insert).
 
 ## Renumber Before Sharing
 
-Keep development line numbers messy, but renumber (**Ctrl+E**) before sharing code. Makes it clean and professional.
+Keep development line numbers messy, but Renumber (**Ctrl+E**) before sharing code. Makes it clean and professional.
 
 [← Back to Tk GUI Help](index.md)

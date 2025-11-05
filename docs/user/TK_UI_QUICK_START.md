@@ -34,14 +34,12 @@ The Tk UI is the default graphical interface for MBASIC.
 | **Ctrl+N** | New program |
 | **Ctrl+I** | Smart insert blank line |
 | **Ctrl+E** | Renumber program |
-| **Ctrl+V** | Show/hide Variables window |
-| **Ctrl+W** | Show/hide Variables & Resources window |
+| **Ctrl+W** | Show/hide Variables window |
 | **Ctrl+K** | Show/hide Execution Stack window |
-| **Ctrl+T** | Step through code (next statement) |
-| **Ctrl+L** | Step through code (next line) |
-| **Ctrl+G** | Continue execution (go) |
 | **Ctrl+B** | Toggle breakpoint |
 | **Ctrl+H** | Find and replace (Tk UI only) |
+
+**Note:** Step, Continue, and Stop are available via toolbar buttons or the Run menu (no keyboard shortcuts).
 
 ## Screen Layout
 
@@ -228,13 +226,13 @@ Notice: GOTO 10 automatically became GOTO 100!
 
 ```
 1. Click line number gutter to set breakpoint (● appears)
-2. Press Ctrl+V to open Variables window
+2. Press Ctrl+W to open Variables window
 3. Press Ctrl+R to run
 4. Program stops at breakpoint
 5. Check variable values in Variables window
-6. Press Ctrl+T to step through code
+6. Click "Step" or "Stmt" toolbar button to step through code
 7. Watch variables update in real-time
-8. Press Ctrl+G to continue running
+8. Click "Cont" toolbar button to continue running
 ```
 
 **Variables Window Features:**
@@ -320,9 +318,9 @@ Red **?** markers appear in line number gutter for syntax errors:
 60 END
 ```
 
-Run with **Ctrl+R**, then check Variables window (**Ctrl+V**) to see array contents!
+Run with **Ctrl+R**, then check Variables window (**Ctrl+W**) to see array contents!
 
-## Variable Case Preservation (New in October 2025)
+## Variable Case Preservation
 
 MBASIC now preserves the original case of your variables while maintaining case-insensitive behavior!
 
@@ -374,7 +372,7 @@ With error mode enabled, MBASIC catches the typo at line 30 immediately!
 
 ---
 
-## Improved Debugging Features (October 2025)
+## Improved Debugging Features
 
 The TK UI now provides enhanced debugging with intuitive statement highlighting.
 
@@ -424,14 +422,14 @@ For lines with multiple statements (colon-separated), stepping shows exactly whi
 10 PRINT "A": X=5: GOSUB 100: PRINT "B": END
 ```
 
-Use **Ctrl+T** (step statement) to move through each part:
+Click the **Stmt** toolbar button (step statement) to move through each part:
 1. `PRINT "A"` ← First
 2. `X=5` ← Second
 3. `GOSUB 100` ← Third (jumps to subroutine)
 4. After RETURN: `PRINT "B"` ← Resumes here (not at start of line)
 5. `END` ← Last
 
-Use **Ctrl+L** (step line) to execute the entire line at once.
+Click the **Step** toolbar button (step line) to execute the entire line at once.
 
 ### Execution Stack Window
 
@@ -527,7 +525,7 @@ When working with arrays, keep Variables window open:
 40 NEXT I
 ```
 
-Run this with **Ctrl+V** window open - you'll see each array element as it's filled!
+Run this with **Ctrl+W** window open - you'll see each array element as it's filled!
 
 ### 5. Execution Stack for Loops
 
@@ -590,8 +588,8 @@ python3 mbasic --ui tk basic/arrays.bas
 In order of importance:
 
 1. **Smart Insert (Ctrl+I)** - Essential for efficient editing
-2. **Run/Step/Continue (Ctrl+R/T/G)** - Core debugging workflow
-3. **Variables Window (Ctrl+V)** - See what your program is doing
+2. **Run (Ctrl+R)** and toolbar buttons (Step/Stmt/Cont) - Core debugging workflow
+3. **Variables Window (Ctrl+W)** - See what your program is doing
 4. **Renumber (Ctrl+E)** - Keep code organized
 5. **Breakpoints (Ctrl+B)** - Stop at critical points
 6. **Save Often (Ctrl+S)** - Protect your work
@@ -606,7 +604,7 @@ In order of importance:
 
 ## Getting Help
 
-- **In-app help**: Press **F1** or use Help menu
+- **In-app help**: Press **Ctrl+?** or use Help menu
 - **Online docs**: See `docs/` directory
 - **Examples**: Check `basic/` directory
 - **Issues**: Report at GitHub repository

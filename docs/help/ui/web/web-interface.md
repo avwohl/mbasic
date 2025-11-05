@@ -76,16 +76,19 @@ Access File, Edit, Run, and Help functions.
 ### File Menu
 
 - **New** - Clear the editor and start a new program
-- **Open** - Load a .bas file from your computer (via browser file picker)
+- **Open** - Open a .bas file from your computer (via browser file picker)
 - **Clear Output** - Clear the output area
 
-**Note:** A "Load Example" feature to choose from sample BASIC programs is planned for a future release.
+**Note:** An "Open Example" feature to choose from sample BASIC programs is planned for a future release.
 
 ### Edit Menu
 
 - **Copy** - Copy selected text to clipboard
 - **Paste** - Paste from clipboard (Ctrl+V)
 - **Select All** - Select all editor text
+- **Sort Lines** - Sort selected lines numerically by line number
+- **Smart Insert** - Insert lines intelligently between existing line numbers
+- **Settings** - Configure auto-numbering, case handling, and other interpreter options
 
 ### Run Menu
 
@@ -96,6 +99,10 @@ Access File, Edit, Run, and Help functions.
 - **Continue** - Resume execution after a breakpoint or step
 - **Step Line** - Execute all statements on the current line, then pause
 - **Step Statement** - Execute one statement, then pause
+
+### View Menu
+
+- **Show Variables** - Open the Variables Window to view and monitor program variables in real-time
 
 ### Help Menu
 

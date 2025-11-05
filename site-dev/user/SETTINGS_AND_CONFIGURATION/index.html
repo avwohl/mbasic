@@ -1385,10 +1385,19 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span>
 </code></pre></div>
 <h3 id="change-a-setting">Change a Setting<a class="headerlink" href="#change-a-setting" title="Permanent link">&para;</a></h3>
+<p><strong>Using SET command (in BASIC):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
-</code></pre></div>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;editor.auto_number&quot;</span><span class="w"> </span><span class="vg">true</span>
+</code></pre></div></p>
+<p><strong>Using JSON file (in settings.json):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">&quot;variables.case_conflict&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">&quot;editor.auto_number&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">}</span>
+</code></pre></div></p>
+<p>Note: Both methods are equivalent. SET commands affect the current session; JSON files persist across sessions.</p>
 <h3 id="get-help-on-a-setting">Get Help on a Setting<a class="headerlink" href="#get-help-on-a-setting" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="vg">HELP</span><span class="w"> </span><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="vg">HELP</span><span class="w"> </span><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span>
 </code></pre></div>
 <h2 id="settings-scope">Settings Scope<a class="headerlink" href="#settings-scope" title="Permanent link">&para;</a></h2>
 <p>Settings are applied in this order (most specific wins):</p>
@@ -1403,19 +1412,19 @@
 - <strong>Linux/Mac:</strong> <code>~/.mbasic/settings.json</code>
 - <strong>Windows:</strong> <code>%APPDATA%/mbasic/settings.json</code> (typically <code>C:\Users\YourName\AppData\Roaming\mbasic\settings.json</code>)</p>
 <p>Example:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;variables.case_conflict&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;first_wins&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">&quot;editor.auto_number&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">&quot;ui.theme&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dark&quot;</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;variables.case_conflict&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;first_wins&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">&quot;editor.auto_number&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">&quot;ui.theme&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dark&quot;</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="p">}</span>
 </code></pre></div></p>
 <h3 id="project-settings-file">Project Settings File<a class="headerlink" href="#project-settings-file" title="Permanent link">&para;</a></h3>
 <p>Location: <code>.mbasic/settings.json</code> (in your project directory)</p>
 <p>Use for project-specific preferences:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;variables.case_conflict&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">&quot;editor.auto_number_step&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">&quot;variables.case_conflict&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nt">&quot;editor.auto_number_step&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="p">}</span>
 </code></pre></div></p>
 <hr />
 <h2 id="variable-settings">Variable Settings<a class="headerlink" href="#variable-settings" title="Permanent link">&para;</a></h2>
@@ -1431,36 +1440,36 @@
 - <code>"prefer_mixed"</code> - Prefer mixed case (camelCase/PascalCase)</p>
 <p><strong>Examples:</strong></p>
 <h4 id="first_wins-default">first_wins (default)<a class="headerlink" href="#first_wins-default" title="Permanent link">&para;</a></h4>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">TargetAngle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">45</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">targetangle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">90</span><span class="w">  </span><span class="c1">&#39; Uses &quot;TargetAngle&quot; (first case)</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">TargetAngle</span><span class="w">  </span><span class="c1">&#39; Displays as &quot;TargetAngle&quot; everywhere</span>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">TargetAngle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">45</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">targetangle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">90</span><span class="w">  </span><span class="c1">&#39; Uses &quot;TargetAngle&quot; (first case)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">TargetAngle</span><span class="w">  </span><span class="c1">&#39; Displays as &quot;TargetAngle&quot; everywhere</span>
 </code></pre></div>
 Variable window shows: <code>TargetAngle = 90</code></p>
 <h4 id="error">error<a class="headerlink" href="#error" title="Permanent link">&para;</a></h4>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nl">10</span><span class="w"> </span><span class="vg">TargetAngle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">45</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nl">20</span><span class="w"> </span><span class="vg">targetangle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">90</span><span class="w">  </span><span class="c1">&#39; ERROR: Variable name case conflict</span>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nl">10</span><span class="w"> </span><span class="vg">TargetAngle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">45</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nl">20</span><span class="w"> </span><span class="vg">targetangle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">90</span><span class="w">  </span><span class="c1">&#39; ERROR: Variable name case conflict</span>
 </code></pre></div>
 Program stops with error message showing line numbers.</p>
 <h4 id="prefer_upper">prefer_upper<a class="headerlink" href="#prefer_upper" title="Permanent link">&para;</a></h4>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;prefer_upper&quot;</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nl">10</span><span class="w"> </span><span class="vg">TargetAngle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">45</span><span class="w">  </span><span class="c1">&#39; 1 uppercase letter</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nl">20</span><span class="w"> </span><span class="vg">targetangle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">90</span><span class="w">  </span><span class="c1">&#39; 0 uppercase letters</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="nl">30</span><span class="w"> </span><span class="vg">TARGETANGLE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span><span class="w">  </span><span class="c1">&#39; 11 uppercase letters (wins)</span>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;prefer_upper&quot;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nl">10</span><span class="w"> </span><span class="vg">TargetAngle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">45</span><span class="w">  </span><span class="c1">&#39; 1 uppercase letter</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nl">20</span><span class="w"> </span><span class="vg">targetangle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">90</span><span class="w">  </span><span class="c1">&#39; 0 uppercase letters</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="nl">30</span><span class="w"> </span><span class="vg">TARGETANGLE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span><span class="w">  </span><span class="c1">&#39; 11 uppercase letters (wins)</span>
 </code></pre></div>
 Variable window shows: <code>TARGETANGLE = 100</code></p>
 <h4 id="prefer_lower">prefer_lower<a class="headerlink" href="#prefer_lower" title="Permanent link">&para;</a></h4>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;prefer_lower&quot;</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nl">10</span><span class="w"> </span><span class="vg">COUNTER</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w">  </span><span class="c1">&#39; 7 uppercase letters</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nl">20</span><span class="w"> </span><span class="vg">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span><span class="w">  </span><span class="c1">&#39; 7 lowercase letters (wins)</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="nl">30</span><span class="w"> </span><span class="vg">Counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">30</span><span class="w">  </span><span class="c1">&#39; Mixed case</span>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;prefer_lower&quot;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nl">10</span><span class="w"> </span><span class="vg">COUNTER</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w">  </span><span class="c1">&#39; 7 uppercase letters</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nl">20</span><span class="w"> </span><span class="vg">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span><span class="w">  </span><span class="c1">&#39; 7 lowercase letters (wins)</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nl">30</span><span class="w"> </span><span class="vg">Counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">30</span><span class="w">  </span><span class="c1">&#39; Mixed case</span>
 </code></pre></div>
 Variable window shows: <code>counter = 30</code></p>
 <h4 id="prefer_mixed">prefer_mixed<a class="headerlink" href="#prefer_mixed" title="Permanent link">&para;</a></h4>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;prefer_mixed&quot;</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nl">10</span><span class="w"> </span><span class="vg">myvar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w">      </span><span class="c1">&#39; All lowercase</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nl">20</span><span class="w"> </span><span class="vg">MYVAR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span><span class="w">      </span><span class="c1">&#39; All uppercase</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nl">30</span><span class="w"> </span><span class="vg">MyVar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">30</span><span class="w">      </span><span class="c1">&#39; Mixed case (wins)</span>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;prefer_mixed&quot;</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nl">10</span><span class="w"> </span><span class="vg">myvar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">10</span><span class="w">      </span><span class="c1">&#39; All lowercase</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nl">20</span><span class="w"> </span><span class="vg">MYVAR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">20</span><span class="w">      </span><span class="c1">&#39; All uppercase</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="nl">30</span><span class="w"> </span><span class="vg">MyVar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">30</span><span class="w">      </span><span class="c1">&#39; Mixed case (wins)</span>
 </code></pre></div>
 Variable window shows: <code>MyVar = 30</code></p>
 <p><strong>Use Cases:</strong>
@@ -1474,11 +1483,11 @@ Variable window shows: <code>MyVar = 30</code></p>
 <p><strong>Type:</strong> Boolean</p>
 <p><strong>Default:</strong> <code>true</code></p>
 <p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1">&#39; With show_types_in_window = true</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="vg">Variable</span><span class="w"> </span><span class="vg">window</span><span class="w"> </span><span class="nl">shows:</span><span class="w"> </span><span class="vg">Counter</span><span class="o">%</span><span class="p">,</span><span class="w"> </span><span class="vg">Message$</span><span class="p">,</span><span class="w"> </span><span class="vg">Value!</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1">&#39; With show_types_in_window = false</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="vg">Variable</span><span class="w"> </span><span class="vg">window</span><span class="w"> </span><span class="nl">shows:</span><span class="w"> </span><span class="vg">Counter</span><span class="p">,</span><span class="w"> </span><span class="vg">Message</span><span class="p">,</span><span class="w"> </span><span class="vg">Value</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">&#39; With show_types_in_window = true</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="vg">Variable</span><span class="w"> </span><span class="vg">window</span><span class="w"> </span><span class="nl">shows:</span><span class="w"> </span><span class="vg">Counter</span><span class="o">%</span><span class="p">,</span><span class="w"> </span><span class="vg">Message$</span><span class="p">,</span><span class="w"> </span><span class="vg">Value!</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1">&#39; With show_types_in_window = false</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="vg">Variable</span><span class="w"> </span><span class="vg">window</span><span class="w"> </span><span class="nl">shows:</span><span class="w"> </span><span class="vg">Counter</span><span class="p">,</span><span class="w"> </span><span class="vg">Message</span><span class="p">,</span><span class="w"> </span><span class="vg">Value</span>
 </code></pre></div></p>
 <hr />
 <h2 id="editor-settings">Editor Settings<a class="headerlink" href="#editor-settings" title="Permanent link">&para;</a></h2>
@@ -1487,20 +1496,20 @@ Variable window shows: <code>MyVar = 30</code></p>
 <p><strong>Type:</strong> Boolean</p>
 <p><strong>Default:</strong> <code>true</code></p>
 <p><strong>When enabled:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">&#39; You type (without line number):</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Hello&quot;</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1">&#39; MBASIC adds:</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="nl">10</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Hello&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1">&#39; You type (without line number):</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Hello&quot;</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1">&#39; MBASIC adds:</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="nl">10</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Hello&quot;</span>
 </code></pre></div></p>
 <h3 id="editorauto_number_step">editor.auto_number_step<a class="headerlink" href="#editorauto_number_step" title="Permanent link">&para;</a></h3>
 <p><strong>Controls:</strong> Line number increment for auto-numbering</p>
 <p><strong>Type:</strong> Integer (1-1000)</p>
 <p><strong>Default:</strong> <code>10</code></p>
 <p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;editor.auto_number_step&quot;</span><span class="w"> </span><span class="il">5</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="c1">&#39; Lines numbered: 5, 10, 15, 20, ...</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;editor.auto_number_step&quot;</span><span class="w"> </span><span class="il">5</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1">&#39; Lines numbered: 5, 10, 15, 20, ...</span>
 </code></pre></div></p>
 <h3 id="editortab_size">editor.tab_size<a class="headerlink" href="#editortab_size" title="Permanent link">&para;</a></h3>
 <p><strong>Controls:</strong> Tab width in spaces</p>
@@ -1526,8 +1535,8 @@ Variable window shows: <code>MyVar = 30</code></p>
 <p><strong>Type:</strong> Integer (1-3600)</p>
 <p><strong>Default:</strong> <code>30</code></p>
 <p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;interpreter.max_execution_time&quot;</span><span class="w"> </span><span class="il">60</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="c1">&#39; Program will stop after 60 seconds</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;interpreter.max_execution_time&quot;</span><span class="w"> </span><span class="il">60</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="c1">&#39; Program will stop after 60 seconds</span>
 </code></pre></div></p>
 <p>Set to <code>0</code> for unlimited execution time (use with caution).</p>
 <h3 id="interpreterdebug_mode">interpreter.debug_mode<a class="headerlink" href="#interpreterdebug_mode" title="Permanent link">&para;</a></h3>
@@ -1557,158 +1566,158 @@ Variable window shows: <code>MyVar = 30</code></p>
 <p><strong>Type:</strong> Integer (8-32)</p>
 <p><strong>Default:</strong> <code>12</code></p>
 <p><strong>Example (when implemented):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;ui.font_size&quot;</span><span class="w"> </span><span class="il">14</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="c1">&#39; Increases font size for better readability</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;ui.font_size&quot;</span><span class="w"> </span><span class="il">14</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="c1">&#39; Increases font size for better readability</span>
 </code></pre></div></p>
 <hr />
 <h2 id="command-reference">Command Reference<a class="headerlink" href="#command-reference" title="Permanent link">&para;</a></h2>
 <h3 id="set-command">SET Command<a class="headerlink" href="#set-command" title="Permanent link">&para;</a></h3>
 <p><strong>Syntax:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;setting.name&quot;</span><span class="w"> </span><span class="vg">value</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;setting.name&quot;</span><span class="w"> </span><span class="vg">value</span>
 </code></pre></div></p>
 <p><strong>Examples:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;editor.auto_number_step&quot;</span><span class="w"> </span><span class="il">5</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;ui.theme&quot;</span><span class="w"> </span><span class="s2">&quot;dark&quot;</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;editor.show_line_numbers&quot;</span><span class="w"> </span><span class="vg">true</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;editor.auto_number_step&quot;</span><span class="w"> </span><span class="il">5</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;ui.theme&quot;</span><span class="w"> </span><span class="s2">&quot;dark&quot;</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;editor.show_line_numbers&quot;</span><span class="w"> </span><span class="vg">true</span>
 </code></pre></div></p>
 <p><strong>Type Conversion:</strong>
 - Strings: <code>"value"</code> (with quotes)
 - Numbers: <code>5</code> (without quotes)
-- Booleans: <code>true</code> or <code>false</code> (lowercase, no quotes)</p>
+- Booleans: <code>true</code> or <code>false</code> (lowercase, no quotes in commands; use true/false in JSON files)</p>
 <h3 id="show-settings-command">SHOW SETTINGS Command<a class="headerlink" href="#show-settings-command" title="Permanent link">&para;</a></h3>
 <p><strong>Syntax:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span><span class="w">               </span><span class="c1">&#39; Show all settings</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span><span class="w"> </span><span class="s2">&quot;pattern&quot;</span><span class="w">     </span><span class="c1">&#39; Show matching settings</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span><span class="w">               </span><span class="c1">&#39; Show all settings</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span><span class="w"> </span><span class="s2">&quot;pattern&quot;</span><span class="w">     </span><span class="c1">&#39; Show matching settings</span>
 </code></pre></div></p>
 <p><strong>Examples:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="c1">&#39; Displays all settings with current values</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span><span class="w"> </span><span class="s2">&quot;editor&quot;</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="c1">&#39; Shows only editor.* settings</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span><span class="w"> </span><span class="s2">&quot;case&quot;</span>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="c1">&#39; Shows settings containing &quot;case&quot; in name</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="c1">&#39; Displays all settings with current values</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span><span class="w"> </span><span class="s2">&quot;editor&quot;</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="c1">&#39; Shows only editor.* settings</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span><span class="w"> </span><span class="s2">&quot;case&quot;</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="c1">&#39; Shows settings containing &quot;case&quot; in name</span>
 </code></pre></div></p>
 <p><strong>Output Format:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>Category: Variables
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>  variables.case_conflict = first_wins (default)
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>  variables.show_types_in_window = true
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>Category: Editor
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>  editor.auto_number = true
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>  ...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>Category: Variables
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>  variables.case_conflict = first_wins (default)
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>  variables.show_types_in_window = true
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>Category: Editor
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>  editor.auto_number = true
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>  ...
 </code></pre></div></p>
 <h3 id="help-set-command">HELP SET Command<a class="headerlink" href="#help-set-command" title="Permanent link">&para;</a></h3>
 <p><strong>Syntax:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="vg">HELP</span><span class="w"> </span><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;setting.name&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="vg">HELP</span><span class="w"> </span><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;setting.name&quot;</span>
 </code></pre></div></p>
 <p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="vg">HELP</span><span class="w"> </span><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="c1">&#39; Output:</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1">&#39; Setting: variables.case_conflict</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="c1">&#39; Type: enum</span>
-<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="c1">&#39; Default: first_wins</span>
-<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="c1">&#39; Choices: first_wins, error, prefer_upper, prefer_lower, prefer_mixed</span>
-<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="c1">&#39;</span>
-<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="c1">&#39; Description:</span>
-<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="c1">&#39; Controls what happens when the same variable appears with different cases.</span>
-<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="c1">&#39; ...</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="vg">HELP</span><span class="w"> </span><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="c1">&#39; Output:</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1">&#39; Setting: variables.case_conflict</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="c1">&#39; Type: enum</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="c1">&#39; Default: first_wins</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="c1">&#39; Choices: first_wins, error, prefer_upper, prefer_lower, prefer_mixed</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="c1">&#39;</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="c1">&#39; Description:</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="c1">&#39; Controls what happens when the same variable appears with different cases.</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="c1">&#39; ...</span>
 </code></pre></div></p>
 <hr />
 <h2 id="common-workflows">Common Workflows<a class="headerlink" href="#common-workflows" title="Permanent link">&para;</a></h2>
 <h3 id="team-project-with-consistent-naming">Team Project with Consistent Naming<a class="headerlink" href="#team-project-with-consistent-naming" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1">&#39; In project .mbasic/settings.json:</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="p">{</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">  </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">  </span><span class="s2">&quot;editor.auto_number_step&quot;</span><span class="o">:</span><span class="w"> </span><span class="il">5</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="p">}</span>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="c1">&#39; Now all team members must use consistent case</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1">&#39; In project .mbasic/settings.json:</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="p">{</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">  </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">  </span><span class="s2">&quot;editor.auto_number_step&quot;</span><span class="o">:</span><span class="w"> </span><span class="il">5</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="p">}</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="c1">&#39; Now all team members must use consistent case</span>
 </code></pre></div>
 <h3 id="classic-basic-style-all-caps">Classic BASIC Style (All Caps)<a class="headerlink" href="#classic-basic-style-all-caps" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;prefer_upper&quot;</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;ui.theme&quot;</span><span class="w"> </span><span class="s2">&quot;classic&quot;</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="c1">&#39; Variables display in uppercase like vintage BASIC</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;prefer_upper&quot;</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;ui.theme&quot;</span><span class="w"> </span><span class="s2">&quot;classic&quot;</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1">&#39; Variables display in uppercase like vintage BASIC</span>
 </code></pre></div>
 <h3 id="modern-python-like-style">Modern Python-like Style<a class="headerlink" href="#modern-python-like-style" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;prefer_lower&quot;</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;ui.theme&quot;</span><span class="w"> </span><span class="s2">&quot;dark&quot;</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1">&#39; Variables display in lowercase like modern languages</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;prefer_lower&quot;</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;ui.theme&quot;</span><span class="w"> </span><span class="s2">&quot;dark&quot;</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="c1">&#39; Variables display in lowercase like modern languages</span>
 </code></pre></div>
 <h3 id="debugging-session">Debugging Session<a class="headerlink" href="#debugging-session" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;interpreter.debug_mode&quot;</span><span class="w"> </span><span class="vg">true</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;interpreter.max_execution_time&quot;</span><span class="w"> </span><span class="il">300</span>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="kr">RUN</span>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="c1">&#39; See detailed execution traces</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;interpreter.debug_mode&quot;</span><span class="w"> </span><span class="vg">true</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;interpreter.max_execution_time&quot;</span><span class="w"> </span><span class="il">300</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="kr">RUN</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="c1">&#39; See detailed execution traces</span>
 </code></pre></div>
 <hr />
 <h2 id="case-conflict-scenarios">Case Conflict Scenarios<a class="headerlink" href="#case-conflict-scenarios" title="Permanent link">&para;</a></h2>
 <h3 id="scenario-1-accidental-typos">Scenario 1: Accidental Typos<a class="headerlink" href="#scenario-1-accidental-typos" title="Permanent link">&para;</a></h3>
 <p><strong>Without error checking:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1">&#39; Default: first_wins</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="nl">10</span><span class="w"> </span><span class="vg">TotalCount</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">0</span>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="nl">30</span><span class="w">   </span><span class="vg">TotalCont</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">TotalCont</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">I</span><span class="w">  </span><span class="c1">&#39; Typo! Different variable</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="nl">40</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
-<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="nl">50</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">TotalCount</span><span class="w">  </span><span class="c1">&#39; Prints 0 (bug!)</span>
-</code></pre></div></p>
-<p><strong>With error checking:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1">&#39; Default: first_wins</span>
 <a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="nl">10</span><span class="w"> </span><span class="vg">TotalCount</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">0</span>
 <a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span>
-<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="nl">30</span><span class="w">   </span><span class="vg">TotalCont</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">TotalCont</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="nl">30</span><span class="w">   </span><span class="vg">TotalCont</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">TotalCont</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">I</span><span class="w">  </span><span class="c1">&#39; Typo! Different variable</span>
 <a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="nl">40</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
-<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>
-<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="c1">&#39; ERROR at line 30: Variable name case conflict:</span>
-<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span class="c1">&#39; &quot;TotalCont&quot; vs &quot;TotalCount&quot; at line 10</span>
-<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a><span class="c1">&#39; Bug caught immediately!</span>
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="nl">50</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">TotalCount</span><span class="w">  </span><span class="c1">&#39; Prints 0 (bug!)</span>
+</code></pre></div></p>
+<p><strong>With error checking:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="nl">10</span><span class="w"> </span><span class="vg">TotalCount</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">0</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="nl">30</span><span class="w">   </span><span class="vg">TotalCont</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">TotalCont</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="nl">40</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="c1">&#39; ERROR at line 30: Variable name case conflict:</span>
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a><span class="c1">&#39; &quot;TotalCont&quot; vs &quot;TotalCount&quot; at line 10</span>
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a><span class="c1">&#39; Bug caught immediately!</span>
 </code></pre></div></p>
 <h3 id="scenario-2-merging-code">Scenario 2: Merging Code<a class="headerlink" href="#scenario-2-merging-code" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1">&#39; Program 1 uses:</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="vg">PlayerScore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span>
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="c1">&#39; Program 2 uses:</span>
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="vg">playerscore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">200</span>
-<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>
-<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="c1">&#39; After MERGE:</span>
-<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a><span class="nl">10</span><span class="w"> </span><span class="vg">PlayerScore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span>
-<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a><span class="nl">20</span><span class="w"> </span><span class="vg">playerscore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">200</span><span class="w">  </span><span class="c1">&#39; Same variable, different case</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1">&#39; Program 1 uses:</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="vg">PlayerScore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="c1">&#39; Program 2 uses:</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="vg">playerscore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">200</span>
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a>
+<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a><span class="c1">&#39; After MERGE:</span>
+<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a><span class="nl">10</span><span class="w"> </span><span class="vg">PlayerScore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span>
+<a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a><span class="nl">20</span><span class="w"> </span><span class="vg">playerscore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">200</span><span class="w">  </span><span class="c1">&#39; Same variable, different case</span>
 </code></pre></div></p>
 <p><strong>Solution:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;first_wins&quot;</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="c1">&#39; Uses &quot;PlayerScore&quot; everywhere</span>
-<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>
-<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="c1">&#39; OR</span>
-<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
-<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="c1">&#39; Forces you to fix the conflict</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;first_wins&quot;</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="c1">&#39; Uses &quot;PlayerScore&quot; everywhere</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="c1">&#39; OR</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="c1">&#39; Forces you to fix the conflict</span>
 </code></pre></div></p>
 <h3 id="scenario-3-code-style-enforcement">Scenario 3: Code Style Enforcement<a class="headerlink" href="#scenario-3-code-style-enforcement" title="Permanent link">&para;</a></h3>
 <p><strong>Team wants camelCase:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;prefer_mixed&quot;</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>
-<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="c1">&#39; Team members use different cases:</span>
-<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="nl">10</span><span class="w"> </span><span class="vg">targetangle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">45</span><span class="w">   </span><span class="c1">&#39; All lowercase</span>
-<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="nl">20</span><span class="w"> </span><span class="vg">TARGETANGLE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">90</span><span class="w">   </span><span class="c1">&#39; All uppercase</span>
-<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="nl">30</span><span class="w"> </span><span class="vg">TargetAngle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span><span class="w">  </span><span class="c1">&#39; Mixed case (camelCase)</span>
-<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a>
-<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a><span class="c1">&#39; Variable window shows: TargetAngle</span>
-<a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a><span class="c1">&#39; Enforces team&#39;s camelCase style</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;prefer_mixed&quot;</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="c1">&#39; Team members use different cases:</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="nl">10</span><span class="w"> </span><span class="vg">targetangle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">45</span><span class="w">   </span><span class="c1">&#39; All lowercase</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="nl">20</span><span class="w"> </span><span class="vg">TARGETANGLE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">90</span><span class="w">   </span><span class="c1">&#39; All uppercase</span>
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a><span class="nl">30</span><span class="w"> </span><span class="vg">TargetAngle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">100</span><span class="w">  </span><span class="c1">&#39; Mixed case (camelCase)</span>
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a>
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a><span class="c1">&#39; Variable window shows: TargetAngle</span>
+<a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a><span class="c1">&#39; Enforces team&#39;s camelCase style</span>
 </code></pre></div></p>
 <hr />
 <h2 id="tips-and-best-practices">Tips and Best Practices<a class="headerlink" href="#tips-and-best-practices" title="Permanent link">&para;</a></h2>
 <h3 id="1-use-error-mode-for-team-projects">1. Use error Mode for Team Projects<a class="headerlink" href="#1-use-error-mode-for-team-projects" title="Permanent link">&para;</a></h3>
 <p>Prevents accidental case variations across team members.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1">&#39; In project .mbasic/settings.json:</span>
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="p">{</span>
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="w">  </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
-<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1">&#39; In project .mbasic/settings.json:</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="p">{</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">  </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="p">}</span>
 </code></pre></div>
 <h3 id="2-use-first_wins-for-personal-projects">2. Use first_wins for Personal Projects<a class="headerlink" href="#2-use-first_wins-for-personal-projects" title="Permanent link">&para;</a></h3>
 <p>Least surprising behavior, lets you code freely.</p>
@@ -1716,21 +1725,21 @@ Variable window shows: <code>MyVar = 30</code></p>
 <p>The Variables &amp; Resources window (Ctrl+W in TK UI) shows the canonical case being used.</p>
 <h3 id="4-document-your-choice">4. Document Your Choice<a class="headerlink" href="#4-document-your-choice" title="Permanent link">&para;</a></h3>
 <p>Add a comment at the top of programs:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="nl">10</span><span class="w"> </span><span class="c1">REM Case policy: first_wins</span>
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="nl">20</span><span class="w"> </span><span class="c1">REM Use consistent case for readability</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="nl">10</span><span class="w"> </span><span class="c1">REM Case policy: first_wins</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="nl">20</span><span class="w"> </span><span class="c1">REM Use consistent case for readability</span>
 </code></pre></div></p>
 <h3 id="5-test-after-changing-policies">5. Test After Changing Policies<a class="headerlink" href="#5-test-after-changing-policies" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="kr">RUN</span>
-<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>
-<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="c1">&#39; Fix any conflicts found</span>
-<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="c1">&#39; Then set back to first_wins if desired</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="vg">SET</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span><span class="w"> </span><span class="s2">&quot;error&quot;</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="kr">RUN</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="c1">&#39; Fix any conflicts found</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="c1">&#39; Then set back to first_wins if desired</span>
 </code></pre></div>
 <hr />
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="case-conflict-error-what-to-do">"Case conflict error" - What to do?<a class="headerlink" href="#case-conflict-error-what-to-do" title="Permanent link">&para;</a></h3>
 <p><strong>Error message:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>Variable name case conflict: &#39;TargetAngle&#39; at line 10 vs &#39;targetangle&#39; at line 20
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>Variable name case conflict: &#39;TargetAngle&#39; at line 10 vs &#39;targetangle&#39; at line 20
 </code></pre></div></p>
 <p><strong>Solutions:</strong>
 1. Fix the code to use consistent case
@@ -1743,32 +1752,32 @@ Variable window shows: <code>MyVar = 30</code></p>
 - <strong>Project:</strong> <code>.mbasic/settings.json</code> (create directory if needed)</p>
 <p>Settings in files persist across sessions. Settings via <code>SET</code> command only affect current session.</p>
 <h3 id="which-setting-is-being-used">Which setting is being used?<a class="headerlink" href="#which-setting-is-being-used" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span>
-<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>
-<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="c1">&#39; Output shows:</span>
-<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="c1">&#39; variables.case_conflict = error (project)</span>
-<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="c1">&#39;                          ^^^^^^^ shows scope</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="vg">SHOW</span><span class="w"> </span><span class="vg">SETTINGS</span><span class="w"> </span><span class="s2">&quot;variables.case_conflict&quot;</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="c1">&#39; Output shows:</span>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="c1">&#39; variables.case_conflict = error (project)</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="c1">&#39;                          ^^^^^^^ shows scope</span>
 </code></pre></div>
 <p>Possible scopes: <code>(default)</code>, <code>(global)</code>, <code>(project)</code>, <code>(file)</code></p>
 <hr />
 <h2 id="advanced-usage">Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permanent link">&para;</a></h2>
 <h3 id="create-project-settings-directory">Create Project Settings Directory<a class="headerlink" href="#create-project-settings-directory" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>.mbasic
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>.mbasic/settings.json<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
-<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="s">{</span>
-<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="s">  &quot;variables.case_conflict&quot;: &quot;error&quot;,</span>
-<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="s">  &quot;editor.auto_number_step&quot;: 5,</span>
-<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a><span class="s">  &quot;ui.theme&quot;: &quot;dark&quot;</span>
-<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a><span class="s">}</span>
-<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a><span class="s">EOF</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>.mbasic
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>.mbasic/settings.json<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="s">{</span>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="s">  &quot;variables.case_conflict&quot;: &quot;error&quot;,</span>
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a><span class="s">  &quot;editor.auto_number_step&quot;: 5,</span>
+<a id="__codelineno-37-6" name="__codelineno-37-6" href="#__codelineno-37-6"></a><span class="s">  &quot;ui.theme&quot;: &quot;dark&quot;</span>
+<a id="__codelineno-37-7" name="__codelineno-37-7" href="#__codelineno-37-7"></a><span class="s">}</span>
+<a id="__codelineno-37-8" name="__codelineno-37-8" href="#__codelineno-37-8"></a><span class="s">EOF</span>
 </code></pre></div>
 <h3 id="backup-global-settings">Backup Global Settings<a class="headerlink" href="#backup-global-settings" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>cp<span class="w"> </span>~/.mbasic/settings.json<span class="w"> </span>~/.mbasic/settings.json.backup
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>cp<span class="w"> </span>~/.mbasic/settings.json<span class="w"> </span>~/.mbasic/settings.json.backup
 </code></pre></div>
 <h3 id="reset-to-defaults">Reset to Defaults<a class="headerlink" href="#reset-to-defaults" title="Permanent link">&para;</a></h3>
 <p>Delete settings files and MBASIC will use built-in defaults:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>rm<span class="w"> </span>~/.mbasic/settings.json
-<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>rm<span class="w"> </span>.mbasic/settings.json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>rm<span class="w"> </span>~/.mbasic/settings.json
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>rm<span class="w"> </span>.mbasic/settings.json
 </code></pre></div></p>
 <hr />
 <h2 id="related-documentation">Related Documentation<a class="headerlink" href="#related-documentation" title="Permanent link">&para;</a></h2>

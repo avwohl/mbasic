@@ -845,6 +845,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dependencies
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installation-methods" class="md-nav__link">
     <span class="md-ellipsis">
       Installation Methods
@@ -1054,6 +1063,36 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python3<span class="w"> </span>--version
 </code></pre></div>
 <p>If you see a version number like <code>Python 3.9.x</code> or higher, you're good to go! If not, download Python from <a href="https://www.python.org/downloads/">python.org</a>.</p>
+<h2 id="dependencies">Dependencies<a class="headerlink" href="#dependencies" title="Permanent link">&para;</a></h2>
+<p>MBASIC's dependencies depend on which UI mode you plan to use:</p>
+<table>
+<thead>
+<tr>
+<th>UI Mode</th>
+<th>External Dependencies</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CLI</strong></td>
+<td>None (Python standard library only)</td>
+</tr>
+<tr>
+<td><strong>Curses</strong></td>
+<td><code>urwid</code> (install via pip)</td>
+</tr>
+<tr>
+<td><strong>Tk</strong></td>
+<td><code>tkinter</code> (usually pre-installed with Python)</td>
+</tr>
+<tr>
+<td><strong>Web</strong></td>
+<td><code>nicegui</code> (install via pip)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>If you only want CLI mode</strong>, you can skip all dependency installation steps. Just run <code>python3 mbasic</code> and you're ready to go!</p>
+<p><strong>For other UIs</strong>, use <code>pip install -r requirements.txt</code> to install the necessary dependencies.</p>
 <h2 id="installation-methods">Installation Methods<a class="headerlink" href="#installation-methods" title="Permanent link">&para;</a></h2>
 <h3 id="method-1-using-virtual-environment-recommended">Method 1: Using Virtual Environment (Recommended)<a class="headerlink" href="#method-1-using-virtual-environment-recommended" title="Permanent link">&para;</a></h3>
 <p>A virtual environment keeps this project's dependencies separate from your system Python. This is the recommended approach for Python projects.</p>
@@ -1087,7 +1126,12 @@
 <h4 id="step-4-install-dependencies">Step 4: Install dependencies<a class="headerlink" href="#step-4-install-dependencies" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </code></pre></div>
-<p>Note: Since this project has no external dependencies, this step mainly verifies your Python environment is working correctly.</p>
+<p>This installs optional dependencies for specific UIs:
+- <strong>CLI mode</strong>: No dependencies needed (Python standard library only)
+- <strong>Curses mode</strong>: Requires <code>urwid</code> for terminal UI
+- <strong>Tk mode</strong>: Requires <code>tkinter</code> (usually pre-installed with Python)
+- <strong>Web mode</strong>: Requires <code>nicegui</code> for browser-based UI</p>
+<p>If you only plan to use CLI mode, you can skip this step.</p>
 <h4 id="step-5-run-the-interpreter">Step 5: Run the interpreter<a class="headerlink" href="#step-5-run-the-interpreter" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>python3<span class="w"> </span>mbasic
 </code></pre></div>
@@ -1103,10 +1147,10 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Navigate to the project directory</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nb">cd</span><span class="w"> </span>mbasic
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Run the interpreter</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Run the interpreter (CLI mode - no dependencies required)</span>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>python3<span class="w"> </span>mbasic
 </code></pre></div>
-<p>This method works fine since the project has no external dependencies.</p>
+<p><strong>Note</strong>: CLI mode uses only Python's standard library and requires no external dependencies. For other UIs (Curses, Tk, Web), you'll need to install their dependencies via <code>pip install -r requirements.txt</code>.</p>
 <h3 id="method-3-install-as-a-python-package">Method 3: Install as a Python Package<a class="headerlink" href="#method-3-install-as-a-python-package" title="Permanent link">&para;</a></h3>
 <p>For system-wide installation:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">cd</span><span class="w"> </span>mbasic
@@ -1137,18 +1181,20 @@
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="python3-command-not-found">"python3: command not found"<a class="headerlink" href="#python3-command-not-found" title="Permanent link">&para;</a></h3>
-<p>Try using <code>python</code> instead of <code>python3</code>:</p>
+<p>On some systems, Python 3 is available as <code>python</code> instead of <code>python3</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>python<span class="w"> </span>--version
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>python<span class="w"> </span>mbasic
+</code></pre></div>
+<p>If this shows Python 3.8 or later, you can use <code>python</code> instead of <code>python3</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>python<span class="w"> </span>mbasic
 </code></pre></div>
 <h3 id="permission-denied-on-linuxmac">Permission Denied on Linux/Mac<a class="headerlink" href="#permission-denied-on-linuxmac" title="Permanent link">&para;</a></h3>
 <p>Make sure the script is executable:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>chmod<span class="w"> </span>+x<span class="w"> </span>mbasic
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>./mbasic
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>chmod<span class="w"> </span>+x<span class="w"> </span>mbasic
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>./mbasic
 </code></pre></div>
 <h3 id="virtual-environment-not-activating-on-windows">Virtual Environment Not Activating on Windows<a class="headerlink" href="#virtual-environment-not-activating-on-windows" title="Permanent link">&para;</a></h3>
 <p>If you get an error about execution policies in PowerShell, you may need to allow scripts:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="nb">Set-ExecutionPolicy</span> <span class="n">-ExecutionPolicy</span> <span class="n">RemoteSigned</span> <span class="n">-Scope</span> <span class="n">CurrentUser</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nb">Set-ExecutionPolicy</span> <span class="n">-ExecutionPolicy</span> <span class="n">RemoteSigned</span> <span class="n">-Scope</span> <span class="n">CurrentUser</span>
 </code></pre></div>
 <p>Then try activating again.</p>
 <h3 id="module-not-found-errors">"Module not found" errors<a class="headerlink" href="#module-not-found-errors" title="Permanent link">&para;</a></h3>
@@ -1196,7 +1242,7 @@
 <li>Check that you're using Python 3.8 or later</li>
 <li>Make sure you're in the project directory</li>
 <li>Try running with <code>DEBUG=1</code> for more detailed error messages:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nv">DEBUG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python3<span class="w"> </span>mbasic<span class="w"> </span>yourprogram.bas
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="nv">DEBUG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python3<span class="w"> </span>mbasic<span class="w"> </span>yourprogram.bas
 </code></pre></div></li>
 </ol>
 <p>Happy BASIC programming!</p>

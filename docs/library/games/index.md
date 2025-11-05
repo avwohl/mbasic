@@ -270,12 +270,15 @@ Classic BASIC games from the CP/M era
 
 ### Calendar
 
+Year-long calendar display program from Creative Computing
 
-
-**Year:** 1980s
-**Tags:** 
+**Source:** Creative Computing, Morristown, NJ
+**Year:** 1979
+**Tags:** calendar, display
 
 **[Download calendar.bas](calendar.bas)**
+
+**Note:** A simpler calendar utility is also available in the [Utilities Library](../utilities/index.md#calendar)
 
 ---
 
