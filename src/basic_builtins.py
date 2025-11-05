@@ -269,8 +269,9 @@ class UsingFormatter:
             rounded = round(value)
 
         # Determine sign - preserve negative sign for values that round to zero.
-        # This matches BASIC behavior where -0.001 formatted with no decimal places
-        # displays as "-0" (not "0"). Positive values that round to zero display as "0".
+        # original_negative was captured before rounding (line 263), allowing us to detect
+        # cases like -0.001 which round to 0 but should display as "-0" (not "0").
+        # This matches BASIC behavior. Positive values that round to zero display as "0".
         if rounded == 0 and original_negative:
             is_negative = True
         else:

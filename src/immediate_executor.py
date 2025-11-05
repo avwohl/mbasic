@@ -35,9 +35,10 @@ class ImmediateExecutor:
 
     CAN execute when waiting for input:
     - 'waiting_for_input' - Program is waiting for INPUT. Immediate mode is allowed
-      to inspect/modify variables while paused for input. This state is detected
-      by checking if state.input_prompt is not None. However, the user should
-      respond to the input prompt via normal input, not via immediate commands.
+      to inspect/modify variables while paused for input (e.g., PRINT X, X=100).
+      This state is detected by checking if state.input_prompt is not None.
+      Note: While allowed, users typically respond to INPUT prompts via normal input
+      rather than using immediate commands to set variable values.
 
     Usage:
         executor = ImmediateExecutor(runtime, interpreter, io_handler)

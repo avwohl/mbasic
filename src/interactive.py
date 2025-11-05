@@ -322,9 +322,9 @@ class InteractiveMode:
         command = parts[0].upper() if parts else ""
         args = parts[1] if len(parts) > 1 else ""
 
-        # Meta-commands (editor commands that manipulate program source)
-        # AUTO and EDIT are meta-commands that require special handling - they can't be
-        # parsed as BASIC statements, so they're handled directly here.
+        # Special commands that require direct handling
+        # AUTO and EDIT cannot be parsed as BASIC statements (no corresponding AST nodes),
+        # so they're handled directly here before attempting to parse.
         # Everything else goes through the parser as immediate mode statements.
         if command == "AUTO":
             self.cmd_auto(args)
@@ -415,7 +415,6 @@ class InteractiveMode:
         State management:
         - Clears stopped/halted flags in runtime
         - Restores PC from stop_pc (saved execution position)
-        - Note: stop_pc itself is NOT cleared (remains for potential debugging)
         - Resumes tick-based execution loop
         - Handles input prompts and errors during execution
         """
