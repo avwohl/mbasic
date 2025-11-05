@@ -2599,9 +2599,10 @@ class TkBackend(UIBackend):
         Returns:
             'break' to prevent character insertion, None to allow it
         """
-        # Clear yellow statement highlight when user starts editing
+        # Clear yellow statement highlight on any keypress when paused at breakpoint
         # This prevents visual artifact where statement highlight remains on part of a line
-        # after text is modified (occurs because highlight is tag-based and editing shifts positions)
+        # after text is modified (occurs because highlight is tag-based and editing shifts positions).
+        # Note: This clears on ANY key including arrows/function keys, not just editing keys.
         if self.paused_at_breakpoint:
             self._clear_statement_highlight()
 

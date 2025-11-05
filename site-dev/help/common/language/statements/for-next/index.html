@@ -952,17 +952,18 @@
 <h3 id="operation">Operation:<a class="headerlink" href="#operation" title="Permanent link">&para;</a></h3>
 <ol>
 <li>Variable is set to the starting value (x)</li>
-<li>If variable exceeds ending value (y) considering STEP direction, loop terminates</li>
 <li>Statements in loop body execute</li>
 <li>Variable increments by step value (z)</li>
+<li>If variable exceeds ending value (y) considering STEP direction, loop terminates</li>
 <li>Process repeats from step 2</li>
 </ol>
 <h3 id="features">Features:<a class="headerlink" href="#features" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>STEP</strong> can be positive, negative, or fractional</li>
-<li>Negative STEP counts backward (loop terminates when variable &lt; end)</li>
-<li>Positive STEP counts forward (loop terminates when variable &gt; end)</li>
-<li>Loop executes at least once if start equals end (regardless of STEP value)</li>
+<li>Negative STEP counts backward (loop terminates when variable &lt; end after increment)</li>
+<li>Positive STEP counts forward (loop terminates when variable &gt; end after increment)</li>
+<li>Loop body executes at least once regardless of start/end relationship</li>
+<li>Termination check occurs at NEXT, not FOR (after loop body has executed)</li>
 <li>Multiple variables can be specified in NEXT for nested loops</li>
 </ul>
 <h3 id="example">Example:<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>

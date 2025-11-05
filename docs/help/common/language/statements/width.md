@@ -2,7 +2,7 @@
 category: system
 description: To set the printed line width in number of characters for the terminal or line printer
 keywords: ['command', 'for', 'function', 'if', 'line', 'number', 'print', 'return', 'statement', 'width']
-syntax: WIDTH [LPRINT] <integer expression>
+syntax: WIDTH <integer expression>
 title: WIDTH
 type: statement
 ---

@@ -57,7 +57,7 @@ This document lists all features implemented in this MBASIC interpreter.
 - **PRINT USING** - Formatted output with format strings
 - **INPUT** - Interactive input with prompts
 - **LINE INPUT** - Full line input
-- **LPRINT** - Line printer output
+- **LPRINT** - Line printer output (Note: LPRINT statement is supported, but WIDTH LPRINT syntax is not)
 
 **File I/O:**
 - **Sequential files:** OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#
