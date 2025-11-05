@@ -127,8 +127,7 @@ class ImmediateExecutor:
                 - output: Output text or error message
 
         Examples:
-            >>> if executor.can_execute_immediate():
-            ...     success, output = executor.execute("PRINT 2 + 2")
+            >>> executor.execute("PRINT 2 + 2")
             (True, " 4\\n")
 
             >>> executor.execute("X = 100")

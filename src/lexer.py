@@ -1,6 +1,8 @@
 """
 Lexer for MBASIC 5.21 (CP/M era MBASIC-80)
 Based on BASIC-80 Reference Manual Version 5.21
+
+Note: MBASIC 5.21 includes Extended BASIC features (e.g., periods in identifiers).
 """
 from typing import List, Optional
 from src.tokens import Token, TokenType, KEYWORDS

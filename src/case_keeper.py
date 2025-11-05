@@ -11,12 +11,12 @@ from typing import Dict, Optional, List, Tuple
 class CaseKeeperTable:
     """A dictionary that stores strings with case-insensitive keys but preserves display case.
 
-    Example:
+    Example (with default "first_wins" policy):
         table = CaseKeeperTable()
         table.set("PRINT", "Print")  # Key: "print", Display: "Print"
         table.get("print")  # Returns: "Print"
         table.get("PRINT")  # Returns: "Print" (same - case insensitive)
-        table.get("PrInT")  # Returns: "Print" (same - case insensitive)
+        table.set("print", "PRINT")  # Ignored - first wins, keeps "Print"
     """
 
     def __init__(self, policy: str = "first_wins"):
