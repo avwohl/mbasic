@@ -1,6 +1,6 @@
 ---
 category: editing
-description: To list all or part of the program currently     in memory at the line printer
+description: To list all or part of the program currently in memory at the line printer
 keywords: ['command', 'execute', 'for', 'line', 'llist', 'number', 'print', 'program', 'return', 'statement']
 syntax: LLIST [<line number>[-[<line number>]]]
 title: LLIST
@@ -35,11 +35,11 @@ LLIST [<line number>[-[<line number>]]]
 
 ## Purpose
 
-To list all or part of the program currently     in memory at the line printer.
+To list all or part of the program currently in memory at the line printer.
 
 ## Remarks
 
-LLIST assumes a l32-character wide printer. BASIC-80 always returns to command level after an LLIST is executed. The options for LLIST are the same as for LIST, Format 2. NOTE:           LLIST and LPRINT are not       included    in   all implementations of BASIC-80.
+LLIST assumes a 132-character wide printer. BASIC-80 always returns to command level after an LLIST is executed. The options for LLIST are the same as for LIST, Format 2. NOTE: LLIST and LPRINT are not included in all implementations of BASIC-80.
 
 ## Example
 
@@ -51,5 +51,5 @@ See the examples for LIST, Format 2.
 - [AUTO](auto.md) - To generate a line number   automatically     after every carriage return
 - [DELETE](delete.md) - To delete program lines
 - [EDIT](edit.md) - To enter Edit Mode at the specified line
-- [LIST](list.md) - To list all or part of the program currently            in memory at the terminal
+- [LIST](list.md) - To list all or part of the program currently in memory at the terminal
 - [RENUM](renum.md) - Renumber program lines and update line references

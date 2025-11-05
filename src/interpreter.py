@@ -38,9 +38,9 @@ class InterpreterState:
     """Complete execution state of the interpreter at any point in time
 
     Primary execution states (check these to determine current status):
-    - runtime.halted: True if stopped (paused/done/at breakpoint)
-    - input_prompt: Non-None if waiting for input
-    - error_info: Non-None if an error occurred
+    - error_info: Non-None if an error occurred (check FIRST - highest priority)
+    - input_prompt: Non-None if waiting for input (check SECOND)
+    - runtime.halted: True if stopped (paused/done/at breakpoint) (check LAST)
 
     Also tracks: input buffering, debugging flags, performance metrics, and
     provides computed properties for current line/statement position.
@@ -53,8 +53,9 @@ class InterpreterState:
     input_file_number: Optional[int] = None  # If reading from file
 
     # Debugging (breakpoints are stored in Runtime, not here)
-    skip_next_breakpoint_check: bool = False  # Allows execution past a breakpoint after stopping on it
-                                               # (prevents re-triggering the same breakpoint immediately)
+    skip_next_breakpoint_check: bool = False  # Set when halting at a breakpoint.
+                                               # On next execution, allows stepping past the breakpoint once,
+                                               # then clears itself. Prevents re-halting on same breakpoint.
     pause_requested: bool = False  # Set by pause() method
 
     # Error handling
@@ -94,6 +95,7 @@ class InterpreterState:
         """Get current statement char_end from statement table (computed property)
 
         Uses max(char_end, next_char_start - 1) to handle string tokens correctly.
+        For the last statement on a line, uses line_text_map to get actual line length.
         This works because:
         - If there's a next statement, the colon is at next_char_start - 1
         - If char_end is correct (most tokens), it will be >= next_char_start - 1
@@ -578,7 +580,8 @@ class Interpreter:
                 continue
 
 
-    # OLD EXECUTION METHODS REMOVED (v1.0.300)
+    # OLD EXECUTION METHODS REMOVED (internal version v1.0.300 - this is the mbasic implementation
+    # version, not the MBASIC 5.21 language version)
     # run_from_current(), _run_loop(), step_once() removed
     # These used old current_line/next_line fields
     # Replaced by tick_pc() and PC-based execution
@@ -1066,9 +1069,10 @@ class Interpreter:
             raise RuntimeError(f"RETURN error: line {return_line} no longer exists")
 
         line_statements = self.runtime.statement_table.get_line_statements(return_line)
-        # return_stmt is 0-indexed offset. Valid range: 0 to len(statements) inclusive.
-        # return_stmt == len(statements) is valid: "continue at next line" (GOSUB was last stmt)
-        # return_stmt > len(statements) is invalid: statement was deleted (validation error)
+        # return_stmt is 0-indexed offset into statements array.
+        # Valid range: 0 to len(statements) where len(statements) is a special sentinel value
+        # meaning "continue at next line" (GOSUB's last statement completed, resume after the line).
+        # Values > len(statements) indicate the statement was deleted (validation error).
         if return_stmt > len(line_statements):  # Check for strictly greater than (== len is OK)
             raise RuntimeError(f"RETURN error: statement {return_stmt} in line {return_line} no longer exists")
 
@@ -1129,7 +1133,9 @@ class Interpreter:
         """
         # Determine which variables to process
         if stmt.variables:
-            # Process variables in order: NEXT I, J, K closes I first, then J, then K
+            # Process variables left-to-right: NEXT I, J, K processes I first, then J, then K.
+            # Each variable is incremented; if it loops back to FOR, subsequent vars are skipped.
+            # If a variable's loop completes, it's popped and the next variable is processed.
             var_list = stmt.variables
         else:
             # NEXT without variable - use innermost loop
@@ -1219,8 +1225,8 @@ class Interpreter:
                 raise RuntimeError(f"NEXT error: FOR loop line {return_line} no longer exists")
 
             line_statements = self.runtime.statement_table.get_line_statements(return_line)
-            # return_stmt is 0-indexed offset. Valid values are 0 to len(statements).
-            # return_stmt == len(statements) means FOR was last statement (continue at next line).
+            # return_stmt is 0-indexed offset into statements array. Valid indices are 0 to len(statements)-1.
+            # return_stmt == len(statements) is a special sentinel: FOR was last statement, continue at next line.
             # return_stmt > len(statements) is invalid (statement was deleted).
             if return_stmt > len(line_statements):
                 raise RuntimeError(f"NEXT error: FOR statement in line {return_line} no longer exists")
@@ -1288,6 +1294,8 @@ class Interpreter:
         # Pop the loop from the stack BEFORE jumping back to WHILE.
         # The WHILE will re-push if the condition is still true, or skip the
         # loop body if the condition is now false. This ensures clean stack state.
+        # Note: If an error occurs during WHILE condition evaluation, the loop is already popped,
+        # which is correct (error handling should not leave partial loop state).
         self.limits.pop_while_loop()
         self.runtime.pop_while_loop()
 
@@ -1320,7 +1328,8 @@ class Interpreter:
         # Determine where to resume
         if stmt.line_number is None or stmt.line_number == 0:
             # RESUME or RESUME 0 - retry the statement that caused the error
-            # Both forms are valid BASIC syntax with identical meaning
+            # Parser treats these differently (None vs 0) as separate AST representations,
+            # but they have identical runtime behavior (both retry the error statement)
             self.runtime.npc = error_pc
         elif stmt.line_number == -1:
             # RESUME NEXT - continue at statement after the error
@@ -1478,6 +1487,7 @@ class Interpreter:
         self.runtime.clear_arrays()
 
         # Close all open files
+        # Note: Errors during file close are silently ignored (bare except: pass below)
         for file_num in list(self.runtime.files.keys()):
             try:
                 file_obj = self.runtime.files[file_num]
@@ -1488,7 +1498,11 @@ class Interpreter:
         self.runtime.files.clear()
         self.runtime.field_buffers.clear()
 
-        # Note: We preserve runtime.common_vars for CHAIN compatibility
+        # Note: Preserved state for CHAIN compatibility:
+        #   - runtime.common_vars (COMMON variables)
+        #   - runtime.files (open file handles)
+        #   - runtime.field_buffers (random access file buffers)
+        #   - runtime.user_functions (DEF FN functions)
         # Note: We ignore string_space and stack_space parameters (Python manages memory automatically)
 
     def execute_randomize(self, stmt):
@@ -1533,7 +1547,8 @@ class Interpreter:
         """
         # MBASIC 5.21 gives "Duplicate Definition" if:
         # 1. OPTION BASE has already been executed, OR
-        # 2. Any arrays have been created (even with implicit BASE 0)
+        # 2. Any arrays have been created (both explicitly via DIM and implicitly via first use like A(5)=10)
+        #    This applies regardless of the current array base (0 or 1).
         if self.runtime.option_base_executed:
             raise RuntimeError("Duplicate Definition")
 
@@ -1569,8 +1584,9 @@ class Interpreter:
         """Execute INPUT statement - read from keyboard or file
 
         In tick-based execution mode, this may transition to 'waiting_for_input' state
-        instead of blocking. When input is provided via provide_input(), execution
-        resumes from the input buffer.
+        instead of blocking. Sets: input_prompt (prompt text), input_variables (var list),
+        input_file_number (file # or None). When input is provided via provide_input(),
+        execution resumes and these state vars are read then cleared.
         """
         # Check if reading from file
         if stmt.file_number is not None:
@@ -2221,7 +2237,7 @@ class Interpreter:
 
         # Validate and open file with appropriate mode using filesystem provider
         # Valid modes: I (input), O (output), A (append), R (random access)
-        # Any other mode raises "Invalid OPEN mode" error
+        # Any other mode raises "Invalid OPEN mode: {mode}" error (with actual mode shown)
         try:
             if mode == "I":
                 # Open for input - binary mode so we can detect ^Z
@@ -2277,6 +2293,7 @@ class Interpreter:
         Syntax: RESET
         """
         # Close all open files
+        # Note: Errors during file close are silently ignored (bare except: pass below)
         for file_num in list(self.runtime.files.keys()):
             self.runtime.files[file_num]['handle'].close()
             del self.runtime.files[file_num]
@@ -2454,7 +2471,9 @@ class Interpreter:
                 break
 
         if not found:
-            # If not a field variable, just do normal assignment
+            # If not a field variable, fall back to normal assignment.
+            # Note: In strict MBASIC 5.21, LSET/RSET are only for field variables.
+            # This fallback is a compatibility extension.
             self.runtime.set_variable_raw(var_name, value)
 
     def execute_rset(self, stmt):
@@ -2489,13 +2508,16 @@ class Interpreter:
                 break
 
         if not found:
-            # If not a field variable, just do normal assignment
+            # If not a field variable, fall back to normal assignment.
+            # Note: In strict MBASIC 5.21, LSET/RSET are only for field variables.
+            # This fallback is a compatibility extension.
             self.runtime.set_variable_raw(var_name, value)
 
     def execute_midassignment(self, stmt):
         """Execute MID$ assignment statement - replace substring in-place
 
         Syntax: MID$(string_var, start, length) = value
+        (length is required in our implementation; parser should enforce this)
 
         Replaces 'length' characters in string_var starting at position 'start' (1-based).
         - If value is shorter than length, only those characters are replaced
@@ -2522,7 +2544,10 @@ class Interpreter:
             return
 
         # Calculate how many characters to actually replace
-        # This is the minimum of: length parameter, length of new_value, and available space in string
+        # min(length, len(new_value), available_space) where:
+        #   length = requested replacement length (from MID$ stmt)
+        #   len(new_value) = chars available in replacement string
+        #   available_space = chars from start_idx to end of string (prevents overrun)
         chars_to_replace = min(length, len(new_value), len(current_value) - start_idx)
 
         # Build the new string
@@ -2626,7 +2651,8 @@ class Interpreter:
         self.runtime.stopped = True
 
         # Save PC position for CONT
-        # npc is set by statement execution flow to point to next statement
+        # runtime.npc (next program counter) is set by tick() to point to the next statement
+        # to execute after the current one completes
         self.runtime.stop_pc = self.runtime.npc
 
         # Print "Break in <line>" message
@@ -2677,7 +2703,9 @@ class Interpreter:
         CONT resumes execution after a STOP statement.
         Only works in interactive mode.
 
-        Note: Ctrl+C (Break) does not set stopped flag, so CONT cannot resume after Break.
+        Note: This function only checks the stopped flag. Ctrl+C (Break) interrupts execution
+        without setting stopped=True, so CONT cannot resume after Break. This is handled elsewhere
+        in the execution flow (Break sets halted but not stopped).
         """
         if not hasattr(self, 'interactive_mode') or not self.interactive_mode:
             raise RuntimeError("CONT only available in interactive mode")
@@ -2861,7 +2889,9 @@ class Interpreter:
         call_token = self._make_token_info(expr)
 
         # Save parameter values (function parameters shadow variables)
-        # Note: We use get_variable_for_debugger here because we're saving state, not actually reading for use
+        # Note: Use get_variable_for_debugger to avoid triggering variable access tracking.
+        # We ARE using the value (to save/restore), but this is implementation detail,
+        # not program-level variable access.
         saved_vars = {}
         for i, param in enumerate(func_def.parameters):
             param_name = param.name + (param.type_suffix or "")
@@ -2874,7 +2904,8 @@ class Interpreter:
         result = self.evaluate_expression(func_def.expression)
 
         # Restore parameter values
-        # Use debugger_set=True since this is implementation detail, not actual program assignment
+        # Use debugger_set=True to avoid tracking this as program-level assignment.
+        # This is function call implementation (save/restore params), not user code.
         for param_name, saved_value in saved_vars.items():
             base_name = param_name.rstrip('$%!#')
             type_suffix = param_name[-1] if param_name[-1] in '$%!#' else None

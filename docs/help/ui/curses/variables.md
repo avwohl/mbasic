@@ -250,7 +250,7 @@ Large arrays:
 | Feature | Curses | CLI | Tk | Web |
 |---------|--------|-----|-----|-----|
 | Visual window | ✅ | ❌ | ✅ | ✅ |
-| Edit values | ⚠️ | ❌ | ✅ | ✅ |
+| Edit values | ❌ | ❌ | ✅ | ✅ |
 | Filtering | ✅ | ❌ | ✅ | ✅ |
 | Sorting | ✅ | ❌ | ✅ | ✅ |
 | Real-time | ✅ | ❌ | ✅ | ✅ |

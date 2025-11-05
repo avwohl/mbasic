@@ -71,10 +71,10 @@ class SettingsWidget(urwid.WidgetWrap):
                 if widget_group:
                     content.extend(widget_group)
 
-        # Create scrollable list (without buttons)
+        # Create scrollable list of settings widgets
         listbox = urwid.ListBox(urwid.SimpleFocusListWalker(content))
 
-        # Create footer with keyboard shortcuts hint
+        # Create footer with keyboard shortcuts (instead of button widgets)
         footer_text = urwid.Text("Enter=OK  ESC/^P=Cancel  ^A=Apply  ^R=Reset", align='center')
         footer = urwid.AttrMap(footer_text, 'header')
 
@@ -251,7 +251,7 @@ class SettingsWidget(urwid.WidgetWrap):
             None if key was handled, otherwise the key
         """
         # Handle global shortcuts first (before widgets consume them)
-        if key == 'esc':
+        if key == 'esc' or key == 'ctrl p':
             self._on_cancel()
             return None
 

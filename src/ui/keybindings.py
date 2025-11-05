@@ -136,7 +136,8 @@ VARIABLES_KEY = _ctrl_key_to_urwid(_variables_key)
 VARIABLES_CHAR = _ctrl_key_to_char(_variables_key)
 VARIABLES_DISPLAY = _variables_key
 
-# Execution stack window (menu only - no dedicated key, step_line uses Ctrl+K)
+# Execution stack window (menu only - no dedicated key)
+# Note: Ctrl+K is used by step_line, not stack window
 STACK_KEY = ''  # No keyboard shortcut
 STACK_CHAR = ''
 STACK_DISPLAY = 'Menu only'
@@ -187,6 +188,7 @@ BREAKPOINT_CHAR = _ctrl_key_to_char(_breakpoint_key)
 BREAKPOINT_DISPLAY = _breakpoint_key
 
 # Clear all breakpoints (hardcoded)
+# Note: urwid format is 'ctrl shift b', display format is 'Ctrl+Shift+B'
 CLEAR_BREAKPOINTS_KEY = 'ctrl shift b'
 CLEAR_BREAKPOINTS_DISPLAY = 'Ctrl+Shift+B'
 
@@ -281,6 +283,7 @@ KEYBINDINGS_BY_CATEGORY = {
     ],
     'Editing': [
         (BREAKPOINT_DISPLAY, 'Toggle breakpoint on current line'),
+        (CLEAR_BREAKPOINTS_DISPLAY, 'Clear all breakpoints'),
         (DELETE_LINE_DISPLAY, 'Delete current line'),
         (INSERT_LINE_DISPLAY, 'Insert line'),
         (RENUMBER_DISPLAY, 'Renumber all lines (RENUM)'),
@@ -304,7 +307,8 @@ KEYBINDINGS_BY_CATEGORY = {
 }
 
 # Quick reference for status bar - use compact ^ notation instead of Ctrl+
-STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K stack  Tab cycle  ^Q quit"
+# Note: ^K is step_line (execute current line), not stack (stack is menu-only)
+STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K step  Tab cycle  ^Q quit"
 EDITOR_STATUS = "Editor - ^F help  ^U menu  Tab cycle"
 OUTPUT_STATUS = "Output - Up/Down scroll  Tab cycle  ^U menu"
 

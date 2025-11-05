@@ -196,7 +196,7 @@ Make sure you're in the correct directory (the `mbasic` folder containing `mbasi
 
 ## Feature Status
 
-This is a complete implementation of MBASIC 5.21. All core language features are implemented and tested.
+This is a comprehensive implementation of MBASIC 5.21. All core language features and statements are implemented and tested, with some hardware-specific features emulated or adapted for modern systems.
 
 ### What Works
 - ✓ Mathematical calculations and expressions

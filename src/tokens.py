@@ -210,7 +210,17 @@ class TokenType(Enum):
 
 @dataclass
 class Token:
-    """Represents a single token in MBASIC source code"""
+    """Represents a single token in MBASIC source code.
+
+    Attributes:
+        type: Token type (keyword, identifier, number, etc.)
+        value: Normalized value (lowercase for identifiers/keywords)
+        line: Line number where token appears
+        column: Column number where token starts
+        original_case: Original case for identifiers before normalization
+        original_case_keyword: Original case for keywords (e.g., "PRINT", "Print", "print")
+                              Used by keyword case formatter to preserve or enforce case style
+    """
     type: TokenType
     value: Any  # Normalized value (lowercase for identifiers and keywords)
     line: int

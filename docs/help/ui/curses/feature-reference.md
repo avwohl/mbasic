@@ -116,7 +116,7 @@ Use your terminal's native copy/paste functions instead (typically Shift+Ctrl+C/
 
 ### Find/Replace (Not yet implemented)
 Find and Replace functionality is not yet available in Curses UI.
-See [Find/Replace Status](find-replace.md) for workarounds and alternatives.
+See [Find/Replace](find-replace.md) (available via menu) for workarounds and alternatives.
 
 ### Smart Insert (Ctrl+I)
 Insert a new line number at the midpoint between the current line and the next line.

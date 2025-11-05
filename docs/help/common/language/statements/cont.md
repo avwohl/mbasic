@@ -30,11 +30,11 @@ See example Section 2.61, STOP.
 ```
 
 ## See Also
-- [CHAIN](chain.md) - To call a program and pass variables to it            from the current program
+- [CHAIN](chain.md) - To call a program and pass variables to it from the current program
 - [CLEAR](clear.md) - To set all numeric variables to zero and all string variables to null; and, optionally, 'to set the end of memory and the amount of stack space
 - [COMMON](common.md) - To pass variables to a CHAINed program
 - [END](end.md) - To terminate program execution, close all files and return to command level
-- [NEW](new.md) - To delete the program currently   in   memory   and clear all variables
+- [NEW](new.md) - To delete the program currently in memory and clear all variables
 - [RUN](run.md) - Executes the current program or loads and runs a program from disk
-- [STOP](stop.md) - To terminate program      execution   and    return   to command level
+- [STOP](stop.md) - To terminate program execution and return to command level
 - [SYSTEM](system.md) - Exits MBASIC and returns to the operating system

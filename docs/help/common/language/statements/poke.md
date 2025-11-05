@@ -47,4 +47,4 @@ The integer expression I is the address of the memory   location to be POKEd.   
 ## See Also
 - [CALL](call.md) - To call an assembly language subroutine
 - [OUT](out.md) - To send a byte to a machine output port
-- [WAIT](wait.md) - To suspend program execution while      monitoring the status of a machine input port
+- [WAIT](wait.md) - To suspend program execution while monitoring the status of a machine input port

@@ -78,16 +78,56 @@ def extract_json_from_markdown(text: str, verbose: bool = False) -> Optional[Any
 
     # Strategy 4: Look for markdown blocks anywhere in text (not just start/end)
     # This handles cases where there's explanatory text before/after
-    all_json_blocks = re.findall(r'```(?:json)?\s*\n(.*?)\n```', text, re.DOTALL)
-    for block in all_json_blocks:
-        block = block.strip()
+    # Try multiple patterns to catch various markdown formatting issues
+    markdown_patterns = [
+        r'```json\s*\n(.*?)\n```',  # Standard ```json block
+        r'```json\s*\n(.*?)```',    # Missing newline before closing
+        r'```json\s+(.*?)\n```',    # Space instead of newline after opening
+        r'```json\s+(.*?)```',      # Space instead of newline, missing newline at close
+        r'```\s*\n(.*?)\n```',      # Plain ``` block
+        r'```\s*\n(.*?)```',        # Plain ``` block, missing newline at close
+    ]
+
+    for pattern in markdown_patterns:
+        all_json_blocks = re.findall(pattern, text, re.DOTALL)
+        for block in all_json_blocks:
+            block = block.strip()
+            try:
+                result = json.loads(block)
+                if isinstance(result, (list, dict)):
+                    if verbose:
+                        print(f"✓ Extracted from markdown block (pattern: {pattern})")
+                    return result
+            except json.JSONDecodeError:
+                continue
+
+    # Strategy 4b: Aggressive markdown stripping - handle malformed blocks
+    # If we see ```json at the start, extract everything until ``` or end of text
+    if text.strip().startswith('```json'):
+        # Find the content after ```json
+        content_start = text.find('```json') + 7  # len('```json') = 7
+        # Skip any whitespace/newlines after ```json
+        while content_start < len(text) and text[content_start] in ' \t\r\n':
+            content_start += 1
+
+        # Find the closing ``` if it exists
+        closing_backticks = text.find('```', content_start)
+        if closing_backticks != -1:
+            json_candidate = text[content_start:closing_backticks].strip()
+        else:
+            # No closing backticks - take everything to the end
+            json_candidate = text[content_start:].strip()
+
         try:
-            result = json.loads(block)
+            result = json.loads(json_candidate)
+            if isinstance(result, (list, dict)):
+                if verbose:
+                    print("✓ Extracted using aggressive markdown stripping")
+                return result
+        except json.JSONDecodeError as e:
             if verbose:
-                print("✓ Extracted from embedded markdown block")
-            return result
-        except json.JSONDecodeError:
-            continue
+                print(f"  Aggressive markdown stripping found JSON-like content but parsing failed: {e}")
+                print(f"  Candidate text (first 200 chars): {json_candidate[:200]}")
 
     # Strategy 5: Find JSON array/object patterns anywhere in text
     # Look for [ ... ] or { ... }

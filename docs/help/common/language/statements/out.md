@@ -46,4 +46,4 @@ The integer expression I is the port number, and the integer expression J is the
 ## See Also
 - [CALL](call.md) - To call an assembly language subroutine
 - [POKE](poke.md) - To write a byte into a memory location
-- [WAIT](wait.md) - To suspend program execution while      monitoring the status of a machine input port
+- [WAIT](wait.md) - To suspend program execution while monitoring the status of a machine input port

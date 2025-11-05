@@ -168,9 +168,11 @@ class InteractiveMode:
         # Use emacs-style keybindings (default, but be explicit)
         readline.parse_and_bind('set editing-mode emacs')
 
-        # Bind Ctrl+A to insert literal \x01 character instead of moving cursor
-        # This overrides default Ctrl+A (beginning-of-line). The literal character
-        # appears in input string where it's detected for edit mode (see start() method)
+        # Bind Ctrl+A to insert the character instead of moving cursor to beginning-of-line
+        # This overrides default Ctrl+A (beginning-of-line) behavior.
+        # When user presses Ctrl+A, the terminal sends ASCII 0x01, and 'self-insert'
+        # tells readline to insert it as-is instead of interpreting it as a command.
+        # The \x01 character in the input string triggers edit mode (see start() method)
         readline.parse_and_bind('Control-a: self-insert')
 
     def _completer(self, text, state):
@@ -321,8 +323,9 @@ class InteractiveMode:
         args = parts[1] if len(parts) > 1 else ""
 
         # Meta-commands (editor commands that manipulate program source)
-        # Only AUTO and EDIT are true meta-commands that can't be parsed - they're
-        # handled specially below. Everything else goes through parser as immediate mode.
+        # AUTO and EDIT are meta-commands that require special handling - they can't be
+        # parsed as BASIC statements, so they're handled directly here.
+        # Everything else goes through the parser as immediate mode statements.
         if command == "AUTO":
             self.cmd_auto(args)
         elif command == "EDIT":
@@ -789,6 +792,9 @@ class InteractiveMode:
         - Removing lines from program manager
         - Updating runtime statement table if program is loaded
 
+        Error handling: ValueError is caught and displayed with "?" prefix,
+        all other exceptions are converted to "?Syntax error".
+
         Syntax:
             DELETE 40       - Delete single line 40
             DELETE 40-100   - Delete lines 40 through 100 (inclusive)
@@ -811,7 +817,8 @@ class InteractiveMode:
     def cmd_renum(self, args):
         """RENUM [new_start][,[old_start][,increment]] - Renumber program lines and update references
 
-        Delegates to renum_program() from ui_helpers, which uses an AST-based approach:
+        Delegates to renum_program() from ui_helpers.
+        The renum_program() implementation uses an AST-based approach (see ui_helpers.py):
         1. Parse program to AST
         2. Build line number mapping (old -> new)
         3. Walk AST and update all line number references (via _renum_statement callback)
@@ -993,6 +1000,7 @@ class InteractiveMode:
         - <CR>: End and save
 
         Note: Count prefixes ([n]D, [n]C) and search commands ([n]S, [n]K) are not yet implemented.
+        If entered, they will be treated as unknown commands and silently ignored.
         """
         if not args or not args.strip():
             print("?Syntax error - specify line number")
@@ -1321,9 +1329,10 @@ class InteractiveMode:
             if ast.lines and len(ast.lines) > 0:
                 line_node = ast.lines[0]
                 # Save old PC to preserve stopped program position.
-                # Immediate mode does NOT support GOTO/GOSUB (see help text),
-                # so any PC changes from statements are not meaningful and
-                # would break CONT functionality for stopped programs.
+                # Immediate mode should NOT use GOTO/GOSUB (see help text) because
+                # PC changes would break CONT functionality for stopped programs.
+                # We save/restore PC to prevent this, but the statements themselves
+                # can technically execute GOTO/GOSUB - they just won't have the intended effect.
                 old_pc = runtime.pc
 
                 # Execute each statement on line 0
@@ -1331,6 +1340,7 @@ class InteractiveMode:
                     interpreter.execute_statement(stmt)
 
                 # Restore previous PC to maintain stopped program position
+                # This prevents GOTO/GOSUB in immediate mode from affecting CONT
                 runtime.pc = old_pc
 
         except Exception as e:

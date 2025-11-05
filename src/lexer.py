@@ -11,6 +11,10 @@ def create_keyword_case_manager() -> SimpleKeywordCase:
     """
     Create a SimpleKeywordCase handler configured from settings.
 
+    Uses SimpleKeywordCase for straightforward case policy handling.
+    (Historical note: Earlier versions considered a more complex KeywordCaseManager
+    for advanced policies, but SimpleKeywordCase proved sufficient.)
+
     Returns:
         SimpleKeywordCase with policy from settings, or default policy
     """

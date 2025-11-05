@@ -31,7 +31,7 @@ REM statements are not executed but are output exactly as entered when the progr
              130 FOR I=1 TO 20
              140 SUM=SUM + V(I)
              or, with Extended and Disk versions:
-             120 FOR I=l TO 20     'CALCULATE   AVERAGE VELOCITY
+             120 FOR I=1 TO 20     'CALCULATE AVERAGE VELOCITY
              130 SUM=SUM+V(I)
              140 NEXT I
 ```

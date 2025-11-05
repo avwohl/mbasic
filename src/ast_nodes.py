@@ -523,35 +523,9 @@ class LimitsStatementNode:
     column: int = 0
 
 
-@dataclass
-class ShowSettingsStatementNode:
-    """SHOWSETTINGS statement - display current settings
-
-    Syntax:
-        SHOWSETTINGS          - Display all settings
-        SHOWSETTINGS filter   - Display settings matching filter (e.g., "editor")
-
-    Shows current setting values with optional filter prefix.
-    """
-    filter: Optional[Any] = None  # Optional filter expression
-    line_num: int = 0
-    column: int = 0
-
-
-@dataclass
-class SetSettingStatementNode:
-    """SETSETTING statement - modify a setting value
-
-    Syntax:
-        SETSETTING key value  - Set setting to value
-
-    Example:
-        SETSETTING editor.auto_number_step 100
-    """
-    key: Any  # Key expression (string)
-    value: Any  # Value expression
-    line_num: int = 0
-    column: int = 0
+# NOTE: SetSettingStatementNode and ShowSettingsStatementNode are defined later in the file
+# in the "Settings Commands" section (around line 1005-1038) with the correct field names.
+# These earlier definitions were removed to eliminate duplicates.
 
 
 @dataclass
@@ -717,7 +691,7 @@ class StepStatementNode:
 
     STEP executes one or more statements in debug mode, pausing after each.
     """
-    count: int = None
+    count: Optional[int] = None
     line_num: int = 0
     column: int = 0
 
@@ -832,7 +806,6 @@ class DefFnStatementNode:
     parameters: List['VariableNode']
     expression: 'ExpressionNode'
     line_num: int = 0
-    column: int = 0
     column: int = 0
 
 

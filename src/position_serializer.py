@@ -64,8 +64,9 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
         return keyword.capitalize()
 
     elif policy == "preserve":
-        # Preserve is handled by caller passing in original case
-        # This shouldn't be called with "preserve", but if it is, use capitalize
+        # Preserve is handled by caller passing in original case - caller should not call this function
+        # However, we handle it defensively: if called with "preserve", return capitalize as fallback
+        # This allows the code to work even if caller incorrectly passes "preserve" policy
         return keyword.capitalize()
 
     else:

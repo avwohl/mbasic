@@ -4,9 +4,26 @@ External user-facing documentation and guides.
 
 ## Contents
 
+### Getting Started
+- **[INSTALL.md](INSTALL.md)** - Installation guide
+- **[INSTALLATION.md](INSTALLATION.md)** - Alternative installation instructions
+- **[CHOOSING_YOUR_UI.md](CHOOSING_YOUR_UI.md)** - Guide to selecting the right UI
+
+### UI-Specific Guides
+- **[TK_UI_QUICK_START.md](TK_UI_QUICK_START.md)** - Tk/Tkinter UI quick start
+
+### Reference Documentation
 - **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick command reference
-- **[URWID_UI.md](URWID_UI.md)** - Urwid/curses UI guide
+- **[keyboard-shortcuts.md](keyboard-shortcuts.md)** - Keyboard shortcuts reference
+- **[UI_FEATURE_COMPARISON.md](UI_FEATURE_COMPARISON.md)** - Feature comparison across UIs
+
+### Configuration
+- **[SETTINGS_AND_CONFIGURATION.md](SETTINGS_AND_CONFIGURATION.md)** - Settings guide
+- **[CASE_HANDLING_GUIDE.md](CASE_HANDLING_GUIDE.md)** - Variable and keyword case handling
+
+### Compatibility
 - **[FILE_FORMAT_COMPATIBILITY.md](FILE_FORMAT_COMPATIBILITY.md)** - File format, line endings, CP/M compatibility
+- **[sequential-files.md](sequential-files.md)** - Sequential file I/O guide
 
 ## Purpose
 

@@ -34,7 +34,14 @@ class InMemoryFileHandle(FileHandle):
         return self.file_obj.write(data)
 
     def flush(self):
-        """Flush write buffers."""
+        """Flush write buffers.
+
+        Note: This calls StringIO/BytesIO flush() which are no-ops.
+        Content is only saved to the virtual filesystem on close().
+        This differs from file flush() semantics where flush() typically
+        persists buffered writes. For in-memory files, all writes are
+        already in memory, so flush() has no meaningful effect.
+        """
         # StringIO/BytesIO have flush() methods (no-ops) - hasattr check for safety
         if hasattr(self.file_obj, 'flush'):
             self.file_obj.flush()

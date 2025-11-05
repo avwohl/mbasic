@@ -26,15 +26,13 @@ AUTO begins numbering at <line number> and increments   each   subsequent line n
 ## Example
 
 ```basic
-AUTO 100,50      Generates line numbers 100,
-                              150, 200 •••
-             AUTO             Generates line numbers 10,
-                              20,30,40 •••
+AUTO 100,50    # Generates line numbers 100, 150, 200 •••
+AUTO           # Generates line numbers 10, 20, 30, 40 •••
 ```
 
 ## See Also
 - [DELETE](delete.md) - To delete program lines
 - [EDIT](edit.md) - To enter Edit Mode at the specified line
-- [LIST](list.md) - To list all or part of the program currently            in memory at the terminal
-- [LLIST](llist.md) - To list all or part of the program currently     in memory at the line printer
+- [LIST](list.md) - To list all or part of the program currently in memory at the terminal
+- [LLIST](llist.md) - To list all or part of the program currently in memory at the line printer
 - [RENUM](renum.md) - Renumber program lines and update line references

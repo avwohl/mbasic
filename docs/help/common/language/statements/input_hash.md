@@ -1,6 +1,6 @@
 ---
 category: file-io
-description: To read data items from a sequential disk    file and assign them to program variables
+description: To read data items from a sequential disk file and assign them to program variables
 keywords: ['command', 'data', 'file', 'for', 'if', 'input', 'line', 'number', 'open', 'print']
 syntax: INPUT#<file number>,<variable list>
 title: "INPUT# (File)"
@@ -19,7 +19,7 @@ INPUT#<file number>,<variable list>
 
 ## Purpose
 
-To read data items from a sequential disk    file and assign them to program variables.
+To read data items from a sequential disk file and assign them to program variables.
 
 ## Remarks
 

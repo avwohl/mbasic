@@ -128,7 +128,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
     2. Line number (variable width): auto-numbered line numbers
     3. Program text (rest): BASIC code
 
-    Note: Line numbers use variable width (not fixed 5 chars) for flexibility with large programs.
+    Note: Line numbers are formatted with fixed 5-char width for alignment,
+    but parsing accepts variable width for flexibility.
     """
 
     def __init__(self):
@@ -1255,6 +1256,8 @@ class CursesBackend(UIBackend):
         self.stack_window_visible = False
 
         # Editor state
+        # Note: self.editor_lines is the CursesBackend's storage dict
+        # self.editor.lines is the ProgramEditorWidget's storage dict (different object)
         self.editor_lines = {}  # line_num -> text for editing
         self.current_line_num = 10  # Default starting line number
         self.current_filename = None  # Track current filename for Save vs Save As
@@ -1268,8 +1271,6 @@ class CursesBackend(UIBackend):
         from src.runtime import Runtime
         from src.interpreter import Interpreter
         from src.resource_limits import create_unlimited_limits
-        from src.immediate_executor import OutputCapturingIOHandler
-
         self.runtime = Runtime({}, {})
 
         # Create capturing IO handler for execution (created once, reused)
@@ -3974,7 +3975,9 @@ class CursesBackend(UIBackend):
 
                 # Initialize interpreter state for execution
                 # NOTE: Don't call interpreter.start() because it resets PC!
-                # RUN 120 already set PC to line 120, so just clear halted flag
+                # RUN 120 already set PC to line 120, so we preserve it.
+                # We only create InterpreterState if it doesn't exist (first run of session),
+                # which initializes tracking state but doesn't modify PC/runtime state.
                 from src.interpreter import InterpreterState
                 if not hasattr(self.interpreter, 'state') or self.interpreter.state is None:
                     self.interpreter.state = InterpreterState(_interpreter=self.interpreter)

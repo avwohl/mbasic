@@ -3,6 +3,10 @@ MBASIC Error Codes and Messages
 
 Based on Appendix F of the MBASIC-80 Reference Manual.
 Each error has a numeric code, a two-letter code, and a message.
+
+Note: Some two-letter codes are duplicated (e.g., DD, CN, DF) across different
+numeric error codes. This matches the original MBASIC 5.21 specification where
+the two-letter codes alone are ambiguous - the numeric code is authoritative.
 """
 
 # Error code mapping: number -> (two_letter_code, message)

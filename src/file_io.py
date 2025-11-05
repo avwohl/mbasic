@@ -1,5 +1,19 @@
 """
-File I/O abstraction for MBASIC interpreter.
+File I/O abstraction for MBASIC interpreter - PROGRAM file operations.
+
+This module handles PROGRAM file operations (FILES, LOAD, SAVE, MERGE, KILL commands).
+For RUNTIME file I/O (OPEN, CLOSE, INPUT#, PRINT# statements), see src/filesystem/base.py.
+
+TWO SEPARATE FILESYSTEM ABSTRACTIONS:
+1. FileIO (this file) - Program management operations
+   - Used by: Interactive mode, UI file browsers
+   - Operations: FILES (list), LOAD/SAVE/MERGE (program files), KILL (delete)
+   - Purpose: Load .BAS programs into memory, save from memory to disk
+
+2. FileSystemProvider (src/filesystem/base.py) - Runtime file I/O
+   - Used by: Interpreter during program execution
+   - Operations: OPEN/CLOSE, INPUT#/PRINT#/WRITE#, EOF(), LOC(), LOF()
+   - Purpose: File I/O from within running BASIC programs
 
 Provides sandboxed file operations for different UI contexts:
 - RealFileIO: Direct filesystem access (TK, Curses, CLI)
@@ -15,7 +29,7 @@ class FileIO(ABC):
 
     Different UIs provide different implementations:
     - Local UIs (TK/Curses/CLI): RealFileIO (direct filesystem)
-    - Web UI: SandboxedFileIO (browser localStorage)
+    - Web UI: SandboxedFileIO (delegates to backend.sandboxed_fs, an in-memory filesystem)
     """
 
     @abstractmethod
@@ -146,8 +160,10 @@ class RealFileIO(FileIO):
 class SandboxedFileIO(FileIO):
     """Sandboxed file operations for web UI.
 
-    Designed for browser localStorage file storage with 'mbasic_file_' prefix.
-    No access to server filesystem - all files are client-side only.
+    Acts as an adapter to backend.sandboxed_fs (SandboxedFileSystemProvider from
+    src/filesystem/sandboxed_fs.py), which provides an in-memory virtual filesystem.
+    Files are stored in Python server memory (not browser localStorage).
+    No access to server filesystem - all files are sandboxed in memory.
 
     NOTE: Partially implemented. list_files() delegates to backend.sandboxed_fs,
     but load_file(), save_file(), delete_file(), and file_exists() are STUBS that
@@ -159,7 +175,8 @@ class SandboxedFileIO(FileIO):
         """Initialize sandboxed file I/O.
 
         Args:
-            backend: NiceGUIBackend instance for JavaScript execution
+            backend: NiceGUIBackend instance that has a sandboxed_fs attribute
+                    (SandboxedFileSystemProvider instance)
         """
         self.backend = backend
 

@@ -44,6 +44,8 @@ Summary of BASIC-80 error codes and their meanings.
 
 ## Extended and Disk Version Errors
 
+**Note:** Error codes 24-25, 27-28, and 31-49 are not defined in MBASIC 5.21 and are reserved for future use or specific system implementations.
+
 | Code | Number | Message | Description |
 |------|--------|---------|-------------|
 | | 19 | No RESUME | An error trapping routine is entered but contains no RESUME statement. |
@@ -56,6 +58,8 @@ Summary of BASIC-80 error codes and their meanings.
 | | 30 | WEND without WHILE | A WEND was encountered without a matching WHILE. |
 
 ## Disk I/O Errors
+
+**Note:** Error codes 56, 59-60, and 65 are not defined in MBASIC 5.21 and are reserved for future use or specific system implementations.
 
 | Code | Number | Message | Description |
 |------|--------|---------|-------------|

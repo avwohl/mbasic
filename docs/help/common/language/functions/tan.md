@@ -17,7 +17,7 @@ TAN (X)
 
 ## Description
 
-Returns the tangent of X in radians. TAN (X) is calculated in single preclslon. If TAN overflows, the "Overflow" error message is displayed, machine infinity with the appropriate sign is supplied as the . result, and execution continues.
+Returns the tangent of X in radians. TAN (X) is calculated in single precision. If TAN overflows, the "Overflow" error message is displayed, machine infinity with the appropriate sign is supplied as the result, and execution continues.
 
 ## Example
 

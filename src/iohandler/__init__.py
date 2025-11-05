@@ -6,6 +6,12 @@ allowing the interpreter to work with different I/O backends
 
 Note: This module was originally named 'io' but was renamed to 'iohandler'
 to avoid conflicts with Python's built-in 'io' module.
+
+GUIIOHandler and WebIOHandler are not exported here because they have
+dependencies on their respective UI frameworks (tkinter, nicegui).
+They should be imported directly from their modules when needed:
+  - from src.iohandler.gui import GUIIOHandler
+  - from src.iohandler.web_io import WebIOHandler
 """
 
 from .base import IOHandler

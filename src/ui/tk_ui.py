@@ -1048,9 +1048,9 @@ class TkBackend(UIBackend):
         # to determine if we're clicking the arrow or the text
         if column == '#0':  # Tree column (Variable)
             col_x = event.x
-        elif column == '#1':  # Value column (swapped to be first)
+        elif column == '#1':  # Value column (first data column)
             col_x = event.x - self.variables_tree.column('#0', 'width')
-        elif column == '#2':  # Type column (swapped to be second)
+        elif column == '#2':  # Type column (second data column)
             col_x = event.x - self.variables_tree.column('#0', 'width') - self.variables_tree.column('Value', 'width')
         else:
             return
@@ -1086,8 +1086,8 @@ class TkBackend(UIBackend):
 
         # Extract variable info from display
         variable_display = item_data['text']  # From #0 column (Variable)
-        value_display = str(item_data['values'][0])  # Value column (swapped to first) - convert to string
-        type_suffix_display = item_data['values'][1]  # Type column (swapped to second)
+        value_display = str(item_data['values'][0])  # Value column (first data column) - convert to string
+        type_suffix_display = item_data['values'][1]  # Type column (second data column)
 
         # Parse variable name and type
         # Format examples: "A%", "NAME$", "X", "A%(10x10) [5,3]=42"
@@ -1167,11 +1167,13 @@ class TkBackend(UIBackend):
                 suffix = None
 
             # Create a token with line=-1 to indicate immediate mode / variable editor
+            # This token is used by set_variable to track the edit source
             class ImmediateModeToken:
                 def __init__(self):
                     self.line = -1
                     self.position = None
 
+            # Update the variable using the runtime's set_variable method
             self.runtime.set_variable(
                 base_name,
                 suffix,
@@ -1230,9 +1232,12 @@ class TkBackend(UIBackend):
             if array_base == 0:
                 # OPTION BASE 0: use all zeros
                 default_subscripts = ','.join(['0'] * len(dimensions))
-            else:
+            elif array_base == 1:
                 # OPTION BASE 1: use all ones
                 default_subscripts = ','.join(['1'] * len(dimensions))
+            else:
+                # Invalid array_base - default to 0
+                default_subscripts = ','.join(['0'] * len(dimensions))
 
         # Create custom dialog
         dialog = tk.Toplevel(self.variables_window)
@@ -3451,6 +3456,10 @@ class TkBackend(UIBackend):
         - END statement (in some cases)
 
         Invalid if program was edited after stopping.
+
+        TODO: This implementation is incomplete. The runtime.stop_line and
+        runtime.stop_stmt_index attributes are not set anywhere when a program
+        stops, so this will fail. Need to implement proper state saving on STOP.
         """
         # Check if runtime exists and is in stopped state
         if not self.runtime or not self.runtime.stopped:
@@ -3462,16 +3471,18 @@ class TkBackend(UIBackend):
             self.runtime.stopped = False
 
             # Restore execution position
-            self.runtime.current_line = self.runtime.stop_line
-            self.runtime.current_stmt_index = self.runtime.stop_stmt_index
+            # TODO: These attributes don't exist - need to implement proper STOP state saving
+            if hasattr(self.runtime, 'stop_line') and hasattr(self.runtime, 'stop_stmt_index'):
+                self.runtime.current_line = self.runtime.stop_line
+                self.runtime.current_stmt_index = self.runtime.stop_stmt_index
             self.runtime.halted = False
 
             # Resume tick-based execution
             # The interpreter will continue from the saved position
             # Start ticking again
-            self.is_running = True
+            self.running = True  # Fixed: was self.is_running
             self._set_status("Running")
-            self._tick()
+            self._execute_tick()  # Fixed: was self._tick()
 
         except Exception as e:
             self._write_output(f"?Error continuing: {e}")

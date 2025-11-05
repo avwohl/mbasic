@@ -59,12 +59,12 @@ Shows active FOR loops and GOSUB calls. Perfect for understanding nested structu
 
 ## Find and Replace
 
-**Find text ({{kbd:find}}):**
+**Find text (Ctrl+F):**
 - Opens Find dialog with search options
 - Case sensitive and whole word matching
 - Press F3 to find next occurrence
 
-**Replace text ({{kbd:find_replace}}):**
+**Replace text (Ctrl+H):**
 - Find and replace single or all occurrences
 - Visual highlighting of matches
 - Shows replacement count

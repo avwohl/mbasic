@@ -40,17 +40,17 @@ CLEAR resets all variables to their initial values (0 for numbers, empty for str
 
 ```basic
 CLEAR
-                CLEAR ,32768
-                CLEAR ,,2000
-                CLEAR ,32768,2000
+CLEAR ,32768
+CLEAR ,,2000
+CLEAR ,32768,2000
 ```
 
 ## See Also
-- [CHAIN](chain.md) - To call a program and pass variables to it            from the current program
+- [CHAIN](chain.md) - To call a program and pass variables to it from the current program
 - [COMMON](common.md) - To pass variables to a CHAINed program
 - [CONT](cont.md) - To continue program execution after a Control-C has been typed, or a STOP or END statement has been executed
 - [END](end.md) - To terminate program execution, close all files and return to command level
-- [NEW](new.md) - To delete the program currently   in   memory   and clear all variables
+- [NEW](new.md) - To delete the program currently in memory and clear all variables
 - [RUN](run.md) - Executes the current program or loads and runs a program from disk
-- [STOP](stop.md) - To terminate program      execution   and    return   to command level
+- [STOP](stop.md) - To terminate program execution and return to command level
 - [SYSTEM](system.md) - Exits MBASIC and returns to the operating system

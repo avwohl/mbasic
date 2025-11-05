@@ -47,4 +47,4 @@ The CALL statement is one way to transfer program flow to an assembly language s
 ## See Also
 - [OUT](out.md) - To send a byte to a machine output port
 - [POKE](poke.md) - To write a byte into a memory location
-- [WAIT](wait.md) - To suspend program execution while      monitoring the status of a machine input port
+- [WAIT](wait.md) - To suspend program execution while monitoring the status of a machine input port

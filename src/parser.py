@@ -135,9 +135,9 @@ class Parser:
     def at_end_of_line(self) -> bool:
         """Check if at end of logical line (NEWLINE or EOF)
 
-        Note: APOSTROPHE starts a comment statement and ends the current statement,
-        but not the line itself (the comment content continues on the same line).
-        This allows comment statements to be preserved in the AST.
+        Note: APOSTROPHE (') starts a comment that consumes the rest of the line.
+        The comment content is preserved in the AST as a statement, but no further
+        statements can follow on the same line after a comment.
         """
         if self.at_end_of_tokens():
             return True
@@ -1587,7 +1587,7 @@ class Parser:
             filter_expr = self.parse_expression()
 
         return ShowSettingsStatementNode(
-            filter=filter_expr,
+            pattern=filter_expr,  # Use 'pattern' field name to match node definition
             line_num=token.line,
             column=token.column
         )
@@ -1607,7 +1607,7 @@ class Parser:
         value_expr = self.parse_expression()
 
         return SetSettingStatementNode(
-            key=key_expr,
+            setting_name=key_expr,  # Use 'setting_name' field name to match node definition
             value=value_expr,
             line_num=token.line,
             column=token.column
@@ -2635,17 +2635,15 @@ class Parser:
 
         # Parse letter ranges
         while not self.at_end_of_line() and not self.match(TokenType.COLON):
-            # Get first letter
+            # Get first letter (normalize to lowercase for def_type_map)
             letter_token = self.expect(TokenType.IDENTIFIER)
-            first_letter = letter_token.value[0].upper()
-            first_letter_lower = first_letter.lower()
+            first_letter_lower = letter_token.value[0].lower()
 
             # Check for range (A-Z)
             if self.match(TokenType.MINUS):
                 self.advance()
                 last_letter_token = self.expect(TokenType.IDENTIFIER)
-                last_letter = last_letter_token.value[0].upper()
-                last_letter_lower = last_letter.lower()
+                last_letter_lower = last_letter_token.value[0].lower()
 
                 # Update def_type_map and letters set for range (use lowercase)
                 for letter in range(ord(first_letter_lower), ord(last_letter_lower) + 1):

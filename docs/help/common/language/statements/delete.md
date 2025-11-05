@@ -36,6 +36,6 @@ DELETE 40         Deletes line 40
 ## See Also
 - [AUTO](auto.md) - To generate a line number   automatically     after every carriage return
 - [EDIT](edit.md) - To enter Edit Mode at the specified line
-- [LIST](list.md) - To list all or part of the program currently            in memory at the terminal
-- [LLIST](llist.md) - To list all or part of the program currently     in memory at the line printer
+- [LIST](list.md) - To list all or part of the program currently in memory at the terminal
+- [LLIST](llist.md) - To list all or part of the program currently in memory at the line printer
 - [RENUM](renum.md) - Renumber program lines and update line references

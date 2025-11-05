@@ -977,8 +977,13 @@ class BuiltinFunctions:
         INPUT$ - Read num characters from keyboard or file.
         (Method name is INPUT since Python doesn't allow $ in names)
 
-        INPUT$(n) - read n characters from keyboard
-        INPUT$(n, #filenum) - read n characters from file
+        BASIC syntax:
+            INPUT$(n) - read n characters from keyboard
+            INPUT$(n, #filenum) - read n characters from file
+
+        Python call syntax (from interpreter):
+            INPUT(n) - read n characters from keyboard
+            INPUT(n, filenum) - read n characters from file (no # prefix)
         """
         num = int(num)
 

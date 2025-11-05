@@ -39,7 +39,7 @@ class ResourceLimits:
                  # Memory limits
                  max_total_memory: int = 10*1024*1024,  # 10MB default
                  max_array_size: int = 1*1024*1024,      # 1MB per array
-                 max_string_length: int = 255,            # 255 bytes (MBASIC 5.21 limit - standard for 8-bit BASIC)
+                 max_string_length: int = 255,            # 255 bytes (MBASIC 5.21 compatibility - can be overridden)
 
                  # File system limits
                  max_open_files: int = 10,
@@ -185,7 +185,7 @@ class ResourceLimits:
         # Calculate total elements (all dimensions multiplied)
         total_elements = 1
         for dim_size in dimensions:
-            total_elements *= (dim_size + 1)  # +1 because BASIC is 0-indexed
+            total_elements *= (dim_size + 1)  # +1 because DIM A(N) creates N+1 elements (0 to N)
 
         # Estimate element size
         element_size = self.estimate_size(None, element_type)
@@ -359,7 +359,7 @@ def create_web_limits() -> ResourceLimits:
         max_while_depth=25,
         max_total_memory=5*1024*1024,      # 5MB
         max_array_size=512*1024,            # 512KB per array
-        max_string_length=255,              # 255 bytes (MBASIC 5.21 limit - standard for 8-bit BASIC)
+        max_string_length=255,              # 255 bytes (MBASIC 5.21 compatibility)
         max_open_files=5,
         max_file_size=256*1024,             # 256KB per file
         max_total_files=10,
@@ -380,7 +380,7 @@ def create_local_limits() -> ResourceLimits:
         max_while_depth=100,
         max_total_memory=100*1024*1024,     # 100MB
         max_array_size=10*1024*1024,        # 10MB per array
-        max_string_length=255,              # 255 bytes (MBASIC 5.21 limit - standard for 8-bit BASIC)
+        max_string_length=255,              # 255 bytes (MBASIC 5.21 compatibility)
         max_open_files=20,
         max_file_size=10*1024*1024,         # 10MB per file
         max_total_files=100,
@@ -401,7 +401,7 @@ def create_unlimited_limits() -> ResourceLimits:
         max_while_depth=1000,
         max_total_memory=1024*1024*1024,    # 1GB
         max_array_size=100*1024*1024,       # 100MB per array
-        max_string_length=1024*1024,        # 1MB strings
+        max_string_length=1024*1024,        # 1MB strings (for testing/development - not MBASIC compatible)
         max_open_files=100,
         max_file_size=100*1024*1024,        # 100MB per file
         max_total_files=1000,

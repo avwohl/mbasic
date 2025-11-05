@@ -2,6 +2,22 @@
 
 Manages program lines, ASTs, parsing, and file operations.
 Extracted from InteractiveMode to enable reuse across different UIs.
+
+FILE I/O ARCHITECTURE:
+This manager uses direct Python file I/O (open/read/write) for loading and saving
+.BAS program files. This is intentional and separate from the two filesystem abstractions:
+
+1. FileIO (src/file_io.py) - For interactive commands (FILES, LOAD, SAVE)
+   - Web UI uses SandboxedFileIO (browser localStorage)
+   - Local UIs use RealFileIO (direct filesystem)
+
+2. FileSystemProvider (src/filesystem/base.py) - For runtime BASIC statements
+   - Used during program execution (OPEN, INPUT#, PRINT#)
+
+ProgramManager uses direct file I/O because:
+- It's only used by local UIs (CLI, Curses, Tk) where filesystem access is safe
+- Web UI uses FileIO abstraction in interactive.py instead
+- Keeps manager simple and free of UI-specific abstractions
 """
 
 import re

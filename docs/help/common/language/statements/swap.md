@@ -41,4 +41,4 @@ LIST
 ```
 
 ## See Also
-- [LET](let.md) - To assign     the   value   of   an   expression   to   a variable
+- [LET](let.md) - To assign the value of an expression to a variable

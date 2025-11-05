@@ -31,8 +31,12 @@ class ImmediateExecutor:
     - 'error' - Program encountered error
 
     DO NOT execute when status is:
-    - 'running' - Program is executing (tick() is running)
-    - 'waiting_for_input' - Program is waiting for INPUT (use normal input instead)
+    - 'running' - Program is executing (tick() is running) and not halted
+
+    CAN execute when waiting for input:
+    - 'waiting_for_input' - Program is waiting for INPUT. Immediate mode is allowed
+      to inspect/modify variables while paused for input. However, the user should
+      respond to the input prompt via normal input, not via immediate commands.
 
     Usage:
         executor = ImmediateExecutor(runtime, interpreter, io_handler)
@@ -81,8 +85,8 @@ class ImmediateExecutor:
             # Safe to execute immediate commands when:
             # - Program is halted (paused/done/breakpoint)
             # - OR there's an error
-            # - OR waiting for input
-            # NOT safe when program is actively running
+            # - OR waiting for input (allows inspection while paused for INPUT)
+            # NOT safe when program is actively running (halted=False)
             return (self.runtime.halted or
                     state.error_info is not None or
                     state.input_prompt is not None)
@@ -330,7 +334,8 @@ LIMITATIONS:
 ───────────────────────────────────────────────────────────────────
 
   • Multi-statement lines (: separator) work but are not recommended
-  • GOTO, GOSUB, and control flow statements are not supported
+  • GOTO, GOSUB, and control flow statements are not recommended
+    (they will execute but may produce unexpected results)
   • DEF FN works, but FN calls may fail without proper program context
   • Cannot execute while program is actively running (paused/input/breakpoint OK)
 

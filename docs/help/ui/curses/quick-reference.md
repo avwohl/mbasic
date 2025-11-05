@@ -23,7 +23,7 @@ Quick reference for the curses text UI.
 |-----|--------|
 | **Ctrl+Q** | Quit |
 | **Ctrl+U** | Show menu |
-| **?** | Help (with search) |
+| **^F** (Ctrl+F) | Help (with search) |
 | **Ctrl+W** | Toggle variables watch window |
 | **Menu only** | Toggle execution stack window |
 
@@ -34,7 +34,7 @@ Quick reference for the curses text UI.
 | **Ctrl+R** | Run program |
 | **Menu only** | List program |
 | **Ctrl+N** | New program |
-| **Ctrl+V** | Save program |
+| **^V** (Ctrl+V) | Save program (Ctrl+S unavailable - terminal flow control) |
 | **Ctrl+O** | Open/Load program |
 
 ## Editing

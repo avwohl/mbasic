@@ -1,6 +1,6 @@
 ---
 category: hardware
-description: To suspend program execution while      monitoring the status of a machine input port
+description: To suspend program execution while monitoring the status of a machine input port
 keywords: ['command', 'data', 'for', 'if', 'input', 'loop', 'next', 'number', 'program', 'put']
 syntax: WAIT <port number>, I[,J]
 title: WAIT
@@ -30,7 +30,7 @@ where I and J are integer expressions
 
 ## Purpose
 
-To suspend program execution while      monitoring the status of a machine input port.
+To suspend program execution while monitoring the status of a machine input port.
 
 ## Remarks
 

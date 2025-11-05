@@ -37,26 +37,31 @@ The Web UI debugger currently offers:
 
 ### Debug Mode
 
-1. **Set breakpoints** where needed
-2. Click **Debug** button or press `F5`
+1. **Set breakpoints** where needed (via Run menu)
+2. Use **Run → Run Program** or press `Ctrl+R` to start
 3. Program runs until first breakpoint
-4. Debugger panel activates
+4. Use **Run → Continue** or `Ctrl+G` to continue
+5. Use **Run → Stop** or `Ctrl+Q` to stop
 
 ### Debug Controls
 
-When paused at breakpoint:
+**Currently implemented:**
 
-- **Continue (F5)** - Run to next breakpoint
-- **Step Over (F10)** - Execute current line
-- **Step Into (F11)** - Enter subroutine
-- **Step Out (Shift+F11)** - Exit current subroutine
-- **Stop (Shift+F5)** - End debug session
+- **Run (Ctrl+R)** - Start program from beginning
+- **Continue (Ctrl+G)** - Run to next breakpoint
+- **Step Statement (Ctrl+T)** - Execute one statement
+- **Step Line (Ctrl+K)** - Execute one line (all statements on line)
+- **Stop (Ctrl+Q)** - End execution
+
+**Note:** Function key shortcuts (F5, F10, F11, etc.) are not implemented in the Web UI.
 
 ## Variable Inspector
 
+**Note:** The detailed variable inspector features described below are partially implemented. Basic variable viewing via Debug menu is available, but the advanced panels and watch expressions are planned for future releases.
+
 ### Variables Panel
 
-Located in right sidebar during debugging:
+Would be located in right sidebar during debugging:
 
 ```
 Variables
@@ -104,9 +109,11 @@ Add custom expressions to monitor:
 
 ## Call Stack
 
+**Note:** The call stack panel described below is a planned feature and not yet implemented in the Web UI.
+
 ### Stack Panel
 
-Shows execution path:
+Would show execution path:
 
 ```
 Call Stack
@@ -138,13 +145,15 @@ Shows:
 
 ## Execution Flow
 
-### Current Line Highlighting
+**Note:** The execution flow features described below are planned for future releases.
+
+### Current Line Highlighting (Planned)
 
 - **Yellow highlight** - Next line to execute
 - **Green highlight** - Just executed
 - **Gray highlight** - Skipped line (IF/THEN)
 
-### Execution Trace
+### Execution Trace (Planned)
 
 Enable trace mode to see:
 ```
@@ -156,7 +165,7 @@ Enable trace mode to see:
 [60] END
 ```
 
-### Flow Visualization
+### Flow Visualization (Planned)
 
 - Arrows show jump targets
 - GOSUB/RETURN paths highlighted
@@ -204,7 +213,9 @@ Will provide timing and performance data:
 
 ## Debug Settings
 
-### Options Menu
+**Note:** The debug settings described below are planned for future releases. See [Settings](settings.md) for currently available settings.
+
+### Options Menu (Planned)
 
 **Display Options:**
 - Show line numbers
@@ -281,26 +292,19 @@ Will provide timing and performance data:
 
 ## Keyboard Shortcuts
 
-**Debug Control:**
+**Currently Implemented:**
+- `Ctrl+R` - Run program
+- `Ctrl+G` - Continue (run to next breakpoint)
+- `Ctrl+T` - Step statement
+- `Ctrl+K` - Step line
+- `Ctrl+Q` - Stop execution
+
+**Planned for Future Releases:**
 - `F5` - Start/Continue debugging
-- `Shift+F5` - Stop debugging
 - `F9` - Toggle breakpoint
-- `Ctrl+F9` - Clear all breakpoints
 - `F10` - Step over
 - `F11` - Step into
-- `Shift+F11` - Step out
-
-**Navigation:**
-- `Ctrl+G` - Go to line
-- `Alt+Left` - Go back
-- `Alt+Right` - Go forward
-- `Ctrl+Shift+F` - Find in files
-
-**Inspector:**
-- `Ctrl+Alt+V` - Toggle variables panel
-- `Ctrl+Alt+C` - Toggle call stack
-- `Ctrl+Alt+W` - Add watch
-- `Ctrl+Alt+D` - Toggle debug console
+- Navigation and inspector shortcuts
 
 ## Tips and Best Practices
 
@@ -333,7 +337,9 @@ Will provide timing and performance data:
 
 ## Integration with Browser Tools
 
-### Browser DevTools
+**Note:** The browser integration features described below are planned for future releases.
+
+### Browser DevTools (Standard Browser Features)
 
 Press `F12` to open browser tools:
 
@@ -351,9 +357,10 @@ Press `F12` to open browser tools:
 - View session storage
 - Check cookies
 
-### Browser Console Commands
+### Browser Console Commands (Planned)
 
 ```javascript
+// These commands are planned for future releases:
 // Get current program
 mbasic.getProgram()
 

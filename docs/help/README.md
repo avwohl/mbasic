@@ -26,9 +26,6 @@ Help specific to the full-screen terminal UI:
 ### `/ui/tk` - Tkinter GUI Backend Help
 Help specific to the graphical Tkinter interface.
 
-### `/ui/visual` - Visual Backend Help
-Help specific to the visual backend.
-
 ### `/ui/web` - Web UI Backend Help
 Help specific to the web browser interface.
 
@@ -46,5 +43,6 @@ UIs should:
 - **CLI Help**: [ui/cli/index.md](ui/cli/index.md)
 - **Curses Help**: [ui/curses/index.md](ui/curses/index.md)
 - **Tk Help**: [ui/tk/index.md](ui/tk/index.md)
-- **Visual Help**: [ui/visual/index.md](ui/visual/index.md)
 - **Web Help**: [ui/web/index.md](ui/web/index.md)
+
+**Note:** The visual backend is part of the web UI implementation.

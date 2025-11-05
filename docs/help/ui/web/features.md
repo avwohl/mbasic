@@ -1,6 +1,8 @@
 # Web UI Features
 
-Complete reference of all features available in the MBASIC Web UI.
+**Note:** This document describes both currently implemented features and planned enhancements. Some advanced features (code intelligence, automatic saving, session recovery, collaborative editing) are planned for future releases. For currently implemented features, see [Getting Started](getting-started.md).
+
+Complete reference of features available and planned for the MBASIC Web UI.
 
 ## Editor Features
 

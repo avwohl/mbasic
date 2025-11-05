@@ -44,6 +44,6 @@ Modern MBASIC implementations often provide full-screen editing capabilities ins
 ## See Also
 - [AUTO](auto.md) - To generate a line number   automatically     after every carriage return
 - [DELETE](delete.md) - To delete program lines
-- [LIST](list.md) - To list all or part of the program currently            in memory at the terminal
-- [LLIST](llist.md) - To list all or part of the program currently     in memory at the line printer
+- [LIST](list.md) - To list all or part of the program currently in memory at the terminal
+- [LLIST](llist.md) - To list all or part of the program currently in memory at the line printer
 - [RENUM](renum.md) - Renumber program lines and update line references

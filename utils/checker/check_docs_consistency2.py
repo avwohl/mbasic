@@ -514,15 +514,15 @@ CRITICAL JSON FORMAT REQUIREMENTS:
             response_text = self._api_call_with_retry(prompt)
 
             # Parse JSON response using robust markdown-aware extractor
-            result = extract_json_from_markdown(response_text, verbose=False)
+            result = extract_json_from_markdown(response_text, verbose=True)
 
             if result is None:
                 # If we get here, parsing failed
                 print(f"Warning: Could not parse JSON from response")
-                if len(response_text) < 200:
-                    print(f"  Response was: {response_text}")
+                if len(response_text) < 500:
+                    print(f"  Full response was:\n{response_text}")
                 else:
-                    print(f"  Response started with: {response_text[:200]}...")
+                    print(f"  Response started with:\n{response_text[:500]}...")
                 return []
 
             return result

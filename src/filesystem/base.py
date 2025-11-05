@@ -1,5 +1,19 @@
 """
-Filesystem abstraction for MBASIC interpreter.
+Filesystem abstraction for MBASIC interpreter - RUNTIME file I/O.
+
+This module handles RUNTIME file I/O (OPEN, CLOSE, INPUT#, PRINT# statements).
+For PROGRAM file operations (FILES, LOAD, SAVE, MERGE commands), see src/file_io.py.
+
+TWO SEPARATE FILESYSTEM ABSTRACTIONS:
+1. FileIO (src/file_io.py) - Program management operations
+   - Used by: Interactive mode, UI file browsers
+   - Operations: FILES (list), LOAD/SAVE/MERGE (program files), KILL (delete)
+   - Purpose: Load .BAS programs into memory, save from memory to disk
+
+2. FileSystemProvider (this file) - Runtime file I/O
+   - Used by: Interpreter during program execution
+   - Operations: OPEN/CLOSE, INPUT#/PRINT#/WRITE#, EOF(), LOC(), LOF()
+   - Purpose: File I/O from within running BASIC programs
 
 Provides pluggable filesystem implementations to isolate and secure
 file I/O operations, especially for web-based multi-user environments.

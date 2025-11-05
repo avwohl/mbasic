@@ -1554,12 +1554,16 @@ class NiceGUIBackend(UIBackend):
         try:
             line_num = int(line_num_str)
 
-            if line_num in self.runtime.breakpoints:
-                self.runtime.breakpoints.remove(line_num)
+            # Use PC object for consistency with _toggle_breakpoint
+            # When setting breakpoint via dialog (no cursor position), use statement 0
+            pc = PC(line_num, 0)
+
+            if pc in self.runtime.breakpoints:
+                self.runtime.breakpoints.discard(pc)
                 self._notify(f'❌ Breakpoint removed: line {line_num}', type='info')
                 self._set_status(f'Removed breakpoint at {line_num}')
             else:
-                self.runtime.breakpoints.add(line_num)
+                self.runtime.breakpoints.add(pc)
                 self._notify(f'🔴 Breakpoint set: line {line_num}', type='positive')
                 self._set_status(f'Breakpoint at {line_num}')
 
@@ -1984,8 +1988,9 @@ class NiceGUIBackend(UIBackend):
                 if not self._save_editor_to_program():
                     return  # Parse errors
 
+                # If empty program, just show Ready (matches RUN behavior - silent success)
                 if not self.program.lines:
-                    self._notify('No program loaded', type='warning')
+                    self._set_status('Ready')
                     return
 
                 # Start execution
@@ -1999,7 +2004,7 @@ class NiceGUIBackend(UIBackend):
                 else:
                     self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
-                # Update IO handler for execution (reuse existing interpreter to preserve session)
+                # Create new IO handler for execution (interpreter/runtime reused to preserve session state)
                 self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
                 self.interpreter.io = self.exec_io
                 self.interpreter.limits = create_local_limits()
@@ -2048,8 +2053,9 @@ class NiceGUIBackend(UIBackend):
                 if not self._save_editor_to_program():
                     return  # Parse errors
 
+                # If empty program, just show Ready (matches RUN behavior - silent success)
                 if not self.program.lines:
-                    self._notify('No program loaded', type='warning')
+                    self._set_status('Ready')
                     return
 
                 # Start execution
@@ -2063,7 +2069,7 @@ class NiceGUIBackend(UIBackend):
                 else:
                     self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
-                # Update IO handler for execution (reuse existing interpreter to preserve session)
+                # Create new IO handler for execution (interpreter/runtime reused to preserve session state)
                 self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
                 self.interpreter.io = self.exec_io
                 self.interpreter.limits = create_local_limits()
@@ -3090,10 +3096,11 @@ class NiceGUIBackend(UIBackend):
                 self._set_status('Immediate command executed')
 
                 # Don't sync editor from AST after immediate command - editor text is the source!
-                # Current flow: editor text → parsed to AST → execution
-                # (Never reverse: AST → text, as that would lose user's exact text/formatting)
-                # TODO: Future architecture: parse lines immediately into AST,
-                # text only kept for syntax errors
+                # Current architecture: editor text → parsed to AST → execution
+                # We never reverse (AST → text) because that would lose user's exact text/formatting.
+                # This design preserves user's original syntax, spacing, and comments.
+                # Note: This is the current design. A future architecture might parse lines immediately
+                # into AST and only keep text for display/editing, but that would require major refactoring.
 
                 # If statement set NPC (like RUN/GOTO), move it to PC
                 # This is what the tick loop does after executing a statement

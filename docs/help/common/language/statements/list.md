@@ -1,6 +1,6 @@
 ---
 category: editing
-description: To list all or part of the program currently            in memory at the terminal
+description: To list all or part of the program currently in memory at the terminal
 keywords: ['command', 'execute', 'for', 'if', 'line', 'list', 'number', 'program', 'return', 'statement']
 title: LIST
 type: statement
@@ -12,7 +12,7 @@ type: statement
 
 ## Purpose
 
-To list all or part of the program currently            in memory at the terminal.
+To list all or part of the program currently in memory at the terminal.
 
 ## Remarks
 
@@ -41,5 +41,5 @@ Format 1:
 - [AUTO](auto.md) - To generate a line number   automatically     after every carriage return
 - [DELETE](delete.md) - To delete program lines
 - [EDIT](edit.md) - To enter Edit Mode at the specified line
-- [LLIST](llist.md) - To list all or part of the program currently     in memory at the line printer
+- [LLIST](llist.md) - To list all or part of the program currently in memory at the line printer
 - [RENUM](renum.md) - Renumber program lines and update line references

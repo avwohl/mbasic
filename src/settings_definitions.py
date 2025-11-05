@@ -163,8 +163,7 @@ SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
     # Note: Line numbers are always shown - they're fundamental to BASIC!
     # Removed editor.show_line_numbers setting as it makes no sense for BASIC
 
-    # Note: interpreter.max_execution_time and interpreter.debug_mode are available
-    # but not shown in UI - edit settings file directly if needed
+    # Note: Additional settings may be added in future versions
     # Note: ui.theme not implemented yet
 }
 

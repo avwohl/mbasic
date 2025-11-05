@@ -98,7 +98,8 @@ class CLIDebugger:
         statements separated by colons, each statement is executed separately.
 
         This matches the curses UI 'Step Statement' command (Ctrl+T).
-        For line-based stepping, see the UI-specific step_line command.
+        Note: The curses UI also has 'Step Line' (Ctrl+K) which executes all
+        statements on the current line. The CLI STEP command is statement-only.
 
         Usage:
             STEP        - Execute next statement and pause

@@ -26,7 +26,13 @@ python3 mbasic
 ## Placeholder
 
 For detailed installation instructions, see:
-- `docs/dev/INSTALLATION_FOR_DEVELOPERS.md` - Developer setup
+- [INSTALL.md](INSTALL.md) - Complete installation guide
 - `README.md` - Quick start guide
 
-This documentation is planned but not yet written.
+This file (INSTALLATION.md) is a placeholder. Use INSTALL.md for full documentation.
+
+
+**Note:** See [INSTALL.md](INSTALL.md) for complete installation instructions.
+
+
+**Complete installation guide:** See [INSTALL.md](INSTALL.md)

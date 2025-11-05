@@ -35,8 +35,8 @@ Convert string values to numeric values. Numeric values that are read in from a 
 - [CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](../statements/cload.md) - To load a program or an array from cassette tape into memory
 - [CDBL](cdbl.md) - Converts X to a double-precision floating-point number
 - [CHR$](chr_dollar.md) - Returns a one-character string whose ASCII code is the specified value
-- [CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](../statements/csave.md) - To save the program or an       array   currently     in memory on cassette tape
-- [DEFINT/SNG/DBL/STR](../statements/defint-sng-dbl-str.md) - To declare variable types as integer,        single precision, double precision, or string
+- [CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](../statements/csave.md) - To save the program or an array currently in memory on cassette tape
+- [DEFINT/SNG/DBL/STR](../statements/defint-sng-dbl-str.md) - To declare variable types as integer, single precision, double precision, or string
 - [ERR AND ERL VARIABLES](../statements/err-erl-variables.md) - Error code and error line number variables used in error handling
 - [INPUT#](../statements/input_hash.md) - To read data items from a sequential disk    file and assign them to program variables
 - [LINE INPUT](../statements/line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters

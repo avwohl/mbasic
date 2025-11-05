@@ -69,7 +69,7 @@ def open_help():
     return open_help_in_browser()
 
 
-# Legacy class removed - using direct web URL instead
+# Legacy class kept for compatibility - new code should use direct web URL instead
 # The help site is already built and served at http://localhost/mbasic_docs
 
 class WebHelpLauncher_DEPRECATED:

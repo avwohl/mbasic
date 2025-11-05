@@ -59,11 +59,13 @@ class CaseStringHandler:
                 policy = get("keywords.case_style", "force_lower")
                 table = cls.get_keyword_table(policy)
             elif setting_prefix == "idents":
-                # Identifiers always preserve their original case.
+                # Identifiers always preserve their original case in display.
                 # Unlike keywords, which can be forced to a specific case policy,
                 # identifiers (variable/function names) retain their case as typed.
                 # This matches MBASIC 5.21 behavior where identifiers are case-insensitive
                 # for matching but preserve display case.
+                # Note: We bypass the identifier_table here since identifiers always return
+                # original_text. The table could be used in future for conflict detection.
                 return original_text
             else:
                 # Unknown prefix, return original

@@ -605,8 +605,10 @@ def renum_program(program_manager, args: str, renum_callback, runtime=None):
     Args:
         program_manager: ProgramManager instance with .lines and .line_asts
         args: RENUM command arguments (e.g., "100", "100,0,10", "100,50")
-        renum_callback: Function that takes (stmt, line_map) to update statement references
-                        Should handle GOTO, GOSUB, ON GOTO, ON GOSUB, IF THEN/ELSE line numbers
+        renum_callback: Function that takes (stmt, line_map) to update statement references.
+                        Called for ALL statements; callback is responsible for identifying and
+                        updating statements with line number references (GOTO, GOSUB, ON GOTO,
+                        ON GOSUB, IF THEN/ELSE line numbers)
         runtime: Optional runtime object to update with new line numbers
 
     Returns:
@@ -1222,6 +1224,11 @@ def serialize_expression(expr):
 
     Returns:
         str: Expression source text
+
+    Note:
+        ERR and ERL are special system variables that are serialized without
+        parentheses (e.g., "ERR" not "ERR()") when they appear as FunctionCallNode
+        with no arguments, matching MBASIC 5.21 syntax.
 
     Example:
         >>> # Assume we have a NumberNode with value 100

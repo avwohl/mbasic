@@ -57,8 +57,8 @@ Let's write a simple program:
 
 You don't need to memorize everything. The status line shows common commands:
 
-- **Ctrl+P** - Help (you're here now!)
-- **Ctrl+R** - Run program
+- **^F** (Ctrl+F) - Help (you're here now!)
+- **^R** (Ctrl+R) - Run program
 - **Q** - Quit
 
 No function keys needed!
