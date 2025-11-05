@@ -640,9 +640,8 @@ class Interpreter:
 
     def _invoke_error_handler(self, error_code, error_pc):
         """Invoke the error handler"""
-        # Note: error_info is set by the exception handler that caught the error.
-        # Multiple exception handlers in tick_pc() set error_info before calling this.
-        # We're now ready to invoke the error handler
+        # Note: error_info is set by the exception handler in tick_pc() that caught
+        # the error before calling this method. We're now ready to invoke the error handler.
 
         # Set ERR%, ERL%, and ERS% system variables
         self.runtime.set_variable_raw('err%', error_code)
@@ -2623,7 +2622,7 @@ class Interpreter:
         Implementation note: Outputs from line_text_map (original source text), not regenerated from AST.
         This preserves original formatting/spacing/case. The line_text_map is maintained by ProgramManager
         and is kept in sync with the AST during program modifications (add_line, delete_line, RENUM, MERGE).
-        If line_text_map becomes out of sync with AST (programming error), LIST output may be incorrect.
+        The sync is handled by ProgramManager methods and should remain consistent during normal operation.
         """
         # Evaluate start and end expressions
         start_line = None

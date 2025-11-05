@@ -7,12 +7,12 @@ FileIO abstraction in interactive.py instead.
 
 FILE I/O ARCHITECTURE:
 This manager provides direct Python file I/O methods (load_from_file, save_to_file)
-for local UIs (CLI, Curses, Tk) to load/save .BAS program files. This is separate
-from the two filesystem abstractions:
+for local UIs (CLI, Curses, Tk) to load/save .BAS program files via UI menus/dialogs.
+This is separate from the two filesystem abstractions:
 
-1. FileIO (src/file_io.py) - For interactive LOAD/SAVE/MERGE/KILL commands
-   - Interactive mode uses FileIO.load_file() for LOAD command
-   - ProgramManager's load_from_file() is a convenience method for UI file dialogs
+1. FileIO (src/file_io.py) - For interactive BASIC commands (LOAD/SAVE/MERGE/KILL)
+   - Used when user types LOAD "FILE.BAS" or SAVE "FILE.BAS" in immediate mode
+   - FileIO.load_file() delegates to ProgramManager methods after path resolution
    - Web UI uses SandboxedFileIO (server memory virtual filesystem)
    - Local UIs use RealFileIO (direct filesystem access)
 
@@ -20,9 +20,11 @@ from the two filesystem abstractions:
    - Used during program execution (OPEN, INPUT#, PRINT#, etc.)
 
 Why ProgramManager has its own file I/O methods:
-- Provides simpler API for local UIs that don't need FileIO abstraction
+- Provides simpler API for local UI menu operations (File > Open/Save dialogs)
 - Only used by local UIs (CLI, Curses, Tk) where filesystem access is safe
-- Web UI uses FileIO abstraction in interactive.py instead
+- Separate from BASIC command flow: UI menus call ProgramManager directly,
+  BASIC commands (LOAD/SAVE) go through FileIO abstraction first
+- Web UI uses FileIO abstraction exclusively (no direct ProgramManager file access)
 """
 
 import re

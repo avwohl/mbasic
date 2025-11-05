@@ -926,10 +926,10 @@ class BuiltinFunctions:
 
     def INKEY(self):
         """
-        Read keyboard without waiting (non-blocking input).
+        INKEY$ - Read keyboard without waiting (non-blocking input).
+        (Method name is INKEY since Python doesn't allow $ in names)
 
         Returns a single character if a key is pressed, or empty string if not.
-        This is the MBASIC INKEY$ function.
         """
         # Platform-specific implementation
         if sys.platform == 'win32':

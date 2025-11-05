@@ -13,6 +13,113 @@ import re
 from typing import Optional, Any
 
 
+def _attempt_json_repair(json_text: str, verbose: bool = False) -> Optional[Any]:
+    """
+    Attempt to repair truncated JSON by closing open structures.
+    This is a last-resort strategy for handling API responses that were cut off.
+
+    Args:
+        json_text: Potentially truncated JSON text
+        verbose: If True, print debug information
+
+    Returns:
+        Parsed JSON if repair was successful, None otherwise
+    """
+    if not json_text:
+        return None
+
+    # Try to parse what we have first to understand where it failed
+    try:
+        # Find all complete JSON objects in the array
+        # If it's an array of objects, try to extract complete ones
+        if json_text.strip().startswith('['):
+            # Count open braces to find complete objects
+            complete_objects = []
+            current_obj = ""
+            brace_count = 0
+            in_string = False
+            escape_next = False
+
+            # Skip the opening '['
+            text_to_parse = json_text[1:] if json_text.startswith('[') else json_text
+
+            for char in text_to_parse:
+                if escape_next:
+                    current_obj += char
+                    escape_next = False
+                    continue
+
+                if char == '\\' and in_string:
+                    current_obj += char
+                    escape_next = True
+                    continue
+
+                if char == '"' and not escape_next:
+                    in_string = not in_string
+                    current_obj += char
+                    continue
+
+                if not in_string:
+                    if char == '{':
+                        if brace_count == 0:
+                            current_obj = char
+                        else:
+                            current_obj += char
+                        brace_count += 1
+                    elif char == '}':
+                        current_obj += char
+                        brace_count -= 1
+                        if brace_count == 0:
+                            # Try to parse this complete object
+                            try:
+                                obj = json.loads(current_obj)
+                                complete_objects.append(obj)
+                                current_obj = ""
+                            except:
+                                pass  # This object is malformed, skip it
+                    else:
+                        if current_obj:  # Only add if we're inside an object
+                            current_obj += char
+                else:
+                    current_obj += char
+
+            # If we found any complete objects, return them
+            if complete_objects:
+                if verbose:
+                    print(f"  ✓ Recovered {len(complete_objects)} complete objects from truncated JSON")
+                return complete_objects
+
+        # If not an array or couldn't extract objects, try simpler repairs
+        # Try closing unclosed strings and structures
+        repaired = json_text
+
+        # Count unclosed quotes (rough approximation)
+        quote_count = json_text.count('"') - json_text.count('\\"')
+        if quote_count % 2 == 1:
+            repaired += '"'
+
+        # Close unclosed braces/brackets
+        open_braces = json_text.count('{') - json_text.count('}')
+        open_brackets = json_text.count('[') - json_text.count(']')
+
+        repaired += '}' * open_braces
+        repaired += ']' * open_brackets
+
+        try:
+            result = json.loads(repaired)
+            if verbose:
+                print(f"  ✓ Successfully repaired truncated JSON")
+            return result
+        except:
+            pass
+
+    except Exception as e:
+        if verbose:
+            print(f"  JSON repair failed: {e}")
+
+    return None
+
+
 def extract_json_from_markdown(text: str, verbose: bool = False) -> Optional[Any]:
     """
     Extract and parse JSON from text that may contain markdown or other content.
@@ -23,6 +130,7 @@ def extract_json_from_markdown(text: str, verbose: bool = False) -> Optional[Any
     3. Extract from plain code blocks (``` ... ```)
     4. Find JSON array/object anywhere in text
     5. Strip common prefixes/suffixes and retry
+    6. Handle metadata prefixes from Claude API
 
     Args:
         text: Text that may contain JSON (possibly with markdown)
@@ -36,6 +144,26 @@ def extract_json_from_markdown(text: str, verbose: bool = False) -> Optional[Any
 
     original_text = text
     text = text.strip()
+
+    # Strategy 0: Handle common metadata/wrapper patterns from Claude API
+    # Sometimes Claude returns metadata before the actual content
+    # Look for patterns like "Here's the analysis:" or "I found these issues:"
+    # followed by the actual JSON
+    metadata_patterns = [
+        r'^.*?(?:Here\'s|Here is|I found|Analysis|Results?).*?:\s*\n',
+        r'^.*?(?:response|output|result).*?:\s*\n',
+    ]
+
+    for pattern in metadata_patterns:
+        match = re.match(pattern, text, re.IGNORECASE | re.DOTALL)
+        if match:
+            # Remove the metadata prefix and try parsing what's left
+            cleaned = text[match.end():]
+            if cleaned.strip().startswith('[') or cleaned.strip().startswith('{') or cleaned.strip().startswith('```'):
+                if verbose:
+                    print(f"  Removed metadata prefix: {match.group()[:50]}...")
+                text = cleaned.strip()
+                break
 
     # Strategy 1: Try direct parsing first
     try:
@@ -129,6 +257,13 @@ def extract_json_from_markdown(text: str, verbose: bool = False) -> Optional[Any
                 print(f"  Aggressive markdown stripping found JSON-like content but parsing failed: {e}")
                 print(f"  Candidate text (first 200 chars): {json_candidate[:200]}")
 
+                # Check if it looks like the JSON was truncated
+                if "Unterminated string" in str(e):
+                    print(f"  WARNING: JSON appears to be truncated (incomplete response)")
+                    # Try to salvage what we can by closing the JSON properly
+                    # This is a last-resort attempt for truncated responses
+                    return _attempt_json_repair(json_candidate, verbose)
+
     # Strategy 5: Find JSON array/object patterns anywhere in text
     # Look for [ ... ] or { ... }
     # This is more aggressive and handles "Here are the results: [...]"
@@ -193,10 +328,54 @@ def extract_json_from_markdown(text: str, verbose: bool = False) -> Optional[Any
         except json.JSONDecodeError:
             pass
 
+    # Strategy 7: Try to fix common JSON formatting errors
+    # Sometimes Claude might return slightly malformed JSON that can be fixed
+    if verbose:
+        print("  Attempting to fix common JSON formatting errors...")
+
+    # Look for patterns that suggest JSON but might have issues
+    # Try removing trailing commas (common error)
+    cleaned_text = re.sub(r',(\s*[}\]])', r'\1', text)
+    if cleaned_text != text:
+        try:
+            result = json.loads(cleaned_text)
+            if isinstance(result, (list, dict)):
+                if verbose:
+                    print("✓ Fixed by removing trailing commas")
+                return result
+        except json.JSONDecodeError:
+            pass
+
+    # Try to close unclosed arrays/objects
+    # This handles truncated JSON
+    if text.strip().startswith('[') and not text.strip().endswith(']'):
+        # Array not closed - try to close it
+        fixed_text = text.strip()
+        # Remove any trailing comma
+        if fixed_text.endswith(','):
+            fixed_text = fixed_text[:-1]
+        fixed_text += ']'
+        try:
+            result = json.loads(fixed_text)
+            if isinstance(result, list):
+                if verbose:
+                    print("✓ Fixed by closing unclosed array")
+                return result
+        except json.JSONDecodeError:
+            pass
+
+    # Try fixing unescaped quotes in strings (but be careful)
+    # This is risky and should only be done as last resort
+    # Look for patterns like: "key": "value with "quotes" inside"
+
     # All strategies failed
     if verbose:
         print("✗ All extraction strategies failed")
-        print(f"Text preview: {original_text[:300]}...")
+        if len(original_text) < 1000:
+            print(f"Full text:\n{original_text}")
+        else:
+            print(f"Text preview (first 500 chars):\n{original_text[:500]}...")
+            print(f"Text preview (last 200 chars):\n...{original_text[-200:]}")
 
     return None
 
@@ -231,6 +410,13 @@ def test_extractor():
 
         # Case 8: Text that starts with ```json
         ('```json\n[{"bug": "code_bug"}]', [{"bug": "code_bug"}]),
+
+        # Case 9: Text with metadata prefix
+        ('Here\'s the analysis:\n```json\n[{"test": "metadata"}]\n```',
+         [{"test": "metadata"}]),
+
+        # Case 10: Trailing comma in JSON (common error)
+        ('[{"a": 1, "b": 2,}]', [{"a": 1, "b": 2}]),
     ]
 
     print("Testing JSON extractor...")

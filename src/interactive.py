@@ -826,6 +826,10 @@ class InteractiveMode:
         3. Walk AST and update all line number references (via _renum_statement callback)
         4. Serialize AST back to source
 
+        Known limitation: ERL expressions with binary operators (ERL+100, ERL*2) cannot
+        distinguish line number references from arithmetic constants, so all numbers on
+        the right side are conservatively renumbered. See _renum_erl_comparison() for details.
+
         Args format: "new_start,old_start,increment"
         Examples:
             RENUM           -> 10,0,10 (renumber all from line 10)
@@ -1337,15 +1341,13 @@ class InteractiveMode:
             if ast.lines and len(ast.lines) > 0:
                 line_node = ast.lines[0]
                 # Save old PC to preserve stopped program position for CONT.
-                # Immediate mode should NOT use GOTO/GOSUB (see help text) because
-                # PC changes would break CONT functionality for stopped programs.
-                #
-                # IMPORTANT: GOTO/GOSUB WILL execute during the statement execution below
-                # (jumping to program lines and potentially executing code there), but
-                # we restore the original PC afterward. This means:
+                # Note: GOTO/GOSUB in immediate mode are discouraged (see help text) because
+                # they can be confusing, but if used, they execute and jump to program lines
+                # during statement execution. However, we restore the original PC afterward
+                # to preserve CONT functionality for stopped programs. This means:
                 # - The jump happens and code runs during execute_statement()
                 # - But the final PC change is reverted, preserving stopped position
-                # - This prevents CONT from resuming at the wrong location
+                # - CONT will resume at the original stopped location, not the GOTO target
                 old_pc = runtime.pc
 
                 # Execute each statement on line 0

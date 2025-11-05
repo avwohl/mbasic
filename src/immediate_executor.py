@@ -158,9 +158,9 @@ class ImmediateExecutor:
         # This feature requires the following UI integration:
         # - interpreter.interactive_mode must reference the UI object
         # - UI must have a 'program' attribute with add_line() and delete_line() methods
-        # - UI must have _refresh_editor() method to update the display
-        # - UI must have _highlight_current_statement() for restoring execution highlighting
-        # If these requirements are not met, this will return an error message.
+        # - UI must have _refresh_editor() method to update the display (optional)
+        # - UI must have _highlight_current_statement() for restoring execution highlighting (optional)
+        # If core requirements are not met, this will return an error message.
         import re
         line_match = re.match(r'^(\d+)\s*(.*)$', statement)
         if line_match:
@@ -172,6 +172,14 @@ class ImmediateExecutor:
             if hasattr(self.interpreter, 'interactive_mode') and self.interpreter.interactive_mode:
                 # Call the UI's method to add/edit a line
                 ui = self.interpreter.interactive_mode
+                # Validate required UI integration
+                if not hasattr(ui, 'program') or not ui.program:
+                    return (False, "Cannot edit program lines: UI program manager not available\n")
+                if line_content and not hasattr(ui.program, 'add_line'):
+                    return (False, "Cannot edit program lines: add_line method not available\n")
+                if not line_content and not hasattr(ui.program, 'delete_line'):
+                    return (False, "Cannot edit program lines: delete_line method not available\n")
+
                 if hasattr(ui, 'program') and ui.program:
                     if line_content:
                         # Add/update line - add_line expects complete line text with line number
