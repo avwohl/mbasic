@@ -57,11 +57,11 @@ The Web UI debugger currently offers:
 
 ## Variable Inspector
 
-**Note:** The detailed variable inspector features described below are partially implemented. Basic variable viewing via Debug menu is available, but the advanced panels and watch expressions are planned for future releases.
+**Implementation Status:** Basic variable viewing via Debug menu is currently available. The detailed variable inspector panels, watch expressions, and interactive editing features described below are **planned for future releases** and not yet implemented.
 
-### Variables Panel
+### Variables Panel (Planned)
 
-Would be located in right sidebar during debugging:
+The following features are planned for future implementation and would be located in right sidebar during debugging:
 
 ```
 Variables
@@ -77,30 +77,30 @@ Variables
    └─ ERR = 0 (Error Code)
 ```
 
-### Features
+### Features (Planned)
 
-**Variable Display:**
+**Variable Display (Planned):**
 - Name, value, and type shown
 - Arrays show dimensions and elements
 - Strings shown with quotes
 - Numbers formatted appropriately
 
-**Interactive Editing:**
+**Interactive Editing (Planned):**
 1. **Double-click** any variable value
 2. Edit dialog appears
 3. Enter new value
 4. Press Enter to apply
 5. Press Esc to cancel
 
-**Filtering:**
+**Filtering (Planned):**
 - Search box to find variables
 - Filter by type (scalar/array/string)
 - Show only modified variables
 - Hide system variables
 
-### Watch Expressions
+### Watch Expressions (Planned)
 
-Add custom expressions to monitor:
+Planned feature to add custom expressions to monitor:
 
 1. Click **Add Watch** button
 2. Enter expression (e.g., `A + B`, `LEN(S$)`)
@@ -111,9 +111,9 @@ Add custom expressions to monitor:
 
 **Note:** The call stack panel described below is a planned feature and not yet implemented in the Web UI.
 
-### Stack Panel
+### Stack Panel (Planned)
 
-Would show execution path:
+Planned feature that would show execution path:
 
 ```
 Call Stack
@@ -123,13 +123,13 @@ Call Stack
 └─ Main Program
 ```
 
-**Features:**
+**Features (Planned):**
 - Click to view source location
 - Shows line numbers
 - Indicates subroutine calls
 - Displays FOR loop contexts
 
-### FOR Loop Stack
+### FOR Loop Stack (Planned)
 
 ```
 FOR Loops

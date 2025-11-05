@@ -37,8 +37,8 @@ This guide helps you choose the right UI for your needs and understand the featu
 |---------|-----|--------|----|-----|-------|
 | **New program** | ✅ | ✅ | ✅ | ✅ | NEW command |
 | **Load file** | ✅ | ✅ | ✅ | ✅ | LOAD "filename" |
-| **Save (with prompt)** | ❌ | ✅ | ✅ | ✅ | Ctrl+S |
-| **Save As** | ✅ | ✅ | ✅ | ✅ | SAVE "filename" / Ctrl+Shift+S |
+| **Save (interactive)** | ❌ | ✅ | ✅ | ✅ | Ctrl+S prompts for filename |
+| **Save (command)** | ✅ | ✅ | ✅ | ✅ | SAVE "filename" command |
 | **Recent files** | ❌ | ❌ | ✅ | ⚠️ | Tk: menu, Web: localStorage |
 | **Drag & drop** | ❌ | ❌ | ✅ | ✅ | GUI only |
 | **Auto-save** | ❌ | ❌ | ⚠️ | ✅ | Tk: optional, Web: automatic |
@@ -106,7 +106,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 - No visual editor (line-based only)
 - No mouse support
 - Limited UI features
-- No Save without filename prompt
+- No interactive save prompt (must use SAVE "filename" command)
 
 **Unique Features:**
 - Direct command-line debugging
@@ -201,7 +201,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 - ⏳ Find/Replace in Web UI
 
 ### Known Gaps
-- CLI: No Save without prompt
+- CLI: No interactive save prompt (use SAVE "filename" command instead)
 - Web: No Find/Replace yet
 - Curses: Limited variable editing
 - All: No collaborative editing
@@ -214,8 +214,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 |--------|-----|--------|----|----|
 | **Run** | RUN | Ctrl+R | Ctrl+R/F5 | Ctrl+R/F5 |
 | **Stop** | Ctrl+C | Ctrl+C/Esc | Esc | Esc |
-| **Save** | N/A | Ctrl+S | Ctrl+S | Ctrl+S |
-| **Save As** | SAVE "file" | Ctrl+Shift+S | Ctrl+Shift+S | Ctrl+Shift+S |
+| **Save** | SAVE "file" | Ctrl+S | Ctrl+S | Ctrl+S |
 | **New** | NEW | Ctrl+N | Ctrl+N | Ctrl+N |
 | **Load** | LOAD "file" | Ctrl+O | Ctrl+O | Ctrl+O |
 | **Help** | HELP | Ctrl+H/F1 | F1 | F1 |

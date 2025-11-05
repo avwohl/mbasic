@@ -1857,8 +1857,8 @@ class NiceGUIBackend(UIBackend):
         The KeyboardInterrupt handling is done at the top level in mbasic,
         which wraps start_web_ui() in a try/except.
         """
-        # Don't check self.running - it seems to not persist correctly in NiceGUI callbacks
-        # Just check if we have an interpreter
+        # Check if we have an interpreter before proceeding
+        # Note: self.running is also set/cleared elsewhere but may not persist reliably in async callbacks
         if not self.interpreter:
             return
 
@@ -2262,8 +2262,7 @@ class NiceGUIBackend(UIBackend):
         """Help > Help Topics - Opens in web browser."""
         try:
             from ..web_help_launcher import open_help_in_browser
-            url = "http://localhost/mbasic_docs/help/ui/web/"
-
+            # Note: URL is constructed by web_help_launcher based on topic parameter
             success = open_help_in_browser(topic="help/ui/web/", ui_type="web")
 
             if success:
@@ -2281,8 +2280,7 @@ class NiceGUIBackend(UIBackend):
         """Help > Games Library - Opens program library in browser."""
         try:
             from ..web_help_launcher import open_help_in_browser
-            url = "http://localhost/mbasic_docs/library/"
-
+            # Note: URL is constructed by web_help_launcher based on topic parameter
             success = open_help_in_browser(topic="library/", ui_type="web")
 
             if success:
@@ -2617,9 +2615,10 @@ class NiceGUIBackend(UIBackend):
             last_text = self.last_edited_line_text or ''
             content_diff = abs(len(current_text) - len(last_text))
 
-            # If content changed significantly (>5 chars), likely a paste
+            # If content changed significantly (>5 chars), likely a paste - check for double line numbers
             if content_diff > 5:
-                # Check if first line is just an auto-number prompt (e.g., "10 ")
+                # When pasting with auto-numbering enabled, the first line may have a double line number
+                # (e.g., "10 100 PRINT" where "10 " is the auto-number prompt and "100 PRINT" is pasted)
                 lines = current_text.split('\n')
                 if lines and re.match(r'^\d+\s+\d+\s+', lines[0]):
                     # First line has format "10 100 ..." - double line number from paste

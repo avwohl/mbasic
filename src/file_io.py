@@ -17,7 +17,7 @@ TWO SEPARATE FILESYSTEM ABSTRACTIONS:
 
 Provides sandboxed file operations for different UI contexts:
 - RealFileIO: Direct filesystem access (TK, Curses, CLI)
-- SandboxedFileIO: Browser localStorage (Web UI)
+- SandboxedFileIO: Server memory virtual filesystem (Web UI)
 """
 
 from typing import List, Tuple
@@ -201,28 +201,28 @@ class SandboxedFileIO(FileIO):
         return []
 
     def load_file(self, filename: str) -> str:
-        """Load file from browser localStorage.
+        """Load file from server memory virtual filesystem.
 
         STUB: Raises error because ui.run_javascript() requires async/await.
         """
         raise IOError("LOAD not yet implemented in web UI - requires async refactor")
 
     def save_file(self, filename: str, content: str) -> None:
-        """Save file to browser localStorage.
+        """Save file to server memory virtual filesystem.
 
         STUB: Raises error because ui.run_javascript() requires async/await.
         """
         raise IOError("SAVE not yet implemented in web UI - requires async refactor")
 
     def delete_file(self, filename: str) -> None:
-        """Delete file from browser localStorage.
+        """Delete file from server memory virtual filesystem.
 
         STUB: Raises error because ui.run_javascript() requires async/await.
         """
         raise IOError("DELETE not yet implemented in web UI - requires async refactor")
 
     def file_exists(self, filename: str) -> bool:
-        """Check if file exists in browser localStorage.
+        """Check if file exists in server memory virtual filesystem.
 
         STUB: Returns False because ui.run_javascript() requires async/await.
         """

@@ -53,9 +53,9 @@ class InterpreterState:
     input_file_number: Optional[int] = None  # If reading from file
 
     # Debugging (breakpoints are stored in Runtime, not here)
-    skip_next_breakpoint_check: bool = False  # Set when halting at a breakpoint.
-                                               # On next execution, allows stepping past the breakpoint once,
-                                               # then clears itself. Prevents re-halting on same breakpoint.
+    skip_next_breakpoint_check: bool = False  # Set to True when halting AT a breakpoint (during the halt).
+                                               # On next execution, allows stepping past the breakpoint once (flag is checked),
+                                               # then clears itself to False. Prevents re-halting on same breakpoint.
     pause_requested: bool = False  # Set by pause() method
 
     # Error handling
@@ -1070,8 +1070,8 @@ class Interpreter:
 
         line_statements = self.runtime.statement_table.get_line_statements(return_line)
         # return_stmt is 0-indexed offset into statements array.
-        # Valid range: 0 to len(statements) where len(statements) is a special sentinel value
-        # meaning "continue at next line" (GOSUB's last statement completed, resume after the line).
+        # Valid range: 0 to len(statements)-1 for existing statements.
+        # return_stmt == len(statements) is a special sentinel: GOSUB was last statement, continue at next line.
         # Values > len(statements) indicate the statement was deleted (validation error).
         if return_stmt > len(line_statements):  # Check for strictly greater than (== len is OK)
             raise RuntimeError(f"RETURN error: statement {return_stmt} in line {return_line} no longer exists")
@@ -1225,9 +1225,10 @@ class Interpreter:
                 raise RuntimeError(f"NEXT error: FOR loop line {return_line} no longer exists")
 
             line_statements = self.runtime.statement_table.get_line_statements(return_line)
-            # return_stmt is 0-indexed offset into statements array. Valid indices are 0 to len(statements)-1.
+            # return_stmt is 0-indexed offset into statements array.
+            # Valid range: 0 to len(statements)-1 for existing statements.
             # return_stmt == len(statements) is a special sentinel: FOR was last statement, continue at next line.
-            # return_stmt > len(statements) is invalid (statement was deleted).
+            # Values > len(statements) indicate the statement was deleted (validation error).
             if return_stmt > len(line_statements):
                 raise RuntimeError(f"NEXT error: FOR statement in line {return_line} no longer exists")
 
@@ -1291,11 +1292,11 @@ class Interpreter:
         # Jump back to the WHILE statement to re-evaluate the condition
         self.runtime.npc = PC(loop_info['while_line'], loop_info['while_stmt'])
 
-        # Pop the loop from the stack BEFORE jumping back to WHILE.
+        # Pop the loop from the stack AFTER setting the jump target.
         # The WHILE will re-push if the condition is still true, or skip the
         # loop body if the condition is now false. This ensures clean stack state.
-        # Note: If an error occurs during WHILE condition evaluation, the loop is already popped,
-        # which is correct (error handling should not leave partial loop state).
+        # Note: We pop here (before execution reaches WHILE) so that if an error occurs during
+        # WHILE condition evaluation, the loop is already popped (correct error handling behavior).
         self.limits.pop_while_loop()
         self.runtime.pop_while_loop()
 
@@ -1499,10 +1500,9 @@ class Interpreter:
         self.runtime.field_buffers.clear()
 
         # Note: Preserved state for CHAIN compatibility:
-        #   - runtime.common_vars (COMMON variables)
-        #   - runtime.files (open file handles)
-        #   - runtime.field_buffers (random access file buffers)
+        #   - runtime.common_vars (list of COMMON variable names - the list itself, not variable values)
         #   - runtime.user_functions (DEF FN functions)
+        # Note: Files and field_buffers are NOT preserved (cleared above).
         # Note: We ignore string_space and stack_space parameters (Python manages memory automatically)
 
     def execute_randomize(self, stmt):
@@ -1549,6 +1549,8 @@ class Interpreter:
         # 1. OPTION BASE has already been executed, OR
         # 2. Any arrays have been created (both explicitly via DIM and implicitly via first use like A(5)=10)
         #    This applies regardless of the current array base (0 or 1).
+        # Note: The check len(self.runtime._arrays) > 0 catches all array creation because both
+        # explicit DIM and implicit array access (via set_array_element) update runtime._arrays.
         if self.runtime.option_base_executed:
             raise RuntimeError("Duplicate Definition")
 
@@ -2237,7 +2239,7 @@ class Interpreter:
 
         # Validate and open file with appropriate mode using filesystem provider
         # Valid modes: I (input), O (output), A (append), R (random access)
-        # Any other mode raises "Invalid OPEN mode: {mode}" error (with actual mode shown)
+        # Any other mode raises error listing valid modes
         try:
             if mode == "I":
                 # Open for input - binary mode so we can detect ^Z
@@ -2252,7 +2254,7 @@ class Interpreter:
                 # Random access - open for both read and write
                 file_handle = self.fs.open(filename, "r+", binary=True)
             else:
-                raise RuntimeError(f"Invalid OPEN mode: {mode}")
+                raise RuntimeError(f"Invalid OPEN mode: {mode} (valid modes: I, O, A, R)")
 
             # Store file handle and mode
             self.runtime.files[file_num] = {
@@ -2522,7 +2524,7 @@ class Interpreter:
         Replaces 'length' characters in string_var starting at position 'start' (1-based).
         - If value is shorter than length, only those characters are replaced
         - If value is longer than length, only 'length' characters are used
-        - If start is beyond the string length, no replacement occurs
+        - If start is out of bounds (< 1 or > string length), no replacement occurs
         - The string variable is modified in-place
         """
         # Evaluate the current value of the string variable
@@ -2538,9 +2540,10 @@ class Interpreter:
         # Convert to 0-based index
         start_idx = start - 1
 
-        # Validate start position
+        # Validate start position (must be within string: 0 <= start_idx < len)
+        # Note: start_idx == len(current_value) is considered out of bounds (can't start replacement past end)
         if start_idx < 0 or start_idx >= len(current_value):
-            # Start position is out of bounds - no replacement
+            # Start position is out of bounds - no replacement (MBASIC 5.21 behavior)
             return
 
         # Calculate how many characters to actually replace
@@ -2596,8 +2599,10 @@ class Interpreter:
         LIST 10-       - List lines 10 to end
         LIST -50       - List lines from beginning to 50
 
-        Note: Outputs from line_text_map (original source text), not regenerated from AST.
-        This preserves formatting but requires line_text_map to stay in sync with AST.
+        Implementation note: Outputs from line_text_map (original source text), not regenerated from AST.
+        This preserves original formatting/spacing/case. The line_text_map is maintained by ProgramManager
+        and is kept in sync with the AST during program modifications (add_line, delete_line, RENUM, MERGE).
+        If line_text_map becomes out of sync with AST (programming error), LIST output may be incorrect.
         """
         # Evaluate start and end expressions
         start_line = None
@@ -2703,9 +2708,10 @@ class Interpreter:
         CONT resumes execution after a STOP statement.
         Only works in interactive mode.
 
-        Note: This function only checks the stopped flag. Ctrl+C (Break) interrupts execution
-        without setting stopped=True, so CONT cannot resume after Break. This is handled elsewhere
-        in the execution flow (Break sets halted but not stopped).
+        Behavior distinction (MBASIC 5.21 compatibility):
+        - STOP statement: Sets runtime.stopped=True, allowing CONT to resume
+        - Break (Ctrl+C): Sets runtime.halted=True but NOT stopped=True, so CONT fails
+        This is intentional: CONT only works after STOP, not after Break interruption.
         """
         if not hasattr(self, 'interactive_mode') or not self.interactive_mode:
             raise RuntimeError("CONT only available in interactive mode")
@@ -2782,7 +2788,11 @@ class Interpreter:
         # Arithmetic
         if op == TokenType.PLUS:
             result = left + right
-            # Enforce 255 byte string limit (MBASIC 5.21 compatibility)
+            # Enforce 255 character string limit for concatenation (MBASIC 5.21 compatibility)
+            # Note: This check only applies to concatenation via PLUS operator.
+            # Other string operations (MID$, LSET, RSET, INPUT) do not enforce this limit.
+            # Also note: len() counts characters, not bytes. For ASCII this is equivalent,
+            # but extended characters could differ if using latin-1 encoding.
             if isinstance(result, str) and len(result) > 255:
                 raise RuntimeError("String too long")
             return result

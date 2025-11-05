@@ -94,6 +94,9 @@ class SandboxedFileSystemProvider(FileSystemProvider):
     - No access to real filesystem
     - No path traversal (../ etc.)
     - Resource limits enforced
+    - Per-user isolation via user_id keys in class-level storage
+      IMPORTANT: Caller must ensure user_id is securely generated/validated
+      to prevent cross-user access (e.g., use session IDs, not user-provided values)
     """
 
     # Class-level storage for all users

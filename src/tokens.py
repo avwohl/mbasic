@@ -217,16 +217,22 @@ class Token:
         value: Normalized value (lowercase for identifiers/keywords)
         line: Line number where token appears
         column: Column number where token starts
-        original_case: Original case for identifiers before normalization
-        original_case_keyword: Original case for keywords (e.g., "PRINT", "Print", "print")
-                              Used by keyword case formatter to preserve or enforce case style
+        original_case: Original case for user-defined identifiers (variable names) before normalization.
+                      Only set for IDENTIFIER tokens. Example: "myVar" stored here, "myvar" in value.
+        original_case_keyword: Original case for keywords, determined by keyword case policy.
+                              Only set for keyword tokens (PRINT, IF, GOTO, etc.). Used by serializer
+                              to output keywords with consistent or preserved case style.
+
+    Note: These fields serve different purposes and are mutually exclusive:
+    - original_case: For identifiers (user variables) - preserves what user typed
+    - original_case_keyword: For keywords - stores policy-determined display case
     """
     type: TokenType
     value: Any  # Normalized value (lowercase for identifiers and keywords)
     line: int
     column: int
-    original_case: Any = None  # Original case for identifiers (before lowercasing)
-    original_case_keyword: str = None  # Original case for keywords (e.g., "PRINT", "Print", "print")
+    original_case: Any = None  # Original case for user identifiers (variables only, not keywords)
+    original_case_keyword: str = None  # Display case for keywords (policy-determined, not identifiers)
 
     def __repr__(self):
         # Show both original cases if available

@@ -87,10 +87,12 @@ Press `f` to cycle through filters:
 ## Sorting Options
 
 Press `s` to cycle through sort orders:
-- **Name (A-Z)**: Alphabetical by variable name
-- **Type**: Group by variable type
-- **Value**: Sort by value (numerics first)
-- **Last Modified**: Recently changed first
+- **Accessed**: Most recently accessed (read or written) - shown first
+- **Written**: Most recently written to - shown first
+- **Read**: Most recently read from - shown first
+- **Name**: Alphabetical by variable name
+
+Press `d` to toggle sort direction (ascending/descending).
 
 ## During Debugging
 

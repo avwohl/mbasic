@@ -240,11 +240,23 @@ class SettingsDialog(tk.Toplevel):
     def _on_cancel(self):
         """Handle Cancel button."""
         # Restore original values
+        failed_keys = []
         for key, value in self.original_values.items():
             try:
                 set_setting(key, value, SettingScope.GLOBAL)
-            except Exception:
-                pass  # Ignore errors on cancel
+            except Exception as e:
+                # Track failed restores - user should know if settings couldn't be restored
+                failed_keys.append(key)
+
+        # If any settings failed to restore, warn the user
+        if failed_keys:
+            messagebox.showwarning(
+                "Settings Restore Warning",
+                f"Some settings could not be restored to their original values:\n" +
+                "\n".join(f"  - {key}" for key in failed_keys) +
+                "\n\nThese settings may remain in their modified state.",
+                parent=self
+            )
 
         self.destroy()
 

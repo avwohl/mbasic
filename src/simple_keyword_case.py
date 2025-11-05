@@ -1,13 +1,19 @@
 """
 Simple keyword case handling for MBASIC.
 
-Keywords only need three policies:
+This is a simplified keyword case handler used by the lexer (src/lexer.py).
+It supports only three force-based policies:
 - force_lower: all lowercase (default, MBASIC 5.21 style)
 - force_upper: all UPPERCASE (classic BASIC)
 - force_capitalize: Capitalize first letter (modern style)
 
-Unlike variables, "first wins" doesn't make sense for keywords since
-the interpreter registers them at startup.
+For advanced policies (first_wins, preserve, error) via CaseKeeperTable,
+see KeywordCaseManager (src/keyword_case_manager.py) which is used by
+parser.py and position_serializer.py.
+
+The lexer uses SimpleKeywordCase because keywords only need force-based
+policies in the tokenization phase. Advanced policies are handled later
+in the parsing/serialization phase.
 """
 
 

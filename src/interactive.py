@@ -415,6 +415,7 @@ class InteractiveMode:
         State management:
         - Clears stopped/halted flags in runtime
         - Restores PC from stop_pc (saved execution position)
+        - Note: stop_pc itself is NOT cleared (remains for potential debugging)
         - Resumes tick-based execution loop
         - Handles input prompts and errors during execution
         """
@@ -566,6 +567,7 @@ class InteractiveMode:
         - Lines with matching line numbers are replaced
         - New line numbers are added
         - Existing lines not in the file are kept
+        - If program_runtime exists, updates runtime's statement_table (for CONT support)
         """
         if not filename:
             print("?Syntax error")
@@ -635,9 +637,9 @@ class InteractiveMode:
                 program_text = f.read()
 
             # Save variables based on CHAIN options:
-            # - MERGE: always preserves all variables (it's an overlay)
-            # - ALL: passes all variables to new program
-            # - Neither: only pass COMMON variables
+            # - MERGE (merge=True): overlay mode, preserves all variables
+            # - ALL (all_flag=True): passes all variables to new program
+            # - Neither: only pass COMMON variables (if defined)
             saved_variables = None
             if self.program_runtime:
                 if all_flag or merge:
@@ -914,15 +916,20 @@ class InteractiveMode:
                 stmt.line_number = line_map[stmt.line_number]
 
     def _renum_erl_comparison(self, expr, line_map):
-        """Handle ERL binary operations in expressions (intended for comparison patterns)
+        """Handle ERL binary operations in expressions
 
         MBASIC manual specifies: if ERL appears on left side of comparison operator
         (=, <>, <, >, <=, >=), the right-hand number is a line number reference.
 
-        Current implementation: Renumbers for ANY binary operator with ERL on left,
-        including arithmetic (ERL + 100, ERL * 2). This is broader than the manual
-        specifies but avoids missing valid comparison patterns. Consider adding
-        operator type checking if arithmetic expressions cause issues.
+        IMPORTANT: Current implementation renumbers for ANY binary operator with ERL on left,
+        including arithmetic (ERL + 100, ERL * 2). This is broader than the manual specifies.
+
+        Rationale: Without semantic analysis, we cannot distinguish ERL=100 (comparison)
+        from ERL+100 (arithmetic) at parse time. We conservatively renumber all cases
+        to avoid missing valid line number references in comparisons.
+
+        Known limitation: Arithmetic like "IF ERL+100 THEN..." will incorrectly renumber
+        the 100 if it happens to be an old line number. This is rare in practice.
 
         Args:
             expr: Expression node to check
@@ -1000,7 +1007,8 @@ class InteractiveMode:
         - <CR>: End and save
 
         Note: Count prefixes ([n]D, [n]C) and search commands ([n]S, [n]K) are not yet implemented.
-        If entered, they will be treated as unknown commands and silently ignored.
+        Digits are not recognized as command prefixes and will be processed as individual
+        characters (e.g., '5D' processes '5' as unknown, then 'D' deletes one character).
         """
         if not args or not args.strip():
             print("?Syntax error - specify line number")
@@ -1328,11 +1336,16 @@ class InteractiveMode:
             # Execute just the statement at line 0
             if ast.lines and len(ast.lines) > 0:
                 line_node = ast.lines[0]
-                # Save old PC to preserve stopped program position.
+                # Save old PC to preserve stopped program position for CONT.
                 # Immediate mode should NOT use GOTO/GOSUB (see help text) because
                 # PC changes would break CONT functionality for stopped programs.
-                # We save/restore PC to prevent this, but the statements themselves
-                # can technically execute GOTO/GOSUB - they just won't have the intended effect.
+                #
+                # IMPORTANT: GOTO/GOSUB WILL execute during the statement execution below
+                # (jumping to program lines and potentially executing code there), but
+                # we restore the original PC afterward. This means:
+                # - The jump happens and code runs during execute_statement()
+                # - But the final PC change is reverted, preserving stopped position
+                # - This prevents CONT from resuming at the wrong location
                 old_pc = runtime.pc
 
                 # Execute each statement on line 0
@@ -1340,7 +1353,7 @@ class InteractiveMode:
                     interpreter.execute_statement(stmt)
 
                 # Restore previous PC to maintain stopped program position
-                # This prevents GOTO/GOSUB in immediate mode from affecting CONT
+                # This reverts any GOTO/GOSUB PC changes from above execution
                 runtime.pc = old_pc
 
         except Exception as e:

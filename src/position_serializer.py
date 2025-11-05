@@ -221,7 +221,7 @@ class PositionSerializer:
             return " " + serialize_statement(stmt)
 
     def serialize_let_statement(self, stmt: ast_nodes.LetStatementNode) -> str:
-        """Serialize LET or assignment statement"""
+        """Serialize LET statement (LetStatementNode) which represents assignment in MBASIC"""
         result = ""
 
         # Variable
@@ -520,7 +520,7 @@ def _adjust_statement_positions(stmt, offset):
     # Recurse into sub-structures
     stmt_type = type(stmt).__name__
 
-    if stmt_type == 'AssignmentStatementNode':
+    if stmt_type == 'LetStatementNode':
         _adjust_expression_positions(stmt.variable, offset)
         _adjust_expression_positions(stmt.expression, offset)
 

@@ -44,6 +44,10 @@ class CLIDebugger:
     def cmd_break(self, args=""):
         """BREAK command - set/clear/list breakpoints.
 
+        Breakpoints are only activated when the RUN command is executed.
+        After setting breakpoints, use RUN to start/restart the program
+        for them to take effect.
+
         Usage:
             BREAK           - List all breakpoints
             BREAK 100       - Set breakpoint at line 100
@@ -97,9 +101,11 @@ class CLIDebugger:
         Executes a single statement (not a full line). If a line contains multiple
         statements separated by colons, each statement is executed separately.
 
-        This matches the curses UI 'Step Statement' command (Ctrl+T).
-        Note: The curses UI also has 'Step Line' (Ctrl+K) which executes all
-        statements on the current line. The CLI STEP command is statement-only.
+        This implements statement-level stepping similar to the curses UI 'Step Statement'
+        command (Ctrl+T). The curses UI also has a separate 'Step Line' command (Ctrl+K)
+        which is not available in the CLI.
+
+        After each step, displays the current line number in format: [{line_num}]
 
         Usage:
             STEP        - Execute next statement and pause

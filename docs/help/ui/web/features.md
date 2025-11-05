@@ -1,6 +1,8 @@
 # Web UI Features
 
-**Note:** This document describes both currently implemented features and planned enhancements. Some advanced features (code intelligence, automatic saving, session recovery, collaborative editing) are planned for future releases. For currently implemented features, see [Getting Started](getting-started.md).
+**IMPORTANT:** This document describes both **currently implemented features** and **planned enhancements**. Many advanced features described below (code intelligence, search/replace, automatic saving, session recovery, templates, inline help, testing, collaborative editing) are **planned for future releases** and not yet implemented.
+
+Features marked with **(Planned)** are not yet available. For currently implemented features only, see [Getting Started](getting-started.md).
 
 Complete reference of features available and planned for the MBASIC Web UI.
 
@@ -8,6 +10,7 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 ### Syntax Highlighting
 
+**Currently Implemented:**
 - **Keywords** in blue (PRINT, FOR, IF)
 - **Strings** in green ("Hello")
 - **Numbers** in orange (42, 3.14)
@@ -15,48 +18,49 @@ Complete reference of features available and planned for the MBASIC Web UI.
 - **Line numbers** in purple
 - **Operators** in red (+, -, *, /)
 
-### Code Intelligence
+### Code Intelligence (Planned)
 
-**Auto-completion:**
+**Auto-completion (Planned):**
 - BASIC keywords
 - Variable names
 - Function names
 - Line numbers
 
-**Syntax Checking:**
+**Syntax Checking (Planned):**
 - Real-time validation
 - Error underlining
 - Hover for details
 - Quick fixes
 
-**Code Folding:**
+**Code Folding (Planned):**
 - Collapse/expand FOR loops
 - Hide/show subroutines
 - Fold long IF blocks
 
 ### Line Management
 
-**Smart Line Numbering:**
-- Auto-increment by 10
-- Insert with intermediate numbers
-- Automatic renumbering
-- Duplicate detection
+**Smart Line Numbering (Currently Implemented):**
+- Auto-increment by configurable step (default 10)
+- Manual line number entry supported
 
-**Line Operations:**
+**Line Operations (Planned):**
 - Select multiple lines
 - Bulk delete
 - Copy with line numbers
 - Paste with renumbering
+- Insert with intermediate numbers
+- Automatic renumbering
+- Duplicate detection
 
-### Search and Replace
+### Search and Replace (Planned)
 
-**Find (Ctrl+F):**
+**Find (Ctrl+F) (Planned):**
 - Search in editor
 - Case sensitive option
 - Whole word option
 - Regular expressions
 
-**Replace (Ctrl+H):**
+**Replace (Ctrl+H) (Planned):**
 - Replace single
 - Replace all
 - Preview changes
@@ -65,13 +69,16 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 ### Local Storage
 
-**Automatic Saving:**
+**Currently Implemented:**
+- Programs stored in browser localStorage
+
+**Automatic Saving (Planned):**
 - Saves to browser storage
 - Every 30 seconds
 - On significant changes
 - Before running
 
-**Session Recovery:**
+**Session Recovery (Planned):**
 - Restores last program
 - Recovers after crash
 - Maintains breakpoints
@@ -79,44 +86,46 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 ### File Operations
 
-**Open Files:**
+**Currently Implemented:**
+- Load .BAS files from local filesystem
+- Save/download programs as .BAS files
+
+**Open Files (Planned):**
 - Click to browse
 - Drag and drop
 - Recent files list
 - Multiple format support
 
-**Save Options:**
-- Save to browser
-- Download as file
+**Save Options (Currently Implemented):**
+- Download as .BAS file
 
 ### Format Support
 
-**Input Formats:**
+**Input Formats (Currently Implemented):**
 - .BAS files
 - .TXT files
 - ASCII text
 
-**Output Formats:**
+**Output Formats (Currently Implemented):**
 - Standard .BAS
-- Formatted text
 
 ## Program Execution
 
 ### Run Modes
 
-**Normal Run:**
+**Normal Run (Currently Implemented):**
 - Full speed execution
 - Output to panel
 - Error handling
 - Input prompts
 
-**Debug Mode:**
-- Breakpoint support
-- Step execution
-- Variable inspection
-- Call stack
+**Debug Mode (Partially Implemented):**
+- Basic breakpoint support (via Run menu)
+- Step execution (Ctrl+T, Ctrl+K)
+- Basic variable inspection (via Debug menu)
+- Call stack (planned)
 
-**Trace Mode:**
+**Trace Mode (Planned):**
 - Line-by-line output
 - Show all statements
 - Variable changes
@@ -124,27 +133,34 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 ### Input/Output
 
-**Output Panel:**
+**Output Panel (Currently Implemented):**
 - Scrollable output
 - Clear button
 - Copy text
-- Export log
 
-**Input Handling:**
-- Modal input dialog
+**Export log (Planned)**
+
+**Input Handling (Currently Implemented):**
+- Modal input dialog for INPUT statements
+- Basic validation
+
+**Advanced Input (Planned):**
 - Inline input field
-- Validation
 - Default values
+- Custom validators
 
 ### Error Handling
 
-**Error Display:**
+**Error Display (Currently Implemented):**
+- Error message display
+- Line number indication
+
+**Advanced Error Display (Planned):**
 - Line highlighting
-- Error message
 - Stack trace
 - Quick fix suggestions
 
-**Error Recovery:**
+**Error Recovery (Planned):**
 - Continue option
 - Edit and retry
 - Skip statement
@@ -166,42 +182,53 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 ### Variable Inspector
 
-**Display Features:**
+**Currently Implemented:**
+- Basic variable viewing via Debug menu
+
+**Display Features (Planned):**
 - Tree view
 - Type indicators
 - Array expansion
 - Search/filter
 
-**Editing:**
+**Editing (Planned):**
 - Double-click edit
 - Type validation
 - Immediate update
 
 ### Execution Control
 
-**Step Controls:**
+**Currently Implemented:**
+- Run (Ctrl+R)
+- Continue (Ctrl+G)
+- Step statement (Ctrl+T)
+- Step line (Ctrl+K)
+- Stop (Ctrl+Q)
+
+**Step Controls (Planned):**
 - Step over (F10)
 - Step into (F11)
 - Step out (Shift+F11)
 - Run to cursor
 
-**Flow Control:**
-- Continue (F5)
+**Flow Control (Planned):**
 - Pause
-- Stop (Shift+F5)
 - Restart
 
 ## User Interface
 
 ### Layout Options
 
-**Panel Configuration:**
+**Currently Implemented:**
+- Basic panel layout (editor, output, menu)
+
+**Panel Configuration (Planned):**
 - Resizable panels
 - Hide/show panels
 - Horizontal/vertical split
 - Full-screen mode
 
-**Themes:**
+**Themes (Planned):**
 - Light mode
 - Dark mode
 - High contrast
@@ -209,13 +236,17 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 ### Customization
 
-**Editor Settings:**
+**Currently Implemented:**
+- Auto-numbering settings (via Settings dialog)
+- Line number increment configuration
+
+**Editor Settings (Planned):**
 - Font size
 - Font family
 - Tab size
 - Line wrapping
 
-**Behavior Settings:**
+**Behavior Settings (Planned):**
 - Auto-save interval
 - Syntax check delay
 - Execution speed
@@ -223,13 +254,16 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 ### Accessibility
 
-**Keyboard Navigation:**
+**Keyboard Navigation (Partially Implemented):**
+- Basic keyboard shortcuts (see [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md))
+
+**Keyboard Navigation (Planned):**
 - Full keyboard control
 - Customizable shortcuts
 - Vim mode (optional)
 - Screen reader support
 
-**Visual Aids:**
+**Visual Aids (Planned):**
 - Zoom in/out
 - High contrast
 - Large fonts
@@ -241,15 +275,15 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 **Note:** Collaboration features (sharing, collaborative editing, version control) are not currently implemented. Programs are stored locally in browser storage only.
 
-### Performance
+### Performance (Planned)
 
-**Optimization:**
+**Optimization (Planned):**
 - Lazy loading
 - Virtual scrolling
 - Web workers
 - Efficient rendering
 
-**Resource Management:**
+**Resource Management (Planned):**
 - Memory monitoring
 - CPU usage display
 - Storage quotas
@@ -257,23 +291,26 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 ### Integration
 
-**Browser APIs:**
+**Browser APIs (Partially Implemented):**
+- File system access (load/save files)
+- localStorage (program storage)
+
+**Browser APIs (Planned):**
 - Clipboard access
-- File system access
 - Notifications
 - Fullscreen API
 
 ## Productivity Tools
 
-### Templates
+### Templates (Planned)
 
-**Program Templates:**
+**Program Templates (Planned):**
 - Hello World
 - Input example
 - Loop examples
 - Game templates
 
-**Code Snippets:**
+**Code Snippets (Planned):**
 - Common patterns
 - Error handling
 - Input validation
@@ -281,27 +318,29 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 ### Documentation
 
-**Inline Help:**
+**Help Panel (Currently Implemented):**
+- Access to documentation via Help menu
+- Context-sensitive help
+
+**Inline Help (Planned):**
 - Hover documentation
 - Parameter hints
 - Example code
 - Quick links
 
-**Help Panel:**
+**Advanced Help (Planned):**
 - Searchable docs
-- Context sensitive
-- Examples included
 - Offline capable
 
-### Testing
+### Testing (Planned)
 
-**Test Support:**
+**Test Support (Planned):**
 - Test file detection
 - Expected output
 - Assertion checking
 - Test runner
 
-**Benchmarking:**
+**Benchmarking (Planned):**
 - Execution timing
 - Performance metrics
 - Memory usage
@@ -309,8 +348,12 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 ## Settings and Preferences
 
-### General Settings
+**Currently Implemented:**
+See [Settings](settings.md) for currently available settings (auto-numbering, line increment).
 
+### General Settings (Planned)
+
+**Planned settings:**
 ```
 ☑ Auto-save enabled
   └─ Interval: 30 seconds
@@ -321,8 +364,9 @@ Complete reference of features available and planned for the MBASIC Web UI.
 ☑ Word wrap
 ```
 
-### Editor Preferences
+### Editor Preferences (Planned)
 
+**Planned preferences:**
 ```
 Font: Consolas, monospace
 Size: 14px
@@ -331,8 +375,9 @@ Tab Size: 4
 Insert Spaces: No
 ```
 
-### Debug Preferences
+### Debug Preferences (Planned)
 
+**Planned preferences:**
 ```
 ☑ Break on error
 ☐ Break on warning
@@ -341,8 +386,9 @@ Insert Spaces: No
 Execution Speed: Normal
 ```
 
-### Advanced Options
+### Advanced Options (Planned)
 
+**Planned options:**
 ```
 ☑ Enable web workers
 ☑ Use localStorage
@@ -353,22 +399,32 @@ History Size: 50
 
 ## Mobile Support
 
-### Touch Interface
+**Currently Implemented:**
+- Basic responsive layout
+- Touch-friendly interface
 
+### Touch Interface (Partially Implemented)
+
+**Currently works:**
 - Touch to place cursor
-- Pinch to zoom
 - Swipe to scroll
+- Virtual keyboard support
+
+**Planned:**
+- Pinch to zoom
 - Long press for context menu
+- Touch gestures for debugging
 
-### Responsive Design
+### Responsive Design (Partially Implemented)
 
+**Currently works:**
 - Adapts to screen size
 - Mobile-optimized layout
 - Touch-friendly buttons
-- Virtual keyboard support
 
-### Mobile Features
+### Mobile Features (Planned)
 
+**Planned:**
 - Simplified interface
 - Essential features only
 - Optimized performance
@@ -376,22 +432,28 @@ History Size: 50
 
 ## Security Features
 
-### Sandboxing
+### Sandboxing (Currently Implemented)
 
-- Isolated execution
-- No file system access
-- Limited network access
+**Currently Implemented:**
+- Isolated execution in browser
+- No direct file system access (uses browser File API)
+- No network access from BASIC programs
 - Safe program execution
 
-### Data Protection
+### Data Protection (Currently Implemented)
 
-- Local storage only
+**Currently Implemented:**
+- Local storage only (browser localStorage)
 - No server uploads
+- Data stays in browser
+
+**Planned:**
 - Encrypted storage
 - Session isolation
 
-### Privacy
+### Privacy (Currently Implemented)
 
+**Currently Implemented:**
 - No tracking
 - No analytics
 - Local processing

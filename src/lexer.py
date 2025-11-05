@@ -11,9 +11,12 @@ def create_keyword_case_manager() -> SimpleKeywordCase:
     """
     Create a SimpleKeywordCase handler configured from settings.
 
-    Uses SimpleKeywordCase for straightforward case policy handling.
-    (Historical note: Earlier versions considered a more complex KeywordCaseManager
-    for advanced policies, but SimpleKeywordCase proved sufficient.)
+    Uses SimpleKeywordCase for straightforward case policy handling in the lexer.
+    Note: There is also a KeywordCaseManager class (src/keyword_case_manager.py)
+    that uses CaseKeeperTable for advanced policies (first_wins, preserve, error).
+    The parser and position_serializer use KeywordCaseManager, while the lexer
+    uses SimpleKeywordCase for simplicity since keywords only need force-based
+    policies (force_lower, force_upper, force_capitalize).
 
     Returns:
         SimpleKeywordCase with policy from settings, or default policy
@@ -45,8 +48,10 @@ class Lexer:
         self.column = 1
         self.tokens: List[Token] = []
 
-        # Keyword case handler - uses SimpleKeywordCase (simple force-based policies only)
-        # Note: KeywordCaseManager class exists for more complex policies (first_wins, preserve)
+        # Keyword case handler - uses SimpleKeywordCase (force-based policies: force_lower, force_upper, force_capitalize)
+        # Note: KeywordCaseManager class (src/keyword_case_manager.py) is used by parser/position_serializer
+        # for more complex policies (first_wins, preserve, error) via CaseKeeperTable.
+        # The lexer uses SimpleKeywordCase for simplicity since keywords only need force-based policies.
         self.keyword_case_manager = keyword_case_manager or SimpleKeywordCase(policy="force_lower")
 
     def current_char(self) -> Optional[str]:

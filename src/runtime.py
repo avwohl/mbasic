@@ -52,8 +52,9 @@ class Runtime:
         self._ast_or_line_table = ast_or_line_table
 
         # Variable storage (PRIVATE - use get_variable/set_variable methods)
-        # Each variable is stored as: name_with_suffix -> {'value': val, 'last_read': {...}, 'last_write': {...}, 'original_case': str, 'case_variants': [...]}
-        # Note: line -1 in last_write indicates debugger/prompt/internal set (not from program execution)
+        # Each variable is stored as: name_with_suffix -> {'value': val, 'last_read': {...}, 'last_write': {...}, 'original_case': str}
+        # Note: line -1 in last_write indicates system/internal set (used by set_variable_raw for ERR%, ERL%,
+        #       and also by debugger_set=True calls). This distinguishes from normal program execution.
         self._variables = {}
         self._arrays = {}             # name_with_suffix -> {'dims': [...], 'data': [...]}
 
@@ -347,8 +348,9 @@ class Runtime:
             type_suffix: Type suffix ($, %, !, #) or None
             def_type_map: Optional DEF type mapping
             token: REQUIRED - Token object with line and position info for tracking.
-                   The token must not be None, but may lack 'line' or 'position'
-                   attributes (fallback logic handles missing attributes).
+                   Must not be None. The token should have 'line' and 'position'
+                   attributes, but getattr() fallbacks are used if they're missing
+                   (falling back to self.pc.line_num for line, None for position).
 
         Returns:
             Variable value (default 0 for numeric, "" for string)
@@ -841,8 +843,8 @@ class Runtime:
             'data': [default_value] * total_size,
             'last_read_subscripts': None,  # Last accessed subscripts for read
             'last_write_subscripts': None,  # Last accessed subscripts for write
-            'last_read': tracking_info,  # DIM counts as both read and write
-            'last_write': tracking_info
+            'last_read': tracking_info,  # Track DIM location (allocation acts as initialization)
+            'last_write': tracking_info  # Track DIM location (array is created/initialized here)
         }
 
     def delete_array(self, name, type_suffix=None, def_type_map=None):
@@ -1171,15 +1173,18 @@ class Runtime:
         Example:
             [
                 {'name': 'counter', 'type_suffix': '%', 'is_array': False, 'value': 42,
+                 'original_case': 'Counter',
                  'last_read': {'line': 20, 'position': 5, 'timestamp': 1234.567},
                  'last_write': {'line': 10, 'position': 4, 'timestamp': 1234.500}},
                 {'name': 'msg', 'type_suffix': '$', 'is_array': False, 'value': 'hello',
+                 'original_case': 'msg',
                  'last_read': None, 'last_write': {'line': 15, 'position': 2, 'timestamp': 1234.200}},
                 {'name': 'matrix', 'type_suffix': '%', 'is_array': True,
-                 'dimensions': [10, 5], 'base': 0, 'last_read': None, 'last_write': None}
+                 'dimensions': [10, 5], 'base': 0, 'original_case': 'Matrix',
+                 'last_read': None, 'last_write': None}
             ]
 
-        Note: line -1 in last_write indicates debugger/prompt/internal set
+        Note: line -1 in last_write indicates system/internal set (not from program execution)
         """
         result = []
 
@@ -1221,6 +1226,7 @@ class Runtime:
                 'is_array': True,
                 'dimensions': array_data['dims'],
                 'base': self.array_base,  # Global OPTION BASE setting
+                'original_case': array_data.get('original_case', base_name),  # Include canonical case for display
                 'last_read': array_data.get('last_read'),  # Tracking info for array access
                 'last_write': array_data.get('last_write'),
                 'last_read_subscripts': array_data.get('last_read_subscripts'),  # Last accessed indexes
@@ -1281,10 +1287,14 @@ class Runtime:
                  For GOSUB calls:
                  {
                      'type': 'GOSUB',
-                     'from_line': 60,      # Line to return to (despite misleading name)
-                     'return_line': 60,    # Line to return to
+                     'from_line': 60,      # DEPRECATED: Same as return_line (kept for compatibility)
+                     'return_line': 60,    # Line to return to after RETURN
                      'return_stmt': 0      # Statement offset to return to
                  }
+
+                 Note: 'from_line' is misleading and redundant with 'return_line'.
+                       Both contain the line number to return to (not where GOSUB was called from).
+                       Use 'return_line' for clarity; 'from_line' exists for backward compatibility.
 
                  For FOR loops:
                  {

@@ -14,8 +14,7 @@ class CLIBackend(UIBackend):
     with commands like LIST, RUN, SAVE, LOAD, etc.
 
     Implementation: Wraps the existing InteractiveMode class to reuse
-    its command parsing and execution logic. Future refactoring could
-    move command logic directly into this UIBackend subclass.
+    its command parsing and execution logic.
 
     Usage:
         from src.iohandler.console import ConsoleIOHandler

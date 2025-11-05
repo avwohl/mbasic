@@ -29,7 +29,12 @@ class InteractiveMenuBar(urwid.WidgetWrap):
         # Define menu structure: {menu_name: [(label, callback_name), ...]}
         # Use keybindings module to get actual shortcuts
         def fmt_key(display):
-            """Convert keybinding display to compact ^X format."""
+            """Convert keybinding display to compact ^X format.
+
+            Note: This assumes display format is 'Ctrl+X'. If keybindings JSON
+            uses other formats (e.g., 'Alt+X', 'F5'), this function will return
+            them unchanged, which may not match the desired compact format.
+            """
             if display.startswith('Ctrl+'):
                 return '^' + display[5:]
             return display

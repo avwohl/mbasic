@@ -118,13 +118,16 @@ class WebIOHandler(IOHandler):
         """
         Get a complete line from user via dialog (LINE INPUT statement).
 
-        Similar to input() but preserves all characters exactly as typed.
-
         Args:
             prompt: Prompt to display
 
         Returns:
             Complete line entered by user
+
+        Note: Current implementation does NOT preserve leading/trailing spaces
+        as documented in base class. HTML input fields strip spaces.
+        This is a known limitation - see input_line() documentation in base.py.
+        For web UI, input() and input_line() work the same way.
         """
         # For web UI, input() and input_line() work the same way
         return self.input(prompt)

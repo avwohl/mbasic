@@ -79,6 +79,16 @@ MBASIC is a **runtime interpreter** for MBASIC-80 programs. Unlike traditional B
    - Dynamic typing, dynamic array sizing
    - Immediate execution of parsed code
 
+### Hardware Compatibility Notes
+
+**PEEK/POKE** - Emulated for compatibility:
+- POKE: Parsed and executes successfully, but performs no operation (no-op)
+- PEEK: Returns random integer 0-255 (for RNG seeding compatibility)
+- **PEEK does NOT return values written by POKE** - no memory state is maintained
+- No access to actual system memory
+
+See [Compatibility Guide](compatibility.md) for full details on hardware-specific features.
+
 ### Benefits
 
 ✅ **Fast startup**: No compilation delay

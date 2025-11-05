@@ -155,6 +155,10 @@ class CursesIOHandler(IOHandler):
 
         Returns:
             User input as string
+
+        Note: Current implementation does NOT preserve leading/trailing spaces
+        as documented in base class. curses getstr() strips trailing spaces.
+        This is a known limitation - see input_line() documentation in base.py.
         """
         return self.input(prompt)
 

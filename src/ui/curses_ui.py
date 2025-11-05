@@ -128,8 +128,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
     2. Line number (variable width): auto-numbered line numbers
     3. Program text (rest): BASIC code
 
-    Note: Line numbers are formatted with fixed 5-char width for alignment,
-    but parsing accepts variable width for flexibility.
+    Note: Line numbers use variable width in display (_format_line), but when parsing
+    pasted content (_parse_line_numbers), line numbers are right-justified to 5 chars
+    for consistency. This means programmatically added lines have variable width while
+    pasted lines get 5-char formatting.
     """
 
     def __init__(self):
@@ -1316,15 +1318,26 @@ class CursesBackend(UIBackend):
                 if self.debug_enabled:
                     self.output(f"Debug: {message}")
 
+        # IO Handler Lifecycle:
+        # 1. self.io_handler (CapturingIOHandler) - Used for RUN program execution
+        #    Captures output to display in output window, defined inline above
+        # 2. immediate_io (OutputCapturingIOHandler) - Used for immediate mode commands
+        #    Created here and recreated in start() with fresh instance
+        #    OutputCapturingIOHandler is imported from immediate_executor module
         self.io_handler = CapturingIOHandler()
 
-        # Create one interpreter for the session - don't create multiple!
+        # Interpreter Lifecycle:
+        # Create ONE interpreter for the session - shared across all executions!
+        # This interpreter is created here in __init__ and reused throughout the session.
+        # It is NOT recreated in start() - only the ImmediateExecutor is recreated.
         # Use unlimited limits for immediate mode (runs will use local limits)
         immediate_io = OutputCapturingIOHandler()
         self.interpreter = Interpreter(self.runtime, immediate_io, limits=create_unlimited_limits())
 
-        # Initialize immediate mode executor to use the session interpreter
-        # Create a proper ImmediateExecutor (will be re-initialized in start() and _run_program())
+        # ImmediateExecutor Lifecycle:
+        # Create initial ImmediateExecutor here, but it will be recreated in start()
+        # with a fresh OutputCapturingIOHandler. This initial creation ensures the
+        # attribute exists, but the working instance is created in start().
         self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
 
         # Immediate mode UI widgets
@@ -2298,7 +2311,12 @@ class CursesBackend(UIBackend):
             self.loop.draw_screen()
 
     def _show_help(self):
-        """Show interactive help browser."""
+        """Show interactive help browser.
+
+        Note: Unlike _show_keymap and _show_settings which support toggling,
+        help doesn't store overlay state so it can't be toggled off. The help
+        widget handles its own close behavior via ESC/Q keys.
+        """
         # Get help root directory
         help_root = Path(__file__).parent.parent.parent / "docs" / "help"
 
@@ -2306,23 +2324,30 @@ class CursesBackend(UIBackend):
         help_widget = HelpWidget(str(help_root), "index.md")
 
         # Create overlay
+        # Use self.main_widget for consistency with _show_keymap/_show_settings
+        # (not self.loop.widget which might be a menu or other overlay)
         overlay = urwid.Overlay(
             urwid.AttrMap(help_widget, 'body'),
-            self.loop.widget,
+            self.main_widget,
             align='center',
             width=('relative', 90),
             valign='middle',
             height=('relative', 90)
         )
 
-        # Store original widget BEFORE replacing it
-        main_widget = self.loop.widget
+        # Help widget manages its own lifecycle - no need to store overlay
+        # It will close via ESC/Q keys which are handled in HelpWidget itself
 
     def _show_keymap(self):
-        """Show keyboard shortcuts reference."""
+        """Show keyboard shortcuts reference.
+
+        This method supports toggling - calling it when keymap is already open will close it.
+        Main widget storage: Uses self.main_widget (stored in __init__) rather than
+        self.loop.widget (which might be a menu or other overlay).
+        """
         from .keymap_widget import KeymapWidget
 
-        # Check if keymap is already open
+        # Check if keymap is already open (toggle behavior)
         if hasattr(self, '_keymap_overlay') and self._keymap_overlay:
             # Close keymap
             self.loop.widget = self._keymap_main_widget
@@ -2341,7 +2366,8 @@ class CursesBackend(UIBackend):
         # Create keymap widget
         keymap_widget = KeymapWidget(on_close=close_keymap)
 
-        # Use the stored main widget (not current loop.widget which might be a menu)
+        # Main widget storage: Use self.main_widget (stored at UI creation)
+        # not self.loop.widget (current widget which might be a menu or overlay)
         main_widget = self.main_widget
         self._keymap_main_widget = main_widget
 
@@ -2366,11 +2392,17 @@ class CursesBackend(UIBackend):
         self.loop.unhandled_input = keymap_input
 
     def _activate_menu(self):
-        """Activate the interactive menu bar."""
+        """Activate the interactive menu bar.
+
+        Main widget storage: Extracts base_widget from self.loop.widget to handle
+        cases where current widget might already be an overlay. This is different from
+        _show_keymap/_show_settings which use self.main_widget directly.
+        """
         # Get the dropdown overlay from menu bar
         overlay = self.menu_bar.activate()
 
-        # Store original widget (the main UI without any overlays)
+        # Main widget storage: Extract base widget from current loop.widget
+        # This unwraps any existing overlay to get the actual main UI
         main_widget = self.loop.widget.base_widget if hasattr(self.loop.widget, 'base_widget') else self.loop.widget
 
         # Track current menu overlay (updated when refreshing)
@@ -2420,10 +2452,15 @@ class CursesBackend(UIBackend):
             self.editor.next_auto_line_num = self.editor.auto_number_start
 
     def _show_settings(self):
-        """Toggle settings editor."""
+        """Toggle settings editor.
+
+        This method supports toggling - calling it when settings is already open will close it.
+        Main widget storage: Uses self.main_widget (stored in __init__) rather than
+        self.loop.widget (which might be a menu or other overlay).
+        """
         from .curses_settings_widget import SettingsWidget
 
-        # Check if settings is already open
+        # Check if settings is already open (toggle behavior)
         if hasattr(self, '_settings_overlay') and self._settings_overlay:
             # Close settings
             self.loop.widget = self._settings_main_widget
@@ -2435,7 +2472,8 @@ class CursesBackend(UIBackend):
         # Create settings widget
         settings_widget = SettingsWidget()
 
-        # Use the stored main widget (not current loop.widget which might be a menu)
+        # Main widget storage: Use self.main_widget (stored at UI creation)
+        # not self.loop.widget (current widget which might be a menu or overlay)
         main_widget = self.main_widget
         self._settings_main_widget = main_widget
 
@@ -3044,7 +3082,7 @@ class CursesBackend(UIBackend):
                 return False
 
         # Reset runtime with current program - RUN = CLEAR + GOTO first line (or start_line if specified)
-        # This preserves breakpoints but clears variables
+        # Note: Breakpoints are not preserved by reset_for_run - they must be re-applied below
         self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
         # Clear any buffered output from previous run
@@ -3076,7 +3114,9 @@ class CursesBackend(UIBackend):
             # Set PC to start at the specified line (after start() has built statement table)
             self.runtime.pc = PC.from_line(start_line)
 
-        # Set breakpoints from editor
+        # Re-apply breakpoints from editor
+        # Breakpoints are stored in editor UI state and must be re-applied to interpreter
+        # after reset_for_run (which clears them)
         for line_num in self.editor.breakpoints:
             self.interpreter.set_breakpoint(line_num)
 
@@ -3975,7 +4015,9 @@ class CursesBackend(UIBackend):
 
                 # Initialize interpreter state for execution
                 # NOTE: Don't call interpreter.start() because it resets PC!
-                # RUN 120 already set PC to line 120, so we preserve it.
+                # If the immediate command was 'RUN 120', the immediate executor has already
+                # set PC to line 120 via interpreter.start(start_line=120), so we need to
+                # preserve that PC value and not reset it.
                 # We only create InterpreterState if it doesn't exist (first run of session),
                 # which initializes tracking state but doesn't modify PC/runtime state.
                 from src.interpreter import InterpreterState
@@ -4047,7 +4089,13 @@ class CursesBackend(UIBackend):
             self._write_output(f"?Error saving file: {e}\n")
 
     def cmd_delete(self, args):
-        """Execute DELETE command using ui_helpers."""
+        """Execute DELETE command using ui_helpers.
+
+        Note: Doesn't sync to runtime immediately - sync happens when next immediate
+        command is executed via _execute_immediate. This is acceptable because DELETE
+        modifies self.program which is the source of truth, and runtime is only updated
+        when needed for execution.
+        """
         from src.ui.ui_helpers import delete_lines_from_program
 
         try:
@@ -4064,7 +4112,13 @@ class CursesBackend(UIBackend):
             self._write_output(f"?Error during delete: {e}\n")
 
     def cmd_renum(self, args):
-        """Execute RENUM command using ui_helpers."""
+        """Execute RENUM command using ui_helpers.
+
+        Note: Doesn't sync to runtime immediately - sync happens when next immediate
+        command is executed via _execute_immediate. This is acceptable because RENUM
+        modifies self.program which is the source of truth, and runtime is only updated
+        when needed for execution.
+        """
         from src.ui.ui_helpers import renum_program
 
         # Need access to InteractiveMode's _renum_statement

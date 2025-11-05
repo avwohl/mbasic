@@ -116,7 +116,7 @@ MBASIC 5.21:
 This implementation:
 - POKE: Parsed and executes successfully, but performs no operation (no-op)
 - PEEK: Returns random integer 0-255 (for RNG seeding compatibility)
-- PEEK does NOT return values written by POKE
+- **PEEK does NOT return values written by POKE** - no memory state is maintained
 - No access to actual system memory
 
 **Why:** Programs often used `RANDOMIZE PEEK(0)` to seed random numbers. Since we cannot access real memory, PEEK returns random values to support this common pattern.
@@ -181,19 +181,23 @@ OPEN "O", #1, "DATA.TXT"      ' Simple filename only
 OPEN "O", #1, "GAME.BAS"      ' No paths allowed
 ```
 
-**Limitations:**
-- Files stored in browser memory (not browser localStorage)
-- No path support - simple filenames only
-- Filenames converted to UPPERCASE automatically
-- No directories (paths like "folder/file.txt" not supported)
-- Files persist only during browser session
+**Storage and persistence:**
+- Files stored in Python-side memory (not browser localStorage)
+- Files persist only during browser session - lost on page refresh
+- No persistent storage across sessions
 - 50 file limit, 1MB per file
 
-**File names:**
+**File naming:**
 - Must be simple names (no slashes, no paths)
-- Automatically uppercased (CP/M style)
+- Automatically uppercased by the virtual filesystem (CP/M style)
 - 8.3 format recommended but not required
 - Examples: DATA.TXT, PROGRAM.BAS, OUTPUT.DAT
+- The uppercasing is a programmatic transformation for CP/M compatibility, not evidence of persistent storage
+
+**Limitations:**
+- No path support - simple filenames only
+- No directories (paths like "folder/file.txt" not supported)
+- Cannot save/load files to user's local disk (security restriction)
 
 **Why different:**
 - Security: No access to user's real filesystem

@@ -23,8 +23,8 @@ class PC:
     Multiple statements can appear on one line, separated by colons.
 
     Examples:
-        PC(10, 0)  - First statement on line 10
-        PC(10, 2)  - Third statement on line 10 (offset 2 = index 2)
+        PC(10, 0)  - First statement on line 10 (index 0)
+        PC(10, 2)  - Third statement on line 10 (index 2)
         PC(None, 0) - Halted (no valid line)
     """
 
@@ -151,6 +151,10 @@ class StatementTable:
     def next_pc(self, pc):
         """
         Get next PC after given PC (sequential execution).
+
+        Sequential execution means:
+        - Next statement on same line (increment stmt_offset), OR
+        - First statement of next line (if at end of current line)
 
         Args:
             pc: Current program counter

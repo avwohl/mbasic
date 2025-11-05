@@ -8,9 +8,11 @@ keywords: [settings, configuration, tkinter, desktop, preferences, dialog]
 
 # Tk Settings Dialog
 
-**Note:** The Tk (Tkinter) desktop GUI is planned to provide the most comprehensive settings dialog. The features described below represent the intended implementation. Check the actual UI for currently available settings.
+**Implementation Status:** The Tk (Tkinter) desktop GUI is planned to provide the most comprehensive settings dialog. **The features described in this document represent planned/intended implementation and are not yet available.** This is a design document for future development.
 
 The Tk GUI is designed to offer a tabbed interface for all MBASIC settings, with more configuration options than the Web UI, including keyword display, variable case handling, interpreter settings, and UI themes.
+
+**Current Status:** Most features described below are not yet implemented. Check the actual UI or [UI Feature Comparison](../../../user/UI_FEATURE_COMPARISON.md) for what is currently available.
 
 ## Opening the Settings Dialog
 
@@ -18,9 +20,9 @@ The Tk GUI is designed to offer a tabbed interface for all MBASIC settings, with
 1. Menu: **File → Settings**
 2. Keyboard shortcut: (check your system's menu)
 
-## Settings Dialog Interface
+## Settings Dialog Interface (Planned)
 
-The settings dialog is a multi-tabbed window:
+The settings dialog is designed to be a multi-tabbed window:
 
 ```
 ┌─ MBASIC Settings ──────────────────────┐
@@ -44,11 +46,11 @@ The settings dialog is a multi-tabbed window:
 └──────────────────────────────────────────┘
 ```
 
-## Tabs
+## Tabs (Planned)
 
-### Editor Tab
+### Editor Tab (Planned)
 
-Controls editor behavior:
+Planned to control editor behavior:
 
 | Setting | Type | Range | Description |
 |---------|------|-------|-------------|
@@ -57,9 +59,9 @@ Controls editor behavior:
 | Tab Size | Spinbox | 1-16 | Tab width in spaces |
 | Show Line Numbers | Checkbox | - | Show line numbers in gutter |
 
-### Keywords Tab
+### Keywords Tab (Planned)
 
-Controls keyword display:
+Planned to control keyword display:
 
 | Setting | Type | Choices | Description |
 |---------|------|---------|-------------|
@@ -70,9 +72,9 @@ Controls keyword display:
 - `force_upper`: `PRINT "hello"`
 - `force_capitalize`: `Print "hello"`
 
-### Variables Tab
+### Variables Tab (Planned)
 
-Controls variable behavior:
+Planned to control variable behavior:
 
 | Setting | Type | Choices | Description |
 |---------|------|---------|-------------|
@@ -86,9 +88,9 @@ Controls variable behavior:
 - `prefer_lower` - Choose most lowercase version
 - `prefer_mixed` - Prefer camelCase/PascalCase
 
-### Interpreter Tab
+### Interpreter Tab (Planned)
 
-Controls interpreter behavior:
+Planned to control interpreter behavior:
 
 | Setting | Type | Range | Description |
 |---------|------|-------|-------------|
@@ -96,24 +98,24 @@ Controls interpreter behavior:
 | Max Execution Time | Spinbox | 1-3600 | Program timeout in seconds |
 | Debug Mode | Checkbox | - | Enable debug output |
 
-### UI Tab
+### UI Tab (Planned)
 
-Controls UI appearance:
+Planned to control UI appearance:
 
 | Setting | Type | Choices/Range | Description |
 |---------|------|---------------|-------------|
 | Theme | Dropdown | default, dark, light, classic | Color scheme |
 | Font Size | Spinbox | 8-32 | Font size in points |
 
-## Using the Dialog
+## Using the Dialog (Planned)
 
-### Viewing Settings
+### Viewing Settings (Planned)
 
 1. Open dialog (**File → Settings**)
 2. Click on tabs to view different categories
 3. Scroll within tabs if needed
 
-### Changing Settings
+### Changing Settings (Planned)
 
 1. Navigate to the setting you want to change
 2. For checkboxes: click to toggle

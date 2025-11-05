@@ -54,6 +54,8 @@ class HelpWidget(urwid.WidgetWrap):
 
         # Create frame with title and footer
         self.title = urwid.Text("")
+        # Footer shows hardcoded keybindings for help navigation
+        # Note: These are help-specific navigation keys, not general editor keybindings
         self.footer = urwid.Text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
 
         frame = urwid.Frame(
@@ -97,7 +99,8 @@ class HelpWidget(urwid.WidgetWrap):
         if 'files' not in self.search_indexes:
             return results
 
-        # Map tier to labels (UI tier handled separately inline, Other is fallback)
+        # Map tier to labels (Other is fallback)
+        # Note: UI tier is checked separately with startswith('ui/') below
         tier_labels = {
             'language': '📕 Language',
             'mbasic': '📗 MBASIC',

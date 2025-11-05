@@ -164,7 +164,6 @@ SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
     # Removed editor.show_line_numbers setting as it makes no sense for BASIC
 
     # Note: Additional settings may be added in future versions
-    # Note: ui.theme not implemented yet
 }
 
 

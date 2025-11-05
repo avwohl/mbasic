@@ -1,7 +1,9 @@
 """Settings manager for MBASIC interpreter.
 
 Handles loading, saving, and accessing user settings with scope precedence.
-Supports global settings (~/.mbasic/settings.json) and project settings (.mbasic/settings.json).
+Supports global settings and project settings:
+- Global: ~/.mbasic/settings.json (Linux/Mac) or %APPDATA%/mbasic/settings.json (Windows)
+- Project: .mbasic/settings.json in project directory
 """
 
 import json
@@ -19,7 +21,11 @@ from .settings_definitions import (
 
 
 class SettingsManager:
-    """Manages user settings with scope precedence (file > project > global > default)"""
+    """Manages user settings with scope precedence.
+
+    Current precedence: project > global > default
+    Future: file > project > global > default (file-level settings not yet implemented)
+    """
 
     def __init__(self, project_dir: Optional[str] = None):
         """Initialize settings manager.
@@ -30,7 +36,7 @@ class SettingsManager:
         self.project_dir = project_dir
         self.global_settings: Dict[str, Any] = {}
         self.project_settings: Dict[str, Any] = {}
-        self.file_settings: Dict[str, Any] = {}  # Future: per-file settings
+        self.file_settings: Dict[str, Any] = {}  # Not yet implemented: per-file settings
 
         # Paths
         self.global_settings_path = self._get_global_settings_path()
@@ -61,7 +67,14 @@ class SettingsManager:
         return settings_dir / 'settings.json'
 
     def load(self):
-        """Load settings from disk (global and project)"""
+        """Load settings from disk (global and project).
+
+        Note: Settings are stored in flattened format on disk (e.g., 'editor.auto_number')
+        but _get_from_dict() and _set_in_dict() expect nested format internally
+        (e.g., {'editor': {'auto_number': True}}). Currently, load() does not unflatten,
+        which means settings set via set() will be nested but loaded settings remain flat.
+        This works because _get_from_dict() handles both formats, but it's inconsistent.
+        """
         # Load global settings
         if self.global_settings_path.exists():
             try:
@@ -158,7 +171,8 @@ class SettingsManager:
     def get(self, key: str, default: Optional[Any] = None) -> Any:
         """Get setting value with scope precedence.
 
-        Precedence: file > project > global > definition default > provided default
+        Current precedence: project > global > definition default > provided default
+        Future: file > project > global > definition default > provided default
 
         Args:
             key: Setting key (e.g., 'variables.case_conflict')
@@ -167,7 +181,7 @@ class SettingsManager:
         Returns:
             Setting value
         """
-        # Check file settings (future)
+        # Check file settings (not yet implemented)
         if key in self.file_settings:
             return self.file_settings[key]
 

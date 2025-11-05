@@ -135,9 +135,9 @@ class Parser:
     def at_end_of_line(self) -> bool:
         """Check if at end of logical line (NEWLINE or EOF)
 
-        Note: APOSTROPHE (') starts a comment that consumes the rest of the line.
-        The comment content is preserved in the AST as a statement, but no further
-        statements can follow on the same line after a comment.
+        Note: This method does NOT check for comment tokens (REM, REMARK, APOSTROPHE).
+        Comments are handled separately in parse_line() where they explicitly end
+        statement parsing with a 'break' statement, consuming the rest of the line.
         """
         if self.at_end_of_tokens():
             return True
@@ -369,12 +369,12 @@ class Parser:
             if self.match(TokenType.COLON):
                 self.advance()
             elif self.match(TokenType.SEMICOLON):
-                # Allow trailing semicolon at end of line (treat as no-op).
+                # Allow trailing semicolon at end of line only (treat as no-op).
                 # Context matters: Semicolons WITHIN PRINT/LPRINT are item separators (parsed there),
-                # but semicolons BETWEEN statements are treated as trailing no-ops (handled here).
+                # but semicolons at end of statement are NOT valid statement separators in MBASIC.
+                # MBASIC uses COLON (:) to separate statements, not semicolon (;).
                 self.advance()
-                # If there's more after the semicolon, treat it as error
-                # But allow end of line or colon after semicolon
+                # If there's more after the semicolon (except another colon or newline), it's an error
                 if not self.at_end_of_line() and not self.match(TokenType.COLON):
                     token = self.current()
                     raise ParseError(f"Expected : or newline after ;, got {token.type.name}", token)
@@ -1194,10 +1194,12 @@ class Parser:
         if self.match(TokenType.HASH):
             self.advance()  # Skip #
             file_number = self.parse_expression()
-            # Expect comma after file number
+            # Optionally consume comma after file number
+            # Note: MBASIC 5.21 typically uses comma (PRINT #1, "text"), but comma is
+            # technically optional. Some dialects allow semicolon. Our parser accepts both
+            # comma and no separator, treating them the same way.
             if self.match(TokenType.COMMA):
                 self.advance()
-            # Note: Some dialects allow semicolon, but MBASIC uses comma
 
         # Check for USING keyword
         if self.match(TokenType.USING):
@@ -1261,7 +1263,7 @@ class Parser:
 
         # Expect semicolon after format string
         if not self.match(TokenType.SEMICOLON):
-            raise ValueError(f"Expected ';' after PRINT USING format string at line {self.current.line}")
+            raise ParseError(f"Expected ';' after PRINT USING format string at line {self.current().line}")
         self.advance()
 
         # Parse list of expressions (separated by semicolons)
@@ -1378,11 +1380,12 @@ class Parser:
                 line_num=token.line,
                 column=token.column
             )
-            # Check separator after prompt
-            # Note: In MBASIC, both comma and semicolon after prompt show "?" prompt.
-            # The separator type doesn't affect behavior (both display "?"), so we just
-            # consume it without tracking. The only way to suppress "?" is INPUT;
-            # (semicolon immediately after INPUT keyword, handled by suppress_question above).
+            # Consume separator after prompt (comma or semicolon)
+            # Note: In MBASIC 5.21, the separator AFTER the prompt string doesn't affect
+            # whether "?" is displayed. Both INPUT "Name"; X and INPUT "Name", X display
+            # the prompt followed by "?". The suppress_question flag (set by INPUT; with
+            # semicolon BEFORE the prompt) is what controls "?" display, not the separator
+            # after the prompt.
             if self.match(TokenType.SEMICOLON):
                 self.advance()
             elif self.match(TokenType.COMMA):
@@ -1577,17 +1580,19 @@ class Parser:
 
         Syntax:
             SHOWSETTINGS          - Show all settings
-            SHOWSETTINGS filter   - Show settings matching filter
+            SHOWSETTINGS pattern  - Show settings matching pattern
+
+        The pattern is an optional string expression to filter settings.
         """
         token = self.advance()
 
-        # Check for optional filter expression
-        filter_expr = None
+        # Check for optional pattern expression
+        pattern_expr = None
         if not self.is_at_end() and self.current_token().type not in (TokenType.COLON, TokenType.NEWLINE, TokenType.EOF):
-            filter_expr = self.parse_expression()
+            pattern_expr = self.parse_expression()
 
         return ShowSettingsStatementNode(
-            pattern=filter_expr,  # Use 'pattern' field name to match node definition
+            pattern=pattern_expr,  # Field name: 'pattern' (optional filter string)
             line_num=token.line,
             column=token.column
         )
@@ -1596,18 +1601,21 @@ class Parser:
         """Parse SETSETTING statement
 
         Syntax:
-            SETSETTING key value
+            SETSETTING setting_name value
+
+        The setting_name is a string expression identifying the setting.
+        The value is an expression that will be evaluated and assigned.
         """
         token = self.advance()
 
-        # Parse key (must be a string expression)
-        key_expr = self.parse_expression()
+        # Parse setting_name (typically a string expression like "editor.auto_number")
+        setting_name_expr = self.parse_expression()
 
         # Parse value expression
         value_expr = self.parse_expression()
 
         return SetSettingStatementNode(
-            setting_name=key_expr,  # Use 'setting_name' field name to match node definition
+            setting_name=setting_name_expr,  # Field name: 'setting_name' (string identifying setting)
             value=value_expr,
             line_num=token.line,
             column=token.column

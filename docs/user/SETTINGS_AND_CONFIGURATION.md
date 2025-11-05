@@ -1,5 +1,7 @@
 # Settings and Configuration
 
+> **Status:** The settings system is FULLY IMPLEMENTED and available in all UIs. All commands (SET, SHOW SETTINGS, HELP SET) work as documented. Settings files are automatically created in ~/.mbasic/settings.json (Linux/Mac) or %APPDATA%/mbasic/settings.json (Windows).
+
 MBASIC includes a comprehensive settings system that allows you to customize its behavior. Settings can be configured globally, per-project, or per-file.
 
 ## Quick Start
@@ -30,7 +32,9 @@ Settings are applied in this order (most specific wins):
 
 ### Global Settings File
 
-Location: `~/.mbasic/settings.json`
+**Location:**
+- **Linux/Mac:** `~/.mbasic/settings.json`
+- **Windows:** `%APPDATA%/mbasic/settings.json` (typically `C:\Users\YourName\AppData\Roaming\mbasic\settings.json`)
 
 Example:
 ```json
@@ -512,8 +516,9 @@ Variable name case conflict: 'TargetAngle' at line 10 vs 'targetangle' at line 2
 ### Settings not persisting?
 
 Check that you're editing the right file:
-- Global: `~/.mbasic/settings.json`
-- Project: `.mbasic/settings.json` (create directory if needed)
+- **Global (Linux/Mac):** `~/.mbasic/settings.json`
+- **Global (Windows):** `%APPDATA%/mbasic/settings.json`
+- **Project:** `.mbasic/settings.json` (create directory if needed)
 
 Settings in files persist across sessions. Settings via `SET` command only affect current session.
 

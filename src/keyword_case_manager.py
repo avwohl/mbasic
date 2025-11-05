@@ -5,6 +5,11 @@ Similar to variable case handling, maintains a table mapping normalized (lowerca
 keywords to their display case based on the configured policy.
 
 The keyword table is the single source of truth for how keywords should be displayed.
+
+Note: This class provides advanced case policies (first_wins, preserve, error) via
+CaseKeeperTable and is used by parser.py and position_serializer.py. For simpler
+force-based policies in the lexer, see SimpleKeywordCase (src/simple_keyword_case.py)
+which only supports force_lower, force_upper, and force_capitalize.
 """
 
 from src.case_keeper import CaseKeeperTable

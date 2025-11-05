@@ -41,6 +41,10 @@ class ConsoleIOHandler(IOHandler):
         """Input a complete line from console.
 
         For console, this delegates to self.input() (same behavior).
+
+        Note: Current implementation does NOT preserve leading/trailing spaces
+        as documented in base class. Python's input() automatically strips them.
+        This is a known limitation - see input_line() documentation in base.py.
         """
         return self.input(prompt)
 

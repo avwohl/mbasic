@@ -1002,5 +1002,8 @@ class BuiltinFunctions:
             if file_num not in self.runtime.files:
                 raise ValueError(f"File #{file_num} not open")
 
-            file_handle = self.runtime.files[file_num]
+            # self.runtime.files[file_num] is a dict with 'handle', 'mode', 'eof' keys
+            # (see EOF() method for the same pattern)
+            file_info = self.runtime.files[file_num]
+            file_handle = file_info['handle']
             return file_handle.read(num)

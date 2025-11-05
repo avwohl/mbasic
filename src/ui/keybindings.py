@@ -137,7 +137,8 @@ VARIABLES_CHAR = _ctrl_key_to_char(_variables_key)
 VARIABLES_DISPLAY = _variables_key
 
 # Execution stack window (menu only - no dedicated key)
-# Note: Ctrl+K is used by step_line, not stack window
+# Note: No keyboard shortcut to avoid conflicts with editor typing.
+# Ctrl+K is used by step_line (LIST_KEY), not for stack window.
 STACK_KEY = ''  # No keyboard shortcut
 STACK_CHAR = ''
 STACK_DISPLAY = 'Menu only'
@@ -153,6 +154,8 @@ RUN_CHAR = _ctrl_key_to_char(_run_key)
 RUN_DISPLAY = _run_key
 
 # Step Line (Ctrl+K) - execute all statements on current line
+# Note: Variable named LIST_KEY for historical compatibility (BASIC's LIST command),
+# but this is actually for step_line functionality in the debugger
 _list_key = _get_key('editor', 'step_line') or 'Ctrl+K'
 LIST_KEY = _ctrl_key_to_urwid(_list_key)
 LIST_CHAR = _ctrl_key_to_char(_list_key)
@@ -213,6 +216,8 @@ INSERT_LINE_DISPLAY = 'Ctrl+J'
 # =============================================================================
 
 # Continue execution (Go)
+# Note: Loads from 'goto_line' action in JSON because the same key (Ctrl+G)
+# is context-sensitive: "Go to line" in editor, "Go/Continue" in debugger
 _continue_key = _get_key('editor', 'goto_line') or 'Ctrl+G'
 CONTINUE_KEY = _ctrl_key_to_urwid(_continue_key)
 CONTINUE_CHAR = _ctrl_key_to_char(_continue_key)
@@ -307,8 +312,8 @@ KEYBINDINGS_BY_CATEGORY = {
 }
 
 # Quick reference for status bar - use compact ^ notation instead of Ctrl+
-# Note: ^K is step_line (execute current line), not stack (stack is menu-only)
-STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K step  Tab cycle  ^Q quit"
+# Note: ^K is "step line" (execute all statements on current line), not stack (stack is menu-only)
+STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K step line  Tab cycle  ^Q quit"
 EDITOR_STATUS = "Editor - ^F help  ^U menu  Tab cycle"
 OUTPUT_STATUS = "Output - Up/Down scroll  Tab cycle  ^U menu"
 

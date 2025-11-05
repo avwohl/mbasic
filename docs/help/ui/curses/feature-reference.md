@@ -84,19 +84,26 @@ Filter the variables list to show only variables matching a search term.
 
 ### Variable Sorting (s key in variables window)
 Cycle through different sort orders:
-- By name (alphabetical)
-- By type (Integer, Single, Double, String)
-- By value
-- By last modified
+- **Accessed**: Most recently accessed (read or written) - newest first
+- **Written**: Most recently written to - newest first
+- **Read**: Most recently read from - newest first
+- **Name**: Alphabetically by variable name
 
-Press 'd' to reverse sort direction.
+Press 'd' to toggle sort direction (ascending/descending).
 
 ### Execution Stack (Menu only)
 View the call stack showing:
 - Active GOSUB calls
 - FOR/NEXT loops
 - WHILE loops
-Helps understand program flow and nesting levels. Access through the menu bar.
+Helps understand program flow and nesting levels.
+
+**How to access:**
+1. Press Ctrl+U to open the menu bar
+2. Navigate to the Debug menu
+3. Select "Execution Stack" option
+
+Note: There is no dedicated keyboard shortcut to avoid conflicts with editor typing.
 
 ### Resource Usage
 Monitor memory and variable usage in the status bar.

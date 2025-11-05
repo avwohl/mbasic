@@ -35,7 +35,8 @@ class ImmediateExecutor:
 
     CAN execute when waiting for input:
     - 'waiting_for_input' - Program is waiting for INPUT. Immediate mode is allowed
-      to inspect/modify variables while paused for input. However, the user should
+      to inspect/modify variables while paused for input. This state is detected
+      by checking if state.input_prompt is not None. However, the user should
       respond to the input prompt via normal input, not via immediate commands.
 
     Usage:
@@ -153,6 +154,13 @@ class ImmediateExecutor:
 
         # Special case: Numbered line - this is a program edit, not immediate execution
         # In real MBASIC, typing a numbered line in immediate mode adds/edits that line
+        #
+        # This feature requires the following UI integration:
+        # - interpreter.interactive_mode must reference the UI object
+        # - UI must have a 'program' attribute with add_line() and delete_line() methods
+        # - UI must have _refresh_editor() method to update the display
+        # - UI must have _highlight_current_statement() for restoring execution highlighting
+        # If these requirements are not met, this will return an error message.
         import re
         line_match = re.match(r'^(\d+)\s*(.*)$', statement)
         if line_match:

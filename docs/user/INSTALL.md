@@ -207,6 +207,7 @@ This is a comprehensive implementation of MBASIC 5.21. All core language feature
 - ✓ DATA/READ/RESTORE statements
 - ✓ User-defined functions (DEF FN)
 - ✓ Interactive mode commands (RUN, LIST, SAVE, LOAD, EDIT, DELETE, RENUM, CONT)
+- ✓ Settings system (SET, SHOW SETTINGS commands with global/project configuration files)
 - ✓ Sequential file I/O (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF)
 - ✓ Random file I/O (FIELD, GET, PUT, LSET, RSET, LOC, LOF)
 - ✓ Binary file I/O (MKI$/MKS$/MKD$, CVI/CVS/CVD)

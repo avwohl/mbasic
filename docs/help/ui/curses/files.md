@@ -21,7 +21,7 @@ How to save and load BASIC programs.
 
 ## Saving Programs
 
-1. Press **Ctrl+V** (Note: Ctrl+S unavailable due to terminal flow control)
+1. Press **^V** to save (Note: ^S unavailable due to terminal flow control)
 2. Status line prompts: "Save as: _"
 3. Type filename (e.g., `myprogram.bas`)
 4. Press **Enter**
@@ -37,7 +37,7 @@ How to save and load BASIC programs.
 ### Example
 
 ```
-Press Ctrl+V
+Press ^V
 Type: hello.bas
 Press Enter
 → "Saved to hello.bas"
@@ -45,7 +45,7 @@ Press Enter
 
 ## Loading Programs
 
-1. Press **Ctrl+O**
+1. Press **^O**
 2. Status line prompts: "Load file: _"
 3. Type filename
 4. Press **Enter**
@@ -61,7 +61,7 @@ Press Enter
 ### Example
 
 ```
-Press Ctrl+O
+Press ^O
 Type: hello.bas
 Press Enter
 → Program loads into editor
@@ -82,7 +82,7 @@ The program will:
 
 ## Creating a New Program
 
-1. Press **Ctrl+N**
+1. Press **^N**
 2. Confirms: "Program cleared"
 3. Editor is empty, ready for new program
 
@@ -122,7 +122,7 @@ Each line must start with a line number.
 - Look at bottom status line
 - It says "Save as: " or "Load file: "
 - Type filename there
-- If error message is showing, press **ESC** first
+- If error message is showing, press ESC first
 
 ## See Also
 

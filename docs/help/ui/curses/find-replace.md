@@ -2,7 +2,9 @@
 
 ## Current Status
 
-The Curses UI currently **does not have** Find/Replace functionality. This feature is planned for future implementation.
+The Curses UI currently **does not have** Find/Replace functionality for the editor. This feature is planned for future implementation.
+
+**Note:** Search IS available in the Variables Window (press `/` while in the variables window to search for a variable by name). This document is specifically about Find/Replace in the program editor.
 
 ## Workarounds
 
@@ -11,17 +13,17 @@ The Curses UI currently **does not have** Find/Replace functionality. This featu
 While there's no built-in find feature, you can:
 
 1. **Use line numbers** to navigate directly:
-   - Press `Ctrl+G` to go to a specific line
-   - Type the line number and press Enter
+   - In immediate mode, type a line number to view that line
+   - Use arrow keys to move between lines
 
 2. **Visual scanning**:
    - Use Page Up/Page Down to browse
    - Arrow keys for line-by-line movement
 
 3. **Export and search**:
-   - Save the program: `Ctrl+S`
+   - Save the program: `^V`
    - Use external editor with find feature
-   - Reload with `Ctrl+O`
+   - Reload with `^O`
 
 ### Replacing Text
 
@@ -30,7 +32,7 @@ For text replacement:
 1. **Manual editing**:
    - Navigate to each occurrence
    - Edit line by line
-   - Use `Ctrl+K` to clear line and retype
+   - Use `^D` to delete line and retype
 
 2. **External editor**:
    - Save program to file
@@ -45,7 +47,7 @@ For text replacement:
 
 Find/Replace is planned with these features:
 
-**Find (Ctrl+F):**
+**Find:**
 - Search forward/backward
 - Case sensitive option
 - Whole word matching
@@ -57,8 +59,7 @@ Find/Replace is planned with these features:
 - Confirmation prompts
 
 **Navigation:**
-- F3 for Find Next
-- Shift+F3 for Find Previous
+- Next/Previous match navigation
 - Highlight all matches
 - Match counter
 
@@ -68,9 +69,7 @@ If you need Find/Replace now, use:
 
 ### Tk UI
 - Full Find/Replace dialogs
-- Ctrl+F for Find
-- Use Edit menu for Replace
-- F3 for Find Next
+- Use Edit menu for Find/Replace
 - Case sensitive and whole word options
 
 ### Command to switch:

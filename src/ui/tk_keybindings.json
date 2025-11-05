@@ -5,22 +5,12 @@
       "primary": "Ctrl+N",
       "description": "New file"
     },
-    "new_program": {
-      "keys": ["Ctrl+N"],
-      "primary": "Ctrl+N",
-      "description": "New file"
-    },
     "file_open": {
       "keys": ["Ctrl+O"],
       "primary": "Ctrl+O",
       "description": "Open file"
     },
     "file_save": {
-      "keys": ["Ctrl+S"],
-      "primary": "Ctrl+S",
-      "description": "Save file"
-    },
-    "save_file": {
       "keys": ["Ctrl+S"],
       "primary": "Ctrl+S",
       "description": "Save file"
@@ -80,6 +70,11 @@
       "keys": ["Return"],
       "primary": "Return",
       "description": "Execute search (when in search box)"
+    },
+    "inpage_search": {
+      "keys": ["Ctrl+F"],
+      "primary": "Ctrl+F",
+      "description": "Find text in current help page"
     }
   }
 }

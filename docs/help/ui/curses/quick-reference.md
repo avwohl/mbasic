@@ -45,6 +45,8 @@ Quick reference for the curses text UI.
 | **Ctrl+D** | Delete current line |
 | **Ctrl+E** | Renumber all lines (RENUM) |
 
+**Note:** Find/Replace is not yet available in Curses UI. See [Find/Replace](find-replace.md) for workarounds.
+
 ## Debugger (when program running)
 
 | Key | Action |
@@ -60,18 +62,16 @@ Quick reference for the curses text UI.
 
 | Key | Action |
 |-----|--------|
-| **s** | Cycle sort mode (Name → Accessed → Written → Read → Type → Value) |
+| **s** | Cycle sort mode (Accessed → Written → Read → Name) |
 | **d** | Toggle sort direction (ascending ↑ / descending ↓) |
 | **f** | Filter variables (All/Scalars/Arrays/Modified) |
 | **/** | Search for variable |
 
 **Sort Modes:**
-- **Name**: Alphabetically by variable name
-- **Accessed**: Most recently accessed (read or written)
-- **Written**: Most recently written to
-- **Read**: Most recently read from
-- **Type**: By type suffix ($, %, !, #)
-- **Value**: By value (numbers, strings, arrays)
+- **Accessed**: Most recently accessed (read or written) - default, newest first
+- **Written**: Most recently written to - newest first
+- **Read**: Most recently read from - newest first
+- **Name**: Alphabetically by variable name - A to Z
 
 ## Navigation
 

@@ -44,8 +44,6 @@ Summary of BASIC-80 error codes and their meanings.
 
 ## Extended and Disk Version Errors
 
-**Note:** Error codes 24-25, 27-28, and 31-49 are not defined in MBASIC 5.21 and are reserved for future use or specific system implementations.
-
 | Code | Number | Message | Description |
 |------|--------|---------|-------------|
 | | 19 | No RESUME | An error trapping routine is entered but contains no RESUME statement. |
@@ -53,13 +51,14 @@ Summary of BASIC-80 error codes and their meanings.
 | | 21 | Unprintable error | An error message is not available for the error condition. Usually caused by ERROR with an undefined error code. |
 | | 22 | Missing operand | An expression contains an operator with no operand following it. |
 | | 23 | Line buffer overflow | An attempt is made to input a line that has too many characters. |
+| | *24-25* | *(Reserved)* | Not defined in MBASIC 5.21. Reserved for future use. |
 | | 26 | FOR without NEXT | A FOR was encountered without a matching NEXT. |
+| | *27-28* | *(Reserved)* | Not defined in MBASIC 5.21. Reserved for future use. |
 | | 29 | WHILE without WEND | A WHILE statement does not have a matching WEND. |
 | | 30 | WEND without WHILE | A WEND was encountered without a matching WHILE. |
+| | *31-49* | *(Reserved)* | Not defined in MBASIC 5.21. Reserved for future use. |
 
 ## Disk I/O Errors
-
-**Note:** Error codes 56, 59-60, and 65 are not defined in MBASIC 5.21 and are reserved for future use or specific system implementations.
 
 | Code | Number | Message | Description |
 |------|--------|---------|-------------|
@@ -69,12 +68,15 @@ Summary of BASIC-80 error codes and their meanings.
 | | 53 | File not found | A LOAD, KILL, or OPEN statement references a file that does not exist. |
 | | 54 | Bad file mode | An attempt is made to use PUT, GET, or LOF with a sequential file, to LOAD a random file, or to OPEN with a mode other than I, O, or R. |
 | | 55 | File already open | A sequential output mode OPEN is issued for a file that is already open, or a KILL is given for an open file. |
+| | *56* | *(Reserved)* | Not defined in MBASIC 5.21. Reserved for future use. |
 | | 57 | Disk I/O error | A fatal I/O error occurred on a disk operation that the OS cannot recover from. |
 | | 58 | File already exists | The filename in a NAME statement is identical to an existing filename. |
+| | *59-60* | *(Reserved)* | Not defined in MBASIC 5.21. Reserved for future use. |
 | | 61 | Disk full | All disk storage space is in use. |
 | | 62 | Input past end | An INPUT statement is executed after all data in the file has been read, or for an empty file. Use EOF to detect end of file. |
 | | 63 | Bad record number | In a PUT or GET statement, the record number is either greater than 32767 or equal to zero. |
 | | 64 | Bad file name | An illegal form is used for the filename (e.g., too many characters). |
+| | *65* | *(Reserved)* | Not defined in MBASIC 5.21. Reserved for future use. |
 | | 66 | Direct statement in file | A direct statement is encountered while LOADing an ASCII-format file. The LOAD is terminated. |
 | | 67 | Too many files | An attempt is made to create a new file when all 255 directory entries are full. |
 

@@ -17,6 +17,19 @@ from src.input_sanitizer import sanitize_and_clear_parity, is_valid_input_char
 from src.debug_logger import debug_log_error, is_debug_mode
 from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode, get_default_reverse_for_mode
 from src.pc import PC
+from src.ast_nodes import EndStatementNode
+
+
+class _ImmediateModeToken:
+    """Token for variable edits from immediate mode or variable editor.
+
+    Used to mark variable changes that originate from the variable inspector
+    or immediate mode, not from program execution. The line=-1 signals to
+    runtime.set_variable() that this is a debugger/immediate mode edit.
+    """
+    def __init__(self):
+        self.line = -1
+        self.position = None
 
 
 class TkBackend(UIBackend):
@@ -25,8 +38,10 @@ class TkBackend(UIBackend):
     Provides a graphical UI with:
     - Menu bar (File, Edit, Run, Help)
     - Toolbar with common actions
-    - 3-pane vertical layout: editor (top), output (middle), immediate mode (bottom)
-    - Line numbers in editor
+    - 3-pane vertical layout:
+      * Editor with line numbers (top, ~50% - weight=3)
+      * Output pane (middle, ~33% - weight=2)
+      * Immediate mode input line (bottom, ~17% - weight=1)
     - Syntax highlighting (optional)
     - File dialogs for Open/Save
 
@@ -709,7 +724,7 @@ class TkBackend(UIBackend):
                 else:
                     # Get statement at PC to check if it's END or steppable
                     stmt = self.runtime.statement_table.get(pc)
-                    if stmt and stmt.__class__.__name__ == 'EndStatementNode':
+                    if stmt and isinstance(stmt, EndStatementNode):
                         # Stopped at END statement - don't highlight
                         self._add_output("\n--- Program finished ---\n")
                         self._set_status("Ready")
@@ -767,7 +782,7 @@ class TkBackend(UIBackend):
                 else:
                     # Get statement at PC to check if it's END or steppable
                     stmt = self.runtime.statement_table.get(pc)
-                    if stmt and stmt.__class__.__name__ == 'EndStatementNode':
+                    if stmt and isinstance(stmt, EndStatementNode):
                         # Stopped at END statement - don't highlight
                         self._add_output("\n--- Program finished ---\n")
                         self._set_status("Ready")
@@ -1071,7 +1086,8 @@ class TkBackend(UIBackend):
         from tkinter import simpledialog
         import re
 
-        # Check if we clicked on a row (accept 'tree' for first column or 'cell' for other columns)
+        # Check if we clicked on a row (accept both 'tree' and 'cell' regions)
+        # 'tree' = first column area, 'cell' = other column areas
         region = self.variables_tree.identify_region(event.x, event.y)
         if region not in ('cell', 'tree'):
             return
@@ -1166,19 +1182,13 @@ class TkBackend(UIBackend):
                 base_name = variable_name
                 suffix = None
 
-            # Create a token with line=-1 to indicate immediate mode / variable editor
-            # This token is used by set_variable to track the edit source
-            class ImmediateModeToken:
-                def __init__(self):
-                    self.line = -1
-                    self.position = None
-
             # Update the variable using the runtime's set_variable method
+            # Use _ImmediateModeToken to mark this as a debugger/immediate mode edit
             self.runtime.set_variable(
                 base_name,
                 suffix,
                 new_value,
-                token=ImmediateModeToken()
+                token=_ImmediateModeToken()
             )
 
             # Refresh variables window
@@ -1365,19 +1375,14 @@ class TkBackend(UIBackend):
                 else:
                     new_value = float(new_value_str)
 
-                # Create a token with line=-1 to indicate immediate mode / variable editor
-                class ImmediateModeToken:
-                    def __init__(self):
-                        self.line = -1
-                        self.position = None
-
                 # Update array element
+                # Use _ImmediateModeToken to mark this as a debugger/immediate mode edit
                 self.runtime.set_array_element(
                     base_name,
                     suffix,
                     subscripts,
                     new_value,
-                    token=ImmediateModeToken()
+                    token=_ImmediateModeToken()
                 )
 
                 result['cancelled'] = False
@@ -2212,7 +2217,10 @@ class TkBackend(UIBackend):
 
         Removes blank lines to keep program clean, but preserves the final
         line which is always blank in Tk Text widget (internal Tk behavior).
-        Called after any modification (typing, pasting, etc.)
+
+        Currently called only from _on_enter_key (after each keypress), not
+        after pasting or other modifications. This provides continuous cleanup
+        as the user types.
         """
         import tkinter as tk
 
@@ -3457,9 +3465,12 @@ class TkBackend(UIBackend):
 
         Invalid if program was edited after stopping.
 
-        TODO: This implementation is incomplete. The runtime.stop_line and
-        runtime.stop_stmt_index attributes are not set anywhere when a program
-        stops, so this will fail. Need to implement proper state saving on STOP.
+        NOTE: This is a simplified implementation. The runtime.stop_line and
+        runtime.stop_stmt_index attributes are optional extensions for better
+        state restoration. If not present, execution continues from the current
+        PC position maintained by the interpreter. Full CONT semantics require
+        the interpreter to save execution position when stopping (see STOP handler
+        in interpreter.py).
         """
         # Check if runtime exists and is in stopped state
         if not self.runtime or not self.runtime.stopped:
@@ -3467,22 +3478,21 @@ class TkBackend(UIBackend):
             return
 
         try:
-            # Clear stopped flag
+            # Clear stopped and halted flags to resume execution
             self.runtime.stopped = False
+            self.runtime.halted = False
 
-            # Restore execution position
-            # TODO: These attributes don't exist - need to implement proper STOP state saving
+            # Restore execution position if available (optional extension)
+            # The interpreter maintains PC through stop_pc, so this is supplementary
             if hasattr(self.runtime, 'stop_line') and hasattr(self.runtime, 'stop_stmt_index'):
                 self.runtime.current_line = self.runtime.stop_line
                 self.runtime.current_stmt_index = self.runtime.stop_stmt_index
-            self.runtime.halted = False
 
-            # Resume tick-based execution
-            # The interpreter will continue from the saved position
-            # Start ticking again
-            self.running = True  # Fixed: was self.is_running
+            # Resume tick-based execution from current PC
+            # The interpreter will continue from the saved position (stop_pc)
+            self.running = True
             self._set_status("Running")
-            self._execute_tick()  # Fixed: was self._tick()
+            self._execute_tick()
 
         except Exception as e:
             self._write_output(f"?Error continuing: {e}")
