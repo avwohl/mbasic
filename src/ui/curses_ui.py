@@ -318,6 +318,28 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         return None, None
 
+    def _find_last_line_number(self):
+        """Find the highest line number in the editor.
+
+        Returns:
+            tuple: (line_number, code_start_col) of the last (highest) numbered line,
+                   or (None, None) if no lines found
+        """
+        current_text = self.edit_widget.get_edit_text()
+        lines = current_text.split('\n')
+
+        last_line_number = None
+        last_code_start = None
+
+        for line in lines:
+            line_num, code_start = self._parse_line_number(line)
+            if line_num is not None:
+                if last_line_number is None or line_num > last_line_number:
+                    last_line_number = line_num
+                    last_code_start = code_start
+
+        return last_line_number, last_code_start
+
     def keypress(self, size, key):
         """Handle key presses for column-aware editing and auto-numbering.
 
