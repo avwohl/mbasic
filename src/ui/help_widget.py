@@ -338,6 +338,10 @@ class HelpWidget(urwid.WidgetWrap):
             self.link_positions = link_positions
             self.current_link_index = 0
 
+            # Scroll to top of the document
+            if len(self.walker) > 0:
+                self.listbox.set_focus(0)
+
             # Update title
             self.current_topic = relative_path
             topic_name = relative_path.rsplit('/', 1)[-1].replace('.md', '').replace('-', ' ').title()
