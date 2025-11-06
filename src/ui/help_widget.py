@@ -51,8 +51,9 @@ class HelpWidget(urwid.WidgetWrap):
         self.search_result_index = 0
 
         # Create display widgets
-        self.text_widget = urwid.Text("")
-        self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker([self.text_widget]))
+        # Use SimpleFocusListWalker to hold list of line widgets for scrolling
+        self.walker = urwid.SimpleFocusListWalker([])
+        self.listbox = urwid.ListBox(self.walker)
 
         # Create frame with title and footer
         self.title = urwid.Text("")
@@ -171,7 +172,7 @@ class HelpWidget(urwid.WidgetWrap):
             result_text += "- Statement names (e.g., 'print', 'for', 'if')\n"
             result_text += "- Function names (e.g., 'left$', 'abs', 'int')\n"
             result_text += "\nPress ESC to return, / to search again"
-            self.text_widget.set_text(result_text)
+            self._set_content(result_text)
             self.current_links = []
             self.search_mode = False
             self.footer.set_text(" /=New Search ESC=Back ")
@@ -189,7 +190,7 @@ class HelpWidget(urwid.WidgetWrap):
                 # Add as link
                 self.current_links.append((i * 4, title, path))
 
-            self.text_widget.set_text(result_text)
+            self._set_content(result_text)
             self.link_positions = [link[0] for link in self.current_links]
             self.current_link_index = 0
             self.search_mode = False
@@ -204,6 +205,63 @@ class HelpWidget(urwid.WidgetWrap):
         self.footer.set_text(" ↑/↓=Scroll →/←=Next/Prev Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
         self._load_topic(self.current_topic)
 
+    def _set_content(self, text_markup):
+        """Set content in the listbox, converting markup to line widgets."""
+        # Convert markup list into separate line widgets for proper scrolling
+        # text_markup is a list of strings and (attr, text) tuples
+
+        if not isinstance(text_markup, list):
+            text_markup = [text_markup]
+
+        # Collect line data by processing markup
+        current_line = []
+        all_lines = []
+
+        for item in text_markup:
+            if isinstance(item, tuple):
+                # (attr, text) tuple
+                text = item[1]
+                # Check for newlines within the text
+                if '\n' in text:
+                    parts = text.split('\n')
+                    for i, part in enumerate(parts):
+                        if part:
+                            current_line.append((item[0], part))
+                        if i < len(parts) - 1:  # Not the last part
+                            all_lines.append(current_line if current_line else [('', '')])
+                            current_line = []
+                else:
+                    current_line.append(item)
+            else:
+                # Plain string
+                text = str(item)
+                if '\n' in text:
+                    parts = text.split('\n')
+                    for i, part in enumerate(parts):
+                        if part:
+                            current_line.append(part)
+                        if i < len(parts) - 1:
+                            all_lines.append(current_line if current_line else [''])
+                            current_line = []
+                else:
+                    if text:
+                        current_line.append(text)
+
+        # Add final line if non-empty
+        if current_line:
+            all_lines.append(current_line)
+
+        # Create Text widgets for each line
+        line_widgets = []
+        for line_markup in all_lines:
+            if not line_markup:
+                line_markup = ['']
+            text_widget = urwid.Text(line_markup)
+            line_widgets.append(text_widget)
+
+        # Update walker
+        self.walker[:] = line_widgets if line_widgets else [urwid.Text('')]
+
     def _refresh_display(self):
         """Re-render the current display with updated link highlighting."""
         # Re-render using cached lines (preserves scroll position)
@@ -212,7 +270,7 @@ class HelpWidget(urwid.WidgetWrap):
                 self.current_rendered_lines,
                 self.current_link_index
             )
-            self.text_widget.set_text(text_markup)
+            self._set_content(text_markup)
 
     def _create_text_markup_with_links(self, lines: List[str], current_link_index: int = 0) -> List:
         """
@@ -283,7 +341,7 @@ class HelpWidget(urwid.WidgetWrap):
 
         if not full_path.exists():
             error_text = f"Error: Help topic not found\n\nPath: {relative_path}\n\nPress ESC or Q to exit."
-            self.text_widget.set_text(error_text)
+            self._set_content(error_text)
             self.current_links = []
             self.link_positions = []
             self.title.set_text(f" MBASIC Help: {relative_path} (NOT FOUND) ")
@@ -306,7 +364,7 @@ class HelpWidget(urwid.WidgetWrap):
             text_markup = self._create_text_markup_with_links(lines, self.current_link_index)
 
             # Set the content
-            self.text_widget.set_text(text_markup)
+            self._set_content(text_markup)
 
             # Store links and positions
             self.current_links = links
@@ -323,7 +381,7 @@ class HelpWidget(urwid.WidgetWrap):
         except Exception as e:
             import traceback
             error_text = f"Error loading help topic:\n\n{str(e)}\n\n{traceback.format_exc()}\n\nPress ESC or Q to exit."
-            self.text_widget.set_text(error_text)
+            self._set_content(error_text)
             self.current_links = []
             self.link_positions = []
             return False
@@ -414,6 +472,10 @@ class HelpWidget(urwid.WidgetWrap):
                 self.current_link_index = (self.current_link_index + 1) % len(self.link_positions)
                 # Re-render to update highlighting
                 self._refresh_display()
+                # Scroll to make the link visible
+                link_line = self.link_positions[self.current_link_index]
+                if link_line < len(self.walker):
+                    self.listbox.set_focus(link_line)
                 return None
 
         elif key in ('shift tab', 'left'):
@@ -422,6 +484,10 @@ class HelpWidget(urwid.WidgetWrap):
                 self.current_link_index = (self.current_link_index - 1) % len(self.link_positions)
                 # Re-render to update highlighting
                 self._refresh_display()
+                # Scroll to make the link visible
+                link_line = self.link_positions[self.current_link_index]
+                if link_line < len(self.walker):
+                    self.listbox.set_focus(link_line)
                 return None
 
         # Pass other keys to listbox for scrolling
