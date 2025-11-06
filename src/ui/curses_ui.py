@@ -368,6 +368,19 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Handle Enter key - commits line and moves to next with auto-numbering
         # Skip auto-numbering if we were in rapid input mode (paste operation)
         if key == 'enter' and self.auto_number_enabled and not in_rapid_input:
+            # FIRST: Clean up any double line numbers before auto-numbering
+            current_text = self.edit_widget.get_edit_text()
+            cursor_pos = self.edit_widget.edit_pos
+            new_text = self._parse_line_numbers(current_text)
+            if new_text != current_text:
+                self.edit_widget.set_edit_text(new_text)
+                # Recalculate everything after text change
+                current_text = new_text
+                cursor_pos = self.edit_widget.edit_pos
+                text_before_cursor = current_text[:cursor_pos]
+                line_num = text_before_cursor.count('\n')
+                lines = current_text.split('\n')
+
             # Parse current line number (variable width)
             current_line_number = None
             if line_num < len(lines):
