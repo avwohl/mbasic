@@ -231,7 +231,6 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # For deferred processing after input completes (paste operations)
         self._needs_parse = False  # Flag: lines need parsing (reformat pasted BASIC code)
-        self._needs_auto_number = False  # Flag: need to add auto-number line after paste
         self._loop = None  # Will be set by CursesBackend after loop creation
         self._idle_handle = None  # Handle for enter_idle callback
 
@@ -440,13 +439,86 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Let key be processed at new position
             return super().keypress(size, key)
 
-        # Handle Enter key - just set flags, let enter_idle callback do the work
-        if key == 'enter':
-            # Set flags for deferred processing (happens in _on_enter_idle after all input processed)
-            self._needs_parse = True  # Parse/reformat any pasted BASIC code
-            if self.auto_number_enabled:
-                self._needs_auto_number = True  # Add auto-number line after paste completes
+        # Handle Enter key with auto-numbering
+        if key == 'enter' and self.auto_number_enabled:
+            # Parse current line number (variable width)
+            current_line_number = None
+            if line_num < len(lines):
+                line = lines[line_num]
+                line_num_parsed, code_start = self._parse_line_number(line)
+                if line_num_parsed is not None:
+                    current_line_number = line_num_parsed
 
+            # Move to end of current line
+            if line_num < len(lines):
+                line_start = sum(len(lines[i]) + 1 for i in range(line_num))
+                line_end = line_start + len(lines[line_num])
+                self.edit_widget.set_edit_pos(line_end)
+
+            # Calculate next auto-number based on current line + increment
+            if current_line_number is not None:
+                next_num = current_line_number + self.auto_number_increment
+            else:
+                next_num = self.next_auto_line_num
+
+            # Get all existing line numbers from display
+            existing_line_nums = set()
+            for display_line in lines:
+                if len(display_line) >= 3:  # At least status + 1-digit + space
+                    try:
+                        parsed_num, _ = self._parse_line_number(display_line)
+                        if parsed_num is not None:
+                            existing_line_nums.add(parsed_num)
+                    except:
+                        pass
+
+            # Find next available number that doesn't collide
+            sorted_line_nums = sorted(existing_line_nums)
+            if current_line_number in sorted_line_nums:
+                idx = sorted_line_nums.index(current_line_number)
+                if idx + 1 < len(sorted_line_nums):
+                    max_allowed = sorted_line_nums[idx + 1]
+                else:
+                    max_allowed = 99999
+            else:
+                max_allowed = 99999
+
+            # Find next valid number
+            attempts = 0
+            while next_num in existing_line_nums or next_num >= max_allowed:
+                next_num += self.auto_number_increment
+                attempts += 1
+                if next_num >= 99999 or attempts > 10:
+                    self._parent_ui.show_yesno_popup(
+                        "No Room",
+                        f"No room to insert line after {current_line_number}.\n\n"
+                        f"Would you like to renumber the program to make room?",
+                        lambda response: self._on_auto_number_renumber_response(response)
+                    )
+                    return None
+
+            # Format new line: " NN " (with status space)
+            new_line_prefix = f"\n {next_num} "
+
+            # Insert newline and prefix at end of current line
+            current_text = self.edit_widget.get_edit_text()
+            cursor_pos = self.edit_widget.edit_pos
+            new_text = current_text[:cursor_pos] + new_line_prefix + current_text[cursor_pos:]
+            self.edit_widget.set_edit_text(new_text)
+            self.edit_widget.set_edit_pos(cursor_pos + len(new_line_prefix))
+
+            # Update next_auto_line_num for next time
+            self.next_auto_line_num = next_num + self.auto_number_increment
+
+            # Set flag for deferred parsing (reformats pasted BASIC code)
+            self._needs_parse = True
+
+            return None
+
+        # Handle Enter when auto-numbering disabled
+        if key == 'enter':
+            # Set flag for deferred parsing (reformats pasted BASIC code)
+            self._needs_parse = True
             # Let Enter be processed normally (insert newline)
             return super().keypress(size, key)
 
@@ -1052,11 +1124,12 @@ class ProgramEditorWidget(urwid.WidgetWrap):
     def _on_enter_idle(self):
         """Called by urwid when entering idle state (after all input processed).
 
-        This is where expensive operations happen: parsing, sorting, auto-numbering.
+        This is where expensive operations happen: parsing and sorting.
+        Auto-numbering happens immediately on each Enter in keypress().
         urwid automatically redraws screen after this returns.
         """
         # Check if any work is needed
-        if not self._needs_parse and not self._needs_sort and not self._needs_auto_number:
+        if not self._needs_parse and not self._needs_sort:
             return
 
         # Get current state
@@ -1097,45 +1170,6 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     self._sort_and_position_line(lines, line_num, target_column=col_in_line)
 
             self._needs_sort = False
-
-        # Step 3: Add auto-number line after paste completes
-        if self._needs_auto_number:
-            # Get final state after parsing and sorting
-            current_text = self.edit_widget.get_edit_text()
-            cursor_pos = self.edit_widget.edit_pos
-
-            # Find the last line with a line number
-            last_line_number, _ = self._find_last_line_number()
-
-            if last_line_number is not None:
-                # Calculate next auto-number
-                next_num = last_line_number + self.auto_number_increment
-
-                # Check if cursor is at the start of an empty line
-                # (paste leaves cursor on new blank line after last Enter)
-                text_before_cursor = current_text[:cursor_pos]
-                text_after_cursor = current_text[cursor_pos:]
-
-                # Check if we're at start of line (preceded by newline or at start)
-                at_line_start = (cursor_pos == 0 or text_before_cursor.endswith('\n'))
-                # Check if current line is empty (followed by newline or at end)
-                current_line_empty = (cursor_pos == len(current_text) or text_after_cursor.startswith('\n'))
-
-                if at_line_start and current_line_empty:
-                    # Already on empty line, just add the line number (no leading newline)
-                    new_line_prefix = f" {next_num} "
-                else:
-                    # Not on empty line, add newline before line number
-                    new_line_prefix = f"\n {next_num} "
-
-                new_text = current_text[:cursor_pos] + new_line_prefix + current_text[cursor_pos:]
-                self.edit_widget.set_edit_text(new_text)
-                self.edit_widget.set_edit_pos(cursor_pos + len(new_line_prefix))
-
-                # Update next_auto_line_num for next time
-                self.next_auto_line_num = next_num + self.auto_number_increment
-
-            self._needs_auto_number = False
 
         # urwid automatically redraws screen after this callback returns
 
