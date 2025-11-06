@@ -21,30 +21,30 @@ Quick reference for the curses text UI.
 
 | Key | Action |
 |-----|--------|
-| **Ctrl+Q** | Quit |
-| **Ctrl+U** | Show menu |
-| **^F** (Ctrl+F) | Help (with search) |
-| **Ctrl+W** | Toggle variables watch window |
-| **Ctrl+,** | Settings |
+| **^Q** | Quit |
+| **^U** | Show menu |
+| **^F** | Help (with search) |
+| **^W** | Toggle variables watch window |
+| **^,** | Settings |
 | **Menu only** | Toggle execution stack window |
 
 ## Program Management
 
 | Key | Action |
 |-----|--------|
-| **Ctrl+R** | Run program |
+| **^R** | Run program |
 | **Menu only** | List program |
-| **Ctrl+N** | New program |
-| **^V** (Ctrl+V) | Save program (Ctrl+S unavailable - terminal flow control) |
-| **Ctrl+O** | Open/Load program |
+| **^N** | New program |
+| **^V** | Save program (^S unavailable - terminal flow control) |
+| **^O** | Open/Load program |
 
 ## Editing
 
 | Key | Action |
 |-----|--------|
-| **Ctrl+B** | Toggle breakpoint on current line |
-| **Ctrl+D** | Delete current line |
-| **Ctrl+E** | Renumber all lines (RENUM) |
+| **^B** | Toggle breakpoint on current line |
+| **^D** | Delete current line |
+| **^E** | Renumber all lines (RENUM) |
 
 **Note:** Find/Replace is not yet available in Curses UI. See [Find/Replace](find-replace.md) for workarounds.
 
@@ -52,11 +52,11 @@ Quick reference for the curses text UI.
 
 | Key | Action |
 |-----|--------|
-| **Ctrl+G** | Continue execution |
-| **Ctrl+K** | Step Line - execute all statements on current line |
-| **Ctrl+T** | Step Statement - execute one statement at a time |
-| **Ctrl+X** | Stop execution |
-| **Ctrl+W** | Show/hide variables window |
+| **^G** | Continue execution |
+| **^K** | Step Line - execute all statements on current line |
+| **^T** | Step Statement - execute one statement at a time |
+| **^X** | Stop execution |
+| **^W** | Show/hide variables window |
 | **Menu only** | Show/hide execution stack window |
 
 ## Variables Window (when visible)

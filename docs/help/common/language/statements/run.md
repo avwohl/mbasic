@@ -65,9 +65,9 @@ RUN "PROGRAM.BAS"
 - [CLEAR](clear.md) - To set all numeric variables to zero and all string variables to null; and, optionally, 'to set the end of memory and the amount of stack space
 - [COMMON](common.md) - To pass variables to a CHAINed program
 - [CONT](cont.md) - To continue program execution after a Control-C has been typed, or a STOP or END statement has been executed
-- [END](end.md) - To terminate program execution, close all files and return to command level
+- [END](end.md) - To terminate program execution, close all files and return to the BASIC prompt
 - [GOTO](goto.md) - Branch unconditionally to a specified line number
 - [LOAD](load.md) - To load a file from disk into memory
 - [NEW](new.md) - To delete the program currently in memory and clear all variables
-- [STOP](stop.md) - To terminate program execution and return to command level
+- [STOP](stop.md) - To terminate program execution and return to the BASIC prompt
 - [SYSTEM](system.md) - Exits MBASIC and returns to the operating system
