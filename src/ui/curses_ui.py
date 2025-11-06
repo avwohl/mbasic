@@ -233,8 +233,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             return super().keypress(size, key)
 
         # Check if we have pending updates from paste
+        # Save state before clearing (for auto-number skip check)
+        in_rapid_input = self._needs_refresh or self._needs_sort
+
         # If so, process them NOW before handling this key
-        if self._needs_refresh or self._needs_sort:
+        if in_rapid_input:
             self._perform_deferred_refresh()
 
         # Get current cursor position (only for special keys)
@@ -328,8 +331,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             return super().keypress(size, key)
 
         # Handle Enter key - commits line and moves to next with auto-numbering
-        # Skip auto-numbering if we're in rapid input mode (paste operation)
-        if key == 'enter' and self.auto_number_enabled and not (self._needs_refresh or self._needs_sort):
+        # Skip auto-numbering if we were in rapid input mode (paste operation)
+        if key == 'enter' and self.auto_number_enabled and not in_rapid_input:
             # Parse current line number (variable width)
             current_line_number = None
             if line_num < len(lines):
