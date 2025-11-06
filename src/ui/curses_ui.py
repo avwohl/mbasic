@@ -209,40 +209,48 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         if len(line) < 3:  # Need at least status + digit + space
             return None, None
 
-        # Skip status character and find all number sequences
+        # Skip status character
         content = line[1:]  # Everything after status
 
-        # Find all number sequences followed by space or more numbers
+        # Parse line numbers at the start only
+        # Format: "20 100 for..." -> line number is 100
+        # Stop as soon as we hit non-digit after space (start of code)
         last_num = None
         last_num_end = None
         pos = 0
 
         while pos < len(content):
-            # Skip non-digits
-            while pos < len(content) and not content[pos].isdigit():
+            # Skip leading spaces
+            while pos < len(content) and content[pos] == ' ':
                 pos += 1
 
             if pos >= len(content):
                 break
 
+            # If we hit a non-digit, we've reached the code - stop
+            if not content[pos].isdigit():
+                break
+
             # Found start of a number - extract it
-            num_start = pos
             num_str = ""
             while pos < len(content) and content[pos].isdigit():
                 num_str += content[pos]
                 pos += 1
 
-            # Check what follows the number
-            if pos < len(content) and content[pos] == ' ':
-                # Number followed by space - this could be a line number
-                try:
-                    last_num = int(num_str)
-                    last_num_end = pos + 1  # Position after the space
-                except ValueError:
-                    pass
+            # Save this as potential line number
+            try:
+                last_num = int(num_str)
+                # Find where code starts (skip spaces after the number)
+                code_pos = pos
+                while code_pos < len(content) and content[code_pos] == ' ':
+                    code_pos += 1
+                last_num_end = code_pos
+            except ValueError:
+                pass
 
-            # If number is followed by non-space, it's part of the code, stop looking
-            elif pos < len(content):
+            # Check what follows the number
+            if pos < len(content) and content[pos] != ' ':
+                # Number is followed by non-space (like "i" in "50i") - it's part of code, stop
                 break
 
         if last_num is not None:
