@@ -14,7 +14,7 @@ from .keybindings import (
     DELETE_LINE_KEY, INSERT_LINE_KEY, RENUMBER_KEY,
     CONTINUE_KEY, STEP_KEY, STOP_KEY, TAB_KEY, SETTINGS_KEY,
     MAXIMIZE_OUTPUT_KEY,
-    STATUS_BAR_SHORTCUTS, EDITOR_STATUS, OUTPUT_STATUS
+    STATUS_BAR_SHORTCUTS
 )
 from .markdown_renderer import MarkdownRenderer
 from .help_widget import HelpWidget
@@ -1968,11 +1968,10 @@ class CursesBackend(UIBackend):
             if self.pile.focus_position == 1:
                 # Switch to output/immediate
                 self.pile.focus_position = 2
-                self.status_bar.set_text(OUTPUT_STATUS)
             else:
                 # Switch back to editor
                 self.pile.focus_position = 1
-                self.status_bar.set_text(EDITOR_STATUS)
+            # Keep the startup status bar message (don't change it)
             return None
 
         elif key == MENU_KEY:

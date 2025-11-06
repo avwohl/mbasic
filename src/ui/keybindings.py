@@ -324,7 +324,7 @@ KEYBINDINGS_BY_CATEGORY = {
 # Note: ^K is "step line" (execute all statements on current line)
 #       Stack window is menu-only (Ctrl+U -> Debug -> Execution Stack)
 #       Quit is menu-only (Ctrl+U -> File -> Quit) or Ctrl+C
-STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K step line  Tab cycle"
+STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K step line  Tab cycle  ↑↓ scroll"
 EDITOR_STATUS = "Editor - ^F help  ^U menu  Tab cycle"
 OUTPUT_STATUS = "Output - Up/Down scroll  Tab cycle  ^U menu"
 
