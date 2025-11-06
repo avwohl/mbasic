@@ -20,7 +20,7 @@
 
 **Canvas shows**:
 - Column 0: Status (●=breakpoint, ?=error, space=normal)
-- Columns 1-5: Line number (5 digits, right-aligned)
+- Variable width line number
 
 **Text widget**:
 - User can type anything, including line numbers
@@ -221,8 +221,8 @@ def _on_enter_key(self, event):
             current_line_num, existing_nums, auto_number_increment
         )
 
-        # Insert new line with number
-        self.text.insert('insert', f'\\n{next_available:>5} ')
+        # Insert new line with number (variable width)
+        self.text.insert('insert', f'\\n{next_available} ')
 
         return 'break'  # Prevent default Enter behavior
 ```

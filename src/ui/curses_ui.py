@@ -128,11 +128,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
     - Field 2 (variable width): Line number (no padding for display)
     - Field 3 (rest of line): Program text (BASIC code)
 
-    Note: This is NOT a true columnar layout with fixed column boundaries.
-    Line numbers use variable width for display (_format_line returns variable-width numbers).
-    However, when reformatting pasted content, _parse_line_numbers uses fixed 5-character width
-    for alignment consistency. The keypress method uses _parse_line_number to find code boundaries
-    dynamically. The layout is a formatted string with three fields, not three columns.
+    Note: Line numbers use variable width (not fixed 5 chars) for flexibility with large programs.
     """
 
     def __init__(self):
@@ -199,9 +195,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
     def _parse_line_number(self, line):
         """Extract line number from display line.
 
-        Format: "SNNNNN CODE" where S=status (1 char), NNNNN=line number (fixed 5-char
-        width, right-justified), and CODE is the program text. This matches the format
-        used by _format_line() and _parse_line_numbers().
+        Format: "SNN CODE" where S=status, NN=line number (variable width)
 
         Args:
             line: Display line string
@@ -227,11 +221,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
     def keypress(self, size, key):
         """Handle key presses for column-aware editing and auto-numbering.
 
-        Format: "SNNNNN CODE" where S=status, NNNNN=line number (fixed 5-char width)
+        Format: "S<linenum> CODE" (where <linenum> is variable width)
         - Column 0: Status (●, ?, space) - read-only
-        - Columns 1-5: Line number (fixed 5-char width, right-justified) - editable
-        - Column 6: Space
-        - Columns 7+: Code - editable
+        - Columns 1+: Line number (variable width) - editable
+        - After line number: Space
+        - After space: Code - editable
         """
         # FAST PATH: For normal printable characters, bypass all processing
         # This is critical for responsive typing
@@ -290,7 +284,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     col_in_line = cursor_pos
 
         # Mark that sorting is needed when editing line numbers
-        # Check if we're in line number area (columns 1-5, before the space at column 6)
+        # Check if we're in line number area (variable width, before the code)
         if line_num < len(lines):
             line = lines[line_num]
             line_num_parsed, code_start = self._parse_line_number(line)
@@ -960,11 +954,6 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         - Lines with column structure: " [space]     10 PRINT"
         - Raw pasted lines: "10 PRINT"
 
-        Note: When reformatting pasted content, line numbers are right-justified to 5 characters
-        for consistent alignment. This differs from the variable-width formatting used in
-        _format_line() for display. The fixed 5-char width (lines 991, 1024) helps maintain
-        alignment when pasting multiple lines with different line number lengths.
-
         Args:
             text: Current editor text
 
@@ -994,10 +983,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     j += 1
                 rest = line[j:]
 
-                # Reformat with column structure
+                # Reformat with column structure (variable width line numbers)
                 if num_str:
-                    line_num_formatted = f"{num_str:>5}"
-                    new_line = f" {line_num_formatted} {rest}"
+                    new_line = f" {num_str} {rest}"
                     lines[i] = new_line
                     changed = True
                 continue
@@ -1029,8 +1017,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
                     # ALWAYS use the number from code area (replaces auto-number or fills empty)
                     # This preserves user's pasted line numbers like 210, 220, 230
-                    line_num_formatted = f"{num_str:>5}"
-                    new_line = f"{status}{line_num_formatted} {rest}"
+                    # Use variable width line numbers (no fixed padding)
+                    new_line = f"{status}{num_str} {rest}"
 
                     lines[i] = new_line
                     changed = True
@@ -2087,8 +2075,8 @@ class CursesBackend(UIBackend):
 
         current_line = lines[line_index]
 
-        # Parse current line number from columns 1-5
-        if len(current_line) < 6:
+        # Parse current line number (variable width)
+        if len(current_line) < 3:  # Need at least status + digit + space
             self.status_bar.set_text("Current line has no line number")
             return
 

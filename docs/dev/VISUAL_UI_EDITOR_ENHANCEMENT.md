@@ -69,10 +69,10 @@ S#####_CODE
 ```
 
 ### Key Features
-- **Column 0**: Status symbol (read-only, visual only)
-- **Columns 1-5**: Line number (5 digits, editable as part of text)
-- **Column 6**: Space separator
-- **Columns 7+**: Code
+- **Field 1**: Status symbol (read-only, visual only)
+- **Field 2**: Line number (variable width, editable as part of text)
+- **Separator**: Space
+- **Field 3**: Code
 - **All text is selectable and copyable** (including line numbers)
 - **Auto-sort on navigation**: Sort only when moving away from line (not on every keystroke)
 - **Auto-scroll**: Jump to line's new position after sort

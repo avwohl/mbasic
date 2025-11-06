@@ -46,10 +46,11 @@ def _toggle_breakpoint_current_line(self):
     text_before_cursor = current_text[:cursor_pos]
     line_index = text_before_cursor.count('\n')
 
-    # Extract line number from columns 1-5
+    # Extract line number (variable width after status char)
     lines = current_text.split('\n')
     line = lines[line_index]
-    line_number = int(line[1:6].strip())
+    # Use _parse_line_number to extract variable-width line number
+    line_number, _ = self._parse_line_number(line)
 
     # Toggle breakpoint in set
     if line_number in self.editor.breakpoints:

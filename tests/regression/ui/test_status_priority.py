@@ -65,7 +65,7 @@ def test_status_priority():
     print()
 
     print("Test 2: Breakpoint preserved when error is fixed")
-    # Format: "SNNNNN CODE"
+    # Format: "S<linenum> CODE" (variable width)
     # Line 10 has error, line 20 has error + breakpoint
     editor.breakpoints.clear()
     editor.breakpoints.add(20)

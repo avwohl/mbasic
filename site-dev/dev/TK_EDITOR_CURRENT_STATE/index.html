@@ -1096,7 +1096,7 @@
 </code></pre></div>
 <p><strong>Canvas shows</strong>:
 - Column 0: Status (●=breakpoint, ?=error, space=normal)
-- Columns 1-5: Line number (5 digits, right-aligned)</p>
+- Variable width line number</p>
 <p><strong>Text widget</strong>:
 - User can type anything, including line numbers
 - No coordination with Canvas line numbers</p>
@@ -1280,8 +1280,8 @@ Result: Blank line.</p>
 <a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>            <span class="n">current_line_num</span><span class="p">,</span> <span class="n">existing_nums</span><span class="p">,</span> <span class="n">auto_number_increment</span>
 <a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>        <span class="p">)</span>
 <a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>        <span class="c1"># Insert new line with number</span>
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="s1">&#39;insert&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">n</span><span class="si">{</span><span class="n">next_available</span><span class="si">:</span><span class="s1">&gt;5</span><span class="si">}</span><span class="s1"> &#39;</span><span class="p">)</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>        <span class="c1"># Insert new line with number (variable width)</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="s1">&#39;insert&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">n</span><span class="si">{</span><span class="n">next_available</span><span class="si">}</span><span class="s1"> &#39;</span><span class="p">)</span>
 <a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>
 <a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>        <span class="k">return</span> <span class="s1">&#39;break&#39;</span>  <span class="c1"># Prevent default Enter behavior</span>
 </code></pre></div></p>

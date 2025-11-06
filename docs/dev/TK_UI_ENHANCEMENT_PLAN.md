@@ -171,7 +171,7 @@ from tkinter import font as tkfont
 class LineNumberedText(tk.Frame):
     """Text widget with line numbers and status column.
 
-    Layout: [Status (1 char)][Line Number (5 digits)][Separator (1)][Code]
+    Layout: [Status (1 char)][Line Number (variable width)][Separator][Code]
     Status symbols: ● breakpoint, ? error, space normal
     """
 
@@ -230,8 +230,8 @@ class LineNumberedText(tk.Frame):
                 # Draw status (column 0)
                 self.canvas.create_text(10, y, text=status, font=font_obj)
 
-                # Draw line number (columns 1-5, right-aligned)
-                self.canvas.create_text(55, y, text=f'{basic_line:5d}',
+                # Draw line number (variable width)
+                self.canvas.create_text(55, y, text=str(basic_line),
                                       font=font_obj, anchor='e')
 
     def _get_basic_line_number(self, text_line):

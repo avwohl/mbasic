@@ -10,7 +10,7 @@
 | `^F` | This help |
 | `Ctrl+P` | Settings |
 | `Ctrl+W` | Toggle variables watch window |
-| `Menu only` | Toggle execution stack window |
+| `Menu only` | Show/hide execution stack window (menu only) |
 
 ## Program Management
 
@@ -42,7 +42,7 @@
 | `Ctrl+T` | Step Statement - execute one statement at a time |
 | `Ctrl+X` | Stop execution (eXit) |
 | `Ctrl+W` | Show/hide variables window |
-| `Menu only` | Show/hide execution stack window |
+| `Menu only` | Show/hide execution stack window (menu only) |
 
 ## Variables Window (when visible)
 

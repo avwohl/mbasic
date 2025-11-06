@@ -31,10 +31,10 @@ def test_3column_editor():
     # Set an error
     editor.set_error(30, "Syntax error")
 
-    print("Column Layout:")
-    print("  Column 1 (1 char):  Status (● = breakpoint, ? = error)")
-    print("  Column 2 (5 chars): Line number (right-aligned)")
-    print("  Column 3 (rest):    BASIC code")
+    print("Field Layout:")
+    print("  Field 1 (1 char):      Status (● = breakpoint, ? = error)")
+    print("  Field 2 (variable):    Line number")
+    print("  Field 3 (rest):        BASIC code")
     print()
 
     print("Sample Program:")
@@ -60,8 +60,8 @@ def test_3column_editor():
     print()
 
     print("Features:")
-    print("  ✓ Status column shows breakpoints and errors")
-    print("  ✓ Line numbers are right-aligned in 5-character field")
+    print("  ✓ Status field shows breakpoints and errors")
+    print("  ✓ Line numbers use variable width")
     print("  ✓ Code uses remaining space")
     print("  ✓ Breakpoints tracked (toggle with toggle_breakpoint())")
     print("  ✓ Errors tracked (set with set_error())")

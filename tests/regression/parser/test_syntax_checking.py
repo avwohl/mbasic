@@ -76,11 +76,11 @@ def test_syntax_checking():
     print()
 
     print("Test 5: Verify _update_syntax_errors marks errors correctly")
-    # Format: "SNNNNN CODE" (S=status at col 0, NNNNN=line number at cols 1-5 right-aligned, space at col 6, code at col 7+)
+    # Format: "S<linenum> CODE" (S=status, linenum=variable width, space, code)
     # Build correctly formatted lines
-    line1 = " " + "   10" + " " + "foo"        # Status + line number (5 chars) + space + code
-    line2 = " " + "   20" + " " + "PRINT \"hello\""
-    line3 = " " + "   30" + " " + "bar"
+    line1 = " " + "10" + " " + "foo"        # Status + line number (variable width) + space + code
+    line2 = " " + "20" + " " + "PRINT \"hello\""
+    line3 = " " + "30" + " " + "bar"
     text = line1 + "\n" + line2 + "\n" + line3
     new_text = editor._update_syntax_errors(text)
     print(f"  Input lines:")

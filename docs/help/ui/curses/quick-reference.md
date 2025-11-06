@@ -82,13 +82,16 @@ Quick reference for the curses text UI.
 
 ## Screen Editor
 
-### Column Layout
+### Display Format
 
 ```
+S<linenum> CODE
+
+Where:
 [0]   Status: ? error (highest), ● breakpoint, space normal
-[1-5] Line number (5 digits, right-aligned)
-[6]   Separator space
-[7+]  BASIC code
+[1+]  Line number (variable width)
+      Separator space
+      BASIC code
 ```
 
 ### Status Priority (when line has multiple states)
@@ -99,10 +102,8 @@ Quick reference for the curses text UI.
 
 ### Line Number Editing
 
-- Type digits in columns 1-5 (calculator-style)
-- Numbers auto right-justify when leaving column
-- Leftmost digit drops when typing at rightmost position
-- Backspace deletes rightmost digit and right-justifies
+- Type digits to edit line number (variable width)
+- Line numbers can be 1-65529
 
 ### Navigation Keys
 

@@ -832,9 +832,9 @@ ad1fdcf (05:11) - Expression reassociation
 - Fixed program output display
 - Customized borders to maximize content space
 - Replaced LineBox with TopLeftBox for better UI
-- Added 3-column editor: status, line numbers, code
-- Implemented column-aware cursor control
-- Auto right-justify line numbers
+- Added 3-field editor: status, line numbers, code
+- Implemented field-aware cursor control
+- Auto-sort line numbers on navigation
 - Fixed Ctrl+C clean exit
 
 **Editor Enhancements** (10:00 AM - 12:00 PM)

@@ -163,18 +163,18 @@ This document compares the curses UI implementation (`src/ui/curses_ui.py`, 3810
 
 | Aspect | TK UI | Curses UI | Analysis |
 |--------|-------|-----------|----------|
-| **Architecture** | **LineNumberedText widget** | **3-column format** | ⚠️ FUNDAMENTALLY DIFFERENT |
-| Line numbers | Embedded in text | Separate column (1-5) | Different approach |
+| **Architecture** | **LineNumberedText widget** | **3-field format** | ⚠️ FUNDAMENTALLY DIFFERENT |
+| Line numbers | Embedded in text | Variable width | Different approach |
 | Status column | Separate canvas | Column 0 (S) | Similar concept |
-| Format | Variable spacing | Fixed "SNNNNN CODE" | More rigid |
-| Editing | Text-like editing | Column-aware editing | More complex |
+| Format | Variable spacing | "S<linenum> CODE" | Different structure |
+| Editing | Text-like editing | Field-aware editing | More complex |
 
 **Curses Format:**
 ```
-SNNNNN CODE
-│└────┘ └─── Code area (column 7+)
-│  │
-│  └─ Line number (columns 1-5, right-justified)
+S<linenum> CODE
+│ └─────┘ └─── Code area
+│    │
+│    └─ Line number (variable width)
 └─ Status (column 0: ●, ?, space)
 ```
 

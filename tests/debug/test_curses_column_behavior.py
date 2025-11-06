@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-Test column-aware cursor behavior in the program editor.
+Test field-aware cursor behavior in the program editor.
 
 Tests:
-1. Status column (0-1) is read-only - cursor moves to line number column
-2. Line number column (2-6) allows typing
-3. Line numbers get right-justified when leaving column
-4. Control keys trigger right-justification
+1. Status field is read-only - cursor moves to line number field
+2. Line number field allows typing (variable width)
+3. Control keys trigger line sorting
 """
 
 import sys
@@ -39,28 +38,26 @@ def test_column_behavior():
     print("   - If user types here, cursor moves to line number column")
     print("   ✓ Status column is protected from user input")
 
-    # Test line number column
-    print("\n2. Line Number Column Behavior:")
-    print("   - Line number column (columns 2-6) allows typing")
-    print("   - 5 characters wide")
-    print("   - Gets right-justified when leaving")
-    print("   ✓ Line numbers editable in columns 2-6")
+    # Test line number field
+    print("\n2. Line Number Field Behavior:")
+    print("   - Line number field allows typing (variable width)")
+    print("   - Lines get sorted when navigating away")
+    print("   ✓ Line numbers editable (variable width)")
 
-    # Demonstrate right-justification
-    print("\n3. Right-Justification Trigger:")
-    print("   - Triggered when: moving to code column (column 7+)")
+    # Demonstrate sorting
+    print("\n3. Auto-Sort Trigger:")
+    print("   - Triggered when: moving to code area")
     print("   - Triggered when: pressing control keys (Ctrl+R, Ctrl+L, etc.)")
     print("   - Triggered when: pressing Tab or Enter")
-    print("   ✓ Line numbers auto-format on exit")
+    print("   ✓ Lines auto-sort on navigation")
 
     # Show line format
     print("\n4. Line Format:")
     print("   Column Layout:")
     print("   [0] Status: ● = breakpoint, ? = error, space = normal")
-    print("   [1] Space (separator)")
-    print("   [2-6] Line number (5 chars, right-aligned)")
-    print("   [7] Space (separator)")
-    print("   [8+] BASIC code")
+    print("   [1+] Line number (variable width)")
+    print("        Space (separator)")
+    print("        BASIC code")
     print()
 
     # Example with breakpoint
@@ -94,10 +91,10 @@ def test_column_behavior():
 
     print("\nFeatures:")
     print("  ✓ Status column protected from typing")
-    print("  ✓ Line number column editable (columns 2-6)")
-    print("  ✓ Auto right-justify when leaving line number area")
-    print("  ✓ Control keys trigger right-justification")
-    print("  ✓ Cursor auto-moves from status to line number column")
+    print("  ✓ Line number field editable (variable width)")
+    print("  ✓ Auto-sort when leaving line number area")
+    print("  ✓ Control keys trigger sorting")
+    print("  ✓ Cursor auto-moves from status to line number field")
 
 if __name__ == '__main__':
     test_column_behavior()
