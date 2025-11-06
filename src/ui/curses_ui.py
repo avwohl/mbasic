@@ -1049,14 +1049,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         else:
             return text
 
-    def _on_enter_idle(self, callback_arg):
+    def _on_enter_idle(self):
         """Called by urwid when entering idle state (after all input processed).
 
         This is where expensive operations happen: parsing, sorting, auto-numbering.
         urwid automatically redraws screen after this returns.
-
-        Args:
-            callback_arg: Argument passed by urwid enter_idle callback (unused)
         """
         # Check if any work is needed
         if not self._needs_parse and not self._needs_sort and not self._needs_auto_number:
