@@ -2140,7 +2140,7 @@ class CursesBackend(UIBackend):
                 return
 
         # Insert blank line BEFORE current line (at current line's position)
-        # Format: status(1) + line_num(5) + space + code
+        # Format: status(1) + line_num(variable width) + space + code
         status_char = ' '  # New line has no breakpoint or error
         new_line_text = f"{status_char}{insert_num} "
 
