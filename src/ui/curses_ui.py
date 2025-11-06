@@ -3773,6 +3773,10 @@ class CursesBackend(UIBackend):
         except urwid.ExitMainLoop:
             pass  # Dialog closed
 
+        # Force screen redraw after dialog closes
+        if hasattr(self.loop, 'draw_screen'):
+            self.loop.draw_screen()
+
         return result['value']
 
     def _get_editor_text(self):
