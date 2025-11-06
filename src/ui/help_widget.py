@@ -234,13 +234,14 @@ class HelpWidget(urwid.WidgetWrap):
         if self.current_rendered_lines:
             text_markup, new_link_positions = self._create_text_markup_with_links(
                 self.current_rendered_lines,
+                self.current_links,
                 self.current_link_index
             )
             # Update link positions with the accurate positions from markup creation
             self.link_positions = new_link_positions
             self._set_content(text_markup)
 
-    def _create_text_markup_with_links(self, lines: List[str], current_link_index: int = 0) -> tuple[List[List], List[int]]:
+    def _create_text_markup_with_links(self, lines: List[str], links: List[tuple], current_link_index: int = 0) -> tuple[List[List], List[int]]:
         """
         Convert plain text lines to urwid markup with link highlighting.
 
@@ -250,6 +251,7 @@ class HelpWidget(urwid.WidgetWrap):
 
         Args:
             lines: List of plain text lines with links marked as [text]
+            links: List of (line_number, link_text, target) tuples from the renderer
             current_link_index: Index of the currently selected link (for highlighting)
 
         Returns:
@@ -261,42 +263,55 @@ class HelpWidget(urwid.WidgetWrap):
 
         all_line_markups = []
         link_positions = []  # Track which line each link is on
-        link_counter = 0  # Track which link we're on globally
+
+        # Build a map of line -> list of (link_index, link_text) for links on that line
+        links_by_line = {}
+        for link_idx, (line_num, link_text, _) in enumerate(links):
+            if line_num not in links_by_line:
+                links_by_line[line_num] = []
+            links_by_line[line_num].append((link_idx, link_text))
+            link_positions.append(line_num)
 
         for line_idx, line in enumerate(lines):
-            # Find all [text] patterns (links)
-            link_pattern = r'\[([^\]]+)\]'
-
-            # Split the line by links and build markup
-            last_end = 0
             line_markup = []
 
-            for match in re.finditer(link_pattern, line):
-                # Add text before the link
-                if match.start() > last_end:
-                    line_markup.append(line[last_end:match.start()])
+            # Check if this line has any links
+            if line_idx in links_by_line:
+                # Process links on this line
+                last_end = 0
+                for link_idx, link_text in links_by_line[line_idx]:
+                    # Find this specific link text in the line (with brackets)
+                    link_pattern = re.escape(f'[{link_text}]')
+                    match = re.search(link_pattern, line[last_end:])
 
-                # Add the link with appropriate attribute
-                link_text = match.group(0)  # Keep the brackets
+                    if match:
+                        # Adjust match position relative to full line
+                        match_start = last_end + match.start()
+                        match_end = last_end + match.end()
 
-                # Use 'focus' attribute for current link, 'link' for others
-                if link_counter == current_link_index:
-                    line_markup.append(('focus', link_text))
-                else:
-                    line_markup.append(('link', link_text))
+                        # Add text before the link
+                        if match_start > last_end:
+                            line_markup.append(line[last_end:match_start])
 
-                # Track which line this link is on
-                link_positions.append(line_idx)
-                link_counter += 1
-                last_end = match.end()
+                        # Add the link with appropriate attribute
+                        link_with_brackets = f'[{link_text}]'
+                        if link_idx == current_link_index:
+                            line_markup.append(('focus', link_with_brackets))
+                        else:
+                            line_markup.append(('link', link_with_brackets))
 
-            # Add remaining text after last link
-            if last_end < len(line):
-                line_markup.append(line[last_end:])
+                        last_end = match_end
 
-            # If line has no links, just add it as plain text
-            if not line_markup:
+                # Add remaining text after last link
+                if last_end < len(line):
+                    line_markup.append(line[last_end:])
+            else:
+                # No links on this line, just add plain text
                 line_markup = [line]
+
+            # If line ended up empty, add empty string
+            if not line_markup:
+                line_markup = ['']
 
             all_line_markups.append(line_markup)
 
@@ -327,20 +342,30 @@ class HelpWidget(urwid.WidgetWrap):
             # Cache the rendered lines for later re-rendering
             self.current_rendered_lines = lines
 
-            # Create text markup with link highlighting
-            text_markup, link_positions = self._create_text_markup_with_links(lines, self.current_link_index)
+            # Store links first
+            self.current_links = links
+            self.current_link_index = 0
+
+            # Create text markup with link highlighting using the renderer's link info
+            text_markup, link_positions = self._create_text_markup_with_links(
+                lines,
+                links,
+                self.current_link_index
+            )
 
             # Set the content
             self._set_content(text_markup)
 
-            # Store links and positions (use accurate positions from markup creation)
-            self.current_links = links
+            # Store positions from markup creation
             self.link_positions = link_positions
-            self.current_link_index = 0
 
             # Scroll to top of the document
             if len(self.walker) > 0:
                 self.listbox.set_focus(0)
+
+            # If there's a first link, make sure it's visible (but don't scroll to it, keep at top)
+            # This ensures the highlight is in the viewport
+            # Actually, just leave at top - user can press right arrow to move to first link if needed
 
             # Update title
             self.current_topic = relative_path
@@ -398,8 +423,8 @@ class HelpWidget(urwid.WidgetWrap):
                 _, _, target = self.current_links[self.current_link_index]
 
                 # Check if target is already an absolute path (from search results)
-                # Absolute paths don't start with . or .., or start with common/
-                if not target.startswith('.') or target.startswith('common/'):
+                # Absolute paths start with common/ or ui/
+                if target.startswith('common/') or target.startswith('ui/'):
                     # This is already a help-root-relative path (e.g., from search results)
                     new_topic = target.replace('\\', '/')
                 else:
@@ -468,6 +493,10 @@ class HelpWidget(urwid.WidgetWrap):
                     # Force invalidate to ensure redraw
                     self.listbox._invalidate()
                 return None
+
+        elif key == ' ':
+            # Space key scrolls down one page (like browsers)
+            return super().keypress(size, 'page down')
 
         # Pass other keys to listbox for scrolling
         return super().keypress(size, key)
