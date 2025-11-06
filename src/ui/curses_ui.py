@@ -329,12 +329,20 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Handle Enter key - commits line and moves to next with auto-numbering
         if key == 'enter' and self.auto_number_enabled:
-            # Check if next line already starts with a number (pasted content)
+            # Check if text after cursor starts with a line number (pasted content)
             # If so, skip auto-numbering and just insert newline
             current_text = self.edit_widget.get_edit_text()
             cursor_pos = self.edit_widget.edit_pos
             # Get text after cursor
             text_after_cursor = current_text[cursor_pos:].lstrip()
+
+            # If there's a newline followed by a number, we're in the middle of pasted content
+            # Don't auto-number - just insert newline and let the pasted numbers be used
+            if '\n' in text_after_cursor:
+                next_line = text_after_cursor.split('\n', 1)[1].lstrip()
+                if next_line and next_line[0].isdigit():
+                    # Pasted content with line numbers follows - don't auto-number
+                    return super().keypress(size, key)
 
             # Check if current line has DOUBLE line numbers (pasted content with auto-number)
             # When pasting "10 PRINT", we might get "?20 10 PRINT" (double numbering)
