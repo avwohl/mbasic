@@ -381,13 +381,24 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 line_num = text_before_cursor.count('\n')
                 lines = current_text.split('\n')
 
-            # Parse current line number (variable width)
+            # Parse current line number and check if it has code
             current_line_number = None
+            has_code = False
             if line_num < len(lines):
                 line = lines[line_num]
                 line_num_parsed, code_start = self._parse_line_number(line)
                 if line_num_parsed is not None:
                     current_line_number = line_num_parsed
+                    # Check if there's any code after the line number
+                    if code_start < len(line):
+                        code_area = line[code_start:].strip()
+                        has_code = bool(code_area)
+
+            # Don't auto-number if current line is empty (no code)
+            # This prevents creating "310" when pressing Enter on an empty "300 " line
+            if not has_code:
+                # Just process Enter normally without adding a line number
+                return super().keypress(size, key)
 
             # Move to end of current line
             if line_num < len(lines):
