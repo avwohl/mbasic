@@ -239,6 +239,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # For detecting rapid Enter keys (paste operations with multiple lines)
         self._last_enter_time = 0  # Timestamp of last Enter key press
         self._rapid_enter_threshold = 0.05  # Seconds - Enter keys within this window are considered rapid
+        self._skipped_auto_number = False  # Flag: auto-numbering was skipped due to paste
 
         # Syntax error tracking
         self.syntax_errors = {}  # Maps line number -> error message
@@ -436,6 +437,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Handle Enter key - commits line and moves to next with auto-numbering
         # Skip auto-numbering if we were in rapid input mode (paste operation)
         if key == 'enter' and self.auto_number_enabled and not in_rapid_input:
+            # Clear the skipped flag since we're doing auto-numbering now
+            self._skipped_auto_number = False
             # FIRST: Clean up any double line numbers before auto-numbering
             current_text = self.edit_widget.get_edit_text()
             cursor_pos = self.edit_widget.edit_pos
@@ -538,6 +541,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 # Try to maintain cursor position
                 if cursor_pos <= len(new_text):
                     self.edit_widget.set_edit_pos(cursor_pos)
+
+            # Mark that we skipped auto-numbering if it was enabled but we're in rapid input
+            if self.auto_number_enabled and in_rapid_input:
+                self._skipped_auto_number = True
 
             # Update Enter timestamp to track rapid Enter keys (paste detection)
             self._last_enter_time = current_time
@@ -1220,6 +1227,32 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     self._sort_and_position_line(lines, line_num, target_column=col_in_line)
 
             self._needs_sort = False
+
+        # Step 3: Add auto-number line if we skipped it during paste
+        if self._skipped_auto_number and self.auto_number_enabled:
+            # Get final state after parsing and sorting
+            current_text = self.edit_widget.get_edit_text()
+            cursor_pos = self.edit_widget.edit_pos
+            lines = current_text.split('\n')
+
+            # Find the last line with a line number
+            last_line_number, _ = self._find_last_line_number()
+
+            if last_line_number is not None:
+                # Calculate next auto-number
+                next_num = last_line_number + self.auto_number_increment
+
+                # Add auto-number line at cursor position
+                new_line_prefix = f"\n {next_num} "
+                new_text = current_text[:cursor_pos] + new_line_prefix + current_text[cursor_pos:]
+                self.edit_widget.set_edit_text(new_text)
+                self.edit_widget.set_edit_pos(cursor_pos + len(new_line_prefix))
+
+                # Update next_auto_line_num for next time
+                self.next_auto_line_num = next_num + self.auto_number_increment
+
+            # Clear the flag
+            self._skipped_auto_number = False
 
         # Clear refresh flag
         self._needs_refresh = False
