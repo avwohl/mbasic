@@ -12,7 +12,7 @@ This is separate from the two filesystem abstractions:
 
 1. FileIO (src/file_io.py) - For interactive BASIC commands (LOAD/SAVE/MERGE/KILL)
    - Used when user types LOAD "FILE.BAS" or SAVE "FILE.BAS" in immediate mode
-   - FileIO.load_file() delegates to ProgramManager methods after path resolution
+   - FileIO.load_file() returns raw file content (string), caller passes to ProgramManager
    - Web UI uses SandboxedFileIO (server memory virtual filesystem)
    - Local UIs use RealFileIO (direct filesystem access)
 
@@ -25,6 +25,11 @@ Why ProgramManager has its own file I/O methods:
 - Separate from BASIC command flow: UI menus call ProgramManager directly,
   BASIC commands (LOAD/SAVE) go through FileIO abstraction first
 - Web UI uses FileIO abstraction exclusively (no direct ProgramManager file access)
+
+Note: ProgramManager.load_from_file() returns (success, lines) tuple for direct
+UI integration, while FileIO.load_file() returns raw file text. These serve
+different purposes: ProgramManager integrates with the editor, FileIO provides
+raw file content for the LOAD command to parse.
 """
 
 import re

@@ -20,7 +20,7 @@ class PC:
     Immutable program counter - identifies a statement by (line_num, stmt_offset).
 
     The stmt_offset is a 0-based index into the statements list for a line.
-    This means the first statement has offset 0, second has offset 1, etc.
+    This means the first statement has index 0, second has index 1, etc.
     Multiple statements can appear on one line, separated by colons.
 
     Examples:
@@ -28,8 +28,8 @@ class PC:
         PC(10, 2)  - Third statement on line 10 (stmt_offset=2)
         PC(None, 0) - Halted (no valid line)
 
-    Note: stmt_offset is both an "offset from beginning" and an "index position".
-    These terms are equivalent for 0-based indexing (offset=0 is index=0).
+    Note: stmt_offset is the list index (position in the statements array).
+    The term "offset" is used for historical reasons but it's simply the array index.
     """
 
     def __init__(self, line_num=None, stmt_offset=0):

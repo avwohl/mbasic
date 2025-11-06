@@ -12,7 +12,8 @@ Key differences from interpreter:
 
 Expression parsing notes:
 - Functions generally require parentheses: SIN(X), CHR$(65)
-- Exception: RND and INKEY$ can be called without parentheses (standard BASIC)
+- Exception: RND and INKEY$ can be called without parentheses (MBASIC 5.21 behavior)
+  Note: This is MBASIC-specific, not universal to all BASIC dialects
 """
 
 from typing import List, Optional, Dict, Tuple
@@ -1195,10 +1196,10 @@ class Parser:
             self.advance()  # Skip #
             file_number = self.parse_expression()
             # Optionally consume comma after file number
-            # Note: MBASIC 5.21 typically uses comma (PRINT #1, "text"), but comma is
-            # technically optional. Our parser accepts comma or no separator.
-            # If semicolon appears instead, it will be treated as an item separator
-            # in the expression list below (not as a file number separator).
+            # Note: MBASIC 5.21 typically uses comma (PRINT #1, "text").
+            # Our parser makes the comma optional for flexibility.
+            # If semicolon appears instead of comma, it will be treated as an item
+            # separator in the expression list below (not as a file number separator).
             if self.match(TokenType.COMMA):
                 self.advance()
 
@@ -1382,11 +1383,11 @@ class Parser:
                 column=token.column
             )
             # Consume separator after prompt (comma or semicolon)
-            # Note: In MBASIC 5.21, the separator after the prompt string affects "?" display:
-            # - INPUT "Name"; X  displays "Name? " (semicolon shows '?')
-            # - INPUT "Name", X  displays "Name " (comma suppresses '?')
-            # Additionally, INPUT; (semicolon immediately after INPUT keyword) can also
-            # suppress the '?' prompt, which is tracked by the suppress_question flag above.
+            # Note: In MBASIC 5.21, the separator after prompt affects "?" display:
+            # - INPUT "Name"; X  displays "Name? " (semicolon AFTER prompt shows '?')
+            # - INPUT "Name", X  displays "Name " (comma AFTER prompt suppresses '?')
+            # Different behavior: INPUT; (semicolon IMMEDIATELY after INPUT keyword, no prompt)
+            # suppresses the default '?' prompt entirely (tracked by suppress_question flag above).
             if self.match(TokenType.SEMICOLON):
                 self.advance()
             elif self.match(TokenType.COMMA):
@@ -2781,7 +2782,8 @@ class Parser:
             COMMON variable1, variable2, array1(), string$, ...
 
         The empty parentheses () indicate an array variable (all elements shared).
-        This is just a marker - no subscripts are specified or stored.
+        This is just a marker - no subscripts are specified or stored. Non-empty
+        parentheses are an error (parser enforces empty parens only).
 
         Examples:
             COMMON A, B, C           - Simple variables
@@ -3609,10 +3611,11 @@ class Parser:
         MBASIC 5.21 syntax:
             CALL address           - Call machine code at numeric address
 
-        Extended syntax (also supported for compatibility with other BASIC dialects):
+        Extended syntax (for compatibility with other BASIC dialects):
             CALL ROUTINE(X,Y)      - Call with arguments
 
-        Both forms are fully supported by this parser.
+        Note: MBASIC 5.21 primarily uses the simple numeric address form, but this
+        parser fully supports both forms for broader compatibility.
 
         Examples:
             CALL 16384             - Call decimal address

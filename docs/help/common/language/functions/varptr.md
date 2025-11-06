@@ -13,7 +13,7 @@ type: function
 
 ⚠️ **Not Implemented**: This feature requires direct memory access and is not implemented in this Python-based interpreter.
 
-**Behavior**: Function is not available
+**Behavior**: Function is parsed but raises a runtime error when called
 
 **Why**: In the original MBASIC, VARPTR returned a pointer to the variable's memory address. Python uses managed memory with garbage collection, so variables don't have fixed memory addresses.
 

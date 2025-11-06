@@ -4127,10 +4127,9 @@ class CursesBackend(UIBackend):
     def cmd_delete(self, args):
         """Execute DELETE command using ui_helpers.
 
-        Note: Doesn't sync to runtime immediately - sync happens when next immediate
-        command is executed via _execute_immediate. This is acceptable because DELETE
-        modifies self.program which is the source of truth, and runtime is only updated
-        when needed for execution.
+        Note: Updates self.program immediately (source of truth). Runtime sync occurs
+        automatically via _execute_immediate which calls _sync_program_to_runtime before
+        executing any immediate command. This ensures runtime is always in sync when needed.
         """
         from src.ui.ui_helpers import delete_lines_from_program
 
@@ -4150,10 +4149,9 @@ class CursesBackend(UIBackend):
     def cmd_renum(self, args):
         """Execute RENUM command using ui_helpers.
 
-        Note: Doesn't sync to runtime immediately - sync happens when next immediate
-        command is executed via _execute_immediate. This is acceptable because RENUM
-        modifies self.program which is the source of truth, and runtime is only updated
-        when needed for execution.
+        Note: Updates self.program immediately (source of truth). Runtime sync occurs
+        automatically via _execute_immediate which calls _sync_program_to_runtime before
+        executing any immediate command. This ensures runtime is always in sync when needed.
         """
         from src.ui.ui_helpers import renum_program
 

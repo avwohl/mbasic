@@ -493,7 +493,8 @@ class InteractiveMode:
         """NEW - Clear program"""
         self.program.clear()
         self.current_file = None
-        # Clear execution state when program is cleared
+        # Clear execution stacks (GOSUB/FOR/STOP state) when program is cleared
+        # Note: program_runtime object persists, only its stacks are cleared
         self.clear_execution_state()
         print("Ready")
 
@@ -586,7 +587,7 @@ class InteractiveMode:
             # Show parse errors if any
             if errors:
                 for line_num, error in errors:
-                    # Error already contains line number (e.g., "Syntax error in 2020: ..."), don't duplicate
+                    # Error message from merge_from_file - format may vary
                     print(f"?{error}")
 
             if success:
@@ -638,20 +639,24 @@ class InteractiveMode:
             # Save variables based on CHAIN options:
             # - MERGE (merge=True): overlay mode, preserves all variables
             # - ALL (all_flag=True): passes all variables to new program
-            # - Neither: only pass COMMON variables (if defined)
+            # - Neither: only pass COMMON variables (with type suffix resolution below)
+            #
+            # Note for COMMON variables: common_vars stores base names (e.g., "i"), but
+            # actual variables may have type suffixes (e.g., "i%", "i$") based on DEF
+            # statements or explicit suffixes. We must try all possible type suffixes
+            # (%, $, !, #, and no suffix) to find the actual variable in the runtime.
+            # This type suffix resolution logic is implemented below for the COMMON case.
             saved_variables = None
             if self.program_runtime:
                 if all_flag or merge:
                     # Save all variables
                     saved_variables = self.program_runtime.get_all_variables()
                 elif self.program_runtime.common_vars:
-                    # Save only COMMON variables (in order)
-                    # Note: common_vars stores base names (e.g., "i"), but actual variables
-                    # may have type suffixes (e.g., "i%", "i$") based on DEF statements
+                    # Save only COMMON variables (in order declared)
                     saved_variables = {}
                     for var_name in self.program_runtime.common_vars:
                         # Try to find the variable with type suffix
-                        # Check all possible type suffixes: %, $, !, #
+                        # Check all possible type suffixes: %, $, !, #, and no suffix
                         found = False
                         for suffix in ['%', '$', '!', '#', '']:
                             full_name = var_name + suffix
@@ -825,9 +830,10 @@ class InteractiveMode:
         3. Walk AST and update all line number references (via _renum_statement callback)
         4. Serialize AST back to source
 
-        Known limitation: ERL expressions with binary operators (ERL+100, ERL*2) cannot
-        distinguish line number references from arithmetic constants, so all numbers on
-        the right side are conservatively renumbered. See _renum_erl_comparison() for details.
+        Conservative behavior: ERL expressions with ANY binary operators (ERL+100, ERL*2, ERL=100)
+        have all right-hand numbers conservatively renumbered, even for arithmetic operations.
+        This is intentionally broader than the MBASIC manual (which only specifies comparison
+        operators) to avoid missing line references. See _renum_erl_comparison() for details.
 
         Args format: "new_start,old_start,increment"
         Examples:
@@ -1010,7 +1016,7 @@ class InteractiveMode:
         - <CR>: End and save
 
         Note: Count prefixes ([n]D, [n]C) and search commands ([n]S, [n]K) are not yet implemented.
-        Digits are silently ignored (not recognized as command prefixes or processed as commands).
+        Digits fall through the command handling logic and produce no action (no output, no cursor movement).
         """
         if not args or not args.strip():
             print("?Syntax error - specify line number")
@@ -1339,13 +1345,14 @@ class InteractiveMode:
             if ast.lines and len(ast.lines) > 0:
                 line_node = ast.lines[0]
                 # Save old PC to preserve stopped program position for CONT.
-                # Note: GOTO/GOSUB in immediate mode are discouraged (see help text) because
-                # they can be confusing, but if used, they execute and jump to program lines
-                # during statement execution. However, we restore the original PC afterward
-                # to preserve CONT functionality for stopped programs. This means:
-                # - The jump happens and code runs during execute_statement()
+                # Note: GOTO/GOSUB in immediate mode are not recommended (see help text) because
+                # behavior may be confusing: they execute and jump during execute_statement(),
+                # but we restore the original PC afterward to preserve CONT functionality.
+                # This means:
+                # - The jump happens and target code runs during execute_statement()
                 # - But the final PC change is reverted, preserving stopped position
                 # - CONT will resume at the original stopped location, not the GOTO target
+                # - So GOTO/GOSUB are functionally working but their PC effects are undone
                 old_pc = runtime.pc
 
                 # Execute each statement on line 0

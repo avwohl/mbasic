@@ -16,12 +16,16 @@ TWO SEPARATE FILESYSTEM ABSTRACTIONS:
 2. FileSystemProvider (src/filesystem/base.py) - Runtime file I/O (OPEN/CLOSE/INPUT#/PRINT#)
    - Used by: Interpreter during program execution
    - Operations: OPEN/CLOSE, INPUT#/PRINT#/WRITE#, EOF(), LOC(), LOF()
+   - Also provides: list_files() and delete() for runtime use within programs
    - Purpose: File I/O from within running BASIC programs
    - Implementations:
      * LocalFileSystemProvider: Direct filesystem access (TK, Curses, CLI)
      * SandboxedFileSystemProvider: Python server memory (Web UI)
 
 Note: Both abstractions serve different purposes and are used at different times.
+There is intentional overlap: both provide list_files() and delete() methods.
+FileIO is for interactive commands (FILES/KILL), FileSystemProvider is for
+runtime access (though not all BASIC dialects support runtime file listing/deletion).
 """
 
 from typing import List, Tuple
@@ -175,10 +179,11 @@ class SandboxedFileIO(FileIO):
     - load_file(): STUB - raises IOError (requires async/await refactor)
     - save_file(): STUB - raises IOError (requires async/await refactor)
     - delete_file(): STUB - raises IOError (requires async/await refactor)
-    - file_exists(): STUB - returns False (requires async/await refactor)
+    - file_exists(): STUB - raises IOError (requires async/await refactor)
 
-    The stubs exist because ui.run_javascript() cannot be called from synchronous code.
-    Full implementation requires async/await refactoring of the FileIO interface.
+    The stubs exist because the current FileIO interface is synchronous, but full
+    implementation requires async/await refactoring to properly integrate with
+    the web UI backend.
     """
 
     def __init__(self, backend):
@@ -234,6 +239,6 @@ class SandboxedFileIO(FileIO):
     def file_exists(self, filename: str) -> bool:
         """Check if file exists in server memory virtual filesystem.
 
-        STUB: Returns False because ui.run_javascript() requires async/await.
+        STUB: Raises error because ui.run_javascript() requires async/await.
         """
-        return False
+        raise IOError("File existence check not yet implemented in web UI - requires async refactor")

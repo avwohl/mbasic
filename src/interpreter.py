@@ -39,11 +39,13 @@ class InterpreterState:
 
     Primary execution states (check these to determine current status):
     Note: The suggested checking order below is for UI code that examines state AFTER
-    execution completes. During execution (in tick_pc()), the actual checking order is:
-    1. pause_requested, 2. halted, 3. break_requested, 4. breakpoints, 5. input_prompt,
-    6. errors (handled via exceptions). For UI/callers checking completed state:
+    execution completes. During execution (in tick_pc()), checks occur in this order:
+    1. pause_requested, 2. halted, 3. break_requested, 4. breakpoints,
+    5. statement execution (input_prompt set DURING execution, errors via exceptions).
+
+    For UI/callers checking completed state:
     - error_info: Non-None if an error occurred (highest priority for display)
-    - input_prompt: Non-None if waiting for input (blocks until user provides input)
+    - input_prompt: Non-None if waiting for input (set during statement execution)
     - runtime.halted: True if stopped (paused/done/at breakpoint)
 
     Also tracks: input buffering, debugging flags, performance metrics, and
@@ -1078,7 +1080,9 @@ class Interpreter:
         # return_stmt is 0-indexed offset into statements array.
         # Valid range: 0 to len(statements) (inclusive).
         # - 0 to len(statements)-1: Normal statement positions
-        # - len(statements): Special sentinel meaning "GOSUB was last statement, continue at next line"
+        # - len(statements): Special sentinel - GOSUB was last statement on line, so RETURN
+        #   continues at next line. This value is valid because PC can point one past the
+        #   last statement to indicate "move to next line" (handled by statement_table.next_pc).
         # Values > len(statements) indicate the statement was deleted (validation error).
         if return_stmt > len(line_statements):  # Check for strictly greater than (== len is OK)
             raise RuntimeError(f"RETURN error: statement {return_stmt} in line {return_line} no longer exists")
@@ -1091,10 +1095,10 @@ class Interpreter:
 
         Syntax: FOR variable = start TO end [STEP step]
 
-        The loop variable can have any type suffix (%, $, !, #) and the variable
-        type determines how values are stored, but the loop arithmetic always uses
-        the evaluated numeric values. String variables in FOR loops are uncommon
-        but technically allowed (though not meaningful).
+        The loop variable typically has numeric type suffixes (%, !, #). The variable
+        type determines how values are stored. String variables ($) in FOR loops
+        would cause a type error when set_variable() attempts to store the numeric
+        loop value, so they are effectively not supported despite being parsed.
 
         After FOR, the variable is set to start value and the loop is registered.
         NEXT will increment/decrement and check the end condition.
@@ -1134,9 +1138,13 @@ class Interpreter:
         Syntax: NEXT [variable [, variable ...]]
 
         NEXT I, J, K processes variables left-to-right: I first, then J, then K.
-        If any loop continues (not finished), execution jumps back to the loop body
-        and remaining variables are not processed. This differs from separate
-        statements (NEXT I: NEXT J: NEXT K) which would always execute sequentially.
+        For each variable, _execute_next_single() is called to increment it and check if
+        the loop should continue. If _execute_next_single() returns True (loop continues),
+        execution jumps back to the FOR body and remaining variables are not processed.
+        If it returns False (loop finished), that loop is popped and the next variable is processed.
+
+        This differs from separate statements (NEXT I: NEXT J: NEXT K) which would
+        always execute sequentially, processing all three NEXT statements.
         """
         # Determine which variables to process
         if stmt.variables:
@@ -1233,9 +1241,13 @@ class Interpreter:
 
             line_statements = self.runtime.statement_table.get_line_statements(return_line)
             # return_stmt is 0-indexed offset into statements array.
-            # Valid range: 0 to len(statements)-1 for existing statements.
-            # return_stmt == len(statements) is a special sentinel: FOR was last statement, continue at next line.
-            # Values > len(statements) indicate the statement was deleted (validation error).
+            # Valid range:
+            #   - 0 to len(statements)-1: Normal statement positions (existing statements)
+            #   - len(statements): Special sentinel value - FOR was last statement on line,
+            #                      continue execution at next line (no more statements to execute on current line)
+            #   - > len(statements): Invalid - indicates the statement was deleted
+            #
+            # Validation: Check for strictly greater than (== len is OK as sentinel)
             if return_stmt > len(line_statements):
                 raise RuntimeError(f"NEXT error: FOR statement in line {return_line} no longer exists")
 
@@ -1299,11 +1311,11 @@ class Interpreter:
         # Jump back to the WHILE statement to re-evaluate the condition
         self.runtime.npc = PC(loop_info['while_line'], loop_info['while_stmt'])
 
-        # Pop the loop from the stack AFTER setting the jump target.
-        # The WHILE will re-push if the condition is still true, or skip the
-        # loop body if the condition is now false. This ensures clean stack state.
-        # Note: We pop here (before execution reaches WHILE) so that if an error occurs during
-        # WHILE condition evaluation, the loop is already popped (correct error handling behavior).
+        # Pop the loop from the stack (after setting npc above, before WHILE re-executes).
+        # Timing: We pop NOW so the stack is clean before WHILE condition re-evaluation.
+        # The WHILE will re-push if its condition is still true, or skip the loop body
+        # if false. This ensures clean stack state and proper error handling if the
+        # WHILE condition evaluation fails (loop already popped, won't corrupt stack).
         self.limits.pop_while_loop()
         self.runtime.pop_while_loop()
 
@@ -1337,8 +1349,8 @@ class Interpreter:
         if stmt.line_number is None or stmt.line_number == 0:
             # RESUME or RESUME 0 - retry the statement that caused the error
             # Note: Parser creates different AST representations (None vs 0) to preserve
-            # the original source syntax for round-trip serialization, but the interpreter
-            # treats both identically at runtime (both retry the error statement).
+            # the original source syntax for position_serializer round-trip accuracy.
+            # The interpreter treats both identically at runtime (both retry the error statement).
             self.runtime.npc = error_pc
         elif stmt.line_number == -1:
             # RESUME NEXT - continue at statement after the error
@@ -1507,10 +1519,17 @@ class Interpreter:
         self.runtime.files.clear()
         self.runtime.field_buffers.clear()
 
-        # Note: Preserved state for CHAIN compatibility:
-        #   - runtime.common_vars (list of COMMON variable names - the list itself, not variable values)
+        # State preservation for CHAIN compatibility:
+        #
+        # PRESERVED by CLEAR (not cleared):
+        #   - runtime.common_vars (list of COMMON variable names - the list itself, not values)
         #   - runtime.user_functions (DEF FN functions)
-        # Note: Files and field_buffers are NOT preserved (cleared above).
+        #
+        # NOT PRESERVED (cleared above):
+        #   - All variables and arrays
+        #   - All open files (closed and cleared)
+        #   - Field buffers
+        #
         # Note: We ignore string_space and stack_space parameters (Python manages memory automatically)
 
     def execute_randomize(self, stmt):
@@ -1693,8 +1712,10 @@ class Interpreter:
         Uses latin-1 (ISO-8859-1) to preserve byte values 128-255 unchanged.
         CP/M and MBASIC used 8-bit characters; latin-1 maps bytes 0-255 to
         Unicode U+0000-U+00FF, allowing round-trip byte preservation.
-        Note: Files using non-English code pages (other than standard ASCII/latin-1)
-        may require conversion before reading for accurate character display.
+        Note: CP/M systems often used code pages like CP437 or CP850 for characters
+        128-255, which do NOT match latin-1. Latin-1 preserves the BYTE VALUES but
+        not necessarily the CHARACTER MEANING for non-ASCII CP/M text. Conversion
+        may be needed for accurate display of non-English CP/M files.
 
         EOF Detection (three methods):
         1. EOF flag already set (file_info['eof'] == True) → returns None immediately
@@ -1916,13 +1937,17 @@ class Interpreter:
                     # Set NPC to target line (like GOTO)
                     # On next tick(), NPC will be moved to PC
                     self.runtime.npc = PC.from_line(line_num)
-                    self.runtime.halted = False
+                    self.runtime.halted = False  # Continue execution at new line
         else:
             # RUN without arguments - CLEAR + restart from beginning
             if hasattr(self, 'interactive_mode') and self.interactive_mode:
                 self.interactive_mode.cmd_run()
             else:
-                # In non-interactive context, just restart
+                # In non-interactive context, restart from beginning
+                # Note: RUN without args sets halted=True to stop current execution.
+                # The caller (e.g., UI tick loop) should detect halted=True and restart
+                # execution from the beginning if desired. This is different from
+                # RUN line_number which sets halted=False to continue execution inline.
                 self.runtime.clear_variables()
                 self.runtime.halted = True
 
@@ -2308,9 +2333,12 @@ class Interpreter:
         """Execute RESET statement - close all open files
 
         Syntax: RESET
+
+        Note: Unlike CLEAR (which silently ignores file close errors), RESET allows
+        errors during file close to propagate to the caller. This is intentional
+        different behavior between the two statements.
         """
-        # Close all open files
-        # Note: Unlike CLEAR, RESET doesn't catch file close errors - they propagate to caller
+        # Close all open files (errors propagate to caller)
         for file_num in list(self.runtime.files.keys()):
             self.runtime.files[file_num]['handle'].close()
             del self.runtime.files[file_num]
@@ -2514,9 +2542,11 @@ class Interpreter:
 
                 # Right-justify and pad/truncate to width
                 if len(value) < width:
+                    # Pad on left (right-justify)
                     value = ' ' * (width - len(value)) + value
                 else:
-                    value = value[:width]
+                    # Truncate from LEFT (keep rightmost characters for right-justification)
+                    value = value[-width:]
 
                 # Update buffer
                 buffer_info['buffer'][offset:offset+width] = value.encode('latin-1')
@@ -2729,7 +2759,8 @@ class Interpreter:
         Only works in interactive mode.
 
         Behavior distinction (MBASIC 5.21 compatibility):
-        - STOP statement: Sets runtime.stopped=True, allowing CONT to resume
+        - STOP statement: Sets both runtime.stopped=True AND runtime.halted=True
+          The stopped flag allows CONT to resume from the saved position
         - Break (Ctrl+C): Sets runtime.halted=True but NOT stopped=True, so CONT fails
         This is intentional: CONT only works after STOP, not after Break interruption.
         """
@@ -2748,10 +2779,10 @@ class Interpreter:
         STEP is intended to execute one or more statements, then pause.
         Current implementation: Placeholder (not yet functional - no actual stepping occurs).
 
-        Status: The tick() method supports step_statement and step_line modes, but this
-        immediate STEP command is not yet connected to that infrastructure. Full
-        implementation would require:
-        - Integration with tick(mode='step_statement')
+        Status: The tick_pc() method has infrastructure for step_statement and step_line
+        modes, but this immediate STEP command is not yet connected to that infrastructure.
+        Full implementation would require:
+        - Integration with tick_pc(mode='step_statement')
         - State tracking for multi-step commands
         - UI coordination for displaying position between steps
         """

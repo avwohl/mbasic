@@ -1785,8 +1785,8 @@ class NiceGUIBackend(UIBackend):
     async def _menu_run(self):
         """Run > Run Program - Execute program.
 
-        RUN clears variables (like CLEAR statement) and starts execution from first line.
-        Note: This implementation does NOT clear output (see line 1799 comment below).
+        RUN clears variables (via runtime.reset_for_run()) and starts execution from first line.
+        Note: This implementation does NOT clear output (see comment at line ~1806 below).
         RUN on empty program is fine (just clears variables, no execution).
         RUN at a breakpoint restarts from the beginning.
         """
@@ -1804,6 +1804,7 @@ class NiceGUIBackend(UIBackend):
             # Don't show error - this matches real MBASIC behavior
 
             # Don't clear output - continuous scrolling like ASR33 teletype
+            # Note: Step commands (Ctrl+T/Ctrl+K) DO clear output for clarity when debugging
             self._set_status('Running...')
 
             # Get program AST
@@ -2981,15 +2982,15 @@ class NiceGUIBackend(UIBackend):
         self.waiting_for_input = False
         self.input_prompt_text = None
 
-        # Provide input to interpreter via TWO mechanisms (both are needed):
-        # 1. interpreter.provide_input() - Primary path for synchronous interpreter
-        #    (see _get_input method which returns empty and relies on state transitions)
+        # Provide input to interpreter via TWO mechanisms (both may be needed depending on code path):
+        # 1. interpreter.provide_input() - Used when interpreter is waiting synchronously
+        #    (checked via interpreter.state.input_prompt). Stores input for retrieval.
         if self.interpreter and self.interpreter.state.input_prompt:
             self.interpreter.provide_input(user_input)
 
-        # 2. input_future.set_result() - Secondary path for async compatibility
-        #    (see _get_input_async method which uses asyncio.Future)
-        #    This ensures both synchronous and async code paths work correctly.
+        # 2. input_future.set_result() - Used when async code is waiting via asyncio.Future
+        #    (see _get_input_async method). Only one path is active at a time, but we
+        #    attempt both to ensure the waiting code receives input regardless of which path it used.
         if self.input_future and not self.input_future.done():
             self.input_future.set_result(user_input)
 

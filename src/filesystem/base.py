@@ -13,7 +13,13 @@ TWO SEPARATE FILESYSTEM ABSTRACTIONS:
 2. FileSystemProvider (this file) - Runtime file I/O
    - Used by: Interpreter during program execution
    - Operations: OPEN/CLOSE, INPUT#/PRINT#/WRITE#, EOF(), LOC(), LOF()
+   - Also provides: list_files() and delete() for runtime use
    - Purpose: File I/O from within running BASIC programs
+
+Note: There is intentional overlap between the two abstractions.
+Both provide list_files() and delete() methods, but serve different contexts:
+FileIO is for interactive commands (FILES/KILL), FileSystemProvider is for
+runtime access (though not all BASIC dialects support runtime file operations).
 
 Provides pluggable filesystem implementations to isolate and secure
 file I/O operations, especially for web-based multi-user environments.

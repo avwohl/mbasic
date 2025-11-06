@@ -23,7 +23,7 @@ Returns a string of X characters, read from the terminal or from file number Y.
 
 If the terminal is used for input, no characters will be echoed and all control characters are passed through.
 
-**Note**: In original MBASIC, Control-C would interrupt the INPUT$ function. This implementation passes Control-C through to the program (it can be detected and handled).
+**Note**: In original MBASIC 5.21, Control-C would interrupt the INPUT$ function, terminating the wait. This implementation passes Control-C through to the program (CHR$(3)) so it can be detected and handled, matching compiler behavior.
 
 ## Example
 

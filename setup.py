@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-Setup script for MBASIC 5.21 Interpreter
+Setup script for MBASIC 5.21 Interpreter (version 0.99.0)
+
+Package version 0.99.0 reflects approximately 99% implementation status (core complete).
+This is an independent open-source implementation of MBASIC 5.21 (BASIC-80 for CP/M).
 """
 
 from setuptools import setup, find_packages

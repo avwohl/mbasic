@@ -154,9 +154,10 @@ RUN_CHAR = _ctrl_key_to_char(_run_key)
 RUN_DISPLAY = _run_key
 
 # Step Line - execute all statements on current line (debugger command)
-# Note: Variable named LIST_KEY for historical compatibility (originally BASIC's LIST command),
-# but now implements step_line functionality in the debugger. Executes all statements
-# on the current line before pausing again.
+# Note: Variable named LIST_KEY for historical reasons (it was originally associated with
+# BASIC's LIST command). This variable now implements step_line debugger functionality,
+# which executes all statements on the current line before pausing again. The variable
+# name doesn't match its current purpose but is retained for backward compatibility.
 _list_key = _get_key('editor', 'step_line') or 'Ctrl+K'
 LIST_KEY = _ctrl_key_to_urwid(_list_key)
 LIST_CHAR = _ctrl_key_to_char(_list_key)

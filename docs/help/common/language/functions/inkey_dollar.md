@@ -19,7 +19,7 @@ INKEY$
 
 Returns either a one-character string containing a character read from the terminal or a null string if no character is pending at the terminal. No characters will be echoed and all characters are passed through to the program.
 
-**Note**: In original MBASIC, Control-C would terminate the program. In the BASIC Compiler, Control-C was passed through. This implementation passes Control-C through to the program (it can be detected and handled).
+**Note**: Control-C behavior varied in original implementations. In MBASIC 5.21, Control-C would terminate the program. In the BASIC Compiler, Control-C was passed through to the program. This implementation follows the compiler behavior and passes Control-C through (CHR$(3)) so it can be detected and handled by programs.
 
 ## Example
 

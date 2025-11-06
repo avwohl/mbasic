@@ -52,8 +52,8 @@ class IOHandler(ABC):
     def input_line(self, prompt: str = '') -> str:
         """Input a complete line from user (LINE INPUT statement).
 
-        Intended behavior: Preserve leading/trailing spaces and not interpret
-        commas as field separators (for MBASIC LINE INPUT compatibility).
+        Design goal: Preserve leading/trailing spaces and not interpret commas as
+        field separators (for MBASIC LINE INPUT compatibility).
 
         Args:
             prompt: Optional prompt to display
@@ -64,12 +64,14 @@ class IOHandler(ABC):
         Examples:
             line = input_line("Enter text: ")
 
-        Known limitation: Current implementations (console, curses, web) do NOT
-        fully preserve leading/trailing spaces due to underlying platform limitations:
+        KNOWN LIMITATION (not a bug - platform limitation):
+        Current implementations (console, curses, web) CANNOT fully preserve
+        leading/trailing spaces due to underlying platform API constraints:
         - console: Python input() strips trailing newline/spaces
         - curses: getstr() strips trailing spaces
         - web: HTML input fields strip spaces
-        This is a limitation of the underlying platform APIs.
+        This is an accepted limitation of the underlying platform APIs, not an
+        implementation defect.
         """
         pass
 

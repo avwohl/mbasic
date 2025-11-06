@@ -213,8 +213,10 @@ def update_line_references(code: str, line_mapping: Dict[int, int]) -> str:
 
     # Match: keyword + space + line number
     # Keywords: GOTO, GOSUB, THEN, ELSE, or "ON <expr> GOTO/GOSUB"
+    # Note: Pattern uses .+? (non-greedy) to match expression in ON statements,
+    # which allows expressions containing any characters including 'G' (e.g., ON FLAG GOTO)
     pattern = re.compile(
-        r'\b(GOTO|GOSUB|THEN|ELSE|ON\s+[^G]+\s+GOTO|ON\s+[^G]+\s+GOSUB)\s+(\d+)',
+        r'\b(GOTO|GOSUB|THEN|ELSE|ON\s+.+?\s+GOTO|ON\s+.+?\s+GOSUB)\s+(\d+)',
         re.IGNORECASE
     )
 
@@ -1174,6 +1176,7 @@ def serialize_variable(var):
     text = getattr(var, 'original_case', var.name) or var.name
     # Only add type suffix if it was explicit in the original source
     # Don't add suffixes that were inferred from DEF statements
+    # Note: getattr defaults to False if explicit_type_suffix is missing, preventing suffix output
     if var.type_suffix and getattr(var, 'explicit_type_suffix', False):
         text += var.type_suffix
     if var.subscripts:

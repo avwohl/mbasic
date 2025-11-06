@@ -38,9 +38,10 @@ class TkBackend(UIBackend):
     Provides a graphical UI with:
     - Menu bar (File, Edit, Run, Help)
     - Toolbar with common actions
-    - 3-pane vertical layout:
+    - 4-pane vertical layout:
       * Editor with line numbers (top, ~50% - weight=3)
       * Output pane (middle, ~33% - weight=2)
+      * INPUT row (shown only for INPUT statements, hidden otherwise)
       * Immediate mode input line (bottom, ~17% - weight=1)
     - Syntax highlighting (optional)
     - File dialogs for Open/Save
@@ -1007,7 +1008,7 @@ class TkBackend(UIBackend):
 
         # Create Treeview
         tree = ttk.Treeview(self.variables_window, columns=('Value', 'Type'), show='tree headings')
-        # Set initial heading text with arrows
+        # Set initial heading text with arrows (matches self.variables_sort_column default: 'accessed')
         tree.heading('#0', text='↓ Variable (Last Accessed)')
         tree.heading('Value', text='  Value')
         tree.heading('Type', text='  Type')
@@ -2232,9 +2233,9 @@ class TkBackend(UIBackend):
         Removes blank lines to keep program clean, but preserves the final
         line which is always blank in Tk Text widget (internal Tk behavior).
 
-        Currently called only from _on_enter_key (after each keypress), not
-        after pasting or other modifications. This provides continuous cleanup
-        as the user types.
+        Currently called only from _on_enter_key (after each Enter key press), not
+        after pasting or other modifications. This provides cleanup when the user
+        presses Enter to move to a new line.
         """
         import tkinter as tk
 
@@ -3537,7 +3538,7 @@ class TkBackend(UIBackend):
             return
 
         # Check if safe to execute - use both can_execute_immediate() AND self.running flag
-        # We check self.running to prevent immediate mode execution during program execution,
+        # The 'not self.running' check prevents immediate mode execution when a program is running,
         # even if the tick hasn't completed yet. This prevents race conditions where immediate
         # mode could execute while the program is still running but between tick cycles.
         can_exec_immediate = self.immediate_executor.can_execute_immediate()

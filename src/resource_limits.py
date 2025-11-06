@@ -183,9 +183,11 @@ class ResourceLimits:
             Estimated size in bytes
         """
         # Calculate total elements (all dimensions multiplied)
+        # Note: DIM A(N) creates N+1 elements (0 to N) in MBASIC 5.21
+        # This calculation matches the array creation logic in src/interpreter.py execute_dim()
         total_elements = 1
         for dim_size in dimensions:
-            total_elements *= (dim_size + 1)  # +1 because DIM A(N) creates N+1 elements (0 to N)
+            total_elements *= (dim_size + 1)  # +1 for 0-based indexing
 
         # Estimate element size
         element_size = self.estimate_size(None, element_type)

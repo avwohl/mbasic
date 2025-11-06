@@ -69,8 +69,8 @@ BASIC supports some control characters:
 | 7 | BEL | Bell/beep: `PRINT CHR$(7)` |
 | 8 | BS | Backspace |
 | 9 | TAB | Tab character |
-| 10 | LF | Line feed (Unix newline) |
-| 13 | CR | Carriage return (Mac/DOS newline) |
+| 10 | LF | Line feed (new line) |
+| 13 | CR | Carriage return (return to line start) |
 | 27 | ESC | Escape character |
 
 Use CHR$() to include control characters in strings.

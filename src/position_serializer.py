@@ -465,8 +465,8 @@ def renumber_with_spacing_preservation(program_lines: dict, start: int, step: in
     1. Updates line numbers in the AST
     2. Updates all line number references (GOTO, GOSUB, etc.)
     3. Adjusts token column positions to account for line number length changes
-    4. Text can then be regenerated from updated AST using position_serializer
-       (caller must call position_serializer separately)
+    4. Text can then be regenerated from updated AST using serialize_line()
+       (caller should call serialize_line() on each returned LineNode to regenerate text)
 
     Args:
         program_lines: Dict of line_number -> LineNode
@@ -476,6 +476,7 @@ def renumber_with_spacing_preservation(program_lines: dict, start: int, step: in
 
     Returns:
         Dict of new_line_number -> LineNode (with updated positions)
+        Caller should serialize these LineNodes using serialize_line() to get text
     """
     # Build mapping of old -> new line numbers
     old_line_nums = sorted(program_lines.keys())

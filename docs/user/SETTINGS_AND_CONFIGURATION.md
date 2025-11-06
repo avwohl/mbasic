@@ -1,6 +1,6 @@
 # Settings and Configuration
 
-> **Status:** The settings system is FULLY IMPLEMENTED and available in all UIs. All commands (SET, SHOW SETTINGS, HELP SET) work as documented. Settings files are automatically created in ~/.mbasic/settings.json (Linux/Mac) or %APPDATA%/mbasic/settings.json (Windows).
+> **Status:** The settings system is implemented and available in all UIs. Core commands (SET, SHOW SETTINGS, HELP SET) work as documented. Settings files are automatically created in ~/.mbasic/settings.json (Linux/Mac) or %APPDATA%/mbasic/settings.json (Windows). Note: Some individual settings are still planned (see status notes for each setting).
 
 MBASIC includes a comprehensive settings system that allows you to customize its behavior. Settings can be configured globally, per-project, or per-file.
 

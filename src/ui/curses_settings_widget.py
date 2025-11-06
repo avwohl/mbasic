@@ -124,7 +124,8 @@ class SettingsWidget(urwid.WidgetWrap):
             group = []
             for choice in defn.choices:
                 # Create display label (strip force_ prefix for cleaner display)
-                display_label = choice.replace('force_', '')
+                # Use removeprefix to only strip from the beginning, not anywhere in the string
+                display_label = choice.removeprefix('force_') if hasattr(str, 'removeprefix') else (choice[6:] if choice.startswith('force_') else choice)
                 rb = urwid.RadioButton(group, display_label, state=(choice == current_value))
                 # Store the actual value as user_data for later retrieval
                 rb._actual_value = choice
@@ -251,6 +252,10 @@ class SettingsWidget(urwid.WidgetWrap):
             None if key was handled, otherwise the key
         """
         # Handle global shortcuts first (before widgets consume them)
+        # Note: Ctrl+P is used for Cancel in the settings widget context (overrides
+        # editor's Parse Program binding). When the settings widget is open, Ctrl+P
+        # closes the settings dialog. This is intentional - modal dialogs can override
+        # editor keybindings while they have focus.
         if key == 'esc' or key == 'ctrl p':
             self._on_cancel()
             return None

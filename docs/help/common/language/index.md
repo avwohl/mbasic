@@ -37,6 +37,9 @@ Programming statements for control flow, I/O, file operations, and program manag
 - Arrays (DIM, ERASE, OPTION BASE)
 - Error Handling (ON ERROR GOTO, RESUME, etc.)
 
+### [Operators](operators.md)
+Arithmetic, comparison, logical, and string operators.
+
 ### [Appendices](appendices/index.md)
 Additional reference material.
 

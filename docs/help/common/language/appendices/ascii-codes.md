@@ -83,9 +83,9 @@ Complete ASCII character code reference for BASIC-80.
 | 52 | 34 | 4 | 76 | 4C | L | 100 | 64 | d | 124 | 7C | \| |
 | 53 | 35 | 5 | 77 | 4D | M | 101 | 65 | e | 125 | 7D | } |
 | 54 | 36 | 6 | 78 | 4E | N | 102 | 66 | f | 126 | 7E | ~ |
-| 55 | 37 | 7 | 79 | 4F | O | 103 | 67 | g | 127 | 7F | DEL |
+| 55 | 37 | 7 | 79 | 4F | O | 103 | 67 | g |  |  |  |
 
-## Special Character: DEL
+## Control Character: DEL
 
 | Dec | Hex | Name | Description |
 |-----|-----|------|-------------|

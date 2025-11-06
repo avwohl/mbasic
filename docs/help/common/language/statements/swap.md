@@ -15,7 +15,7 @@ type: statement
 SWAP <variable>,<variable>
 ```
 
-**Versions:** EXtended, Disk
+**Versions:** Extended, Disk
 
 ## Purpose
 

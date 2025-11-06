@@ -156,11 +156,12 @@ class ImmediateExecutor:
         # In real MBASIC, typing a numbered line in immediate mode adds/edits that line
         #
         # This feature requires the following UI integration:
-        # - interpreter.interactive_mode must reference the UI object
-        # - UI must have a 'program' attribute with add_line() and delete_line() methods
-        # - UI must have _refresh_editor() method to update the display (optional)
-        # - UI must have _highlight_current_statement() for restoring execution highlighting (optional)
-        # If core requirements are not met, this will return an error message.
+        # - interpreter.interactive_mode must reference the UI object (checked with hasattr)
+        # - UI.program must have add_line() and delete_line() methods (validated, errors if missing)
+        # - UI._refresh_editor() method to update the display (optional, checked with hasattr)
+        # - UI._highlight_current_statement() for restoring execution highlighting (optional, checked with hasattr)
+        # If interactive_mode doesn't exist, line editing silently continues without UI update.
+        # If interactive_mode exists but required program methods are missing, returns error message.
         import re
         line_match = re.match(r'^(\d+)\s*(.*)$', statement)
         if line_match:
@@ -349,8 +350,8 @@ variables in immediate mode:
 LIMITATIONS:
 ───────────────────────────────────────────────────────────────────
 
-  • INPUT statement is not allowed in immediate mode (use direct assignment instead)
-  • Multi-statement lines (: separator) work but are not recommended
+  • INPUT statement will fail at runtime in immediate mode (blocked when input() is called, not at parse time - use direct assignment instead)
+  • Multi-statement lines (: separator) are fully supported
   • GOTO, GOSUB, and control flow statements are not recommended
     (they will execute but may produce unexpected results)
   • DEF FN works, but FN calls may fail without proper program context

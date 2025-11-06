@@ -56,6 +56,7 @@ class Runtime:
         # Note: line -1 in last_write indicates non-program execution sources:
         #       1. System/internal variables (ERR%, ERL%) via set_variable_raw() with FakeToken(line=-1)
         #       2. Debugger/interactive prompt via set_variable() with debugger_set=True and token.line=-1
+        #       Both use line=-1, making them indistinguishable in last_write alone.
         #       This distinguishes these special sources from normal program execution (line >= 0).
         self._variables = {}
         self._arrays = {}             # name_with_suffix -> {'dims': [...], 'data': [...]}
@@ -431,7 +432,9 @@ class Runtime:
         full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
 
         # Check for case conflicts and get canonical case (skip for debugger sets)
-        # Note: If not debugger_set, token is guaranteed to be non-None by the ValueError check above
+        # Note: If not debugger_set, token is guaranteed to be non-None by the ValueError check above.
+        # Debugger sets skip case conflict checking because they don't have source location context
+        # and are used for internal/system variables that don't need case consistency enforcement.
         if not debugger_set:
             if original_case is None:
                 original_case = name  # Fallback if not provided
@@ -1217,7 +1220,10 @@ class Runtime:
             if last_char in ('$', '%', '!', '#'):
                 return full_name[:-1], last_char
             else:
-                # No suffix - assume single precision
+                # No explicit suffix - default to single precision (!)
+                # Note: In _variables, all names should already have resolved type suffixes
+                # from _resolve_variable_name() which applies DEF type rules. This fallback
+                # handles edge cases where a variable was stored without a type suffix.
                 return full_name, '!'
 
         # Process scalar variables

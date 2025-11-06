@@ -23,8 +23,8 @@ Variables are typed by their suffix character:
 | Suffix | Type | Range | Precision |
 |--------|------|-------|-----------|
 | **%** | INTEGER | -32768 to 32767 | Whole numbers |
-| **!** | SINGLE | ±2.938736×10^-39 to ±1.701412×10^38 | ~7 digits |
-| **#** | DOUBLE | ±2.938736×10^-39 to ±1.701412×10^38 | ~16 digits |
+| **!** | SINGLE | ±2.938736×10^-39 to ±1.701412×10^38 | approximately 7 digits |
+| **#** | DOUBLE | ±2.938736×10^-39 to ±1.701412×10^38 | approximately 16 digits |
 | **$** | STRING | 0 to 255 characters | Text |
 
 ## INTEGER (%)

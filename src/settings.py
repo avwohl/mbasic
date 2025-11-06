@@ -25,9 +25,10 @@ class SettingsManager:
 
     Precedence: project > global > default
 
-    Note: File-level settings (per-file overrides) are defined in the data structures
-    but not yet fully implemented. The file_settings dict exists and can be set/queried,
-    but there is no UI or command to manage per-file settings yet.
+    Note: File-level settings infrastructure exists (file_settings dict, FILE scope),
+    but there are currently no settings defined with FILE scope in settings_definitions.py,
+    and there is no UI or command to manage per-file settings yet. This is reserved
+    for future use.
     """
 
     def __init__(self, project_dir: Optional[str] = None):
@@ -178,9 +179,10 @@ class SettingsManager:
 
         Precedence: file > project > global > definition default > provided default
 
-        Note: File-level settings are checked first but not yet fully implemented
-        (no UI/commands to manage them). If file_settings dict is empty (normal case),
-        this falls through to project/global settings.
+        Note: File-level settings infrastructure exists but is not yet fully implemented.
+        The file_settings dict can be set programmatically and is checked first in precedence,
+        but there is no UI or command to manage per-file settings. In normal usage,
+        file_settings is empty and precedence falls through to project/global settings.
 
         Args:
             key: Setting key (e.g., 'variables.case_conflict')

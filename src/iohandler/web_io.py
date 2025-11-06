@@ -161,6 +161,8 @@ class WebIOHandler(IOHandler):
 
         This is a backward compatibility alias. New code should use input_char().
         Note: Always calls input_char(blocking=False) for non-blocking behavior.
+        The original get_char() implementation was non-blocking, so this preserves
+        that behavior for backward compatibility.
         """
         return self.input_char(blocking=False)
 

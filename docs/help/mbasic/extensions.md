@@ -66,7 +66,7 @@ The GUI interfaces (Curses, Tk, Web) are **NOT in MBASIC 5.21**.
 - Find and Replace (Tk only)
 - Cut/Copy/Paste (Tk, Web)
 - Mouse support (Tk, Web)
-- Auto-save (Web)
+- Auto-save to local filesystem (Tk, Curses, CLI only - Web UI files are session-only)
 
 ### 🎯 Visual Debugging
 

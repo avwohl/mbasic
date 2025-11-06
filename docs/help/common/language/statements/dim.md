@@ -34,5 +34,5 @@ If an array variable name is used without a DIM statement, the maximum value of 
 ```
 
 ## See Also
-- [ERASE](erase.md) - To eliminate arrays from a program
+- [ERASE](erase.md) - To eliminate arrays from a program (arrays can be redimensioned after ERASE)
 - [OPTION BASE](option-base.md) - To declare the minimum value for array subscripts

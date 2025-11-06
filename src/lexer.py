@@ -14,9 +14,11 @@ def create_keyword_case_manager() -> SimpleKeywordCase:
     Create a SimpleKeywordCase handler configured from settings.
 
     The lexer uses SimpleKeywordCase which supports force-based case policies:
-    - force_lower: Convert all keywords to lowercase
+    - force_lower: Convert all keywords to lowercase (default)
     - force_upper: Convert all keywords to UPPERCASE
     - force_capitalize: Convert all keywords to Capitalized form
+
+    SimpleKeywordCase validates policy strings and defaults to force_lower for invalid values.
 
     Note: A separate KeywordCaseManager class exists (src/keyword_case_manager.py)
     that provides additional advanced policies (first_wins, preserve, error) using
@@ -26,7 +28,7 @@ def create_keyword_case_manager() -> SimpleKeywordCase:
     SimpleKeywordCase class.
 
     Returns:
-        SimpleKeywordCase with policy from settings, or default policy (force_lower)
+        SimpleKeywordCase with policy from settings (validated), or default (force_lower)
     """
     try:
         from src.settings import get
@@ -267,10 +269,11 @@ class Lexer:
             return token
 
         # Special case: File I/O keywords followed by # (e.g., PRINT#1)
-        # The # is NOT a type suffix here - it's part of the file I/O syntax.
         # MBASIC allows "PRINT#1" with no space, which should tokenize as:
         #   PRINT (keyword) + # (operator) + 1 (number)
-        # Since we read "PRINT#" as one identifier, we need to split it.
+        # The read_identifier() method treated # as a type suffix and consumed it,
+        # so we now have "PRINT#" as ident. For file I/O keywords, we split it back out:
+        # return PRINT keyword token and rewind pos to re-tokenize # separately.
         if ident_lower.endswith('#') and ident_lower[:-1] in KEYWORDS:
             keyword_part = ident_lower[:-1]
             # Check if this is a file I/O keyword that can be followed by #
@@ -287,12 +290,15 @@ class Lexer:
 
         # NOTE: We do NOT handle old BASIC where keywords run together (NEXTI, FORI).
         # This is properly-formed MBASIC 5.21 which requires spaces.
-        # Old BASIC files should be preprocessed with conversion scripts.
+        # Exception: PRINT# and similar file I/O keywords (handled above) support # without space.
+        # Other old BASIC syntax should be preprocessed with conversion scripts.
 
         # Otherwise it's an identifier
         # Normalize to lowercase (BASIC is case-insensitive) but preserve original case
         token = Token(TokenType.IDENTIFIER, ident.lower(), start_line, start_column)
-        token.original_case = ident  # Preserve original case for display
+        # Preserve original case for display (identifiers always use original_case field,
+        # unlike keywords which use original_case_keyword with policy-determined case)
+        token.original_case = ident
         return token
 
     def read_line_number(self) -> Token:

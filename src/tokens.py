@@ -223,9 +223,11 @@ class Token:
                               Only set for keyword tokens (PRINT, IF, GOTO, etc.). Used by serializer
                               to output keywords with consistent or preserved case style.
 
-    Note: These fields serve different purposes and are mutually exclusive:
+    Note: These fields serve different purposes and should be mutually exclusive
+    (identifiers use original_case, keywords use original_case_keyword):
     - original_case: For identifiers (user variables) - preserves what user typed
     - original_case_keyword: For keywords - stores policy-determined display case
+    The dataclass doesn't enforce this exclusivity, but code should maintain it.
     """
     type: TokenType
     value: Any  # Normalized value (lowercase for identifiers and keywords)

@@ -234,7 +234,8 @@ class LineNumberedText(tk.Frame if tk else object):
             return None
 
         # Match line number followed by whitespace OR end of string (both valid)
-        # Examples: "10 PRINT" (whitespace after), "10" (end after), "10REM" (no match - invalid)
+        # Examples: "10 PRINT" (whitespace after), "10" (end after)
+        # Note: "10REM" would not match (MBASIC 5.21 requires whitespace between line number and statement)
         match = re.match(r'^(\d+)(?:\s|$)', line_text)
         if match:
             return int(match.group(1))
@@ -312,10 +313,11 @@ class LineNumberedText(tk.Frame if tk else object):
         return None
 
     def _on_status_click(self, event):
-        """Handle click on status column (show error for ?, breakpoint info for ●).
+        """Handle click on status column (show error details for ?, breakpoint confirmation for ●).
 
-        Note: This currently only displays information messages. It does NOT toggle
-        breakpoints - that must be done through the UI's breakpoint commands.
+        Note: This displays information/confirmation messages only. It does NOT toggle
+        breakpoints or show detailed breakpoint info - that must be done through the UI's
+        breakpoint commands and debugger windows.
         """
         import tkinter.messagebox as messagebox
 

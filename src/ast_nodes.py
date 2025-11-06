@@ -58,10 +58,13 @@ class LineNode:
     """A single line in a BASIC program (line_number + statements)
 
     The AST is the single source of truth. Text is always regenerated from
-    the AST using token positions and formatting information.
+    the AST using statement token information (each statement has char_start/char_end
+    and tokens preserve original_case for keywords and identifiers).
 
     Design note: This class intentionally does not have a source_text field to avoid
     maintaining duplicate copies that could get out of sync with the AST during editing.
+    Text regeneration is handled by the position_serializer module which reconstructs
+    source text from statement nodes and their token information.
     """
     line_number: int
     statements: List['StatementNode']
@@ -1049,9 +1052,11 @@ class TypeInfo:
     Provides convenience methods for working with VarType enum and converting
     between type suffixes, DEF statement tokens, and VarType enum values.
 
-    This class wraps VarType with static helper methods. New code may use
-    VarType directly, but TypeInfo provides backwards compatibility and
-    convenient conversion utilities.
+    This class provides a facade over VarType with two purposes:
+    1. Static helper methods for type conversions
+    2. Class attributes (INTEGER, SINGLE, etc.) that expose VarType enum values
+       for backward compatibility with code that uses TypeInfo.INTEGER instead
+       of VarType.INTEGER
     """
     # Expose enum values as class attributes for compatibility
     INTEGER = VarType.INTEGER
