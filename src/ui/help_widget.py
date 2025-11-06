@@ -20,15 +20,17 @@ from .help_macros import HelpMacros
 class HelpWidget(urwid.WidgetWrap):
     """Urwid widget for browsing help documentation."""
 
-    def __init__(self, help_root: str, initial_topic: str = "index.md"):
+    def __init__(self, help_root: str, initial_topic: str = "index.md", on_close=None):
         """
         Initialize help browser widget.
 
         Args:
             help_root: Path to help documentation root (e.g., "docs/help")
             initial_topic: Initial topic to display (relative to help_root)
+            on_close: Optional callback function to call when help is closed
         """
         self.help_root = Path(help_root)
+        self.on_close = on_close
         self.renderer = MarkdownRenderer()
         # HelpWidget is curses-specific (uses urwid), so hardcode 'curses' UI name
         self.macros = HelpMacros('curses', help_root)
@@ -60,7 +62,7 @@ class HelpWidget(urwid.WidgetWrap):
         # to avoid dependency on keybinding configuration. HelpMacros does load the full keybindings
         # from JSON (for {{kbd:action}} macro expansion in help content), but the help widget itself
         # doesn't use those loaded keybindings. If help navigation keys change, update here and keypress().
-        self.footer = urwid.Text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
+        self.footer = urwid.Text(" ↑/↓=Scroll →/←=Next/Prev Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
 
         frame = urwid.Frame(
             self.listbox,
@@ -153,7 +155,7 @@ class HelpWidget(urwid.WidgetWrap):
         """Execute search and display results."""
         if not self.search_query:
             self.search_mode = False
-            self.footer.set_text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
+            self.footer.set_text(" ↑/↓=Scroll →/←=Next/Prev Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
             self._load_topic(self.current_topic)
             return
 
@@ -199,7 +201,7 @@ class HelpWidget(urwid.WidgetWrap):
         """Cancel search and return to previous topic."""
         self.search_mode = False
         self.search_query = ""
-        self.footer.set_text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
+        self.footer.set_text(" ↑/↓=Scroll →/←=Next/Prev Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
         self._load_topic(self.current_topic)
 
     def _refresh_display(self):
@@ -351,8 +353,10 @@ class HelpWidget(urwid.WidgetWrap):
 
         # Normal mode navigation
         if key in ('q', 'Q', 'esc'):
-            # Signal to close help
-            return 'esc'
+            # Close help by calling the callback
+            if self.on_close:
+                self.on_close()
+            return None
 
         elif key == '/':
             # Enter search mode
@@ -404,7 +408,7 @@ class HelpWidget(urwid.WidgetWrap):
                 self._load_topic(previous_topic)
                 return None
 
-        elif key == 'tab':
+        elif key in ('tab', 'right'):
             # Move to next link
             if self.link_positions:
                 self.current_link_index = (self.current_link_index + 1) % len(self.link_positions)
@@ -412,7 +416,7 @@ class HelpWidget(urwid.WidgetWrap):
                 self._refresh_display()
                 return None
 
-        elif key == 'shift tab':
+        elif key in ('shift tab', 'left'):
             # Move to previous link
             if self.link_positions:
                 self.current_link_index = (self.current_link_index - 1) % len(self.link_positions)

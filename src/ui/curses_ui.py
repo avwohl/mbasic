@@ -2336,15 +2336,17 @@ class CursesBackend(UIBackend):
     def _show_help(self):
         """Show interactive help browser.
 
-        Note: Unlike _show_keymap and _show_settings which support toggling,
-        help doesn't store overlay state so it can't be toggled off. The help
-        widget handles its own close behavior via ESC/Q keys.
+        Help widget closes via ESC/Q keys which call the on_close callback.
         """
         # Get help root directory
         help_root = Path(__file__).parent.parent.parent / "docs" / "help"
 
-        # Create help widget - open main help index
-        help_widget = HelpWidget(str(help_root), "index.md")
+        def close_help():
+            """Close help and restore main UI."""
+            self.loop.widget = self.main_widget
+
+        # Create help widget with close callback
+        help_widget = HelpWidget(str(help_root), "index.md", on_close=close_help)
 
         # Create overlay
         # Main widget retrieval: Use self.main_widget (stored at UI creation time in __init__)
@@ -2360,9 +2362,6 @@ class CursesBackend(UIBackend):
             height=('relative', 90)
         )
 
-        # Help widget manages its own lifecycle - it doesn't support toggling
-        # like _show_keymap and _show_settings do, so we don't store the overlay
-        # or main widget. Help closes via ESC/Q handled internally by HelpWidget.
         self.loop.widget = overlay
 
     def _show_keymap(self):
