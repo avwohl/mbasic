@@ -197,8 +197,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         Format: "SNN CODE" where S=status, NN=line number (variable width)
 
-        If there are multiple numbers (like "?20 100 for..."), uses the LAST number
-        before the actual code, since BASIC code cannot legally start with a number.
+        Handles multiple line numbers by keeping the last one found.
+        Example: "?10 100 for..." returns 100, since "for" stops the search.
 
         Args:
             line: Display line string
@@ -209,53 +209,47 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         if len(line) < 3:  # Need at least status + digit + space
             return None, None
 
-        # Skip status character
-        content = line[1:]  # Everything after status
+        # Loop to find all line numbers at the start, keep the last one
+        pos = 1  # Start after status character
+        last_line_num = None
+        last_code_start = None
 
-        # Parse line numbers at the start only
-        # Format: "20 100 for..." -> line number is 100
-        # Stop as soon as we hit non-digit after space (start of code)
-        last_num = None
-        last_num_end = None
-        pos = 0
-
-        while pos < len(content):
-            # Skip leading spaces
-            while pos < len(content) and content[pos] == ' ':
+        while pos < len(line):
+            # Skip spaces
+            while pos < len(line) and line[pos] == ' ':
                 pos += 1
 
-            if pos >= len(content):
+            if pos >= len(line):
                 break
 
-            # If we hit a non-digit, we've reached the code - stop
-            if not content[pos].isdigit():
+            # Try to parse a number
+            if not line[pos].isdigit():
+                # Hit non-digit, we're at the code now
                 break
 
-            # Found start of a number - extract it
-            num_str = ""
-            while pos < len(content) and content[pos].isdigit():
-                num_str += content[pos]
+            # Extract the number
+            num_start = pos
+            while pos < len(line) and line[pos].isdigit():
                 pos += 1
 
-            # Save this as potential line number
-            try:
-                last_num = int(num_str)
-                # Find where code starts (skip spaces after the number)
-                code_pos = pos
-                while code_pos < len(content) and content[code_pos] == ' ':
-                    code_pos += 1
-                last_num_end = code_pos
-            except ValueError:
-                pass
-
-            # Check what follows the number
-            if pos < len(content) and content[pos] != ' ':
-                # Number is followed by non-space (like "i" in "50i") - it's part of code, stop
+            # Must be followed by space to be a line number
+            if pos < len(line) and line[pos] == ' ':
+                try:
+                    last_line_num = int(line[num_start:pos])
+                    # Code starts after this number and its following spaces
+                    code_pos = pos
+                    while code_pos < len(line) and line[code_pos] == ' ':
+                        code_pos += 1
+                    last_code_start = code_pos
+                    # Continue loop to see if there's another number
+                except ValueError:
+                    break
+            else:
+                # Number not followed by space, we're at the code
                 break
 
-        if last_num is not None:
-            # Add 1 to account for status character we skipped
-            return last_num, last_num_end + 1
+        if last_line_num is not None:
+            return last_line_num, last_code_start
 
         return None, None
 
