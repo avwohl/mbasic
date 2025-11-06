@@ -1744,18 +1744,14 @@ class CursesBackend(UIBackend):
         # Create immediate mode input field with Enter handler
         self.immediate_input = ImmediateInput("Ok > ", self._execute_immediate)
 
-        # Create help hint
-        help_hint = urwid.Text(('dim', "Type HELP for commands"), align='right')
-
         # Merge output and immediate mode into single pane
         # This matches real BASIC where everything appears in one output area
         self.output_and_immediate_pile = urwid.Pile([
             ('weight', 1, self.output),  # Scrollable output (program + immediate history)
-            ('pack', help_hint),
             ('pack', self.immediate_input)
         ])
         # Set focus to immediate input by default when in output pane
-        self.output_and_immediate_pile.focus_position = 2
+        self.output_and_immediate_pile.focus_position = 1
 
         self.output_frame = TopLeftBox(
             self.output_and_immediate_pile,

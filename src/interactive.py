@@ -217,7 +217,6 @@ class InteractiveMode:
             print("(Note: readline not available - line editing limited)")
         else:
             print("(Tip: Press Ctrl+A to edit last line, or Ctrl+A followed by line number)")
-        print("Type HELP for debugging commands (BREAK, STEP, STACK)")
         print("Ready")
 
         while True:
