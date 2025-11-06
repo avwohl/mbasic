@@ -22,46 +22,21 @@ Many issues have already been fixed by previous work:
 - ✅ renum_program docstring - already clarified
 - ✅ Many immediate_executor comments - already updated
 
-**Fixed During This Session:**
-1. docs/help/ui/curses/getting-started.md - Fixed help key from Ctrl+P to ^F
-2. docs/help/ui/curses/quick-reference.md - Fixed help key from ? to ^F, added Save note about Ctrl+S
-3. src/parser.py - Fixed APOSTROPHE comment to clarify it ends the line
-4. src/ui/curses_settings_widget.py - Clarified "without buttons" comment, added ^P handler for Cancel
-5. docs/help/ui/curses/variables.md - Fixed Edit values status from ⚠️ to ❌
-6. src/ui/web_help_launcher.py - Fixed "Legacy class removed" comment (class still exists)
-7. docs/help/common/language/statements/swap.md - Fixed excessive spacing in LET reference
-8. src/error_codes.py - Added note explaining duplicate two-letter error codes match MBASIC 5.21 spec
-9. src/resource_limits.py - Clarified array sizing comment (DIM A(N) creates N+1 elements)
-10. docs/help/common/language/statements/cload.md - Fixed title formatting (added dash)
-11. docs/help/common/language/statements/csave.md - Fixed title formatting and excessive spacing
-12. docs/help/common/language/statements/clear.md - Fixed example indentation and See Also spacing
-13. docs/help/common/language/statements/auto.md - Reformatted example with consistent spacing
-14. docs/user/README.md - Added complete list of all documentation files with categorization
-15. docs/help/common/language/statements/randomize.md - Fixed excessive spacing in output examples
-16. docs/help/common/language/statements/rem.md - Fixed "I=l" typo to "I=1" and spacing
-17. docs/help/common/language/statements/llist.md - Fixed "l32" typo to "132" and excessive spacing
-18. docs/help/common/language/functions/tan.md - Fixed "preclslon" typo to "precision"
-19. docs/help/common/language/functions/inp.md - Fixed "cont~ining" typo to "containing"
-20. docs/help/common/language/statements/new.md - Fixed excessive spacing in "in memory" (2 places) and CHAIN reference
-21. docs/help/common/language/statements/clear.md - Fixed "in memory" spacing in NEW reference
-22. docs/help/common/language/statements/common.md - Fixed "in memory" and CHAIN spacing
-23. docs/help/common/language/statements/cont.md - Fixed "in memory" and CHAIN spacing
-24. docs/help/common/language/statements/end.md - Fixed "in memory" and CHAIN spacing
-25. docs/help/common/language/statements/run.md - Fixed "in memory" and CHAIN spacing
-26. docs/help/common/language/statements/system.md - Fixed "in memory" and CHAIN spacing
-27. docs/help/common/language/statements/null.md - Fixed excessive spacing in description and remarks
-28. Batch fixed "currently     in memory" in 7 files (auto, cload, delete, edit, list, llist, renum)
-29. Batch fixed "currently            in memory" in 6 files (auto, delete, edit, list, llist, renum)
-30. Batch fixed STOP reference "program execution" spacing in 7 files (clear, common, cont, end, new, run, system)
-31. Batch fixed DEFINT reference "integer, single precision" spacing in 2 files (cload, csave)
-32. Batch fixed INPUT# reference "sequential disk file" spacing in 3 files (cload, csave, input_hash)
-33. Fixed CSAVE reference "or an array currently" spacing in cload.md
-34. Batch fixed WAIT reference "while monitoring" spacing in 4 files (call, out, poke, wait)
-35. Batch fixed WIDTH reference "number of characters" spacing in 6 function files
-36. Batch fixed CSAVE and DEFINT references in 2 function files (cvi-cvs-cvd, mki_dollar-mks_dollar-mkd_dollar)
-37. Batch fixed NULL reference "at the end of each line" spacing in 6 function files
+**Fixed During Previous Sessions:**
+- 77 fixes across 45 unique files (many low-hanging documentation formatting issues)
 
-**Summary:** Fixed 77 total issues across 45 unique files (many files had multiple systematic fixes)
+**Fixed During Current Session (Push to 50%):**
+38. src/debug_logger.py (2 places) - Changed "Claude Code" to "IDEs or other development tools" (more general)
+39. src/ui/base.py - Updated UIBackend docstring to list actual backends instead of non-existent ones
+40. src/ui/__init__.py - Added urwid installation hint to ImportError comment
+41. src/ui/keymap_widget.py - Removed unnecessary LineBox title=None comment
+42. src/ui/tk_settings_dialog.py - Removed redundant isinstance check (all widgets are tk.Variable)
+43. src/ui/ui_helpers.py - Clarified REMARK→REM conversion happens in parser, not serializer
+44. src/ui/variable_sorting.py - Removed outdated reference to removed 'type'/'value' sort modes
+45. docs/help/common/language/functions/peek.md - Fixed typo "cont~ining" → "containing"
+46. docs/help/common/language/functions/usr.md - Fixed typo "cont~ining" → "containing"
+
+**Summary:** Fixed 9 new issues (77+9 = 86 total issues fixed)
 
 **Files Modified This Session (45 unique files):**
 - docs/help/ui/curses/getting-started.md
@@ -111,9 +86,15 @@ Many issues have already been fixed by previous work:
 - Average 1.7 fixes per file (many files had multiple issues)
 - Completed comprehensive cleanup of excessive spacing patterns
 
+**Progress Tracking:**
+- Starting point: 85/229 (37%) from user's report
+- After this session: 94/229 (41%) - 9 new fixes
+- Target: 115/229 (50%)
+- Remaining to hit 50%: 21 more fixes needed
+
 **Remaining Work:**
 - Many issues in the report have already been fixed in previous sessions
-- Focus on code_vs_comment issues requiring deeper analysis
-- Some documentation issues are informational rather than actionable
-- Estimated 200-300 issues remaining (out of original 467)
-- Check for more unfixed issues in Medium and Low Severity sections
+- Most quick documentation fixes (typos, formatting) have been completed
+- Remaining issues are more complex (code_vs_comment requiring deeper analysis)
+- Some issues are informational rather than actionable
+- Continue working through Low Severity section for remaining quick wins
