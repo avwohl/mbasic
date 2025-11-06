@@ -1401,9 +1401,16 @@ class CursesBackend(UIBackend):
 
         # Sync editor lines from program manager
         self.editor.lines.clear()
-        for line_num, line_obj in self.program.lines.items():
-            # line_obj.text is the full line like "20 PRINT", extract just the code part
-            self.editor.lines[line_num] = line_obj.text
+        for line_num, line_text in self.program.lines.items():
+            # line_text is already a string like "20 PRINT j"
+            # Extract just the code part (after line number and space)
+            import re
+            match = re.match(r'^\d+\s+(.*)', line_text)
+            if match:
+                code_only = match.group(1)
+            else:
+                code_only = line_text
+            self.editor.lines[line_num] = code_only
 
         # Update the display
         self.editor._update_display()
