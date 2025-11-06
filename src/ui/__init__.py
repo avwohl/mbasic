@@ -14,7 +14,7 @@ try:
     from .curses_ui import CursesBackend
     _has_curses = True
 except ImportError:
-    # Curses UI not available
+    # Curses UI not available (requires urwid: pip install urwid)
     _has_curses = False
     CursesBackend = None
 

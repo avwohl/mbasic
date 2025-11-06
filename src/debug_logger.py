@@ -2,7 +2,7 @@
 
 Provides centralized debug output controlled by MBASIC_DEBUG environment variable.
 When enabled, errors and debug info are output to stderr and returned as formatted
-strings for UI display when debugging with Claude Code or other tools.
+strings for UI display when debugging with IDEs or other development tools.
 
 Usage:
     from src.debug_logger import debug_log_error, is_debug_mode
@@ -51,7 +51,7 @@ def debug_log_error(message: str,
                    context: Optional[Dict[str, Any]] = None) -> str:
     """Log an error in debug mode.
 
-    Outputs error details to stderr (visible to Claude/developer) and
+    Outputs error details to stderr (visible to developers in IDE/console) and
     returns a formatted error message for the UI.
 
     Args:

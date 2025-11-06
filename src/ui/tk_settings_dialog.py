@@ -202,10 +202,8 @@ class SettingsDialog(tk.Toplevel):
         """
         values = {}
         for key, widget in self.widgets.items():
-            if isinstance(widget, tk.Variable):
-                values[key] = widget.get()
-            else:
-                values[key] = widget.get()
+            # All widgets are tk.Variable instances (BooleanVar, StringVar, IntVar)
+            values[key] = widget.get()
         return values
 
     def _apply_settings(self):

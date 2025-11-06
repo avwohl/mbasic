@@ -73,7 +73,7 @@ def get_sort_key_function(sort_mode):
         return lambda v: v['last_read']['timestamp'] if v.get('last_read') else 0
 
     else:
-        # Default to name sorting (unknown modes fall back to this, e.g., old 'type'/'value')
+        # Default to name sorting (unknown modes fall back to this)
         return lambda v: v['name'].lower()
 
 

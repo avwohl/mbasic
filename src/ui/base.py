@@ -18,9 +18,11 @@ class UIBackend(ABC):
     - UI-specific interaction loop
 
     Different UIs can implement this interface:
-    - CLIBackend: Terminal-based REPL (current InteractiveMode)
-    - GUIBackend: Desktop GUI with visual editor
-    - MobileBackend: Touch-based mobile UI
+    - CLIBackend: Terminal-based REPL (interactive command mode)
+    - CursesBackend: Full-screen terminal UI with visual editor
+    - TkBackend: Desktop GUI using Tkinter
+
+    Future/potential backend types (not yet implemented):
     - WebBackend: Browser-based interface
     - HeadlessBackend: No UI, for batch processing
 

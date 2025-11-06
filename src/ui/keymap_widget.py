@@ -51,7 +51,6 @@ class KeymapWidget(urwid.WidgetWrap):
         self.listbox = urwid.ListBox(self.listwalker)
 
         # Wrap in line box with black background
-        # title=None creates border without title text (still has top border line)
         linebox = urwid.LineBox(
             urwid.AttrMap(self.listbox, 'body'),
             title=None

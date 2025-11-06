@@ -74,7 +74,7 @@ A = PEEK(&H5A00)
 ## See Also
 - [FRE](fre.md) - Arguments to FRE are dummy arguments
 - [HELP SET](../statements/helpsetting.md) - Display help for a specific setting
-- [INKEY$](inkey_dollar.md) - Returns either a one-character string cont~ining a character read from the terminal or a null string if no character is pending at the terminal
+- [INKEY$](inkey_dollar.md) - Returns either a one-character string containing a character read from the terminal or a null string if no character is pending at the terminal
 - [INP](inp.md) - Returns the byte read from port I
 - [LIMITS](../statements/limits.md) - Display resource usage and interpreter limits
 - [NULL](../statements/null.md) - To set the number of nulls to be printed at the end of each line

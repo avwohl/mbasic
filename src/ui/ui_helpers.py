@@ -1087,7 +1087,7 @@ def serialize_statement(stmt):
 
     elif stmt_type == 'RemarkStatementNode':
         # Preserve comments using original syntax (REM or ')
-        # Note: REMARK is converted to REM for consistency
+        # Note: REMARK is converted to REM during parsing, not here
         if stmt.comment_type == "APOSTROPHE":
             return f"' {stmt.text}"
         else:  # REM, REMARK, or default
