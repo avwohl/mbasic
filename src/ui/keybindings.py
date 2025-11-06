@@ -120,8 +120,8 @@ MENU_DISPLAY = 'Ctrl+U'
 
 # Keymap window - accessible via menu only (no dedicated key to avoid conflicts with typing)
 
-# Quit
-_quit_key = _get_key('editor', 'quit') or 'Ctrl+Q'
+# Quit - use Ctrl+X (Ctrl+Q/Ctrl+S unavailable due to terminal flow control XON/XOFF)
+_quit_key = _get_key('editor', 'quit') or 'Ctrl+X'
 QUIT_KEY = _ctrl_key_to_urwid(_quit_key)
 QUIT_CHAR = _ctrl_key_to_char(_quit_key)
 QUIT_DISPLAY = _quit_key
@@ -324,7 +324,7 @@ KEYBINDINGS_BY_CATEGORY = {
 # Quick reference for status bar - use compact ^X notation instead of Ctrl+X
 # Note: ^K is "step line" (execute all statements on current line)
 #       Stack window is menu-only (Ctrl+U -> Debug -> Execution Stack)
-STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K step line  Tab cycle  ^Q quit"
+STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K step line  Tab cycle  ^X quit"
 EDITOR_STATUS = "Editor - ^F help  ^U menu  Tab cycle"
 OUTPUT_STATUS = "Output - Up/Down scroll  Tab cycle  ^U menu"
 
