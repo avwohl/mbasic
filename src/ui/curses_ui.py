@@ -3718,7 +3718,7 @@ class CursesBackend(UIBackend):
 
         # Create dialog
         fill = urwid.Filler(edit, valign='top')
-        box = urwid.LineBox(fill, title="Input Required - Press Enter to submit, ESC to cancel")
+        box = urwid.LineBox(fill, title="Input Required - Press Enter to submit (empty=cancel)")
         overlay = urwid.Overlay(
             urwid.AttrMap(box, 'body'),
             self.loop.widget,
