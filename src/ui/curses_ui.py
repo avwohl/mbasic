@@ -226,11 +226,12 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             allow_tab=False
         )
 
-        # For debouncing sorting during navigation
-        self._needs_sort = False  # Flag: lines need sorting when navigation happens
+        # For tracking line number changes to trigger auto-sort
+        self._saved_line_num = None  # Save line number when entering a line, check on exit
 
         # For deferred processing after input completes (paste operations)
         self._needs_parse = False  # Flag: lines need parsing (reformat pasted BASIC code)
+        self._needs_sort = False  # Flag: lines need sorting when idle (typing in line number area)
         self._loop = None  # Will be set by CursesBackend after loop creation
         self._idle_handle = None  # Handle for enter_idle callback
 
@@ -374,9 +375,13 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         is_arrow_key = is_updown_arrow or is_leftright_arrow
         is_other_nav_key = key in ['page up', 'page down', 'home', 'end']
 
+        # Handle Tab specially - it switches focus between editor and output
+        # We need to check line number changes before Tab takes effect
+        is_tab = (key == 'tab')
+
         # Check syntax when leaving line or pressing control keys
         # (Not during normal typing - avoids annoying errors for incomplete lines)
-        if is_control_key or is_updown_arrow or is_other_nav_key:
+        if is_control_key or is_updown_arrow or is_other_nav_key or is_tab:
             # About to navigate or run command - check syntax now
             new_text = self._update_syntax_errors(current_text)
             if new_text != current_text:
@@ -395,21 +400,28 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 else:
                     col_in_line = cursor_pos
 
-        # Mark that sorting is needed when editing line numbers
-        # Check if we're in line number area (variable width, before the code)
-        if line_num < len(lines):
-            line = lines[line_num]
-            line_num_parsed, code_start = self._parse_line_number(line)
-            if line_num_parsed is not None and col_in_line > 0 and col_in_line < code_start:
-                if len(key) == 1 and key.isdigit():
-                    self._needs_sort = True
+        # Check if line number changed and sort if navigating away
+        if is_control_key or is_other_nav_key or is_updown_arrow or is_tab:
+            # About to navigate - check if line number changed
+            if line_num < len(lines):
+                line = lines[line_num]
+                current_line_num, code_start = self._parse_line_number(line)
 
-        # Sort lines only when navigating away (not on every keystroke)
-        if (is_control_key or is_other_nav_key or is_updown_arrow) and self._needs_sort:
-            # About to navigate - sort now if needed
-            self._sort_and_position_line(lines, line_num, target_column=col_in_line)
-            self._needs_sort = False
-            return super().keypress(size, key)
+                # If line number changed from when we entered this line, sort
+                if current_line_num is not None and self._saved_line_num is not None:
+                    if current_line_num != self._saved_line_num:
+                        # Line number changed - sort lines
+                        self._sort_and_position_line(lines, line_num, target_column=col_in_line)
+                        # After sorting, save the new line number for next navigation
+                        # (the line may have moved, so parse again)
+                        current_text = self.edit_widget.get_edit_text()
+                        cursor_pos = self.edit_widget.edit_pos
+                        text_before_cursor = current_text[:cursor_pos]
+                        line_num = text_before_cursor.count('\n')
+                        lines = current_text.split('\n')
+                        if line_num < len(lines):
+                            self._saved_line_num, _ = self._parse_line_number(lines[line_num])
+                        return super().keypress(size, key)
 
         # Handle backspace key to protect separator space and status column
         if key == 'backspace':
@@ -542,7 +554,19 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 return None
 
         # Let parent handle the key (allows arrows, backspace, etc.)
-        return super().keypress(size, key)
+        result = super().keypress(size, key)
+
+        # After navigation, save the current line number for comparison on next navigation
+        if is_arrow_key or is_other_nav_key:
+            current_text = self.edit_widget.get_edit_text()
+            cursor_pos = self.edit_widget.edit_pos
+            text_before_cursor = current_text[:cursor_pos]
+            line_num = text_before_cursor.count('\n')
+            lines = current_text.split('\n')
+            if line_num < len(lines):
+                self._saved_line_num, _ = self._parse_line_number(lines[line_num])
+
+        return result
 
     def _on_auto_number_renumber_response(self, response):
         """Handle response to renumber prompt during auto-numbering."""
@@ -1530,8 +1554,10 @@ class CursesBackend(UIBackend):
 
         # Sync any pre-loaded program to the editor
         # (e.g., when loading a file from command line)
-        if self.program.has_lines() and not self.editor_lines:
-            self._sync_program_to_editor()
+        if self.program.has_lines():
+            if not self.editor_lines:
+                self._sync_program_to_editor()
+            # Else: editor already has content, don't overwrite
 
         # Set up signal handling for clean exit
         import signal
@@ -1789,11 +1815,13 @@ class CursesBackend(UIBackend):
         dialog = InputDialog(prompt, initial)
 
         def on_close(result):
-            # Pop this dialog from the stack and get saved focus
+            # Pop this dialog from the stack and get saved state
             saved_focus = None
+            saved_input_handler = None
             if self.dialog_stack:
                 popped = self.dialog_stack.pop()
                 saved_focus = popped.get('saved_focus')
+                saved_input_handler = popped.get('saved_input_handler')
 
             # Restore previous widget (either base or previous dialog)
             if self.dialog_stack:
@@ -1802,6 +1830,10 @@ class CursesBackend(UIBackend):
             else:
                 # No more dialogs, show base widget
                 self.loop.widget = self.base_widget
+
+                # Restore the input handler (e.g., back to menu_input or _handle_input)
+                if saved_input_handler is not None:
+                    self.loop.unhandled_input = saved_input_handler
 
                 # Restore focus to the saved position
                 if saved_focus is not None:
@@ -1822,6 +1854,9 @@ class CursesBackend(UIBackend):
         except:
             pass
 
+        # Save current input handler so it can be restored
+        saved_input_handler = self.loop.unhandled_input
+
         # Get the current widget to overlay on top of
         base_for_overlay = self.loop.widget
 
@@ -1835,12 +1870,13 @@ class CursesBackend(UIBackend):
             height=10
         )
 
-        # Push to stack with saved focus
+        # Push to stack with saved focus and input handler
         self.dialog_stack.append({
             'overlay': overlay,
             'dialog': dialog,
             'callback': callback,
-            'saved_focus': saved_focus
+            'saved_focus': saved_focus,
+            'saved_input_handler': saved_input_handler
         })
 
         # Show the overlay
@@ -1859,11 +1895,13 @@ class CursesBackend(UIBackend):
         dialog = YesNoDialog(title, message)
 
         def on_close(result):
-            # Pop this dialog from the stack and get saved focus
+            # Pop this dialog from the stack and get saved state
             saved_focus = None
+            saved_input_handler = None
             if self.dialog_stack:
                 popped = self.dialog_stack.pop()
                 saved_focus = popped.get('saved_focus')
+                saved_input_handler = popped.get('saved_input_handler')
 
             # Restore previous widget (either base or previous dialog)
             if self.dialog_stack:
@@ -1872,6 +1910,10 @@ class CursesBackend(UIBackend):
             else:
                 # No more dialogs, show base widget
                 self.loop.widget = self.base_widget
+
+                # Restore the input handler (e.g., back to menu_input or _handle_input)
+                if saved_input_handler is not None:
+                    self.loop.unhandled_input = saved_input_handler
 
                 # Restore focus to the saved position
                 if saved_focus is not None:
@@ -1892,6 +1934,9 @@ class CursesBackend(UIBackend):
         except:
             pass
 
+        # Save current input handler so it can be restored
+        saved_input_handler = self.loop.unhandled_input
+
         # Get the current widget to overlay on top of
         base_for_overlay = self.loop.widget
 
@@ -1905,12 +1950,13 @@ class CursesBackend(UIBackend):
             height=15
         )
 
-        # Push to stack with saved focus
+        # Push to stack with saved focus and input handler
         self.dialog_stack.append({
             'overlay': overlay,
             'dialog': dialog,
             'callback': callback,
-            'saved_focus': saved_focus
+            'saved_focus': saved_focus,
+            'saved_input_handler': saved_input_handler
         })
 
         # Show the overlay
@@ -1970,14 +2016,6 @@ class CursesBackend(UIBackend):
             # Save program
             self._save_program()
 
-        elif key == 'shift ctrl v' or key == 'ctrl V':
-            # Save As - always prompt for filename
-            self._save_as_program()
-
-        elif key == 'shift ctrl o' or key == 'ctrl O':
-            # Show recent files
-            self._show_recent_files()
-
         elif key == BREAKPOINT_KEY:
             # Toggle breakpoint on current line
             self._toggle_breakpoint_current_line()
@@ -2017,6 +2055,16 @@ class CursesBackend(UIBackend):
         elif key == 'c' and self.watch_window_visible:
             # Clear filter for variables window
             self._clear_variables_filter()
+
+        elif key == 'esc' and self.watch_window_visible:
+            # Close variables window with ESC
+            self._toggle_variables_window()
+            return None
+
+        elif key == 'esc' and self.stack_window_visible:
+            # Close stack window with ESC
+            self._toggle_stack_window()
+            return None
 
         elif key == DELETE_LINE_KEY:
             # Delete current line
@@ -2063,7 +2111,7 @@ class CursesBackend(UIBackend):
     def _debug_continue(self):
         """Continue execution from paused/breakpoint state."""
         if not self.interpreter:
-            self.status_bar.set_text("No program running")
+            self._append_to_output("No program running")
             return
 
         try:
@@ -2072,14 +2120,15 @@ class CursesBackend(UIBackend):
                 # Clear statement highlighting when continuing
                 self.editor._update_display()
                 # Continue from breakpoint - just clear halted flag and resume tick execution
-                self.status_bar.set_text("Continuing execution...")
+                # (No status bar update - execution will show output in output window)
                 self.runtime.halted = False
                 # Schedule next tick to resume execution
                 self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
             else:
-                self.status_bar.set_text("Not paused")
+                # Not paused - inform user
+                self._append_to_output("Not paused")
         except Exception as e:
-            self.status_bar.set_text(f"Continue error: {e}")
+            self._append_to_output(f"Continue error: {e}")
 
     def _debug_step(self):
         """Execute one statement and pause (single-step debugging)."""
@@ -2101,7 +2150,7 @@ class CursesBackend(UIBackend):
                 self.runtime.halted = False
 
             # Execute one statement
-            self.status_bar.set_text("Stepping...")
+            # (No status bar update - output will show in output window)
             state = self.interpreter.tick(mode='step_statement', max_statements=1)
 
             # Collect any output
@@ -2146,14 +2195,14 @@ class CursesBackend(UIBackend):
                 line_num = state.error_info.pc.line_num
                 self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
                 self._update_output()
-                self.status_bar.set_text("Error during step")
+                # Status bar stays at default - error message is in output
                 self._update_immediate_status()
             elif self.runtime.halted:
                 # Clear highlighting when done
                 self.editor._update_display()
                 self.output_buffer.append("Program completed")
                 self._update_output()
-                self.status_bar.set_text("Program completed")
+                # Status bar stays at default - completion message is in output
                 self._update_immediate_status()
         except Exception as e:
             import traceback
@@ -2167,7 +2216,7 @@ class CursesBackend(UIBackend):
             else:
                 self.output_buffer.append(traceback.format_exc())
             self._update_output()
-            self.status_bar.set_text(f"Step error: {e}")
+            # Status bar stays at default - error is in output
 
     def _debug_step_line(self):
         """Execute all statements on current line and pause (step by line)."""
@@ -2189,7 +2238,7 @@ class CursesBackend(UIBackend):
                 self.runtime.halted = False
 
             # Execute all statements on current line
-            self.status_bar.set_text("Stepping line...")
+            # (No status bar update - output will show in output window)
             state = self.interpreter.tick(mode='step_line', max_statements=100)
 
             # Collect any output
@@ -2228,13 +2277,13 @@ class CursesBackend(UIBackend):
                 line_num = state.error_info.pc.line_num
                 self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
                 self._update_output()
-                self.status_bar.set_text("Error during step")
+                # Status bar stays at default - error message is in output
                 self._update_immediate_status()
             elif self.runtime.halted:
                 self.editor._update_display()
                 self.output_buffer.append("Program completed")
                 self._update_output()
-                self.status_bar.set_text("Program completed")
+                # Status bar stays at default - completion message is in output
                 self._update_immediate_status()
         except Exception as e:
             import traceback
@@ -2248,12 +2297,12 @@ class CursesBackend(UIBackend):
             else:
                 self.output_buffer.append(traceback.format_exc())
             self._update_output()
-            self.status_bar.set_text(f"Step line error: {e}")
+            # Status bar stays at default - error is in output
 
     def _debug_stop(self):
         """Stop program execution."""
         if not self.interpreter:
-            self.status_bar.set_text("No program running")
+            self._append_to_output("No program running")
             return
 
         try:
@@ -2262,10 +2311,12 @@ class CursesBackend(UIBackend):
             self.running = False
             self.output_buffer.append("Program stopped by user")
             self._update_output()
-            self.status_bar.set_text("Program stopped - Ready")
+            # Status bar stays at default - stop message is in output
             self._update_immediate_status()
         except Exception as e:
-            self.status_bar.set_text(f"Stop error: {e}")
+            # Status bar stays at default - just log the error
+            self.output_buffer.append(f"Stop error: {e}")
+            self._update_output()
 
     def _menu_step_line(self):
         """Menu/button handler for Step Line command."""
@@ -3065,7 +3116,7 @@ class CursesBackend(UIBackend):
         import re
 
         if not self.interpreter or not self.interpreter.runtime:
-            self.status_bar.set_text("No program running")
+            self._append_to_output("No program running")
             return
 
         # Get focused item from variables walker
@@ -3121,8 +3172,8 @@ class CursesBackend(UIBackend):
             subscripts_prompt = f"Edit {variable_name}({dimensions_str}) - Enter subscripts (e.g., 1,2,3): "
             subscripts_str = self._get_input_dialog(subscripts_prompt, initial=default_subscripts)
 
-            if not subscripts_str:
-                return  # User cancelled
+            if subscripts_str is None:
+                return  # User cancelled with ESC
 
             # Parse and validate subscripts
             try:
@@ -3160,8 +3211,8 @@ class CursesBackend(UIBackend):
             value_prompt = f"{variable_name}({subscripts_str}) = {current_val} → New value: "
             new_value_str = self._get_input_dialog(value_prompt)
 
-            if not new_value_str:
-                return  # User cancelled
+            if new_value_str is None:
+                return  # User cancelled with ESC
 
             # Convert to appropriate type
             try:
@@ -3199,8 +3250,8 @@ class CursesBackend(UIBackend):
             prompt = f"{variable_name} = "
             new_value_str = self._get_input_dialog(prompt)
 
-            if not new_value_str:
-                return  # User cancelled
+            if new_value_str is None:
+                return  # User cancelled with ESC
 
             # Convert to appropriate type
             try:
@@ -3433,7 +3484,7 @@ class CursesBackend(UIBackend):
                 self.output_buffer.append("│ Fix the syntax error and try running again.")
                 self.output_buffer.append("└──────────────────────────────────────────────────┘")
                 self._update_output()
-                self.status_bar.set_text("Parse error - Fix and try again")
+                # Status bar stays at default - error is displayed in output
                 return False
 
         # Reset runtime with current program - RUN = CLEAR + GOTO first line (or start_line if specified)
@@ -3451,9 +3502,9 @@ class CursesBackend(UIBackend):
         # Start interpreter (sets up statement table, etc.)
         state = self.interpreter.start()
 
-        # If empty program, just show Ready (variables cleared, nothing to execute)
+        # If empty program, just return (variables cleared, nothing to execute)
         if not self.program.lines:
-            self.status_bar.set_text('Ready')
+            # No status bar update - status bar stays at default
             self.running = False
             return False
 
@@ -3467,7 +3518,7 @@ class CursesBackend(UIBackend):
             if start_line not in self.program.line_asts:
                 self.output_buffer.append(f"?Undefined line {start_line}")
                 self._update_output()
-                self.status_bar.set_text("Error")
+                # Status bar stays at default - error is in output
                 self.running = False
                 return False
             # Set PC to start at the specified line (after start() has built statement table)
@@ -3491,7 +3542,7 @@ class CursesBackend(UIBackend):
             self.output_buffer.append(f"│ Error: {error_msg}")
             self.output_buffer.append("└──────────────────────────────────────────────────┘")
             self._update_output()
-            self.status_bar.set_text("Startup error - Check program")
+            # Status bar stays at default - error is in output
             return False
 
         return True
@@ -3507,8 +3558,7 @@ class CursesBackend(UIBackend):
             if not self._setup_program(start_line):
                 return
 
-            # Update status
-            self.status_bar.set_text("Running program...")
+            # No status bar update - program output will show in output window
 
             # Set up tick-based execution using urwid's alarm
             self._execute_tick()
@@ -3588,7 +3638,7 @@ class CursesBackend(UIBackend):
                 self.output_buffer.append("└──────────────────────────────────────────────────┘")
 
                 self._update_output()
-                self.status_bar.set_text("Error - ^F help  ^U menu")
+                # Status bar stays at default - error is displayed in output
                 self._update_immediate_status()
 
             elif self.runtime.halted:
@@ -3641,7 +3691,7 @@ class CursesBackend(UIBackend):
                 self.output_buffer.append(f"│ Error: {error_msg}")
                 self.output_buffer.append("└──────────────────────────────────────────────────┘")
                 self._update_output()
-                self.status_bar.set_text("Error - ^F help  ^U menu")
+                # Status bar stays at default - error is displayed in output
                 self._update_immediate_status()
             else:
                 # Internal/unexpected error - log it to stderr
@@ -3674,19 +3724,31 @@ class CursesBackend(UIBackend):
                 self.status_bar.set_text("Execution error - See output")
 
     def _get_input_for_interpreter(self, prompt):
-        """Show input dialog and provide input to interpreter."""
-        # Get input from user
-        result = self._get_input_dialog(prompt)
+        """Show input dialog and provide input to interpreter.
 
-        # If user cancelled (ESC), treat as empty string
-        if result is None:
-            result = ""
+        This is an async operation - it shows the dialog and returns immediately.
+        When the user provides input (or cancels), the callback will handle it.
+        """
+        def on_input_complete(result):
+            """Called when user completes input or cancels."""
+            # If user cancelled (ESC), stop program execution (like BASIC STOP statement)
+            if result is None:
+                # Save current PC for CONT
+                self.runtime.stopped = True
+                self.runtime.stop_pc = self.runtime.pc
+                self.running = False
+                self._append_to_output("Input cancelled - Program stopped")
+                self._update_immediate_status()
+                return
 
-        # Provide input to interpreter
-        self.interpreter.provide_input(result)
+            # Provide input to interpreter
+            self.interpreter.provide_input(result)
 
-        # Continue execution
-        self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
+            # Continue execution
+            self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
+
+        # Show dialog asynchronously with callback
+        self._show_input_dialog_async(prompt, on_input_complete)
 
     def _list_program(self):
         """List the current program."""
@@ -3818,6 +3880,18 @@ class CursesBackend(UIBackend):
             self.output_walker.set_focus(len(self.output_walker) - 1)
             # Urwid will redraw automatically - no need to force draw_screen()
 
+    def _append_to_output(self, message):
+        """Append a message to output buffer and update display.
+
+        Args:
+            message: String or list of strings to append
+        """
+        if isinstance(message, list):
+            self.output_buffer.extend(message)
+        else:
+            self.output_buffer.append(message)
+        self._update_output()
+
     def _update_output_with_lines(self, lines):
         """Update output window with specific lines."""
         # Clear existing content
@@ -3902,6 +3976,60 @@ class CursesBackend(UIBackend):
 
         return result['value']
 
+    def _show_input_dialog_async(self, prompt, callback, initial=""):
+        """Show input dialog asynchronously with callback.
+
+        Args:
+            prompt: The prompt text to show
+            callback: Function to call with result (or None if cancelled)
+            initial: Initial text value (default: "")
+
+        The dialog will be shown immediately and this function returns.
+        When user presses Enter or ESC, the callback will be called with the result.
+        """
+        # Create input widget with optional initial value
+        edit = urwid.Edit(caption=prompt, edit_text=initial)
+
+        # Create dialog
+        fill = urwid.Filler(edit, valign='top')
+        box = urwid.LineBox(fill, title="Input Required - Press Enter to submit, ESC to cancel")
+        overlay = urwid.Overlay(
+            urwid.AttrMap(box, 'body'),
+            self.loop.widget,
+            align='center',
+            width=('relative', 60),
+            valign='middle',
+            height=5
+        )
+
+        # Store original widget and handler
+        original_widget = self.loop.widget
+        old_handler = self.loop.unhandled_input
+
+        def handle_input(key):
+            """Handle input for the dialog."""
+            if key == 'enter':
+                # Get the result and restore state
+                result = edit.get_edit_text()
+                self.loop.widget = original_widget
+                self.loop.unhandled_input = old_handler
+                # Call callback with result
+                callback(result)
+                return None
+            elif key == 'esc':
+                # Restore state
+                self.loop.widget = original_widget
+                self.loop.unhandled_input = old_handler
+                # Call callback with None (cancelled)
+                callback(None)
+                return None
+            # Let other keys pass through to edit widget
+            return key
+
+        # Set up dialog
+        self.loop.widget = overlay
+        self.loop.unhandled_input = handle_input
+
     def _get_input_dialog(self, prompt, initial=""):
         """Show input dialog and get user response.
 
@@ -3913,7 +4041,7 @@ class CursesBackend(UIBackend):
 
         # Create dialog
         fill = urwid.Filler(edit, valign='top')
-        box = urwid.LineBox(fill, title="Input Required - Press Enter to submit (empty=cancel)")
+        box = urwid.LineBox(fill, title="Input Required - Press Enter to submit, ESC to cancel")
         overlay = urwid.Overlay(
             urwid.AttrMap(box, 'body'),
             self.loop.widget,
@@ -3931,20 +4059,18 @@ class CursesBackend(UIBackend):
         result = {'value': None}
         done = {'flag': False}
 
-        # Create a custom exception to exit just this dialog
-        class DialogExit(Exception):
-            pass
-
         def handle_input(key):
             if key == 'enter':
                 result['value'] = edit.get_edit_text()
                 done['flag'] = True
-                raise DialogExit()
+                # Exit the nested loop
+                raise urwid.ExitMainLoop()
             elif key == 'esc':
-                # ESC cancels - just treat empty string as cancel
-                result['value'] = ""  # Return empty string for cancel
+                # ESC cancels - return None to indicate cancellation
+                result['value'] = None
                 done['flag'] = True
-                raise DialogExit()
+                # Exit the nested loop
+                raise urwid.ExitMainLoop()
             # Let other keys pass through
             return key
 
@@ -3953,20 +4079,15 @@ class CursesBackend(UIBackend):
         self.loop.unhandled_input = handle_input
 
         # Run nested event loop for dialog
-        # Note: This will STOP the current event loop
         try:
             self.loop.run()
-        except DialogExit:
-            # Dialog closed normally
+        except urwid.ExitMainLoop:
+            # Dialog closed - this is expected
             pass
         finally:
             # Always restore state
             self.loop.widget = original_widget
             self.loop.unhandled_input = old_handler
-
-        # The loop has stopped - we need to CONTINUE it by raising StopIteration
-        # which tells urwid to return from run() but keep the loop alive
-        # Actually, DialogExit already stopped the loop, so we're good
 
         return result['value']
 
@@ -4017,6 +4138,12 @@ class CursesBackend(UIBackend):
 
             self.output_buffer.append(f"Loaded {filename}")
             self._update_output()
+
+            # Set focus to editor
+            try:
+                self.pile.focus_position = 1  # 1 = editor_frame
+            except:
+                pass
 
             # Start autosave for loaded file
             self.auto_save.stop_autosave()
@@ -4384,7 +4511,7 @@ class CursesBackend(UIBackend):
                 self.runtime.halted = False
                 self.interpreter.state.is_first_line = True
 
-                self.status_bar.set_text("Running program...")
+                # No status bar update - program output will show in output window
                 self.running = True
                 # Start the tick loop
                 self.loop.set_alarm_in(0.01, lambda loop, user_data: self._execute_tick())
@@ -4433,7 +4560,7 @@ class CursesBackend(UIBackend):
         """Execute SAVE command."""
         try:
             if not filename:
-                self._write_output("?Syntax error: filename required\n")
+                self._append_to_output("?Syntax error: filename required")
                 return
 
             # Remove quotes if present
@@ -4441,10 +4568,10 @@ class CursesBackend(UIBackend):
 
             # Use program manager's save_to_file
             self.program.save_to_file(filename)
-            self._write_output(f"Saved to {filename}\n")
+            self._append_to_output(f"Saved to {filename}")
 
         except Exception as e:
-            self._write_output(f"?Error saving file: {e}\n")
+            self._append_to_output(f"?Error saving file: {e}")
 
     def cmd_delete(self, args):
         """Execute DELETE command using ui_helpers.
@@ -4459,14 +4586,14 @@ class CursesBackend(UIBackend):
             deleted = delete_lines_from_program(self.program, args, runtime=None)
             self._refresh_editor()
             if len(deleted) == 1:
-                self._write_output(f"Deleted line {deleted[0]}\n")
+                self._append_to_output(f"Deleted line {deleted[0]}")
             else:
-                self._write_output(f"Deleted {len(deleted)} lines ({min(deleted)}-{max(deleted)})\n")
+                self._append_to_output(f"Deleted {len(deleted)} lines ({min(deleted)}-{max(deleted)})")
 
         except ValueError as e:
-            self._write_output(f"?{e}\n")
+            self._append_to_output(f"?{e}")
         except Exception as e:
-            self._write_output(f"?Error during delete: {e}\n")
+            self._append_to_output(f"?Error during delete: {e}")
 
     def cmd_renum(self, args):
         """Execute RENUM command using ui_helpers.
@@ -4480,7 +4607,7 @@ class CursesBackend(UIBackend):
         # Need access to InteractiveMode's _renum_statement
         # Curses UI has self.interpreter which should have interactive_mode
         if not hasattr(self, 'interpreter') or not hasattr(self.interpreter, 'interactive_mode'):
-            self._write_output("?RENUM not available in this mode\n")
+            self._append_to_output("?RENUM not available in this mode")
             return
 
         try:
@@ -4491,18 +4618,18 @@ class CursesBackend(UIBackend):
                 runtime=None
             )
             self._refresh_editor()
-            self._write_output("Renumbered\n")
+            self._append_to_output("Renumbered")
 
         except ValueError as e:
-            self._write_output(f"?{e}\n")
+            self._append_to_output(f"?{e}")
         except Exception as e:
-            self._write_output(f"?Error during renumber: {e}\n")
+            self._append_to_output(f"?Error during renumber: {e}")
 
     def cmd_merge(self, filename):
         """Execute MERGE command using ProgramManager."""
         try:
             if not filename:
-                self._write_output("?Syntax error: filename required\n")
+                self._append_to_output("?Syntax error: filename required")
                 return
 
             # Use ProgramManager's merge_from_file
@@ -4511,19 +4638,19 @@ class CursesBackend(UIBackend):
             # Show parse errors if any
             if errors:
                 for line_num, error in errors:
-                    self._write_output(f"?Parse error at line {line_num}: {error}\n")
+                    self._append_to_output(f"?Parse error at line {line_num}: {error}")
 
             if success:
                 self._refresh_editor()
-                self._write_output(f"Merged from {filename}\n")
-                self._write_output(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced\n")
+                self._append_to_output(f"Merged from {filename}")
+                self._append_to_output(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
             else:
-                self._write_output("?No lines merged\n")
+                self._append_to_output("?No lines merged")
 
         except FileNotFoundError:
-            self._write_output(f"?File not found: {filename}\n")
+            self._append_to_output(f"?File not found: {filename}")
         except Exception as e:
-            self._write_output(f"?{e}\n")
+            self._append_to_output(f"?{e}")
 
     def cmd_files(self, filespec=""):
         """Execute FILES command using ui_helpers."""
@@ -4534,42 +4661,42 @@ class CursesBackend(UIBackend):
             pattern = filespec if filespec else "*"
 
             if not files:
-                self._write_output(f"No files matching: {pattern}\n")
+                self._append_to_output(f"No files matching: {pattern}")
                 return
 
-            self._write_output(f"\nDirectory listing for: {pattern}\n")
-            self._write_output("-" * 50 + "\n")
+            self._append_to_output(f"\nDirectory listing for: {pattern}")
+            self._append_to_output("-" * 50)
             for filename, size, is_dir in files:
                 if is_dir:
-                    self._write_output(f"{filename:<30}        <DIR>\n")
+                    self._append_to_output(f"{filename:<30}        <DIR>")
                 elif size is not None:
-                    self._write_output(f"{filename:<30} {size:>12} bytes\n")
+                    self._append_to_output(f"{filename:<30} {size:>12} bytes")
                 else:
-                    self._write_output(f"{filename:<30}            ?\n")
+                    self._append_to_output(f"{filename:<30}            ?")
 
-            self._write_output(f"\n{len(files)} file(s)\n")
+            self._append_to_output(f"\n{len(files)} file(s)")
 
         except Exception as e:
-            self._write_output(f"?Error listing files: {e}\n")
+            self._append_to_output(f"?Error listing files: {e}")
 
     def cmd_cont(self):
         """Execute CONT command - continue after STOP."""
         # Check if in stopped state
         if not self.runtime.stopped:
-            self._write_output("?Can't continue\n")
+            self._append_to_output("?Can't continue")
             return
 
         try:
             # Clear stopped flag
             self.runtime.stopped = False
 
-            # Restore execution position
-            self.runtime.current_line = self.runtime.stop_line
-            self.runtime.current_stmt_index = self.runtime.stop_stmt_index
+            # Restore execution position from saved PC
+            self.runtime.pc = self.runtime.stop_pc
             self.runtime.halted = False
+            self.running = True
 
-            # Resume execution
-            self._run_program_continue()
+            # Resume execution by scheduling next tick
+            self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
 
         except Exception as e:
-            self._write_output(f"?Error: {e}\n")
+            self._append_to_output(f"?Error: {e}")

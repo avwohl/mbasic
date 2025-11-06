@@ -126,7 +126,7 @@ MENU_DISPLAY = 'Ctrl+U'
 _quit_key = _get_key('editor', 'quit') or 'Ctrl+Q'  # Keep for JSON config compatibility
 QUIT_KEY = None  # No keyboard shortcut
 QUIT_CHAR = None
-QUIT_DISPLAY = '(menu only)'
+QUIT_DISPLAY = ''
 
 # Alternative quit (Ctrl+C - interrupt signal)
 _quit_alt_key = _get_key('editor', 'continue') or 'Ctrl+C'
@@ -145,7 +145,7 @@ VARIABLES_DISPLAY = _variables_key
 # The stack window is accessed via the menu system (Ctrl+U -> Debug -> Execution Stack).
 STACK_KEY = ''  # No keyboard shortcut
 STACK_CHAR = ''
-STACK_DISPLAY = 'Menu only'
+STACK_DISPLAY = ''
 
 # =============================================================================
 # Program Management (loaded from JSON)
@@ -213,11 +213,11 @@ RENUMBER_KEY = 'ctrl e'
 RENUMBER_CHAR = '\x05'
 RENUMBER_DISPLAY = 'Ctrl+E'
 
-# Smart Insert Line (Ctrl+I unavailable - identical to Tab)
-# Use Ctrl+J instead (J for inJect/insert)
-INSERT_LINE_KEY = 'ctrl j'
-INSERT_LINE_CHAR = '\x0a'
-INSERT_LINE_DISPLAY = 'Ctrl+J'
+# Smart Insert Line (Ctrl+I unavailable - identical to Tab, Ctrl+J unavailable - identical to Enter, Ctrl+L intercepted by terminal for clear screen)
+# Use Ctrl+Y instead (Y for Yank/insert line)
+INSERT_LINE_KEY = 'ctrl y'
+INSERT_LINE_CHAR = '\x19'
+INSERT_LINE_DISPLAY = 'Ctrl+Y'
 
 # =============================================================================
 # Debugger Commands (loaded from JSON where available)
@@ -246,11 +246,7 @@ STOP_KEY = 'ctrl x'
 STOP_CHAR = '\x18'
 STOP_DISPLAY = 'Ctrl+X'
 
-# Clear Output - removed, ^Y reassigned to quit (clear output rarely used, accessible via menu)
-
-# Note: Ctrl+L is context-sensitive in curses UI:
-# - When debugging: Step Line (execute all statements on current line)
-# - When editing: List program (same as LIST_KEY)
+# Clear Output - removed (clear output rarely used, accessible via menu)
 
 # Settings
 SETTINGS_KEY = 'ctrl p'
@@ -279,25 +275,21 @@ TAB_DISPLAY = 'Tab'
 # All keybindings organized by category for help display
 KEYBINDINGS_BY_CATEGORY = {
     'Global Commands': [
-        (QUIT_DISPLAY, 'Quit'),
-        (QUIT_ALT_DISPLAY, 'Quit (alternative)'),
+        (QUIT_ALT_DISPLAY, 'Quit'),
         (MENU_DISPLAY, 'Activate menu bar (arrows navigate, Enter selects)'),
         (HELP_DISPLAY, 'This help'),
         (SETTINGS_DISPLAY, 'Settings'),
         (VARIABLES_DISPLAY, 'Toggle variables watch window'),
-        (STACK_DISPLAY, 'Show/hide execution stack window (menu only)'),
+        (STACK_DISPLAY, 'Show/hide execution stack window'),
     ],
     'Program Management': [
         (RUN_DISPLAY, 'Run program'),
         (NEW_DISPLAY, 'New program'),
         (OPEN_DISPLAY, 'Open/Load program'),
         (SAVE_DISPLAY, 'Save program'),
-        ('Shift+Ctrl+V', 'Save As'),
-        ('Shift+Ctrl+O', 'Recent files'),
     ],
     'Editing': [
         (BREAKPOINT_DISPLAY, 'Toggle breakpoint on current line'),
-        (CLEAR_BREAKPOINTS_DISPLAY, 'Clear all breakpoints'),
         (DELETE_LINE_DISPLAY, 'Delete current line'),
         (INSERT_LINE_DISPLAY, 'Insert line'),
         (RENUMBER_DISPLAY, 'Renumber all lines (RENUM)'),
@@ -308,7 +300,7 @@ KEYBINDINGS_BY_CATEGORY = {
         (STEP_DISPLAY, 'Step Statement - execute one statement at a time'),
         (STOP_DISPLAY, 'Stop execution (eXit)'),
         (VARIABLES_DISPLAY, 'Show/hide variables window'),
-        (STACK_DISPLAY, 'Show/hide execution stack window (menu only)'),
+        (STACK_DISPLAY, 'Show/hide execution stack window'),
     ],
     'Variables Window (when visible)': [
         ('s', 'Cycle sort mode (Name → Accessed → Written → Read → Type → Value)'),

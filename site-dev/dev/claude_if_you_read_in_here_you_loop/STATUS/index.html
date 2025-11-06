@@ -1,0 +1,1726 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/dev/claude_if_you_read_in_here_you_loop/STATUS/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Implementation Status - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#implementation-status" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Implementation Status
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC (Interpreter)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fully-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✓ Fully Implemented
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="✓ Fully Implemented">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-language-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Core Language Features
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#control-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Control Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#built-in-functions-47" class="md-nav__link">
+    <span class="md-ellipsis">
+      Built-in Functions (47+)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#string-manipulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      String Manipulation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debugging
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-defined-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      User-Defined Features
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interactive-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interactive Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-system-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      File System Operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sequential-file-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sequential File I/O
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#random-access-file-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      Random Access File I/O
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error Handling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#program-state-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Program State Management
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#not-yet-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✗ Not Yet Implemented
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implemented-for-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✓ Implemented for Compatibility
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="✓ Implemented for Compatibility">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#screen-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      Screen Control
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hardware-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hardware Access
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#will-not-be-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      ❌ Will Not Be Implemented
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="❌ Will Not Be Implemented">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-hardware-access-cpm-specific" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Hardware Access (CP/M-Specific)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-printer-support-obsolete-hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Printer Support (Obsolete Hardware)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-cassettetape-operations-obsolete-media" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Cassette/Tape Operations (Obsolete Media)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-terminal-control-obsoleteunnecessary" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Terminal Control (Obsolete/Unnecessary)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Status
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Status">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parser-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parser Tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interpreter-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interpreter Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compatibility-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compatibility Notes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Compatibility Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      What Works
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-doesnt-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      What Doesn't Work
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#roadmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      Roadmap
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Roadmap">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-current-core-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1 (Current) - Core Language ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-completed-advanced-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2 (Completed) - Advanced Features ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-completed-sequential-file-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3 (Completed) - Sequential File I/O ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-completed-random-file-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4 (Completed) - Random File I/O ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-completed-formatted-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 5 (Completed) - Formatted Output ✓
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-future-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 6 (Future) - Enhancements
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Known Limitations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Known Limitations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#floating-point-precision-feature-not-a-bug" class="md-nav__link">
+    <span class="md-ellipsis">
+      Floating Point Precision (FEATURE, NOT A BUG)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-your-program" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Your Program
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contributing
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/dev/claude_if_you_read_in_here_you_loop/STATUS.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="implementation-status">Implementation Status<a class="headerlink" href="#implementation-status" title="Permanent link">&para;</a></h1>
+<p>This document provides a comprehensive overview of what is and is not yet implemented in the MBASIC 5.21 Interpreter.</p>
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<p><strong>Parser Coverage:</strong> 100% - All MBASIC 5.21 syntax is parsed correctly
+<strong>Runtime Implementation:</strong> ~99% - All major features complete; only obsolete/incompatible features remain unimplemented</p>
+<h2 id="fully-implemented">✓ Fully Implemented<a class="headerlink" href="#fully-implemented" title="Permanent link">&para;</a></h2>
+<h3 id="core-language-features">Core Language Features<a class="headerlink" href="#core-language-features" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ Variables (all type suffixes: $, %, !, #)</li>
+<li>✓ Arrays with DIM, ERASE, OPTION BASE</li>
+<li>✓ All arithmetic operators (+, -, *, /, \, ^, MOD)</li>
+<li>✓ All relational operators (=, &lt;&gt;, &lt;, &gt;, &lt;=, &gt;=)</li>
+<li>✓ All logical operators (AND, OR, XOR, NOT)</li>
+<li>✓ String concatenation</li>
+<li>✓ Expression evaluation with correct precedence</li>
+<li>✓ Type coercion and conversion</li>
+</ul>
+<h3 id="control-flow">Control Flow<a class="headerlink" href="#control-flow" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ IF/THEN/ELSE (both line numbers and statements)</li>
+<li>✓ GOTO</li>
+<li>✓ GOSUB/RETURN</li>
+<li>✓ ON expression GOTO line1, line2, ... (computed GOTO)</li>
+<li>✓ ON expression GOSUB line1, line2, ... (computed GOSUB)</li>
+<li>✓ FOR/NEXT (including STEP)</li>
+<li>✓ WHILE/WEND</li>
+<li>✓ END</li>
+<li>✓ STOP/CONT</li>
+</ul>
+<h3 id="data-management">Data Management<a class="headerlink" href="#data-management" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ LET (assignment)</li>
+<li>✓ SWAP (exchange values of two variables)</li>
+<li>✓ DATA/READ/RESTORE</li>
+<li>✓ INPUT (console input)</li>
+<li>✓ PRINT (console output with zones and separators)</li>
+<li>✓ PRINT USING (formatted output with format strings)</li>
+<li>✓ PRINT# USING (formatted file output)</li>
+</ul>
+<h3 id="built-in-functions-47">Built-in Functions (47+)<a class="headerlink" href="#built-in-functions-47" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ Math: ABS, ATN, COS, EXP, INT, LOG, RND, SGN, SIN, SQR, TAN</li>
+<li>✓ String: ASC, CHR<span class="arithmatex"><span class="MathJax_Preview">, INSTR, LEFT</span><script type="math/tex">, INSTR, LEFT</script></span>, LEN, MID<span class="arithmatex"><span class="MathJax_Preview">, RIGHT</span><script type="math/tex">, RIGHT</script></span>, SPACE<span class="arithmatex"><span class="MathJax_Preview">, STR</span><script type="math/tex">, STR</script></span>, STRING$, VAL</li>
+<li>✓ Conversion: CDBL, CINT, CSNG</li>
+<li>✓ Binary I/O: CVI, CVS, CVD (convert string to int/single/double), MKI<span class="arithmatex"><span class="MathJax_Preview">, MKS</span><script type="math/tex">, MKS</script></span>, MKD$ (convert int/single/double to string)</li>
+<li>✓ Input: INKEY$ (non-blocking keyboard input)</li>
+<li>✓ File I/O: EOF() (end of file test), LOC() (record position), LOF() (file length)</li>
+<li>✓ Output: TAB(n) (tab to column), SPC(n) (print n spaces)</li>
+<li>✓ Other: FIX, HEX<span class="arithmatex"><span class="MathJax_Preview">, OCT</span><script type="math/tex">, OCT</script></span>, POS</li>
+</ul>
+<h3 id="string-manipulation">String Manipulation<a class="headerlink" href="#string-manipulation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ MID<span class="arithmatex"><span class="MathJax_Preview">(var</span><script type="math/tex">(var</script></span>, start, len) = value$ - Replace substring in-place</li>
+</ul>
+<h3 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ TRON/TROFF - Trace program execution (shows line numbers as they execute)</li>
+</ul>
+<h3 id="user-defined-features">User-Defined Features<a class="headerlink" href="#user-defined-features" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ DEF FN (user-defined functions) - single-line functions with parameters</li>
+<li>✓ DEFINT/DEFSNG/DEFDBL/DEFSTR (type declarations)</li>
+</ul>
+<h3 id="interactive-mode">Interactive Mode<a class="headerlink" href="#interactive-mode" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ Line entry and editing</li>
+<li>✓ RUN (execute program)</li>
+<li>✓ LIST (list program lines)</li>
+<li>✓ SAVE/LOAD (save/load programs to disk)</li>
+<li>✓ NEW (clear program)</li>
+<li>✓ DELETE (delete line ranges)</li>
+<li>✓ RENUM (renumber program lines)</li>
+<li>✓ FILES (list directory)</li>
+<li>✓ CHAIN (load and execute another program)</li>
+<li>✓ MERGE (merge program from file)</li>
+<li>✓ SYSTEM (exit interpreter)</li>
+<li>✓ COMMON (declare variables for CHAIN)</li>
+<li>✓ CLEAR (clear all variables)</li>
+<li>✓ Immediate mode (evaluate expressions directly)</li>
+</ul>
+<h3 id="file-system-operations">File System Operations<a class="headerlink" href="#file-system-operations" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ KILL "filename" - Delete file</li>
+<li>✓ NAME "old" AS "new" - Rename file</li>
+<li>✓ RESET - Close all open files</li>
+</ul>
+<h3 id="sequential-file-io">Sequential File I/O<a class="headerlink" href="#sequential-file-io" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ OPEN "I"/"O"/"A", #n, "file" - Open file for input/output/append</li>
+<li>✓ CLOSE [#n] - Close file(s)</li>
+<li>✓ PRINT #n, data - Write to file</li>
+<li>✓ INPUT #n, var1, var2 - Read comma-separated values</li>
+<li>✓ LINE INPUT #n, var$ - Read entire line</li>
+<li>✓ WRITE #n, data - Write comma-delimited data with quoted strings</li>
+<li>✓ EOF(n) - Test for end of file (respects ^Z as CP/M EOF marker)</li>
+</ul>
+<h3 id="random-access-file-io">Random Access File I/O<a class="headerlink" href="#random-access-file-io" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ OPEN "R", #n, "file", record_len - Open random file</li>
+<li>✓ FIELD #n, width AS var$, ... - Define record layout</li>
+<li>✓ GET #n [,record] - Read record</li>
+<li>✓ PUT #n [,record] - Write record</li>
+<li>✓ LSET var$ = value$ - Left-justify in field</li>
+<li>✓ RSET var$ = value$ - Right-justify in field</li>
+<li>✓ LOC(n) - Get current record position</li>
+<li>✓ LOF(n) - Get file length</li>
+</ul>
+<h3 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ ON ERROR GOTO line - Set error trap (GOTO)</li>
+<li>✓ ON ERROR GOSUB line - Set error trap (GOSUB)</li>
+<li>✓ ON ERROR GOTO 0 - Disable error trapping</li>
+<li>✓ RESUME - Retry the statement that caused the error</li>
+<li>✓ RESUME 0 - Same as RESUME (retry error statement)</li>
+<li>✓ RESUME NEXT - Continue at next statement after error</li>
+<li>✓ RESUME line - Resume at specific line number</li>
+<li>✓ ERR% - Error code variable</li>
+<li>✓ ERL% - Error line number variable</li>
+</ul>
+<h3 id="program-state-management">Program State Management<a class="headerlink" href="#program-state-management" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ Break handling (Ctrl+C)</li>
+<li>✓ STOP/CONT (pause and resume execution)</li>
+<li>✓ GOSUB stack preservation</li>
+<li>✓ FOR loop stack preservation</li>
+<li>✓ WHILE loop stack preservation</li>
+<li>✓ Variable preservation across STOP</li>
+</ul>
+<h2 id="not-yet-implemented">✗ Not Yet Implemented<a class="headerlink" href="#not-yet-implemented" title="Permanent link">&para;</a></h2>
+<p>Currently, all major MBASIC 5.21 features are implemented. See "❌ Will Not Be Implemented" below for features that are intentionally not supported due to obsolescence or incompatibility with modern systems.</p>
+<h2 id="implemented-for-compatibility">✓ Implemented for Compatibility<a class="headerlink" href="#implemented-for-compatibility" title="Permanent link">&para;</a></h2>
+<p>These features are implemented and accepted by the parser/interpreter for compatibility with existing BASIC programs, but they perform no action or have limited functionality in a modern environment. Programs using these features will run without errors, but the features may not have visible effects.</p>
+<h3 id="screen-control">Screen Control<a class="headerlink" href="#screen-control" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>CLS</strong> - Clear screen</li>
+<li>Status: ✓ Implemented as no-op</li>
+<li>Why: Terminal control sequences vary widely across platforms. Modern terminals provide their own clear commands. Programs can use CLS for compatibility, but it won't actually clear the screen.</li>
+<li>
+<p>Note: If screen clearing is needed, use your terminal's native clear command (e.g., <code>clear</code> on Unix/Linux, <code>cls</code> on Windows) before running the program.</p>
+</li>
+<li>
+<p><strong>WIDTH [#n,] width</strong> - Set output width</p>
+</li>
+<li>Status: ✓ Implemented as no-op</li>
+<li>Why: Modern terminals handle line width automatically and dynamically adjust to window size. Setting a fixed width is not meaningful in modern terminal contexts.</li>
+<li>Note: Programs can use WIDTH for compatibility, but it won't affect output formatting.</li>
+</ul>
+<h3 id="hardware-access">Hardware Access<a class="headerlink" href="#hardware-access" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>PEEK(addr)</strong> - Read byte from memory address</li>
+<li>Status: ✓ Implemented - returns random value 0-255</li>
+<li>Why: Direct memory access is not possible in modern Python/OS environments. Most vintage BASIC programs use PEEK to seed random number generators (e.g., <code>RANDOMIZE PEEK(0)</code>), so returning a random value provides reasonable compatibility for this common use case.</li>
+<li>Note: Programs that rely on reading specific memory addresses will not work correctly.</li>
+</ul>
+<h2 id="will-not-be-implemented">❌ Will Not Be Implemented<a class="headerlink" href="#will-not-be-implemented" title="Permanent link">&para;</a></h2>
+<p>These features are obsolete, hardware-specific, or incompatible with modern computing environments. They are parsed for compatibility but will never have functional implementations.</p>
+<h3 id="1-hardware-access-cpm-specific">1. Hardware Access (CP/M-Specific)<a class="headerlink" href="#1-hardware-access-cpm-specific" title="Permanent link">&para;</a></h3>
+<p><strong>Reason:</strong> Requires direct hardware/memory access not available in modern operating systems</p>
+<ul>
+<li><strong>POKE addr, value</strong> - Write byte to memory address</li>
+<li>Status: Parsed but does nothing</li>
+<li>
+<p>Why: Would require hardware emulation; not relevant for modern use</p>
+</li>
+<li>
+<p><strong>INP(port)</strong> - Read from I/O port</p>
+</li>
+<li>Status: Returns 0 (placeholder)</li>
+<li>
+<p>Why: I/O ports don't exist in modern operating systems</p>
+</li>
+<li>
+<p><strong>OUT port, value</strong> - Write to I/O port</p>
+</li>
+<li>Status: Parsed but does nothing</li>
+<li>
+<p>Why: I/O ports are obsolete; no modern equivalent</p>
+</li>
+<li>
+<p><strong>CALL addr</strong> - Call machine language subroutine</p>
+</li>
+<li>Status: Parsed but does nothing</li>
+<li>
+<p>Why: Would require Z80 emulation; not practical or useful</p>
+</li>
+<li>
+<p><strong>USR(n)</strong> - Call user machine code routine</p>
+</li>
+<li>Status: Returns 0 (placeholder)</li>
+<li>
+<p>Why: Cannot execute Z80/8080 machine code from Python</p>
+</li>
+<li>
+<p><strong>VARPTR(var)</strong> - Return memory address of variable</p>
+</li>
+<li>Status: Not implemented</li>
+<li>
+<p>Why: Memory addresses are not meaningful in Python's managed memory environment; variables don't have fixed addresses</p>
+</li>
+<li>
+<p><strong>FRE(n)</strong> - Return free memory available</p>
+</li>
+<li>Status: Not implemented</li>
+<li>Why: Modern systems use virtual memory and garbage collection; "free memory" is meaningless in Python</li>
+<li>Note: Would return arbitrary values that don't reflect actual system memory</li>
+</ul>
+<h3 id="2-printer-support-obsolete-hardware">2. Printer Support (Obsolete Hardware)<a class="headerlink" href="#2-printer-support-obsolete-hardware" title="Permanent link">&para;</a></h3>
+<p><strong>Reason:</strong> Line printers are obsolete; modern systems use different printing paradigms</p>
+<ul>
+<li><strong>LPRINT [USING] ...</strong> - Print to line printer</li>
+<li>Status: Not implemented</li>
+<li>Why: Line printers don't exist; would need complex OS print spooling</li>
+<li>
+<p>Alternative: Use PRINT to redirect output, then print from file</p>
+</li>
+<li>
+<p><strong>LLIST</strong> - List program to printer</p>
+</li>
+<li>Status: Not implemented</li>
+<li>
+<p>Why: Same as LPRINT; obsolete hardware interface</p>
+</li>
+<li>
+<p><strong>LPOS(n)</strong> - Get line printer head position</p>
+</li>
+<li>Status: Not implemented</li>
+<li>Why: No printer head to query on modern systems</li>
+</ul>
+<h3 id="3-cassettetape-operations-obsolete-media">3. Cassette/Tape Operations (Obsolete Media)<a class="headerlink" href="#3-cassettetape-operations-obsolete-media" title="Permanent link">&para;</a></h3>
+<p><strong>Reason:</strong> Cassette tapes are not used for data storage in modern systems</p>
+<ul>
+<li><strong>CLOAD</strong> - Load program from cassette</li>
+<li>Status: Not in MBASIC 5.21 spec (only in earlier versions)</li>
+<li>
+<p>Why: Cassette tapes are obsolete storage media</p>
+</li>
+<li>
+<p><strong>CSAVE</strong> - Save program to cassette</p>
+</li>
+<li>Status: Not in MBASIC 5.21 spec (only in earlier versions)</li>
+<li>Why: Cassette tapes are obsolete storage media</li>
+</ul>
+<h3 id="4-terminal-control-obsoleteunnecessary">4. Terminal Control (Obsolete/Unnecessary)<a class="headerlink" href="#4-terminal-control-obsoleteunnecessary" title="Permanent link">&para;</a></h3>
+<p><strong>Reason:</strong> Modern terminals handle these automatically or differently</p>
+<ul>
+<li><strong>NULL n</strong> - Set number of nulls after carriage return</li>
+<li>Status: Not implemented</li>
+<li>Why: Was needed for slow mechanical teletypes; modern terminals don't need this</li>
+</ul>
+<p><strong>Note:</strong> These features are documented here for completeness and to explain why they appear in MBASIC documentation but aren't implemented. Programs that rely heavily on these features cannot be run without modification.</p>
+<h2 id="testing-status">Testing Status<a class="headerlink" href="#testing-status" title="Permanent link">&para;</a></h2>
+<h3 id="parser-tests">Parser Tests<a class="headerlink" href="#parser-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Coverage:</strong> 121/121 files (100%)</li>
+<li><strong>Status:</strong> All valid MBASIC 5.21 programs parse successfully</li>
+<li><strong>Test corpus:</strong> 120+ real MBASIC programs from vintage sources</li>
+</ul>
+<h3 id="interpreter-tests">Interpreter Tests<a class="headerlink" href="#interpreter-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Core features:</strong> Fully tested</li>
+<li><strong>Self-checking tests:</strong> 20/20 pass</li>
+<li><strong>Manual testing:</strong> Extensive testing with vintage programs</li>
+<li><strong>Error handling:</strong> Fully tested (ON ERROR GOTO/GOSUB, RESUME variants)</li>
+<li><strong>WHILE/WEND:</strong> Tested with nested loops</li>
+<li><strong>INKEY$:</strong> Tested with cross-platform support</li>
+<li><strong>ON GOTO/GOSUB:</strong> Tested with multiple values, out-of-range, expressions</li>
+<li><strong>File system ops:</strong> Tested (KILL, NAME AS, RESET)</li>
+<li><strong>Sequential file I/O:</strong> Fully tested (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF with ^Z support)</li>
+<li><strong>Random file I/O:</strong> Fully tested (FIELD, GET, PUT, LSET, RSET, LOC, LOF)</li>
+<li><strong>Binary conversions:</strong> Fully tested (CVI/CVS/CVD, MKI<span class="arithmatex"><span class="MathJax_Preview">/MKS</span><script type="math/tex">/MKS</script></span>/MKD$ for binary file I/O)</li>
+<li><strong>MID$ assignment:</strong> Fully tested (replace substring in-place, simple vars and arrays)</li>
+<li><strong>TRON/TROFF:</strong> Fully tested (execution trace for debugging)</li>
+<li><strong>PRINT USING:</strong> Fully tested (string formats: !, \ \, &amp;; numeric formats: #, +, -, ., ,, **, $<span class="arithmatex"><span class="MathJax_Preview">, **</span><script type="math/tex">, **</script></span>, <sup>^</sup>^, overflow)</li>
+<li><strong>SWAP:</strong> Fully tested (simple variables, array elements, mixed types)</li>
+</ul>
+<h2 id="compatibility-notes">Compatibility Notes<a class="headerlink" href="#compatibility-notes" title="Permanent link">&para;</a></h2>
+<h3 id="what-works">What Works<a class="headerlink" href="#what-works" title="Permanent link">&para;</a></h3>
+<p>Programs that use:
+- Mathematical calculations
+- String processing (including MID$ assignment for in-place modification)
+- Arrays and data structures
+- Variable operations (LET, SWAP)
+- Control flow (IF, FOR, WHILE/WEND, GOSUB, ON GOTO/GOSUB)
+- Error handling (ON ERROR GOTO/GOSUB, RESUME)
+- Debugging (TRON/TROFF execution trace)
+- User input/output
+- Formatted output (PRINT USING, PRINT# USING with all format types)
+- Non-blocking keyboard input (INKEY<span class="arithmatex"><span class="MathJax_Preview">)
+- Sequential file I/O (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF)
+- Random access file I/O (FIELD, GET, PUT, LSET, RSET, LOC, LOF)
+- Binary file I/O (CVI/CVS/CVD, MKI</span><script type="math/tex">)
+- Sequential file I/O (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF)
+- Random access file I/O (FIELD, GET, PUT, LSET, RSET, LOC, LOF)
+- Binary file I/O (CVI/CVS/CVD, MKI</script></span>/MKS<span class="arithmatex"><span class="MathJax_Preview">/MKD</span><script type="math/tex">/MKD</script></span> for reading/writing numeric data)
+- File system operations (KILL, NAME AS, RESET)
+- DATA statements
+- User-defined functions</p>
+<h3 id="what-doesnt-work">What Doesn't Work<a class="headerlink" href="#what-doesnt-work" title="Permanent link">&para;</a></h3>
+<p>Programs that require:
+- Hardware/memory access (POKE, INP, OUT, CALL, USR, VARPTR, FRE)
+- Line printer output (LPRINT, LLIST, LPOS)
+- Cassette tape storage (CLOAD, CSAVE - not in MBASIC 5.21 anyway)
+- Terminal null padding (NULL)</p>
+<p>See the <strong>"❌ Will Not Be Implemented"</strong> section above for detailed explanations of why these features are not supported.</p>
+<h2 id="roadmap">Roadmap<a class="headerlink" href="#roadmap" title="Permanent link">&para;</a></h2>
+<h3 id="phase-1-current-core-language">Phase 1 (Current) - Core Language ✓<a class="headerlink" href="#phase-1-current-core-language" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ Complete parser</li>
+<li>✓ Basic interpreter</li>
+<li>✓ Interactive mode</li>
+<li>✓ Essential built-in functions</li>
+</ul>
+<h3 id="phase-2-completed-advanced-features">Phase 2 (Completed) - Advanced Features ✓<a class="headerlink" href="#phase-2-completed-advanced-features" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ Error handling (ON ERROR GOTO/GOSUB, RESUME)</li>
+<li>✓ WHILE/WEND loops</li>
+<li>✓ INKEY$ non-blocking input</li>
+<li>✓ Computed jumps (ON GOTO/GOSUB)</li>
+<li>✓ File system operations (KILL, NAME AS, RESET)</li>
+</ul>
+<h3 id="phase-3-completed-sequential-file-io">Phase 3 (Completed) - Sequential File I/O ✓<a class="headerlink" href="#phase-3-completed-sequential-file-io" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ OPEN for INPUT/OUTPUT/APPEND</li>
+<li>✓ CLOSE statement</li>
+<li>✓ PRINT#, INPUT#, LINE INPUT# statements</li>
+<li>✓ WRITE# statement</li>
+<li>✓ EOF() function with ^Z support</li>
+</ul>
+<h3 id="phase-4-completed-random-file-io">Phase 4 (Completed) - Random File I/O ✓<a class="headerlink" href="#phase-4-completed-random-file-io" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ OPEN "R" for random access</li>
+<li>✓ FIELD statement for record layout</li>
+<li>✓ GET/PUT for record read/write</li>
+<li>✓ LSET/RSET for field assignment</li>
+<li>✓ LOC/LOF functions</li>
+</ul>
+<h3 id="phase-5-completed-formatted-output">Phase 5 (Completed) - Formatted Output ✓<a class="headerlink" href="#phase-5-completed-formatted-output" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ TAB(n) and SPC(n) functions</li>
+<li>✓ PRINT USING with string formats (!,  \, &amp;)</li>
+<li>✓ PRINT USING with numeric formats (#, +, -, ., ,)</li>
+<li>✓ PRINT USING with special formats (**, $<span class="arithmatex"><span class="MathJax_Preview">, **</span><script type="math/tex">, **</script></span>, <sup>^</sup>^)</li>
+<li>✓ PRINT# USING for file output</li>
+<li>✓ Format overflow detection (%)</li>
+<li>✓ Literal character escaping (_)</li>
+</ul>
+<h3 id="phase-6-future-enhancements">Phase 6 (Future) - Enhancements<a class="headerlink" href="#phase-6-future-enhancements" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Documentation improvements</li>
+<li>Performance optimization</li>
+<li>Extended error messages</li>
+<li>Additional debugging features</li>
+</ul>
+<h2 id="known-limitations">Known Limitations<a class="headerlink" href="#known-limitations" title="Permanent link">&para;</a></h2>
+<h3 id="floating-point-precision-feature-not-a-bug">Floating Point Precision (FEATURE, NOT A BUG)<a class="headerlink" href="#floating-point-precision-feature-not-a-bug" title="Permanent link">&para;</a></h3>
+<p>This implementation uses Python's native <code>float</code> type (IEEE 754 double precision, 64-bit) for all numeric calculations, while original MBASIC 5.21 used single precision (32-bit) floats.</p>
+<p><strong>Result</strong>: Our implementation is ~9 orders of magnitude MORE accurate than the original:
+- Original MBASIC: ~6-7 significant digits, errors at 10⁻⁷
+- Our MBASIC: ~15-16 significant digits, errors at 10⁻¹⁶</p>
+<p>This means:
+- <strong>Better accuracy</strong> in trig functions (SIN, COS, TAN, ATN)
+- <strong>Better preservation</strong> of mathematical identities (e.g., SIN²+COS²=1)
+- <strong>Better precision</strong> in compound calculations
+- The ATN (arctangent) function, notorious for poor accuracy in original MBASIC, is highly accurate</p>
+<p><strong>Note</strong>: Programs may produce slightly different numeric results due to this improved precision. This is expected and beneficial.</p>
+<p><strong>See</strong>: <code>doc/MATH_PRECISION_ANALYSIS.md</code> for detailed comparison with real MBASIC 5.21, including side-by-side test results.</p>
+<h2 id="testing-your-program">Testing Your Program<a class="headerlink" href="#testing-your-program" title="Permanent link">&para;</a></h2>
+<p>To check if your MBASIC program will work:</p>
+<ol>
+<li>
+<p><strong>Parser test:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python3<span class="w"> </span>mbasic<span class="w"> </span>yourprogram.bas
+</code></pre></div>
+   If it parses without errors, the syntax is valid.</p>
+</li>
+<li>
+<p><strong>Check for unimplemented features:</strong></p>
+</li>
+<li>Look for "NotImplementedError" when running</li>
+<li>Review the "Not Yet Implemented" section above</li>
+<li>
+<p>Check if your program uses file I/O or computed jumps</p>
+</li>
+<li>
+<p><strong>Run tests:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Run self-checking tests</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>python3<span class="w"> </span>mbasic<span class="w"> </span>basic/tests_with_results/test_operator_precedence.bas
+</code></pre></div></p>
+</li>
+</ol>
+<h2 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h2>
+<p>Contributions welcome! Priority areas:
+1. Additional test cases
+2. Performance optimization
+3. Enhanced error messages and debugging features</p>
+<p>Contributions welcome - see the project repository for details.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

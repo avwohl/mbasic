@@ -183,14 +183,12 @@ def run_file(program_path, backend, debug_enabled=False):
             for line_num, error_msg in errors:
                 print(f"Parse error at line {line_num}: {error_msg}", file=sys.stderr)
 
-        # Run the program if it loaded successfully
-        if success:
-            backend.cmd_run()
-        else:
+        if not success:
             print(f"Failed to load program: {program_path}", file=sys.stderr)
             sys.exit(1)
 
-        # Enter interactive mode after running
+        # Enter interactive mode with program loaded
+        # (Don't call cmd_run() here - it needs the event loop which starts in backend.start())
         backend.start()
 
     except FileNotFoundError:

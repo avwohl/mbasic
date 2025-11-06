@@ -1,0 +1,1446 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/dev/claude_if_you_read_in_here_you_loop/DETOKENIZER_FIXES/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Detokenizer Improvements - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#detokenizer-improvements" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Detokenizer Improvements
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC (Interpreter)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary-of-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary of Fixes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Summary of Fixes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issues-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Issues Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issues-fixed-previous" class="md-nav__link">
+    <span class="md-ellipsis">
+      Issues Fixed (Previous)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#smart-spacing-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Smart Spacing Algorithm
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Results
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#impact-on-lexer-success-rate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Impact on Lexer Success Rate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#errors-eliminated" class="md-nav__link">
+    <span class="md-ellipsis">
+      Errors Eliminated
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-improvements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Improvements
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example Improvements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-hanoibas" class="md-nav__link">
+    <span class="md-ellipsis">
+      File: hanoi.bas
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-aceybas" class="md-nav__link">
+    <span class="md-ellipsis">
+      File: acey.bas
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-remaining-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Known Remaining Issues
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Known Remaining Issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-embedded-multiple-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Embedded Multiple Spaces
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-some-corrupt-tokenized-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Some Corrupt Tokenized Files
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-changes-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Changes Summary
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Changes Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-utilsdetokenizerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      File: utils/detokenizer.py
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benefits
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Benefits">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#for-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      For Users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-lexer" class="md-nav__link">
+    <span class="md-ellipsis">
+      For Lexer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-compiler" class="md-nav__link">
+    <span class="md-ellipsis">
+      For Compiler
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-improvements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Future Improvements
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Improvements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#potential-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Potential Enhancements
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/dev/claude_if_you_read_in_here_you_loop/DETOKENIZER_FIXES.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="detokenizer-improvements">Detokenizer Improvements<a class="headerlink" href="#detokenizer-improvements" title="Permanent link">&para;</a></h1>
+<h2 id="summary-of-fixes">Summary of Fixes<a class="headerlink" href="#summary-of-fixes" title="Permanent link">&para;</a></h2>
+<p>The detokenizer has been significantly improved to produce cleaner, more accurate MBASIC source code.</p>
+<h3 id="issues-fixed">Issues Fixed<a class="headerlink" href="#issues-fixed" title="Permanent link">&para;</a></h3>
+<h4 id="0-missing-spaces-after-keywords-latest-fix">0. Missing Spaces After Keywords ✓ (Latest Fix)<a class="headerlink" href="#0-missing-spaces-after-keywords-latest-fix" title="Permanent link">&para;</a></h4>
+<p><strong>Before</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">FORI</span><span class="o">=</span><span class="il">0</span><span class="vg">TO10</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nl">20</span><span class="w"> </span><span class="vg">IFFOO</span><span class="o">=</span><span class="il">1</span><span class="vg">THEN100</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nl">30</span><span class="w"> </span><span class="nl">PRINTX:</span><span class="kr">NEXT</span>
+</code></pre></div></p>
+<p><strong>After</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="o">=</span><span class="il">0</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">FOO</span><span class="o">=</span><span class="il">1</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="il">100</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="nl">X:</span><span class="kr">NEXT</span>
+</code></pre></div></p>
+<p><strong>Root Cause</strong>: Old 8K BASIC didn't require spaces after keywords. Programs could be written as <code>FORI=0TO10</code> instead of <code>FOR I=0 TO 10</code>. The detokenizer was outputting tokens without proper spacing after keywords, causing the lexer to fail parsing.</p>
+<p><strong>Implementation</strong>: Added <code>needs_space_after()</code> function that:
+- Checks if a keyword needs space after it (FOR, TO, IF, THEN, ELSE, etc.)
+- Peeks at the next byte to determine if space is needed
+- Doesn't add space before operators (=, &lt;, &gt;, +, -, etc.)
+- Doesn't add space after colon (:)
+- Doesn't add trailing space at end of line</p>
+<h3 id="issues-fixed-previous">Issues Fixed (Previous)<a class="headerlink" href="#issues-fixed-previous" title="Permanent link">&para;</a></h3>
+<h4 id="1-excessive-spacing">1. Excessive Spacing ✓<a class="headerlink" href="#1-excessive-spacing" title="Permanent link">&para;</a></h4>
+<p><strong>Before</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kr">CLEAR</span><span class="w">  </span><span class="il">2000</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="vg">CHR$</span><span class="w"> </span><span class="p">(</span><span class="il">27</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kr">INPUT</span><span class="w"> </span><span class="err">$</span><span class="p">(</span><span class="il">1</span><span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="kr">DEFINT</span><span class="w">  </span><span class="vg">A</span><span class="o">-</span><span class="w"> </span><span class="vg">Z</span>
+</code></pre></div></p>
+<p><strong>After</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kr">CLEAR</span><span class="w"> </span><span class="il">2000</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kr">CHR$</span><span class="p">(</span><span class="il">27</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kr">INPUT$</span><span class="p">(</span><span class="il">1</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="kr">DEFINT</span><span class="w"> </span><span class="vg">A</span><span class="o">-</span><span class="vg">Z</span>
+</code></pre></div></p>
+<p><strong>Implementation</strong>: Added smart spacing logic that only inserts spaces where grammatically necessary.</p>
+<h4 id="2-remark-keyword">2. REMARK Keyword ✓<a class="headerlink" href="#2-remark-keyword" title="Permanent link">&para;</a></h4>
+<p><strong>Before</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="o">:</span><span class="kr">REM</span><span class="w"> </span><span class="vg">ARK</span><span class="w">  </span><span class="vg">HANOI</span><span class="o">.</span><span class="vg">BAS</span>
+</code></pre></div></p>
+<p><strong>After</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="o">:</span><span class="vg">REMARK</span><span class="w">  </span><span class="vg">HANOI</span><span class="o">.</span><span class="vg">BAS</span>
+</code></pre></div></p>
+<p><strong>Root Cause</strong>: Token 0xDB was "ARK " (with space), which combined with REM (0x8F) to form REMARK. Fixed by:
+- Changing 0xDB to just "ARK" (no trailing space)
+- Adding special case: ARK after REM gets no space (forms REMARK)</p>
+<h4 id="3-standalone-and-tokens">3. Standalone $ and % Tokens ✓<a class="headerlink" href="#3-standalone-and-tokens" title="Permanent link">&para;</a></h4>
+<p><strong>Before</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nl">480</span><span class="w"> </span><span class="kr">PRINT</span><span class="w">  </span><span class="vg">Y5$</span><span class="p">;</span><span class="o">:</span><span class="vg">A$</span><span class="o">=</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="err">$</span><span class="p">(</span><span class="il">1</span><span class="p">)</span><span class="o">:</span><span class="kr">PRINT</span><span class="w">  </span><span class="vg">X5$Y1$</span><span class="p">;</span><span class="err">$</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">                                              </span><span class="o">^</span><span class="w"> </span><span class="vg">standalone!</span>
+</code></pre></div></p>
+<p><strong>After</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nl">480</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">Y5$</span><span class="p">;</span><span class="o">:</span><span class="vg">A$</span><span class="o">=</span><span class="kr">INPUT$</span><span class="p">(</span><span class="il">1</span><span class="p">)</span><span class="o">:</span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">X5$Y1$</span><span class="p">;</span>
+</code></pre></div></p>
+<p><strong>Root Cause</strong>: Smart spacing prevents emission of standalone operator tokens after identifiers.</p>
+<hr />
+<h2 id="smart-spacing-algorithm">Smart Spacing Algorithm<a class="headerlink" href="#smart-spacing-algorithm" title="Permanent link">&para;</a></h2>
+<p>The improved detokenizer uses context-aware spacing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">needs_space_before</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prev_token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="c1"># No space before operators</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="k">if</span> <span class="n">token</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="s1">&#39;)&#39;</span><span class="p">,</span> <span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">}:</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="c1"># Special case: ARK after REM (REMARK)</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="k">if</span> <span class="n">token</span> <span class="o">==</span> <span class="s2">&quot;ARK&quot;</span> <span class="ow">and</span> <span class="n">prev_token</span> <span class="o">==</span> <span class="s2">&quot;REM&quot;</span><span class="p">:</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="c1"># No space after operators (except closing paren)</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="k">if</span> <span class="n">prev_token</span> <span class="ow">in</span> <span class="n">operators</span> <span class="ow">and</span> <span class="n">prev_token</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;)&#39;</span><span class="p">,</span> <span class="s1">&#39;}&#39;</span><span class="p">}:</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>    <span class="c1"># No space after tokens ending with &#39;(&#39; like TAB( or SPC(</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>    <span class="k">if</span> <span class="n">prev_token</span> <span class="ow">and</span> <span class="n">prev_token</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;(&#39;</span><span class="p">:</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>    <span class="c1"># Otherwise, add space between keywords/identifiers</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>    <span class="k">return</span> <span class="kc">True</span>
+</code></pre></div>
+<hr />
+<h2 id="test-results">Test Results<a class="headerlink" href="#test-results" title="Permanent link">&para;</a></h2>
+<h3 id="impact-on-lexer-success-rate">Impact on Lexer Success Rate<a class="headerlink" href="#impact-on-lexer-success-rate" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Files Parsed</th>
+<th>Success Rate</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Before detokenizer fix</td>
+<td>221 / 372</td>
+<td>59.4%</td>
+<td>-</td>
+</tr>
+<tr>
+<td><strong>After detokenizer fix</strong></td>
+<td><strong>234 / 372</strong></td>
+<td><strong>62.9%</strong></td>
+<td><strong>+3.5%</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Net improvement</strong>: +13 files successfully parsed</p>
+<h3 id="errors-eliminated">Errors Eliminated<a class="headerlink" href="#errors-eliminated" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Error Type</th>
+<th>Before</th>
+<th>After</th>
+<th>Fixed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standalone <code>$</code></td>
+<td>24</td>
+<td>~10</td>
+<td>~14</td>
+</tr>
+<tr>
+<td>Standalone <code>%</code></td>
+<td>17</td>
+<td>~8</td>
+<td>~9</td>
+</tr>
+<tr>
+<td>Spacing issues</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Cosmetic improvement</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="example-improvements">Example Improvements<a class="headerlink" href="#example-improvements" title="Permanent link">&para;</a></h2>
+<h3 id="file-hanoibas">File: hanoi.bas<a class="headerlink" href="#file-hanoibas" title="Permanent link">&para;</a></h3>
+<p><strong>Before</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nl">10</span><span class="w"> </span><span class="o">:</span><span class="kr">REM</span><span class="w"> </span><span class="vg">ARK</span><span class="w">    </span><span class="vg">HANOI</span><span class="o">.</span><span class="vg">BAS</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nl">40</span><span class="w"> </span><span class="kr">CLEAR</span><span class="w">  </span><span class="il">2000</span><span class="o">:</span><span class="vg">E$</span><span class="o">=</span><span class="w"> </span><span class="vg">CHR$</span><span class="w"> </span><span class="p">(</span><span class="il">27</span><span class="p">)</span><span class="o">:</span><span class="vg">E1$</span><span class="o">=</span><span class="w"> </span><span class="vg">E$</span><span class="o">+</span><span class="w"> </span><span class="s2">&quot;E&quot;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nl">100</span><span class="w"> </span><span class="kr">PRINT</span><span class="w">  </span><span class="vg">E1$</span><span class="p">;</span><span class="o">:</span><span class="kr">INPUT</span><span class="w">  </span><span class="s2">&quot;ENTER TOTAL NUMBER OF DISKS (1-12)&quot;</span><span class="p">;</span><span class="vg">D</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nl">130</span><span class="w"> </span><span class="kr">PRINT</span><span class="w">  </span><span class="s2">&quot;Would you like the computer to play? &lt;N&gt; &quot;</span><span class="p">;</span><span class="o">:</span><span class="vg">D1$</span><span class="o">=</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="err">$</span><span class="p">(</span><span class="il">1</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>After</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nl">10</span><span class="w"> </span><span class="o">:</span><span class="vg">REMARK</span><span class="w">  </span><span class="vg">HANOI</span><span class="o">.</span><span class="vg">BAS</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nl">40</span><span class="w"> </span><span class="kr">CLEAR</span><span class="w"> </span><span class="il">2000</span><span class="o">:</span><span class="vg">E$</span><span class="o">=</span><span class="kr">CHR$</span><span class="p">(</span><span class="il">27</span><span class="p">)</span><span class="o">:</span><span class="vg">E1$</span><span class="o">=</span><span class="vg">E$</span><span class="o">+</span><span class="s2">&quot;E&quot;</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nl">100</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">E1$</span><span class="p">;</span><span class="o">:</span><span class="kr">INPUT</span><span class="w"> </span><span class="s2">&quot;ENTER TOTAL NUMBER OF DISKS (1-12)&quot;</span><span class="p">;</span><span class="vg">D</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="nl">130</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Would you like the computer to play? &lt;N&gt; &quot;</span><span class="p">;</span><span class="o">:</span><span class="vg">D1$</span><span class="o">=</span><span class="kr">INPUT$</span><span class="p">(</span><span class="il">1</span><span class="p">)</span>
+</code></pre></div></p>
+<h3 id="file-aceybas">File: acey.bas<a class="headerlink" href="#file-aceybas" title="Permanent link">&para;</a></h3>
+<p><strong>Before</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nl">80</span><span class="w"> </span><span class="kr">CLEAR</span><span class="w">  </span><span class="il">200</span><span class="o">:</span><span class="vg">I</span><span class="o">=</span><span class="w"> </span><span class="kr">RND</span><span class="w"> </span><span class="p">(</span><span class="o">-</span><span class="w"> </span><span class="kr">PEEK</span><span class="w"> </span><span class="p">(</span><span class="il">8219</span><span class="p">))</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nl">90</span><span class="w"> </span><span class="kr">DEFINT</span><span class="w">  </span><span class="vg">A</span><span class="o">-</span><span class="w"> </span><span class="nl">C:</span><span class="kr">DEFINT</span><span class="w">  </span><span class="vg">E</span><span class="o">-</span><span class="w"> </span><span class="vg">Z</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="nl">130</span><span class="w"> </span><span class="vg">T$</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span><span class="o">=</span><span class="w"> </span><span class="vg">CHR$</span><span class="w"> </span><span class="p">(</span><span class="vg">V</span><span class="p">(</span><span class="vg">I</span><span class="p">))</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="nl">210</span><span class="w"> </span><span class="kr">IF</span><span class="w">  </span><span class="vg">LEFT$</span><span class="w"> </span><span class="p">(</span><span class="vg">QA$</span><span class="p">,</span><span class="il">1</span><span class="p">)</span><span class="o">&lt;</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="s2">&quot;Y&quot;</span><span class="w"> </span><span class="kr">THEN</span><span class="w">  </span><span class="il">230</span>
+</code></pre></div></p>
+<p><strong>After</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nl">80</span><span class="w"> </span><span class="kr">CLEAR</span><span class="w"> </span><span class="il">200</span><span class="o">:</span><span class="vg">I</span><span class="o">=</span><span class="kr">RND</span><span class="w"> </span><span class="p">(</span><span class="o">-</span><span class="kr">PEEK</span><span class="w"> </span><span class="p">(</span><span class="il">8219</span><span class="p">))</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nl">90</span><span class="w"> </span><span class="kr">DEFINT</span><span class="w"> </span><span class="vg">A</span><span class="o">-</span><span class="nl">C:</span><span class="kr">DEFINT</span><span class="w"> </span><span class="vg">E</span><span class="o">-</span><span class="vg">Z</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="nl">130</span><span class="w"> </span><span class="vg">T$</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span><span class="o">=</span><span class="kr">CHR$</span><span class="p">(</span><span class="vg">V</span><span class="p">(</span><span class="vg">I</span><span class="p">))</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="nl">210</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="kr">LEFT$</span><span class="p">(</span><span class="vg">QA$</span><span class="p">,</span><span class="il">1</span><span class="p">)</span><span class="o">&lt;&gt;</span><span class="s2">&quot;Y&quot;</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="il">230</span>
+</code></pre></div></p>
+<hr />
+<h2 id="known-remaining-issues">Known Remaining Issues<a class="headerlink" href="#known-remaining-issues" title="Permanent link">&para;</a></h2>
+<h3 id="1-embedded-multiple-spaces">1. Embedded Multiple Spaces<a class="headerlink" href="#1-embedded-multiple-spaces" title="Permanent link">&para;</a></h3>
+<p>Some files have double spaces that are in the original tokenized file:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nl">70</span><span class="w"> </span><span class="kr">ON</span><span class="w">  </span><span class="kr">ERROR</span><span class="w">  </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">970</span>
+</code></pre></div></p>
+<p>These are actual spaces (0x20) or tabs (0x09) embedded in the tokenized file, not a detokenizer issue.</p>
+<h3 id="2-some-corrupt-tokenized-files">2. Some Corrupt Tokenized Files<a class="headerlink" href="#2-some-corrupt-tokenized-files" title="Permanent link">&para;</a></h3>
+<p>A few files (like <code>1stop.bas</code>) appear to be corrupted or not standard MBASIC tokenized format:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nl">1</span><span class="w"> </span><span class="kr">STOP</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nl">24090</span><span class="w"> </span><span class="err">#</span><span class="vg">V</span><span class="p">[</span><span class="vg">EB</span><span class="p">]</span><span class="s2">&quot;XOR A[EB]##^#V[EB]&quot;</span><span class="kr">COMMON</span><span class="w"> </span><span class="vg">A</span><span class="p">[</span><span class="vg">EB</span><span class="p">]</span><span class="err">##</span><span class="o">^</span>
+</code></pre></div></p>
+<p>These files are beyond repair and should be excluded from tests.</p>
+<hr />
+<h2 id="code-changes-summary">Code Changes Summary<a class="headerlink" href="#code-changes-summary" title="Permanent link">&para;</a></h2>
+<h3 id="file-utilsdetokenizerpy">File: <code>utils/detokenizer.py</code><a class="headerlink" href="#file-utilsdetokenizerpy" title="Permanent link">&para;</a></h3>
+<p><strong>Changes Made</strong>:</p>
+<ol>
+<li><strong>Added <code>needs_space_after()</code> function</strong> (Latest - lines 67-162)</li>
+<li>Determines if space needed after a keyword token</li>
+<li>Peeks at next byte to decide</li>
+<li>Lists of keywords needing/not needing spaces</li>
+<li>Checks if next byte is operator/delimiter</li>
+<li>
+<p>Prevents trailing spaces at end of line</p>
+</li>
+<li>
+<p><strong>Added <code>needs_space_before()</code> function</strong> (lines 35-64)</p>
+</li>
+<li>Context-aware spacing logic</li>
+<li>
+<p>Special cases for operators, keywords, REMARK</p>
+</li>
+<li>
+<p><strong>Modified token output</strong> (lines 264-300)</p>
+</li>
+<li>Changed from always adding space: <code>print(f"{s} ", end="")</code></li>
+<li>
+<p>To smart spacing before AND after:
+     <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Smart spacing before</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">if</span> <span class="n">needs_space_before</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">prev_token</span><span class="p">):</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="c1"># Smart spacing after (peek at next byte)</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="n">next_byte</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">count</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="k">if</span> <span class="n">next_byte</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">needs_space_after</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">next_byte</span><span class="p">):</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="n">prev_token</span> <span class="o">=</span> <span class="n">s</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Fixed REMARK token</strong> (line 325)</p>
+</li>
+<li>Changed: <code>table[0xDB] = "ARK "</code></li>
+<li>
+<p>To: <code>table[0xDB] = "ARK"</code></p>
+</li>
+<li>
+<p><strong>Track previous token</strong> (line 61, throughout)</p>
+</li>
+<li>Added <code>prev_token</code> variable</li>
+<li>Updated after each token/character emission</li>
+</ol>
+<hr />
+<h2 id="benefits">Benefits<a class="headerlink" href="#benefits" title="Permanent link">&para;</a></h2>
+<h3 id="for-users">For Users<a class="headerlink" href="#for-users" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ Cleaner, more readable detokenized code</li>
+<li>✓ Code looks like hand-written MBASIC</li>
+<li>✓ Fewer lexer errors when parsing</li>
+<li>✓ Easier to understand and modify</li>
+</ul>
+<h3 id="for-lexer">For Lexer<a class="headerlink" href="#for-lexer" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ +13 files parse successfully</li>
+<li>✓ Eliminated most standalone <code>$</code> and <code>%</code> errors</li>
+<li>✓ Better input quality for testing</li>
+<li>✓ More accurate representation of original code</li>
+</ul>
+<h3 id="for-compiler">For Compiler<a class="headerlink" href="#for-compiler" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ Cleaner AST when implemented</li>
+<li>✓ Better error messages (accurate column positions)</li>
+<li>✓ Faithful to original MBASIC syntax</li>
+</ul>
+<hr />
+<h2 id="future-improvements">Future Improvements<a class="headerlink" href="#future-improvements" title="Permanent link">&para;</a></h2>
+<h3 id="potential-enhancements">Potential Enhancements<a class="headerlink" href="#potential-enhancements" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Number Format Validation</strong></li>
+<li>Validate reconstructed floating-point numbers</li>
+<li>
+<p>Ensure exponents are complete (not <code>0D</code> or <code>1820E</code>)</p>
+</li>
+<li>
+<p><strong>Line Continuation Detection</strong></p>
+</li>
+<li>Detect if original used line continuation</li>
+<li>
+<p>Preserve multiline constructs</p>
+</li>
+<li>
+<p><strong>Comment Preservation</strong></p>
+</li>
+<li>Better handling of inline comments</li>
+<li>
+<p>Preserve comment formatting</p>
+</li>
+<li>
+<p><strong>Variable Name Case</strong></p>
+</li>
+<li>Tokenized BASIC loses original case</li>
+<li>Could add heuristics for common conventions (e.g., <code>I</code>, <code>J</code>, <code>K</code> for loops)</li>
+</ol>
+<hr />
+<h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
+<p>The detokenizer improvements resulted in:
+- <strong>Cleaner output</strong> - Proper spacing, correct keywords
+- <strong>Higher lexer success rate</strong> - 62.9% (up from 59.4%)
+- <strong>Better code quality</strong> - Detokenized code looks like original MBASIC</p>
+<p>These fixes eliminate a major source of lexer errors and provide a solid foundation for compiler development.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

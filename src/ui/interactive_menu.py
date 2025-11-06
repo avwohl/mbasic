@@ -71,7 +71,7 @@ class InteractiveMenuBar(urwid.WidgetWrap):
                 (f'Step Statement {fmt_key(kb.STEP_DISPLAY)}', '_debug_step_statement'),
                 (f'Stop           {fmt_key(kb.STOP_DISPLAY)}', '_debug_stop'),
                 ('---', None),
-                ('Clear Output   (menu only)', '_clear_output'),
+                ('Clear Output', '_clear_output'),
             ],
             'Debug': [
                 (f'Variables Window {fmt_key(kb.VARIABLES_DISPLAY)}', '_toggle_variables_window'),
@@ -250,6 +250,11 @@ class InteractiveMenuBar(urwid.WidgetWrap):
 
             # Deactivate menu first (before calling callback)
             self.deactivate()
+
+            # Restore main input handler before calling callback
+            # This is critical so that if the callback opens a dialog, the dialog
+            # saves the correct handler (_handle_input) to its stack, not menu_input
+            self.parent_ui.loop.unhandled_input = self.parent_ui._handle_input
 
             if callback_name:
                 # Execute callback after menu is closed

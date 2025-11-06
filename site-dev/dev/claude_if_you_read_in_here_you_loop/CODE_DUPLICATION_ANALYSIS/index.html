@@ -1,0 +1,1765 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/dev/claude_if_you_read_in_here_you_loop/CODE_DUPLICATION_ANALYSIS/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Code Duplication and Shared Feature Analysis - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#code-duplication-and-shared-feature-analysis" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Code Duplication and Shared Feature Analysis
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../help/mbasic/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Docs
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started with MBASIC (Interpreter)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../help/mbasic/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Compatibility Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Docs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Executive Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-size-breakdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      File Size Breakdown
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-implementation-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Command Implementation Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Command Implementation Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#commands-per-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      Commands Per UI
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#missing-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Missing Commands
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#duplicated-command-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Duplicated Command Implementations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Duplicated Command Implementations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notable-duplication-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notable Duplication Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feature-distribution-estimates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature Distribution Estimates
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Feature Distribution Estimates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tk-ui-2396-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tk UI (2,396 LOC)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#curses-ui-3019-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      Curses UI (3,019 LOC)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interpreter-2779-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interpreter (2,779 LOC)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feature-availability-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature Availability Matrix
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-complexity-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Complexity Metrics
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consolidation-opportunities" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consolidation Opportunities
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consolidation Opportunities">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-command-implementations-high-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Command Implementations (High Priority)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-list-parsing-medium-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. List Parsing (Medium Priority)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-program-manipulation-medium-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Program Manipulation (Medium Priority)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-editor-infrastructure-low-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Editor Infrastructure (Low Priority)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recent-consolidation-successes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recent Consolidation Successes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recent Consolidation Successes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ast-serialization-completed" class="md-nav__link">
+    <span class="md-ellipsis">
+      AST Serialization (Completed)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommendations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommendations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-command-consolidation-highest-roi" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Command Consolidation (Highest ROI)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-curses-ui-parity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Curses UI Parity
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-web-ui-architecture-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Web UI Architecture Review
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consolidation-results-2025-10-26" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consolidation Results (2025-10-26)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consolidation Results (2025-10-26)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-consolidation-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2 Consolidation - Commands
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#overall-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overall Impact
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#updated-duplication-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      Updated Duplication Levels
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/dev/claude_if_you_read_in_here_you_loop/CODE_DUPLICATION_ANALYSIS.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="code-duplication-and-shared-feature-analysis">Code Duplication and Shared Feature Analysis<a class="headerlink" href="#code-duplication-and-shared-feature-analysis" title="Permanent link">&para;</a></h1>
+<p>Analysis Date: 2025-10-26</p>
+<h2 id="executive-summary">Executive Summary<a class="headerlink" href="#executive-summary" title="Permanent link">&para;</a></h2>
+<p><strong>Total Codebase:</strong> 12,126 LOC
+- CLI (interactive.py): 1,313 LOC
+- Tk UI: 2,396 LOC
+- Curses UI: 3,019 LOC
+- Web UI: 1,510 LOC
+- Interpreter: 2,779 LOC
+- UI Helpers: 1,109 LOC</p>
+<p><strong>Estimated Duplication:</strong> ~684 LOC (5.6% of codebase)
+- Command implementations: ~284 LOC
+- UI infrastructure: ~400 LOC</p>
+<h2 id="file-size-breakdown">File Size Breakdown<a class="headerlink" href="#file-size-breakdown" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Total LOC</th>
+<th>Commands LOC</th>
+<th>Other LOC</th>
+<th>% Commands</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>interactive.py</td>
+<td>1,313</td>
+<td>763</td>
+<td>550</td>
+<td>58.1%</td>
+</tr>
+<tr>
+<td>tk_ui.py</td>
+<td>2,396</td>
+<td>331</td>
+<td>2,065</td>
+<td>13.8%</td>
+</tr>
+<tr>
+<td>curses_ui.py</td>
+<td>3,019</td>
+<td>15</td>
+<td>3,004</td>
+<td>0.5%</td>
+</tr>
+<tr>
+<td>web_ui.py</td>
+<td>1,510</td>
+<td>0</td>
+<td>1,510</td>
+<td>0.0%</td>
+</tr>
+<tr>
+<td>interpreter.py</td>
+<td>2,779</td>
+<td>0</td>
+<td>2,779</td>
+<td>0.0%</td>
+</tr>
+<tr>
+<td>ui_helpers.py</td>
+<td>1,109</td>
+<td>0</td>
+<td>1,109</td>
+<td>0.0%</td>
+</tr>
+</tbody>
+</table>
+<h2 id="command-implementation-analysis">Command Implementation Analysis<a class="headerlink" href="#command-implementation-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="commands-per-ui">Commands Per UI<a class="headerlink" href="#commands-per-ui" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>CLI (interactive.py):</strong> 14 commands</li>
+<li>
+<p>cmd_auto, cmd_chain, cmd_cont, cmd_delete, cmd_edit, cmd_files, cmd_list, cmd_load, cmd_merge, cmd_new, cmd_renum, cmd_run, cmd_save, cmd_system</p>
+</li>
+<li>
+<p><strong>Tk UI:</strong> 10 commands</p>
+</li>
+<li>
+<p>cmd_cont, cmd_delete, cmd_files, cmd_list, cmd_load, cmd_merge, cmd_new, cmd_renum, cmd_run, cmd_save</p>
+</li>
+<li>
+<p><strong>Curses UI:</strong> 4 commands</p>
+</li>
+<li>
+<p>cmd_list, cmd_load, cmd_new, cmd_run</p>
+</li>
+<li>
+<p><strong>Web UI:</strong> 0 commands (uses different architecture)</p>
+</li>
+</ul>
+<h3 id="missing-commands">Missing Commands<a class="headerlink" href="#missing-commands" title="Permanent link">&para;</a></h3>
+<p><strong>CLI-only commands (not in Tk UI):</strong>
+- cmd_auto (77 LOC)
+- cmd_chain (142 LOC)
+- cmd_edit (154 LOC)
+- cmd_system (5 LOC)</p>
+<p><strong>Tk UI has all commands from Curses UI</strong> (full superset)</p>
+<p><strong>Curses UI missing from CLI:</strong>
+- cmd_auto, cmd_chain, cmd_cont, cmd_delete, cmd_edit, cmd_files, cmd_merge, cmd_renum, cmd_save, cmd_system</p>
+<h2 id="duplicated-command-implementations">Duplicated Command Implementations<a class="headerlink" href="#duplicated-command-implementations" title="Permanent link">&para;</a></h2>
+<p>Commands implemented in both CLI and Tk UI:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>CLI LOC</th>
+<th>Tk LOC</th>
+<th>Total</th>
+<th>Duplication</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cmd_cont</td>
+<td>23</td>
+<td>37</td>
+<td>60</td>
+<td>23</td>
+</tr>
+<tr>
+<td>cmd_delete</td>
+<td>42</td>
+<td>49</td>
+<td>91</td>
+<td>42</td>
+</tr>
+<tr>
+<td>cmd_files</td>
+<td>47</td>
+<td>46</td>
+<td>93</td>
+<td>46</td>
+</tr>
+<tr>
+<td>cmd_list</td>
+<td>34</td>
+<td>7</td>
+<td>41</td>
+<td>7</td>
+</tr>
+<tr>
+<td>cmd_load</td>
+<td>37</td>
+<td>18</td>
+<td>55</td>
+<td>18</td>
+</tr>
+<tr>
+<td>cmd_merge</td>
+<td>65</td>
+<td>32</td>
+<td>97</td>
+<td>32</td>
+</tr>
+<tr>
+<td>cmd_new</td>
+<td>8</td>
+<td>9</td>
+<td>17</td>
+<td>8</td>
+</tr>
+<tr>
+<td>cmd_renum</td>
+<td>79</td>
+<td>74</td>
+<td>153</td>
+<td>74</td>
+</tr>
+<tr>
+<td>cmd_run</td>
+<td>25</td>
+<td>50</td>
+<td>75</td>
+<td>25</td>
+</tr>
+<tr>
+<td>cmd_save</td>
+<td>25</td>
+<td>9</td>
+<td>34</td>
+<td>9</td>
+</tr>
+<tr>
+<td><strong>TOTAL</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td><strong>284</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="notable-duplication-examples">Notable Duplication Examples<a class="headerlink" href="#notable-duplication-examples" title="Permanent link">&para;</a></h3>
+<p><strong>cmd_delete (42 CLI + 49 Tk = 91 total)</strong>
+- Both implement full range parsing
+- Both handle line deletion logic
+- Could be consolidated to ui_helpers</p>
+<p><strong>cmd_renum (79 CLI + 74 Tk = 153 total)</strong>
+- Recently partially consolidated (now uses ui_helpers.serialize_line)
+- Still has duplicate logic for line mapping and reference updates
+- Good candidate for further consolidation</p>
+<p><strong>cmd_list (34 CLI + 7 Tk = 41 total)</strong>
+- CLI: 34 LOC with full range parsing
+- Tk UI: 7 LOC, delegates to program.get_lines()
+- Different approaches show opportunity for standardization</p>
+<h2 id="feature-distribution-estimates">Feature Distribution Estimates<a class="headerlink" href="#feature-distribution-estimates" title="Permanent link">&para;</a></h2>
+<h3 id="tk-ui-2396-loc">Tk UI (2,396 LOC)<a class="headerlink" href="#tk-ui-2396-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Editor: 400 LOC (16.7%)</li>
+<li>Commands: 331 LOC (13.8%)</li>
+<li>Menu/UI: 300 LOC (12.5%)</li>
+<li>Program Execution: 300 LOC (12.5%)</li>
+<li>Variables Window: 250 LOC (10.4%)</li>
+<li>Breakpoints: 150 LOC (6.3%)</li>
+<li>Stack Window: 150 LOC (6.3%)</li>
+<li>Immediate Mode: 100 LOC (4.2%)</li>
+<li>Syntax Highlighting: 100 LOC (4.2%)</li>
+<li>Other: 315 LOC (13.1%)</li>
+</ul>
+<h3 id="curses-ui-3019-loc">Curses UI (3,019 LOC)<a class="headerlink" href="#curses-ui-3019-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Editor: 500 LOC (16.6%)</li>
+<li>Menu/UI: 400 LOC (13.2%)</li>
+<li>Program Execution: 400 LOC (13.2%)</li>
+<li>Variables Window: 300 LOC (9.9%)</li>
+<li>Breakpoints: 200 LOC (6.6%)</li>
+<li>Stack Window: 200 LOC (6.6%)</li>
+<li>Help System: 200 LOC (6.6%)</li>
+<li>Syntax Highlighting: 150 LOC (5.0%)</li>
+<li>Commands: 15 LOC (0.5%)</li>
+<li>Other: 654 LOC (21.7%)</li>
+</ul>
+<h3 id="interpreter-2779-loc">Interpreter (2,779 LOC)<a class="headerlink" href="#interpreter-2779-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Statement Execution: 800 LOC (28.8%)</li>
+<li>Expression Evaluation: 400 LOC (14.4%)</li>
+<li>Function Calls: 300 LOC (10.8%)</li>
+<li>Control Flow: 300 LOC (10.8%)</li>
+<li>Error Handling: 200 LOC (7.2%)</li>
+<li>File I/O: 200 LOC (7.2%)</li>
+<li>Runtime State: 200 LOC (7.2%)</li>
+<li>Other: 379 LOC (13.6%)</li>
+</ul>
+<h2 id="feature-availability-matrix">Feature Availability Matrix<a class="headerlink" href="#feature-availability-matrix" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>CLI</th>
+<th>Tk UI</th>
+<th>Curses</th>
+<th>Web</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Breakpoints</td>
+<td>✗</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Step Debugging</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Variable Watch</td>
+<td>✗</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Execution Stack</td>
+<td>✗</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Immediate Mode</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Auto-numbering</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✗</td>
+</tr>
+<tr>
+<td>Syntax Highlighting</td>
+<td>✗</td>
+<td>✓</td>
+<td>✓</td>
+<td>✗</td>
+</tr>
+</tbody>
+</table>
+<h2 id="code-complexity-metrics">Code Complexity Metrics<a class="headerlink" href="#code-complexity-metrics" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Commands</th>
+<th>Functions</th>
+<th>Classes</th>
+<th>Error Handling</th>
+<th>File Ops</th>
+<th>Prog Manip</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLI</td>
+<td>14</td>
+<td>36</td>
+<td>1</td>
+<td>52</td>
+<td>6</td>
+<td>39</td>
+</tr>
+<tr>
+<td>Tk UI</td>
+<td>10</td>
+<td>92</td>
+<td>2</td>
+<td>88</td>
+<td>2</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Curses UI</td>
+<td>4</td>
+<td>91</td>
+<td>7</td>
+<td>66</td>
+<td>7</td>
+<td>17</td>
+</tr>
+<tr>
+<td>Web UI</td>
+<td>0</td>
+<td>45</td>
+<td>1</td>
+<td>23</td>
+<td>14</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Interpreter</td>
+<td>0</td>
+<td>96</td>
+<td>5</td>
+<td>142</td>
+<td>13</td>
+<td>9</td>
+</tr>
+<tr>
+<td>UI Helpers</td>
+<td>0</td>
+<td>30</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<h2 id="consolidation-opportunities">Consolidation Opportunities<a class="headerlink" href="#consolidation-opportunities" title="Permanent link">&para;</a></h2>
+<h3 id="1-command-implementations-high-priority">1. Command Implementations (High Priority)<a class="headerlink" href="#1-command-implementations-high-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Estimated Savings:</strong> 200-250 LOC</p>
+<p>Commands that could be moved to ui_helpers or CLI:</p>
+<ol>
+<li><strong>cmd_delete</strong> (42+49 = 91 LOC)</li>
+<li>Both implement similar logic</li>
+<li>Could create <code>ui_helpers.delete_program_lines()</code></li>
+<li>
+<p>UIs would just need to call it and refresh display</p>
+</li>
+<li>
+<p><strong>cmd_files</strong> (47+46 = 93 LOC)</p>
+</li>
+<li>Near-identical implementations</li>
+<li>
+<p>Could consolidate to single function</p>
+</li>
+<li>
+<p><strong>cmd_merge</strong> (65+32 = 97 LOC)</p>
+</li>
+<li>Complex logic duplicated</li>
+<li>
+<p>Good candidate for ui_helpers</p>
+</li>
+<li>
+<p><strong>cmd_renum</strong> (79+74 = 153 LOC)</p>
+</li>
+<li>Already partially consolidated (uses serialize_line)</li>
+<li>Could consolidate remaining logic</li>
+</ol>
+<h3 id="2-list-parsing-medium-priority">2. List Parsing (Medium Priority)<a class="headerlink" href="#2-list-parsing-medium-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Estimated Savings:</strong> 50-100 LOC</p>
+<p>Range parsing appears in multiple commands:
+- cmd_list (range parsing)
+- cmd_delete (range parsing - already uses ui_helpers.parse_delete_args)
+- cmd_renum (argument parsing - already uses ui_helpers.parse_renum_args)</p>
+<h3 id="3-program-manipulation-medium-priority">3. Program Manipulation (Medium Priority)<a class="headerlink" href="#3-program-manipulation-medium-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Estimated Savings:</strong> 100-150 LOC</p>
+<p>Multiple UIs manipulate program state:
+- Line addition/deletion
+- AST updates
+- Runtime state synchronization</p>
+<p>Could create unified program management utilities.</p>
+<h3 id="4-editor-infrastructure-low-priority">4. Editor Infrastructure (Low Priority)<a class="headerlink" href="#4-editor-infrastructure-low-priority" title="Permanent link">&para;</a></h3>
+<p><strong>Estimated Savings:</strong> 300-400 LOC</p>
+<p>Each UI has editor setup, but implementations are UI-specific:
+- Tk: Tkinter Text widget
+- Curses: urwid Edit widgets
+- Web: HTML textarea</p>
+<p>These are inherently different, but common patterns exist:
+- Syntax error display
+- Line number formatting
+- Auto-numbering logic</p>
+<h2 id="recent-consolidation-successes">Recent Consolidation Successes<a class="headerlink" href="#recent-consolidation-successes" title="Permanent link">&para;</a></h2>
+<h3 id="ast-serialization-completed">AST Serialization (Completed)<a class="headerlink" href="#ast-serialization-completed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Before:</strong> Duplicated in interactive.py and tk_ui.py (~400 LOC)</li>
+<li><strong>After:</strong> Single implementation in ui_helpers.py</li>
+<li><strong>Savings:</strong> ~226 LOC removed</li>
+<li><strong>Date:</strong> 2025-10-26</li>
+</ul>
+<p>Commands now using ui_helpers:
+- serialize_line()
+- serialize_statement()
+- serialize_expression()
+- serialize_variable()
+- build_line_mapping()
+- parse_delete_args()
+- parse_renum_args()</p>
+<h2 id="recommendations">Recommendations<a class="headerlink" href="#recommendations" title="Permanent link">&para;</a></h2>
+<h3 id="phase-1-command-consolidation-highest-roi">Phase 1: Command Consolidation (Highest ROI)<a class="headerlink" href="#phase-1-command-consolidation-highest-roi" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Move cmd_delete logic to ui_helpers</li>
+<li>Move cmd_files logic to ui_helpers</li>
+<li>Move cmd_merge logic to ui_helpers</li>
+<li>Complete cmd_renum consolidation</li>
+</ol>
+<p><strong>Estimated effort:</strong> 4-8 hours
+<strong>Estimated savings:</strong> 200-250 LOC</p>
+<h3 id="phase-2-curses-ui-parity">Phase 2: Curses UI Parity<a class="headerlink" href="#phase-2-curses-ui-parity" title="Permanent link">&para;</a></h3>
+<p>Add missing commands to Curses UI using shared implementations:
+- cmd_save, cmd_delete, cmd_renum, cmd_merge, cmd_files</p>
+<p><strong>Estimated effort:</strong> 2-4 hours
+<strong>Estimated savings:</strong> Reduces future maintenance burden</p>
+<h3 id="phase-3-web-ui-architecture-review">Phase 3: Web UI Architecture Review<a class="headerlink" href="#phase-3-web-ui-architecture-review" title="Permanent link">&para;</a></h3>
+<p>Web UI uses different command architecture - investigate if it can use shared command implementations.</p>
+<p><strong>Estimated effort:</strong> 4-6 hours</p>
+<h2 id="consolidation-results-2025-10-26">Consolidation Results (2025-10-26)<a class="headerlink" href="#consolidation-results-2025-10-26" title="Permanent link">&para;</a></h2>
+<h3 id="phase-2-consolidation-commands">Phase 2 Consolidation - Commands<a class="headerlink" href="#phase-2-consolidation-commands" title="Permanent link">&para;</a></h3>
+<p>Successfully consolidated 4 major commands:</p>
+<p><strong>1. DELETE Command</strong>
+- Created <code>delete_lines_from_program()</code> in ui_helpers
+- CLI: 42 LOC → 19 LOC (saved 23 LOC, 55% reduction)
+- Tk UI: 49 LOC → 29 LOC (saved 20 LOC, 41% reduction)
+- Curses UI: Added 17 LOC using shared implementation</p>
+<p><strong>2. FILES Command</strong>
+- Created <code>list_files()</code> in ui_helpers
+- CLI: 47 LOC → 33 LOC (saved 14 LOC, 30% reduction)
+- Tk UI: 46 LOC → 32 LOC (saved 14 LOC, 30% reduction)
+- Curses UI: Added 27 LOC using shared implementation</p>
+<p><strong>3. MERGE Command</strong>
+- Consolidated to use <code>ProgramManager.merge_from_file()</code>
+- CLI: 65 LOC → 49 LOC (saved 16 LOC, 25% reduction)
+- Tk UI: Already using it (32 LOC)
+- Curses UI: Added 27 LOC using shared implementation</p>
+<p><strong>4. RENUM Command</strong>
+- Created <code>renum_program()</code> in ui_helpers
+- CLI: 79 LOC → 34 LOC (saved 45 LOC, 57% reduction)
+- Tk UI: 74 LOC → 37 LOC (saved 37 LOC, 50% reduction)
+- Curses UI: Added 25 LOC using shared implementation</p>
+<h3 id="overall-impact">Overall Impact<a class="headerlink" href="#overall-impact" title="Permanent link">&para;</a></h3>
+<p><strong>Code Savings:</strong>
+- CLI: Reduced command code by 98 LOC (42.1%)
+- Tk UI: Reduced command code by 71 LOC (35.3%)
+- Total saved: 169 LOC from existing UIs</p>
+<p><strong>New Code:</strong>
+- UI Helpers: Added ~160 LOC of reusable functions
+- Curses UI: Added 134 LOC for 6 new commands (SAVE, DELETE, RENUM, MERGE, FILES, CONT)</p>
+<p><strong>Net Result:</strong>
+- 35 LOC net reduction while adding 6 commands to Curses UI
+- Curses UI: 4 commands → 10 commands (150% increase)
+- All UIs now share same logic for core commands
+- Maintenance burden significantly reduced</p>
+<h3 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h3>
+<p>All consolidations tested and verified:
+- ✓ CLI smoke tests pass (DELETE, RENUM, SAVE, LOAD, FILES, MERGE)
+- ✓ Indentation preservation verified
+- ✓ Error handling consistent across UIs
+- ✓ All commands use shared ui_helpers functions</p>
+<h3 id="updated-duplication-levels">Updated Duplication Levels<a class="headerlink" href="#updated-duplication-levels" title="Permanent link">&para;</a></h3>
+<p><strong>Before Phase 2:</strong>
+- Total duplication: ~684 LOC (5.6% of codebase)
+- Command duplication: 284 LOC</p>
+<p><strong>After Phase 2:</strong>
+- Command duplication: ~115 LOC remaining
+- Total estimated duplication: ~500 LOC (4.1% of codebase)
+- <strong>Reduction: 184 LOC of duplication eliminated</strong></p>
+<h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
+<p>The consolidation effort successfully reduced code duplication while improving feature parity across UIs. The shared implementations in ui_helpers provide a solid foundation for future development.</p>
+<p><strong>Achievements:</strong>
+1. ✅ Eliminated 169 LOC of duplicated command code
+2. ✅ Added 160 LOC of reusable utilities
+3. ✅ Brought Curses UI to feature parity (4 → 10 commands)
+4. ✅ Maintained backward compatibility
+5. ✅ All tests passing</p>
+<p><strong>Key Takeaways:</strong>
+1. Consolidation is highly effective (35-57% size reduction per command)
+2. Shared code is easier to maintain and test
+3. UI-specific code remains in UIs (display, refresh, formatting)
+4. Feature parity improves user experience
+5. Net LOC reduction even while adding features</p>
+<p><strong>Future Opportunities:</strong>
+1. Validate syntax checking logic (duplicated in Tk/Web UI)
+2. Error formatting could be further standardized
+3. Runtime initialization patterns could be consolidated
+4. Monitor for new duplication as features are added</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

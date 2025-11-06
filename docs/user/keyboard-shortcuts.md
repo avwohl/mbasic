@@ -4,13 +4,12 @@
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+Q` | Quit |
-| `Ctrl+C` | Quit (alternative) |
+| `Ctrl+C` | Quit |
 | `Ctrl+U` | Activate menu bar (arrows navigate, Enter selects) |
 | `^F` | This help |
 | `Ctrl+P` | Settings |
 | `Ctrl+W` | Toggle variables watch window |
-| `Menu only` | Show/hide execution stack window (menu only) |
+| `` | Show/hide execution stack window |
 
 ## Program Management
 
@@ -20,17 +19,14 @@
 | `Ctrl+N` | New program |
 | `Ctrl+O` | Open/Load program |
 | `Ctrl+V` | Save program |
-| `Shift+Ctrl+V` | Save As |
-| `Shift+Ctrl+O` | Recent files |
 
 ## Editing
 
 | Key | Action |
 |-----|--------|
 | `Ctrl+B` | Toggle breakpoint on current line |
-| `Ctrl+Shift+B` | Clear all breakpoints |
 | `Ctrl+D` | Delete current line |
-| `Ctrl+J` | Insert line |
+| `Ctrl+Y` | Insert line |
 | `Ctrl+E` | Renumber all lines (RENUM) |
 
 ## Debugger (when program running)
@@ -42,7 +38,7 @@
 | `Ctrl+T` | Step Statement - execute one statement at a time |
 | `Ctrl+X` | Stop execution (eXit) |
 | `Ctrl+W` | Show/hide variables window |
-| `Menu only` | Show/hide execution stack window (menu only) |
+| `` | Show/hide execution stack window |
 
 ## Variables Window (when visible)
 
