@@ -3759,29 +3759,29 @@ class CursesBackend(UIBackend):
 
         # Manually pump events until dialog is closed
         # This avoids nested event loops which cause ExitMainLoop to exit entire app
-        import sys
-        sys.stderr.write(f"DEBUG: Starting event pump\n")
-        sys.stderr.flush()
+        debug_file = open('/tmp/mbasic_dialog_debug.txt', 'w')
+        debug_file.write(f"DEBUG: Starting event pump\n")
+        debug_file.flush()
 
         while not done[0]:
             try:
-                sys.stderr.write(f"DEBUG: About to draw screen\n")
-                sys.stderr.flush()
+                debug_file.write(f"DEBUG: About to draw screen\n")
+                debug_file.flush()
                 self.loop.draw_screen()
 
-                sys.stderr.write(f"DEBUG: About to get input\n")
-                sys.stderr.flush()
+                debug_file.write(f"DEBUG: About to get input\n")
+                debug_file.flush()
                 keys = self.loop.screen.get_input()
 
-                sys.stderr.write(f"DEBUG: Got keys: {repr(keys)}\n")
-                sys.stderr.flush()
+                debug_file.write(f"DEBUG: Got keys: {repr(keys)}\n")
+                debug_file.flush()
 
                 if keys:
                     # Check for ESC/Enter before processing (so widget doesn't consume them)
                     filtered_keys = []
                     for key in keys:
-                        sys.stderr.write(f"DEBUG: Processing key: {repr(key)}\n")
-                        sys.stderr.flush()
+                        debug_file.write(f"DEBUG: Processing key: {repr(key)}\n")
+                        debug_file.flush()
 
                         if key == 'enter':
                             result[0] = edit.get_edit_text()
@@ -3803,7 +3803,13 @@ class CursesBackend(UIBackend):
                 done[0] = True
                 self.loop.widget = original_widget
                 self.loop.unhandled_input = old_handler
+            except Exception as e:
+                debug_file.write(f"DEBUG: Exception in event pump: {e}\n")
+                debug_file.flush()
+                raise
 
+        debug_file.write(f"DEBUG: Event pump finished, result={result[0]}\n")
+        debug_file.close()
         return result[0]
 
     def _get_editor_text(self):
