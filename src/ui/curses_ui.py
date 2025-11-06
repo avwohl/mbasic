@@ -329,63 +329,6 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Handle Enter key - commits line and moves to next with auto-numbering
         if key == 'enter' and self.auto_number_enabled:
-            # Check if text after cursor starts with a line number (pasted content)
-            # If so, skip auto-numbering and just insert newline
-            current_text = self.edit_widget.get_edit_text()
-            cursor_pos = self.edit_widget.edit_pos
-            # Get text after cursor
-            text_after_cursor = current_text[cursor_pos:].lstrip()
-
-            # If there's a newline followed by a number, we're in the middle of pasted content
-            # Don't auto-number - just insert newline and let the pasted numbers be used
-            if '\n' in text_after_cursor:
-                next_line = text_after_cursor.split('\n', 1)[1].lstrip()
-                if next_line and next_line[0].isdigit():
-                    # Pasted content with line numbers follows - don't auto-number
-                    return super().keypress(size, key)
-
-            # Check if current line has DOUBLE line numbers (pasted content with auto-number)
-            # When pasting "10 PRINT", we might get "?20 10 PRINT" (double numbering)
-            # We need to detect and fix this specific case, not just any line starting with a digit
-            if line_num < len(lines):
-                current_line = lines[line_num]
-                status_char = current_line[0] if current_line else ' '
-
-                # Parse the line to get the line number and code area
-                line_num_parsed, code_start = self._parse_line_number(current_line)
-                if line_num_parsed is not None and code_start is not None and code_start > 0:
-                    code_part = current_line[code_start:].strip()
-                    # Check if code part ALSO starts with digit (double numbering case)
-                    if code_part and code_part[0].isdigit():
-                        # Extract the number from code area
-                        pasted_num_str = ""
-                        for ch in code_part:
-                            if ch.isdigit():
-                                pasted_num_str += ch
-                            else:
-                                break
-
-                        # If we found a complete number in the code area, this is double numbering
-                        if pasted_num_str:
-                            # Remove auto-number, keep only pasted content
-                            fixed_line = f"{status_char}{code_part}"
-
-                            # Replace the current line
-                            current_text = self.edit_widget.get_edit_text()
-                            lines_list = current_text.split('\n')
-                            if line_num < len(lines_list):
-                                lines_list[line_num] = fixed_line
-                                new_text = '\n'.join(lines_list)
-                                self.edit_widget.set_edit_text(new_text)
-
-                            # Insert newline with just status character (no auto-number for pasted content)
-                            current_text = self.edit_widget.get_edit_text()
-                            cursor_pos = self.edit_widget.edit_pos
-                            new_text = current_text[:cursor_pos] + "\n " + current_text[cursor_pos:]
-                            self.edit_widget.set_edit_text(new_text)
-                            self.edit_widget.set_edit_pos(cursor_pos + 2)
-                            return None
-
             # Parse current line number (variable width)
             current_line_number = None
             if line_num < len(lines):
