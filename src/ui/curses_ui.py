@@ -1390,6 +1390,24 @@ class CursesBackend(UIBackend):
         # (but don't start the loop yet - that happens in start())
         self._create_ui()
 
+    def _refresh_editor(self):
+        """Refresh the editor display from program manager.
+
+        Called by immediate executor after adding/deleting lines via commands like "20 PRINT".
+        Syncs the editor widget's line storage with the program manager's lines.
+        """
+        if not self.editor:
+            return
+
+        # Sync editor lines from program manager
+        self.editor.lines.clear()
+        for line_num, line_obj in self.program.lines.items():
+            # line_obj.text is the full line like "20 PRINT", extract just the code part
+            self.editor.lines[line_num] = line_obj.text
+
+        # Update the display
+        self.editor._update_display()
+
     def start(self):
         """Start the urwid-based curses UI main loop."""
         # UI already created in __init__, just start the loop
