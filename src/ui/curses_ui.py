@@ -381,24 +381,13 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 line_num = text_before_cursor.count('\n')
                 lines = current_text.split('\n')
 
-            # Parse current line number and check if it has code
+            # Parse current line number (variable width)
             current_line_number = None
-            has_code = False
             if line_num < len(lines):
                 line = lines[line_num]
                 line_num_parsed, code_start = self._parse_line_number(line)
                 if line_num_parsed is not None:
                     current_line_number = line_num_parsed
-                    # Check if there's any code after the line number
-                    if code_start < len(line):
-                        code_area = line[code_start:].strip()
-                        has_code = bool(code_area)
-
-            # Don't auto-number if current line is empty (no code)
-            # This prevents creating "310" when pressing Enter on an empty "300 " line
-            if not has_code:
-                # Just process Enter normally without adding a line number
-                return super().keypress(size, key)
 
             # Move to end of current line
             if line_num < len(lines):
@@ -1040,8 +1029,25 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                         lines[i] = new_line
                         changed = True
 
+        # THIRD: Remove empty lines that only have line numbers (no code)
+        # This cleans up leftover auto-numbered lines like " 10 " when pasting over them
+        filtered_lines = []
+        for line in lines:
+            if len(line) >= 3:
+                status = line[0]
+                linenum_int, code_start_col = self._parse_line_number(line)
+                if linenum_int is not None and code_start_col is not None:
+                    code_area = line[code_start_col:] if code_start_col < len(line) else ""
+                    # Keep line if it has code, or if it's the last line (empty line at end is okay)
+                    if code_area.strip() or line == lines[-1]:
+                        filtered_lines.append(line)
+                    else:
+                        changed = True  # We're removing an empty line
+                        continue
+            filtered_lines.append(line)
+
         if changed:
-            return '\n'.join(lines)
+            return '\n'.join(filtered_lines)
         else:
             return text
 
