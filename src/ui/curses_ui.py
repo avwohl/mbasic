@@ -1233,7 +1233,6 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Get final state after parsing and sorting
             current_text = self.edit_widget.get_edit_text()
             cursor_pos = self.edit_widget.edit_pos
-            lines = current_text.split('\n')
 
             # Find the last line with a line number
             last_line_number, _ = self._find_last_line_number()
@@ -1242,8 +1241,23 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 # Calculate next auto-number
                 next_num = last_line_number + self.auto_number_increment
 
-                # Add auto-number line at cursor position
-                new_line_prefix = f"\n {next_num} "
+                # Check if cursor is at the start of an empty line
+                # (paste leaves cursor on new blank line after last Enter)
+                text_before_cursor = current_text[:cursor_pos]
+                text_after_cursor = current_text[cursor_pos:]
+
+                # Check if we're at start of line (preceded by newline or at start)
+                at_line_start = (cursor_pos == 0 or text_before_cursor.endswith('\n'))
+                # Check if current line is empty (followed by newline or at end)
+                current_line_empty = (cursor_pos == len(current_text) or text_after_cursor.startswith('\n'))
+
+                if at_line_start and current_line_empty:
+                    # Already on empty line, just add the line number (no leading newline)
+                    new_line_prefix = f" {next_num} "
+                else:
+                    # Not on empty line, add newline before line number
+                    new_line_prefix = f"\n {next_num} "
+
                 new_text = current_text[:cursor_pos] + new_line_prefix + current_text[cursor_pos:]
                 self.edit_widget.set_edit_text(new_text)
                 self.edit_widget.set_edit_pos(cursor_pos + len(new_line_prefix))
