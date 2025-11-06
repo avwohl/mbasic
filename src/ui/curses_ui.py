@@ -5,6 +5,7 @@ It provides an editor, output window, and menu system.
 """
 
 import urwid
+import time
 from pathlib import Path
 from .base import UIBackend
 from .keybindings import (
@@ -235,6 +236,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         self._loop = None  # Will be set by CursesBackend after loop creation
         self._idle_delay = 0.1  # Seconds to wait after last keystroke before refresh
 
+        # For detecting rapid Enter keys (paste operations with multiple lines)
+        self._last_enter_time = 0  # Timestamp of last Enter key press
+        self._rapid_enter_threshold = 0.05  # Seconds - Enter keys within this window are considered rapid
+
         # Syntax error tracking
         self.syntax_errors = {}  # Maps line number -> error message
         self._output_walker = None  # Will be set by CursesBackend for displaying errors
@@ -328,7 +333,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Check if we have pending updates from paste
         # Save state before clearing (for auto-number skip check)
-        in_rapid_input = self._needs_refresh or self._needs_sort
+        # Also check if this is a rapid Enter key (multiple Enter keys within short time = paste)
+        current_time = time.time()
+        is_rapid_enter = (key == 'enter' and
+                         (current_time - self._last_enter_time) < self._rapid_enter_threshold)
+        in_rapid_input = self._needs_refresh or self._needs_sort or is_rapid_enter
 
         # If so, process them NOW before handling this key
         if in_rapid_input:
@@ -513,6 +522,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Update next_auto_line_num for next time
             self.next_auto_line_num = next_num + self.auto_number_increment
 
+            # Update Enter timestamp to track rapid Enter keys (paste detection)
+            self._last_enter_time = current_time
+
             return None
 
         # Handle Enter when auto-numbering is disabled OR during paste
@@ -526,6 +538,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 # Try to maintain cursor position
                 if cursor_pos <= len(new_text):
                     self.edit_widget.set_edit_pos(cursor_pos)
+
+            # Update Enter timestamp to track rapid Enter keys (paste detection)
+            self._last_enter_time = current_time
+
             # Let Enter be processed normally
             return super().keypress(size, key)
 
