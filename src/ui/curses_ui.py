@@ -393,12 +393,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             for display_line in lines:
                 if len(display_line) >= 3:  # At least status + 1-digit + space
                     try:
-                        # Parse line number after status character (variable width)
-                        # Find the space after the line number
-                        space_idx = display_line.find(' ', 1)
-                        if space_idx > 1:
-                            line_num_str = display_line[1:space_idx]
-                            existing_line_nums.add(int(line_num_str))
+                        # Use _parse_line_number to handle multiple numbers correctly
+                        # (e.g., "?10 100 for..." should extract 100, not 10)
+                        parsed_num, _ = self._parse_line_number(display_line)
+                        if parsed_num is not None:
+                            existing_line_nums.add(parsed_num)
                     except:
                         pass
 
