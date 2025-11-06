@@ -3764,7 +3764,23 @@ class CursesBackend(UIBackend):
                 self.loop.draw_screen()
                 keys = self.loop.screen.get_input()
                 if keys:
-                    self.loop.process_input(keys)
+                    # Check for ESC/Enter before processing (so widget doesn't consume them)
+                    filtered_keys = []
+                    for key in keys:
+                        if key == 'enter':
+                            result[0] = edit.get_edit_text()
+                            done[0] = True
+                            self.loop.widget = original_widget
+                            self.loop.unhandled_input = old_handler
+                        elif key == 'esc':
+                            result[0] = None
+                            done[0] = True
+                            self.loop.widget = original_widget
+                            self.loop.unhandled_input = old_handler
+                        else:
+                            filtered_keys.append(key)
+                    if filtered_keys and not done[0]:
+                        self.loop.process_input(filtered_keys)
             except KeyboardInterrupt:
                 # Handle Ctrl+C
                 result[0] = None
