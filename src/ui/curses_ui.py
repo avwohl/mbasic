@@ -1402,6 +1402,68 @@ class CursesBackend(UIBackend):
         # (but don't start the loop yet - that happens in start())
         self._create_ui()
 
+    def _save_editor_to_program(self):
+        """Save editor content back to program.
+
+        Parses lines from editor and saves them to program manager.
+        Returns True if successful, False if errors occurred.
+        """
+        if not self.editor:
+            return False
+
+        # Clear current program
+        self.program.clear()
+
+        # Parse each line from editor
+        had_errors = False
+        for line_num, code_text in self.editor.lines.items():
+            # Reconstruct full line with line number
+            full_line = f"{line_num} {code_text}"
+            success, error = self.program.add_line(line_num, full_line)
+            if not success:
+                # Mark error in editor
+                self.editor.errors[line_num] = error
+                had_errors = True
+            else:
+                # Clear any previous error
+                if line_num in self.editor.errors:
+                    del self.editor.errors[line_num]
+
+        return not had_errors
+
+    def _renumber_lines(self):
+        """Renumber program lines with default increment (10, 10)."""
+        from src.ui.ui_helpers import renum_program
+
+        try:
+            # Save editor to program first
+            self._save_editor_to_program()
+
+            # Renumber with default args (start=10, step=10)
+            old_lines, line_map = renum_program(
+                self.program,
+                "",  # Empty args = use defaults
+                self._renum_statement,
+                runtime=None
+            )
+
+            # Refresh editor from renumbered program
+            self._refresh_editor()
+
+        except Exception as e:
+            # Silently handle errors - user already said yes to renumber
+            pass
+
+    def _renum_statement(self, stmt, line_map):
+        """Update line number references in a statement node.
+
+        Args:
+            stmt: Statement node to update
+            line_map: dict mapping old line numbers to new line numbers
+        """
+        from src.ui.ui_helpers import renum_statement_helper
+        renum_statement_helper(stmt, line_map)
+
     def _refresh_editor(self):
         """Refresh the editor display from program manager.
 
