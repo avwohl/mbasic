@@ -1010,7 +1010,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Skip empty code lines
             if not code_area.strip() or line_number is None:
                 # Clear error status for empty lines, but preserve breakpoints
-                if line_number > 0:
+                if line_number is not None and line_number > 0:
                     new_status = self._get_status_char(line_number, has_syntax_error=False)
                     if status != new_status:
                         lines[i] = new_status + line[1:]
@@ -1021,7 +1021,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             is_valid, error_msg = self._check_line_syntax(code_area)
 
             # Determine correct status based on priority
-            if line_number > 0:
+            if line_number is not None and line_number > 0:
                 new_status = self._get_status_char(line_number, has_syntax_error=not is_valid)
 
                 # Update status if it changed
