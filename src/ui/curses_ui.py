@@ -5,7 +5,6 @@ It provides an editor, output window, and menu system.
 """
 
 import urwid
-import time
 from pathlib import Path
 from .base import UIBackend
 from .keybindings import (
@@ -227,19 +226,14 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             allow_tab=False
         )
 
-        # For debouncing sorting during rapid input (paste operations)
+        # For debouncing sorting during navigation
         self._needs_sort = False  # Flag: lines need sorting when navigation happens
 
-        # For deferred screen refresh during rapid input (paste operations)
-        self._needs_refresh = False  # Flag: screen needs refresh when input stops
-        self._pending_refresh_alarm = None  # Handle for pending refresh alarm
+        # For deferred processing after input completes (paste operations)
+        self._needs_parse = False  # Flag: lines need parsing (reformat pasted BASIC code)
+        self._needs_auto_number = False  # Flag: need to add auto-number line after paste
         self._loop = None  # Will be set by CursesBackend after loop creation
-        self._idle_delay = 0.1  # Seconds to wait after last keystroke before refresh
-
-        # For detecting rapid Enter keys (paste operations with multiple lines)
-        self._last_enter_time = 0  # Timestamp of last Enter key press
-        self._rapid_enter_threshold = 0.05  # Seconds - Enter keys within this window are considered rapid
-        self._skipped_auto_number = False  # Flag: auto-numbering was skipped due to paste
+        self._idle_handle = None  # Handle for enter_idle callback
 
         # Syntax error tracking
         self.syntax_errors = {}  # Maps line number -> error message
@@ -354,17 +348,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         if len(key) == 1 and key >= ' ' and key <= '~':
             return super().keypress(size, key)
 
-        # Check if we have pending updates from paste
-        # Save state before clearing (for auto-number skip check)
-        # Also check if this is a rapid Enter key (multiple Enter keys within short time = paste)
-        current_time = time.time()
-        is_rapid_enter = (key == 'enter' and
-                         (current_time - self._last_enter_time) < self._rapid_enter_threshold)
-        in_rapid_input = self._needs_refresh or self._needs_sort or is_rapid_enter
-
-        # If so, process them NOW before handling this key
-        if in_rapid_input:
-            self._perform_deferred_refresh()
+        # No expensive processing here - just set flags and let enter_idle callback handle it
 
         # Get current cursor position (only for special keys)
         current_text = self.edit_widget.get_edit_text()
@@ -456,127 +440,14 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Let key be processed at new position
             return super().keypress(size, key)
 
-        # Handle Enter key - commits line and moves to next with auto-numbering
-        # Skip auto-numbering if we were in rapid input mode (paste operation)
-        if key == 'enter' and self.auto_number_enabled and not in_rapid_input:
-            # Clear the skipped flag since we're doing auto-numbering now
-            self._skipped_auto_number = False
-            # FIRST: Clean up any double line numbers before auto-numbering
-            current_text = self.edit_widget.get_edit_text()
-            cursor_pos = self.edit_widget.edit_pos
-            new_text = self._parse_line_numbers(current_text)
-            if new_text != current_text:
-                self.edit_widget.set_edit_text(new_text)
-                # Recalculate everything after text change
-                current_text = new_text
-                cursor_pos = self.edit_widget.edit_pos
-                text_before_cursor = current_text[:cursor_pos]
-                line_num = text_before_cursor.count('\n')
-                lines = current_text.split('\n')
-
-            # Parse current line number (variable width)
-            current_line_number = None
-            if line_num < len(lines):
-                line = lines[line_num]
-                line_num_parsed, code_start = self._parse_line_number(line)
-                if line_num_parsed is not None:
-                    current_line_number = line_num_parsed
-
-            # Move to end of current line
-            if line_num < len(lines):
-                line_start = sum(len(lines[i]) + 1 for i in range(line_num))
-                line_end = line_start + len(lines[line_num])
-                self.edit_widget.set_edit_pos(line_end)
-
-            # Calculate next auto-number based on current line + increment
-            if current_line_number is not None:
-                next_num = current_line_number + self.auto_number_increment
-            else:
-                next_num = self.next_auto_line_num
-
-            # Get all existing line numbers from display
-            existing_line_nums = set()
-            for display_line in lines:
-                if len(display_line) >= 3:  # At least status + 1-digit + space
-                    try:
-                        # Use _parse_line_number to handle multiple numbers correctly
-                        # (e.g., "?10 100 for..." should extract 100, not 10)
-                        parsed_num, _ = self._parse_line_number(display_line)
-                        if parsed_num is not None:
-                            existing_line_nums.add(parsed_num)
-                    except:
-                        pass
-
-            # Find next available number that doesn't collide
-            # Also check it's not above the next line in sequence
-            sorted_line_nums = sorted(existing_line_nums)
-            if current_line_number in sorted_line_nums:
-                idx = sorted_line_nums.index(current_line_number)
-                if idx + 1 < len(sorted_line_nums):
-                    max_allowed = sorted_line_nums[idx + 1]
-                else:
-                    max_allowed = 99999
-            else:
-                max_allowed = 99999
-
-            # Find next valid number
-            attempts = 0
-            while next_num in existing_line_nums or next_num >= max_allowed:
-                next_num += self.auto_number_increment
-                attempts += 1
-                if next_num >= 99999 or attempts > 10:  # Avoid overflow or too many attempts
-                    # No room - offer to renumber
-                    self._parent_ui.show_yesno_popup(
-                        "No Room",
-                        f"No room to insert line after {current_line_number}.\n\n"
-                        f"Would you like to renumber the program to make room?",
-                        lambda response: self._on_auto_number_renumber_response(response)
-                    )
-                    return None
-
-            # Format new line: " NN " (with status space)
-            new_line_prefix = f"\n {next_num} "
-
-            # Insert newline and prefix at end of current line
-            current_text = self.edit_widget.get_edit_text()
-            cursor_pos = self.edit_widget.edit_pos
-            new_text = current_text[:cursor_pos] + new_line_prefix + current_text[cursor_pos:]
-            self.edit_widget.set_edit_text(new_text)
-            self.edit_widget.set_edit_pos(cursor_pos + len(new_line_prefix))
-
-            # Update next_auto_line_num for next time
-            self.next_auto_line_num = next_num + self.auto_number_increment
-
-            # Update Enter timestamp to track rapid Enter keys (paste detection)
-            self._last_enter_time = current_time
-
-            return None
-
-        # Handle Enter when auto-numbering is disabled OR during paste
-        # Clean up any double line numbers that may have been created
+        # Handle Enter key - just set flags, let enter_idle callback do the work
         if key == 'enter':
-            # Skip _parse_line_numbers during rapid input (paste) to avoid reformatting partial lines
-            # It will be called once after paste completes in _perform_deferred_refresh
-            if not in_rapid_input:
-                current_text = self.edit_widget.get_edit_text()
-                cursor_pos = self.edit_widget.edit_pos
-                new_text = self._parse_line_numbers(current_text)
-                if new_text != current_text:
-                    self.edit_widget.set_edit_text(new_text)
-                    # Try to maintain cursor position
-                    if cursor_pos <= len(new_text):
-                        self.edit_widget.set_edit_pos(cursor_pos)
+            # Set flags for deferred processing (happens in _on_enter_idle after all input processed)
+            self._needs_parse = True  # Parse/reformat any pasted BASIC code
+            if self.auto_number_enabled:
+                self._needs_auto_number = True  # Add auto-number line after paste completes
 
-            # Mark that we skipped auto-numbering if it was enabled but we're in rapid input
-            if self.auto_number_enabled and in_rapid_input:
-                self._skipped_auto_number = True
-                # Schedule deferred refresh to add auto-number line after paste completes
-                self._schedule_deferred_refresh()
-
-            # Update Enter timestamp to track rapid Enter keys (paste detection)
-            self._last_enter_time = current_time
-
-            # Let Enter be processed normally
+            # Let Enter be processed normally (insert newline)
             return super().keypress(size, key)
 
         # Check if this is a control key we don't handle - pass to unhandled_input
@@ -1178,45 +1049,17 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         else:
             return text
 
-    def _schedule_deferred_refresh(self):
-        """Schedule a deferred screen refresh after idle delay.
+    def _on_enter_idle(self, callback_arg):
+        """Called by urwid when entering idle state (after all input processed).
 
-        Cancels any existing pending refresh and schedules a new one.
-        This batches updates during rapid input (paste operations).
-        """
-        if not self._loop:
-            # Loop not available yet, skip scheduling
-            return
-
-        # Cancel existing alarm if any
-        if self._pending_refresh_alarm:
-            self._loop.remove_alarm(self._pending_refresh_alarm)
-            self._pending_refresh_alarm = None
-
-        # Schedule new alarm
-        self._pending_refresh_alarm = self._loop.set_alarm_in(
-            self._idle_delay,
-            self._perform_deferred_refresh
-        )
-
-        # Mark that a refresh is pending
-        self._needs_refresh = True
-
-    def _perform_deferred_refresh(self, loop=None, _user_data=None):
-        """Perform deferred screen refresh (alarm callback).
-
-        Called when input has been idle for the delay period.
-        Performs any pending sorting and screen updates.
+        This is where expensive operations happen: parsing, sorting, auto-numbering.
+        urwid automatically redraws screen after this returns.
 
         Args:
-            loop: urwid MainLoop (passed by alarm callback)
-            user_data: User data (passed by alarm callback, unused)
+            callback_arg: Argument passed by urwid enter_idle callback (unused)
         """
-        # Clear the alarm handle
-        self._pending_refresh_alarm = None
-
-        # Check if refresh is actually needed
-        if not self._needs_refresh and not self._needs_sort:
+        # Check if any work is needed
+        if not self._needs_parse and not self._needs_sort and not self._needs_auto_number:
             return
 
         # Get current state
@@ -1225,14 +1068,17 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Step 1: Parse and reformat lines with numbers in code area
         # (This handles pasted BASIC code like "10 PRINT")
-        new_text = self._parse_line_numbers(current_text)
-        if new_text != current_text:
-            # Text was reformatted - update the editor
-            self.edit_widget.set_edit_text(new_text)
-            # Try to maintain cursor position (may shift due to reformatting)
-            if cursor_pos <= len(new_text):
-                self.edit_widget.set_edit_pos(cursor_pos)
-            current_text = new_text
+        if self._needs_parse:
+            new_text = self._parse_line_numbers(current_text)
+            if new_text != current_text:
+                # Text was reformatted - update the editor
+                self.edit_widget.set_edit_text(new_text)
+                # Try to maintain cursor position (may shift due to reformatting)
+                if cursor_pos <= len(new_text):
+                    self.edit_widget.set_edit_pos(cursor_pos)
+                current_text = new_text
+                cursor_pos = self.edit_widget.edit_pos
+            self._needs_parse = False
 
         # Step 2: Perform deferred sorting if needed
         if self._needs_sort:
@@ -1255,8 +1101,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
             self._needs_sort = False
 
-        # Step 3: Add auto-number line if we skipped it during paste
-        if self._skipped_auto_number and self.auto_number_enabled:
+        # Step 3: Add auto-number line after paste completes
+        if self._needs_auto_number:
             # Get final state after parsing and sorting
             current_text = self.edit_widget.get_edit_text()
             cursor_pos = self.edit_widget.edit_pos
@@ -1292,15 +1138,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 # Update next_auto_line_num for next time
                 self.next_auto_line_num = next_num + self.auto_number_increment
 
-            # Clear the flag
-            self._skipped_auto_number = False
+            self._needs_auto_number = False
 
-        # Clear refresh flag
-        self._needs_refresh = False
-
-        # Force screen redraw if loop is available
-        if self._loop:
-            self._loop.draw_screen()
+        # urwid automatically redraws screen after this callback returns
 
     def _sort_and_position_line(self, lines, current_line_index, target_column=7):
         """Sort lines by line number and position cursor at the moved line.
@@ -1875,8 +1715,11 @@ class CursesBackend(UIBackend):
             handle_mouse=False
         )
 
-        # Pass loop reference to editor for deferred refresh mechanism
+        # Pass loop reference to editor
         self.editor._loop = self.loop
+
+        # Register enter_idle callback for deferred processing (parse, sort, auto-number after paste)
+        self.editor._idle_handle = self.loop.event_loop.enter_idle(self.editor._on_enter_idle)
 
     def _get_palette(self):
         """Get the color palette for the UI."""
