@@ -483,6 +483,18 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Let unhandled_input handle all control keys
             return key
 
+        # Prevent down arrow from moving past last line (causes cursor to disappear)
+        if key == 'down':
+            current_text = self.edit_widget.get_edit_text()
+            cursor_pos = self.edit_widget.edit_pos
+            text_before_cursor = current_text[:cursor_pos]
+            line_num = text_before_cursor.count('\n')
+            total_lines = current_text.count('\n')
+
+            # If already on last line, don't process down arrow
+            if line_num >= total_lines:
+                return None
+
         # Let parent handle the key (allows arrows, backspace, etc.)
         return super().keypress(size, key)
 
@@ -1414,6 +1426,12 @@ class CursesBackend(UIBackend):
 
         # Update the display
         self.editor._update_display()
+
+        # Clean up any empty auto-numbered lines left in the editor
+        current_text = self.editor.edit_widget.get_edit_text()
+        new_text = self.editor._parse_line_numbers(current_text)
+        if new_text != current_text:
+            self.editor.edit_widget.set_edit_text(new_text)
 
     def start(self):
         """Start the urwid-based curses UI main loop."""
