@@ -20,25 +20,6 @@ from src.ui.web.codemirror5_editor import CodeMirror5Editor
 from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode, get_default_reverse_for_mode
 
 
-def log_web_error(context: str, exception: Exception):
-    """Log web UI error to /tmp/web_debug.log for debugging.
-
-    Args:
-        context: Description of where error occurred (e.g., "_menu_run")
-        exception: The exception that was caught
-    """
-    with open('/tmp/web_debug.log', 'a') as f:
-        f.write(f"\n{'='*70}\n")
-        f.write(f"WEB UI DEBUG in {context}\n")
-        f.write(f"{'='*70}\n")
-        f.write(f"Message: {exception}\n")
-        f.write(f"{'-'*70}\n")
-        if isinstance(exception, Exception):
-            traceback.print_exc(file=f)
-        f.write(f"{'='*70}\n\n")
-        f.flush()
-
-
 class SimpleWebIOHandler(IOHandler):
     """Simple IO handler for NiceGUI that appends to textarea."""
 

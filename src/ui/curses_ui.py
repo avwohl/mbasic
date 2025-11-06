@@ -120,6 +120,65 @@ def make_output_line(text):
     return SelectableText(text if text else "")
 
 
+class InputDialog(urwid.WidgetWrap):
+    """A popup dialog for text input using urwid signals."""
+    signals = ['close']
+
+    def __init__(self, prompt, initial=""):
+        self.edit = urwid.Edit(caption=prompt, edit_text=initial)
+
+        pile = urwid.Pile([
+            urwid.Text("Press Enter to submit, ESC to cancel"),
+            urwid.Divider(),
+            self.edit,
+        ])
+
+        fill = urwid.Filler(pile, valign='top')
+        box = urwid.LineBox(fill, title="Input Required")
+        super().__init__(urwid.AttrMap(box, 'body'))
+
+    def keypress(self, size, key):
+        if key == 'enter':
+            urwid.emit_signal(self, 'close', self.edit.get_edit_text())
+            return None
+        elif key == 'esc':
+            urwid.emit_signal(self, 'close', None)
+            return None
+        return super().keypress(size, key)
+
+
+class YesNoDialog(urwid.WidgetWrap):
+    """A popup dialog for yes/no questions using urwid signals."""
+    signals = ['close']
+
+    def __init__(self, title, message):
+        self.title = title
+        text = urwid.Text(message)
+
+        pile = urwid.Pile([
+            urwid.Text("Press 'y' for Yes, 'n' for No, ESC to cancel"),
+            urwid.Divider(),
+            text,
+        ])
+
+        fill = urwid.Filler(pile, valign='top')
+        box = urwid.LineBox(fill, title=title)
+        super().__init__(urwid.AttrMap(box, 'body'))
+
+    def selectable(self):
+        """Make this widget selectable so it receives keypresses."""
+        return True
+
+    def keypress(self, size, key):
+        if key in ('y', 'Y'):
+            urwid.emit_signal(self, 'close', True)
+            return None
+        elif key in ('n', 'N', 'esc'):
+            urwid.emit_signal(self, 'close', False)
+            return None
+        return None  # Consume all other keys
+
+
 class ProgramEditorWidget(urwid.WidgetWrap):
     """3-field program editor widget for BASIC programs.
 
@@ -433,19 +492,13 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 attempts += 1
                 if next_num >= 99999 or attempts > 10:  # Avoid overflow or too many attempts
                     # No room - offer to renumber
-                    response = self._parent_ui._show_yesno_dialog(
+                    self._parent_ui.show_yesno_popup(
                         "No Room",
                         f"No room to insert line after {current_line_number}.\n\n"
-                        f"Would you like to renumber the program to make room?"
+                        f"Would you like to renumber the program to make room?",
+                        lambda response: self._on_auto_number_renumber_response(response)
                     )
-                    if response:
-                        # Save editor to program, renumber, and refresh
-                        self._parent_ui._save_editor_to_program()
-                        self._parent_ui._renumber_lines()
-                        return None
-                    else:
-                        # User declined - just stay on current line
-                        return None
+                    return None
 
             # Format new line: " NN " (with status space)
             new_line_prefix = f"\n {next_num} "
@@ -497,6 +550,14 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Let parent handle the key (allows arrows, backspace, etc.)
         return super().keypress(size, key)
+
+    def _on_auto_number_renumber_response(self, response):
+        """Handle response to renumber prompt during auto-numbering."""
+        if response:
+            # Save editor to program, renumber, and refresh
+            self._parent_ui._save_editor_to_program()
+            self._parent_ui._renumber_lines()
+        # If response is False/None, just return (user declined)
 
     def _format_line(self, line_num, code_text, highlight_stmt=None, statements=None):
         """Format a single program line with status, line number, and code.
@@ -1715,12 +1776,14 @@ class CursesBackend(UIBackend):
         self.pile.focus_position = 2
 
         # Create main widget with keybindings
-        main_widget = urwid.AttrMap(self.pile, 'body')
-        self.main_widget = main_widget  # Store for overlays
+        self.base_widget = urwid.AttrMap(self.pile, 'body')
+
+        # Dialog stack for handling nested dialogs
+        self.dialog_stack = []
 
         # Set up the main loop with cursor visible
         self.loop = urwid.MainLoop(
-            main_widget,
+            self.base_widget,
             palette=self._get_palette(),
             unhandled_input=self._handle_input,
             handle_mouse=False
@@ -1753,6 +1816,146 @@ class CursesBackend(UIBackend):
             ('help_text', 'dark gray', 'black'),
         ]
 
+    def show_input_popup(self, prompt, callback, initial=""):
+        """Show an input dialog using Overlay and call callback with result.
+
+        This uses a stack-based approach so dialogs can be nested.
+
+        Args:
+            prompt: The prompt text to display
+            callback: Function to call with result (str or None for cancel)
+            initial: Initial text in the input field
+        """
+        dialog = InputDialog(prompt, initial)
+
+        def on_close(result):
+            # Pop this dialog from the stack and get saved focus
+            saved_focus = None
+            if self.dialog_stack:
+                popped = self.dialog_stack.pop()
+                saved_focus = popped.get('saved_focus')
+
+            # Restore previous widget (either base or previous dialog)
+            if self.dialog_stack:
+                # There's still a dialog on the stack, show it
+                self.loop.widget = self.dialog_stack[-1]['overlay']
+            else:
+                # No more dialogs, show base widget
+                self.loop.widget = self.base_widget
+
+                # Restore focus to the saved position
+                if saved_focus is not None:
+                    try:
+                        self.pile.focus_position = saved_focus
+                    except:
+                        pass
+
+            # Call the callback
+            callback(result)
+
+        urwid.connect_signal(dialog, 'close', on_close)
+
+        # Save current focus position before showing dialog
+        saved_focus = None
+        try:
+            saved_focus = self.pile.focus_position
+        except:
+            pass
+
+        # Get the current widget to overlay on top of
+        base_for_overlay = self.loop.widget
+
+        # Create overlay
+        overlay = urwid.Overlay(
+            dialog,
+            base_for_overlay,
+            align='center',
+            width=60,
+            valign='middle',
+            height=10
+        )
+
+        # Push to stack with saved focus
+        self.dialog_stack.append({
+            'overlay': overlay,
+            'dialog': dialog,
+            'callback': callback,
+            'saved_focus': saved_focus
+        })
+
+        # Show the overlay
+        self.loop.widget = overlay
+
+    def show_yesno_popup(self, title, message, callback):
+        """Show a yes/no dialog using Overlay and call callback with result.
+
+        This uses a stack-based approach so dialogs can be nested.
+
+        Args:
+            title: The dialog title
+            message: The message text to display
+            callback: Function to call with result (True/False)
+        """
+        dialog = YesNoDialog(title, message)
+
+        def on_close(result):
+            # Pop this dialog from the stack and get saved focus
+            saved_focus = None
+            if self.dialog_stack:
+                popped = self.dialog_stack.pop()
+                saved_focus = popped.get('saved_focus')
+
+            # Restore previous widget (either base or previous dialog)
+            if self.dialog_stack:
+                # There's still a dialog on the stack, show it
+                self.loop.widget = self.dialog_stack[-1]['overlay']
+            else:
+                # No more dialogs, show base widget
+                self.loop.widget = self.base_widget
+
+                # Restore focus to the saved position
+                if saved_focus is not None:
+                    try:
+                        self.pile.focus_position = saved_focus
+                    except:
+                        pass
+
+            # Call the callback
+            callback(result)
+
+        urwid.connect_signal(dialog, 'close', on_close)
+
+        # Save current focus position before showing dialog
+        saved_focus = None
+        try:
+            saved_focus = self.pile.focus_position
+        except:
+            pass
+
+        # Get the current widget to overlay on top of
+        base_for_overlay = self.loop.widget
+
+        # Create overlay
+        overlay = urwid.Overlay(
+            dialog,
+            base_for_overlay,
+            align='center',
+            width=60,
+            valign='middle',
+            height=15
+        )
+
+        # Push to stack with saved focus
+        self.dialog_stack.append({
+            'overlay': overlay,
+            'dialog': dialog,
+            'callback': callback,
+            'saved_focus': saved_focus
+        })
+
+        # Show the overlay
+        self.loop.widget = overlay
+
     def _handle_input(self, key):
         """Handle global keyboard shortcuts."""
         if key == QUIT_KEY or key == QUIT_ALT_KEY:
@@ -1761,14 +1964,14 @@ class CursesBackend(UIBackend):
 
         elif key == TAB_KEY:
             # Toggle between editor (position 1) and output (position 2)
-            pile = self.loop.widget.base_widget
-            if pile.focus_position == 1:
+            # self.pile is the actual pile widget we created
+            if self.pile.focus_position == 1:
                 # Switch to output/immediate
-                pile.focus_position = 2
+                self.pile.focus_position = 2
                 self.status_bar.set_text(OUTPUT_STATUS)
             else:
                 # Switch back to editor
-                pile.focus_position = 1
+                self.pile.focus_position = 1
                 self.status_bar.set_text(EDITOR_STATUS)
             return None
 
@@ -1811,10 +2014,6 @@ class CursesBackend(UIBackend):
         elif key == 'shift ctrl v' or key == 'ctrl V':
             # Save As - always prompt for filename
             self._save_as_program()
-
-        elif key == OPEN_KEY:
-            # Open/Load program
-            self._load_program()
 
         elif key == 'shift ctrl o' or key == 'ctrl O':
             # Show recent files
@@ -2260,14 +2459,28 @@ class CursesBackend(UIBackend):
                 insert_num = midpoint
             else:
                 # No room - offer to renumber
-                response = self._get_input_dialog(
-                    f"No room between lines {prev_line_num} and {current_line_num}. Renumber? (y/n): "
+                self.show_input_popup(
+                    f"No room between lines {prev_line_num} and {current_line_num}. Renumber? (y/n): ",
+                    lambda response: self._on_insert_line_renumber_response(response)
                 )
-                if response and response.lower().startswith('y'):
-                    # Renumber to make room
-                    self._renumber_lines()
                 return
 
+        # Continue with the actual insert
+        self._continue_smart_insert(insert_num, line_index, lines)
+
+    def _on_insert_line_renumber_response(self, response):
+        """Handle response to renumber prompt when inserting a line."""
+        if response and response.lower().startswith('y'):
+            # Renumber to make room
+            self._renumber_lines()
+        # If no or cancelled, just return (do nothing)
+
+        # Continue with insert line after dialog
+        # Note: We can't continue the insert here because we've lost the context
+        # (lines, line_index, insert_num variables). User will need to retry insert.
+
+    def _continue_smart_insert(self, insert_num, line_index, lines):
+        """Continue smart insert after getting the insert number."""
         # Insert blank line BEFORE current line (at current line's position)
         # Format: status(1) + line_num(variable width) + space + code
         status_char = ' '  # New line has no breakpoint or error
@@ -2316,8 +2529,14 @@ class CursesBackend(UIBackend):
             self.status_bar.set_text("No lines to renumber")
             return
 
-        # Get renumber parameters from user
-        start_str = self._get_input_dialog("RENUM - Start line number (default 10): ")
+        # Get renumber parameters from user using callback chain
+        self.show_input_popup(
+            "RENUM - Start line number (default 10): ",
+            lambda start_str: self._on_renum_start(start_str, valid_lines)
+        )
+
+    def _on_renum_start(self, start_str, valid_lines):
+        """Handle start line number from RENUM dialog."""
         if start_str is None:
             # User cancelled
             self.status_bar.set_text("Renumber cancelled")
@@ -2331,7 +2550,14 @@ class CursesBackend(UIBackend):
                 self.status_bar.set_text("Invalid start number")
                 return
 
-        increment_str = self._get_input_dialog("RENUM - Increment (default 10): ")
+        # Now ask for increment (passing start and valid_lines)
+        self.show_input_popup(
+            "RENUM - Increment (default 10): ",
+            lambda increment_str: self._on_renum_increment(increment_str, start, valid_lines)
+        )
+
+    def _on_renum_increment(self, increment_str, start, valid_lines):
+        """Handle increment from RENUM dialog and perform renumbering."""
         if increment_str is None:
             # User cancelled
             self.status_bar.set_text("Renumber cancelled")
@@ -2344,6 +2570,12 @@ class CursesBackend(UIBackend):
             except:
                 self.status_bar.set_text("Invalid increment")
                 return
+
+        # Perform the renumbering
+        self._do_renumber(start, increment, valid_lines)
+
+    def _do_renumber(self, start, increment, valid_lines):
+        """Actually perform the renumbering with the given parameters."""
 
         # Build new lines with renumbered line numbers
         new_lines = []
@@ -3839,17 +4071,24 @@ class CursesBackend(UIBackend):
         """Save program to file (uses current filename if available)."""
         # Use current filename if we have one, otherwise prompt
         if self.current_filename:
-            filename = self.current_filename
-            self.output_buffer.append(f"Saving to {filename}...")
-            self._update_output()
+            self._do_save_to_file(self.current_filename)
         else:
             # No current filename, prompt for one
-            filename = self._get_input_dialog("Save as: ")
+            self.show_input_popup("Save as: ", lambda filename: self._on_save_filename(filename))
 
-            if not filename:
-                self.output_buffer.append("Save cancelled")
-                self._update_output()
-                return
+    def _on_save_filename(self, filename):
+        """Handle filename from save dialog."""
+        if not filename:
+            self.output_buffer.append("Save cancelled")
+            self._update_output()
+            return
+
+        self._do_save_to_file(filename)
+
+    def _do_save_to_file(self, filename):
+        """Actually save the program to a file."""
+        self.output_buffer.append(f"Saving to {filename}...")
+        self._update_output()
 
         try:
             # Parse editor content first
@@ -3892,56 +4131,14 @@ class CursesBackend(UIBackend):
     def _save_as_program(self):
         """Save program to a new file (always prompts for filename)."""
         # Always prompt for filename
-        filename = self._get_input_dialog("Save as: ")
-
-        if not filename:
-            self.output_buffer.append("Save cancelled")
-            self._update_output()
-            return
-
-        try:
-            # Parse editor content first
-            self._parse_editor_content()
-
-            # Create program content
-            lines = []
-            for line_num in sorted(self.editor_lines.keys()):
-                lines.append(f"{line_num} {self.editor_lines[line_num]}")
-
-            # Write to file
-            with open(filename, 'w') as f:
-                f.write('\n'.join(lines))
-                f.write('\n')
-
-            # Add to recent files
-            self.recent_files.add_file(filename)
-
-            # Store as current filename
-            self.current_filename = filename
-
-            self.output_buffer.append(f"Saved to {filename}")
-            self._update_output()
-
-            # Clean up autosave after successful save
-            self.auto_save.cleanup_after_save(filename)
-
-            # Restart autosave with new filename
-            self.auto_save.stop_autosave()
-            self.auto_save.start_autosave(
-                filename,
-                self._get_editor_content,
-                interval=30
-            )
-
-        except Exception as e:
-            self.output_buffer.append(f"Error saving file: {e}")
-            self._update_output()
+        self.show_input_popup("Save as: ", lambda filename: self._on_save_filename(filename))
 
     def _load_program(self):
         """Load program from file."""
-        # Get filename from user
-        filename = self._get_input_dialog("Load file: ")
+        self.show_input_popup("Load file: ", self._on_load_filename)
 
+    def _on_load_filename(self, filename):
+        """Handle filename from load dialog."""
         if not filename:
             self.output_buffer.append("Load cancelled")
             self._update_output()
@@ -3952,35 +4149,65 @@ class CursesBackend(UIBackend):
             if self.auto_save.is_autosave_newer(filename):
                 prompt = self.auto_save.format_recovery_prompt(filename)
                 if prompt:
-                    response = self._show_yesno_dialog(
+                    # Show yes/no popup for recovery with callback
+                    self.show_yesno_popup(
                         "Auto-save Recovery",
-                        prompt + "\n\nPress 'y' to recover, 'n' to load original file"
+                        prompt + "\n\nPress 'y' to recover, 'n' to load original file",
+                        lambda response: self._on_autosave_recovery_response(response, filename)
                     )
-                    if response:
-                        # Load from autosave
-                        autosave_content = self.auto_save.load_autosave(filename)
-                        if autosave_content:
-                            # Clear editor
-                            self.editor_lines = {}
-                            self.editor.set_edit_text(autosave_content)
-                            # Parse content
-                            self._parse_editor_content()
-                            # Add to recent files
-                            self.recent_files.add_file(filename)
-                            self.output_buffer.append(f"Recovered from autosave: {filename}")
-                            self._update_output()
-                            # Start autosave
-                            self.auto_save.start_autosave(
-                                filename,
-                                self._get_editor_content,
-                                interval=30
-                            )
-                            return
+                    return
 
             # Normal load (no recovery or user declined)
             self._load_program_file(filename)
         except Exception as e:
             self.output_buffer.append(f"Error loading file: {e}")
+            self._update_output()
+
+    def _on_autosave_recovery_response(self, response, filename):
+        """Handle autosave recovery yes/no response."""
+        try:
+            if response:
+                # Load from autosave
+                autosave_content = self.auto_save.load_autosave(filename)
+                if autosave_content:
+                    # Clear editor
+                    self.editor_lines = {}
+
+                    # Filter out blank lines (lines with only line number, no code)
+                    lines = []
+                    for line in autosave_content.split('\n'):
+                        # Parse line number from the line (format: " 100 code" or "?100 code")
+                        line_num, code_start = self.editor._parse_line_number(line)
+                        if line_num is not None:
+                            # Extract code after the space
+                            code = line[code_start:].strip() if len(line) > code_start else ""
+                            # Only keep lines that have actual code
+                            if code:
+                                lines.append(line)
+                        elif line.strip():  # Keep non-numbered lines if they have content
+                            lines.append(line)
+
+                    cleaned_content = '\n'.join(lines)
+                    self.editor.edit_widget.set_edit_text(cleaned_content)
+                    # Parse content
+                    self._parse_editor_content()
+                    # Add to recent files
+                    self.recent_files.add_file(filename)
+                    # Set current filename
+                    self.current_filename = filename
+                    self.output_buffer.append(f"Recovered from autosave: {filename}")
+                    self._update_output()
+                    # Start autosave
+                    self.auto_save.start_autosave(
+                        filename,
+                        self._get_editor_content,
+                        interval=30
+                    )
+            else:
+                # User declined recovery, load normally
+                self._load_program_file(filename)
+        except Exception as e:
+            self.output_buffer.append(f"Error in autosave recovery: {e}")
             self._update_output()
 
     def _show_recent_files(self):
