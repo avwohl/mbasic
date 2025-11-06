@@ -545,6 +545,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Mark that we skipped auto-numbering if it was enabled but we're in rapid input
             if self.auto_number_enabled and in_rapid_input:
                 self._skipped_auto_number = True
+                # Schedule deferred refresh to add auto-number line after paste completes
+                self._schedule_deferred_refresh()
 
             # Update Enter timestamp to track rapid Enter keys (paste detection)
             self._last_enter_time = current_time
