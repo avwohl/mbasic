@@ -197,6 +197,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         Format: "SNN CODE" where S=status, NN=line number (variable width)
 
+        If there are multiple numbers (like "?20 100 for..."), uses the LAST number
+        before the actual code, since BASIC code cannot legally start with a number.
+
         Args:
             line: Display line string
 
@@ -206,17 +209,47 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         if len(line) < 3:  # Need at least status + digit + space
             return None, None
 
-        # Find first space after status character (marks end of line number)
-        space_idx = line.find(' ', 1)
-        if space_idx <= 1:
-            return None, None
+        # Skip status character and find all number sequences
+        content = line[1:]  # Everything after status
 
-        try:
-            line_num = int(line[1:space_idx])
-            code_start_col = space_idx + 1  # After the space
-            return line_num, code_start_col
-        except ValueError:
-            return None, None
+        # Find all number sequences followed by space or more numbers
+        last_num = None
+        last_num_end = None
+        pos = 0
+
+        while pos < len(content):
+            # Skip non-digits
+            while pos < len(content) and not content[pos].isdigit():
+                pos += 1
+
+            if pos >= len(content):
+                break
+
+            # Found start of a number - extract it
+            num_start = pos
+            num_str = ""
+            while pos < len(content) and content[pos].isdigit():
+                num_str += content[pos]
+                pos += 1
+
+            # Check what follows the number
+            if pos < len(content) and content[pos] == ' ':
+                # Number followed by space - this could be a line number
+                try:
+                    last_num = int(num_str)
+                    last_num_end = pos + 1  # Position after the space
+                except ValueError:
+                    pass
+
+            # If number is followed by non-space, it's part of the code, stop looking
+            elif pos < len(content):
+                break
+
+        if last_num is not None:
+            # Add 1 to account for status character we skipped
+            return last_num, last_num_end + 1
+
+        return None, None
 
     def keypress(self, size, key):
         """Handle key presses for column-aware editing and auto-numbering.
