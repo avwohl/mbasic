@@ -472,10 +472,14 @@ class HelpWidget(urwid.WidgetWrap):
                 self.current_link_index = (self.current_link_index + 1) % len(self.link_positions)
                 # Re-render to update highlighting
                 self._refresh_display()
-                # Scroll to make the link visible
+                # Scroll to make the link visible with padding
                 link_line = self.link_positions[self.current_link_index]
                 if link_line < len(self.walker):
+                    # Set alignment first, then focus to trigger scroll
+                    self.listbox.set_focus_valign('middle')
                     self.listbox.set_focus(link_line)
+                    # Force invalidate to ensure redraw
+                    self.listbox._invalidate()
                 return None
 
         elif key in ('shift tab', 'left'):
@@ -484,10 +488,14 @@ class HelpWidget(urwid.WidgetWrap):
                 self.current_link_index = (self.current_link_index - 1) % len(self.link_positions)
                 # Re-render to update highlighting
                 self._refresh_display()
-                # Scroll to make the link visible
+                # Scroll to make the link visible with padding
                 link_line = self.link_positions[self.current_link_index]
                 if link_line < len(self.walker):
+                    # Set alignment first, then focus to trigger scroll
+                    self.listbox.set_focus_valign('middle')
                     self.listbox.set_focus(link_line)
+                    # Force invalidate to ensure redraw
+                    self.listbox._invalidate()
                 return None
 
         # Pass other keys to listbox for scrolling
