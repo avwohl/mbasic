@@ -3746,10 +3746,14 @@ class CursesBackend(UIBackend):
                 f.write(f"handle_input got key: {repr(key)}\n")
 
             if key == 'enter':
+                with open('/tmp/mbasic_dialog_debug.txt', 'a') as f:
+                    f.write(f"Raising DialogExit for enter\n")
                 result['value'] = edit.get_edit_text()
                 done['flag'] = True
                 raise DialogExit()
             elif key == 'esc':
+                with open('/tmp/mbasic_dialog_debug.txt', 'a') as f:
+                    f.write(f"Raising DialogExit for esc\n")
                 result['value'] = None
                 done['flag'] = True
                 raise DialogExit()
@@ -3760,16 +3764,31 @@ class CursesBackend(UIBackend):
         old_handler = self.loop.unhandled_input
         self.loop.unhandled_input = handle_input
 
+        with open('/tmp/mbasic_dialog_debug.txt', 'a') as f:
+            f.write(f"About to call loop.run()\n")
+
         # Run nested event loop for dialog
         try:
             self.loop.run()
+            with open('/tmp/mbasic_dialog_debug.txt', 'a') as f:
+                f.write(f"loop.run() returned normally (should not happen)\n")
         except DialogExit:
             # Dialog closed normally
-            pass
+            with open('/tmp/mbasic_dialog_debug.txt', 'a') as f:
+                f.write(f"Caught DialogExit, closing dialog\n")
+        except Exception as e:
+            with open('/tmp/mbasic_dialog_debug.txt', 'a') as f:
+                f.write(f"Caught unexpected exception: {type(e).__name__}: {e}\n")
+            raise
         finally:
             # Always restore state
+            with open('/tmp/mbasic_dialog_debug.txt', 'a') as f:
+                f.write(f"In finally, restoring state\n")
             self.loop.widget = original_widget
             self.loop.unhandled_input = old_handler
+
+        with open('/tmp/mbasic_dialog_debug.txt', 'a') as f:
+            f.write(f"Returning result: {repr(result['value'])}\n")
 
         return result['value']
 
