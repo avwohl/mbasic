@@ -3759,17 +3759,28 @@ class CursesBackend(UIBackend):
 
         # Manually pump events until dialog is closed
         # This avoids nested event loops which cause ExitMainLoop to exit entire app
+        import sys
+        sys.stderr.write(f"DEBUG: Starting event pump\n")
+        sys.stderr.flush()
+
         while not done[0]:
             try:
+                sys.stderr.write(f"DEBUG: About to draw screen\n")
+                sys.stderr.flush()
                 self.loop.draw_screen()
+
+                sys.stderr.write(f"DEBUG: About to get input\n")
+                sys.stderr.flush()
                 keys = self.loop.screen.get_input()
+
+                sys.stderr.write(f"DEBUG: Got keys: {repr(keys)}\n")
+                sys.stderr.flush()
+
                 if keys:
                     # Check for ESC/Enter before processing (so widget doesn't consume them)
                     filtered_keys = []
                     for key in keys:
-                        # Debug: write key to stderr
-                        import sys
-                        sys.stderr.write(f"DEBUG: Got key: {repr(key)}\n")
+                        sys.stderr.write(f"DEBUG: Processing key: {repr(key)}\n")
                         sys.stderr.flush()
 
                         if key == 'enter':
