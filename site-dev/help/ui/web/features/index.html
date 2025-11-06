@@ -1461,15 +1461,16 @@
 <h2 id="file-management">File Management<a class="headerlink" href="#file-management" title="Permanent link">&para;</a></h2>
 <h3 id="local-storage">Local Storage<a class="headerlink" href="#local-storage" title="Permanent link">&para;</a></h3>
 <p><strong>Currently Implemented:</strong>
-- Programs stored in browser localStorage</p>
+- Programs stored in Python server memory (session-only, lost on page refresh)
+- Recent files list stored in browser localStorage</p>
 <p><strong>Automatic Saving (Planned):</strong>
-- Saves to browser storage
+- Saves programs to browser localStorage for persistence
 - Every 30 seconds
 - On significant changes
 - Before running</p>
 <p><strong>Session Recovery (Planned):</strong>
-- Restores last program
-- Recovers after crash
+- Restores last program from browser storage
+- Recovers after crash or page refresh
 - Maintains breakpoints
 - Preserves variables</p>
 <h3 id="file-operations">File Operations<a class="headerlink" href="#file-operations" title="Permanent link">&para;</a></h3>

@@ -45,7 +45,7 @@ The FOR...NEXT loop executes a block of statements a specified number of times, 
 - **STEP** can be positive, negative, or fractional
 - Negative STEP counts backward (loop terminates when variable < end after increment)
 - Positive STEP counts forward (loop terminates when variable > end after increment)
-- In MBASIC 5.21, loop body executes at least once (termination check occurs at NEXT, after first iteration)
+- Loop body may not execute at all if start/end/step values would cause immediate termination (e.g., FOR I=10 TO 1 with positive STEP)
 - Multiple variables can be specified in NEXT for nested loops
 
 ### Example:

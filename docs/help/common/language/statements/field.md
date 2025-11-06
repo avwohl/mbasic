@@ -2,7 +2,7 @@
 category: file-io
 description: To allocate space for variables in a random file buffer
 keywords: ['command', 'data', 'error', 'execute', 'field', 'file', 'for', 'get', 'if', 'input']
-syntax: FIELD [#]<file number>,<field width> AS <string variable>...
+syntax: FIELD [#]<file number>,<field width> AS <string variable>[,<field width> AS <string variable>...]
 title: FIELD
 type: statement
 ---
@@ -12,7 +12,7 @@ type: statement
 ## Syntax
 
 ```basic
-FIELD [#]<file number>,<field width> AS <string variable>...
+FIELD [#]<file number>,<field width> AS <string variable>[,<field width> AS <string variable>...]
 ```
 
 **Versions:** Disk

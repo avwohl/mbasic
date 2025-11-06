@@ -855,8 +855,8 @@ class BuiltinFunctions:
             current_pos = file_handle.tell()
 
             # Peek at next byte to check for ^Z or EOF
-            # File opened in binary mode ('rb'), so read(1) returns bytes object
-            # next_byte[0] accesses the first byte value as integer
+            # File opened in binary mode ('rb') per mode 'I' check above
+            # read(1) returns bytes object; next_byte[0] accesses the first byte value as integer
             next_byte = file_handle.read(1)
             if not next_byte:
                 # Physical EOF

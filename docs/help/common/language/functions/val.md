@@ -17,7 +17,7 @@ VAL (X$)
 
 ## Description
 
-Returns the numerical value of string X$. The VAL function also strips leading blanks, tabs, and linefeeds from the argument string. For example, VAL(" -3") returns -3.
+Returns the numerical value of string X$. The VAL function also strips leading blanks, tabs, and linefeeds from the argument string. For example, VAL (" -3") returns -3.
 
 ## Example
 

@@ -2,8 +2,8 @@
 
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
-**Last Updated:** 2025-11-04
-**Total Documents:** 157
+**Last Updated:** 2025-11-06
+**Total Documents:** 161
 
 ## What's Here
 
@@ -144,6 +144,9 @@ If you're contributing to MBASIC:
 
 - [Array Input Read Fix](ARRAY_INPUT_READ_FIX.md)
 - [Browser Opening Fix](BROWSER_OPENING_FIX.md)
+- [Code Comment Fixes Applied](CODE_COMMENT_FIXES_APPLIED.md)
+- [Code Comment Fixes Remaining](CODE_COMMENT_FIXES_REMAINING.md)
+- [Code Comment Fixes Summary](CODE_COMMENT_FIXES_SUMMARY.md)
 - [Cr Line Ending Fix](CR_LINE_ENDING_FIX.md)
 - [Data Statement Fix](DATA_STATEMENT_FIX.md)
 - [Debug Mode](DEBUG_MODE.md)
@@ -191,6 +194,7 @@ If you're contributing to MBASIC:
 - [Keyword Case Scope Analysis](KEYWORD_CASE_SCOPE_ANALYSIS.md)
 - [Keyword Identifier Splitting](KEYWORD_IDENTIFIER_SPLITTING.md)
 - [Not Implemented](NOT_IMPLEMENTED.md)
+- [Parsed Inconsistencies Readme](PARSED_INCONSISTENCIES_README.md)
 - [Resource Limits Design](RESOURCE_LIMITS_DESIGN.md)
 - [Status](STATUS.md)
 - [Variable Editing Feature](VARIABLE_EDITING_FEATURE.md)

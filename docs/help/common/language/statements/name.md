@@ -28,15 +28,13 @@ To change the name of a disk file.
 ## Example
 
 ```basic
-Ok
-              NAME "ACCTS" AS "LEDGER"
-              Ok
-              In this example, the file that was
-              formerly named ACCTS will now be named LEDGER.
+NAME "ACCTS" AS "LEDGER"
 ```
+
+In this example, the file that was formerly named ACCTS will now be named LEDGER.
 
 ## See Also
 - [KILL](kill.md) - To delete a file from disk
 - [LOAD](load.md) - To load a file from disk into memory
-- [MERGE](merge.md) - To merge a specified disk file into the      program currently in memory
+- [MERGE](merge.md) - To merge a specified disk file into the program currently in memory
 - [SAVE](save.md) - To save a program file on disk

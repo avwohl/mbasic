@@ -82,7 +82,7 @@ PRECISE# = 0.123456789012345
 - High-precision mathematics
 - Astronomy, physics calculations
 
-**Note:** Use D or E for exponent notation (e.g., 1.5D+10 or 1.5E+10)
+**Note:** Use D for double-precision exponent notation or E for single-precision (e.g., 1.5D+10 for double, 1.5E+10 for single)
 
 ## STRING ($)
 

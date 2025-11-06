@@ -24,12 +24,12 @@ Returns a random number between 0 and 1. The same sequence of random numbers is 
 ## Example
 
 ```basic
-10 FOR I=l TO 5
- 20 PRINT INT(RND*100);
- 30 NEXT
- RUN
- 24 30 31 51 5
- Ok
+10 FOR I=1 TO 5
+20 PRINT INT(RND*100);
+30 NEXT
+RUN
+24 30 31 51 5
+Ok
 ```
 
 ## See Also

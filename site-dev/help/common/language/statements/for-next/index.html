@@ -962,8 +962,7 @@
 <li><strong>STEP</strong> can be positive, negative, or fractional</li>
 <li>Negative STEP counts backward (loop terminates when variable &lt; end after increment)</li>
 <li>Positive STEP counts forward (loop terminates when variable &gt; end after increment)</li>
-<li>Loop body executes at least once regardless of start/end relationship</li>
-<li>Termination check occurs at NEXT, not FOR (after loop body has executed)</li>
+<li>Loop body may not execute at all if start/end/step values would cause immediate termination (e.g., FOR I=10 TO 1 with positive STEP)</li>
 <li>Multiple variables can be specified in NEXT for nested loops</li>
 </ul>
 <h3 id="example">Example:<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>

@@ -38,8 +38,8 @@ LIST
               60 DATA 5,7,12
               Ok
               RUN
-              R = 5                AREA = 7S.5
-              R = 7                AREA = l53.S6
+              R = 5                AREA = 78.5
+              R = 7                AREA = 153.86
               R = 12               AREA = 452.16
               ?Out of data in 10
               Ok

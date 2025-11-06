@@ -1,5 +1,11 @@
 """
 Abstract Syntax Tree (AST) node definitions for MBASIC 5.21
+
+This module defines all AST node types for representing BASIC programs.
+Nodes are organized into:
+- Program structure (ProgramNode, LineNode)
+- Statements (PrintStatementNode, ForStatementNode, etc.)
+- Expressions (NumberNode, BinaryOpNode, etc.)
 """
 
 from typing import List, Optional, Any, Set
@@ -13,7 +19,14 @@ from src.tokens import TokenType, Token
 # ============================================================================
 
 class VarType(Enum):
-    """Variable type enumeration for BASIC variables"""
+    """Variable type enumeration for BASIC variables
+
+    Types are specified by suffix characters or DEF statements:
+    - INTEGER: % suffix (e.g., COUNT%) or DEFINT A-Z
+    - SINGLE: ! suffix (e.g., VALUE!) or DEFSNG A-Z (default type)
+    - DOUBLE: # suffix (e.g., TOTAL#) or DEFDBL A-Z
+    - STRING: $ suffix (e.g., NAME$) or DEFSTR A-Z
+    """
     INTEGER = 'INTEGER'  # % suffix or DEFINT
     SINGLE = 'SINGLE'    # ! suffix or DEFSNG (default)
     DOUBLE = 'DOUBLE'    # # suffix or DEFDBL
@@ -25,7 +38,11 @@ class VarType(Enum):
 # ============================================================================
 
 class Node:
-    """Base class for all AST nodes"""
+    """Base class for all AST nodes
+
+    Provides line_num and column attributes for source location tracking.
+    Most nodes use dataclasses instead of this base class.
+    """
     def __init__(self, line_num: int = 0, column: int = 0):
         self.line_num = line_num
         self.column = column
@@ -43,6 +60,11 @@ class ProgramNode:
     numbered line in the BASIC program and contains a list of statements
     (since multiple statements can appear on one line, separated by colons).
 
+    Example:
+        10 PRINT "HELLO"
+        20 FOR I=1 TO 10: PRINT I: NEXT I
+        30 END
+
     Attributes:
         lines: List of LineNode objects
         def_type_statements: Global DEF type mappings (DEFINT/DEFSNG/DEFDBL/DEFSTR)
@@ -56,6 +78,9 @@ class ProgramNode:
 @dataclass
 class LineNode:
     """A single line in a BASIC program (line_number + statements)
+
+    Example:
+        20 FOR I=1 TO 10: PRINT I: NEXT I
 
     The AST is the single source of truth. Text is always regenerated from
     the AST using statement token information (each statement has char_start/char_end
@@ -78,7 +103,12 @@ class LineNode:
 
 @dataclass
 class StatementNode:
-    """Base class for all statements"""
+    """Base class for all statements
+
+    All statement nodes inherit from this class. Statement nodes represent
+    executable commands in BASIC programs. Subclasses include PrintStatementNode,
+    ForStatementNode, GotoStatementNode, etc.
+    """
     line_num: int = 0
     column: int = 0
     char_start: int = 0  # Character offset from start of line for highlighting
@@ -92,6 +122,11 @@ class PrintStatementNode:
     Syntax:
         PRINT expr1, expr2          - Print to screen
         PRINT #filenum, expr1       - Print to file
+
+    Separators:
+        , (comma)  - Tab to next print zone
+        ; (semicolon) - No spacing between items
+        (none) - Newline after output
     """
     expressions: List['ExpressionNode']
     separators: List[str]  # ";" or "," or None for newline
@@ -160,7 +195,12 @@ class InputStatementNode:
 
 @dataclass
 class LetStatementNode:
-    """LET or implicit assignment statement"""
+    """LET or implicit assignment statement
+
+    Syntax:
+        LET variable = expression
+        variable = expression           - LET keyword is optional
+    """
     variable: 'VariableNode'
     expression: 'ExpressionNode'
     line_num: int = 0
@@ -169,7 +209,13 @@ class LetStatementNode:
 
 @dataclass
 class IfStatementNode:
-    """IF statement with optional THEN and ELSE"""
+    """IF statement with optional THEN and ELSE
+
+    Syntax:
+        IF condition THEN statement
+        IF condition THEN line_number
+        IF condition THEN statement ELSE statement
+    """
     condition: 'ExpressionNode'
     then_statements: List['StatementNode']
     then_line_number: Optional[int]  # For IF...THEN line_number GOTO style
@@ -184,7 +230,12 @@ class IfStatementNode:
 
 @dataclass
 class ForStatementNode:
-    """FOR loop statement"""
+    """FOR loop statement
+
+    Syntax:
+        FOR variable = start TO end
+        FOR variable = start TO end STEP increment
+    """
     variable: 'VariableNode'
     start_expr: 'ExpressionNode'
     end_expr: 'ExpressionNode'
@@ -198,7 +249,12 @@ class ForStatementNode:
 
 @dataclass
 class NextStatementNode:
-    """NEXT statement - end of FOR loop"""
+    """NEXT statement - end of FOR loop
+
+    Syntax:
+        NEXT variable
+        NEXT variable1, variable2, ...
+    """
     variables: List['VariableNode']  # Can be NEXT I or NEXT I,J,K
     line_num: int = 0
     column: int = 0
@@ -206,7 +262,11 @@ class NextStatementNode:
 
 @dataclass
 class WhileStatementNode:
-    """WHILE loop statement"""
+    """WHILE loop statement
+
+    Syntax:
+        WHILE condition
+    """
     condition: 'ExpressionNode'
     line_num: int = 0
     column: int = 0
@@ -214,14 +274,22 @@ class WhileStatementNode:
 
 @dataclass
 class WendStatementNode:
-    """WEND statement - end of WHILE loop"""
+    """WEND statement - end of WHILE loop
+
+    Syntax:
+        WEND
+    """
     line_num: int = 0
     column: int = 0
 
 
 @dataclass
 class GotoStatementNode:
-    """GOTO statement - unconditional jump"""
+    """GOTO statement - unconditional jump
+
+    Syntax:
+        GOTO line_number
+    """
     line_number: int
     line_num: int = 0
     column: int = 0
@@ -229,7 +297,11 @@ class GotoStatementNode:
 
 @dataclass
 class GosubStatementNode:
-    """GOSUB statement - call subroutine at line number"""
+    """GOSUB statement - call subroutine at line number
+
+    Syntax:
+        GOSUB line_number
+    """
     line_number: int
     line_num: int = 0
     column: int = 0
@@ -237,14 +309,22 @@ class GosubStatementNode:
 
 @dataclass
 class ReturnStatementNode:
-    """RETURN statement - return from GOSUB"""
+    """RETURN statement - return from GOSUB
+
+    Syntax:
+        RETURN
+    """
     line_num: int = 0
     column: int = 0
 
 
 @dataclass
 class OnGotoStatementNode:
-    """ON...GOTO statement - computed GOTO"""
+    """ON...GOTO statement - computed GOTO
+
+    Syntax:
+        ON expression GOTO line1, line2, ...
+    """
     expression: 'ExpressionNode'
     line_numbers: List[int]
     line_num: int = 0
@@ -253,7 +333,11 @@ class OnGotoStatementNode:
 
 @dataclass
 class OnGosubStatementNode:
-    """ON...GOSUB statement - computed GOSUB"""
+    """ON...GOSUB statement - computed GOSUB
+
+    Syntax:
+        ON expression GOSUB line1, line2, ...
+    """
     expression: 'ExpressionNode'
     line_numbers: List[int]
     line_num: int = 0
@@ -262,7 +346,11 @@ class OnGosubStatementNode:
 
 @dataclass
 class DimStatementNode:
-    """DIM statement - declare array dimensions"""
+    """DIM statement - declare array dimensions
+
+    Syntax:
+        DIM array1(size), array2(rows, cols), ...
+    """
     arrays: List['ArrayDeclNode']
     line_num: int = 0
     column: int = 0
@@ -304,7 +392,12 @@ class MidAssignmentStatementNode:
 
 @dataclass
 class ArrayDeclNode:
-    """Array declaration in DIM statement"""
+    """Array declaration in DIM statement
+
+    Example:
+        A(10)         - One-dimensional array
+        B(5, 10)      - Two-dimensional array
+    """
     name: str
     dimensions: List['ExpressionNode']  # Must be constant expressions in compiled BASIC
     line_num: int = 0
@@ -314,6 +407,12 @@ class ArrayDeclNode:
 @dataclass
 class DefTypeStatementNode:
     """DEFINT/DEFSNG/DEFDBL/DEFSTR statement
+
+    Syntax:
+        DEFINT letter[-letter], ...
+        DEFSNG letter[-letter], ...
+        DEFDBL letter[-letter], ...
+        DEFSTR letter[-letter], ...
 
     Defines default types for variables based on their first letter.
     Example: DEFINT I-K makes all variables starting with I, J, K default to INTEGER.
@@ -326,7 +425,11 @@ class DefTypeStatementNode:
 
 @dataclass
 class ReadStatementNode:
-    """READ statement - read from DATA"""
+    """READ statement - read from DATA
+
+    Syntax:
+        READ variable1, variable2, ...
+    """
     variables: List['VariableNode']
     line_num: int = 0
     column: int = 0
@@ -334,7 +437,11 @@ class ReadStatementNode:
 
 @dataclass
 class DataStatementNode:
-    """DATA statement - stores data values"""
+    """DATA statement - stores data values
+
+    Syntax:
+        DATA value1, value2, ...
+    """
     values: List['ExpressionNode']
     line_num: int = 0
     column: int = 0
@@ -342,7 +449,12 @@ class DataStatementNode:
 
 @dataclass
 class RestoreStatementNode:
-    """RESTORE statement - reset DATA pointer"""
+    """RESTORE statement - reset DATA pointer
+
+    Syntax:
+        RESTORE
+        RESTORE line_number
+    """
     line_number: Optional[int]
     line_num: int = 0
     column: int = 0
@@ -350,7 +462,11 @@ class RestoreStatementNode:
 
 @dataclass
 class OpenStatementNode:
-    """OPEN statement - open file for I/O"""
+    """OPEN statement - open file for I/O
+
+    Syntax:
+        OPEN mode, #filenum, filename$ [, reclen]
+    """
     mode: str  # "I", "O", "R", "A"
     file_number: 'ExpressionNode'
     filename: 'ExpressionNode'
@@ -361,7 +477,12 @@ class OpenStatementNode:
 
 @dataclass
 class CloseStatementNode:
-    """CLOSE statement - close file(s)"""
+    """CLOSE statement - close file(s)
+
+    Syntax:
+        CLOSE
+        CLOSE #filenum1, #filenum2, ...
+    """
     file_numbers: List['ExpressionNode']
     line_num: int = 0
     column: int = 0
@@ -479,28 +600,44 @@ class RsetStatementNode:
 
 @dataclass
 class EndStatementNode:
-    """END statement - terminate program"""
+    """END statement - terminate program
+
+    Syntax:
+        END
+    """
     line_num: int = 0
     column: int = 0
 
 
 @dataclass
 class TronStatementNode:
-    """TRON statement - enable execution trace (shows line numbers)"""
+    """TRON statement - enable execution trace (shows line numbers)
+
+    Syntax:
+        TRON
+    """
     line_num: int = 0
     column: int = 0
 
 
 @dataclass
 class TroffStatementNode:
-    """TROFF statement - disable execution trace"""
+    """TROFF statement - disable execution trace
+
+    Syntax:
+        TROFF
+    """
     line_num: int = 0
     column: int = 0
 
 
 @dataclass
 class ClsStatementNode:
-    """CLS statement - clear screen (no-op for compatibility)"""
+    """CLS statement - clear screen (no-op for compatibility)
+
+    Syntax:
+        CLS
+    """
     line_num: int = 0
     column: int = 0
 
@@ -533,7 +670,7 @@ class LimitsStatementNode:
 
 
 # NOTE: SetSettingStatementNode and ShowSettingsStatementNode are defined
-# in the "Settings Commands" section later in this file.
+# in the "Settings Commands" section later in this file (search for "Settings Commands").
 
 
 @dataclass
@@ -629,8 +766,6 @@ class RenumStatementNode:
     Parameters can be omitted using commas:
         RENUM 100,,20  - new_start=100, old_start=0 (default), increment=20
         RENUM ,50,20   - new_start=10 (default), old_start=50, increment=20
-
-    Note: None means use default value (handled by interpreter: 10, 0, 10 respectively)
     """
     new_start: 'ExpressionNode' = None  # New starting line number (None → default 10)
     old_start: 'ExpressionNode' = None  # First old line to renumber (None → default 0)
@@ -674,6 +809,9 @@ class ListStatementNode:
 class StopStatementNode:
     """STOP statement - pause program execution
 
+    Syntax:
+        STOP
+
     STOP pauses the program and returns to interactive mode.
     Variables, the program counter, and the call stack are preserved.
     Use CONT to resume execution from the statement after STOP.
@@ -685,6 +823,9 @@ class StopStatementNode:
 @dataclass
 class ContStatementNode:
     """CONT statement - continue execution after STOP
+
+    Syntax:
+        CONT
 
     CONT resumes execution from where the program was stopped.
     This can only be used after a STOP or after Ctrl+C (Break).
@@ -721,7 +862,13 @@ class RandomizeStatementNode:
 
 @dataclass
 class RemarkStatementNode:
-    """REM/REMARK statement - comment"""
+    """REM/REMARK statement - comment
+
+    Syntax:
+        REM text
+        REMARK text
+        ' text
+    """
     text: str
     comment_type: str = "REM"  # "REM", "REMARK", or "APOSTROPHE" - preserves original syntax
     line_num: int = 0
@@ -730,7 +877,11 @@ class RemarkStatementNode:
 
 @dataclass
 class SwapStatementNode:
-    """SWAP statement - exchange values of two variables"""
+    """SWAP statement - exchange values of two variables
+
+    Syntax:
+        SWAP variable1, variable2
+    """
     var1: 'VariableNode'
     var2: 'VariableNode'
     line_num: int = 0
@@ -753,7 +904,13 @@ class ErrorStatementNode:
 
 @dataclass
 class OnErrorStatementNode:
-    """ON ERROR GOTO/GOSUB statement - error handling"""
+    """ON ERROR GOTO/GOSUB statement - error handling
+
+    Syntax:
+        ON ERROR GOTO line_number
+        ON ERROR GOSUB line_number
+        ON ERROR GOTO 0                - Disable error handling
+    """
     line_number: int
     is_gosub: bool = False  # True for ON ERROR GOSUB, False for ON ERROR GOTO
     line_num: int = 0
@@ -762,7 +919,13 @@ class OnErrorStatementNode:
 
 @dataclass
 class ResumeStatementNode:
-    """RESUME statement - continue after error"""
+    """RESUME statement - continue after error
+
+    Syntax:
+        RESUME                  - Retry statement that caused error
+        RESUME NEXT             - Continue at next statement
+        RESUME line_number      - Continue at specific line
+    """
     line_number: Optional[int]  # None means RESUME, 0 means RESUME NEXT
     line_num: int = 0
     column: int = 0
@@ -770,7 +933,11 @@ class ResumeStatementNode:
 
 @dataclass
 class PokeStatementNode:
-    """POKE statement - write to memory"""
+    """POKE statement - write to memory
+
+    Syntax:
+        POKE address, value
+    """
     address: 'ExpressionNode'
     value: 'ExpressionNode'
     line_num: int = 0
@@ -779,7 +946,11 @@ class PokeStatementNode:
 
 @dataclass
 class OutStatementNode:
-    """OUT statement - write to I/O port"""
+    """OUT statement - write to I/O port
+
+    Syntax:
+        OUT port, value
+    """
     port: 'ExpressionNode'
     value: 'ExpressionNode'
     line_num: int = 0
@@ -812,7 +983,11 @@ class CallStatementNode:
 
 @dataclass
 class DefFnStatementNode:
-    """DEF FN statement - define single-line function"""
+    """DEF FN statement - define single-line function
+
+    Syntax:
+        DEF FNname(param1, param2, ...) = expression
+    """
     name: str
     parameters: List['VariableNode']
     expression: 'ExpressionNode'
@@ -822,7 +997,12 @@ class DefFnStatementNode:
 
 @dataclass
 class WidthStatementNode:
-    """WIDTH statement - set output width"""
+    """WIDTH statement - set output width
+
+    Syntax:
+        WIDTH width
+        WIDTH width, device
+    """
     width: 'ExpressionNode'
     device: Optional['ExpressionNode']
     line_num: int = 0
@@ -831,7 +1011,13 @@ class WidthStatementNode:
 
 @dataclass
 class ClearStatementNode:
-    """CLEAR statement - clear variables and set memory"""
+    """CLEAR statement - clear variables and set memory
+
+    Syntax:
+        CLEAR
+        CLEAR string_space
+        CLEAR string_space, stack_space
+    """
     string_space: Optional['ExpressionNode']
     stack_space: Optional['ExpressionNode']
     line_num: int = 0
@@ -871,7 +1057,11 @@ class CommonStatementNode:
 
 @dataclass
 class FieldStatementNode:
-    """FIELD statement - define random-access file buffer"""
+    """FIELD statement - define random-access file buffer
+
+    Syntax:
+        FIELD #filenum, width1 AS var1, width2 AS var2, ...
+    """
     file_number: 'ExpressionNode'
     fields: List[tuple]  # List of (width, variable) tuples
     line_num: int = 0
@@ -880,7 +1070,12 @@ class FieldStatementNode:
 
 @dataclass
 class GetStatementNode:
-    """GET statement - read record from random-access file"""
+    """GET statement - read record from random-access file
+
+    Syntax:
+        GET #filenum
+        GET #filenum, record_number
+    """
     file_number: 'ExpressionNode'
     record_number: Optional['ExpressionNode']
     line_num: int = 0
@@ -889,7 +1084,12 @@ class GetStatementNode:
 
 @dataclass
 class PutStatementNode:
-    """PUT statement - write record to random-access file"""
+    """PUT statement - write record to random-access file
+
+    Syntax:
+        PUT #filenum
+        PUT #filenum, record_number
+    """
     file_number: 'ExpressionNode'
     record_number: Optional['ExpressionNode']
     line_num: int = 0
@@ -898,7 +1098,12 @@ class PutStatementNode:
 
 @dataclass
 class LineInputStatementNode:
-    """LINE INPUT statement - read entire line"""
+    """LINE INPUT statement - read entire line
+
+    Syntax:
+        LINE INPUT "prompt"; variable$
+        LINE INPUT #filenum, variable$
+    """
     file_number: Optional['ExpressionNode']
     prompt: Optional['ExpressionNode']
     variable: 'VariableNode'
@@ -908,7 +1113,12 @@ class LineInputStatementNode:
 
 @dataclass
 class WriteStatementNode:
-    """WRITE statement - formatted output"""
+    """WRITE statement - formatted output
+
+    Syntax:
+        WRITE expr1, expr2, ...
+        WRITE #filenum, expr1, expr2, ...
+    """
     file_number: Optional['ExpressionNode']
     expressions: List['ExpressionNode']
     line_num: int = 0
@@ -921,13 +1131,25 @@ class WriteStatementNode:
 
 @dataclass
 class ExpressionNode:
-    """Base class for all expressions"""
+    """Base class for all expressions
+
+    Expressions evaluate to values and can be used in statements.
+    Subclasses include NumberNode, StringNode, VariableNode, BinaryOpNode, etc.
+    """
     pass
 
 
 @dataclass
 class NumberNode:
-    """Numeric literal"""
+    """Numeric literal
+
+    Examples:
+        42          - Integer
+        3.14        - Floating point
+        &HFF        - Hexadecimal
+        &O77        - Octal
+        1.23E+5     - Scientific notation
+    """
     value: float
     literal: str  # Original text representation
     line_num: int = 0
@@ -936,7 +1158,11 @@ class NumberNode:
 
 @dataclass
 class StringNode:
-    """String literal"""
+    """String literal
+
+    Example:
+        "HELLO"     - String constant
+    """
     value: str
     line_num: int = 0
     column: int = 0
@@ -964,7 +1190,15 @@ class VariableNode:
 
 @dataclass
 class BinaryOpNode:
-    """Binary operation (arithmetic, relational, logical)"""
+    """Binary operation (arithmetic, relational, logical)
+
+    Examples:
+        A + B       - Addition
+        X * Y       - Multiplication
+        I < 10      - Comparison
+        A$ = B$     - String comparison
+        X AND Y     - Logical AND
+    """
     operator: TokenType
     left: 'ExpressionNode'
     right: 'ExpressionNode'
@@ -974,7 +1208,13 @@ class BinaryOpNode:
 
 @dataclass
 class UnaryOpNode:
-    """Unary operation (-, NOT, +)"""
+    """Unary operation (-, NOT, +)
+
+    Examples:
+        -X          - Negation
+        NOT FLAG    - Logical NOT
+        +Y          - Unary plus
+    """
     operator: TokenType
     operand: 'ExpressionNode'
     line_num: int = 0
@@ -983,7 +1223,13 @@ class UnaryOpNode:
 
 @dataclass
 class FunctionCallNode:
-    """Built-in or user-defined function call"""
+    """Built-in or user-defined function call
+
+    Examples:
+        SIN(X)      - Built-in function
+        FNcalc(A,B) - User-defined function (DEF FN)
+        LEN(A$)     - String function
+    """
     name: str
     arguments: List['ExpressionNode']
     line_num: int = 0
@@ -1076,6 +1322,11 @@ class TypeInfo:
 
         Returns:
             VarType enum value
+
+        Examples:
+            TypeInfo.from_suffix('%') → VarType.INTEGER
+            TypeInfo.from_suffix('$') → VarType.STRING
+            TypeInfo.from_suffix(None) → VarType.SINGLE (default)
         """
         if suffix == '%':
             return VarType.INTEGER
@@ -1097,6 +1348,10 @@ class TypeInfo:
 
         Returns:
             VarType enum value
+
+        Examples:
+            TypeInfo.from_def_statement(TokenType.DEFINT) → VarType.INTEGER
+            TypeInfo.from_def_statement(TokenType.DEFSTR) → VarType.STRING
         """
         # Import here to avoid circular dependency
         from src.tokens import TokenType

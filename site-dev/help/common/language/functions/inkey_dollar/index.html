@@ -886,7 +886,7 @@
 </code></pre></div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <p>Returns either a one-character string containing a character read from the terminal or a null string if no character is pending at the terminal. No characters will be echoed and all characters are passed through to the program.</p>
-<p><strong>Note</strong>: In original MBASIC, Control-C would terminate the program. In the BASIC Compiler, Control-C was passed through. This implementation passes Control-C through to the program (it can be detected and handled).</p>
+<p><strong>Note</strong>: Control-C behavior varied in original implementations. In MBASIC 5.21 interpreter, Control-C would terminate the program. In the BASIC Compiler, Control-C was passed through. This implementation follows compiler behavior and passes Control-C through (CHR$(3)) for program detection and handling.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">1000</span><span class="w"> </span><span class="c1">REM TIMED INPUT SUBROUTINE</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nl">1010</span><span class="w"> </span><span class="vg">RESPONSE$</span><span class="o">=</span><span class="s2">&quot;&quot;</span>

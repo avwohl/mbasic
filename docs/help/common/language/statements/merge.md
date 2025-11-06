@@ -19,7 +19,7 @@ MERGE <filename>
 
 ## Purpose
 
-To merge a specified disk file into the      program currently in memory.
+To merge a specified disk file into the program currently in memory.
 
 ## Remarks
 

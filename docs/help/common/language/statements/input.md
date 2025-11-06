@@ -13,7 +13,7 @@ type: statement
 ## Syntax
 
 ```basic
-INPUT[:] [<"prompt string">:]<list of variables>
+INPUT[;] ["prompt string"[;|,]]variable[,variable...]
 ```
 
 ## Purpose

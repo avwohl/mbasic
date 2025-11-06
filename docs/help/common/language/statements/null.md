@@ -26,14 +26,12 @@ For 10-character-per-second tape punches, <integer expression> should be >=3. Wh
 ## Example
 
 ```basic
-Ok
-              NULL 2
-              Ok
-              100 INPUT X
-              200 IF X<50 GOTO 800
-              Two null characters will be printed after each
-              line.
+NULL 2
+100 INPUT X
+200 IF X<50 GOTO 800
 ```
+
+Two null characters will be printed after each line.
 
 ## See Also
 - [WIDTH](width.md) - Set printed line width

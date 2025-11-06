@@ -916,7 +916,7 @@
 <h1 id="varptr">VARPTR<a class="headerlink" href="#varptr" title="Permanent link">&para;</a></h1>
 <h2 id="implementation-note">Implementation Note<a class="headerlink" href="#implementation-note" title="Permanent link">&para;</a></h2>
 <p>⚠️ <strong>Not Implemented</strong>: This feature requires direct memory access and is not implemented in this Python-based interpreter.</p>
-<p><strong>Behavior</strong>: Function is not available</p>
+<p><strong>Behavior</strong>: Function is not available (runtime error when called)</p>
 <p><strong>Why</strong>: In the original MBASIC, VARPTR returned a pointer to the variable's memory address. Python uses managed memory with garbage collection, so variables don't have fixed memory addresses.</p>
 <p><strong>Historical Context</strong>: VARPTR was used to pass variable addresses to assembly language subroutines via CALL or USR functions, which are also not implemented.</p>
 <p><strong>Historical Reference</strong>: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.</p>

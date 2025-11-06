@@ -67,6 +67,11 @@ class FileHandle(ABC):
         """Check if at end of file."""
         pass
 
+    @abstractmethod
+    def flush(self):
+        """Flush write buffers."""
+        pass
+
 
 class FileSystemProvider(ABC):
     """

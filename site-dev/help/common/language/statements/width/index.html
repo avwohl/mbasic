@@ -901,10 +901,9 @@
 <h1 id="width">WIDTH<a class="headerlink" href="#width" title="Permanent link">&para;</a></h1>
 <h2 id="implementation-note">Implementation Note<a class="headerlink" href="#implementation-note" title="Permanent link">&para;</a></h2>
 <p>⚠️ <strong>Emulated as No-Op</strong>: This statement is parsed for compatibility but performs no operation.</p>
-<p><strong>Behavior</strong>: Statement executes successfully without errors, but does not affect output width.</p>
+<p><strong>Behavior</strong>: The simple "WIDTH <number>" statement parses and executes successfully without errors, but does not affect output width (settings are silently ignored).</p>
 <p><strong>Why</strong>: Terminal and UI width is controlled by the operating system or UI framework, not the BASIC program. The WIDTH statement cannot actually change these settings.</p>
-<p><strong>Note</strong>: Programs using WIDTH will run without errors, but width settings are silently ignored.</p>
-<p><strong>Limitations</strong>: The "WIDTH LPRINT" syntax is not supported (parse error). Only the simple "WIDTH <number>" form is accepted.</p>
+<p><strong>Limitations</strong>: The "WIDTH LPRINT" syntax is NOT supported and will cause a parse error. Only the simple "WIDTH <number>" form is accepted as a no-op.</p>
 <p><strong>Historical Reference</strong>: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.</p>
 <hr />
 <h2 id="syntax">Syntax<a class="headerlink" href="#syntax" title="Permanent link">&para;</a></h2>

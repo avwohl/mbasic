@@ -39,7 +39,7 @@ The OPTION BASE statement must appear before any DIM statements or array referen
 60 NEXT I
 ```
 
-Without OPTION BASE 1, the array would have elements A(0) through A(10).
+Without OPTION BASE 1 (using the default OPTION BASE 0), the array DIM A(10) would have elements A(0) through A(10).
 
 ## See Also
 - [DIM](dim.md) - Declare array dimensions and allocate memory for array variables

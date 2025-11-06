@@ -2,7 +2,7 @@
 category: arrays
 description: To eliminate arrays from a program
 keywords: ['array', 'command', 'dim', 'erase', 'error', 'for', 'if', 'program', 'statement', 'variable']
-syntax: ERASE <list of array variables>
+syntax: ERASE <array>[,<array>...]
 title: ERASE
 type: statement
 ---
@@ -12,7 +12,7 @@ type: statement
 ## Syntax
 
 ```basic
-ERASE <list of array variables>
+ERASE <array>[,<array>...]
 ```
 
 ## Purpose

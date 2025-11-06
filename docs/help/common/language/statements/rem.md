@@ -26,14 +26,16 @@ REM statements are not executed but are output exactly as entered when the progr
 ## Example
 
 ```basic
-..
-             120 REM CALCULATE AVERAGE VELOCITY
-             130 FOR I=1 TO 20
-             140 SUM=SUM + V(I)
-             or, with Extended and Disk versions:
-             120 FOR I=1 TO 20     'CALCULATE AVERAGE VELOCITY
-             130 SUM=SUM+V(I)
-             140 NEXT I
+120 REM CALCULATE AVERAGE VELOCITY
+130 FOR I=1 TO 20
+140 SUM=SUM + V(I)
+```
+
+or, with Extended and Disk versions:
+```basic
+120 FOR I=1 TO 20     'CALCULATE AVERAGE VELOCITY
+130 SUM=SUM+V(I)
+140 NEXT I
 ```
 
 ## See Also
