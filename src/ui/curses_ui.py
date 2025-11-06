@@ -3741,6 +3741,10 @@ class CursesBackend(UIBackend):
             pass
 
         def handle_input(key):
+            # Log all keys for debugging
+            with open('/tmp/mbasic_dialog_debug.txt', 'a') as f:
+                f.write(f"handle_input got key: {repr(key)}\n")
+
             if key == 'enter':
                 result['value'] = edit.get_edit_text()
                 done['flag'] = True
