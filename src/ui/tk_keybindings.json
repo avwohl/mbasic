@@ -37,6 +37,31 @@
     }
   },
   "editor": {
+    "cut": {
+      "keys": ["Ctrl+X"],
+      "primary": "Ctrl+X",
+      "description": "Cut selected text"
+    },
+    "copy": {
+      "keys": ["Ctrl+C"],
+      "primary": "Ctrl+C",
+      "description": "Copy selected text"
+    },
+    "paste": {
+      "keys": ["Ctrl+V"],
+      "primary": "Ctrl+V",
+      "description": "Paste text"
+    },
+    "find": {
+      "keys": ["Ctrl+F"],
+      "primary": "Ctrl+F",
+      "description": "Find text"
+    },
+    "replace": {
+      "keys": ["Ctrl+H"],
+      "primary": "Ctrl+H",
+      "description": "Replace text"
+    },
     "smart_insert": {
       "keys": ["Ctrl+I"],
       "primary": "Ctrl+I",

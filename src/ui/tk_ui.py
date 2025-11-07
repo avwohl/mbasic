@@ -378,17 +378,24 @@ class TkBackend(UIBackend):
         # Edit menu
         edit_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Edit", menu=edit_menu)
-        edit_menu.add_command(label="Cut", command=self._menu_cut, accelerator="Ctrl+X")
-        edit_menu.add_command(label="Copy", command=self._menu_copy, accelerator="Ctrl+C")
-        edit_menu.add_command(label="Paste", command=self._menu_paste, accelerator="Ctrl+V")
+        edit_menu.add_command(label="Cut", command=self._menu_cut,
+                             accelerator=self.keybindings.get_tk_accelerator('editor', 'cut'))
+        edit_menu.add_command(label="Copy", command=self._menu_copy,
+                             accelerator=self.keybindings.get_tk_accelerator('editor', 'copy'))
+        edit_menu.add_command(label="Paste", command=self._menu_paste,
+                             accelerator=self.keybindings.get_tk_accelerator('editor', 'paste'))
         edit_menu.add_separator()
-        edit_menu.add_command(label="Find...", command=self._menu_find, accelerator="Ctrl+F")
+        edit_menu.add_command(label="Find...", command=self._menu_find,
+                             accelerator=self.keybindings.get_tk_accelerator('editor', 'find'))
         edit_menu.add_command(label="Find Next", command=self._find_next, accelerator="F3")
-        edit_menu.add_command(label="Replace...", command=self._menu_replace, accelerator="Ctrl+H")
+        edit_menu.add_command(label="Replace...", command=self._menu_replace,
+                             accelerator=self.keybindings.get_tk_accelerator('editor', 'replace'))
         edit_menu.add_separator()
-        edit_menu.add_command(label="Insert Line", command=self._smart_insert_line, accelerator="Ctrl+I")
+        edit_menu.add_command(label="Insert Line", command=self._smart_insert_line,
+                             accelerator=self.keybindings.get_tk_accelerator('editor', 'smart_insert'))
         edit_menu.add_separator()
-        edit_menu.add_command(label="Toggle Breakpoint", command=lambda: self.root.after(1, self._toggle_breakpoint), accelerator="Ctrl+B")
+        edit_menu.add_command(label="Toggle Breakpoint", command=lambda: self.root.after(1, self._toggle_breakpoint),
+                             accelerator=self.keybindings.get_tk_accelerator('editor', 'toggle_breakpoint'))
         edit_menu.add_command(label="Clear All Breakpoints", command=lambda: self.root.after(1, self._clear_all_breakpoints))
         edit_menu.add_separator()
         edit_menu.add_command(label="Settings...", command=self._menu_settings)
@@ -411,8 +418,10 @@ class TkBackend(UIBackend):
         # View menu
         view_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="View", menu=view_menu)
-        view_menu.add_command(label="Variables", command=self._toggle_variables, accelerator="Ctrl+W")
-        view_menu.add_command(label="Execution Stack", command=self._toggle_stack, accelerator="Ctrl+K")
+        view_menu.add_command(label="Variables", command=self._toggle_variables,
+                             accelerator=self.keybindings.get_tk_accelerator('view', 'toggle_variables'))
+        view_menu.add_command(label="Execution Stack", command=self._toggle_stack,
+                             accelerator=self.keybindings.get_tk_accelerator('view', 'toggle_stack'))
 
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -431,10 +440,16 @@ class TkBackend(UIBackend):
         self.keybindings.bind_all_to_tk(self.root, 'menu', 'run_program', lambda e: self._menu_run())
         self.keybindings.bind_all_to_tk(self.root, 'menu', 'help_topics', lambda e: self._menu_help())
 
-        # Additional keyboard shortcuts not in config
-        self.root.bind('<Control-b>', lambda e: self._toggle_breakpoint())
-        self.root.bind('<Control-f>', lambda e: self._menu_find())
-        self.root.bind('<Control-h>', lambda e: self._menu_replace())
+        # Editor shortcuts
+        self.keybindings.bind_all_to_tk(self.root, 'editor', 'toggle_breakpoint', lambda e: self._toggle_breakpoint())
+        self.keybindings.bind_all_to_tk(self.root, 'editor', 'find', lambda e: self._menu_find())
+        self.keybindings.bind_all_to_tk(self.root, 'editor', 'replace', lambda e: self._menu_replace())
+
+        # View shortcuts
+        self.keybindings.bind_all_to_tk(self.root, 'view', 'toggle_variables', lambda e: self._toggle_variables())
+        self.keybindings.bind_all_to_tk(self.root, 'view', 'toggle_stack', lambda e: self._toggle_stack())
+
+        # Additional shortcuts
         self.root.bind('<F3>', lambda e: self._find_next())
         # Note: Ctrl+I is bound directly to editor text widget in start() (not root window)
         # to prevent tab key interference - see editor_text.text.bind('<Control-i>', ...)
