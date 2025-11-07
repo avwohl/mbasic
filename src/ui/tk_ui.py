@@ -18,6 +18,8 @@ from src.debug_logger import debug_log_error, is_debug_mode
 from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode, get_default_reverse_for_mode
 from src.pc import PC
 from src.ast_nodes import EndStatementNode
+import tkinter as tk
+from tkinter import filedialog, messagebox, font, scrolledtext, ttk, simpledialog
 
 
 class _ImmediateModeToken:
@@ -142,8 +144,6 @@ class TkBackend(UIBackend):
 
         Creates the main window and starts the Tk event loop.
         """
-        import tkinter as tk
-        from tkinter import ttk, scrolledtext
         from .tk_widgets import LineNumberedText
 
         # Create main window
@@ -284,8 +284,8 @@ class TkBackend(UIBackend):
 
         self.immediate_entry.bind('<Button-3>', show_immediate_context_menu)
 
-        execute_btn = ttk.Button(input_frame, text="Execute", command=self._execute_immediate)
-        execute_btn.pack(side=tk.LEFT)
+        self.execute_btn = ttk.Button(input_frame, text="Enter", command=self._execute_immediate)
+        self.execute_btn.pack(side=tk.LEFT)
 
         # Set immediate_history and immediate_status to None
         # These attributes are not currently used but are set to None for defensive programming
@@ -349,7 +349,6 @@ class TkBackend(UIBackend):
 
     def _create_menu(self):
         """Create menu bar."""
-        import tkinter as tk
 
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
@@ -456,8 +455,6 @@ class TkBackend(UIBackend):
 
     def _create_toolbar(self):
         """Create toolbar with common actions."""
-        import tkinter as tk
-        from tkinter import ttk
 
         toolbar = ttk.Frame(self.root)
         toolbar.pack(side=tk.TOP, fill=tk.X)
@@ -493,8 +490,6 @@ class TkBackend(UIBackend):
 
     def _menu_open(self):
         """File > Open"""
-        import tkinter as tk
-        from tkinter import filedialog, messagebox
 
         filename = filedialog.askopenfilename(
             title="Open BASIC Program",
@@ -549,8 +544,6 @@ class TkBackend(UIBackend):
 
     def _menu_save_as(self):
         """File > Save As"""
-        import tkinter as tk
-        from tkinter import filedialog
 
         filename = filedialog.asksaveasfilename(
             title="Save BASIC Program",
@@ -574,7 +567,6 @@ class TkBackend(UIBackend):
 
     def _update_recent_files_menu(self):
         """Update the Recent Files submenu with current list."""
-        import tkinter as tk
         from pathlib import Path
 
         if not self.recent_files_menu:
@@ -619,8 +611,6 @@ class TkBackend(UIBackend):
             filepath: Full path to file to open
         """
         from pathlib import Path
-        import tkinter as tk
-        from tkinter import messagebox
 
         # Check if file exists
         if not Path(filepath).exists():
@@ -674,8 +664,6 @@ class TkBackend(UIBackend):
 
     def _clear_recent_files(self):
         """Clear the recent files list."""
-        import tkinter as tk
-        from tkinter import messagebox
 
         result = messagebox.askyesno(
             "Clear Recent Files",
@@ -828,7 +816,6 @@ class TkBackend(UIBackend):
 
     def _menu_continue(self):
         """Run > Continue (from breakpoint or error)"""
-        import tkinter as tk
 
         if not self.interpreter or not self.paused_at_breakpoint:
             self._set_status("Not paused")
@@ -990,8 +977,6 @@ class TkBackend(UIBackend):
 
     def _create_variables_window(self):
         """Create variables watch window (Toplevel)."""
-        import tkinter as tk
-        from tkinter import ttk
 
         # Create window
         self.variables_window = tk.Toplevel(self.root)
@@ -1103,8 +1088,6 @@ class TkBackend(UIBackend):
 
     def _on_variable_double_click(self, event):
         """Handle double-click on variable to edit its value."""
-        import tkinter as tk
-        from tkinter import simpledialog
         import re
 
         # Check if we clicked on a row (accept both 'tree' and 'cell' regions)
@@ -1143,8 +1126,6 @@ class TkBackend(UIBackend):
             type_suffix: Type character ($, %, !, #, or empty)
             current_value: Current value as string
         """
-        import tkinter as tk
-        from tkinter import simpledialog, messagebox
 
         if not self.runtime:
             messagebox.showerror("Error", "Runtime not available")
@@ -1232,8 +1213,6 @@ class TkBackend(UIBackend):
             type_suffix: Type character ($, %, !, #, or empty)
             value_display: Display string like "Array(10x10) [5,3]=42"
         """
-        import tkinter as tk
-        from tkinter import messagebox
         import re
 
         if not self.runtime:
@@ -1592,7 +1571,6 @@ class TkBackend(UIBackend):
 
     def _edit_selected_variable(self):
         """Edit the currently selected variable (called by Edit button)."""
-        from tkinter import messagebox
 
         # Get selected item
         selection = self.variables_tree.selection()
@@ -1618,8 +1596,6 @@ class TkBackend(UIBackend):
 
     def _create_stack_window(self):
         """Create execution stack window (Toplevel)."""
-        import tkinter as tk
-        from tkinter import ttk
 
         # Create window
         self.stack_window = tk.Toplevel(self.root)
@@ -1725,7 +1701,6 @@ class TkBackend(UIBackend):
 
     def _menu_clear_output(self):
         """Run > Clear Output"""
-        import tkinter as tk
         self.output_text.config(state=tk.NORMAL)
         self.output_text.delete(1.0, tk.END)
         self.output_text.config(state=tk.DISABLED)
@@ -1738,9 +1713,9 @@ class TkBackend(UIBackend):
         open_help_in_browser(topic="help/ui/tk/", ui_type="tk")
 
     def _menu_games_library(self):
-        """Help > Games Library - Opens program library in browser"""
+        """Help > Games Library - Opens games library in browser"""
         from .web_help_launcher import open_help_in_browser
-        open_help_in_browser(topic="library/", ui_type="tk")
+        open_help_in_browser(topic="library/games", ui_type="tk")
 
     def _context_help(self):
         """Show context-sensitive help for keyword at cursor"""
@@ -1808,8 +1783,6 @@ class TkBackend(UIBackend):
 
     def _menu_about(self):
         """Help > About"""
-        import tkinter as tk
-        from tkinter import messagebox
 
         # Get help key from config
         help_keys = self.keybindings.get_all_keys('menu', 'help_topics')
@@ -1834,8 +1807,6 @@ class TkBackend(UIBackend):
 
     def _menu_find(self):
         """Edit > Find... (Ctrl+F)"""
-        import tkinter as tk
-        from tkinter import ttk
 
         # Close any existing find dialog
         if self.find_dialog and self.find_dialog.winfo_exists():
@@ -1885,7 +1856,6 @@ class TkBackend(UIBackend):
 
     def _find_next(self):
         """Find next occurrence (F3)"""
-        import tkinter as tk
 
         if not self.find_text:
             self._menu_find()
@@ -1929,8 +1899,6 @@ class TkBackend(UIBackend):
 
     def _menu_replace(self):
         """Edit > Replace... (Ctrl+H)"""
-        import tkinter as tk
-        from tkinter import ttk
 
         # Close any existing replace dialog
         if self.replace_dialog and self.replace_dialog.winfo_exists():
@@ -2040,7 +2008,6 @@ class TkBackend(UIBackend):
         Line numbers are part of the text content as entered by user.
         No formatting is applied to preserve compatibility with real MBASIC.
         """
-        import tkinter as tk
 
         self.editor_text.text.delete(1.0, tk.END)
         for line_num, line_text in self.program.get_lines():
@@ -2058,7 +2025,6 @@ class TkBackend(UIBackend):
         Returns:
             bool: True if all lines parsed successfully, False if any errors occurred
         """
-        import tkinter as tk
 
         # Clear current program
         self.program.clear()
@@ -2136,7 +2102,6 @@ class TkBackend(UIBackend):
 
         Validates each line independently as entered - immediate feedback.
         """
-        import tkinter as tk
         import re
 
         # Get editor content
@@ -2253,7 +2218,6 @@ class TkBackend(UIBackend):
         after pasting or other modifications. This provides cleanup when the user
         presses Enter to move to a new line.
         """
-        import tkinter as tk
 
         # Get current cursor position
         cursor_pos = self.editor_text.text.index(tk.INSERT)
@@ -2295,7 +2259,6 @@ class TkBackend(UIBackend):
         Returns:
             'break' to prevent default Enter behavior
         """
-        import tkinter as tk
         import re
         from lexer import tokenize
         from parser import Parser
@@ -2429,7 +2392,6 @@ class TkBackend(UIBackend):
                     new_line_num = midpoint
                 else:
                     # No room at all - offer to renumber
-                    from tkinter import messagebox
                     response = messagebox.askyesno(
                         "No Room",
                         f"No room to insert line between {current_line_num} and {next_existing_line_num}.\n\n"
@@ -2474,7 +2436,6 @@ class TkBackend(UIBackend):
         Returns:
             'break' to prevent default paste, None to allow it
         """
-        import tkinter as tk
 
         try:
             # Get clipboard content
@@ -2653,7 +2614,6 @@ class TkBackend(UIBackend):
 
         # If parity bit was set, insert the cleared character instead
         if char != event.char:
-            import tkinter as tk
             self.editor_text.text.insert(tk.INSERT, char)
             return 'break'
 
@@ -2662,7 +2622,6 @@ class TkBackend(UIBackend):
 
     def _check_line_change(self):
         """Check if cursor moved off a line and trigger auto-sort if line number changed."""
-        import tkinter as tk
         import re
 
         # Get current cursor position
@@ -2776,8 +2735,6 @@ class TkBackend(UIBackend):
 
         Triggered by Ctrl+I keyboard shortcut.
         """
-        import tkinter as tk
-        from tkinter import messagebox
         from src.ui.ui_helpers import calculate_midpoint
         import re
 
@@ -2884,7 +2841,6 @@ class TkBackend(UIBackend):
         Args:
             line_number: BASIC line number to scroll to
         """
-        import tkinter as tk
 
         # Find which editor line contains this BASIC line number
         editor_content = self.editor_text.text.get(1.0, tk.END)
@@ -2909,7 +2865,6 @@ class TkBackend(UIBackend):
 
     def _add_output(self, text):
         """Add text to output widget."""
-        import tkinter as tk
 
         self.output_text.config(state=tk.NORMAL)
         self.output_text.insert(tk.END, text)
@@ -2978,6 +2933,7 @@ class TkBackend(UIBackend):
 
     def _execute_tick(self):
         """Execute one tick of the interpreter and schedule next tick if needed."""
+
         if not self.running or not self.interpreter:
             return
 
@@ -2989,9 +2945,13 @@ class TkBackend(UIBackend):
 
             # Handle interpreter state (input needed, error, halted, or running)
             if state.input_prompt is not None:
-                # INPUT statement needs user input - pause execution and show input row
+                # INPUT statement needs user input - pause execution
                 self.running = False
-                self._show_input_row(state.input_prompt)
+                # Update UI state to enable immediate pane for input
+                self._update_immediate_status()
+                # Clear and focus immediate entry for user input
+                self.immediate_entry.delete(0, tk.END)
+                self.immediate_entry.focus_force()
                 # Don't schedule next tick - will resume when user provides input
                 return
 
@@ -3216,12 +3176,10 @@ class TkBackend(UIBackend):
         Returns:
             Current text in editor
         """
-        import tkinter as tk
         return self.editor_text.text.get(1.0, tk.END)
 
     def cmd_new(self) -> None:
         """Execute NEW command - clear program."""
-        import tkinter as tk
 
         # Stop current autosave
         self.auto_save.stop_autosave()
@@ -3550,7 +3508,6 @@ class TkBackend(UIBackend):
 
     def _update_immediate_status(self):
         """Update immediate mode panel status based on interpreter state."""
-        import tkinter as tk
 
         if not self.immediate_executor or not self.immediate_entry or not self.immediate_prompt_label:
             return
@@ -3578,13 +3535,18 @@ class TkBackend(UIBackend):
             self.immediate_entry.config(state=tk.NORMAL)
         else:
             # Not safe - disable input (program is running)
-            self.immediate_prompt_label.config(text="[running] >", fg="red")
-            self.immediate_entry.config(state=tk.DISABLED)
+            # UNLESS we're waiting for INPUT from the user
+            if self.interpreter and self.interpreter.state.input_prompt is not None:
+                # Enable input for INPUT statement
+                self.immediate_prompt_label.config(text=self.interpreter.state.input_prompt, fg="blue")
+                self.immediate_entry.config(state=tk.NORMAL)
+            else:
+                # Program is running, disable input
+                self.immediate_prompt_label.config(text="[running] >", fg="red")
+                self.immediate_entry.config(state=tk.DISABLED)
 
     def _execute_immediate(self):
         """Execute immediate mode command."""
-        import tkinter as tk
-        from tkinter import messagebox
 
         if not self.immediate_executor or not self.immediate_entry:
             messagebox.showwarning("Warning", "Immediate mode not initialized")
@@ -3592,6 +3554,18 @@ class TkBackend(UIBackend):
 
         command = self.immediate_entry.get().strip()
         if not command:
+            return
+
+        # Check if interpreter is waiting for INPUT during program execution
+        if self.interpreter and self.interpreter.state.input_prompt is not None:
+            # Provide input to the running program
+            value = command
+            self.immediate_entry.delete(0, tk.END)
+            self._add_output(value + '\n')
+            self.interpreter.provide_input(value)
+            self.immediate_prompt_label.config(text="Ok >")
+            self.running = True
+            self.tick_timer_id = self.root.after(10, self._execute_tick)
             return
 
         # Check if safe to execute
@@ -3637,7 +3611,6 @@ class TkBackend(UIBackend):
             # Start execution if not already running
             if not self.running:
                 # Switch interpreter IO to output to main output pane (not immediate output)
-                from src.ui.tk_io_handler import TkIOHandler
                 tk_io = TkIOHandler(self._add_output, self.root, backend=self)
                 self.interpreter.io = tk_io
 
@@ -3675,7 +3648,6 @@ class TkBackend(UIBackend):
 
     def _setup_editor_context_menu(self):
         """Setup right-click context menu for editor text widget."""
-        import tkinter as tk
 
         def show_context_menu(event):
             menu = tk.Menu(self.editor_text, tearoff=0)
@@ -3714,14 +3686,12 @@ class TkBackend(UIBackend):
 
     def _select_all_editor(self):
         """Select all text in editor."""
-        import tkinter as tk
         self.editor_text.text.tag_add(tk.SEL, "1.0", tk.END)
         self.editor_text.text.mark_set(tk.INSERT, "1.0")
         self.editor_text.text.see(tk.INSERT)
 
     def _setup_output_context_menu(self):
         """Setup right-click context menu for output text widget."""
-        import tkinter as tk
 
         def show_context_menu(event):
             menu = tk.Menu(self.output_text, tearoff=0)
@@ -3761,7 +3731,6 @@ class TkBackend(UIBackend):
         in the Tk UI (see __init__). This is dead code retained for potential
         future use if immediate mode gets its own output widget.
         """
-        import tkinter as tk
 
         def show_context_menu(event):
             menu = tk.Menu(self.immediate_history, tearoff=0)
@@ -3796,7 +3765,6 @@ class TkBackend(UIBackend):
 
     def _copy_output_selection(self):
         """Copy selected text from output widget to clipboard."""
-        import tkinter as tk
         try:
             selected_text = self.output_text.get(tk.SEL_FIRST, tk.SEL_LAST)
             self.root.clipboard_clear()
@@ -3806,14 +3774,12 @@ class TkBackend(UIBackend):
 
     def _select_all_output(self):
         """Select all text in output widget."""
-        import tkinter as tk
         self.output_text.tag_add(tk.SEL, "1.0", tk.END)
         self.output_text.mark_set(tk.INSERT, "1.0")
         self.output_text.see(tk.INSERT)
 
     def _copy_immediate_selection(self):
         """Copy selected text from immediate history widget to clipboard."""
-        import tkinter as tk
         try:
             selected_text = self.immediate_history.get(tk.SEL_FIRST, tk.SEL_LAST)
             self.root.clipboard_clear()
@@ -3823,14 +3789,12 @@ class TkBackend(UIBackend):
 
     def _select_all_immediate(self):
         """Select all text in immediate history widget."""
-        import tkinter as tk
         self.immediate_history.tag_add(tk.SEL, "1.0", tk.END)
         self.immediate_history.mark_set(tk.INSERT, "1.0")
         self.immediate_history.see(tk.INSERT)
 
     def _show_input_row(self, prompt: str = ''):
         """Show the INPUT row with prompt."""
-        import tkinter as tk
 
         if self.input_row and self.input_label and self.input_entry:
             # Set prompt text
@@ -3852,7 +3816,6 @@ class TkBackend(UIBackend):
 
     def _submit_input(self):
         """Submit INPUT value from inline input field."""
-        import tkinter as tk
 
         if not self.input_entry:
             return
@@ -3939,7 +3902,6 @@ class TkIOHandler(IOHandler):
             return result
         else:
             # Fallback to dialog if backend not available
-            from tkinter import simpledialog
 
             result = simpledialog.askstring(
                 "INPUT",
@@ -3960,7 +3922,6 @@ class TkIOHandler(IOHandler):
         Unlike input() which prefers inline input field, this ALWAYS uses
         a modal dialog regardless of backend availability.
         """
-        from tkinter import simpledialog
 
         # Show prompt in output first
         if prompt:
@@ -3992,7 +3953,6 @@ class TkIOHandler(IOHandler):
             # Non-blocking: no key available (would need background monitoring)
             return ""
 
-        from tkinter import simpledialog
 
         # Show modal input dialog
         result = simpledialog.askstring(
