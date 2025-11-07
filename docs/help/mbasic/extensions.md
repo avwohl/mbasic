@@ -4,12 +4,6 @@
 
 This is **MBASIC-2025**, a modern implementation of Microsoft BASIC-80 5.21 (CP/M era) with carefully chosen extensions for modern development while maintaining 100% compatibility with original MBASIC 5.21 programs.
 
-**Project Names Under Consideration:**
-- MBASIC-2025 (emphasizes the modern update)
-- Visual MBASIC 5.21 (emphasizes the multiple UIs)
-- MBASIC++ (emphasizes extensions)
-- MBASIC-X (extended MBASIC)
-
 ## Extensions Beyond Original MBASIC 5.21
 
 These features are **NOT** in the original CP/M MBASIC 5.21 from 1981. They are modern additions for improved development experience.

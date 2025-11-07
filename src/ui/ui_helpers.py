@@ -215,7 +215,8 @@ def update_line_references(code: str, line_mapping: Dict[int, int]) -> str:
     # Match: keyword + space + line number
     # Keywords: GOTO, GOSUB, THEN, ELSE, or "ON <expr> GOTO/GOSUB"
     # Note: Pattern uses .+? (non-greedy) to match expression in ON statements,
-    # which allows expressions containing any characters including 'G' (e.g., ON FLAG GOTO)
+    # which correctly handles edge cases like "ON FLAG GOTO" (variable starting with 'G'),
+    # "ON X+Y GOTO" (expressions), and "ON A$ GOTO" (string variables)
     pattern = re.compile(
         r'\b(GOTO|GOSUB|THEN|ELSE|ON\s+.+?\s+GOTO|ON\s+.+?\s+GOSUB)\s+(\d+)',
         re.IGNORECASE
@@ -609,10 +610,12 @@ def renum_program(program_manager, args: str, renum_callback, runtime=None):
     Args:
         program_manager: ProgramManager instance with .lines and .line_asts
         args: RENUM command arguments (e.g., "100", "100,0,10", "100,50")
-        renum_callback: Function that takes (stmt, line_map) to update statement references.
+        renum_callback: Function(stmt: StatementNode, line_map: Dict[int, int]) -> None
+                        that updates statement line number references in-place.
                         Called for ALL statements; callback is responsible for identifying and
                         updating statements with line number references (GOTO, GOSUB, ON GOTO,
-                        ON GOSUB, IF THEN/ELSE line numbers)
+                        ON GOSUB, IF THEN/ELSE line numbers). See update_statement_references()
+                        in curses_ui.py for an example implementation.
         runtime: Optional runtime object to update with new line numbers
 
     Returns:
@@ -1150,8 +1153,10 @@ def serialize_statement(stmt):
     elif stmt_type == 'WendStatementNode':
         return "WEND"
 
-    # For other statement types, raise an error - this indicates a missing serialization handler
-    # All statement types must be explicitly handled to prevent silent data corruption during RENUM
+    # For unhandled statement types, raise an error to prevent silent data corruption
+    # Prevention strategy: Explicitly fail (with ValueError) rather than silently omitting
+    # statements during RENUM, which would corrupt the program.
+    # All statement types must be handled above - if we reach here, serialization failed.
     else:
         from src.debug_logger import debug_log
         error_msg = f"Unhandled statement type '{stmt_type}' in serialize_statement() - cannot serialize during RENUM"
@@ -1177,7 +1182,8 @@ def serialize_variable(var):
     text = getattr(var, 'original_case', var.name) or var.name
     # Only add type suffix if it was explicit in the original source
     # Don't add suffixes that were inferred from DEF statements
-    # Note: getattr defaults to False if explicit_type_suffix is missing, preventing suffix output
+    # Note: explicit_type_suffix is not always set (depends on parser implementation),
+    # so getattr defaults to False if missing, preventing incorrect suffix output
     if var.type_suffix and getattr(var, 'explicit_type_suffix', False):
         text += var.type_suffix
     if var.subscripts:

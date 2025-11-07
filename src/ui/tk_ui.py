@@ -25,9 +25,11 @@ from tkinter import filedialog, messagebox, font, scrolledtext, ttk, simpledialo
 class _ImmediateModeToken:
     """Token for variable edits from immediate mode or variable editor.
 
-    Used to mark variable changes that originate from the variable inspector
-    or immediate mode, not from program execution. The line=-1 signals to
-    runtime.set_variable() that this is a debugger/immediate mode edit.
+    This class is instantiated when editing variables via the variable inspector
+    (see _on_variable_edit() around line 1194). Used to mark variable changes that
+    originate from the variable inspector or immediate mode, not from program
+    execution. The line=-1 signals to runtime.set_variable() that this is a
+    debugger/immediate mode edit.
     """
     def __init__(self):
         self.line = -1
@@ -40,11 +42,11 @@ class TkBackend(UIBackend):
     Provides a graphical UI with:
     - Menu bar (File, Edit, Run, Help)
     - Toolbar with common actions
-    - 3-pane vertical layout:
-      * Editor with line numbers (top, ~50% - weight=3)
-      * Output pane (middle, ~33% - weight=2)
+    - 3-pane vertical layout (weights: 3:2:1 = total 6 units):
+      * Editor with line numbers (top, ~50% = 3/6 - weight=3)
+      * Output pane (middle, ~33% = 2/6 - weight=2)
         - Contains INPUT row (shown/hidden dynamically for INPUT statements)
-      * Immediate mode input line (bottom, ~17% - weight=1)
+      * Immediate mode input line (bottom, ~17% = 1/6 - weight=1)
     - File dialogs for Open/Save
 
     Usage:
@@ -213,6 +215,7 @@ class TkBackend(UIBackend):
         self.output_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # INPUT row (hidden by default, shown when INPUT statement needs input)
+        # Visibility controlled via pack() when showing, pack_forget() when hiding
         self.input_row = ttk.Frame(output_frame, height=40)
         # Don't pack yet - will be packed when needed
 
@@ -1052,7 +1055,7 @@ class TkBackend(UIBackend):
         """Handle clicks on variable list column headings.
 
         Only the Variable column (column #0) is sortable - clicking it cycles through
-        different sort modes (accessed, written, read, name, type, value).
+        different sort modes (see _cycle_variable_sort() for the cycle order).
         Type and Value columns are not sortable.
         """
         # Identify which part of the tree was clicked
@@ -1240,8 +1243,8 @@ class TkBackend(UIBackend):
             dimensions = self.runtime._arrays[full_name]['dims']
 
         # If no default subscripts, use first element based on array_base
-        # OPTION BASE only allows 0 or 1. The else clause is defensive programming
-        # to handle any unexpected values (should not occur in correct implementations).
+        # OPTION BASE only allows 0 or 1 (validated by OPTION statement parser).
+        # The else clause is defensive programming for unexpected values.
         if not default_subscripts and dimensions:
             array_base = self.runtime.array_base
             if array_base == 0:
@@ -2212,7 +2215,8 @@ class TkBackend(UIBackend):
         """Remove all blank lines from the editor (except final line).
 
         Removes blank lines to keep program clean, but preserves the final
-        line which is always blank in Tk Text widget (internal Tk behavior).
+        line. Tk Text widgets always end with a newline character (Tk design -
+        text content ends at last newline, so there's always an empty final line).
 
         Currently called only from _on_enter_key (after each Enter key press), not
         after pasting or other modifications. This provides cleanup when the user
@@ -2472,9 +2476,9 @@ class TkBackend(UIBackend):
                     return 'break'
 
             # Multi-line paste or single-line paste into blank line - use auto-numbering logic
-            # This handles two cases:
-            # 1. Multi-line paste (sanitized_text contains \n) - auto-number if needed
-            # 2. Single-line paste into blank line (current_line_text is empty) - auto-number if needed
+            # Both cases use the same logic (split by \n, process each line):
+            # 1. Multi-line paste: sanitized_text contains \n → multiple lines to process
+            # 2. Single-line paste into blank line: current_line_text empty → one line to process
             from lexer import tokenize
             from parser import Parser
 
@@ -2578,9 +2582,10 @@ class TkBackend(UIBackend):
             'break' to prevent character insertion, None to allow it
         """
         # Clear yellow statement highlight on any keypress when paused at breakpoint
-        # This prevents visual artifact where statement highlight remains on part of a line
-        # after text is modified (occurs because highlight is tag-based and editing shifts positions).
-        # Note: This clears on ANY key including arrows/function keys, not just editing keys.
+        # Clears on ANY key (even arrows/function keys) because: 1) user interaction during
+        # debugging suggests intent to modify/inspect code, making highlight less relevant,
+        # and 2) prevents visual artifacts when text IS modified (highlight is tag-based and
+        # editing shifts character positions, causing highlight to drift or split incorrectly).
         if self.paused_at_breakpoint:
             self._clear_statement_highlight()
 
@@ -2910,8 +2915,8 @@ class TkBackend(UIBackend):
             match = re.match(r'^\s*(\d+)', line_text)
             if match and int(match.group(1)) == line_number:
                 # Found the line - use char positions directly
-                # Lines are displayed exactly as stored, so char_start/char_end
-                # are relative to the line as displayed
+                # Lines are displayed exactly as stored in program manager (see _refresh_editor),
+                # so char_start/char_end from runtime are directly usable as Tk text indices
 
                 start_idx = f"{editor_line_idx}.{char_start}"
                 end_idx = f"{editor_line_idx}.{char_end}"
@@ -3470,6 +3475,7 @@ class TkBackend(UIBackend):
         - Ctrl+C/Break
         - END statement (in some cases)
 
+        Validation: Requires runtime exists and runtime.stopped is True.
         Invalid if program was edited after stopping.
 
         The interpreter moves NPC to PC when STOP is executed (see execute_stop()
@@ -3582,8 +3588,9 @@ class TkBackend(UIBackend):
         # This allows LIST to work, but doesn't start execution
         self._sync_program_to_runtime()
 
-        # Execute without echoing (GUI design choice: command is visible in entry field,
-        # and "Ok" prompt is unnecessary in GUI context - only results are shown)
+        # Execute without echoing (GUI design choice that deviates from typical BASIC
+        # behavior: command is visible in entry field, and "Ok" prompt is unnecessary
+        # in GUI context - only results are shown. Traditional BASIC echoes to output.)
         success, output = self.immediate_executor.execute(command)
 
         # Show output if any
@@ -3605,7 +3612,7 @@ class TkBackend(UIBackend):
 
         # Check if interpreter has work to do (after RUN statement)
         # Use has_work() to check if the interpreter is ready to execute (e.g., after RUN command).
-        # This complements runtime flag checks (self.running, runtime.halted) used elsewhere.
+        # This is the only location in tk_ui.py that calls has_work().
         has_work = self.interpreter.has_work()
         if has_work:
             # Start execution if not already running
@@ -3641,8 +3648,8 @@ class TkBackend(UIBackend):
 
         This method name is historical - it simply forwards to _add_output().
         In the Tk UI, immediate mode output goes to the main output pane.
-        Note: self.immediate_history exists but is always None (see __init__) -
-        it's a dummy attribute for compatibility with code that references it.
+        Note: self.immediate_history exists but is always None (see __init__). Code
+        that references it (e.g., _setup_immediate_context_menu) guards against None.
         """
         self._add_output(text)
 
@@ -3731,6 +3738,8 @@ class TkBackend(UIBackend):
         in the Tk UI (see __init__). This is dead code retained for potential
         future use if immediate mode gets its own output widget.
         """
+        if self.immediate_history is None:
+            return  # Nothing to set up
 
         def show_context_menu(event):
             menu = tk.Menu(self.immediate_history, tearoff=0)
@@ -3847,8 +3856,8 @@ class TkIOHandler(IOHandler):
     output text widget via a callback function.
 
     Input strategy:
-    - INPUT statement: Prefers inline input field (when backend available),
-      falls back to modal dialog
+    - INPUT statement: Uses inline input field when backend available,
+      otherwise uses modal dialog (not a preference, but availability-based)
     - LINE INPUT statement: Always uses modal dialog for consistent UX
     """
     

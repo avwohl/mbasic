@@ -55,7 +55,7 @@ Ok
 - [FILES](../statements/files.md) - Displays the directory of files on disk
 - [GET](../statements/get.md) - To read a record from a random disk file into    a random buffer
 - [INPUT$](input_dollar.md) - Returns a string of X characters, read from the terminal or from file number Y
-- [LOC](loc.md) - With random disk files, LOC returns the next record number to be used if a GET or PUT (without a record number) is executed
+- [LOC](loc.md) - Returns current file POSITION/record number (LOF returns total SIZE in bytes)
 - [LPOS](lpos.md) - Returns the current position of the line printer print head within the line printer buffer
 - [LSET](../statements/lset.md) - Left-justifies a string in a field for random file output
 - [OPEN](../statements/open.md) - To allow I/O to a disk file

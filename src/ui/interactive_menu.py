@@ -50,7 +50,7 @@ class InteractiveMenuBar(urwid.WidgetWrap):
             'Run': [
                 (f'Run Program    {key_to_display(kb.RUN_KEY)}', '_run_program'),
                 (f'Continue       {key_to_display(kb.CONTINUE_KEY)}', '_debug_continue'),
-                (f'Step Line      {key_to_display(kb.LIST_KEY)}', '_debug_step_line'),
+                (f'Step Line      {key_to_display(kb.STEP_LINE_KEY)}', '_debug_step_line'),
                 (f'Step Statement {key_to_display(kb.STEP_KEY)}', '_debug_step_statement'),
                 (f'Stop           {key_to_display(kb.STOP_KEY)}', '_debug_stop'),
                 ('---', None),

@@ -27,7 +27,7 @@ To merge a specified disk file into the program currently in memory.
 
 If any lines in the disk file have the same line numbers as lines in the program in memory, the lines from the file on disk will replace the corresponding lines in memory. (MERGEing may be thought of as "inserting" the program lines on disk into the program in memory.)
 
-**Open files**: Unlike LOAD, MERGE does NOT close open files. Files that are open before MERGE remain open after MERGE completes.
+**File handling:** Unlike LOAD (without ,R), MERGE does **NOT close open files**. Files that are open before MERGE remain open after MERGE completes. (Compare with [LOAD](load.md) which closes files except when using the ,R option.)
 
 BASIC-80 always returns to command level after executing a MERGE command.
 

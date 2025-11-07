@@ -21,6 +21,8 @@ CVI(2-byte string) CVS(4-byte string) CVD(8-byte string)
 
 Convert string values to numeric values. Numeric values that are read in from a random disk file must be converted from strings back into numbers. CVI converts a 2-byte string to an integer. CVS converts a 4-byte string to a single precision number. CVD converts an 8-byte string to a double precision number.
 
+**Error:** Raises "Illegal function call" (error code FC/5) if the string length is incorrect (not exactly 2, 4, or 8 bytes respectively). See [Error Codes](../appendices/error-codes.md) for details.
+
 ## Example
 
 ```basic

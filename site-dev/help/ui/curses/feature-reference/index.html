@@ -1,0 +1,1398 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/help/ui/curses/feature-reference/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Curses UI - Complete Feature Reference - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#curses-ui-complete-feature-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Curses UI - Complete Feature Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#file-operations-7-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      File Operations (7 features)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Operations (7 features)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-program-ctrln" class="md-nav__link">
+    <span class="md-ellipsis">
+      New Program (Ctrl+N)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openload-file-ctrlo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Open/Load File (Ctrl+O)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#save-file-ctrlv" class="md-nav__link">
+    <span class="md-ellipsis">
+      Save File (Ctrl+V)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#save-as-shiftctrlv" class="md-nav__link">
+    <span class="md-ellipsis">
+      Save As (Shift+Ctrl+V)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recent-files-ctrlshifto" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recent Files (Ctrl+Shift+O)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-save" class="md-nav__link">
+    <span class="md-ellipsis">
+      Auto-Save
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#merge-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Merge Files
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execution-control-6-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Execution &amp; Control (6 features)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Execution &amp; Control (6 features)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-program-ctrlr" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run Program (Ctrl+R)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stopinterrupt-ctrlx" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stop/Interrupt (Ctrl+X)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#continue-ctrlg" class="md-nav__link">
+    <span class="md-ellipsis">
+      Continue (Ctrl+G)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-program-menu-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      List Program (Menu only)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#renumber-ctrle" class="md-nav__link">
+    <span class="md-ellipsis">
+      Renumber (Ctrl+E)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-line-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Auto Line Numbers
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debugging-6-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debugging (6 features)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Debugging (6 features)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breakpoints-ctrlb" class="md-nav__link">
+    <span class="md-ellipsis">
+      Breakpoints (Ctrl+B)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-statement-ctrlt" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step Statement (Ctrl+T)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-line-ctrlk" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step Line (Ctrl+K)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clear-all-breakpoints-ctrlshiftb" class="md-nav__link">
+    <span class="md-ellipsis">
+      Clear All Breakpoints (Ctrl+Shift+B)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-statement-debug" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-Statement Debug
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-line-highlight" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current Line Highlight
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variable-inspection-6-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variable Inspection (6 features)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Variable Inspection (6 features)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#variables-window-ctrlw" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variables Window (Ctrl+W)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edit-variable-value-not-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edit Variable Value (Not implemented)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable-filtering-f-key-in-variables-window" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variable Filtering (f key in variables window)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable-sorting-s-key-in-variables-window" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variable Sorting (s key in variables window)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execution-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      Execution Stack
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resource-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resource Usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#editor-features-7-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Editor Features (7 features)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Editor Features (7 features)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#line-editing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Line Editing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-line-edit" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-Line Edit
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-lines-ctrld" class="md-nav__link">
+    <span class="md-ellipsis">
+      Delete Lines (Ctrl+D)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cutcopypaste-not-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cut/Copy/Paste (Not implemented)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#findreplace-not-yet-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      Find/Replace (Not yet implemented)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smart-insert-ctrli" class="md-nav__link">
+    <span class="md-ellipsis">
+      Smart Insert (Ctrl+I)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sort-lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sort Lines
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#syntax-checking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax Checking
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#settings-configuration-1-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      Settings &amp; Configuration (1 feature)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Settings &amp; Configuration (1 feature)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#settings-widget-ctrl" class="md-nav__link">
+    <span class="md-ellipsis">
+      Settings Widget (Ctrl+,)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#help-system-4-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Help System (4 features)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Help System (4 features)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#help-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      Help Command (?)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integrated-docs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integrated Docs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      Search Help
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context Help
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Reference
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#most-used-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Most Used Shortcuts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#status-bar-indicators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Status Bar Indicators
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/help/ui/curses/feature-reference.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="curses-ui-complete-feature-reference">Curses UI - Complete Feature Reference<a class="headerlink" href="#curses-ui-complete-feature-reference" title="Permanent link">&para;</a></h1>
+<p>This document covers all 37 features available in the Curses UI.</p>
+<h2 id="file-operations-7-features">File Operations (7 features)<a class="headerlink" href="#file-operations-7-features" title="Permanent link">&para;</a></h2>
+<h3 id="new-program-ctrln">New Program (Ctrl+N)<a class="headerlink" href="#new-program-ctrln" title="Permanent link">&para;</a></h3>
+<p>Clear the current program and start fresh.</p>
+<h3 id="openload-file-ctrlo">Open/Load File (Ctrl+O)<a class="headerlink" href="#openload-file-ctrlo" title="Permanent link">&para;</a></h3>
+<p>Load a BASIC program from disk. Opens a file browser to select the file.</p>
+<h3 id="save-file-ctrlv">Save File (Ctrl+V)<a class="headerlink" href="#save-file-ctrlv" title="Permanent link">&para;</a></h3>
+<p>Save the current program to disk. If no filename is set, prompts for one.
+Note: Uses Ctrl+V because Ctrl+S is reserved for terminal flow control.</p>
+<h3 id="save-as-shiftctrlv">Save As (Shift+Ctrl+V)<a class="headerlink" href="#save-as-shiftctrlv" title="Permanent link">&para;</a></h3>
+<p>Save the current program with a new filename.</p>
+<h3 id="recent-files-ctrlshifto">Recent Files (Ctrl+Shift+O)<a class="headerlink" href="#recent-files-ctrlshifto" title="Permanent link">&para;</a></h3>
+<p>View and load from a list of recently opened files.</p>
+<h3 id="auto-save">Auto-Save<a class="headerlink" href="#auto-save" title="Permanent link">&para;</a></h3>
+<p>The Curses UI automatically saves your work periodically to prevent data loss.</p>
+<h3 id="merge-files">Merge Files<a class="headerlink" href="#merge-files" title="Permanent link">&para;</a></h3>
+<p>Merge another BASIC program into the current one. Useful for combining code modules.</p>
+<h2 id="execution-control-6-features">Execution &amp; Control (6 features)<a class="headerlink" href="#execution-control-6-features" title="Permanent link">&para;</a></h2>
+<h3 id="run-program-ctrlr">Run Program (Ctrl+R)<a class="headerlink" href="#run-program-ctrlr" title="Permanent link">&para;</a></h3>
+<p>Execute the current BASIC program from the beginning.</p>
+<h3 id="stopinterrupt-ctrlx">Stop/Interrupt (Ctrl+X)<a class="headerlink" href="#stopinterrupt-ctrlx" title="Permanent link">&para;</a></h3>
+<p>Stop a running program immediately.</p>
+<h3 id="continue-ctrlg">Continue (Ctrl+G)<a class="headerlink" href="#continue-ctrlg" title="Permanent link">&para;</a></h3>
+<p>Resume execution after hitting a breakpoint or stepping.</p>
+<h3 id="list-program-menu-only">List Program (Menu only)<a class="headerlink" href="#list-program-menu-only" title="Permanent link">&para;</a></h3>
+<p>Display the program listing in the editor. Access through the menu bar.</p>
+<h3 id="renumber-ctrle">Renumber (Ctrl+E)<a class="headerlink" href="#renumber-ctrle" title="Permanent link">&para;</a></h3>
+<p>Renumber all program lines with consistent increments. Opens a dialog to specify start line and increment.</p>
+<h3 id="auto-line-numbers">Auto Line Numbers<a class="headerlink" href="#auto-line-numbers" title="Permanent link">&para;</a></h3>
+<p>Automatically generate line numbers when entering new lines. Toggle on/off as needed.</p>
+<h2 id="debugging-6-features">Debugging (6 features)<a class="headerlink" href="#debugging-6-features" title="Permanent link">&para;</a></h2>
+<h3 id="breakpoints-ctrlb">Breakpoints (Ctrl+B)<a class="headerlink" href="#breakpoints-ctrlb" title="Permanent link">&para;</a></h3>
+<p>Toggle a breakpoint on the current line. Execution will pause when reaching this line.
+- Set: Click margin or press Ctrl+B
+- Indicated by: ● symbol in line number margin</p>
+<h3 id="step-statement-ctrlt">Step Statement (Ctrl+T)<a class="headerlink" href="#step-statement-ctrlt" title="Permanent link">&para;</a></h3>
+<p>Execute one BASIC statement and pause. Useful for debugging complex lines with multiple statements.</p>
+<h3 id="step-line-ctrlk">Step Line (Ctrl+K)<a class="headerlink" href="#step-line-ctrlk" title="Permanent link">&para;</a></h3>
+<p>Execute the next line of code and pause. Advances one line number at a time.</p>
+<h3 id="clear-all-breakpoints-ctrlshiftb">Clear All Breakpoints (Ctrl+Shift+B)<a class="headerlink" href="#clear-all-breakpoints-ctrlshiftb" title="Permanent link">&para;</a></h3>
+<p>Remove all breakpoints from the program at once.</p>
+<h3 id="multi-statement-debug">Multi-Statement Debug<a class="headerlink" href="#multi-statement-debug" title="Permanent link">&para;</a></h3>
+<p>When stepping, the debugger highlights individual statements on lines with multiple statements (separated by :).</p>
+<h3 id="current-line-highlight">Current Line Highlight<a class="headerlink" href="#current-line-highlight" title="Permanent link">&para;</a></h3>
+<p>The currently executing line is highlighted with a cyan background during program execution.</p>
+<h2 id="variable-inspection-6-features">Variable Inspection (6 features)<a class="headerlink" href="#variable-inspection-6-features" title="Permanent link">&para;</a></h2>
+<p><strong>Note:</strong> The Curses UI provides a dedicated Variables Window. In CLI mode, variable inspection uses the PRINT statement instead. See <a href="../../cli/variables/">CLI Variables</a> for details.</p>
+<h3 id="variables-window-ctrlw">Variables Window (Ctrl+W)<a class="headerlink" href="#variables-window-ctrlw" title="Permanent link">&para;</a></h3>
+<p>Open/close the variables inspection window showing all program variables and their current values.</p>
+<h3 id="edit-variable-value-not-implemented">Edit Variable Value (Not implemented)<a class="headerlink" href="#edit-variable-value-not-implemented" title="Permanent link">&para;</a></h3>
+<p>⚠️ Variable editing is not available in Curses UI. You cannot directly edit values in the variables window. Use immediate mode commands to modify variable values instead.</p>
+<h3 id="variable-filtering-f-key-in-variables-window">Variable Filtering (f key in variables window)<a class="headerlink" href="#variable-filtering-f-key-in-variables-window" title="Permanent link">&para;</a></h3>
+<p>Filter the variables list to show only variables matching a search term.</p>
+<h3 id="variable-sorting-s-key-in-variables-window">Variable Sorting (s key in variables window)<a class="headerlink" href="#variable-sorting-s-key-in-variables-window" title="Permanent link">&para;</a></h3>
+<p>Cycle through different sort orders:
+- <strong>Accessed</strong>: Most recently accessed (read or written) - newest first
+- <strong>Written</strong>: Most recently written to - newest first
+- <strong>Read</strong>: Most recently read from - newest first
+- <strong>Name</strong>: Alphabetically by variable name</p>
+<p>Press 'd' to toggle sort direction (ascending/descending).</p>
+<h3 id="execution-stack">Execution Stack<a class="headerlink" href="#execution-stack" title="Permanent link">&para;</a></h3>
+<p>View the call stack showing:</p>
+<p><strong>Access methods:</strong>
+- Via menu: Ctrl+U → Debug → Execution Stack
+- Via command: Type <code>STACK</code> in immediate mode (same as CLI)
+- Active GOSUB calls
+- FOR/NEXT loops
+- WHILE loops
+Helps understand program flow and nesting levels.</p>
+<p><strong>How to access:</strong>
+1. Press Ctrl+U to open the menu bar
+2. Navigate to the Debug menu
+3. Select "Execution Stack" option</p>
+<p>Note: There is no dedicated keyboard shortcut to avoid conflicts with editor typing.</p>
+<h3 id="resource-usage">Resource Usage<a class="headerlink" href="#resource-usage" title="Permanent link">&para;</a></h3>
+<p>Monitor memory and variable usage in the status bar.</p>
+<h2 id="editor-features-7-features">Editor Features (7 features)<a class="headerlink" href="#editor-features-7-features" title="Permanent link">&para;</a></h2>
+<h3 id="line-editing">Line Editing<a class="headerlink" href="#line-editing" title="Permanent link">&para;</a></h3>
+<p>Edit BASIC code line-by-line with full cursor navigation.</p>
+<h3 id="multi-line-edit">Multi-Line Edit<a class="headerlink" href="#multi-line-edit" title="Permanent link">&para;</a></h3>
+<p>Edit multiple lines at once in the full-screen editor.</p>
+<h3 id="delete-lines-ctrld">Delete Lines (Ctrl+D)<a class="headerlink" href="#delete-lines-ctrld" title="Permanent link">&para;</a></h3>
+<p>Delete the current line in the editor.</p>
+<h3 id="cutcopypaste-not-implemented">Cut/Copy/Paste (Not implemented)<a class="headerlink" href="#cutcopypaste-not-implemented" title="Permanent link">&para;</a></h3>
+<p>Standard clipboard operations are not available in the Curses UI due to keyboard shortcut conflicts:
+- <strong>Ctrl+X</strong> - Used for Stop/Interrupt (cannot be used for Cut)
+- <strong>Ctrl+C</strong> - Terminal signal to exit program (cannot be used for Copy)
+- <strong>Ctrl+V</strong> - Used for Save File (cannot be used for Paste; Ctrl+S is reserved by terminal for flow control)</p>
+<p><strong>Workaround:</strong> Use your terminal's native copy/paste functions instead (typically Shift+Ctrl+C/V or mouse selection).</p>
+<h3 id="findreplace-not-yet-implemented">Find/Replace (Not yet implemented)<a class="headerlink" href="#findreplace-not-yet-implemented" title="Permanent link">&para;</a></h3>
+<p>Find and Replace functionality is not yet available in Curses UI via keyboard shortcuts.</p>
+<p><strong>Workaround:</strong> Use text editor commands in your terminal (if available) or load/edit/save files externally.</p>
+<h3 id="smart-insert-ctrli">Smart Insert (Ctrl+I)<a class="headerlink" href="#smart-insert-ctrli" title="Permanent link">&para;</a></h3>
+<p>Insert a new line number at the midpoint between the current line and the next line.
+Example: Between lines 10 and 20, inserts line 15.</p>
+<h3 id="sort-lines">Sort Lines<a class="headerlink" href="#sort-lines" title="Permanent link">&para;</a></h3>
+<p>Lines are automatically kept in numerical order. Manual sorting is available if needed.</p>
+<h3 id="syntax-checking">Syntax Checking<a class="headerlink" href="#syntax-checking" title="Permanent link">&para;</a></h3>
+<p>Real-time syntax validation as you type. Syntax errors are marked with a '?' symbol in the line number margin.</p>
+<h2 id="settings-configuration-1-feature">Settings &amp; Configuration (1 feature)<a class="headerlink" href="#settings-configuration-1-feature" title="Permanent link">&para;</a></h2>
+<h3 id="settings-widget-ctrl">Settings Widget (Ctrl+,)<a class="headerlink" href="#settings-widget-ctrl" title="Permanent link">&para;</a></h3>
+<p>Interactive settings dialog for configuring MBASIC behavior. Adjust auto-numbering, keyword case style, variable handling, themes, and more.</p>
+<p>See <a href="../settings/">Curses Settings Widget</a> for complete documentation.</p>
+<h2 id="help-system-4-features">Help System (4 features)<a class="headerlink" href="#help-system-4-features" title="Permanent link">&para;</a></h2>
+<h3 id="help-command">Help Command (?)<a class="headerlink" href="#help-command" title="Permanent link">&para;</a></h3>
+<p>Display the main help screen with keyboard shortcuts and feature overview. Press ? to open help.</p>
+<h3 id="integrated-docs">Integrated Docs<a class="headerlink" href="#integrated-docs" title="Permanent link">&para;</a></h3>
+<p>Complete MBASIC language reference and UI guide built into the help system.</p>
+<h3 id="search-help">Search Help<a class="headerlink" href="#search-help" title="Permanent link">&para;</a></h3>
+<p>Search the help system for specific topics, commands, or keywords.</p>
+<h3 id="context-help">Context Help<a class="headerlink" href="#context-help" title="Permanent link">&para;</a></h3>
+<p>Press ? with cursor on a BASIC keyword to get help for that specific command.</p>
+<h2 id="quick-reference">Quick Reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
+<h3 id="most-used-shortcuts">Most Used Shortcuts<a class="headerlink" href="#most-used-shortcuts" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Shortcut</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ctrl+N</td>
+<td>New Program</td>
+</tr>
+<tr>
+<td>Ctrl+O</td>
+<td>Open File</td>
+</tr>
+<tr>
+<td>Ctrl+V</td>
+<td>Save File</td>
+</tr>
+<tr>
+<td>Ctrl+R</td>
+<td>Run Program</td>
+</tr>
+<tr>
+<td>Ctrl+X</td>
+<td>Stop Program</td>
+</tr>
+<tr>
+<td>Ctrl+B</td>
+<td>Toggle Breakpoint</td>
+</tr>
+<tr>
+<td>Ctrl+T</td>
+<td>Step Statement</td>
+</tr>
+<tr>
+<td>Ctrl+K</td>
+<td>Step Line</td>
+</tr>
+<tr>
+<td>Ctrl+G</td>
+<td>Continue</td>
+</tr>
+<tr>
+<td>Ctrl+W</td>
+<td>Variables Window</td>
+</tr>
+<tr>
+<td>Menu only</td>
+<td>Execution Stack</td>
+</tr>
+<tr>
+<td>?</td>
+<td>Help</td>
+</tr>
+</tbody>
+</table>
+<h3 id="status-bar-indicators">Status Bar Indicators<a class="headerlink" href="#status-bar-indicators" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>●</strong> - Breakpoint set on line</li>
+<li><strong>?</strong> - Syntax error on line</li>
+<li><strong>Cyan highlight</strong> - Currently executing line</li>
+</ul>
+<hr />
+<p><em>See also: <a href="../../../../user/keyboard-shortcuts/">Keyboard Shortcuts</a>, <a href="../getting-started/">Getting Started</a></em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

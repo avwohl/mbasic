@@ -21,7 +21,7 @@ Welcome to MBASIC 5.21! This is a complete Python implementation of MBASIC-80 fo
 MBASIC 5.21 is a classic BASIC dialect from the CP/M era (late 1970s - early 1980s). This interpreter provides:
 
 - **100% MBASIC 5.21 compatibility** - Runs authentic MBASIC programs
-- **Modern interface** - Choice of CLI, Curses, or Tkinter UI
+- **Modern interface** - Choice of CLI, Curses, Tkinter, or Web UI
 - **Cross-platform** - Works on Linux, macOS, Windows
 - **No dependencies** - Pure Python implementation
 
@@ -102,7 +102,7 @@ RUN
 
 ## Choosing a User Interface
 
-MBASIC supports three interfaces:
+MBASIC supports four interfaces:
 
 ### Curses UI (Default)
 
@@ -135,10 +135,20 @@ mbasic --ui tk
 
 **Best for:** Users who prefer graphical interfaces
 
+### Web UI
+
+Browser-based interface with modern IDE features:
+
+```bash
+mbasic --ui web
+```
+
+**Best for:** Remote access, collaborative development, modern web-based workflow
+
 ## Next Steps
 
 - **Learn the language:** See [Language Reference](../common/language/statements/index.md)
-- **Choose your UI:** [CLI](../ui/cli/index.md), [Curses](../ui/curses/index.md), or [Tk](../ui/tk/index.md)
+- **Choose your UI:** [CLI](../ui/cli/index.md), [Curses](../ui/curses/index.md), [Tk](../ui/tk/index.md), or Web
 - **Explore features:** [MBASIC Features](features.md)
 - **Check compatibility:** [Compatibility Guide](compatibility.md)
 - **Understand the architecture:** [Architecture](architecture.md)

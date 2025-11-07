@@ -76,7 +76,9 @@ class ConsoleIOHandler(IOHandler):
                     else:
                         return ""
                 except ImportError:
-                    # Fallback: return empty string
+                    # Fallback: return empty string (msvcrt not available)
+                    import warnings
+                    warnings.warn("msvcrt not available on Windows - non-blocking input_char() not supported", RuntimeWarning)
                     return ""
         else:
             # Blocking: wait for single character
@@ -104,6 +106,12 @@ class ConsoleIOHandler(IOHandler):
                     # - Returns the entire line, not just one character
                     # This is a known limitation when msvcrt is unavailable.
                     # For proper single-character input on Windows, msvcrt is required.
+                    import warnings
+                    warnings.warn(
+                        "msvcrt not available on Windows - input_char() falling back to input() "
+                        "(waits for Enter, not single character)",
+                        RuntimeWarning
+                    )
                     line = input()
                     return line[:1] if line else ""
 

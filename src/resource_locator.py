@@ -1,7 +1,10 @@
 """Resource locator for finding package data files (docs, basic programs, etc.)
 
-This module provides functions to locate package resources that work both in
-development (running from source) and in installed environments (pip install).
+This module provides functions to locate package resources (data files, docs,
+examples) that work both in development (running from source) and in installed
+environments (pip install).
+
+Note: This is distinct from resource_limits.py which enforces runtime execution limits.
 
 When installed via pip, data files are typically installed to:
 - Site-packages: /usr/local/lib/python3.x/site-packages/mbasic/docs/

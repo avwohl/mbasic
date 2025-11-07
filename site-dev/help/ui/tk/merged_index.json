@@ -1,0 +1,1046 @@
+{
+  "ui": "tk",
+  "generated": "build_help_indexes.py",
+  "files": [
+    {
+      "path": "common/language/data-types.md",
+      "title": "Data Types",
+      "type": "reference",
+      "category": "",
+      "description": "BASIC-80 data types and type suffixes",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/operators.md",
+      "title": "Operators and Expressions",
+      "type": "guide",
+      "category": "",
+      "description": "Reference guide for BASIC-80 operators including arithmetic, comparison, and logical operations",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/character-set.md",
+      "title": "Character Set",
+      "type": "reference",
+      "category": "",
+      "description": "BASIC-80 character set and special characters",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/appendices/error-codes.md",
+      "title": "Error Codes and Messages",
+      "type": "reference",
+      "category": "",
+      "description": "Complete reference of BASIC-80 error codes and their meanings",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/appendices/ascii-codes.md",
+      "title": "ASCII Character Codes",
+      "type": "reference",
+      "category": "",
+      "description": "Complete ASCII character code reference table for BASIC-80",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/appendices/math-functions.md",
+      "title": "Mathematical Functions",
+      "type": "reference",
+      "category": "",
+      "description": "Quick reference for all mathematical functions in BASIC-80",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/lset.md",
+      "title": "LSET",
+      "type": "statement",
+      "category": "file-io",
+      "description": "Left-justifies a string in a field for random file output",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/field.md",
+      "title": "FIELD",
+      "type": "statement",
+      "category": "file-io",
+      "description": "To allocate space for variables in a random file buffer",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/common.md",
+      "title": "COMMON",
+      "type": "statement",
+      "category": "program-control",
+      "description": "To pass variables to a CHAINed program",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/auto.md",
+      "title": "AUTO",
+      "type": "statement",
+      "category": "editing",
+      "description": "To generate a line number   automatically     after every carriage return",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/delete.md",
+      "title": "DELETE",
+      "type": "statement",
+      "category": "editing",
+      "description": "To delete program lines",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/helpsetting.md",
+      "title": "HELP SET",
+      "type": "statement",
+      "category": "system",
+      "description": "Display help for a specific setting",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/csave.md",
+      "title": "CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION",
+      "type": "statement",
+      "category": "file-io",
+      "description": "To save the program or an       array   currently     in memory on cassette tape",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/randomize.md",
+      "title": "RANDOMIZE",
+      "type": "statement",
+      "category": "system",
+      "description": "To reseed the random number generator",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/goto.md",
+      "title": "GOTO",
+      "type": "statement",
+      "category": "control-flow",
+      "description": "Branch unconditionally to a specified line number",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/mid-assignment.md",
+      "title": "MID$ Assignment",
+      "type": "statement",
+      "category": "string",
+      "description": "Replace characters within a string variable",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/read.md",
+      "title": "READ",
+      "type": "statement",
+      "category": "data",
+      "description": "To read values from a DATA statement and assign them to variables",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/write.md",
+      "title": "WRITE",
+      "type": "statement",
+      "category": "input-output",
+      "description": "To output data at the terminal",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/close.md",
+      "title": "CLOSE",
+      "type": "statement",
+      "category": "file-io",
+      "description": "To conclude I/O to a disk file",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/def-usr.md",
+      "title": "DEF USR",
+      "type": "statement",
+      "category": "subroutines",
+      "description": "To specify the starting address of an assembly language subroutine",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/rem.md",
+      "title": "REM",
+      "type": "statement",
+      "category": "system",
+      "description": "To allow explanatory remarks to be inserted in a program",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/cload.md",
+      "title": "CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION",
+      "type": "statement",
+      "category": "file-io",
+      "description": "To load a program or an array from cassette tape into memory",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/put.md",
+      "title": "PUT",
+      "type": "statement",
+      "category": "file-io",
+      "description": "To write a record from   a   random   buffer   to   a random",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/stop.md",
+      "title": "STOP",
+      "type": "statement",
+      "category": "program-control",
+      "description": "To terminate program      execution   and    return   to command level",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/on-error-goto.md",
+      "title": "ON ERROR GOTO",
+      "type": "statement",
+      "category": "error-handling",
+      "description": "To enable error trapping and specify the   first line of the error handling subroutine",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/line-input.md",
+      "title": "LINE INPUT",
+      "type": "statement",
+      "category": "file-io",
+      "description": "To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/reset.md",
+      "title": "RESET",
+      "type": "statement",
+      "category": "file-io",
+      "description": "Closes all open files",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/def-fn.md",
+      "title": "DEF FN",
+      "type": "statement",
+      "category": "functions",
+      "description": "Define and name a user-defined function",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/cont.md",
+      "title": "CONT",
+      "type": "statement",
+      "category": "program-control",
+      "description": "To continue program execution after a Control-C has been typed, or a STOP or END statement has been executed",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/merge.md",
+      "title": "MERGE",
+      "type": "statement",
+      "category": "file-management",
+      "description": "To merge a specified disk file into the      program currently in memory",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/restore.md",
+      "title": "RESTORE",
+      "type": "statement",
+      "category": "data",
+      "description": "Resets the DATA pointer to the beginning or a specified line",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/writei.md",
+      "title": "WRITE",
+      "type": "statement",
+      "category": "file-io",
+      "description": "Write data to a sequential file with delimiters",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/load.md",
+      "title": "LOAD",
+      "type": "statement",
+      "category": "file-management",
+      "description": "To load a file from disk into memory",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/showsettings.md",
+      "title": "SHOW SETTINGS",
+      "type": "statement",
+      "category": "system",
+      "description": "Display current interpreter settings",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/input_hash.md",
+      "title": "INPUT#",
+      "type": "statement",
+      "category": "file-io",
+      "description": "To read data items from a sequential disk    file and assign them to program variables",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/err-erl-variables.md",
+      "title": "ERR AND ERL VARIABLES",
+      "type": "statement",
+      "category": "error-handling",
+      "description": "Error code and error line number variables used in error handling",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/llist.md",
+      "title": "LLIST",
+      "type": "statement",
+      "category": "editing",
+      "description": "To list all or part of the program currently     in memory at the line printer",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/setsetting.md",
+      "title": "SET (setting)",
+      "type": "statement",
+      "category": "system",
+      "description": "Configure interpreter settings at runtime",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/if-then-else-if-goto.md",
+      "title": "IF \u2022\u2022\u2022 THEN[ \u2022\u2022\u2022 ELSE] AND IF \u2022\u2022\u2022 GOTO",
+      "type": "statement",
+      "category": "control-flow",
+      "description": "Make decisions and control program flow based on conditional expressions",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/end.md",
+      "title": "END",
+      "type": "statement",
+      "category": "program-control",
+      "description": "To terminate program execution, close all   files and return to command level",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/erase.md",
+      "title": "ERASE",
+      "type": "statement",
+      "category": "arrays",
+      "description": "To eliminate arrays from a program",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/get.md",
+      "title": "GET",
+      "type": "statement",
+      "category": "file-io",
+      "description": "To read a record from a random disk file into    a random buffer",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/input.md",
+      "title": "INPUT",
+      "type": "statement",
+      "category": "input-output",
+      "description": "Read user input from the terminal during program execution",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/limits.md",
+      "title": "LIMITS",
+      "type": "statement",
+      "category": "system",
+      "description": "Display resource usage and interpreter limits",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/while-wend.md",
+      "title": "WHILE \u2022\u2022\u2022 WEND",
+      "type": "statement",
+      "category": "control-flow",
+      "description": "Execute statements in a loop while a condition is true",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/wait.md",
+      "title": "WAIT",
+      "type": "statement",
+      "category": "hardware",
+      "description": "To suspend program execution while      monitoring the status of a machine input port",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/name.md",
+      "title": "NAME",
+      "type": "statement",
+      "category": "file-management",
+      "description": "To change the name of a disk file",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/out.md",
+      "title": "OUT",
+      "type": "statement",
+      "category": "hardware",
+      "description": "To send a byte to a machine output port",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/poke.md",
+      "title": "POKE",
+      "type": "statement",
+      "category": "hardware",
+      "description": "To write a byte into a memory location",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/resume.md",
+      "title": "RESUME",
+      "type": "statement",
+      "category": "error-handling",
+      "description": "Continue program execution after error recovery",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/save.md",
+      "title": "SAVE",
+      "type": "statement",
+      "category": "file-management",
+      "description": "To save a program file on disk",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/tron-troff.md",
+      "title": "TRON/TROFF",
+      "type": "statement",
+      "category": "system",
+      "description": "To trace the execution of program statements",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/dim.md",
+      "title": "DIM",
+      "type": "statement",
+      "category": "arrays",
+      "description": "Declare array dimensions and allocate memory for array variables",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/lprint-lprint-using.md",
+      "title": "LPRINT AND LPRINT USING",
+      "type": "statement",
+      "category": "file-io",
+      "description": "To print data at the line printer",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/on-gosub-on-goto.md",
+      "title": "ON \u2022\u2022\u2022 GOSUB AND ON \u2022\u2022\u2022 GOTO",
+      "type": "statement",
+      "category": "control-flow",
+      "description": "To branch to one of several specified line numbers, depending on the value returned when an expression is evaluated",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/open.md",
+      "title": "OPEN",
+      "type": "statement",
+      "category": "file-io",
+      "description": "To allow I/O to a disk file",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/renum.md",
+      "title": "RENUM",
+      "type": "statement",
+      "category": "editing",
+      "description": "Renumber program lines and update line references",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/inputi.md",
+      "title": "~ INPUTi",
+      "type": "statement",
+      "category": "file-io",
+      "description": "To read an entire line (up to 254 characters), without delimiters, from a sequential disk data file to a string variable",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/call.md",
+      "title": "CALL",
+      "type": "statement",
+      "category": "hardware",
+      "description": "To call an assembly language subroutine",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/list.md",
+      "title": "LIST",
+      "type": "statement",
+      "category": "editing",
+      "description": "To list all or part of the program currently            in memory at the terminal",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/files.md",
+      "title": "FILES",
+      "type": "statement",
+      "category": "file-io",
+      "description": "Displays the directory of files on disk",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/kill.md",
+      "title": "KILL",
+      "type": "statement",
+      "category": "file-management",
+      "description": "To delete a file from disk",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/run.md",
+      "title": "RUN",
+      "type": "statement",
+      "category": "program-control",
+      "description": "Executes the current program or loads and runs a program from disk",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/rset.md",
+      "title": "RSET",
+      "type": "statement",
+      "category": "file-io",
+      "description": "Right-justifies a string in a field for random file output",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/defint-sng-dbl-str.md",
+      "title": "DEFINT/SNG/DBL/STR",
+      "type": "statement",
+      "category": "type-declaration",
+      "description": "To declare variable types as integer,        single precision, double precision, or string",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/cls.md",
+      "title": "CLS",
+      "type": "statement",
+      "category": "display",
+      "description": "Clears the screen and moves the cursor to the home position",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/width.md",
+      "title": "WIDTH",
+      "type": "statement",
+      "category": "system",
+      "description": "To set the printed line width in number        of characters for the terminal or line printer",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/edit.md",
+      "title": "EDIT",
+      "type": "statement",
+      "category": "editing",
+      "description": "To enter Edit Mode at the specified line",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/print.md",
+      "title": "PRINT",
+      "type": "statement",
+      "category": "input-output",
+      "description": "Output text and values to the screen",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/for-next.md",
+      "title": "FOR \u2022\u2022\u2022 NEXT",
+      "type": "statement",
+      "category": "control-flow",
+      "description": "Execute statements repeatedly with a loop counter",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/null.md",
+      "title": null,
+      "type": "statement",
+      "category": "system",
+      "description": "To set the number of nulls to be printed at   the end of each line",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/chain.md",
+      "title": "CHAIN",
+      "type": "statement",
+      "category": "program-control",
+      "description": "To call a program and pass variables to it            from the current program",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/clear.md",
+      "title": "CLEAR",
+      "type": "statement",
+      "category": "program-control",
+      "description": "To set all numeric variables to zero and all string variables to null; and, optionally, 'to set the end of memory and the amount of stack space",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/gosub-return.md",
+      "title": "GOSUB \u2022.. RETURN",
+      "type": "statement",
+      "category": "control-flow",
+      "description": "Branch to and return from a subroutine",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/option-base.md",
+      "title": "OPTION BASE",
+      "type": "statement",
+      "category": "arrays",
+      "description": "To declare      the     minimum   value   for   array subscripts",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/data.md",
+      "title": "DATA",
+      "type": "statement",
+      "category": "data",
+      "description": "To store the numeric and string constants that are accessed by the program~s READ statement(s)",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/new.md",
+      "title": "NEW",
+      "type": "statement",
+      "category": "program-control",
+      "description": "To delete the program currently   in   memory   and clear all variables",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/swap.md",
+      "title": "SWAP",
+      "type": "statement",
+      "category": "variables",
+      "description": "To exchange the values of two variables",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/error.md",
+      "title": "ERROR",
+      "type": "statement",
+      "category": "error-handling",
+      "description": "1) To simulate the occurrence of a BASIC-80 error1   or 2) to allow error codes to be defined by the user",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/system.md",
+      "title": "SYSTEM",
+      "type": "statement",
+      "category": "program-control",
+      "description": "Exits MBASIC and returns to the operating system",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/statements/printi-printi-using.md",
+      "title": "PRINTi AND PRINTi USING",
+      "type": "statement",
+      "category": "file-io",
+      "description": "To write data to a sequential disk file",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/exp.md",
+      "title": "EXP",
+      "type": "function",
+      "category": "mathematical",
+      "description": "Returns e to the power of X",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/space_dollar.md",
+      "title": "SPACE$",
+      "type": "function",
+      "category": "string",
+      "description": "Returns a string of I spaces",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/lpos.md",
+      "title": "LPOS",
+      "type": "function",
+      "category": "file-io",
+      "description": "Returns the current position of the line printer print head within the line printer buffer",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/eof.md",
+      "title": "EOF",
+      "type": "function",
+      "category": "file-io",
+      "description": "Returns -1 (true) if the end of a sequential file has been reached",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/usr.md",
+      "title": "USR",
+      "type": "function",
+      "category": "system",
+      "description": "Calls the user's assembly language subroutine with the argument X",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/peek.md",
+      "title": "PEEK",
+      "type": "function",
+      "category": "system",
+      "description": "Returns the byte (decimal integer in the range 0 to 255) read from memory location I",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/cvi-cvs-cvd.md",
+      "title": "CVI, CVS, CVD",
+      "type": "function",
+      "category": "type-conversion",
+      "description": "Convert string values to numeric values",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/inkey_dollar.md",
+      "title": "INKEY$",
+      "type": "function",
+      "category": "system",
+      "description": "Returns either a one-character string cont~ining a character read from the terminal or a null string if no character is pending at the terminal",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/rnd.md",
+      "title": "RND",
+      "type": "function",
+      "category": "mathematical",
+      "description": "Returns a random number between 0 and 1",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/inp.md",
+      "title": "INP",
+      "type": "function",
+      "category": "system",
+      "description": "Returns the byte read from port I",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/tab.md",
+      "title": "TAB",
+      "type": "function",
+      "category": "output-formatting",
+      "description": "Spaces to position I on the terminal",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/oct_dollar.md",
+      "title": "OCT$",
+      "type": "function",
+      "category": "string",
+      "description": "Returns a string which represents the octal value of the decimal argument",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/val.md",
+      "title": "VAL",
+      "type": "function",
+      "category": "string",
+      "description": "Returns the numerical value of string X$",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/asc.md",
+      "title": "ASC",
+      "type": "function",
+      "category": "string",
+      "description": "Returns a numerical value that is the ASCII code of the first character of the string X$",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/hex_dollar.md",
+      "title": "HEX$",
+      "type": "function",
+      "category": "string",
+      "description": "Returns a string which represents the hexadecimal value of the decimal argument",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/cos.md",
+      "title": "COS",
+      "type": "function",
+      "category": "mathematical",
+      "description": "Returns the cosine of X in radians",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/abs.md",
+      "title": "ABS",
+      "type": "function",
+      "category": "mathematical",
+      "description": "Return the absolute value of a number (removes negative sign)",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/log.md",
+      "title": "LOG",
+      "type": "function",
+      "category": "mathematical",
+      "description": "Returns the natural logarithm of X",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/mki_dollar-mks_dollar-mkd_dollar.md",
+      "title": "MKI$, MKS$, MKD$",
+      "type": "function",
+      "category": "type-conversion",
+      "description": "Convert numeric values to string values",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/right_dollar.md",
+      "title": "RIGHT$",
+      "type": "function",
+      "category": "string",
+      "description": "Return the rightmost N characters from a string",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/chr_dollar.md",
+      "title": "CHR$",
+      "type": "function",
+      "category": "string",
+      "description": "Returns a one-character string whose ASCII code is the specified value",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/input_dollar.md",
+      "title": "INPUT$",
+      "type": "function",
+      "category": "file-io",
+      "description": "Returns a string of X characters, read from the terminal or from file number Y",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/spc.md",
+      "title": "SPC",
+      "type": "function",
+      "category": "string",
+      "description": "Prints I blanks on the terminal",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/loc.md",
+      "title": "LOC",
+      "type": "function",
+      "category": "file-io",
+      "description": "With random disk files, LOC returns the next record number to be used if a GET or PUT (without a record number) is executed",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/pos.md",
+      "title": "POS",
+      "type": "function",
+      "category": "file-io",
+      "description": "Returns the current cursor position",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/string_dollar.md",
+      "title": "STRING$",
+      "type": "function",
+      "category": "string",
+      "description": "Returns a string of length I whose characters all have ASCII code J or the first character of X$",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/mid_dollar.md",
+      "title": "MID$",
+      "type": "function",
+      "category": "string",
+      "description": "Extract a substring from the middle of a string",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/sqr.md",
+      "title": "SQR",
+      "type": "function",
+      "category": "mathematical",
+      "description": "Returns the square root of X",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/str_dollar.md",
+      "title": "STR$",
+      "type": "function",
+      "category": "string",
+      "description": "Convert a number to its string representation",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/csng.md",
+      "title": "CSNG",
+      "type": "function",
+      "category": "type-conversion",
+      "description": "Converts X to a single-precision floating-point number",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/sgn.md",
+      "title": "SGN",
+      "type": "function",
+      "category": "mathematical",
+      "description": "Returns the sign of X (-1, 0, or 1)",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/instr.md",
+      "title": "INSTR",
+      "type": "function",
+      "category": "string",
+      "description": "Searches for the first occurrence of string Y$ in X$ and returns the position at which the match is found",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/int.md",
+      "title": "INT",
+      "type": "function",
+      "category": "mathematical",
+      "description": "Return the largest integer less than or equal to a number (floor function)",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/lof.md",
+      "title": "LOF",
+      "type": "function",
+      "category": "file-io",
+      "description": "Returns the length of a file in bytes",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/fre.md",
+      "title": "FRE",
+      "type": "function",
+      "category": "system",
+      "description": "Arguments to FRE are dummy arguments",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/sin.md",
+      "title": "SIN",
+      "type": "function",
+      "category": "mathematical",
+      "description": "Returns the sine of X in radians",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/atn.md",
+      "title": "ATN",
+      "type": "function",
+      "category": "mathematical",
+      "description": "Returns the arctangent of X in radians",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/cint.md",
+      "title": "CINT",
+      "type": "function",
+      "category": "type-conversion",
+      "description": "Converts X to an integer by rounding the fractional portion",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/tan.md",
+      "title": "TAN",
+      "type": "function",
+      "category": "mathematical",
+      "description": "Returns the tangent of X in radians",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/left_dollar.md",
+      "title": "LEFT$",
+      "type": "function",
+      "category": "string",
+      "description": "Return the leftmost N characters from a string",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/cdbl.md",
+      "title": "CDBL",
+      "type": "function",
+      "category": "type-conversion",
+      "description": "Converts X to a double-precision floating-point number",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/fix.md",
+      "title": "FIX",
+      "type": "function",
+      "category": "mathematical",
+      "description": "Returns the truncated integer part of X",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/varptr.md",
+      "title": "VARPTR",
+      "type": "function",
+      "category": "system",
+      "description": "Returns the memory address of a variable",
+      "tier": "language"
+    },
+    {
+      "path": "common/language/functions/len.md",
+      "title": "LEN",
+      "type": "function",
+      "category": "string",
+      "description": "Returns the number of characters in X$",
+      "tier": "language"
+    },
+    {
+      "path": "mbasic/compatibility.md",
+      "title": "MBASIC Compatibility Guide",
+      "type": "reference",
+      "category": "mbasic",
+      "description": "Complete guide to MBASIC 5.21 compatibility and differences from CP/M MBASIC",
+      "tier": "mbasic"
+    },
+    {
+      "path": "mbasic/getting-started.md",
+      "title": "Getting Started with MBASIC",
+      "type": "guide",
+      "category": "mbasic",
+      "description": "Introduction to MBASIC interpreter and how to get started",
+      "tier": "mbasic"
+    },
+    {
+      "path": "mbasic/features.md",
+      "title": "MBASIC Features",
+      "type": "reference",
+      "category": "mbasic",
+      "description": "Complete list of MBASIC interpreter features and capabilities",
+      "tier": "mbasic"
+    },
+    {
+      "path": "mbasic/architecture.md",
+      "title": "MBASIC Architecture: Interpreter and Compiler",
+      "type": "guide",
+      "category": "",
+      "description": "NEEDS_DESCRIPTION",
+      "tier": "mbasic"
+    },
+    {
+      "path": "ui/tk/index.md",
+      "title": "MBASIC Tkinter GUI Help",
+      "type": "guide",
+      "category": "",
+      "description": "Help system for the MBASIC graphical user interface",
+      "tier": "ui/tk"
+    }
+  ]
+}

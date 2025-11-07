@@ -7,7 +7,7 @@ The Web UI provides debugging tools for BASIC program development with visual fe
 The Web UI debugger currently offers:
 - Basic breakpoint management (via Run menu)
 - Step-by-step execution
-- Variable inspection
+- Basic variable inspection (via Debug menu)
 - Visual indicators in editor
 
 ## Setting Breakpoints

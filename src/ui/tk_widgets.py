@@ -162,7 +162,9 @@ class LineNumberedText(tk.Frame if tk else object):
 
         Args:
             line_num: Tkinter text widget line number (1-based sequential index),
-                     not BASIC line number (e.g., 10, 20, 30)
+                     not BASIC line number (e.g., 10, 20, 30).
+                     Note: This class uses dual numbering - editor line numbers for
+                     text widget operations, BASIC line numbers for line_metadata lookups.
         """
         # Check if line still exists and is still blank
         try:
@@ -234,8 +236,9 @@ class LineNumberedText(tk.Frame if tk else object):
             return None
 
         # Match line number followed by whitespace OR end of string (both valid)
-        # Examples: "10 PRINT" (whitespace after), "10" (end after)
-        # Note: "10REM" would not match (MBASIC 5.21 requires whitespace between line number and statement)
+        # Valid: "10 PRINT" (whitespace after), "10" (end after), "  10  REM" (leading whitespace ok)
+        # Invalid: "10REM" (no whitespace), "ABC10" (non-digit prefix), "" (empty after strip)
+        # MBASIC 5.21 requires whitespace (or end of line) between line number and statement
         match = re.match(r'^(\d+)(?:\s|$)', line_text)
         if match:
             return int(match.group(1))
@@ -316,8 +319,8 @@ class LineNumberedText(tk.Frame if tk else object):
         """Handle click on status column (show error details for ?, breakpoint confirmation for ●).
 
         Note: This displays information/confirmation messages only. It does NOT toggle
-        breakpoints or show detailed breakpoint info - that must be done through the UI's
-        breakpoint commands and debugger windows.
+        breakpoints - that's handled by the UI backend's breakpoint toggle command
+        (e.g., TkBackend._toggle_breakpoint(), accessed via ^B in Tk UI or menu).
         """
         import tkinter.messagebox as messagebox
 

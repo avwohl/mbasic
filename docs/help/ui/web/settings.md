@@ -121,7 +121,11 @@ After changing to 100:
 
 ## Settings Storage
 
-Web UI settings are stored in your **browser's localStorage**. This means:
+Web UI settings can be stored in two ways depending on your deployment configuration:
+
+### Local Storage (Default)
+
+By default, settings are stored in your **browser's localStorage**. This means:
 
 ✅ **Advantages:**
 - Settings persist across page reloads
@@ -134,6 +138,33 @@ Web UI settings are stored in your **browser's localStorage**. This means:
 - Clearing browser data clears settings
 - Settings don't sync across devices/browsers
 - Not shared with CLI/desktop versions
+
+### Redis Session Storage (Multi-User Deployments)
+
+If the web server is configured with `NICEGUI_REDIS_URL`, settings are stored in Redis with per-session isolation:
+
+✅ **Advantages:**
+- Settings persist across browser tabs
+- Shared state in multi-instance deployments
+- Better for production environments
+- Automatic session cleanup
+- Supports concurrent users
+
+⚠️ **Limitations:**
+- Requires Redis server
+- Settings are session-based (cleared when session expires)
+- Requires server-side configuration
+
+**Server Configuration:**
+```bash
+# Set Redis URL environment variable
+export NICEGUI_REDIS_URL="redis://localhost:6379/0"
+
+# Start web server
+python -m src.ui.web.main
+```
+
+Each user session gets isolated settings storage, preventing conflicts between concurrent users.
 
 ### Exporting Settings (Future)
 

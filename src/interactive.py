@@ -296,6 +296,8 @@ class InteractiveMode:
                 if line_num in self.lines:
                     del self.lines[line_num]
                     del self.line_asts[line_num]
+                    # Clear execution state since line edits invalidate GOSUB/FOR stacks
+                    self.clear_execution_state()
                     # Update runtime's statement_table if program is running
                     if self.program_runtime:
                         self.program_runtime.statement_table.delete_line(line_num)
@@ -305,6 +307,8 @@ class InteractiveMode:
                 line_ast = self.parse_single_line(line)
                 if line_ast:
                     self.line_asts[line_num] = line_ast
+                    # Clear execution state since line edits invalidate GOSUB/FOR stacks
+                    self.clear_execution_state()
                     # Update runtime's statement_table if program is running
                     if self.program_runtime:
                         self.program_runtime.statement_table.replace_line(line_num, line_ast)

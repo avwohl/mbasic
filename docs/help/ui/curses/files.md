@@ -21,7 +21,7 @@ How to save and load BASIC programs.
 
 ## Saving Programs
 
-1. Press **^V** to save (Note: ^S unavailable due to terminal flow control)
+1. Press **^V** to save (^S unavailable - terminal flow control)
 2. Status line prompts: "Save as: _"
 3. Type filename (e.g., `myprogram.bas`)
 4. Press **Enter**
@@ -77,8 +77,7 @@ python3 mbasic --ui curses myprogram.bas
 
 The program will:
 - Load into the editor
-- Automatically run
-- Then enter interactive mode
+- Enter interactive mode (ready to run with ^R)
 
 ## Creating a New Program
 

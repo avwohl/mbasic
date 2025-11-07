@@ -42,3 +42,5 @@ G. T. JONES             $25.00
 - [LPRINT](../statements/lprint-lprint-using.md) - Print to line printer
 - [POS](pos.md) - Current cursor position
 - [WIDTH](../statements/width.md) - Set output line width
+- [READ](../statements/read.md) - Read data from DATA statements (used in example above)
+- [DATA](../statements/data.md) - Store data for READ statements (used in example above)

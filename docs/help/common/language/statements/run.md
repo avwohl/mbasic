@@ -35,7 +35,7 @@ The RUN statement has several forms:
 
 When RUN is executed:
 - All variables are reset to zero or empty strings
-- All open files are closed
+- All open files are closed (unlike STOP, which keeps files open)
 - All FOR/NEXT loops are cleared
 - All GOSUB return addresses are cleared
 - DATA pointers are reset to the first DATA statement

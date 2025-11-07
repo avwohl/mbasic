@@ -67,6 +67,8 @@ Quick reference for the curses text UI.
 | **d** | Toggle sort direction (ascending ↑ / descending ↓) |
 | **f** | Cycle filter mode (All → Scalars → Arrays → Modified) |
 | **/** | Search for variable |
+| **n** | Next search match |
+| **N** | Previous search match |
 
 **Sort Modes:**
 - **Accessed**: Most recently accessed (read or written) - default, newest first

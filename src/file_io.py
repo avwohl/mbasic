@@ -176,14 +176,13 @@ class SandboxedFileIO(FileIO):
 
     Implementation status:
     - list_files(): IMPLEMENTED - delegates to backend.sandboxed_fs
-    - load_file(): STUB - raises IOError (requires async/await refactor)
-    - save_file(): STUB - raises IOError (requires async/await refactor)
-    - delete_file(): STUB - raises IOError (requires async/await refactor)
-    - file_exists(): STUB - raises IOError (requires async/await refactor)
+    - load_file(): STUB - raises IOError (requires async refactor)
+    - save_file(): STUB - raises IOError (requires async refactor)
+    - delete_file(): STUB - raises IOError (requires async refactor)
+    - file_exists(): STUB - raises IOError (requires async refactor)
 
     The stubs exist because the current FileIO interface is synchronous, but full
-    implementation requires async/await refactoring to properly integrate with
-    the web UI backend.
+    implementation requires async refactor to properly integrate with the web UI backend.
     """
 
     def __init__(self, backend):
@@ -218,27 +217,27 @@ class SandboxedFileIO(FileIO):
     def load_file(self, filename: str) -> str:
         """Load file from server memory virtual filesystem.
 
-        STUB: Raises error because ui.run_javascript() requires async/await.
+        STUB: Raises error (requires async refactor).
         """
         raise IOError("LOAD not yet implemented in web UI - requires async refactor")
 
     def save_file(self, filename: str, content: str) -> None:
         """Save file to server memory virtual filesystem.
 
-        STUB: Raises error because ui.run_javascript() requires async/await.
+        STUB: Raises error (requires async refactor).
         """
         raise IOError("SAVE not yet implemented in web UI - requires async refactor")
 
     def delete_file(self, filename: str) -> None:
         """Delete file from server memory virtual filesystem.
 
-        STUB: Raises error because ui.run_javascript() requires async/await.
+        STUB: Raises error (requires async refactor).
         """
         raise IOError("DELETE not yet implemented in web UI - requires async refactor")
 
     def file_exists(self, filename: str) -> bool:
         """Check if file exists in server memory virtual filesystem.
 
-        STUB: Raises error because ui.run_javascript() requires async/await.
+        STUB: Raises error (requires async refactor).
         """
         raise IOError("File existence check not yet implemented in web UI - requires async refactor")

@@ -24,7 +24,7 @@ Variables are typed by their suffix character:
 |--------|------|-------|-----------|
 | **%** | INTEGER | -32768 to 32767 | Whole numbers |
 | **!** | SINGLE | ±2.938736×10^-39 to ±1.701412×10^38 | approximately 7 digits |
-| **#** | DOUBLE | ±2.938736×10^-39 to ±1.701412×10^38 | approximately 16 digits |
+| **#** | DOUBLE | ±2.938736×10^-308 to ±1.797693×10^308 | approximately 16 digits |
 | **$** | STRING | 0 to 255 characters | Text |
 
 ## INTEGER (%)
@@ -75,14 +75,17 @@ BIGNUM# = 1.23456789012345D+100
 PRECISE# = 0.123456789012345
 ```
 
-**Range:** Approximately 2.938736×10^-39 to 1.701412×10^38 (same numerical range as single-precision, but with greater precision)
+**Range:** Approximately 2.938736×10^-308 to 1.797693×10^308 (much larger range than single-precision, with greater precision)
 
 **Uses:**
 - Scientific calculations
 - High-precision mathematics
 - Astronomy, physics calculations
 
-**Note:** Use D for double-precision exponent notation or E for single-precision (e.g., 1.5D+10 for double, 1.5E+10 for single)
+**Exponent Notation:**
+- D notation (e.g., 1.5D+10) forces double-precision, required for exponents beyond single-precision range
+- E notation (e.g., 1.5E+10) uses single-precision by default, converts to double if assigned to # variable
+- For values within single-precision range, D and E are interchangeable when assigned to # variables
 
 ## STRING ($)
 

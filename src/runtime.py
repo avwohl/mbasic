@@ -351,15 +351,15 @@ class Runtime:
             name: Variable name (e.g., 'x', 'foo')
             type_suffix: Type suffix ($, %, !, #) or None
             def_type_map: Optional DEF type mapping
-            token: REQUIRED - Token object for tracking. Must not be None (ValueError raised if None).
+            token: REQUIRED - Token object for tracking (ValueError raised if None).
 
-                   The token should have 'line' and 'position' attributes for tracking.
-                   If token is missing these attributes, fallback values are used:
-                   - Missing 'line' falls back to self.pc.line_num (or None if PC is halted)
-                   - Missing 'position' falls back to None
+                   Token object is required but its attributes are optional:
+                   - token.line: Preferred for tracking, falls back to self.pc.line_num if missing
+                   - token.position: Preferred for tracking, falls back to None if missing
 
                    This allows robust handling of tokens from various sources (lexer, parser,
-                   fake tokens) while enforcing that a token object must be provided.
+                   fake tokens) while enforcing that some token object must be provided.
+                   For debugging without token requirements, use get_variable_for_debugger().
 
         Returns:
             Variable value (default 0 for numeric, "" for string)
@@ -471,14 +471,15 @@ class Runtime:
 
         # Update last_write tracking
         if debugger_set:
-            # Debugger/prompt/internal set: use line -1 as sentinel
+            # Debugger/prompt set: use line -1 as sentinel
             self._variables[full_name]['last_write'] = {
                 'line': -1,
                 'position': None,
                 'timestamp': time.perf_counter()
             }
         elif token is not None:
-            # Normal program execution or internal set (token.line may be -1 for internal/system variables)
+            # Non-debugger path: normal program execution (token.line >= 0) OR internal/system set (token.line = -1)
+            # Both use this branch; line value from token distinguishes them
             self._variables[full_name]['last_write'] = {
                 'line': getattr(token, 'line', self.pc.line_num if self.pc and not self.pc.halted() else None),
                 'position': getattr(token, 'position', None),

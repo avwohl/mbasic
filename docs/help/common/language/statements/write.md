@@ -40,6 +40,6 @@ Ok
 ```
 
 ## See Also
-- [WRITE#](writei.md) - Write data to a sequential file (file output variant)
+- [WRITE#](writei.md) - Write data to a sequential file (file output)
 - [INPUT](input.md) - Read user input from the terminal during program execution
-- [PRINT](print.md) - Output text and values to the screen
+- [PRINT](print.md) - Output text and values to the terminal

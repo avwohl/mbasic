@@ -4,41 +4,39 @@
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+C` | Quit |
-| `Ctrl+U` | Activate menu bar (arrows navigate, Enter selects) |
+| `^Q` | Quit |
+| `^U` | Activate menu bar (arrows navigate, Enter selects) |
 | `^F` | This help |
-| `Ctrl+P` | Settings |
-| `Ctrl+W` | Toggle variables watch window |
-| `` | Show/hide execution stack window |
+| `^P` | Settings |
+| `^W` | Toggle variables watch window |
 
 ## Program Management
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+R` | Run program |
-| `Ctrl+N` | New program |
-| `Ctrl+O` | Open/Load program |
-| `Ctrl+V` | Save program |
+| `^R` | Run program |
+| `^N` | New program |
+| `^O` | Open/Load program |
+| `^V` | Save program |
 
 ## Editing
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+B` | Toggle breakpoint on current line |
-| `Ctrl+D` | Delete current line |
-| `Ctrl+Y` | Insert line |
-| `Ctrl+E` | Renumber all lines (RENUM) |
+| `^B` | Toggle breakpoint on current line |
+| `^D` | Delete current line |
+| `^Y` | Insert line |
+| `^E` | Renumber all lines (RENUM) |
 
 ## Debugger (when program running)
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+G` | Continue execution (Go) |
-| `Ctrl+K` | Step Line - execute all statements on current line |
-| `Ctrl+T` | Step Statement - execute one statement at a time |
-| `Ctrl+X` | Stop execution (eXit) |
-| `Ctrl+W` | Show/hide variables window |
-| `` | Show/hide execution stack window |
+| `^G` | Continue execution (Go) |
+| `^K` | Step Line - execute all statements on current line |
+| `^T` | Step Statement - execute one statement at a time |
+| `^X` | Stop execution (eXit) |
+| `^W` | Show/hide variables window |
 
 ## Variables Window (when visible)
 

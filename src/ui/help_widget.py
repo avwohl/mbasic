@@ -62,7 +62,12 @@ class HelpWidget(urwid.WidgetWrap):
         # keybindings. The help widget uses fixed keys (U for back, / for search, ESC/Q to exit)
         # to avoid dependency on keybinding configuration. HelpMacros does load the full keybindings
         # from JSON (for {{kbd:action}} macro expansion in help content), but the help widget itself
-        # doesn't use those loaded keybindings. If help navigation keys change, update here and keypress().
+        # doesn't use those loaded keybindings.
+        #
+        # MAINTENANCE: If help navigation keys change, update:
+        # 1. This footer text (line below)
+        # 2. The keypress() method (handle_key mapping around line 150+)
+        # 3. Help documentation that mentions these keys
         self.footer = urwid.Text(" ↑/↓=Scroll →/←=Next/Prev Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
 
         frame = urwid.Frame(

@@ -7,6 +7,8 @@ keywords: [settings, configuration, preferences, customization]
 
 # Settings System Overview
 
+**Note:** The settings system is a **MBASIC Extension** - not present in original MBASIC 5.21. See [MBASIC Extensions](../mbasic/extensions.md) for details.
+
 MBASIC provides a comprehensive settings system that allows you to customize the behavior of the interpreter and editor across all user interfaces.
 
 ## What Are Settings?
@@ -66,11 +68,14 @@ Settings are stored in JSON format:
 | `variables.show_types_in_window` | boolean | `true` | Show type suffixes ($, %, !) in variable window |
 
 **Choices for `variables.case_conflict`:**
-- `first_wins` - First occurrence sets the case (silent)
-- `error` - Flag conflicts as errors
-- `prefer_upper` - Choose most uppercase version
-- `prefer_lower` - Choose most lowercase version
-- `prefer_mixed` - Prefer mixed case (camelCase)
+
+BASIC is case-insensitive by default (Count = COUNT = count are the same variable). This setting controls which case version is displayed when the same variable is referenced with different cases:
+
+- `first_wins` - First occurrence sets the case (silent) - e.g., if `Count` is used first, all references display as `Count`
+- `error` - Flag conflicts as errors - raises error when same variable used with different cases
+- `prefer_upper` - Choose most uppercase version - e.g., `COUNT` wins over `Count`
+- `prefer_lower` - Choose most lowercase version - e.g., `count` wins over `Count`
+- `prefer_mixed` - Prefer mixed case (camelCase) - e.g., `Count` wins over `COUNT`
 
 ### Interpreter Settings
 

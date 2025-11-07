@@ -1,8 +1,11 @@
-"""Resource limits for BASIC program execution.
+"""Resource limits for BASIC program execution (runtime enforcement).
 
 This module provides centralized resource tracking and enforcement for BASIC
-programs. Different UIs can create appropriate limit configurations (web UI
-uses tight limits, local UIs use generous limits).
+programs during execution (CPU time, memory, loop depth, etc.). Different UIs
+can create appropriate limit configurations (web UI uses tight limits, local
+UIs use generous limits).
+
+Note: This is distinct from resource_locator.py which finds package data files.
 
 Usage:
     # Web UI

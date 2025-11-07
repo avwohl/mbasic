@@ -24,9 +24,13 @@ type: statement
 ## Syntax
 
 ```basic
-WAIT <port number>, • I[,J]
-where I and J are integer expressions
+WAIT <port number>, I[,J]
 ```
+
+Where:
+- **port number**: Integer expression specifying the I/O port to monitor
+- **I**: Integer expression for AND mask
+- **J**: Optional integer expression for XOR mask (default: 0)
 
 ## Purpose
 

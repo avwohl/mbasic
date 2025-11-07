@@ -9,7 +9,7 @@ from pathlib import Path
 from .base import UIBackend
 from .keybindings import (
     HELP_KEY, MENU_KEY, QUIT_KEY, QUIT_ALT_KEY,
-    VARIABLES_KEY, STACK_KEY, RUN_KEY, LIST_KEY, NEW_KEY, SAVE_KEY, OPEN_KEY,
+    VARIABLES_KEY, STACK_KEY, RUN_KEY, STEP_LINE_KEY, NEW_KEY, SAVE_KEY, OPEN_KEY,
     BREAKPOINT_KEY, CLEAR_BREAKPOINTS_KEY,
     DELETE_LINE_KEY, INSERT_LINE_KEY, RENUMBER_KEY,
     CONTINUE_KEY, STEP_KEY, STOP_KEY, TAB_KEY, SETTINGS_KEY,
@@ -188,10 +188,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
     Display format: "S<linenum> CODE" where:
     - Field 1 (1 char): Status (●=breakpoint, ?=error, space=normal)
-    - Field 2 (variable width): Line number (no padding for display)
+    - Field 2 (variable width): Line number (1-5 digits, no padding)
     - Field 3 (rest of line): Program text (BASIC code)
 
-    Note: Line numbers use variable width (not fixed 5 chars) for flexibility with large programs.
+    Line numbers use as many digits as needed (10, 100, 1000, etc.) rather than
+    fixed-width formatting. This maximizes screen space for code.
     """
 
     def __init__(self):
@@ -260,8 +261,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         Format: "SNN CODE" where S=status, NN=line number (variable width)
 
-        Handles multiple line numbers by keeping the last one found.
-        Example: "?10 100 for..." returns 100, since "for" stops the search.
+        When user edits line numbers, this finds the last valid number before code starts.
+        Example: User types "10 20" then starts code - returns 20 as the line number.
+        Example: " 100 FOR I=1 TO 10" - returns 100, "FOR" indicates code starts.
 
         Args:
             line: Display line string
@@ -352,7 +354,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         if len(key) == 1 and key >= ' ' and key <= '~':
             return super().keypress(size, key)
 
-        # No expensive processing here - just set flags and let enter_idle callback handle it
+        # For special keys (non-printable), we DO process them below to handle
+        # cursor navigation, protection of status column, etc.
 
         # Get current cursor position (only for special keys)
         current_text = self.edit_widget.get_edit_text()
@@ -1017,7 +1020,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             return text
 
     def _display_syntax_errors(self):
-        """Display syntax error messages in the output window with context."""
+        """Display syntax error messages in the output window with context.
+
+        Called by _update_syntax_indicators() during editing to show real-time
+        syntax feedback. Errors are displayed immediately as the user types/edits lines.
+        """
         # Check if output walker is available (use 'is None' instead of 'not' to avoid false positive on empty walker)
         if self._output_walker is None:
             # Output window not available yet
@@ -1368,53 +1375,14 @@ class CursesBackend(UIBackend):
         self.runtime = Runtime({}, {})
 
         # Create capturing IO handler for execution (created once, reused)
-        class CapturingIOHandler:
-            """IO handler that captures output to a buffer."""
-            def __init__(self):
-                self.output_buffer = []
-                self.debug_enabled = False
-
-            def output(self, text, end='\n'):
-                if end == '\n':
-                    self.output_buffer.append(str(text))
-                else:
-                    if self.output_buffer:
-                        self.output_buffer[-1] += str(text) + end
-                    else:
-                        self.output_buffer.append(str(text) + end)
-
-            def get_and_clear_output(self):
-                output = self.output_buffer[:]
-                self.output_buffer.clear()
-                return output
-
-            def set_debug(self, enabled):
-                self.debug_enabled = enabled
-
-            def input(self, prompt=''):
-                return ""
-
-            def input_line(self, prompt=''):
-                return ""
-
-            def input_char(self, blocking=True):
-                return ""
-
-            def clear_screen(self):
-                pass
-
-            def error(self, message):
-                self.output(f"Error: {message}")
-
-            def debug(self, message):
-                if self.debug_enabled:
-                    self.output(f"Debug: {message}")
+        # Import shared CapturingIOHandler
+        from .capturing_io_handler import CapturingIOHandler
 
         # IO Handler Lifecycle:
         # 1. self.io_handler (CapturingIOHandler) - Used for RUN program execution
-        #    Captures output to display in output window, defined inline above
+        #    Created ONCE here, reused throughout session (NOT recreated in start())
         # 2. immediate_io (OutputCapturingIOHandler) - Used for immediate mode commands
-        #    Created here and recreated in start() with fresh instance
+        #    Created here temporarily, then RECREATED in start() with fresh instance each time
         #    OutputCapturingIOHandler is imported from immediate_executor module
         self.io_handler = CapturingIOHandler()
 
@@ -1640,9 +1608,11 @@ class CursesBackend(UIBackend):
     def _create_toolbar(self):
         """Create toolbar with common action buttons.
 
-        Note: This method is no longer used (toolbar removed from UI in favor of Ctrl+U menu
-        for better keyboard navigation). The method is retained for reference and potential
-        future re-enablement, but can be safely removed if the toolbar is not planned to return.
+        STATUS: UNUSED - not called anywhere in current implementation.
+
+        The toolbar was removed from the UI in favor of Ctrl+U menu for better keyboard
+        navigation. This fully-implemented method is retained for reference in case toolbar
+        functionality is desired in the future. Can be safely removed if no plans to restore.
         """
         # Create button widgets - use urwid.Button with callback
         new_btn = urwid.Button("New", on_press=lambda _btn: self._menu_new())
@@ -1727,7 +1697,7 @@ class CursesBackend(UIBackend):
         # Create stack frame (initially hidden)
         self.stack_frame = TopLeftBox(
             self.stack_window,
-            title=f"Execution Stack ({key_to_display(LIST_KEY)} to toggle)"
+            title=f"Execution Stack ({key_to_display(STEP_LINE_KEY)} to toggle)"
         )
 
         # Create output frame with top/left border only (no bottom/right space reserved)
@@ -2007,7 +1977,7 @@ class CursesBackend(UIBackend):
             # Run program
             self._run_program()
 
-        elif key == LIST_KEY:
+        elif key == STEP_LINE_KEY:
             # Ctrl+L = Step Line (execute all statements on current line)
             self._debug_step_line()
 
@@ -3435,7 +3405,7 @@ class CursesBackend(UIBackend):
 
             if entry['type'] == 'GOSUB':
                 # Show statement-level precision for GOSUB return address
-                # Note: default of 0 if return_stmt is missing means first statement on line
+                # return_stmt is statement offset (0-based index): 0 = first statement, 1 = second, etc.
                 return_stmt = entry.get('return_stmt', 0)
                 line = f"{indent}GOSUB from line {entry['from_line']}.{return_stmt}"
             elif entry['type'] == 'FOR':
@@ -3495,9 +3465,10 @@ class CursesBackend(UIBackend):
                 return False
 
         # Reset runtime with current program - RUN = CLEAR + GOTO first line (or start_line if specified)
-        # Note: reset_for_run() clears variables and resets PC. Breakpoints are stored in
-        # the editor (self.editor.breakpoints), NOT in runtime, so they persist across runs
-        # and are re-applied below via interpreter.set_breakpoint() calls.
+        # Note: reset_for_run() clears variables and resets PC. Breakpoints are STORED in
+        # the editor (self.editor.breakpoints) as the authoritative source, not in runtime.
+        # This allows them to persist across runs. After reset_for_run(), we re-apply them
+        # to the interpreter below via set_breakpoint() calls so execution can check them.
         self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
         # Clear any buffered output from previous run
@@ -3859,7 +3830,8 @@ class CursesBackend(UIBackend):
                 self.runtime.statement_table.add(pc, stmt)
 
         # Restore PC only if execution is running AND not paused at breakpoint
-        # (paused programs need PC reset to current breakpoint location)
+        # When paused_at_breakpoint=True, we let PC reset to halted (below) so that
+        # continuing execution will properly resume from the breakpoint location.
         # Otherwise ensure halted (don't accidentally start execution)
         if self.running and not self.paused_at_breakpoint:
             # Execution is running - preserve execution state
@@ -4469,37 +4441,8 @@ class CursesBackend(UIBackend):
                 if not hasattr(self, 'io_handler') or self.io_handler is None:
                     # Need to create the CapturingIOHandler class inline
                     # (duplicates definition in _run_program - consider extracting to shared location)
-                    class CapturingIOHandler:
-                        def __init__(self):
-                            self.output_buffer = []
-                            self.debug_enabled = False
-                        def output(self, text, end='\n'):
-                            if end == '\n':
-                                self.output_buffer.append(str(text))
-                            else:
-                                if self.output_buffer:
-                                    self.output_buffer[-1] += str(text) + end
-                                else:
-                                    self.output_buffer.append(str(text) + end)
-                        def get_and_clear_output(self):
-                            output = self.output_buffer[:]
-                            self.output_buffer.clear()
-                            return output
-                        def set_debug(self, enabled):
-                            self.debug_enabled = enabled
-                        def input(self, prompt=''):
-                            return ""
-                        def input_line(self, prompt=''):
-                            return ""
-                        def input_char(self, blocking=True):
-                            return ""
-                        def clear_screen(self):
-                            pass
-                        def error(self, message):
-                            self.output(f"Error: {message}")
-                        def debug(self, message):
-                            if self.debug_enabled:
-                                self.output(f"Debug: {message}")
+                    # Import shared CapturingIOHandler
+                    from .capturing_io_handler import CapturingIOHandler
 
                     io_handler = CapturingIOHandler()
                     self.interpreter.io = io_handler
@@ -4586,14 +4529,13 @@ class CursesBackend(UIBackend):
     def cmd_delete(self, args):
         """Execute DELETE command using ui_helpers.
 
-        Note: Updates self.program immediately (source of truth). Runtime sync occurs
-        automatically via _execute_immediate which calls _sync_program_to_runtime before
-        executing any immediate command. This ensures runtime is always in sync when needed.
+        Note: Updates self.program immediately (source of truth), then syncs to runtime.
         """
         from src.ui.ui_helpers import delete_lines_from_program
 
         try:
             deleted = delete_lines_from_program(self.program, args, runtime=None)
+            self._sync_program_to_runtime()  # Sync runtime after program changes
             self._refresh_editor()
             if len(deleted) == 1:
                 self._append_to_output(f"Deleted line {deleted[0]}")
@@ -4608,9 +4550,7 @@ class CursesBackend(UIBackend):
     def cmd_renum(self, args):
         """Execute RENUM command using ui_helpers.
 
-        Note: Updates self.program immediately (source of truth). Runtime sync occurs
-        automatically via _execute_immediate which calls _sync_program_to_runtime before
-        executing any immediate command. This ensures runtime is always in sync when needed.
+        Note: Updates self.program immediately (source of truth), then syncs to runtime.
         """
         from src.ui.ui_helpers import renum_program
 
@@ -4627,6 +4567,7 @@ class CursesBackend(UIBackend):
                 self.interpreter.interactive_mode._renum_statement,
                 runtime=None
             )
+            self._sync_program_to_runtime()  # Sync runtime after program changes
             self._refresh_editor()
             self._append_to_output("Renumbered")
 

@@ -109,14 +109,16 @@ class PositionSerializer:
         """Emit a keyword token with case from keyword case table.
 
         Args:
-            keyword: The keyword to emit (should be normalized lowercase for proper lookup)
+            keyword: The keyword to emit (MUST be normalized lowercase by caller)
             expected_column: Column where keyword should appear
             node_type: Type of AST node for debugging
 
         Returns:
             String with appropriate spacing + keyword text (with case from table)
 
-        Note: Caller is responsible for normalizing keyword to lowercase before calling.
+        Caller responsibility: The caller must pass the keyword in lowercase (e.g., "print", "for").
+        This function's responsibility: Looks up the display case from the keyword case manager
+        and handles spacing/positioning.
         """
         # Get display case from keyword case manager table
         if self.keyword_case_manager:
@@ -233,12 +235,11 @@ class PositionSerializer:
     def serialize_let_statement(self, stmt: ast_nodes.LetStatementNode) -> str:
         """Serialize LET or assignment statement.
 
-        Note: LetStatementNode represents both explicit LET statements (LET A=5)
-        and implicit assignments (A=5) in MBASIC. The node name 'LetStatementNode'
-        is used consistently throughout the codebase.
+        LetStatementNode represents both:
+        - Explicit LET statements: LET A=5
+        - Implicit assignments: A=5 (without LET keyword)
 
-        In _adjust_statement_positions(), 'AssignmentStatementNode' was used historically
-        but has been replaced by 'LetStatementNode' for consistency.
+        Both forms use the same AST node type for consistency throughout the codebase.
         """
         result = ""
 

@@ -2,7 +2,9 @@
 Lexer for MBASIC 5.21 (CP/M era MBASIC-80)
 Based on BASIC-80 Reference Manual Version 5.21
 
-Note: MBASIC 5.21 includes Extended BASIC features (e.g., periods in identifiers).
+MBASIC 5.21 Extended BASIC features: This implementation always enables Extended BASIC
+features (e.g., periods in identifiers like "RECORD.FIELD") as they are part of MBASIC 5.21.
+There is no option to disable them.
 """
 from typing import List, Optional
 from src.tokens import Token, TokenType, KEYWORDS
@@ -17,8 +19,9 @@ def create_keyword_case_manager() -> SimpleKeywordCase:
     - force_upper: Convert all keywords to UPPERCASE
     - force_capitalize: Convert all keywords to Capitalized form
 
-    Note: SimpleKeywordCase is implemented in src/simple_keyword_case.py. It validates
-    policy strings in its __init__ method and defaults to force_lower for invalid values.
+    Note: SimpleKeywordCase validates policy strings in its __init__ method. Invalid
+    policy values (not in: force_lower, force_upper, force_capitalize) are automatically
+    corrected to force_lower. See src/simple_keyword_case.py for implementation.
 
     Returns:
         SimpleKeywordCase with policy from settings (validated), or default (force_lower)

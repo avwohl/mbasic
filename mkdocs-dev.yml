@@ -91,10 +91,6 @@ markdown_extensions:
 # Using awesome-pages plugin to auto-discover pages
 nav:
   - Home: index.md
-  - Getting Started:
-    - help/mbasic/getting-started.md
-    - help/mbasic/features.md
-    - help/mbasic/compatibility.md
   - Library:
     - library/index.md
     - Games: library/games/index.md
@@ -106,7 +102,6 @@ nav:
     - Data Management: library/data_management/index.md
     - Telecommunications: library/telecommunications/index.md
     - Demos: library/demos/index.md
-  - Developer Docs: dev/index.md
 
 extra:
   social:
@@ -127,12 +122,8 @@ exclude_docs: |
   history/docs_inconsistencies_report*.md
   dev/claude_if_you_read_in_here_you_loop/
   design/future_compiler/
-  PROJECT_STATUS.md
   dev/*_TODO.md
   dev/PIP_INSTALL_RESOURCE_LOCATION_PLAN.md
   dev/POPUP_DIALOG_REFACTOR_TODO.md
   dev/STATUS_BAR_UPDATES_REVIEW.md
   future/
-  help/index.md
-  help/common/
-  help/ui/

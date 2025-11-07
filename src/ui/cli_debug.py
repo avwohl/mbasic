@@ -44,9 +44,9 @@ class CLIDebugger:
     def cmd_break(self, args=""):
         """BREAK command - set/clear/list breakpoints.
 
-        Breakpoints are only activated when the RUN command is executed.
-        After setting breakpoints, use RUN to start/restart the program
-        for them to take effect.
+        Breakpoints can be set at any time (before or during execution).
+        They are checked during program execution at each statement.
+        Use RUN to start the program, and it will pause when reaching breakpoints.
 
         Usage:
             BREAK           - List all breakpoints

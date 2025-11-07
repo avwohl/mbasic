@@ -275,7 +275,7 @@ class UsingFormatter:
             rounded = round(value)
 
         # Determine sign - preserve negative sign for values that round to zero.
-        # original_negative was captured before rounding (line 269 above: original_negative = value < 0)
+        # original_negative was captured before rounding (see above)
         # This allows us to detect cases like -0.001 which round to 0 but should display as "-0" (not "0").
         # This matches BASIC behavior. Positive values that round to zero display as "0".
         if rounded == 0 and original_negative:
@@ -835,9 +835,9 @@ class BuiltinFunctions:
         Returns -1 if at EOF, 0 otherwise
 
         Note: For binary input files (mode 'I' from OPEN statement), respects ^Z (ASCII 26)
-        as EOF marker (CP/M style). Mode 'I' is set by the OPEN statement for binary input,
-        which opens the file in binary mode ('rb'). Text mode files and output files use
-        standard Python EOF detection.
+        as EOF marker (CP/M style). Mode 'I' means "Input" in MBASIC syntax and is implemented
+        as binary mode ('rb') by execute_open() in interpreter.py. This allows ^Z detection
+        for CP/M compatibility. Text mode files (output, append) use standard Python EOF detection.
         """
         file_num = int(file_num)
         if file_num not in self.runtime.files:

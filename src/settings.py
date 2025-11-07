@@ -80,13 +80,11 @@ class SettingsManager:
     def load(self):
         """Load settings from backend (file or Redis).
 
-        Implementation note: Settings are stored in flattened format
-        (e.g., {'editor.auto_number': True}) and save() uses _flatten_settings() to write them.
-        However, load() intentionally does NOT call _unflatten_settings() - it keeps settings
-        in flattened format after loading. This is by design because _get_from_dict() can handle
-        both flattened ('editor.auto_number': True) and nested ({'editor': {'auto_number': True}})
-        formats. Settings modified via set() will be in nested format, while loaded settings
-        remain flat, but both work correctly in lookups.
+        Format handling: Settings are stored on disk in flattened format (e.g.,
+        {'editor.auto_number': True}) but this method loads them as-is without unflattening.
+        Internal representation is flexible: _get_from_dict() handles both flat keys like
+        'editor.auto_number' and nested dicts like {'editor': {'auto_number': True}}.
+        Loaded settings remain flat; settings modified via set() become nested; both work.
         """
         # Load settings from backend
         self.global_settings = self.backend.load_global()

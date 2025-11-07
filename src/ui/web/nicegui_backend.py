@@ -590,6 +590,8 @@ class AboutDialog(ui.dialog):
         self.clear()
         with self, ui.card().classes('w-[400px]'):
             ui.label('About MBASIC').classes('text-xl font-bold mb-4')
+            # Note: '5.21' is the MBASIC language version (intentionally hardcoded)
+            # VERSION below is the implementation/package version (from src.version)
             ui.label('MBASIC 5.21 Web IDE').classes('text-lg')
             ui.label(f'{VERSION}').classes('text-md text-gray-600 mb-4')
             ui.label('A modern implementation of Microsoft BASIC').classes('text-sm text-gray-600')
@@ -988,7 +990,7 @@ class NiceGUIBackend(UIBackend):
     - File management
     - Execution controls
     - Variables window
-    - Breakpoint support (planned - not yet implemented)
+    - Breakpoint support (toggle, clear all, visual indicators)
 
     Based on TK UI feature set (see docs/dev/TK_UI_FEATURE_AUDIT.md).
     """
@@ -1128,7 +1130,7 @@ class NiceGUIBackend(UIBackend):
             </style>
         ''')
 
-        # Set page title
+        # Set page title ('5.21' is MBASIC language version, intentionally hardcoded)
         ui.page_title('MBASIC 5.21 - Web IDE')
 
         # Add global CSS to ensure full viewport height in both Firefox and Chrome
@@ -1258,7 +1260,7 @@ class NiceGUIBackend(UIBackend):
                         self.output.value = self.output_text
 
         # INPUT handling: When INPUT statement executes, the immediate_entry input box
-        # is focused for user input (see _execute_tick() lines ~1886-1888).
+        # is focused for user input (see _execute_tick() at line 1932).
         # The output textarea remains readonly.
         # Store state for input handling
         self.input_prompt_text = None  # Track current input prompt
@@ -1446,7 +1448,12 @@ class NiceGUIBackend(UIBackend):
     # =========================================================================
 
     async def _toggle_breakpoint(self):
-        """Toggle statement-level breakpoint at current cursor position."""
+        """Toggle breakpoint at current cursor position.
+
+        Supports both line-level and statement-level breakpoints:
+        - If cursor is on first statement: sets line-level breakpoint (PC with stmt_offset=0)
+        - If cursor is within multi-statement line: sets statement-level breakpoint (PC with stmt_offset>0)
+        """
         try:
             # Get cursor position from CodeMirror editor via run_method
             cursor_info = await self.editor.run_method('getCursorPosition')
@@ -1819,13 +1826,16 @@ class NiceGUIBackend(UIBackend):
     async def _menu_run(self):
         """Run > Run Program - Execute program.
 
-        RUN clears variables (via runtime.reset_for_run()) and starts execution from first line.
-        Note: This implementation does NOT clear output (see comment at line ~1806 below).
+        RUN clears variables but preserves breakpoints (via runtime.reset_for_run())
+        and starts execution from first line.
+        Note: This implementation does NOT clear output (see comment at line ~1845 below).
         RUN on empty program is fine (just clears variables, no execution).
         RUN at a breakpoint restarts from the beginning.
         """
         try:
-            # Stop any existing execution timer first
+            # Stop any existing execution timer first (defensive programming - prevents multiple timers)
+            # Note: This pattern is applied uniformly across all timer management (see _menu_continue,
+            # _menu_new, _menu_stop, etc.)
             if self.exec_timer:
                 self.exec_timer.cancel()
                 self.exec_timer = None
@@ -1838,6 +1848,8 @@ class NiceGUIBackend(UIBackend):
             # Don't show error - this matches real MBASIC behavior
 
             # Don't clear output - continuous scrolling like ASR33 teletype
+            # Design choice: Unlike some modern BASIC interpreters that clear output on RUN,
+            # we preserve historical ASR33 behavior (continuous scrolling, no auto-clear).
             # Note: Step commands (Ctrl+T/Ctrl+K) DO clear output for clarity when debugging
             self._set_status('Running...')
 
@@ -1917,7 +1929,8 @@ class NiceGUIBackend(UIBackend):
                     self.waiting_for_input = True
                     self.input_prompt_text = state.input_prompt
                     # Note: We don't append the prompt to output here because the interpreter
-                    # has already printed it via io.output() before setting input_prompt state
+                    # has already printed it via io.output() before setting input_prompt state.
+                    # Verified: INPUT statement calls io.output(prompt) before awaiting user input.
                     # Change placeholder text to indicate we're waiting for input
                     self.immediate_entry.props('placeholder="Input: "')
                     # Focus the immediate input box for user to type
@@ -1947,7 +1960,8 @@ class NiceGUIBackend(UIBackend):
                     self.waiting_for_input = True
                     self.input_prompt_text = state.input_prompt
                     # Note: We don't append the prompt to output here because the interpreter
-                    # has already printed it via io.output() before setting input_prompt state
+                    # has already printed it via io.output() before setting input_prompt state.
+                    # Verified: INPUT statement calls io.output(prompt) before awaiting user input.
                     # Change placeholder text to indicate we're waiting for input
                     self.immediate_entry.props('placeholder="Input: "')
                     # Focus the immediate input box for user to type
@@ -2039,7 +2053,7 @@ class NiceGUIBackend(UIBackend):
                     return
 
                 # Start execution
-                self._clear_output()
+                # Note: Output is NOT cleared - continuous scrolling like ASR33 teletype
 
                 # Create or reset runtime - preserves breakpoints
                 from src.resource_limits import create_local_limits
@@ -2106,7 +2120,7 @@ class NiceGUIBackend(UIBackend):
                     return
 
                 # Start execution
-                self._clear_output()
+                # Note: Output is NOT cleared - continuous scrolling like ASR33 teletype
 
                 # Create or reset runtime - preserves breakpoints
                 from src.resource_limits import create_local_limits
@@ -2491,9 +2505,12 @@ class NiceGUIBackend(UIBackend):
         """Sync program to runtime, conditionally preserving PC.
 
         Updates runtime's statement_table and line_text_map from self.program.
-        Preserves current PC/execution state only if exec_timer is active;
-        otherwise resets PC to halted. This allows LIST and other commands to
-        see the current program without starting execution.
+
+        PC handling (conditional preservation):
+        - If exec_timer is active (execution in progress): Preserves PC and halted state,
+          allowing program to resume from current position after rebuild.
+        - Otherwise (no active execution): Resets PC to halted state, preventing
+          unexpected execution when LIST/edit commands modify the program.
         """
         # Save current PC/halted state before rebuilding statement table
         # We'll conditionally restore based on whether execution is active (see below)
@@ -2662,8 +2679,10 @@ class NiceGUIBackend(UIBackend):
             if not self.editor_has_been_used and current_text:
                 self.editor_has_been_used = True
 
-            # Detect paste: large content change (more than 1-2 chars difference from last tracked)
-            # This helps clear auto-number prompts before paste content merges with them
+            # Detect paste: large content change (threshold: >5 chars)
+            # This heuristic helps clear auto-number prompts before paste content merges with them.
+            # The 5-char threshold is arbitrary - balances detecting small pastes while avoiding
+            # false positives from rapid typing (e.g., typing "PRINT" quickly = 5 chars but not a paste).
             last_text = self.last_edited_line_text or ''
             content_diff = abs(len(current_text) - len(last_text))
 
@@ -2808,8 +2827,10 @@ class NiceGUIBackend(UIBackend):
     async def _check_auto_number(self):
         """Check if we should auto-number lines without line numbers.
 
-        Only auto-numbers a line once - tracks the last snapshot to avoid
-        re-numbering lines while user is still typing on them.
+        Auto-numbers a line at most once per content state - tracks last snapshot to avoid
+        re-numbering lines while user is typing. However, if content changes significantly
+        (e.g., line edited after numbering, then un-numbered again), the line could be
+        re-numbered by this logic.
         """
         # Prevent recursive calls when we update the editor
         if self.auto_numbering_in_progress:
@@ -3531,14 +3552,22 @@ class NiceGUIBackend(UIBackend):
     # =========================================================================
 
     def start(self):
-        """Not implemented - raises NotImplementedError.
+        """NOT IMPLEMENTED - raises NotImplementedError.
 
-        Use start_web_ui() module function instead for web backend.
+        Web backend cannot be started per-instance. Use start_web_ui() module
+        function instead, which creates backend instances per user session.
+
+        Raises:
+            NotImplementedError: Always raised
         """
         raise NotImplementedError("Web backend uses start_web_ui() function, not backend.start()")
 
     def stop(self):
-        """Stop the UI."""
+        """Stop the web UI server and shut down NiceGUI app.
+
+        Calls app.shutdown() to terminate the NiceGUI application,
+        disconnecting all clients and stopping the web server.
+        """
         app.shutdown()
 
 

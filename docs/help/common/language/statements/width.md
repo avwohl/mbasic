@@ -29,9 +29,9 @@ type: statement
 WIDTH <integer expression>
 ```
 
-Original MBASIC 5.21 also supported:
+**⚠️ UNSUPPORTED SYNTAX** - Original MBASIC 5.21 also supported:
 ```basic
-WIDTH LPRINT <integer expression>  ' NOT SUPPORTED in this implementation
+WIDTH LPRINT <integer expression>  ' ⚠️ NOT SUPPORTED - will cause parse error
 ```
 
 ## Purpose
@@ -48,6 +48,9 @@ If `<integer expression>` is 255, the line width is "infinite," that is, BASIC n
 
 ## Example
 
+**Note:** The example below shows historical MBASIC 5.21 behavior. In this implementation, WIDTH is a no-op, so the output would be the same before and after WIDTH is called.
+
+**Original MBASIC 5.21 behavior:**
 ```basic
 10 PRINT "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 ```
@@ -68,6 +71,8 @@ ABCDEFGHIJKLMNOPQR
 STUVWXYZ
 Ok
 ```
+
+**This implementation:** Output would be identical in both cases (WIDTH has no effect).
 
 ## See Also
 - [LPRINT](lprint-lprint-using.md) - Print to line printer

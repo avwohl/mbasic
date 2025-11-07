@@ -32,7 +32,13 @@ class HelpMacros:
         self.keybindings = self._load_keybindings()
 
     def _load_keybindings(self) -> Dict:
-        """Load keybindings configuration for current UI."""
+        """Load keybindings configuration for current UI.
+
+        Note: This is generic keybinding loading for macro expansion in help content
+        (e.g., {{kbd:run}} -> "^R"). This is different from help_widget.py which uses
+        hardcoded keys for its own navigation. HelpMacros needs full keybindings to
+        expand {{kbd:action}} macros in documentation, not for actual event handling.
+        """
         keybindings_path = Path(__file__).parent / f"{self.ui_name}_keybindings.json"
 
         if keybindings_path.exists():

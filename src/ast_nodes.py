@@ -1,6 +1,8 @@
 """
 Abstract Syntax Tree (AST) node definitions for MBASIC 5.21
 
+Note: 5.21 refers to the Microsoft BASIC-80 language version, not this package version.
+
 This module defines all AST node types for representing BASIC programs.
 Nodes are organized into:
 - Program structure (ProgramNode, LineNode)
@@ -89,7 +91,9 @@ class LineNode:
     Design note: This class intentionally does not have a source_text field to avoid
     maintaining duplicate copies that could get out of sync with the AST during editing.
     Text regeneration is handled by the position_serializer module which reconstructs
-    source text from statement nodes and their token information.
+    source text from statement nodes and their token information. Each StatementNode
+    has char_start/char_end offsets that indicate the character position within the
+    regenerated line text.
     """
     line_number: int
     statements: List['StatementNode']
@@ -127,13 +131,18 @@ class PrintStatementNode:
         , (comma)  - Tab to next print zone
         ; (semicolon) - No spacing between items
         (none) - Newline after output
+
+    Note: keyword_token fields are present in some statement nodes (PRINT, IF, FOR) but not
+    others. These were intended for case-preserving keyword regeneration but are not currently
+    used by position_serializer, which handles keyword case through case_keepy_string() instead.
+    The fields remain for potential future use and backward compatibility.
     """
     expressions: List['ExpressionNode']
     separators: List[str]  # ";" or "," or None for newline
     file_number: Optional['ExpressionNode'] = None  # For PRINT #n, ...
     line_num: int = 0
     column: int = 0
-    keyword_token: Optional[Token] = None  # Token for PRINT keyword (for case handling)
+    keyword_token: Optional[Token] = None  # Token for PRINT keyword (legacy, not currently used)
 
 
 @dataclass
@@ -1173,11 +1182,14 @@ class VariableNode:
     """Variable reference
 
     Type suffix handling:
-    - type_suffix: The actual suffix character ($, %, !, #)
-    - explicit_type_suffix: True if suffix appeared in source code, False if inferred from DEF
+    - type_suffix: The actual suffix character ($, %, !, #) - always set to indicate variable type
+    - explicit_type_suffix: Boolean indicating the origin of type_suffix:
+        * True: suffix appeared in source code (e.g., "X%" in "X% = 5")
+        * False: suffix inferred from DEFINT/DEFSNG/DEFDBL/DEFSTR (e.g., "X" with DEFINT A-Z)
 
     Example: In "DEFINT A-Z: X=5", variable X has type_suffix='%' and explicit_type_suffix=False.
-    The suffix must be tracked but not regenerated in source code.
+    The suffix must be tracked for type checking but not regenerated in source code.
+    Both fields must always be examined together to correctly handle variable typing.
     """
     name: str  # Normalized lowercase name for lookups
     type_suffix: Optional[str] = None  # $, %, !, # - The actual suffix (see explicit_type_suffix for origin)

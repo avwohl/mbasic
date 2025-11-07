@@ -26,20 +26,11 @@ The EDIT command enters the line editor for the specified line number, allowing 
 ### Usage:
 - If the specified line exists, it is displayed for editing
 - If the line doesn't exist, an error is generated
-- The line editor provides special commands for inserting, deleting, and modifying characters
-
-### Edit Mode Commands:
-In traditional MBASIC, EDIT mode provided special single-character commands:
-- **I** - Insert mode
-- **D** - Delete characters
-- **C** - Change characters
-- **L** - List the line
-- **Q** - Quit edit mode
-- **Space** - Move cursor forward
-- **Enter** - Accept changes
 
 ### Implementation Note:
-This implementation provides full-screen editing capabilities through the integrated editor (when using the Tk, Curses, or Web UI). The traditional single-character edit mode commands are not implemented. Use the full-screen editor to modify program lines.
+**Modern MBASIC Implementation:** This implementation provides full-screen editing capabilities through the integrated editor (Tk, Curses, or Web UI). The traditional MBASIC single-character edit mode commands (I, D, C, L, Q, etc.) are **not implemented**. Simply edit program lines directly in the full-screen editor.
+
+**Historical Reference:** Original MBASIC 5.21 provided a line-oriented edit mode with single-character commands for inserting, deleting, and changing characters. This is not needed with modern full-screen editors.
 
 ## See Also
 - [AUTO](auto.md) - To generate a line number automatically after every carriage return

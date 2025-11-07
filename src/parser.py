@@ -592,7 +592,7 @@ class Parser:
             # Look ahead to distinguish MID$ statement from MID$ function call
             # MID$ statement has pattern: MID$ ( ... ) =
             # MID$ function has pattern: MID$ ( ... ) in expression context
-            # Note: The lexer tokenizes 'MID$' as a single MID token
+            # Note: The lexer tokenizes 'MID$' (including the $) as a single token with type TokenType.MID
             # Lookahead strategy: scan past balanced parentheses, check for = sign
             saved_pos = self.position
             try:
@@ -613,6 +613,9 @@ class Parser:
                         self.position = saved_pos  # Restore position to parse properly
                         return self.parse_mid_assignment()
             except:
+                # Bare except intentionally catches all exceptions during lookahead
+                # (IndexError if we run past end, any parsing errors from malformed syntax)
+                # This is safe because position is restored below and proper error reported later
                 pass
             # Restore position - either not a statement or error in lookahead
             self.position = saved_pos
@@ -1035,10 +1038,10 @@ class Parser:
         }
         func_name = name_map.get(func_name, func_name)
 
-        # RND can be called without parentheses (RND returns random in [0,1))
-        # RND(n) where n>0 returns same sequence, n<0 reseeds, n=0 repeats last
+        # RND can be called without parentheses - MBASIC 5.21 compatibility feature
+        # Syntax: RND returns random in [0,1), RND(n) for seeding (n>0 same sequence, n<0 reseed, n=0 repeat)
         if func_token.type == TokenType.RND and not self.match(TokenType.LPAREN):
-            # RND without arguments
+            # RND without parentheses - valid in MBASIC 5.21
             return FunctionCallNode(
                 name=func_name,
                 arguments=[],
@@ -1046,9 +1049,10 @@ class Parser:
                 column=func_token.column
             )
 
-        # INKEY$ can be called without parentheses (returns keyboard input or "")
+        # INKEY$ can be called without parentheses - MBASIC 5.21 compatibility feature
+        # Returns keyboard input character or "" if no key pressed
         if func_token.type == TokenType.INKEY and not self.match(TokenType.LPAREN):
-            # INKEY$ without arguments
+            # INKEY$ without parentheses - valid in MBASIC 5.21
             return FunctionCallNode(
                 name=func_name,
                 arguments=[],
@@ -1630,7 +1634,7 @@ class Parser:
         value_expr = self.parse_expression()
 
         return SetSettingStatementNode(
-            setting_name=setting_name_expr,  # Field name: 'setting_name' (string identifying setting)
+            setting_name=setting_name_expr,
             value=value_expr,
             line_num=token.line,
             column=token.column
@@ -2232,10 +2236,6 @@ class Parser:
         Parse FOR statement
 
         Syntax: FOR variable = start TO end [STEP step]
-
-        Note: Some files may have malformed FOR loops like "FOR 1 TO 100" (missing variable).
-        We handle this by creating a dummy variable 'I' to allow parsing to continue,
-        though this changes the semantics and may cause issues if variable I is referenced elsewhere.
         """
         token = self.advance()
 
@@ -2274,26 +2274,8 @@ class Parser:
 
             # Parse start expression
             start_expr = self.parse_expression()
-        elif var_token and var_token.type == TokenType.NUMBER:
-            # Malformed FOR loop like "FOR 1 TO 100"
-            # Create a dummy variable "I" and use the number as start
-            start_expr = NumberNode(
-                value=float(var_token.value),
-                literal=var_token.value,
-                line_num=var_token.line,
-                column=var_token.column
-            )
-            self.advance()
-
-            variable = VariableNode(
-                name="I",  # Dummy variable
-                type_suffix=None,
-                subscripts=None,
-                line_num=var_token.line,
-                column=var_token.column
-            )
         else:
-            raise ParseError("Expected variable or number after FOR", var_token)
+            raise ParseError("Expected variable after FOR", var_token)
 
         # Expect TO
         to_token = self.expect(TokenType.TO)
@@ -2502,8 +2484,9 @@ class Parser:
 
         Syntax: DIM array1(dims), array2(dims), ...
 
-        Note: MBASIC 5.21 allows any expression for dimensions (evaluated at runtime).
-        Some compiled BASICs require constant expressions, but we accept any expression.
+        Dimension expressions: This implementation matches MBASIC 5.21 behavior by accepting
+        any expression for array dimensions (e.g., DIM A(X*2, Y+1)). Dimensions are evaluated
+        at runtime. Note: Some compiled BASICs (GW-BASIC, QuickBASIC) require constants only.
         """
         token = self.advance()
 
@@ -2702,6 +2685,11 @@ class Parser:
 
         Syntax: DEF FNname[(param1, param2, ...)] = expression
         Note: FN is part of the function name, e.g., "FNR", "FNA$"
+
+        Function name normalization: All function names are normalized to lowercase with
+        'fn' prefix (e.g., "FNR" becomes "fnr", "FNA$" becomes "fna$") for consistent
+        lookup. This matches the lexer's identifier normalization and ensures function
+        calls match their definitions regardless of case.
 
         Examples:
             DEF FNR(X) = INT(X*100+.5)/100

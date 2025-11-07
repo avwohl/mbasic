@@ -56,7 +56,7 @@ class FileSettingsBackend(SettingsBackend):
     """File-based settings storage (original behavior).
 
     Stores settings in JSON files:
-    - Global: ~/.mbasic/settings.json
+    - Global: ~/.mbasic/settings.json (Linux/Mac) or %APPDATA%/mbasic/settings.json (Windows)
     - Project: .mbasic/settings.json in project directory
     """
 
@@ -151,8 +151,8 @@ class RedisSettingsBackend(SettingsBackend):
     Stores settings in Redis with per-session isolation:
     - Key format: nicegui:settings:{session_id}
     - Each session has independent settings
-    - Initialized from default file-based settings
-    - No disk writes in this mode (read-only from disk)
+    - Optionally initialized from default file-based settings (if provided and not already in Redis)
+    - No disk writes in this mode (Redis is the only storage)
     """
 
     def __init__(self, redis_client, session_id: str, default_settings: Optional[Dict[str, Any]] = None):

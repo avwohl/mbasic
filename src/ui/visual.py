@@ -122,7 +122,7 @@ class VisualBackend(UIBackend):
     def cmd_list(self, args: str = "") -> None:
         """Execute LIST command - list program lines.
 
-        Example implementation:
+        Example:
             lines = self.program.get_lines()
             for line_num, line_text in lines:
                 self.io.output(line_text)
@@ -172,18 +172,36 @@ class VisualBackend(UIBackend):
         pass
 
     def cmd_delete(self, args: str) -> None:
-        """Execute DELETE command - delete line range."""
-        # Parse args (e.g., "10-50" or "100")
-        # Call self.program.delete_line() or delete_range()
+        """Execute DELETE command - delete line range.
+
+        Status: Stub implementation. Override in subclass to implement.
+        See curses_ui.py or tk_ui.py for example implementations.
+
+        Example:
+            # Parse args (e.g., "10-50" or "100")
+            # Call self.program.delete_line() or delete_range()
+        """
         pass
 
     def cmd_renum(self, args: str) -> None:
-        """Execute RENUM command - renumber lines."""
-        # Parse args for new_start and increment
-        # Call self.program.renumber()
+        """Execute RENUM command - renumber lines.
+
+        Status: Stub implementation. Override in subclass to implement.
+        See ui_helpers.renum_program() for the shared implementation logic.
+
+        Example:
+            # Parse args for new_start and increment
+            # Call ui_helpers.renum_program(self.program, args, callback)
+        """
         pass
 
     def cmd_cont(self) -> None:
-        """Execute CONT command - continue after STOP."""
-        # Resume execution if runtime is in stopped state
+        """Execute CONT command - continue after STOP.
+
+        Status: Stub implementation. Override in subclass to implement.
+        See tk_ui.cmd_cont() for example implementation.
+
+        Example:
+            # Resume execution if runtime is in stopped state
+        """
         pass

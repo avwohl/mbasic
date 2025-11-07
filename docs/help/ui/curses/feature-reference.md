@@ -1,8 +1,8 @@
 # Curses UI - Complete Feature Reference
 
-This document covers all 36 features available in the Curses UI.
+This document covers all 37 features available in the Curses UI.
 
-## File Operations (8 features)
+## File Operations (7 features)
 
 ### New Program (Ctrl+N)
 Clear the current program and start fresh.
@@ -22,9 +22,6 @@ View and load from a list of recently opened files.
 
 ### Auto-Save
 The Curses UI automatically saves your work periodically to prevent data loss.
-
-### Delete Lines (Ctrl+D)
-Delete the current line in the editor.
 
 ### Merge Files
 Merge another BASIC program into the current one. Useful for combining code modules.
@@ -73,6 +70,8 @@ The currently executing line is highlighted with a cyan background during progra
 
 ## Variable Inspection (6 features)
 
+**Note:** The Curses UI provides a dedicated Variables Window. In CLI mode, variable inspection uses the PRINT statement instead. See [CLI Variables](../cli/variables.md) for details.
+
 ### Variables Window (Ctrl+W)
 Open/close the variables inspection window showing all program variables and their current values.
 
@@ -91,8 +90,12 @@ Cycle through different sort orders:
 
 Press 'd' to toggle sort direction (ascending/descending).
 
-### Execution Stack (Menu only)
+### Execution Stack
 View the call stack showing:
+
+**Access methods:**
+- Via menu: Ctrl+U → Debug → Execution Stack
+- Via command: Type `STACK` in immediate mode (same as CLI)
 - Active GOSUB calls
 - FOR/NEXT loops
 - WHILE loops
@@ -108,7 +111,7 @@ Note: There is no dedicated keyboard shortcut to avoid conflicts with editor typ
 ### Resource Usage
 Monitor memory and variable usage in the status bar.
 
-## Editor Features (6 features)
+## Editor Features (7 features)
 
 ### Line Editing
 Edit BASIC code line-by-line with full cursor navigation.
@@ -116,14 +119,21 @@ Edit BASIC code line-by-line with full cursor navigation.
 ### Multi-Line Edit
 Edit multiple lines at once in the full-screen editor.
 
+### Delete Lines (Ctrl+D)
+Delete the current line in the editor.
+
 ### Cut/Copy/Paste (Not implemented)
-Standard clipboard operations are not available in the Curses UI.
-Note: Ctrl+X is used for Stop/Interrupt, Ctrl+C exits the program, and Ctrl+V is used for Save.
-Use your terminal's native copy/paste functions instead (typically Shift+Ctrl+C/V or mouse selection).
+Standard clipboard operations are not available in the Curses UI due to keyboard shortcut conflicts:
+- **Ctrl+X** - Used for Stop/Interrupt (cannot be used for Cut)
+- **Ctrl+C** - Terminal signal to exit program (cannot be used for Copy)
+- **Ctrl+V** - Used for Save File (cannot be used for Paste; Ctrl+S is reserved by terminal for flow control)
+
+**Workaround:** Use your terminal's native copy/paste functions instead (typically Shift+Ctrl+C/V or mouse selection).
 
 ### Find/Replace (Not yet implemented)
-Find and Replace functionality is not yet available in Curses UI.
-See [Find/Replace](find-replace.md) (available via menu) for workarounds and alternatives.
+Find and Replace functionality is not yet available in Curses UI via keyboard shortcuts.
+
+**Workaround:** Use text editor commands in your terminal (if available) or load/edit/save files externally.
 
 ### Smart Insert (Ctrl+I)
 Insert a new line number at the midpoint between the current line and the next line.
@@ -134,6 +144,13 @@ Lines are automatically kept in numerical order. Manual sorting is available if 
 
 ### Syntax Checking
 Real-time syntax validation as you type. Syntax errors are marked with a '?' symbol in the line number margin.
+
+## Settings & Configuration (1 feature)
+
+### Settings Widget (Ctrl+,)
+Interactive settings dialog for configuring MBASIC behavior. Adjust auto-numbering, keyword case style, variable handling, themes, and more.
+
+See [Curses Settings Widget](settings.md) for complete documentation.
 
 ## Help System (4 features)
 

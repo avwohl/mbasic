@@ -2782,14 +2782,19 @@ class Interpreter:
         self.interactive_mode.cmd_cont()
 
     def execute_step(self, stmt):
-        """Execute STEP statement (debug command)
+        """Execute STEP statement (debug command) - PLACEHOLDER, NOT FUNCTIONAL
 
         STEP is intended to execute one or more statements, then pause.
-        Current implementation: Placeholder (not yet functional - no actual stepping occurs).
 
-        Status: The tick_pc() method has infrastructure for step_statement and step_line
-        modes, but this immediate STEP command is not yet connected to that infrastructure.
-        Full implementation would require:
+        IMPORTANT: This method is a placeholder and does NOT actually perform stepping.
+
+        The tick_pc() method DOES have working step infrastructure (modes 'step_statement'
+        and 'step_line'), which is used by UI debuggers. However, this STEP command
+        (for typing "STEP" in immediate mode) is not connected to that infrastructure.
+
+        UIs should use tick_pc(mode='step_statement') directly, not this command.
+
+        Full STEP command implementation would require:
         - Integration with tick_pc(mode='step_statement')
         - State tracking for multi-step commands
         - UI coordination for displaying position between steps

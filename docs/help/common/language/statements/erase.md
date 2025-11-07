@@ -23,8 +23,6 @@ To eliminate arrays from a program.
 
 Arrays may be redimensioned after they are ERASEd, or the previously allocated array space in memory may be used for other purposes. If an attempt is made to redimension an array without first ERASEing it, a "Redimensioned array" error occurs.
 
-**Implementation Note:** This Python implementation of MBASIC fully supports the ERASE statement.
-
 ## Example
 
 ```basic

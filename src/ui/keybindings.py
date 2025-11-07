@@ -208,7 +208,7 @@ MENU_KEY = 'ctrl u'
 QUIT_KEY = None  # No keyboard shortcut
 
 # Alternative quit (interrupt signal)
-_quit_alt_from_json = _get_key('editor', 'continue')
+_quit_alt_from_json = _get_key('editor', 'quit')
 QUIT_ALT_KEY = _ctrl_key_to_urwid(_quit_alt_from_json) if _quit_alt_from_json else 'ctrl c'
 
 # Variables watch window
@@ -227,8 +227,8 @@ _run_from_json = _get_key('editor', 'run')
 RUN_KEY = _ctrl_key_to_urwid(_run_from_json) if _run_from_json else 'ctrl r'
 
 # Step Line - execute all statements on current line (debugger command)
-_list_from_json = _get_key('editor', 'step_line')
-LIST_KEY = _ctrl_key_to_urwid(_list_from_json) if _list_from_json else 'ctrl k'
+_step_line_from_json = _get_key('editor', 'step_line')
+STEP_LINE_KEY = _ctrl_key_to_urwid(_step_line_from_json) if _step_line_from_json else 'ctrl k'
 
 # Open/Load program
 _open_from_json = _get_key('editor', 'open')
@@ -270,7 +270,7 @@ INSERT_LINE_KEY = 'ctrl y'
 _continue_from_json = _get_key('editor', 'goto_line')
 CONTINUE_KEY = _ctrl_key_to_urwid(_continue_from_json) if _continue_from_json else 'ctrl g'
 
-# Step (execute one statement)
+# Step Statement - execute one statement at a time (debugger command)
 _step_from_json = _get_key('editor', 'step')
 STEP_KEY = _ctrl_key_to_urwid(_step_from_json) if _step_from_json else 'ctrl t'
 
@@ -352,7 +352,7 @@ KEYBINDINGS_BY_CATEGORY = {
     ],
     'Debugger (when program running)': [
         (key_to_display(CONTINUE_KEY), 'Continue execution (Go)'),
-        (key_to_display(LIST_KEY), 'Step Line - execute all statements on current line'),
+        (key_to_display(STEP_LINE_KEY), 'Step Line - execute all statements on current line'),
         (key_to_display(STEP_KEY), 'Step Statement - execute one statement at a time'),
         (key_to_display(STOP_KEY), 'Stop execution (eXit)'),
         (key_to_display(VARIABLES_KEY), 'Show/hide variables window'),
@@ -368,7 +368,7 @@ KEYBINDINGS_BY_CATEGORY = {
 }
 
 # Quick reference for status bar
-STATUS_BAR_SHORTCUTS = f"MBASIC - {key_to_display(HELP_KEY)} help  {key_to_display(MENU_KEY)} menu  {key_to_display(VARIABLES_KEY)} vars  {key_to_display(LIST_KEY)} step line  {key_to_display(TAB_KEY)} cycle  ↑↓ scroll"
+STATUS_BAR_SHORTCUTS = f"MBASIC - {key_to_display(HELP_KEY)} help  {key_to_display(MENU_KEY)} menu  {key_to_display(VARIABLES_KEY)} vars  {key_to_display(STEP_LINE_KEY)} step line  {key_to_display(TAB_KEY)} cycle  ↑↓ scroll"
 EDITOR_STATUS = f"Editor - {key_to_display(HELP_KEY)} help  {key_to_display(MENU_KEY)} menu  {key_to_display(TAB_KEY)} cycle"
 OUTPUT_STATUS = f"Output - {key_to_display(UP_KEY)}/{key_to_display(DOWN_KEY)} scroll  {key_to_display(TAB_KEY)} cycle  {key_to_display(MENU_KEY)} menu"
 

@@ -81,7 +81,7 @@ class ImmediateExecutor:
         if self.interpreter is None:
             return True
 
-        # Check interpreter state using microprocessor model
+        # Check interpreter state flags
         if hasattr(self.interpreter, 'state') and self.interpreter.state:
             state = self.interpreter.state
             # Safe to execute immediate commands when:
@@ -350,7 +350,7 @@ variables in immediate mode:
 LIMITATIONS:
 ───────────────────────────────────────────────────────────────────
 
-  • INPUT statement will fail at runtime in immediate mode (blocked when input() is called, not at parse time - use direct assignment instead)
+  • INPUT statement will fail at runtime in immediate mode (use direct assignment instead)
   • Multi-statement lines (: separator) are fully supported
   • GOTO, GOSUB, and control flow statements are not recommended
     (they will execute but may produce unexpected results)

@@ -26,19 +26,11 @@ Breakpoints pause program execution at specific lines, allowing you to inspect t
 
 ### Setting Breakpoints
 
-**Tk UI:**
-- Click the line number gutter next to the line
-- Or position cursor on the line and press **Ctrl+B**
-- Breakpoints show with a **●** indicator
-
-**Curses UI:**
-- Position cursor on the line and press **b**
-- Breakpoints show with a **●** indicator
-
-**Web UI:**
-- Click the line number to toggle breakpoint
-- Use the "Breakpoint" button in the toolbar
-- Breakpoints show with a **●** indicator and pink background
+| UI | Method | Indicator |
+|----|--------|-----------|
+| **Tk UI** | Click line number gutter, or **Ctrl+B** on line | **●** indicator |
+| **Curses UI** | Position cursor on line and press **b** | **●** indicator |
+| **Web UI** | Click line number or use toolbar "Breakpoint" button | **●** indicator + pink background |
 
 ### Removing Breakpoints
 

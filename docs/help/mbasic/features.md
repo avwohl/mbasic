@@ -14,7 +14,7 @@ description: Complete list of MBASIC interpreter features and capabilities
 
 # MBASIC Features
 
-This document lists all features implemented in this MBASIC interpreter.
+This document lists all features implemented in MBASIC-2025 (this implementation of MBASIC 5.21).
 
 ## Language Features
 
