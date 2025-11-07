@@ -7,6 +7,8 @@ Each error has a numeric code, a two-letter code, and a message.
 Note: Some two-letter codes are duplicated (e.g., DD, CN, DF) across different
 numeric error codes. This matches the original MBASIC 5.21 specification where
 the two-letter codes alone are ambiguous - the numeric code is authoritative.
+All error handling in this implementation uses numeric codes for lookups, so the
+duplicate two-letter codes do not cause ambiguity in practice.
 """
 
 # Error code mapping: number -> (two_letter_code, message)

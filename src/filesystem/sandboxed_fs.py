@@ -34,13 +34,12 @@ class InMemoryFileHandle(FileHandle):
         return self.file_obj.write(data)
 
     def flush(self):
-        """Flush write buffers.
+        """Flush write buffers (no-op for in-memory files).
 
         Note: This calls StringIO/BytesIO flush() which are no-ops.
         Content is only saved to the virtual filesystem on close().
-        This differs from file flush() semantics where flush() typically
-        persists buffered writes. For in-memory files, all writes are
-        already in memory, so flush() has no meaningful effect.
+        Unlike standard file flush() which persists buffered writes to disk,
+        in-memory file writes are already in memory, so flush() has no effect.
         """
         # StringIO/BytesIO have flush() methods (no-ops) - hasattr check for safety
         if hasattr(self.file_obj, 'flush'):
@@ -112,6 +111,8 @@ class SandboxedFileSystemProvider(FileSystemProvider):
 
         Args:
             user_id: Unique identifier for this user/session
+                    SECURITY: Must be securely generated/validated (e.g., session IDs)
+                    to prevent cross-user access. Do NOT use user-provided values.
             max_files: Maximum number of files allowed
             max_file_size: Maximum size per file in bytes (default 1MB)
         """
