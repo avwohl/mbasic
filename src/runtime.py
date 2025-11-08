@@ -985,7 +985,7 @@ class Runtime:
         )
 
         # Check if this variable already has an active FOR loop
-        # This prevents nested FOR loops with the same variable (e.g., FOR I=1 TO 10 / FOR I=1 TO 5)
+        # This prevents nested FOR loops with the same variable (e.g., FOR I=1 TO 10: FOR I=1 TO 5)
         if var_name in self.for_loop_vars:
             debug_log(
                 f"ERROR: {var_name} already on stack at index {self.for_loop_vars[var_name]}!",

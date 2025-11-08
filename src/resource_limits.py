@@ -164,9 +164,9 @@ class ResourceLimits:
         elif var_type == TypeInfo.DOUBLE:
             return 8  # 8 bytes for double-precision float
         elif var_type == TypeInfo.STRING:
-            # String: length + overhead
+            # String: UTF-8 byte length + 4-byte length prefix
             if isinstance(value, str):
-                return len(value.encode('utf-8')) + 4  # +4 for length prefix
+                return len(value.encode('utf-8')) + 4
             return 4  # Empty string
         else:
             return 8  # Default to double

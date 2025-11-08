@@ -72,9 +72,10 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
         return keyword.capitalize()
 
     elif policy == "preserve":
-        # The "preserve" policy should be handled by the caller passing in the original case
-        # rather than calling this function. However, we provide a defensive fallback
-        # (capitalize) in case this function is called with "preserve" policy.
+        # The "preserve" policy means the caller should pass keywords in their desired case
+        # and this function returns them as-is. However, since we can't know the original case
+        # here, we provide a defensive fallback (capitalize) for robustness.
+        # Callers using "preserve" should pass keywords already in the correct case.
         return keyword.capitalize()
 
     else:
@@ -247,8 +248,8 @@ class PositionSerializer:
         var_text = self.serialize_expression(stmt.variable)
         result += var_text
 
-        # Equals sign (operator position not tracked - using None for column)
-        # Operators are not stored as separate tokens in AST, so position is inferred
+        # Equals sign (operator position not tracked in AST - using None for column)
+        # Operator positions are not stored in AST nodes, so position is inferred during serialization
         result += self.emit_token("=", None, "LetOperator")
 
         # Expression
