@@ -227,7 +227,6 @@ class InteractiveMode:
             self._setup_readline()
 
         print("MBASIC-2025 - Modern MBASIC 5.21 Interpreter")
-        print("100% compatible with MBASIC 5.21 + modern debugging extensions")
         if not READLINE_AVAILABLE:
             print("(Note: readline not available - line editing limited)")
         else:
