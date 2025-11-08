@@ -1299,7 +1299,7 @@ class InteractiveMode:
         print("  LOAD \"file\"        - Load program")
         print("  SAVE \"file\"        - Save program")
         print("  MERGE \"file\"       - Merge program")
-        print("  FILES [pattern]    - List files")
+        print("  FILES [\"pattern\"]  - List files")
         print("  AUTO [start][,inc] - Auto line numbering")
         print("  EDIT line          - Edit line")
         print("  SYSTEM             - Exit")
