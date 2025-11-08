@@ -34,8 +34,8 @@ The Tk UI is the default graphical interface for MBASIC.
 | **Ctrl+N** | New program |
 | **Ctrl+I** | Smart insert blank line |
 | **Ctrl+E** | Renumber program |
-| **Ctrl+W** | Show/hide Variables window |
-| **Ctrl+K** | Show/hide Execution Stack window |
+| **Ctrl+W** | Show/hide Variables Window |
+| **Ctrl+K** | Show/hide Execution Stack Window |
 | **Ctrl+B** | Toggle breakpoint |
 | **Ctrl+H** | Find and replace (Tk UI only) |
 
@@ -226,11 +226,11 @@ Notice: GOTO 10 automatically became GOTO 100!
 
 ```
 1. Click line number gutter to set breakpoint (● appears)
-2. Press Ctrl+W to open Variables window
+2. Press Ctrl+W to open Variables Window
 3. Press Ctrl+R to run
 4. Program stops at breakpoint
-5. Check variable values in Variables window
-6. Click "Step" or "Stmt" toolbar button to step through code
+5. Check variable values in Variables Window
+6. Click "Step" toolbar button to step through code one statement at a time
 7. Watch variables update in real-time
 8. Click "Cont" toolbar button to continue running
 ```
@@ -318,7 +318,7 @@ Red **?** markers appear in line number gutter for syntax errors:
 60 END
 ```
 
-Run with **Ctrl+R**, then check Variables window (**Ctrl+W**) to see array contents!
+Run with **Ctrl+R**, then check Variables Window (**Ctrl+W**) to see array contents!
 
 ## Variable Case Preservation
 
@@ -433,7 +433,7 @@ Click the **Step** toolbar button (step line) to execute the entire line at once
 
 ### Execution Stack Window
 
-Press **Ctrl+K** to see the execution stack showing active loops and subroutine calls:
+Press **Ctrl+K** to see the Execution Stack Window showing active loops and subroutine calls:
 
 ```basic
 10 FOR I = 1 TO 3
@@ -516,7 +516,7 @@ Add comments while developing with Smart Insert:
 
 ### 4. Variables Window for Arrays
 
-When working with arrays, keep Variables window open:
+When working with arrays, keep Variables Window open:
 
 ```basic
 10 DIM SCORES(5)
@@ -527,9 +527,9 @@ When working with arrays, keep Variables window open:
 
 Run this with **Ctrl+W** window open - you'll see each array element as it's filled!
 
-### 5. Execution Stack for Loops
+### 5. Execution Stack Window for Loops
 
-Press **Ctrl+K** to see Execution Stack while stepping through nested loops:
+Press **Ctrl+K** to see Execution Stack Window while stepping through nested loops:
 
 ```basic
 10 FOR I = 1 TO 3
@@ -599,7 +599,7 @@ In order of importance:
 ❌ **Manually calculating line numbers** → Use Smart Insert instead
 ❌ **Running without saving** → Save first with Ctrl+S
 ❌ **Ignoring ? markers** → Fix syntax errors before running
-❌ **Not using Variables window** → You're debugging blind!
+❌ **Not using Variables Window** → You're debugging blind!
 ❌ **Stepping through entire program** → Set breakpoints, use Continue
 
 ## Getting Help

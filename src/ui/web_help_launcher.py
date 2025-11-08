@@ -71,6 +71,11 @@ def open_help():
 
 # Legacy class kept for compatibility - new code should use direct web URL instead
 # The help site is already built and served at http://localhost/mbasic_docs
+#
+# Migration guide for code using this class:
+# OLD: launcher = WebHelpLauncher(); launcher.open_help("statements/print")
+# NEW: Open http://localhost/mbasic_docs/statements/print.html directly in browser
+# NEW: In NiceGUI backend, use: ui.navigate.to('/mbasic_docs/statements/print.html', new_tab=True)
 
 class WebHelpLauncher_DEPRECATED:
     """Legacy class wrapper for compatibility."""

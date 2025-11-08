@@ -318,6 +318,10 @@ class TkHelpBrowser(tk.Toplevel):
         - Relative paths: Resolved from current topic's directory using Path operations
 
         All paths are normalized to forward slashes for consistency.
+
+        Note: Path normalization logic is duplicated in _open_link_in_new_window().
+        Both methods use similar approach: resolve relative paths, normalize to help_root,
+        handle path separators. If modification needed, update both methods consistently.
         """
         # Check if target is an absolute path (starts with / or contains :/)
         # OR starts with common/ (common help paths should always be absolute)
@@ -763,7 +767,12 @@ class TkHelpBrowser(tk.Toplevel):
         self.text_widget.see(tk.INSERT)
 
     def _open_link_in_new_window(self, link_tag: str):
-        """Open a link in a new help browser window."""
+        """Open a link in a new help browser window.
+
+        Note: Path normalization logic is duplicated from _follow_link().
+        Both methods resolve paths relative to help_root with similar logic.
+        If modification needed, update both methods consistently.
+        """
         # Get the URL from our stored mapping
         url = self.link_urls.get(link_tag)
         if url:

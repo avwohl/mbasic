@@ -1,8 +1,14 @@
 # Web UI Features
 
-**IMPORTANT:** This document describes both **currently implemented features** and **planned enhancements**. Many advanced features described below (code intelligence, search/replace, automatic saving, session recovery, templates, inline help, testing, collaborative editing) are **planned for future releases** and not yet implemented.
+**IMPORTANT:** This document describes both **currently implemented features** and **planned enhancements**. Many advanced features described below are **planned for future releases** and not yet implemented.
 
-Features marked with **(Planned)** are not yet available. For currently implemented features only, see [Getting Started](getting-started.md).
+**Status Indicators:**
+- **(Currently Implemented)** - Feature is available now
+- **(Planned)** - Feature is not yet available, planned for future release
+- **(Partially Implemented)** - Some aspects work, others are planned
+- No marker - Feature section contains both implemented and planned features (check subsections)
+
+For a quick overview of currently implemented features only, see [Getting Started](getting-started.md).
 
 Complete reference of features available and planned for the MBASIC Web UI.
 

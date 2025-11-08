@@ -1298,11 +1298,11 @@ class Runtime:
             list: Tuples of (line_number, stmt_offset) where GOSUB was called
                  Example: [(100, 0), (500, 2), (1000, 1)]
                  This represents GOSUB called from:
-                   - line 100, offset 0 (1st statement on line 100)
-                   - line 500, offset 2 (3rd statement on line 500)
-                   - line 1000, offset 1 (2nd statement on line 1000)
+                   - line 100, statement offset 0 (1st statement)
+                   - line 500, statement offset 2 (3rd statement)
+                   - line 1000, statement offset 1 (2nd statement)
 
-                 Note: stmt_offset uses 0-based indexing (0 = 1st statement, 1 = 2nd statement, etc.)
+                 Note: stmt_offset uses 0-based indexing (offset 0 = 1st statement, offset 1 = 2nd statement, etc.)
 
         Note: The first element is the oldest GOSUB, the last is the most recent.
         """
@@ -1360,8 +1360,8 @@ class Runtime:
                      {'type': 'WHILE', 'line': 500, 'stmt': 0}
                  ]
 
-                 This shows: FOR I at line 100, statement 0 (1st statement), then GOSUB (will return to line 130, statement 0),
-                 then WHILE at line 500, statement 0 (innermost).
+                 This shows: FOR I at line 100, statement offset 0 (1st statement), then GOSUB (will return to line 130, offset 0),
+                 then WHILE at line 500, statement offset 0 (innermost).
                  Proper unwinding would be: WEND, RETURN (to line 130), NEXT I.
 
         Note: The order reflects nesting level based on execution order (when each
@@ -1425,11 +1425,11 @@ class Runtime:
             line_or_pc: Line number (int) or PC object for breakpoint
             stmt_offset: Optional statement offset. If None, breaks on entire line.
                         Ignored if line_or_pc is a PC object.
-                        Note: Uses 0-based indexing (0 = 1st statement, 1 = 2nd statement, 2 = 3rd statement, etc.)
+                        Note: Uses 0-based indexing (offset 0 = 1st statement, offset 1 = 2nd statement, offset 2 = 3rd statement, etc.)
 
         Examples:
             set_breakpoint(100)           # Line-level (entire line)
-            set_breakpoint(100, 2)        # Statement-level (line 100, offset 2 = 3rd statement on line)
+            set_breakpoint(100, 2)        # Statement-level (line 100, statement offset 2 = 3rd statement)
             set_breakpoint(PC(100, 2))    # PC object (preferred)
         """
         if isinstance(line_or_pc, PC):

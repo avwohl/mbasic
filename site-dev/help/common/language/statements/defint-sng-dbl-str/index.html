@@ -718,8 +718,8 @@
 <p>A DEFtype statement declares that the variable names beginning with the letter(s) specified will be that type variable. However, a type declaration character always takes precedence over a DEFtype statement in the typing of a variable.</p>
 <p>If no type declaration statements are encountered, BASIC-80 assumes all variables without declaration characters are single precision variables.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">DEFDBL</span><span class="w"> </span><span class="vg">L</span><span class="o">-</span><span class="vg">P</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1">&#39; All variables beginning with the letters L, M, N, O, and P</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">DEFDBL</span><span class="w"> </span><span class="vg">D</span><span class="o">-</span><span class="vg">E</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1">&#39; All variables beginning with the letters D and E</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1">&#39; will be double precision variables.</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nl">20</span><span class="w"> </span><span class="kr">DEFSTR</span><span class="w"> </span><span class="vg">A</span>
@@ -729,11 +729,12 @@
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1">&#39; All variables beginning with the letters I, J, K, L, M, N, W, X, Y, Z</span>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1">&#39; will be integer variables.</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="nl">40</span><span class="w"> </span><span class="vg">LENGTH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">12.5</span><span class="w">    </span><span class="c1">&#39; Double precision (starts with L)</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="nl">40</span><span class="w"> </span><span class="kd">DATA</span><span class="err">#</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">12.5</span><span class="w">     </span><span class="c1">&#39; Double precision (starts with D)</span>
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="nl">50</span><span class="w"> </span><span class="vg">AMOUNT$</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;100&quot;</span><span class="w">  </span><span class="c1">&#39; String (has $ suffix, overrides DEFSTR)</span>
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="nl">60</span><span class="w"> </span><span class="vg">INDEX</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">42</span><span class="w">       </span><span class="c1">&#39; Integer (starts with I)</span>
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="nl">70</span><span class="w"> </span><span class="vg">A1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;TEST&quot;</span><span class="w">      </span><span class="c1">&#39; String (starts with A, DEFSTR applies)</span>
 </code></pre></div>
+<p><strong>Note:</strong> When ranges overlap, the last declaration takes precedence. For example, if you declare both <code>DEFDBL L-P</code> and <code>DEFINT I-N</code>, variables starting with L, M, and N would be affected by both declarations, with the later declaration taking effect.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../data-types/">Data Types</a> - Overview of BASIC data types</li>

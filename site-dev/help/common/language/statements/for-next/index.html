@@ -685,6 +685,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#loop-termination" class="md-nav__link">
+    <span class="md-ellipsis">
+      Loop Termination:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       Features:
@@ -772,16 +781,21 @@
 <li>Variable is set to the starting value (x)</li>
 <li>Statements in loop body execute</li>
 <li>Variable increments by step value (z)</li>
-<li>If variable exceeds ending value (y) considering STEP direction, loop terminates</li>
-<li>Process repeats from step 2</li>
+<li>Loop termination test (see below)</li>
+<li>If test passes, process repeats from step 2</li>
 </ol>
+<h3 id="loop-termination">Loop Termination:<a class="headerlink" href="#loop-termination" title="Permanent link">&para;</a></h3>
+<p>The loop terminates when the variable passes the ending value, considering the STEP direction:
+- <strong>Positive STEP</strong> (or no STEP): Loop terminates when variable &gt; ending value
+- <strong>Negative STEP</strong>: Loop terminates when variable &lt; ending value</p>
+<p>For example:
+- <code>FOR I = 1 TO 10</code> terminates when I &gt; 10 (after I reaches 10 and increments to 11)
+- <code>FOR I = 10 TO 1 STEP -1</code> terminates when I &lt; 1 (after I reaches 1 and decrements to 0)</p>
 <h3 id="features">Features:<a class="headerlink" href="#features" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>STEP</strong> can be positive, negative, or fractional</li>
-<li>Negative STEP counts backward (loop terminates when variable &lt; end after increment)</li>
-<li>Positive STEP counts forward (loop terminates when variable &gt; end after increment)</li>
-<li>Loop body may not execute at all if start/end/step values would cause immediate termination (e.g., FOR I=10 TO 1 with positive STEP)</li>
-<li>Multiple variables can be specified in NEXT for nested loops</li>
+<li><strong>STEP</strong> can be positive, negative, or fractional (defaults to 1 if omitted)</li>
+<li>Loop body may not execute at all if start/end/step values would cause immediate termination (e.g., <code>FOR I=10 TO 1</code> with positive STEP)</li>
+<li>Multiple variables can be specified in NEXT for nested loops (e.g., <code>NEXT J, I</code>)</li>
 </ul>
 <h3 id="example">Example:<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
 <p><div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">10</span><span class="w"> </span><span class="k">STEP</span><span class="w"> </span><span class="il">2</span>

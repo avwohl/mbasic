@@ -8,6 +8,9 @@ These utilities help prevent issues with:
 - Control characters corrupting editor content
 - Parity bits (bit 7) causing character mismatches
 - Invalid characters in BASIC programs
+
+Implementation note: Uses standard Python type hints (e.g., tuple[str, bool])
+which require Python 3.9+. For earlier Python versions, use Tuple[str, bool] from typing.
 """
 
 

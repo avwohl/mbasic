@@ -328,9 +328,18 @@ Lines with syntax errors show with a **?** marker:
 | Stack window | **Ctrl+K** | During execution |
 | Edit variable | **e** or **Enter** | In variables window |
 
-### Web UI
+### Web UI Only
 
-Most actions use buttons or menus. Execution shortcuts (Ctrl+R, Ctrl+T, Ctrl+G, Ctrl+Q) work.
+| Action | Shortcut | Notes |
+|--------|----------|-------|
+| Run program | **Ctrl+R** | Start from beginning |
+| Step | **Ctrl+T** | One statement at a time |
+| Continue | **Ctrl+G** | Run to next breakpoint |
+| Stop | **Ctrl+Q** | Halt execution |
+| Variables window | **Ctrl+V** | Show/hide variables |
+| Stack window | **Ctrl+K** | Show/hide stack |
+
+Note: Web UI also supports mouse interaction via toolbar buttons and menus for all debugging operations.
 
 ## See Also
 

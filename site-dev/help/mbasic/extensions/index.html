@@ -900,7 +900,9 @@
 - Find and Replace (Tk only)
 - Cut/Copy/Paste (Tk, Web)
 - Mouse support (Tk, Web)
-- Auto-save to local filesystem (Tk, Curses, CLI only - Web UI files are session-only)</p>
+- Auto-save behavior varies by UI:
+  - <strong>CLI, Tk, Curses:</strong> Save to local filesystem (persistent)
+  - <strong>Web UI:</strong> Files stored in server-side session memory only (not persistent across page refreshes)</p>
 <h3 id="visual-debugging">🎯 Visual Debugging<a class="headerlink" href="#visual-debugging" title="Permanent link">&para;</a></h3>
 <p><strong>Features NOT in original MBASIC 5.21:</strong>
 - Visual breakpoints (click line numbers)
@@ -914,6 +916,15 @@
 - Long filenames (original limited to 8.3)
 - Path support (original only drive letters)
 - Unicode text files (original only ASCII)</p>
+<p><strong>Web UI File Storage Limitations:</strong>
+The Web UI uses an in-memory virtual filesystem with these restrictions:
+- Files persist during browser session only (lost on page refresh)
+- No persistent storage across sessions
+- 50 file limit maximum
+- 1MB per file maximum
+- No path support (simple filenames only)
+- Cannot access user's local filesystem (security restriction)</p>
+<p>See <a href="../compatibility/">Compatibility Guide</a> for complete Web UI file storage details.</p>
 <h3 id="development-tools">🔧 Development Tools<a class="headerlink" href="#development-tools" title="Permanent link">&para;</a></h3>
 <p><strong>NOT in original MBASIC 5.21:</strong>
 - Parse tree visualization (<code>utils/show_parse_tree.py</code>)

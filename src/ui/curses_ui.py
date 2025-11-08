@@ -3459,7 +3459,7 @@ class CursesBackend(UIBackend):
             if not success:
                 # Format parse error with context
                 self.output_buffer.append("")
-                self.output_buffer.append("┌─ Parse Error ──────────────────────────────────┐")
+                self.output_buffer.append("┌─ Parse Error ────────────────────────────────────┐")
                 self.output_buffer.append(f"│ Line {line_num}:")
                 if line_num in self.editor_lines:
                     code = self.editor_lines[line_num]

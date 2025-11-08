@@ -24,7 +24,9 @@ class UIBackend(ABC):
 
     Future/potential backend types (not yet implemented):
     - WebBackend: Browser-based interface
-    - HeadlessBackend: No UI, for batch processing
+    - BatchBackend: Non-interactive execution mode for running programs from command line
+                   (Note: "headless" typically means no UI, which seems contradictory to UIBackend purpose;
+                   batch/non-interactive execution may be better handled outside the UIBackend abstraction)
 
     Usage:
         backend = CLIBackend(io_handler, program_manager)

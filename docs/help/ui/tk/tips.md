@@ -10,6 +10,8 @@ keywords: [tips, tricks, productivity, best practices]
 
 Get the most out of the MBASIC Tkinter GUI.
 
+**Note:** Some features described below (Smart Insert, Variables Window, Execution Stack) are documented here based on the Tk UI design specifications. Check [Settings](settings.md) for current implementation status or refer to the actual UI to verify which features are currently available.
+
 ## Smart Insert for Rapid Development
 
 **Scenario:** You have a skeleton and need to flesh it out:

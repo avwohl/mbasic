@@ -7,7 +7,7 @@
 20 END
 ```
 
-[See detailed tutorial](examples/hello-world.md)
+For a detailed walkthrough of this example, see [Hello World Tutorial](examples/hello-world.md).
 
 ## Simple Loop
 

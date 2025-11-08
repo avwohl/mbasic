@@ -157,8 +157,8 @@ SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
         scope=SettingScope.PROJECT,
     ),
 
-    # Note: editor.tab_size setting not included - BASIC uses line numbers for structure,
-    # not indentation, so tab size is not relevant for BASIC programs
+    # Note: editor.tab_size setting not included - BASIC uses line numbers for program structure,
+    # not indentation, so tab size is not a meaningful setting for BASIC source code
 
     # Note: Line numbers are always shown - they're fundamental to BASIC!
     # editor.show_line_numbers setting not included - makes no sense for BASIC

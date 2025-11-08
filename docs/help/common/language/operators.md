@@ -176,4 +176,4 @@ BASIC-80 automatically converts between numeric types:
 - [Type Conversion Functions](functions/index.md#type-conversion-functions)
 - [LET Statement](statements/let.md) - Variable assignment
 - [IF Statement](statements/if-then-else-if-goto.md) - Conditional execution
-- [Data Types](data-types.md) - Variable types and declarations
+- [DEFINT/SNG/DBL/STR](statements/defint-sng-dbl-str.md) - Variable type declarations

@@ -1129,11 +1129,16 @@
 <ul>
 <li><strong>Browser-based IDE</strong> - Run MBASIC in any modern browser</li>
 <li><strong>Syntax highlighting</strong> - Color-coded editor</li>
-<li><strong>Auto-save</strong> - Automatic saving to browser storage</li>
+<li><strong>Session-based storage</strong> - Files persist during browser session only (lost on page refresh)</li>
 <li><strong>Three-panel layout</strong> - Editor, output, and command areas</li>
-<li><strong>In-memory filesystem</strong> - File operations in browser memory</li>
+<li><strong>In-memory filesystem</strong> - Virtual filesystem with limitations:</li>
+<li>50 file limit maximum</li>
+<li>1MB per file maximum</li>
+<li>No path support (simple filenames only)</li>
+<li>No persistent storage across sessions</li>
 <li><strong>Basic debugging</strong> - Simple breakpoint support via menu</li>
 </ul>
+<p>See <a href="../compatibility/">Compatibility Guide</a> for complete Web UI file storage details.</p>
 <h2 id="compiler-features">Compiler Features<a class="headerlink" href="#compiler-features" title="Permanent link">&para;</a></h2>
 <h3 id="semantic-analyzer">Semantic Analyzer<a class="headerlink" href="#semantic-analyzer" title="Permanent link">&para;</a></h3>
 <p>The interpreter includes an advanced semantic analyzer with 18 optimizations:</p>

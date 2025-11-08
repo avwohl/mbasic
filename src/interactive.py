@@ -4,9 +4,9 @@ Modern implementation of MBASIC 5.21 interactive REPL
 
 Implements the interactive REPL with:
 - Line entry and editing
-- Direct commands (RUN, LIST, SAVE, LOAD, NEW, MERGE, FILES, SYSTEM, DELETE, RENUM, etc.)
-- AUTO mode for automatic line numbering
-- EDIT mode for character-by-character line editing
+- Direct commands (RUN, LIST, SAVE, LOAD, NEW, MERGE, FILES, SYSTEM, DELETE, RENUM, AUTO, EDIT, etc.)
+- AUTO command for automatic line numbering with customizable start/step
+- EDIT command for character-by-character line editing (insert/delete/copy mode)
 - Immediate mode execution (PRINT, LET, etc. without line numbers)
 """
 

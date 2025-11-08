@@ -45,5 +45,5 @@ Student 200 Mary scored 92.3
 ```
 
 ## See Also
-- [DATA](data.md) - To store the numeric and string constants that are accessed by the program's READ statement(s)
+- [DATA](data.md) - To store the numeric and string constants that are accessed by the program's READ statements
 - [RESTORE](restore.md) - Resets the DATA pointer to the beginning or a specified line

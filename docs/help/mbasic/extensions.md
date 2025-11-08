@@ -60,7 +60,9 @@ The GUI interfaces (Curses, Tk, Web) are **NOT in MBASIC 5.21**.
 - Find and Replace (Tk only)
 - Cut/Copy/Paste (Tk, Web)
 - Mouse support (Tk, Web)
-- Auto-save to local filesystem (Tk, Curses, CLI only - Web UI files are session-only)
+- Auto-save behavior varies by UI:
+  - **CLI, Tk, Curses:** Save to local filesystem (persistent)
+  - **Web UI:** Files stored in server-side session memory only (not persistent across page refreshes)
 
 ### 🎯 Visual Debugging
 
@@ -78,6 +80,17 @@ The GUI interfaces (Curses, Tk, Web) are **NOT in MBASIC 5.21**.
 - Long filenames (original limited to 8.3)
 - Path support (original only drive letters)
 - Unicode text files (original only ASCII)
+
+**Web UI File Storage Limitations:**
+The Web UI uses an in-memory virtual filesystem with these restrictions:
+- Files persist during browser session only (lost on page refresh)
+- No persistent storage across sessions
+- 50 file limit maximum
+- 1MB per file maximum
+- No path support (simple filenames only)
+- Cannot access user's local filesystem (security restriction)
+
+See [Compatibility Guide](compatibility.md) for complete Web UI file storage details.
 
 ### 🔧 Development Tools
 

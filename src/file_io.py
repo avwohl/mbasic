@@ -5,9 +5,9 @@ This module handles PROGRAM file operations (FILES, LOAD, SAVE, MERGE, KILL comm
 For RUNTIME file I/O (OPEN, CLOSE, INPUT#, PRINT# statements), see src/filesystem/base.py.
 
 TWO SEPARATE FILESYSTEM ABSTRACTIONS:
-1. FileIO (this file) - Program management operations (FILES/LOAD/SAVE/MERGE/KILL)
+1. FileIO (this file) - Program management operations
    - Used by: Interactive mode, UI file browsers
-   - Operations: FILES (list), LOAD/SAVE/MERGE (program files), KILL (delete)
+   - Operations: FILES (list files), LOAD/SAVE/MERGE (program files), KILL (delete files)
    - Purpose: Load .BAS programs into memory, save from memory to storage
    - Implementations:
      * RealFileIO: Direct filesystem access to disk (Tk, Curses, CLI)

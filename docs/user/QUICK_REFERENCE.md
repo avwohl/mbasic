@@ -179,7 +179,7 @@ See example programs in the `basic/` directory of the MBASIC installation.
 
 ## More Information
 
-- Press `Ctrl+P` (or `^F`) within the Curses UI to access the built-in help system
+- Press `^P` (or `^F`) within the Curses UI to access the built-in help system
 - See `docs/help/` directory for full help documentation
 - Visit [CHOOSING_YOUR_UI.md](CHOOSING_YOUR_UI.md) for UI comparison and selection guide
 

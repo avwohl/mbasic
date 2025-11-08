@@ -976,9 +976,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-execution-stack-for-loops" class="md-nav__link">
+  <a href="#5-execution-stack-window-for-loops" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Execution Stack for Loops
+      5. Execution Stack Window for Loops
     </span>
   </a>
   
@@ -1144,11 +1144,11 @@
 </tr>
 <tr>
 <td><strong>Ctrl+W</strong></td>
-<td>Show/hide Variables window</td>
+<td>Show/hide Variables Window</td>
 </tr>
 <tr>
 <td><strong>Ctrl+K</strong></td>
-<td>Show/hide Execution Stack window</td>
+<td>Show/hide Execution Stack Window</td>
 </tr>
 <tr>
 <td><strong>Ctrl+B</strong></td>
@@ -1293,11 +1293,11 @@
 <p>Notice: GOTO 10 automatically became GOTO 100!</p>
 <h3 id="4-debug-with-breakpoints-and-variables">4. Debug with Breakpoints and Variables<a class="headerlink" href="#4-debug-with-breakpoints-and-variables" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>1. Click line number gutter to set breakpoint (● appears)
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>2. Press Ctrl+W to open Variables window
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>2. Press Ctrl+W to open Variables Window
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>3. Press Ctrl+R to run
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>4. Program stops at breakpoint
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>5. Check variable values in Variables window
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>6. Click &quot;Step&quot; or &quot;Stmt&quot; toolbar button to step through code
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>5. Check variable values in Variables Window
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>6. Click &quot;Step&quot; toolbar button to step through code one statement at a time
 <a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>7. Watch variables update in real-time
 <a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>8. Click &quot;Cont&quot; toolbar button to continue running
 </code></pre></div>
@@ -1363,7 +1363,7 @@
 <a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">5</span><span class="p">)</span>
 <a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="nl">60</span><span class="w"> </span><span class="kr">END</span>
 </code></pre></div>
-<p>Run with <strong>Ctrl+R</strong>, then check Variables window (<strong>Ctrl+W</strong>) to see array contents!</p>
+<p>Run with <strong>Ctrl+R</strong>, then check Variables Window (<strong>Ctrl+W</strong>) to see array contents!</p>
 <h2 id="variable-case-preservation">Variable Case Preservation<a class="headerlink" href="#variable-case-preservation" title="Permanent link">&para;</a></h2>
 <p>MBASIC now preserves the original case of your variables while maintaining case-insensitive behavior!</p>
 <h3 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
@@ -1441,7 +1441,7 @@
 5. <code>END</code> ← Last</p>
 <p>Click the <strong>Step</strong> toolbar button (step line) to execute the entire line at once.</p>
 <h3 id="execution-stack-window">Execution Stack Window<a class="headerlink" href="#execution-stack-window" title="Permanent link">&para;</a></h3>
-<p>Press <strong>Ctrl+K</strong> to see the execution stack showing active loops and subroutine calls:</p>
+<p>Press <strong>Ctrl+K</strong> to see the Execution Stack Window showing active loops and subroutine calls:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">3</span>
 <a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="nl">20</span><span class="w">   </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">J</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">2</span>
 <a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="nl">30</span><span class="w">     </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">100</span>
@@ -1500,15 +1500,15 @@
 <a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="nl">20</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">10</span>
 </code></pre></div></p>
 <h3 id="4-variables-window-for-arrays">4. Variables Window for Arrays<a class="headerlink" href="#4-variables-window-for-arrays" title="Permanent link">&para;</a></h3>
-<p>When working with arrays, keep Variables window open:</p>
+<p>When working with arrays, keep Variables Window open:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="nl">10</span><span class="w"> </span><span class="kd">DIM</span><span class="w"> </span><span class="vg">SCORES</span><span class="p">(</span><span class="il">5</span><span class="p">)</span>
 <a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">5</span>
 <a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="nl">30</span><span class="w">   </span><span class="kr">INPUT</span><span class="w"> </span><span class="s2">&quot;Score&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">SCORES</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span>
 <a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
 </code></pre></div>
 <p>Run this with <strong>Ctrl+W</strong> window open - you'll see each array element as it's filled!</p>
-<h3 id="5-execution-stack-for-loops">5. Execution Stack for Loops<a class="headerlink" href="#5-execution-stack-for-loops" title="Permanent link">&para;</a></h3>
-<p>Press <strong>Ctrl+K</strong> to see Execution Stack while stepping through nested loops:</p>
+<h3 id="5-execution-stack-window-for-loops">5. Execution Stack Window for Loops<a class="headerlink" href="#5-execution-stack-window-for-loops" title="Permanent link">&para;</a></h3>
+<p>Press <strong>Ctrl+K</strong> to see Execution Stack Window while stepping through nested loops:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">3</span>
 <a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a><span class="nl">20</span><span class="w">   </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">J</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">2</span>
 <a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="nl">30</span><span class="w">     </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">I</span><span class="p">;</span><span class="w"> </span><span class="vg">J</span>
@@ -1557,7 +1557,7 @@
 <p>❌ <strong>Manually calculating line numbers</strong> → Use Smart Insert instead
 ❌ <strong>Running without saving</strong> → Save first with Ctrl+S
 ❌ <strong>Ignoring ? markers</strong> → Fix syntax errors before running
-❌ <strong>Not using Variables window</strong> → You're debugging blind!
+❌ <strong>Not using Variables Window</strong> → You're debugging blind!
 ❌ <strong>Stepping through entire program</strong> → Set breakpoints, use Continue</p>
 <h2 id="getting-help">Getting Help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
 <ul>

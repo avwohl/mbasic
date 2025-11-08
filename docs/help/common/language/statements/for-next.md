@@ -38,15 +38,22 @@ The FOR...NEXT loop executes a block of statements a specified number of times, 
 1. Variable is set to the starting value (x)
 2. Statements in loop body execute
 3. Variable increments by step value (z)
-4. If variable exceeds ending value (y) considering STEP direction, loop terminates
-5. Process repeats from step 2
+4. Loop termination test (see below)
+5. If test passes, process repeats from step 2
+
+### Loop Termination:
+The loop terminates when the variable passes the ending value, considering the STEP direction:
+- **Positive STEP** (or no STEP): Loop terminates when variable > ending value
+- **Negative STEP**: Loop terminates when variable < ending value
+
+For example:
+- `FOR I = 1 TO 10` terminates when I > 10 (after I reaches 10 and increments to 11)
+- `FOR I = 10 TO 1 STEP -1` terminates when I < 1 (after I reaches 1 and decrements to 0)
 
 ### Features:
-- **STEP** can be positive, negative, or fractional
-- Negative STEP counts backward (loop terminates when variable < end after increment)
-- Positive STEP counts forward (loop terminates when variable > end after increment)
-- Loop body may not execute at all if start/end/step values would cause immediate termination (e.g., FOR I=10 TO 1 with positive STEP)
-- Multiple variables can be specified in NEXT for nested loops
+- **STEP** can be positive, negative, or fractional (defaults to 1 if omitted)
+- Loop body may not execute at all if start/end/step values would cause immediate termination (e.g., `FOR I=10 TO 1` with positive STEP)
+- Multiple variables can be specified in NEXT for nested loops (e.g., `NEXT J, I`)
 
 ### Example:
 ```basic

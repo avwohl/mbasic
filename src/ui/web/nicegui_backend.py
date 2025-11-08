@@ -1231,10 +1231,11 @@ class NiceGUIBackend(UIBackend):
                         self.editor_has_been_used = False  # Track if user has typed anything
 
                         # Content change handlers via CodeMirror's on_change callback
-                        # The _on_editor_change method (defined below) handles:
+                        # The _on_editor_change method handles:
                         # - Removing blank lines
                         # - Auto-numbering
                         # - Placeholder clearing
+                        # (Note: Method defined later in this class - search for 'def _on_editor_change')
 
                         # Click and blur handlers registered separately
                         self.editor.on('click', self._on_editor_click, throttle=0.05)

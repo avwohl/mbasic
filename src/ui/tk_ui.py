@@ -2119,8 +2119,9 @@ class TkBackend(UIBackend):
         errors_found = []
 
         # Check each line independently (per-line validation)
-        # Note: This method is called with a delay (100ms) after cursor movement/clicks
-        # to avoid excessive validation during rapid editing
+        # Note: This method is called:
+        # - With 100ms delay after cursor movement/clicks (to avoid excessive validation during rapid editing)
+        # - Immediately when focus leaves editor (to ensure validation before switching windows)
         for line in editor_content.split('\n'):
             line_stripped = line.strip()
             if not line_stripped:
@@ -2143,6 +2144,7 @@ class TkBackend(UIBackend):
             # Only show full error list in output if there are multiple errors.
             # For single errors, the red ? icon in the editor is sufficient feedback.
             # This avoids cluttering the output pane with repetitive messages during editing.
+            # Note: We don't track "first time" - this is intentionally simple.
             should_show_list = len(errors_found) > 1
             if should_show_list:
                 self._add_output("\n=== Syntax Errors ===\n")

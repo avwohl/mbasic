@@ -1017,8 +1017,12 @@ def serialize_line(line_node):
             if match:
                 # Spaces after line number in original
                 relative_indent = len(match.group(2))
-            # Note: If source_text doesn't match pattern, falls back to relative_indent=1
-            # This can cause inconsistent indentation for programmatically inserted lines
+            # Note: If source_text doesn't match pattern (or is unavailable), falls back to relative_indent=1.
+            # When does this occur?
+            # 1. Programmatically inserted lines (no source_text attribute)
+            # 2. Lines where source_text doesn't start with line_number + spaces (edge case)
+            # Result: These lines get single-space indentation instead of preserving original spacing.
+            # This is expected behavior - programmatically inserted lines use standard formatting.
 
         # Apply the relative indentation
         parts.append(' ' * relative_indent)

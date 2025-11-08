@@ -24,8 +24,11 @@ This guide helps you choose the right UI for your needs and understand the featu
 | Symbol | Meaning |
 |--------|---------|
 | ✅ | Fully implemented and available |
-| ⚠️ | Partially implemented or planned (see Notes column) |
+| ⚠️ | Partially implemented (see Notes column for details) |
+| 📋 | Planned for future implementation (not yet available) |
 | ❌ | Not available or not applicable |
+
+**Note:** For ⚠️ entries, check the Notes column to understand which parts are implemented versus planned.
 
 ### Core Features
 

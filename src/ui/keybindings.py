@@ -1,13 +1,12 @@
 """
 Keyboard binding definitions for MBASIC Curses UI.
 
-This module loads keybindings from curses_keybindings.json (located in src/ui/)
-and provides them in the format expected by the Curses UI (urwid key names,
-character codes, display names).
+This module loads keybindings from curses_keybindings.json and provides them
+in the format expected by the Curses UI (urwid key names, character codes, display names).
 
 This ensures consistency between the JSON config, the UI behavior, and the documentation.
 
-Note: curses_keybindings.json contains the canonical key definitions for the curses UI.
+File location: curses_keybindings.json is located in the src/ui/ directory (same directory as this module).
 If you need to modify keybindings, edit that JSON file rather than changing constants here.
 """
 
@@ -340,9 +339,13 @@ SETTINGS_RESET_KEY = 'ctrl r'
 
 # All keybindings organized by category for help display
 # Note: This dictionary contains keybindings shown in the help system.
-# Some defined constants (like CLEAR_BREAKPOINTS_KEY, STOP_KEY, MAXIMIZE_OUTPUT_KEY,
-# STACK_KEY, and dialog-specific keys) are not included here as they are either
-# menu-only commands, context-specific, or advanced features not shown in main help.
+# Some defined constants are not included here:
+# - CLEAR_BREAKPOINTS_KEY (Shift+Ctrl+B) - Available in menu under Edit > Clear All Breakpoints
+# - STOP_KEY (Ctrl+X) - Shown in debugger context in the Debugger category
+# - MAXIMIZE_OUTPUT_KEY (Shift+Ctrl+M) - Menu-only feature, not documented as keyboard shortcut
+# - STACK_KEY (empty string) - No keyboard shortcut assigned, menu-only
+# - Dialog-specific keys (DIALOG_YES_KEY, DIALOG_NO_KEY, SETTINGS_APPLY_KEY, SETTINGS_RESET_KEY) - Shown in dialog prompts
+# - Context-specific keys (VARS_SORT_MODE_KEY, VARS_SORT_DIR_KEY, etc.) - Shown in Variables Window category
 KEYBINDINGS_BY_CATEGORY = {
     'Global Commands': [
         (key_to_display(QUIT_ALT_KEY), 'Quit'),

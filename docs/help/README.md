@@ -45,4 +45,4 @@ UIs should:
 - **Tk Help**: [ui/tk/index.md](ui/tk/index.md)
 - **Web Help**: [ui/web/index.md](ui/web/index.md)
 
-**Note:** The visual backend is part of the web UI implementation.
+**Note:** MBASIC supports four UI backends: CLI (command-line interface), Curses (terminal full-screen), Tk (desktop GUI), and Web (browser-based). The help system provides both common content (shared across all backends) and UI-specific documentation for each interface.

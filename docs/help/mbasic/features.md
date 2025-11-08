@@ -169,10 +169,16 @@ This document lists all features implemented in MBASIC-2025 (this implementation
 
 - **Browser-based IDE** - Run MBASIC in any modern browser
 - **Syntax highlighting** - Color-coded editor
-- **Auto-save** - Automatic saving to browser storage
+- **Session-based storage** - Files persist during browser session only (lost on page refresh)
 - **Three-panel layout** - Editor, output, and command areas
-- **In-memory filesystem** - File operations in browser memory
+- **In-memory filesystem** - Virtual filesystem with limitations:
+  - 50 file limit maximum
+  - 1MB per file maximum
+  - No path support (simple filenames only)
+  - No persistent storage across sessions
 - **Basic debugging** - Simple breakpoint support via menu
+
+See [Compatibility Guide](compatibility.md) for complete Web UI file storage details.
 
 ## Compiler Features
 

@@ -30,7 +30,7 @@ Key behaviors:
 - Multiple values must be separated by commas
 - String values may be entered with or without quotes (quotes are required if the string contains commas)
 - If too few values are entered, the prompt is repeated with ?? for the remaining values
-- If too many values are entered, the extras are ignored with a ?Redo from start message
+- If too many values are entered, a "?Redo from start" message is displayed and the user must re-enter all values
 - A semicolon immediately after INPUT suppresses the carriage return/line feed after the user presses Enter
 - A semicolon after the prompt string causes the prompt to be displayed without a question mark
 
