@@ -2,11 +2,13 @@
 Tkinter-based help browser for navigating markdown documentation.
 
 Provides:
-- Scrollable help content display
-- Clickable links
+- Scrollable help content display with markdown rendering
+- Clickable links with navigation history (back button and home button)
 - Search across multi-tier help system with ranking and fuzzy matching
-- In-page search (Ctrl+F) with match highlighting
-- Navigation history (back button)
+- Search result display with tier markers (Language/MBASIC/UI)
+- In-page search (Ctrl+F) with match highlighting and navigation
+- Context menu with copy operations and 'Open in New Window' for links
+- Table formatting for markdown tables
 """
 
 import tkinter as tk
@@ -94,9 +96,12 @@ class TkHelpBrowser(tk.Toplevel):
 
         self.inpage_search_entry = ttk.Entry(self.inpage_search_bar, width=30)
         self.inpage_search_entry.pack(side=tk.LEFT, padx=2)
+        # Return key in search box navigates to next match (local widget binding)
+        # Note: This binding is specific to the in-page search entry widget and is not
+        # documented in tk_keybindings.json, which only documents global application
+        # keybindings. Local widget bindings are documented in code comments only.
         self.inpage_search_entry.bind('<Return>', lambda e: self._inpage_find_next())
-        # Note: ESC closes search bar - this is not documented in tk_keybindings.json
-        # as it's a local widget binding rather than a global application keybinding
+        # ESC key closes search bar (local widget binding, not in tk_keybindings.json)
         self.inpage_search_entry.bind('<Escape>', lambda e: self._inpage_search_close())
 
         ttk.Button(self.inpage_search_bar, text="▲ Prev", command=self._inpage_find_prev, width=8).pack(side=tk.LEFT, padx=2)
@@ -306,7 +311,14 @@ class TkHelpBrowser(tk.Toplevel):
         self.text_widget.insert(tk.END, line[last_end:])
 
     def _follow_link(self, target: str):
-        """Follow a link to another help topic."""
+        """Follow a link to another help topic.
+
+        Handles both absolute and relative link paths:
+        - Absolute paths: Start with '/', 'common/', or contain ':/' or ':\\'
+        - Relative paths: Resolved from current topic's directory using Path operations
+
+        All paths are normalized to forward slashes for consistency.
+        """
         # Check if target is an absolute path (starts with / or contains :/)
         # OR starts with common/ (common help paths should always be absolute)
         # Absolute paths are relative to help root
@@ -687,6 +699,9 @@ class TkHelpBrowser(tk.Toplevel):
             menu = tk.Menu(self.text_widget, tearoff=0)
 
             # Check if we're on a link
+            # Note: Both "link_" (from _render_line_with_links) and "result_link_"
+            # (from _execute_search) prefixes are checked. Both types are stored
+            # identically in self.link_urls, but the prefixes distinguish their origin.
             index = self.text_widget.index(f"@{event.x},{event.y}")
             tags = self.text_widget.tag_names(index)
             link_tag = None
@@ -780,8 +795,9 @@ class TkHelpBrowser(tk.Toplevel):
     def _format_table_row(self, line: str) -> str:
         """Format a markdown table row for display.
 
-        Note: This implementation is duplicated in src/ui/markdown_renderer.py.
-        Consider extracting to a shared utility module if additional changes are needed.
+        Note: This implementation may be duplicated in src/ui/markdown_renderer.py.
+        If both implementations exist and changes are needed to table formatting logic,
+        consider extracting to a shared utility module to maintain consistency.
         """
         # Strip and split by |
         parts = [p.strip() for p in line.strip().split('|')]

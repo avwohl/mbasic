@@ -79,6 +79,8 @@ class SettingsWidget(urwid.WidgetWrap):
         listbox = urwid.ListBox(urwid.SimpleFocusListWalker(content))
 
         # Create footer with keyboard shortcuts (instead of button widgets)
+        # Note: All shortcuts use constants from keybindings module to ensure
+        # footer display matches actual key handling in keypress() method
         footer_text = urwid.Text(
             f"↑↓ {key_to_display(ENTER_KEY)}=OK  "
             f"{key_to_display(ESC_KEY)}/{key_to_display(SETTINGS_KEY)}=Cancel  "
@@ -133,8 +135,9 @@ class SettingsWidget(urwid.WidgetWrap):
             # Create radio button group for enum
             group = []
             for choice in defn.choices:
-                # Create display label (strip force_ prefix for cleaner display)
-                # Use removeprefix to only strip from the beginning, not anywhere in the string
+                # Create display label (strip 'force_' prefix from beginning for cleaner display)
+                # Note: Both removeprefix() and the fallback [6:] only strip from the beginning,
+                # ensuring we don't modify 'force_' appearing elsewhere in the string
                 display_label = choice.removeprefix('force_') if hasattr(str, 'removeprefix') else (choice[6:] if choice.startswith('force_') else choice)
                 rb = urwid.RadioButton(group, display_label, state=(choice == current_value))
                 # Store the actual value as user_data for later retrieval
@@ -244,9 +247,11 @@ class SettingsWidget(urwid.WidgetWrap):
                     widget.set_edit_text(str(defn.default))
 
                 elif defn.type == SettingType.ENUM:
-                    # Set radio button to default
+                    # Set radio button to default value
+                    # Note: Compares actual value (stored in _actual_value) not display label
+                    # since display labels have 'force_' prefix stripped (see _create_setting_widget)
                     for rb in widget:
-                        rb.set_state(rb.get_label() == defn.default)
+                        rb.set_state(rb._actual_value == defn.default)
 
                 elif defn.type == SettingType.STRING:
                     widget.set_edit_text(str(defn.default))

@@ -56,8 +56,9 @@ class SimpleWebIOHandler(IOHandler):
         # Get input from UI (this will block until user enters input)
         result = self.input_callback(prompt)
 
-        # Note: The input echoing (displaying what user typed) is handled by the
-        # inline input handler in the NiceGUIBackend class, not here.
+        # Note: Input echoing (displaying what user typed) happens naturally because
+        # the user types directly into the output textarea, which is made editable
+        # by _enable_inline_input() in the NiceGUIBackend class.
 
         return result
 
@@ -102,7 +103,7 @@ class VariablesDialog(ui.dialog):
         """
         super().__init__()
         self.backend = backend
-        # Sort state (matches Tk UI defaults: see src/ui/tk_ui.py lines 91-92)
+        # Sort state (matches Tk UI defaults: see sort_mode and sort_reverse in src/ui/tk_ui.py)
         self.sort_mode = 'accessed'  # Current sort mode
         self.sort_reverse = True  # Sort direction
 
@@ -769,7 +770,7 @@ class FindReplaceDialog(ui.dialog):
                 """Clear dialog reference when closed."""
                 self._is_open = False
                 self.close()
-                # Note: CodeMirror maintains its own scroll position, no need to restore
+                # Note: CodeMirror maintains scroll position automatically when dialog closes
 
             with ui.row().classes('gap-2'):
                 ui.button('Find', on_click=do_find).classes('bg-blue-500').tooltip('Find from beginning').props('no-caps')
@@ -992,7 +993,7 @@ class NiceGUIBackend(UIBackend):
     - Variables window
     - Breakpoint support (toggle, clear all, visual indicators)
 
-    Based on TK UI feature set (see docs/dev/TK_UI_FEATURE_AUDIT.md).
+    Based on TK UI feature set (see docs/dev/claude_if_you_read_in_here_you_loop/TK_UI_FEATURE_AUDIT.md).
     """
 
     def __init__(self, io_handler, program_manager):
@@ -1230,7 +1231,7 @@ class NiceGUIBackend(UIBackend):
                         self.editor_has_been_used = False  # Track if user has typed anything
 
                         # Content change handlers via CodeMirror's on_change callback
-                        # The _on_editor_change method (defined at line ~2609) handles:
+                        # The _on_editor_change method (defined below) handles:
                         # - Removing blank lines
                         # - Auto-numbering
                         # - Placeholder clearing
@@ -1905,11 +1906,10 @@ class NiceGUIBackend(UIBackend):
 
         This method is called every 10ms by ui.timer() during program execution.
 
-        Note on Ctrl+C handling (external to this method):
-        Ctrl+C interrupts are handled at the top level (in mbasic main, which wraps
-        start_web_ui() in a try/except). During long-running programs, Ctrl+C can be
-        unresponsive because Python signal handlers only run between bytecode instructions.
-        This method does not implement any Ctrl+C handling directly.
+        Note: In the web UI, Ctrl+C in the browser does not send interrupt signals to
+        the Python backend process. To stop a running program, users must use the Stop
+        menu item or the server-side interrupt mechanism (if running from terminal).
+        This differs from terminal-based UIs where Ctrl+C works directly.
         """
         # Check if we have an interpreter before proceeding
         # Note: self.running is also set/cleared elsewhere but may not persist reliably in async callbacks
@@ -2130,7 +2130,9 @@ class NiceGUIBackend(UIBackend):
                 else:
                     self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
-                # Create new IO handler for execution (interpreter/runtime reused to preserve session state)
+                # Create new IO handler for execution
+                # Note: Interpreter/runtime objects are reused across runs (not recreated each time).
+                # The runtime.reset_for_run() call above clears variables but preserves breakpoints.
                 self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
                 self.interpreter.io = self.exec_io
                 self.interpreter.limits = create_local_limits()
@@ -2632,10 +2634,9 @@ class NiceGUIBackend(UIBackend):
     def _remove_blank_lines(self, e=None):
         """Remove blank lines from editor except the last line.
 
-        The last line is preserved even if blank, since it's likely where the cursor
-        is after pressing Enter. This prevents removing the blank line user just created.
-        Note: This assumes cursor is at the end, which may not always be true if user
-        clicks elsewhere.
+        The last line is preserved even if blank to avoid removing it while the user
+        is actively typing on it. This is a heuristic that works well in practice but
+        may preserve some blank lines if the user edits earlier in the document.
         """
         try:
             if not self.editor:
@@ -3171,11 +3172,10 @@ class NiceGUIBackend(UIBackend):
             if success:
                 self._set_status('Immediate command executed')
 
-                # Architecture note: We do NOT sync editor from AST after immediate commands.
-                # This preserves the one-way data flow: editor text → AST → execution.
-                # Syncing AST → editor would lose user's exact text, spacing, and comments.
-                # Some immediate commands (like RENUM) modify the AST directly, but we rely
-                # on those commands to update the editor text themselves, not via automatic sync.
+                # Architecture: We do NOT auto-sync editor from AST after immediate commands.
+                # This preserves one-way data flow (editor → AST → execution) and prevents
+                # losing user's formatting/comments. Commands that modify code (like RENUM)
+                # update the editor text directly.
 
                 # If statement set NPC (like RUN/GOTO), move it to PC
                 # This is what the tick loop does after executing a statement
@@ -3407,7 +3407,9 @@ class NiceGUIBackend(UIBackend):
                     if rest:  # Only add if there's content after line number
                         self.program.add_line(line_num, line)
         except Exception as e:
-            # If sync fails, log but don't crash - we'll serialize what we have
+            # If sync fails, write to stderr but don't crash - we'll serialize what we have.
+            # Using sys.stderr.write directly (not log_web_error) to avoid dependency on logging
+            # infrastructure during critical serialization path.
             sys.stderr.write(f"Warning: Failed to sync program from editor: {e}\n")
             sys.stderr.flush()
 
@@ -3630,7 +3632,7 @@ def start_web_ui(port=8080):
                 sys.stderr.write(f"Warning: Failed to save session state: {e}\n")
                 sys.stderr.flush()
 
-        # Save state periodically
+        # Save state periodically (errors are caught and logged, won't crash the UI)
         ui.timer(5.0, save_state_periodic)
 
         # Save state on disconnect

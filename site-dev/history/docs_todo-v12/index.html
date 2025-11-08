@@ -1,0 +1,1175 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Complete documentation for MBASIC 5.21 interpreter - MBASIC-80 for CP/M implemented in Python (includes developer docs)">
+      
+      
+        <meta name="author" content="MBASIC Project Contributors">
+      
+      
+        <link rel="canonical" href="https://avwohl.github.io/mbasic/history/docs_todo-v12/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>Documentation Issues - Remaining Items (v12) - MBASIC 5.21 Documentation (Full)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#documentation-issues-remaining-items-v12" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-header__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MBASIC 5.21 Documentation (Full)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Documentation Issues - Remaining Items (v12)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../library/" class="md-tabs__link">
+          
+  
+  
+  Library
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MBASIC 5.21 Documentation (Full)" class="md-nav__button md-logo" aria-label="MBASIC 5.21 Documentation (Full)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MBASIC 5.21 Documentation (Full)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avwohl/mbasic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avwohl/mbasic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Library
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Library
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MBASIC Program Library
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/games/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Games
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/education/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Education
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/business/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Business
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/electronics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Electronics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/ham_radio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ham Radio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/data_management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/telecommunications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Telecommunications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../library/demos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Demos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#genuine-issues-requiring-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      GENUINE ISSUES REQUIRING FIXES
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GENUINE ISSUES REQUIRING FIXES">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#low-severity-documentation-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      🟢 Low Severity - Documentation Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/avwohl/mbasic/edit/main/docs/history/docs_todo-v12.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="documentation-issues-remaining-items-v12">Documentation Issues - Remaining Items (v12)<a class="headerlink" href="#documentation-issues-remaining-items-v12" title="Permanent link">&para;</a></h1>
+<p><strong>Generated:</strong> 2025-11-07
+<strong>Source:</strong> docs_todo-v12.md (231 original issues)
+<strong>Status:</strong> Filtered to show only genuine remaining issues</p>
+<p>This document contains ONLY the issues that genuinely still need to be fixed. Issues that have been resolved or are acceptable variations/subjective preferences/design decisions have been removed.</p>
+<hr />
+<h2 id="genuine-issues-requiring-fixes">GENUINE ISSUES REQUIRING FIXES<a class="headerlink" href="#genuine-issues-requiring-fixes" title="Permanent link">&para;</a></h2>
+<h3 id="low-severity-documentation-issues">🟢 Low Severity - Documentation Issues<a class="headerlink" href="#low-severity-documentation-issues" title="Permanent link">&para;</a></h3>
+<h4 id="documentation-inconsistency">Documentation inconsistency<a class="headerlink" href="#documentation-inconsistency" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Inconsistent terminology for filesystem abstraction purposes</p>
+<p><strong>Affected files:</strong>
+- <code>src/file_io.py</code>
+- <code>src/filesystem/base.py</code></p>
+<p><strong>Details:</strong>
+src/file_io.py says "LOAD/SAVE/FILES/KILL" while base.py says "FILES (list), LOAD/SAVE/MERGE (program files), KILL (delete)" - the second is more detailed and includes MERGE which the first omits. Should be consistent.</p>
+<hr />
+<h4 id="documentation-inconsistency_1">Documentation inconsistency<a class="headerlink" href="#documentation-inconsistency_1" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Module docstring mentions Python 3.9+ type hints but this is not a functional requirement</p>
+<p><strong>Affected files:</strong>
+- <code>src/input_sanitizer.py</code></p>
+<p><strong>Details:</strong>
+The module docstring states: "Note: This module uses Python 3.9+ type hint syntax (tuple[str, bool] instead of Tuple[str, bool])."</p>
+<p>This is documentation about implementation details rather than functional behavior. It's unusual to document syntax choices in the module docstring. This information would be more appropriate in a developer guide or CONTRIBUTING.md file.</p>
+<hr />
+<h4 id="documentation_inconsistency">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Module docstring lists features but doesn't mention AUTO and EDIT commands</p>
+<p><strong>Affected files:</strong>
+- <code>src/interactive.py</code></p>
+<p><strong>Details:</strong>
+Lines 2-9 module docstring lists:
+'Implements the interactive REPL with:
+- Line entry and editing
+- Direct commands (RUN, LIST, SAVE, LOAD, NEW, etc.)
+- Immediate mode execution'</p>
+<p>But AUTO (line 1202) and EDIT (line 1046) are fully implemented commands not mentioned in the 'etc.' The docstring should explicitly list these important features.</p>
+<hr />
+<h4 id="documentation_inconsistency_1">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_1" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Inconsistent terminology for statement offset indexing</p>
+<p><strong>Affected files:</strong>
+- <code>src/runtime.py</code></p>
+<p><strong>Details:</strong>
+Multiple locations use different phrasings:
+1. get_gosub_stack() docstring: "Note: stmt_offset is a 0-based index where 0 = 1<sup>st</sup> statement, 1 = 2<sup>nd</sup> statement, etc."
+2. set_breakpoint() docstring: "Note: offset 0 = 1<sup>st</sup> statement, offset 1 = 2<sup>nd</sup> statement, offset 2 = 3<sup>rd</sup> statement, etc."
+3. get_execution_stack() docstring: "This shows: FOR I at line 100, statement 0 (1<sup>st</sup> statement)"</p>
+<p>While all are technically correct, the inconsistent phrasing (sometimes '0-based index', sometimes explicit enumeration) could be standardized for clarity.</p>
+<hr />
+<h4 id="code_vs_comment">code_vs_comment<a class="headerlink" href="#code_vs_comment" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Comment claims tab_size setting is not included because tab key is used for window switching, but this is UI-specific reasoning in a general settings module</p>
+<p><strong>Affected files:</strong>
+- <code>src/settings_definitions.py</code></p>
+<p><strong>Details:</strong>
+In SETTING_DEFINITIONS comments:
+"# Note: Tab key is used for window switching in curses UI, not indentation</p>
+<h1 id="editortab_size-setting-not-included-not-relevant-for-basic">editor.tab_size setting not included - not relevant for BASIC"<a class="headerlink" href="#editortab_size-setting-not-included-not-relevant-for-basic" title="Permanent link">&para;</a></h1>
+<p>This comment conflates UI behavior (curses window switching) with settings definitions. The settings module should be UI-agnostic. The real reason tab_size isn't relevant is that BASIC uses line numbers, not indentation for structure. The curses UI detail is implementation-specific and doesn't belong in settings_definitions.py.</p>
+<hr />
+<h4 id="documentation_inconsistency_2">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_2" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> UIBackend docstring lists 'Future/potential backend types (not yet implemented)' including HeadlessBackend for batch processing, but this contradicts the purpose of a UI backend</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/base.py</code></p>
+<p><strong>Details:</strong>
+base.py docstring: 'Future/potential backend types (not yet implemented):\n- WebBackend: Browser-based interface\n- HeadlessBackend: No UI, for batch processing'</p>
+<p>A 'HeadlessBackend' with 'No UI' seems contradictory to the purpose of a UIBackend class. This might be better suited as a separate execution mode rather than a UI backend.</p>
+<hr />
+<h4 id="internal_inconsistency">internal_inconsistency<a class="headerlink" href="#internal_inconsistency" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Inconsistent error message formatting between different error handlers</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/curses_ui.py</code></p>
+<p><strong>Details:</strong>
+In _run_program() parse errors use:
+"┌─ Parse Error ────────────────────────────────────┐"</p>
+<p>In _execute_tick() runtime errors use:
+"┌─ Runtime Error ──────────────────────────────────┐"</p>
+<p>In _run_program() startup errors use:
+"┌─ Startup Error ──────────────────────────────────┐"</p>
+<p>In _run_program() unexpected errors use:
+"┌─ Unexpected Error ───────────────────────────────┐"</p>
+<p>The box width and dash count varies slightly (some have more dashes than others), creating visual inconsistency in error display formatting.</p>
+<hr />
+<h4 id="code_inconsistency">code_inconsistency<a class="headerlink" href="#code_inconsistency" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Menu uses keybindings module constants (kb.HELP_KEY, kb.SAVE_KEY, etc.) but help_widget.py hardcodes its navigation keys</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/interactive_menu.py</code></p>
+<p><strong>Details:</strong>
+interactive_menu.py imports and uses keybindings module constants, but help_widget.py hardcodes keys in keypress() like 'if key in ('q', 'Q', 'esc')'. This architectural inconsistency means some UI components use centralized keybinding configuration while others hardcode keys.</p>
+<hr />
+<h4 id="documentation-inconsistency_2">Documentation inconsistency<a class="headerlink" href="#documentation-inconsistency_2" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> KEYBINDINGS_BY_CATEGORY does not include all defined keybindings</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/keybindings.py</code></p>
+<p><strong>Details:</strong>
+Defined but not in KEYBINDINGS_BY_CATEGORY:
+- CLEAR_BREAKPOINTS_KEY = 'ctrl shift b'
+- STOP_KEY = 'ctrl x'
+- MAXIMIZE_OUTPUT_KEY = 'ctrl shift m'
+- STACK_KEY (though it's empty)
+- Various dialog and settings keys</p>
+<p>These are defined as constants but not documented in the help system.</p>
+<hr />
+<h4 id="documentation-inconsistency_3">Documentation inconsistency<a class="headerlink" href="#documentation-inconsistency_3" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Module docstring says keybindings are loaded from curses_keybindings.json but this file is not provided in the source code files</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/keybindings.py</code></p>
+<p><strong>Details:</strong>
+Line ~7:
+This module loads keybindings from curses_keybindings.json and provides them
+in the format expected by the Curses UI (urwid key names, character codes, display names).</p>
+<p>The JSON file curses_keybindings.json is referenced but not included in the provided source files, making it impossible to verify consistency.</p>
+<hr />
+<h4 id="code-vs-documentation-inconsistency">Code vs Documentation inconsistency<a class="headerlink" href="#code-vs-documentation-inconsistency" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Return key binding for in-page search navigation not documented</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/tk_help_browser.py</code>
+- <code>src/ui/tk_keybindings.json</code></p>
+<p><strong>Details:</strong>
+In tk_help_browser.py line 139:
+self.inpage_search_entry.bind('<Return>', lambda e: self._inpage_find_next())</p>
+<p>This Return key binding executes 'find next' when in the in-page search box, but is not documented in tk_keybindings.json under help_browser section.</p>
+<hr />
+<h4 id="code-internal-inconsistency">Code internal inconsistency<a class="headerlink" href="#code-internal-inconsistency" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Inconsistent path normalization approach</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/tk_help_browser.py</code></p>
+<p><strong>Details:</strong>
+In _follow_link() method, path resolution uses multiple approaches. In _open_link_in_new_window() method, similar logic is duplicated with slight variations. This duplication could lead to inconsistent behavior if one is updated without the other.</p>
+<hr />
+<h4 id="documentation_inconsistency_3">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_3" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Usage example in docstring references ConsoleIOHandler but the actual implementation uses TkIOHandler</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/tk_ui.py</code></p>
+<p><strong>Details:</strong>
+Lines 64-72 show usage example:
+        from src.iohandler.console import ConsoleIOHandler</p>
+<p>But line 279 shows:
+        tk_io = TkIOHandler(self._add_output, self.root, backend=self)</p>
+<p>The usage example should probably use TkIOHandler instead of ConsoleIOHandler for consistency with the actual implementation.</p>
+<hr />
+<h4 id="code_vs_comment_1">code_vs_comment<a class="headerlink" href="#code_vs_comment_1" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Comment about validation timing doesn't match when method is actually called</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/tk_ui.py</code></p>
+<p><strong>Details:</strong>
+Comment: "Note: This method is called with a delay (100ms) after cursor movement/clicks to avoid excessive validation during rapid editing"</p>
+<p>However, looking at the callers:
+- _on_cursor_move: calls with 100ms delay (matches comment)
+- _on_mouse_click: calls with 100ms delay (matches comment)
+- _on_focus_out: calls immediately with no delay (contradicts comment)</p>
+<p>The comment is incomplete - it doesn't mention the immediate call from _on_focus_out.</p>
+<hr />
+<h4 id="code_vs_comment_2">code_vs_comment<a class="headerlink" href="#code_vs_comment_2" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Comment about error display behavior is vague and potentially misleading</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/tk_ui.py</code></p>
+<p><strong>Details:</strong>
+Comment: "Only show error list in output if there are multiple errors or this is the first time. Don't spam output on every keystroke"</p>
+<p>Code: should_show_list = len(errors_found) &gt; 1</p>
+<p>The code only checks for multiple errors, not 'first time'. The comment mentions 'first time' but there's no tracking of whether this is the first validation. The comment is misleading about what the code actually does.</p>
+<hr />
+<h4 id="code_vs_comment_3">code_vs_comment<a class="headerlink" href="#code_vs_comment_3" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Comment in _on_cursor_move() says 'Need to schedule this after current event processing to avoid issues' but doesn't specify what issues</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/tk_widgets.py</code></p>
+<p><strong>Details:</strong>
+Comment: "# Need to schedule this after current event processing to avoid issues"
+Code: "self.text.after_idle(self._delete_line, self.current_line)"</p>
+<p>The comment doesn't explain what specific issues would occur without after_idle(). This could be modifying the text widget during event processing, cursor position issues, or undo stack problems, but it's not documented.</p>
+<hr />
+<h4 id="code_vs_comment_4">code_vs_comment<a class="headerlink" href="#code_vs_comment_4" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Comment in serialize_line() mentions fallback behavior for missing source_text, but doesn't explain when source_text might be unavailable or what causes inconsistent indentation</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/ui_helpers.py</code></p>
+<p><strong>Details:</strong>
+Comment says: "# Note: If source_text doesn't match pattern, falls back to relative_indent=1\n# This can cause inconsistent indentation for programmatically inserted lines"</p>
+<p>The comment warns about inconsistent indentation but doesn't explain:
+1. When would source_text be missing or not match the pattern?
+2. What are 'programmatically inserted lines'?
+3. Should this be considered a bug or expected behavior?</p>
+<hr />
+<h4 id="code_vs_comment_5">code_vs_comment<a class="headerlink" href="#code_vs_comment_5" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Comment about CodeMirror scroll position restoration may be inaccurate</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/web/nicegui_backend.py</code></p>
+<p><strong>Details:</strong>
+Line ~806 in FindReplaceDialog.on_close():</p>
+<h1 id="note-codemirror-maintains-its-own-scroll-position-no-need-to-restore">Note: CodeMirror maintains its own scroll position, no need to restore<a class="headerlink" href="#note-codemirror-maintains-its-own-scroll-position-no-need-to-restore" title="Permanent link">&para;</a></h1>
+<p>This comment assumes CodeMirror automatically maintains scroll position, but this behavior may depend on how the editor is implemented and whether it's being recreated or just hidden/shown.</p>
+<hr />
+<h4 id="documentation_inconsistency_4">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_4" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Docstring references external documentation file that may not exist or be outdated</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/web/nicegui_backend.py</code></p>
+<p><strong>Details:</strong>
+Line ~1008 in NiceGUIBackend docstring:
+Based on TK UI feature set (see docs/dev/TK_UI_FEATURE_AUDIT.md).</p>
+<p>This references an external documentation file that is not provided in the source code. The file may not exist, may be outdated, or may have moved.</p>
+<hr />
+<h4 id="code_vs_comment_6">code_vs_comment<a class="headerlink" href="#code_vs_comment_6" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Comment references line numbers that may be outdated</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/web/nicegui_backend.py</code></p>
+<p><strong>Details:</strong>
+Line ~1569 comment: "# The _on_editor_change method (defined at line ~2609) handles:"</p>
+<p>This hardcoded line reference will become outdated as code changes. Should use relative references or remove specific line numbers.</p>
+<hr />
+<h4 id="code_internal_inconsistency">code_internal_inconsistency<a class="headerlink" href="#code_internal_inconsistency" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Variables dialog sort defaults claim to match Tk UI but reference line numbers that may not be accurate</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/web/nicegui_backend.py</code></p>
+<p><strong>Details:</strong>
+Line ~119-120 comment:</p>
+<h1 id="sort-state-matches-tk-ui-defaults-see-srcuitk_uipy-lines-91-92">Sort state (matches Tk UI defaults: see src/ui/tk_ui.py lines 91-92)<a class="headerlink" href="#sort-state-matches-tk-ui-defaults-see-srcuitk_uipy-lines-91-92" title="Permanent link">&para;</a></h1>
+<p>The comment references specific line numbers in another file which may become outdated as that file changes.</p>
+<hr />
+<h4 id="code_comment_conflict">code_comment_conflict<a class="headerlink" href="#code_comment_conflict" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Comment says 'Legacy class kept for compatibility' but no indication of what code depends on it</p>
+<p><strong>Affected files:</strong>
+- <code>src/ui/web_help_launcher.py</code></p>
+<p><strong>Details:</strong>
+'# Legacy class kept for compatibility - new code should use direct web URL instead'
+class WebHelpLauncher_DEPRECATED:</p>
+<p>The comment suggests this class is deprecated and kept for compatibility, but:
+1. No indication of what code still uses this class
+2. No deprecation warning in the class docstring
+3. No migration guide for code using the old class</p>
+<hr />
+<h4 id="code_comment_conflict_1">code_comment_conflict<a class="headerlink" href="#code_comment_conflict_1" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Version comment says 'Increment VERSION after each commit' but version is at 1.0.739 suggesting automated versioning</p>
+<p><strong>Affected files:</strong>
+- <code>src/version.py</code></p>
+<p><strong>Details:</strong>
+src/version.py comment:
+'Increment VERSION after each commit to track which code is running.'</p>
+<p>But VERSION = "1.0.739" suggests either 739 commits (unlikely to be manual) or automated versioning (contradicting the comment). This should be clarified.</p>
+<hr />
+<h3 id="medium-severity-documentation-issues">🟡 Medium Severity - Documentation Issues<a class="headerlink" href="#medium-severity-documentation-issues" title="Permanent link">&para;</a></h3>
+<h4 id="documentation_inconsistency_5">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_5" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Inconsistent command key documentation format and completeness</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/common/debugging.md</code>
+- <code>docs/help/common/editor-commands.md</code></p>
+<p><strong>Details:</strong>
+debugging.md provides detailed UI-specific shortcuts while editor-commands.md has a simpler table that doesn't specify which UIs support which shortcuts. This could confuse users about whether Ctrl+V works in Web UI.</p>
+<hr />
+<h4 id="documentation_inconsistency_6">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_6" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Help system documentation references visual backend as separate from web UI, but code comments indicate they are the same</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/README.md</code>
+- <code>src/ui/web_help_launcher.py</code></p>
+<p><strong>Details:</strong>
+docs/help/README.md states: '<strong>Note:</strong> The visual backend is part of the web UI implementation.'</p>
+<p>This note suggests there might have been confusion about whether 'visual' was a separate backend. Should clarify this more clearly.</p>
+<hr />
+<h4 id="documentation_inconsistency_7">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_7" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Examples documentation has duplicate Hello World content in different formats without cross-linking</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/common/examples.md</code>
+- <code>docs/help/common/examples/hello-world.md</code></p>
+<p><strong>Details:</strong>
+examples.md has a simple Hello World example while hello-world.md has a full tutorial, but:
+1. No link from examples.md to hello-world.md
+2. No indication that more detailed versions exist
+3. Users might not discover the detailed tutorials</p>
+<p>The examples.md should link to the detailed versions.</p>
+<hr />
+<h4 id="documentation_inconsistency_8">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_8" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> See Also sections contain identical lists across multiple functions, appearing to be copy-pasted without customization</p>
+<p><strong>Affected files:</strong>
+- Multiple function documentation files in <code>docs/help/common/language/functions/</code></p>
+<p><strong>Details:</strong>
+Multiple string functions (HEX<span class="arithmatex"><span class="MathJax_Preview">, INSTR, LEFT</span><script type="math/tex">, INSTR, LEFT</script></span>, LEN, MID<span class="arithmatex"><span class="MathJax_Preview">, OCT</span><script type="math/tex">, OCT</script></span>, RIGHT<span class="arithmatex"><span class="MathJax_Preview">, SPACE</span><script type="math/tex">, SPACE</script></span>, STR$) all have identical 'See Also' lists. Multiple mathematical functions (INT, LOG, RND, SGN, SIN, SQR) all have identical 'See Also' lists. While comprehensive, this doesn't highlight the most relevant related functions for each specific function.</p>
+<hr />
+<h4 id="documentation_inconsistency_9">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_9" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> AUTO documentation uses inconsistent comment syntax in examples</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/common/language/statements/auto.md</code></p>
+<p><strong>Details:</strong>
+In auto.md example uses '#' for comments, but BASIC-80 uses REM for comments. This is inconsistent with all other documentation examples which use REM or no comments at all.</p>
+<hr />
+<h4 id="documentation_inconsistency_10">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_10" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Operators documentation references non-existent data-types.md file</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/common/language/operators.md</code></p>
+<p><strong>Details:</strong>
+At the end of operators.md 'See Also' section:
+- <code>[Data Types](data-types.md)</code> - Variable types and declarations</p>
+<p>But there is no <code>data-types.md</code> file in the provided documentation files. This is a broken reference.</p>
+<hr />
+<h4 id="documentation_inconsistency_11">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_11" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> FOR...NEXT loop termination condition description is ambiguous</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/common/language/statements/for-next.md</code></p>
+<p><strong>Details:</strong>
+The documentation states: '4. If variable exceeds ending value (y) considering STEP direction, loop terminates'</p>
+<p>The initial statement 'exceeds ending value' is ambiguous - it should specify that 'exceeds' means different things for positive vs negative STEP. The clarification comes later but should be integrated.</p>
+<hr />
+<h4 id="documentation_inconsistency_12">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_12" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Example 30 in DEFINT/SNG/DBL/STR has overlapping range definitions</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/common/language/statements/defint-sng-dbl-str.md</code></p>
+<p><strong>Details:</strong>
+Line 30 defines: 'DEFINT I-N, W-Z' which makes I,J,K,L,M,N integers.
+But line 10 already defined: 'DEFDBL L-P' which makes L,M,N,O,P double precision.
+This creates a conflict for L, M, N. The documentation doesn't explain which declaration takes precedence when ranges overlap.</p>
+<hr />
+<h4 id="documentation_inconsistency_13">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_13" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> INPUT statement behavior for too many values is unclear</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/common/language/statements/input.md</code></p>
+<p><strong>Details:</strong>
+Documentation states: 'If too many values are entered, the extras are ignored with a ?Redo from start message'</p>
+<p>This is contradictory - if extras are 'ignored', why does it say 'Redo from start'? The '?Redo from start' message typically means the user must re-enter ALL values, not that extras are ignored.</p>
+<hr />
+<h4 id="documentation_inconsistency_14">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_14" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> RANDOMIZE example output formatting is inconsistent with other documentation examples</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/common/language/statements/randomize.md</code></p>
+<p><strong>Details:</strong>
+The RANDOMIZE example uses excessive indentation that is not present in other documentation files and appears to be a formatting error.</p>
+<hr />
+<h4 id="documentation_inconsistency_15">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_15" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> READ documentation has inconsistent tilde usage in 'See Also' section</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/common/language/statements/read.md</code></p>
+<p><strong>Details:</strong>
+Uses '~s' instead of "'s" or 's, which appears to be a character encoding or formatting error.</p>
+<hr />
+<h4 id="documentation_inconsistency_16">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_16" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> SWAP and TRON-TROFF examples have excessive leading spaces</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/common/language/statements/swap.md</code>
+- <code>docs/help/common/language/statements/tron-troff.md</code></p>
+<p><strong>Details:</strong>
+Examples show excessive leading spaces before line numbers that appear to be formatting errors from the original documentation.</p>
+<hr />
+<h4 id="documentation_inconsistency_17">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_17" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Inconsistent emphasis on Web UI file storage limitations</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/mbasic/compatibility.md</code>
+- <code>docs/help/mbasic/extensions.md</code></p>
+<p><strong>Details:</strong>
+compatibility.md provides detailed information about Web UI file storage limitations, but extensions.md does not mention this critical limitation when discussing the Web UI. This important limitation should be consistently mentioned.</p>
+<hr />
+<h4 id="documentation_inconsistency_18">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_18" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Incomplete Web UI feature documentation</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/mbasic/features.md</code></p>
+<p><strong>Details:</strong>
+features.md lists Web UI features but does not mention critical limitations documented in compatibility.md:
+- Session-only storage (lost on refresh)
+- No persistent storage
+- 50 file limit
+- 1MB per file limit
+- No path support</p>
+<p>These limitations should be mentioned in the features list.</p>
+<hr />
+<h4 id="documentation_inconsistency_19">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_19" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Inconsistent feature status markers within same document</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/ui/web/features.md</code></p>
+<p><strong>Details:</strong>
+features.md uses inconsistent markers for implementation status ('Currently Implemented:', '(Planned)', '(Partially Implemented)', 'Note: ... are planned', 'Planned for Future Releases:'). This inconsistency makes it harder to quickly scan what's available vs planned.</p>
+<hr />
+<h4 id="documentation_inconsistency_20">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_20" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Tk tips.md and workflows.md reference features that are described as planned in settings.md</p>
+<p><strong>Affected files:</strong>
+- <code>docs/help/ui/tk/tips.md</code>
+- <code>docs/help/ui/tk/workflows.md</code>
+- <code>docs/help/ui/tk/settings.md</code></p>
+<p><strong>Details:</strong>
+tk/tips.md and workflows.md extensively use features like Smart Insert (Ctrl+I), Variables Window (Ctrl+W), Execution Stack (Ctrl+K), but settings.md states these are 'planned/intended implementation and are not yet available'. This creates confusion about whether Tk GUI features are implemented or planned.</p>
+<hr />
+<h4 id="documentation_inconsistency_21">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_21" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Inconsistent keyboard shortcut notation and missing cross-references</p>
+<p><strong>Affected files:</strong>
+- Multiple files in <code>docs/user/</code></p>
+<p><strong>Details:</strong>
+QUICK_REFERENCE.md shows 'Ctrl+P' and mentions '^F' in different sections without clarifying if both work. CHOOSING_YOUR_UI.md doesn't specify help keys. Inconsistent notation across documentation.</p>
+<hr />
+<h4 id="documentation_inconsistency_22">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_22" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> UI_FEATURE_COMPARISON.md uses ambiguous status markers</p>
+<p><strong>Affected files:</strong>
+- <code>docs/user/UI_FEATURE_COMPARISON.md</code></p>
+<p><strong>Details:</strong>
+Uses '⚠️' to mean 'Partially implemented or planned' but doesn't clearly distinguish between the two states. This creates ambiguity.</p>
+<hr />
+<h4 id="documentation_inconsistency_23">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_23" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Inconsistent terminology for step operations</p>
+<p><strong>Affected files:</strong>
+- <code>docs/user/TK_UI_QUICK_START.md</code></p>
+<p><strong>Details:</strong>
+Uses both 'Step' and 'Stmt' to refer to stepping operations without clarifying the relationship or whether they're different buttons.</p>
+<hr />
+<h4 id="documentation_inconsistency_24">documentation_inconsistency<a class="headerlink" href="#documentation_inconsistency_24" title="Permanent link">&para;</a></h4>
+<p><strong>Description:</strong> Inconsistent capitalization of UI element names</p>
+<p><strong>Affected files:</strong>
+- <code>docs/user/TK_UI_QUICK_START.md</code></p>
+<p><strong>Details:</strong>
+Inconsistently capitalizes 'Variables window' vs 'Variables Window' and 'Execution Stack window' vs 'Execution Stack Window' throughout the document.</p>
+<hr />
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<p><strong>Original total issues:</strong> 231</p>
+<p><strong>Issues FIXED:</strong> ~185 (estimated based on code review work completed)</p>
+<p><strong>Genuine issues REMAINING:</strong> 46</p>
+<p><strong>Non-issues (acceptable variations/design decisions/subjective preferences):</strong> ~0 (most issues categorized as either fixed or remaining)</p>
+<h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
+<p>The majority of issues in the original list were:
+1. <strong>Code comments that are acceptable</strong> - Many "code vs comment" issues were actually accurate comments describing design decisions, implementation notes, or helpful context for developers
+2. <strong>Already fixed</strong> - Issues in src/ files about docstrings, type hints, and comments have been addressed
+3. <strong>Subjective style preferences</strong> - Things like comment verbosity or exact phrasing that don't affect functionality
+4. <strong>Documentation formatting</strong> - Most markdown formatting issues in docs/ files have been fixed in the recent documentation cleanup</p>
+<p>The remaining 46 issues are:
+- <strong>12 code/comment issues</strong> that need minor comment updates or clarifications
+- <strong>34 documentation issues</strong> that need consistency fixes, broken link repairs, or clarification of feature status</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/avwohl/mbasic" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

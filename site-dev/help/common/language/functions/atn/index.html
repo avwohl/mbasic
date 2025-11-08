@@ -704,7 +704,8 @@
 </code></pre></div>
 <p><strong>Versions:</strong> 8K, Extended, Disk</p>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<p>Returns the arctangent of X in radians. Result is in the range -pi/2 to pi/2. The expression X may be any numeric type, but the evaluation of ATN is always performed in single precision.</p>
+<p>Returns the arctangent of X in radians. Result is in the range -pi/2 to pi/2. The expression X may be any numeric type, but the evaluation of ATN is always performed in single precision (~7 significant digits).</p>
+<p><strong>Note:</strong> When computing PI with <code>ATN(1) * 4</code>, the result is limited to single precision (~7 digits). For higher precision, use <code>ATN(CDBL(1)) * 4</code> to get double precision.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="vg">X</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w"> </span><span class="il">20</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="kr">ATN</span><span class="w"> </span><span class="p">(</span><span class="vg">X</span><span class="p">)</span>

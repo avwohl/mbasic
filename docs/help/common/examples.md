@@ -7,6 +7,8 @@
 20 END
 ```
 
+[See detailed tutorial](examples/hello-world.md)
+
 ## Simple Loop
 
 ```
@@ -15,6 +17,8 @@
 30 NEXT I
 40 END
 ```
+
+[See detailed tutorial](examples/loops.md)
 
 ## User Input
 

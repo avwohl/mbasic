@@ -25,7 +25,8 @@ class LineNumberedText(tk.Frame if tk else object):
 
     Status priority (when both error and breakpoint):
     - ? takes priority (error shown)
-    - After fixing error, ● becomes visible
+    - After fixing error, ● becomes visible (automatically handled by set_error() method
+      which checks has_breakpoint flag when clearing errors)
 
     Automatic blank line removal:
     - When cursor moves away from a blank line, that line is automatically deleted
@@ -151,7 +152,9 @@ class LineNumberedText(tk.Frame if tk else object):
             line_text = self.text.get(f'{self.current_line}.0', f'{self.current_line}.end')
             if line_text.strip() == '':
                 # Delete the blank line
-                # Need to schedule this after current event processing to avoid issues
+                # Schedule deletion after current event processing to avoid interfering
+                # with ongoing key/mouse event handling (prevents cursor position issues,
+                # undo stack corruption, and widget state conflicts during event processing)
                 self.text.after_idle(self._delete_line, self.current_line)
 
         # Update current line
@@ -181,7 +184,8 @@ class LineNumberedText(tk.Frame if tk else object):
         """Redraw status column (●=breakpoint, ?=error).
 
         Note: BASIC line numbers are parsed from text content (not drawn in canvas).
-        See _parse_line_number() for the extraction logic.
+        See _parse_line_number() for the regex-based extraction logic that validates
+        line number format (requires whitespace or end-of-line after the number).
         """
         self.canvas.delete('all')
 
@@ -316,10 +320,14 @@ class LineNumberedText(tk.Frame if tk else object):
         return None
 
     def _on_status_click(self, event):
-        """Handle click on status column (show error details for ?, breakpoint confirmation for ●).
+        """Handle click on status column (show error details for ?, breakpoint info for ●).
 
-        Note: This displays information/confirmation messages only. It does NOT toggle
-        breakpoints - that's handled by the UI backend's breakpoint toggle command
+        Displays informational messages about line status:
+        - For error markers (?): Shows error message in a message box
+        - For breakpoint markers (●): Shows informational message about breakpoint
+
+        Note: This displays information messages only. It does NOT toggle breakpoints -
+        that's handled by the UI backend's breakpoint toggle command
         (e.g., TkBackend._toggle_breakpoint(), accessed via ^B in Tk UI or menu).
         """
         import tkinter.messagebox as messagebox

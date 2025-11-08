@@ -49,8 +49,9 @@ class InterpreterState:
     2. halted check - stops if already halted
     3. break_requested check - handles Ctrl+C breaks
     4. breakpoints check - pauses at breakpoints
-    5. statement execution - where input_prompt may be set
-    6. error handling - where error_info is set via exception handlers
+    5. trace output - displays [line] or [line.stmt] if TRON is active
+    6. statement execution - where input_prompt may be set
+    7. error handling - where error_info is set via exception handlers
 
     Also tracks: input buffering, debugging flags, performance metrics, and
     provides computed properties for current line/statement position.
@@ -595,11 +596,11 @@ class Interpreter:
                 continue
 
 
-    # OLD EXECUTION METHODS REMOVED
+    # OLD EXECUTION METHODS REMOVED (version 1.0.299)
     # Note: The project has an internal implementation version (tracked in src/version.py)
     # which is separate from the MBASIC 5.21 language version being implemented.
-    # Old methods: run_from_current(), _run_loop(), step_once() (removed)
-    # These used old current_line/next_line fields
+    # Old methods: run_from_current(), _run_loop(), step_once() (removed in v1.0.299)
+    # These used old current_line/next_line fields (also removed in v1.0.299)
     # Replaced by tick_pc() and PC-based execution
     # CONT command now uses tick() directly
 
@@ -1582,7 +1583,8 @@ class Interpreter:
         # MBASIC 5.21 gives "Duplicate Definition" if:
         # 1. OPTION BASE has already been executed, OR
         # 2. Any arrays have been created (both explicitly via DIM and implicitly via first use like A(5)=10)
-        #    This applies regardless of the current array base (0 or 1).
+        #    The error occurs even if arrays were created with the same base value that OPTION BASE
+        #    would set (e.g., arrays already use base 0, and OPTION BASE 0 would still raise error).
         # Note: The check len(self.runtime._arrays) > 0 catches all array creation because both
         # explicit DIM and implicit array access (via set_array_element) update runtime._arrays.
         if self.runtime.option_base_executed:
@@ -1623,7 +1625,7 @@ class Interpreter:
         1. If state.input_buffer has data: Use buffered input (from provide_input())
         2. Otherwise: Set state.input_prompt, input_variables, input_file_number and return (pauses execution)
         3. UI calls provide_input() with user's input line
-        4. On next tick(), buffered input is used (step 1) and state vars are cleared
+        4. On next tick(), buffered input is used (step 1) and input_prompt/input_variables are cleared
 
         File input bypasses the state machine and reads synchronously.
         """
@@ -2660,8 +2662,8 @@ class Interpreter:
 
         Implementation note: Outputs from line_text_map (original source text), not regenerated from AST.
         This preserves original formatting/spacing/case. The line_text_map is maintained by ProgramManager
-        and is kept in sync with the AST during program modifications (add_line, delete_line, RENUM, MERGE).
-        The sync is handled by ProgramManager methods and should remain consistent during normal operation.
+        and should be kept in sync with the AST during program modifications (add_line, delete_line, RENUM, MERGE).
+        If ProgramManager fails to maintain this sync, LIST output may show stale or incorrect line text.
         """
         # Evaluate start and end expressions
         start_line = None
@@ -2855,9 +2857,11 @@ class Interpreter:
             result = left + right
             # Enforce 255 character string limit for concatenation (MBASIC 5.21 compatibility)
             # Note: This check only applies to concatenation via PLUS operator.
-            # Other string operations (MID$, LSET, RSET, INPUT) do not enforce this limit.
-            # Also note: len() counts characters, not bytes. For ASCII this is equivalent.
-            # Field buffers (LSET/RSET) explicitly use latin-1 encoding where byte count matters.
+            # Other string operations (MID$, INPUT) do not enforce this 255-char limit.
+            # LSET/RSET have different limits: they enforce field width limits (defined by FIELD statement)
+            # rather than the 255-char concatenation limit.
+            # Also note: len() counts characters. For ASCII and latin-1 (both single-byte encodings),
+            # character count equals byte count. Field buffers (LSET/RSET) use latin-1 encoding.
             if isinstance(result, str) and len(result) > 255:
                 raise RuntimeError("String too long")
             return result

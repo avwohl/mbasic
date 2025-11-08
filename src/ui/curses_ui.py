@@ -348,6 +348,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         - Columns 1+: Line number (variable width) - editable
         - After line number: Space
         - After space: Code - editable
+
+        Note: Methods like _sort_and_position_line use a default target_column of 7,
+        which assumes typical line numbers (status=1 char + number=5 digits + space=1 char).
+        This is an approximation since line numbers have variable width.
         """
         # FAST PATH: For normal printable characters, bypass all processing
         # This is critical for responsive typing
@@ -386,8 +390,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # We need to check line number changes before Tab takes effect
         is_tab = (key == TAB_KEY)
 
-        # Check syntax when leaving line or pressing control keys
+        # Check syntax when pressing control keys, navigation keys, or switching focus
         # (Not during normal typing - avoids annoying errors for incomplete lines)
+        # This includes: Ctrl+X commands, up/down arrows, page up/down, home/end, and Tab
         if is_control_key or is_updown_arrow or is_other_nav_key or is_tab:
             # About to navigate or run command - check syntax now
             new_text = self._update_syntax_errors(current_text)
@@ -661,7 +666,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Format: "S<num> " where S=status (1 char space), <num>=line# (variable width), space (1)
             display_text = f" {self.next_auto_line_num} "
             # DON'T increment counter here - that happens only on Enter
-            # This was the bug causing "0    1" issue
+            # Bug fix: Incrementing here caused next_auto_line_num to advance prematurely,
+            # displaying the wrong line number before the user typed anything
         else:
             # Format all lines (with optional highlighting)
             formatted_lines = []
@@ -987,6 +993,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Skip empty code lines
             if not code_area.strip() or line_number is None:
                 # Clear error status for empty lines, but preserve breakpoints
+                # Note: line_number > 0 check handles edge case of line 0 (if present)
+                # Consistent with _check_line_syntax which treats all empty lines as valid
                 if line_number is not None and line_number > 0:
                     new_status = self._get_status_char(line_number, has_syntax_error=False)
                     if status != new_status:
@@ -1206,8 +1214,6 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
             self._needs_sort = False
 
-        # urwid automatically redraws screen after this callback returns
-
     def _sort_and_position_line(self, lines, current_line_index, target_column=7):
         """Sort lines by line number and position cursor at the moved line.
 
@@ -1357,9 +1363,10 @@ class CursesBackend(UIBackend):
         self.stack_window_visible = False
 
         # Editor state
-        # Note: self.editor_lines is the CursesBackend's storage dict
-        # self.editor.lines is the ProgramEditorWidget's storage dict (different object)
-        self.editor_lines = {}  # line_num -> text for editing
+        # Note: self.editor_lines stores execution state (lines loaded from file for RUN)
+        # self.editor.lines (in ProgramEditorWidget) stores the actual editing state
+        # These serve different purposes and are synchronized as needed
+        self.editor_lines = {}  # line_num -> text for execution (synced from editor)
         self.current_line_num = 10  # Default starting line number
         self.current_filename = None  # Track current filename for Save vs Save As
 
@@ -1388,10 +1395,11 @@ class CursesBackend(UIBackend):
 
         # Interpreter Lifecycle:
         # Created ONCE here in __init__ and reused throughout the session.
-        # The interpreter is NOT recreated in start() - only ImmediateExecutor is.
+        # The interpreter object itself is NEVER recreated - the same instance is used
+        # for the lifetime of the UI session.
         # Note: The immediate_io handler created here is temporary - ImmediateExecutor
-        # will be recreated in start() with a fresh OutputCapturingIOHandler, but
-        # this same interpreter instance will be reused with the new executor.
+        # will be recreated in start() with a fresh OutputCapturingIOHandler, but that
+        # new executor will receive this same interpreter instance (not a new interpreter).
         # Use unlimited limits for immediate mode (runs will use local limits)
         # Rationale: Immediate mode commands (PRINT, LIST, etc.) should not be artificially
         # constrained by resource limits. Program execution (RUN) uses separate runtime state
@@ -1661,7 +1669,7 @@ class CursesBackend(UIBackend):
         # Create widgets
         self.menu_bar = InteractiveMenuBar(self)
         # Toolbar removed from UI layout - use Ctrl+U menu instead for keyboard navigation
-        # (_create_toolbar method still exists but is not called)
+        # Note: The _create_toolbar method is fully implemented but intentionally not used
         self.editor = ProgramEditorWidget()
         self.editor._parent_ui = self  # Give editor access to parent UI for dialogs
 
@@ -2067,7 +2075,7 @@ class CursesBackend(UIBackend):
             # Stop execution
             self._debug_stop()
 
-        # Note: Clear output removed from keyboard shortcuts (^Y now used for quit)
+        # Note: Clear output removed from keyboard shortcuts (no dedicated key)
         # Clear output still available via menu: Ctrl+U -> Output -> Clear Output
 
     def _clear_output(self):
@@ -2172,14 +2180,14 @@ class CursesBackend(UIBackend):
                 line_num = state.error_info.pc.line_num
                 self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
                 self._update_output()
-                # Status bar stays at default - error message is in output
+                # Status bar stays at default (STATUS_BAR_SHORTCUTS) - error message is in output
                 self._update_immediate_status()
             elif self.runtime.halted:
                 # Clear highlighting when done
                 self.editor._update_display()
                 self.output_buffer.append("Program completed")
                 self._update_output()
-                # Status bar stays at default - completion message is in output
+                # Status bar stays at default (STATUS_BAR_SHORTCUTS) - completion message is in output
                 self._update_immediate_status()
         except Exception as e:
             import traceback
@@ -2193,7 +2201,7 @@ class CursesBackend(UIBackend):
             else:
                 self.output_buffer.append(traceback.format_exc())
             self._update_output()
-            # Status bar stays at default - error is in output
+            # Status bar stays at default (STATUS_BAR_SHORTCUTS) - error is in output
 
     def _debug_step_line(self):
         """Execute all statements on current line and pause (step by line)."""
@@ -2254,13 +2262,13 @@ class CursesBackend(UIBackend):
                 line_num = state.error_info.pc.line_num
                 self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
                 self._update_output()
-                # Status bar stays at default - error message is in output
+                # Status bar stays at default (STATUS_BAR_SHORTCUTS) - error message is in output
                 self._update_immediate_status()
             elif self.runtime.halted:
                 self.editor._update_display()
                 self.output_buffer.append("Program completed")
                 self._update_output()
-                # Status bar stays at default - completion message is in output
+                # Status bar stays at default (STATUS_BAR_SHORTCUTS) - completion message is in output
                 self._update_immediate_status()
         except Exception as e:
             import traceback
@@ -2274,7 +2282,7 @@ class CursesBackend(UIBackend):
             else:
                 self.output_buffer.append(traceback.format_exc())
             self._update_output()
-            # Status bar stays at default - error is in output
+            # Status bar stays at default (STATUS_BAR_SHORTCUTS) - error is in output
 
     def _debug_stop(self):
         """Stop program execution."""
@@ -2703,8 +2711,9 @@ class CursesBackend(UIBackend):
         # Create overlay
         # Main widget retrieval: Use self.base_widget (stored at UI creation time in __init__)
         # rather than self.loop.widget (which reflects the current widget and might be a menu
-        # or other overlay). This approach is used consistently by _show_help, _show_keymap,
-        # and _show_settings since they create overlays and don't need to unwrap existing ones.
+        # or other overlay). This approach works for _show_help, _show_keymap, and _show_settings
+        # because these methods close any existing overlays first (via on_close callbacks) before
+        # creating new ones, ensuring self.base_widget is the correct base for the new overlay.
         overlay = urwid.Overlay(
             urwid.AttrMap(help_widget, 'body'),
             self.base_widget,
@@ -2773,11 +2782,11 @@ class CursesBackend(UIBackend):
     def _activate_menu(self):
         """Activate the interactive menu bar.
 
-        Main widget storage: Unlike _show_help/_show_keymap/_show_settings which use
-        self.base_widget directly, this method extracts base_widget from self.loop.widget
-        to unwrap any existing overlay. This is necessary because menu activation can occur
-        when other overlays are already open, and we need to preserve those existing overlays
-        while adding the menu dropdown on top of them.
+        Main widget storage: Unlike _show_help/_show_keymap/_show_settings which close
+        existing overlays first (and thus can use self.base_widget directly), this method
+        extracts base_widget from self.loop.widget to unwrap any existing overlay. This
+        preserves existing overlays (like help or settings) while adding the menu dropdown
+        on top of them, allowing menu navigation even when other overlays are present.
         """
         # Get the dropdown overlay from menu bar
         overlay = self.menu_bar.activate()
@@ -3450,7 +3459,7 @@ class CursesBackend(UIBackend):
             if not success:
                 # Format parse error with context
                 self.output_buffer.append("")
-                self.output_buffer.append("┌─ Parse Error ────────────────────────────────────┐")
+                self.output_buffer.append("┌─ Parse Error ──────────────────────────────────┐")
                 self.output_buffer.append(f"│ Line {line_num}:")
                 if line_num in self.editor_lines:
                     code = self.editor_lines[line_num]
@@ -3496,7 +3505,7 @@ class CursesBackend(UIBackend):
             if start_line not in self.program.line_asts:
                 self.output_buffer.append(f"?Undefined line {start_line}")
                 self._update_output()
-                # Status bar stays at default - error is in output
+                # Status bar stays at default (STATUS_BAR_SHORTCUTS) - error is in output
                 self.running = False
                 return False
             # Set PC to start at the specified line (after start() has built statement table)
@@ -3520,7 +3529,7 @@ class CursesBackend(UIBackend):
             self.output_buffer.append(f"│ Error: {error_msg}")
             self.output_buffer.append("└──────────────────────────────────────────────────┘")
             self._update_output()
-            # Status bar stays at default - error is in output
+            # Status bar stays at default (STATUS_BAR_SHORTCUTS) - error is in output
             return False
 
         return True
@@ -3709,7 +3718,9 @@ class CursesBackend(UIBackend):
         """
         def on_input_complete(result):
             """Called when user completes input or cancels."""
-            # If user cancelled (ESC), stop program execution (like BASIC STOP statement)
+            # If user cancelled (ESC), stop program execution
+            # Note: This sets stopped=True similar to a BASIC STOP statement, but the semantics
+            # differ - STOP is a deliberate program action, while ESC is user cancellation
             if result is None:
                 # Stop execution - PC already contains the position for CONT to resume from
                 self.runtime.stopped = True
@@ -4402,7 +4413,7 @@ class CursesBackend(UIBackend):
         # but allows commands like LIST to see the current program.
         self._sync_program_to_runtime()
 
-        # Log the command to output pane (not separate immediate history)
+        # Log the command to output pane
         self.output_walker.append(make_output_line(f"> {command}"))
 
         # Execute

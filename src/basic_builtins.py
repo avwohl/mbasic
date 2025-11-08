@@ -126,7 +126,7 @@ class UsingFormatter:
             'has_decimal': False,  # Whether format includes decimal point
             'leading_sign': False,  # + at start
             'trailing_sign': False,  # + or - at end
-            'trailing_minus_only': False,  # - at end only
+            'trailing_minus_only': False,
             'dollar_sign': False,  # $$
             'asterisk_fill': False,  # **
             'comma': False,  # Thousand separator
@@ -1022,9 +1022,6 @@ class BuiltinFunctions:
             if file_num not in self.runtime.files:
                 raise ValueError(f"File #{file_num} not open")
 
-            # self.runtime.files[file_num] returns a dict with 'handle', 'mode', 'eof' keys
-            # Extract the file handle from the file_info dict to perform read operations
-            # (this pattern is used by EOF(), LOC(), LOF(), and other file functions)
             file_info = self.runtime.files[file_num]
             file_handle = file_info['handle']
             return file_handle.read(num)

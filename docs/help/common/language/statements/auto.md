@@ -26,8 +26,8 @@ AUTO begins numbering at <line number> and increments each subsequent line numbe
 ## Example
 
 ```basic
-AUTO 100,50    # Generates line numbers 100, 150, 200 •••
-AUTO           # Generates line numbers 10, 20, 30, 40 •••
+AUTO 100,50    REM Generates line numbers 100, 150, 200 •••
+AUTO           REM Generates line numbers 10, 20, 30, 40 •••
 ```
 
 ## See Also

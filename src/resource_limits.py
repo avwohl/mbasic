@@ -61,7 +61,7 @@ class ResourceLimits:
             max_while_depth: Maximum WHILE loop nesting depth
             max_total_memory: Maximum total memory for all variables/arrays (bytes)
             max_array_size: Maximum size for a single array (bytes)
-            max_string_length: Maximum length for a string variable (bytes)
+            max_string_length: Maximum length for a string variable (bytes). MBASIC 5.21 limit is 255.
             max_open_files: Maximum number of simultaneously open files
             max_file_size: Maximum size for a single file (bytes)
             max_total_files: Maximum number of files that can be created
@@ -187,10 +187,10 @@ class ResourceLimits:
         """
         # Calculate total elements (all dimensions multiplied)
         # Note: DIM A(N) creates N+1 elements (0 to N) in MBASIC 5.21
-        # This calculation matches the array creation logic in src/interpreter.py execute_dim()
+        # This implements the MBASIC array sizing convention (called by execute_dim() in interpreter.py)
         total_elements = 1
         for dim_size in dimensions:
-            total_elements *= (dim_size + 1)  # +1 for 0-based indexing
+            total_elements *= (dim_size + 1)  # +1 for 0-based indexing (0 to N)
 
         # Estimate element size
         element_size = self.estimate_size(None, element_type)

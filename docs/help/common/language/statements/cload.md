@@ -8,6 +8,8 @@ type: statement
 
 # CLOAD - THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
 
+**Versions:** 8K (cassette), Extended (cassette)
+
 ## Purpose
 
 To load a program or an array from cassette tape into memory.

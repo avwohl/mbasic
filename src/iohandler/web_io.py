@@ -144,11 +144,15 @@ class WebIOHandler(IOHandler):
 
         Args:
             blocking: If True, wait for keypress. If False, return "" if no key ready.
+                     NOTE: This parameter is accepted for interface compatibility but
+                     is ignored in the web UI implementation.
 
         Returns:
             Single character string, or "" if not available
 
-        Note: Character input not supported in web UI (always returns empty string).
+        Note: Character input not supported in web UI. This method always returns
+        an empty string immediately, regardless of the blocking parameter value.
+        The blocking parameter is ignored.
         """
         return ""
 
@@ -223,5 +227,10 @@ class WebIOHandler(IOHandler):
 
         Returns:
             Tuple of (rows, cols) - returns reasonable defaults for web
+
+        Note: This is a web_io-specific method, not part of the IOHandler base
+        interface. Other implementations (console, curses, gui) do not provide
+        this method. This method exists for web-specific utilities that need
+        to estimate display dimensions.
         """
         return (24, 80)

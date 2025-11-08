@@ -27,24 +27,21 @@ If <expression> is    omitted, BASIC-80 suspends program execution     and asks 
 
 ```basic
 10 RANDOMIZE
-             20 FOR 1=1 TO 5
-             30 PRINT RND;
-             40 NEXT I
-             RUN
-             Random Number Seed (-32768 to 32767)? 3     (user
-             types 3)
-              .88598 .484668 .586328 .119426 .709225
-             Ok
-             RUN
-             Random Number Seed (-32768 to 32767)? 4 (user
-             types 4 for new sequence)
-              .803506 .162462 .929364 .292443 .322921
-             Ok
-             RUN
-             Random Number Seed (-32768 to 32767)? 3 (same
-             sequence as first RUN)
-              .88598 .484668 .586328 .119426 .709225
-             Ok
+20 FOR 1=1 TO 5
+30 PRINT RND;
+40 NEXT I
+RUN
+Random Number Seed (-32768 to 32767)? 3     (user types 3)
+ .88598 .484668 .586328 .119426 .709225
+Ok
+RUN
+Random Number Seed (-32768 to 32767)? 4 (user types 4 for new sequence)
+ .803506 .162462 .929364 .292443 .322921
+Ok
+RUN
+Random Number Seed (-32768 to 32767)? 3 (same sequence as first RUN)
+ .88598 .484668 .586328 .119426 .709225
+Ok
 ```
 
 ## See Also

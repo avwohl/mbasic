@@ -1345,6 +1345,8 @@ class Parser:
         # Add newline if there's no trailing separator
         # For N expressions: N-1 separators (between items) = no trailing separator
         #                    N separators (between items + at end) = has trailing separator
+        # Note: If len(separators) > len(expressions) (e.g., "LPRINT ;"), the trailing
+        # separator is already in the list and will suppress the newline.
         if len(separators) < len(expressions):
             separators.append('\n')
 
@@ -2638,10 +2640,10 @@ class Parser:
     def parse_deftype(self) -> DefTypeStatementNode:
         """Parse DEFINT/DEFSNG/DEFDBL/DEFSTR statement
 
-        Note: This method always updates def_type_map during parsing.
-        In batch mode (two-pass), first pass collects types, second pass uses them.
-        In interactive mode (single-pass), this immediately updates the type map.
-        The AST node is created for program serialization/documentation.
+        Note: This method always updates def_type_map during parsing, regardless of mode.
+        The type map is shared between parsing passes in batch mode and affects variable
+        type inference throughout the program. The AST node is created for program
+        serialization/documentation.
         """
         token = self.advance()
         var_type = TypeInfo.from_def_statement(token.type)
@@ -3374,7 +3376,8 @@ class Parser:
         - Quoted strings: DATA "HELLO", "WORLD"
         - Unquoted strings: DATA HELLO WORLD, FOO BAR
 
-        Unquoted strings extend until comma, colon, end of line, or unrecognized token
+        Unquoted strings extend until comma, colon, end of line, or unrecognized token.
+        Line numbers (e.g., DATA 100 200) are treated as part of unquoted strings.
         """
         token = self.advance()
 
@@ -3556,7 +3559,8 @@ class Parser:
 
         The parsed statement contains:
         - width: Column width expression (typically 40 or 80)
-        - device: Optional device expression (typically screen or printer)
+        - device: Optional device expression (implementation-specific; may support
+          file numbers, device codes, or other values depending on the interpreter)
         """
         token = self.advance()
 

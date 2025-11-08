@@ -4,8 +4,10 @@ Modern implementation of MBASIC 5.21 interactive REPL
 
 Implements the interactive REPL with:
 - Line entry and editing
-- Direct commands (RUN, LIST, SAVE, LOAD, NEW, AUTO, EDIT, etc.)
-- Immediate mode execution
+- Direct commands (RUN, LIST, SAVE, LOAD, NEW, MERGE, FILES, SYSTEM, DELETE, RENUM, etc.)
+- AUTO mode for automatic line numbering
+- EDIT mode for character-by-character line editing
+- Immediate mode execution (PRINT, LET, etc. without line numbers)
 """
 
 import sys
@@ -647,14 +649,9 @@ class InteractiveMode:
                 program_text = f.read()
 
             # Save variables based on CHAIN options:
-            # - MERGE (merge=True): overlay mode, preserves all variables
-            # - ALL (all_flag=True): passes all variables to new program
-            # - Neither: pass COMMON variables with type suffix resolution
-            #
-            # COMMON variable handling: common_vars stores base names (e.g., "i"), but
-            # actual variables may have type suffixes (e.g., "i%", "i$") based on DEF
-            # statements or explicit suffixes. We check type suffixes (%, $, !, #, and
-            # no suffix) in order and save the FIRST matching variable found in the runtime.
+            # - MERGE: preserves all variables (overlay mode)
+            # - ALL: passes all variables to new program
+            # - Neither: passes only COMMON variables (resolves type suffixes if needed)
             saved_variables = None
             if self.program_runtime:
                 if all_flag or merge:
@@ -664,8 +661,7 @@ class InteractiveMode:
                     # Save only COMMON variables (in order declared)
                     saved_variables = {}
                     for var_name in self.program_runtime.common_vars:
-                        # Try to find the variable with type suffix
-                        # Check all possible type suffixes: %, $, !, #, and no suffix
+                        # Resolve type suffix and save first matching variable
                         found = False
                         for suffix in ['%', '$', '!', '#', '']:
                             full_name = var_name + suffix
@@ -673,8 +669,7 @@ class InteractiveMode:
                                 saved_variables[full_name] = self.program_runtime.get_variable_raw(full_name)
                                 found = True
                                 break
-                        # If not found with any suffix, the variable might not have been initialized
-                        # That's okay - we just skip it
+                        # Skip uninitialized variables
 
             # Load or merge program
             if merge:
@@ -1028,8 +1023,10 @@ class InteractiveMode:
         - <CR>: End and save
 
         Note: Count prefixes ([n]D, [n]C) and search commands ([n]S, [n]K) are not yet implemented.
-        If digits are entered, they fall through all command handling logic without matching any
-        if/elif branches, resulting in no action (no output, no cursor movement, no error message).
+        INTENTIONAL BEHAVIOR: When digits are entered, they are silently ignored (no output, no
+        cursor movement, no error). This preserves MBASIC compatibility where digits are reserved
+        for count prefixes in the full EDIT implementation. Future enhancement will parse and
+        use digit prefixes to repeat commands.
         """
         if not args or not args.strip():
             print("?Syntax error - specify line number")
@@ -1287,7 +1284,8 @@ class InteractiveMode:
 
         FILES - List all files in current directory
         FILES "*.BAS" - List files matching pattern
-        FILES "A:*.*" - List files on drive A (not supported, lists current dir)
+
+        Note: Drive letter syntax (e.g., "A:*.*") is not supported in this implementation.
         """
         from src.ui.ui_helpers import list_files
 
@@ -1320,7 +1318,8 @@ class InteractiveMode:
 
         Runtime selection:
         - If program_runtime exists (from RUN), use it so immediate mode can
-          examine/modify program variables (works for stopped OR finished programs)
+          examine/modify program variables. Works for stopped programs (via STOP/Break)
+          AND finished programs (program_runtime persists until NEW/LOAD/next RUN).
         - Otherwise use persistent immediate mode runtime for variable isolation
         """
         # Build a minimal program with line 0
@@ -1345,7 +1344,9 @@ class InteractiveMode:
                 # Initialize immediate mode runtime if needed
                 if self.runtime is None:
                     from resource_limits import create_unlimited_limits
-                    # Pass empty line_text_map for immediate mode (line 0 is temporary)
+                    # Pass empty line_text_map since immediate mode uses temporary line 0
+                    # (no source line text available for error reporting, but this is fine
+                    # for immediate mode where the user just typed the statement)
                     self.runtime = Runtime(ast, {})
                     self.runtime.setup()
                     self.interpreter = Interpreter(self.runtime, self.io, limits=create_unlimited_limits())

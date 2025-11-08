@@ -37,7 +37,7 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
     """Apply keyword case policy to a keyword.
 
     Args:
-        keyword: The keyword to transform (may be any case - function handles normalization internally)
+        keyword: The keyword to transform (may be any case)
         policy: Case policy to apply (force_lower, force_upper, force_capitalize, first_wins, error, preserve)
         keyword_tracker: Dictionary tracking first occurrence of each keyword (for first_wins policy)
 
@@ -45,7 +45,7 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
         Keyword with case policy applied
 
     Note: The first_wins policy normalizes keywords to lowercase for lookup purposes.
-    Other policies transform the keyword directly. Callers may pass keywords in any case.
+    Other policies transform the keyword directly without normalization. Callers may pass keywords in any case.
     """
     if policy == "force_lower":
         return keyword.lower()
@@ -72,10 +72,10 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
         return keyword.capitalize()
 
     elif policy == "preserve":
-        # The "preserve" policy means the caller should pass keywords in their desired case
+        # The "preserve" policy means callers should pass keywords already in the correct case
         # and this function returns them as-is. However, since we can't know the original case
-        # here, we provide a defensive fallback (capitalize) for robustness.
-        # Callers using "preserve" should pass keywords already in the correct case.
+        # here, we provide a defensive fallback (capitalize) for robustness in case this
+        # function is called incorrectly with "preserve" policy.
         return keyword.capitalize()
 
     else:
@@ -248,8 +248,7 @@ class PositionSerializer:
         var_text = self.serialize_expression(stmt.variable)
         result += var_text
 
-        # Equals sign (operator position not tracked in AST - using None for column)
-        # Operator positions are not stored in AST nodes, so position is inferred during serialization
+        # Equals sign (operator positions not tracked in AST - using None for column)
         result += self.emit_token("=", None, "LetOperator")
 
         # Expression
@@ -469,8 +468,6 @@ def renumber_with_spacing_preservation(program_lines: dict, start: int, step: in
     1. Updates line numbers in the AST
     2. Updates all line number references (GOTO, GOSUB, etc.)
     3. Adjusts token column positions to account for line number length changes
-    4. Text can then be regenerated from updated AST using serialize_line()
-       (caller should call serialize_line() on each returned LineNode to regenerate text)
 
     Args:
         program_lines: Dict of line_number -> LineNode
@@ -480,7 +477,7 @@ def renumber_with_spacing_preservation(program_lines: dict, start: int, step: in
 
     Returns:
         Dict of new_line_number -> LineNode (with updated positions)
-        Caller should serialize these LineNodes using serialize_line() to get text
+        Caller should serialize these LineNodes using serialize_line() to regenerate text
     """
     # Build mapping of old -> new line numbers
     old_line_nums = sorted(program_lines.keys())

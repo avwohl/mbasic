@@ -25,10 +25,25 @@ To conclude I/O to a disk file.
 
 ## Example
 
+**Close a single file:**
 ```basic
 10 OPEN "O", 1, "OUTPUT.TXT"
 20 PRINT #1, "Hello, World!"
 30 CLOSE 1
+```
+
+**Close multiple files:**
+```basic
+10 OPEN "O", 1, "FILE1.TXT"
+20 OPEN "O", 2, "FILE2.TXT"
+30 OPEN "O", 3, "FILE3.TXT"
+40 REM ... write data ...
+50 CLOSE 1, 2, 3
+```
+
+**Close all files:**
+```basic
+10 CLOSE
 ```
 
 ## See Also

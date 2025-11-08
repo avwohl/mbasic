@@ -21,8 +21,8 @@
 | **Ctrl+T** | | Step (execute one statement) |
 | **Ctrl+G** | | Continue (run to next breakpoint) |
 | **Ctrl+Q** | | Stop execution |
-| **Ctrl+V** | | Open Variables window |
-| **Ctrl+K** | | Open Execution Stack window |
+| **Ctrl+V** | | Open Variables window (Curses/Tk/Web) |
+| **Ctrl+K** | | Open Execution Stack window (Curses/Tk/Web) |
 | **b** | **Ctrl+B** | Toggle breakpoint (Curses: **b**, Tk: **Ctrl+B**) |
 
 ## Editing Commands

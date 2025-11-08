@@ -247,7 +247,8 @@ class ImmediateExecutor:
 
                 # Note: We do not save/restore the PC before/after execution.
                 # This allows statements like RUN to change execution position.
-                # Normal statements (PRINT, LET, etc.) don't modify PC anyway.
+                # Control flow statements (GOTO, GOSUB) can also modify PC but may produce
+                # unexpected results (see help text). Normal statements (PRINT, LET) don't modify PC.
 
             # Get captured output
             output = self.io.get_output() if self.io else ""

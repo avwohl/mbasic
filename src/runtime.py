@@ -53,6 +53,9 @@ class Runtime:
 
         # Variable storage (PRIVATE - use get_variable/set_variable methods)
         # Each variable is stored as: name_with_suffix -> {'value': val, 'last_read': {...}, 'last_write': {...}, 'original_case': str}
+        # Note: 'original_case' stores the canonical case for display (determined by case_conflict policy).
+        #       Despite the name 'original_case', this field stores the resolved canonical case variant,
+        #       not necessarily the first case seen. See _check_case_conflict() for resolution logic.
         # Note: line -1 in last_write indicates non-program execution sources:
         #       1. System/internal variables (ERR%, ERL%) via set_variable_raw() with FakeToken(line=-1)
         #       2. Debugger/interactive prompt via set_variable() with debugger_set=True and token.line=-1
@@ -386,10 +389,11 @@ class Runtime:
                 'value': default_value,
                 'last_read': None,
                 'last_write': None,
-                'original_case': canonical_case  # Store canonical case
+                'original_case': canonical_case  # Store canonical case for display (see _check_case_conflict)
             }
         else:
             # Always update original_case to canonical (for prefer_upper/prefer_lower/prefer_mixed policies)
+            # Note: 'original_case' field name is misleading - it stores the canonical case, not the original
             self._variables[full_name]['original_case'] = canonical_case
 
         # Track read access
@@ -460,10 +464,11 @@ class Runtime:
                 'value': None,
                 'last_read': None,
                 'last_write': None,
-                'original_case': canonical_case  # Store canonical case
+                'original_case': canonical_case  # Store canonical case for display (see _check_case_conflict)
             }
         else:
             # Always update original_case to canonical (for prefer_upper/prefer_lower/prefer_mixed policies)
+            # Note: 'original_case' field name is misleading - it stores the canonical case, not the original
             self._variables[full_name]['original_case'] = canonical_case
 
         # Set value
@@ -863,12 +868,15 @@ class Runtime:
             'data': [default_value] * total_size,
             'last_read_subscripts': None,  # Last accessed subscripts for read
             'last_write_subscripts': None,  # Last accessed subscripts for write
-            'last_read': tracking_info,  # Track DIM location for debugger (shows where array was allocated)
+            'last_read': tracking_info,  # Track DIM location (initialization sets read timestamp for debugger)
             'last_write': tracking_info  # Track DIM location (array initialization counts as write)
         }
-        # Note: DIM is tracked as both read and write for debugger display purposes.
-        # Technically DIM is an allocation/initialization (write-only), but tracking it
-        # as both allows debuggers to show "last accessed" info for unaccessed arrays.
+        # Note: DIM is tracked as both read and write to provide consistent debugger display.
+        # While DIM is technically allocation/initialization (write-only operation), setting
+        # last_read to the DIM location ensures that debuggers/inspectors can show "Last accessed"
+        # information even for arrays that have never been explicitly read. Without this, an
+        # unaccessed array would show no last_read info, which could be confusing. The DIM location
+        # provides useful context about where the array was created.
 
     def delete_array(self, name, type_suffix=None, def_type_map=None):
         """
@@ -985,7 +993,8 @@ class Runtime:
         )
 
         # Check if this variable already has an active FOR loop
-        # This prevents nested FOR loops with the same variable (e.g., FOR I=1 TO 10: FOR I=1 TO 5)
+        # This prevents nested FOR loops with the same variable
+        # Example of disallowed nesting: FOR I=1 TO 10: FOR I=1 TO 5 (inner FOR reuses outer I)
         if var_name in self.for_loop_vars:
             debug_log(
                 f"ERROR: {var_name} already on stack at index {self.for_loop_vars[var_name]}!",
@@ -1221,9 +1230,10 @@ class Runtime:
                 return full_name[:-1], last_char
             else:
                 # No explicit suffix - default to single precision (!)
-                # Note: In _variables, all names should already have resolved type suffixes
+                # Note: In normal operation, all names in _variables have resolved type suffixes
                 # from _resolve_variable_name() which applies DEF type rules. This fallback
-                # handles edge cases where a variable was stored without a type suffix.
+                # is defensive programming for robustness - it should not occur in practice,
+                # but protects against potential edge cases in legacy code or future changes.
                 return full_name, '!'
 
         # Process scalar variables
@@ -1292,7 +1302,7 @@ class Runtime:
                    - line 500, offset 2 (3rd statement on line 500)
                    - line 1000, offset 1 (2nd statement on line 1000)
 
-                 Note: stmt_offset is a 0-based index where 0 = 1st statement, 1 = 2nd statement, etc.
+                 Note: stmt_offset uses 0-based indexing (0 = 1st statement, 1 = 2nd statement, etc.)
 
         Note: The first element is the oldest GOSUB, the last is the most recent.
         """
@@ -1393,10 +1403,14 @@ class Runtime:
 
     # Backward compatibility alias
     def get_loop_stack(self):
-        """Deprecated: Use get_execution_stack() instead.
+        """Deprecated (as of 2025-10-25): Use get_execution_stack() instead.
 
-        This is a compatibility alias. get_execution_stack() provides the same
-        functionality with a clearer name (execution stack vs loop stack).
+        This is a compatibility alias maintained for backward compatibility.
+        get_execution_stack() provides the same functionality with a clearer name
+        (execution stack vs loop stack).
+
+        Deprecated since: 2025-10-25 (commit cda25c84)
+        Will be removed: No earlier than 2026-01-01
         """
         return self.get_execution_stack()
 
@@ -1409,9 +1423,9 @@ class Runtime:
 
         Args:
             line_or_pc: Line number (int) or PC object for breakpoint
-            stmt_offset: Optional statement offset (0-based index). If None, breaks on entire line.
+            stmt_offset: Optional statement offset. If None, breaks on entire line.
                         Ignored if line_or_pc is a PC object.
-                        Note: offset 0 = 1st statement, offset 1 = 2nd statement, offset 2 = 3rd statement, etc.
+                        Note: Uses 0-based indexing (0 = 1st statement, 1 = 2nd statement, 2 = 3rd statement, etc.)
 
         Examples:
             set_breakpoint(100)           # Line-level (entire line)

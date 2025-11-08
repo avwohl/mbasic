@@ -29,15 +29,15 @@ Any type variable may be SWAPped (integer, single precision, double precision, s
 
 ```basic
 LIST
-              10 A$=" ONE " : B$=" ALL " : C$="FOR"
-              20 PRINT A$ C$ B$
-              30 SWAP A$, B$
-              40 PRINT A$ C$ B$
-              RUN
-              Ok
-               ONE FOR ALL
-               ALL FOR ONE
-              Ok
+10 A$=" ONE " : B$=" ALL " : C$="FOR"
+20 PRINT A$ C$ B$
+30 SWAP A$, B$
+40 PRINT A$ C$ B$
+RUN
+Ok
+ ONE FOR ALL
+ ALL FOR ONE
+Ok
 ```
 
 ## See Also

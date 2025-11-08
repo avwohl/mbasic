@@ -243,7 +243,7 @@ class Lexer:
             if char.isalnum() or char == '.':
                 ident += self.advance()
             elif char in ['$', '%', '!', '#']:
-                # Type suffix - only allowed at end of identifier
+                # Type suffix - terminates identifier (e.g., A$ reads as A$, not A$B)
                 ident += self.advance()
                 break
             else:
@@ -361,7 +361,7 @@ class Lexer:
                 at_line_start = True
                 continue
 
-            # Apostrophe comment (like REM)
+            # Apostrophe comment - distinct token type (unlike REM/REMARK which are keywords)
             if char == "'":
                 self.advance()  # Skip the apostrophe
                 comment_text = self.read_comment()

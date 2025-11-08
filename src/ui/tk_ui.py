@@ -50,11 +50,10 @@ class TkBackend(UIBackend):
     - File dialogs for Open/Save
 
     Usage:
-        from src.iohandler.console import ConsoleIOHandler
+        from src.ui.tk_ui import TkBackend, TkIOHandler
         from src.editing.manager import ProgramManager
-        from src.ui.tk_ui import TkBackend
 
-        io = ConsoleIOHandler()
+        io = TkIOHandler()  # TkIOHandler created without backend reference initially
         def_type_map = {}  # Type suffix defaults for variables (DEFINT, DEFSNG, etc.)
         program = ProgramManager(def_type_map)
         backend = TkBackend(io, program)
@@ -101,7 +100,9 @@ class TkBackend(UIBackend):
         self.stack_tree = None
         self.stack_visible = False
 
-        # Immediate mode
+        # Immediate mode widgets and executor
+        # Note: immediate_history and immediate_status are always None in Tk UI (see lines 293-297)
+        # immediate_entry is the actual Entry widget created in start()
         self.immediate_executor = None
         self.immediate_history = None
         self.immediate_entry = None
@@ -2015,8 +2016,9 @@ class TkBackend(UIBackend):
         self.editor_text.text.delete(1.0, tk.END)
         for line_num, line_text in self.program.get_lines():
             # Insert line exactly as stored from program manager - no formatting applied here
-            # Note: Some formatting may occur elsewhere (e.g., variable display, stack display)
-            # This preserves compatibility with real MBASIC for program text
+            # to preserve compatibility with real MBASIC for program text.
+            # (Note: "formatting may occur elsewhere" refers to the Variables and Stack windows,
+            # which DO format data for display - not the editor/program text itself)
             self.editor_text.text.insert(tk.END, line_text + "\n")
 
         # Clear error indicators
@@ -2138,8 +2140,9 @@ class TkBackend(UIBackend):
 
         # Show errors in output window if any found
         if errors_found:
-            # Only show error list in output if there are multiple errors or this is the first time
-            # Don't spam output on every keystroke
+            # Only show full error list in output if there are multiple errors.
+            # For single errors, the red ? icon in the editor is sufficient feedback.
+            # This avoids cluttering the output pane with repetitive messages during editing.
             should_show_list = len(errors_found) > 1
             if should_show_list:
                 self._add_output("\n=== Syntax Errors ===\n")
@@ -2197,7 +2200,8 @@ class TkBackend(UIBackend):
 
     def _on_mouse_click(self, event):
         """Handle mouse click - check for line change after click settles."""
-        # Clear yellow statement highlight when clicking (allows text selection to be visible)
+        # Clear yellow statement highlight when clicking (allows text selection to be visible).
+        # The highlight is restored when execution resumes or when stepping to the next statement.
         if self.paused_at_breakpoint:
             self._clear_statement_highlight()
         # Use after() to check after click is processed
@@ -2596,7 +2600,8 @@ class TkBackend(UIBackend):
         if len(event.char) != 1:
             return None
 
-        # Allow editing keys (backspace, delete) - these modify text but aren't input
+        # Allow control characters (backspace, delete) - these modify text via deletion,
+        # not by inserting printable characters, so they pass validation
         char_code = ord(event.char)
         if char_code in (8, 127):  # Backspace (0x08) or Delete (0x7F)
             return None

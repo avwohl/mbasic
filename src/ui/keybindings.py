@@ -1,10 +1,14 @@
 """
 Keyboard binding definitions for MBASIC Curses UI.
 
-This module loads keybindings from curses_keybindings.json and provides them
-in the format expected by the Curses UI (urwid key names, character codes, display names).
+This module loads keybindings from curses_keybindings.json (located in src/ui/)
+and provides them in the format expected by the Curses UI (urwid key names,
+character codes, display names).
 
 This ensures consistency between the JSON config, the UI behavior, and the documentation.
+
+Note: curses_keybindings.json contains the canonical key definitions for the curses UI.
+If you need to modify keybindings, edit that JSON file rather than changing constants here.
 """
 
 import json
@@ -203,11 +207,13 @@ HELP_KEY = 'ctrl f'
 # Menu system (not in JSON, hardcoded)
 MENU_KEY = 'ctrl u'
 
-# Quit - No keyboard shortcut (most Ctrl keys intercepted by terminal or already assigned)
-# Use menu: Ctrl+U -> File -> Quit, or Ctrl+C (interrupt) will also quit
+# Quit - No dedicated keyboard shortcut (most Ctrl keys intercepted by terminal or already assigned)
+# Primary method: Use menu (Ctrl+U -> File -> Quit)
+# Alternative: Ctrl+C (interrupt signal) will also quit - see QUIT_ALT_KEY below
 QUIT_KEY = None  # No keyboard shortcut
 
-# Alternative quit (interrupt signal)
+# Alternative quit via interrupt signal (Ctrl+C)
+# Note: This is not a standard keybinding but a signal handler, hence "alternative"
 _quit_alt_from_json = _get_key('editor', 'quit')
 QUIT_ALT_KEY = _ctrl_key_to_urwid(_quit_alt_from_json) if _quit_alt_from_json else 'ctrl c'
 
@@ -266,7 +272,10 @@ INSERT_LINE_KEY = 'ctrl y'
 # Debugger Commands (loaded from JSON where available)
 # =============================================================================
 
-# Continue execution (Go) / Go to line
+# Go to line (also used for Continue execution in debugger context)
+# Note: This key serves dual purpose - "Go to line" in editor mode and
+# "Continue execution (Go)" in debugger mode. The JSON key is 'goto_line'
+# to reflect its primary function, but CONTINUE_KEY name reflects debugger usage.
 _continue_from_json = _get_key('editor', 'goto_line')
 CONTINUE_KEY = _ctrl_key_to_urwid(_continue_from_json) if _continue_from_json else 'ctrl g'
 
@@ -330,6 +339,10 @@ SETTINGS_RESET_KEY = 'ctrl r'
 # =============================================================================
 
 # All keybindings organized by category for help display
+# Note: This dictionary contains keybindings shown in the help system.
+# Some defined constants (like CLEAR_BREAKPOINTS_KEY, STOP_KEY, MAXIMIZE_OUTPUT_KEY,
+# STACK_KEY, and dialog-specific keys) are not included here as they are either
+# menu-only commands, context-specific, or advanced features not shown in main help.
 KEYBINDINGS_BY_CATEGORY = {
     'Global Commands': [
         (key_to_display(QUIT_ALT_KEY), 'Quit'),

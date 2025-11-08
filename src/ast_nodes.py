@@ -10,7 +10,7 @@ Nodes are organized into:
 - Expressions (NumberNode, BinaryOpNode, etc.)
 """
 
-from typing import List, Optional, Any, Set
+from typing import List, Optional, Any, Set, Tuple
 from dataclasses import dataclass
 from enum import Enum
 from src.tokens import TokenType, Token
@@ -547,7 +547,7 @@ class ChainStatementNode:
     start_line: 'ExpressionNode' = None  # Optional starting line number
     merge: bool = False  # True if MERGE option specified
     all_flag: bool = False  # True if ALL option specified (pass all variables)
-    delete_range: Optional[Tuple[int, int]] = None  # (start_line, end_line) for DELETE option
+    delete_range: Optional[Tuple[int, int]] = None  # (start_line_number, end_line_number) for DELETE option - tuple of int line numbers
     line_num: int = 0
     column: int = 0
 
@@ -778,8 +778,8 @@ class RenumStatementNode:
         RENUM 100,,20  - new_start=100, old_start=0 (default), increment=20
         RENUM ,50,20   - new_start=10 (default), old_start=50, increment=20
     """
-    new_start: 'ExpressionNode' = None  # New starting line number (None → default 10)
-    old_start: 'ExpressionNode' = None  # First old line to renumber (None → default 0)
+    new_start: 'ExpressionNode' = None  # New starting line_number (None → default 10)
+    old_start: 'ExpressionNode' = None  # First old line_number to renumber (None → default 0)
     increment: 'ExpressionNode' = None  # Increment (None → default 10)
     line_num: int = 0
     column: int = 0
@@ -809,8 +809,8 @@ class ListStatementNode:
         LIST -end        - List from beginning to end
         LIST start-      - List from start to end
     """
-    start: 'ExpressionNode' = None  # Start line number (None = beginning)
-    end: 'ExpressionNode' = None    # End line number (None = end of program)
+    start: 'ExpressionNode' = None  # Start line_number (None = beginning)
+    end: 'ExpressionNode' = None    # End line_number (None = end of program)
     single_line: bool = False       # True if listing single line (no dash)
     line_num: int = 0
     column: int = 0
