@@ -288,7 +288,7 @@ class Lexer:
         token = Token(TokenType.IDENTIFIER, ident.lower(), start_line, start_column)
         # Preserve original case for display. Identifiers use the original_case field
         # to store the exact case as typed. Keywords use original_case_keyword to store
-        # the case determined by the keyword case policy (see Token class in token_types.py).
+        # the case determined by the keyword case policy (see Token class in tokens.py).
         token.original_case = ident
         return token
 

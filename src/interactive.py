@@ -4,7 +4,7 @@ Modern implementation of MBASIC 5.21 interactive REPL
 
 Implements the interactive REPL with:
 - Line entry and editing
-- Direct commands (RUN, LIST, SAVE, LOAD, NEW, etc.)
+- Direct commands (RUN, LIST, SAVE, LOAD, NEW, AUTO, EDIT, etc.)
 - Immediate mode execution
 """
 

@@ -1103,9 +1103,9 @@ class Interpreter:
         Syntax: FOR variable = start TO end [STEP step]
 
         The loop variable typically has numeric type suffixes (%, !, #). The variable
-        type determines how values are stored. String variables ($) in FOR loops
-        would cause a type error when set_variable() attempts to store the numeric
-        loop value, so they are effectively not supported despite being parsed.
+        type determines how values are stored. String variables ($) are syntactically
+        valid (parser accepts them) but cause a "Type mismatch" error at runtime when
+        set_variable() attempts to assign numeric loop values to a string variable.
 
         After FOR, the variable is set to start value and the loop is registered.
         NEXT will increment/decrement and check the end condition.
@@ -1355,8 +1355,9 @@ class Interpreter:
         # Determine where to resume
         if stmt.line_number is None or stmt.line_number == 0:
             # RESUME or RESUME 0 - retry the statement that caused the error
-            # Note: Parser preserves the distinction (None vs 0) for accurate source
-            # text regeneration, but the interpreter treats both identically at runtime.
+            # Note: MBASIC allows both 'RESUME' and 'RESUME 0' as equivalent syntactic forms.
+            # Parser preserves the distinction (None vs 0) for source text regeneration,
+            # but runtime execution treats both identically.
             self.runtime.npc = error_pc
         elif stmt.line_number == -1:
             # RESUME NEXT - continue at statement after the error
