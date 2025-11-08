@@ -74,7 +74,7 @@ def print_error(e, runtime=None):
 class InteractiveMode:
     """MBASIC 5.21 interactive command mode"""
 
-    def __init__(self, io_handler=None):
+    def __init__(self, io_handler=None, file_io=None):
         # Initialize DEF type map (like Parser does)
         # Import TypeInfo here to avoid circular dependency
         from src.parser import TypeInfo
@@ -102,6 +102,12 @@ class InteractiveMode:
             from src.iohandler.console import ConsoleIOHandler
             io_handler = ConsoleIOHandler(debug_enabled=False)
         self.io = io_handler
+
+        # File I/O module (defaults to real filesystem if not provided)
+        if file_io is None:
+            from src.file_io import RealFileIO
+            file_io = RealFileIO()
+        self.file_io = file_io
 
     # Properties for backward compatibility
     @property
@@ -365,7 +371,7 @@ class InteractiveMode:
             # Pass line text map for better error messages
             from resource_limits import create_unlimited_limits
             runtime = Runtime(self.line_asts, self.lines)
-            interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits())
+            interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits(), file_io=self.file_io)
             # Pass reference to interactive mode so statements like LIST can access the line editor
             interpreter.interactive_mode = self
 
@@ -766,7 +772,7 @@ class InteractiveMode:
                 # First time running (from command line, not during execution) - create new objects
                 from resource_limits import create_unlimited_limits
                 runtime = Runtime(self.line_asts, self.lines)
-                interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits())
+                interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits(), file_io=self.file_io)
                 interpreter.interactive_mode = self
 
                 # Restore variables if saved
@@ -1302,7 +1308,7 @@ class InteractiveMode:
     def cmd_system(self):
         """SYSTEM - Exit to operating system"""
         print("Goodbye")
-        sys.exit(0)
+        self.file_io.system_exit()
 
     def cmd_files(self, filespec):
         """FILES [filespec] - Display directory listing

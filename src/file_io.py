@@ -107,6 +107,19 @@ class FileIO(ABC):
         """
         pass
 
+    @abstractmethod
+    def system_exit(self) -> None:
+        """Exit to operating system / end session.
+
+        Different implementations handle this differently:
+        - Local UIs (CLI/Curses/TK): Exit the Python process (sys.exit(0))
+        - Web UI: Raise an error (cannot exit server for one user)
+
+        Raises:
+            IOError: In sandboxed environments where exit is not allowed
+        """
+        pass
+
 
 class RealFileIO(FileIO):
     """Real filesystem access for local UIs (TK, Curses, CLI).
@@ -163,6 +176,11 @@ class RealFileIO(FileIO):
         """Check if file exists in local filesystem."""
         import os
         return os.path.exists(filename)
+
+    def system_exit(self) -> None:
+        """Exit to operating system."""
+        import sys
+        sys.exit(0)
 
 
 class SandboxedFileIO(FileIO):
@@ -241,3 +259,10 @@ class SandboxedFileIO(FileIO):
         STUB: Raises error (requires async refactor).
         """
         raise IOError("File existence check not yet implemented in web UI - requires async refactor")
+
+    def system_exit(self) -> None:
+        """Cannot exit in multi-user web environment.
+
+        Raises IOError since exiting would terminate the server for all users.
+        """
+        raise IOError("SYSTEM command not available in web UI - would terminate server for all users")

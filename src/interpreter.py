@@ -2012,9 +2012,10 @@ class Interpreter:
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
             self.interactive_mode.cmd_system()
         else:
-            # In non-interactive context, just halt
+            # In non-interactive context, use file_io to handle exit
+            # (in web UI this will raise an error instead of exiting)
             self.io.output("Goodbye")
-            sys.exit(0)
+            self.file_io.system_exit()
 
     def execute_limits(self, stmt):
         """Execute LIMITS statement - display resource usage"""
