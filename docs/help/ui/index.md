@@ -25,7 +25,7 @@ mbasic --ui curses
 **Features:**
 - Split editor/output view
 - Syntax highlighting
-- Real-time variable watch
+- Real-time variable viewing
 - Visual debugger with breakpoints
 - Menu system (Ctrl+M)
 

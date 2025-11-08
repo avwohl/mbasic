@@ -130,7 +130,7 @@ This document lists all features implemented in MBASIC-2025 (this implementation
 - **TRON/TROFF** - Line tracing
 - **Breakpoints** - Set/clear breakpoints (available in all UIs; access method varies)
 - **Step execution** - Execute one line at a time (available in all UIs; access method varies)
-- **Variable watch** - Monitor variables (available in all UIs; access method varies)
+- **Variable viewing** - Monitor variables (available in all UIs; access method varies)
 - **Stack viewer** - View call stack (available in all UIs; access method varies)
 
 See UI-specific documentation for details: [CLI Debugging](../ui/cli/debugging.md), [Curses UI](../ui/curses/feature-reference.md), [Tk UI](../ui/tk/feature-reference.md)
@@ -145,7 +145,7 @@ See UI-specific documentation for details: [CLI Debugging](../ui/cli/debugging.m
 - **Breakpoint indicators** - Visual markers
 - **Auto-numbering** - Smart line numbering
 - **Line sorting** - Automatic or on-demand
-- **Variables window** - Watch variable values (Ctrl+W)
+- **Variables window** - View variable values (Ctrl+W)
 - **Stack window** - View execution stack (Ctrl+K)
 - **Help system** - Built-in documentation (Ctrl+H)
 - **Fast paste** - Optimized for large programs

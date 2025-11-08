@@ -24,7 +24,7 @@ Quick reference for the curses text UI.
 | **{{kbd:quit:curses}}** | Quit |
 | **ESC** | Show menu |
 | **{{kbd:help:curses}}** | Help |
-| **Menu only** | Toggle variables watch window |
+| **Menu only** | Toggle variables window |
 | **Menu only** | Settings |
 | **Menu only** | Toggle execution stack window |
 

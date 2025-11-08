@@ -234,13 +234,11 @@ Large arrays:
 ### Current Limitations
 1. **No inline editing**: Cannot modify values in window
 2. **No array expansion**: Cannot view array elements
-3. **No watch expressions**: Cannot add custom expressions
-4. **Limited mouse support**: Depends on terminal
+3. **Limited mouse support**: Depends on terminal
 
 ### Planned Enhancements
 - Full variable editing
 - Array element viewing
-- Watch expressions
 - Better mouse integration
 - Value history tracking
 

@@ -83,7 +83,7 @@ The Tkinter GUI provides:
 - **Syntax highlighting** - BASIC keywords highlighted
 - **Line numbers** - Automatic line numbering in gutter
 - **Visual debugger** - Step through code, set breakpoints
-- **Variable watch** - Monitor variable values in real-time
+- **Variable viewing** - Monitor variable values in real-time
 - **Output window** - See program output
 - **Error highlighting** - Syntax errors marked in code with **?**
 - **Smart Insert** - {{kbd:smart_insert}} inserts lines between existing line numbers

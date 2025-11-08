@@ -8,7 +8,7 @@
 | `^U` | Activate menu bar (arrows navigate, Enter selects) |
 | `^F` | This help |
 | `^P` | Settings |
-| `^W` | Toggle variables watch window |
+| `^W` | Toggle variables window |
 
 ## Program Management
 

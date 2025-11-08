@@ -107,7 +107,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 - Authentic MBASIC-80 experience
 - Lightweight and fast
 - Perfect for automation/scripting
-- NEW debugging commands (BREAK, STEP, WATCH, STACK)
+- NEW debugging commands (BREAK, STEP, STACK)
 - Extensive test coverage
 - Works everywhere Python runs
 
@@ -235,7 +235,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 | **Toggle Breakpoint** | {{kbd:toggle_breakpoint:cli}} | {{kbd:toggle_breakpoint:curses}} | {{kbd:toggle_breakpoint:tk}} | {{kbd:toggle_breakpoint:web}} |
 | **Step** | {{kbd:step:cli}} | {{kbd:step:curses}} | Menu/Toolbar | {{kbd:step:web}} |
 | **Continue** | {{kbd:continue:cli}} | {{kbd:continue:curses}} | Menu/Toolbar | {{kbd:continue:web}} |
-| **Variables** | {{kbd:watch:cli}} | (none) | {{kbd:toggle_variables:tk}} | {{kbd:toggle_variables:web}} |
+| **Variables** | PRINT | (none) | {{kbd:toggle_variables:tk}} | {{kbd:toggle_variables:web}} |
 
 ## Performance Comparison
 
