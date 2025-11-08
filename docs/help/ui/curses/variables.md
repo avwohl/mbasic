@@ -57,7 +57,7 @@ Use immediate mode commands instead:
 
 1. Note the variable you want to change
 2. Close variables window (Esc)
-3. Stop program if running (Ctrl+C)
+3. Stop program if running ({{kbd:continue:curses}})
 4. Use immediate mode to modify variables:
    ```
    A = 100
@@ -135,7 +135,7 @@ Error        : [ERROR] or [UNDEFINED]
 - **Ctrl+Arrow**: Move window
 - **Alt+Arrow**: Resize window
 - **Ctrl+M**: Maximize/restore
-- **Ctrl+X**: Close window
+- **{{kbd:stop:curses}}**: Close window
 
 ### Display Options
 - **v**: Toggle value truncation

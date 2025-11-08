@@ -19,7 +19,7 @@ How to execute your BASIC programs.
 
 ## Running a Program
 
-1. Press **Ctrl+R**
+1. Press **{{kbd:run:curses}}**
 2. Program executes in the output window
 3. Output appears below the editor
 
@@ -30,7 +30,7 @@ How to execute your BASIC programs.
 20 END
 ```
 
-Press **Ctrl+R** → Output window shows:
+Press **{{kbd:run:curses}}** → Output window shows:
 ```
 Hello, World!
 ```
@@ -67,7 +67,7 @@ Programs normally run until:
 - STOP statement
 - Runtime error
 
-**Note**: Press **Ctrl+X** to stop a running program.
+**Note**: Press **{{kbd:stop:curses}}** to stop a running program.
 
 ## Listing Programs
 

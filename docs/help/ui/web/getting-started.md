@@ -46,11 +46,11 @@ Quick-access buttons below the menu bar:
 - **Open** - Upload a .BAS file from your computer
 - **Save** - Download current program (triggers Save As if not yet named)
 - **Save As** - Download program with custom filename
-- **Run** - Parse and execute the program (▶️ green button, Ctrl+R)
-- **Stop** - Stop running program (⏹️ red button, Ctrl+Q)
+- **Run** - Parse and execute the program (▶️ green button, {{kbd:run:web}})
+- **Stop** - Stop running program (⏹️ red button, {{kbd:stop:web}})
 - **Step Line** - Execute all statements on current line, then pause (⏭️ button, Ctrl+K)
-- **Step Stmt** - Execute one statement, then pause (↻ button, Ctrl+T)
-- **Continue** - Resume normal execution after stepping (▶️⏸️ button, Ctrl+G)
+- **Step Stmt** - Execute one statement, then pause (↻ button, {{kbd:step:web}})
+- **Continue** - Resume normal execution after stepping (▶️⏸️ button, {{kbd:continue:web}})
 
 ### 3. Program Editor
 

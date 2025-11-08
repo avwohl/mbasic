@@ -50,22 +50,22 @@ The Tk UI has three main sections:
 ## Menu Bar
 
 ### File Menu
-- **New** (Ctrl+N) - Clear program
-- **Open** (Ctrl+O) - Load program file
-- **Save** (Ctrl+S) - Save current program
+- **New** ({{kbd:file_new:tk}}) - Clear program
+- **Open** ({{kbd:file_open:tk}}) - Load program file
+- **Save** ({{kbd:file_save:tk}}) - Save current program
 - **Save As** - Save with new name
 - **Exit** - Quit MBASIC
 
 ### Edit Menu
-- **Cut** (Ctrl+X) - Cut selected text
-- **Copy** (Ctrl+C) - Copy selected text
-- **Paste** (Ctrl+V) - Paste clipboard
+- **Cut** ({{kbd:cut:tk}}) - Cut selected text
+- **Copy** ({{kbd:copy:tk}}) - Copy selected text
+- **Paste** ({{kbd:paste:tk}}) - Paste clipboard
 - **Select All** (Ctrl+A) - Select all text
-- **Find** (Ctrl+F) - Search in program
+- **Find** ({{kbd:find:tk}}) - Search in program
 
 ### Run Menu
-- **Run** (Ctrl+R) - Execute program
-- **Stop** (Ctrl+Break) - Interrupt execution
+- **Run** ({{kbd:run_program:tk}}) - Execute program
+- **Stop** ({{kbd:toggle_breakpoint:tk}}reak) - Interrupt execution
 - **Clear Output** - Clear output pane
 
 ### Help Menu
@@ -103,7 +103,7 @@ The bottom pane shows program output:
 
 ## Running Programs
 
-Click **Run → Run** or press **Ctrl+R**.
+Click **Run → Run** or press **{{kbd:run_program:tk}}**.
 
 Output appears in the output pane.
 
@@ -135,22 +135,22 @@ Type expressions without line numbers for immediate execution.
 
 | Shortcut | Action |
 |----------|--------|
-| **Ctrl+N** | New program |
-| **Ctrl+O** | Open file |
-| **Ctrl+S** | Save file |
-| **Ctrl+R** | Run program |
-| **Ctrl+F** | Find |
+| **{{kbd:file_new:tk}}** | New program |
+| **{{kbd:file_open:tk}}** | Open file |
+| **{{kbd:file_save:tk}}** | Save file |
+| **{{kbd:run_program:tk}}** | Run program |
+| **{{kbd:find:tk}}** | Find |
 | **F1** | Help |
 
 ## File Operations
 
 **Save your program:**
-1. Click **File → Save** (or Ctrl+S)
+1. Click **File → Save** (or {{kbd:file_save:tk}})
 2. Choose filename and location
 3. Click Save
 
 **Load a program:**
-1. Click **File → Open** (or Ctrl+O)
+1. Click **File → Open** (or {{kbd:file_open:tk}})
 2. Select the .bas file
 3. Click Open
 
@@ -176,9 +176,9 @@ Click on line 20 in the editor to fix it.
 
 ## Tips
 
-1. **Use Ctrl+S often** - Save your work frequently
+1. **Use {{kbd:file_save:tk}} often** - Save your work frequently
 2. **Clear output** - Use Run → Clear Output between runs
-3. **Use Find** - Ctrl+F to search for variables/statements
+3. **Use Find** - {{kbd:find:tk}} to search for variables/statements
 4. **Right-click in help** - Copy examples or open new windows
 5. **Check output pane** - Errors and PRINT output go here
 
@@ -193,7 +193,7 @@ Click on line 20 in the editor to fix it.
 - Type your response and press OK
 
 **Program won't stop:**
-- Press Ctrl+Break or use Run → Stop
+- Press {{kbd:toggle_breakpoint:tk}}reak or use Run → Stop
 - Add END statement to your program
 
 ## Advantages of Tk UI

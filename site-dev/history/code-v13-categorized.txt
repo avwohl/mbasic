@@ -1,0 +1,458 @@
+=== COMMENT-ONLY FIXES ===
+
+[High] Comment in _sync_program_to_runtime says 'When paused_at_breakpoint=True, we let PC reset to halted (below) so that continuing execution will properly resume from the breakpoint location', but this logic seems backwards - resetting to halted would lose the breakpoint position
+Files: src/ui/curses_ui.py
+
+[Medium] Comment about DIM tracking as both read and write is inconsistent with typical semantics
+Files: src/runtime.py
+
+[Low] Comment in execute_list() warns about ProgramManager sync issues, but doesn't specify what operations might fail to maintain sync
+Files: src/interpreter.py
+
+[Low] Comment about line=-1 usage is inconsistent between different locations
+Files: src/runtime.py
+
+[Low] Comment about token requirements is verbose and could be clearer
+Files: src/runtime.py
+
+
+=== SAFE UI/SHARED FIXES ===
+
+[High] SandboxedFileIO methods documented as STUB but list_files() is IMPLEMENTED
+Files: src/file_io.py
+
+[High] _on_status_click() docstring says it shows 'breakpoint info for ●' but the implementation shows a generic message, not actual breakpoint information
+Files: src/ui/tk_widgets.py
+
+[High] Documentation claims MBASIC supports four UI backends (CLI, Curses, Tk, Web), but the codebase shows no CLI backend implementation
+Files: docs/help/README.md, docs/help/common/debugging.md, docs/help/common/editor-commands.md
+
+[High] Error code reference inconsistency - CVI/CVS/CVD uses different error code format
+Files: docs/help/common/language/appendices/error-codes.md, docs/help/common/language/functions/cvi-cvs-cvd.md
+
+[High] Contradictory information about variable name significance and case sensitivity
+Files: docs/help/common/language/variables.md, docs/help/common/settings.md
+
+[High] Contradictory information about file persistence and auto-save behavior across UIs
+Files: docs/help/common/ui/curses/editing.md, docs/help/common/ui/tk/index.md, docs/help/mbasic/extensions.md
+
+[High] Web UI file storage limits documented in only one place
+Files: docs/help/mbasic/compatibility.md, docs/help/mbasic/extensions.md
+
+[High] LPRINT statement support is contradictory between documents
+Files: docs/help/mbasic/features.md, docs/help/mbasic/not-implemented.md
+
+[High] Web UI file storage limitations may be outdated or incorrect
+Files: docs/help/mbasic/features.md
+
+[High] Contradictory information about variable editing capability in Curses UI
+Files: docs/help/ui/curses/feature-reference.md, docs/help/ui/curses/variables.md
+
+[High] Contradictory status of Find/Replace feature
+Files: docs/help/ui/curses/feature-reference.md, docs/help/ui/curses/find-replace.md
+
+[High] Feature count mismatch: feature-reference.md claims 37 features total, but only documents 31 features (8+6+6+6+7+4=37 claimed, but actual count is 31)
+Files: docs/help/ui/tk/feature-reference.md, docs/help/ui/tk/features.md
+
+[High] Settings dialog implementation status contradiction
+Files: docs/help/ui/tk/feature-reference.md, docs/help/ui/tk/settings.md
+
+[High] Feature implementation status inconsistency between UIs
+Files: docs/help/ui/tk/feature-reference.md, docs/help/ui/web/features.md
+
+[High] Variable Inspector implementation status contradiction
+Files: docs/help/ui/web/features.md, docs/help/ui/web/debugging.md
+
+[High] Ctrl+X shortcut conflict within same document
+Files: docs/help/ui/tk/feature-reference.md
+
+[High] Broken cross-reference to Games Library
+Files: docs/help/ui/web/index.md, docs/library/games/index.md, docs/library/business/index.md, docs/library/data_management/index.md, docs/library/demos/index.md, docs/library/education/index.md, docs/library/electronics/index.md, docs/library/ham_radio/index.md
+
+[High] README.md lists QUICK_REFERENCE.md as 'Curses UI specific' but doesn't list a Tk UI quick reference, yet TK_UI_QUICK_START.md exists and is listed separately
+Files: docs/user/README.md, docs/user/TK_UI_QUICK_START.md
+
+[Medium] STEP command docstring describes statement-level stepping but implementation uncertainty
+Files: src/ui/cli_debug.py
+
+[Medium] Inconsistent terminology for stepping commands between CLI and curses UI
+Files: src/ui/cli_debug.py, src/ui/curses_keybindings.json
+
+[Medium] Comment claims bug fix but code behavior doesn't match the described bug
+Files: src/ui/curses_ui.py
+
+[Medium] Inconsistent handling of line number width assumptions across methods
+Files: src/ui/curses_ui.py
+
+[Medium] Comment about status bar updates contradicts actual implementation in multiple methods
+Files: src/ui/curses_ui.py
+
+[Medium] Inconsistent handling of start_line parameter in _setup_program and _run_program
+Files: src/ui/curses_ui.py
+
+[Medium] Inconsistent handling of program/runtime synchronization - some methods sync immediately, others preserve runtime state, with no clear pattern
+Files: src/ui/curses_ui.py
+
+[Medium] STOP_KEY is defined as 'ctrl x' but is not included in KEYBINDINGS_BY_CATEGORY. However, it IS documented in the 'Debugger' category comment as being shown. The comment says it's 'Shown in debugger context in the Debugger category' but it's actually present in the dictionary.
+Files: src/ui/keybindings.py
+
+[Medium] Path normalization logic duplicated between _follow_link() and _open_link_in_new_window() methods
+Files: src/ui/tk_help_browser.py
+
+[Medium] Comment describes _ImmediateModeToken usage at line 1194 but the file is truncated and that line is not visible
+Files: src/ui/tk_ui.py
+
+[Medium] Comment about when blank line removal occurs contradicts potential future behavior
+Files: src/ui/tk_ui.py
+
+[Medium] Comment about error state and Continue button contradicts validation logic
+Files: src/ui/tk_ui.py
+
+[Medium] _on_cursor_move() comment about scheduling deletion 'after_idle' gives detailed reasons but one reason (undo stack corruption) is not clearly demonstrated by the simple deletion operation
+Files: src/ui/tk_widgets.py
+
+[Medium] Comment claims RUN clears output, but code explicitly does NOT clear output
+Files: src/ui/web/nicegui_backend.py
+
+[Medium] Version string 'MBASIC 5.21' in UI title doesn't match VERSION constant usage pattern
+Files: src/ui/web/nicegui_backend.py
+
+[Medium] Inconsistent error handling between periodic save and disconnect save - both catch exceptions but one is described as 'won't crash' while other is just 'save on disconnect'
+Files: src/ui/web/nicegui_backend.py
+
+[Medium] Double-precision range values differ between documents
+Files: docs/help/common/language/data-types.md, docs/help/common/language/functions/cdbl.md
+
+[Medium] Single-precision range values differ between documents
+Files: docs/help/common/language/data-types.md, docs/help/common/language/functions/csng.md
+
+[Medium] Loop example shows GOTO for early exit but doesn't mention EXIT FOR or other structured alternatives
+Files: docs/help/common/examples/loops.md
+
+[Medium] Inconsistent formatting and detail level in 'Implementation Note' sections for unimplemented features
+Files: docs/help/common/language/functions/lpos.md, docs/help/common/language/functions/inp.md, docs/help/common/language/functions/peek.md
+
+[Medium] Conflicting information about whether STOP closes files
+Files: docs/help/common/language/statements/close.md, docs/help/common/language/statements/chain.md
+
+[Medium] Filename does not match content - inputi.md documents LINE INPUT# not INPUT#
+Files: docs/help/common/language/statements/inputi.md
+
+[Medium] Incorrect cross-reference for LINE INPUT# in See Also section
+Files: docs/help/common/language/statements/line-input.md
+
+[Medium] RSET and RESET have very similar names (one letter difference) but completely different purposes, no cross-reference warning
+Files: docs/help/common/language/statements/rset.md, docs/help/common/language/statements/reset.md
+
+[Medium] Inconsistent implementation note formatting and detail level
+Files: docs/help/common/language/statements/wait.md, docs/help/common/language/statements/width.md
+
+[Medium] Inconsistent information about Web UI file storage persistence mechanism
+Files: docs/help/mbasic/compatibility.md, docs/help/mbasic/extensions.md
+
+[Medium] BREAK, STEP, and STACK commands availability inconsistently documented
+Files: docs/help/mbasic/extensions.md, docs/help/common/ui/curses/editing.md, docs/help/common/ui/tk/index.md
+
+[Medium] PEEK/POKE behavior documented differently in two places
+Files: docs/help/mbasic/architecture.md, docs/help/mbasic/compatibility.md
+
+[Medium] Find/Replace feature availability unclear
+Files: docs/help/common/ui/curses/editing.md, docs/help/mbasic/extensions.md
+
+[Medium] WIDTH statement behavior documented as no-op but syntax support unclear
+Files: docs/help/mbasic/compatibility.md
+
+[Medium] Features.md lists 'Web UI' as a supported interface, but cli/index.md only mentions CLI, Curses, and Tk UIs
+Files: docs/help/mbasic/features.md, docs/help/ui/cli/index.md
+
+[Medium] Debugging features availability differs between general features and CLI-specific documentation
+Files: docs/help/mbasic/features.md, docs/help/ui/cli/debugging.md
+
+[Medium] Number of optimizations differs between documents
+Files: docs/help/mbasic/features.md, docs/help/mbasic/index.md
+
+[Medium] CLS and LOCATE commands status unclear
+Files: docs/help/mbasic/features.md, docs/help/mbasic/not-implemented.md
+
+[Medium] Find/Replace availability inconsistent
+Files: docs/help/mbasic/features.md, docs/help/ui/cli/find-replace.md
+
+[Medium] Compiler vs Interpreter mode mentioned but not explained
+Files: docs/help/mbasic/features.md
+
+[Medium] Inconsistent information about Execution Stack access method
+Files: docs/help/ui/curses/feature-reference.md, docs/help/ui/curses/quick-reference.md
+
+[Medium] Inconsistent keyboard shortcut documentation for Cut/Copy/Paste
+Files: docs/help/ui/curses/feature-reference.md, docs/help/ui/curses/quick-reference.md, docs/help/ui/curses/editing.md
+
+[Medium] Contradictory information about Variables Window availability
+Files: docs/help/ui/curses/variables.md, docs/help/ui/index.md
+
+[Medium] Documented features that may not be implemented
+Files: docs/help/ui/curses/variables.md
+
+[Medium] Broken cross-reference links
+Files: docs/help/ui/common/errors.md, docs/help/ui/cli/variables.md
+
+[Medium] Find/Replace keyboard shortcuts inconsistency
+Files: docs/help/ui/tk/feature-reference.md, docs/help/ui/tk/features.md
+
+[Medium] Smart Insert (Ctrl+I) feature status unclear across documents
+Files: docs/help/ui/tk/features.md, docs/help/ui/tk/workflows.md, docs/help/ui/tk/tips.md
+
+[Medium] Renumber keyboard shortcut inconsistency
+Files: docs/help/ui/tk/feature-reference.md, docs/help/ui/tk/workflows.md
+
+[Medium] Variables Window keyboard shortcut inconsistency
+Files: docs/help/ui/tk/feature-reference.md, docs/help/ui/tk/features.md
+
+[Medium] Execution Stack keyboard shortcut inconsistency
+Files: docs/help/ui/tk/feature-reference.md, docs/help/ui/tk/features.md
+
+[Medium] Debug keyboard shortcuts inconsistency between documents
+Files: docs/help/ui/web/features.md, docs/help/ui/web/debugging.md
+
+[Medium] File storage implementation status internal contradiction
+Files: docs/help/ui/web/features.md
+
+[Medium] Stop execution keyboard shortcut inconsistency
+Files: docs/help/ui/web/features.md, docs/help/ui/web/debugging.md
+
+[Medium] Statement and function count inconsistency
+Files: docs/help/ui/tk/index.md, docs/help/ui/tk/feature-reference.md
+
+[Medium] Recent files storage location inconsistency
+Files: docs/help/ui/web/features.md
+
+[Medium] Contradictory information about auto-save to localStorage
+Files: docs/help/ui/web/getting-started.md, docs/help/ui/web/settings.md
+
+[Medium] Contradictory information about 'Open Example' feature
+Files: docs/help/ui/web/getting-started.md, docs/help/ui/web/web-interface.md
+
+[Medium] Conflicting information about Calendar program location
+Files: docs/library/index.md, docs/library/utilities/index.md
+
+[Medium] Contradictory information about CLI debugging capabilities
+Files: docs/user/CHOOSING_YOUR_UI.md
+
+[Medium] README.md describes keyboard-shortcuts.md as 'Curses UI specific' but the file title says 'MBASIC Curses UI Keyboard Shortcuts', creating ambiguity about whether it covers all UIs or just Curses
+Files: docs/user/README.md, docs/user/keyboard-shortcuts.md
+
+[Medium] SETTINGS_AND_CONFIGURATION.md shows boolean values in SET commands without quotes, but JSON examples use true/false
+Files: docs/user/SETTINGS_AND_CONFIGURATION.md, docs/user/TK_UI_QUICK_START.md
+
+[Medium] Inconsistent use of ⚠️ symbol - sometimes means 'partially implemented' and sometimes means 'limited/basic'
+Files: docs/user/UI_FEATURE_COMPARISON.md
+
+[Medium] Document claims to describe 'Sequential File Handling' but only covers line endings and ^Z EOF marker, not general sequential file operations
+Files: docs/user/sequential-files.md
+
+[Medium] UI_FEATURE_COMPARISON.md shows Find/Replace as ❌ for Web UI but marks it as ⚠️ with 'Tk: implemented, Web: planned' in the Notes
+Files: docs/user/UI_FEATURE_COMPARISON.md, docs/user/TK_UI_QUICK_START.md
+
+[Medium] Feature matrix shows 'Edit variables' as ⚠️ for Curses with 'CLI: immediate mode only' in Notes, but CLI column shows ❌
+Files: docs/user/UI_FEATURE_COMPARISON.md
+
+[Low] BREAK command docstring mentions RUN but doesn't document relationship with enhanced_run
+Files: src/ui/cli_debug.py
+
+[Low] cmd_step docstring references curses UI implementation details
+Files: src/ui/cli_debug.py
+
+[Low] Comment says 'Status bar stays at default' but code shows it's updated in some paths
+Files: src/ui/curses_ui.py
+
+[Low] Comment on line 172 says CONTINUE_KEY is used for 'Go to line' in editor mode and 'Continue execution (Go)' in debugger mode, but the JSON key name is 'goto_line'. This dual-purpose nature is documented in comments but may be confusing.
+Files: src/ui/keybindings.py
+
+[Low] KEYBINDINGS_BY_CATEGORY comment lists several keys as 'not included' but doesn't explain why SETTINGS_KEY (Ctrl+P) IS included in 'Global Commands' category despite being defined similarly to other excluded keys.
+Files: src/ui/keybindings.py
+
+[Low] The _format_key_display function converts 'Ctrl+' notation to '^' notation, but keybindings.py already has key_to_display() function that does similar conversion. This creates two different sources of truth for key display formatting.
+Files: src/ui/keymap_widget.py
+
+[Low] Table formatting logic may be duplicated in markdown_renderer.py
+Files: src/ui/tk_help_browser.py, src/ui/markdown_renderer.py
+
+[Low] _redraw() docstring mentions _parse_line_number() validation but doesn't explain what happens when validation fails
+Files: src/ui/tk_widgets.py
+
+[Low] Inconsistent version number references - hardcoded '5.21' vs imported VERSION
+Files: src/ui/web/nicegui_backend.py
+
+[Low] Inconsistent handling of editor placeholder clearing
+Files: src/ui/web/nicegui_backend.py
+
+[Low] Inconsistent keyboard shortcut documentation for toggling breakpoints
+Files: docs/help/common/debugging.md, docs/help/common/editor-commands.md
+
+[Low] Settings dialog shows auto-save settings not mentioned in debugging documentation
+Files: src/ui/web/web_settings_dialog.py, docs/help/common/debugging.md
+
+[Low] Inconsistent key binding documentation format
+Files: docs/help/common/editor-commands.md
+
+[Low] PI computation precision note appears in both files with slightly different wording
+Files: docs/help/common/language/appendices/math-functions.md, docs/help/common/language/functions/atn.md
+
+[Low] Error handling cross-reference points to section that may not exist
+Files: docs/help/common/language/appendices/index.md, docs/help/common/language/appendices/error-codes.md
+
+[Low] Duplicate basic language information with different organization
+Files: docs/help/common/language.md, docs/help/common/getting-started.md
+
+[Low] Index page lists functions in 'By Category' section but some categorizations may be debatable
+Files: docs/help/common/language/functions/index.md
+
+[Low] HEX$ and OCT$ have slightly different example styles
+Files: docs/help/common/language/functions/hex_dollar.md, docs/help/common/language/functions/oct_dollar.md
+
+[Low] STRING$ example output formatting is inconsistent with typical BASIC output
+Files: docs/help/common/language/functions/string_dollar.md
+
+[Low] CLOAD and CSAVE documentation titles include 'THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION' but don't clarify if they're implemented in this interpreter
+Files: docs/help/common/language/statements/cload.md, docs/help/common/language/statements/csave.md
+
+[Low] Index page lists 'LINE INPUT#' with link to inputi.md but the actual file is input_hash.md
+Files: docs/help/common/language/statements/index.md
+
+[Low] DEFINT/SNG/DBL/STR example shows conflicting type declarations without explaining precedence clearly
+Files: docs/help/common/language/statements/defint-sng-dbl-str.md
+
+[Low] EDIT documentation references non-existent line editor commands
+Files: docs/help/common/language/statements/edit.md
+
+[Low] GOSUB and GOTO have inconsistent 'See Also' sections
+Files: docs/help/common/language/statements/gosub-return.md, docs/help/common/language/statements/goto.md
+
+[Low] Contradictory information about file closing behavior
+Files: docs/help/common/language/statements/load.md, docs/help/common/language/statements/merge.md
+
+[Low] RENUM example shows unchanged output after renumbering
+Files: docs/help/common/language/statements/renum.md
+
+[Low] Semantic analyzer status claims contradictory
+Files: docs/help/mbasic/architecture.md
+
+[Low] Inconsistent listing of supported UIs between documents
+Files: docs/help/mbasic/features.md, docs/help/mbasic/getting-started.md
+
+[Low] STEP INTO/OVER documented but marked as not implemented in same document
+Files: docs/help/ui/cli/debugging.md
+
+[Low] Different command examples for starting MBASIC
+Files: docs/help/mbasic/getting-started.md, docs/help/ui/cli/index.md
+
+[Low] Settings commands not listed in main features document
+Files: docs/help/ui/cli/settings.md, docs/help/mbasic/features.md
+
+[Low] Installation instructions reference non-existent requirements.txt
+Files: docs/help/mbasic/getting-started.md
+
+[Low] Incomplete keyboard shortcuts for Variables Window
+Files: docs/help/ui/curses/quick-reference.md, docs/help/ui/curses/variables.md
+
+[Low] Run Program keyboard shortcut presentation inconsistency
+Files: docs/help/ui/tk/feature-reference.md, docs/help/ui/tk/getting-started.md
+
+[Low] Stop/Interrupt keyboard shortcut inconsistency with standard conventions
+Files: docs/help/ui/tk/feature-reference.md
+
+[Low] Default UI inconsistency
+Files: docs/help/ui/tk/getting-started.md, docs/help/ui/tk/index.md
+
+[Low] Visual indicator color inconsistency
+Files: docs/help/ui/tk/feature-reference.md
+
+[Low] Syntax error indicator inconsistency
+Files: docs/help/ui/tk/feature-reference.md, docs/help/ui/tk/features.md
+
+[Low] Inconsistent Settings dialog access instructions
+Files: docs/help/ui/web/getting-started.md, docs/help/ui/web/settings.md
+
+[Low] Incomplete information about Settings tabs
+Files: docs/help/ui/web/settings.md
+
+[Low] Inconsistent variable name in example code
+Files: docs/user/CASE_HANDLING_GUIDE.md
+
+[Low] Incomplete file extension list
+Files: docs/user/FILE_FORMAT_COMPATIBILITY.md
+
+[Low] Different keyboard shortcuts documented for same actions across UIs without clear cross-reference
+Files: docs/user/TK_UI_QUICK_START.md, docs/user/keyboard-shortcuts.md
+
+[Low] TK_UI_QUICK_START.md mentions 'Ctrl+?' for help but this shortcut is not standard across platforms
+Files: docs/user/TK_UI_QUICK_START.md
+
+[Low] Settings file location uses ~ for home directory but doesn't explain this is Unix/Linux notation
+Files: docs/user/SETTINGS_AND_CONFIGURATION.md
+
+[Low] Document mentions 'Stmt' toolbar button but doesn't explain what 'Stmt' means or how it differs from 'Step'
+Files: docs/user/TK_UI_QUICK_START.md
+
+[Low] Document shows 'interpreter.max_execution_time' default as 30 seconds but doesn't explain what happens when time limit is reached
+Files: docs/user/SETTINGS_AND_CONFIGURATION.md
+
+
+=== GLOBAL CHANGES (NEED REVIEW) ===
+
+[High] Security warning about user_id validation is in docstring but not enforced in code
+Files: src/filesystem/sandboxed_fs.py
+
+[High] Extensive comment block about numbered line editing describes validation checks that don't match the actual code flow
+Files: src/immediate_executor.py
+
+[High] Comment in _renum_erl_comparison says implementation renumbers 'ANY binary operator' but then describes this as broader than manual specifies, creating confusion about whether this is correct behavior
+Files: src/interactive.py
+
+[Medium] Docstring claims INPUT 'will fail at runtime' but implementation shows it fails when input() is called, not during parsing/execution setup
+Files: src/immediate_executor.py
+
+[Medium] Comment claims EDIT command 'cannot be parsed as BASIC statements' but code attempts to parse it through execute_immediate() before checking for EDIT
+Files: src/interactive.py
+
+[Medium] Inconsistent error handling between CLEAR and RESET for file closing
+Files: src/interpreter.py
+
+[Medium] execute_step() docstring claims it's a placeholder and not functional, but also describes working step infrastructure in tick_pc() that UIs should use directly
+Files: src/interpreter.py
+
+[Medium] web_io.py implements get_screen_size() method which is not part of the IOHandler base interface
+Files: src/iohandler/base.py, src/iohandler/web_io.py
+
+[Medium] Comment in load() method claims settings remain flat, but code shows settings can be both flat and nested
+Files: src/settings.py
+
+[Medium] Redis settings isolation feature not documented for users
+Files: test_redis_settings.py, docs/help/common/debugging.md
+
+[Low] ChainStatementNode delete_range type annotation inconsistency
+Files: src/ast_nodes.py
+
+[Low] CaseKeeperTable supports multiple policies but case_string_handler.py only uses force_lower for keywords and always returns original for identifiers
+Files: src/case_keeper.py, src/case_string_handler.py
+
+[Low] Module docstring mentions UI display but doesn't specify which UI or how formatted messages are consumed
+Files: src/debug_logger.py
+
+[Low] Help text mentions 'Ctrl+H (UI help)' but this is UI-specific and may not be available in all contexts
+Files: src/immediate_executor.py
+
+[Low] Docstring for cmd_edit says 'Count prefixes ([n]D, [n]C) and search commands ([n]S, [n]K) are not yet implemented' but then describes digit behavior as 'INTENTIONAL BEHAVIOR' that 'preserves MBASIC compatibility'
+Files: src/interactive.py
+
+[Low] Comment in evaluate_functioncall() explains debugger_set=True usage but the actual code uses get_variable_for_debugger() for reading, not set_variable with debugger_set
+Files: src/interpreter.py
+
+[Low] input_line() limitation about not preserving spaces is documented as platform limitation, but implementations don't attempt any workarounds
+Files: src/iohandler/base.py, src/iohandler/console.py, src/iohandler/curses_io.py, src/iohandler/web_io.py
+
+[Low] Default parameter value in __init__ doesn't match any preset configuration exactly
+Files: src/resource_limits.py
+
+[Low] Version comment claims automatic increment but manual verification needed
+Files: src/version.py
+

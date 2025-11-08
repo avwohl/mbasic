@@ -107,7 +107,7 @@ This leaves room to insert lines later.
 | **Delete** | Delete at cursor |
 | **Enter** | Save line |
 
-**Note:** Cut/Copy/Paste operations (Ctrl+X/C/V) are not available in the Curses UI due to keyboard shortcut conflicts. Use your terminal's native clipboard functions instead (typically Shift+Ctrl+C/V or mouse selection).
+**Note:** Cut/Copy/Paste operations ({{kbd:stop:curses}}/C/V) are not available in the Curses UI due to keyboard shortcut conflicts. Use your terminal's native clipboard functions instead (typically Shift+{{kbd:continue:curses}}/V or mouse selection).
 
 ## Tips
 

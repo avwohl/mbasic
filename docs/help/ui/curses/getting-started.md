@@ -49,7 +49,7 @@ Let's write a simple program:
 
 6. Press **Enter**
 
-7. Press **Ctrl+R** to run
+7. Press **{{kbd:run:curses}}** to run
 
 8. Output appears in the bottom window!
 
@@ -58,8 +58,8 @@ Let's write a simple program:
 You don't need to memorize everything. The status line shows common commands:
 
 - **^F** (Ctrl+F) - Help (you're here now!)
-- **^R** (Ctrl+R) - Run program
-- **^Q** (Ctrl+Q) - Quit
+- **^R** ({{kbd:run:curses}}) - Run program
+- **^Q** ({{kbd:quit:curses}}) - Quit
 
 No function keys needed!
 

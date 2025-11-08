@@ -4,26 +4,26 @@ This document covers all features available in the Tkinter (Tk) UI, organized by
 
 ## File Operations (8 features)
 
-### New Program (Ctrl+N)
+### New Program ({{kbd:file_new:tk}})
 Create a new program. Prompts to save current program if there are unsaved changes.
 - Menu: File → New
-- Shortcut: Ctrl+N
+- Shortcut: {{kbd:file_new:tk}}
 
-### Open/Load File (Ctrl+O)
+### Open/Load File ({{kbd:file_open:tk}})
 Open a BASIC program from disk using a native file dialog.
 - Menu: File → Open
-- Shortcut: Ctrl+O
+- Shortcut: {{kbd:file_open:tk}}
 - Supports .bas and .txt files
 
-### Save File (Ctrl+S)
+### Save File ({{kbd:file_save:tk}})
 Save the current program. If no filename is set, prompts for one (same as Save As).
 - Menu: File → Save
-- Shortcut: Ctrl+S
+- Shortcut: {{kbd:file_save:tk}}
 
-### Save As (Ctrl+Shift+S)
+### Save As ({{kbd:file_save_as:tk}})
 Save the program with a new filename.
 - Menu: File → Save As
-- Shortcut: Ctrl+Shift+S
+- Shortcut: {{kbd:file_save_as:tk}}
 
 ### Recent Files
 Access recently opened files from the File menu.
@@ -35,10 +35,10 @@ Tk UI supports auto-save functionality. Programs are periodically saved to preve
 - Configurable interval
 - Creates backup files
 
-### Delete Lines (Ctrl+D)
+### Delete Lines
 Delete selected lines or the current line.
-- Select lines and press Ctrl+D
-- Or use Edit menu
+- Select lines and use Edit → Delete Lines menu
+- Or select and press Delete/Backspace key
 
 ### Merge Files
 Merge another BASIC program into the current one.
@@ -47,31 +47,32 @@ Merge another BASIC program into the current one.
 
 ## Execution & Control (6 features)
 
-### Run Program (Ctrl+R or F5)
+### Run Program ({{kbd:run_program:tk}} or F5)
 Execute the current program from the beginning.
 - Menu: Run → Run Program
-- Shortcuts: Ctrl+R or F5
+- Shortcuts: {{kbd:run_program:tk}} or F5
 - Output appears in the output pane
 
-### Stop/Interrupt (Ctrl+X)
+### Stop/Interrupt ({{kbd:cut:tk}})
 Stop a running program immediately.
 - Menu: Run → Stop
-- Shortcut: Ctrl+X
+- Shortcut: {{kbd:cut:tk}}
 
-### Continue (Ctrl+G)
+### Continue
 Resume execution after pausing at a breakpoint.
 - Menu: Run → Continue
-- Shortcut: Ctrl+G
+- Toolbar: "Cont" button
+- No keyboard shortcut
 
 ### List Program
 View the program listing in the editor window.
 - Menu: Edit → List Program
 - Refreshes the editor view
 
-### Renumber (Ctrl+E)
+### Renumber ({{kbd:renumber:tk}})
 Renumber program lines with specified start and increment.
 - Menu: Edit → Renumber
-- Shortcut: Ctrl+E
+- Shortcut: {{kbd:renumber:tk}}
 - Opens dialog for configuration
 
 ### Auto Line Numbers
@@ -81,17 +82,18 @@ Automatically insert line numbers when pressing Enter.
 
 ## Debugging (6 features)
 
-### Breakpoints (Ctrl+B)
-Set or remove breakpoints by clicking the line number margin or using Ctrl+B.
+### Breakpoints ({{kbd:toggle_breakpoint:tk}})
+Set or remove breakpoints by clicking the line number margin or using {{kbd:toggle_breakpoint:tk}}.
 - Visual indicator: ● symbol
 - Menu: Run → Toggle Breakpoint
-- Shortcut: Ctrl+B
+- Shortcut: {{kbd:toggle_breakpoint:tk}}
 - Click line number margin
 
-### Step Statement (Ctrl+T)
+### Step Statement
 Execute one BASIC statement at a time.
 - Menu: Run → Step Statement
-- Shortcut: Ctrl+T
+- Toolbar: "Stmt" button
+- No keyboard shortcut
 - Pauses after each statement
 
 ### Step Line (F10)
@@ -100,10 +102,10 @@ Execute one line at a time.
 - Shortcut: F10
 - Pauses after each line number
 
-### Clear All Breakpoints (Ctrl+Shift+B)
+### Clear All Breakpoints ({{kbd:file_save:tk}}hift+B)
 Remove all breakpoints from the program.
 - Menu: Run → Clear All Breakpoints
-- Shortcut: Ctrl+Shift+B
+- Shortcut: {{kbd:file_save:tk}}hift+B
 
 ### Multi-Statement Debug
 When stepping by statement, individual statements on multi-statement lines are highlighted separately.
@@ -115,10 +117,10 @@ The currently executing line is highlighted during program execution.
 
 ## Variable Inspection (6 features)
 
-### Variables Window (Ctrl+W)
+### Variables Window ({{kbd:toggle_variables:tk}})
 Open a window showing all program variables and their current values.
 - Menu: Debug → Variables Window
-- Shortcut: Ctrl+W
+- Shortcut: {{kbd:toggle_variables:tk}}
 - Shows name, type, and value
 - Updates in real-time during execution
 
@@ -141,13 +143,13 @@ Click column headers to sort variables:
 - By value
 - Click again to reverse order
 
-### Execution Stack (Ctrl+K)
+### Execution Stack ({{kbd:toggle_stack:tk}})
 View the call stack showing:
 - Active GOSUB calls with return lines
 - FOR loops with current iteration
 - WHILE loops
 - Menu: Debug → Execution Stack
-- Shortcut: Ctrl+K
+- Shortcut: {{kbd:toggle_stack:tk}}
 
 ### Resource Usage
 Monitor memory usage and variable count in the status bar.
@@ -169,26 +171,26 @@ Edit multiple lines simultaneously:
 - Copy/paste blocks of code
 - Indent/unindent selections
 
-### Cut/Copy/Paste (Ctrl+X/C/V)
+### Cut/Copy/Paste ({{kbd:cut:tk}}/C/V)
 Standard clipboard operations with native OS clipboard integration.
-- Cut: Ctrl+X
-- Copy: Ctrl+C
-- Paste: Ctrl+V
+- Cut: {{kbd:cut:tk}}
+- Copy: {{kbd:copy:tk}}
+- Paste: {{kbd:paste:tk}}
 - Also available via Edit menu and right-click context menu
 
-### Find/Replace (Ctrl+F / Ctrl+H)
+### Find/Replace ({{kbd:find:tk}} / {{kbd:replace:tk}})
 Powerful search and replace functionality:
-- Find: Ctrl+F
-- Replace: Ctrl+H
+- Find: {{kbd:find:tk}}
+- Replace: {{kbd:replace:tk}}
 - Find Next: F3
 - Options: Case-sensitive, whole word, regex
 - Replace single or all occurrences
 - Search wraps around
 
-### Smart Insert (Ctrl+I)
+### Smart Insert ({{kbd:smart_insert:tk}})
 Insert a line number at the midpoint between current and next line.
 - Menu: Edit → Smart Insert
-- Shortcut: Ctrl+I
+- Shortcut: {{kbd:smart_insert:tk}}
 - Example: Between 10 and 20, inserts 15
 
 ### Sort Lines
@@ -219,7 +221,7 @@ Complete MBASIC language documentation integrated into the UI:
 - Examples and tutorials
 - Searchable index
 
-### Search Help (Ctrl+Shift+F)
+### Search Help ({{kbd:file_save:tk}}hift+F)
 Search across all help documentation:
 - Full-text search
 - Keyword search
@@ -239,8 +241,8 @@ The Tk UI uses a flexible window layout:
 - **Toolbar**: Quick access to common operations
 - **Editor Pane**: Main code editing area with line numbers
 - **Output Pane**: Program output and error messages
-- **Variables Window**: Detachable variable inspector (Ctrl+W)
-- **Stack Window**: Detachable call stack viewer (Ctrl+K)
+- **Variables Window**: Detachable variable inspector ({{kbd:toggle_variables:tk}})
+- **Stack Window**: Detachable call stack viewer ({{kbd:toggle_stack:tk}})
 - **Status Bar**: Current file, cursor position, resource usage
 
 All panes can be resized with splitters.
@@ -261,19 +263,19 @@ The Tk UI fully supports mouse operations:
 ### Essential Shortcuts
 | Shortcut | Action |
 |----------|--------|
-| Ctrl+N | New Program |
-| Ctrl+O | Open File |
-| Ctrl+S | Save File |
-| Ctrl+R / F5 | Run Program |
-| Ctrl+X | Stop Program |
-| Ctrl+B | Toggle Breakpoint |
-| Ctrl+T | Step Statement |
+| {{kbd:file_new:tk}} | New Program |
+| {{kbd:file_open:tk}} | Open File |
+| {{kbd:file_save:tk}} | Save File |
+| {{kbd:run_program:tk}} / F5 | Run Program |
+| {{kbd:cut:tk}} | Stop Program |
+| {{kbd:toggle_breakpoint:tk}} | Toggle Breakpoint |
 | F10 | Step Line |
-| Ctrl+G | Continue |
-| Ctrl+W | Variables Window |
-| Ctrl+K | Execution Stack |
-| Ctrl+F | Find |
-| Ctrl+H | Find & Replace |
+| (toolbar) | Step Statement |
+| (toolbar) | Continue |
+| {{kbd:toggle_variables:tk}} | Variables Window |
+| {{kbd:toggle_stack:tk}} | Execution Stack |
+| {{kbd:find:tk}} | Find |
+| {{kbd:replace:tk}} | Find & Replace |
 | F1 | Help |
 | Shift+F1 | Context Help |
 

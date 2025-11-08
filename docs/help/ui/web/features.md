@@ -60,13 +60,13 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 ### Search and Replace (Planned)
 
-**Find (Ctrl+F) (Planned):**
+**Find ({{kbd:find:web}}) (Planned):**
 - Search in editor
 - Case sensitive option
 - Whole word option
 - Regular expressions
 
-**Replace (Ctrl+H) (Planned):**
+**Replace ({{kbd:replace:web}}) (Planned):**
 - Replace single
 - Replace all
 - Preview changes
@@ -128,7 +128,7 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 **Debug Mode (Partially Implemented):**
 - Basic breakpoint support (via Run menu)
-- Step execution (Ctrl+T, Ctrl+K)
+- Step execution ({{kbd:step:web}}, Ctrl+K)
 - Basic variable inspection (via Debug menu)
 - Call stack (planned)
 
@@ -206,11 +206,11 @@ Complete reference of features available and planned for the MBASIC Web UI.
 ### Execution Control
 
 **Currently Implemented:**
-- Run (Ctrl+R)
-- Continue (Ctrl+G)
-- Step statement (Ctrl+T)
+- Run ({{kbd:run:web}})
+- Continue ({{kbd:continue:web}})
+- Step statement ({{kbd:step:web}})
 - Step line (Ctrl+K)
-- Stop (Ctrl+Q)
+- Stop ({{kbd:stop:web}})
 
 **Advanced Controls (Planned):**
 - Step over (planned for future release)
@@ -534,7 +534,7 @@ History Size: 50
 
 ### Getting Help
 
-- Press F1 for help
+- Press {{kbd:help:web}} for help
 - Check documentation
 - View examples
 - Report issues on GitHub

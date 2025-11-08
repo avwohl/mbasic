@@ -4,20 +4,20 @@ This document covers all features available in the Curses UI, organized by categ
 
 ## File Operations (7 features)
 
-### New Program (Ctrl+N)
+### New Program ({{kbd:new:curses}})
 Clear the current program and start fresh.
 
-### Open/Load File (Ctrl+O)
+### Open/Load File ({{kbd:open:curses}})
 Load a BASIC program from disk. Opens a file browser to select the file.
 
-### Save File (Ctrl+V)
+### Save File ({{kbd:save:curses}})
 Save the current program to disk. If no filename is set, prompts for one.
-Note: Uses Ctrl+V because Ctrl+S is reserved for terminal flow control.
+Note: Uses {{kbd:save:curses}} because {{kbd:save:curses}} is reserved for terminal flow control.
 
-### Save As (Shift+Ctrl+V)
+### Save As (Shift+{{kbd:save:curses}})
 Save the current program with a new filename.
 
-### Recent Files (Ctrl+Shift+O)
+### Recent Files ({{kbd:save:curses}}hift+O)
 View and load from a list of recently opened files.
 
 ### Auto-Save
@@ -28,13 +28,13 @@ Merge another BASIC program into the current one. Useful for combining code modu
 
 ## Execution & Control (6 features)
 
-### Run Program (Ctrl+R)
+### Run Program ({{kbd:run:curses}})
 Execute the current BASIC program from the beginning.
 
-### Stop/Interrupt (Ctrl+X)
+### Stop/Interrupt ({{kbd:stop:curses}})
 Stop a running program immediately.
 
-### Continue (Ctrl+G)
+### Continue ({{kbd:goto_line:curses}})
 Resume execution after hitting a breakpoint or stepping.
 
 ### List Program (Menu only)
@@ -48,18 +48,18 @@ Automatically generate line numbers when entering new lines. Toggle on/off as ne
 
 ## Debugging (6 features)
 
-### Breakpoints (Ctrl+B)
+### Breakpoints ({{kbd:toggle_breakpoint:curses}})
 Toggle a breakpoint on the current line. Execution will pause when reaching this line.
-- Set: Click margin or press Ctrl+B
+- Set: Click margin or press {{kbd:toggle_breakpoint:curses}}
 - Indicated by: ● symbol in line number margin
 
-### Step Statement (Ctrl+T)
+### Step Statement ({{kbd:step:curses}})
 Execute one BASIC statement and pause. Useful for debugging complex lines with multiple statements.
 
-### Step Line (Ctrl+K)
+### Step Line ({{kbd:step_line:curses}})
 Execute the next line of code and pause. Advances one line number at a time.
 
-### Clear All Breakpoints (Ctrl+Shift+B)
+### Clear All Breakpoints ({{kbd:save:curses}}hift+B)
 Remove all breakpoints from the program at once.
 
 ### Multi-Statement Debug
@@ -124,11 +124,11 @@ Delete the current line in the editor.
 
 ### Cut/Copy/Paste (Not implemented)
 Standard clipboard operations are not available in the Curses UI due to keyboard shortcut conflicts:
-- **Ctrl+X** - Used for Stop/Interrupt (cannot be used for Cut)
-- **Ctrl+C** - Terminal signal to exit program (cannot be used for Copy)
-- **Ctrl+V** - Used for Save File (cannot be used for Paste; Ctrl+S is reserved by terminal for flow control)
+- **{{kbd:stop:curses}}** - Used for Stop/Interrupt (cannot be used for Cut)
+- **{{kbd:continue:curses}}** - Terminal signal to exit program (cannot be used for Copy)
+- **{{kbd:save:curses}}** - Used for Save File (cannot be used for Paste; {{kbd:save:curses}} is reserved by terminal for flow control)
 
-**Workaround:** Use your terminal's native copy/paste functions instead (typically Shift+Ctrl+C/V or mouse selection).
+**Workaround:** Use your terminal's native copy/paste functions instead (typically Shift+{{kbd:continue:curses}}/V or mouse selection).
 
 ### Find/Replace (Not yet implemented)
 Find and Replace functionality is not yet available in Curses UI via keyboard shortcuts.
@@ -171,15 +171,15 @@ Press ? with cursor on a BASIC keyword to get help for that specific command.
 ### Most Used Shortcuts
 | Shortcut | Action |
 |----------|--------|
-| Ctrl+N | New Program |
-| Ctrl+O | Open File |
-| Ctrl+V | Save File |
-| Ctrl+R | Run Program |
-| Ctrl+X | Stop Program |
-| Ctrl+B | Toggle Breakpoint |
-| Ctrl+T | Step Statement |
-| Ctrl+K | Step Line |
-| Ctrl+G | Continue |
+| {{kbd:new:curses}} | New Program |
+| {{kbd:open:curses}} | Open File |
+| {{kbd:save:curses}} | Save File |
+| {{kbd:run:curses}} | Run Program |
+| {{kbd:stop:curses}} | Stop Program |
+| {{kbd:toggle_breakpoint:curses}} | Toggle Breakpoint |
+| {{kbd:step:curses}} | Step Statement |
+| {{kbd:step_line:curses}} | Step Line |
+| {{kbd:goto_line:curses}} | Continue |
 | Ctrl+W | Variables Window |
 | Menu only | Execution Stack |
 | ? | Help |

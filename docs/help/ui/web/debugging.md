@@ -38,22 +38,22 @@ The Web UI debugger currently offers:
 ### Debug Mode
 
 1. **Set breakpoints** where needed (via Run menu)
-2. Use **Run → Run Program** or press `Ctrl+R` to start
+2. Use **Run → Run Program** or press `{{kbd:run:web}}` to start
 3. Program runs until first breakpoint
-4. Use **Run → Continue** or `Ctrl+G` to continue
-5. Use **Run → Stop** or `Ctrl+Q` to stop
+4. Use **Run → Continue** or `{{kbd:continue:web}}` to continue
+5. Use **Run → Stop** or `{{kbd:stop:web}}` to stop
 
 ### Debug Controls
 
 **Currently implemented:**
 
-- **Run (Ctrl+R)** - Start program from beginning
-- **Continue (Ctrl+G)** - Run to next breakpoint
-- **Step Statement (Ctrl+T)** - Execute one statement
+- **Run ({{kbd:run:web}})** - Start program from beginning
+- **Continue ({{kbd:continue:web}})** - Run to next breakpoint
+- **Step Statement ({{kbd:step:web}})** - Execute one statement
 - **Step Line (Ctrl+K)** - Execute one line (all statements on line)
-- **Stop (Ctrl+Q)** - End execution
+- **Stop ({{kbd:stop:web}})** - End execution
 
-**Note:** Function key shortcuts (F5, F10, F11, etc.) are not implemented in the Web UI.
+**Note:** Function key shortcuts ({{kbd:continue:web}}, {{kbd:step:web}}, {{kbd:help:web}}1, etc.) are not implemented in the Web UI.
 
 ## Variable Inspector
 
@@ -293,17 +293,17 @@ Will provide timing and performance data:
 ## Keyboard Shortcuts
 
 **Currently Implemented:**
-- `Ctrl+R` - Run program
-- `Ctrl+G` - Continue (run to next breakpoint)
-- `Ctrl+T` - Step statement
+- `{{kbd:run:web}}` - Run program
+- `{{kbd:continue:web}}` - Continue (run to next breakpoint)
+- `{{kbd:step:web}}` - Step statement
 - `Ctrl+K` - Step line
-- `Ctrl+Q` - Stop execution
+- `{{kbd:stop:web}}` - Stop execution
 
 **Planned for Future Releases:**
-- `F5` - Start/Continue debugging
-- `F9` - Toggle breakpoint
-- `F10` - Step over
-- `F11` - Step into
+- `{{kbd:continue:web}}` - Start/Continue debugging
+- `{{kbd:toggle_breakpoint:web}}` - Toggle breakpoint
+- `{{kbd:step:web}}` - Step over
+- `{{kbd:help:web}}1` - Step into
 - Navigation and inspector shortcuts
 
 ## Tips and Best Practices
@@ -341,7 +341,7 @@ Will provide timing and performance data:
 
 ### Browser DevTools (Standard Browser Features)
 
-Press `F12` to open browser tools:
+Press `{{kbd:help:web}}2` to open browser tools:
 
 **Console Tab:**
 - View debug output

@@ -169,7 +169,7 @@ Each user session gets isolated settings storage, preventing conflicts between c
 ### Exporting Settings (Future)
 
 To share settings across browsers or with CLI:
-1. Open browser developer tools (F12)
+1. Open browser developer tools ({{kbd:help:web}}2)
 2. Go to Application → Local Storage
 3. Find MBASIC settings key
 4. Copy JSON value
@@ -268,7 +268,7 @@ Settings dialog works in all modern browsers:
 ## Troubleshooting
 
 ### Settings dialog won't open
-- Check browser console for errors (F12)
+- Check browser console for errors ({{kbd:help:web}}2)
 - Refresh page
 - Check that JavaScript is enabled
 

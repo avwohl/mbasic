@@ -107,7 +107,7 @@ AUTO
 Ok
 ```
 
-Press Ctrl+C to stop AUTO mode.
+Press {{kbd:stop:cli}} to stop AUTO mode.
 
 See: [AUTO Command](../../language/statements/auto.md)
 
@@ -151,7 +151,7 @@ Use **EDIT** to fix line 20.
 
 | Key | Action |
 |-----|--------|
-| **Ctrl+C** | Interrupt running program |
+| **{{kbd:stop:cli}}** | Interrupt running program |
 | **Ctrl+D** | Exit MBASIC (Unix/Linux) |
 | **Ctrl+Z** | Exit MBASIC (Windows) |
 | **Up/Down** | Command history (if available) |

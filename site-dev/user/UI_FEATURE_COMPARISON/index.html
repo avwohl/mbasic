@@ -1184,7 +1184,7 @@
 <td>✅</td>
 <td>✅</td>
 <td>✅</td>
-<td>Ctrl+S prompts for filename</td>
+<td>Keyboard shortcut prompts for filename</td>
 </tr>
 <tr>
 <td><strong>Save (command)</strong></td>
@@ -1532,7 +1532,7 @@
 - Desktop only (no remote)
 - Heavier resource usage</p>
 <p><strong>Unique Features:</strong>
-- Find/Replace (Ctrl+F/H)
+- Find/Replace ({{kbd:find:tk}}/{{kbd:replace:tk}})
 - Smart Insert mode
 - Most UI polish
 - Native file dialogs
@@ -1594,51 +1594,51 @@
 <tbody>
 <tr>
 <td><strong>Run</strong></td>
-<td>RUN</td>
-<td>Ctrl+R</td>
-<td>Ctrl+R</td>
-<td>Ctrl+R/F5</td>
+<td>{{kbd:run:cli}}</td>
+<td>{{kbd:run:curses}}</td>
+<td>{{kbd:run_program:tk}}</td>
+<td>{{kbd:run:web}}</td>
 </tr>
 <tr>
 <td><strong>Stop</strong></td>
-<td>Ctrl+C</td>
-<td>Ctrl+C/Esc</td>
+<td>{{kbd:stop:cli}}</td>
+<td>{{kbd:stop:curses}}/Esc</td>
 <td>Esc</td>
-<td>Esc</td>
+<td>{{kbd:stop:web}}</td>
 </tr>
 <tr>
 <td><strong>Save</strong></td>
-<td>SAVE "file"</td>
-<td>Ctrl+S</td>
-<td>Ctrl+S</td>
-<td>Ctrl+S</td>
+<td>{{kbd:save:cli}}</td>
+<td>{{kbd:save:curses}}</td>
+<td>{{kbd:file_save:tk}}</td>
+<td>{{kbd:save:web}}</td>
 </tr>
 <tr>
 <td><strong>New</strong></td>
-<td>NEW</td>
-<td>Ctrl+N</td>
-<td>Ctrl+N</td>
-<td>Ctrl+N</td>
+<td>{{kbd<img alt="🆕" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f195.svg" title=":new:" />cli}}</td>
+<td>{{kbd<img alt="🆕" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f195.svg" title=":new:" />curses}}</td>
+<td>{{kbd:file_new:tk}}</td>
+<td>{{kbd<img alt="🆕" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f195.svg" title=":new:" />web}}</td>
 </tr>
 <tr>
 <td><strong>Open</strong></td>
-<td>LOAD "file"</td>
-<td>Ctrl+O</td>
-<td>Ctrl+O</td>
-<td>Ctrl+O</td>
+<td>{{kbd:open:cli}}</td>
+<td>{{kbd:open:curses}}</td>
+<td>{{kbd:file_open:tk}}</td>
+<td>{{kbd:open:web}}</td>
 </tr>
 <tr>
 <td><strong>Help</strong></td>
-<td>HELP</td>
-<td>Ctrl+H/F1</td>
-<td>Ctrl+?</td>
-<td>F1</td>
+<td>{{kbd:help:cli}}</td>
+<td>{{kbd:help:curses}}</td>
+<td>{{kbd:help_topics:tk}}</td>
+<td>{{kbd:help:web}}</td>
 </tr>
 <tr>
 <td><strong>Quit</strong></td>
-<td>SYSTEM</td>
-<td>Ctrl+Q</td>
-<td>Ctrl+Q</td>
+<td>{{kbd:quit:cli}}</td>
+<td>{{kbd:quit:curses}}</td>
+<td>{{kbd:file_quit:tk}}</td>
 <td>N/A</td>
 </tr>
 </tbody>
@@ -1657,31 +1657,31 @@
 <tbody>
 <tr>
 <td><strong>Toggle Breakpoint</strong></td>
-<td>BREAK line</td>
-<td>F9</td>
-<td>Ctrl+B</td>
-<td>F9</td>
+<td>{{kbd:toggle_breakpoint:cli}}</td>
+<td>{{kbd:toggle_breakpoint:curses}}</td>
+<td>{{kbd:toggle_breakpoint:tk}}</td>
+<td>{{kbd:toggle_breakpoint:web}}</td>
 </tr>
 <tr>
 <td><strong>Step</strong></td>
-<td>STEP</td>
-<td>F10</td>
+<td>{{kbd:step:cli}}</td>
+<td>{{kbd:step:curses}}</td>
 <td>Menu/Toolbar</td>
-<td>F10</td>
+<td>{{kbd:step:web}}</td>
 </tr>
 <tr>
 <td><strong>Continue</strong></td>
-<td>CONT</td>
-<td>F5</td>
+<td>{{kbd:continue:cli}}</td>
+<td>{{kbd:continue:curses}}</td>
 <td>Menu/Toolbar</td>
-<td>F5</td>
+<td>{{kbd:continue:web}}</td>
 </tr>
 <tr>
 <td><strong>Variables</strong></td>
-<td>WATCH</td>
-<td>Ctrl+W</td>
-<td>Ctrl+W</td>
-<td>Ctrl+Alt+V</td>
+<td>{{kbd<img alt="⌚" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/231a.svg" title=":watch:" />cli}}</td>
+<td>(none)</td>
+<td>{{kbd:toggle_variables:tk}}</td>
+<td>{{kbd:toggle_variables:web}}</td>
 </tr>
 </tbody>
 </table>
@@ -1776,10 +1776,10 @@
 </ul>
 <h2 id="getting-help">Getting Help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>CLI:</strong> Type <code>HELP</code> or <code>HELP &lt;topic&gt;</code></li>
-<li><strong>Curses:</strong> Press F1 or Ctrl+H</li>
-<li><strong>Tk:</strong> Press Ctrl+? or use Help menu</li>
-<li><strong>Web:</strong> Press F1 or click Help</li>
+<li><strong>CLI:</strong> Type {{kbd:help:cli}} or <code>HELP &lt;topic&gt;</code></li>
+<li><strong>Curses:</strong> Press {{kbd:help:curses}} to open help browser</li>
+<li><strong>Tk:</strong> Press {{kbd:help_topics:tk}} or use Help menu</li>
+<li><strong>Web:</strong> Press {{kbd:help:web}} or click Help</li>
 </ul>
 <h2 id="reporting-issues">Reporting Issues<a class="headerlink" href="#reporting-issues" title="Permanent link">&para;</a></h2>
 <p>Found a bug or missing feature? Report at:

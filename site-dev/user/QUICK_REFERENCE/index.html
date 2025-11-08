@@ -899,27 +899,27 @@
 </thead>
 <tbody>
 <tr>
-<td><code>Ctrl+N</code></td>
+<td><code>{{kbd:new}}</code></td>
 <td>New</td>
 <td>Clear program, start fresh</td>
 </tr>
 <tr>
-<td><code>Ctrl+L</code></td>
+<td><code>{{kbd:open}}</code></td>
 <td>Load</td>
 <td>Load program from file</td>
 </tr>
 <tr>
-<td><code>Ctrl+S</code></td>
+<td><code>{{kbd:save}}</code></td>
 <td>Save</td>
 <td>Save program to file</td>
 </tr>
 <tr>
-<td><code>Ctrl+Q</code></td>
+<td><code>{{kbd:quit}}</code></td>
 <td>Quit</td>
 <td>Exit IDE</td>
 </tr>
 <tr>
-<td><code>Ctrl+P</code></td>
+<td><code>{{kbd:help}}</code></td>
 <td>Help</td>
 <td>Open help browser</td>
 </tr>
@@ -946,7 +946,7 @@
 </thead>
 <tbody>
 <tr>
-<td><code>Ctrl+R</code></td>
+<td><code>{{kbd:run}}</code></td>
 <td>Run</td>
 <td>Execute current program</td>
 </tr>
@@ -1025,22 +1025,22 @@
 <h2 id="typical-workflows">Typical Workflows<a class="headerlink" href="#typical-workflows" title="Permanent link">&para;</a></h2>
 <h3 id="1-write-and-run">1. Write and Run<a class="headerlink" href="#1-write-and-run" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>1. Type program in editor
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>2. Ctrl+R to run
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>2. {{kbd:run}} to run
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>3. Check output window
 </code></pre></div>
 <h3 id="2-debug-with-breakpoints">2. Debug with Breakpoints<a class="headerlink" href="#2-debug-with-breakpoints" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>1. Set breakpoints on key lines (press &#39;b&#39;)
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>2. Ctrl+R to run
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>2. {{kbd:run}} to run
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>3. At each breakpoint:
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>   - Press &#39;c&#39; to continue to next breakpoint
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>   - Press &#39;s&#39; to step through line-by-line
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>   - Press &#39;e&#39; to stop
 </code></pre></div>
 <h3 id="3-load-edit-save">3. Load, Edit, Save<a class="headerlink" href="#3-load-edit-save" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>1. Ctrl+L to load existing .bas file
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>1. {{kbd:open}} to load existing .bas file
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>2. Edit in editor window
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>3. Ctrl+R to test
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>4. Ctrl+S to save changes
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>3. {{kbd:run}} to test
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>4. {{kbd:save}} to save changes
 </code></pre></div>
 <h2 id="help-system">Help System<a class="headerlink" href="#help-system" title="Permanent link">&para;</a></h2>
 <table>
@@ -1053,7 +1053,7 @@
 </thead>
 <tbody>
 <tr>
-<td><code>Ctrl+P</code></td>
+<td><code>{{kbd:help}}</code></td>
 <td>Anywhere</td>
 <td>Open help browser</td>
 </tr>
@@ -1097,12 +1097,12 @@
 </ul>
 <h2 id="debugging-strategy-guide">Debugging Strategy Guide<a class="headerlink" href="#debugging-strategy-guide" title="Permanent link">&para;</a></h2>
 <h3 id="quick-testing-no-breakpoints">Quick Testing (No Breakpoints)<a class="headerlink" href="#quick-testing-no-breakpoints" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Ctrl+R → Watch output → Done
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>{{kbd:run}} → Watch output → Done
 </code></pre></div>
 <h3 id="checkpoint-debugging">Checkpoint Debugging<a class="headerlink" href="#checkpoint-debugging" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Set breakpoints at phase boundaries
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>↓
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>Ctrl+R to start
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>{{kbd:run}} to start
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>↓
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>Press &#39;c&#39; at each breakpoint to jump to next phase
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>↓
@@ -1111,7 +1111,7 @@
 <h3 id="detailed-investigation">Detailed Investigation<a class="headerlink" href="#detailed-investigation" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Set breakpoint before problem area
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>↓
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>Ctrl+R to start
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>{{kbd:run}} to start
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>↓
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>Press &#39;c&#39; to get to breakpoint
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>↓
@@ -1122,7 +1122,7 @@
 <h3 id="loop-analysis">Loop Analysis<a class="headerlink" href="#loop-analysis" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Set breakpoint at loop start
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>↓
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Ctrl+R to start
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>{{kbd:run}} to start
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>↓
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>Press &#39;s&#39; to watch first few iterations
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>↓
@@ -1134,7 +1134,7 @@
 ✓ <strong>Continue is your friend</strong>: Use 'c' to skip over working code
 ✓ <strong>Step when uncertain</strong>: Use 's' only in problem areas
 ✓ <strong>Watch the output</strong>: Output window updates as program runs
-✓ <strong>Use help</strong>: Press Ctrl+P anytime for full documentation</p>
+✓ <strong>Use help</strong>: Press {{kbd:help}} anytime for full documentation</p>
 <h2 id="common-issues">Common Issues<a class="headerlink" href="#common-issues" title="Permanent link">&para;</a></h2>
 <p><strong>Problem</strong>: Breakpoint not stopping
 - <strong>Solution</strong>: Make sure ● is visible next to line number</p>
@@ -1148,7 +1148,7 @@
 <p>See example programs in the <code>basic/</code> directory of the MBASIC installation.</p>
 <h2 id="more-information">More Information<a class="headerlink" href="#more-information" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Press <code>^P</code> (or <code>^F</code>) within the Curses UI to access the built-in help system</li>
+<li>Press {{kbd:help}} within the Curses UI to access the built-in help system</li>
 <li>See <code>docs/help/</code> directory for full help documentation</li>
 <li>Visit <a href="../CHOOSING_YOUR_UI/">CHOOSING_YOUR_UI.md</a> for UI comparison and selection guide</li>
 </ul>

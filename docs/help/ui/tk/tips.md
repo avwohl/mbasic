@@ -22,11 +22,11 @@ Get the most out of the MBASIC Tkinter GUI.
 300 END
 ```
 
-Use **Ctrl+I** (Smart Insert) to insert blank lines under each section without calculating line numbers!
+Use **{{kbd:smart_insert:tk}}** (Smart Insert) to insert blank lines under each section without calculating line numbers!
 
 ## Variables Window for Arrays
 
-When working with arrays, keep Variables window open (**Ctrl+W**):
+When working with arrays, keep Variables window open (**{{kbd:toggle_variables:tk}}**):
 
 ```basic
 10 DIM Scores(5)
@@ -39,16 +39,16 @@ Watch each array element fill in real-time!
 
 ## Execution Stack for Nested Loops
 
-Press **Ctrl+K** (Toggle Stack) while stepping through nested loops to see the current state of all active loops.
+Press **{{kbd:toggle_stack:tk}}** (Toggle Stack) while stepping through nested loops to see the current state of all active loops.
 
 ## Quick Testing Cycle
 
 Fastest workflow:
 ```
-Type → Ctrl+R (Run) → Check → Edit → Ctrl+R (Run) → Check → ...
+Type → {{kbd:run_program:tk}} (Run) → Check → Edit → {{kbd:run_program:tk}} (Run) → Check → ...
 ```
 
-No need to save between test runs! Save with **Ctrl+S** only when satisfied.
+No need to save between test runs! Save with **{{kbd:file_save:tk}}** only when satisfied.
 
 ## Use Comments Liberally
 
@@ -58,18 +58,18 @@ MBASIC supports two comment styles:
 20 ' This is also a comment (shorter!)
 ```
 
-Add comments with **Ctrl+I** (Smart Insert).
+Add comments with **{{kbd:smart_insert:tk}}** (Smart Insert).
 
 ## Common Mistakes to Avoid
 
-❌ **Manually calculating line numbers** → Use **Ctrl+I** (Smart Insert)
-❌ **Running without saving** → Save often with **Ctrl+S**
+❌ **Manually calculating line numbers** → Use **{{kbd:smart_insert:tk}}** (Smart Insert)
+❌ **Running without saving** → Save often with **{{kbd:file_save:tk}}**
 ❌ **Ignoring ? markers** → Fix syntax errors before running
 ❌ **Not using Variables window** → You're debugging blind!
 ❌ **Stepping through entire program** → Use breakpoints + Continue (Run menu)
 
 ## Renumber Before Sharing
 
-Keep development line numbers messy, but Renumber (**Ctrl+E**) before sharing code. Makes it clean and professional.
+Keep development line numbers messy, but Renumber (**{{kbd:renumber:tk}}**) before sharing code. Makes it clean and professional.
 
 [← Back to Tk GUI Help](index.md)

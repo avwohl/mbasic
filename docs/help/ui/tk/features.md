@@ -59,18 +59,18 @@ Shows active FOR loops and GOSUB calls. Perfect for understanding nested structu
 
 ## Find and Replace
 
-**Find text (Ctrl+F):**
+**Find text ({{kbd:find:tk}}):**
 - Opens Find dialog with search options
 - Case sensitive and whole word matching
 - Press F3 to find next occurrence
 
-**Replace text (Ctrl+H):**
+**Replace text ({{kbd:replace:tk}}):**
 - Opens combined Find/Replace dialog
 - Find and replace single or all occurrences
 - Visual highlighting of matches
 - Shows replacement count
 
-**Note:** Ctrl+F opens the Find dialog. Ctrl+H opens the Find/Replace dialog which includes both Find and Replace functionality.
+**Note:** {{kbd:find:tk}} opens the Find dialog. {{kbd:replace:tk}} opens the Find/Replace dialog which includes both Find and Replace functionality.
 
 ## Context Help (Shift+F1)
 

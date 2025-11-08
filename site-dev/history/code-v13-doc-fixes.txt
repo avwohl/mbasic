@@ -1,0 +1,2747 @@
+Documentation Fixes from code-v13.md
+Total issues: 97
+================================================================================
+
+
+================================================================================
+FILE: docs/help/README.md
+================================================================================
+
+1. Documentation claims MBASIC supports four UI backends (CLI, Curses, Tk, Web), but the codebase shows no CLI backend implementation
+   Type: documentation_inconsistency
+
+   docs/help/README.md states: 'MBASIC supports four UI backends: CLI (command-line interface), Curses (terminal full-screen), Tk (desktop GUI), and Web (browser-based)'
+
+However, examining the code files provided:
+- src/ui/web/session_state.py - Web UI backend
+- src/ui/web/web_settings_dialog.py - Web UI backend
+- src/ui/web_help_launcher.py - References 'cli' as ui_type parameter
+
+The documentation consistently mentions CLI as a separate backend with its own help section (docs/help/ui/cli/index.md), but no CLI backend implementation is shown in the source code. The 'cli' reference in web_help_launcher.py appears to be just a parameter value, not evidence of a CLI backend.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/debugging.md
+================================================================================
+
+1. Documentation claims MBASIC supports four UI backends (CLI, Curses, Tk, Web), but the codebase shows no CLI backend implementation
+   Type: documentation_inconsistency
+
+   docs/help/README.md states: 'MBASIC supports four UI backends: CLI (command-line interface), Curses (terminal full-screen), Tk (desktop GUI), and Web (browser-based)'
+
+However, examining the code files provided:
+- src/ui/web/session_state.py - Web UI backend
+- src/ui/web/web_settings_dialog.py - Web UI backend
+- src/ui/web_help_launcher.py - References 'cli' as ui_type parameter
+
+The documentation consistently mentions CLI as a separate backend with its own help section (docs/help/ui/cli/index.md), but no CLI backend implementation is shown in the source code. The 'cli' reference in web_help_launcher.py appears to be just a parameter value, not evidence of a CLI backend.
+
+--------------------------------------------------------------------------------
+
+2. Inconsistent keyboard shortcut documentation for toggling breakpoints
+   Type: documentation_inconsistency
+
+   docs/help/common/debugging.md states:
+'Tk UI: Click line number gutter, or **Ctrl+B** on line'
+'Curses UI: Position cursor on line and press **b**'
+
+But docs/help/common/editor-commands.md in the Debugging Commands table shows:
+'**b** | **Ctrl+B** | Toggle breakpoint (Curses: **b**, Tk: **Ctrl+B**)'
+
+The editor-commands.md suggests 'b' is an alternative to Ctrl+B, but debugging.md clarifies they are UI-specific (Curses uses 'b', Tk uses 'Ctrl+B'). The 'Alternative' column in editor-commands.md is misleading.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/editor-commands.md
+================================================================================
+
+1. Documentation claims MBASIC supports four UI backends (CLI, Curses, Tk, Web), but the codebase shows no CLI backend implementation
+   Type: documentation_inconsistency
+
+   docs/help/README.md states: 'MBASIC supports four UI backends: CLI (command-line interface), Curses (terminal full-screen), Tk (desktop GUI), and Web (browser-based)'
+
+However, examining the code files provided:
+- src/ui/web/session_state.py - Web UI backend
+- src/ui/web/web_settings_dialog.py - Web UI backend
+- src/ui/web_help_launcher.py - References 'cli' as ui_type parameter
+
+The documentation consistently mentions CLI as a separate backend with its own help section (docs/help/ui/cli/index.md), but no CLI backend implementation is shown in the source code. The 'cli' reference in web_help_launcher.py appears to be just a parameter value, not evidence of a CLI backend.
+
+--------------------------------------------------------------------------------
+
+2. Inconsistent keyboard shortcut documentation for toggling breakpoints
+   Type: documentation_inconsistency
+
+   docs/help/common/debugging.md states:
+'Tk UI: Click line number gutter, or **Ctrl+B** on line'
+'Curses UI: Position cursor on line and press **b**'
+
+But docs/help/common/editor-commands.md in the Debugging Commands table shows:
+'**b** | **Ctrl+B** | Toggle breakpoint (Curses: **b**, Tk: **Ctrl+B**)'
+
+The editor-commands.md suggests 'b' is an alternative to Ctrl+B, but debugging.md clarifies they are UI-specific (Curses uses 'b', Tk uses 'Ctrl+B'). The 'Alternative' column in editor-commands.md is misleading.
+
+--------------------------------------------------------------------------------
+
+3. Inconsistent key binding documentation format
+   Type: documentation_inconsistency
+
+   In the Program Commands table:
+'**b** | **Ctrl+O** | Load program'
+
+But 'b' is also listed in Debugging Commands as:
+'**b** | **Ctrl+B** | Toggle breakpoint (Curses: **b**, Tk: **Ctrl+B**)'
+
+The same key 'b' is documented for two different functions (Load program and Toggle breakpoint) without clarification about context or UI-specific behavior. This could confuse users about when 'b' does what.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/examples/loops.md
+================================================================================
+
+1. Loop example shows GOTO for early exit but doesn't mention EXIT FOR or other structured alternatives
+   Type: documentation_inconsistency
+
+   The 'Breaking Out of Loops' section in loops.md states: "Use GOTO to exit early" and shows an example with GOTO 120. However, it doesn't mention whether BASIC-80 supports EXIT FOR or other structured loop exit mechanisms, which would be more modern and clearer than GOTO.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/getting-started.md
+================================================================================
+
+1. Duplicate basic language information with different organization
+   Type: documentation_inconsistency
+
+   Both language.md and getting-started.md cover basic BASIC concepts like PRINT, INPUT, FOR...NEXT, and IF...THEN, but with different levels of detail and organization. language.md is more reference-style while getting-started.md is tutorial-style, but there's no clear indication of which to use when or how they relate.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language.md
+================================================================================
+
+1. Duplicate basic language information with different organization
+   Type: documentation_inconsistency
+
+   Both language.md and getting-started.md cover basic BASIC concepts like PRINT, INPUT, FOR...NEXT, and IF...THEN, but with different levels of detail and organization. language.md is more reference-style while getting-started.md is tutorial-style, but there's no clear indication of which to use when or how they relate.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/appendices/error-codes.md
+================================================================================
+
+1. Error code reference inconsistency - CVI/CVS/CVD uses different error code format
+   Type: documentation_inconsistency
+
+   cvi-cvs-cvd.md states: "Error: Raises 'Illegal function call' (error code FC/5)" using the format 'FC/5', but error-codes.md consistently uses format 'FC' with number '5' in separate columns. The dual notation 'FC/5' is not used elsewhere in error-codes.md.
+
+--------------------------------------------------------------------------------
+
+2. Error handling cross-reference points to section that may not exist
+   Type: documentation_inconsistency
+
+   index.md states: "Error handling references (see [Error Handling](../statements/index.md#error-handling) for detailed examples)" but this cross-reference format assumes a specific anchor exists in statements/index.md which is not provided in the documentation files shown.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/appendices/index.md
+================================================================================
+
+1. Error handling cross-reference points to section that may not exist
+   Type: documentation_inconsistency
+
+   index.md states: "Error handling references (see [Error Handling](../statements/index.md#error-handling) for detailed examples)" but this cross-reference format assumes a specific anchor exists in statements/index.md which is not provided in the documentation files shown.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/appendices/math-functions.md
+================================================================================
+
+1. PI computation precision note appears in both files with slightly different wording
+   Type: documentation_inconsistency
+
+   math-functions.md states: "PI can be computed with ATN(1) * 4\n' (Note: ATN is evaluated in single precision, ~7 digits)" while atn.md states: "Note: When computing PI with ATN(1) * 4, the result is limited to single precision (~7 digits). For higher precision, use ATN(CDBL(1)) * 4 to get double precision." The atn.md version provides more complete information about the workaround.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/data-types.md
+================================================================================
+
+1. Double-precision range values differ between documents
+   Type: documentation_inconsistency
+
+   data-types.md states double-precision range as: "±2.938736×10^-308 to ±1.797693×10^308" while cdbl.md states: "range from 2.938735877055719 x 10^-39 to 1.701411834604692 x 10^38". The cdbl.md range appears to be incorrect as it shows 10^-39 to 10^38 which is closer to single-precision range.
+
+--------------------------------------------------------------------------------
+
+2. Single-precision range values differ between documents
+   Type: documentation_inconsistency
+
+   data-types.md states single-precision range as: "±2.938736×10^-39 to ±1.701412×10^38" while csng.md states: "range from 2.938736 x 10^-39 to 1.701412 x 10^38". The csng.md version omits the ± sign which could be misleading about negative number support.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/functions/atn.md
+================================================================================
+
+1. PI computation precision note appears in both files with slightly different wording
+   Type: documentation_inconsistency
+
+   math-functions.md states: "PI can be computed with ATN(1) * 4\n' (Note: ATN is evaluated in single precision, ~7 digits)" while atn.md states: "Note: When computing PI with ATN(1) * 4, the result is limited to single precision (~7 digits). For higher precision, use ATN(CDBL(1)) * 4 to get double precision." The atn.md version provides more complete information about the workaround.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/functions/cdbl.md
+================================================================================
+
+1. Double-precision range values differ between documents
+   Type: documentation_inconsistency
+
+   data-types.md states double-precision range as: "±2.938736×10^-308 to ±1.797693×10^308" while cdbl.md states: "range from 2.938735877055719 x 10^-39 to 1.701411834604692 x 10^38". The cdbl.md range appears to be incorrect as it shows 10^-39 to 10^38 which is closer to single-precision range.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/functions/csng.md
+================================================================================
+
+1. Single-precision range values differ between documents
+   Type: documentation_inconsistency
+
+   data-types.md states single-precision range as: "±2.938736×10^-39 to ±1.701412×10^38" while csng.md states: "range from 2.938736 x 10^-39 to 1.701412 x 10^38". The csng.md version omits the ± sign which could be misleading about negative number support.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/functions/cvi-cvs-cvd.md
+================================================================================
+
+1. Error code reference inconsistency - CVI/CVS/CVD uses different error code format
+   Type: documentation_inconsistency
+
+   cvi-cvs-cvd.md states: "Error: Raises 'Illegal function call' (error code FC/5)" using the format 'FC/5', but error-codes.md consistently uses format 'FC' with number '5' in separate columns. The dual notation 'FC/5' is not used elsewhere in error-codes.md.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/functions/hex_dollar.md
+================================================================================
+
+1. HEX$ and OCT$ have slightly different example styles
+   Type: documentation_inconsistency
+
+   hex_dollar.md example:
+```basic
+10 INPUT X
+20 A$ = HEX$(X)
+30 PRINT X; "DECIMAL IS "; A$; " HEXADECIMAL"
+RUN
+? 32
+32 DECIMAL IS 20 HEXADECIMAL
+Ok
+```
+
+oct_dollar.md has TWO examples:
+1. Similar to HEX$ with INPUT
+2. A simpler direct PRINT example
+
+For consistency, both should have similar example structures, or both should have multiple examples showing different use cases.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/functions/index.md
+================================================================================
+
+1. Index page lists functions in 'By Category' section but some categorizations may be debatable
+   Type: documentation_inconsistency
+
+   SPC and TAB are listed under 'String Functions' but they are actually PRINT statement modifiers/functions that control output formatting, not string manipulation functions. They might be better categorized under a 'File I/O Functions' or 'Output Functions' category, or their own 'Formatting Functions' category.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/functions/inp.md
+================================================================================
+
+1. Inconsistent formatting and detail level in 'Implementation Note' sections for unimplemented features
+   Type: documentation_inconsistency
+
+   lpos.md uses:
+'⚠️ **Not Implemented**: This feature requires line printer hardware...'
+'**Behavior**: Function always returns 0...'
+'**Why**: Line printers are obsolete hardware...'
+'**Alternative**: Use [POS](pos.md)...'
+'**Historical Reference**: The documentation below...'
+
+inp.md uses:
+'⚠️ **Not Implemented**: This feature requires direct hardware I/O port access...'
+'**Behavior**: Always returns 0'
+'**Why**: Cannot access hardware I/O ports...'
+'**Historical Reference**: The documentation below...'
+(Missing **Alternative** section)
+
+peek.md uses:
+'ℹ️ **Emulated with Random Values**: PEEK does NOT read actual memory...'
+'**Behavior**: Each call to PEEK returns a new random integer...'
+'**Why**: Most legacy BASIC programs used PEEK to seed random number generators...'
+'**Important Limitations**: (bullet list)'
+'**Recommendation**: Use [RANDOMIZE]...'
+(Different structure, uses ℹ️ instead of ⚠️, has 'Recommendation' instead of 'Alternative')
+
+These should follow a consistent template for unimplemented/emulated features.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/functions/lpos.md
+================================================================================
+
+1. Inconsistent formatting and detail level in 'Implementation Note' sections for unimplemented features
+   Type: documentation_inconsistency
+
+   lpos.md uses:
+'⚠️ **Not Implemented**: This feature requires line printer hardware...'
+'**Behavior**: Function always returns 0...'
+'**Why**: Line printers are obsolete hardware...'
+'**Alternative**: Use [POS](pos.md)...'
+'**Historical Reference**: The documentation below...'
+
+inp.md uses:
+'⚠️ **Not Implemented**: This feature requires direct hardware I/O port access...'
+'**Behavior**: Always returns 0'
+'**Why**: Cannot access hardware I/O ports...'
+'**Historical Reference**: The documentation below...'
+(Missing **Alternative** section)
+
+peek.md uses:
+'ℹ️ **Emulated with Random Values**: PEEK does NOT read actual memory...'
+'**Behavior**: Each call to PEEK returns a new random integer...'
+'**Why**: Most legacy BASIC programs used PEEK to seed random number generators...'
+'**Important Limitations**: (bullet list)'
+'**Recommendation**: Use [RANDOMIZE]...'
+(Different structure, uses ℹ️ instead of ⚠️, has 'Recommendation' instead of 'Alternative')
+
+These should follow a consistent template for unimplemented/emulated features.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/functions/oct_dollar.md
+================================================================================
+
+1. HEX$ and OCT$ have slightly different example styles
+   Type: documentation_inconsistency
+
+   hex_dollar.md example:
+```basic
+10 INPUT X
+20 A$ = HEX$(X)
+30 PRINT X; "DECIMAL IS "; A$; " HEXADECIMAL"
+RUN
+? 32
+32 DECIMAL IS 20 HEXADECIMAL
+Ok
+```
+
+oct_dollar.md has TWO examples:
+1. Similar to HEX$ with INPUT
+2. A simpler direct PRINT example
+
+For consistency, both should have similar example structures, or both should have multiple examples showing different use cases.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/functions/peek.md
+================================================================================
+
+1. Inconsistent formatting and detail level in 'Implementation Note' sections for unimplemented features
+   Type: documentation_inconsistency
+
+   lpos.md uses:
+'⚠️ **Not Implemented**: This feature requires line printer hardware...'
+'**Behavior**: Function always returns 0...'
+'**Why**: Line printers are obsolete hardware...'
+'**Alternative**: Use [POS](pos.md)...'
+'**Historical Reference**: The documentation below...'
+
+inp.md uses:
+'⚠️ **Not Implemented**: This feature requires direct hardware I/O port access...'
+'**Behavior**: Always returns 0'
+'**Why**: Cannot access hardware I/O ports...'
+'**Historical Reference**: The documentation below...'
+(Missing **Alternative** section)
+
+peek.md uses:
+'ℹ️ **Emulated with Random Values**: PEEK does NOT read actual memory...'
+'**Behavior**: Each call to PEEK returns a new random integer...'
+'**Why**: Most legacy BASIC programs used PEEK to seed random number generators...'
+'**Important Limitations**: (bullet list)'
+'**Recommendation**: Use [RANDOMIZE]...'
+(Different structure, uses ℹ️ instead of ⚠️, has 'Recommendation' instead of 'Alternative')
+
+These should follow a consistent template for unimplemented/emulated features.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/functions/string_dollar.md
+================================================================================
+
+1. STRING$ example output formatting is inconsistent with typical BASIC output
+   Type: documentation_inconsistency
+
+   In string_dollar.md Example:
+```basic
+10 X$ = STRING$(10, 45)
+20 PRINT X$ "MONTHLY REPORT" X$
+```
+
+Output:
+```
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/chain.md
+================================================================================
+
+1. Conflicting information about whether STOP closes files
+   Type: documentation_inconsistency
+
+   In close.md:
+'The END statement and the NEW command always CLOSE all disk files automatically. (STOP does not close disk files.)'
+
+But in chain.md, there's no mention of what happens to open files when STOP is executed before a CHAIN. This could lead to confusion about file handling across program control statements.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/cload.md
+================================================================================
+
+1. CLOAD and CSAVE documentation titles include 'THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION' but don't clarify if they're implemented in this interpreter
+   Type: documentation_inconsistency
+
+   Both cload.md and csave.md have titles like:
+'CLOAD - THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION'
+
+But unlike CALL, USR, and VARPTR which have clear 'Implementation Note' sections stating they're not implemented, these cassette commands don't have such notes. It's unclear if they're implemented in this Python interpreter or not.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/close.md
+================================================================================
+
+1. Conflicting information about whether STOP closes files
+   Type: documentation_inconsistency
+
+   In close.md:
+'The END statement and the NEW command always CLOSE all disk files automatically. (STOP does not close disk files.)'
+
+But in chain.md, there's no mention of what happens to open files when STOP is executed before a CHAIN. This could lead to confusion about file handling across program control statements.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/csave.md
+================================================================================
+
+1. CLOAD and CSAVE documentation titles include 'THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION' but don't clarify if they're implemented in this interpreter
+   Type: documentation_inconsistency
+
+   Both cload.md and csave.md have titles like:
+'CLOAD - THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION'
+
+But unlike CALL, USR, and VARPTR which have clear 'Implementation Note' sections stating they're not implemented, these cassette commands don't have such notes. It's unclear if they're implemented in this Python interpreter or not.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/defint-sng-dbl-str.md
+================================================================================
+
+1. DEFINT/SNG/DBL/STR example shows conflicting type declarations without explaining precedence clearly
+   Type: documentation_inconsistency
+
+   Example line 50 shows:
+50 AMOUNT$ = "100"  ' String (has $ suffix, overrides DEFSTR)
+
+But line 20 already declared:
+20 DEFSTR A
+
+The comment says '$ suffix overrides DEFSTR' but AMOUNT$ starts with A, so DEFSTR A would already make it a string. The example is confusing because it suggests the $ is overriding something when both would make it a string anyway. A better example would show a type suffix overriding a DIFFERENT DEFtype declaration.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/edit.md
+================================================================================
+
+1. EDIT documentation references non-existent line editor commands
+   Type: documentation_inconsistency
+
+   The documentation states:
+'The traditional MBASIC single-character edit mode commands (I, D, C, L, Q, etc.) are **not implemented**'
+
+But then says:
+'Simply edit program lines directly in the full-screen editor.'
+
+This is confusing because it mentions commands that don't exist, then says to use a different editor. It would be clearer to simply state that EDIT is not implemented or redirects to the full-screen editor, without mentioning the historical commands at all.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/gosub-return.md
+================================================================================
+
+1. GOSUB and GOTO have inconsistent 'See Also' sections
+   Type: documentation_inconsistency
+
+   GOSUB-RETURN.md references:
+- FOR...NEXT
+- GOTO
+- IF...THEN...ELSE
+- ON...GOSUB/ON...GOTO
+- WHILE...WEND
+
+GOTO.md references:
+- FOR ••• NEXT (with bullets)
+- GOSUB •.. RETURN (with bullets)
+- IF ••• THEN[ ••• ELSE] AND IF ••• GOTO (different format)
+- ON ••• GOSUB AND ON ••• GOTO (different format)
+- WHILE ••• WEND (with bullets)
+
+The formatting is inconsistent (bullets vs no bullets, different title formats). They should use consistent formatting.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/goto.md
+================================================================================
+
+1. GOSUB and GOTO have inconsistent 'See Also' sections
+   Type: documentation_inconsistency
+
+   GOSUB-RETURN.md references:
+- FOR...NEXT
+- GOTO
+- IF...THEN...ELSE
+- ON...GOSUB/ON...GOTO
+- WHILE...WEND
+
+GOTO.md references:
+- FOR ••• NEXT (with bullets)
+- GOSUB •.. RETURN (with bullets)
+- IF ••• THEN[ ••• ELSE] AND IF ••• GOTO (different format)
+- ON ••• GOSUB AND ON ••• GOTO (different format)
+- WHILE ••• WEND (with bullets)
+
+The formatting is inconsistent (bullets vs no bullets, different title formats). They should use consistent formatting.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/index.md
+================================================================================
+
+1. Index page lists 'LINE INPUT#' with link to inputi.md but the actual file is input_hash.md
+   Type: documentation_inconsistency
+
+   In the alphabetical listing under 'I':
+[LINE INPUT#](inputi.md) - Input entire line from file
+
+But in the 'File I/O' category:
+[LINE INPUT#](inputi.md) - Line input from file
+
+However, the actual INPUT# documentation file is named input_hash.md, not inputi.md. There may be a missing file or incorrect link.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/inputi.md
+================================================================================
+
+1. Filename does not match content - inputi.md documents LINE INPUT# not INPUT#
+   Type: documentation_inconsistency
+
+   The file is named 'inputi.md' (suggesting INPUT#) but documents 'LINE INPUT#' statement. The syntax is 'LINE INPUT#<file number>,<string variable>' not 'INPUT#'. This creates confusion about which statement is documented where.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/line-input.md
+================================================================================
+
+1. Incorrect cross-reference for LINE INPUT# in See Also section
+   Type: documentation_inconsistency
+
+   line-input.md See Also section has:
+- [LINE INPUT#](input_hash.md) - Read an entire line from a file
+
+But input_hash.md would be for INPUT# (read data with delimiters), not LINE INPUT# (read entire line). The link should point to inputi.md based on the file structure.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/load.md
+================================================================================
+
+1. Contradictory information about file closing behavior
+   Type: documentation_inconsistency
+
+   load.md states:
+'**LOAD** (without ,R): Closes all open files and deletes all variables and program lines currently in memory before loading'
+'**LOAD** with **,R** option: Program is RUN after loading, and all open data files are **kept open** for program chaining'
+'Compare with **MERGE**: Never closes files (see [MERGE](merge.md))'
+
+merge.md states:
+'**File handling:** Unlike LOAD (without ,R), MERGE does **NOT close open files**. Files that are open before MERGE remain open after MERGE completes. (Compare with [LOAD](load.md) which closes files except when using the ,R option.)'
+
+These are consistent with each other, but the phrasing could be clearer about the three cases: LOAD without ,R (closes files), LOAD with ,R (keeps files open), and MERGE (keeps files open).
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/merge.md
+================================================================================
+
+1. Contradictory information about file closing behavior
+   Type: documentation_inconsistency
+
+   load.md states:
+'**LOAD** (without ,R): Closes all open files and deletes all variables and program lines currently in memory before loading'
+'**LOAD** with **,R** option: Program is RUN after loading, and all open data files are **kept open** for program chaining'
+'Compare with **MERGE**: Never closes files (see [MERGE](merge.md))'
+
+merge.md states:
+'**File handling:** Unlike LOAD (without ,R), MERGE does **NOT close open files**. Files that are open before MERGE remain open after MERGE completes. (Compare with [LOAD](load.md) which closes files except when using the ,R option.)'
+
+These are consistent with each other, but the phrasing could be clearer about the three cases: LOAD without ,R (closes files), LOAD with ,R (keeps files open), and MERGE (keeps files open).
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/renum.md
+================================================================================
+
+1. RENUM example shows unchanged output after renumbering
+   Type: documentation_inconsistency
+
+   In renum.md Example 1:
+'```basic
+10 PRINT "START"
+20 GOTO 40
+30 PRINT "SKIP THIS"
+40 PRINT "END"
+
+RENUM
+
+10 PRINT "START"
+20 GOTO 40
+30 PRINT "SKIP THIS"
+40 PRINT "END"
+```'
+
+The output after RENUM is identical to the input, which doesn't demonstrate what RENUM does. This appears to be a documentation error - the output should show the renumbered lines.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/reset.md
+================================================================================
+
+1. RSET and RESET have very similar names (one letter difference) but completely different purposes, no cross-reference warning
+   Type: documentation_inconsistency
+
+   RSET: 'Right-justifies a string in a field for random file output'
+RESET: 'Closes all open files'
+
+Both are file-related but serve different purposes. Users typing 'RESET' when they meant 'RSET' (or vice versa) could cause data loss or unexpected behavior. No warning in either doc.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/rset.md
+================================================================================
+
+1. RSET and RESET have very similar names (one letter difference) but completely different purposes, no cross-reference warning
+   Type: documentation_inconsistency
+
+   RSET: 'Right-justifies a string in a field for random file output'
+RESET: 'Closes all open files'
+
+Both are file-related but serve different purposes. Users typing 'RESET' when they meant 'RSET' (or vice versa) could cause data loss or unexpected behavior. No warning in either doc.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/wait.md
+================================================================================
+
+1. Inconsistent implementation note formatting and detail level
+   Type: documentation_inconsistency
+
+   WAIT doc has brief note: '⚠️ Not Implemented: This feature requires direct hardware I/O port access and is not implemented in this Python-based interpreter.'
+
+WIDTH doc has detailed note: '⚠️ Emulated as No-Op: This statement is parsed for compatibility but performs no operation.' with extensive explanation of what works and what doesn't.
+
+Both are unimplemented features but documented with different levels of detail and different terminology (Not Implemented vs Emulated as No-Op).
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/statements/width.md
+================================================================================
+
+1. Inconsistent implementation note formatting and detail level
+   Type: documentation_inconsistency
+
+   WAIT doc has brief note: '⚠️ Not Implemented: This feature requires direct hardware I/O port access and is not implemented in this Python-based interpreter.'
+
+WIDTH doc has detailed note: '⚠️ Emulated as No-Op: This statement is parsed for compatibility but performs no operation.' with extensive explanation of what works and what doesn't.
+
+Both are unimplemented features but documented with different levels of detail and different terminology (Not Implemented vs Emulated as No-Op).
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/language/variables.md
+================================================================================
+
+1. Contradictory information about variable name significance and case sensitivity
+   Type: documentation_inconsistency
+
+   variables.md: 'Note on Variable Name Significance: In the original MBASIC 5.21, only the first 2 characters of variable names were significant (AB, ABC, and ABCDEF would be the same variable). This Python implementation uses the full variable name for identification, allowing distinct variables like COUNT and COUNTER.'
+
+variables.md also says: 'Case Sensitivity: Variable names are not case-sensitive by default (Count = COUNT = count), but the behavior when using different cases can be configured via the variables.case_conflict setting'
+
+settings.md: 'variables.case_conflict ... BASIC is case-insensitive by default (Count = COUNT = count are the same variable)'
+
+The contradiction: variables.md says full names are used (COUNT != COUNTER) but also says case doesn't matter (Count = COUNT). This needs clarification about what 'full variable name' means vs case sensitivity.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/settings.md
+================================================================================
+
+1. Contradictory information about variable name significance and case sensitivity
+   Type: documentation_inconsistency
+
+   variables.md: 'Note on Variable Name Significance: In the original MBASIC 5.21, only the first 2 characters of variable names were significant (AB, ABC, and ABCDEF would be the same variable). This Python implementation uses the full variable name for identification, allowing distinct variables like COUNT and COUNTER.'
+
+variables.md also says: 'Case Sensitivity: Variable names are not case-sensitive by default (Count = COUNT = count), but the behavior when using different cases can be configured via the variables.case_conflict setting'
+
+settings.md: 'variables.case_conflict ... BASIC is case-insensitive by default (Count = COUNT = count are the same variable)'
+
+The contradiction: variables.md says full names are used (COUNT != COUNTER) but also says case doesn't matter (Count = COUNT). This needs clarification about what 'full variable name' means vs case sensitivity.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/ui/curses/editing.md
+================================================================================
+
+1. Contradictory information about file persistence and auto-save behavior across UIs
+   Type: documentation_inconsistency
+
+   curses/editing.md states 'Save often - Don't lose your work' implying persistence, and tk/index.md says 'Use Ctrl+S often - Save your work frequently' also implying persistence. However, extensions.md clarifies that Web UI files are 'stored in server-side session memory only (not persistent across page refreshes)' but doesn't clearly state whether CLI/Tk/Curses have persistent storage. The compatibility.md doc states 'CLI, Tk, and Curses UIs - Real filesystem access' and 'CLI/Tk/Curses: Save to local filesystem (persistent)' but this critical distinction is not made clear in the UI-specific editing documentation.
+
+--------------------------------------------------------------------------------
+
+2. BREAK, STEP, and STACK commands availability inconsistently documented
+   Type: documentation_inconsistency
+
+   extensions.md states these commands have different availability: 'BREAK: CLI (command form), Curses (Ctrl+B), Tk (UI controls)' and 'STEP: CLI (command form), Curses (Ctrl+T/Ctrl+K), Tk (UI controls)' and 'STACK: CLI (command form), Curses (menu access), Tk (stack window)'. However, the curses/editing.md and tk/index.md documents do not mention these debugging commands at all, nor do they document the keyboard shortcuts (Ctrl+B, Ctrl+T, Ctrl+K) or UI controls mentioned. Users reading the UI-specific docs would not know these features exist.
+
+--------------------------------------------------------------------------------
+
+3. Find/Replace feature availability unclear
+   Type: documentation_inconsistency
+
+   curses/editing.md does not mention Find or Find/Replace functionality at all in its 'Navigation' or 'Keyboard Shortcuts' sections. extensions.md states 'Find and Replace (Tk only)' implying it's not available in Curses. However, tk/index.md lists 'Find (Ctrl+F)' in the Edit Menu but doesn't mention Replace. The actual availability and capabilities of Find/Replace across UIs is inconsistently documented.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/common/ui/tk/index.md
+================================================================================
+
+1. Contradictory information about file persistence and auto-save behavior across UIs
+   Type: documentation_inconsistency
+
+   curses/editing.md states 'Save often - Don't lose your work' implying persistence, and tk/index.md says 'Use Ctrl+S often - Save your work frequently' also implying persistence. However, extensions.md clarifies that Web UI files are 'stored in server-side session memory only (not persistent across page refreshes)' but doesn't clearly state whether CLI/Tk/Curses have persistent storage. The compatibility.md doc states 'CLI, Tk, and Curses UIs - Real filesystem access' and 'CLI/Tk/Curses: Save to local filesystem (persistent)' but this critical distinction is not made clear in the UI-specific editing documentation.
+
+--------------------------------------------------------------------------------
+
+2. BREAK, STEP, and STACK commands availability inconsistently documented
+   Type: documentation_inconsistency
+
+   extensions.md states these commands have different availability: 'BREAK: CLI (command form), Curses (Ctrl+B), Tk (UI controls)' and 'STEP: CLI (command form), Curses (Ctrl+T/Ctrl+K), Tk (UI controls)' and 'STACK: CLI (command form), Curses (menu access), Tk (stack window)'. However, the curses/editing.md and tk/index.md documents do not mention these debugging commands at all, nor do they document the keyboard shortcuts (Ctrl+B, Ctrl+T, Ctrl+K) or UI controls mentioned. Users reading the UI-specific docs would not know these features exist.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/mbasic/architecture.md
+================================================================================
+
+1. PEEK/POKE behavior documented differently in two places
+   Type: documentation_inconsistency
+
+   architecture.md states under 'Hardware Compatibility Notes': 'PEEK/POKE - Emulated for compatibility: POKE: Parsed and executes successfully, but performs no operation (no-op), PEEK: Returns random integer 0-255 (for RNG seeding compatibility), PEEK does NOT return values written by POKE - no memory state is maintained'. compatibility.md has an identical section under 'Intentional Differences > 1. Hardware-Specific Features'. This is redundant documentation that could become inconsistent if one is updated without the other.
+
+--------------------------------------------------------------------------------
+
+2. Semantic analyzer status claims contradictory
+   Type: documentation_inconsistency
+
+   architecture.md states 'Semantic Analyzer: ✅ Complete (18 optimizations)' and 'The semantic analyzer is production-ready' but also says 'Code Generation: ❌ Not implemented (future work)'. Later it says 'Current status: Analysis only (no code generation yet)'. The claim of being 'production-ready' and 'Complete' is misleading when it's only the analysis phase without code generation - it cannot actually produce optimized code, only analyze and report.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/mbasic/compatibility.md
+================================================================================
+
+1. Web UI file storage limits documented in only one place
+   Type: documentation_inconsistency
+
+   compatibility.md provides detailed Web UI file storage limitations: '50 file limit, 1MB per file', 'Must be simple names (no slashes, no paths)', 'Automatically uppercased by the virtual filesystem (CP/M style)', '8.3 format recommended but not required'. extensions.md mentions '50 file limit maximum' and '1MB per file maximum' and 'No path support (simple filenames only)' but does not mention the uppercasing behavior or 8.3 format recommendation. This critical information about file naming behavior should be consistent across both documents.
+
+--------------------------------------------------------------------------------
+
+2. Inconsistent information about Web UI file storage persistence mechanism
+   Type: documentation_inconsistency
+
+   compatibility.md states 'Files stored in server-side memory (sandboxed filesystem per session)' and 'Files persist during browser session but are lost on page refresh' and 'Note: Settings (not files) can persist via Redis if configured'. However, it also says 'The uppercasing is a programmatic transformation for CP/M compatibility, not evidence of persistent storage' which seems to contradict the Redis mention. extensions.md says 'Files persist during browser session only (lost on page refresh)' without mentioning Redis at all. The relationship between session memory, Redis, and what actually persists is unclear.
+
+--------------------------------------------------------------------------------
+
+3. PEEK/POKE behavior documented differently in two places
+   Type: documentation_inconsistency
+
+   architecture.md states under 'Hardware Compatibility Notes': 'PEEK/POKE - Emulated for compatibility: POKE: Parsed and executes successfully, but performs no operation (no-op), PEEK: Returns random integer 0-255 (for RNG seeding compatibility), PEEK does NOT return values written by POKE - no memory state is maintained'. compatibility.md has an identical section under 'Intentional Differences > 1. Hardware-Specific Features'. This is redundant documentation that could become inconsistent if one is updated without the other.
+
+--------------------------------------------------------------------------------
+
+4. WIDTH statement behavior documented as no-op but syntax support unclear
+   Type: documentation_inconsistency
+
+   compatibility.md states 'WIDTH 80 - Accepted (no-op)' and 'Note: WIDTH is parsed for compatibility but performs no operation. Terminal width is controlled by the UI or OS. The "WIDTH LPRINT" syntax is not supported.' This raises questions: Is 'WIDTH 80' the only accepted syntax? What about 'WIDTH 40' or other values? What error occurs if WIDTH LPRINT is used? The documentation should clarify what WIDTH syntax is accepted vs rejected.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/mbasic/extensions.md
+================================================================================
+
+1. Contradictory information about file persistence and auto-save behavior across UIs
+   Type: documentation_inconsistency
+
+   curses/editing.md states 'Save often - Don't lose your work' implying persistence, and tk/index.md says 'Use Ctrl+S often - Save your work frequently' also implying persistence. However, extensions.md clarifies that Web UI files are 'stored in server-side session memory only (not persistent across page refreshes)' but doesn't clearly state whether CLI/Tk/Curses have persistent storage. The compatibility.md doc states 'CLI, Tk, and Curses UIs - Real filesystem access' and 'CLI/Tk/Curses: Save to local filesystem (persistent)' but this critical distinction is not made clear in the UI-specific editing documentation.
+
+--------------------------------------------------------------------------------
+
+2. Web UI file storage limits documented in only one place
+   Type: documentation_inconsistency
+
+   compatibility.md provides detailed Web UI file storage limitations: '50 file limit, 1MB per file', 'Must be simple names (no slashes, no paths)', 'Automatically uppercased by the virtual filesystem (CP/M style)', '8.3 format recommended but not required'. extensions.md mentions '50 file limit maximum' and '1MB per file maximum' and 'No path support (simple filenames only)' but does not mention the uppercasing behavior or 8.3 format recommendation. This critical information about file naming behavior should be consistent across both documents.
+
+--------------------------------------------------------------------------------
+
+3. Inconsistent information about Web UI file storage persistence mechanism
+   Type: documentation_inconsistency
+
+   compatibility.md states 'Files stored in server-side memory (sandboxed filesystem per session)' and 'Files persist during browser session but are lost on page refresh' and 'Note: Settings (not files) can persist via Redis if configured'. However, it also says 'The uppercasing is a programmatic transformation for CP/M compatibility, not evidence of persistent storage' which seems to contradict the Redis mention. extensions.md says 'Files persist during browser session only (lost on page refresh)' without mentioning Redis at all. The relationship between session memory, Redis, and what actually persists is unclear.
+
+--------------------------------------------------------------------------------
+
+4. BREAK, STEP, and STACK commands availability inconsistently documented
+   Type: documentation_inconsistency
+
+   extensions.md states these commands have different availability: 'BREAK: CLI (command form), Curses (Ctrl+B), Tk (UI controls)' and 'STEP: CLI (command form), Curses (Ctrl+T/Ctrl+K), Tk (UI controls)' and 'STACK: CLI (command form), Curses (menu access), Tk (stack window)'. However, the curses/editing.md and tk/index.md documents do not mention these debugging commands at all, nor do they document the keyboard shortcuts (Ctrl+B, Ctrl+T, Ctrl+K) or UI controls mentioned. Users reading the UI-specific docs would not know these features exist.
+
+--------------------------------------------------------------------------------
+
+5. Find/Replace feature availability unclear
+   Type: documentation_inconsistency
+
+   curses/editing.md does not mention Find or Find/Replace functionality at all in its 'Navigation' or 'Keyboard Shortcuts' sections. extensions.md states 'Find and Replace (Tk only)' implying it's not available in Curses. However, tk/index.md lists 'Find (Ctrl+F)' in the Edit Menu but doesn't mention Replace. The actual availability and capabilities of Find/Replace across UIs is inconsistently documented.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/mbasic/features.md
+================================================================================
+
+1. LPRINT statement support is contradictory between documents
+   Type: documentation_inconsistency
+
+   features.md states under 'Input/Output' section:
+'LPRINT - Line printer output (Note: LPRINT statement is supported, but WIDTH LPRINT syntax is not)'
+
+This implies LPRINT is implemented.
+
+However, not-implemented.md does not list LPRINT as unsupported, which is consistent with features.md.
+
+But the parenthetical note about 'WIDTH LPRINT syntax is not' supported is unclear - it's not clear if this is a limitation of the LPRINT implementation or a separate WIDTH statement issue.
+
+--------------------------------------------------------------------------------
+
+2. Web UI file storage limitations may be outdated or incorrect
+   Type: documentation_inconsistency
+
+   features.md 'Web UI' section states:
+'Session-based storage - Files persist during browser session only (lost on page refresh)'
+'In-memory filesystem - Virtual filesystem with limitations:
+  - 50 file limit maximum
+  - 1MB per file maximum
+  - No path support (simple filenames only)
+  - No persistent storage across sessions'
+
+This describes very specific technical limitations (50 files, 1MB, no persistence). These numbers seem arbitrary and may be:
+1. Outdated from an earlier implementation
+2. Configurable values that should be documented as defaults
+3. Incorrect if the Web UI was never fully implemented
+
+Needs verification against actual Web UI implementation.
+
+--------------------------------------------------------------------------------
+
+3. Features.md lists 'Web UI' as a supported interface, but cli/index.md only mentions CLI, Curses, and Tk UIs
+   Type: documentation_inconsistency
+
+   features.md states: 'MBASIC supports four interfaces: Curses UI (Default), CLI Mode, Tkinter GUI, Web UI'
+
+cli/index.md Quick Start section shows: 'mbasic' command but doesn't mention --ui web option
+
+features.md has entire 'Web UI' section describing browser-based IDE with session storage and 50 file limit, but this is not referenced in the CLI help index
+
+--------------------------------------------------------------------------------
+
+4. Debugging features availability differs between general features and CLI-specific documentation
+   Type: documentation_inconsistency
+
+   features.md lists under 'Debugging':
+'TRON/TROFF - Line tracing
+Breakpoints - Set/clear breakpoints (UI-dependent)
+Step execution - Execute one line at a time (UI-dependent)
+Variable watch - Monitor variables (UI-dependent)
+Stack viewer - View call stack (UI-dependent)'
+
+cli/debugging.md documents:
+'BREAK - Breakpoint Management
+STEP - Single-Step Execution
+STACK - Call Stack Inspection'
+
+But features.md marks these as '(UI-dependent)' suggesting they may not be available in all UIs, while cli/debugging.md clearly shows they ARE available in CLI. The '(UI-dependent)' note is misleading.
+
+--------------------------------------------------------------------------------
+
+5. Number of optimizations differs between documents
+   Type: documentation_inconsistency
+
+   features.md 'Compiler Features' section states:
+'The interpreter includes an advanced semantic analyzer with 18 optimizations:'
+Then lists 18 numbered optimizations (1-18).
+
+index.md 'About This Implementation' section states:
+'Advanced semantic analyzer with 18 optimizations'
+
+Both say 18, so this is consistent. However, it would be good to verify the actual code implements exactly 18.
+
+--------------------------------------------------------------------------------
+
+6. CLS and LOCATE commands status unclear
+   Type: documentation_inconsistency
+
+   not-implemented.md lists under 'Graphics (Not in MBASIC 5.21)':
+'CLS - Clear screen (GW-BASIC version)
+LOCATE - Cursor positioning (GW-BASIC version)'
+
+With note: 'Why not implemented: MBASIC 5.21 predates graphics BASIC. These features were added in GW-BASIC and later versions.'
+
+However, features.md does not mention CLS or LOCATE at all. If they're not implemented, this is correct, but the parenthetical '(GW-BASIC version)' suggests there might be MBASIC versions of these commands that ARE supported, which is not documented.
+
+--------------------------------------------------------------------------------
+
+7. Find/Replace availability inconsistent
+   Type: documentation_inconsistency
+
+   features.md 'Tkinter GUI' section lists:
+'Find and Replace - Search and replace text (Ctrl+F/Ctrl+H)'
+
+But cli/find-replace.md states:
+'The CLI backend does not have built-in Find/Replace commands. The CLI follows the classic MBASIC-80 command set, which did not include these features.'
+
+This is consistent (Tk has it, CLI doesn't), but features.md should clarify that Find/Replace is Tk-only, not available in CLI or Curses.
+
+--------------------------------------------------------------------------------
+
+8. Compiler vs Interpreter mode mentioned but not explained
+   Type: documentation_inconsistency
+
+   features.md 'Compiler Features' section states:
+'See [Architecture](architecture.md) for details on interpreter vs. compiler modes.'
+
+This implies there are two distinct modes (interpreter and compiler), but:
+1. The features.md title is 'MBASIC Features' suggesting it's an interpreter
+2. The section is called 'Compiler Features' but describes 'semantic analyzer' optimizations
+3. It's unclear if these are compile-time or runtime optimizations
+4. The distinction between 'interpreter mode' and 'compiler mode' is never clearly defined
+
+This needs clarification about what 'compiler mode' means in the context of a Python-based BASIC interpreter.
+
+--------------------------------------------------------------------------------
+
+9. Inconsistent listing of supported UIs between documents
+   Type: documentation_inconsistency
+
+   features.md lists: 'Curses UI (Default), CLI Mode, Tkinter GUI, Web UI' (4 interfaces)
+
+getting-started.md 'Choosing a User Interface' section lists: 'Curses UI (Default), CLI Mode, Tkinter GUI, Web UI' (4 interfaces)
+
+But getting-started.md 'Quick Reference' only shows 3: 'CLI, Curses, Tkinter' - missing Web UI
+
+--------------------------------------------------------------------------------
+
+10. Settings commands not listed in main features document
+   Type: documentation_inconsistency
+
+   cli/settings.md documents:
+'SHOWSETTINGS [filter]'
+'SETSETTING key value'
+
+These are CLI commands for managing settings, but features.md does not list them under 'Program Control' or 'Direct Commands' sections. They should be documented as available commands.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/mbasic/getting-started.md
+================================================================================
+
+1. Inconsistent listing of supported UIs between documents
+   Type: documentation_inconsistency
+
+   features.md lists: 'Curses UI (Default), CLI Mode, Tkinter GUI, Web UI' (4 interfaces)
+
+getting-started.md 'Choosing a User Interface' section lists: 'Curses UI (Default), CLI Mode, Tkinter GUI, Web UI' (4 interfaces)
+
+But getting-started.md 'Quick Reference' only shows 3: 'CLI, Curses, Tkinter' - missing Web UI
+
+--------------------------------------------------------------------------------
+
+2. Different command examples for starting MBASIC
+   Type: documentation_inconsistency
+
+   getting-started.md shows:
+'mbasic' (no python3 prefix)
+'mbasic --ui cli'
+'mbasic --ui tk'
+'mbasic --ui web'
+
+cli/index.md shows:
+'mbasic' (no python3 prefix)
+
+But getting-started.md 'Quick Install' section shows:
+'python3 mbasic' (with python3 prefix)
+
+Inconsistent about whether to use 'python3 mbasic' or just 'mbasic' command.
+
+--------------------------------------------------------------------------------
+
+3. Installation instructions reference non-existent requirements.txt
+   Type: documentation_inconsistency
+
+   getting-started.md 'Quick Install' section shows:
+'# Install optional dependencies
+pip install -r requirements.txt'
+
+But no requirements.txt file is provided in the documentation files. This file path should be verified to exist in the actual project, or the documentation should specify the correct path or list dependencies explicitly.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/mbasic/index.md
+================================================================================
+
+1. Number of optimizations differs between documents
+   Type: documentation_inconsistency
+
+   features.md 'Compiler Features' section states:
+'The interpreter includes an advanced semantic analyzer with 18 optimizations:'
+Then lists 18 numbered optimizations (1-18).
+
+index.md 'About This Implementation' section states:
+'Advanced semantic analyzer with 18 optimizations'
+
+Both say 18, so this is consistent. However, it would be good to verify the actual code implements exactly 18.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/mbasic/not-implemented.md
+================================================================================
+
+1. LPRINT statement support is contradictory between documents
+   Type: documentation_inconsistency
+
+   features.md states under 'Input/Output' section:
+'LPRINT - Line printer output (Note: LPRINT statement is supported, but WIDTH LPRINT syntax is not)'
+
+This implies LPRINT is implemented.
+
+However, not-implemented.md does not list LPRINT as unsupported, which is consistent with features.md.
+
+But the parenthetical note about 'WIDTH LPRINT syntax is not' supported is unclear - it's not clear if this is a limitation of the LPRINT implementation or a separate WIDTH statement issue.
+
+--------------------------------------------------------------------------------
+
+2. CLS and LOCATE commands status unclear
+   Type: documentation_inconsistency
+
+   not-implemented.md lists under 'Graphics (Not in MBASIC 5.21)':
+'CLS - Clear screen (GW-BASIC version)
+LOCATE - Cursor positioning (GW-BASIC version)'
+
+With note: 'Why not implemented: MBASIC 5.21 predates graphics BASIC. These features were added in GW-BASIC and later versions.'
+
+However, features.md does not mention CLS or LOCATE at all. If they're not implemented, this is correct, but the parenthetical '(GW-BASIC version)' suggests there might be MBASIC versions of these commands that ARE supported, which is not documented.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/cli/debugging.md
+================================================================================
+
+1. Debugging features availability differs between general features and CLI-specific documentation
+   Type: documentation_inconsistency
+
+   features.md lists under 'Debugging':
+'TRON/TROFF - Line tracing
+Breakpoints - Set/clear breakpoints (UI-dependent)
+Step execution - Execute one line at a time (UI-dependent)
+Variable watch - Monitor variables (UI-dependent)
+Stack viewer - View call stack (UI-dependent)'
+
+cli/debugging.md documents:
+'BREAK - Breakpoint Management
+STEP - Single-Step Execution
+STACK - Call Stack Inspection'
+
+But features.md marks these as '(UI-dependent)' suggesting they may not be available in all UIs, while cli/debugging.md clearly shows they ARE available in CLI. The '(UI-dependent)' note is misleading.
+
+--------------------------------------------------------------------------------
+
+2. STEP INTO/OVER documented but marked as not implemented in same document
+   Type: documentation_inconsistency
+
+   cli/debugging.md 'STEP - Single-Step Execution' section shows syntax:
+'STEP [n] - Execute n statements (default: 1)
+STEP INTO - Step into subroutines
+STEP OVER - Step over subroutine calls'
+
+But later under 'Limitations' section:
+'STEP INTO/OVER not yet implemented (use STEP)'
+
+This is contradictory within the same document.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/cli/find-replace.md
+================================================================================
+
+1. Find/Replace availability inconsistent
+   Type: documentation_inconsistency
+
+   features.md 'Tkinter GUI' section lists:
+'Find and Replace - Search and replace text (Ctrl+F/Ctrl+H)'
+
+But cli/find-replace.md states:
+'The CLI backend does not have built-in Find/Replace commands. The CLI follows the classic MBASIC-80 command set, which did not include these features.'
+
+This is consistent (Tk has it, CLI doesn't), but features.md should clarify that Find/Replace is Tk-only, not available in CLI or Curses.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/cli/index.md
+================================================================================
+
+1. Features.md lists 'Web UI' as a supported interface, but cli/index.md only mentions CLI, Curses, and Tk UIs
+   Type: documentation_inconsistency
+
+   features.md states: 'MBASIC supports four interfaces: Curses UI (Default), CLI Mode, Tkinter GUI, Web UI'
+
+cli/index.md Quick Start section shows: 'mbasic' command but doesn't mention --ui web option
+
+features.md has entire 'Web UI' section describing browser-based IDE with session storage and 50 file limit, but this is not referenced in the CLI help index
+
+--------------------------------------------------------------------------------
+
+2. Different command examples for starting MBASIC
+   Type: documentation_inconsistency
+
+   getting-started.md shows:
+'mbasic' (no python3 prefix)
+'mbasic --ui cli'
+'mbasic --ui tk'
+'mbasic --ui web'
+
+cli/index.md shows:
+'mbasic' (no python3 prefix)
+
+But getting-started.md 'Quick Install' section shows:
+'python3 mbasic' (with python3 prefix)
+
+Inconsistent about whether to use 'python3 mbasic' or just 'mbasic' command.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/cli/settings.md
+================================================================================
+
+1. Settings commands not listed in main features document
+   Type: documentation_inconsistency
+
+   cli/settings.md documents:
+'SHOWSETTINGS [filter]'
+'SETSETTING key value'
+
+These are CLI commands for managing settings, but features.md does not list them under 'Program Control' or 'Direct Commands' sections. They should be documented as available commands.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/cli/variables.md
+================================================================================
+
+1. Broken cross-reference links
+   Type: documentation_inconsistency
+
+   errors.md contains: "See Also: - [ON ERROR GOTO](../../common/language/statements/on-error-goto.md) - Set up error handling - [ERR and ERL](../../common/language/statements/err-erl-variables.md) - Error information - [RESUME](../../common/language/statements/resume.md) - Continue after error - [Error Codes](../../common/language/appendices/error-codes.md) - Complete error code reference"
+
+These links reference files that are not provided in the documentation set. Without verifying these files exist, these could be broken links. The documentation should be checked for link validity.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/common/errors.md
+================================================================================
+
+1. Broken cross-reference links
+   Type: documentation_inconsistency
+
+   errors.md contains: "See Also: - [ON ERROR GOTO](../../common/language/statements/on-error-goto.md) - Set up error handling - [ERR and ERL](../../common/language/statements/err-erl-variables.md) - Error information - [RESUME](../../common/language/statements/resume.md) - Continue after error - [Error Codes](../../common/language/appendices/error-codes.md) - Complete error code reference"
+
+These links reference files that are not provided in the documentation set. Without verifying these files exist, these could be broken links. The documentation should be checked for link validity.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/curses/editing.md
+================================================================================
+
+1. Inconsistent keyboard shortcut documentation for Cut/Copy/Paste
+   Type: documentation_inconsistency
+
+   feature-reference.md states: "Cut/Copy/Paste (Not implemented) Standard clipboard operations are not available in the Curses UI due to keyboard shortcut conflicts: - **Ctrl+X** - Used for Stop/Interrupt (cannot be used for Cut) - **Ctrl+C** - Terminal signal to exit program (cannot be used for Copy) - **Ctrl+V** - Used for Save File (cannot be used for Paste; Ctrl+S is reserved by terminal for flow control)"
+
+However, quick-reference.md does NOT list these shortcuts in the Editing section at all, and editing.md makes no mention of clipboard operations or their unavailability.
+
+This creates confusion about whether these features exist or not, and the rationale is only explained in one document.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/curses/feature-reference.md
+================================================================================
+
+1. Contradictory information about variable editing capability in Curses UI
+   Type: documentation_inconsistency
+
+   feature-reference.md states: "Edit Variable Value (Not implemented) ⚠️ Variable editing is not available in Curses UI. You cannot directly edit values in the variables window."
+
+However, variables.md states: "Variable Editing (Limited)" with "Current Status: ⚠️ Partial Implementation" and lists "What Works" and "What Doesn't Work Yet", implying some editing capability exists.
+
+These two documents contradict each other on whether variable editing is completely unavailable or partially implemented.
+
+--------------------------------------------------------------------------------
+
+2. Contradictory status of Find/Replace feature
+   Type: documentation_inconsistency
+
+   feature-reference.md states: "Find/Replace (Not yet implemented) Find and Replace functionality is not yet available in Curses UI via keyboard shortcuts."
+
+find-replace.md states: "The Curses UI currently **does not have** Find/Replace functionality for the editor. This feature is planned for future implementation."
+
+Both agree it's not implemented, but feature-reference.md says "not yet available via keyboard shortcuts" (implying it might be available another way), while find-replace.md says it "does not have" the functionality at all. The wording creates ambiguity.
+
+--------------------------------------------------------------------------------
+
+3. Inconsistent information about Execution Stack access method
+   Type: documentation_inconsistency
+
+   feature-reference.md states: "Execution Stack: View the call stack showing: **Access methods:** - Via menu: Ctrl+U → Debug → Execution Stack - Via command: Type `STACK` in immediate mode (same as CLI)"
+
+quick-reference.md lists under Global Commands: "Menu only | Toggle execution stack window"
+
+The feature-reference suggests both menu AND command access, while quick-reference only mentions menu access. Also, feature-reference says "View" while quick-reference says "Toggle", implying different behaviors.
+
+--------------------------------------------------------------------------------
+
+4. Inconsistent keyboard shortcut documentation for Cut/Copy/Paste
+   Type: documentation_inconsistency
+
+   feature-reference.md states: "Cut/Copy/Paste (Not implemented) Standard clipboard operations are not available in the Curses UI due to keyboard shortcut conflicts: - **Ctrl+X** - Used for Stop/Interrupt (cannot be used for Cut) - **Ctrl+C** - Terminal signal to exit program (cannot be used for Copy) - **Ctrl+V** - Used for Save File (cannot be used for Paste; Ctrl+S is reserved by terminal for flow control)"
+
+However, quick-reference.md does NOT list these shortcuts in the Editing section at all, and editing.md makes no mention of clipboard operations or their unavailability.
+
+This creates confusion about whether these features exist or not, and the rationale is only explained in one document.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/curses/find-replace.md
+================================================================================
+
+1. Contradictory status of Find/Replace feature
+   Type: documentation_inconsistency
+
+   feature-reference.md states: "Find/Replace (Not yet implemented) Find and Replace functionality is not yet available in Curses UI via keyboard shortcuts."
+
+find-replace.md states: "The Curses UI currently **does not have** Find/Replace functionality for the editor. This feature is planned for future implementation."
+
+Both agree it's not implemented, but feature-reference.md says "not yet available via keyboard shortcuts" (implying it might be available another way), while find-replace.md says it "does not have" the functionality at all. The wording creates ambiguity.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/curses/quick-reference.md
+================================================================================
+
+1. Inconsistent information about Execution Stack access method
+   Type: documentation_inconsistency
+
+   feature-reference.md states: "Execution Stack: View the call stack showing: **Access methods:** - Via menu: Ctrl+U → Debug → Execution Stack - Via command: Type `STACK` in immediate mode (same as CLI)"
+
+quick-reference.md lists under Global Commands: "Menu only | Toggle execution stack window"
+
+The feature-reference suggests both menu AND command access, while quick-reference only mentions menu access. Also, feature-reference says "View" while quick-reference says "Toggle", implying different behaviors.
+
+--------------------------------------------------------------------------------
+
+2. Inconsistent keyboard shortcut documentation for Cut/Copy/Paste
+   Type: documentation_inconsistency
+
+   feature-reference.md states: "Cut/Copy/Paste (Not implemented) Standard clipboard operations are not available in the Curses UI due to keyboard shortcut conflicts: - **Ctrl+X** - Used for Stop/Interrupt (cannot be used for Cut) - **Ctrl+C** - Terminal signal to exit program (cannot be used for Copy) - **Ctrl+V** - Used for Save File (cannot be used for Paste; Ctrl+S is reserved by terminal for flow control)"
+
+However, quick-reference.md does NOT list these shortcuts in the Editing section at all, and editing.md makes no mention of clipboard operations or their unavailability.
+
+This creates confusion about whether these features exist or not, and the rationale is only explained in one document.
+
+--------------------------------------------------------------------------------
+
+3. Incomplete keyboard shortcuts for Variables Window
+   Type: documentation_inconsistency
+
+   quick-reference.md lists Variables Window keys: "s | Cycle sort mode, d | Toggle sort direction, f | Cycle filter mode, / | Search for variable, n | Next search match, N | Previous search match"
+
+variables.md lists additional keys not in quick-reference: "v | Toggle value truncation, t | Toggle type display, d | Show decimal/hex toggle, w | Word wrap long strings, r | Refresh, u | Toggle auto-update, e | Export to file, h | Help, p | Pin window, q | Close"
+
+The quick-reference is missing many documented keyboard shortcuts for the Variables Window.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/curses/variables.md
+================================================================================
+
+1. Contradictory information about variable editing capability in Curses UI
+   Type: documentation_inconsistency
+
+   feature-reference.md states: "Edit Variable Value (Not implemented) ⚠️ Variable editing is not available in Curses UI. You cannot directly edit values in the variables window."
+
+However, variables.md states: "Variable Editing (Limited)" with "Current Status: ⚠️ Partial Implementation" and lists "What Works" and "What Doesn't Work Yet", implying some editing capability exists.
+
+These two documents contradict each other on whether variable editing is completely unavailable or partially implemented.
+
+--------------------------------------------------------------------------------
+
+2. Contradictory information about Variables Window availability
+   Type: documentation_inconsistency
+
+   index.md comparison table shows: "Variables Window | Curses: ✓ | CLI: ✗ | Tkinter: ✓ | Web: ✓"
+
+However, cli/variables.md explicitly states: "## Variables Window (GUI UIs Only) The CLI does not have a Variables Window feature. For visual variable inspection, use: - **Curses UI** - Full-screen terminal with Variables Window (Ctrl+W)"
+
+This is consistent. However, variables.md for Curses states the window has limitations and partial implementation, which is not reflected in the comparison table that simply shows a checkmark.
+
+--------------------------------------------------------------------------------
+
+3. Documented features that may not be implemented
+   Type: documentation_inconsistency
+
+   variables.md documents many advanced features with specific keyboard shortcuts:
+- "Ctrl+Arrow: Move window"
+- "Alt+Arrow: Resize window"
+- "Ctrl+M: Maximize/restore"
+- "Ctrl+X: Close window"
+- "v: Toggle value truncation"
+- "t: Toggle type display"
+- "d: Show decimal/hex toggle"
+- "w: Word wrap long strings"
+- "p: Pin window"
+- "e: Export to file"
+- "Double-click variable name (if mouse enabled)"
+
+These features are documented as if they exist, but there's no indication in other documentation that these are implemented. The feature-reference.md doesn't mention most of these capabilities. This suggests either over-documentation of planned features or missing implementation status notes.
+
+--------------------------------------------------------------------------------
+
+4. Incomplete keyboard shortcuts for Variables Window
+   Type: documentation_inconsistency
+
+   quick-reference.md lists Variables Window keys: "s | Cycle sort mode, d | Toggle sort direction, f | Cycle filter mode, / | Search for variable, n | Next search match, N | Previous search match"
+
+variables.md lists additional keys not in quick-reference: "v | Toggle value truncation, t | Toggle type display, d | Show decimal/hex toggle, w | Word wrap long strings, r | Refresh, u | Toggle auto-update, e | Export to file, h | Help, p | Pin window, q | Close"
+
+The quick-reference is missing many documented keyboard shortcuts for the Variables Window.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/index.md
+================================================================================
+
+1. Contradictory information about Variables Window availability
+   Type: documentation_inconsistency
+
+   index.md comparison table shows: "Variables Window | Curses: ✓ | CLI: ✗ | Tkinter: ✓ | Web: ✓"
+
+However, cli/variables.md explicitly states: "## Variables Window (GUI UIs Only) The CLI does not have a Variables Window feature. For visual variable inspection, use: - **Curses UI** - Full-screen terminal with Variables Window (Ctrl+W)"
+
+This is consistent. However, variables.md for Curses states the window has limitations and partial implementation, which is not reflected in the comparison table that simply shows a checkmark.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/tk/feature-reference.md
+================================================================================
+
+1. Feature count mismatch: feature-reference.md claims 37 features total, but only documents 31 features (8+6+6+6+7+4=37 claimed, but actual count is 31)
+   Type: documentation_inconsistency
+
+   feature-reference.md header states: 'This document covers all 37 features available in the Tkinter (Tk) UI.'
+
+But the documented features are:
+- File Operations: 8 features
+- Execution & Control: 6 features
+- Debugging: 6 features
+- Variable Inspection: 6 features
+- Editor Features: 7 features
+- Help System: 4 features
+Total: 37 features claimed, but some sections may be overcounting or undercounting
+
+--------------------------------------------------------------------------------
+
+2. Settings dialog implementation status contradiction
+   Type: documentation_inconsistency
+
+   feature-reference.md lists 'Auto-Save' as a feature:
+'Auto-Save
+Tk UI supports auto-save functionality. Programs are periodically saved to prevent data loss.
+- Configurable interval
+- Creates backup files'
+
+But settings.md states:
+'Implementation Status: The Tk (Tkinter) desktop GUI is planned to provide the most comprehensive settings dialog. **The features described in this document represent planned/intended implementation and are not yet available.**'
+
+And later: 'Current Status: Most features described below are not yet implemented.'
+
+This creates confusion about whether auto-save is actually implemented or just planned.
+
+--------------------------------------------------------------------------------
+
+3. Feature implementation status inconsistency between UIs
+   Type: documentation_inconsistency
+
+   feature-reference.md presents all Tk features as currently available with no implementation status warnings.
+
+But web/features.md clearly marks features with:
+'**(Currently Implemented)** - Feature is available now'
+'**(Planned)** - Feature is not yet available'
+'**(Partially Implemented)** - Some aspects work'
+
+The Tk documentation should follow the same pattern if many features are actually planned rather than implemented, as suggested by settings.md.
+
+--------------------------------------------------------------------------------
+
+4. Ctrl+X shortcut conflict within same document
+   Type: documentation_inconsistency
+
+   feature-reference.md assigns Ctrl+X to two different functions:
+
+1. Under 'Stop/Interrupt (Ctrl+X)':
+'Stop a running program immediately.
+- Shortcut: Ctrl+X'
+
+2. Under 'Cut/Copy/Paste (Ctrl+X/C/V)':
+'Standard clipboard operations with native OS clipboard integration.
+- Cut: Ctrl+X'
+
+The same keyboard shortcut cannot perform both Stop Program and Cut operations.
+
+--------------------------------------------------------------------------------
+
+5. Find/Replace keyboard shortcuts inconsistency
+   Type: documentation_inconsistency
+
+   feature-reference.md states:
+'Find/Replace (Ctrl+F / Ctrl+H)'
+'Find: Ctrl+F'
+'Replace: Ctrl+H'
+
+But features.md states:
+'Find text (Ctrl+F): Opens Find dialog'
+'Replace text (Ctrl+H): Opens combined Find/Replace dialog'
+'Note: Ctrl+F opens the Find dialog. Ctrl+H opens the Find/Replace dialog which includes both Find and Replace functionality.'
+
+This suggests Ctrl+H opens a combined dialog, not a separate Replace dialog, which contradicts the feature-reference.md description of separate Find and Replace functions.
+
+--------------------------------------------------------------------------------
+
+6. Renumber keyboard shortcut inconsistency
+   Type: documentation_inconsistency
+
+   feature-reference.md states:
+'Renumber (Ctrl+E)
+Renumber program lines with specified start and increment.
+- Menu: Edit → Renumber
+- Shortcut: Ctrl+E'
+
+workflows.md states:
+'Press **Ctrl+E** (Renumber)'
+
+But workflows.md also has a note:
+'**Note:** Some features described below (Smart Insert, Variables Window, Execution Stack, Renumber dialog) are documented here based on the Tk UI design specifications. Check [Settings](settings.md) for current implementation status'
+
+This suggests Renumber might not be implemented, contradicting feature-reference.md which lists it as an available feature.
+
+--------------------------------------------------------------------------------
+
+7. Variables Window keyboard shortcut inconsistency
+   Type: documentation_inconsistency
+
+   feature-reference.md states:
+'Variables Window (Ctrl+W)'
+'Shortcut: Ctrl+W'
+
+features.md states:
+'Variables Window ({{kbd:toggle_variables}})'
+
+The use of {{kbd:toggle_variables}} template suggests the actual shortcut might be different from Ctrl+W, or that it's configurable. This inconsistency needs clarification.
+
+--------------------------------------------------------------------------------
+
+8. Execution Stack keyboard shortcut inconsistency
+   Type: documentation_inconsistency
+
+   feature-reference.md states:
+'Execution Stack (Ctrl+K)'
+'Shortcut: Ctrl+K'
+
+features.md states:
+'Execution Stack ({{kbd:toggle_stack}})'
+
+The use of {{kbd:toggle_stack}} template suggests the actual shortcut might be different from Ctrl+K, or that it's configurable.
+
+--------------------------------------------------------------------------------
+
+9. Statement and function count inconsistency
+   Type: documentation_inconsistency
+
+   tk/index.md states:
+'**Statements** - All 63 BASIC-80 statements'
+'**Functions** - All 40 BASIC-80 functions'
+
+But feature-reference.md does not mention these counts anywhere, and there's no way to verify if the Tk UI actually supports all 63 statements and 40 functions as claimed.
+
+--------------------------------------------------------------------------------
+
+10. Run Program keyboard shortcut presentation inconsistency
+   Type: documentation_inconsistency
+
+   feature-reference.md states:
+'Run Program (Ctrl+R or F5)'
+'Shortcuts: Ctrl+R or F5'
+
+getting-started.md states:
+'Run it: Press {{kbd:run_program}} or Run → Run Program'
+
+The template {{kbd:run_program}} should expand to show both shortcuts for consistency.
+
+--------------------------------------------------------------------------------
+
+11. Stop/Interrupt keyboard shortcut inconsistency with standard conventions
+   Type: documentation_inconsistency
+
+   feature-reference.md states:
+'Stop/Interrupt (Ctrl+X)
+Stop a running program immediately.
+- Menu: Run → Stop
+- Shortcut: Ctrl+X'
+
+But Ctrl+X is conventionally used for 'Cut' in most applications. The Quick Reference table at the bottom of the same document confirms:
+'Ctrl+X | Stop Program'
+
+This might conflict with the Cut operation mentioned elsewhere in the document under 'Cut/Copy/Paste (Ctrl+X/C/V)'.
+
+--------------------------------------------------------------------------------
+
+12. Visual indicator color inconsistency
+   Type: documentation_inconsistency
+
+   feature-reference.md states under 'Visual Indicators':
+'**●** - Breakpoint on line'
+
+But under 'Breakpoints' section:
+'Visual indicator: ● symbol'
+
+And in features.md:
+'Blue ● appears'
+
+The color of the breakpoint indicator should be consistently documented. feature-reference.md doesn't specify the color.
+
+--------------------------------------------------------------------------------
+
+13. Syntax error indicator inconsistency
+   Type: documentation_inconsistency
+
+   feature-reference.md states:
+'**Red underline** - Syntax error'
+
+features.md states:
+'Red **?** appears in gutter for errors'
+
+These describe different visual indicators for syntax errors (underline vs. ? symbol in gutter).
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/tk/features.md
+================================================================================
+
+1. Feature count mismatch: feature-reference.md claims 37 features total, but only documents 31 features (8+6+6+6+7+4=37 claimed, but actual count is 31)
+   Type: documentation_inconsistency
+
+   feature-reference.md header states: 'This document covers all 37 features available in the Tkinter (Tk) UI.'
+
+But the documented features are:
+- File Operations: 8 features
+- Execution & Control: 6 features
+- Debugging: 6 features
+- Variable Inspection: 6 features
+- Editor Features: 7 features
+- Help System: 4 features
+Total: 37 features claimed, but some sections may be overcounting or undercounting
+
+--------------------------------------------------------------------------------
+
+2. Find/Replace keyboard shortcuts inconsistency
+   Type: documentation_inconsistency
+
+   feature-reference.md states:
+'Find/Replace (Ctrl+F / Ctrl+H)'
+'Find: Ctrl+F'
+'Replace: Ctrl+H'
+
+But features.md states:
+'Find text (Ctrl+F): Opens Find dialog'
+'Replace text (Ctrl+H): Opens combined Find/Replace dialog'
+'Note: Ctrl+F opens the Find dialog. Ctrl+H opens the Find/Replace dialog which includes both Find and Replace functionality.'
+
+This suggests Ctrl+H opens a combined dialog, not a separate Replace dialog, which contradicts the feature-reference.md description of separate Find and Replace functions.
+
+--------------------------------------------------------------------------------
+
+3. Smart Insert (Ctrl+I) feature status unclear across documents
+   Type: documentation_inconsistency
+
+   features.md describes Smart Insert as a current feature:
+'Smart Insert ({{kbd:smart_insert}})
+**The fastest way to add code between existing lines!**'
+
+workflows.md also describes it as current:
+'Press **Ctrl+I** (Smart Insert) to insert blank line'
+
+tips.md describes it as current:
+'Use **Ctrl+I** (Smart Insert) to insert blank lines under each section'
+
+But all three documents have notes stating:
+'**Note:** Some features described below (Smart Insert, Variables Window, Execution Stack) are documented here based on the Tk UI design specifications. Check [Settings](settings.md) for current implementation status'
+
+This creates ambiguity about whether Smart Insert is actually implemented or just planned.
+
+--------------------------------------------------------------------------------
+
+4. Variables Window keyboard shortcut inconsistency
+   Type: documentation_inconsistency
+
+   feature-reference.md states:
+'Variables Window (Ctrl+W)'
+'Shortcut: Ctrl+W'
+
+features.md states:
+'Variables Window ({{kbd:toggle_variables}})'
+
+The use of {{kbd:toggle_variables}} template suggests the actual shortcut might be different from Ctrl+W, or that it's configurable. This inconsistency needs clarification.
+
+--------------------------------------------------------------------------------
+
+5. Execution Stack keyboard shortcut inconsistency
+   Type: documentation_inconsistency
+
+   feature-reference.md states:
+'Execution Stack (Ctrl+K)'
+'Shortcut: Ctrl+K'
+
+features.md states:
+'Execution Stack ({{kbd:toggle_stack}})'
+
+The use of {{kbd:toggle_stack}} template suggests the actual shortcut might be different from Ctrl+K, or that it's configurable.
+
+--------------------------------------------------------------------------------
+
+6. Syntax error indicator inconsistency
+   Type: documentation_inconsistency
+
+   feature-reference.md states:
+'**Red underline** - Syntax error'
+
+features.md states:
+'Red **?** appears in gutter for errors'
+
+These describe different visual indicators for syntax errors (underline vs. ? symbol in gutter).
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/tk/getting-started.md
+================================================================================
+
+1. Run Program keyboard shortcut presentation inconsistency
+   Type: documentation_inconsistency
+
+   feature-reference.md states:
+'Run Program (Ctrl+R or F5)'
+'Shortcuts: Ctrl+R or F5'
+
+getting-started.md states:
+'Run it: Press {{kbd:run_program}} or Run → Run Program'
+
+The template {{kbd:run_program}} should expand to show both shortcuts for consistency.
+
+--------------------------------------------------------------------------------
+
+2. Default UI inconsistency
+   Type: documentation_inconsistency
+
+   getting-started.md states:
+'Or to use the default curses UI:
+```bash
+mbasic [filename.bas]
+```'
+
+This implies curses is the default UI. However, index.md states:
+'**Start the GUI:**
+```bash
+mbasic --ui tk [filename.bas]
+```'
+
+The documentation should clarify which UI is actually the default when no --ui flag is specified.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/tk/index.md
+================================================================================
+
+1. Statement and function count inconsistency
+   Type: documentation_inconsistency
+
+   tk/index.md states:
+'**Statements** - All 63 BASIC-80 statements'
+'**Functions** - All 40 BASIC-80 functions'
+
+But feature-reference.md does not mention these counts anywhere, and there's no way to verify if the Tk UI actually supports all 63 statements and 40 functions as claimed.
+
+--------------------------------------------------------------------------------
+
+2. Default UI inconsistency
+   Type: documentation_inconsistency
+
+   getting-started.md states:
+'Or to use the default curses UI:
+```bash
+mbasic [filename.bas]
+```'
+
+This implies curses is the default UI. However, index.md states:
+'**Start the GUI:**
+```bash
+mbasic --ui tk [filename.bas]
+```'
+
+The documentation should clarify which UI is actually the default when no --ui flag is specified.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/tk/settings.md
+================================================================================
+
+1. Settings dialog implementation status contradiction
+   Type: documentation_inconsistency
+
+   feature-reference.md lists 'Auto-Save' as a feature:
+'Auto-Save
+Tk UI supports auto-save functionality. Programs are periodically saved to prevent data loss.
+- Configurable interval
+- Creates backup files'
+
+But settings.md states:
+'Implementation Status: The Tk (Tkinter) desktop GUI is planned to provide the most comprehensive settings dialog. **The features described in this document represent planned/intended implementation and are not yet available.**'
+
+And later: 'Current Status: Most features described below are not yet implemented.'
+
+This creates confusion about whether auto-save is actually implemented or just planned.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/tk/tips.md
+================================================================================
+
+1. Smart Insert (Ctrl+I) feature status unclear across documents
+   Type: documentation_inconsistency
+
+   features.md describes Smart Insert as a current feature:
+'Smart Insert ({{kbd:smart_insert}})
+**The fastest way to add code between existing lines!**'
+
+workflows.md also describes it as current:
+'Press **Ctrl+I** (Smart Insert) to insert blank line'
+
+tips.md describes it as current:
+'Use **Ctrl+I** (Smart Insert) to insert blank lines under each section'
+
+But all three documents have notes stating:
+'**Note:** Some features described below (Smart Insert, Variables Window, Execution Stack) are documented here based on the Tk UI design specifications. Check [Settings](settings.md) for current implementation status'
+
+This creates ambiguity about whether Smart Insert is actually implemented or just planned.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/tk/workflows.md
+================================================================================
+
+1. Smart Insert (Ctrl+I) feature status unclear across documents
+   Type: documentation_inconsistency
+
+   features.md describes Smart Insert as a current feature:
+'Smart Insert ({{kbd:smart_insert}})
+**The fastest way to add code between existing lines!**'
+
+workflows.md also describes it as current:
+'Press **Ctrl+I** (Smart Insert) to insert blank line'
+
+tips.md describes it as current:
+'Use **Ctrl+I** (Smart Insert) to insert blank lines under each section'
+
+But all three documents have notes stating:
+'**Note:** Some features described below (Smart Insert, Variables Window, Execution Stack) are documented here based on the Tk UI design specifications. Check [Settings](settings.md) for current implementation status'
+
+This creates ambiguity about whether Smart Insert is actually implemented or just planned.
+
+--------------------------------------------------------------------------------
+
+2. Renumber keyboard shortcut inconsistency
+   Type: documentation_inconsistency
+
+   feature-reference.md states:
+'Renumber (Ctrl+E)
+Renumber program lines with specified start and increment.
+- Menu: Edit → Renumber
+- Shortcut: Ctrl+E'
+
+workflows.md states:
+'Press **Ctrl+E** (Renumber)'
+
+But workflows.md also has a note:
+'**Note:** Some features described below (Smart Insert, Variables Window, Execution Stack, Renumber dialog) are documented here based on the Tk UI design specifications. Check [Settings](settings.md) for current implementation status'
+
+This suggests Renumber might not be implemented, contradicting feature-reference.md which lists it as an available feature.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/web/debugging.md
+================================================================================
+
+1. Variable Inspector implementation status contradiction
+   Type: documentation_inconsistency
+
+   web/features.md states under 'Variable Inspector':
+'**Currently Implemented:**
+- Basic variable viewing via Debug menu'
+
+But web/debugging.md states:
+'**Implementation Status:** Basic variable viewing via Debug menu is currently available. The detailed variable inspector panels, watch expressions, and interactive editing features described below are **planned for future releases** and not yet implemented.'
+
+Then debugging.md shows a detailed 'Variables Panel (Planned)' section with tree view, which contradicts the 'currently available' statement in features.md.
+
+--------------------------------------------------------------------------------
+
+2. Debug keyboard shortcuts inconsistency between documents
+   Type: documentation_inconsistency
+
+   web/features.md states:
+'Step statement (Ctrl+T)'
+'Step line (Ctrl+K)'
+
+web/debugging.md states:
+'Step Statement (Ctrl+T) - Execute one statement'
+'Step Line (Ctrl+K) - Execute one line'
+
+But debugging.md also states:
+'**Note:** Function key shortcuts (F5, F10, F11, etc.) are not implemented in the Web UI.'
+
+And later in debugging.md:
+'**Planned for Future Releases:**
+- `F5` - Start/Continue debugging
+- `F9` - Toggle breakpoint
+- `F10` - Step over
+- `F11` - Step into'
+
+This creates confusion because F10 is listed as planned, but Ctrl+K (Step Line) is listed as currently implemented. The relationship between these shortcuts needs clarification.
+
+--------------------------------------------------------------------------------
+
+3. Stop execution keyboard shortcut inconsistency
+   Type: documentation_inconsistency
+
+   web/features.md states:
+'Stop (Ctrl+Q)'
+
+web/debugging.md states:
+'Use **Run → Stop** or `Ctrl+Q` to stop'
+
+But later in debugging.md under 'Keyboard Shortcuts':
+'`Ctrl+Q` - Stop execution'
+
+However, Ctrl+Q is conventionally used to quit applications in many systems. This might cause confusion or conflicts.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/web/features.md
+================================================================================
+
+1. Feature implementation status inconsistency between UIs
+   Type: documentation_inconsistency
+
+   feature-reference.md presents all Tk features as currently available with no implementation status warnings.
+
+But web/features.md clearly marks features with:
+'**(Currently Implemented)** - Feature is available now'
+'**(Planned)** - Feature is not yet available'
+'**(Partially Implemented)** - Some aspects work'
+
+The Tk documentation should follow the same pattern if many features are actually planned rather than implemented, as suggested by settings.md.
+
+--------------------------------------------------------------------------------
+
+2. Variable Inspector implementation status contradiction
+   Type: documentation_inconsistency
+
+   web/features.md states under 'Variable Inspector':
+'**Currently Implemented:**
+- Basic variable viewing via Debug menu'
+
+But web/debugging.md states:
+'**Implementation Status:** Basic variable viewing via Debug menu is currently available. The detailed variable inspector panels, watch expressions, and interactive editing features described below are **planned for future releases** and not yet implemented.'
+
+Then debugging.md shows a detailed 'Variables Panel (Planned)' section with tree view, which contradicts the 'currently available' statement in features.md.
+
+--------------------------------------------------------------------------------
+
+3. Debug keyboard shortcuts inconsistency between documents
+   Type: documentation_inconsistency
+
+   web/features.md states:
+'Step statement (Ctrl+T)'
+'Step line (Ctrl+K)'
+
+web/debugging.md states:
+'Step Statement (Ctrl+T) - Execute one statement'
+'Step Line (Ctrl+K) - Execute one line'
+
+But debugging.md also states:
+'**Note:** Function key shortcuts (F5, F10, F11, etc.) are not implemented in the Web UI.'
+
+And later in debugging.md:
+'**Planned for Future Releases:**
+- `F5` - Start/Continue debugging
+- `F9` - Toggle breakpoint
+- `F10` - Step over
+- `F11` - Step into'
+
+This creates confusion because F10 is listed as planned, but Ctrl+K (Step Line) is listed as currently implemented. The relationship between these shortcuts needs clarification.
+
+--------------------------------------------------------------------------------
+
+4. File storage implementation status internal contradiction
+   Type: documentation_inconsistency
+
+   web/features.md states under 'Local Storage':
+'**Currently Implemented:**
+- Programs stored in Python server memory (session-only, lost on page refresh)'
+
+But later under 'Data Protection (Currently Implemented)':
+'**Currently Implemented:**
+- Local storage only (browser localStorage)'
+
+These two statements contradict each other - programs cannot be both in 'Python server memory' and in 'browser localStorage' at the same time.
+
+--------------------------------------------------------------------------------
+
+5. Stop execution keyboard shortcut inconsistency
+   Type: documentation_inconsistency
+
+   web/features.md states:
+'Stop (Ctrl+Q)'
+
+web/debugging.md states:
+'Use **Run → Stop** or `Ctrl+Q` to stop'
+
+But later in debugging.md under 'Keyboard Shortcuts':
+'`Ctrl+Q` - Stop execution'
+
+However, Ctrl+Q is conventionally used to quit applications in many systems. This might cause confusion or conflicts.
+
+--------------------------------------------------------------------------------
+
+6. Recent files storage location inconsistency
+   Type: documentation_inconsistency
+
+   web/features.md states under 'Local Storage':
+'**Currently Implemented:**
+- Programs stored in Python server memory (session-only, lost on page refresh)
+- Recent files list stored in browser localStorage'
+
+This is inconsistent - if programs are lost on page refresh (server memory), how can a recent files list persist in localStorage? The recent files list would reference programs that no longer exist.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/web/getting-started.md
+================================================================================
+
+1. Contradictory information about auto-save to localStorage
+   Type: documentation_inconsistency
+
+   getting-started.md states: "Auto-save to browser localStorage is planned for a future release" (appears twice in the document)
+
+But settings.md states: "By default, settings are stored in your browser's localStorage" and describes localStorage as the default storage mechanism that is already implemented.
+
+This creates confusion about whether localStorage is currently used or planned for the future.
+
+--------------------------------------------------------------------------------
+
+2. Contradictory information about 'Open Example' feature
+   Type: documentation_inconsistency
+
+   getting-started.md does not mention any limitation on opening example programs.
+
+web-interface.md explicitly states: "Note: An 'Open Example' feature to choose from sample BASIC programs is planned for a future release."
+
+This suggests the feature doesn't exist yet, but getting-started.md doesn't clarify this.
+
+--------------------------------------------------------------------------------
+
+3. Inconsistent Settings dialog access instructions
+   Type: documentation_inconsistency
+
+   getting-started.md does not mention how to access the Settings dialog in the main interface overview section.
+
+settings.md states: "Click the ⚙️ Settings icon in the navigation bar" or "Click menu → Settings"
+
+The getting-started.md should mention the Settings icon/menu in the Interface Overview section for consistency.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/web/index.md
+================================================================================
+
+1. Broken cross-reference to Games Library
+   Type: documentation_inconsistency
+
+   index.md states: "Browse and run classic BASIC games: [Games Library](../../../library/games/index.md) - 113 classic CP/M era games ready to run!"
+
+However, the actual games/index.md only lists 113 games, but the instructions say to 'Download' the .bas files and then 'Open' them in MBASIC.
+
+This contradicts the 'ready to run' claim in index.md, as users must download and manually load files rather than running them directly from the web interface.
+
+All library index files (business, data_management, demos, education, electronics, ham_radio) have the same pattern of requiring download and manual loading.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/web/settings.md
+================================================================================
+
+1. Contradictory information about auto-save to localStorage
+   Type: documentation_inconsistency
+
+   getting-started.md states: "Auto-save to browser localStorage is planned for a future release" (appears twice in the document)
+
+But settings.md states: "By default, settings are stored in your browser's localStorage" and describes localStorage as the default storage mechanism that is already implemented.
+
+This creates confusion about whether localStorage is currently used or planned for the future.
+
+--------------------------------------------------------------------------------
+
+2. Inconsistent Settings dialog access instructions
+   Type: documentation_inconsistency
+
+   getting-started.md does not mention how to access the Settings dialog in the main interface overview section.
+
+settings.md states: "Click the ⚙️ Settings icon in the navigation bar" or "Click menu → Settings"
+
+The getting-started.md should mention the Settings icon/menu in the Interface Overview section for consistency.
+
+--------------------------------------------------------------------------------
+
+3. Incomplete information about Settings tabs
+   Type: documentation_inconsistency
+
+   settings.md describes two tabs: 'Editor Tab' and 'Limits Tab'
+
+The dialog interface diagram shows: "📝 Editor    📊 Limits"
+
+However, the document doesn't clarify if there are any other tabs or if this is the complete set. The web-interface.md mentions 'Settings - Configure auto-numbering, case handling, and other interpreter options' which suggests more settings than just auto-numbering and limits.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/help/ui/web/web-interface.md
+================================================================================
+
+1. Contradictory information about 'Open Example' feature
+   Type: documentation_inconsistency
+
+   getting-started.md does not mention any limitation on opening example programs.
+
+web-interface.md explicitly states: "Note: An 'Open Example' feature to choose from sample BASIC programs is planned for a future release."
+
+This suggests the feature doesn't exist yet, but getting-started.md doesn't clarify this.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/library/business/index.md
+================================================================================
+
+1. Broken cross-reference to Games Library
+   Type: documentation_inconsistency
+
+   index.md states: "Browse and run classic BASIC games: [Games Library](../../../library/games/index.md) - 113 classic CP/M era games ready to run!"
+
+However, the actual games/index.md only lists 113 games, but the instructions say to 'Download' the .bas files and then 'Open' them in MBASIC.
+
+This contradicts the 'ready to run' claim in index.md, as users must download and manually load files rather than running them directly from the web interface.
+
+All library index files (business, data_management, demos, education, electronics, ham_radio) have the same pattern of requiring download and manual loading.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/library/data_management/index.md
+================================================================================
+
+1. Broken cross-reference to Games Library
+   Type: documentation_inconsistency
+
+   index.md states: "Browse and run classic BASIC games: [Games Library](../../../library/games/index.md) - 113 classic CP/M era games ready to run!"
+
+However, the actual games/index.md only lists 113 games, but the instructions say to 'Download' the .bas files and then 'Open' them in MBASIC.
+
+This contradicts the 'ready to run' claim in index.md, as users must download and manually load files rather than running them directly from the web interface.
+
+All library index files (business, data_management, demos, education, electronics, ham_radio) have the same pattern of requiring download and manual loading.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/library/demos/index.md
+================================================================================
+
+1. Broken cross-reference to Games Library
+   Type: documentation_inconsistency
+
+   index.md states: "Browse and run classic BASIC games: [Games Library](../../../library/games/index.md) - 113 classic CP/M era games ready to run!"
+
+However, the actual games/index.md only lists 113 games, but the instructions say to 'Download' the .bas files and then 'Open' them in MBASIC.
+
+This contradicts the 'ready to run' claim in index.md, as users must download and manually load files rather than running them directly from the web interface.
+
+All library index files (business, data_management, demos, education, electronics, ham_radio) have the same pattern of requiring download and manual loading.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/library/education/index.md
+================================================================================
+
+1. Broken cross-reference to Games Library
+   Type: documentation_inconsistency
+
+   index.md states: "Browse and run classic BASIC games: [Games Library](../../../library/games/index.md) - 113 classic CP/M era games ready to run!"
+
+However, the actual games/index.md only lists 113 games, but the instructions say to 'Download' the .bas files and then 'Open' them in MBASIC.
+
+This contradicts the 'ready to run' claim in index.md, as users must download and manually load files rather than running them directly from the web interface.
+
+All library index files (business, data_management, demos, education, electronics, ham_radio) have the same pattern of requiring download and manual loading.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/library/electronics/index.md
+================================================================================
+
+1. Broken cross-reference to Games Library
+   Type: documentation_inconsistency
+
+   index.md states: "Browse and run classic BASIC games: [Games Library](../../../library/games/index.md) - 113 classic CP/M era games ready to run!"
+
+However, the actual games/index.md only lists 113 games, but the instructions say to 'Download' the .bas files and then 'Open' them in MBASIC.
+
+This contradicts the 'ready to run' claim in index.md, as users must download and manually load files rather than running them directly from the web interface.
+
+All library index files (business, data_management, demos, education, electronics, ham_radio) have the same pattern of requiring download and manual loading.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/library/games/index.md
+================================================================================
+
+1. Broken cross-reference to Games Library
+   Type: documentation_inconsistency
+
+   index.md states: "Browse and run classic BASIC games: [Games Library](../../../library/games/index.md) - 113 classic CP/M era games ready to run!"
+
+However, the actual games/index.md only lists 113 games, but the instructions say to 'Download' the .bas files and then 'Open' them in MBASIC.
+
+This contradicts the 'ready to run' claim in index.md, as users must download and manually load files rather than running them directly from the web interface.
+
+All library index files (business, data_management, demos, education, electronics, ham_radio) have the same pattern of requiring download and manual loading.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/library/ham_radio/index.md
+================================================================================
+
+1. Broken cross-reference to Games Library
+   Type: documentation_inconsistency
+
+   index.md states: "Browse and run classic BASIC games: [Games Library](../../../library/games/index.md) - 113 classic CP/M era games ready to run!"
+
+However, the actual games/index.md only lists 113 games, but the instructions say to 'Download' the .bas files and then 'Open' them in MBASIC.
+
+This contradicts the 'ready to run' claim in index.md, as users must download and manually load files rather than running them directly from the web interface.
+
+All library index files (business, data_management, demos, education, electronics, ham_radio) have the same pattern of requiring download and manual loading.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/library/index.md
+================================================================================
+
+1. Conflicting information about Calendar program location
+   Type: documentation_inconsistency
+
+   docs/library/index.md lists 'Calendar' under Utilities featured programs: 'Featured programs: Calendar, Unit Converter, Sort, Search, Day of Week Calculator'
+
+However, docs/library/utilities/index.md states: 'Note: A different calendar program is also available in the [Games Library](../games/index.md#calendar)'
+
+This suggests there are TWO calendar programs (one in Utilities, one in Games), but the main index only mentions the Utilities category having Calendar as a featured program. The Games category featured programs list does not mention Calendar: 'Featured programs: Blackjack, Spacewar, Star Trek, Hangman, Roulette'
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/library/utilities/index.md
+================================================================================
+
+1. Conflicting information about Calendar program location
+   Type: documentation_inconsistency
+
+   docs/library/index.md lists 'Calendar' under Utilities featured programs: 'Featured programs: Calendar, Unit Converter, Sort, Search, Day of Week Calculator'
+
+However, docs/library/utilities/index.md states: 'Note: A different calendar program is also available in the [Games Library](../games/index.md#calendar)'
+
+This suggests there are TWO calendar programs (one in Utilities, one in Games), but the main index only mentions the Utilities category having Calendar as a featured program. The Games category featured programs list does not mention Calendar: 'Featured programs: Blackjack, Spacewar, Star Trek, Hangman, Roulette'
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/user/CASE_HANDLING_GUIDE.md
+================================================================================
+
+1. Inconsistent variable name in example code
+   Type: documentation_inconsistency
+
+   In the 'Problem 1: Accidental Typos' section, the example shows:
+'10 TotalCount = 0
+20 FOR I = 1 TO 10
+30   TotalCont = TotalCont + I   ← Typo! Missing 'u'
+40 NEXT I
+50 PRINT TotalCount'
+
+The comment says 'Missing 'u'' but the actual typo is that 'TotalCont' is missing the 'u' to be 'TotalCount'. However, line 30 shows 'TotalCont = TotalCont + I' which means it's consistently using the misspelled version on both sides of the assignment. The example would be clearer if it showed: 'TotalCont = TotalCount + I' to demonstrate that the typo creates a NEW variable that doesn't get printed.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/user/CHOOSING_YOUR_UI.md
+================================================================================
+
+1. Contradictory information about CLI debugging capabilities
+   Type: documentation_inconsistency
+
+   The document contains contradictory statements about CLI debugging:
+
+In the 'CLI (Command Line Interface)' section under 'Unique advantages':
+'Command-line debugging (BREAK, STEP, WATCH commands)'
+
+But in the 'Limitations' section:
+'No visual debugging (text commands only)'
+
+Then there's a Note that attempts to clarify:
+'Note: CLI has full debugging capabilities through commands (BREAK, STEP, WATCH, STACK), but lacks the visual debugging interface (Variables Window, clickable breakpoints, etc.) found in Curses, Tk, and Web UIs.'
+
+The issue is that 'Unique advantages' lists 'Command-line debugging' as if it's unique to CLI, but the note clarifies that CLI has the SAME debugging commands as other UIs, just without the visual interface. This makes 'Command-line debugging' not actually a unique advantage of CLI.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/user/FILE_FORMAT_COMPATIBILITY.md
+================================================================================
+
+1. Incomplete file extension list
+   Type: documentation_inconsistency
+
+   The 'File Extensions' section lists:
+'- `.bas` - Standard BASIC program files (recommended)
+- `.BAS` - Uppercase variant (also supported)
+- `.txt` - Plain text files containing BASIC code'
+
+However, the section title says 'MBASIC recognizes these file extensions' but doesn't clarify if this is an exhaustive list or if other extensions might also work. Additionally, it's unclear if files without extensions are supported (e.g., just 'program' with no extension).
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/user/README.md
+================================================================================
+
+1. README.md lists QUICK_REFERENCE.md as 'Curses UI specific' but doesn't list a Tk UI quick reference, yet TK_UI_QUICK_START.md exists and is listed separately
+   Type: documentation_inconsistency
+
+   README.md structure:
+'### Reference Documentation
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick command reference (Curses UI specific)'
+
+But under '### UI-Specific Guides':
+'- **[TK_UI_QUICK_START.md](TK_UI_QUICK_START.md)** - Tk/Tkinter UI quick start'
+
+This creates confusion about whether TK_UI_QUICK_START.md is the Tk equivalent of QUICK_REFERENCE.md or something different. The categorization should be consistent - either both are 'UI-Specific Guides' or both are 'Reference Documentation'.
+
+--------------------------------------------------------------------------------
+
+2. README.md describes keyboard-shortcuts.md as 'Curses UI specific' but the file title says 'MBASIC Curses UI Keyboard Shortcuts', creating ambiguity about whether it covers all UIs or just Curses
+   Type: documentation_inconsistency
+
+   README.md line: '- **[keyboard-shortcuts.md](keyboard-shortcuts.md)** - Keyboard shortcuts reference (Curses UI specific)'
+
+keyboard-shortcuts.md title: '# MBASIC Curses UI Keyboard Shortcuts'
+
+This is consistent, but TK_UI_QUICK_START.md has its own shortcuts table that differs from keyboard-shortcuts.md, suggesting there should be separate docs or a unified reference.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/user/SETTINGS_AND_CONFIGURATION.md
+================================================================================
+
+1. SETTINGS_AND_CONFIGURATION.md shows boolean values in SET commands without quotes, but JSON examples use true/false
+   Type: documentation_inconsistency
+
+   SETTINGS_AND_CONFIGURATION.md states:
+'SET "editor.auto_number" true'
+'Booleans: true or false (lowercase, no quotes in commands; use true/false in JSON files)'
+
+But earlier in the same doc:
+'**Using SET command (in BASIC):**
+```basic
+SET "variables.case_conflict" "error"
+SET "editor.auto_number" true
+```'
+
+This is internally consistent, but TK_UI_QUICK_START.md doesn't mention the SET command syntax at all when discussing settings, only showing:
+'SET "variables.case_conflict" "error"' without explaining boolean syntax.
+
+--------------------------------------------------------------------------------
+
+2. Settings file location uses ~ for home directory but doesn't explain this is Unix/Linux notation
+   Type: documentation_inconsistency
+
+   Document states:
+'**Location:**
+- **Linux/Mac:** `~/.mbasic/settings.json`
+- **Windows:** `%APPDATA%/mbasic/settings.json`'
+
+The ~ notation is explained implicitly by context but Windows users unfamiliar with Unix might not understand it. Should add '(home directory)' or similar clarification.
+
+--------------------------------------------------------------------------------
+
+3. Document shows 'interpreter.max_execution_time' default as 30 seconds but doesn't explain what happens when time limit is reached
+   Type: documentation_inconsistency
+
+   Document states:
+'### interpreter.max_execution_time
+
+**Controls:** Maximum program execution time in seconds
+
+**Type:** Integer (1-3600)
+
+**Default:** `30`
+
+**Example:**
+```basic
+SET "interpreter.max_execution_time" 60
+' Program will stop after 60 seconds
+```
+
+Set to `0` for unlimited execution time (use with caution).'
+
+Doesn't explain:
+- What error message appears when time limit is reached
+- Whether program can be resumed
+- Whether this applies to all UIs or just some
+- Whether debugging (stepping) counts toward time limit
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/user/TK_UI_QUICK_START.md
+================================================================================
+
+1. README.md lists QUICK_REFERENCE.md as 'Curses UI specific' but doesn't list a Tk UI quick reference, yet TK_UI_QUICK_START.md exists and is listed separately
+   Type: documentation_inconsistency
+
+   README.md structure:
+'### Reference Documentation
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick command reference (Curses UI specific)'
+
+But under '### UI-Specific Guides':
+'- **[TK_UI_QUICK_START.md](TK_UI_QUICK_START.md)** - Tk/Tkinter UI quick start'
+
+This creates confusion about whether TK_UI_QUICK_START.md is the Tk equivalent of QUICK_REFERENCE.md or something different. The categorization should be consistent - either both are 'UI-Specific Guides' or both are 'Reference Documentation'.
+
+--------------------------------------------------------------------------------
+
+2. SETTINGS_AND_CONFIGURATION.md shows boolean values in SET commands without quotes, but JSON examples use true/false
+   Type: documentation_inconsistency
+
+   SETTINGS_AND_CONFIGURATION.md states:
+'SET "editor.auto_number" true'
+'Booleans: true or false (lowercase, no quotes in commands; use true/false in JSON files)'
+
+But earlier in the same doc:
+'**Using SET command (in BASIC):**
+```basic
+SET "variables.case_conflict" "error"
+SET "editor.auto_number" true
+```'
+
+This is internally consistent, but TK_UI_QUICK_START.md doesn't mention the SET command syntax at all when discussing settings, only showing:
+'SET "variables.case_conflict" "error"' without explaining boolean syntax.
+
+--------------------------------------------------------------------------------
+
+3. UI_FEATURE_COMPARISON.md shows Find/Replace as ❌ for Web UI but marks it as ⚠️ with 'Tk: implemented, Web: planned' in the Notes
+   Type: documentation_inconsistency
+
+   UI_FEATURE_COMPARISON.md table:
+'| **Find/Replace** | ❌ | ❌ | ✅ | ⚠️ | Tk: implemented, Web: planned |'
+
+The Web column shows ⚠️ but the Notes say 'Web: planned', which should be 📋 according to the legend:
+'| 📋 | Planned for future implementation (not yet available) |'
+
+Inconsistent symbol usage.
+
+--------------------------------------------------------------------------------
+
+4. Different keyboard shortcuts documented for same actions across UIs without clear cross-reference
+   Type: documentation_inconsistency
+
+   TK_UI_QUICK_START.md shows:
+- Ctrl+H for Find and Replace
+- Ctrl+? for Help
+- No Ctrl+U mentioned
+
+keyboard-shortcuts.md (Curses) shows:
+- ^U for Activate menu bar
+- ^F for Help (not Ctrl+?)
+- ^P for Settings
+
+These differences are expected between UIs but there's no clear statement that keyboard-shortcuts.md is ONLY for Curses UI, and TK_UI_QUICK_START.md doesn't have a complete shortcuts reference.
+
+--------------------------------------------------------------------------------
+
+5. TK_UI_QUICK_START.md mentions 'Ctrl+?' for help but this shortcut is not standard across platforms
+   Type: documentation_inconsistency
+
+   Document states:
+'| **Ctrl+?** | Show/hide Variables Window |' (in table)
+And later: '- **In-app help**: Press **Ctrl+?** or use Help menu'
+
+Ctrl+? is not a standard keyboard shortcut and may not work on all platforms (? requires Shift on most keyboards, making it Ctrl+Shift+/). This should be clarified or changed to a more standard shortcut like F1.
+
+--------------------------------------------------------------------------------
+
+6. Document mentions 'Stmt' toolbar button but doesn't explain what 'Stmt' means or how it differs from 'Step'
+   Type: documentation_inconsistency
+
+   Document states:
+'Click the **Stmt** toolbar button (step statement) to move through each part:'
+
+And later:
+'Click the **Step** toolbar button (step line) to execute the entire line at once.'
+
+The abbreviation 'Stmt' is not explained until used in context. Should define 'Stmt = Statement' earlier or use full word 'Statement' in toolbar button description.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/user/UI_FEATURE_COMPARISON.md
+================================================================================
+
+1. Inconsistent use of ⚠️ symbol - sometimes means 'partially implemented' and sometimes means 'limited/basic'
+   Type: documentation_inconsistency
+
+   Legend states:
+'| ⚠️ | Partially implemented (see Notes column for details) |'
+
+But used for:
+1. 'Syntax highlighting' in Curses: 'Curses: basic' (not partial, just basic)
+2. 'Mouse support' in Curses: 'Curses: limited, terminal-dependent' (not partial, just limited)
+3. 'Keyboard shortcuts' in CLI: 'CLI: limited' (not partial, just limited)
+4. 'Recent files' in Web: 'Tk: menu, Web: localStorage' (fully implemented, just different)
+
+These should use different symbols or the legend should be updated to include 'limited/basic' as a meaning.
+
+--------------------------------------------------------------------------------
+
+2. UI_FEATURE_COMPARISON.md shows Find/Replace as ❌ for Web UI but marks it as ⚠️ with 'Tk: implemented, Web: planned' in the Notes
+   Type: documentation_inconsistency
+
+   UI_FEATURE_COMPARISON.md table:
+'| **Find/Replace** | ❌ | ❌ | ✅ | ⚠️ | Tk: implemented, Web: planned |'
+
+The Web column shows ⚠️ but the Notes say 'Web: planned', which should be 📋 according to the legend:
+'| 📋 | Planned for future implementation (not yet available) |'
+
+Inconsistent symbol usage.
+
+--------------------------------------------------------------------------------
+
+3. Feature matrix shows 'Edit variables' as ⚠️ for Curses with 'CLI: immediate mode only' in Notes, but CLI column shows ❌
+   Type: documentation_inconsistency
+
+   Table row:
+'| **Edit variables** | ❌ | ⚠️ | ✅ | ✅ | CLI: immediate mode only |'
+
+The Notes say 'CLI: immediate mode only' but the CLI column shows ❌ (not available). If CLI can edit variables in immediate mode, it should be ⚠️ with a note, not ❌. This is contradictory.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/user/keyboard-shortcuts.md
+================================================================================
+
+1. README.md describes keyboard-shortcuts.md as 'Curses UI specific' but the file title says 'MBASIC Curses UI Keyboard Shortcuts', creating ambiguity about whether it covers all UIs or just Curses
+   Type: documentation_inconsistency
+
+   README.md line: '- **[keyboard-shortcuts.md](keyboard-shortcuts.md)** - Keyboard shortcuts reference (Curses UI specific)'
+
+keyboard-shortcuts.md title: '# MBASIC Curses UI Keyboard Shortcuts'
+
+This is consistent, but TK_UI_QUICK_START.md has its own shortcuts table that differs from keyboard-shortcuts.md, suggesting there should be separate docs or a unified reference.
+
+--------------------------------------------------------------------------------
+
+2. Different keyboard shortcuts documented for same actions across UIs without clear cross-reference
+   Type: documentation_inconsistency
+
+   TK_UI_QUICK_START.md shows:
+- Ctrl+H for Find and Replace
+- Ctrl+? for Help
+- No Ctrl+U mentioned
+
+keyboard-shortcuts.md (Curses) shows:
+- ^U for Activate menu bar
+- ^F for Help (not Ctrl+?)
+- ^P for Settings
+
+These differences are expected between UIs but there's no clear statement that keyboard-shortcuts.md is ONLY for Curses UI, and TK_UI_QUICK_START.md doesn't have a complete shortcuts reference.
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+FILE: docs/user/sequential-files.md
+================================================================================
+
+1. Document claims to describe 'Sequential File Handling' but only covers line endings and ^Z EOF marker, not general sequential file operations
+   Type: documentation_inconsistency
+
+   Title: '# Sequential File Handling'
+
+But content only covers:
+- Line Ending Differences
+- CP/M File Format and ^Z EOF Marker
+
+Missing:
+- How to open sequential files (OPEN "I" vs OPEN "O")
+- INPUT# vs LINE INPUT# usage
+- PRINT# for output
+- CLOSE statement
+- General sequential file workflow
+
+The 'See Also' section references these topics but they're not covered in this doc. Title should be more specific like 'Sequential File Line Endings and EOF Markers' or content should be expanded.
+
+--------------------------------------------------------------------------------
+

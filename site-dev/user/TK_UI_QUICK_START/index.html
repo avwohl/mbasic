@@ -1106,7 +1106,7 @@
    <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;HELLO, WORLD!&quot;</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">END</span>
 </code></pre></div></li>
-<li>Press <strong>Ctrl+R</strong> to run</li>
+<li>Press <strong>{{kbd:run_program}}</strong> to run</li>
 <li>See output in the lower pane</li>
 </ol>
 <h2 id="essential-keyboard-shortcuts">Essential Keyboard Shortcuts<a class="headerlink" href="#essential-keyboard-shortcuts" title="Permanent link">&para;</a></h2>
@@ -1119,43 +1119,43 @@
 </thead>
 <tbody>
 <tr>
-<td><strong>Ctrl+R</strong></td>
+<td><strong>{{kbd:run_program}}</strong></td>
 <td>Run program</td>
 </tr>
 <tr>
-<td><strong>Ctrl+S</strong></td>
+<td><strong>{{kbd:file_save}}</strong></td>
 <td>Save file</td>
 </tr>
 <tr>
-<td><strong>Ctrl+O</strong></td>
+<td><strong>{{kbd:file_open}}</strong></td>
 <td>Open file</td>
 </tr>
 <tr>
-<td><strong>Ctrl+N</strong></td>
+<td><strong>{{kbd:file_new}}</strong></td>
 <td>New program</td>
 </tr>
 <tr>
-<td><strong>Ctrl+I</strong></td>
+<td><strong>{{kbd:smart_insert}}</strong></td>
 <td>Smart insert blank line</td>
 </tr>
 <tr>
-<td><strong>Ctrl+E</strong></td>
+<td><strong>{{kbd:renumber}}</strong></td>
 <td>Renumber program</td>
 </tr>
 <tr>
-<td><strong>Ctrl+W</strong></td>
+<td><strong>{{kbd:toggle_variables}}</strong></td>
 <td>Show/hide Variables Window</td>
 </tr>
 <tr>
-<td><strong>Ctrl+K</strong></td>
+<td><strong>{{kbd:toggle_stack}}</strong></td>
 <td>Show/hide Execution Stack Window</td>
 </tr>
 <tr>
-<td><strong>Ctrl+B</strong></td>
+<td><strong>{{kbd:toggle_breakpoint}}</strong></td>
 <td>Toggle breakpoint</td>
 </tr>
 <tr>
-<td><strong>Ctrl+H</strong></td>
+<td><strong>{{kbd:replace}}</strong></td>
 <td>Find and replace (Tk UI only)</td>
 </tr>
 </tbody>
@@ -1180,7 +1180,7 @@
 <a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>└────────────────────────────────────────────────────┘
 </code></pre></div>
 <h2 id="smart-insert-workflow">Smart Insert Workflow<a class="headerlink" href="#smart-insert-workflow" title="Permanent link">&para;</a></h2>
-<p><strong>Smart Insert (Ctrl+I)</strong> is the fastest way to add code between existing lines. No more mental math to figure out line numbers!</p>
+<p><strong>Smart Insert ({{kbd:smart_insert}})</strong> is the fastest way to add code between existing lines. No more mental math to figure out line numbers!</p>
 <h3 id="example-1-basic-usage">Example 1: Basic Usage<a class="headerlink" href="#example-1-basic-usage" title="Permanent link">&para;</a></h3>
 <p>You have this program:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;START&quot;</span>
@@ -1189,7 +1189,7 @@
 <p>Want to add a line between them?</p>
 <ol>
 <li>Click on line 10 (or position cursor anywhere on that line)</li>
-<li>Press <strong>Ctrl+I</strong></li>
+<li>Press <strong>{{kbd:smart_insert}}</strong></li>
 <li>A blank line 15 is automatically inserted!</li>
 </ol>
 <p>Result:
@@ -1204,7 +1204,7 @@
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nl">11</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;TWO&quot;</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nl">12</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;THREE&quot;</span>
 </code></pre></div></p>
-<p>Position cursor on line 10, press <strong>Ctrl+I</strong>:</p>
+<p>Position cursor on line 10, press <strong>{{kbd:smart_insert}}</strong>:</p>
 <p>A dialog appears: "No room between lines 10 and 11. Would you like to renumber the program to make room?"</p>
 <p>Click <strong>Yes</strong> → Lines 11 onwards are renumbered to 1000, 1010, 1020... creating plenty of room!</p>
 <p>Result:
@@ -1219,7 +1219,7 @@
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nl">20</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;MIDDLE&quot;</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nl">30</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;END&quot;</span>
 </code></pre></div></p>
-<p>Cursor on line 30, press <strong>Ctrl+I</strong>:</p>
+<p>Cursor on line 30, press <strong>{{kbd:smart_insert}}</strong>:</p>
 <p>A blank line 40 is inserted (using standard increment of 10).</p>
 <p>Result:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;START&quot;</span>
@@ -1235,27 +1235,27 @@
 </code></pre></div></p>
 <p><strong>New way (Smart Insert):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>1. Position on line 10
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>2. Press Ctrl+I
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>2. Press {{kbd:smart_insert}}
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>3. Start typing your code
 </code></pre></div></p>
 <p><strong>Time saved:</strong> ~5-10 seconds per line insertion. Over a programming session, this adds up!</p>
 <h2 id="typical-workflows">Typical Workflows<a class="headerlink" href="#typical-workflows" title="Permanent link">&para;</a></h2>
 <h3 id="1-write-new-program">1. Write New Program<a class="headerlink" href="#1-write-new-program" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>1. Press Ctrl+N for new program
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>1. Press {{kbd:file_new}} for new program
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>2. Type first line: 10 PRINT &quot;START&quot;
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>3. Press Enter
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>4. Type next line: 20 END
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>5. Press Ctrl+R to run
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>5. Press {{kbd:run_program}} to run
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>6. Check output in lower pane
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>7. Press Ctrl+S to save
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>7. Press {{kbd:file_save}} to save
 </code></pre></div>
 <h3 id="2-expand-existing-program">2. Expand Existing Program<a class="headerlink" href="#2-expand-existing-program" title="Permanent link">&para;</a></h3>
 <p>You have a working program and need to add functionality:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>1. Find the spot where new code goes
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>2. Press Ctrl+I to insert blank line
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>2. Press {{kbd:smart_insert}} to insert blank line
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>3. Type your new code
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>4. Press Ctrl+R to test
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>5. Press Ctrl+S to save
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>4. Press {{kbd:run_program}} to test
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>5. Press {{kbd:file_save}} to save
 </code></pre></div>
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nl">Before:</span>
@@ -1263,7 +1263,7 @@
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="nl">20</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;You entered&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">N</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="nl">30</span><span class="w"> </span><span class="kr">END</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="vg">After</span><span class="w"> </span><span class="p">(</span><span class="vg">cursor</span><span class="w"> </span><span class="vg">on</span><span class="w"> </span><span class="il">10</span><span class="p">,</span><span class="w"> </span><span class="vg">Ctrl</span><span class="o">+</span><span class="vg">I</span><span class="w"> </span><span class="vg">twice</span><span class="p">)</span><span class="o">:</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="vg">After</span><span class="w"> </span><span class="p">(</span><span class="vg">cursor</span><span class="w"> </span><span class="vg">on</span><span class="w"> </span><span class="il">10</span><span class="p">,</span><span class="w"> </span><span class="p">{{</span><span class="nl">kbd:</span><span class="vg">smart_insert</span><span class="p">}}</span><span class="w"> </span><span class="vg">twice</span><span class="p">)</span><span class="o">:</span>
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="nl">10</span><span class="w"> </span><span class="kr">INPUT</span><span class="w"> </span><span class="s2">&quot;Enter number&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">N</span>
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="nl">15</span><span class="w"> </span><span class="kr">IF</span><span class="w"> </span><span class="vg">N</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="il">0</span><span class="w"> </span><span class="kr">THEN</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;Must be positive&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kr">GOTO</span><span class="w"> </span><span class="nl">10</span>
 <a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="nl">17</span><span class="w"> </span><span class="c1">&#39; Validate input</span>
@@ -1272,7 +1272,7 @@
 </code></pre></div></p>
 <h3 id="3-major-restructuring-use-renumber">3. Major Restructuring - Use Renumber<a class="headerlink" href="#3-major-restructuring-use-renumber" title="Permanent link">&para;</a></h3>
 <p>Your program has grown and line numbers are a mess:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>1. Press Ctrl+E (Renumber dialog opens)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>1. Press {{kbd:renumber}} (Renumber dialog opens)
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>2. Set &quot;Start at&quot;: 100
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>3. Set &quot;Increment&quot;: 10
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>4. Click &quot;Renumber&quot;
@@ -1293,8 +1293,8 @@
 <p>Notice: GOTO 10 automatically became GOTO 100!</p>
 <h3 id="4-debug-with-breakpoints-and-variables">4. Debug with Breakpoints and Variables<a class="headerlink" href="#4-debug-with-breakpoints-and-variables" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>1. Click line number gutter to set breakpoint (● appears)
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>2. Press Ctrl+W to open Variables Window
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>3. Press Ctrl+R to run
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>2. Press {{kbd:toggle_variables}} to open Variables Window
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>3. Press {{kbd:run_program}} to run
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>4. Program stops at breakpoint
 <a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>5. Check variable values in Variables Window
 <a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>6. Click &quot;Step&quot; toolbar button to step through code one statement at a time
@@ -1310,7 +1310,7 @@
 - Filter box to search for specific variables</p>
 <h3 id="5-advanced-editing-find-and-replace">5. Advanced Editing - Find and Replace<a class="headerlink" href="#5-advanced-editing-find-and-replace" title="Permanent link">&para;</a></h3>
 <p>Large program with repeated code?</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>1. Press Ctrl+H (Find and Replace)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>1. Press {{kbd:replace}} (Find and Replace)
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>2. Enter find text: &quot;OLDVAR&quot;
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>3. Enter replace text: &quot;NEWVAR&quot;
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>4. Click &quot;Replace All&quot;
@@ -1322,11 +1322,11 @@
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>python3<span class="w"> </span>mbasic<span class="w"> </span>--ui<span class="w"> </span>tk<span class="w"> </span>myprogram.bas
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Or load from menu</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="m">1</span>.<span class="w"> </span>Press<span class="w"> </span>Ctrl+O
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="m">1</span>.<span class="w"> </span>Press<span class="w"> </span><span class="o">{{</span>kbd:file_open<span class="o">}}</span>
 <a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="m">2</span>.<span class="w"> </span>Browse<span class="w"> </span>to<span class="w"> </span>file
 <a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="m">3</span>.<span class="w"> </span>Click<span class="w"> </span>Open
 <a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="m">4</span>.<span class="w"> </span>Edit<span class="w"> </span><span class="k">in</span><span class="w"> </span>editor
-<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="m">5</span>.<span class="w"> </span>Press<span class="w"> </span>Ctrl+S<span class="w"> </span>to<span class="w"> </span>save
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="m">5</span>.<span class="w"> </span>Press<span class="w"> </span><span class="o">{{</span>kbd:file_save<span class="o">}}</span><span class="w"> </span>to<span class="w"> </span>save
 </code></pre></div>
 <h3 id="create-program-template">Create Program Template<a class="headerlink" href="#create-program-template" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nl">10</span><span class="w"> </span><span class="c1">REM Program: [Name]</span>
@@ -1342,14 +1342,14 @@
 <a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="nl">910</span>
 <a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="nl">1000</span><span class="w"> </span><span class="kr">END</span>
 </code></pre></div>
-<p>Use <strong>Ctrl+I</strong> to fill in sections!</p>
+<p>Use <strong>{{kbd:smart_insert}}</strong> to fill in sections!</p>
 <h3 id="fix-syntax-errors">Fix Syntax Errors<a class="headerlink" href="#fix-syntax-errors" title="Permanent link">&para;</a></h3>
 <p>Red <strong>?</strong> markers appear in line number gutter for syntax errors:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>1. Look for ? in gutter
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>2. Read error in output pane
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>3. Fix the syntax
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>4. ? disappears automatically (100ms delay)
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>5. Press Ctrl+R to run
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>5. Press {{kbd:run_program}} to run
 </code></pre></div>
 <p><strong>Common errors:</strong>
 - Missing quotes: <code>PRINT HELLO</code> → <code>PRINT "HELLO"</code>
@@ -1363,7 +1363,7 @@
 <a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">A</span><span class="p">(</span><span class="il">5</span><span class="p">)</span>
 <a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="nl">60</span><span class="w"> </span><span class="kr">END</span>
 </code></pre></div>
-<p>Run with <strong>Ctrl+R</strong>, then check Variables Window (<strong>Ctrl+W</strong>) to see array contents!</p>
+<p>Run with <strong>{{kbd:run_program}}</strong>, then check Variables Window (<strong>{{kbd:toggle_variables}}</strong>) to see array contents!</p>
 <h2 id="variable-case-preservation">Variable Case Preservation<a class="headerlink" href="#variable-case-preservation" title="Permanent link">&para;</a></h2>
 <p>MBASIC now preserves the original case of your variables while maintaining case-insensitive behavior!</p>
 <h3 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
@@ -1441,7 +1441,7 @@
 5. <code>END</code> ← Last</p>
 <p>Click the <strong>Step</strong> toolbar button (step line) to execute the entire line at once.</p>
 <h3 id="execution-stack-window">Execution Stack Window<a class="headerlink" href="#execution-stack-window" title="Permanent link">&para;</a></h3>
-<p>Press <strong>Ctrl+K</strong> to see the Execution Stack Window showing active loops and subroutine calls:</p>
+<p>Press <strong>{{kbd:toggle_stack}}</strong> to see the Execution Stack Window showing active loops and subroutine calls:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">3</span>
 <a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="nl">20</span><span class="w">   </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">J</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">2</span>
 <a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="nl">30</span><span class="w">     </span><span class="kr">GOSUB</span><span class="w"> </span><span class="nl">100</span>
@@ -1469,7 +1469,7 @@
 <a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="nl">200</span><span class="w"> </span><span class="c1">REM Output</span>
 <a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="nl">300</span><span class="w"> </span><span class="kr">END</span>
 </code></pre></div>
-<p>Use Smart Insert (Ctrl+I) to add details under each section header without worrying about line numbers!</p>
+<p>Use Smart Insert ({{kbd:smart_insert}}) to add details under each section header without worrying about line numbers!</p>
 <h3 id="2-renumber-before-sharing">2. Renumber Before Sharing<a class="headerlink" href="#2-renumber-before-sharing" title="Permanent link">&para;</a></h3>
 <p>Your development version might have messy line numbers:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;START&quot;</span>
@@ -1479,7 +1479,7 @@
 <a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="nl">50</span><span class="w"> </span><span class="kr">END</span>
 </code></pre></div></p>
 <p>Before sharing, make it clean:
-1. Press <strong>Ctrl+E</strong>
+1. Press <strong>{{kbd:renumber}}</strong>
 2. Start=10, Increment=10
 3. Result:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">PRINT</span><span class="w"> </span><span class="s2">&quot;START&quot;</span>
@@ -1495,7 +1495,7 @@
 </code></pre></div></p>
 <p>Add comments while developing with Smart Insert:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="nl">10</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">5</span>
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="c1">&#39; Ctrl+I here creates line 15</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="c1">&#39; {{kbd:smart_insert}} here creates line 15</span>
 <a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="nl">15</span><span class="w"> </span><span class="c1">&#39; Calculate result</span>
 <a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="nl">20</span><span class="w"> </span><span class="vg">Y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="vg">X</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="il">10</span>
 </code></pre></div></p>
@@ -1506,9 +1506,9 @@
 <a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="nl">30</span><span class="w">   </span><span class="kr">INPUT</span><span class="w"> </span><span class="s2">&quot;Score&quot;</span><span class="p">;</span><span class="w"> </span><span class="vg">SCORES</span><span class="p">(</span><span class="vg">I</span><span class="p">)</span>
 <a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="nl">40</span><span class="w"> </span><span class="kr">NEXT</span><span class="w"> </span><span class="vg">I</span>
 </code></pre></div>
-<p>Run this with <strong>Ctrl+W</strong> window open - you'll see each array element as it's filled!</p>
+<p>Run this with <strong>{{kbd:toggle_variables}}</strong> window open - you'll see each array element as it's filled!</p>
 <h3 id="5-execution-stack-window-for-loops">5. Execution Stack Window for Loops<a class="headerlink" href="#5-execution-stack-window-for-loops" title="Permanent link">&para;</a></h3>
-<p>Press <strong>Ctrl+K</strong> to see Execution Stack Window while stepping through nested loops:</p>
+<p>Press <strong>{{kbd:toggle_stack}}</strong> to see Execution Stack Window while stepping through nested loops:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="nl">10</span><span class="w"> </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">3</span>
 <a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a><span class="nl">20</span><span class="w">   </span><span class="kr">FOR</span><span class="w"> </span><span class="vg">J</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="il">1</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="il">2</span>
 <a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="nl">30</span><span class="w">     </span><span class="kr">PRINT</span><span class="w"> </span><span class="vg">I</span><span class="p">;</span><span class="w"> </span><span class="vg">J</span>
@@ -1522,12 +1522,12 @@
 <p>Perfect for debugging complex loop logic!</p>
 <h3 id="6-quick-testing-cycle">6. Quick Testing Cycle<a class="headerlink" href="#6-quick-testing-cycle" title="Permanent link">&para;</a></h3>
 <p>Fastest workflow for iterative development:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>Type → Ctrl+R → Check → Edit → Ctrl+R → Check → ...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>Type → {{kbd:run_program}} → Check → Edit → {{kbd:run_program}} → Check → ...
 </code></pre></div>
-<p>No need to save between test runs! Save with <strong>Ctrl+S</strong> only when you're happy with results.</p>
+<p>No need to save between test runs! Save with <strong>{{kbd:file_save}}</strong> only when you're happy with results.</p>
 <h3 id="7-breakpoint-shortcuts">7. Breakpoint Shortcuts<a class="headerlink" href="#7-breakpoint-shortcuts" title="Permanent link">&para;</a></h3>
 <p><strong>Mouse:</strong> Click line number to toggle breakpoint
-<strong>Keyboard:</strong> Position cursor, press <strong>Ctrl+B</strong></p>
+<strong>Keyboard:</strong> Position cursor, press <strong>{{kbd:toggle_breakpoint}}</strong></p>
 <p>Try both and use whichever feels faster!</p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <h3 id="learn-more-about">Learn More About...<a class="headerlink" href="#learn-more-about" title="Permanent link">&para;</a></h3>
@@ -1546,22 +1546,22 @@
 <h3 id="master-these-skills">Master These Skills<a class="headerlink" href="#master-these-skills" title="Permanent link">&para;</a></h3>
 <p>In order of importance:</p>
 <ol>
-<li><strong>Smart Insert (Ctrl+I)</strong> - Essential for efficient editing</li>
-<li><strong>Run (Ctrl+R)</strong> and toolbar buttons (Step/Stmt/Cont) - Core debugging workflow</li>
-<li><strong>Variables Window (Ctrl+W)</strong> - See what your program is doing</li>
-<li><strong>Renumber (Ctrl+E)</strong> - Keep code organized</li>
-<li><strong>Breakpoints (Ctrl+B)</strong> - Stop at critical points</li>
-<li><strong>Save Often (Ctrl+S)</strong> - Protect your work</li>
+<li><strong>Smart Insert ({{kbd:smart_insert}})</strong> - Essential for efficient editing</li>
+<li><strong>Run ({{kbd:run_program}})</strong> and toolbar buttons (Step/Stmt/Cont) - Core debugging workflow</li>
+<li><strong>Variables Window ({{kbd:toggle_variables}})</strong> - See what your program is doing</li>
+<li><strong>Renumber ({{kbd:renumber}})</strong> - Keep code organized</li>
+<li><strong>Breakpoints ({{kbd:toggle_breakpoint}})</strong> - Stop at critical points</li>
+<li><strong>Save Often ({{kbd:file_save}})</strong> - Protect your work</li>
 </ol>
 <h3 id="common-mistakes-to-avoid">Common Mistakes to Avoid<a class="headerlink" href="#common-mistakes-to-avoid" title="Permanent link">&para;</a></h3>
 <p>❌ <strong>Manually calculating line numbers</strong> → Use Smart Insert instead
-❌ <strong>Running without saving</strong> → Save first with Ctrl+S
+❌ <strong>Running without saving</strong> → Save first with {{kbd:file_save}}
 ❌ <strong>Ignoring ? markers</strong> → Fix syntax errors before running
 ❌ <strong>Not using Variables Window</strong> → You're debugging blind!
 ❌ <strong>Stepping through entire program</strong> → Set breakpoints, use Continue</p>
 <h2 id="getting-help">Getting Help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>In-app help</strong>: Press <strong>Ctrl+?</strong> or use Help menu</li>
+<li><strong>In-app help</strong>: Press <strong>{{kbd:help_topics}}</strong> or use Help menu</li>
 <li><strong>Online docs</strong>: See <code>docs/</code> directory</li>
 <li><strong>Examples</strong>: Check <code>basic/</code> directory</li>
 <li><strong>Issues</strong>: Report at GitHub repository</li>

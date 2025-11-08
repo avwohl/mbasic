@@ -120,10 +120,14 @@ site_dir: site-dev
 exclude_docs: |
   README.md
   history/docs_inconsistencies_report*.md
+  history/code-v13*.md
+  history/docs-v13.md
   dev/claude_if_you_read_in_here_you_loop/
   design/future_compiler/
   dev/*_TODO.md
   dev/PIP_INSTALL_RESOURCE_LOCATION_PLAN.md
   dev/POPUP_DIALOG_REFACTOR_TODO.md
   dev/STATUS_BAR_UPDATES_REVIEW.md
+  dev/KEYBINDING_MACROS_MIGRATION.md
   future/
+  help/

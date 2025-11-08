@@ -28,7 +28,7 @@ The Curses UI provides a full-screen text editor for writing BASIC programs.
 │                                          │
 │                                          │
 │                                          │
-└─ [Ctrl+R: Run] [Ctrl+P: Help] ─────────┘
+└─ [{{kbd:run:curses}}: Run] [{{kbd:parse:curses}}: Help] ─────────┘
 ```
 
 ## Entering Programs
@@ -113,11 +113,11 @@ Result:
 See your UI's keyboard shortcuts documentation for the complete list.
 
 Common shortcuts:
-- **Ctrl+R** - Run program
-- **Ctrl+N** - New program (clear)
-- **Ctrl+S** - Save program
+- **{{kbd:run:curses}}** - Run program
+- **{{kbd:new:curses}}** - New program (clear)
+- **{{kbd:save:curses}}** - Save program
 - **Ctrl+L** - Load program
-- **Ctrl+P** - Help
+- **{{kbd:parse:curses}}** - Help
 
 ## Renumbering Lines
 
@@ -142,7 +142,7 @@ AUTO
 30 PRINT "Line 3"    (number added automatically)
 ```
 
-Exit AUTO mode with Ctrl+C or by typing a line number manually.
+Exit AUTO mode with {{kbd:continue:curses}} or by typing a line number manually.
 
 See: [AUTO Command](../../language/statements/auto.md)
 
