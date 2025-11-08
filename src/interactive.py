@@ -24,6 +24,7 @@ from src.interpreter import Interpreter, ChainException
 import src.ast_nodes as ast_nodes
 from src.input_sanitizer import sanitize_and_clear_parity
 from src.debug_logger import debug_log_error, is_debug_mode
+from src.ui.keybinding_loader import KeybindingLoader
 
 # Try to import readline for better line editing
 # This enhances input() with:
@@ -81,6 +82,23 @@ def print_error(e, runtime=None):
         print("(Full traceback sent to stderr - check console)")
 
 
+def _format_key_for_display(key_string):
+    """
+    Convert keybinding format to ^X notation for CLI display.
+
+    Args:
+        key_string: Key in format like "Ctrl+A" or "SYSTEM"
+
+    Returns:
+        Display string like "^A" or "SYSTEM"
+    """
+    if key_string.startswith("Ctrl+"):
+        # Convert "Ctrl+A" to "^A"
+        letter = key_string[5:]
+        return f"^{letter}"
+    return key_string
+
+
 class InteractiveMode:
     """MBASIC 5.21 interactive command mode"""
 
@@ -118,6 +136,14 @@ class InteractiveMode:
             from src.file_io import RealFileIO
             file_io = RealFileIO()
         self.file_io = file_io
+
+        # Load CLI keybindings for displaying keyboard shortcuts
+        self.keybindings = KeybindingLoader('cli')
+        # Cache formatted key displays
+        edit_key = self.keybindings.get_primary('editor', 'edit') or 'Ctrl+A'
+        stop_key = self.keybindings.get_primary('editor', 'stop') or 'Ctrl+C'
+        self.edit_key_display = _format_key_for_display(edit_key)
+        self.stop_key_display = _format_key_for_display(stop_key)
 
     # Properties for backward compatibility
     @property
@@ -232,7 +258,7 @@ class InteractiveMode:
         if not READLINE_AVAILABLE:
             print("(Note: readline not available - line editing limited)")
         else:
-            print("(Tip: Press ^A to edit last line, or ^A followed by line number)")
+            print(f"(Tip: Press {self.edit_key_display} to edit last line, or {self.edit_key_display} followed by line number)")
         print("Ready")
 
         while True:
@@ -288,7 +314,7 @@ class InteractiveMode:
                     break
                 elif self.ctrl_c_count == 2:
                     # Two Ctrl+C in a row - show hint
-                    print("Press ^C again to exit, or type SYSTEM to return to OS")
+                    print(f"Press {self.stop_key_display} again to exit, or type SYSTEM to return to OS")
                 else:
                     # First Ctrl+C - just show "Break"
                     print("Break")

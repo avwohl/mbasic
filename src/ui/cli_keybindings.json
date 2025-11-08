@@ -1,5 +1,10 @@
 {
   "editor": {
+    "edit": {
+      "keys": ["Ctrl+A"],
+      "primary": "Ctrl+A",
+      "description": "Edit line (last line or Ctrl+A followed by line number)"
+    },
     "run": {
       "keys": ["RUN"],
       "primary": "RUN",
