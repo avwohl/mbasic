@@ -42,13 +42,13 @@ The FOR...NEXT loop executes a block of statements a specified number of times, 
 5. If test passes, process repeats from step 2
 
 ### Loop Termination:
-The loop terminates when the variable passes the ending value, considering the STEP direction:
-- **Positive STEP** (or no STEP): Loop terminates when variable > ending value
-- **Negative STEP**: Loop terminates when variable < ending value
+The termination test happens AFTER each increment/decrement at the NEXT statement:
+- **Positive STEP** (or no STEP): Loop continues while variable <= ending value
+- **Negative STEP**: Loop continues while variable >= ending value
 
 For example:
-- `FOR I = 1 TO 10` terminates when I > 10 (after I reaches 10 and increments to 11)
-- `FOR I = 10 TO 1 STEP -1` terminates when I < 1 (after I reaches 1 and decrements to 0)
+- `FOR I = 1 TO 10` executes with I=1,2,3,...,10 (11 iterations). After I=10 executes, NEXT increments to 11, test fails (11 > 10), loop exits.
+- `FOR I = 10 TO 1 STEP -1` executes with I=10,9,8,...,1 (10 iterations). After I=1 executes, NEXT decrements to 0, test fails (0 < 1), loop exits.
 
 ### Features:
 - **STEP** can be positive, negative, or fractional (defaults to 1 if omitted)

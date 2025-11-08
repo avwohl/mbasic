@@ -32,6 +32,7 @@ END statements may be placed anywhere in the program to terminate execution. Unl
 - Returns to command level
 - No "Break" message printed
 - Can be continued with CONT (execution resumes at next statement after END)
+- Note: Files remain closed if CONT is used after END
 
 **STOP:**
 - Does NOT close files
@@ -39,7 +40,7 @@ END statements may be placed anywhere in the program to terminate execution. Unl
 - Prints "Break in line nnnnn" message
 - Can be continued with CONT (execution resumes at statement after STOP)
 
-Both END and STOP allow continuation with CONT, but END closes files first.
+Both END and STOP allow continuation with CONT. The key difference is that END closes all files before returning to command level, and these files remain closed even if execution is continued with CONT.
 
 ## Example
 

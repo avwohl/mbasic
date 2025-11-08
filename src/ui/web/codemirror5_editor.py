@@ -48,7 +48,7 @@ class CodeMirror5Editor(ui.element, component='codemirror5_editor.js'):
 
         # Internal handler to keep _value in sync with user edits
         def _internal_change_handler(e):
-            self._value = e.args  # CodeMirror sends new value as args
+            self._value = e.args  # CodeMirror sends new value in e.args attribute
             if on_change:
                 on_change(e)
 
@@ -142,7 +142,7 @@ class CodeMirror5Editor(ui.element, component='codemirror5_editor.js'):
         Full implementation would require async JavaScript communication support.
 
         Returns:
-            Dict with 'line' and 'column' keys (placeholder: always {0, 0})
+            Dict with 'line' and 'column' keys (placeholder: always {'line': 0, 'column': 0})
         """
         # This would need async support, for now return placeholder
         return {'line': 0, 'column': 0}

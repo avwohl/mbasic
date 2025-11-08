@@ -4,9 +4,10 @@ Macro substitution for help documentation.
 Provides template variable replacement in markdown help files.
 Macros use the format: {{macro_name}} or {{macro_name:context}}
 
-Example:
-  {{kbd:help}} → looks up 'help' action in keybindings (searches all sections)
-                  and returns the primary keybinding for that action
+Examples:
+  {{kbd:help}} → looks up 'help' action in current UI's keybindings and returns
+                  the primary keybinding for that action
+  {{kbd:save:curses}} → looks up 'save' action in Curses UI specifically
   {{version}} → MBASIC version string
 """
 
@@ -34,10 +35,10 @@ class HelpMacros:
     def _load_keybindings(self) -> Dict:
         """Load keybindings configuration for current UI.
 
-        Note: This is generic keybinding loading for macro expansion in help content
-        (e.g., {{kbd:run}} -> "^R"). This is different from help_widget.py which uses
-        hardcoded keys for its own navigation. HelpMacros needs full keybindings to
-        expand {{kbd:action}} macros in documentation, not for actual event handling.
+        Note: This loads the same keybinding JSON files as keybinding_loader.py, but for
+        a different purpose: macro expansion in help content (e.g., {{kbd:run}} -> "^R")
+        rather than runtime event handling. This is separate from help_widget.py which
+        uses hardcoded keys for navigation within the help system itself.
         """
         keybindings_path = Path(__file__).parent / f"{self.ui_name}_keybindings.json"
 

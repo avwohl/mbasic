@@ -28,8 +28,9 @@ class PC:
         PC(10, 2)  - Third statement on line 10 (stmt_offset=2)
         PC(None, 0) - Halted (no valid line)
 
-    Note: stmt_offset is the list index (position in the statements array).
-    The term "offset" is used for historical reasons but it's simply the array index.
+    Note: Throughout the codebase, stmt_offset is consistently used as a list index
+    (0, 1, 2, ...) not an offset in bytes. The parameter name uses "offset" for
+    historical/semantic reasons (it offsets from the start of the line's statement list).
     """
 
     def __init__(self, line_num=None, stmt_offset=0):

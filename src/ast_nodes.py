@@ -188,13 +188,13 @@ class InputStatementNode:
 
     Note: The suppress_question field controls "?" display:
     - suppress_question=False (default): Adds "?" after prompt
-      Examples: INPUT var → "? ", INPUT "Name", var → "Name? "
-    - suppress_question=True: No "?" added (but custom prompt string still displays if present)
-      Examples: INPUT; var → "" (no prompt), INPUT "Name"; var → "Name" (prompt without "?")
+      Examples: INPUT var → "? ", INPUT "Name", var → "Name? ", INPUT "Name"; var → "Name? "
+    - suppress_question=True: No "?" added, no prompt displayed
+      Examples: INPUT; var → "" (no prompt, no "?")
 
-    Semicolon position determines suppress_question value:
-    - INPUT "prompt"; var → semicolon after prompt is just separator (suppress_question=False, shows "?")
+    Semicolon usage:
     - INPUT; var → semicolon immediately after INPUT (suppress_question=True, no "?")
+    - INPUT "prompt"; var → semicolon after prompt is just separator (suppress_question=False, shows "?")
     """
     prompt: Optional['ExpressionNode']
     variables: List['VariableNode']
@@ -234,9 +234,9 @@ class IfStatementNode:
     else_line_number: Optional[int]
     line_num: int = 0
     column: int = 0
-    keyword_token: Optional[Token] = None  # Token for IF keyword
-    then_token: Optional[Token] = None     # Token for THEN keyword
-    else_token: Optional[Token] = None     # Token for ELSE keyword (if present)
+    keyword_token: Optional[Token] = None  # Token for IF keyword (legacy, not currently used)
+    then_token: Optional[Token] = None     # Token for THEN keyword (legacy, not currently used)
+    else_token: Optional[Token] = None     # Token for ELSE keyword (legacy, not currently used)
 
 
 @dataclass
@@ -253,9 +253,9 @@ class ForStatementNode:
     step_expr: Optional['ExpressionNode']  # Default is 1
     line_num: int = 0
     column: int = 0
-    keyword_token: Optional[Token] = None  # Token for FOR keyword
-    to_token: Optional[Token] = None       # Token for TO keyword
-    step_token: Optional[Token] = None     # Token for STEP keyword (if present)
+    keyword_token: Optional[Token] = None  # Token for FOR keyword (legacy, not currently used)
+    to_token: Optional[Token] = None       # Token for TO keyword (legacy, not currently used)
+    step_token: Optional[Token] = None     # Token for STEP keyword (legacy, not currently used)
 
 
 @dataclass
@@ -1189,7 +1189,7 @@ class VariableNode:
     """Variable reference
 
     Type suffix handling:
-    - type_suffix: The actual suffix character ($, %, !, #) - always set to indicate variable type
+    - type_suffix: The actual suffix character ($, %, !, #) when present
     - explicit_type_suffix: Boolean indicating the origin of type_suffix:
         * True: suffix appeared in source code (e.g., "X%" in "X% = 5")
         * False: suffix inferred from DEFINT/DEFSNG/DEFDBL/DEFSTR (e.g., "X" with DEFINT A-Z)

@@ -187,7 +187,8 @@ class ResourceLimits:
         """
         # Calculate total elements (all dimensions multiplied)
         # Note: DIM A(N) creates N+1 elements (0 to N) in MBASIC 5.21
-        # This implements the MBASIC array sizing convention (called by execute_dim() in interpreter.py)
+        # This calculation accounts for the MBASIC array sizing convention for limit checking.
+        # The actual array creation/initialization is done by execute_dim() in interpreter.py.
         total_elements = 1
         for dim_size in dimensions:
             total_elements *= (dim_size + 1)  # +1 for 0-based indexing (0 to N)

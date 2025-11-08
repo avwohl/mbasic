@@ -2144,7 +2144,6 @@ class TkBackend(UIBackend):
             # Only show full error list in output if there are multiple errors.
             # For single errors, the red ? icon in the editor is sufficient feedback.
             # This avoids cluttering the output pane with repetitive messages during editing.
-            # Note: We don't track "first time" - this is intentionally simple.
             should_show_list = len(errors_found) > 1
             if should_show_list:
                 self._add_output("\n=== Syntax Errors ===\n")
@@ -2602,13 +2601,14 @@ class TkBackend(UIBackend):
         if len(event.char) != 1:
             return None
 
-        # Allow control characters (backspace, delete) - these modify text via deletion,
-        # not by inserting printable characters, so they pass validation
+        # Allow backspace and delete - these modify text via deletion, not by inserting
+        # printable characters, so they pass validation. Note: These are control characters
+        # but we allow them specifically. Other control characters are blocked later.
         char_code = ord(event.char)
         if char_code in (8, 127):  # Backspace (0x08) or Delete (0x7F)
             return None
 
-        # Allow keyboard shortcuts with modifier keys (Control, Alt, etc.) to propagate
+        # Allow keyboard shortcuts with Control or Alt modifier keys to propagate
         # This ensures shortcuts like Ctrl+B, Ctrl+S, etc. reach their handlers
         # event.state contains modifier flags:
         # 0x0004 = Control, 0x0008 = Alt/Option, 0x0001 = Shift
@@ -2835,12 +2835,15 @@ class TkBackend(UIBackend):
         new_line_text = f'{insert_num} \n'
         self.editor_text.text.insert(f'{insert_index}.0', new_line_text)
 
-        # DON'T save to program yet - the line is blank and would be filtered out by
-        # _save_editor_to_program() which skips blank lines. Just position the cursor on
-        # the new line so user can start typing. The line will be saved to program when:
-        # 1. User types content and triggers _on_key_release -> _save_editor_to_program()
+        # DON'T save to program yet - the line only has a line number with no statement,
+        # so _save_editor_to_program() will skip it (only saves lines with statements).
+        # Just position the cursor on the new line so user can start typing. The line
+        # will be saved to program when:
+        # 1. User types a statement and triggers _on_key_release -> _save_editor_to_program()
         # 2. User switches focus or saves the file
-        # If user never types anything, the blank line remains in editor but won't be saved.
+        # Note: This line won't be removed by _remove_blank_lines() because it contains
+        # the line number (not completely blank), but it won't be saved to the program
+        # until content is added.
 
         # Position cursor at the end of the line number (ready to type code)
         col_pos = len(f'{insert_num} ')
@@ -3483,7 +3486,6 @@ class TkBackend(UIBackend):
         - END statement (in some cases)
 
         Validation: Requires runtime exists and runtime.stopped is True.
-        Invalid if program was edited after stopping.
 
         The interpreter moves NPC to PC when STOP is executed (see execute_stop()
         in interpreter.py). CONT simply clears the stopped/halted flags and resumes
@@ -3653,10 +3655,10 @@ class TkBackend(UIBackend):
     def _add_immediate_output(self, text):
         """Add text to main output pane.
 
-        This method name is historical - it simply forwards to _add_output().
-        In the Tk UI, immediate mode output goes to the main output pane.
-        Note: self.immediate_history exists but is always None (see __init__). Code
-        that references it (e.g., _setup_immediate_context_menu) guards against None.
+        Note: This method name is historical/misleading - it actually adds to the
+        main output pane, not a separate immediate output pane. It simply forwards
+        to _add_output(). In the Tk UI, immediate mode output goes to the main
+        output pane. self.immediate_history is always None (see __init__).
         """
         self._add_output(text)
 
@@ -3741,9 +3743,10 @@ class TkBackend(UIBackend):
     def _setup_immediate_context_menu(self):
         """Setup right-click context menu for immediate history widget.
 
-        NOTE: This method is currently unused - immediate_history is always None
-        in the Tk UI (see __init__). This is dead code retained for potential
-        future use if immediate mode gets its own output widget.
+        DEAD CODE: This method is never called because immediate_history is always
+        None in the Tk UI (see __init__). Retained for potential future use if
+        immediate mode gets its own output widget. Related dead code:
+        _copy_immediate_selection() and _select_all_immediate().
         """
         if self.immediate_history is None:
             return  # Nothing to set up

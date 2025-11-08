@@ -15,9 +15,9 @@ The MBASIC compiler implements 27 optimization techniques to improve program per
 
 ## Summary
 
-**27 optimizations implemented** in the semantic analysis phase.
+**27 optimizations analyzed** in the semantic analysis phase.
 
-All optimizations preserve the original program behavior while improving performance or reducing resource usage.
+These optimizations are designed to preserve the original program behavior while identifying opportunities for performance improvement and resource reduction. The actual code transformations will be applied during code generation (currently in development).
 
 ## Optimizations
 

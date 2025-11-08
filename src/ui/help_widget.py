@@ -58,14 +58,21 @@ class HelpWidget(urwid.WidgetWrap):
         # Create frame with title and footer
         self.title = urwid.Text("")
         # Footer shows navigation keys for the help system specifically
-        # Note: Help navigation keys are hardcoded here and in keypress() method, not loaded from
-        # keybindings. The help widget uses fixed keys (U for back, / for search, ESC/Q to exit)
-        # to avoid dependency on keybinding configuration. HelpMacros does load the full keybindings
-        # from JSON (for {{kbd:action}} macro expansion in help content), but the help widget itself
-        # doesn't use those loaded keybindings.
+        # Note: Help navigation keys are HARDCODED (not loaded from keybindings JSON) to avoid
+        # circular dependency issues. The help widget uses fixed keys (U for back, / for search,
+        # ESC/Q to exit) that work regardless of user keybinding customization.
+        #
+        # Note: HelpMacros (instantiated below) DOES load keybindings from JSON, but only for
+        # macro expansion in help content ({{kbd:action}} substitution). The help widget's
+        # own navigation doesn't consult those loaded keybindings - it uses hardcoded keys.
         #
         # MAINTENANCE: If help navigation keys change, update:
-        # 1. This footer text (line below)
+        # 1. All footer text assignments (search for 'self.footer' in this file - multiple locations):
+        #    - Initial footer (line ~73 below)
+        #    - _cancel_search() around line ~166
+        #    - _execute_search() around lines ~185, ~204, ~212
+        #    - _start_search() around line ~159
+        #    - keypress() search mode around lines ~444, ~448
         # 2. The keypress() method (handle_key mapping around line 150+)
         # 3. Help documentation that mentions these keys
         self.footer = urwid.Text(" ↑/↓=Scroll →/←=Next/Prev Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
@@ -112,8 +119,8 @@ class HelpWidget(urwid.WidgetWrap):
             return results
 
         # Map tier to labels for search result display
-        # Note: UI tier (e.g., 'ui/curses', 'ui/tk') is detected via startswith('ui/')
-        # check below and gets '📘 UI' label. Other unrecognized tiers get '📙 Other'.
+        # Note: Tier labels are determined from tier_labels dict ('language', 'mbasic'),
+        # startswith('ui/') check for UI tiers ('ui/curses', 'ui/tk'), or '📙 Other' fallback.
         tier_labels = {
             'language': '📕 Language',
             'mbasic': '📗 MBASIC',
@@ -250,12 +257,13 @@ class HelpWidget(urwid.WidgetWrap):
         """
         Convert plain text lines to urwid markup with link highlighting.
 
-        Links are marked with [text] in the rendered output. This method
-        finds ALL [text] patterns for display/navigation, but uses the renderer's
-        links for target mapping when following links.
+        Links are marked with [text] or [text](url) in the rendered output. This method
+        finds ALL such patterns for display/navigation using regex r'\\[([^\\]]+)\\](?:\\([^)]+\\))?',
+        which matches both formats. The renderer's links list is used for target mapping when
+        following links.
 
         Args:
-            lines: List of plain text lines with links marked as [text]
+            lines: List of plain text lines with links marked as [text] or [text](url)
             links: List of (line_number, link_text, target) tuples from the renderer (for targets)
             current_link_index: Index of the currently selected link (for highlighting)
 

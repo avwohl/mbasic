@@ -25,11 +25,10 @@ class KeybindingLoader:
     def _load_config(self) -> Dict:
         """Load keybindings configuration for current UI.
 
-        Note: This loads keybindings for UI event handling (binding keys to actions).
-        This is different from help_macros.py which loads the same JSON for macro
-        expansion in help content (e.g., {{kbd:run}} -> "^R"). These serve different
-        purposes: KeybindingLoader for runtime event handling, HelpMacros for
-        documentation generation.
+        Note: This loads keybindings for runtime event handling (binding keys to actions).
+        help_macros.py loads the same JSON files but for macro expansion in help content
+        (e.g., {{kbd:run}} -> "^R"). Both read the same data but use it differently:
+        KeybindingLoader for runtime key event handling, HelpMacros for documentation display.
         """
         config_path = Path(__file__).parent / f"{self.ui_name}_keybindings.json"
 

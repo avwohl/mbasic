@@ -4,7 +4,9 @@ Modern implementation of MBASIC 5.21 interactive REPL
 
 Implements the interactive REPL with:
 - Line entry and editing
-- Direct commands (RUN, LIST, SAVE, LOAD, NEW, MERGE, FILES, SYSTEM, DELETE, RENUM, AUTO, EDIT, etc.)
+- Direct commands: AUTO, EDIT, HELP (handled specially, not parsed as BASIC statements)
+- Immediate mode statements: RUN, LIST, SAVE, LOAD, NEW, MERGE, FILES, SYSTEM, DELETE, RENUM, etc.
+  (parsed as BASIC statements and executed in immediate mode)
 - AUTO command for automatic line numbering with customizable start/step
 - EDIT command for character-by-character line editing (insert/delete/copy mode)
 - Immediate mode execution (PRINT, LET, etc. without line numbers)
@@ -949,15 +951,17 @@ class InteractiveMode:
     def _renum_erl_comparison(self, expr, line_map):
         """Handle ERL binary operations in expressions
 
-        MBASIC manual specifies: if ERL appears on left side of comparison operator
-        (=, <>, <, >, <=, >=), the right-hand number is a line number reference.
+        MBASIC 5.21 Manual Specification:
+        When ERL appears on the left side of a comparison operator (=, <>, <, >, <=, >=),
+        the right-hand number is treated as a line number reference and should be renumbered.
 
-        IMPORTANT: Current implementation renumbers for ANY binary operator with ERL on left,
-        including arithmetic (ERL + 100, ERL * 2). This is broader than the manual specifies.
+        INTENTIONAL DEVIATION FROM MANUAL:
+        This implementation renumbers for ANY binary operator with ERL on left, including
+        arithmetic operators (ERL + 100, ERL * 2, etc.), not just comparison operators.
 
-        Rationale: Without semantic analysis, we cannot distinguish ERL=100 (comparison)
-        from ERL+100 (arithmetic) at parse time. We conservatively renumber all cases
-        to avoid missing valid line number references in comparisons.
+        Rationale: Without semantic analysis of operator types, we cannot distinguish
+        ERL=100 (comparison) from ERL+100 (arithmetic) at parse time. We conservatively
+        renumber all cases to avoid missing valid line number references in comparisons.
 
         Known limitation: Arithmetic like "IF ERL+100 THEN..." will incorrectly renumber
         the 100 if it happens to be an old line number. This is rare in practice.
@@ -1193,7 +1197,9 @@ class InteractiveMode:
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         except:
-            # Fallback for non-TTY/piped input or any terminal errors (bare except)
+            # Fallback for non-TTY/piped input or any terminal errors.
+            # Bare except is acceptable here because we're degrading gracefully to basic read()
+            # on any error (AttributeError, termios.error, ImportError on Windows, etc.)
             ch = sys.stdin.read(1)
             return ch if ch else None
 

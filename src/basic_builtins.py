@@ -113,9 +113,9 @@ class UsingFormatter:
         """Parse a numeric field starting at start_pos
 
         Sign behavior:
-        - leading_sign: + at start, adds + or - sign
-        - trailing_sign: + at end, adds + or - sign
-        - trailing_minus_only: - at end, adds - for negative or space for non-negative (always 1 char)
+        - leading_sign: + at start, adds + or - sign (2 chars total)
+        - trailing_sign: + at end, adds + or - sign (2 chars total)
+        - trailing_minus_only: - at end, adds - for negative OR space for non-negative (1 char total)
         """
         spec = {
             'start_pos': start_pos,
@@ -838,9 +838,10 @@ class BuiltinFunctions:
         Returns -1 if at EOF, 0 otherwise
 
         Note: For binary input files (mode 'I' from OPEN statement), respects ^Z (ASCII 26)
-        as EOF marker (CP/M style). Mode 'I' means "Input" in MBASIC syntax and is implemented
-        as binary mode ('rb') by execute_open() in interpreter.py. This allows ^Z detection
-        for CP/M compatibility. Text mode files (output, append) use standard Python EOF detection.
+        as EOF marker (CP/M style). In MBASIC syntax, mode 'I' stands for "Input" but is
+        specifically BINARY INPUT mode, implemented as 'rb' by execute_open() in interpreter.py.
+        This binary mode allows ^Z detection for CP/M compatibility. Text mode files (output,
+        append) use standard Python EOF detection without ^Z checking.
         """
         file_num = int(file_num)
         if file_num not in self.runtime.files:
@@ -852,9 +853,9 @@ class BuiltinFunctions:
         if file_info['eof']:
             return -1
 
-        # For input files opened in binary mode, check for EOF or ^Z
-        # Mode 'I' = binary input mode, where files are opened in binary mode ('rb')
-        # and ^Z checking is appropriate for CP/M-style EOF detection
+        # For mode 'I' files (binary input), check for EOF or ^Z
+        # These files are opened in binary mode ('rb') which allows ^Z checking
+        # for CP/M-style EOF detection
         if file_info['mode'] == 'I':
             file_handle = file_info['handle']
             current_pos = file_handle.tell()

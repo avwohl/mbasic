@@ -2,9 +2,8 @@
 Lexer for MBASIC 5.21 (CP/M era MBASIC-80)
 Based on BASIC-80 Reference Manual Version 5.21
 
-MBASIC 5.21 Extended BASIC features: This implementation always enables Extended BASIC
+MBASIC 5.21 Extended BASIC features: This implementation enables Extended BASIC
 features (e.g., periods in identifiers like "RECORD.FIELD") as they are part of MBASIC 5.21.
-There is no option to disable them.
 """
 from typing import List, Optional
 from tokens import Token, TokenType, KEYWORDS

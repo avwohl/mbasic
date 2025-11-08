@@ -26,10 +26,11 @@ class SettingsManager:
 
     Precedence: project > global > default
 
-    Note: File-level settings infrastructure is fully implemented (file_settings dict,
-    FILE scope support in get/set/reset methods), but currently unused. No settings are
-    defined with FILE scope in settings_definitions.py, and there is no UI or command
-    to manage per-file settings. This infrastructure is reserved for future use.
+    Note: File-level settings infrastructure is partially implemented (file_settings dict,
+    FILE scope support in get/set/reset methods for runtime manipulation), but persistence
+    is not implemented (load() doesn't populate it, save() doesn't persist it). No settings
+    are defined with FILE scope in settings_definitions.py. This infrastructure is reserved
+    for future use.
     """
 
     def __init__(self, project_dir: Optional[str] = None, backend: Optional[SettingsBackend] = None):
@@ -57,7 +58,13 @@ class SettingsManager:
         self.load()
 
     def _get_global_settings_path(self) -> Path:
-        """Get path to global settings file"""
+        """Get path to global settings file.
+
+        Note: This method is not currently used. Path resolution has been delegated to the
+        backend (FileSettingsBackend or Redis backend). The __init__ method retrieves paths
+        from backend.global_settings_path for backward compatibility, but these helper
+        methods remain unused. Kept for potential future use or manual path queries.
+        """
         if os.name == 'nt':  # Windows
             appdata = os.getenv('APPDATA', os.path.expanduser('~'))
             base_dir = Path(appdata) / 'mbasic'
@@ -68,7 +75,13 @@ class SettingsManager:
         return base_dir / 'settings.json'
 
     def _get_project_settings_path(self) -> Optional[Path]:
-        """Get path to project settings file"""
+        """Get path to project settings file.
+
+        Note: This method is not currently used. Path resolution has been delegated to the
+        backend (FileSettingsBackend or Redis backend). The __init__ method retrieves paths
+        from backend.project_settings_path for backward compatibility, but these helper
+        methods remain unused. Kept for potential future use or manual path queries.
+        """
         if not self.project_dir:
             return None
 
@@ -148,12 +161,12 @@ class SettingsManager:
     def get(self, key: str, default: Optional[Any] = None) -> Any:
         """Get setting value with scope precedence.
 
-        Precedence: file > project > global > definition default > provided default
+        Precedence order: file > project > global > definition default > provided default
 
-        Note: File-level settings infrastructure is fully implemented and functional.
-        The file_settings dict can be set programmatically and is checked first in precedence.
-        However, no UI or command exists to manage per-file settings. In normal usage,
-        file_settings is empty and precedence falls through to project/global settings.
+        Note: File-level settings (first in precedence) are not populated in normal usage.
+        The file_settings dict can be set programmatically and is checked first, but no
+        persistence layer exists (not saved/loaded) and no UI/command manages per-file settings.
+        In practice, precedence is: project > global > definition default > provided default.
 
         Args:
             key: Setting key (e.g., 'variables.case_conflict')

@@ -223,14 +223,15 @@ class Token:
                               Only set for keyword tokens (PRINT, IF, GOTO, etc.). Used by serializer
                               to output keywords with consistent or preserved case style.
 
-    Note: These fields serve different purposes and should be mutually exclusive
-    (identifiers use original_case, keywords use original_case_keyword):
-    - original_case: For identifiers (user variables) - preserves what user typed
-    - original_case_keyword: For keywords - stores policy-determined display case
+    Note: By convention, these fields are used for different token types:
+    - original_case: For IDENTIFIER tokens (user variables) - preserves what user typed
+    - original_case_keyword: For keyword tokens - stores policy-determined display case
 
-    The dataclass doesn't enforce exclusivity (both can be set) for implementation flexibility,
-    but the lexer/parser maintain this convention: only one field is populated per token.
-    If both are set, serialization uses original_case_keyword for keywords, original_case for identifiers.
+    The dataclass does not enforce this convention (both fields can technically be set on the
+    same token) to allow implementation flexibility. However, the lexer/parser follow this
+    convention and only populate the appropriate field for each token type. Serializers check
+    token type to determine which field to use: original_case_keyword for keywords,
+    original_case for identifiers.
     """
     type: TokenType
     value: Any  # Normalized value (lowercase for identifiers and keywords)

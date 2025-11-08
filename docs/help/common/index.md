@@ -12,7 +12,7 @@ Keyboard shortcuts vary by UI. See your UI-specific help:
 | **Help** | {{kbd:help:cli}} | {{kbd:help:curses}} | {{kbd:help_topics:tk}} | {{kbd:help:web}} |
 | **Quit** | {{kbd:quit:cli}} | {{kbd:quit:curses}} | {{kbd:file_quit:tk}} | Menu only |
 
-For complete shortcuts, see [Keyboard Shortcuts](shortcuts.md) or your UI-specific guide:
+For complete shortcuts, see your UI-specific guide:
 - [CLI Commands](../ui/cli/index.md)
 - [Curses Shortcuts](../ui/curses/quick-reference.md)
 - [Tk Shortcuts](../ui/tk/feature-reference.md)
@@ -20,11 +20,7 @@ For complete shortcuts, see [Keyboard Shortcuts](shortcuts.md) or your UI-specif
 
 ## Topics
 
-[Keyboard Shortcuts](shortcuts.md)
-
 [BASIC Language Reference](language/index.md)
-
-[Examples](examples.md)
 
 ## Navigation
 

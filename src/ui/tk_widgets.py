@@ -183,9 +183,10 @@ class LineNumberedText(tk.Frame if tk else object):
     def _redraw(self):
         """Redraw status column (●=breakpoint, ?=error).
 
-        Note: BASIC line numbers are parsed from text content (not drawn in canvas).
-        See _parse_line_number() for the regex-based extraction logic that validates
-        line number format (requires whitespace or end-of-line after the number).
+        Note: BASIC line numbers are part of the text content (not drawn separately
+        in the canvas). See _parse_line_number() for the regex-based extraction logic
+        that validates line number format (requires whitespace or end-of-string after
+        the number).
         """
         self.canvas.delete('all')
 

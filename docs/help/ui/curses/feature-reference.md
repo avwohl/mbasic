@@ -72,8 +72,9 @@ The currently executing line is highlighted with a cyan background during progra
 
 **Note:** The Curses UI provides a dedicated Variables Window. In CLI mode, variable inspection uses the PRINT statement instead. See [CLI Variables](../cli/variables.md) for details.
 
-### Variables Window (Ctrl+W)
+### Variables Window (Menu only)
 Open/close the variables inspection window showing all program variables and their current values.
+**Note:** Access via menu only - no keyboard shortcut assigned.
 
 ### Edit Variable Value (Not implemented)
 ⚠️ Variable editing is not available in Curses UI. You cannot directly edit values in the variables window. Use immediate mode commands to modify variable values instead.
@@ -147,8 +148,9 @@ Real-time syntax validation as you type. Syntax errors are marked with a '?' sym
 
 ## Settings & Configuration (1 feature)
 
-### Settings Widget (Ctrl+,)
+### Settings Widget (Menu only)
 Interactive settings dialog for configuring MBASIC behavior. Adjust auto-numbering, keyword case style, variable handling, themes, and more.
+**Note:** Access via menu only - no keyboard shortcut assigned.
 
 See [Curses Settings Widget](settings.md) for complete documentation.
 

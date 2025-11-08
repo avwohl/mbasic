@@ -66,7 +66,7 @@ class InterpreterState:
     # Debugging (breakpoints are stored in Runtime, not here)
     skip_next_breakpoint_check: bool = False  # Set to True AFTER halting at a breakpoint (set after returning state).
                                                # On next execution, if still True, allows stepping past the breakpoint once,
-                                               # then clears itself to False. Prevents re-halting on same breakpoint.
+                                               # then is cleared to False. Prevents re-halting on same breakpoint.
     pause_requested: bool = False  # Set by pause() method
 
     # Error handling
@@ -1516,7 +1516,8 @@ class Interpreter:
         self.runtime.clear_arrays()
 
         # Close all open files
-        # Note: Errors during file close are silently ignored (bare except: pass)
+        # Note: Errors during file close are silently ignored (bare except: pass).
+        # This differs from RESET which allows errors to propagate to the caller.
         for file_num in list(self.runtime.files.keys()):
             try:
                 file_obj = self.runtime.files[file_num]

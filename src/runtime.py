@@ -53,9 +53,9 @@ class Runtime:
 
         # Variable storage (PRIVATE - use get_variable/set_variable methods)
         # Each variable is stored as: name_with_suffix -> {'value': val, 'last_read': {...}, 'last_write': {...}, 'original_case': str}
-        # Note: 'original_case' stores the canonical case for display (determined by case_conflict policy).
-        #       Despite the name 'original_case', this field stores the resolved canonical case variant,
-        #       not necessarily the first case seen. See _check_case_conflict() for resolution logic.
+        # Note: The 'original_case' field stores the canonical case for display (determined by case_conflict policy).
+        #       Despite its misleading name, this field contains the policy-resolved canonical case variant,
+        #       not the original case as first typed. See _check_case_conflict() for resolution logic.
         # Note: line -1 in last_write indicates non-program execution sources:
         #       1. System/internal variables (ERR%, ERL%) via set_variable_raw() with FakeToken(line=-1)
         #       2. Debugger/interactive prompt via set_variable() with debugger_set=True and token.line=-1
@@ -389,11 +389,11 @@ class Runtime:
                 'value': default_value,
                 'last_read': None,
                 'last_write': None,
-                'original_case': canonical_case  # Store canonical case for display (see _check_case_conflict)
+                'original_case': canonical_case  # Canonical case for display (field name is historical, see module header)
             }
         else:
-            # Always update original_case to canonical (for prefer_upper/prefer_lower/prefer_mixed policies)
-            # Note: 'original_case' field name is misleading - it stores the canonical case, not the original
+            # Always update to canonical case (for prefer_upper/prefer_lower/prefer_mixed policies)
+            # Note: Despite the field name, this stores canonical case not original (see module header)
             self._variables[full_name]['original_case'] = canonical_case
 
         # Track read access
@@ -464,11 +464,11 @@ class Runtime:
                 'value': None,
                 'last_read': None,
                 'last_write': None,
-                'original_case': canonical_case  # Store canonical case for display (see _check_case_conflict)
+                'original_case': canonical_case  # Canonical case for display (field name is historical, see module header)
             }
         else:
-            # Always update original_case to canonical (for prefer_upper/prefer_lower/prefer_mixed policies)
-            # Note: 'original_case' field name is misleading - it stores the canonical case, not the original
+            # Always update to canonical case (for prefer_upper/prefer_lower/prefer_mixed policies)
+            # Note: Despite the field name, this stores canonical case not original (see module header)
             self._variables[full_name]['original_case'] = canonical_case
 
         # Set value

@@ -44,8 +44,9 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
     Returns:
         Keyword with case policy applied
 
-    Note: The first_wins policy normalizes keywords to lowercase for lookup purposes.
-    Other policies transform the keyword directly without normalization. Callers may pass keywords in any case.
+    Note: While this function can handle keywords in any case, callers should pass lowercase
+    keywords for consistency (emit_keyword() requires lowercase). The first_wins policy
+    normalizes to lowercase for lookup. Other policies transform based on input case.
     """
     if policy == "force_lower":
         return keyword.lower()
@@ -72,10 +73,10 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
         return keyword.capitalize()
 
     elif policy == "preserve":
-        # The "preserve" policy means callers should pass keywords already in the correct case
-        # and this function returns them as-is. However, since we can't know the original case
-        # here, we provide a defensive fallback (capitalize) for robustness in case this
-        # function is called incorrectly with "preserve" policy.
+        # The "preserve" policy is typically handled at a higher level (keywords passed with
+        # original case preserved). If this function is called with "preserve" policy, we
+        # return the keyword as-is if already properly cased, or capitalize as a safe default.
+        # Note: This fallback shouldn't normally execute in correct usage.
         return keyword.capitalize()
 
     else:
@@ -110,16 +111,16 @@ class PositionSerializer:
         """Emit a keyword token with case from keyword case table.
 
         Args:
-            keyword: The keyword to emit (MUST be normalized lowercase by caller)
+            keyword: The keyword to emit (must be normalized lowercase by caller, e.g., "print", "for")
             expected_column: Column where keyword should appear
             node_type: Type of AST node for debugging
 
         Returns:
             String with appropriate spacing + keyword text (with case from table)
 
-        Caller responsibility: The caller must pass the keyword in lowercase (e.g., "print", "for").
-        This function's responsibility: Looks up the display case from the keyword case manager
-        and handles spacing/positioning.
+        Note: This function requires lowercase input because it looks up the display case
+        from the keyword case manager using the normalized form. The manager then applies
+        the configured case policy (upper, lower, etc.) to produce the final output.
         """
         # Get display case from keyword case manager table
         if self.keyword_case_manager:
@@ -234,13 +235,16 @@ class PositionSerializer:
             return " " + serialize_statement(stmt)
 
     def serialize_let_statement(self, stmt: ast_nodes.LetStatementNode) -> str:
-        """Serialize LET or assignment statement.
+        """Serialize assignment statement (without LET keyword).
 
-        LetStatementNode represents both:
-        - Explicit LET statements: LET A=5
-        - Implicit assignments: A=5 (without LET keyword)
+        LetStatementNode represents both explicit LET statements and implicit assignments
+        in the AST. However, this serializer ALWAYS outputs the implicit assignment form
+        (A=5) without the LET keyword, regardless of whether the original source used LET.
 
-        Both forms use the same AST node type for consistency throughout the codebase.
+        This is because:
+        - The AST doesn't track whether LET was originally present
+        - LET is optional in MBASIC and functionally equivalent to implicit assignment
+        - Both forms use the same AST node type for consistency throughout the codebase
         """
         result = ""
 

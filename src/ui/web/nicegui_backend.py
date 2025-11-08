@@ -2639,8 +2639,8 @@ class NiceGUIBackend(UIBackend):
         """Remove blank lines from editor except the last line.
 
         The last line is preserved even if blank to avoid removing it while the user
-        is actively typing on it. This is a heuristic that works well in practice but
-        may preserve some blank lines if the user edits earlier in the document.
+        is actively typing on it. Only the final line is preserved; all other blank
+        lines are removed regardless of cursor position.
         """
         try:
             if not self.editor:
@@ -2842,10 +2842,9 @@ class NiceGUIBackend(UIBackend):
     async def _check_auto_number(self):
         """Check if we should auto-number lines without line numbers.
 
-        Auto-numbers a line at most once per content state - tracks last snapshot to avoid
-        re-numbering lines while user is typing. However, if content changes significantly
-        (e.g., line edited after numbering, then un-numbered again), the line could be
-        re-numbered by this logic.
+        Tracks last edited line text to avoid re-numbering unchanged content.
+        Lines without line numbers will be auto-numbered based on the highest
+        existing line number plus the configured step value.
         """
         # Prevent recursive calls when we update the editor
         if self.auto_numbering_in_progress:
@@ -3049,15 +3048,15 @@ class NiceGUIBackend(UIBackend):
         self.waiting_for_input = False
         self.input_prompt_text = None
 
-        # Provide input to interpreter via TWO mechanisms (both may be needed depending on code path):
+        # Provide input to interpreter via TWO mechanisms (we check both in case either is active):
         # 1. interpreter.provide_input() - Used when interpreter is waiting synchronously
         #    (checked via interpreter.state.input_prompt). Stores input for retrieval.
         if self.interpreter and self.interpreter.state.input_prompt:
             self.interpreter.provide_input(user_input)
 
         # 2. input_future.set_result() - Used when async code is waiting via asyncio.Future
-        #    (see _get_input_async method). Only one path is active at a time, but we
-        #    attempt both to ensure the waiting code receives input regardless of which path it used.
+        #    (see _get_input_async method). Only one path will be active at a time, but we
+        #    check both to handle whichever path the interpreter is currently using.
         if self.input_future and not self.input_future.done():
             self.input_future.set_result(user_input)
 
@@ -3111,7 +3110,7 @@ class NiceGUIBackend(UIBackend):
 
         # Return empty string - signals interpreter to transition to 'waiting_for_input'
         # state (state transition happens in interpreter when it receives empty string
-        # from input()). Execution pauses until _submit_input() calls provide_input().
+        # from input()). Execution pauses until _handle_output_enter() calls provide_input().
         return ""
 
     def _on_immediate_enter(self, e):
@@ -3422,8 +3421,7 @@ class NiceGUIBackend(UIBackend):
                         self.program.add_line(line_num, line)
         except Exception as e:
             # If sync fails, write to stderr but don't crash - we'll serialize what we have.
-            # Using sys.stderr.write directly (not log_web_error) to avoid dependency on logging
-            # infrastructure during critical serialization path.
+            # Using sys.stderr.write directly to ensure output even if logging fails.
             sys.stderr.write(f"Warning: Failed to sync program from editor: {e}\n")
             sys.stderr.flush()
 
@@ -3581,8 +3579,7 @@ class NiceGUIBackend(UIBackend):
     def stop(self):
         """Stop the web UI server and shut down NiceGUI app.
 
-        Calls app.shutdown() to terminate the NiceGUI application,
-        disconnecting all clients and stopping the web server.
+        Calls app.shutdown() to terminate the NiceGUI application.
         """
         app.shutdown()
 
@@ -3615,7 +3612,7 @@ def start_web_ui(port=8080):
         # Try to restore existing session state
         saved_state = app.storage.client.get('session_state')
 
-        # Create default DEF type map (all SINGLE precision)
+        # Initialize DEF type map with all letters as SINGLE precision
         def_type_map = {}
         for letter in 'abcdefghijklmnopqrstuvwxyz':
             def_type_map[letter] = TypeInfo.SINGLE
@@ -3667,7 +3664,7 @@ def start_web_ui(port=8080):
         sys.stderr.write("Session state will be shared across load-balanced instances\n\n")
     else:
         sys.stderr.write("In-memory storage (default): Session state per process only\n")
-        sys.stderr.write("Set NICEGUI_REDIS_URL to enable Redis storage for load balancing\n\n")
+        sys.stderr.write("Set NICEGUI_REDIS_URL to enable Redis storage for session persistence\n\n")
     sys.stderr.flush()
 
     # Start NiceGUI server

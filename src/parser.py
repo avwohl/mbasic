@@ -613,10 +613,11 @@ class Parser:
                         # This is MID$ statement, not function
                         self.position = saved_pos  # Restore position to parse properly
                         return self.parse_mid_assignment()
-            except:
-                # Bare except intentionally catches all exceptions during lookahead
-                # (IndexError if we run past end, any parsing errors from malformed syntax)
-                # This is safe because position is restored below and proper error reported later
+            except (IndexError, ParseError):
+                # Catch lookahead failures during MID$ statement detection
+                # IndexError: if we run past end of tokens
+                # ParseError: if malformed syntax encountered during lookahead
+                # Position is restored below, so proper error will be reported later if needed
                 pass
             # Restore position - either not a statement or error in lookahead
             self.position = saved_pos
@@ -1238,8 +1239,11 @@ class Parser:
             expressions.append(expr)
 
         # Add newline if there's no trailing separator
-        # For N expressions: N-1 separators (between items) = no trailing separator
-        #                    N separators (between items + at end) = has trailing separator
+        # Separator count vs expression count:
+        # - If separators < expressions: no trailing separator, add newline
+        # - If separators >= expressions: has trailing separator, no newline added
+        # Examples: "PRINT A;B;C" has 2 separators for 3 items (no trailing sep, adds \n)
+        #           "PRINT A;B;C;" has 3 separators for 3 items (trailing sep, no \n)
         if len(separators) < len(expressions):
             separators.append('\n')
 
@@ -1343,10 +1347,12 @@ class Parser:
             expressions.append(expr)
 
         # Add newline if there's no trailing separator
-        # For N expressions: N-1 separators (between items) = no trailing separator
-        #                    N separators (between items + at end) = has trailing separator
-        # Note: If len(separators) > len(expressions) (e.g., "LPRINT ;"), the trailing
-        # separator is already in the list and will suppress the newline.
+        # Separator count vs expression count:
+        # - If separators < expressions: no trailing separator, add newline
+        # - If separators >= expressions: has trailing separator, no newline added
+        # Examples: "LPRINT A;B;C" has 2 separators for 3 items (no trailing sep, adds \n)
+        #           "LPRINT A;B;C;" has 3 separators for 3 items (trailing sep, no \n)
+        #           "LPRINT ;" has 1 separator for 0 items (trailing sep, no \n)
         if len(separators) < len(expressions):
             separators.append('\n')
 
@@ -1413,8 +1419,10 @@ class Parser:
 
         # Check for LINE modifier (e.g., INPUT "prompt";LINE var$)
         # LINE allows input of entire line including commas
-        # Note: The lexer tokenizes standalone LINE keyword as LINE_INPUT token.
-        # This is distinct from the LINE INPUT statement which is parsed separately.
+        # Note: The lexer tokenizes LINE keyword as LINE_INPUT token both when standalone
+        # (LINE INPUT statement) and when used as modifier (INPUT...LINE). The parser
+        # distinguishes these cases by context - LINE INPUT is a statement, INPUT...LINE
+        # uses LINE as a modifier within the INPUT statement.
         line_mode = False
         if self.match(TokenType.LINE_INPUT):
             line_mode = True
@@ -2489,9 +2497,9 @@ class Parser:
 
         Syntax: DIM array1(dims), array2(dims), ...
 
-        Dimension expressions: This implementation matches MBASIC 5.21 behavior by accepting
-        any expression for array dimensions (e.g., DIM A(X*2, Y+1)). Dimensions are evaluated
-        at runtime. Note: Some compiled BASICs (GW-BASIC, QuickBASIC) require constants only.
+        Dimension expressions: This implementation accepts any expression for array dimensions
+        (e.g., DIM A(X*2, Y+1)), with dimensions evaluated at runtime. This matches MBASIC 5.21
+        behavior. Note: Some compiled BASICs (e.g., QuickBASIC) may require constants only.
         """
         token = self.advance()
 
@@ -2639,10 +2647,11 @@ class Parser:
     def parse_deftype(self) -> DefTypeStatementNode:
         """Parse DEFINT/DEFSNG/DEFDBL/DEFSTR statement
 
-        Note: This method always updates def_type_map during parsing, regardless of mode.
-        The type map is shared between parsing passes in batch mode and affects variable
-        type inference throughout the program. The AST node is created for program
-        serialization/documentation.
+        Note: This method always updates def_type_map during parsing. The type map is
+        shared across all statements (both in interactive mode where statements are parsed
+        one at a time, and in batch mode where the entire program is parsed). The type map
+        affects variable type inference throughout the program. The AST node is created
+        for program serialization/documentation.
         """
         token = self.advance()
         var_type = TypeInfo.from_def_statement(token.type)
@@ -2707,7 +2716,8 @@ class Parser:
         fn_name_token = self.current()
 
         if fn_name_token and fn_name_token.type == TokenType.FN:
-            # Handle "DEF FN name" with space (optional FN keyword)
+            # Handle "DEF FN name" with space (FN is separate token)
+            # Lexer tokenizes "DEF FN R" as: DEF token, FN token, IDENTIFIER "r"
             self.advance()
             fn_name_token = self.expect(TokenType.IDENTIFIER)
             raw_name = fn_name_token.value
@@ -2715,9 +2725,11 @@ class Parser:
             type_suffix = self.get_type_suffix(raw_name)
             if type_suffix:
                 raw_name = raw_name[:-1]
-            function_name = "fn" + raw_name  # Use lowercase 'fn' to match function calls
+            function_name = "fn" + raw_name  # Add 'fn' prefix to match function calls
         elif fn_name_token and fn_name_token.type == TokenType.IDENTIFIER:
-            # "DEF FNR" without space - identifier is "fnr" (lexer already normalized to lowercase)
+            # Handle "DEF FNR" without space (FN and name are single identifier token)
+            # Lexer tokenizes "DEF FNR" as: DEF token, IDENTIFIER "fnr"
+            # The lexer already normalized to lowercase and kept 'fn' as part of identifier
             if not fn_name_token.value.startswith("fn"):
                 raise ParseError("DEF function name must start with FN", fn_name_token)
             self.advance()
@@ -2726,8 +2738,7 @@ class Parser:
             type_suffix = self.get_type_suffix(raw_name)
             if type_suffix:
                 raw_name = raw_name[:-1]
-            # raw_name already starts with lowercase 'fn' from lexer normalization
-            function_name = raw_name
+            function_name = raw_name  # Already has 'fn' prefix from lexer
         else:
             raise ParseError("Expected function name after DEF", fn_name_token)
 
@@ -2809,7 +2820,7 @@ class Parser:
             if self.match(TokenType.LPAREN):
                 self.advance()
                 if not self.match(TokenType.RPAREN):
-                    raise ParseError("Expected ) after ( in COMMON array", self.current())
+                    raise ParseError("COMMON arrays must use empty parentheses () - subscripts not allowed", self.current())
                 self.advance()
 
             # Just store the variable name as a string
@@ -3558,8 +3569,9 @@ class Parser:
 
         The parsed statement contains:
         - width: Column width expression (typically 40 or 80)
-        - device: Optional device expression (implementation-specific; may support
-          file numbers, device codes, or other values depending on the interpreter)
+        - device: Optional device expression (e.g., file number like 1, or device name).
+          In MBASIC 5.21, common values are file numbers or omitted for console.
+          The parser accepts any expression; validation occurs at runtime.
         """
         token = self.advance()
 
@@ -3687,7 +3699,10 @@ class Parser:
     def parse_resume(self) -> ResumeStatementNode:
         """Parse RESUME statement - Syntax: RESUME [NEXT | 0 | line_number]
 
-        Note: RESUME and RESUME 0 both retry the statement that caused the error.
+        Note: RESUME with no argument retries the statement that caused the error.
+        RESUME 0 also retries the error statement (interpreter treats 0 and None equivalently).
+        RESUME NEXT continues at the statement after the error.
+        RESUME line_number continues at the specified line.
         """
         token = self.advance()
 

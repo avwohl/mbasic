@@ -142,6 +142,7 @@ To ensure compatibility with original MBASIC 5.21:
 | **GUI interfaces** | ❌ | ✅ | Extension |
 | **Syntax highlighting** | ❌ | ✅ | Extension |
 | **Find** | ❌ | ✅ (Tk) | Extension |
+| **Replace** | ❌ | ✅ (Tk) | Extension |
 | **Visual debugging** | ❌ | ✅ | Extension |
 | **Long filenames** | ❌ | ✅ | Enhancement |
 | **Unicode** | ❌ | ✅ | Enhancement |

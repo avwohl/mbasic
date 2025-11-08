@@ -202,7 +202,7 @@ def update_line_references(code: str, line_mapping: Dict[int, int]) -> str:
         >>> update_line_references("ON X GOTO 10,20", mapping)
         'ON X GOTO 100,200'
     """
-    # Two-pass approach using different regex patterns:
+    # Two-pattern approach (applied sequentially in a single pass):
     # Pattern 1: Match keyword + first line number (GOTO/GOSUB/THEN/ELSE/ON...GOTO/ON...GOSUB)
     # Pattern 2: Match comma-separated line numbers (for ON...GOTO/GOSUB lists)
 
@@ -611,7 +611,8 @@ def renum_program(program_manager, args: str, renum_callback, runtime=None):
         program_manager: ProgramManager instance with .lines and .line_asts
         args: RENUM command arguments (e.g., "100", "100,0,10", "100,50")
         renum_callback: Function(stmt: StatementNode, line_map: Dict[int, int]) -> None
-                        that updates statement line number references in-place.
+                        that updates statement line number references by directly modifying
+                        the statement node's attributes (e.g., stmt.line_number for GOTO).
                         Called for ALL statements; callback is responsible for identifying and
                         updating statements with line number references (GOTO, GOSUB, ON GOTO,
                         ON GOSUB, IF THEN/ELSE line numbers). See update_statement_references()

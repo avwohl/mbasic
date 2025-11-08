@@ -353,8 +353,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         which assumes typical line numbers (status=1 char + number=5 digits + space=1 char).
         This is an approximation since line numbers have variable width.
         """
-        # FAST PATH: For normal printable characters, bypass all processing
-        # This is critical for responsive typing
+        # FAST PATH: For normal printable characters, bypass editor-specific processing
+        # (syntax checking, column protection, etc.) for responsive typing
         if len(key) == 1 and key >= ' ' and key <= '~':
             return super().keypress(size, key)
 
@@ -3841,8 +3841,9 @@ class CursesBackend(UIBackend):
                 self.runtime.statement_table.add(pc, stmt)
 
         # Restore PC only if execution is running AND not paused at breakpoint
-        # When paused_at_breakpoint=True, we reset PC to halted because the breakpoint PC
-        # is stored separately and will be restored when continuing from the breakpoint.
+        # When paused_at_breakpoint=True, we reset PC to halted to prevent accidental
+        # resumption. When the user continues from a breakpoint (via _debug_continue),
+        # the interpreter's state already has the correct PC and simply clears the halted flag.
         # When not running at all, ensure halted (don't accidentally start execution)
         if self.running and not self.paused_at_breakpoint:
             # Execution is running - preserve execution state
