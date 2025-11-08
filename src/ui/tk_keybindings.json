@@ -82,7 +82,7 @@
     "toggle_variables": {
       "keys": ["Ctrl+W"],
       "primary": "Ctrl+W",
-      "description": "Toggle variables watch window"
+      "description": "Toggle variables window"
     },
     "toggle_stack": {
       "keys": ["Ctrl+K"],

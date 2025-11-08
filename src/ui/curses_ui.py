@@ -1354,7 +1354,7 @@ class CursesBackend(UIBackend):
         self.status_bar = None
         self.variables_walker = None
         self.variables_window = None
-        self.watch_window_visible = False
+        self.variables_window_visible = False
         self.variables_sort_mode = 'name'  # 'name', 'accessed', 'written', 'read', 'type', 'value'
         self.variables_sort_reverse = False  # False=ascending, True=descending
         self.variables_filter_text = ""  # Filter text for variables window
@@ -1680,7 +1680,7 @@ class CursesBackend(UIBackend):
         # Pass output_walker to editor for displaying syntax errors
         self.editor._output_walker = self.output_walker
 
-        # Create variables window (watch window)
+        # Create variables window
         self.variables_walker = urwid.SimpleFocusListWalker([])
         self.variables_window = urwid.ListBox(self.variables_walker)
 
@@ -2017,31 +2017,31 @@ class CursesBackend(UIBackend):
             # Toggle execution stack window (only if STACK_KEY is defined)
             self._toggle_stack_window()
 
-        elif key == VARS_SORT_MODE_KEY and self.watch_window_visible:
+        elif key == VARS_SORT_MODE_KEY and self.variables_window_visible:
             # Cycle sort mode in variables window
             self._cycle_variables_sort_mode()
 
-        elif key == VARS_SORT_DIR_KEY and self.watch_window_visible:
+        elif key == VARS_SORT_DIR_KEY and self.variables_window_visible:
             # Toggle sort direction in variables window
             self._toggle_variables_sort_direction()
 
-        elif key == VARS_EDIT_KEY and self.watch_window_visible:
+        elif key == VARS_EDIT_KEY and self.variables_window_visible:
             # Edit selected variable value
             self._edit_selected_variable()
 
-        elif key == 'enter' and self.watch_window_visible:
+        elif key == 'enter' and self.variables_window_visible:
             # Edit selected variable value (Enter key)
             self._edit_selected_variable()
 
-        elif key == VARS_FILTER_KEY and self.watch_window_visible:
+        elif key == VARS_FILTER_KEY and self.variables_window_visible:
             # Set filter for variables window
             self._set_variables_filter()
 
-        elif key == VARS_CLEAR_KEY and self.watch_window_visible:
+        elif key == VARS_CLEAR_KEY and self.variables_window_visible:
             # Clear filter for variables window
             self._clear_variables_filter()
 
-        elif key == 'esc' and self.watch_window_visible:
+        elif key == 'esc' and self.variables_window_visible:
             # Close variables window with ESC
             self._toggle_variables_window()
             return None
@@ -2155,7 +2155,7 @@ class CursesBackend(UIBackend):
                 )
 
                 # Update variables window if visible
-                if self.watch_window_visible:
+                if self.variables_window_visible:
                     self._update_variables_window()
 
                 # Update stack window if visible
@@ -2241,7 +2241,7 @@ class CursesBackend(UIBackend):
                 )
 
                 # Update variables window if visible
-                if self.watch_window_visible:
+                if self.variables_window_visible:
                     self._update_variables_window()
 
                 # Update stack window if visible
@@ -2920,10 +2920,10 @@ class CursesBackend(UIBackend):
         self.loop.set_alarm_in(0.1, check_signals)
 
     def _toggle_variables_window(self):
-        """Toggle visibility of the variables watch window."""
-        self.watch_window_visible = not self.watch_window_visible
+        """Toggle visibility of the variables window."""
+        self.variables_window_visible = not self.variables_window_visible
 
-        if self.watch_window_visible:
+        if self.variables_window_visible:
             # Add variables window to the pile (position 2, between editor and output)
             # Layout: menu (0), editor (1), variables (2), output (3), status (4)
             self.pile.contents.insert(2, (self.variables_frame, ('weight', 1)))
@@ -3380,7 +3380,7 @@ class CursesBackend(UIBackend):
         if self.stack_window_visible:
             # Determine insertion position based on whether variables window is visible
             # Layout: menu (0), editor (1), [variables (2)], [stack (2 or 3)], output, status
-            insert_pos = 3 if self.watch_window_visible else 2
+            insert_pos = 3 if self.variables_window_visible else 2
             self.pile.contents.insert(insert_pos, (self.stack_frame, ('weight', 1)))
 
             # Update stack display
@@ -4477,7 +4477,7 @@ class CursesBackend(UIBackend):
                 self.loop.set_alarm_in(0.01, lambda loop, user_data: self._execute_tick())
 
         # Update variables/stack windows if visible
-        if self.watch_window_visible:
+        if self.variables_window_visible:
             self._update_variables_window()
         if self.stack_window_visible:
             self._update_stack_window()

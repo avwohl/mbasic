@@ -216,7 +216,7 @@ QUIT_KEY = None  # No keyboard shortcut
 _quit_alt_from_json = _get_key('editor', 'quit')
 QUIT_ALT_KEY = _ctrl_key_to_urwid(_quit_alt_from_json) if _quit_alt_from_json else 'ctrl c'
 
-# Variables watch window
+# Variables window
 _variables_from_json = _get_key('editor', 'variables')
 VARIABLES_KEY = _ctrl_key_to_urwid(_variables_from_json) if _variables_from_json else 'ctrl w'
 
@@ -352,7 +352,7 @@ KEYBINDINGS_BY_CATEGORY = {
         (key_to_display(MENU_KEY), 'Activate menu bar (arrows navigate, Enter selects)'),
         (key_to_display(HELP_KEY), 'This help'),
         (key_to_display(SETTINGS_KEY), 'Settings'),
-        (key_to_display(VARIABLES_KEY), 'Toggle variables watch window'),
+        (key_to_display(VARIABLES_KEY), 'Toggle variables window'),
     ],
     'Program Management': [
         (key_to_display(RUN_KEY), 'Run program'),

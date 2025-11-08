@@ -88,7 +88,7 @@ class TkBackend(UIBackend):
         self.breakpoints = set()  # Set of line numbers with breakpoints
         self.tick_timer_id = None  # ID of pending after() call
 
-        # Variables watch window state
+        # Variables window state
         self.variables_window = None
         self.variables_tree = None
         self.variables_visible = False
@@ -339,7 +339,7 @@ class TkBackend(UIBackend):
         self.status_label = ttk.Label(self.root, text="Ready", relief=tk.SUNKEN, anchor=tk.W)
         self.status_label.pack(side=tk.BOTTOM, fill=tk.X)
 
-        # Create variables watch window (initially hidden)
+        # Create variables window (initially hidden)
         self._create_variables_window()
 
         # Create execution stack window (initially hidden)
@@ -980,7 +980,7 @@ class TkBackend(UIBackend):
         self._set_status("All breakpoints cleared")
 
     def _create_variables_window(self):
-        """Create variables watch window (Toplevel)."""
+        """Create variables window (Toplevel)."""
 
         # Create window
         self.variables_window = tk.Toplevel(self.root)
