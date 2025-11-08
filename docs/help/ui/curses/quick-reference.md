@@ -21,32 +21,32 @@ Quick reference for the curses text UI.
 
 | Key | Action |
 |-----|--------|
-| **^Q** | Quit |
-| **^U** | Show menu |
-| **^F** | Help (with search) |
-| **^W** | Toggle variables watch window |
-| **^,** | Settings |
+| **{{kbd:quit:curses}}** | Quit |
+| **ESC** | Show menu |
+| **{{kbd:help:curses}}** | Help |
+| **Menu only** | Toggle variables watch window |
+| **Menu only** | Settings |
 | **Menu only** | Toggle execution stack window |
 
 ## Program Management
 
 | Key | Action |
 |-----|--------|
-| **^R** | Run program |
+| **{{kbd:run:curses}}** | Run program |
 | **Menu only** | List program |
-| **^N** | New program |
-| **^V** | Save program (^S unavailable - terminal flow control) |
-| **^O** | Open/Load program |
+| **{{kbd:new:curses}}** | New program |
+| **{{kbd:save:curses}}** | Save program (Ctrl+S unavailable - terminal flow control) |
+| **{{kbd:open:curses}}** | Open/Load program |
 
 ## Editing
 
 | Key | Action |
 |-----|--------|
-| **^B** | Toggle breakpoint on current line |
-| **^D** | Delete current line |
-| **^E** | Renumber all lines (RENUM) |
+| **{{kbd:toggle_breakpoint:curses}}** | Toggle breakpoint on current line |
+| **Delete/Backspace** | Delete current line |
+| **Menu only** | Renumber all lines (RENUM) |
 
-**Note:** Cut/Copy/Paste (^X/^C/^V) are not available - use your terminal's native clipboard (typically Shift+^C/V or mouse selection).
+**Note:** Cut/Copy/Paste are not available - use your terminal's native clipboard (typically Shift+Ctrl+C/V or mouse selection).
 
 **Note:** Find/Replace is not yet available in Curses UI. See [Find/Replace](find-replace.md) for workarounds.
 
@@ -54,11 +54,11 @@ Quick reference for the curses text UI.
 
 | Key | Action |
 |-----|--------|
-| **^G** | Continue execution |
-| **^K** | Step Line - execute all statements on current line |
-| **^T** | Step Statement - execute one statement at a time |
-| **^X** | Stop execution |
-| **^W** | Show/hide variables window |
+| **{{kbd:continue:curses}}** | Continue execution |
+| **{{kbd:step_line:curses}}** | Step Line - execute all statements on current line |
+| **{{kbd:step:curses}}** | Step Statement - execute one statement at a time |
+| **{{kbd:stop:curses}}** | Stop execution |
+| **Menu only** | Show/hide variables window |
 | **Menu only** | Show/hide execution stack window |
 
 ## Variables Window (when visible)

@@ -18,7 +18,7 @@ How to navigate MBASIC help.
 
 ## Opening Help
 
-Press **^F** (Ctrl+F) anytime to open help.
+Press **{{kbd:help:curses}}** anytime to open help.
 
 ## Navigation Keys
 
@@ -96,7 +96,7 @@ Sample programs to learn from.
 
 ## Tips
 
-- Press **^F** (Ctrl+F) anytime for help
+- Press **{{kbd:help:curses}}** anytime for help
 - Links are highlighted
 - **U** goes back
 - **ESC** or **Q** exits help

@@ -57,9 +57,9 @@ Let's write a simple program:
 
 You don't need to memorize everything. The status line shows common commands:
 
-- **^F** (Ctrl+F) - Help (you're here now!)
-- **^R** ({{kbd:run:curses}}) - Run program
-- **^Q** ({{kbd:quit:curses}}) - Quit
+- **{{kbd:help:curses}}** - Help (you're here now!)
+- **{{kbd:run:curses}}** - Run program
+- **{{kbd:quit:curses}}** - Quit
 
 No function keys needed!
 
@@ -86,6 +86,6 @@ Or jump to the BASIC language:
 ## Tips
 
 - Press **ESC** to clear error messages
-- Press **^F** (Ctrl+F) to open help
+- Press **{{kbd:help:curses}}** to open help
 - Status line shows available commands
 - Lines auto-increment by 10 for easy editing

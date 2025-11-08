@@ -21,7 +21,7 @@ How to save and load BASIC programs.
 
 ## Saving Programs
 
-1. Press **^V** to save (^S unavailable - terminal flow control)
+1. Press **{{kbd:save:curses}}** to save (Ctrl+S unavailable - terminal flow control)
 2. Status line prompts: "Save as: _"
 3. Type filename (e.g., `myprogram.bas`)
 4. Press **Enter**
@@ -37,7 +37,7 @@ How to save and load BASIC programs.
 ### Example
 
 ```
-Press ^V
+Press {{kbd:save:curses}}
 Type: hello.bas
 Press Enter
 → "Saved to hello.bas"
@@ -45,7 +45,7 @@ Press Enter
 
 ## Loading Programs
 
-1. Press **^O**
+1. Press **{{kbd:open:curses}}**
 2. Status line prompts: "Load file: _"
 3. Type filename
 4. Press **Enter**
@@ -61,7 +61,7 @@ Press Enter
 ### Example
 
 ```
-Press ^O
+Press {{kbd:open:curses}}
 Type: hello.bas
 Press Enter
 → Program loads into editor
@@ -77,11 +77,11 @@ python3 mbasic --ui curses myprogram.bas
 
 The program will:
 - Load into the editor
-- Enter interactive mode (ready to run with ^R)
+- Enter interactive mode (ready to run with {{kbd:run:curses}})
 
 ## Creating a New Program
 
-1. Press **^N**
+1. Press **{{kbd:new:curses}}**
 2. Confirms: "Program cleared"
 3. Editor is empty, ready for new program
 

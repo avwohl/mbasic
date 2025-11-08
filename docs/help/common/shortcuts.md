@@ -1,24 +1,30 @@
 # Keyboard Shortcuts
 
-**Note:** This page shows shortcuts common across UIs using **^X** notation (meaning Ctrl+X). For UI-specific details, see:
-- [Curses UI Shortcuts](ui/curses/editing.md) - Keyboard-focused shortcuts
-- [Tk UI Shortcuts](ui/tk/index.md) - Keyboard + mouse shortcuts
-- Web UI - Click-based interface (toolbar buttons and menus)
+Keyboard shortcuts vary significantly by UI. This page shows a comparison across all interfaces. For detailed UI-specific help, see:
+- [CLI Commands](../ui/cli/index.md) - Command-based interface
+- [Curses UI Shortcuts](../ui/curses/quick-reference.md) - Full-screen terminal interface
+- [Tk UI Shortcuts](../ui/tk/feature-reference.md) - GUI with keyboard shortcuts
+- [Web Interface](../ui/web/index.md) - Click-based browser interface
 
-## Common Shortcuts (All UIs)
+## Execution Shortcuts
 
-### Execution
-- **^R** - Run program
-- **^T** - Step statement (execute one statement)
-- **^K** - Step line (Tk/Web only - execute one line)
-- **^G** - Continue (run to next breakpoint)
-- **^Q** - Stop execution
+| Action | CLI | Curses | Tk | Web |
+|--------|-----|--------|-----|-----|
+| **Run program** | {{kbd:run:cli}} | {{kbd:run:curses}} | {{kbd:run_program:tk}} | {{kbd:run:web}} |
+| **Step statement** | {{kbd:step:cli}} | {{kbd:step:curses}} | Toolbar only | {{kbd:step:web}} |
+| **Step line** | Not available | {{kbd:step_line:curses}} | Toolbar only | Not available |
+| **Continue** | {{kbd:continue:cli}} | {{kbd:continue:curses}} | Toolbar only | {{kbd:continue:web}} |
+| **Stop** | {{kbd:stop:cli}} | {{kbd:stop:curses}} | Toolbar only | {{kbd:stop:web}} |
 
-### Interface
-- **^P** or **^H** - Show help
-- **^C** or **ESC** - Cancel/Close dialogs
-- **^V** - Open Variables window (Tk/Web)
-- **^U** - Open Execution Stack window (Tk/Web)
+## Interface Shortcuts
+
+| Action | CLI | Curses | Tk | Web |
+|--------|-----|--------|-----|-----|
+| **Help** | {{kbd:help:cli}} | {{kbd:help:curses}} | {{kbd:help_topics:tk}} | {{kbd:help:web}} |
+| **Save** | {{kbd:save:cli}} | {{kbd:save:curses}} | {{kbd:file_save:tk}} | {{kbd:save:web}} |
+| **Open/Load** | {{kbd:open:cli}} | {{kbd:open:curses}} | {{kbd:file_open:tk}} | {{kbd:open:web}} |
+| **New program** | {{kbd:new:cli}} | {{kbd:new:curses}} | {{kbd:file_new:tk}} | {{kbd:new:web}} |
+| **Quit** | {{kbd:quit:cli}} | {{kbd:quit:curses}} | {{kbd:file_quit:tk}} | Menu only |
 
 ## UI-Specific Shortcuts
 
@@ -26,8 +32,9 @@
 
 | UI | Shortcut |
 |----|----------|
+| **CLI** | Not available in CLI mode |
 | **Curses** | **b** - Toggle breakpoint on current line |
-| **Tk** | **^B** - Toggle breakpoint on current line, or click line number gutter |
+| **Tk** | **{{kbd:toggle_breakpoint:tk}}** - Toggle breakpoint on current line, or click line number gutter |
 | **Web** | Click line number or use toolbar "Breakpoint" button |
 
 ### Curses-Specific (Terminal UI)

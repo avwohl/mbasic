@@ -21,9 +21,9 @@ While there's no built-in find feature, you can:
    - Arrow keys for line-by-line movement
 
 3. **Export and search**:
-   - Save the program: `^V`
+   - Save the program: {{kbd:save:curses}}
    - Use external editor with find feature
-   - Reload with `^O`
+   - Reload with {{kbd:open:curses}}
 
 ### Replacing Text
 
@@ -32,7 +32,7 @@ For text replacement:
 1. **Manual editing**:
    - Navigate to each occurrence
    - Edit line by line
-   - Use `^D` to delete line and retype
+   - Use Delete key to delete line and retype
 
 2. **External editor**:
    - Save program to file
