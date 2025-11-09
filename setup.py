@@ -29,10 +29,13 @@ setup(
     # Include the main script
     py_modules=["mbasic"],
 
-    # Create a command-line script
+    # Create a command-line script and register mkdocs plugins
     entry_points={
         "console_scripts": [
             "mbasic=mbasic:main",
+        ],
+        "mkdocs.plugins": [
+            "macro_expander = utils.mkdocs_plugins.macro_expander:MacroExpanderPlugin",
         ],
     },
 

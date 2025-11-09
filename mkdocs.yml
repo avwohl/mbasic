@@ -44,6 +44,8 @@ theme:
 plugins:
   - search:
       separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  - macro_expander:
+      ui_name: curses
   - awesome-pages:
       filename: .pages
       collapse_single_pages: false

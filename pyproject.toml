@@ -99,6 +99,9 @@ Changelog = "https://github.com/avwohl/mbasic/blob/main/docs/dev/WORK_IN_PROGRES
 [project.scripts]
 mbasic = "mbasic:main"
 
+[project.entry-points."mkdocs.plugins"]
+macro_expander = "utils.mkdocs_plugins.macro_expander:MacroExpanderPlugin"
+
 [tool.setuptools]
 # Include both the entry point module and the src package
 py-modules = ["mbasic"]  # Entry point: mbasic
