@@ -1,0 +1,7 @@
+100 REM Test SINGLE precision floating point
+110 X! = 3.14159
+120 FOR I! = 0.5 TO 5.5 STEP 0.5
+130 PRINT I!
+140 NEXT I!
+150 PRINT X!
+160 END

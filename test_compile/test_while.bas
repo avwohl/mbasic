@@ -1,0 +1,8 @@
+100 REM Test WHILE/WEND loop
+110 I% = 1
+120 WHILE I% <= 5
+130 PRINT I%
+140 I% = I% + 1
+150 WEND
+160 PRINT "Done"
+170 END

@@ -524,7 +524,7 @@ class ConstantEvaluator:
 
             # Perform the operation
             # operator is a TokenType, convert to string
-            from tokens import TokenType
+        # Note: TokenType is already imported from src.tokens at the top
             op_map = {
                 TokenType.PLUS: '+',
                 TokenType.MINUS: '-',
@@ -595,7 +595,7 @@ class ConstantEvaluator:
             if operand is None:
                 return None
 
-            from tokens import TokenType
+        # Note: TokenType is already imported from src.tokens at the top
             op_map = {
                 TokenType.PLUS: '+',
                 TokenType.MINUS: '-',
@@ -1997,7 +1997,7 @@ class SemanticAnalyzer:
 
         # Register variable if not seen before
         if var_name not in self.symbols.variables:
-            var_type = self._get_type_from_name(stmt.variable.name)
+            var_type = self._get_type_from_variable_node(stmt.variable)
             # VariableNode with subscripts is an array
             is_array = stmt.variable.subscripts is not None
 
@@ -2084,7 +2084,7 @@ class SemanticAnalyzer:
 
         # Register loop variable
         if var_name not in self.symbols.variables:
-            var_type = self._get_type_from_name(stmt.variable.name)
+            var_type = self._get_type_from_variable_node(stmt.variable)
             self.symbols.variables[var_name] = VariableInfo(
                 name=var_name,
                 var_type=var_type,
@@ -2467,7 +2467,7 @@ class SemanticAnalyzer:
         if isinstance(expr, VariableNode):
             var_name = expr.name.upper()
             if var_name not in self.symbols.variables:
-                var_type = self._get_type_from_name(expr.name)
+                var_type = self._get_type_from_variable_node(expr)
                 # Check if this is an array (has subscripts)
                 is_array = expr.subscripts is not None
                 self.symbols.variables[var_name] = VariableInfo(
@@ -2779,7 +2779,7 @@ class SemanticAnalyzer:
                 return f"{expr.name}(...)"
             return expr.name
         elif isinstance(expr, BinaryOpNode):
-            from tokens import TokenType
+        # Note: TokenType is already imported from src.tokens at the top
             op_map = {
                 TokenType.PLUS: '+', TokenType.MINUS: '-',
                 TokenType.MULTIPLY: '*', TokenType.DIVIDE: '/',
@@ -2795,7 +2795,7 @@ class SemanticAnalyzer:
             op = op_map.get(expr.operator, str(expr.operator))
             return f"({self._describe_expression(expr.left)} {op} {self._describe_expression(expr.right)})"
         elif isinstance(expr, UnaryOpNode):
-            from tokens import TokenType
+        # Note: TokenType is already imported from src.tokens at the top
             if expr.operator == TokenType.NOT:
                 return f"NOT {self._describe_expression(expr.operand)}"
             elif expr.operator == TokenType.MINUS:
@@ -2817,7 +2817,7 @@ class SemanticAnalyzer:
         if not isinstance(expr, UnaryOpNode):
             return None
 
-        from tokens import TokenType
+        # Note: TokenType is already imported from src.tokens at the top
 
         original_desc = self._describe_expression(expr)
         reduction_type = None
@@ -2946,7 +2946,7 @@ class SemanticAnalyzer:
         if not isinstance(expr, BinaryOpNode):
             return None
 
-        from tokens import TokenType
+        # Note: TokenType is already imported from src.tokens at the top
         import math
 
         original_desc = self._describe_expression(expr)
@@ -3281,7 +3281,7 @@ class SemanticAnalyzer:
         if not isinstance(expr, BinaryOpNode):
             return None
 
-        from tokens import TokenType
+        # Note: TokenType is already imported from src.tokens at the top
 
         # Only handle associative operations
         if expr.operator not in (TokenType.PLUS, TokenType.MULTIPLY):
@@ -4085,8 +4085,7 @@ class SemanticAnalyzer:
         if stmt is None:
             return
 
-        from parser import (LetStatementNode, IfStatementNode, PrintStatementNode,
-                          ForStatementNode, InputStatementNode, DataStatementNode)
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         if isinstance(stmt, LetStatementNode):
             self._collect_function_calls_from_expr(stmt.expression, line_num)
@@ -4125,7 +4124,7 @@ class SemanticAnalyzer:
         if expr is None:
             return
 
-        from parser import FunctionCallNode, BinaryOpNode, UnaryOpNode, VariableNode
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         if isinstance(expr, FunctionCallNode):
             func_name = expr.name.upper()
@@ -4173,9 +4172,7 @@ class SemanticAnalyzer:
         if stmt is None:
             return
 
-        from parser import (LetStatementNode, IfStatementNode, PrintStatementNode,
-                          ForStatementNode, InputStatementNode, DataStatementNode,
-                          ReadStatementNode, DimStatementNode)
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         if isinstance(stmt, LetStatementNode):
             # Check LHS (if it's an array write)
@@ -4226,7 +4223,7 @@ class SemanticAnalyzer:
         if expr is None:
             return
 
-        from parser import FunctionCallNode, BinaryOpNode, UnaryOpNode, VariableNode
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         if isinstance(expr, VariableNode):
             if expr.subscripts:
@@ -4248,7 +4245,7 @@ class SemanticAnalyzer:
 
     def _check_array_access(self, var_node, line_num: int, access_type: str):
         """Check if an array access with constant indices is within bounds"""
-        from parser import VariableNode
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         if not isinstance(var_node, VariableNode) or not var_node.subscripts:
             return
@@ -4334,8 +4331,7 @@ class SemanticAnalyzer:
         if stmt is None:
             return
 
-        from parser import (LetStatementNode, IfStatementNode, PrintStatementNode,
-                          ForStatementNode)
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         if isinstance(stmt, LetStatementNode):
             # Check LHS
@@ -4369,7 +4365,7 @@ class SemanticAnalyzer:
         if expr is None:
             return
 
-        from parser import FunctionCallNode, BinaryOpNode, UnaryOpNode, VariableNode
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         if isinstance(expr, VariableNode):
             if expr.subscripts:
@@ -4391,7 +4387,7 @@ class SemanticAnalyzer:
 
     def _record_array_access(self, var_node, line_num: int):
         """Record an array access pattern"""
-        from parser import VariableNode
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         if not isinstance(var_node, VariableNode) or not var_node.subscripts:
             return
@@ -4544,8 +4540,7 @@ class SemanticAnalyzer:
         if stmt is None:
             return
 
-        from parser import (LetStatementNode, IfStatementNode, PrintStatementNode,
-                          ForStatementNode, WhileStatementNode)
+        # Note: All statement node types are already imported from src.ast_nodes at the top
 
         if isinstance(stmt, LetStatementNode):
             self._collect_expr_computations_from_expr(stmt.expression, line_num)
@@ -4578,8 +4573,7 @@ class SemanticAnalyzer:
         if expr is None:
             return
 
-        from parser import (BinaryOpNode, UnaryOpNode, FunctionCallNode, VariableNode,
-                          NumberNode, StringNode)
+        # Note: All expression node types are already imported from src.ast_nodes at the top
 
         # Only track non-trivial expressions (binary ops, function calls)
         if isinstance(expr, BinaryOpNode):
@@ -4625,8 +4619,7 @@ class SemanticAnalyzer:
         if stmt is None:
             return (None, set())
 
-        from parser import (LetStatementNode, IfStatementNode, PrintStatementNode,
-                          ForStatementNode, WhileStatementNode)
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         if isinstance(stmt, LetStatementNode):
             return self._find_expr_info_in_expr(stmt.expression, expr_hash)
@@ -4677,7 +4670,7 @@ class SemanticAnalyzer:
             return (desc, vars_used)
 
         # Recurse into subexpressions
-        from parser import BinaryOpNode, UnaryOpNode, FunctionCallNode, VariableNode
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         if isinstance(expr, BinaryOpNode):
             result = self._find_expr_info_in_expr(expr.left, expr_hash)
@@ -4731,8 +4724,7 @@ class SemanticAnalyzer:
         """Get all variables modified in a line"""
         modified = set()
 
-        from parser import (LetStatementNode, ForStatementNode, InputStatementNode,
-                          ReadStatementNode, VariableNode)
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         for stmt in line.statements:
             if isinstance(stmt, LetStatementNode):
@@ -4825,7 +4817,7 @@ class SemanticAnalyzer:
         if stmt is None:
             return
 
-        from parser import LetStatementNode, VariableNode, BinaryOpNode
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         if isinstance(stmt, LetStatementNode):
             # Check if this is a string variable
@@ -4851,8 +4843,8 @@ class SemanticAnalyzer:
         if expr is None:
             return False
 
-        from parser import BinaryOpNode, VariableNode
-        from tokens import TokenType
+        # Note: All node types are already imported from src.ast_nodes at the top
+        # Note: TokenType is already imported from src.tokens at the top
 
         if isinstance(expr, BinaryOpNode):
             # Check for PLUS operator (string concatenation in BASIC)
@@ -4869,7 +4861,7 @@ class SemanticAnalyzer:
         if expr is None:
             return False
 
-        from parser import VariableNode, BinaryOpNode, UnaryOpNode, FunctionCallNode
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         if isinstance(expr, VariableNode):
             # Get full variable name with type suffix
@@ -4927,8 +4919,7 @@ class SemanticAnalyzer:
         if stmt is None:
             return
 
-        from parser import (LetStatementNode, ForStatementNode, InputStatementNode,
-                           ReadStatementNode, VariableNode)
+        # Note: All node types are already imported from src.ast_nodes at the top
 
         # LET statement
         if isinstance(stmt, LetStatementNode):
@@ -5015,9 +5006,8 @@ class SemanticAnalyzer:
         if expr is None:
             return False
 
-        from parser import (NumberNode, VariableNode, BinaryOpNode, UnaryOpNode,
-                           FunctionCallNode, ForStatementNode)
-        from tokens import TokenType
+        # Note: All node types are already imported from src.ast_nodes at the top
+        # Note: TokenType is already imported from src.tokens at the top
 
         # Integer literal
         if isinstance(expr, NumberNode):
@@ -5557,6 +5547,21 @@ class SemanticAnalyzer:
         elif name.endswith('#'):
             return VarType.DOUBLE
         elif name.endswith('$'):
+            return VarType.STRING
+        else:
+            # Default is SINGLE (can be overridden by DEF statements)
+            return VarType.SINGLE
+
+    def _get_type_from_variable_node(self, var_node) -> VarType:
+        """Determine variable type from VariableNode (uses type_suffix attribute)"""
+        suffix = var_node.type_suffix
+        if suffix == '%':
+            return VarType.INTEGER
+        elif suffix == '!':
+            return VarType.SINGLE
+        elif suffix == '#':
+            return VarType.DOUBLE
+        elif suffix == '$':
             return VarType.STRING
         else:
             # Default is SINGLE (can be overridden by DEF statements)
@@ -6228,13 +6233,87 @@ class SemanticAnalyzer:
         lines.append("=" * 70)
         return '\n'.join(lines)
 
+    def compile(self, program: ProgramNode, backend_name: str = 'z88dk',
+                output_file: str = 'a.out') -> bool:
+        """
+        Compile the analyzed program using the specified backend.
+
+        Args:
+            program: The analyzed AST to compile
+            backend_name: Name of backend to use ('z88dk', etc.)
+            output_file: Desired output executable name
+
+        Returns:
+            True if compilation succeeds, False on error
+        """
+        import subprocess
+        import os
+        from pathlib import Path
+        from src.codegen_backend import Z88dkCBackend
+
+        # Select backend
+        if backend_name == 'z88dk':
+            backend = Z88dkCBackend(self.symbols)
+        else:
+            self.errors.append(f"Unknown backend: {backend_name}")
+            return False
+
+        # Generate source code
+        print(f"Generating code with {backend_name} backend...")
+        try:
+            source_code = backend.generate(program)
+        except Exception as e:
+            self.errors.append(f"Code generation failed: {e}")
+            return False
+
+        # Write source file
+        source_ext = backend.get_file_extension()
+        source_file = output_file + source_ext
+        print(f"Writing {source_file}...")
+        try:
+            with open(source_file, 'w') as f:
+                f.write(source_code)
+        except IOError as e:
+            self.errors.append(f"Failed to write source file: {e}")
+            return False
+
+        # Compile with backend's compiler
+        compile_cmd = backend.get_compiler_command(source_file, output_file)
+        print(f"Compiling: {' '.join(compile_cmd)}")
+        try:
+            result = subprocess.run(compile_cmd, capture_output=True, text=True)
+            if result.returncode != 0:
+                self.errors.append(f"Compilation failed:\n{result.stderr}")
+                return False
+        except Exception as e:
+            self.errors.append(f"Compiler invocation failed: {e}")
+            return False
+
+        # z88dk creates UPPERCASE.COM files, rename to lowercase
+        if backend_name == 'z88dk':
+            uppercase_com = output_file.upper() + '.COM'
+            lowercase_com = output_file.lower() + '.com'
+            if os.path.exists(uppercase_com):
+                print(f"Renaming {uppercase_com} to {lowercase_com}...")
+                os.rename(uppercase_com, lowercase_com)
+                print(f"Created: {lowercase_com}")
+            else:
+                self.warnings.append(f"Expected output {uppercase_com} not found")
+
+        # Report backend warnings
+        if backend.warnings:
+            self.warnings.extend(backend.warnings)
+
+        print(f"Compilation successful!")
+        return True
+
 
 if __name__ == '__main__':
     # Simple test
     import sys
 
-    from lexer import tokenize
-    from parser import Parser
+    from src.lexer import tokenize
+    from src.parser import Parser
 
     test_program = """
 10 REM Test program - demonstrates runtime constant evaluation
