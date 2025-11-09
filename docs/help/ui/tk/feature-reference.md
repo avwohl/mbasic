@@ -53,10 +53,10 @@ Execute the current program from the beginning.
 - Shortcuts: {{kbd:run_program:tk}} or F5
 - Output appears in the output pane
 
-### Stop/Interrupt ({{kbd:cut:tk}})
+### Stop/Interrupt
 Stop a running program immediately.
 - Menu: Run → Stop
-- Shortcut: {{kbd:cut:tk}}
+- No keyboard shortcut (menu only)
 
 ### Continue
 Resume execution after pausing at a breakpoint.
@@ -102,10 +102,10 @@ Execute one line at a time.
 - Shortcut: F10
 - Pauses after each line number
 
-### Clear All Breakpoints ({{kbd:file_save:tk}}hift+B)
+### Clear All Breakpoints
 Remove all breakpoints from the program.
-- Menu: Run → Clear All Breakpoints
-- Shortcut: {{kbd:file_save:tk}}hift+B
+- Menu: Edit → Clear All Breakpoints
+- No keyboard shortcut (menu only)
 
 ### Multi-Statement Debug
 When stepping by statement, individual statements on multi-statement lines are highlighted separately.

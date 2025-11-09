@@ -1083,7 +1083,7 @@ class TkBackend(UIBackend):
         # Determine click action based on horizontal position within column header:
         # - Left 20 pixels (arrow area) = toggle sort direction
         # - Rest of header = cycle/set sort column
-        ARROW_CLICK_WIDTH = 20  # Width of clickable arrow area in pixels
+        ARROW_CLICK_WIDTH = 20  # Width of clickable arrow area in pixels (typical arrow icon width for standard Tkinter theme)
         if col_x < ARROW_CLICK_WIDTH:
             self._toggle_variable_sort_direction()
         else:
@@ -3635,9 +3635,13 @@ class TkBackend(UIBackend):
                 # NOTE: Don't call interpreter.start() because it calls runtime.setup()
                 # which resets PC to the first statement. The RUN command has already
                 # set PC to the correct line (e.g., RUN 120 sets PC to line 120).
-                # We only need to clear the halted flag and mark this as first line.
-                # This avoids the full initialization that start() does:
-                #   - runtime.setup() (rebuilds tables, resets PC)
+                # Instead, we manually perform minimal initialization here.
+                #
+                # MAINTENANCE RISK: This duplicates part of start()'s logic. If start()
+                # changes, this code may need to be updated to match. We only replicate
+                # the minimal setup needed (clearing halted flag, marking first line)
+                # while avoiding the full initialization that start() does:
+                #   - runtime.setup() (rebuilds tables, resets PC) <- THIS is what we avoid
                 #   - Creates new InterpreterState
                 #   - Sets up Ctrl+C handler
                 self.runtime.halted = False  # Clear halted flag to start execution
@@ -3866,10 +3870,15 @@ class TkIOHandler(IOHandler):
     This handler captures program output and sends it to the Tk UI's
     output text widget via a callback function.
 
-    Input strategy:
-    - INPUT statement: Uses inline input field when backend available,
-      otherwise uses modal dialog (not a preference, but availability-based)
-    - LINE INPUT statement: Always uses modal dialog for consistent UX
+    Input strategy rationale:
+    - INPUT statement: Uses inline input field when backend available (allowing the user to
+      see program output context while typing input), otherwise uses modal dialog as fallback.
+      This is availability-based, not a UI preference.
+    - LINE INPUT statement: Always uses modal dialog for consistent UX. This is intentional
+      because LINE INPUT reads entire lines including whitespace, and the modal dialog provides
+      a clearer visual indication that the full line (including spaces) will be captured.
+      The inline field is optimized for short INPUT responses, while LINE INPUT often requires
+      more careful multi-word input.
     """
     
     def __init__(self, output_callback, root=None, backend=None):

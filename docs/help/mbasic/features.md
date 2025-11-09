@@ -150,6 +150,8 @@ See UI-specific documentation for details: [CLI Debugging](../ui/cli/debugging.m
 - **Help system** - Built-in documentation ({{kbd:help:curses}})
 - **Fast paste** - Optimized for large programs
 
+**Note:** Find/Replace is not available in Curses UI. Use the Tk UI for search/replace functionality.
+
 ### CLI Mode
 
 - **Classic MBASIC interface** - Authentic experience
@@ -179,6 +181,8 @@ See UI-specific documentation for details: [CLI Debugging](../ui/cli/debugging.m
   - No path support (simple filenames only)
   - No persistent storage across sessions
 - **Basic debugging** - Simple breakpoint support via menu
+
+**Note:** Find/Replace is not available in Web UI. Use the Tk UI for search/replace functionality.
 
 See [Compatibility Guide](compatibility.md) for complete Web UI file storage details.
 

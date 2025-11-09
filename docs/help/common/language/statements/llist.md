@@ -48,7 +48,7 @@ See the examples for LIST, Format 2.
 ```
 
 ## See Also
-- [AUTO](auto.md) - To generate a line number   automatically     after every carriage return
+- [AUTO](auto.md) - To generate a line number automatically after every carriage return
 - [DELETE](delete.md) - To delete program lines
 - [EDIT](edit.md) - To enter Edit Mode at the specified line
 - [LIST](list.md) - To list all or part of the program currently in memory at the terminal

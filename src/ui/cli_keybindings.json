@@ -41,14 +41,14 @@
       "description": "Exit to system"
     },
     "toggle_breakpoint": {
-      "keys": ["BREAK line"],
+      "keys": ["BREAK", "BREAK line", "BREAK line-", "BREAK CLEAR"],
       "primary": "BREAK line",
-      "description": "Set breakpoint at line"
+      "description": "List breakpoints, set/clear breakpoint at line, or clear all (BREAK | BREAK line | BREAK line- | BREAK CLEAR)"
     },
     "step": {
-      "keys": ["STEP"],
+      "keys": ["STEP", "STEP n"],
       "primary": "STEP",
-      "description": "Step to next statement"
+      "description": "Execute next statement or n statements (STEP | STEP n)"
     },
     "continue": {
       "keys": ["CONT"],

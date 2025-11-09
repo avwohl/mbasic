@@ -21,7 +21,7 @@ class SettingScope(Enum):
     """Scope/precedence of settings"""
     GLOBAL = "global"      # ~/.mbasic/settings.json
     PROJECT = "project"    # .mbasic/settings.json in project dir
-    FILE = "file"          # Per-file metadata
+    FILE = "file"          # Per-file metadata (RESERVED FOR FUTURE USE - not currently implemented)
 
 
 class SettingDefinition:

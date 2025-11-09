@@ -212,11 +212,11 @@ class InteractiveMode:
         # Use emacs-style keybindings (default, but be explicit)
         readline.parse_and_bind('set editing-mode emacs')
 
-        # Bind Ctrl+A to insert the character instead of moving cursor to beginning-of-line
-        # This overrides default Ctrl+A (beginning-of-line) behavior.
-        # When user presses Ctrl+A, the terminal sends ASCII 0x01, and 'self-insert'
-        # tells readline to insert it as-is instead of interpreting it as a command.
-        # The \x01 character in the input string triggers edit mode (see start() method)
+        # Bind Ctrl+A to insert the character (ASCII 0x01) into the input line,
+        # overriding the default Ctrl+A (beginning-of-line) behavior.
+        # When the user presses Ctrl+A, readline's 'self-insert' action inserts the
+        # 0x01 character into the input string and returns it to the application.
+        # The start() method then detects this character and enters edit mode.
         readline.parse_and_bind('Control-a: self-insert')
 
     def _completer(self, text, state):
@@ -692,8 +692,7 @@ class InteractiveMode:
                 program_text = f.read()
 
             # Save variables based on CHAIN options:
-            # - MERGE: preserves all variables (overlay mode)
-            # - ALL: passes all variables to new program
+            # - MERGE or ALL: saves all variables (both flags have identical behavior for variable preservation)
             # - Neither: passes only COMMON variables (resolves type suffixes if needed)
             saved_variables = None
             if self.program_runtime:

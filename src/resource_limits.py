@@ -185,10 +185,10 @@ class ResourceLimits:
         Returns:
             Estimated size in bytes
         """
-        # Calculate total elements (all dimensions multiplied)
+        # Calculate total elements for limit checking
         # Note: DIM A(N) creates N+1 elements (0 to N) in MBASIC 5.21
-        # This calculation accounts for the MBASIC array sizing convention for limit checking.
-        # The actual array creation/initialization is done by execute_dim() in interpreter.py.
+        # We use this convention here to calculate the correct size for limit checking only.
+        # The actual array creation/initialization is handled by execute_dim() in interpreter.py.
         total_elements = 1
         for dim_size in dimensions:
             total_elements *= (dim_size + 1)  # +1 for 0-based indexing (0 to N)
@@ -401,6 +401,12 @@ def create_local_limits() -> ResourceLimits:
 
 def create_unlimited_limits() -> ResourceLimits:
     """Create effectively unlimited limits (for testing).
+
+    Note: This configuration intentionally breaks MBASIC 5.21 compatibility by setting
+    max_string_length to 1MB (instead of 255 bytes). This allows testing modern programs
+    without string length constraints, but may cause tests to pass with unlimited limits
+    that would fail with MBASIC-compatible limits. Use create_local_limits() or
+    create_web_limits() for MBASIC 5.21 compatible string handling.
 
     Returns:
         ResourceLimits configured with very high limits for testing/development

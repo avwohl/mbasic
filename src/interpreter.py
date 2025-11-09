@@ -1146,10 +1146,11 @@ class Interpreter:
         Syntax: NEXT [variable [, variable ...]]
 
         NEXT I, J, K processes variables left-to-right: I first, then J, then K.
-        For each variable, _execute_next_single() is called to increment it and check if
-        the loop should continue. If _execute_next_single() returns True (loop continues),
-        execution jumps back to the FOR body and remaining variables are not processed.
-        If it returns False (loop finished), that loop is popped and the next variable is processed.
+        For each variable, _execute_next_single() increments it and checks if the loop
+        should continue:
+        - Returns True (loop continues): Execution jumps back to FOR body, remaining
+          variables are not processed
+        - Returns False (loop finished): That loop is popped, next variable is processed
 
         This differs from separate statements (NEXT I: NEXT J: NEXT K) which would
         always execute sequentially, processing all three NEXT statements.
@@ -1628,7 +1629,9 @@ class Interpreter:
         3. UI calls provide_input() with user's input line
         4. On next tick(), buffered input is used (step 1) and input_prompt/input_variables are cleared
 
-        File input bypasses the state machine and reads synchronously.
+        File input bypasses the state machine and reads synchronously because file data is
+        immediately available (blocking I/O), unlike keyboard input which requires async
+        handling in the UI event loop.
         """
         # Check if reading from file
         if stmt.file_number is not None:

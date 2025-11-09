@@ -40,17 +40,15 @@ At the very top, three menus:
 
 ### 2. Toolbar
 
-Quick-access buttons below the menu bar:
+Quick-access buttons below the menu bar for common operations:
 
-- **New** - Clear editor, start fresh program
-- **Open** - Upload a .BAS file from your computer
-- **Save** - Download current program (triggers Save As if not yet named)
-- **Save As** - Download program with custom filename
 - **Run** - Parse and execute the program (▶️ green button, {{kbd:run:web}})
 - **Stop** - Stop running program (⏹️ red button, {{kbd:stop:web}})
-- **Step Line** - Execute all statements on current line, then pause (⏭️ button, {{kbd:step_line:web}})
-- **Step Stmt** - Execute one statement, then pause (↻ button, {{kbd:step:web}})
-- **Continue** - Resume normal execution after stepping (▶️⏸️ button, {{kbd:continue:web}})
+- **Step** - Execute all statements on current line, then pause (⏭️ button, {{kbd:step_line:web}})
+- **Stmt** - Execute one statement, then pause (↻ button, {{kbd:step:web}})
+- **Cont** - Resume normal execution after stepping (▶️⏸️ button, {{kbd:continue:web}})
+
+File operations (New, Open, Save, Save As) are available through the File menu.
 
 ### 3. Program Editor
 

@@ -11,9 +11,21 @@ For advanced policies (first_wins, preserve, error) via CaseKeeperTable,
 see KeywordCaseManager (src/keyword_case_manager.py) which is used by
 src/parser.py and src/position_serializer.py.
 
+ARCHITECTURE NOTE - Why Two Separate Case Handling Systems:
+
 The lexer (src/lexer.py) uses SimpleKeywordCase because keywords only need
-force-based policies in the tokenization phase. Advanced policies are handled
-later in the parsing/serialization phase by KeywordCaseManager.
+force-based policies in the tokenization phase. This lightweight handler applies
+immediate transformations during tokenization without needing to track state.
+
+The parser (src/parser.py) and serializer (src/position_serializer.py) use
+KeywordCaseManager for advanced policies that require state tracking across the
+entire program (first_wins, preserve, error). This separation allows:
+1. Fast, stateless tokenization in the lexer
+2. Complex, stateful case management in later phases
+3. Settings changes between phases (though both should use consistent settings)
+
+Note: Both systems read from the same settings.get("keywords.case_style") setting,
+so they should normally be configured with the same policy.
 """
 
 

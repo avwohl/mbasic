@@ -103,6 +103,16 @@ def get_additional_keybindings():
     These are readline keybindings that are handled by Python's readline module,
     not by the keybinding system. They're documented here for completeness.
 
+    NOTE: These keybindings are intentionally NOT in cli_keybindings.json because:
+    1. They're provided by readline, not the MBASIC keybinding system
+    2. They're only available when readline is installed (platform-dependent)
+    3. Users can't customize them through MBASIC settings
+    4. They follow standard readline/Emacs conventions (Ctrl+E, Ctrl+K, etc.)
+
+    This separation keeps cli_keybindings.json focused on MBASIC-specific keybindings
+    that users can customize, while this function documents readline's built-in keybindings
+    for reference in help systems.
+
     Returns:
         dict: Additional keybindings in the same format as cli_keybindings.json
     """

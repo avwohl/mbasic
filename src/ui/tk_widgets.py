@@ -240,10 +240,17 @@ class LineNumberedText(tk.Frame if tk else object):
         if not line_text:
             return None
 
-        # Match line number followed by whitespace OR end of string (both valid)
-        # Valid: "10 PRINT" (whitespace after), "10" (end after), "  10  REM" (leading whitespace ok)
-        # Invalid: "10REM" (no whitespace), "ABC10" (non-digit prefix), "" (empty after strip)
-        # MBASIC 5.21 requires whitespace (or end of line) between line number and statement
+        # Match line number followed by whitespace OR end of string (both valid).
+        # Valid examples:
+        #   "10 PRINT" - line number 10 followed by whitespace, then statement
+        #   "10" - standalone line number (no statement, just the line number)
+        #   "  10  REM" - leading whitespace is ok (stripped above)
+        # Invalid examples:
+        #   "10REM" - no whitespace between line number and statement
+        #   "ABC10" - non-digit prefix
+        #   "" - empty after strip
+        # Note: MBASIC 5.21 requires whitespace OR end-of-line between line number and statement.
+        # A standalone line number like "10" is valid (represents a numbered line with no code).
         match = re.match(r'^(\d+)(?:\s|$)', line_text)
         if match:
             return int(match.group(1))

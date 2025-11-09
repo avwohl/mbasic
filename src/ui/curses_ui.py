@@ -909,7 +909,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             tokens = lexer.tokenize()
 
             # Reject bare identifiers (the parser treats them as implicit REMs for
-            # old BASIC compatibility, but in the editor we want to be stricter)
+            # old BASIC compatibility, but in the editor we want to be stricter).
+            # Note: This only catches bare identifiers followed by EOF or COLON (e.g., "foo" or "foo:").
+            # Bare identifiers followed by other tokens (e.g., "foo + bar") will be caught by the
+            # parser as syntax errors, so this check is sufficient for editor validation.
             if len(tokens) >= 2:
                 first_token = tokens[0]
                 second_token = tokens[1]
@@ -2107,7 +2110,7 @@ class CursesBackend(UIBackend):
                 # Clear statement highlighting when continuing
                 self.editor._update_display()
                 # Continue from breakpoint - just clear halted flag and resume tick execution
-                # (No status bar update - execution will show output in output window)
+                # (Immediate mode status remains disabled - execution will show output in output window)
                 self.runtime.halted = False
                 # Schedule next tick to resume execution
                 self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
@@ -2137,7 +2140,7 @@ class CursesBackend(UIBackend):
                 self.runtime.halted = False
 
             # Execute one statement
-            # (No status bar update - output will show in output window)
+            # (Immediate mode status remains disabled during execution - output shows in output window)
             state = self.interpreter.tick(mode='step_statement', max_statements=1)
 
             # Collect any output
@@ -2182,14 +2185,14 @@ class CursesBackend(UIBackend):
                 line_num = state.error_info.pc.line_num
                 self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
                 self._update_output()
-                # Status bar stays at default (STATUS_BAR_SHORTCUTS) - error message is in output
+                # Update immediate status (allows immediate mode again) - error message is in output
                 self._update_immediate_status()
             elif self.runtime.halted:
                 # Clear highlighting when done
                 self.editor._update_display()
                 self.output_buffer.append("Program completed")
                 self._update_output()
-                # Status bar stays at default (STATUS_BAR_SHORTCUTS) - completion message is in output
+                # Update immediate status (allows immediate mode again) - completion message is in output
                 self._update_immediate_status()
         except Exception as e:
             import traceback
@@ -2203,7 +2206,7 @@ class CursesBackend(UIBackend):
             else:
                 self.output_buffer.append(traceback.format_exc())
             self._update_output()
-            # Status bar stays at default (STATUS_BAR_SHORTCUTS) - error is in output
+            # Don't update immediate status on exception - error is in output
 
     def _debug_step_line(self):
         """Execute all statements on current line and pause (step by line)."""
@@ -2225,7 +2228,7 @@ class CursesBackend(UIBackend):
                 self.runtime.halted = False
 
             # Execute all statements on current line
-            # (No status bar update - output will show in output window)
+            # (Immediate mode status remains disabled during execution - output shows in output window)
             state = self.interpreter.tick(mode='step_line', max_statements=100)
 
             # Collect any output
@@ -2264,13 +2267,13 @@ class CursesBackend(UIBackend):
                 line_num = state.error_info.pc.line_num
                 self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
                 self._update_output()
-                # Status bar stays at default (STATUS_BAR_SHORTCUTS) - error message is in output
+                # Update immediate status (allows immediate mode again) - error message is in output
                 self._update_immediate_status()
             elif self.runtime.halted:
                 self.editor._update_display()
                 self.output_buffer.append("Program completed")
                 self._update_output()
-                # Status bar stays at default (STATUS_BAR_SHORTCUTS) - completion message is in output
+                # Update immediate status (allows immediate mode again) - completion message is in output
                 self._update_immediate_status()
         except Exception as e:
             import traceback
@@ -2284,7 +2287,7 @@ class CursesBackend(UIBackend):
             else:
                 self.output_buffer.append(traceback.format_exc())
             self._update_output()
-            # Status bar stays at default (STATUS_BAR_SHORTCUTS) - error is in output
+            # Don't update immediate status on exception - error is in output
 
     def _debug_stop(self):
         """Stop program execution."""
@@ -2298,10 +2301,10 @@ class CursesBackend(UIBackend):
             self.running = False
             self.output_buffer.append("Program stopped by user")
             self._update_output()
-            # Status bar stays at default - stop message is in output
+            # Update immediate status (allows immediate mode again) - stop message is in output
             self._update_immediate_status()
         except Exception as e:
-            # Status bar stays at default - just log the error
+            # Don't update immediate status on exception - just log the error
             self.output_buffer.append(f"Stop error: {e}")
             self._update_output()
 
@@ -2471,9 +2474,9 @@ class CursesBackend(UIBackend):
             self._renumber_lines()
         # If no or cancelled, just return (do nothing)
 
-        # Continue with insert line after dialog
-        # Note: We can't continue the insert here because we've lost the context
-        # (lines, line_index, insert_num variables). User will need to retry insert.
+        # Note: Cannot continue the insert operation here because the context was lost
+        # when the dialog callback was invoked (lines, line_index, insert_num variables
+        # are no longer available). User will need to retry the insert operation manually.
 
     def _continue_smart_insert(self, insert_num, line_index, lines):
         """Continue smart insert after getting the insert number."""
@@ -2492,7 +2495,10 @@ class CursesBackend(UIBackend):
         new_text = '\n'.join(lines)
         self.editor.edit_widget.set_edit_text(new_text)
 
-        # Position cursor on the new line, at the code area (column 7)
+        # Position cursor on the new line, at the code area (column 7).
+        # Note: Column 7 is hardcoded as the start of code area for standard 5-digit line numbers
+        # plus space (e.g., "10    PRINT"). If line number width becomes variable, this should use
+        # _parse_line_number() to determine code_start position dynamically.
         if line_index > 0:
             new_cursor_pos = sum(len(lines[i]) + 1 for i in range(line_index)) + 7
         else:
@@ -3472,7 +3478,7 @@ class CursesBackend(UIBackend):
                 self.output_buffer.append("│ Fix the syntax error and try running again.")
                 self.output_buffer.append("└──────────────────────────────────────────────────┘")
                 self._update_output()
-                # Status bar stays at default - error is displayed in output
+                # Don't update immediate status here - error is displayed in output
                 return False
 
         # Reset runtime with current program - RUN = CLEAR + GOTO first line (or start_line if specified)
@@ -3493,7 +3499,7 @@ class CursesBackend(UIBackend):
 
         # If empty program, just return (variables cleared, nothing to execute)
         if not self.program.lines:
-            # No status bar update - status bar stays at default
+            # Don't update immediate status - no execution occurred
             self.running = False
             return False
 
@@ -3507,7 +3513,7 @@ class CursesBackend(UIBackend):
             if start_line not in self.program.line_asts:
                 self.output_buffer.append(f"?Undefined line {start_line}")
                 self._update_output()
-                # Status bar stays at default (STATUS_BAR_SHORTCUTS) - error is in output
+                # Don't update immediate status here - error is in output
                 self.running = False
                 return False
             # Set PC to start at the specified line (after start() has built statement table)
@@ -3531,7 +3537,7 @@ class CursesBackend(UIBackend):
             self.output_buffer.append(f"│ Error: {error_msg}")
             self.output_buffer.append("└──────────────────────────────────────────────────┘")
             self._update_output()
-            # Status bar stays at default (STATUS_BAR_SHORTCUTS) - error is in output
+            # Don't update immediate status on exception - error is in output
             return False
 
         return True
@@ -3547,7 +3553,7 @@ class CursesBackend(UIBackend):
             if not self._setup_program(start_line):
                 return
 
-            # No status bar update - program output will show in output window
+            # Immediate mode status remains disabled during execution - program output shows in output window
 
             # Set up tick-based execution using urwid's alarm
             self._execute_tick()
@@ -3627,7 +3633,7 @@ class CursesBackend(UIBackend):
                 self.output_buffer.append("└──────────────────────────────────────────────────┘")
 
                 self._update_output()
-                # Status bar stays at default - error is displayed in output
+                # Don't update immediate status here - error is displayed in output
                 self._update_immediate_status()
 
             elif self.runtime.halted:
@@ -3680,7 +3686,7 @@ class CursesBackend(UIBackend):
                 self.output_buffer.append(f"│ Error: {error_msg}")
                 self.output_buffer.append("└──────────────────────────────────────────────────┘")
                 self._update_output()
-                # Status bar stays at default - error is displayed in output
+                # Don't update immediate status here - error is displayed in output
                 self._update_immediate_status()
             else:
                 # Internal/unexpected error - log it to stderr
@@ -4474,7 +4480,7 @@ class CursesBackend(UIBackend):
                 self.runtime.halted = False
                 self.interpreter.state.is_first_line = True
 
-                # No status bar update - program output will show in output window
+                # Immediate mode status remains disabled during execution - program output shows in output window
                 self.running = True
                 # Start the tick loop
                 self.loop.set_alarm_in(0.01, lambda loop, user_data: self._execute_tick())

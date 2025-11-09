@@ -231,11 +231,16 @@ def create_settings_backend(session_id: Optional[str] = None,
     """Factory function to create appropriate settings backend.
 
     Args:
-        session_id: Session ID for Redis mode (required if NICEGUI_REDIS_URL is set)
+        session_id: Session ID for Redis mode (required for Redis backend, but falls back
+            to file backend if not provided even when NICEGUI_REDIS_URL is set)
         project_dir: Project directory for file mode
 
     Returns:
-        SettingsBackend instance (File or Redis based on environment)
+        SettingsBackend instance (Redis if redis_url and session_id both provided, otherwise File)
+
+    Note:
+        If NICEGUI_REDIS_URL is set but session_id is None, silently falls back to FileSettingsBackend.
+        If Redis connection fails, also falls back to FileSettingsBackend with warning.
     """
     import os
 

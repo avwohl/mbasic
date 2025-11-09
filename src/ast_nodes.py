@@ -186,15 +186,19 @@ class InputStatementNode:
         INPUT; var1                - Read without prompt (no "?")
         INPUT #filenum, var1       - Read from file
 
-    Note: The suppress_question field controls "?" display:
-    - suppress_question=False (default): Adds "?" after prompt
-      Examples: INPUT var → "? ", INPUT "Name", var → "Name? ", INPUT "Name"; var → "Name? "
-    - suppress_question=True: No "?" added, no prompt displayed
-      Examples: INPUT; var → "" (no prompt, no "?")
+    Note: The suppress_question field is parsed by the parser when INPUT; (semicolon
+    immediately after INPUT) is used, but it is NOT currently checked by the interpreter.
+    Current behavior: "?" is always displayed (either "? " alone or "prompt? ").
 
-    Semicolon usage:
-    - INPUT; var → semicolon immediately after INPUT (suppress_question=True, no "?")
-    - INPUT "prompt"; var → semicolon after prompt is just separator (suppress_question=False, shows "?")
+    Expected behavior (when suppress_question is implemented):
+    - suppress_question=False (default): Adds "?" after prompt
+      Examples: INPUT var → "? ", INPUT "Name", var → "Name? "
+    - suppress_question=True: No "?" added (for INPUT; syntax)
+      Examples: INPUT; var → "" (no prompt), INPUT "prompt"; var → "prompt" (no "?")
+
+    Semicolon usage in MBASIC:
+    - INPUT; var → semicolon immediately after INPUT (sets suppress_question=True)
+    - INPUT "prompt"; var → semicolon after prompt is just separator (suppress_question=False)
     """
     prompt: Optional['ExpressionNode']
     variables: List['VariableNode']

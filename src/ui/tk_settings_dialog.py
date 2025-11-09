@@ -202,7 +202,9 @@ class SettingsDialog(tk.Toplevel):
         """
         values = {}
         for key, widget in self.widgets.items():
-            # All widgets are tk.Variable instances (BooleanVar, StringVar, IntVar)
+            # All entries in self.widgets dict are tk.Variable instances (BooleanVar, StringVar, IntVar),
+            # not the actual widget objects (Checkbutton, Spinbox, Entry, Combobox).
+            # The variables are associated with widgets via textvariable/variable parameters.
             values[key] = widget.get()
         return values
 

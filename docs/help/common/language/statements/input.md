@@ -73,6 +73,6 @@ WHAT IS THE RADIUS? _
 ## See Also
 - [LINE INPUT](line-input.md) - To input an entire line (up to 254 characters) to a string variable, without the use of delimiters
 - [PRINT](print.md) - Output text and values to the screen
-- [INPUT#](inputi.md) - Read data from a sequential file
+- [INPUT#](input_hash.md) - Read data from a sequential file
 - [READ](read.md) - Read values from DATA statements
 - [WRITE](write.md) - To output data at the terminal

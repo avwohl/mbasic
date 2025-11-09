@@ -12,7 +12,22 @@ The MBASIC Web IDE provides a full-featured BASIC programming environment access
 
 ## Main Components
 
-The Web UI has three main text areas:
+The Web UI has a vertical layout with these components:
+
+### Menu Bar
+
+Located at the top with File, Edit, Run, View, and Help menus. See [Menu Functions](#menu-functions) below for details.
+
+### Toolbar
+
+Quick-access buttons below the menu bar for common operations:
+- **Run** (▶️ green) - Start program execution
+- **Stop** (⏹️ red) - Stop running program
+- **Step** (⏭️) - Execute all statements on current line
+- **Stmt** (↻) - Execute one statement
+- **Cont** (▶️⏸️) - Continue execution after pause
+
+Additional file operations are available through the File menu.
 
 ### Program Editor (Top)
 
@@ -66,10 +81,6 @@ Press Enter → Output shows: 1 2 3
 **When to use Command vs Editor:**
 - **Command** - Quick calculations, testing expressions, checking variables
 - **Editor** - Writing programs you want to save and run multiple times
-
-### Menu Bar
-
-Access File, Edit, Run, and Help functions.
 
 ## Menu Functions
 

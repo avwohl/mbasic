@@ -37,16 +37,16 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
     """Apply keyword case policy to a keyword.
 
     Args:
-        keyword: The keyword to transform (may be any case)
+        keyword: The keyword to transform (must be normalized lowercase)
         policy: Case policy to apply (force_lower, force_upper, force_capitalize, first_wins, error, preserve)
         keyword_tracker: Dictionary tracking first occurrence of each keyword (for first_wins policy)
 
     Returns:
         Keyword with case policy applied
 
-    Note: While this function can handle keywords in any case, callers should pass lowercase
-    keywords for consistency (emit_keyword() requires lowercase). The first_wins policy
-    normalizes to lowercase for lookup. Other policies transform based on input case.
+    Note: This function requires lowercase input to ensure consistent behavior with
+    emit_keyword(). The first_wins policy uses lowercase for lookup; other policies
+    apply transformations based on the lowercase input.
     """
     if policy == "force_lower":
         return keyword.lower()
@@ -92,7 +92,8 @@ class PositionSerializer:
 
         Args:
             debug: If True, collect and report position conflicts
-            keyword_case_manager: KeywordCaseManager instance (from parser) with keyword case table
+            keyword_case_manager: KeywordCaseManager instance (from parser) with keyword case table.
+                                  If None (default), keywords are forced to lowercase (fallback mode).
         """
         self.debug = debug
         self.conflicts: List[PositionConflict] = []
@@ -126,7 +127,7 @@ class PositionSerializer:
         if self.keyword_case_manager:
             keyword_with_case = self.keyword_case_manager.get_display_case(keyword)
         else:
-            # Fallback if no manager (shouldn't happen)
+            # Fallback if no manager provided (default to lowercase)
             keyword_with_case = keyword.lower()
 
         # Use regular emit_token for positioning
@@ -235,16 +236,19 @@ class PositionSerializer:
             return " " + serialize_statement(stmt)
 
     def serialize_let_statement(self, stmt: ast_nodes.LetStatementNode) -> str:
-        """Serialize assignment statement (without LET keyword).
+        """Serialize assignment statement (always outputs without LET keyword).
 
-        LetStatementNode represents both explicit LET statements and implicit assignments
-        in the AST. However, this serializer ALWAYS outputs the implicit assignment form
-        (A=5) without the LET keyword, regardless of whether the original source used LET.
+        Design decision: LetStatementNode represents both explicit LET statements and implicit
+        assignments in the AST. This serializer intentionally ALWAYS outputs the implicit
+        assignment form (A=5) without the LET keyword, regardless of the original source.
 
-        This is because:
-        - The AST doesn't track whether LET was originally present
+        Rationale:
+        - The AST doesn't track whether LET was originally present (intentional simplification)
         - LET is optional in MBASIC and functionally equivalent to implicit assignment
+        - Using implicit form produces more compact, modern-looking code
         - Both forms use the same AST node type for consistency throughout the codebase
+
+        Note: This means round-trip serialization will convert "LET A=5" to "A=5".
         """
         result = ""
 
@@ -344,12 +348,16 @@ class PositionSerializer:
         return result
 
     def serialize_rem_statement(self, stmt: ast_nodes.RemarkStatementNode) -> str:
-        """Serialize REM statement"""
+        """Serialize REM statement
+
+        Note: stmt.comment_type is stored in uppercase by the parser ("APOSTROPHE", "REM", or "REMARK").
+        We convert to lowercase before passing to emit_keyword() which requires lowercase input.
+        """
         # Use comment_type to preserve original syntax (REM, REMARK, or ')
         if stmt.comment_type == "APOSTROPHE":
             result = self.emit_token("'", stmt.column, "RemKeyword")
         else:
-            # Apply keyword case to REM/REMARK
+            # Apply keyword case to REM/REMARK (convert to lowercase for emit_keyword)
             result = self.emit_keyword(stmt.comment_type.lower(), stmt.column, "RemKeyword")
 
         if stmt.text:

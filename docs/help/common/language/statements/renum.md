@@ -230,7 +230,7 @@ RENUM 100,0,100    ' 100, 200, 300... lots of room
 - yyyyy = line containing it (may be renumbered)
 
 ## See Also
-- [AUTO](auto.md) - To generate a line number   automatically     after every carriage return
+- [AUTO](auto.md) - To generate a line number automatically after every carriage return
 - [DELETE](delete.md) - To delete program lines
 - [EDIT](edit.md) - To enter Edit Mode at the specified line
 - [LIST](list.md) - To list all or part of the program currently in memory at the terminal

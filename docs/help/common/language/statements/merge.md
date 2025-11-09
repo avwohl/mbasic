@@ -1,6 +1,6 @@
 ---
 category: file-management
-description: To merge a specified disk file into the      program currently in memory
+description: To merge a specified disk file into the program currently in memory
 keywords: ['command', 'error', 'file', 'for', 'if', 'line', 'merge', 'number', 'program', 'return']
 syntax: MERGE <filename>
 title: MERGE

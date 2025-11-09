@@ -113,9 +113,9 @@ class UsingFormatter:
         """Parse a numeric field starting at start_pos
 
         Sign behavior:
-        - leading_sign: + at start, adds + or - sign (2 chars total)
-        - trailing_sign: + at end, adds + or - sign (2 chars total)
-        - trailing_minus_only: - at end, adds - for negative OR space for non-negative (1 char total)
+        - leading_sign: + at start, always adds + or - sign (reserves 1 char for sign)
+        - trailing_sign: + at end, always adds + or - sign (reserves 1 char for sign)
+        - trailing_minus_only: - at end, adds - for negative OR space for non-negative (reserves 1 char)
         """
         spec = {
             'start_pos': start_pos,
@@ -837,11 +837,12 @@ class BuiltinFunctions:
 
         Returns -1 if at EOF, 0 otherwise
 
-        Note: For binary input files (mode 'I' from OPEN statement), respects ^Z (ASCII 26)
-        as EOF marker (CP/M style). In MBASIC syntax, mode 'I' stands for "Input" but is
-        specifically BINARY INPUT mode, implemented as 'rb' by execute_open() in interpreter.py.
-        This binary mode allows ^Z detection for CP/M compatibility. Text mode files (output,
-        append) use standard Python EOF detection without ^Z checking.
+        Note: For binary input files (OPEN statement mode 'I'), respects ^Z (ASCII 26)
+        as EOF marker (CP/M style). The 'I' mode from BASIC's OPEN statement is stored in
+        file_info['mode'] and corresponds to binary input, which execute_open() in
+        interpreter.py implements by opening the file with Python mode 'rb'. This binary
+        mode allows ^Z detection for CP/M compatibility. Text mode files (output, append)
+        use standard Python EOF detection without ^Z checking.
         """
         file_num = int(file_num)
         if file_num not in self.runtime.files:

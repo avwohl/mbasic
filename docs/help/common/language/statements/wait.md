@@ -11,13 +11,15 @@ type: statement
 
 ## Implementation Note
 
-⚠️ **Not Implemented**: This feature requires direct hardware I/O port access and is not implemented in this Python-based interpreter.
+⚠️ **Not Implemented**: This statement is parsed for compatibility but performs no operation.
 
-**Behavior**: Statement is parsed but no operation is performed
+**Behavior**: The WAIT statement parses successfully without errors, but does not perform any hardware I/O operations (it is silently ignored).
 
-**Why**: Cannot access hardware I/O ports from a Python interpreter. WAIT was used to synchronize with hardware devices by polling I/O ports.
+**Why**: This feature requires direct hardware I/O port access, which cannot be provided by a Python-based interpreter. WAIT was historically used to synchronize with hardware devices by polling I/O ports, which is not possible in modern cross-platform software.
 
-**Alternative**: For delays, use a busy loop or timer logic in BASIC. For event synchronization, restructure the program to use sequential logic instead of hardware polling.
+**Limitations**: All WAIT statements are silently ignored. The program continues immediately to the next statement without any delay or hardware polling.
+
+**Alternative**: For delays, use a busy loop with a counter. For event synchronization, restructure the program to use sequential logic instead of hardware polling.
 
 **Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
 

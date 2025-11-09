@@ -43,7 +43,7 @@ If no type declaration statements are encountered, BASIC-80 assumes all variable
 40 DATA# = 12.5     ' Double precision (starts with D, has # suffix)
 50 INDEX% = 42      ' Integer (starts with I, has % suffix)
 60 NAME1$ = "TEST"  ' String (starts with N, but $ suffix overrides DEFINT)
-70 AMOUNT = 100     ' String variable (starts with A, DEFSTR applies)
+70 AMOUNT = "100"   ' String variable (starts with A, DEFSTR applies)
 ```
 
 **Type Declaration Precedence:**

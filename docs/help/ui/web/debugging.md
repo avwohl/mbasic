@@ -49,11 +49,10 @@ The Web UI debugger currently offers:
 
 - **Run ({{kbd:run:web}})** - Start program from beginning
 - **Continue ({{kbd:continue:web}})** - Run to next breakpoint
-- **Step Statement ({{kbd:step:web}})** - Execute one statement
-- **Step Line ({{kbd:step_line:web}})** - Execute one line (all statements on line)
+- **Step ({{kbd:step:web}})** - Step to next line
 - **Stop ({{kbd:stop:web}})** - End execution
 
-**Note:** Function key shortcuts ({{kbd:continue:web}}, {{kbd:step:web}}, {{kbd:help:web}}1, etc.) are not implemented in the Web UI.
+**Note:** The Web UI uses {{kbd:step:web}} for stepping. Statement-level stepping is not yet implemented.
 
 ## Variable Inspector
 
@@ -286,18 +285,17 @@ Will provide timing and performance data:
 ## Keyboard Shortcuts
 
 **Currently Implemented:**
-- `{{kbd:run:web}}` - Run program
-- `{{kbd:continue:web}}` - Continue (run to next breakpoint)
-- `{{kbd:step:web}}` - Step statement
-- `{{kbd:step_line:web}}` - Step line
+- `{{kbd:run:web}}` - Run program from beginning
+- `{{kbd:continue:web}}` - Continue to next breakpoint
+- `{{kbd:step:web}}` - Step to next line
 - `{{kbd:stop:web}}` - Stop execution
 
 **Planned for Future Releases:**
-- `{{kbd:continue:web}}` - Start/Continue debugging
-- `{{kbd:toggle_breakpoint:web}}` - Toggle breakpoint
-- `{{kbd:step:web}}` - Step over
-- `{{kbd:help:web}}1` - Step into
-- Navigation and inspector shortcuts
+- Statement-level stepping (execute one statement at a time)
+- Navigation shortcuts for debugger panels
+- Variable inspector shortcuts
+
+**Note:** {{kbd:toggle_breakpoint:web}} is implemented but currently available via menu only (not yet bound to keyboard).
 
 ## Tips and Best Practices
 
@@ -334,7 +332,7 @@ Will provide timing and performance data:
 
 ### Browser DevTools (Standard Browser Features)
 
-Press `{{kbd:help:web}}2` to open browser tools:
+Press `F12` to open browser tools (standard browser shortcut):
 
 **Console Tab:**
 - View debug output

@@ -43,7 +43,7 @@ class SettingsManager:
         self.project_dir = project_dir
         self.global_settings: Dict[str, Any] = {}
         self.project_settings: Dict[str, Any] = {}
-        self.file_settings: Dict[str, Any] = {}  # Not yet implemented: per-file settings
+        self.file_settings: Dict[str, Any] = {}  # RESERVED FOR FUTURE USE: per-file settings (not persisted)
 
         # Settings backend (file or Redis)
         if backend is None:
