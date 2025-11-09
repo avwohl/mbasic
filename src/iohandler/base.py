@@ -67,9 +67,9 @@ class IOHandler(ABC):
         KNOWN LIMITATION (not a bug - platform limitation):
         Current implementations (console, curses, web) CANNOT fully preserve
         leading/trailing spaces due to underlying platform API constraints:
-        - console: Python input() strips trailing newline/spaces
-        - curses: getstr() strips trailing spaces
-        - web: HTML input fields strip spaces
+        - console: Python input() strips trailing newline only (preserves spaces)
+        - curses: getstr() strips trailing whitespace (spaces, tabs, newlines)
+        - web: HTML input fields strip leading/trailing whitespace by default
         This is an accepted limitation of the underlying platform APIs, not an
         implementation defect.
         """

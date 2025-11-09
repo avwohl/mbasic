@@ -2063,13 +2063,19 @@ class TkBackend(UIBackend):
         return not had_errors
 
     def _sync_program_to_runtime(self):
-        """Sync program to runtime, preserving PC only if execution is running.
+        """Sync program to runtime, conditionally preserving PC.
 
         Updates runtime's statement_table and line_text_map from self.program.
-        If execution is currently running (self.running=True and not paused),
-        the PC is preserved. Otherwise, PC is set to halted state to prevent
-        accidental execution. This allows LIST and other commands to see the
-        current program state.
+
+        PC handling:
+        - If running and not paused at breakpoint: Preserves PC and execution state
+        - If paused at breakpoint: Resets PC to halted (prevents accidental resumption)
+        - If not running: Resets PC to halted for safety
+
+        This allows LIST and other commands to see the current program without
+        accidentally triggering execution. When paused at a breakpoint, the PC is
+        intentionally reset; when the user continues, the runtime state already
+        has the correct PC.
         """
         from src.pc import PC
 

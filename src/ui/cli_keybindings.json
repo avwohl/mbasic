@@ -64,6 +64,11 @@
       "keys": ["SET \"setting\" value"],
       "primary": "SET \"setting\" value",
       "description": "Change a setting (e.g., SET \"editor.auto_number_start\" 100)"
+    },
+    "stack": {
+      "keys": ["STACK"],
+      "primary": "STACK",
+      "description": "Show execution stack (GOSUB/FOR/WHILE loops)"
     }
   }
 }

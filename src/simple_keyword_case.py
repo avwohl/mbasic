@@ -64,13 +64,15 @@ class SimpleKeywordCase:
     def register_keyword(self, keyword: str, original_case: str, line_num: int = 0, column: int = 0) -> str:
         """Register a keyword and return the display case.
 
-        For compatibility with existing code. Just applies the policy.
+        Maintains signature compatibility with KeywordCaseManager.register_keyword()
+        which uses line_num and column for advanced policies (first_wins, preserve, error).
+        SimpleKeywordCase only supports force-based policies, so these parameters are unused.
 
         Args:
             keyword: Normalized (lowercase) keyword
-            original_case: Original case as typed (ignored for keywords)
-            line_num: Line number (unused)
-            column: Column (unused)
+            original_case: Original case as typed (ignored - force policies apply transformation)
+            line_num: Line number (unused - required for KeywordCaseManager compatibility)
+            column: Column (unused - required for KeywordCaseManager compatibility)
 
         Returns:
             The keyword with policy applied

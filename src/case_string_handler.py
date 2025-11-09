@@ -10,9 +10,8 @@ from src.case_keeper import CaseKeeperTable
 class CaseStringHandler:
     """Unified handler for case-sensitive string processing."""
 
-    # Shared tables for consistency across lexer and parser
+    # Shared table for consistency across lexer and parser
     _keyword_table: Optional[CaseKeeperTable] = None
-    _identifier_table: Optional[CaseKeeperTable] = None
 
     @classmethod
     def get_keyword_table(cls, policy: str = "force_lower") -> CaseKeeperTable:
@@ -22,19 +21,10 @@ class CaseStringHandler:
         return cls._keyword_table
 
     @classmethod
-    def get_identifier_table(cls, policy: str = "force_lower") -> CaseKeeperTable:
-        """Get or create the identifier case keeper table."""
-        if cls._identifier_table is None:
-            cls._identifier_table = CaseKeeperTable(policy=policy)
-        return cls._identifier_table
-
-    @classmethod
     def clear_tables(cls):
         """Clear all case keeper tables."""
         if cls._keyword_table:
             cls._keyword_table.clear()
-        if cls._identifier_table:
-            cls._identifier_table.clear()
 
     @classmethod
     def case_keepy_string(cls, text: str, original_text: str, setting_prefix: str,
@@ -64,9 +54,6 @@ class CaseStringHandler:
                 # identifiers (variable/function names) retain their case as typed.
                 # This matches MBASIC 5.21 behavior where identifiers are case-insensitive
                 # for matching but preserve display case.
-                # Note: We return original_text directly without policy enforcement.
-                # A get_identifier_table() method is implemented (for potential future use)
-                # but is never called - identifiers always preserve their original case.
                 return original_text
             else:
                 # Unknown prefix, return original

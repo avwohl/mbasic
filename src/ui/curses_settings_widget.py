@@ -135,9 +135,7 @@ class SettingsWidget(urwid.WidgetWrap):
             # Create radio button group for enum
             group = []
             for choice in defn.choices:
-                # Create display label (strip 'force_' prefix from beginning for cleaner display)
-                # Note: Both removeprefix() and the fallback [6:] only strip from the beginning,
-                # ensuring we don't modify 'force_' appearing elsewhere in the string
+                # Strip 'force_' prefix from beginning for cleaner display
                 display_label = choice.removeprefix('force_') if hasattr(str, 'removeprefix') else (choice[6:] if choice.startswith('force_') else choice)
                 rb = urwid.RadioButton(group, display_label, state=(choice == current_value))
                 # Store the actual value as user_data for later retrieval

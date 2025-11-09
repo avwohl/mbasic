@@ -267,7 +267,7 @@ The Tk UI fully supports mouse operations:
 | {{kbd:file_open:tk}} | Open File |
 | {{kbd:file_save:tk}} | Save File |
 | {{kbd:run_program:tk}} / F5 | Run Program |
-| {{kbd:cut:tk}} | Stop Program |
+| (menu only) | Stop Program |
 | {{kbd:toggle_breakpoint:tk}} | Toggle Breakpoint |
 | F10 | Step Line |
 | (toolbar) | Step Statement |

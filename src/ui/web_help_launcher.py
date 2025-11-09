@@ -74,8 +74,9 @@ def open_help():
 #
 # Migration guide for code using this class:
 # OLD: launcher = WebHelpLauncher(); launcher.open_help("statements/print")
-# NEW: Open http://localhost/mbasic_docs/statements/print.html directly in browser
-# NEW: In NiceGUI backend, use: ui.navigate.to('/mbasic_docs/statements/print.html', new_tab=True)
+# NEW: open_help_in_browser("statements/print")  # Uses directory-style URLs: /statements/print/
+# NEW: In NiceGUI backend, use: ui.navigate.to('/mbasic_docs/statements/print/', new_tab=True)
+# Note: MkDocs uses directory-style URLs by default (/path/ not /path.html)
 
 class WebHelpLauncher_DEPRECATED:
     """Legacy class wrapper for compatibility."""

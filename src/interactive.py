@@ -901,6 +901,9 @@ class InteractiveMode:
                 self._renum_statement,
                 self.program_runtime
             )
+            # Clear execution state since renumbering invalidates GOSUB/FOR stacks
+            # (line numbers in stacks are now incorrect)
+            self.clear_execution_state()
             print("Renumbered")
 
         except ValueError as e:
@@ -1200,6 +1203,9 @@ class InteractiveMode:
                 # Update runtime's statement_table if program is running
                 if self.program_runtime:
                     self.program_runtime.statement_table.replace_line(line_num, line_ast)
+                # Clear execution state since line edits invalidate GOSUB/FOR stacks
+                # (must be called after statement_table update)
+                self.clear_execution_state()
 
         except KeyboardInterrupt:
             # Ctrl+C cancels edit

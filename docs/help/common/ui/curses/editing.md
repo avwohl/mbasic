@@ -202,7 +202,7 @@ The editor automatically sorts them as 10, 30.
 10 PRINT "Test"
 1O PRINT "Oops"   ← Letter O instead of zero
 ```
-Creates a new variable 1O (syntax error)!
+This is a syntax error! The parser will reject "1O" as an invalid line number.
 
 ## See Also
 

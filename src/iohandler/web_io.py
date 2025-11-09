@@ -131,9 +131,10 @@ class WebIOHandler(IOHandler):
             Complete line entered by user
 
         Note: Current implementation does NOT preserve leading/trailing spaces
-        as documented in base class. HTML input fields strip spaces.
-        This is a known limitation - see input_line() documentation in base.py.
-        For web UI, input() and input_line() work the same way.
+        as documented in base class. HTML input fields strip leading/trailing
+        whitespace by default (browser behavior). This is a known limitation -
+        see input_line() documentation in base.py. For web UI, input() and
+        input_line() work the same way.
         """
         # For web UI, input() and input_line() work the same way
         return self.input(prompt)

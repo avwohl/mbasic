@@ -731,23 +731,16 @@ class TkHelpBrowser(tk.Toplevel):
             # Always offer select all
             menu.add_command(label="Select All", command=self._select_all)
 
-            # Define dismiss_menu helper for ESC/FocusOut bindings (below)
-            def dismiss_menu():
-                try:
-                    menu.unpost()
-                except:
-                    pass
-
+            # Note: tk_popup() handles menu dismissal automatically (ESC key,
+            # clicks outside menu, selecting items). Explicit bindings for
+            # FocusOut/Escape are not needed and may not fire reliably since
+            # Menu widgets have their own event handling for dismissal.
             try:
                 menu.tk_popup(event.x_root, event.y_root)
             finally:
                 # Release grab after menu is shown. Note: tk_popup handles menu interaction,
                 # but we explicitly release the grab to ensure clean state.
                 menu.grab_release()
-
-            # Bind ESC and clicks outside to dismiss
-            menu.bind("<FocusOut>", lambda e: dismiss_menu())
-            menu.bind("<Escape>", lambda e: dismiss_menu())
 
         self.text_widget.bind("<Button-3>", show_context_menu)  # Right-click
 

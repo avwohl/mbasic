@@ -136,10 +136,17 @@ class Parser:
     def at_end_of_line(self) -> bool:
         """Check if at end of logical line (NEWLINE or EOF)
 
-        Note: This method does NOT check for comment tokens (REM, REMARK, APOSTROPHE)
-        or statement separators (COLON). Use at_end_of_statement() when parsing statements
-        that should stop at comments/colons. Use at_end_of_line() for line-level parsing
-        where colons separate multiple statements on the same line.
+        Use cases:
+        - Line-level parsing in parse_program() where COLON separates statements on same line
+        - Collecting DEF type statements across the program
+        - Parsing function bodies in DEF FN where entire line is function definition
+
+        Important: This does NOT check for COLON or comment tokens. For statement parsing,
+        use at_end_of_statement() instead to properly stop at colons and comments.
+
+        Note: Most statement parsing should use at_end_of_statement(), not this method.
+        Using at_end_of_line() in statement parsing can cause bugs where comments are
+        parsed as part of the statement instead of ending it.
         """
         if self.at_end_of_tokens():
             return True
@@ -151,8 +158,18 @@ class Parser:
 
         A statement ends at:
         - End of line (NEWLINE or EOF)
-        - Statement separator (COLON)
-        - Comment (REM, REMARK, or APOSTROPHE)
+        - Statement separator (COLON) - allows multiple statements per line
+        - Comment (REM, REMARK, or APOSTROPHE) - everything after is ignored
+
+        Use cases:
+        - Parsing statement arguments (INPUT variables, NEXT variables, etc.)
+        - Parsing expression lists in most statements
+        - General statement boundary detection
+
+        Special case: PRINT/LPRINT inside IF...THEN...ELSE need custom logic that
+        also checks for ELSE token, since they can be nested in conditionals.
+
+        Note: For PRINT/LPRINT, use at_end_of_statement() AND check for ELSE explicitly.
         """
         if self.at_end_of_tokens():
             return True
@@ -1430,7 +1447,7 @@ class Parser:
 
         # Parse variable list
         variables: List[VariableNode] = []
-        while not self.at_end_of_line() and not self.match(TokenType.COLON):
+        while not self.at_end_of_statement():
             var_token = self.expect(TokenType.IDENTIFIER)
 
             # Check for array subscripts
@@ -2322,7 +2339,7 @@ class Parser:
         variables: List[VariableNode] = []
 
         # Parse optional variable list
-        while not self.at_end_of_line() and not self.match(TokenType.COLON):
+        while not self.at_end_of_statement():
             if self.match(TokenType.IDENTIFIER):
                 var_token = self.advance()
                 # Extract type suffix and strip from name

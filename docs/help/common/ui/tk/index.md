@@ -65,7 +65,7 @@ The Tk UI has three main sections:
 
 ### Run Menu
 - **Run** ({{kbd:run_program:tk}}) - Execute program
-- **Stop** ({{kbd:stop:tk}}) - Interrupt execution
+- **Stop** - Interrupt execution (menu only)
 - **Clear Output** - Clear output pane
 
 ### Help Menu
@@ -193,7 +193,7 @@ Click on line 20 in the editor to fix it.
 - Type your response and press OK
 
 **Program won't stop:**
-- Press {{kbd:stop:tk}} or use Run → Stop
+- Use Run → Stop menu
 - Add END statement to your program
 
 ## Advantages of Tk UI

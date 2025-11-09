@@ -1225,11 +1225,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         Args:
             lines: List of text lines
             current_line_index: Index of line that triggered the sort
-            target_column: Column to position cursor at (default: 7). This value is an
-                          approximation for typical line numbers. Since line numbers have
-                          variable width, the actual code area start position varies.
-                          The cursor will be positioned at this column or adjusted based
-                          on actual line content.
+            target_column: Column to position cursor at (default: 7). Since line numbers have
+                          variable width, this is approximate. The cursor will be positioned
+                          at this column or adjusted based on actual line content.
         """
         if current_line_index >= len(lines):
             return
@@ -1618,63 +1616,11 @@ class CursesBackend(UIBackend):
             except:
                 pass
 
-    def _create_toolbar(self):
-        """Create toolbar with common action buttons.
-
-        STATUS: UNUSED - not called anywhere in current implementation.
-
-        The toolbar was removed from the UI in favor of Ctrl+U menu for better keyboard
-        navigation. This fully-implemented method is retained for reference in case toolbar
-        functionality is desired in the future. Can be safely removed if no plans to restore.
-        """
-        # Create button widgets - use urwid.Button with callback
-        new_btn = urwid.Button("New", on_press=lambda _btn: self._menu_new())
-        open_btn = urwid.Button("Open", on_press=lambda _btn: self._menu_load())
-        save_btn = urwid.Button("Save", on_press=lambda _btn: self._menu_save())
-
-        sep1 = urwid.Text("│")  # Separator
-
-        run_btn = urwid.Button("Run", on_press=lambda _btn: self._menu_run())
-        stop_btn = urwid.Button("Stop", on_press=lambda _btn: self._menu_stop())
-
-        sep2 = urwid.Text("│")  # Separator
-
-        step_btn = urwid.Button("Step", on_press=lambda _btn: self._menu_step_line())
-        stmt_btn = urwid.Button("Stmt", on_press=lambda _btn: self._menu_step())
-        cont_btn = urwid.Button("Cont", on_press=lambda _btn: self._menu_continue())
-
-        # Create horizontal layout with buttons
-        toolbar_columns = urwid.Columns([
-            ('pack', new_btn),
-            (1, urwid.Text(" ")),
-            ('pack', open_btn),
-            (1, urwid.Text(" ")),
-            ('pack', save_btn),
-            (1, urwid.Text(" ")),
-            ('pack', sep1),
-            (1, urwid.Text(" ")),
-            ('pack', run_btn),
-            (1, urwid.Text(" ")),
-            ('pack', stop_btn),
-            (1, urwid.Text(" ")),
-            ('pack', sep2),
-            (1, urwid.Text(" ")),
-            ('pack', step_btn),
-            (1, urwid.Text(" ")),
-            ('pack', stmt_btn),
-            (1, urwid.Text(" ")),
-            ('pack', cont_btn),
-        ])
-
-        # Wrap in AttrMap for styling
-        return urwid.AttrMap(toolbar_columns, 'header')
-
     def _create_ui(self):
         """Create the urwid UI layout."""
         # Create widgets
         self.menu_bar = InteractiveMenuBar(self)
-        # Toolbar removed from UI layout - use Ctrl+U menu instead for keyboard navigation
-        # Note: The _create_toolbar method is fully implemented but intentionally not used
+        # Toolbar removed from UI layout - use Ctrl+U interactive menu bar instead for keyboard navigation
         self.editor = ProgramEditorWidget()
         self.editor._parent_ui = self  # Give editor access to parent UI for dialogs
 
@@ -2360,8 +2306,9 @@ class CursesBackend(UIBackend):
         new_text = '\n'.join(lines)
         self.editor.edit_widget.set_edit_text(new_text)
 
-        # Position cursor at beginning of next line (or previous if at end)
-        # Always position at column 1 (start of line number field)
+        # Position cursor intelligently after deletion:
+        # - If not at last line: position at column 1 of the line that moved up
+        # - If was last line: position at end of the new last line
         if line_index < len(lines):
             # Position at start of line that moved up (column 1)
             if line_index > 0:
@@ -2495,14 +2442,17 @@ class CursesBackend(UIBackend):
         new_text = '\n'.join(lines)
         self.editor.edit_widget.set_edit_text(new_text)
 
-        # Position cursor on the new line, at the code area (column 7).
-        # Note: Column 7 is hardcoded as the start of code area for standard 5-digit line numbers
-        # plus space (e.g., "10    PRINT"). If line number width becomes variable, this should use
-        # _parse_line_number() to determine code_start position dynamically.
+        # Position cursor on the new line, at the code area start.
+        # Use _parse_line_number() to determine code_start position dynamically
+        # to handle variable line number widths.
+        _, code_start = self.editor._parse_line_number(lines[line_index])
+        if code_start is None:
+            code_start = 7  # Fallback to column 7 if parsing fails
+
         if line_index > 0:
-            new_cursor_pos = sum(len(lines[i]) + 1 for i in range(line_index)) + 7
+            new_cursor_pos = sum(len(lines[i]) + 1 for i in range(line_index)) + code_start
         else:
-            new_cursor_pos = 7  # Column 7 is start of code area
+            new_cursor_pos = code_start
 
         self.editor.edit_widget.set_edit_pos(new_cursor_pos)
 
@@ -2658,7 +2608,8 @@ class CursesBackend(UIBackend):
         # Update display to show/hide breakpoint indicator
         # Need to recalculate status for this line
         status = line[0]
-        code_area = line[7:] if len(line) > 7 else ""
+        # Use code_start already computed from _parse_line_number() above
+        code_area = line[code_start:] if len(line) > code_start else ""
 
         # Check if line has syntax error
         has_syntax_error = line_number in self.editor.syntax_errors
@@ -3821,11 +3772,19 @@ class CursesBackend(UIBackend):
         self.editor.lines = self.editor_lines.copy()
 
     def _sync_program_to_runtime(self):
-        """Sync program to runtime without resetting PC.
+        """Sync program to runtime, conditionally preserving PC.
 
-        Updates runtime's statement_table and line_text_map from self.program,
-        but preserves current PC/execution state. This allows LIST and other
-        commands to see the current program without starting execution.
+        Updates runtime's statement_table and line_text_map from self.program.
+
+        PC handling:
+        - If running and not paused at breakpoint: Preserves PC and execution state
+        - If paused at breakpoint: Resets PC to halted (prevents accidental resumption)
+        - If not running: Resets PC to halted for safety
+
+        This allows LIST and other commands to see the current program without
+        accidentally triggering execution. When paused at a breakpoint, the PC is
+        intentionally reset; when the user continues via _debug_continue(), the
+        interpreter's state already has the correct PC.
         """
         from src.pc import PC
 

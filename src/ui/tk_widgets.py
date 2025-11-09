@@ -352,7 +352,9 @@ class LineNumberedText(tk.Frame if tk else object):
         try:
             line_text = self.text.get(f'{clicked_editor_line}.0', f'{clicked_editor_line}.end')
             import re
-            match = re.match(r'^\s*(\d+)', line_text)
+            # Use same pattern as _parse_line_number() for consistency
+            line_text = line_text.strip()
+            match = re.match(r'^(\d+)(?:\s|$)', line_text)
             if match:
                 line_num = int(match.group(1))
                 error_msg = self.get_error_message(line_num)
