@@ -231,6 +231,28 @@ def dump_keymap(ui_name: str) -> None:
         print(f"Error loading keybindings: {e}")
         return
 
+    # Check if UI module has additional keybindings (e.g., readline keys for CLI)
+    try:
+        # Try to import the UI module and get additional keybindings
+        ui_module_name = f"src.ui.{ui_name}"
+        import importlib
+        ui_module = importlib.import_module(ui_module_name)
+
+        if hasattr(ui_module, 'get_additional_keybindings'):
+            additional = ui_module.get_additional_keybindings()
+            if additional:
+                # Merge additional keybindings into config
+                for context, bindings in additional.items():
+                    if context in config:
+                        # Merge into existing context
+                        config[context].update(bindings)
+                    else:
+                        # Add new context
+                        config[context] = bindings
+    except (ImportError, AttributeError):
+        # UI module doesn't have additional keybindings, that's OK
+        pass
+
     # Display header
     ui_display_name = {
         'curses': 'Curses',

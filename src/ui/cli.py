@@ -95,3 +95,90 @@ class CLIBackend(UIBackend):
     def execute_immediate(self, statement: str) -> None:
         """Execute immediate mode statement."""
         self.interactive.execute_statement(statement)
+
+
+def get_additional_keybindings():
+    """Return additional keybindings for CLI that aren't in the JSON file.
+
+    These are readline keybindings that are handled by Python's readline module,
+    not by the keybinding system. They're documented here for completeness.
+
+    Returns:
+        dict: Additional keybindings in the same format as cli_keybindings.json
+    """
+    try:
+        import readline
+        readline_available = True
+    except ImportError:
+        readline_available = False
+
+    if not readline_available:
+        # If readline isn't available, return empty dict
+        return {}
+
+    # Standard readline/Emacs keybindings available when readline is loaded
+    # Note: Ctrl+A is overridden by MBASIC to trigger edit mode
+    return {
+        "line_editing": {
+            "move_end_of_line": {
+                "keys": ["Ctrl+E"],
+                "primary": "Ctrl+E",
+                "description": "Move cursor to end of line"
+            },
+            "delete_to_end": {
+                "keys": ["Ctrl+K"],
+                "primary": "Ctrl+K",
+                "description": "Delete from cursor to end of line"
+            },
+            "delete_line": {
+                "keys": ["Ctrl+U"],
+                "primary": "Ctrl+U",
+                "description": "Delete entire line"
+            },
+            "delete_word": {
+                "keys": ["Ctrl+W"],
+                "primary": "Ctrl+W",
+                "description": "Delete word before cursor"
+            },
+            "transpose_chars": {
+                "keys": ["Ctrl+T"],
+                "primary": "Ctrl+T",
+                "description": "Transpose (swap) two characters"
+            },
+            "history_prev": {
+                "keys": ["Up Arrow", "Ctrl+P"],
+                "primary": "Up Arrow",
+                "description": "Previous command in history"
+            },
+            "history_next": {
+                "keys": ["Down Arrow", "Ctrl+N"],
+                "primary": "Down Arrow",
+                "description": "Next command in history"
+            },
+            "move_forward_char": {
+                "keys": ["Right Arrow", "Ctrl+F"],
+                "primary": "Right Arrow",
+                "description": "Move cursor forward one character"
+            },
+            "move_backward_char": {
+                "keys": ["Left Arrow", "Ctrl+B"],
+                "primary": "Left Arrow",
+                "description": "Move cursor backward one character"
+            },
+            "delete_char": {
+                "keys": ["Ctrl+D"],
+                "primary": "Ctrl+D",
+                "description": "Delete character under cursor"
+            },
+            "backward_delete_char": {
+                "keys": ["Backspace", "Ctrl+H"],
+                "primary": "Backspace",
+                "description": "Delete character before cursor"
+            },
+            "tab_complete": {
+                "keys": ["Tab"],
+                "primary": "Tab",
+                "description": "Auto-complete BASIC keywords"
+            }
+        }
+    }
