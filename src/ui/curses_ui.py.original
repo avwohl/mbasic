@@ -1,0 +1,3942 @@
+"""Curses UI backend using urwid.
+
+This module provides a full-screen terminal UI for MBASIC using the urwid library.
+It provides an editor, output window, and menu system.
+"""
+
+import urwid
+from pathlib import Path
+from .base import UIBackend
+from .keybindings import (
+    HELP_KEY, MENU_KEY, QUIT_KEY, QUIT_ALT_KEY,
+    VARIABLES_KEY, STACK_KEY, RUN_KEY, LIST_KEY, NEW_KEY, SAVE_KEY, OPEN_KEY,
+    BREAKPOINT_KEY, CLEAR_BREAKPOINTS_KEY,
+    DELETE_LINE_KEY, INSERT_LINE_KEY, RENUMBER_KEY,
+    CONTINUE_KEY, STEP_KEY, STOP_KEY, CLEAR_OUTPUT_KEY, TAB_KEY, SETTINGS_KEY,
+    STATUS_BAR_SHORTCUTS, EDITOR_STATUS, OUTPUT_STATUS
+)
+from .markdown_renderer import MarkdownRenderer
+from .help_widget import HelpWidget
+from .recent_files import RecentFilesManager
+from .auto_save import AutoSaveManager
+from src.runtime import Runtime
+from src.interpreter import Interpreter
+from src.lexer import Lexer
+from src.parser import Parser
+from src.immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
+from src.input_sanitizer import is_valid_input_char, clear_parity
+from src.debug_logger import debug_log_error, is_debug_mode
+from src.ui.variable_sorting import sort_variables, get_sort_mode_label
+
+
+class TopLeftBox(urwid.WidgetWrap):
+    """Custom box widget that only draws top border (no left/bottom/right).
+
+    This allows edge-to-edge content that doesn't interfere with copying text.
+    """
+
+    def __init__(self, original_widget, title=''):
+        """Create a box with only top border.
+
+        Args:
+            original_widget: The widget to wrap
+            title: Title to display in top border
+        """
+        self.title = title
+        self.original_widget = original_widget
+
+        # Create the top border line with title
+        if title:
+            # Title in the top border: "── Title ────────"
+            title_text = urwid.Text(f'── {title} ', wrap='clip')
+            fill_text = urwid.Text('─' * 200, wrap='clip')
+            top_border = urwid.Columns([
+                ('pack', title_text),
+                fill_text
+            ], dividechars=0)
+        else:
+            top_border = urwid.Text('─' * 200, wrap='clip')
+
+        # Stack top border and content (no left border)
+        pile = urwid.Pile([
+            ('pack', top_border),
+            original_widget
+        ])
+
+        # Set focus to the content area (not the top border)
+        pile.focus_position = 1
+
+        super().__init__(pile)
+
+    def selectable(self):
+        """Pass through selectability of wrapped widget."""
+        return self._w.selectable()
+
+
+class SelectableText(urwid.Text):
+    """Text widget that is selectable for ListBox scrolling."""
+
+    def selectable(self):
+        return True
+
+    def keypress(self, size, key):
+        # Return key unconsumed so ListBox can handle up/down scrolling
+        return key
+
+
+def make_output_line(text):
+    """Create an output line widget.
+
+    Args:
+        text: Line text to display
+
+    Returns:
+        Selectable text widget for scrolling in ListBox
+    """
+    return SelectableText(text if text else "")
+
+
+class MenuBar(urwid.Text):
+    """Simple menu bar showing available menu categories."""
+
+    def __init__(self):
+        """Initialize menu bar."""
+        menu_text = " File   Edit   Run   Help "
+        super().__init__(menu_text, align='left')
+
+
+class ProgramEditorWidget(urwid.WidgetWrap):
+    """Program editor widget for BASIC programs.
+
+    Line format: STATUS + LINE_NUMBER + SPACE + CODE
+    - Status (1 char): ● for breakpoint, ? for error, space otherwise
+    - Line number (1-5 digits, variable width): editable line number
+    - Space (1 char): separator
+    - Code (variable width): BASIC code text
+
+    All parts are variable width - no fixed column positions.
+    """
+
+    def __init__(self):
+        """Initialize the program editor."""
+        # Program lines storage: {line_num: code_text}
+        self.lines = {}
+        # Breakpoints: set of line numbers
+        self.breakpoints = set()
+        # Errors: {line_num: error_message}
+        self.errors = {}
+
+        # Auto-numbering settings (defaults)
+        self.auto_number_start = 10
+        self.auto_number_increment = 10
+        self.auto_number_enabled = True
+
+        # Load config file if it exists
+        self._load_config()
+
+        self.next_auto_line_num = self.auto_number_start
+
+        # Current line being edited
+        self.current_line_num = None
+
+        # Create the display widget
+        self.text_widget = urwid.Text("", wrap='clip')
+
+        # Use Edit with allow_tab=False to improve performance
+        # and align='left' for faster rendering
+        self.edit_widget = urwid.Edit(
+            "", "",
+            multiline=True,
+            align='left',
+            wrap='clip',
+            allow_tab=False
+        )
+
+        # For debouncing sorting during rapid input (paste operations)
+        self._needs_sort = False  # Flag: lines need sorting when navigation happens
+
+        # For deferred screen refresh during rapid input (paste operations)
+        self._needs_refresh = False  # Flag: screen needs refresh when input stops
+        self._pending_refresh_alarm = None  # Handle for pending refresh alarm
+        self._loop = None  # Will be set by CursesBackend after loop creation
+        self._idle_delay = 0.1  # Seconds to wait after last keystroke before refresh
+
+        # Syntax error tracking
+        self.syntax_errors = {}  # Maps line number -> error message
+        self._output_walker = None  # Will be set by CursesBackend for displaying errors
+        self._showing_syntax_errors = False  # Track if output window has syntax errors
+
+        # Use a pile to allow switching between display and edit modes
+        self.pile = urwid.Pile([self.edit_widget])
+
+        # Set focus to the edit widget
+        self.pile.focus_position = 0
+
+        super().__init__(self.pile)
+
+        # Initialize with empty program
+        self._update_display()
+
+    def keypress(self, size, key):
+        """Handle key presses for line editing and auto-numbering.
+
+        Line format: STATUS + LINE_NUMBER + SPACE + CODE (all variable width)
+        Examples:
+          " 10 PRINT" (status + 2-digit number + space + code)
+          "●100 FOR I=1 TO 10" (breakpoint + 3-digit number + space + code)
+        """
+        # CRITICAL PERFORMANCE: For paste, skip ALL processing for normal typing
+        # Check if it's a single printable character (not a special key)
+        if len(key) == 1 and key >= ' ' and key <= '~':
+            # Fast path: normal printable ASCII - just pass through
+            # This avoids expensive text parsing on every pasted character
+
+            # Schedule deferred refresh - will happen 0.1s after typing stops
+            self._schedule_deferred_refresh()
+
+            return super().keypress(size, key)
+
+        # NON-PRINTABLE KEY: Check if we have pending updates from paste
+        # If so, process them NOW before handling this key
+        if self._needs_refresh or self._needs_sort:
+            self._perform_deferred_refresh()
+
+        # Get current cursor position (only for special keys)
+        current_text = self.edit_widget.get_edit_text()
+        cursor_pos = self.edit_widget.edit_pos
+
+        # Find which line we're on and position within that line
+        text_before_cursor = current_text[:cursor_pos]
+        line_num = text_before_cursor.count('\n')
+        lines = current_text.split('\n')
+
+        if line_num < len(lines):
+            line_start_pos = sum(len(lines[i]) + 1 for i in range(line_num))  # +1 for \n
+            col_in_line = cursor_pos - line_start_pos
+        else:
+            col_in_line = 0
+
+        # Check if pressing a control key or navigation key
+        is_control_key = key.startswith('ctrl ') or key in ['tab', 'enter', 'esc']
+        is_updown_arrow = key in ['up', 'down']  # Up/down move to different lines
+        is_leftright_arrow = key in ['left', 'right']  # Left/right stay on same line
+        is_arrow_key = is_updown_arrow or is_leftright_arrow
+        is_other_nav_key = key in ['page up', 'page down', 'home', 'end']
+
+        # Check syntax when leaving line or pressing control keys
+        # (Not during normal typing - avoids annoying errors for incomplete lines)
+        if is_control_key or is_updown_arrow or is_other_nav_key:
+            # About to navigate or run command - check syntax now
+            new_text = self._update_syntax_errors(current_text)
+            if new_text != current_text:
+                # Text was updated with error markers - update the editor
+                self.edit_widget.set_edit_text(new_text)
+                # Recalculate positions
+                current_text = new_text
+                cursor_pos = self.edit_widget.edit_pos
+                text_before_cursor = current_text[:cursor_pos]
+                line_num = text_before_cursor.count('\n')
+                lines = current_text.split('\n')
+                if line_num < len(lines):
+                    line_start_pos = sum(len(lines[i]) + 1 for i in range(line_num))
+                    col_in_line = cursor_pos - line_start_pos
+
+        # PERFORMANCE: Skip right-justification during rapid typing/paste
+        # Only do it when navigating (which is when user expects formatting)
+        should_right_justify = False
+        if is_control_key or is_updown_arrow or is_other_nav_key:
+            # About to navigate - right-justify now
+            should_right_justify = True
+
+        if should_right_justify:
+            # Right-justify the line number on the current line
+            if line_num < len(lines) and len(lines[line_num]) >= 6:
+                line = lines[line_num]
+                # Extract line number area (columns 1-5)
+                if len(line) >= 6:
+                    status = line[0] if len(line) > 0 else ' '
+                    line_num_text = line[1:6].strip()
+                    rest_of_line = line[6:] if len(line) > 6 else ''
+
+                    # Right-justify the line number
+                    if line_num_text:
+                        line_num_formatted = f"{line_num_text:>5}"
+                        new_line = f"{status}{line_num_formatted}{rest_of_line}"
+
+                        # Replace the line
+                        lines[line_num] = new_line
+                        new_text = '\n'.join(lines)
+                        old_cursor = cursor_pos
+                        self.edit_widget.set_edit_text(new_text)
+                        self.edit_widget.set_edit_pos(old_cursor)
+
+        # Mark that sorting is needed when editing line numbers
+        if 1 <= col_in_line <= 6 and len(key) == 1 and key.isdigit():
+            # Typing digits in line number area - will need sorting later
+            self._needs_sort = True
+
+        # Sort lines only when navigating away (not on every keystroke)
+        # This makes paste much faster - only sort once at the end
+        if (is_control_key or is_other_nav_key or is_updown_arrow) and self._needs_sort:
+            # About to navigate - sort now if needed
+            if 1 <= col_in_line <= 6:
+                self._sort_and_position_line(lines, line_num, target_column=col_in_line)
+                self._needs_sort = False
+                return super().keypress(size, key)
+
+        # Handle backspace key specially to protect separator space
+        if key == 'backspace':
+            if line_num < len(lines):
+                line = lines[line_num]
+                line_start = sum(len(lines[i]) + 1 for i in range(line_num))
+
+                # At column 7 (code start): move to column 6 but don't delete separator
+                if col_in_line == 7:
+                    new_cursor_pos = line_start + 6
+                    self.edit_widget.set_edit_pos(new_cursor_pos)
+                    return None
+
+                # At column 6 (separator): delete rightmost digit of line number
+                elif col_in_line == 6:
+                    # Ensure line is at least 7 characters
+                    if len(line) < 7:
+                        line = line + ' ' * (7 - len(line))
+
+                    status = line[0]
+                    linenum_field = line[1:6]
+                    rest = line[6:]
+
+                    # Replace rightmost digit (position 4) with space
+                    linenum_list = list(linenum_field)
+                    linenum_list[4] = ' '
+                    linenum_field = ''.join(linenum_list)
+
+                    # Right-justify the line number
+                    line_num_text = linenum_field.strip()
+                    if line_num_text:
+                        linenum_field = f"{line_num_text:>5}"
+                    else:
+                        linenum_field = '     '
+
+                    # Rebuild line
+                    new_line = status + linenum_field + rest
+                    lines[line_num] = new_line
+                    new_text = '\n'.join(lines)
+                    self.edit_widget.set_edit_text(new_text)
+
+                    # Move cursor to column 5 (rightmost position after right-justify)
+                    new_cursor_pos = line_start + 5
+                    self.edit_widget.set_edit_pos(new_cursor_pos)
+                    return None
+
+                # At columns 1-5 (line number): replace digit at cursor with space
+                elif 1 <= col_in_line <= 5:
+                    # Ensure line is at least 7 characters
+                    if len(line) < 7:
+                        line = line + ' ' * (7 - len(line))
+
+                    status = line[0]
+                    linenum_field = line[1:6]
+                    rest = line[6:]
+
+                    # Replace character at cursor position with space
+                    linenum_list = list(linenum_field)
+                    pos_in_field = col_in_line - 1
+                    linenum_list[pos_in_field] = ' '
+                    linenum_field = ''.join(linenum_list)
+
+                    # Right-justify the line number
+                    line_num_text = linenum_field.strip()
+                    if line_num_text:
+                        linenum_field = f"{line_num_text:>5}"
+                    else:
+                        linenum_field = '     '
+
+                    # Rebuild line
+                    new_line = status + linenum_field + rest
+                    lines[line_num] = new_line
+                    new_text = '\n'.join(lines)
+                    self.edit_widget.set_edit_text(new_text)
+
+                    # After right-justify, move cursor to rightmost position (col 5)
+                    # This gives consistent behavior and user knows where they are
+                    new_cursor_pos = line_start + 5
+                    self.edit_widget.set_edit_pos(new_cursor_pos)
+                    return None
+
+        # Prevent typing in status column (column 0)
+        if col_in_line < 1 and len(key) == 1 and key.isprintable():
+            # Move cursor to line number column (column 1)
+            new_cursor_pos = cursor_pos + (1 - col_in_line)
+            self.edit_widget.set_edit_pos(new_cursor_pos)
+            # Process the key at new position
+            cursor_pos = new_cursor_pos
+            col_in_line = 1
+
+        # Handle input in line number column (1-5)
+        if 1 <= col_in_line <= 5 and len(key) == 1 and key.isprintable():
+            if not key.isdigit():
+                # Move cursor to code area (column 7) and insert character there
+                if line_num < len(lines):
+                    line_start = sum(len(lines[i]) + 1 for i in range(line_num))
+                    # Ensure line is at least 7 characters long
+                    line = lines[line_num]
+                    if len(line) < 7:
+                        # Pad line to have at least 7 characters
+                        line = line + ' ' * (7 - len(line))
+                        lines[line_num] = line
+                        current_text = '\n'.join(lines)
+                        self.edit_widget.set_edit_text(current_text)
+                    # Move cursor to column 7
+                    new_cursor_pos = line_start + 7
+                    self.edit_widget.set_edit_pos(new_cursor_pos)
+                    # Now let the key be processed at the new position
+                    return super().keypress(size, key)
+            else:
+                # Typing a digit in line number area
+                if line_num < len(lines):
+                    line_start = sum(len(lines[i]) + 1 for i in range(line_num))
+                    line = lines[line_num]
+
+                    # Ensure line is at least 7 characters
+                    if len(line) < 7:
+                        line = line + ' ' * (7 - len(line))
+
+                    # Extract parts: status (0), linenum (1-5), space (6), code (7+)
+                    status = line[0]
+                    linenum_field = line[1:6]  # 5 characters
+                    rest = line[6:]
+
+                    # Find position within linenum_field (0-4)
+                    pos_in_field = col_in_line - 1
+
+                    # Check if at rightmost position (column 5, pos_in_field 4)
+                    if pos_in_field == 4:
+                        # At rightmost position: shift left and add new digit at end
+                        linenum_list = list(linenum_field)
+                        linenum_list.append(key)
+                        # Keep only rightmost 5 characters (shift left if overflow)
+                        linenum_list = linenum_list[-5:]
+                        linenum_field = ''.join(linenum_list)
+                        # Stay at same position (rightmost)
+                        new_col = 5
+                    else:
+                        # Not at rightmost: overwrite at position
+                        linenum_list = list(linenum_field)
+                        if pos_in_field < len(linenum_list):
+                            linenum_list[pos_in_field] = key
+                        linenum_field = ''.join(linenum_list)
+                        # Move cursor right after typed digit
+                        new_col = min(col_in_line + 1, 5)
+
+                    # Rebuild line
+                    new_line = status + linenum_field + rest
+                    lines[line_num] = new_line
+                    new_text = '\n'.join(lines)
+
+                    # Update text
+                    self.edit_widget.set_edit_text(new_text)
+
+                    # Position cursor
+                    new_cursor_pos = line_start + new_col
+                    self.edit_widget.set_edit_pos(new_cursor_pos)
+
+                    return None
+
+        # Handle input at column 6 (separator space)
+        if col_in_line == 6 and len(key) == 1 and key.isprintable():
+            if line_num < len(lines):
+                line_start = sum(len(lines[i]) + 1 for i in range(line_num))
+                line = lines[line_num]
+
+                # Ensure line is at least 7 characters long
+                if len(line) < 7:
+                    line = line + ' ' * (7 - len(line))
+
+                if key.isdigit():
+                    # Digit at column 6: shift left and add new digit at end
+                    status = line[0]
+                    linenum_field = line[1:6]  # 5 characters
+                    rest = line[6:]
+
+                    # Shift left and add new digit at end (calculator style)
+                    linenum_list = list(linenum_field)
+                    linenum_list.append(key)
+                    # Keep only rightmost 5 characters (shift left if overflow)
+                    linenum_list = linenum_list[-5:]
+                    linenum_field = ''.join(linenum_list)
+
+                    # Rebuild line
+                    new_line = status + linenum_field + rest
+                    lines[line_num] = new_line
+                    new_text = '\n'.join(lines)
+                    self.edit_widget.set_edit_text(new_text)
+
+                    # Keep cursor at column 6 (after the line number)
+                    new_cursor_pos = line_start + 6
+                    self.edit_widget.set_edit_pos(new_cursor_pos)
+                    return None
+                else:
+                    # Non-digit at column 6: moving to code area - sort lines first
+                    self._sort_and_position_line(lines, line_num)
+                    # Now let the key be processed at the new position
+                    return super().keypress(size, key)
+
+        # Handle Enter key - commits line and moves to next with auto-numbering
+        if key == 'enter' and self.auto_number_enabled:
+            # Right-justify current line number before committing
+            current_line_number = None
+            if line_num < len(lines) and len(lines[line_num]) >= 6:
+                line = lines[line_num]
+                status = line[0] if len(line) > 0 else ' '
+                line_num_text = line[1:6].strip()
+                rest_of_line = line[6:] if len(line) > 6 else ''
+
+                if line_num_text:
+                    # Parse current line number
+                    try:
+                        current_line_number = int(line_num_text)
+                    except:
+                        pass
+
+                    line_num_formatted = f"{line_num_text:>5}"
+                    lines[line_num] = f"{status}{line_num_formatted}{rest_of_line}"
+                    current_text = '\n'.join(lines)
+                    self.edit_widget.set_edit_text(current_text)
+
+            # Move to end of current line
+            if line_num < len(lines):
+                line_start = sum(len(lines[i]) + 1 for i in range(line_num))
+                line_end = line_start + len(lines[line_num])
+                self.edit_widget.set_edit_pos(line_end)
+
+            # Calculate next auto-number based on current line + increment
+            if current_line_number is not None:
+                next_num = current_line_number + self.auto_number_increment
+            else:
+                next_num = self.next_auto_line_num
+
+            # Get all existing line numbers from display
+            existing_line_nums = set()
+            for display_line in lines:
+                if len(display_line) >= 6:
+                    try:
+                        existing_line_nums.add(int(display_line[1:6].strip()))
+                    except:
+                        pass
+
+            # Find next available number that doesn't collide
+            # Also check it's not above the next line in sequence
+            sorted_line_nums = sorted(existing_line_nums)
+            if current_line_number in sorted_line_nums:
+                idx = sorted_line_nums.index(current_line_number)
+                if idx + 1 < len(sorted_line_nums):
+                    max_allowed = sorted_line_nums[idx + 1]
+                else:
+                    max_allowed = 99999
+            else:
+                max_allowed = 99999
+
+            # Find next valid number
+            attempts = 0
+            while next_num in existing_line_nums or next_num >= max_allowed:
+                next_num += self.auto_number_increment
+                attempts += 1
+                if next_num >= 99999 or attempts > 10:  # Avoid overflow or too many attempts
+                    # No room - offer to renumber
+                    response = self._parent_ui._show_yesno_dialog(
+                        "No Room",
+                        f"No room to insert line after {current_line_number}.\n\n"
+                        f"Would you like to renumber the program to make room?"
+                    )
+                    if response:
+                        # Save editor to program, renumber, and refresh
+                        self._parent_ui._save_editor_to_program()
+                        self._parent_ui._renumber_lines()
+                        return None
+                    else:
+                        # User declined - just stay on current line
+                        return None
+
+            # Format new line: status + line number + space (variable width)
+            new_line_prefix = f"\n {next_num} "
+
+            # Insert newline and prefix at end of current line
+            current_text = self.edit_widget.get_edit_text()
+            cursor_pos = self.edit_widget.edit_pos
+            new_text = current_text[:cursor_pos] + new_line_prefix + current_text[cursor_pos:]
+            self.edit_widget.set_edit_text(new_text)
+            self.edit_widget.set_edit_pos(cursor_pos + len(new_line_prefix))
+
+            # Update next_auto_line_num for next time
+            self.next_auto_line_num = next_num + self.auto_number_increment
+
+            return None
+
+        # Let parent handle the key (allows arrows, backspace, etc.)
+        return super().keypress(size, key)
+
+    def _format_line(self, line_num, code_text, highlight_stmt=None, statements=None):
+        """Format a single program line with status, line number, and code.
+
+        Args:
+            line_num: Line number
+            code_text: BASIC code text
+            highlight_stmt: Optional statement index to highlight (0-based)
+            statements: Optional list of statement nodes for line (needed for highlight)
+
+        Returns:
+            Formatted string or urwid markup: "SNNNNN CODE" with optional highlighting
+        """
+        # Status column (1 char)
+        if line_num in self.breakpoints:
+            status = '●'
+        elif line_num in self.errors:
+            status = '?'
+        else:
+            status = ' '
+
+        # Line number (1-5 digits, variable width)
+        line_num_str = str(line_num)
+
+        # Prefix: status + line_num + space (variable width)
+        prefix = f"{status}{line_num_str} "
+
+        # If no highlighting requested, return simple string
+        if highlight_stmt is None or statements is None:
+            return prefix + code_text
+
+        # Find statement boundaries for highlighting
+        try:
+            if highlight_stmt < 0 or highlight_stmt >= len(statements):
+                # Invalid statement index, return without highlight
+                return prefix + code_text
+
+            # Split code by colons to find statement boundaries
+            parts = code_text.split(':')
+
+            # If statement index is out of range for parts, highlight whole line
+            if highlight_stmt >= len(parts):
+                return [prefix, ('active_stmt', code_text)]
+
+            # Build the result with the highlighted statement
+            result = [prefix]
+
+            for i, part in enumerate(parts):
+                if i > 0:
+                    result.append(':')  # Add back the colon separator
+
+                if i == highlight_stmt:
+                    # This is the statement to highlight
+                    result.append(('active_stmt', part))
+                else:
+                    # Normal text
+                    result.append(part)
+
+            return result
+
+        except Exception:
+            # If anything goes wrong, return without highlighting
+            return prefix + code_text
+
+    def _update_display(self, highlight_line=None, highlight_stmt=None, statement_table=None):
+        """Update the text display with all program lines.
+
+        Args:
+            highlight_line: Optional line number to highlight a statement on
+            highlight_stmt: Optional statement index to highlight (0-based)
+            statement_table: Optional StatementTable for getting statement info
+        """
+        if not self.lines:
+            # Empty program - start with first line number ready
+            # Format: status + line_number + space (variable width)
+            display_text = f" {self.next_auto_line_num} "
+            # Increment counter since we've used this number for display
+            self.next_auto_line_num += self.auto_number_increment
+        else:
+            # Format all lines (with optional highlighting)
+            formatted_lines = []
+            for line_num in sorted(self.lines.keys()):
+                code_text = self.lines[line_num]
+
+                # Check if this line should be highlighted
+                if line_num == highlight_line and statement_table:
+                    statements = statement_table.get_line_statements(line_num)
+                    formatted = self._format_line(line_num, code_text, highlight_stmt, statements)
+                else:
+                    formatted = self._format_line(line_num, code_text)
+
+                formatted_lines.append(formatted)
+
+            # Join lines - handle both string and markup formats
+            if any(isinstance(line, list) for line in formatted_lines):
+                # We have markup - need to join carefully
+                display_text = []
+                for i, line in enumerate(formatted_lines):
+                    if i > 0:
+                        display_text.append('\n')
+                    if isinstance(line, list):
+                        display_text.extend(line)
+                    else:
+                        display_text.append(line)
+            else:
+                # All strings - simple join
+                display_text = '\n'.join(formatted_lines)
+
+        # Update the edit widget
+        self.edit_widget.set_edit_text(display_text)
+
+        # If empty program, position cursor at code column (after line number)
+        if not self.lines:
+            self.edit_widget.set_edit_pos(7)  # Position 7 is start of code area
+
+    def get_program_text(self):
+        """Get the program as line-numbered text.
+
+        Returns:
+            String with all lines in format "LINENUM CODE"
+        """
+        if not self.lines:
+            return ""
+
+        lines_list = []
+        for line_num in sorted(self.lines.keys()):
+            lines_list.append(f"{line_num} {self.lines[line_num]}")
+        return '\n'.join(lines_list)
+
+    def set_program_text(self, text):
+        """Set the program from line-numbered text.
+
+        Args:
+            text: String with lines in format "LINENUM CODE"
+        """
+        self.lines = {}
+        self.errors = {}
+
+        for line in text.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+
+            # Parse "LINENUM CODE"
+            parts = line.split(None, 1)
+            if parts and parts[0].isdigit():
+                line_num = int(parts[0])
+                code = parts[1] if len(parts) > 1 else ""
+                self.lines[line_num] = code
+
+        self._update_display()
+
+    def set_edit_text(self, text):
+        """Compatibility alias for set_program_text.
+
+        Args:
+            text: String with lines in format "LINENUM CODE"
+        """
+        self.set_program_text(text)
+
+    def get_edit_text(self):
+        """Compatibility alias for get_program_text.
+
+        Returns:
+            String with all lines in format "LINENUM CODE"
+        """
+        return self.get_program_text()
+
+    def add_line(self, line_num, code_text):
+        """Add or update a program line.
+
+        Args:
+            line_num: Line number
+            code_text: BASIC code (without line number)
+        """
+        self.lines[line_num] = code_text
+        # Clear any error for this line when modified
+        if line_num in self.errors:
+            del self.errors[line_num]
+        self._update_display()
+
+    def delete_line(self, line_num):
+        """Delete a program line.
+
+        Args:
+            line_num: Line number to delete
+        """
+        if line_num in self.lines:
+            del self.lines[line_num]
+        if line_num in self.errors:
+            del self.errors[line_num]
+        if line_num in self.breakpoints:
+            self.breakpoints.remove(line_num)
+        self._update_display()
+
+    def clear(self):
+        """Clear all program lines."""
+        self.lines = {}
+        self.errors = {}
+        self.breakpoints = set()
+        self._update_display()
+
+    def toggle_breakpoint(self, line_num):
+        """Toggle breakpoint on a line.
+
+        Args:
+            line_num: Line number
+        """
+        if line_num in self.breakpoints:
+            self.breakpoints.remove(line_num)
+        else:
+            self.breakpoints.add(line_num)
+        self._update_display()
+
+    def set_error(self, line_num, error_msg):
+        """Mark a line as having an error.
+
+        Args:
+            line_num: Line number
+            error_msg: Error message
+        """
+        self.errors[line_num] = error_msg
+        self._update_display()
+
+    def _load_config(self):
+        """Load configuration from .mbasic.conf file."""
+        import configparser
+        import os
+        from pathlib import Path
+
+        # Look for config in current directory, then home directory
+        config_paths = [
+            Path('.mbasic.conf'),
+            Path('.') / '.mbasic.conf',
+            Path.home() / '.mbasic.conf',
+        ]
+
+        for config_path in config_paths:
+            if config_path.exists():
+                try:
+                    config = configparser.ConfigParser()
+                    config.read(config_path)
+
+                    # Load editor settings
+                    if 'editor' in config:
+                        editor = config['editor']
+
+                        if 'auto_number_increment' in editor:
+                            self.auto_number_increment = int(editor['auto_number_increment'])
+
+                        if 'auto_number_start' in editor:
+                            self.auto_number_start = int(editor['auto_number_start'])
+
+                        if 'auto_number_enabled' in editor:
+                            self.auto_number_enabled = editor.getboolean('auto_number_enabled')
+
+                    return  # Stop after first config found
+                except Exception as e:
+                    # Silently ignore config errors and use defaults
+                    pass
+
+    def _check_line_syntax(self, code_text):
+        """Check if a line of BASIC code has valid syntax.
+
+        Args:
+            code_text: The BASIC code (without line number)
+
+        Returns:
+            Tuple of (is_valid: bool, error_message: str or None)
+        """
+        if not code_text or not code_text.strip():
+            # Empty lines are valid
+            return (True, None)
+
+        try:
+            # Import here to avoid circular dependencies
+            from src.lexer import Lexer
+            from src.parser import Parser
+            from src.ast_nodes import RemarkStatementNode
+            from src.tokens import TokenType
+            from src.lexer import create_keyword_case_manager
+
+            # Tokenize the code
+            keyword_mgr = create_keyword_case_manager()
+            lexer = Lexer(code_text, keyword_case_manager=keyword_mgr)
+            tokens = lexer.tokenize()
+
+            # Reject bare identifiers (the parser treats them as implicit REMs for
+            # old BASIC compatibility, but in the editor we want to be stricter)
+            if len(tokens) >= 2:
+                first_token = tokens[0]
+                second_token = tokens[1]
+                # If first token is identifier and second is EOF (or colon),
+                # this is a bare identifier like "foo" which should be invalid
+                if (first_token.type == TokenType.IDENTIFIER and
+                    second_token.type in (TokenType.EOF, TokenType.COLON)):
+                    return (False, f"Invalid statement: '{first_token.value}' is not a BASIC keyword")
+
+            # Parse the statement
+            # Create a new parser with empty def_type_map to avoid affecting existing state
+            parser = Parser(tokens, def_type_map={})
+            result = parser.parse_statement()
+
+            # Additional check: reject implicit REM statements (bare identifiers)
+            # The parser allows these for compatibility, but we want stricter checking
+            if isinstance(result, RemarkStatementNode):
+                # Check if this was an actual REM keyword or implicit REM
+                # Look at first token - if it's not REM/REMARK/', it's implicit
+                if tokens and tokens[0].type not in (TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE):
+                    return (False, f"Invalid statement: '{tokens[0].value}' is not a BASIC keyword")
+
+            # If we get here, parsing succeeded with valid syntax
+            return (True, None)
+
+        except Exception as e:
+            # Any error (lexer or parser) means invalid syntax
+            # Extract a useful error message
+            error_msg = str(e)
+            # Remove "Parse error at line X, column Y: " prefix if present
+            if "Parse error" in error_msg and ":" in error_msg:
+                error_msg = error_msg.split(":", 1)[1].strip()
+            return (False, error_msg)
+
+    def _get_status_char(self, line_number, has_syntax_error):
+        """Get the status character for a line based on priority.
+
+        Priority order (highest to lowest):
+        1. Syntax error (?) - highest priority
+        2. Breakpoint (●) - medium priority
+        3. Normal ( ) - default
+
+        Args:
+            line_number: The line number to check
+            has_syntax_error: Whether the line has a syntax error
+
+        Returns:
+            Single character status indicator
+        """
+        if has_syntax_error:
+            return '?'
+        elif line_number in self.breakpoints:
+            return '●'
+        else:
+            return ' '
+
+    def _update_syntax_errors(self, text):
+        """Update status indicators for lines with syntax errors.
+
+        Args:
+            text: Current editor text
+
+        Returns:
+            Updated text with '?' status for lines with parse errors
+        """
+        lines = text.split('\n')
+        changed = False
+
+        # Clear old error messages
+        self.syntax_errors.clear()
+
+        for i, line in enumerate(lines):
+            if not line or len(line) < 7:
+                continue
+
+            # Parse line
+            status, line_number, code_area = self._parse_display_line(line)
+
+            if line_number is None:
+                line_number = 0
+
+            # Skip empty code lines
+            if not code_area.strip():
+                # Clear error status for empty lines, but preserve breakpoints
+                if line_number > 0:
+                    new_status = self._get_status_char(line_number, has_syntax_error=False)
+                    if status != new_status:
+                        # Rebuild line with new status (variable width)
+                        lines[i] = f"{new_status}{line_number} {code_area}"
+                        changed = True
+                continue
+
+            # Check syntax
+            is_valid, error_msg = self._check_line_syntax(code_area)
+
+            # Determine correct status based on priority
+            if line_number > 0:
+                new_status = self._get_status_char(line_number, has_syntax_error=not is_valid)
+
+                # Update status if it changed
+                if status != new_status:
+                    # Rebuild line with new status (variable width)
+                    lines[i] = f"{new_status}{line_number} {code_area}"
+                    changed = True
+
+                # Store or clear error message
+                if not is_valid and error_msg:
+                    self.syntax_errors[line_number] = error_msg
+                # Note: syntax_errors cleared at start, so valid lines won't have errors
+
+        # Update output window with errors
+        self._display_syntax_errors()
+
+        if changed:
+            return '\n'.join(lines)
+        else:
+            return text
+
+    def _display_syntax_errors(self):
+        """Display syntax error messages in the output window with context."""
+        # Check if output walker is available (use 'is None' instead of 'not' to avoid false positive on empty walker)
+        if self._output_walker is None:
+            # Output window not available yet
+            return
+
+        if not self.syntax_errors:
+            # No errors - clear output IF it was showing syntax errors before
+            if self._showing_syntax_errors:
+                self._output_walker.clear()
+                self._showing_syntax_errors = False
+            return
+
+        # Clear output window and show syntax errors
+        self._output_walker.clear()
+        self._showing_syntax_errors = True
+
+        # Add error header
+        self._output_walker.append(make_output_line("┌─ Syntax Errors ──────────────────────────────────┐"))
+        self._output_walker.append(make_output_line("│"))
+
+        # Add each error with code context
+        for line_number in sorted(self.syntax_errors.keys()):
+            error_msg = self.syntax_errors[line_number]
+
+            # Get the code for this line if available
+            code = self.lines.get(line_number, "")
+
+            # Format error with context
+            self._output_walker.append(make_output_line(f"│ Line {line_number}:"))
+            if code:
+                # Show the actual code
+                self._output_walker.append(make_output_line(f"│   {code}"))
+                self._output_walker.append(make_output_line(f"│   ^^^^"))
+            self._output_walker.append(make_output_line(f"│ Error: {error_msg}"))
+            self._output_walker.append(make_output_line("│"))
+
+        self._output_walker.append(make_output_line("└──────────────────────────────────────────────────┘"))
+
+        # Auto-scroll to bottom to show errors
+        if len(self._output_walker) > 0:
+            self._output_walker.set_focus(len(self._output_walker) - 1)
+
+    def _parse_display_line(self, line):
+        """Parse a display line into its components.
+
+        Line format: STATUS + LINENUMBER + SPACE + CODE (variable width)
+
+        Args:
+            line: Display line string
+
+        Returns:
+            Tuple of (status_char, line_number, code_text)
+            Returns (None, None, None) if line cannot be parsed
+        """
+        if not line or len(line) < 2:
+            return (None, None, None)
+
+        # First character is status
+        status = line[0]
+
+        # Next is line number (digits)
+        i = 1
+        num_str = ""
+        while i < len(line) and line[i].isdigit():
+            num_str += line[i]
+            i += 1
+
+        if not num_str:
+            return (None, None, None)
+
+        line_num = int(num_str)
+
+        # Skip space after line number
+        if i < len(line) and line[i] == ' ':
+            i += 1
+
+        # Rest is code
+        code = line[i:] if i < len(line) else ""
+
+        return (status, line_num, code)
+
+    def _parse_line_numbers(self, text):
+        """Parse and reformat lines that start with numbers.
+
+        If a line starts with a number (typical BASIC format like "10 PRINT"),
+        format it as: STATUS + LINENUMBER + SPACE + CODE (variable width)
+
+        Handles both:
+        - Already formatted lines: " 10 PRINT"
+        - Raw pasted lines: "10 PRINT"
+        - Lines with number in code area: " 10 20 PRINT" -> " 20 PRINT"
+
+        Args:
+            text: Current editor text
+
+        Returns:
+            Reformatted text
+        """
+        lines = text.split('\n')
+        changed = False
+
+        for i, line in enumerate(lines):
+            if not line:
+                continue
+
+            # CASE 1: Line starts with a digit (raw pasted BASIC like "10 PRINT")
+            if line[0].isdigit():
+                # Extract number
+                j = 0
+                num_str = ""
+                while j < len(line) and line[j].isdigit():
+                    num_str += line[j]
+                    j += 1
+
+                # Skip spaces after number
+                while j < len(line) and line[j] == ' ':
+                    j += 1
+                rest = line[j:]
+
+                # Reformat with status char (space) + number + space + code
+                if num_str:
+                    new_line = f" {num_str} {rest}"
+                    lines[i] = new_line
+                    changed = True
+                continue
+
+            # CASE 2: Line has proper format, check if code area has number
+            status, line_num, code = self._parse_display_line(line)
+            if status is not None and code:
+                # Check if code starts with a number (illegal for BASIC)
+                code_stripped = code.lstrip()
+                if code_stripped and code_stripped[0].isdigit():
+                    # Extract the number from code area
+                    j = 0
+                    num_str = ""
+                    while j < len(code_stripped) and code_stripped[j].isdigit():
+                        num_str += code_stripped[j]
+                        j += 1
+
+                    # Skip spaces after number
+                    while j < len(code_stripped) and code_stripped[j] == ' ':
+                        j += 1
+                    rest = code_stripped[j:]
+
+                    # Use the number from code area as the line number
+                    new_line = f"{status}{num_str} {rest}"
+                    lines[i] = new_line
+                    changed = True
+
+        if changed:
+            return '\n'.join(lines)
+        else:
+            return text
+
+    def _schedule_deferred_refresh(self):
+        """Schedule a deferred screen refresh after idle delay.
+
+        Cancels any existing pending refresh and schedules a new one.
+        This batches updates during rapid input (paste operations).
+        """
+        if not self._loop:
+            # Loop not available yet, skip scheduling
+            return
+
+        # Cancel existing alarm if any
+        if self._pending_refresh_alarm:
+            self._loop.remove_alarm(self._pending_refresh_alarm)
+            self._pending_refresh_alarm = None
+
+        # Schedule new alarm
+        self._pending_refresh_alarm = self._loop.set_alarm_in(
+            self._idle_delay,
+            self._perform_deferred_refresh
+        )
+
+        # Mark that a refresh is pending
+        self._needs_refresh = True
+
+    def _perform_deferred_refresh(self, loop=None, _user_data=None):
+        """Perform deferred screen refresh (alarm callback).
+
+        Called when input has been idle for the delay period.
+        Performs any pending sorting and screen updates.
+
+        Args:
+            loop: urwid MainLoop (passed by alarm callback)
+            user_data: User data (passed by alarm callback, unused)
+        """
+        # Clear the alarm handle
+        self._pending_refresh_alarm = None
+
+        # Check if refresh is actually needed
+        if not self._needs_refresh and not self._needs_sort:
+            return
+
+        # Get current state
+        current_text = self.edit_widget.get_edit_text()
+        cursor_pos = self.edit_widget.edit_pos
+
+        # Step 1: Parse and reformat lines with numbers in code area
+        # (This handles pasted BASIC code like "10 PRINT")
+        new_text = self._parse_line_numbers(current_text)
+        if new_text != current_text:
+            # Text was reformatted - update the editor
+            self.edit_widget.set_edit_text(new_text)
+            # Try to maintain cursor position (may shift due to reformatting)
+            if cursor_pos <= len(new_text):
+                self.edit_widget.set_edit_pos(cursor_pos)
+            current_text = new_text
+
+        # Step 2: Perform deferred sorting if needed
+        if self._needs_sort:
+            lines = current_text.split('\n')
+
+            # Find current line
+            text_before_cursor = current_text[:cursor_pos]
+            line_num = text_before_cursor.count('\n')
+
+            # Sort if we're in the line number area
+            if line_num < len(lines):
+                line_start_pos = sum(len(lines[i]) + 1 for i in range(line_num))
+                col_in_line = cursor_pos - line_start_pos
+
+                if 1 <= col_in_line <= 6:
+                    self._sort_and_position_line(lines, line_num, target_column=col_in_line)
+
+            self._needs_sort = False
+
+        # Clear refresh flag
+        self._needs_refresh = False
+
+        # Force screen redraw if loop is available
+        if self._loop:
+            self._loop.draw_screen()
+
+    def _sort_and_position_line(self, lines, current_line_index, target_column=7):
+        """Sort lines by line number and position cursor at the moved line.
+
+        Args:
+            lines: List of text lines
+            current_line_index: Index of line that triggered the sort
+            target_column: Column to position cursor at (default: 7 for code area)
+        """
+        if current_line_index >= len(lines):
+            return
+
+        # Parse all lines into (line_number, full_text) tuples
+        parsed_lines = []
+        current_line_text = lines[current_line_index]
+
+        for idx, line in enumerate(lines):
+            _, line_num, _ = self._parse_display_line(line)
+            if line_num is not None:
+                parsed_lines.append((line_num, line))
+            else:
+                # If can't parse line number, keep it in original position
+                parsed_lines.append((999999 + idx, line))
+
+        # Sort by line number
+        parsed_lines.sort(key=lambda x: x[0])
+
+        # Rebuild text
+        sorted_lines = [line_text for _, line_text in parsed_lines]
+        new_text = '\n'.join(sorted_lines)
+        self.edit_widget.set_edit_text(new_text)
+
+        # Find where the current line ended up
+        try:
+            new_index = sorted_lines.index(current_line_text)
+            # Calculate position at target column
+            line_start = sum(len(sorted_lines[i]) + 1 for i in range(new_index))
+            new_cursor_pos = line_start + target_column
+            self.edit_widget.set_edit_pos(new_cursor_pos)
+        except ValueError:
+            # Line not found, position at end
+            self.edit_widget.set_edit_pos(len(new_text))
+
+
+# Keep old EditorWidget for compatibility
+class EditorWidget(urwid.Edit):
+    """Multi-line editor widget for BASIC programs."""
+
+    def __init__(self):
+        super().__init__(multiline=True, align='left', wrap='clip')
+        self.set_caption("")
+
+    def keypress(self, size, key):
+        """Handle key presses in the editor."""
+        # Sanitize character input: clear parity bits and filter control characters
+        if len(key) == 1:
+            # Clear parity bit
+            key = clear_parity(key)
+
+            # Filter invalid characters
+            if not is_valid_input_char(key):
+                # Block invalid character
+                return None
+
+        # Let parent handle keys
+        return super().keypress(size, key)
+
+
+class ImmediateInput(urwid.Edit):
+    """Custom Edit widget for immediate mode input that handles Enter key."""
+
+    def __init__(self, caption, on_execute_callback):
+        """Initialize immediate input widget.
+
+        Args:
+            caption: Text to display before input (e.g., "Ok > ")
+            on_execute_callback: Function to call when Enter is pressed
+        """
+        super().__init__(caption)
+        self.on_execute_callback = on_execute_callback
+
+    def keypress(self, size, key):
+        """Handle key presses, especially Enter."""
+        if key == 'enter':
+            # Execute the command
+            if self.on_execute_callback:
+                self.on_execute_callback()
+            return None  # Consume the key
+        else:
+            # Sanitize character input: clear parity bits and filter control characters
+            if len(key) == 1:
+                # Clear parity bit
+                key = clear_parity(key)
+
+                # Filter invalid characters
+                if not is_valid_input_char(key):
+                    # Block invalid character
+                    return None
+
+            # Let parent handle other keys
+            return super().keypress(size, key)
+
+
+class CursesBackend(UIBackend):
+    """Urwid-based curses UI backend.
+
+    Provides a full-screen terminal interface with:
+    - Multi-line editor for program entry
+    - Output window for program results
+    - Menu system for commands
+    - Keyboard shortcuts
+    """
+
+    def __init__(self, io_handler, program_manager):
+        """Initialize the curses UI backend.
+
+        Args:
+            io_handler: IOHandler instance for I/O operations
+            program_manager: ProgramManager instance
+        """
+        super().__init__(io_handler, program_manager)
+
+        # Recent files manager
+        self.recent_files = RecentFilesManager()
+
+        # Auto-save manager
+        self.auto_save = AutoSaveManager()
+
+        # UI state
+        self.app = None
+        self.loop = None
+        self.loop_running = False  # Track if event loop has been started
+        self.editor = None
+        self.output = None
+        self.status_bar = None
+        self.variables_walker = None
+        self.variables_window = None
+        self.watch_window_visible = False
+        self.variables_sort_mode = 'name'  # 'name', 'accessed', 'written', 'read', 'type', 'value'
+        self.variables_sort_reverse = False  # False=ascending, True=descending
+        self.variables_filter_text = ""  # Filter text for variables window
+        self.stack_walker = None
+        self.stack_window = None
+        self.stack_window_visible = False
+
+        # Editor state
+        self.editor_lines = {}  # line_num -> text for editing
+        self.current_line_num = 10  # Default starting line number
+        self.current_filename = None  # Track current filename for Save vs Save As
+
+        # Execution state
+        self.runtime = None
+        self.interpreter = None
+        self.running = False
+        self.paused_at_breakpoint = False
+        self.output_buffer = []
+
+        # Immediate mode
+        self.immediate_executor = None
+        self.immediate_walker = None
+        self.immediate_window = None
+        self.immediate_input = None
+        self.immediate_status = None
+        self.immediate_frame = None
+
+        # Create the UI layout immediately so widgets exist
+        # (but don't start the loop yet - that happens in start())
+        self._create_ui()
+
+    def start(self):
+        """Start the urwid-based curses UI main loop."""
+        # UI already created in __init__, just start the loop
+
+        # Set up signal handling for clean exit
+        import signal
+
+        def handle_sigint(_signum, _frame):
+            """Handle Ctrl+C (SIGINT) gracefully."""
+            raise urwid.ExitMainLoop()
+
+        # Register signal handler
+        signal.signal(signal.SIGINT, handle_sigint)
+
+        # Set up a callback to make cursor more visible after screen starts
+        def setup_cursor():
+            try:
+                # Access the terminal file descriptor and write escape sequences
+                if hasattr(self.loop.screen, '_term_output_file'):
+                    fd = self.loop.screen._term_output_file.fileno()
+                    import os
+                    # Set cursor color to bright green (works on xterm-compatible terminals)
+                    os.write(fd, b'\033]12;#00FF00\007')  # OSC sequence for cursor color
+                    # Set cursor to steady block for better visibility
+                    os.write(fd, b'\033[2 q')
+            except:
+                pass
+
+        # Schedule cursor setup to run after screen initializes
+        self.loop.set_alarm_in(0, lambda _loop, _user_data: setup_cursor())
+
+        # Run the main loop
+        try:
+            self.loop_running = True
+            self.loop.run()
+        except KeyboardInterrupt:
+            # Handle Ctrl+C gracefully
+            pass
+        finally:
+            self.loop_running = False
+            # Cleanup
+            self._cleanup()
+
+    def _cleanup(self):
+        """Clean up resources before exit."""
+        # Stop autosave
+        if hasattr(self, 'auto_save'):
+            self.auto_save.stop_autosave()
+            # Clean up old autosaves (7+ days)
+            self.auto_save.cleanup_old_autosaves()
+
+        # Restore default cursor color
+        try:
+            if hasattr(self, 'loop') and hasattr(self.loop.screen, '_term_output_file'):
+                fd = self.loop.screen._term_output_file.fileno()
+                import os
+                # Restore default cursor color (works on xterm-compatible terminals)
+                os.write(fd, b'\033]112\007')  # Reset cursor color to default
+        except:
+            pass
+
+        # Stop any running interpreter
+        if hasattr(self, 'interpreter') and self.interpreter:
+            try:
+                # Try to stop cleanly
+                pass
+            except:
+                pass
+
+        # Clear any pending alarms
+        if hasattr(self, 'loop') and self.loop and self.loop_running:
+            try:
+                # Remove all alarms
+                for alarm in list(self.loop.event_loop.alarm_list):
+                    self.loop.remove_alarm(alarm)
+            except:
+                pass
+
+    def _create_toolbar(self):
+        """Create toolbar with common action buttons."""
+        # Create button widgets - use urwid.Button with callback
+        new_btn = urwid.Button("New", on_press=lambda _btn: self._menu_new())
+        open_btn = urwid.Button("Open", on_press=lambda _btn: self._menu_load())
+        save_btn = urwid.Button("Save", on_press=lambda _btn: self._menu_save())
+
+        sep1 = urwid.Text("│")  # Separator
+
+        run_btn = urwid.Button("Run", on_press=lambda _btn: self._menu_run())
+        stop_btn = urwid.Button("Stop", on_press=lambda _btn: self._menu_stop())
+
+        sep2 = urwid.Text("│")  # Separator
+
+        step_btn = urwid.Button("Step", on_press=lambda _btn: self._menu_step_line())
+        stmt_btn = urwid.Button("Stmt", on_press=lambda _btn: self._menu_step())
+        cont_btn = urwid.Button("Cont", on_press=lambda _btn: self._menu_continue())
+
+        # Create horizontal layout with buttons
+        toolbar_columns = urwid.Columns([
+            ('pack', new_btn),
+            (1, urwid.Text(" ")),
+            ('pack', open_btn),
+            (1, urwid.Text(" ")),
+            ('pack', save_btn),
+            (1, urwid.Text(" ")),
+            ('pack', sep1),
+            (1, urwid.Text(" ")),
+            ('pack', run_btn),
+            (1, urwid.Text(" ")),
+            ('pack', stop_btn),
+            (1, urwid.Text(" ")),
+            ('pack', sep2),
+            (1, urwid.Text(" ")),
+            ('pack', step_btn),
+            (1, urwid.Text(" ")),
+            ('pack', stmt_btn),
+            (1, urwid.Text(" ")),
+            ('pack', cont_btn),
+        ])
+
+        # Wrap in AttrMap for styling
+        return urwid.AttrMap(toolbar_columns, 'header')
+
+    def _create_ui(self):
+        """Create the urwid UI layout."""
+        # Create widgets
+        self.menu_bar = urwid.AttrMap(MenuBar(), 'header')
+        self.toolbar = self._create_toolbar()
+        self.editor = ProgramEditorWidget()
+        self.editor._parent_ui = self  # Give editor access to parent UI for dialogs
+
+        # Create scrollable output window using ListBox
+        self.output_walker = urwid.SimpleFocusListWalker([])
+        self.output = urwid.ListBox(self.output_walker)
+
+        # Pass output_walker to editor for displaying syntax errors
+        self.editor._output_walker = self.output_walker
+
+        # Create variables window (watch window)
+        self.variables_walker = urwid.SimpleFocusListWalker([])
+        self.variables_window = urwid.ListBox(self.variables_walker)
+
+        # Create stack window (call stack and loops)
+        self.stack_walker = urwid.SimpleFocusListWalker([])
+        self.stack_window = urwid.ListBox(self.stack_walker)
+
+        self.status_bar = urwid.Text(STATUS_BAR_SHORTCUTS)
+
+        # Create editor frame with top/left border only (no bottom/right space reserved)
+        self.editor_frame = TopLeftBox(
+            urwid.Filler(self.editor, valign='top'),
+            title="Editor"
+        )
+
+        # Create variables frame (initially hidden)
+        self.variables_frame = TopLeftBox(
+            self.variables_window,
+            title="Variables (Ctrl+W to toggle)"
+        )
+
+        # Create stack frame (initially hidden)
+        self.stack_frame = TopLeftBox(
+            self.stack_window,
+            title="Execution Stack (Ctrl+K to toggle)"
+        )
+
+        # Create output frame with top/left border only (no bottom/right space reserved)
+        # ListBox doesn't need Filler since it handles its own scrolling
+        self.output_frame = TopLeftBox(
+            self.output,
+            title="Output"
+        )
+
+        # Create immediate mode window (history + status + input)
+        self.immediate_walker = urwid.SimpleFocusListWalker([])
+        self.immediate_window = urwid.ListBox(self.immediate_walker)
+
+        # Create immediate mode input field with Enter handler
+        self.immediate_input = ImmediateInput("Ok > ", self._execute_immediate)
+
+        # Create immediate mode status indicator
+        self.immediate_status = urwid.Text(('immediate_ok', "Ok"))
+
+        # Create help hint
+        help_hint = urwid.Text(('dim', "Type HELP for commands"), align='right')
+
+        # Create immediate mode panel (status + history + input)
+        immediate_content = urwid.Pile([
+            ('pack', self.immediate_status),
+            ('weight', 1, self.immediate_window),
+            ('pack', help_hint),
+            ('pack', self.immediate_input)
+        ])
+
+        self.immediate_frame = TopLeftBox(
+            immediate_content,
+            title="Immediate Mode"
+        )
+
+        # Create layout - menu bar at top, toolbar, editor, output, immediate, status bar at bottom
+        # Store as instance variable so we can modify it when toggling variables window
+        self.pile = urwid.Pile([
+            ('pack', self.menu_bar),
+            ('pack', self.toolbar),
+            ('weight', 4, self.editor_frame),
+            ('weight', 3, self.output_frame),
+            ('weight', 3, self.immediate_frame),
+            ('pack', self.status_bar)
+        ])
+
+        # Set focus to the editor (third item in pile, after menu bar and toolbar)
+        self.pile.focus_position = 2
+
+        # Create main widget with keybindings
+        main_widget = urwid.AttrMap(self.pile, 'body')
+
+        # Set up the main loop with cursor visible
+        self.loop = urwid.MainLoop(
+            main_widget,
+            palette=self._get_palette(),
+            unhandled_input=self._handle_input,
+            handle_mouse=False
+        )
+
+        # Pass loop reference to editor for deferred refresh mechanism
+        self.editor._loop = self.loop
+
+    def _get_palette(self):
+        """Get the color palette for the UI."""
+        return [
+            ('body', 'white', 'black'),
+            ('header', 'white,bold', 'dark blue'),
+            ('footer', 'white', 'dark blue'),
+            # Use bright yellow for focus - this affects cursor visibility
+            ('focus', 'black', 'yellow', 'standout'),
+            ('error', 'light red', 'black'),
+            # Highlight for active statement during step debugging
+            ('active_stmt', 'black', 'light cyan'),
+            # Immediate mode status indicators
+            ('immediate_ok', 'light green,bold', 'black'),
+            ('immediate_disabled', 'light red,bold', 'black'),
+            # Help system link highlighting
+            ('link', 'light cyan,bold', 'black'),
+        ]
+
+    def _handle_input(self, key):
+        """Handle global keyboard shortcuts."""
+        if key == QUIT_KEY or key == QUIT_ALT_KEY:
+            # Quit
+            raise urwid.ExitMainLoop()
+
+        elif key == TAB_KEY:
+            # Toggle between editor (position 2) and output (position 3)
+            pile = self.loop.widget.base_widget
+            if pile.focus_position == 2:
+                # Switch to output for scrolling
+                pile.focus_position = 3
+                self.status_bar.set_text(OUTPUT_STATUS)
+            else:
+                # Switch back to editor
+                pile.focus_position = 2
+                self.status_bar.set_text(EDITOR_STATUS)
+
+                # Position cursor after the line number + space, at start of code area
+                current_text = self.editor.edit_widget.get_edit_text()
+                cursor_pos = self.editor.edit_widget.edit_pos
+
+                # Find which line the cursor is on
+                text_before_cursor = current_text[:cursor_pos]
+                line_num = text_before_cursor.count('\n')
+                lines = current_text.split('\n')
+
+                if line_num < len(lines):
+                    line = lines[line_num]
+                    line_start = sum(len(lines[i]) + 1 for i in range(line_num))
+
+                    # Parse line format: STATUS + LINENUMBER + SPACE + CODE
+                    # Find where the code starts (after first space following digits)
+                    i = 1  # Skip status char
+                    # Skip digits of line number
+                    while i < len(line) and line[i].isdigit():
+                        i += 1
+                    # Skip space after line number
+                    if i < len(line) and line[i] == ' ':
+                        i += 1
+                    # Now at start of code area
+                    self.editor.edit_widget.set_edit_pos(line_start + i)
+            return None
+
+        elif key == MENU_KEY:
+            # Show menu
+            self._show_menu()
+
+        elif key == HELP_KEY:
+            # Show help
+            self._show_help()
+
+        elif key == SETTINGS_KEY:
+            # Show settings
+            self._show_settings()
+
+        elif key == RUN_KEY:
+            # Run program
+            self._run_program()
+
+        elif key == LIST_KEY:
+            # Context-sensitive: Step Line when debugging, List program otherwise
+            if self.interpreter and self.interpreter.get_state().status in ('paused', 'at_breakpoint', 'running'):
+                # Debugging: Ctrl+L = Step Line
+                self._debug_step_line()
+            else:
+                # Editing: Ctrl+L = List program
+                self._list_program()
+
+        elif key == NEW_KEY:
+            # New program
+            self._new_program()
+
+        elif key == SAVE_KEY:
+            # Save program
+            self._save_program()
+
+        elif key == 'shift ctrl s' or key == 'ctrl S':
+            # Save As - always prompt for filename
+            self._save_as_program()
+
+        elif key == OPEN_KEY:
+            # Open/Load program
+            self._load_program()
+
+        elif key == 'shift ctrl o' or key == 'ctrl O':
+            # Show recent files
+            self._show_recent_files()
+
+        elif key == BREAKPOINT_KEY:
+            # Toggle breakpoint on current line
+            self._toggle_breakpoint_current_line()
+
+        elif key == CLEAR_BREAKPOINTS_KEY:
+            # Clear all breakpoints
+            self._clear_all_breakpoints()
+
+        elif key == VARIABLES_KEY:
+            # Toggle variables window
+            self._toggle_variables_window()
+
+        elif key == STACK_KEY:
+            # Toggle execution stack window
+            self._toggle_stack_window()
+
+        elif key == 's' and self.watch_window_visible:
+            # Cycle sort mode in variables window
+            self._cycle_variables_sort_mode()
+
+        elif key == 'd' and self.watch_window_visible:
+            # Toggle sort direction in variables window
+            self._toggle_variables_sort_direction()
+
+        elif key == 'e' and self.watch_window_visible:
+            # Edit selected variable value
+            self._edit_selected_variable()
+
+        elif key == 'enter' and self.watch_window_visible:
+            # Edit selected variable value (Enter key)
+            self._edit_selected_variable()
+
+        elif key == 'f' and self.watch_window_visible:
+            # Set filter for variables window
+            self._set_variables_filter()
+
+        elif key == 'c' and self.watch_window_visible:
+            # Clear filter for variables window
+            self._clear_variables_filter()
+
+        elif key == DELETE_LINE_KEY:
+            # Delete current line
+            self._delete_current_line()
+
+        elif key == INSERT_LINE_KEY:
+            # Smart insert line between current and next
+            self._smart_insert_line()
+
+        elif key == RENUMBER_KEY:
+            # Renumber all lines
+            self._renumber_lines()
+
+        elif key == CONTINUE_KEY:
+            # Continue execution (from breakpoint/pause)
+            self._debug_continue()
+
+        elif key == STEP_KEY:
+            # Step Statement - execute one statement
+            self._debug_step()
+
+        elif key == STOP_KEY:
+            # Stop execution
+            self._debug_stop()
+
+        elif key == CLEAR_OUTPUT_KEY:
+            # Clear output pane
+            self._clear_output()
+
+    def _clear_output(self):
+        """Clear the output pane."""
+        self.output_buffer.clear()
+        self._update_output()
+        self.status_bar.set_text("Output cleared")
+
+    def _update_status_with_errors(self, base_message="Ready"):
+        """Update status bar with error count if there are syntax errors."""
+        if self.editor.errors:
+            error_count = len(self.editor.errors)
+            plural = "s" if error_count > 1 else ""
+            self.status_bar.set_text(f"{base_message} - {error_count} syntax error{plural} in program")
+        else:
+            self.status_bar.set_text(f"{base_message} - Press Ctrl+H for help")
+
+    def _debug_continue(self):
+        """Continue execution from paused/breakpoint state."""
+        if not self.interpreter:
+            self.status_bar.set_text("No program running")
+            return
+
+        try:
+            state = self.interpreter.get_state()
+            if state.status in ('paused', 'at_breakpoint'):
+                # Clear statement highlighting when continuing
+                self.editor._update_display()
+                # Continue from breakpoint
+                self.status_bar.set_text("Continuing execution...")
+                self.interpreter.cont()
+                # Schedule next tick
+                self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
+            else:
+                self.status_bar.set_text(f"Not paused (status: {state.status})")
+        except Exception as e:
+            self.status_bar.set_text(f"Continue error: {e}")
+
+    def _debug_step(self):
+        """Execute one line and pause (single-step debugging)."""
+        if not self.interpreter:
+            self.status_bar.set_text("No program running")
+            return
+
+        try:
+            state = self.interpreter.get_state()
+            if state.status in ('paused', 'at_breakpoint', 'running'):
+                # Execute one statement
+                self.status_bar.set_text("Stepping...")
+                state = self.interpreter.tick(mode='step', max_statements=1)
+
+                # Collect any output
+                new_output = self.io_handler.get_and_clear_output()
+                if new_output:
+                    self.output_buffer.extend(new_output)
+                    self._update_output()
+
+                # Update editor display with statement highlighting
+                if state.status in ('paused', 'at_breakpoint') and state.current_line:
+                    # Highlight the current statement in the editor
+                    pc = self.runtime.pc if self.runtime else None
+                    self.editor._update_display(
+                        highlight_line=state.current_line,
+                        highlight_stmt=pc.stmt_offset if pc else 0,
+                        statement_table=self.runtime.statement_table if self.runtime else None
+                    )
+
+                    # Update variables window if visible
+                    if self.watch_window_visible:
+                        self._update_variables_window()
+
+                    # Update stack window if visible
+                    if self.stack_window_visible:
+                        self._update_stack_window()
+
+                # Show where we paused
+                if state.status in ('paused', 'at_breakpoint'):
+                    pc = self.runtime.pc if self.runtime else None
+                    stmt_info = f" statement {pc.stmt_offset + 1}" if pc and pc.stmt_offset > 0 else ""
+                    self.output_buffer.append(f"→ Paused at line {state.current_line}{stmt_info}")
+                    self._update_output()
+                    self.status_bar.set_text(f"Paused at line {state.current_line}{stmt_info} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                    self._update_immediate_status()
+                elif state.status == 'done':
+                    # Clear highlighting when done
+                    self.editor._update_display()
+                    self.output_buffer.append("Program completed")
+                    self._update_output()
+                    self.status_bar.set_text("Program completed")
+                    self._update_immediate_status()
+                elif state.status == 'error':
+                    # Clear highlighting on error
+                    self.editor._update_display()
+                    error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                    line_num = state.error_info.pc.line_num if state.error_info else "?"
+                    self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
+                    self._update_output()
+                    self.status_bar.set_text("Error during step")
+                    self._update_immediate_status()
+            else:
+                self.status_bar.set_text(f"Cannot step (status: {state.status})")
+        except Exception as e:
+            import traceback
+
+            # Log error (outputs to stderr in debug mode)
+            error_msg = debug_log_error("Step error", exception=e)
+
+            self.output_buffer.append(f"Step error: {e}")
+            if is_debug_mode():
+                self.output_buffer.append("(Full traceback sent to stderr - check console)")
+            else:
+                self.output_buffer.append(traceback.format_exc())
+            self._update_output()
+            self.status_bar.set_text(f"Step error: {e}")
+
+    def _debug_step_line(self):
+        """Execute all statements on current line and pause (step by line)."""
+        if not self.interpreter:
+            self.status_bar.set_text("No program running")
+            return
+
+        try:
+            state = self.interpreter.get_state()
+            if state.status in ('paused', 'at_breakpoint', 'running'):
+                # Execute all statements on line
+                self.status_bar.set_text("Stepping line...")
+                state = self.interpreter.tick(mode='step_line', max_statements=100)
+
+                # Collect any output
+                new_output = self.io_handler.get_and_clear_output()
+                if new_output:
+                    self.output_buffer.extend(new_output)
+                    self._update_output()
+
+                # Update editor display
+                if state.status in ('paused', 'at_breakpoint') and state.current_line:
+                    self.editor._update_display(
+                        highlight_line=state.current_line,
+                        highlight_stmt=0,  # Highlight whole line, not specific statement
+                        statement_table=self.runtime.statement_table if self.runtime else None
+                    )
+
+                    # Update variables window if visible
+                    if self.watch_window_visible:
+                        self._update_variables_window()
+
+                    # Update stack window if visible
+                    if self.stack_window_visible:
+                        self._update_stack_window()
+
+                    # Show where we paused
+                    self.output_buffer.append(f"→ Paused at line {state.current_line}")
+                    self._update_output()
+                    self.status_bar.set_text(f"Paused at line {state.current_line} - Ctrl+L=Step Line, Ctrl+T=Step Stmt, Ctrl+G=Continue")
+                    self._update_immediate_status()
+                elif state.status == 'done':
+                    self.editor._update_display()
+                    self.output_buffer.append("Program completed")
+                    self._update_output()
+                    self.status_bar.set_text("Program completed")
+                    self._update_immediate_status()
+                elif state.status == 'error':
+                    self.editor._update_display()
+                    error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                    line_num = state.error_info.pc.line_num if state.error_info else "?"
+                    self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
+                    self._update_output()
+                    self.status_bar.set_text("Error during step")
+                    self._update_immediate_status()
+            else:
+                self.status_bar.set_text(f"Cannot step (status: {state.status})")
+        except Exception as e:
+            import traceback
+
+            # Log error (outputs to stderr in debug mode)
+            error_msg = debug_log_error("Step line error", exception=e)
+
+            self.output_buffer.append(f"Step line error: {e}")
+            if is_debug_mode():
+                self.output_buffer.append("(Full traceback sent to stderr - check console)")
+            else:
+                self.output_buffer.append(traceback.format_exc())
+            self._update_output()
+            self.status_bar.set_text(f"Step line error: {e}")
+
+    def _debug_stop(self):
+        """Stop program execution."""
+        if not self.interpreter:
+            self.status_bar.set_text("No program running")
+            return
+
+        try:
+            # Stop the interpreter
+            self.interpreter = None
+            self.runtime = None
+            self.output_buffer.append("Program stopped by user")
+            self._update_output()
+            self.status_bar.set_text("Program stopped - Ready")
+            self._update_immediate_status()
+        except Exception as e:
+            self.status_bar.set_text(f"Stop error: {e}")
+
+    def _menu_step_line(self):
+        """Menu/button handler for Step Line command."""
+        self._debug_step_line()
+
+    def _menu_step(self):
+        """Menu/button handler for Step Statement command."""
+        self._debug_step()
+
+    def _menu_continue(self):
+        """Menu/button handler for Continue command."""
+        self._debug_continue()
+
+    def _delete_current_line(self):
+        """Delete the current line where the cursor is."""
+        # Get current cursor position
+        cursor_pos = self.editor.edit_widget.edit_pos
+        current_text = self.editor.edit_widget.get_edit_text()
+
+        # Find which line we're on
+        text_before_cursor = current_text[:cursor_pos]
+        line_index = text_before_cursor.count('\n')
+
+        # Get the lines
+        lines = current_text.split('\n')
+        if line_index >= len(lines):
+            return
+
+        line = lines[line_index]
+
+        # Parse line to extract line number
+        status, line_number, code = self.editor._parse_display_line(line)
+        if line_number is None:
+            self.status_bar.set_text("No line number to delete")
+            return
+
+        # Remove the line from the display
+        del lines[line_index]
+
+        # Update editor.lines dict
+        if line_number in self.editor.lines:
+            del self.editor.lines[line_number]
+
+        # Remove from breakpoints and errors if present
+        if line_number in self.editor.breakpoints:
+            self.editor.breakpoints.remove(line_number)
+        if line_number in self.editor.syntax_errors:
+            del self.editor.syntax_errors[line_number]
+
+        # Update display
+        new_text = '\n'.join(lines)
+        self.editor.edit_widget.set_edit_text(new_text)
+
+        # Position cursor at beginning of next line (or previous if at end)
+        if line_index < len(lines):
+            # Position at start of line that moved up
+            if line_index > 0:
+                new_cursor_pos = sum(len(lines[i]) + 1 for i in range(line_index))
+            else:
+                new_cursor_pos = 0
+        else:
+            # Was last line, position at end of previous line
+            if lines:
+                new_cursor_pos = sum(len(lines[i]) + 1 for i in range(len(lines) - 1)) + len(lines[-1])
+            else:
+                new_cursor_pos = 0
+
+        self.editor.edit_widget.set_edit_pos(new_cursor_pos)
+
+        # Update status bar
+        self.status_bar.set_text(f"Deleted line {line_number}")
+
+        # Force screen redraw
+        if self.loop and self.loop_running:
+            self.loop.draw_screen()
+
+    def _smart_insert_line(self):
+        """Smart insert - insert blank line between current and next line.
+
+        Uses midpoint calculation to find appropriate line number.
+        If no room, offers to renumber the program.
+        """
+        from src.ui.ui_helpers import calculate_midpoint
+
+        # Get current cursor position and text
+        cursor_pos = self.editor.edit_widget.edit_pos
+        current_text = self.editor.edit_widget.get_edit_text()
+
+        # Find which line we're on
+        text_before_cursor = current_text[:cursor_pos]
+        line_index = text_before_cursor.count('\n')
+
+        # Get all lines
+        lines = current_text.split('\n')
+        if line_index >= len(lines):
+            self.status_bar.set_text("No current line")
+            return
+
+        current_line = lines[line_index]
+
+        # Parse current line number
+        status, current_line_num, code = self.editor._parse_display_line(current_line)
+        if current_line_num is None:
+            self.status_bar.set_text("Current line has no line number")
+            return
+
+        # Collect all line numbers in program
+        all_line_numbers = []
+        for line in lines:
+            _, ln, _ = self.editor._parse_display_line(line)
+            if ln is not None:
+                all_line_numbers.append(ln)
+
+        all_line_numbers = sorted(set(all_line_numbers))
+
+        if not all_line_numbers:
+            self.status_bar.set_text("No program lines found")
+            return
+
+        # Find the next line after current (to insert between prev and current)
+        # We want to insert BEFORE current, so find line before current
+        prev_line_num = None
+        for i, line_num in enumerate(all_line_numbers):
+            if line_num == current_line_num:
+                # Found current line - get previous
+                if i > 0:
+                    prev_line_num = all_line_numbers[i - 1]
+                break
+
+        # Calculate insertion point (insert BEFORE current line)
+        if prev_line_num is None:
+            # At beginning of program - insert line before current
+            insert_num = max(1, current_line_num - self.editor.auto_number_increment)
+            # Make sure we don't conflict with current
+            if insert_num >= current_line_num:
+                insert_num = current_line_num - 1 if current_line_num > 1 else None
+            if insert_num is None or insert_num < 1:
+                self.status_bar.set_text("No room before first line. Use RENUM to make space.")
+                return
+        else:
+            # Between previous and current lines - try midpoint
+            midpoint = calculate_midpoint(prev_line_num, current_line_num)
+            if midpoint is not None:
+                insert_num = midpoint
+            else:
+                # No room - offer to renumber
+                response = self._get_input_dialog(
+                    f"No room between lines {prev_line_num} and {current_line_num}. Renumber? (y/n): "
+                )
+                if response and response.lower().startswith('y'):
+                    # Renumber to make room
+                    self._renumber_lines()
+                return
+
+        # Insert blank line BEFORE current line (at current line's position)
+        # Format: status + line_num + space + code (variable width)
+        status_char = ' '  # New line has no breakpoint or error
+        new_line_text = f"{status_char}{insert_num} "
+
+        # Insert at current position
+        lines.insert(line_index, new_line_text)
+
+        # Update editor.lines dict
+        self.editor.lines[insert_num] = ""  # Empty code
+
+        # Update display
+        new_text = '\n'.join(lines)
+        self.editor.edit_widget.set_edit_text(new_text)
+
+        # Position cursor on the new line, at the code area (column 7)
+        if line_index > 0:
+            new_cursor_pos = sum(len(lines[i]) + 1 for i in range(line_index)) + 7
+        else:
+            new_cursor_pos = 7  # Column 7 is start of code area
+
+        self.editor.edit_widget.set_edit_pos(new_cursor_pos)
+
+        # Update status bar
+        self.status_bar.set_text(f"Inserted line {insert_num}")
+
+        # Force screen redraw
+        if self.loop and self.loop_running:
+            self.loop.draw_screen()
+
+    def _renumber_lines(self):
+        """Renumber all lines with a dialog for start and increment."""
+        # Get current parameters
+        current_text = self.editor.edit_widget.get_edit_text()
+        lines = current_text.split('\n')
+
+        # Count valid program lines
+        valid_lines = []
+        for line in lines:
+            status, line_number, code = self.editor._parse_display_line(line)
+            if line_number is not None:
+                valid_lines.append((line_number, code, status))  # (line_num, code, status)
+
+        if not valid_lines:
+            self.status_bar.set_text("No lines to renumber")
+            return
+
+        # Get renumber parameters from user
+        start_str = self._get_input_dialog("RENUM - Start line number (default 10): ")
+        if start_str is None or start_str == '':
+            start = 10
+        else:
+            try:
+                start = int(start_str)
+            except:
+                self.status_bar.set_text("Invalid start number")
+                return
+
+        increment_str = self._get_input_dialog("RENUM - Increment (default 10): ")
+        if increment_str is None or increment_str == '':
+            increment = 10
+        else:
+            try:
+                increment = int(increment_str)
+            except:
+                self.status_bar.set_text("Invalid increment")
+                return
+
+        # Build new lines with renumbered line numbers
+        new_lines = []
+        new_line_num = start
+        old_to_new = {}  # Map old line numbers to new
+
+        for old_line_num, code, status in valid_lines:
+            old_to_new[old_line_num] = new_line_num
+
+            # Update editor.lines dict
+            self.editor.lines[new_line_num] = code
+            if old_line_num != new_line_num and old_line_num in self.editor.lines:
+                del self.editor.lines[old_line_num]
+
+            # Update breakpoints
+            if old_line_num in self.editor.breakpoints:
+                self.editor.breakpoints.remove(old_line_num)
+                self.editor.breakpoints.add(new_line_num)
+
+            # Update syntax errors
+            if old_line_num in self.editor.syntax_errors:
+                error_msg = self.editor.syntax_errors[old_line_num]
+                del self.editor.syntax_errors[old_line_num]
+                self.editor.syntax_errors[new_line_num] = error_msg
+
+            # Recalculate status for new line number
+            has_syntax_error = new_line_num in self.editor.syntax_errors
+            new_status = self.editor._get_status_char(new_line_num, has_syntax_error)
+
+            # Format new line (variable width)
+            formatted_line = f"{new_status}{new_line_num} {code}"
+            new_lines.append(formatted_line)
+
+            new_line_num += increment
+
+        # Update display
+        new_text = '\n'.join(new_lines)
+        self.editor.edit_widget.set_edit_text(new_text)
+        self.editor.edit_widget.set_edit_pos(0)
+
+        # Update status bar
+        self.status_bar.set_text(f"Renumbered {len(valid_lines)} lines from {start} by {increment}")
+
+        # Force screen redraw
+        if self.loop and self.loop_running:
+            self.loop.draw_screen()
+
+    def _toggle_breakpoint_current_line(self):
+        """Toggle breakpoint on the current line where the cursor is."""
+        # Get current cursor position
+        cursor_pos = self.editor.edit_widget.edit_pos
+        current_text = self.editor.edit_widget.get_edit_text()
+
+        # Find which line we're on
+        text_before_cursor = current_text[:cursor_pos]
+        line_index = text_before_cursor.count('\n')
+
+        # Get the line text
+        lines = current_text.split('\n')
+        if line_index >= len(lines):
+            return
+
+        line = lines[line_index]
+
+        # Parse line to get line number and code
+        status, line_number, code_area = self.editor._parse_display_line(line)
+        if line_number is None:
+            return
+
+        # Toggle breakpoint
+        if line_number in self.editor.breakpoints:
+            self.editor.breakpoints.remove(line_number)
+            self.status_bar.set_text(f"Breakpoint removed from line {line_number}")
+        else:
+            self.editor.breakpoints.add(line_number)
+            self.status_bar.set_text(f"Breakpoint set on line {line_number}")
+
+        # Check if line has syntax error
+        has_syntax_error = line_number in self.editor.syntax_errors
+
+        # Get new status based on priority
+        new_status = self.editor._get_status_char(line_number, has_syntax_error)
+
+        # Update the line if status changed
+        if status != new_status:
+            lines[line_index] = new_status + line[1:]
+            new_text = '\n'.join(lines)
+            self.editor.edit_widget.set_edit_text(new_text)
+            # Restore cursor position
+            self.editor.edit_widget.set_edit_pos(cursor_pos)
+            # Force screen redraw
+            if self.loop and self.loop_running:
+                self.loop.draw_screen()
+
+    def _clear_all_breakpoints(self):
+        """Clear all breakpoints."""
+        if not self.editor.breakpoints:
+            self.status_bar.set_text("No breakpoints to clear")
+            return
+
+        count = len(self.editor.breakpoints)
+        self.editor.breakpoints.clear()
+        self.editor._update_display()
+        self.status_bar.set_text(f"Cleared {count} breakpoint(s)")
+
+        # Update interpreter if running
+        if self.interpreter:
+            self.interpreter.clear_breakpoints()
+
+        # Force redraw
+        if self.loop and self.loop_running:
+            self.loop.draw_screen()
+
+    def _show_help(self):
+        """Show interactive help browser."""
+        # Get help root directory
+        help_root = Path(__file__).parent.parent.parent / "docs" / "help"
+
+        # Create help widget - open main help index
+        help_widget = HelpWidget(str(help_root), "index.md")
+
+        # Create overlay
+        overlay = urwid.Overlay(
+            urwid.AttrMap(help_widget, 'body'),
+            self.loop.widget,
+            align='center',
+            width=('relative', 90),
+            valign='middle',
+            height=('relative', 90)
+        )
+
+        # Store original widget BEFORE replacing it
+        main_widget = self.loop.widget
+
+        # Set up keypress handler to close help when ESC/Q pressed
+        def help_input(key):
+            # Let the help widget handle the key first
+            result = help_widget.keypress((80, 24), key)
+            if result == 'esc':
+                # Help widget wants to close
+                self.loop.widget = main_widget
+                self.loop.unhandled_input = self._handle_input
+            # Don't return anything - we handled it
+
+        # Show overlay and set handler
+        self.loop.widget = overlay
+        self.loop.unhandled_input = help_input
+
+    def _show_menu(self):
+        """Show menu with all available commands."""
+        menu_text = """
+══════════════════════════════════════════════════════════════
+
+                     MBASIC 5.21 MENU
+
+══════════════════════════════════════════════════════════════
+
+File                          Edit
+────────────────────          ───────────────────────────
+  New             Ctrl+N        Delete Line       Ctrl+D
+  Open...         Ctrl+O        Insert Line       Ctrl+I
+  Recent Files... Ctrl+Shift+O  Renumber...       Ctrl+E
+  Save            Ctrl+S        Toggle Break      Ctrl+B
+  Quit            Ctrl+Q        Clear Breaks      Ctrl+Shift+B
+
+Run                           Debug Windows
+────────────────────          ────────────────────
+  Run             Ctrl+R        Variables       Ctrl+W
+  Step Line       Ctrl+L          Sort: s (mode) d (dir)
+  Step Statement  Ctrl+T        Stack           Ctrl+K
+  Continue        Ctrl+G        Clear Output    Ctrl+Y
+  Stop            Ctrl+X
+                                Help
+                                ────────────────────
+                                  Show Help     Ctrl+H
+                                  About         (see help)
+
+══════════════════════════════════════════════════════════════
+
+                  Press ESC to close
+
+══════════════════════════════════════════════════════════════
+"""
+        # Create menu dialog
+        text = urwid.Text(menu_text)
+        fill = urwid.Filler(text, valign='middle')
+        box = urwid.LineBox(fill, title="Menu")
+        overlay = urwid.Overlay(
+            urwid.AttrMap(box, 'body'),
+            self.loop.widget,
+            align='center',
+            width=('relative', 70),
+            valign='middle',
+            height=('relative', 70)
+        )
+
+        # Store original widget BEFORE replacing it
+        main_widget = self.loop.widget
+
+        # Set up a one-time keypress handler to close the dialog
+        def close_menu(key):
+            self.loop.widget = main_widget
+            self.loop.unhandled_input = self._handle_input
+
+        # Show overlay and set handler
+        self.loop.widget = overlay
+        self.loop.unhandled_input = close_menu
+
+    def _show_settings(self):
+        """Show settings editor."""
+        from .curses_settings_widget import SettingsWidget
+
+        # Create settings widget
+        settings_widget = SettingsWidget()
+
+        # Create overlay
+        overlay = urwid.Overlay(
+            urwid.AttrMap(settings_widget, 'body'),
+            self.loop.widget,
+            align='center',
+            width=('relative', 80),
+            valign='middle',
+            height=('relative', 80)
+        )
+
+        # Store original widget BEFORE replacing it
+        main_widget = self.loop.widget
+
+        # Set up keypress handler to close settings when ESC pressed
+        def settings_input(key):
+            # Let the settings widget handle the key first
+            result = settings_widget.keypress((80, 24), key)
+
+            # Check if widget wants to close
+            if hasattr(settings_widget, 'signal'):
+                if settings_widget.signal == 'close':
+                    # Close settings
+                    self.loop.widget = main_widget
+                    self.loop.unhandled_input = self._handle_input
+                elif settings_widget.signal == 'applied':
+                    # Settings applied - could show message
+                    # For now just clear the signal
+                    settings_widget.signal = None
+
+            # Don't return anything - we handled it
+
+        # Show overlay and set handler
+        self.loop.widget = overlay
+        self.loop.unhandled_input = settings_input
+
+    def _toggle_variables_window(self):
+        """Toggle visibility of the variables watch window."""
+        self.watch_window_visible = not self.watch_window_visible
+
+        if self.watch_window_visible:
+            # Add variables window to the pile (position 2, between editor and output)
+            # Layout: menu (0), editor (1), variables (2), output (3), status (4)
+            self.pile.contents.insert(2, (self.variables_frame, ('weight', 2)))
+            self.status_bar.set_text("Variables window shown - Ctrl+W to hide")
+
+            # Update variables display if we have a runtime
+            if self.runtime:
+                self._update_variables_window()
+        else:
+            # Remove variables window from pile
+            # Find and remove the variables frame
+            for i, (widget, options) in enumerate(self.pile.contents):
+                if widget is self.variables_frame:
+                    self.pile.contents.pop(i)
+                    break
+            self.status_bar.set_text("Variables window hidden - Ctrl+W to show")
+
+        # Redraw screen
+        if hasattr(self, 'loop') and self.loop and self.loop_running:
+            self.loop.draw_screen()
+
+    def _update_variables_window(self):
+        """Update the variables window with current runtime state."""
+        if not self.runtime:
+            return
+
+        # Clear current display
+        self.variables_walker.clear()
+
+        # Add resource usage header
+        if self.interpreter and hasattr(self.interpreter, 'limits'):
+            limits = self.interpreter.limits
+
+            # Format memory usage
+            mem_pct = (limits.current_memory_usage / limits.max_total_memory * 100) if limits.max_total_memory > 0 else 0
+            mem_line = f"Memory: {limits.current_memory_usage:,} / {limits.max_total_memory:,} ({mem_pct:.1f}%)"
+
+            # Format stack depths
+            stack_line = f"Stacks: GOSUB={limits.current_gosub_depth}/{limits.max_gosub_depth} FOR={limits.current_for_depth}/{limits.max_for_depth} WHILE={limits.current_while_depth}/{limits.max_while_depth}"
+
+            # Add resource lines with divider
+            self.variables_walker.append(make_output_line(mem_line, attr='highlight'))
+            self.variables_walker.append(make_output_line(stack_line, attr='highlight'))
+            self.variables_walker.append(make_output_line("─" * 40))
+
+        # Get all variables from runtime
+        variables = self.runtime.get_all_variables()
+
+        if not variables:
+            self.variables_walker.append(make_output_line("(no variables yet)"))
+            return
+
+        # Sort variables using common helper
+        variables = sort_variables(variables, self.variables_sort_mode, self.variables_sort_reverse)
+
+        # Store total count before filtering
+        total_count = len(variables)
+
+        # Apply filter if present
+        if self.variables_filter_text:
+            filter_lower = self.variables_filter_text.lower()
+            filtered_variables = []
+
+            # Type map for filtering by type name
+            type_map = {
+                '$': 'string',
+                '%': 'integer',
+                '!': 'single',
+                '#': 'double',
+                '': 'single'  # default
+            }
+
+            for var in variables:
+                name = var['name'] + var['type_suffix']
+                value_str = ""
+
+                # Build value string for matching
+                if var['is_array']:
+                    value_str = f"Array({','.join(str(d) for d in var['dimensions'])})"
+                else:
+                    value_str = str(var['value'])
+
+                # Check if filter matches name, value, or type
+                if (filter_lower in name.lower() or
+                    filter_lower in value_str.lower() or
+                    filter_lower in type_map.get(var['type_suffix'], '').lower()):
+                    filtered_variables.append(var)
+
+            variables = filtered_variables
+
+        # Update window title with counts
+        mode_label = get_sort_mode_label(self.variables_sort_mode)
+        arrow = '↓' if self.variables_sort_reverse else '↑'
+
+        if self.variables_filter_text:
+            title = f"Variables ({len(variables)}/{total_count} filtered: '{self.variables_filter_text}') Sort: {mode_label} {arrow} - s=mode d=dir f=filter e=edit Ctrl+W=toggle"
+        else:
+            title = f"Variables (Sort: {mode_label} {arrow}) - s=mode d=dir f=filter e=edit Ctrl+W=toggle"
+
+        self.variables_frame.set_title(title)
+
+        # Display each variable
+        for var in variables:
+            name = var['name'] + var['type_suffix']
+
+            if var['is_array']:
+                # Array: show dimensions and last accessed cell if available
+                dims = 'x'.join(str(d) for d in var['dimensions'])
+
+                # Check if we have last accessed info
+                if var.get('last_accessed_subscripts') and var.get('last_accessed_value') is not None:
+                    subs = var['last_accessed_subscripts']
+                    last_val = var['last_accessed_value']
+
+                    # Format value naturally
+                    if var['type_suffix'] != '$' and isinstance(last_val, (int, float)) and last_val == int(last_val):
+                        last_val_str = str(int(last_val))
+                    elif var['type_suffix'] == '$':
+                        last_val_str = f'"{last_val}"'
+                    else:
+                        last_val_str = str(last_val)
+
+                    subs_str = ','.join(str(s) for s in subs)
+                    line = f"{name:12} = Array({dims}) [{subs_str}]={last_val_str}"
+                else:
+                    line = f"{name:12} = Array({dims})"
+            else:
+                # Scalar: show value
+                value = var['value']
+                # Format numbers naturally - show integers without decimals
+                if var['type_suffix'] != '$' and isinstance(value, (int, float)) and value == int(value):
+                    value = str(int(value))
+                elif var['type_suffix'] == '$':
+                    # String: show with quotes
+                    value = f'"{value}"'
+
+                line = f"{name:12} = {value}"
+
+            self.variables_walker.append(make_output_line(line))
+
+    def _cycle_variables_sort_mode(self):
+        """Cycle through variable sort modes (triggered by 's' key)."""
+        # Cycle through the 4 useful sort modes
+        modes = ['accessed', 'written', 'read', 'name']
+        try:
+            current_idx = modes.index(self.variables_sort_mode)
+            next_idx = (current_idx + 1) % len(modes)
+        except ValueError:
+            next_idx = 0  # Default to 'accessed'
+
+        self.variables_sort_mode = modes[next_idx]
+
+        # Update variables display (this will also update the title)
+        self._update_variables_window()
+
+        # Show status using common helper for label
+        mode_label = get_sort_mode_label(self.variables_sort_mode)
+        arrow = '↓' if self.variables_sort_reverse else '↑'
+        self.status_bar.set_text(f"Sorting variables by: {mode_label} {arrow}")
+
+        # Redraw screen
+        if hasattr(self, 'loop') and self.loop and self.loop_running:
+            self.loop.draw_screen()
+
+    def _toggle_variables_sort_direction(self):
+        """Toggle variable sort direction (triggered by 'd' key)."""
+        self.variables_sort_reverse = not self.variables_sort_reverse
+
+        # Update variables display (this will also update the title)
+        self._update_variables_window()
+
+        # Show status
+        direction = "descending ↓" if self.variables_sort_reverse else "ascending ↑"
+        self.status_bar.set_text(f"Sort direction: {direction}")
+
+        # Redraw screen
+        if hasattr(self, 'loop') and self.loop and self.loop_running:
+            self.loop.draw_screen()
+
+    def _edit_selected_variable(self):
+        """Edit the currently selected variable in the variables window."""
+        import re
+
+        if not self.interpreter or not self.interpreter.runtime:
+            self.status_bar.set_text("No program running")
+            return
+
+        # Get focused item from variables walker
+        try:
+            focus_idx = self.variables_walker.get_focus()[1]
+            if focus_idx is None or focus_idx >= len(self.variables_walker):
+                self.status_bar.set_text("No variable selected")
+                return
+        except (IndexError, AttributeError):
+            self.status_bar.set_text("No variable selected")
+            return
+
+        # Get the widget at focus position
+        widget = self.variables_walker[focus_idx]
+        # Extract text from the widget
+        text = widget.get_text()[0] if hasattr(widget, 'get_text') else str(widget)
+
+        # Parse variable line format: "NAME$        = "value""
+        # or "A%           = Array(10x10) [5,3]=42"
+        parts = text.split('=', 1)
+        if len(parts) != 2:
+            self.status_bar.set_text("Cannot parse variable")
+            return
+
+        variable_name = parts[0].strip()
+        value_part = parts[1].strip()
+
+        # Determine variable type
+        type_suffix = variable_name[-1] if variable_name[-1] in '$%!#' else None
+
+        # Check if array
+        if 'Array' in value_part:
+            # Array variable - let user type any subscripts
+            # Get array dimensions from display
+            dims_match = re.search(r'Array\(([^)]+)\)', value_part)
+            dimensions_str = dims_match.group(1) if dims_match else "?"
+
+            # Get default subscripts from last accessed (if available)
+            default_subscripts = ""
+            match = re.search(r'\[([^\]]+)\]=(.+)$', value_part)
+            if match:
+                default_subscripts = match.group(1)
+
+            # Get array info from runtime
+            base_name = variable_name[:-1] if type_suffix else variable_name
+            try:
+                array_var = self.interpreter.runtime.get_variable(base_name, type_suffix)
+                dimensions = array_var.dimensions if hasattr(array_var, 'dimensions') else []
+            except:
+                dimensions = []
+
+            # Step 1: Get subscripts from user
+            subscripts_prompt = f"Edit {variable_name}({dimensions_str}) - Enter subscripts (e.g., 1,2,3): "
+            subscripts_str = self._get_input_dialog(subscripts_prompt, initial=default_subscripts)
+
+            if not subscripts_str:
+                return  # User cancelled
+
+            # Parse and validate subscripts
+            try:
+                subscripts = [int(s.strip()) for s in subscripts_str.split(',')]
+
+                # Validate dimension count
+                if dimensions and len(subscripts) != len(dimensions):
+                    self.status_bar.set_text(f"Error: Expected {len(dimensions)} subscripts, got {len(subscripts)}")
+                    return
+
+                # Validate bounds
+                for i, sub in enumerate(subscripts):
+                    if dimensions and i < len(dimensions):
+                        if sub < 0 or sub > dimensions[i]:
+                            self.status_bar.set_text(f"Error: Subscript {i} out of bounds: {sub} not in [0, {dimensions[i]}]")
+                            return
+
+                # Get current value at those subscripts
+                index = 0
+                multiplier = 1
+                for i in reversed(range(len(subscripts))):
+                    index += subscripts[i] * multiplier
+                    multiplier *= (dimensions[i] + 1)
+
+                current_val = array_var.elements[index]
+
+            except ValueError:
+                self.status_bar.set_text("Invalid subscripts (must be integers)")
+                return
+            except Exception as e:
+                self.status_bar.set_text(f"Error: {e}")
+                return
+
+            # Step 2: Show current value and get new value
+            value_prompt = f"{variable_name}({subscripts_str}) = {current_val} → New value: "
+            new_value_str = self._get_input_dialog(value_prompt)
+
+            if not new_value_str:
+                return  # User cancelled
+
+            # Convert to appropriate type
+            try:
+                if type_suffix == '$':
+                    new_value = new_value_str
+                elif type_suffix == '%':
+                    new_value = int(new_value_str)
+                else:
+                    new_value = float(new_value_str)
+            except ValueError:
+                self.status_bar.set_text(f"Invalid value for type {type_suffix}")
+                return
+
+            # Update array element
+            try:
+                self.interpreter.runtime.set_array_element(
+                    base_name,
+                    type_suffix,
+                    subscripts,
+                    new_value,
+                    token=None  # No tracking for debugger edits
+                )
+
+                self._update_variables_window()
+                self.status_bar.set_text(f"{variable_name}({subscripts_str}) = {new_value}")
+
+            except Exception as e:
+                self.status_bar.set_text(f"Error: {e}")
+
+        else:
+            # Simple variable
+            current_value = value_part.strip('"')
+
+            # Get new value from user
+            prompt = f"{variable_name} = "
+            new_value_str = self._get_input_dialog(prompt)
+
+            if not new_value_str:
+                return  # User cancelled
+
+            # Convert to appropriate type
+            try:
+                if type_suffix == '$':
+                    new_value = new_value_str
+                elif type_suffix == '%':
+                    new_value = int(new_value_str)
+                else:
+                    new_value = float(new_value_str)
+            except ValueError:
+                self.status_bar.set_text(f"Invalid value for type {type_suffix}")
+                return
+
+            # Update variable
+            try:
+                base_name = variable_name[:-1] if type_suffix else variable_name
+                self.interpreter.runtime.set_variable(
+                    base_name,
+                    type_suffix,
+                    new_value,
+                    debugger_set=True
+                )
+
+                self._update_variables_window()
+                self.status_bar.set_text(f"{variable_name} = {new_value}")
+
+            except Exception as e:
+                self.status_bar.set_text(f"Error: {e}")
+
+    def _set_variables_filter(self):
+        """Prompt for and set a filter for the variables window."""
+        # Show input dialog for filter text
+        prompt_text = "Enter filter text (search name, value, or type):"
+        current_filter = self.variables_filter_text
+
+        # Create a simple input dialog
+        prompt = urwid.Text(prompt_text)
+        edit = urwid.Edit(caption="Filter: ", edit_text=current_filter)
+
+        def handle_key(key):
+            if key == 'enter':
+                # Set filter
+                self.variables_filter_text = edit.get_edit_text()
+                self._update_variables_window()
+
+                # Close dialog
+                self.loop.widget = self.loop.widget.bottom_w
+
+                # Show status
+                if self.variables_filter_text:
+                    self.status_bar.set_text(f"Filter set: '{self.variables_filter_text}'")
+                else:
+                    self.status_bar.set_text("Filter cleared")
+
+                # Redraw
+                if self.loop_running:
+                    self.loop.draw_screen()
+                return True
+            elif key == 'esc':
+                # Cancel
+                self.loop.widget = self.loop.widget.bottom_w
+                self.status_bar.set_text("Filter cancelled")
+                if self.loop_running:
+                    self.loop.draw_screen()
+                return True
+            return False
+
+        # Create dialog
+        pile = urwid.Pile([
+            ('pack', prompt),
+            ('pack', urwid.Divider()),
+            ('pack', edit),
+            ('pack', urwid.Divider()),
+            ('pack', urwid.Text("Press Enter to apply, ESC to cancel"))
+        ])
+        fill = urwid.Filler(pile, valign='middle')
+        box = urwid.LineBox(fill, title="Filter Variables")
+        overlay = urwid.Overlay(
+            urwid.AttrMap(box, 'body'),
+            self.loop.widget,
+            align='center',
+            width=('relative', 60),
+            valign='middle',
+            height=('relative', 30)
+        )
+
+        # Show dialog with custom key handler
+        self.loop.widget = overlay
+        urwid.connect_signal(edit, 'change', lambda _w, _t: None)  # dummy handler
+
+        # Override unhandled_input temporarily
+        old_handler = self.loop.unhandled_input
+        def dialog_handler(key):
+            if handle_key(key):
+                # Restore old handler
+                self.loop.unhandled_input = old_handler
+            return True
+        self.loop.unhandled_input = dialog_handler
+
+    def _clear_variables_filter(self):
+        """Clear the filter for variables window."""
+        self.variables_filter_text = ""
+        self._update_variables_window()
+        self.status_bar.set_text("Filter cleared")
+
+        # Redraw
+        if self.loop_running:
+            self.loop.draw_screen()
+
+    def _toggle_stack_window(self):
+        """Toggle visibility of the execution stack window."""
+        self.stack_window_visible = not self.stack_window_visible
+
+        if self.stack_window_visible:
+            # Determine insertion position based on whether variables window is visible
+            # Layout: menu (0), editor (1), [variables (2)], [stack (2 or 3)], output, status
+            insert_pos = 3 if self.watch_window_visible else 2
+            self.pile.contents.insert(insert_pos, (self.stack_frame, ('weight', 2)))
+            self.status_bar.set_text("Stack window shown - Ctrl+K to hide")
+
+            # Update stack display if we have a runtime
+            if self.runtime:
+                self._update_stack_window()
+        else:
+            # Remove stack window from pile
+            for i, (widget, options) in enumerate(self.pile.contents):
+                if widget is self.stack_frame:
+                    self.pile.contents.pop(i)
+                    break
+            self.status_bar.set_text("Stack window hidden - Ctrl+K to show")
+
+        # Redraw screen
+        if hasattr(self, 'loop') and self.loop and self.loop_running:
+            self.loop.draw_screen()
+
+    def _update_stack_window(self):
+        """Update the stack window with current execution stack."""
+        if not self.runtime:
+            return
+
+        # Clear current display
+        self.stack_walker.clear()
+
+        # Get execution stack from runtime (GOSUB, FOR, WHILE)
+        stack = self.runtime.get_execution_stack()
+
+        if not stack:
+            self.stack_walker.append(make_output_line("(empty stack)"))
+            return
+
+        # Display stack from bottom to top (oldest to newest)
+        for i, entry in enumerate(stack):
+            indent = "  " * i  # Indent to show nesting level
+
+            if entry['type'] == 'GOSUB':
+                # Show statement-level precision for GOSUB return address
+                return_stmt = entry.get('return_stmt', 0)
+                line = f"{indent}GOSUB from line {entry['from_line']}.{return_stmt}"
+            elif entry['type'] == 'FOR':
+                var = entry['var']
+                current = entry['current']
+                end = entry['end']
+                step = entry['step']
+                stmt = entry.get('stmt', 0)
+                line = f"{indent}FOR {var} = {current} TO {end}"
+                if step != 1:
+                    line += f" STEP {step}"
+                line += f" (line {entry['line']}.{stmt})"
+            elif entry['type'] == 'WHILE':
+                stmt = entry.get('stmt', 0)
+                line = f"{indent}WHILE (line {entry['line']}.{stmt})"
+            else:
+                line = f"{indent}Unknown: {entry}"
+
+            self.stack_walker.append(make_output_line(line))
+
+    def _run_program(self):
+        """Run the current program using tick-based interpreter."""
+        try:
+            # Parse editor content into program
+            self._parse_editor_content()
+
+            if not self.editor_lines:
+                self.output_buffer.append("No program to run")
+                self._update_output()
+                return
+
+            # Update status
+            self.status_bar.set_text("Running program...")
+            # Screen will update automatically when loop is running
+
+            # Load program lines into program manager
+            self.program.clear()
+            for line_num in sorted(self.editor_lines.keys()):
+                line_text = f"{line_num} {self.editor_lines[line_num]}"
+                success, error = self.program.add_line(line_num, line_text)
+                if not success:
+                    # Format parse error with context
+                    self.output_buffer.append("")
+                    self.output_buffer.append("┌─ Parse Error ────────────────────────────────────┐")
+                    self.output_buffer.append(f"│ Line {line_num}:")
+                    if line_num in self.editor_lines:
+                        code = self.editor_lines[line_num]
+                        self.output_buffer.append(f"│   {code}")
+                        self.output_buffer.append(f"│   ^^^^")
+                    self.output_buffer.append(f"│ Error: {error}")
+                    self.output_buffer.append("│")
+                    self.output_buffer.append("│ Fix the syntax error and try running again.")
+                    self.output_buffer.append("└──────────────────────────────────────────────────┘")
+                    self._update_output()
+                    self.status_bar.set_text("Parse error - Fix and try again")
+                    return
+
+            # Create a capturing IO handler that just buffers output
+            class CapturingIOHandler:
+                """IO handler that captures output to a buffer.
+
+                Output is collected during tick execution and then
+                picked up by the UI after the tick returns.
+                """
+                def __init__(self):
+                    self.output_buffer = []
+                    self.debug_enabled = False
+
+                def output(self, text, end='\n'):
+                    """Capture output to buffer."""
+                    if end == '\n':
+                        self.output_buffer.append(str(text))
+                    else:
+                        # For same-line output, append to last line or create new
+                        if self.output_buffer:
+                            self.output_buffer[-1] += str(text) + end
+                        else:
+                            self.output_buffer.append(str(text) + end)
+
+                def get_and_clear_output(self):
+                    """Get buffered output and clear the buffer."""
+                    output = self.output_buffer[:]
+                    self.output_buffer.clear()
+                    return output
+
+                def set_debug(self, enabled):
+                    self.debug_enabled = enabled
+
+                # Stub methods required by IOHandler interface
+                def input(self, prompt=''):
+                    return ""
+
+                def input_line(self, prompt=''):
+                    return ""
+
+                def input_char(self, blocking=True):
+                    return ""
+
+                def clear_screen(self):
+                    pass
+
+                def error(self, message):
+                    self.output(f"Error: {message}")
+
+                def debug(self, message):
+                    if self.debug_enabled:
+                        self.output(f"Debug: {message}")
+
+            # Create runtime and interpreter with local limits
+            from src.resource_limits import create_local_limits
+            io_handler = CapturingIOHandler()
+            runtime = Runtime(self.program.line_asts, self.program.lines)
+            self.interpreter = Interpreter(runtime, io_handler, limits=create_local_limits())
+            self.runtime = runtime
+            self.io_handler = io_handler  # Keep reference to get output later
+
+            # Set breakpoints from editor
+            for line_num in self.editor.breakpoints:
+                self.interpreter.set_breakpoint(line_num)
+
+            # Initialize immediate mode executor
+            immediate_io = OutputCapturingIOHandler()
+            self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
+            self._update_immediate_status()
+
+            # Start execution
+            state = self.interpreter.start()
+
+            if state.status == 'error':
+                error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                self.output_buffer.append("")
+                self.output_buffer.append("┌─ Startup Error ──────────────────────────────────┐")
+                self.output_buffer.append(f"│ Error: {error_msg}")
+                self.output_buffer.append("└──────────────────────────────────────────────────┘")
+                self._update_output()
+                self.status_bar.set_text("Startup error - Check program")
+                return
+
+            # Set up tick-based execution using urwid's alarm
+            self._execute_tick()
+
+        except Exception as e:
+            import traceback
+
+            # Log error (outputs to stderr in debug mode)
+            error_msg = debug_log_error(
+                "Runtime initialization error",
+                exception=e,
+                context={'phase': 'program setup'}
+            )
+
+            # Format error with box
+            self.output_buffer.append("")
+            self.output_buffer.append("┌─ Unexpected Error ───────────────────────────────┐")
+            self.output_buffer.append(f"│ {type(e).__name__}: {e}")
+            self.output_buffer.append("│")
+            if is_debug_mode():
+                self.output_buffer.append("│ (Full traceback sent to stderr - check console)")
+            else:
+                self.output_buffer.append("│ This is an internal error. Details below:")
+            self.output_buffer.append("└──────────────────────────────────────────────────┘")
+            self.output_buffer.append("")
+            # Add traceback for debugging (only if not in debug mode)
+            if not is_debug_mode():
+                for line in traceback.format_exc().split('\n'):
+                    self.output_buffer.append(line)
+            self._update_output()
+            self.status_bar.set_text("Internal error - See output")
+
+    def _execute_tick(self):
+        """Execute one tick of the interpreter and schedule next tick."""
+        try:
+            # Execute one tick
+            state = self.interpreter.tick(mode='run', max_statements=100)
+
+            # Collect any output produced during the tick
+            new_output = self.io_handler.get_and_clear_output()
+            if new_output:
+                self.output_buffer.extend(new_output)
+                self._update_output()
+
+            # Handle state transitions
+            if state.status == 'running':
+                # Schedule next tick
+                self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
+
+            elif state.status == 'waiting_for_input':
+                # Prompt user for input
+                prompt = state.input_prompt or "? "
+                self._get_input_for_interpreter(prompt)
+
+            elif state.status == 'done':
+                # Program completed - show final output if any
+                final_output = self.io_handler.get_and_clear_output()
+                if final_output:
+                    self.output_buffer.extend(final_output)
+                self.output_buffer.append("Ok")
+                self._update_output()
+                self._update_status_with_errors("Ready")
+                self._update_immediate_status()
+
+            elif state.status == 'error':
+                # Error occurred - show any output before error
+                error_output = self.io_handler.get_and_clear_output()
+                if error_output:
+                    self.output_buffer.extend(error_output)
+
+                # Format error with context
+                error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                line_num = state.error_info.pc.line_num if state.error_info else "?"
+
+                # Build error display with box and context
+                self.output_buffer.append("")
+                self.output_buffer.append("┌─ Runtime Error ──────────────────────────────────┐")
+
+                # Try to get the code for the error line
+                if line_num != "?" and isinstance(line_num, int):
+                    self.output_buffer.append(f"│ Line {line_num}:")
+                    # Get code from editor_lines
+                    if line_num in self.editor_lines:
+                        code = self.editor_lines[line_num]
+                        self.output_buffer.append(f"│   {code}")
+                        self.output_buffer.append(f"│   ^^^^")
+                else:
+                    self.output_buffer.append(f"│ Line {line_num}:")
+
+                self.output_buffer.append(f"│ Error: {error_msg}")
+                self.output_buffer.append("└──────────────────────────────────────────────────┘")
+
+                self._update_output()
+                self.status_bar.set_text("Error - Press Ctrl+H for help")
+                self._update_immediate_status()
+
+            elif state.status == 'paused' or state.status == 'at_breakpoint':
+                # Paused execution (breakpoint hit or stepping)
+                if state.status == 'at_breakpoint':
+                    self.output_buffer.append(f"● Breakpoint hit at line {state.current_line}")
+                else:
+                    self.output_buffer.append(f"→ Paused at line {state.current_line}")
+                self._update_output()
+                self.status_bar.set_text(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                self._update_immediate_status()
+
+        except Exception as e:
+            import traceback
+
+            # Gather context for debug logging
+            context = {}
+            if self.interpreter and hasattr(self.interpreter, 'state'):
+                state = self.interpreter.state
+                context['current_line'] = state.current_line
+                context['status'] = state.status
+                if state.error_info:
+                    context['error_line'] = state.error_info.pc.line_num
+
+            # Log error (outputs to stderr in debug mode)
+            error_msg = debug_log_error(
+                "Execution error",
+                exception=e,
+                context=context
+            )
+
+            # Format unexpected tick error with box
+            self.output_buffer.append("")
+            self.output_buffer.append("┌─ Execution Error ────────────────────────────────┐")
+            self.output_buffer.append(f"│ {type(e).__name__}: {e}")
+            self.output_buffer.append("│")
+            if is_debug_mode():
+                self.output_buffer.append("│ (Full traceback sent to stderr - check console)")
+            else:
+                self.output_buffer.append("│ An error occurred during program execution.")
+            self.output_buffer.append("└──────────────────────────────────────────────────┘")
+            self.output_buffer.append("")
+            # Add traceback for debugging (only if not in debug mode)
+            if not is_debug_mode():
+                for line in traceback.format_exc().split('\n'):
+                    self.output_buffer.append(line)
+            self._update_output()
+            self.status_bar.set_text("Execution error - See output")
+
+    def _get_input_for_interpreter(self, prompt):
+        """Show input dialog and provide input to interpreter."""
+        # Get input from user
+        result = self._get_input_dialog(prompt)
+
+        # Provide input to interpreter
+        self.interpreter.provide_input(result)
+
+        # Continue execution
+        self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
+
+    def _list_program(self):
+        """List the current program."""
+        # Parse editor content
+        self._parse_editor_content()
+
+        # Get program listing
+        lines = []
+        for line_num in sorted(self.editor_lines.keys()):
+            lines.append(f"{line_num} {self.editor_lines[line_num]}")
+
+        if lines:
+            self.output_buffer.append("Program listing:")
+            self.output_buffer.extend(lines)
+        else:
+            self.output_buffer.append("No program loaded")
+
+        self._update_output()
+
+    def _get_editor_content(self) -> str:
+        """Get current editor content.
+
+        Returns:
+            Current text in editor
+        """
+        if self.editor and self.editor.edit_widget:
+            return self.editor.edit_widget.get_edit_text()
+        return ""
+
+    def _new_program(self):
+        """Clear the current program."""
+        # Stop current autosave
+        self.auto_save.stop_autosave()
+
+        self.editor_lines = {}
+        self.editor.clear()
+        self.current_filename = None  # Clear filename for new program
+        self.output_buffer.append("Program cleared")
+        self._update_output()
+        self._update_status_with_errors("Ready")
+
+        # Start autosave for new file
+        self.auto_save.start_autosave(
+            'untitled.bas',
+            self._get_editor_content,
+            interval=30
+        )
+
+    def _parse_editor_content(self):
+        """Parse the editor content into line-numbered statements."""
+        # Parse the visual editor text into line-numbered statements
+        self.editor_lines = {}
+
+        # Get the raw text from the editor
+        text = self.editor.edit_widget.get_edit_text()
+
+        # Parse each line
+        for line in text.split('\n'):
+            # Parse line to extract line number and code
+            _, line_num, code = self.editor._parse_display_line(line)
+            if line_num is not None:
+                # Store in editor_lines
+                self.editor_lines[line_num] = code
+
+        # Also update the editor's internal lines dictionary for consistency
+        self.editor.lines = self.editor_lines.copy()
+
+    def _update_output(self):
+        """Update the output window with buffered content."""
+        # Clear existing content
+        self.output_walker[:] = []
+
+        # Add all lines from buffer with focus highlighting on first char
+        for line in self.output_buffer:
+            line_widget = make_output_line(line)
+            self.output_walker.append(line_widget)
+
+        # Set focus to bottom (latest output)
+        if len(self.output_walker) > 0:
+            # Set focus on the walker (not the ListBox)
+            self.output_walker.set_focus(len(self.output_walker) - 1)
+            # Force a screen update
+            if hasattr(self, 'loop') and self.loop and self.loop_running:
+                self.loop.draw_screen()
+
+    def _update_output_with_lines(self, lines):
+        """Update output window with specific lines."""
+        # Clear existing content
+        self.output_walker[:] = []
+
+        # Add all lines with focus highlighting on first char
+        for line in lines:
+            line_widget = make_output_line(line)
+            self.output_walker.append(line_widget)
+
+        # Scroll to the bottom (last line)
+        if len(self.output_walker) > 0:
+            # Set focus on the walker
+            self.output_walker.set_focus(len(self.output_walker) - 1)
+            # Force a screen update
+            if hasattr(self, 'loop') and self.loop and self.loop_running:
+                self.loop.draw_screen()
+
+    def _show_yesno_dialog(self, title, message):
+        """Show yes/no dialog and get user response.
+
+        Args:
+            title: Dialog title
+            message: Dialog message
+
+        Returns:
+            True if yes, False if no
+        """
+        # Create text widget
+        text = urwid.Text(message)
+
+        # Create dialog
+        fill = urwid.Filler(text, valign='top')
+        box = urwid.LineBox(fill, title=f"{title} - Press 'y' for Yes, 'n' for No, ESC to cancel")
+        overlay = urwid.Overlay(
+            urwid.AttrMap(box, 'body'),
+            self.loop.widget,
+            align='center',
+            width=('relative', 70),
+            valign='middle',
+            height=('relative', 40)
+        )
+
+        # Store original widget
+        original_widget = self.loop.widget
+        self.loop.widget = overlay
+
+        # Variable to store result
+        result = {'value': False}
+        done = {'flag': False}
+
+        def handle_input(key):
+            if key == 'y' or key == 'Y':
+                result['value'] = True
+                done['flag'] = True
+                self.loop.widget = original_widget
+            elif key == 'n' or key == 'N' or key == 'esc':
+                result['value'] = False
+                done['flag'] = True
+                self.loop.widget = original_widget
+            return None
+
+        # Temporarily override input handler
+        old_handler = self.loop.unhandled_input
+        self.loop.unhandled_input = handle_input
+
+        # Run loop until we get input
+        while not done['flag']:
+            self.loop.draw_screen()
+            keys = self.loop.screen.get_input()
+            for key in keys:
+                self.loop.process_input(keys)
+            if done['flag']:
+                break
+
+        # Restore handler
+        self.loop.unhandled_input = old_handler
+
+        return result['value']
+
+    def _get_input_dialog(self, prompt, initial=""):
+        """Show input dialog and get user response."""
+        # Create input widget with optional initial value
+        edit = urwid.Edit(caption=prompt, edit_text=initial)
+
+        # Create dialog
+        fill = urwid.Filler(edit, valign='top')
+        box = urwid.LineBox(fill, title="Input Required - Press Enter to submit")
+        overlay = urwid.Overlay(
+            urwid.AttrMap(box, 'body'),
+            self.loop.widget,
+            align='center',
+            width=('relative', 60),
+            valign='middle',
+            height=5
+        )
+
+        # Store original widget
+        original_widget = self.loop.widget
+        self.loop.widget = overlay
+
+        # Variable to store result
+        result = {'value': ''}
+        done = {'flag': False}
+
+        def handle_input(key):
+            if key == 'enter':
+                result['value'] = edit.get_edit_text()
+                done['flag'] = True
+                self.loop.widget = original_widget
+            elif key == 'esc':
+                result['value'] = ''
+                done['flag'] = True
+                self.loop.widget = original_widget
+            else:
+                # Let edit widget handle it
+                return key
+
+        # Temporarily override input handler
+        old_handler = self.loop.unhandled_input
+        self.loop.unhandled_input = handle_input
+
+        # Run loop until we get input
+        while not done['flag']:
+            self.loop.draw_screen()
+            keys = self.loop.screen.get_input()
+            for key in keys:
+                self.loop.process_input(keys)
+            if done['flag']:
+                break
+
+        # Restore handler
+        self.loop.unhandled_input = old_handler
+
+        return result['value']
+
+    def _get_editor_text(self):
+        """Get formatted editor text from line-numbered program."""
+        lines = []
+        for line_num in sorted(self.editor_lines.keys()):
+            lines.append(f"{line_num} {self.editor_lines[line_num]}")
+        return '\n'.join(lines)
+
+    def _load_program_file(self, filename):
+        """Load a program from a file."""
+        try:
+            self.program.load_from_file(filename)
+
+            # Convert program to editor lines
+            self.editor_lines = {}
+            for line_num, line_obj in sorted(self.program.lines.items()):
+                # Get the original text for the line
+                self.editor_lines[line_num] = line_obj.original_text
+
+            # Update editor display
+            self.editor.set_edit_text(self._get_editor_text())
+
+            # Add to recent files
+            self.recent_files.add_file(filename)
+
+            # Store as current filename
+            self.current_filename = filename
+
+            self.output_buffer.append(f"Loaded {filename}")
+            self._update_output()
+
+            # Start autosave for loaded file
+            self.auto_save.stop_autosave()
+            self.auto_save.start_autosave(
+                filename,
+                self._get_editor_content,
+                interval=30
+            )
+
+        except Exception as e:
+            self.output_buffer.append(f"Error loading file: {e}")
+            self._update_output()
+
+    def _save_program(self):
+        """Save program to file (uses current filename if available)."""
+        # Use current filename if we have one, otherwise prompt
+        if self.current_filename:
+            filename = self.current_filename
+            self.output_buffer.append(f"Saving to {filename}...")
+            self._update_output()
+        else:
+            # No current filename, prompt for one
+            filename = self._get_input_dialog("Save as: ")
+
+            if not filename:
+                self.output_buffer.append("Save cancelled")
+                self._update_output()
+                return
+
+        try:
+            # Parse editor content first
+            self._parse_editor_content()
+
+            # Create program content
+            lines = []
+            for line_num in sorted(self.editor_lines.keys()):
+                lines.append(f"{line_num} {self.editor_lines[line_num]}")
+
+            # Write to file
+            with open(filename, 'w') as f:
+                f.write('\n'.join(lines))
+                f.write('\n')
+
+            # Add to recent files
+            self.recent_files.add_file(filename)
+
+            # Store as current filename
+            self.current_filename = filename
+
+            self.output_buffer.append(f"Saved to {filename}")
+            self._update_output()
+
+            # Clean up autosave after successful save
+            self.auto_save.cleanup_after_save(filename)
+
+            # Restart autosave with new filename
+            self.auto_save.stop_autosave()
+            self.auto_save.start_autosave(
+                filename,
+                self._get_editor_content,
+                interval=30
+            )
+
+        except Exception as e:
+            self.output_buffer.append(f"Error saving file: {e}")
+            self._update_output()
+
+    def _save_as_program(self):
+        """Save program to a new file (always prompts for filename)."""
+        # Always prompt for filename
+        filename = self._get_input_dialog("Save as: ")
+
+        if not filename:
+            self.output_buffer.append("Save cancelled")
+            self._update_output()
+            return
+
+        try:
+            # Parse editor content first
+            self._parse_editor_content()
+
+            # Create program content
+            lines = []
+            for line_num in sorted(self.editor_lines.keys()):
+                lines.append(f"{line_num} {self.editor_lines[line_num]}")
+
+            # Write to file
+            with open(filename, 'w') as f:
+                f.write('\n'.join(lines))
+                f.write('\n')
+
+            # Add to recent files
+            self.recent_files.add_file(filename)
+
+            # Store as current filename
+            self.current_filename = filename
+
+            self.output_buffer.append(f"Saved to {filename}")
+            self._update_output()
+
+            # Clean up autosave after successful save
+            self.auto_save.cleanup_after_save(filename)
+
+            # Restart autosave with new filename
+            self.auto_save.stop_autosave()
+            self.auto_save.start_autosave(
+                filename,
+                self._get_editor_content,
+                interval=30
+            )
+
+        except Exception as e:
+            self.output_buffer.append(f"Error saving file: {e}")
+            self._update_output()
+
+    def _load_program(self):
+        """Load program from file."""
+        # Get filename from user
+        filename = self._get_input_dialog("Load file: ")
+
+        if not filename:
+            self.output_buffer.append("Load cancelled")
+            self._update_output()
+            return
+
+        try:
+            # Check for autosave recovery
+            if self.auto_save.is_autosave_newer(filename):
+                prompt = self.auto_save.format_recovery_prompt(filename)
+                if prompt:
+                    response = self._show_yesno_dialog(
+                        "Auto-save Recovery",
+                        prompt + "\n\nPress 'y' to recover, 'n' to load original file"
+                    )
+                    if response:
+                        # Load from autosave
+                        autosave_content = self.auto_save.load_autosave(filename)
+                        if autosave_content:
+                            # Clear editor
+                            self.editor_lines = {}
+                            self.editor.set_edit_text(autosave_content)
+                            # Parse content
+                            self._parse_editor_content()
+                            # Add to recent files
+                            self.recent_files.add_file(filename)
+                            self.output_buffer.append(f"Recovered from autosave: {filename}")
+                            self._update_output()
+                            # Start autosave
+                            self.auto_save.start_autosave(
+                                filename,
+                                self._get_editor_content,
+                                interval=30
+                            )
+                            return
+
+            # Normal load (no recovery or user declined)
+            self._load_program_file(filename)
+        except Exception as e:
+            self.output_buffer.append(f"Error loading file: {e}")
+            self._update_output()
+
+    def _show_recent_files(self):
+        """Show recent files dialog for selection."""
+        from pathlib import Path
+
+        # Get recent files
+        recent = self.recent_files.get_recent_files(max_count=10)
+
+        if not recent:
+            self.output_buffer.append("No recent files")
+            self._update_output()
+            return
+
+        # Build menu text with numbered options
+        menu_lines = [
+            "══════════════════════════════════════════════════════════════",
+            "",
+            "                     RECENT FILES",
+            "",
+            "══════════════════════════════════════════════════════════════",
+            ""
+        ]
+
+        for i, filepath in enumerate(recent, 1):
+            filename = Path(filepath).name
+            menu_lines.append(f"  {i}. {filename}")
+
+        menu_lines.extend([
+            "",
+            "══════════════════════════════════════════════════════════════",
+            "",
+            "     Enter number (1-{}) or ESC to cancel".format(len(recent)),
+            "     'c' to clear recent files",
+            "",
+            "══════════════════════════════════════════════════════════════"
+        ])
+
+        menu_text = '\n'.join(menu_lines)
+
+        # Create menu dialog
+        text = urwid.Text(menu_text)
+        fill = urwid.Filler(text, valign='middle')
+        box = urwid.LineBox(fill, title="Recent Files")
+        overlay = urwid.Overlay(
+            urwid.AttrMap(box, 'body'),
+            self.loop.widget,
+            align='center',
+            width=('relative', 70),
+            valign='middle',
+            height=('relative', 60)
+        )
+
+        # Store original widget
+        main_widget = self.loop.widget
+
+        # Set up keypress handler
+        def handle_selection(key):
+            if key == 'esc':
+                # Cancel
+                self.loop.widget = main_widget
+                self.loop.unhandled_input = self._handle_input
+            elif key == 'c' or key == 'C':
+                # Clear recent files
+                self.recent_files.clear()
+                self.output_buffer.append("Recent files cleared")
+                self._update_output()
+                self.loop.widget = main_widget
+                self.loop.unhandled_input = self._handle_input
+            elif key in '123456789':
+                # Load selected file
+                index = int(key) - 1
+                if index < len(recent):
+                    filepath = recent[index]
+                    # Check if file exists
+                    if not Path(filepath).exists():
+                        self.output_buffer.append(f"File not found: {filepath}")
+                        self.output_buffer.append("Removed from recent files")
+                        self.recent_files.remove_file(filepath)
+                        self._update_output()
+                    else:
+                        try:
+                            self._load_program_file(filepath)
+                        except Exception as e:
+                            self.output_buffer.append(f"Error loading file: {e}")
+                            self._update_output()
+                self.loop.widget = main_widget
+                self.loop.unhandled_input = self._handle_input
+
+        # Show overlay and set handler
+        self.loop.widget = overlay
+        self.loop.unhandled_input = handle_selection
+
+    # Immediate mode methods
+
+    def _execute_immediate(self):
+        """Execute immediate mode command."""
+        if not self.immediate_executor or not self.immediate_input or not self.immediate_walker:
+            return
+
+        command = self.immediate_input.get_edit_text().strip()
+        if not command:
+            return
+
+        # Check if safe to execute
+        if not self.immediate_executor.can_execute_immediate():
+            self.immediate_walker.append(SelectableText("Cannot execute while program is running"))
+            self.immediate_input.set_edit_text("")
+            return
+
+        # Log the command
+        self.immediate_walker.append(SelectableText(f"> {command}"))
+
+        # Execute
+        success, output = self.immediate_executor.execute(command)
+
+        # Log the result
+        if output:
+            for line in output.rstrip().split('\n'):
+                self.immediate_walker.append(SelectableText(line))
+
+        if success:
+            self.immediate_walker.append(SelectableText("Ok"))
+
+        # Clear input
+        self.immediate_input.set_edit_text("")
+
+        # Scroll to bottom of immediate history
+        if len(self.immediate_walker) > 0:
+            self.immediate_window.set_focus(len(self.immediate_walker) - 1)
+
+        # Update variables/stack windows if visible
+        if self.watch_window_visible:
+            self._update_variables_window()
+        if self.stack_window_visible:
+            self._update_stack_window()
+
+    def _update_immediate_status(self):
+        """Update immediate mode panel status based on interpreter state."""
+        if not self.immediate_executor or not self.immediate_status:
+            return
+
+        if self.immediate_executor.can_execute_immediate():
+            # Safe to execute - show green "Ok"
+            self.immediate_status.set_text(('immediate_ok', "Ok"))
+        else:
+            # Not safe - show red status
+            status = self.interpreter.state.status if hasattr(self.interpreter, 'state') else 'unknown'
+            self.immediate_status.set_text(('immediate_disabled', f"[{status}]"))
+
+    # Command implementations (inherited from UIBackend)
+
+    def cmd_run(self):
+        """Execute RUN command."""
+        self._run_program()
+
+    def cmd_list(self, args=""):
+        """Execute LIST command."""
+        self._list_program()
+
+    def cmd_new(self):
+        """Execute NEW command."""
+        self._new_program()
+
+    def cmd_load(self, filename):
+        """Execute LOAD command."""
+        self._load_program_file(filename)
+
+    def cmd_save(self, filename):
+        """Execute SAVE command."""
+        try:
+            if not filename:
+                self._write_output("?Syntax error: filename required\n")
+                return
+
+            # Remove quotes if present
+            filename = filename.strip().strip('"').strip("'")
+
+            # Use program manager's save_to_file
+            self.program.save_to_file(filename)
+            self._write_output(f"Saved to {filename}\n")
+
+        except Exception as e:
+            self._write_output(f"?Error saving file: {e}\n")
+
+    def cmd_delete(self, args):
+        """Execute DELETE command using ui_helpers."""
+        from src.ui.ui_helpers import delete_lines_from_program
+
+        try:
+            deleted = delete_lines_from_program(self.program, args, runtime=None)
+            self._refresh_editor()
+            if len(deleted) == 1:
+                self._write_output(f"Deleted line {deleted[0]}\n")
+            else:
+                self._write_output(f"Deleted {len(deleted)} lines ({min(deleted)}-{max(deleted)})\n")
+
+        except ValueError as e:
+            self._write_output(f"?{e}\n")
+        except Exception as e:
+            self._write_output(f"?Error during delete: {e}\n")
+
+    def cmd_renum(self, args):
+        """Execute RENUM command using ui_helpers."""
+        from src.ui.ui_helpers import renum_program
+
+        # Need access to InteractiveMode's _renum_statement
+        # Curses UI has self.interpreter which should have interactive_mode
+        if not hasattr(self, 'interpreter') or not hasattr(self.interpreter, 'interactive_mode'):
+            self._write_output("?RENUM not available in this mode\n")
+            return
+
+        try:
+            old_lines, line_map = renum_program(
+                self.program,
+                args,
+                self.interpreter.interactive_mode._renum_statement,
+                runtime=None
+            )
+            self._refresh_editor()
+            self._write_output("Renumbered\n")
+
+        except ValueError as e:
+            self._write_output(f"?{e}\n")
+        except Exception as e:
+            self._write_output(f"?Error during renumber: {e}\n")
+
+    def cmd_merge(self, filename):
+        """Execute MERGE command using ProgramManager."""
+        try:
+            if not filename:
+                self._write_output("?Syntax error: filename required\n")
+                return
+
+            # Use ProgramManager's merge_from_file
+            success, errors, lines_added, lines_replaced = self.program.merge_from_file(filename)
+
+            # Show parse errors if any
+            if errors:
+                for line_num, error in errors:
+                    self._write_output(f"?Parse error at line {line_num}: {error}\n")
+
+            if success:
+                self._refresh_editor()
+                self._write_output(f"Merged from {filename}\n")
+                self._write_output(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced\n")
+            else:
+                self._write_output("?No lines merged\n")
+
+        except FileNotFoundError:
+            self._write_output(f"?File not found: {filename}\n")
+        except Exception as e:
+            self._write_output(f"?{e}\n")
+
+    def cmd_files(self, filespec=""):
+        """Execute FILES command using ui_helpers."""
+        from src.ui.ui_helpers import list_files
+
+        try:
+            files = list_files(filespec)
+            pattern = filespec if filespec else "*"
+
+            if not files:
+                self._write_output(f"No files matching: {pattern}\n")
+                return
+
+            self._write_output(f"\nDirectory listing for: {pattern}\n")
+            self._write_output("-" * 50 + "\n")
+            for filename, size, is_dir in files:
+                if is_dir:
+                    self._write_output(f"{filename:<30}        <DIR>\n")
+                elif size is not None:
+                    self._write_output(f"{filename:<30} {size:>12} bytes\n")
+                else:
+                    self._write_output(f"{filename:<30}            ?\n")
+
+            self._write_output(f"\n{len(files)} file(s)\n")
+
+        except Exception as e:
+            self._write_output(f"?Error listing files: {e}\n")
+
+    def cmd_cont(self):
+        """Execute CONT command - continue after STOP."""
+        # Check if runtime exists and is in stopped state
+        if not hasattr(self, 'runtime') or not self.runtime or not self.runtime.stopped:
+            self._write_output("?Can't continue\n")
+            return
+
+        try:
+            # Clear stopped flag
+            self.runtime.stopped = False
+
+            # Restore execution position
+            self.runtime.current_line = self.runtime.stop_line
+            self.runtime.current_stmt_index = self.runtime.stop_stmt_index
+            self.runtime.halted = False
+
+            # Resume execution
+            self._run_program_continue()
+
+        except Exception as e:
+            self._write_output(f"?Error: {e}\n")

@@ -7,7 +7,15 @@ UI types (CLI, GUI, web, mobile, etc.).
 from .base import UIBackend
 from .cli import CLIBackend
 from .visual import VisualBackend
-from .tk_ui import TkBackend
+
+# Try to import tkinter-based GUI (optional dependency)
+try:
+    from .tk_ui import TkBackend
+    _has_tk = True
+except ImportError:
+    # Tkinter UI not available (may need: apt install python3-tk)
+    _has_tk = False
+    TkBackend = None
 
 # Try to import urwid-based curses UI (optional dependency)
 try:

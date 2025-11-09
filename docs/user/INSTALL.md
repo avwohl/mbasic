@@ -16,18 +16,38 @@ python3 --version
 
 If you see a version number like `Python 3.9.x` or higher, you're good to go! If not, download Python from [python.org](https://www.python.org/downloads/).
 
-## Dependencies
+## System Package Requirements (Root Installation)
 
-MBASIC's dependencies depend on which UI mode you plan to use:
+**On Debian/Ubuntu/Linux Mint systems**, you need to install these packages via `apt` with `sudo`:
+
+### REQUIRED for Virtual Environments
+```bash
+sudo apt install python3-venv
+# OR for specific Python version:
+sudo apt install python3.12-venv
+```
+This is **required** to use virtual environments (recommended). Without this, the `python3 -m venv` command will fail.
+
+### OPTIONAL for Tkinter GUI Backend
+```bash
+sudo apt install python3-tk
+```
+Only needed if you want to use the Tkinter GUI backend. Skip this if you only need CLI/Curses/Web UIs.
+
+**On other systems** (Fedora, macOS, Windows), virtual environment support and tkinter are usually included with Python.
+
+## Python Package Dependencies
+
+MBASIC's Python dependencies depend on which UI mode you plan to use:
 
 | UI Mode | External Dependencies |
 |---------|----------------------|
 | **CLI** | None (Python standard library only) |
 | **Curses** | `urwid` (install via pip) |
-| **Tk** | `tkinter` (usually pre-installed with Python) |
+| **Tk** | `tkinter` (system package, see above) |
 | **Web** | `nicegui` (install via pip) |
 
-**If you only want CLI mode**, you can skip all dependency installation steps. Just run `python3 mbasic` and you're ready to go!
+**If you only want CLI mode**, you can skip all pip dependency installation steps. Just run `python3 mbasic` and you're ready to go!
 
 **For other UIs**, use `pip install -r requirements.txt` to install the necessary dependencies.
 
@@ -219,6 +239,22 @@ Then try activating again.
 ### "Module not found" errors
 
 Make sure you're in the correct directory (the `mbasic` folder containing `mbasic`).
+
+### "ensurepip is not available" when creating venv
+
+**On Debian/Ubuntu/Linux Mint**, if you get this error:
+```
+The virtual environment was not created successfully because ensurepip is not available.
+```
+
+You need to install the `python3-venv` package:
+```bash
+sudo apt install python3-venv
+# OR for specific Python version:
+sudo apt install python3.12-venv
+```
+
+This is a required system package for creating virtual environments on Debian-based systems.
 
 ## Feature Status
 

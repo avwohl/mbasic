@@ -47,6 +47,15 @@ pip install mbasic[dev]
 
 For detailed installation instructions including virtual environment setup, see **[INSTALL.md](docs/user/INSTALL.md)**.
 
+**System Requirements (Debian/Ubuntu/Mint only):**
+```bash
+# REQUIRED for virtual environments:
+sudo apt install python3-venv
+
+# OPTIONAL for Tkinter GUI backend:
+sudo apt install python3-tk
+```
+
 **Quick install:**
 
 ```bash
@@ -58,7 +67,7 @@ cd mbasic
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies (optional - only needed for curses UI)
+# Install dependencies (optional - only needed for non-CLI UIs)
 pip install -r requirements.txt
 
 # Run the interpreter

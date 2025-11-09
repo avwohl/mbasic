@@ -6,8 +6,8 @@ MBASIC 5.21 Extended BASIC features: This implementation enables Extended BASIC
 features (e.g., periods in identifiers like "RECORD.FIELD") as they are part of MBASIC 5.21.
 """
 from typing import List, Optional
-from tokens import Token, TokenType, KEYWORDS
-from simple_keyword_case import SimpleKeywordCase
+from src.tokens import Token, TokenType, KEYWORDS
+from src.simple_keyword_case import SimpleKeywordCase
 
 
 def create_keyword_case_manager() -> SimpleKeywordCase:

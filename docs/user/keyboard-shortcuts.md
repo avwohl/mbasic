@@ -1,54 +1,32 @@
 # MBASIC Curses UI Keyboard Shortcuts
 
-## Global Commands
+## Editor
 
 | Key | Action |
 |-----|--------|
-| `^Q` | Quit |
-| `^U` | Activate menu bar (arrows navigate, Enter selects) |
-| `^F` | This help |
-| `^P` | Settings |
-| `^W` | Toggle variables window |
+| `Ctrl+C` | Continue execution |
+| `Ctrl+G` | Go to line |
+| `Ctrl+H` | Open help browser |
+| `Ctrl+N` | New program |
+| `Ctrl+O` | Open/Load BASIC file |
+| `Ctrl+P` | Parse program |
+| `Ctrl+Q` | Quit |
+| `Ctrl+R` | Run program |
+| `Ctrl+V` | Save program (Ctrl+S unavailable - terminal flow control) |
+| `Ctrl+T` | Step statement (execute one statement) |
+| `Ctrl+K` | Step Line (execute all statements on current line) |
+| `Ctrl+X` | Stop program execution |
+| `Ctrl+B` | Toggle breakpoint |
 
-## Program Management
-
-| Key | Action |
-|-----|--------|
-| `^R` | Run program |
-| `^N` | New program |
-| `^O` | Open/Load program |
-| `^V` | Save program |
-
-## Editing
-
-| Key | Action |
-|-----|--------|
-| `^B` | Toggle breakpoint on current line |
-| `^D` | Delete current line |
-| `^Y` | Insert line |
-| `^E` | Renumber all lines (RENUM) |
-
-## Debugger (when program running)
+## Help Browser
 
 | Key | Action |
 |-----|--------|
-| `^G` | Continue execution (Go) |
-| `^K` | Step Line - execute all statements on current line |
-| `^T` | Step Statement - execute one statement at a time |
-| `^X` | Stop execution (eXit) |
-| `^W` | Show/hide variables window |
-
-## Variables Window (when visible)
-
-| Key | Action |
-|-----|--------|
-| `s` | Cycle sort mode (Name → Accessed → Written → Read → Type → Value) |
-| `d` | Toggle sort direction (ascending ↑ / descending ↓) |
-
-## Navigation
-
-| Key | Action |
-|-----|--------|
-| `Tab` | Switch between editor and output |
-| `ESC` | Cancel dialogs and input prompts |
+| `U` | Navigate back |
+| `Enter` | Follow link |
+| `Tab` | Next link |
+| `ESC` | Close help browser |
+| `↓` | Scroll down |
+| `↑` | Scroll up |
+| `/` | Search help |
 
