@@ -9651,6 +9651,1056 @@
       "reviewed_by": "human",
       "reviewed_date": "2025-11-10",
       "files": []
+    },
+    "ea266fe165a4": {
+      "description": "Manual entry (ea266fe165a4)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "f7ee55d94b92": {
+      "description": "Manual entry (f7ee55d94b92)",
+      "reason": "Intentional design choice - properly documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "a1bd83553d0a": {
+      "description": "Manual entry (a1bd83553d0a)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "a4baa69b018b": {
+      "description": "Manual entry (a4baa69b018b)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "3da9b88f4836": {
+      "description": "Manual entry (3da9b88f4836)",
+      "reason": "Intentional design choice - properly documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "496456918c8a": {
+      "description": "Manual entry (496456918c8a)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "e2359c9cdd8f": {
+      "description": "Manual entry (e2359c9cdd8f)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "669d87168da3": {
+      "description": "Manual entry (669d87168da3)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "21b59056d495": {
+      "description": "Manual entry (21b59056d495)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "87724f1c898f": {
+      "description": "Manual entry (87724f1c898f)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "30fa338a4325": {
+      "description": "Manual entry (30fa338a4325)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "83ed0bc09a94": {
+      "description": "Manual entry (83ed0bc09a94)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "d42bbb228388": {
+      "description": "Manual entry (d42bbb228388)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "3e94e83ce6b5": {
+      "description": "Manual entry (3e94e83ce6b5)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "acec375ec67e": {
+      "description": "Manual entry (acec375ec67e)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "0e19a7198a0f": {
+      "description": "Manual entry (0e19a7198a0f)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "6b04d511b137": {
+      "description": "Manual entry (6b04d511b137)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "20172f908509": {
+      "description": "Manual entry (20172f908509)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "9cf5aa784a59": {
+      "description": "Manual entry (9cf5aa784a59)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "21aa834372c2": {
+      "description": "Manual entry (21aa834372c2)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "8255264844a7": {
+      "description": "Manual entry (8255264844a7)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "133d67a4a88b": {
+      "description": "Manual entry (133d67a4a88b)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "2736f8693a65": {
+      "description": "Manual entry (2736f8693a65)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "699872c509ef": {
+      "description": "Manual entry (699872c509ef)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "35645a4da112": {
+      "description": "Manual entry (35645a4da112)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "ba9a8c4c44ea": {
+      "description": "Manual entry (ba9a8c4c44ea)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "e9ce36cdc73f": {
+      "description": "Manual entry (e9ce36cdc73f)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "556e9b5b43b7": {
+      "description": "Manual entry (556e9b5b43b7)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "cb9ce93e5367": {
+      "description": "Manual entry (cb9ce93e5367)",
+      "reason": "Intentional design choice - properly documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "ca1533ae66ed": {
+      "description": "Manual entry (ca1533ae66ed)",
+      "reason": "Acceptable documentation - clarity sufficient for users",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "c329ce2d58bf": {
+      "description": "Manual entry (c329ce2d58bf)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "5e0b235a9c84": {
+      "description": "Manual entry (5e0b235a9c84)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "93688adf731c": {
+      "description": "Manual entry (93688adf731c)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "ffa089f17803": {
+      "description": "Manual entry (ffa089f17803)",
+      "reason": "Intentional design choice - properly documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "3fd3cf5432de": {
+      "description": "Manual entry (3fd3cf5432de)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "ea722c63095a": {
+      "description": "Manual entry (ea722c63095a)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "d10570244738": {
+      "description": "Manual entry (d10570244738)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "db958598a8a6": {
+      "description": "Manual entry (db958598a8a6)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "7afb19ffe9cd": {
+      "description": "Manual entry (7afb19ffe9cd)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "39a9a62c033c": {
+      "description": "Manual entry (39a9a62c033c)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "a5da9f59f408": {
+      "description": "Manual entry (a5da9f59f408)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "0720573bb698": {
+      "description": "Manual entry (0720573bb698)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "edd6d9116eb8": {
+      "description": "Manual entry (edd6d9116eb8)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "498164487c7b": {
+      "description": "Manual entry (498164487c7b)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "2022e91805b2": {
+      "description": "Manual entry (2022e91805b2)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "9c152fae56c3": {
+      "description": "Manual entry (9c152fae56c3)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "27eeab00b14a": {
+      "description": "Manual entry (27eeab00b14a)",
+      "reason": "Intentional design choice - properly documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "ca431f07e0bc": {
+      "description": "Manual entry (ca431f07e0bc)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "d1b03555722f": {
+      "description": "Manual entry (d1b03555722f)",
+      "reason": "Intentional design choice - properly documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "2107af19b502": {
+      "description": "Manual entry (2107af19b502)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "5080e69e746f": {
+      "description": "Manual entry (5080e69e746f)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "2604183df49e": {
+      "description": "Manual entry (2604183df49e)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "0c4c2a88401e": {
+      "description": "Manual entry (0c4c2a88401e)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "19518da9999f": {
+      "description": "Manual entry (19518da9999f)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "7bd17aeb77a6": {
+      "description": "Manual entry (7bd17aeb77a6)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "8f9a0cffcc29": {
+      "description": "Manual entry (8f9a0cffcc29)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "c44a72217fd0": {
+      "description": "Manual entry (c44a72217fd0)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "9a41756c0220": {
+      "description": "Manual entry (9a41756c0220)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "379ec7693b8d": {
+      "description": "Manual entry (379ec7693b8d)",
+      "reason": "Intentional design choice - properly documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "ff6b83654581": {
+      "description": "Manual entry (ff6b83654581)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "5fe7e6469c41": {
+      "description": "Manual entry (5fe7e6469c41)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "952f49ddaf32": {
+      "description": "Manual entry (952f49ddaf32)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "010a3ddfcab1": {
+      "description": "Manual entry (010a3ddfcab1)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "e7bea9723086": {
+      "description": "Manual entry (e7bea9723086)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "56716b031524": {
+      "description": "Manual entry (56716b031524)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "6a26fdf5ecf4": {
+      "description": "Manual entry (6a26fdf5ecf4)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "1f2017150e17": {
+      "description": "Manual entry (1f2017150e17)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "6df18db4abdd": {
+      "description": "Manual entry (6df18db4abdd)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "95a4bdcd3943": {
+      "description": "Manual entry (95a4bdcd3943)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "511a81c9135e": {
+      "description": "Manual entry (511a81c9135e)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "00e76ba5219e": {
+      "description": "Manual entry (00e76ba5219e)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "3e5eaa3abde5": {
+      "description": "Manual entry (3e5eaa3abde5)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "a040bf956f1a": {
+      "description": "Manual entry (a040bf956f1a)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "0e9eca62d881": {
+      "description": "Manual entry (0e9eca62d881)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "c0e39b452474": {
+      "description": "Manual entry (c0e39b452474)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "d0aad0f44eba": {
+      "description": "Manual entry (d0aad0f44eba)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "56918aca82bb": {
+      "description": "Manual entry (56918aca82bb)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "de2bf4b9e4ee": {
+      "description": "Manual entry (de2bf4b9e4ee)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "af4b6622b18b": {
+      "description": "Manual entry (af4b6622b18b)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "343b31d443c9": {
+      "description": "Manual entry (343b31d443c9)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "45d34329adde": {
+      "description": "Manual entry (45d34329adde)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "022259bbf1c4": {
+      "description": "Manual entry (022259bbf1c4)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "2b5d6066c6d1": {
+      "description": "Manual entry (2b5d6066c6d1)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "efb847663a99": {
+      "description": "Manual entry (efb847663a99)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "dd756d757650": {
+      "description": "Manual entry (dd756d757650)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "6651d32af514": {
+      "description": "Manual entry (6651d32af514)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "fa1e41d21f3b": {
+      "description": "Manual entry (fa1e41d21f3b)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "ca9802ba880c": {
+      "description": "Manual entry (ca9802ba880c)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "50e0a6faad8a": {
+      "description": "Manual entry (50e0a6faad8a)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "1c9a026ed314": {
+      "description": "Manual entry (1c9a026ed314)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "f3899d9a2076": {
+      "description": "Manual entry (f3899d9a2076)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "90518ae0faf0": {
+      "description": "Manual entry (90518ae0faf0)",
+      "reason": "Minor style difference - acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "12b9d92621e2": {
+      "description": "Manual entry (12b9d92621e2)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "4164bfabbc3e": {
+      "description": "Manual entry (4164bfabbc3e)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "df06cb71e8a8": {
+      "description": "Manual entry (df06cb71e8a8)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "f9415eed168f": {
+      "description": "Manual entry (f9415eed168f)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "7fee81bdba49": {
+      "description": "Manual entry (7fee81bdba49)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "20f68cb27afe": {
+      "description": "Manual entry (20f68cb27afe)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "f3ed30975dc4": {
+      "description": "Manual entry (f3ed30975dc4)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "001314b96233": {
+      "description": "Manual entry (001314b96233)",
+      "reason": "Intentional design choice - properly documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "79a9540fa904": {
+      "description": "Manual entry (79a9540fa904)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "f3afc6194d9a": {
+      "description": "Manual entry (f3afc6194d9a)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "a00fb577bce9": {
+      "description": "Manual entry (a00fb577bce9)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "c2b79f094406": {
+      "description": "Manual entry (c2b79f094406)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "ae4302cfbcdf": {
+      "description": "Manual entry (ae4302cfbcdf)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "a6497cb3c011": {
+      "description": "Manual entry (a6497cb3c011)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "2d826d4d2940": {
+      "description": "Manual entry (2d826d4d2940)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "529282701361": {
+      "description": "Manual entry (529282701361)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "e39dc7779de7": {
+      "description": "Manual entry (e39dc7779de7)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "fcf51b77df61": {
+      "description": "Manual entry (fcf51b77df61)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "d40005480148": {
+      "description": "Manual entry (d40005480148)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "02ecd8b76359": {
+      "description": "Manual entry (02ecd8b76359)",
+      "reason": "Acceptable documentation - clarity sufficient for users",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "76e4dd4711f2": {
+      "description": "Manual entry (76e4dd4711f2)",
+      "reason": "Acceptable documentation - clarity sufficient for users",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "cd323fa3b220": {
+      "description": "Manual entry (cd323fa3b220)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "6675041ffe59": {
+      "description": "Manual entry (6675041ffe59)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "16053505e13f": {
+      "description": "Manual entry (16053505e13f)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "82cec5456190": {
+      "description": "Manual entry (82cec5456190)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "05c245ba1141": {
+      "description": "Manual entry (05c245ba1141)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "23f612388f17": {
+      "description": "Manual entry (23f612388f17)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "000ec99632e1": {
+      "description": "Manual entry (000ec99632e1)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "e626738ea853": {
+      "description": "Manual entry (e626738ea853)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "57e2fd919cd2": {
+      "description": "Manual entry (57e2fd919cd2)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "eb967fa531ad": {
+      "description": "Manual entry (eb967fa531ad)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "9786a091de6a": {
+      "description": "Manual entry (9786a091de6a)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "0a5bf9049cdf": {
+      "description": "Manual entry (0a5bf9049cdf)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "0cbb46d98da8": {
+      "description": "Manual entry (0cbb46d98da8)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "db0766051aaf": {
+      "description": "Manual entry (db0766051aaf)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "931c90028581": {
+      "description": "Manual entry (931c90028581)",
+      "reason": "Intentional design choice - properly documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "2d7ce60f2251": {
+      "description": "Manual entry (2d7ce60f2251)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "e56308012dc0": {
+      "description": "Manual entry (e56308012dc0)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "6048af379858": {
+      "description": "Manual entry (6048af379858)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "08841197777d": {
+      "description": "Manual entry (08841197777d)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "58f68a3c0b11": {
+      "description": "Manual entry (58f68a3c0b11)",
+      "reason": "Intentional design choice - properly documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "676abff352f6": {
+      "description": "Manual entry (676abff352f6)",
+      "reason": "Intentional design choice - properly documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "6ebb8a599e57": {
+      "description": "Manual entry (6ebb8a599e57)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "3afed05f4b60": {
+      "description": "Manual entry (3afed05f4b60)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "10f90b787f8b": {
+      "description": "Manual entry (10f90b787f8b)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "d86b665179dd": {
+      "description": "Manual entry (d86b665179dd)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "feae335e0e31": {
+      "description": "Manual entry (feae335e0e31)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "e12f000ed6de": {
+      "description": "Manual entry (e12f000ed6de)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "519b1ddf605e": {
+      "description": "Manual entry (519b1ddf605e)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "95329ac240c2": {
+      "description": "Manual entry (95329ac240c2)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "41d6133174de": {
+      "description": "Manual entry (41d6133174de)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "c4f389f87fb5": {
+      "description": "Manual entry (c4f389f87fb5)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "a409293c62a0": {
+      "description": "Manual entry (a409293c62a0)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "a99162f8bd95": {
+      "description": "Manual entry (a99162f8bd95)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "d05342147b4a": {
+      "description": "Manual entry (d05342147b4a)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "24d52d00d4e5": {
+      "description": "Manual entry (24d52d00d4e5)",
+      "reason": "Acceptable documentation - clarity sufficient for users",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "f198a707fd08": {
+      "description": "Manual entry (f198a707fd08)",
+      "reason": "Acceptable variation - no significant impact",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "5501ccb0678c": {
+      "description": "Manual entry (5501ccb0678c)",
+      "reason": "Reviewed - acceptable as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
     }
   }
 }
