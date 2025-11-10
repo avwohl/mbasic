@@ -6,16 +6,16 @@ import sys
 import time
 from pathlib import Path
 
-# Add src directory to path so we can import modules
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+# Add parent directory to path so we can import modules with src prefix
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from resource_limits import (
+from src.resource_limits import (
     ResourceLimits,
     create_web_limits,
     create_local_limits,
     create_unlimited_limits
 )
-from ast_nodes import TypeInfo
+from src.ast_nodes import TypeInfo
 
 
 def test_gosub_stack_tracking():

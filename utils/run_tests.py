@@ -10,7 +10,8 @@ from pathlib import Path
 def run_test(test_file):
     """Run a single test and return output."""
     cmd = ['python3', 'mbasic', '--ui', 'cli', str(test_file)]
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+    # Send RUN command to execute the program and SYSTEM to exit
+    result = subprocess.run(cmd, input="RUN\nSYSTEM\n", capture_output=True, text=True, timeout=10)
 
     # Filter out the interactive prompt lines
     lines = result.stdout.split('\n')
@@ -25,6 +26,8 @@ def run_test(test_file):
         if line.startswith('Type HELP'):
             continue
         if line == 'Ready':
+            continue
+        if line == 'Goodbye':
             continue
         filtered_lines.append(line)
 

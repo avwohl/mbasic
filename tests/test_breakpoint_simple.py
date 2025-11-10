@@ -2,7 +2,8 @@
 """Simple test to verify breakpoint functionality"""
 
 import sys
-sys.path.insert(0, 'src')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Create a test program
 with open('/tmp/test_bp.bas', 'w') as f:
@@ -11,9 +12,9 @@ with open('/tmp/test_bp.bas', 'w') as f:
     f.write("30 PRINT \"Line 30\"\n")
 
 # Test breakpoint system
-from ui.curses_ui import CursesBackend
-from program_manager import ProgramManager
-from iohandler.curses_io import CursesIOHandler
+from src.ui.curses_ui import CursesBackend
+from src.editing.manager import ProgramManager
+from src.iohandler.curses_io import CursesIOHandler
 
 # Create program manager and load program
 pm = ProgramManager()

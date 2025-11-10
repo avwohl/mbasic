@@ -163,7 +163,7 @@ def test_files_in_program():
         state = interpreter.start()
 
         # Execute until done
-        while state.status not in ('done', 'error'):
+        while interpreter.runtime.pc.is_running() and state.error_info is None:
             state = interpreter.tick()
 
         # Check output

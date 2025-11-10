@@ -24,7 +24,7 @@ with open('test_end_fixed.bas', 'w') as f:
 """)
 
 print("\n[1] Starting mbasic...")
-child = pexpect.spawn('python3 mbasic --ui curses test_end_fixed.bas',
+child = pexpect.spawn('python3 ../mbasic --ui curses test_end_fixed.bas',
                       encoding='utf-8',
                       dimensions=(24, 80),
                       timeout=10)
