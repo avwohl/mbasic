@@ -191,6 +191,12 @@ class TkBackend(UIBackend):
         # Bind Enter key for auto-numbering
         self.editor_text.text.bind('<Return>', self._on_enter_key)
 
+        # Bind Tab key to cycle focus (prevent tab character insertion)
+        def on_editor_tab(e):
+            self.immediate_entry.focus_set()
+            return "break"  # Prevent tab character from being inserted
+        self.editor_text.text.bind('<Tab>', on_editor_tab)
+
         # Bind Ctrl+I for smart insert line (must be on text widget to prevent tab)
         self.editor_text.text.bind('<Control-i>', self._on_ctrl_i)
 
@@ -264,6 +270,12 @@ class TkBackend(UIBackend):
                                         exportselection=False)
         self.immediate_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
         self.immediate_entry.bind('<Return>', lambda e: self._execute_immediate())
+
+        # Bind Tab key to move focus to editor
+        def on_immediate_tab(e):
+            self.editor_text.text.focus_set()
+            return "break"  # Prevent default Tab behavior
+        self.immediate_entry.bind('<Tab>', on_immediate_tab)
 
         # Add click handler to force focus when clicking in entry
         def on_entry_click(e):
