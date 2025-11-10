@@ -2247,6 +2247,7 @@ class TkBackend(UIBackend):
             # Editor is empty - insert initial line number
             self.editor_text.text.insert(1.0, f"{self.auto_number_start} ")
             self.editor_text.text.mark_set(tk.INSERT, "1.end")
+            self.editor_text.text.see(tk.INSERT)  # Ensure cursor is visible
             return
 
         # Check if cursor is at start of empty line
@@ -2275,6 +2276,7 @@ class TkBackend(UIBackend):
 
             self.editor_text.text.insert(f'{line_index}.0', f"{next_line_num} ")
             self.editor_text.text.mark_set(tk.INSERT, f'{line_index}.end')
+            self.editor_text.text.see(tk.INSERT)  # Ensure cursor is visible
 
     def _remove_blank_lines(self):
         """Remove all blank lines from the editor (except final line).
