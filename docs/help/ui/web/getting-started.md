@@ -211,7 +211,7 @@ END
 3. Enter a filename (default: `program.bas`)
 4. File downloads to your Downloads folder
 
-**Note:** The Web UI uses browser downloads for saving program files to your computer. Auto-save of programs to browser localStorage is planned for a future release. (Settings ARE saved to localStorage - see [Settings](settings.md))
+**Note:** The Web UI uses browser downloads for saving program files to your computer. Auto-save of program code to browser localStorage is planned for a future release. (Note: Your editor settings ARE already saved to localStorage - see [Settings](settings.md))
 
 **Save As:**
 - Use **Save As** to download with a different filename
@@ -337,7 +337,7 @@ The Web UI works with modern browsers:
 1. **Auto-numbering:** Press Enter in Program Editor to get automatic line numbers
 2. **Quick test:** Use Command area to test expressions without changing your program
 3. **Clear output:** Run → Clear Output to empty the output area
-4. **Save often:** Use File → Save to download your program regularly (auto-save of programs to localStorage is planned for a future release)
+4. **Save often:** Use File → Save to download your program regularly (auto-save of program code to localStorage is planned for a future release)
 5. **Check errors:** Red error messages in output show what went wrong
 
 ## Common Issues
@@ -358,7 +358,7 @@ The Web UI works with modern browsers:
 
 **Problem:** Refreshed browser and program is gone.
 
-**Solution:** Auto-save of programs to localStorage is planned for a future release. Currently, you need to manually save your programs using File → Save. Make sure to save your work regularly to avoid losing changes.
+**Solution:** Auto-save of program code to localStorage is planned for a future release. Currently, you need to manually save your programs using File → Save. Make sure to save your work regularly to avoid losing changes. (Note: Your editor settings are automatically saved to localStorage.)
 
 ### Input area not appearing
 

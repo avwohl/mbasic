@@ -25,7 +25,7 @@ All BASIC-80 commands and statements are described in this reference.
 ### D
 - [DATA](data.md) - Store data values in program
 - [DEF FN](def-fn.md) - Define user function
-- [DEF USR](def-usr.md) - Define assembly language subroutine address
+- [DEF USR](def-usr.md) - Define assembly language subroutine address (not implemented)
 - [DEFINT/SNG/DBL/STR](defint-sng-dbl-str.md) - Set default variable types
 - [DELETE](delete.md) - Delete program lines
 - [DIM](dim.md) - Dimension arrays
@@ -169,7 +169,7 @@ All BASIC-80 commands and statements are described in this reference.
 
 ### Functions
 - [DEF FN](def-fn.md) - Define user function
-- [DEF USR](def-usr.md) - Define assembly subroutine address
+- [DEF USR](def-usr.md) - Define assembly subroutine address (not implemented)
 
 ### Error Handling
 - [ERR and ERL](err-erl-variables.md) - Error variables

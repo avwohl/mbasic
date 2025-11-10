@@ -158,11 +158,11 @@ class ImmediateExecutor:
         #
         # This feature requires the following UI integration:
         # - interpreter.interactive_mode must reference the UI object (checked with hasattr)
-        # - UI.program must have add_line() and delete_line() methods (validated, errors if missing)
+        # - UI.program must have add_line() and delete_line() methods (validated, returns error tuple if missing)
         # - UI._refresh_editor() method to update the display (optional, checked with hasattr)
         # - UI._highlight_current_statement() for restoring execution highlighting (optional, checked with hasattr)
-        # If interactive_mode doesn't exist or is falsy, returns error: "Cannot edit program lines in this mode".
-        # If interactive_mode exists but required program methods are missing, returns error message.
+        # If interactive_mode doesn't exist or is falsy, returns (False, error_message) tuple.
+        # If interactive_mode exists but required program methods are missing, returns (False, error_message) tuple.
         import re
         line_match = re.match(r'^(\d+)\s*(.*)$', statement)
         if line_match:
@@ -245,10 +245,11 @@ class ImmediateExecutor:
                 for stmt in line_node.statements:
                     interpreter.execute_statement(stmt)
 
-                # Note: We do not save/restore the PC before/after execution.
-                # This allows statements like RUN to change execution position.
-                # Control flow statements (GOTO, GOSUB) can also modify PC but may produce
-                # unexpected results (see help text). Normal statements (PRINT, LET) don't modify PC.
+                # Note: We do not save/restore the PC before/after execution by design.
+                # This allows statements like RUN to properly change execution position.
+                # Control flow statements (GOTO, GOSUB) can also modify PC but are not recommended
+                # in immediate mode as they may produce unexpected results (see help text).
+                # Normal statements (PRINT, LET) don't modify PC.
 
             # Get captured output
             output = self.io.get_output() if self.io else ""

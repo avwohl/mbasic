@@ -2,8 +2,8 @@
 
 Manages program lines, ASTs, parsing, and file operations.
 Extracted from InteractiveMode to enable reuse across local UIs (CLI, Curses, Tk).
-Note: Not suitable for Web UI due to direct filesystem access - Web UI uses
-FileIO abstraction in interactive.py instead.
+Note: Web UI should use FileIO abstraction in interactive.py instead of this manager,
+as this module uses direct filesystem access which may not work in web environments.
 
 FILE I/O ARCHITECTURE:
 This manager provides direct Python file I/O methods (load_from_file, save_to_file)

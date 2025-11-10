@@ -360,6 +360,8 @@ class ResourceLimits:
 def create_web_limits() -> ResourceLimits:
     """Create resource limits suitable for web environment (restrictive).
 
+    Maintains MBASIC 5.21 compatibility with 255-byte string length limit.
+
     Returns:
         ResourceLimits configured for web environment with tight constraints
     """
@@ -380,6 +382,8 @@ def create_web_limits() -> ResourceLimits:
 
 def create_local_limits() -> ResourceLimits:
     """Create resource limits suitable for local CLI (generous).
+
+    Maintains MBASIC 5.21 compatibility with 255-byte string length limit.
 
     Returns:
         ResourceLimits configured for local environment with generous constraints

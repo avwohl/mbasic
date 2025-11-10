@@ -101,7 +101,8 @@ class TkBackend(UIBackend):
         self.stack_visible = False
 
         # Immediate mode widgets and executor
-        # Note: immediate_history and immediate_status are always None in Tk UI (see lines 293-297)
+        # Note: immediate_history and immediate_status are always None in Tk UI
+        # (Tk uses immediate_entry Entry widget directly instead of separate history/status widgets)
         # immediate_entry is the actual Entry widget created in start()
         self.immediate_executor = None
         self.immediate_history = None
@@ -2463,7 +2464,7 @@ class TkBackend(UIBackend):
             # Check if this is a simple inline paste (no newlines, pasting into existing line)
             import re
             if '\n' not in sanitized_text:
-                # Single line paste - check if we're in the middle of an existing line
+                # Single line paste - check if current line has existing content
                 current_pos = self.editor_text.text.index(tk.INSERT)
                 current_line_index = int(current_pos.split('.')[0])
                 current_line_text = self.editor_text.text.get(
@@ -2472,6 +2473,7 @@ class TkBackend(UIBackend):
                 ).strip()
 
                 # If current line has content (not blank), do simple inline paste
+                # (cursor can be at start, middle, or end - we just paste at cursor position)
                 if current_line_text:
                     # Delete selected text if any
                     try:
@@ -2488,7 +2490,8 @@ class TkBackend(UIBackend):
                     return 'break'
 
             # Multi-line paste or single-line paste into blank line - use auto-numbering logic
-            # Both cases use the same logic (split by \n, process each line):
+            # Note: Single-line paste into existing line uses different logic (inline paste above).
+            # The auto-numbering path handles:
             # 1. Multi-line paste: sanitized_text contains \n → multiple lines to process
             # 2. Single-line paste into blank line: current_line_text empty → one line to process
             from lexer import tokenize
@@ -2609,8 +2612,9 @@ class TkBackend(UIBackend):
             return None
 
         # Allow backspace and delete - these modify text via deletion, not by inserting
-        # printable characters, so they pass validation. Note: These are control characters
-        # but we allow them specifically. Other control characters are blocked later.
+        # printable characters. We explicitly allow them here before validation logic.
+        # Note: These are control characters (ASCII 8 and 127) but we need them for
+        # text editing. Other control characters are blocked by validation later.
         char_code = ord(event.char)
         if char_code in (8, 127):  # Backspace (0x08) or Delete (0x7F)
             return None
@@ -2932,8 +2936,9 @@ class TkBackend(UIBackend):
             match = re.match(r'^\s*(\d+)', line_text)
             if match and int(match.group(1)) == line_number:
                 # Found the line - use char positions directly
-                # Lines are displayed exactly as stored in program manager (see _refresh_editor),
-                # so char_start/char_end from runtime are directly usable as Tk text indices
+                # Lines in the editor match the program manager's formatted output (see _refresh_editor).
+                # The char_start/char_end positions from runtime correspond to the displayed line text,
+                # so they are directly usable as Tk text indices.
 
                 start_idx = f"{editor_line_idx}.{char_start}"
                 end_idx = f"{editor_line_idx}.{char_end}"

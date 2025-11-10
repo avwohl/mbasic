@@ -160,6 +160,8 @@ See UI-specific documentation for details: [CLI Debugging](../ui/cli/debugging.m
 - **Immediate mode** - Expression evaluation
 - **Command history** (platform-dependent)
 
+**Note:** Find/Replace is not available in CLI. Use the Tk UI for search/replace functionality.
+
 ### Tkinter GUI
 
 - **Graphical interface** - Windows, menus, toolbars

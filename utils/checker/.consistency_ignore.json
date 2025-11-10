@@ -9609,6 +9609,48 @@
       "reason": "Bulk-imported from v14 (all reviewed as OK)",
       "reviewed_by": "bulk_import",
       "reviewed_date": "2025-11-09"
+    },
+    "047f5fae99fd": {
+      "description": "Manual entry (047f5fae99fd)",
+      "reason": "This is proper documentation of intentional code duplication - the MAINTENANCE RISK warning correctly documents a design tradeoff where logic is duplicated to avoid unwanted side effects",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "232cea662c43": {
+      "description": "Manual entry (232cea662c43)",
+      "reason": "False positive - the report itself confirms MERGE IS in the See Also section, so there is no inconsistency",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "f90efb5701c6": {
+      "description": "Manual entry (f90efb5701c6)",
+      "reason": "No inconsistency - CLI DOES have the EDIT command (cmd_edit in interactive.py) which is a character-by-character line editor. Curses has a full-screen editor accessed differently. Both are correct.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "f8b46ce140e4": {
+      "description": "Manual entry (f8b46ce140e4)",
+      "reason": "Not an inconsistency - both docs correctly state editing is not available. The Window Controls section documents DISPLAY options (v/t/d/w for viewing preferences), not editing functions. The extensive documentation is appropriate for the feature-rich variables viewer.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "3884cf910deb": {
+      "description": "Manual entry (3884cf910deb)",
+      "reason": "Not an inconsistency - the {{kbd:save:curses}} placeholder is intentional and will be expanded by the mkdocs plugin (see recent commit about kbd macro expansion). The placeholder correctly expands to ^V which is the actual save key for curses.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "3617affc26f1": {
+      "description": "Manual entry (3617affc26f1)",
+      "reason": "Not an inconsistency - both documents are consistent. Find (Ctrl+F) opens a Find-only dialog, Replace (Ctrl+H) opens a combined Find/Replace dialog. The features.md explicitly clarifies this in a note. This is a common UX pattern (like in VS Code).",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
     }
   }
 }

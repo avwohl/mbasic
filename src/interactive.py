@@ -4,9 +4,9 @@ Modern implementation of MBASIC 5.21 interactive REPL
 
 Implements the interactive REPL with:
 - Line entry and editing
-- Direct commands: AUTO, EDIT, HELP (handled specially, not parsed as BASIC statements)
-- Immediate mode statements: RUN, LIST, SAVE, LOAD, NEW, MERGE, FILES, SYSTEM, DELETE, RENUM, etc.
-  (parsed as BASIC statements and executed in immediate mode)
+- Direct commands: AUTO, EDIT, HELP (handled before parsing)
+- Immediate mode statements: All other commands (RUN, LIST, SAVE, LOAD, NEW, MERGE, FILES,
+  SYSTEM, DELETE, RENUM, etc.) are handled directly by execute_immediate() methods
 - AUTO command for automatic line numbering with customizable start/step
 - EDIT command for character-by-character line editing (insert/delete/copy mode)
 - Immediate mode execution (PRINT, LET, etc. without line numbers)
@@ -638,7 +638,9 @@ class InteractiveMode:
             # Show parse errors if any
             if errors:
                 for line_num, error in errors:
-                    # Error message from merge_from_file - format may vary
+                    # Error message from merge_from_file:
+                    # Format: "Syntax error in {line_num}: {message}" (no "?" prefix)
+                    # Add "?" prefix for MBASIC error style
                     print(f"?{error}")
 
             if success:
@@ -987,6 +989,10 @@ class InteractiveMode:
         This implementation renumbers for ANY binary operator with ERL on left, including
         arithmetic operators (ERL + 100, ERL * 2, etc.), not just comparison operators.
 
+        Implementation: The code does NOT filter by operator type - it simply checks if the
+        expression is a BinaryOpNode with ERL on left and a NumberNode on right. No operator
+        type checking is performed, so ALL binary operators trigger renumbering.
+
         Rationale: Without semantic analysis of operator types, we cannot distinguish
         ERL=100 (comparison) from ERL+100 (arithmetic) at parse time. We conservatively
         renumber all cases to avoid missing valid line number references in comparisons.
@@ -1070,10 +1076,11 @@ class InteractiveMode:
         - <CR>: End and save
 
         Note: Count prefixes ([n]D, [n]C) and search commands ([n]S, [n]K) are not yet implemented.
-        INTENTIONAL BEHAVIOR: When digits are entered, they are silently ignored (no output, no
-        cursor movement, no error). This preserves MBASIC compatibility where digits are reserved
-        for count prefixes in the full EDIT implementation. Future enhancement will parse and
-        use digit prefixes to repeat commands.
+        INTENTIONAL BEHAVIOR: When digits are entered, they fall through the command checks and
+        are not processed (no output, no cursor movement, no error). This happens because there's
+        no explicit digit handling - they simply don't match any elif branch. This preserves MBASIC
+        compatibility where digits are reserved for count prefixes in the full EDIT implementation.
+        Future enhancement will add explicit digit parsing to accumulate count prefixes for commands.
         """
         if not args or not args.strip():
             print("?Syntax error - specify line number")

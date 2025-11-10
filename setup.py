@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """
-Setup script for MBASIC 5.21 Interpreter (version 0.99.0)
+Setup script for MBASIC 5.21 Interpreter
 
-Package version 0.99.0 reflects approximately 99% implementation status (core complete).
-This is an independent open-source implementation of MBASIC 5.21 (BASIC-80 for CP/M).
+Package version: 0.99.0 (reflects approximately 99% implementation status - core complete)
+Language version: MBASIC 5.21 (Microsoft BASIC-80 for CP/M)
+
+Note: 5.21 refers to the Microsoft BASIC-80 language version being interpreted,
+not this package's version number. This is an independent open-source implementation.
 """
 
 from setuptools import setup, find_packages
@@ -15,7 +18,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="mbasic-interpreter",
-    version="0.99.0",  # Reflects ~99% implementation status (core complete)
+    version="0.99.0",  # Package version (99% implementation status). Note: 5.21 is the BASIC language version.
     description="An interpreter for MBASIC 5.21 (BASIC-80 for CP/M) - Independent open-source implementation",
     long_description=long_description,
     long_description_content_type="text/markdown",

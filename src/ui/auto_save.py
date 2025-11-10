@@ -4,9 +4,14 @@ Auto-Save Manager for MBASIC IDE
 Provides auto-save functionality with Emacs-inspired naming (#filename#):
 - Saves to centralized temp directory (~/.mbasic/autosave/) automatically
 - Uses Emacs-style #filename# naming convention
-- Never overwrites user-saved files without permission
-- Offers recovery on startup if autosave is newer
+- Provides utilities to check if autosave is newer than saved file
 - Cleans up old autosaves
+
+This module provides building blocks for auto-save functionality. The UI layer
+is responsible for:
+- Prompting user before overwriting files with autosave content
+- Offering recovery on startup if autosave is newer
+- Deciding when to trigger auto-save operations
 
 Usage:
     manager = AutoSaveManager(autosave_dir=Path.home() / '.mbasic' / 'autosave')

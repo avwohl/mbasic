@@ -415,8 +415,8 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + 'switch (gosub_stack[--gosub_sp]) {')
         self.indent_level += 1
 
-        # Generate case statements for ALL GOSUB return points in the program
-        # (we know the total from the first pass)
+        # Generate case statements for each GOSUB in the program
+        # (iterating over GOSUB count from the first pass)
         for return_id in range(self.total_gosubs):
             code.append(self.indent() + f'case {return_id}: goto gosub_return_{return_id};')
 

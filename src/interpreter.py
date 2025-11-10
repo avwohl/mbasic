@@ -1629,6 +1629,10 @@ class Interpreter:
         3. UI calls provide_input() with user's input line
         4. On next tick(), buffered input is used (step 1) and input_prompt/input_variables are cleared
 
+        Note: input_file_number is set to None for keyboard input and file# for file input.
+        This allows the UI to distinguish between keyboard prompts (show in UI) and file input
+        (internal, no prompt needed). Currently always None since file input bypasses this path.
+
         File input bypasses the state machine and reads synchronously because file data is
         immediately available (blocking I/O), unlike keyboard input which requires async
         handling in the UI event loop.
@@ -1952,15 +1956,16 @@ class Interpreter:
                     self.runtime.npc = PC.from_line(line_num)
                     self.runtime.halted = False  # Continue execution at new line
         else:
-            # RUN without arguments - CLEAR + restart from beginning
+            # RUN without arguments - CLEAR + signal restart needed
             if hasattr(self, 'interactive_mode') and self.interactive_mode:
                 self.interactive_mode.cmd_run()
             else:
-                # In non-interactive context, restart from beginning
-                # Note: RUN without args sets halted=True to stop current execution.
-                # The caller (e.g., UI tick loop) should detect halted=True and restart
+                # In non-interactive context, signal that restart is needed
+                # Note: RUN without args sets halted=True to stop current execution,
+                # signaling the caller (e.g., UI tick loop) that it should restart
                 # execution from the beginning if desired. This is different from
                 # RUN line_number which sets halted=False to continue execution inline.
+                # The caller is responsible for actually restarting execution.
                 self.runtime.clear_variables()
                 self.runtime.halted = True
 
@@ -2132,7 +2137,11 @@ class Interpreter:
         DELETE 10-50     - Delete lines 10 through 50
         DELETE 10-       - Delete lines 10 to end
         DELETE -50       - Delete lines from beginning to 50
-        DELETE           - Delete all lines (same as NEW but keeps variables)
+        DELETE           - Delete all lines (keeps variables, unlike NEW which clears both)
+
+        Note: This implementation preserves variables when deleting lines. NEW clears both
+        lines and variables (execute_new calls clear_variables/clear_arrays), while DELETE
+        only removes lines from the program AST, leaving variables intact.
         """
         # Delegate to interactive mode if available
         if hasattr(self, 'interactive_mode') and self.interactive_mode:

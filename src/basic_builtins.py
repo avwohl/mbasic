@@ -3,8 +3,7 @@ Built-in functions for MBASIC 5.21 (CP/M era MBASIC-80).
 
 BASIC built-in functions (SIN, CHR$, INT, etc.) and formatting utilities (TAB, SPC, USING).
 
-Note: Version 5.21 refers to BASIC-80 Reference Manual Version 5.21. See tokens.py for
-complete MBASIC 5.21 specification reference.
+Note: Version 5.21 refers to BASIC-80 Reference Manual Version 5.21.
 """
 
 import math
@@ -280,7 +279,8 @@ class UsingFormatter:
         # Determine sign - preserve negative sign for values that round to zero.
         # Use original_negative (captured above before rounding) to detect negative values that rounded to zero.
         # This allows us to detect cases like -0.001 which round to 0 but should display as "-0" (not "0").
-        # This matches BASIC behavior. Positive values that round to zero display as "0".
+        # This matches MBASIC 5.21 behavior: negative values that round to zero display as "-0",
+        # while positive values that round to zero display as "0".
         if rounded == 0 and original_negative:
             is_negative = True
         else:
@@ -838,11 +838,13 @@ class BuiltinFunctions:
         Returns -1 if at EOF, 0 otherwise
 
         Note: For binary input files (OPEN statement mode 'I'), respects ^Z (ASCII 26)
-        as EOF marker (CP/M style). The 'I' mode from BASIC's OPEN statement is stored in
-        file_info['mode'] and corresponds to binary input, which execute_open() in
-        interpreter.py implements by opening the file with Python mode 'rb'. This binary
-        mode allows ^Z detection for CP/M compatibility. Text mode files (output, append)
-        use standard Python EOF detection without ^Z checking.
+        as EOF marker (CP/M style).
+
+        Implementation details:
+        - execute_open() in interpreter.py stores mode ('I', 'O', 'A', 'R') in file_info['mode']
+        - Mode 'I' files are opened with binary=True, allowing ^Z detection
+        - Text mode files (output 'O', append 'A') use standard Python EOF detection without ^Z
+        - See execute_open() in interpreter.py lines 2313-2369 for file opening implementation
         """
         file_num = int(file_num)
         if file_num not in self.runtime.files:
@@ -855,8 +857,8 @@ class BuiltinFunctions:
             return -1
 
         # For mode 'I' files (binary input), check for EOF or ^Z
-        # These files are opened in binary mode ('rb') which allows ^Z checking
-        # for CP/M-style EOF detection
+        # Mode 'I' files are opened in binary mode ('rb' - see execute_open() in interpreter.py)
+        # which allows ^Z checking for CP/M-style EOF detection
         if file_info['mode'] == 'I':
             file_handle = file_info['handle']
             current_pos = file_handle.tell()

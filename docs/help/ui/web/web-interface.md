@@ -88,6 +88,8 @@ Press Enter → Output shows: 1 2 3
 
 - **New** - Clear the editor and start a new program
 - **Open** - Open a .bas file from your computer (via browser file picker)
+- **Save** - Download current program to your computer as a .bas file
+- **Save As** - Download with a new filename
 - **Clear Output** - Clear the output area
 
 **Note:** An "Open Example" feature to choose from sample BASIC programs is planned for a future release.

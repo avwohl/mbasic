@@ -551,7 +551,7 @@ class ChainStatementNode:
     start_line: 'ExpressionNode' = None  # Optional starting line number
     merge: bool = False  # True if MERGE option specified
     all_flag: bool = False  # True if ALL option specified (pass all variables)
-    delete_range: Optional[Tuple[int, int]] = None  # (start_line_number, end_line_number) for DELETE option - tuple of int line numbers
+    delete_range: Optional[Tuple[int, int]] = None  # (start_line_number, end_line_number) for DELETE option
     line_num: int = 0
     column: int = 0
 

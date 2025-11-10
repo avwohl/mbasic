@@ -318,7 +318,7 @@ SET "editor.show_line_numbers" true
 **Type Conversion:**
 - Strings: `"value"` (with quotes)
 - Numbers: `5` (without quotes)
-- Booleans: `true` or `false` (lowercase, no quotes in commands; use true/false in JSON files)
+- Booleans: `true` or `false` (lowercase, no quotes in both commands and JSON files)
 
 ### SHOW SETTINGS Command
 

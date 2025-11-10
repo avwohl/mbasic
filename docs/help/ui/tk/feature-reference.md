@@ -171,7 +171,7 @@ Edit multiple lines simultaneously:
 - Copy/paste blocks of code
 - Indent/unindent selections
 
-### Cut/Copy/Paste ({{kbd:cut:tk}}/C/V)
+### Cut/Copy/Paste ({{kbd:cut:tk}}/{{kbd:copy:tk}}/{{kbd:paste:tk}})
 Standard clipboard operations with native OS clipboard integration.
 - Cut: {{kbd:cut:tk}}
 - Copy: {{kbd:copy:tk}}
@@ -221,12 +221,14 @@ Complete MBASIC language documentation integrated into the UI:
 - Examples and tutorials
 - Searchable index
 
-### Search Help ({{kbd:file_save:tk}}hift+F)
+### Search Help
 Search across all help documentation:
 - Full-text search
 - Keyword search
 - Results with context
 - Jump to relevant section
+
+**Note:** Search function is available via the help browser's search box (no dedicated keyboard shortcut).
 
 ### Context Help (Shift+F1)
 Get help for the BASIC keyword at the cursor:

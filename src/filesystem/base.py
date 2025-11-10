@@ -4,7 +4,7 @@ Filesystem abstraction for MBASIC interpreter - RUNTIME file I/O.
 This module handles RUNTIME file I/O (OPEN, CLOSE, INPUT#, PRINT# statements).
 For PROGRAM file operations (FILES, LOAD, SAVE, MERGE commands), see src/file_io.py.
 
-TWO SEPARATE FILESYSTEM ABSTRACTIONS:
+TWO FILESYSTEM ABSTRACTIONS (with some intentional overlap):
 1. FileIO (src/file_io.py) - Program management operations
    - Used by: Interactive mode, UI file browsers
    - Operations: FILES (list), LOAD/SAVE/MERGE (program files), KILL (delete)

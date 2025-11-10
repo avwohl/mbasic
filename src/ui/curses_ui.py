@@ -508,6 +508,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 max_allowed = 99999
 
             # Find next valid number
+            # Note: Auto-numbering stops at 99999 for display consistency, but manual
+            # entry of higher line numbers is not prevented by _parse_line_number().
+            # This is intentional - auto-numbering uses conservative limits while
+            # manual entry allows flexibility.
             attempts = 0
             while next_num in existing_line_nums or next_num >= max_allowed:
                 next_num += self.auto_number_increment
@@ -910,9 +914,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
             # Reject bare identifiers (the parser treats them as implicit REMs for
             # old BASIC compatibility, but in the editor we want to be stricter).
-            # Note: This only catches bare identifiers followed by EOF or COLON (e.g., "foo" or "foo:").
+            # Note: This catches bare identifiers followed by EOF or COLON (e.g., "foo" or "foo:").
             # Bare identifiers followed by other tokens (e.g., "foo + bar") will be caught by the
-            # parser as syntax errors, so this check is sufficient for editor validation.
+            # parser as syntax errors. A second check after parsing catches any remaining cases
+            # where the parser returned a RemarkStatementNode for an implicit REM.
             if len(tokens) >= 2:
                 first_token = tokens[0]
                 second_token = tokens[1]
@@ -1400,9 +1405,10 @@ class CursesBackend(UIBackend):
         # Created ONCE here in __init__ and reused throughout the session.
         # The interpreter object itself is NEVER recreated - the same instance is used
         # for the lifetime of the UI session.
-        # Note: The immediate_io handler created here is temporary - ImmediateExecutor
-        # will be recreated in start() with a fresh OutputCapturingIOHandler, but that
-        # new executor will receive this same interpreter instance (not a new interpreter).
+        # Note: The immediate_io handler created here is used only for initialization.
+        # The Interpreter's IO handler is replaced during program execution (_run_program)
+        # to route output to the appropriate widget. ImmediateExecutor (created in start())
+        # uses a separate OutputCapturingIOHandler but operates on the same Interpreter instance.
         # Use unlimited limits for immediate mode (runs will use local limits)
         # Rationale: Immediate mode commands (PRINT, LIST, etc.) should not be artificially
         # constrained by resource limits. Program execution (RUN) uses separate runtime state
@@ -3678,8 +3684,9 @@ class CursesBackend(UIBackend):
         def on_input_complete(result):
             """Called when user completes input or cancels."""
             # If user cancelled (ESC), stop program execution
-            # Note: This sets stopped=True similar to a BASIC STOP statement, but the semantics
-            # differ - STOP is a deliberate program action, while ESC is user cancellation
+            # Note: This sets stopped=True and running=False. While similar to a BASIC STOP
+            # statement, the semantics differ - STOP is a deliberate program action that can
+            # be continued with CONT, while ESC is user cancellation that stops the UI tick loop.
             if result is None:
                 # Stop execution - PC already contains the position for CONT to resume from
                 self.runtime.stopped = True
@@ -4418,9 +4425,7 @@ class CursesBackend(UIBackend):
                 # Switch interpreter IO to a capturing handler that outputs to the output pane
                 # (Create the same CapturingIOHandler that _run_program uses)
                 if not hasattr(self, 'io_handler') or self.io_handler is None:
-                    # Need to create the CapturingIOHandler class inline
-                    # (duplicates definition in _run_program - consider extracting to shared location)
-                    # Import shared CapturingIOHandler
+                    # Import shared CapturingIOHandler from dedicated module
                     from .capturing_io_handler import CapturingIOHandler
 
                     io_handler = CapturingIOHandler()
@@ -4428,11 +4433,11 @@ class CursesBackend(UIBackend):
                     self.io_handler = io_handler
 
                 # Initialize interpreter state for execution
-                # NOTE: Don't call interpreter.start() here - the immediate executor already
-                # called it if needed (e.g., 'RUN 120' called interpreter.start(start_line=120)
-                # to set PC to line 120). Calling it again would reset PC to the beginning.
-                # We only initialize InterpreterState if it doesn't exist (first run of session),
-                # which sets up tracking state without modifying PC/runtime state.
+                # NOTE: Don't call interpreter.start() here. The immediate executor handles
+                # program start setup (e.g., RUN command sets PC appropriately via
+                # interpreter.start()). This function only ensures InterpreterState exists
+                # for tick-based execution tracking. If we called interpreter.start() here,
+                # it would reset PC to the beginning, overriding the PC set by RUN command.
                 from src.interpreter import InterpreterState
                 if not hasattr(self.interpreter, 'state') or self.interpreter.state is None:
                     self.interpreter.state = InterpreterState(_interpreter=self.interpreter)

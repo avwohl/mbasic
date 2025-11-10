@@ -11,7 +11,7 @@ TWO SEPARATE FILESYSTEM ABSTRACTIONS:
    - Purpose: Load .BAS programs into memory, save from memory to storage
    - Implementations:
      * RealFileIO: Direct filesystem access to disk (Tk, Curses, CLI)
-     * SandboxedFileIO: Python server memory virtual filesystem (Web UI)
+     * SandboxedFileIO: In-memory virtual filesystem on Python server (Web UI - NOT browser storage)
 
 2. FileSystemProvider (src/filesystem/base.py) - Runtime file I/O (OPEN/CLOSE/INPUT#/PRINT#)
    - Used by: Interpreter during program execution
@@ -189,8 +189,10 @@ class SandboxedFileIO(FileIO):
     Acts as an adapter to backend.sandboxed_fs (SandboxedFileSystemProvider from
     src/filesystem/sandboxed_fs.py), which provides an in-memory virtual filesystem.
 
-    Storage location: Python server memory (NOT browser localStorage).
+    Storage location: Python server memory (NOT browser localStorage or disk files).
+    Why server memory? Web UI runs Python interpreter on server, not in browser.
     Security: No access to server filesystem - all files are sandboxed in memory.
+    Lifetime: Files exist only during the server session (cleared on restart).
 
     Implementation status:
     - list_files(): IMPLEMENTED - delegates to backend.sandboxed_fs

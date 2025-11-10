@@ -144,16 +144,13 @@ class WebIOHandler(IOHandler):
         Get single character input (for INKEY$, INPUT$).
 
         Args:
-            blocking: If True, wait for keypress. If False, return "" if no key ready.
-                     NOTE: This parameter is accepted for interface compatibility but
-                     is ignored in the web UI implementation.
+            blocking: Accepted for interface compatibility but ignored in web UI.
 
         Returns:
-            Single character string, or "" if not available
+            Empty string (character input not supported in web UI)
 
-        Note: Character input not supported in web UI. This method always returns
+        Note: Character input is not supported in web UI. This method always returns
         an empty string immediately, regardless of the blocking parameter value.
-        The blocking parameter is ignored.
         """
         return ""
 

@@ -45,4 +45,4 @@ UIs should:
 - **Tk Help**: [ui/tk/index.md](ui/tk/index.md)
 - **Web Help**: [ui/web/index.md](ui/web/index.md)
 
-**Note:** MBASIC supports four UI backends: CLI (command-line interface), Curses (terminal full-screen), Tk (desktop GUI), and Web (browser-based). The help system provides both common content (shared across all backends) and UI-specific documentation for each interface. Help content is built using MkDocs and served locally at `http://localhost/mbasic_docs` for the Tk and Web UIs, while the CLI and Curses UIs use built-in markdown rendering.
+**Note:** MBASIC supports four UI backends: CLI (command-line interface), Curses (terminal full-screen), Tk (desktop GUI), and Web (browser-based). The help system provides both common content (shared across all backends) and UI-specific documentation for each interface. Help content is built using MkDocs and served locally at `http://localhost/mbasic_docs` for the Tk and Web UIs, while the CLI and Curses UIs use built-in markdown rendering. (Legacy code may reference `http://localhost:8000`, which is deprecated in favor of the `/mbasic_docs` path.)

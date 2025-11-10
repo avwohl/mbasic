@@ -47,7 +47,7 @@ The termination test happens AFTER each increment/decrement at the NEXT statemen
 - **Negative STEP**: Loop continues while variable >= ending value
 
 For example:
-- `FOR I = 1 TO 10` executes with I=1,2,3,...,10 (11 iterations). After I=10 executes, NEXT increments to 11, test fails (11 > 10), loop exits.
+- `FOR I = 1 TO 10` executes with I=1,2,3,...,10 (10 iterations). After I=10 executes, NEXT increments to 11, test fails (11 > 10), loop exits.
 - `FOR I = 10 TO 1 STEP -1` executes with I=10,9,8,...,1 (10 iterations). After I=1 executes, NEXT decrements to 0, test fails (0 < 1), loop exits.
 
 ### Features:

@@ -24,9 +24,9 @@ class PC:
     Multiple statements can appear on one line, separated by colons.
 
     Examples:
-        PC(10, 0)  - First statement on line 10 (stmt_offset=0)
-        PC(10, 2)  - Third statement on line 10 (stmt_offset=2)
-        PC(None, 0) - Halted (no valid line)
+        PC(10.0)  - First statement on line 10 (stmt_offset=0)
+        PC(10.2)  - Third statement on line 10 (stmt_offset=2)
+        PC(None.0) - Halted (no valid line)
 
     Note: Throughout the codebase, stmt_offset is consistently used as a list index
     (0, 1, 2, ...) not an offset in bytes. The parameter name uses "offset" for
