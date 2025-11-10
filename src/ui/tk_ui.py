@@ -705,9 +705,19 @@ class TkBackend(UIBackend):
 
     def _menu_step_line(self):
         """Run > Step Line (execute all statements on current line)"""
-        if not self.interpreter:
-            self._set_status("No program running")
-            return
+        # If no program loaded, save editor first
+        if not self.runtime.pc.is_running() and self.runtime.pc.line is None:
+            success = self._save_editor_to_program()
+            if not success:
+                self._set_status("Cannot step - program has syntax errors")
+                return
+            # Initialize for stepping
+            self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
+            state = self.interpreter.start()
+            if state.error_info:
+                self._add_output(f"\n--- Setup error: {state.error_info.error_message} ---\n")
+                self._set_status("Error")
+                return
 
         # Clear paused state to allow stepping through breakpoints
         self.paused_at_breakpoint = False
@@ -726,7 +736,7 @@ class TkBackend(UIBackend):
             elif not self.runtime.pc.is_running():
                 # Halted - check what's at PC to determine if we should highlight
                 pc = self.runtime.pc
-                if pc.halted():
+                if pc.line is None:
                     # Past end of program
                     self._add_output("\n--- Program finished ---\n")
                     self._set_status("Ready")
@@ -760,9 +770,19 @@ class TkBackend(UIBackend):
 
     def _menu_step(self):
         """Run > Step Statement (execute one statement)"""
-        if not self.interpreter:
-            self._set_status("No program running")
-            return
+        # If no program loaded, save editor first
+        if not self.runtime.pc.is_running() and self.runtime.pc.line is None:
+            success = self._save_editor_to_program()
+            if not success:
+                self._set_status("Cannot step - program has syntax errors")
+                return
+            # Initialize for stepping
+            self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
+            state = self.interpreter.start()
+            if state.error_info:
+                self._add_output(f"\n--- Setup error: {state.error_info.error_message} ---\n")
+                self._set_status("Error")
+                return
 
         # Clear paused state to allow stepping through breakpoints
         self.paused_at_breakpoint = False
@@ -781,7 +801,7 @@ class TkBackend(UIBackend):
             elif not self.runtime.pc.is_running():
                 # Halted - check what's at PC to determine if we should highlight
                 pc = self.runtime.pc
-                if pc.halted():
+                if pc.line is None:
                     # Past end of program
                     self._add_output("\n--- Program finished ---\n")
                     self._set_status("Ready")
@@ -3005,7 +3025,7 @@ class TkBackend(UIBackend):
                 # Halted - check what's at PC to determine if done or paused
                 self.running = False
                 pc = self.runtime.pc
-                if pc.halted():
+                if pc.line is None:
                     # Past end of program
                     self._add_output("\n--- Program finished ---\n")
                     self._set_status("Ready")
