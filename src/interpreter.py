@@ -65,9 +65,10 @@ class InterpreterState:
     input_file_number: Optional[int] = None  # If reading from file
 
     # Debugging (breakpoints are stored in Runtime, not here)
-    skip_next_breakpoint_check: bool = False  # Set to True when halting at a breakpoint (in tick_pc method).
-                                               # On next execution, if still True, allows stepping past the breakpoint once,
-                                               # then is cleared to False. Prevents re-halting on same breakpoint.
+    skip_next_breakpoint_check: bool = False  # Set to True DURING halting at a breakpoint (in tick_pc method),
+                                               # within the breakpoint check itself. On next execution, if still True,
+                                               # allows stepping past the breakpoint once, then is cleared to False.
+                                               # Prevents re-halting on same breakpoint.
     pause_requested: bool = False  # Set by pause() method
 
     # Error handling
@@ -2965,13 +2966,7 @@ class Interpreter:
             result = left + right
             # Enforce 255 character string limit for concatenation (MBASIC 5.21 compatibility)
             # Note: This check only applies to concatenation via PLUS operator.
-            # Other string operations (MID$, INPUT) do not enforce this 255-char limit.
-            # LSET/RSET have different limits: they enforce field width limits (defined by FIELD statement)
-            # rather than the 255-char concatenation limit.
-            # Also note: len() counts characters. For ASCII and latin-1 (both single-byte encodings),
-            # character count equals byte count. Field buffers (LSET/RSET) use latin-1 encoding.
-            # This implementation assumes strings are ASCII/latin-1; Unicode strings with multi-byte
-            # characters may have len() < 255 but exceed 255 bytes. MBASIC 5.21 used single-byte encodings only.
+            # Other string operations (MID$, INPUT) and LSET/RSET do not enforce this limit.
             if isinstance(result, str) and len(result) > 255:
                 raise RuntimeError("String too long")
             return result

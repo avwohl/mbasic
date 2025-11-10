@@ -9,22 +9,29 @@ FILE I/O ARCHITECTURE:
 This manager provides direct Python file I/O methods (load_from_file, save_to_file)
 for loading/saving .BAS program files. Used by both UI menus and BASIC commands.
 
-Current implementation:
+Current implementation (LOCAL UIs):
 - LOAD/SAVE/MERGE commands (interactive.py) call ProgramManager methods directly
 - UI menu operations (File > Open/Save) also call ProgramManager methods directly
 - Local UIs (CLI, Curses, Tk) use direct filesystem access via ProgramManager
-- Web UI currently does not support LOAD/SAVE commands (would need async refactor)
+- Cross-platform compiler paths are hardcoded (e.g., z88dk snap path)
+
+Planned improvements:
+- FileIO (src/file_io.py) - Abstraction layer for cross-platform support
+  - RealFileIO: direct filesystem access for local UIs
+  - SandboxedFileIO: in-memory virtual filesystem for web UI (not yet integrated)
+  - Would support configurable compiler paths and cross-platform file access
+
+Web UI limitation:
+- Web UI currently does not support LOAD/SAVE commands (would require async refactor)
+- Would need to use SandboxedFileIO for in-memory session-based file storage
 
 Related filesystem abstractions:
-1. FileIO (src/file_io.py) - Planned abstraction for LOAD/SAVE/MERGE/KILL commands
-   - NOT currently used by LOAD/SAVE commands (they call ProgramManager directly)
-   - Provides backend-agnostic interface for future web UI support
-   - RealFileIO: direct filesystem access for local UIs
-   - SandboxedFileIO: in-memory virtual filesystem for web UI (not yet integrated)
-
-2. FileSystemProvider (src/filesystem/base.py) - For runtime BASIC file I/O
+1. FileSystemProvider (src/filesystem/base.py) - For runtime BASIC file I/O
    - Used during program execution (OPEN, INPUT#, PRINT#, CLOSE, etc.)
    - Separate from program loading (LOAD/SAVE which load .BAS source files)
+
+2. CodeGenBackend (src/codegen_backend.py) - For compiler path handling
+   - Currently hardcodes z88dk snap path - temporary until FileIO integration
 
 ProgramManager.load_from_file() returns (success, errors) tuple where errors
 is a list of (line_number, error_message) tuples for direct UI error reporting.

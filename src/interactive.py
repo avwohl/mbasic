@@ -712,9 +712,12 @@ class InteractiveMode:
             # - MERGE: merges program lines (overlays code) - NOTE: Currently also passes all vars
             # - Neither: passes only COMMON variables (resolves type suffixes if needed)
             #
-            # MBASIC 5.21 behavior: MERGE and ALL are orthogonal options.
+            # KNOWN LIMITATION: In MBASIC 5.21, MERGE and ALL are orthogonal options:
+            # - MERGE (without ALL) should only merge lines, keeping existing variables
+            # - ALL should pass all variables, replacing the program entirely
             # Current implementation: Both MERGE and ALL result in passing all variables.
-            # TODO: Separate line merging (MERGE) from variable passing (ALL).
+            # TODO (Future): Separate line merging (MERGE) from variable passing (ALL).
+            # For now, MERGE provides program overlay but also passes all variables.
             saved_variables = None
             if self.program_runtime:
                 if all_flag or merge:
@@ -901,9 +904,11 @@ class InteractiveMode:
         ERL handling: ERL expressions with ANY binary operators (ERL+100, ERL*2, ERL=100)
         have all right-hand numbers renumbered, even for arithmetic operations.
         This is intentionally broader than the MBASIC manual (which only specifies comparison
-        operators) to avoid missing line references. Known limitation: arithmetic expressions
-        like "IF ERL+100 THEN..." will incorrectly renumber the 100 if it happens to be an
-        old line number. This is rare in practice. See _renum_erl_comparison() for details.
+        operators like ERL=100) to avoid missing valid line references. Rationale: We cannot
+        distinguish ERL=100 (comparison, renumber) from ERL+100 (arithmetic, don't renumber)
+        without semantic analysis, so we conservatively renumber both. Known limitation: arithmetic
+        like "IF ERL+100 THEN..." will incorrectly renumber 100 if it's an old line number.
+        This is rare in practice. See _renum_erl_comparison() for implementation details.
 
         Args format: "new_start,old_start,increment"
         Examples:

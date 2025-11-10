@@ -257,16 +257,20 @@ _breakpoint_from_json = _get_key('editor', 'toggle_breakpoint')
 BREAKPOINT_KEY = _ctrl_key_to_urwid(_breakpoint_from_json) if _breakpoint_from_json else 'ctrl b'
 
 # Clear all breakpoints
-CLEAR_BREAKPOINTS_KEY = 'ctrl shift b'
+_clear_breakpoints_from_json = _get_key('editor', 'clear_all_breakpoints')
+CLEAR_BREAKPOINTS_KEY = _ctrl_key_to_urwid(_clear_breakpoints_from_json) if _clear_breakpoints_from_json else 'ctrl shift b'
 
 # Delete current line
-DELETE_LINE_KEY = 'ctrl d'
+_delete_line_from_json = _get_key('editor', 'delete_line')
+DELETE_LINE_KEY = _ctrl_key_to_urwid(_delete_line_from_json) if _delete_line_from_json else 'ctrl d'
 
 # Renumber lines
-RENUMBER_KEY = 'ctrl e'
+_renumber_from_json = _get_key('editor', 'renumber')
+RENUMBER_KEY = _ctrl_key_to_urwid(_renumber_from_json) if _renumber_from_json else 'ctrl e'
 
 # Smart Insert Line
-INSERT_LINE_KEY = 'ctrl y'
+_insert_line_from_json = _get_key('editor', 'insert_line')
+INSERT_LINE_KEY = _ctrl_key_to_urwid(_insert_line_from_json) if _insert_line_from_json else 'ctrl y'
 
 # =============================================================================
 # Debugger Commands (loaded from JSON where available)
@@ -284,13 +288,16 @@ _step_from_json = _get_key('editor', 'step')
 STEP_KEY = _ctrl_key_to_urwid(_step_from_json) if _step_from_json else 'ctrl t'
 
 # Stop execution
-STOP_KEY = 'ctrl x'
+_stop_from_json = _get_key('editor', 'stop')
+STOP_KEY = _ctrl_key_to_urwid(_stop_from_json) if _stop_from_json else 'ctrl x'
 
 # Settings
-SETTINGS_KEY = 'ctrl p'
+_settings_from_json = _get_key('editor', 'settings')
+SETTINGS_KEY = _ctrl_key_to_urwid(_settings_from_json) if _settings_from_json else 'ctrl p'
 
 # Maximize output
-MAXIMIZE_OUTPUT_KEY = 'ctrl shift m'
+_maximize_output_from_json = _get_key('editor', 'maximize_output')
+MAXIMIZE_OUTPUT_KEY = _ctrl_key_to_urwid(_maximize_output_from_json) if _maximize_output_from_json else 'ctrl shift m'
 
 # =============================================================================
 # Navigation

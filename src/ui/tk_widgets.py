@@ -165,10 +165,9 @@ class LineNumberedText(tk.Frame if tk else object):
         """Delete a line from the text widget.
 
         Args:
-            line_num: Tkinter text widget line number (1-based sequential index),
-                     not BASIC line number (e.g., 10, 20, 30).
-                     Note: This class uses dual numbering - editor line numbers for
-                     text widget operations, BASIC line numbers for line_metadata lookups.
+            line_num: Tkinter text widget line number (1-based sequential index).
+                     This is the position in the editor window (row 1, 2, 3, ...).
+                     This is NOT a BASIC line number (e.g., 10, 20, 30).
         """
         # Check if line still exists and is still blank
         try:

@@ -96,6 +96,11 @@ class Z88dkCBackend(CodeGenBackend):
         Platform requirement: Assumes z88dk is installed via snap on Linux at /snap/bin/z88dk.zcc.
         This path is hardcoded and will not work on other platforms or installation methods.
         For non-snap installations, modify this path or make z88dk.zcc available in PATH.
+
+        Note: This is a temporary hardcoded implementation. The compiler path should eventually
+        be configurable via settings or environment variables for cross-platform support.
+        See src/file_io.py for planned filesystem abstraction that would support
+        configurable compiler locations and cross-platform paths.
         """
         # z88dk.zcc +cpm source.c -create-app -o output
         # This generates OUTPUT.COM (uppercase .COM file)

@@ -262,8 +262,10 @@ class ImmediateExecutor:
                 for stmt in line_node.statements:
                     interpreter.execute_statement(stmt)
 
-                # Note: We do not save/restore the PC before/after execution by design.
+                # Design: We intentionally do NOT save/restore the PC before/after execution.
                 # This allows statements like RUN to properly change execution position.
+                # Rationale: If we saved/restored PC, RUN (which changes PC to line 0 to start
+                # from the beginning) would be undone after immediate mode returns, breaking RUN.
                 # Tradeoff: Control flow statements (GOTO, GOSUB) can also modify PC but are
                 # not recommended in immediate mode as they may produce unexpected results
                 # (see help text). This design prioritizes RUN functionality over preventing
@@ -420,11 +422,11 @@ class OutputCapturingIOHandler:
         self.output_buffer.append(str(text) + "\n")
 
     def input(self, prompt=""):
-        """Input not supported in immediate mode.
+        """INPUT statement not supported in immediate mode - fails at runtime.
 
         User-facing behavior: INPUT statement will fail at runtime in immediate mode.
-        Implementation detail: INPUT statements parse successfully but execution fails
-        when the interpreter calls this input() method."""
+        NOT at parse time - INPUT statements parse successfully but execution fails
+        when the interpreter calls this input() method during statement execution."""
         raise RuntimeError("INPUT not allowed in immediate mode")
 
     def write(self, text):

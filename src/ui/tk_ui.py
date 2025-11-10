@@ -26,10 +26,10 @@ class _ImmediateModeToken:
     """Token for variable edits from immediate mode or variable editor.
 
     This class is instantiated when editing variables via the variable inspector
-    (see _on_variable_double_click() around line 1122). Used to mark variable changes that
+    (see _on_variable_double_click()). Used to mark variable changes that
     originate from the variable inspector or immediate mode, not from program
     execution. The line=-1 signals to runtime.set_variable() that this is a
-    debugger/immediate mode edit.
+    debugger/immediate mode edit, allowing correct variable tracking during debugging.
     """
     def __init__(self):
         self.line = -1
@@ -2444,8 +2444,9 @@ class TkBackend(UIBackend):
         # Refresh to sort lines (only if no errors)
         self._refresh_editor()
 
-        # At this point, the editor contains only the numbered lines (no blank lines)
-        # because _refresh_editor loads from the program, which filters out blank lines
+        # At this point, the editor may contain blank lines inserted by user actions.
+        # Blank line removal is handled by _remove_blank_lines() which is scheduled
+        # asynchronously after key presses via _on_key_press()
 
         # Find where current_line_num is now in the sorted editor
         # and find the next line number after it
@@ -3055,10 +3056,12 @@ class TkBackend(UIBackend):
             import re
             match = re.match(r'^\s*(\d+)', line_text)
             if match and int(match.group(1)) == line_number:
-                # Found the line - use char positions directly
-                # Lines in the editor match the program manager's formatted output (see _refresh_editor).
-                # The char_start/char_end positions from runtime correspond to the displayed line text,
-                # so they are directly usable as Tk text indices.
+                # Found the line - use char positions for highlighting
+                # Note: char_start/char_end from runtime are 0-based column offsets within the line.
+                # Tk text widget uses 0-based column indexing, so these offsets directly map to
+                # Tk indices. The parser ensures positions match the displayed line formatting.
+                # If highlighting fails (try/except below), it indicates a mismatch between
+                # runtime coordinate system and editor display (which would require investigation).
 
                 start_idx = f"{editor_line_idx}.{char_start}"
                 end_idx = f"{editor_line_idx}.{char_end}"
@@ -3773,6 +3776,8 @@ class TkBackend(UIBackend):
                 #   - Sets up Ctrl+C handler
                 # This tradeoff is necessary because RUN [line_number] in immediate mode must
                 # preserve the PC set by the RUN command rather than resetting to first statement.
+                # TODO: Consider refactoring start() to accept an optional parameter that allows
+                # skipping runtime.setup() for cases like RUN [line_number], reducing duplication.
                 self.interpreter.state.is_first_line = True
 
                 self._set_status('Running...')

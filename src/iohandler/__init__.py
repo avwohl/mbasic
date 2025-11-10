@@ -9,11 +9,11 @@ conflicts with Python's built-in 'io' module, which is used elsewhere in the
 codebase (e.g., in src/filesystem/sandboxed_fs.py and test files) for standard
 I/O operations like io.StringIO and io.BytesIO.
 
-GUIIOHandler and WebIOHandler are not exported here because they have
-dependencies on their respective UI frameworks (tkinter, nicegui).
-They should be imported directly from their modules when needed:
-  - from src.iohandler.gui import GUIIOHandler
-  - from src.iohandler.web_io import WebIOHandler
+GUIIOHandler is a stub implementation with no external dependencies - it uses
+only Python standard library. WebIOHandler has dependencies on nicegui.
+They are not exported here to keep this module focused on core I/O handlers:
+  - from src.iohandler.gui import GUIIOHandler (stub for custom GUI implementations)
+  - from src.iohandler.web_io import WebIOHandler (requires nicegui)
 """
 
 from .base import IOHandler

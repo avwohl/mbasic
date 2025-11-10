@@ -3094,17 +3094,24 @@ class NiceGUIBackend(UIBackend):
     def _get_input(self, prompt):
         """Get input from user (non-blocking version for web UI).
 
-        Instead of blocking, this shows the input UI and returns empty string.
-        The interpreter will transition to 'waiting_for_input' state, and
-        when the user submits input via _handle_output_enter(), it will call
-        interpreter.provide_input() to continue execution.
+        Protocol: Returns empty string to signal interpreter state transition.
+
+        This implements a non-blocking input pattern for the web UI:
+        1. Show input UI by calling _enable_inline_input(prompt)
+        2. Return empty string immediately (non-blocking)
+        3. Interpreter detects empty string and transitions to 'waiting_for_input' state
+        4. Program execution pauses
+        5. When user submits via _handle_output_enter(), call interpreter.provide_input()
+        6. Interpreter resumes execution from waiting state
+
+        Implementation note: This relies on interpreter.input() treating empty string
+        as a signal to enter waiting state. If interpreter behavior changes, this
+        state transition protocol will break silently (program will hang).
         """
         # Enable inline input in output textarea
         self._enable_inline_input(prompt)
 
-        # Return empty string - signals interpreter to transition to 'waiting_for_input'
-        # state (state transition happens in interpreter when it receives empty string
-        # from input()). Execution pauses until _handle_output_enter() calls provide_input().
+        # Return empty string to signal interpreter state transition
         return ""
 
     def _on_immediate_enter(self, e):

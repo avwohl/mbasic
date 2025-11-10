@@ -10,7 +10,10 @@ These utilities help prevent issues with:
 - Invalid characters in BASIC programs
 
 The main entry point, sanitize_and_clear_parity(), applies these operations
-sequentially to ensure characters are in valid ASCII range before filtering.
+sequentially. Note: sanitize_input() does NOT validate that parity clearing occurred
+before it's called - it simply filters out any characters with codes >= 128 (which
+indirectly rejects characters that still have bit 7 set). For proper validation,
+always use sanitize_and_clear_parity() which explicitly clears parity before filtering.
 
 Implementation note: Uses standard Python type hints (e.g., tuple[str, bool])
 which require Python 3.9+. For earlier Python versions, use Tuple[str, bool] from typing.
@@ -74,8 +77,10 @@ def sanitize_input(text: str) -> str:
     Note: This function is typically called after clear_parity_all() in the
     sanitize_and_clear_parity() pipeline, where parity bits have already been
     cleared. It filters out characters outside the valid range (32-126, plus
-    tab/newline/CR). By design, this removes any characters with bit 7 set
-    (codes >= 128), which is an indirect way of enforcing valid ASCII-only input.
+    tab/newline/CR). This indirectly rejects any characters with bit 7 set
+    (codes >= 128), but does NOT validate that parity clearing actually occurred.
+    For guaranteed parity clearing, call clear_parity_all() explicitly or use
+    sanitize_and_clear_parity() which combines both operations.
 
     Args:
         text: Input text to sanitize

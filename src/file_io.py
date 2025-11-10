@@ -237,18 +237,27 @@ class SandboxedFileIO(FileIO):
         """List files in sandboxed filesystem.
 
         Uses the backend's sandboxed filesystem provider.
+        Returns empty list if backend.sandboxed_fs doesn't exist.
+        Catches exceptions during listing and size retrieval, returning (filename, None, False)
+        for files that can't be stat'd. Note: Does not catch exceptions from list_files()
+        itself - only from size lookups within the loop.
         """
         # Use the sandboxed filesystem from the backend
         if hasattr(self.backend, 'sandboxed_fs'):
             pattern = filespec.strip().strip('"').strip("'") if filespec else None
-            files = self.backend.sandboxed_fs.list_files(pattern)
+            try:
+                files = self.backend.sandboxed_fs.list_files(pattern)
+            except Exception:
+                # If list_files() itself fails, return empty list
+                return []
+
             # Convert to expected format: (filename, size, is_dir)
             result = []
             for filename in files:
                 try:
                     size = self.backend.sandboxed_fs.get_size(filename)
                     result.append((filename, size, False))
-                except:
+                except Exception:
                     result.append((filename, None, False))
             return result
         return []

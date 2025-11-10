@@ -111,9 +111,15 @@ class SandboxedFileSystemProvider(FileSystemProvider):
             user_id: Unique identifier for this user/session
                     SECURITY: Must be securely generated/validated (e.g., session IDs)
                     to prevent cross-user access. Do NOT use user-provided values.
+                    NOTE: This class does NOT validate user_id - validation is the
+                    caller's responsibility. Passing an untrusted/user-provided value
+                    creates a security vulnerability (cross-user filesystem access).
             max_files: Maximum number of files allowed
             max_file_size: Maximum size per file in bytes (default 1MB)
         """
+        # NOTE: user_id is accepted as-is without validation. Caller must ensure
+        # it is securely generated (e.g., from session management, crypto-secure IDs)
+        # and NOT from user-provided input.
         self.user_id = user_id
         self.max_files = max_files
         self.max_file_size = max_file_size

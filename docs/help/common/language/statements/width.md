@@ -21,7 +21,7 @@ type: statement
 
 **Alternative**: Terminal width is automatically handled by the UI. For custom formatting, use PRINT statements with TAB() and SPC() functions to control output positioning.
 
-**Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
+**Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference. The WIDTH statement syntax and behavior is documented for reference even though it is not implemented.
 
 ---
 

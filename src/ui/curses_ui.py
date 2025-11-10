@@ -1428,10 +1428,11 @@ class CursesBackend(UIBackend):
 
         # ImmediateExecutor Lifecycle:
         # Created here with an OutputCapturingIOHandler, then recreated in start() with
-        # a fresh OutputCapturingIOHandler. Both instances are fully functional - the
-        # recreation in start() ensures a clean state for each UI session.
-        # Note: The interpreter (self.interpreter) is created once here and reused.
-        # Only the executor and its IO handler are recreated in start().
+        # a fresh OutputCapturingIOHandler. The recreation of the executor in start()
+        # provides a fresh IO handler for each UI session, but does NOT clear the
+        # interpreter's execution state (variables, execution position, etc).
+        # Note: The interpreter (self.interpreter) is created once here and reused
+        # across all UI sessions - only the executor wrapper and its IO handler are recreated.
         self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
 
         # Immediate mode UI widgets
@@ -2411,7 +2412,7 @@ class CursesBackend(UIBackend):
             else:
                 # No room - offer to renumber
                 self.show_input_popup(
-                    f"No room between lines {prev_line_num} and {current_line_num}. Renumber? (y/n): ",
+                    f"No room between lines {prev_line_num} and {current_line_num}. Renumber? (y/n)\n(After renumbering, you'll need to retry the insert): ",
                     lambda response: self._on_insert_line_renumber_response(response)
                 )
                 return
@@ -2675,9 +2676,10 @@ class CursesBackend(UIBackend):
         # Create overlay
         # Main widget retrieval: Use self.base_widget (stored at UI creation time in __init__)
         # rather than self.loop.widget (which reflects the current widget and might be a menu
-        # or other overlay). This approach works for _show_help, _show_keymap, and _show_settings
-        # because these methods close any existing overlays first (via on_close callbacks) before
-        # creating new ones, ensuring self.base_widget is the correct base for the new overlay.
+        # or other overlay). Using self.base_widget ensures a consistent base for the overlay,
+        # allowing these methods to properly support toggle behavior (close own overlay if already
+        # open, or create new one). This is different from _activate_menu() which extracts
+        # base_widget from self.loop.widget to stack on top of existing overlays.
         overlay = urwid.Overlay(
             urwid.AttrMap(help_widget, 'body'),
             self.base_widget,
@@ -3683,7 +3685,8 @@ class CursesBackend(UIBackend):
         def on_input_complete(result):
             """Called when user completes input or cancels."""
             # If user cancelled (ESC), stop program execution
-            # Note: This stops the UI tick. PC already contains the position with stop_reason for CONT.
+            # Note: This stops the UI tick. The interpreter's PC (program counter) is already at
+            # the position where execution should resume if user presses CONT.
             # The behavior is similar to STOP: user can examine variables and continue with CONT.
             if result is None:
                 # Stop execution - PC already contains the position for CONT to resume from
@@ -3781,14 +3784,16 @@ class CursesBackend(UIBackend):
         Updates runtime's statement_table and line_text_map from self.program.
 
         PC handling:
-        - If running and not paused at breakpoint: Preserves PC and execution state
-        - If paused at breakpoint: Resets PC to halted (prevents accidental resumption)
+        - If running (and not paused at breakpoint): Preserves PC to resume correctly
+        - If paused at breakpoint: Resets PC to halted to avoid accidental resumption
         - If not running: Resets PC to halted for safety
 
-        This allows LIST and other commands to see the current program without
-        accidentally triggering execution. When paused at a breakpoint, the PC is
-        intentionally reset; when the user continues via _debug_continue(), the
-        interpreter's state already has the correct PC.
+        Rationale: When syncing a modified program during execution, we need to decide
+        whether to preserve the current PC (execution context) or reset it. If execution
+        is actively running, the saved PC is still valid for resuming. If paused at a
+        breakpoint, resetting PC prevents accidental resumption from the wrong location
+        (when user continues via _debug_continue(), the interpreter maintains correct PC).
+        If not running, halting ensures no accidental execution starts.
         """
         from src.pc import PC
 
@@ -3810,16 +3815,16 @@ class CursesBackend(UIBackend):
                 pc = PC(line_num, stmt_offset)
                 self.runtime.statement_table.add(pc, stmt)
 
-        # Restore PC only if execution is running AND not paused at breakpoint
-        # When paused_at_breakpoint=True, we reset PC to halted to prevent accidental
-        # resumption. When the user continues from a breakpoint (via _debug_continue),
-        # the interpreter's state already has the correct PC.
-        # When not running at all, ensure halted (don't accidentally start execution)
+        # PC restoration logic:
+        # Only preserve PC if execution is actively running and not paused at breakpoint.
+        # This allows the program to resume from where it left off. When paused at a
+        # breakpoint, we reset to halted to prevent confusion about where execution will
+        # resume (the actual breakpoint PC is maintained by the interpreter's own state).
         if self.running and not self.paused_at_breakpoint:
-            # Execution is running - preserve execution state
+            # Execution is running - preserve current execution state
             self.runtime.pc = old_pc
         else:
-            # No execution in progress or paused at breakpoint - ensure halted
+            # No execution in progress or paused at breakpoint - reset to halted
             self.runtime.pc = PC.halted_pc()
 
     def _update_output(self):
@@ -4411,7 +4416,7 @@ class CursesBackend(UIBackend):
             self.runtime.npc = None
 
         # Check if interpreter has work to do (after RUN statement)
-        # No state checking - just ask the interpreter
+        # Query the interpreter's execution state to see if it has more work pending
         has_work = self.interpreter.has_work() if self.interpreter else False
         if self.interpreter and has_work:
             # Start execution if not already running
@@ -4427,11 +4432,12 @@ class CursesBackend(UIBackend):
                     self.io_handler = io_handler
 
                 # Initialize interpreter state for execution
-                # NOTE: Don't call interpreter.start() here. The immediate executor handles
-                # program start setup (e.g., RUN command sets PC appropriately via
-                # interpreter.start()). This function only ensures InterpreterState exists
-                # for tick-based execution tracking. If we called interpreter.start() here,
-                # it would reset PC to the beginning, overriding the PC set by RUN command.
+                # NOTE: Don't call interpreter.start() here. The RUN command (executed via the
+                # immediate executor) already called interpreter.start() to set up the program and
+                # position the PC at the appropriate location. This function only ensures
+                # InterpreterState exists for tick-based execution tracking. If we called
+                # interpreter.start() here again, it would reset PC to the beginning, overriding
+                # the PC set by the RUN command.
                 from src.interpreter import InterpreterState
                 if not hasattr(self.interpreter, 'state') or self.interpreter.state is None:
                     self.interpreter.state = InterpreterState(_interpreter=self.interpreter)
