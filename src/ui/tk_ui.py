@@ -2661,6 +2661,21 @@ class TkBackend(UIBackend):
                 # No selection, just insert
                 pass
 
+            # Check if current line only has an auto-number prompt (e.g., "100 " from FocusIn)
+            # If so, delete it before pasting to avoid duplication
+            current_pos = self.editor_text.text.index(tk.INSERT)
+            current_line_index = int(current_pos.split('.')[0])
+            current_line_text = self.editor_text.text.get(
+                f'{current_line_index}.0',
+                f'{current_line_index}.end'
+            )
+            # Check if line is just a number followed by space(s) (auto-number prompt)
+            if re.match(r'^\d+\s+$', current_line_text):
+                # Delete the auto-number prompt line
+                self.editor_text.text.delete(f'{current_line_index}.0', f'{current_line_index}.end')
+                # Move cursor to start of line
+                self.editor_text.text.mark_set(tk.INSERT, f'{current_line_index}.0')
+
             self.editor_text.text.insert(tk.INSERT, sanitized_text)
 
             # Prevent default paste behavior
