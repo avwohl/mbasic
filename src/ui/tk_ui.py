@@ -1243,7 +1243,8 @@ class TkBackend(UIBackend):
 
         Args:
             variable_name: Array name with type suffix (e.g., "A%")
-            type_suffix: Type character ($, %, !, #, or empty)
+            type_suffix: Type character ($, %, !, #, or empty) - also embedded in variable_name
+                        (parameter provided separately for convenience)
             value_display: Display string like "Array(10x10) [5,3]=42"
         """
         import re
@@ -2608,7 +2609,7 @@ class TkBackend(UIBackend):
             for line in lines:
                 stripped = line.strip()
                 if not stripped:
-                    # Blank line
+                    # Blank line (skip unless it's the last line)
                     if line != lines[-1]:
                         removed_blank = True
                     continue
