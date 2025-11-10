@@ -148,8 +148,8 @@ class PC:
         return cls(line=line, statement=statement, stop_reason=reason, error=None)
 
     @classmethod
-    def error(cls, line: int, statement: int, code: int, message: str,
-              on_error_handler: Optional[int] = None):
+    def with_error(cls, line: int, statement: int, code: int, message: str,
+                   on_error_handler: Optional[int] = None):
         """
         Create a PC stopped on an error.
 
@@ -243,7 +243,7 @@ class PC:
         Returns:
             New PC at same position but with error
         """
-        return PC.error(self.line, self.statement, code, message, on_error_handler)
+        return PC.with_error(self.line, self.statement, code, message, on_error_handler)
 
     # Legacy compatibility methods (for gradual migration)
 

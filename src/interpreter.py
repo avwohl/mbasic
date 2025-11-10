@@ -439,7 +439,7 @@ class Interpreter:
             # Unhandled error
             if self.state.error_info is None:
                 pc = self.runtime.pc
-                self.runtime.pc = pc.with_error(5, str(e)) if pc.is_running() else PC.error(None, 0, 5, str(e))
+                self.runtime.pc = pc.with_error(5, str(e)) if pc.is_running() else PC.with_error(None, 0, 5, str(e))
                 self.state.error_info = ErrorInfo(
                     error_code=5,
                     pc=self.runtime.pc,
@@ -1140,8 +1140,8 @@ class Interpreter:
             var_name,
             end,
             step,
-            self.runtime.pc.line_num,
-            self.runtime.pc.stmt_offset
+            self.runtime.pc.line,
+            self.runtime.pc.statement
         )
 
     def execute_next(self, stmt):
@@ -1269,7 +1269,7 @@ class Interpreter:
 
             # Continue loop - update variable and jump to statement AFTER the FOR
             self.runtime.set_variable(base_name, type_suffix, new_value, token=token, limits=self.limits)
-            # Calculate proper next PC (may be next line if FOR is last statement on its line)
+            # Jump back to statement AFTER the FOR
             for_pc = PC.running_at(return_line, return_stmt)
             next_pc = self.runtime.statement_table.next_pc(for_pc)
             self.runtime.npc = next_pc
