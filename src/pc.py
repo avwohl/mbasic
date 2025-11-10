@@ -106,8 +106,13 @@ class PC:
     def __repr__(self):
         """String representation for debugging"""
         if self.line is None:
+            # Program halted (line is None means not in program)
             if self.stop_reason:
-                return f"PC(STOPPED:{self.stop_reason})"
+                # Explicit stop reason (e.g., "END" from halted factory)
+                if self.error:
+                    return f"PC(HALTED:{self.stop_reason} Error#{self.error.code})"
+                return f"PC(HALTED:{self.stop_reason})"
+            # No explicit stop reason (shouldn't occur normally)
             return "PC(HALTED)"
 
         if self.stop_reason:

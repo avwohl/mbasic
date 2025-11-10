@@ -2153,12 +2153,12 @@ class Interpreter:
         DELETE 10-50     - Delete lines 10 through 50
         DELETE 10-       - Delete lines 10 to end
         DELETE -50       - Delete lines from beginning to 50
-        DELETE           - Delete all lines (keeps variables, unlike NEW which clears both)
+        DELETE           - Delete all lines
 
-        Note: This implementation preserves variables and ALL runtime state when deleting lines.
-        NEW clears both lines and variables (execute_new calls clear_variables/clear_arrays),
-        while DELETE only removes lines from the program AST, leaving variables, open files,
-        error handlers, and loop stacks intact.
+        Note: This implementation preserves variables and ALL runtime state when deleting
+        lines. DELETE only removes lines from the program AST, leaving variables, open
+        files, error handlers, and loop stacks intact. This differs from NEW which clears
+        both lines and variables (via clear_variables/clear_arrays).
         """
         # Delegate to interactive mode if available
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
@@ -2685,10 +2685,9 @@ class Interpreter:
         # Convert to 0-based index
         start_idx = start - 1
 
-        # Validate start position (must be within string: 0 <= start_idx < len)
-        # Note: start_idx == len(current_value) is considered out of bounds (can't start replacement past end)
+        # Validate start position: must be 0 <= start_idx < len(current_value)
+        # If out of bounds, no replacement is performed (MBASIC 5.21 behavior)
         if start_idx < 0 or start_idx >= len(current_value):
-            # Start position is out of bounds - no replacement (MBASIC 5.21 behavior)
             return
 
         # Calculate how many characters to actually replace

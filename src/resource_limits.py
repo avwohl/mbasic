@@ -5,7 +5,7 @@ programs during execution (CPU time, memory, loop depth, etc.). Different UIs
 can create appropriate limit configurations (web UI uses tight limits, local
 UIs use generous limits).
 
-Note: This is distinct from resource_locator.py which finds package data files.
+Note: This is distinct from resource_locator.py which locates package data files.
 
 Usage:
     # Web UI
@@ -187,10 +187,10 @@ class ResourceLimits:
             Estimated size in bytes
         """
         # Calculate total elements for limit checking
-        # Note: DIM A(N) creates N+1 elements (0 to N) in MBASIC 5.21
-        # We replicate this convention here for accurate size calculation (limit checking must match
-        # the actual allocation size). The execute_dim() method in interpreter.py uses the same
-        # convention when creating arrays, ensuring consistency between limit checks and allocation.
+        # Note: DIM A(N) creates N+1 elements (0 to N) in MBASIC 5.21 due to 0-based indexing
+        # We account for this convention in our size calculation to ensure limit checks match
+        # the actual memory allocation size. The execute_dim() method in interpreter.py uses the
+        # same convention when creating arrays, ensuring consistency between limit checks and allocation.
         total_elements = 1
         for dim_size in dimensions:
             total_elements *= (dim_size + 1)  # +1 for 0-based indexing (0 to N)
