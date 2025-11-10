@@ -1637,13 +1637,15 @@ class Interpreter:
         3. UI calls provide_input() with user's input line
         4. On next tick(), buffered input is used (step 1) and input_prompt/input_variables are cleared
 
-        Note: input_file_number is set to None for keyboard input and file# for file input.
-        This allows the UI to distinguish between keyboard prompts (show in UI) and file input
-        (internal, no prompt needed). Currently always None since file input bypasses this path.
+        Note: input_file_number is designed to be set to None for keyboard input and file#
+        for file input. This would allow the UI to distinguish between keyboard prompts
+        (show in UI) and file input (internal, no prompt needed). However, currently always
+        set to None because file input (stmt.file_number is not None) takes a separate code
+        path that reads synchronously without setting the state machine.
 
-        File input bypasses the state machine and reads synchronously because file data is
-        immediately available (blocking I/O), unlike keyboard input which requires async
-        handling in the UI event loop.
+        Design note: File input bypasses the state machine and reads synchronously because
+        file data is immediately available (blocking I/O), unlike keyboard input which
+        requires async handling in the UI event loop.
         """
         # Check if reading from file
         if stmt.file_number is not None:
