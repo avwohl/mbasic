@@ -2239,7 +2239,18 @@ class TkBackend(UIBackend):
     def _on_focus_in(self, event):
         """Handle focus entering editor - show auto-number prompt if empty."""
         # Always ensure cursor is visible when focus enters
-        self.editor_text.text.see(tk.INSERT)
+        # Force cursor to be visible by explicitly setting insert properties
+        self.editor_text.text.config(insertwidth=2)  # Set cursor width
+        self.editor_text.text.focus_force()  # Force focus to text widget
+
+        # Ensure cursor position is visible
+        try:
+            cursor_pos = self.editor_text.text.index(tk.INSERT)
+            self.editor_text.text.see(cursor_pos)
+        except:
+            # If there's any issue, set cursor to start
+            self.editor_text.text.mark_set(tk.INSERT, "1.0")
+            self.editor_text.text.see("1.0")
 
         if not self.auto_number_enabled:
             return
