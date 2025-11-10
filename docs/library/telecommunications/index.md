@@ -6,10 +6,10 @@ Modem, terminal, and BBS programs
 
 ### Bmodem
 
-
+Batch modem file transfer - modem communication program for batch file transfers using CP/M modems
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** modem, transfer, communication
 
 **[Download bmodem.bas](bmodem.bas)**
 
@@ -17,10 +17,10 @@ Modem, terminal, and BBS programs
 
 ### Bmodem1
 
-
+Batch modem v1 - early version of batch modem file transfer program for CP/M systems
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** modem, transfer, communication
 
 **[Download bmodem1.bas](bmodem1.bas)**
 
@@ -28,10 +28,10 @@ Modem, terminal, and BBS programs
 
 ### Command
 
-
+Command processor - terminal command interpreter or BBS command processing system
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** terminal, command, bbs
 
 **[Download command.bas](command.bas)**
 
@@ -39,10 +39,10 @@ Modem, terminal, and BBS programs
 
 ### Exitbbs1
 
-
+BBS exit utility v1 - exit/logout utility for bulletin board systems with cleanup and housekeeping
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** bbs, exit, utility
 
 **[Download exitbbs1.bas](exitbbs1.bas)**
 
@@ -50,10 +50,10 @@ Modem, terminal, and BBS programs
 
 ### Xtel
 
-
+Terminal emulator - communications terminal program for modem connections and BBS access
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** terminal, modem, emulator
 
 **[Download xtel.bas](xtel.bas)**
 

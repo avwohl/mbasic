@@ -84,12 +84,14 @@ Press `f` to cycle through filters:
 ## Sorting Options
 
 Press `s` to cycle through sort orders:
-- **Accessed**: Most recently accessed (read or written) - shown first
+- **Accessed**: Most recently accessed (read or written) - shown first (default)
 - **Written**: Most recently written to - shown first
 - **Read**: Most recently read from - shown first
 - **Name**: Alphabetical by variable name
 
 Press `d` to toggle sort direction (ascending/descending).
+
+**Note**: The default sort order is "Accessed" with newest first.
 
 ## During Debugging
 

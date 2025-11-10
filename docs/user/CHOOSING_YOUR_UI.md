@@ -70,11 +70,11 @@ python3 mbasic --debug program.bas
 
 **Limitations:**
 - Line-by-line editing only
-- No visual debugging interface (uses text commands instead)
+- No visual debugging interface (debugging via text commands only)
 - No mouse support
 - No Save without filename
 
-> **Note:** CLI has full debugging capabilities through text commands (BREAK, STEP, STACK), but lacks the visual debugging interface (Variables Window, clickable breakpoints, etc.) found in Curses, Tk, and Web UIs.
+> **Note:** CLI has full debugging capabilities through text commands (BREAK, STEP, STACK, etc.), but lacks visual debugging features (Variables Window, clickable breakpoints, graphical interface) found in Curses, Tk, and Web UIs.
 
 ### 📟 Curses (Terminal UI)
 

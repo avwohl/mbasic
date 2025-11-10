@@ -10,7 +10,7 @@ keywords: [tk, features, smart insert, breakpoints, variables, debugging]
 
 The Tkinter GUI provides powerful features for BASIC development.
 
-## Smart Insert ({{kbd:smart_insert}})
+## Smart Insert ({{kbd:smart_insert:tk}})
 
 **The fastest way to add code between existing lines!**
 
@@ -20,7 +20,7 @@ Example:
 20 PRINT "END"
 ```
 
-Press {{kbd:smart_insert}} on line 10 → Automatically inserts line 15!
+Press {{kbd:smart_insert:tk}} on line 10 → Automatically inserts line 15!
 
 No mental math required.
 
@@ -36,15 +36,15 @@ The editor checks syntax as you type (100ms delay).
 
 **Set breakpoints:**
 - Click line number in gutter
-- Or press {{kbd:toggle_breakpoint}}
+- Or press {{kbd:toggle_breakpoint:tk}}
 - Blue ● appears
 
 **Debug with:**
-- {{kbd:step_statement}} - Execute next statement
-- {{kbd:step_line}} - Execute next line
-- {{kbd:continue_execution}} - Continue to next breakpoint
+- {{kbd:step_statement:tk}} - Execute next statement
+- {{kbd:step_line:tk}} - Execute next line
+- {{kbd:continue_execution:tk}} - Continue to next breakpoint
 
-## Variables Window ({{kbd:toggle_variables}})
+## Variables Window ({{kbd:toggle_variables:tk}})
 
 Shows all variables with:
 - Name (case preserved - displays as you typed!)
@@ -53,7 +53,7 @@ Shows all variables with:
 
 Updates in real-time during debugging.
 
-## Execution Stack ({{kbd:toggle_stack}})
+## Execution Stack ({{kbd:toggle_stack:tk}})
 
 Shows active FOR loops and GOSUB calls. Perfect for understanding nested structures.
 

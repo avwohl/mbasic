@@ -48,7 +48,7 @@
     "step": {
       "keys": ["STEP", "STEP n"],
       "primary": "STEP",
-      "description": "Execute next statement or n statements - statement-level only, not line-level (STEP | STEP n)"
+      "description": "Execute next statement or n statements (STEP | STEP n) - attempts statement-level stepping"
     },
     "continue": {
       "keys": ["CONT"],

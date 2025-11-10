@@ -158,7 +158,9 @@ HELLO WORLD
 **Explanation:**
 - Multi-character function name with type suffix
 - Converts a single character to uppercase using bit manipulation
-- AND &H5F clears bit 5, converting lowercase to uppercase
+- `&H5F` is hexadecimal notation (hex 5F = decimal 95 = binary 01011111)
+- `AND &H5F` clears bit 5 (the lowercase bit in ASCII), converting lowercase to uppercase
+- For more on hexadecimal constants, see [Constants](../data-types.md)
 
 ### Example 5: Distance Calculation (Real-World Example)
 

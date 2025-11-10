@@ -60,10 +60,10 @@ class SettingsManager:
     def _get_global_settings_path(self) -> Path:
         """Get path to global settings file.
 
-        Note: This method is not currently used. Path resolution has been delegated to the
-        backend (FileSettingsBackend or Redis backend). The __init__ method retrieves paths
-        from backend.global_settings_path for backward compatibility, but these helper
-        methods remain unused. Kept for potential future use or manual path queries.
+        Note: This method is not called internally by SettingsManager. Path resolution has been
+        delegated to the backend (FileSettingsBackend or Redis backend). The __init__ method
+        retrieves paths from backend.global_settings_path for backward compatibility.
+        This helper method is kept for potential future use or manual path queries by external code.
         """
         if os.name == 'nt':  # Windows
             appdata = os.getenv('APPDATA', os.path.expanduser('~'))
@@ -77,10 +77,10 @@ class SettingsManager:
     def _get_project_settings_path(self) -> Optional[Path]:
         """Get path to project settings file.
 
-        Note: This method is not currently used. Path resolution has been delegated to the
-        backend (FileSettingsBackend or Redis backend). The __init__ method retrieves paths
-        from backend.project_settings_path for backward compatibility, but these helper
-        methods remain unused. Kept for potential future use or manual path queries.
+        Note: This method is not called internally by SettingsManager. Path resolution has been
+        delegated to the backend (FileSettingsBackend or Redis backend). The __init__ method
+        retrieves paths from backend.project_settings_path for backward compatibility.
+        This helper method is kept for potential future use or manual path queries by external code.
         """
         if not self.project_dir:
             return None

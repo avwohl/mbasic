@@ -37,16 +37,18 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
     """Apply keyword case policy to a keyword.
 
     Args:
-        keyword: The keyword to transform (must be normalized lowercase)
+        keyword: The keyword to transform (should be normalized lowercase for consistency,
+                 but first_wins policy can handle mixed case by normalizing internally)
         policy: Case policy to apply (force_lower, force_upper, force_capitalize, first_wins, error, preserve)
         keyword_tracker: Dictionary tracking first occurrence of each keyword (for first_wins policy)
 
     Returns:
         Keyword with case policy applied
 
-    Note: This function requires lowercase input to ensure consistent behavior with
-    emit_keyword(). The first_wins policy uses lowercase for lookup; other policies
-    apply transformations based on the lowercase input.
+    Note: While this function can handle mixed-case input (first_wins policy normalizes
+    to lowercase internally for lookup), callers should normalize to lowercase before
+    calling to ensure consistent behavior with emit_keyword() and avoid case-sensitivity
+    issues in non-first_wins policies.
     """
     if policy == "force_lower":
         return keyword.lower()
@@ -247,8 +249,9 @@ class PositionSerializer:
         assignment form (A=5) without the LET keyword, regardless of the original source.
 
         Rationale:
-        - The AST doesn't track whether LET was originally present (intentional simplification)
-        - LET is optional in MBASIC and functionally equivalent to implicit assignment
+        - The AST intentionally does not distinguish between explicit LET and implicit assignment
+          forms, as they are semantically equivalent (by design, not limitation)
+        - LET is optional in MBASIC and has no functional difference from implicit assignment
         - Using implicit form produces more compact, modern-looking code
         - Both forms use the same AST node type for consistency throughout the codebase
 

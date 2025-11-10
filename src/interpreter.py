@@ -1092,7 +1092,9 @@ class Interpreter:
         #   continues at next line. This value is valid because PC can point one past the
         #   last statement to indicate "move to next line" (handled by statement_table.next_pc).
         # Values > len(statements) indicate the statement was deleted (validation error).
-        if return_stmt > len(line_statements):  # Check for strictly greater than (== len is OK)
+        # Validation: return_stmt > len(line_statements) means the statement was deleted
+        # (Note: return_stmt == len(line_statements) is valid as a sentinel value)
+        if return_stmt > len(line_statements):
             raise RuntimeError(f"RETURN error: statement {return_stmt} in line {return_line} no longer exists")
 
         # Jump back to the line and statement after GOSUB
@@ -1581,6 +1583,7 @@ class Interpreter:
         - Violating either condition raises "Duplicate Definition" error
 
         Syntax: OPTION BASE 0 | 1
+        Note: Parser validates that base value is 0 or 1 (parse error if not)
 
         Raises:
             RuntimeError: "Duplicate Definition" if OPTION BASE already executed OR if any arrays exist
@@ -1734,8 +1737,8 @@ class Interpreter:
         Unicode U+0000-U+00FF, allowing round-trip byte preservation.
         Note: CP/M systems often used code pages like CP437 or CP850 for characters
         128-255, which do NOT match latin-1. Latin-1 preserves the BYTE VALUES but
-        not necessarily the CHARACTER MEANING for non-ASCII CP/M text. Conversion
-        may be needed for accurate display of non-English CP/M files.
+        not necessarily the CHARACTER MEANING for non-ASCII CP/M text.
+        Future enhancement: Add optional encoding conversion setting for CP437/CP850 display.
 
         EOF Detection (three methods):
         1. EOF flag already set (file_info['eof'] == True) → returns None immediately
@@ -2142,9 +2145,10 @@ class Interpreter:
         DELETE -50       - Delete lines from beginning to 50
         DELETE           - Delete all lines (keeps variables, unlike NEW which clears both)
 
-        Note: This implementation preserves variables when deleting lines. NEW clears both
-        lines and variables (execute_new calls clear_variables/clear_arrays), while DELETE
-        only removes lines from the program AST, leaving variables intact.
+        Note: This implementation preserves variables and ALL runtime state when deleting lines.
+        NEW clears both lines and variables (execute_new calls clear_variables/clear_arrays),
+        while DELETE only removes lines from the program AST, leaving variables, open files,
+        error handlers, and loop stacks intact.
         """
         # Delegate to interactive mode if available
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
@@ -2387,7 +2391,9 @@ class Interpreter:
             CLOSE #1, #2    - Close files 1 and 2
             CLOSE           - Close all files
 
-        Note: Silently ignores closing unopened files (MBASIC 5.21 compatibility)
+        Note: Silently ignores closing unopened files (MBASIC 5.21 compatibility).
+        This allows defensive CLOSE patterns like: CLOSE #1: CLOSE #2: CLOSE #3
+        which ensure files are closed without needing to track which files are open.
         """
         if not stmt.file_numbers:
             # CLOSE with no arguments - close all files
@@ -2957,6 +2963,8 @@ class Interpreter:
             # rather than the 255-char concatenation limit.
             # Also note: len() counts characters. For ASCII and latin-1 (both single-byte encodings),
             # character count equals byte count. Field buffers (LSET/RSET) use latin-1 encoding.
+            # This implementation assumes strings are ASCII/latin-1; Unicode strings with multi-byte
+            # characters may have len() < 255 but exceed 255 bytes. MBASIC 5.21 used single-byte encodings only.
             if isinstance(result, str) and len(result) > 255:
                 raise RuntimeError("String too long")
             return result
@@ -3066,9 +3074,10 @@ class Interpreter:
         # Note: get_variable_for_debugger() and debugger_set=True are used to avoid
         # triggering variable access tracking. This save/restore is internal function
         # call machinery, not user-visible variable access. The tracking system
-        # (if enabled) distinguishes between:
+        # (if enabled) should distinguish between:
         # - User code variable access (tracked for debugging/variables window)
         # - Internal implementation details (not tracked)
+        # Maintainer warning: Ensure all internal variable operations use debugger_set=True
         saved_vars = {}
         for i, param in enumerate(func_def.parameters):
             param_name = param.name + (param.type_suffix or "")

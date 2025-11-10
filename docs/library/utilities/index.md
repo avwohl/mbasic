@@ -159,10 +159,11 @@ Convert lowercase characters to uppercase using bit masking function
 
 ### Un-Prot
 
-Fixup for ** UN.COM **
+Fixup utility for UN.COM unprotect program - modifies UN.COM to work with MBASIC 5.2 protected files (by B. Norris, 1983)
 
-**Year:** 1980s
-**Tags:** 
+**Author:** B. Norris
+**Year:** 1983
+**Tags:** utility, unprotect, mbasic, tool
 
 **[Download un-prot.bas](un-prot.bas)**
 
@@ -192,10 +193,10 @@ Decode uuencoded files back to binary format
 
 ### Xextract
 
-0 -->END PAGE / 1-20 -->EXTRACT ITEM / 21 -->RESTART
+Database extract utility - reads database files and extracts selected items (phone/address records) to output file
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** database, extract, utility, records
 
 **[Download xextract.bas](xextract.bas)**
 
@@ -203,10 +204,10 @@ Decode uuencoded files back to binary format
 
 ### Xscan
 
-0 -->END PAGE / 1-20 -->DELETE ITEM / 21 -->RESTART
+Database scan and delete utility - reads database files and allows deletion of selected items (phone/address records)
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** database, delete, utility, records
 
 **[Download xscan.bas](xscan.bas)**
 

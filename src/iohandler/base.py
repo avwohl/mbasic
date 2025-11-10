@@ -15,6 +15,11 @@ class IOHandler(ABC):
     All I/O backends (console, GUI, etc.) must implement this interface.
     This allows the MBASIC interpreter to work with any I/O system without
     modifying the core interpreter logic.
+
+    Note: Implementations may provide additional methods beyond this interface
+    for backend-specific functionality (e.g., web_io.get_screen_size()). Such
+    methods are not part of the core interface and should only be used by
+    backend-specific code.
     """
 
     @abstractmethod

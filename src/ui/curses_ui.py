@@ -188,11 +188,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
     Display format: "S<linenum> CODE" where:
     - Field 1 (1 char): Status (●=breakpoint, ?=error, space=normal)
-    - Field 2 (variable width): Line number (1-5 digits, no padding)
+    - Field 2 (variable width): Line number (any number of digits, no padding)
     - Field 3 (rest of line): Program text (BASIC code)
 
-    Line numbers use as many digits as needed (10, 100, 1000, etc.) rather than
-    fixed-width formatting. This maximizes screen space for code.
+    Line numbers use as many digits as needed (10, 100, 1000, 10000, etc.) rather
+    than fixed-width formatting. This maximizes screen space for code.
     """
 
     def __init__(self):
@@ -1001,7 +1001,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Skip empty code lines
             if not code_area.strip() or line_number is None:
                 # Clear error status for empty lines, but preserve breakpoints
-                # Note: line_number > 0 check handles edge case of line 0 (if present)
+                # Note: line_number > 0 check silently skips line 0 if present (not a valid
+                # BASIC line number). This avoids setting status for malformed lines.
                 # Consistent with _check_line_syntax which treats all empty lines as valid
                 if line_number is not None and line_number > 0:
                     new_status = self._get_status_char(line_number, has_syntax_error=False)
@@ -1420,8 +1421,9 @@ class CursesBackend(UIBackend):
         self.interpreter.interactive_mode = self
 
         # ImmediateExecutor Lifecycle:
-        # Created here with temporary IO handler (to ensure attribute exists),
-        # then recreated in start() with a fresh OutputCapturingIOHandler.
+        # Created here with an OutputCapturingIOHandler, then recreated in start() with
+        # a fresh OutputCapturingIOHandler. Both instances are fully functional - the
+        # recreation in start() ensures a clean state for each UI session.
         # Note: The interpreter (self.interpreter) is created once here and reused.
         # Only the executor and its IO handler are recreated in start().
         self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)

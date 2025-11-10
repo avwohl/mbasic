@@ -91,7 +91,12 @@ class Z88dkCBackend(CodeGenBackend):
         return '.c'
 
     def get_compiler_command(self, source_file: str, output_file: str) -> List[str]:
-        """Return z88dk.zcc command for CP/M compilation"""
+        """Return z88dk.zcc command for CP/M compilation.
+
+        Platform requirement: Assumes z88dk is installed via snap on Linux at /snap/bin/z88dk.zcc.
+        This path is hardcoded and will not work on other platforms or installation methods.
+        For non-snap installations, modify this path or make z88dk.zcc available in PATH.
+        """
         # z88dk.zcc +cpm source.c -create-app -o output
         # This generates OUTPUT.COM (uppercase .COM file)
         # -lm links the math library for floating point support

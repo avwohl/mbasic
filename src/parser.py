@@ -393,7 +393,8 @@ class Parser:
                 # but semicolons BETWEEN statements are NOT valid in MBASIC.
                 # MBASIC uses COLON (:) to separate statements, not semicolon (;).
                 self.advance()
-                # If there's more after the semicolon (except another colon or newline), it's an error
+                # Trailing semicolon is valid at actual end-of-line OR before a colon (which separates statements).
+                # If there's more content after the semicolon (not colon, not newline), it's an error.
                 if not self.at_end_of_line() and not self.match(TokenType.COLON):
                     token = self.current()
                     raise ParseError(f"Expected : or newline after ;, got {token.type.name}", token)
@@ -1220,8 +1221,9 @@ class Parser:
             self.advance()  # Skip #
             file_number = self.parse_expression()
             # Optionally consume comma after file number
-            # Note: MBASIC 5.21 typically uses comma (PRINT #1, "text").
-            # Our parser makes the comma optional for flexibility.
+            # Note: MBASIC 5.21 typically requires comma (PRINT #1, "text").
+            # Our parser makes the comma optional for compatibility with BASIC variants
+            # that allow PRINT #1; "text" or PRINT #1 "text".
             # If semicolon appears instead of comma, it will be treated as an item
             # separator in the expression list below (not as a file number separator).
             if self.match(TokenType.COMMA):
@@ -1256,11 +1258,11 @@ class Parser:
             expressions.append(expr)
 
         # Add newline if there's no trailing separator
-        # Separator count vs expression count:
-        # - If separators < expressions: no trailing separator, add newline
-        # - If separators >= expressions: has trailing separator, no newline added
-        # Examples: "PRINT A;B;C" has 2 separators for 3 items (no trailing sep, adds \n)
-        #           "PRINT A;B;C;" has 3 separators for 3 items (trailing sep, no \n)
+        # Logic: After parsing N expressions, we have either N-1 or N separators.
+        # - N-1 separators: No trailing separator after last expression → add newline
+        # - N separators: Trailing separator after last expression → no newline
+        # Examples: "PRINT A;B;C" has 3 expressions, 2 separators (no trailing) → adds \n
+        #           "PRINT A;B;C;" has 3 expressions, 3 separators (trailing ;) → no \n
         if len(separators) < len(expressions):
             separators.append('\n')
 
@@ -2515,8 +2517,9 @@ class Parser:
         Syntax: DIM array1(dims), array2(dims), ...
 
         Dimension expressions: This implementation accepts any expression for array dimensions
-        (e.g., DIM A(X*2, Y+1)), with dimensions evaluated at runtime. This matches MBASIC 5.21
-        behavior. Note: Some compiled BASICs (e.g., QuickBASIC) may require constants only.
+        (e.g., DIM A(X*2, Y+1)), with dimensions evaluated at runtime. This behavior has been
+        verified with MBASIC 5.21 (see tests/bas_tests/ for examples).
+        Note: Some compiled BASICs (e.g., QuickBASIC) may require constants only.
         """
         token = self.advance()
 
@@ -2619,10 +2622,10 @@ class Parser:
             MID$(A$, 3, 5) = "HELLO"
             MID$(P$(I), J, 1) = " "
 
-        Note: The lexer tokenizes 'MID$' in source as a single MID token (the $ is part
-        of the keyword, not a separate token).
+        Note: The lexer tokenizes 'MID$' in source as TokenType.MID (the $ is part
+        of the keyword, not a separate token). The token type name is 'MID', not 'MID$'.
         """
-        token = self.current()  # MID token (represents 'MID$' from source)
+        token = self.current()  # MID token (TokenType.MID represents 'MID$' from source)
         self.advance()  # Skip MID token
 
         # Expect opening parenthesis
@@ -3717,9 +3720,15 @@ class Parser:
         """Parse RESUME statement - Syntax: RESUME [NEXT | 0 | line_number]
 
         Note: RESUME with no argument retries the statement that caused the error.
-        RESUME 0 also retries the error statement (interpreter treats 0 and None equivalently).
+        RESUME 0 also retries the error statement (same as RESUME with no argument).
         RESUME NEXT continues at the statement after the error.
         RESUME line_number continues at the specified line.
+
+        AST representation:
+        - RESUME (no arg) → line_number=None
+        - RESUME 0 → line_number=0 (interpreter handles 0 same as None)
+        - RESUME NEXT → line_number=-1 (sentinel value)
+        - RESUME 100 → line_number=100
         """
         token = self.advance()
 
@@ -3728,8 +3737,8 @@ class Parser:
             self.advance()
             line_number = -1  # -1 sentinel means RESUME NEXT
         elif self.match(TokenType.LINE_NUMBER, TokenType.NUMBER):
-            # Note: RESUME 0 means "retry error statement" (interpreter treats 0 and None equivalently)
-            # We store the actual value (0 or other line number) for the AST
+            # Store the actual value (0 or other line number) in the AST
+            # The interpreter handles line_number=0 the same as line_number=None
             line_number = int(self.advance().value)
 
         return ResumeStatementNode(

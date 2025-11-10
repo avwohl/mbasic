@@ -42,9 +42,9 @@ class ConsoleIOHandler(IOHandler):
 
         For console, this delegates to self.input() (same behavior).
 
-        Note: Python's input() strips only the trailing newline, preserving
-        leading/trailing spaces. However, terminal input behavior may vary
-        across platforms. See input_line() documentation in base.py for details.
+        Note: Python's input() strips only the trailing newline. Leading/trailing
+        spaces are generally preserved, but terminal input behavior may vary across
+        platforms. See input_line() documentation in base.py for details.
         """
         return self.input(prompt)
 

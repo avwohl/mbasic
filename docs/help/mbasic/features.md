@@ -66,7 +66,7 @@ This document lists all features implemented in MBASIC-2025 (this implementation
 - **File management:** KILL, NAME AS, RESET
 - **File queries:** EOF, LOC, LOF
 
-### Functions (50+)
+### Functions (45+)
 
 **Mathematical:**
 - Trigonometric: SIN, COS, TAN, ATN
@@ -91,6 +91,8 @@ This document lists all features implemented in MBASIC-2025 (this implementation
 **User-Defined:**
 - DEF FN - Single-line functions
 - Multi-line DEF FN support
+
+For the complete list of all functions, see [Functions Index](../common/language/functions/index.md).
 
 ### Data Handling
 

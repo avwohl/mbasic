@@ -6,10 +6,10 @@ Demonstration programs and test suites
 
 ### Benchmk
 
-
+Interpreter benchmark program - performance testing suite for BASIC interpreter speed comparison
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** benchmark, performance, test
 
 **[Download benchmk.bas](benchmk.bas)**
 
@@ -17,10 +17,10 @@ Demonstration programs and test suites
 
 ### Test Curses Features
 
+Curses UI feature test - comprehensive test suite for curses terminal interface features in MBASIC
 
-
-**Year:** 1980s
-**Tags:** test
+**Year:** Modern
+**Tags:** test, curses, ui
 
 **[Download test_curses_features.bas](test_curses_features.bas)**
 
@@ -28,10 +28,10 @@ Demonstration programs and test suites
 
 ### Test Curses Input
 
+Curses input test - test program for keyboard input handling in curses terminal interface
 
-
-**Year:** 1980s
-**Tags:** test
+**Year:** Modern
+**Tags:** test, curses, input
 
 **[Download test_curses_input.bas](test_curses_input.bas)**
 
@@ -39,10 +39,10 @@ Demonstration programs and test suites
 
 ### Test Curses Simple
 
+Simple curses test - basic test program for curses terminal interface functionality
 
-
-**Year:** 1980s
-**Tags:** test
+**Year:** Modern
+**Tags:** test, curses, basic
 
 **[Download test_curses_simple.bas](test_curses_simple.bas)**
 
@@ -50,10 +50,10 @@ Demonstration programs and test suites
 
 ### Test Immediate Input
 
+Immediate input test - test program for INKEY$ and immediate keyboard input functions
 
-
-**Year:** 1980s
-**Tags:** test
+**Year:** Modern
+**Tags:** test, input, inkey
 
 **[Download test_immediate_input.bas](test_immediate_input.bas)**
 

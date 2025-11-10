@@ -7,11 +7,12 @@ Provides auto-save functionality with Emacs-inspired naming (#filename#):
 - Provides utilities to check if autosave is newer than saved file
 - Cleans up old autosaves
 
-This module provides building blocks for auto-save functionality. The UI layer
-is responsible for:
-- Prompting user before overwriting files with autosave content
-- Offering recovery on startup if autosave is newer
+This module provides building blocks for auto-save functionality, including
+helper methods to format prompts. The UI layer is responsible for:
+- Displaying prompts to user (this module provides format_recovery_prompt() helper)
+- Deciding when to offer recovery on startup
 - Deciding when to trigger auto-save operations
+- Handling user responses to prompts
 
 Usage:
     manager = AutoSaveManager(autosave_dir=Path.home() / '.mbasic' / 'autosave')

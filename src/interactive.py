@@ -5,8 +5,8 @@ Modern implementation of MBASIC 5.21 interactive REPL
 Implements the interactive REPL with:
 - Line entry and editing
 - Direct commands: AUTO, EDIT, HELP (special-cased before parser, see execute_command())
-- Immediate mode statements: All other commands (RUN, LIST, SAVE, LOAD, NEW, MERGE, FILES,
-  SYSTEM, DELETE, RENUM, etc.) are parsed as BASIC statements and executed via execute_immediate()
+- Immediate mode statements: Most commands (RUN, LIST, SAVE, LOAD, NEW, MERGE, FILES,
+  SYSTEM, DELETE, RENUM, CONT, CHAIN, etc.) are parsed as BASIC statements and executed via execute_immediate()
 - AUTO command for automatic line numbering with customizable start/step
 - EDIT command for character-by-character line editing (insert/delete/copy mode)
 - Immediate mode execution (PRINT, LET, etc. without line numbers)
@@ -34,8 +34,9 @@ from src.ui.keybinding_loader import KeybindingLoader
 # - Backspace/Delete working properly
 # - Arrow keys for navigation
 # - Command history (up/down arrows)
-# - Ctrl+A (start of line), Ctrl+E (end of line)
-# - Emacs keybindings (Ctrl+K, Ctrl+U, etc.)
+# - Ctrl+E (end of line)
+# - Other Emacs keybindings (Ctrl+K, Ctrl+U, etc.)
+# Note: Ctrl+A is rebound for EDIT mode to insert ASCII 0x01 (see _setup_readline)
 try:
     import readline
     READLINE_AVAILABLE = True
@@ -1324,6 +1325,7 @@ class InteractiveMode:
                     break
 
                 # Sanitize input: clear parity bits and filter control characters
+                # (second return value is bool indicating if parity bits were found; not needed here)
                 line_text, _ = sanitize_and_clear_parity(line_text)
 
                 # Check if line is empty (just pressing Enter)
@@ -1394,7 +1396,10 @@ class InteractiveMode:
         FILES - List all files in current directory
         FILES "*.BAS" - List files matching pattern
 
-        Note: Drive letter syntax (e.g., "A:*.*") is not supported in this implementation.
+        Note: Drive letter syntax (e.g., "A:*.*") from CP/M and DOS is not supported.
+        This is a modern implementation running on Unix-like and Windows systems where
+        CP/M-style drive letter prefixes don't apply. Use standard path patterns instead
+        (e.g., "*.BAS", "../dir/*.BAS"). Future enhancement: Could add drive letter mapping.
         """
         from src.ui.ui_helpers import list_files
 
@@ -1453,9 +1458,10 @@ class InteractiveMode:
                 # Initialize immediate mode runtime if needed
                 if self.runtime is None:
                     from resource_limits import create_unlimited_limits
-                    # Pass empty line_text_map since immediate mode uses temporary line 0
-                    # (no source line text available for error reporting, but this is fine
-                    # for immediate mode where the user just typed the statement)
+                    # Pass empty line_text_map since immediate mode uses temporary line 0.
+                    # Design note: Could pass {0: statement} to improve error reporting, but immediate
+                    # mode errors typically reference the statement the user just typed (visible on screen),
+                    # so line_text_map provides minimal benefit. Future enhancement if needed.
                     self.runtime = Runtime(ast, {})
                     self.runtime.setup()
                     self.interpreter = Interpreter(self.runtime, self.io, limits=create_unlimited_limits())

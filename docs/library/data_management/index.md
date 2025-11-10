@@ -6,10 +6,11 @@ Database and file management programs
 
 ### Mfil
 
+Message file creator - utility for creating test versions of name/message files for bulletin board systems (by Dick Lieber, 1982)
 
-
-**Year:** 1980s
-**Tags:** 
+**Author:** Dick Lieber
+**Year:** 1982
+**Tags:** database, files, bbs
 
 **[Download mfil.bas](mfil.bas)**
 
@@ -17,10 +18,10 @@ Database and file management programs
 
 ### Sfamove
 
-
+SFA Move utility - data movement tool for SFA database system
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** database, sfa, utility
 
 **[Download sfamove.bas](sfamove.bas)**
 
@@ -28,10 +29,10 @@ Database and file management programs
 
 ### Sfaobdes
 
-
+SFA Object Designer - design tool for SFA database objects and structures
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** database, sfa, design
 
 **[Download sfaobdes.bas](sfaobdes.bas)**
 
@@ -39,10 +40,10 @@ Database and file management programs
 
 ### Sfavoc
 
-
+SFA Vocabulary - vocabulary/dictionary manager for SFA database system
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** database, sfa, vocabulary
 
 **[Download sfavoc.bas](sfavoc.bas)**
 
@@ -50,10 +51,10 @@ Database and file management programs
 
 ### Xlabels
 
-
+Label printer - database label printing utility for mailing labels and address lists
 
 **Year:** 1980s
-**Tags:** 
+**Tags:** database, labels, printing
 
 **[Download xlabels.bas](xlabels.bas)**
 
