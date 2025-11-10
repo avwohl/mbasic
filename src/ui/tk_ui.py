@@ -2233,8 +2233,9 @@ class TkBackend(UIBackend):
 
     def _on_mouse_click(self, event):
         """Handle mouse click - check for line change after click settles."""
-        # Clear yellow statement highlight when clicking (allows text selection to be visible).
-        # The highlight is restored when execution resumes or when stepping to the next statement.
+        # Clear yellow statement highlight when clicking and paused at breakpoint
+        # (allows text selection to be visible). The highlight is restored when
+        # execution resumes or when stepping to the next statement.
         if self.paused_at_breakpoint:
             self._clear_statement_highlight()
         # Use after() to check after click is processed
