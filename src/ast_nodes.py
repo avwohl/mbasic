@@ -12,7 +12,7 @@ Nodes are organized into:
 """
 
 from typing import List, Optional, Any, Set, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from src.tokens import TokenType, Token
 
