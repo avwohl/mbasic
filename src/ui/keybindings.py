@@ -211,9 +211,9 @@ MENU_KEY = 'ctrl u'
 # Alternative method: Ctrl+C (interrupt signal) - handled by QUIT_ALT_KEY below
 QUIT_KEY = None  # No standard keybinding (use menu or Ctrl+C instead)
 
-# Alternative quit via interrupt signal (Ctrl+C)
-# Note: While not a "standard keybinding", Ctrl+C provides a keyboard shortcut to quit.
-# It's handled as a signal rather than a regular key event, hence the separate constant.
+# Alternative quit keybinding (loaded from JSON config)
+# Note: QUIT_ALT_KEY is loaded from the JSON config (defaults to 'ctrl c')
+# and provides an additional way to quit the program via keyboard.
 _quit_alt_from_json = _get_key('editor', 'quit')
 QUIT_ALT_KEY = _ctrl_key_to_urwid(_quit_alt_from_json) if _quit_alt_from_json else 'ctrl c'
 

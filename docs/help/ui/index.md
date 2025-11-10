@@ -99,7 +99,7 @@ Then open: **http://localhost:8080**
 |---------|--------|-----|---------|-----|-------|
 | Visual Editor | ✓ | ✗ | ✓ | ✓ | |
 | Split View | ✓ | ✗ | ✓ | ✓ | |
-| Debugger | ✓ | ✗ | ✓ | Limited | Web: breakpoints, step, basic stack/vars (no advanced panels) |
+| Debugger | ✓ | ✗ | ✓ | Limited | Web: breakpoints, step, basic variable inspection (planned: advanced panels, watch expressions) |
 | Variables Window | ✓ | ✗ | ✓ | ✓ | Web: popup dialog, not persistent panel |
 | Remote Access | ✗ | ✗ | ✗ | ✓ | |
 | Syntax Highlighting | ✓ | ✗ | ✓ | ✓ | |

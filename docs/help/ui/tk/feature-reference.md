@@ -180,14 +180,13 @@ Standard clipboard operations with native OS clipboard integration.
 
 ### Find/Replace ({{kbd:find:tk}} / {{kbd:replace:tk}})
 Powerful search and replace functionality:
-- Find: {{kbd:find:tk}} - Opens Find-only dialog
-- Replace: {{kbd:replace:tk}} - Opens combined Find/Replace dialog (includes both find and replace)
-- Find Next: F3
-- Options: Case-sensitive, whole word, regex
-- Replace single or all occurrences
-- Search wraps around
+- Find: {{kbd:find:tk}} - Opens Find dialog with search options (case-sensitive, whole word, regex)
+- Replace: {{kbd:replace:tk}} - Opens combined Find/Replace dialog with find and replace options
+- Find Next: F3 to find next occurrence
+- Features: Visual highlighting of matches, replacement count, search wraps around
+- Capabilities: Replace single occurrence or all occurrences
 
-**Note:** The Replace dialog includes find functionality, so {{kbd:replace:tk}} can be used for both finding and replacing.
+**Note:** Both dialogs support full search functionality. The Replace dialog includes all Find features plus replacement options.
 
 ### Smart Insert ({{kbd:smart_insert:tk}})
 Insert a line number at the midpoint between current and next line.
