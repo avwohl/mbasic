@@ -107,7 +107,12 @@ This leaves room to insert lines later.
 | **Delete** | Delete at cursor |
 | **Enter** | Save line |
 
-**Note:** Cut/Copy/Paste operations are not available in the Curses UI due to keyboard shortcut conflicts. Use your terminal's native clipboard functions instead (typically Shift+Ctrl+C/V or mouse selection).
+**Note:** Cut/Copy/Paste operations are not available in the Curses UI due to keyboard shortcut conflicts:
+- **{{kbd:stop:curses}}** (Ctrl+C) - Used for Stop/Interrupt, cannot be used for Copy
+- **{{kbd:save:curses}}** (Ctrl+S) - Used for Save File, cannot be used for Paste (also reserved by terminal for flow control)
+- Cut would require Ctrl+X which isn't used but omitted for consistency
+
+**Workaround:** Use your terminal's native clipboard functions (typically Shift+Ctrl+C/V or mouse selection).
 
 ## Tips
 

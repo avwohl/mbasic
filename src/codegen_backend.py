@@ -136,7 +136,7 @@ class Z88dkCBackend(CodeGenBackend):
 
         # GOSUB return stack - for implementing GOSUB/RETURN
         code.append(self.indent() + '/* GOSUB return stack */')
-        code.append(self.indent() + 'int gosub_stack[100];  /* Return line numbers */')
+        code.append(self.indent() + 'int gosub_stack[100];  /* Return IDs (0, 1, 2...) - not line numbers */')
         code.append(self.indent() + 'int gosub_sp = 0;      /* Stack pointer */')
         code.append('')
 

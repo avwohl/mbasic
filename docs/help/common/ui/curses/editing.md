@@ -146,6 +146,12 @@ Exit AUTO mode with {{kbd:continue:curses}} or by typing a line number manually.
 
 See: [AUTO Command](../../language/statements/auto.md)
 
+## Line Editing with EDIT
+
+The **EDIT** command is supported for compatibility with traditional BASIC, but the Curses UI provides full-screen editing capabilities that make it unnecessary. You can directly navigate to any line and edit it in the full-screen editor.
+
+See: [EDIT Command](../../language/statements/edit.md) for traditional usage
+
 ## Direct Mode
 
 Lines without numbers execute immediately:

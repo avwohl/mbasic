@@ -130,8 +130,9 @@ Complete reference of features available and planned for the MBASIC Web UI.
 **Debug Mode (Partially Implemented):**
 - Basic breakpoint support (via Run menu)
 - Step execution ({{kbd:step:web}}, {{kbd:step_line:web}})
-- Basic variable inspection (via Debug menu)
-- Call stack (planned)
+- Basic variable inspection (via Run → Show Variables)
+- Call stack display (via Run → Show Stack)
+- Advanced debugging features (planned: conditional breakpoints, watch expressions, etc.)
 
 **Trace Mode (Planned):**
 - Line-by-line output

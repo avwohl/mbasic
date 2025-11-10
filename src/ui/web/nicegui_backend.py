@@ -3454,7 +3454,10 @@ class NiceGUIBackend(UIBackend):
     def _serialize_runtime(self) -> dict:
         """Serialize runtime state.
 
-        Handles complex objects like AST nodes using pickle.
+        Uses pickle for complex objects:
+        - statement_table: Contains StatementTable with AST statement nodes (pickled)
+        - user_functions: Contains DefFnStatementNode AST nodes (pickled)
+        Other fields use direct serialization (dicts, lists, primitives).
 
         Returns:
             dict: Serialized runtime state

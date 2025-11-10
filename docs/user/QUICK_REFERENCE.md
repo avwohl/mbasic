@@ -1,6 +1,6 @@
 # MBASIC Curses IDE - Quick Reference Card
 
-> **Note:** This reference uses `{{kbd:command}}` notation for keyboard shortcuts. Actual key mappings are configurable. To see your current key bindings, press the Help key or check `~/.mbasic/curses_keybindings.json`.
+> **Note:** This reference uses `{{kbd:command}}` notation for keyboard shortcuts (e.g., `{{kbd:run}}` is typically `^R` for Ctrl+R). Actual key mappings are configurable. To see your current key bindings, press the Help key or check `~/.mbasic/curses_keybindings.json` for the full list of default and customized keys.
 
 ## Starting the IDE
 ```bash

@@ -24,7 +24,7 @@ Variables are typed by their suffix character:
 |--------|------|-------|-----------|
 | **%** | INTEGER | -32768 to 32767 | Whole numbers |
 | **!** | SINGLE | ±2.938736×10^-39 to ±1.701412×10^38 | ~7 significant digits |
-| **#** | DOUBLE | ±2.938736×10^-308 to ±1.797693×10^308 | approximately 16 digits |
+| **#** | DOUBLE | ±2.938736×10^-308 to ±1.797693×10^308 | ~16 significant digits |
 | **$** | STRING | 0 to 255 characters | Text |
 
 ## INTEGER (%)
@@ -66,7 +66,7 @@ VALUE! = 3.14159
 
 ## DOUBLE Precision (#)
 
-Floating-point numbers with about 16 decimal digits of precision.
+Floating-point numbers with ~16 significant digits of precision.
 
 **Examples:**
 ```basic

@@ -193,11 +193,7 @@ class InputStatementNode:
         INPUT; var1                - Read without prompt (no "?")
         INPUT #filenum, var1       - Read from file
 
-    Note: The suppress_question field is parsed by the parser when INPUT; (semicolon
-    immediately after INPUT) is used, but it is NOT currently checked by the interpreter.
-    Current behavior: "?" is always displayed (either "? " alone or "prompt? ").
-
-    Expected behavior (when suppress_question is implemented):
+    The suppress_question field controls "?" display:
     - suppress_question=False (default): Adds "?" after prompt
       Examples: INPUT var → "? ", INPUT "Name", var → "Name? "
     - suppress_question=True: No "?" added (for INPUT; syntax)
@@ -1206,8 +1202,12 @@ class VariableNode:
         * True: suffix appeared in source code (e.g., "X%" in "X% = 5")
         * False: suffix inferred from DEFINT/DEFSNG/DEFDBL/DEFSTR (e.g., "X" with DEFINT A-Z)
 
+    Source code regeneration rules:
+    - When explicit_type_suffix=True: suffix IS included in regenerated source (e.g., "X%")
+    - When explicit_type_suffix=False: suffix is NOT included in regenerated source (e.g., "X")
+
     Example: In "DEFINT A-Z: X=5", variable X has type_suffix='%' and explicit_type_suffix=False.
-    The suffix must be tracked for type checking but not regenerated in source code.
+    The suffix is tracked for type checking but not output when regenerating source code.
     Both fields must always be examined together to correctly handle variable typing.
     """
     name: str  # Normalized lowercase name for lookups

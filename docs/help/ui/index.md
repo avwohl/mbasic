@@ -95,16 +95,16 @@ Then open: **http://localhost:8080**
 
 ## Comparison
 
-| Feature | Curses | CLI | Tkinter | Web |
-|---------|--------|-----|---------|-----|
-| Visual Editor | ✓ | ✗ | ✓ | ✓ |
-| Split View | ✓ | ✗ | ✓ | ✓ |
-| Debugger | ✓ | ✗ | ✓ | Limited |
-| Variables Window | ✓ | ✗ | ✓ | ✓ |
-| Remote Access | ✗ | ✗ | ✗ | ✓ |
-| Syntax Highlighting | ✓ | ✗ | ✓ | ✓ |
-| Terminal Required | ✓ | ✓ | ✗ | ✗ |
-| Browser Required | ✗ | ✗ | ✗ | ✓ |
+| Feature | Curses | CLI | Tkinter | Web | Notes |
+|---------|--------|-----|---------|-----|-------|
+| Visual Editor | ✓ | ✗ | ✓ | ✓ | |
+| Split View | ✓ | ✗ | ✓ | ✓ | |
+| Debugger | ✓ | ✗ | ✓ | Limited | Web: breakpoints, step, basic stack/vars (no advanced panels) |
+| Variables Window | ✓ | ✗ | ✓ | ✓ | Web: popup dialog, not persistent panel |
+| Remote Access | ✗ | ✗ | ✗ | ✓ | |
+| Syntax Highlighting | ✓ | ✗ | ✓ | ✓ | |
+| Terminal Required | ✓ | ✓ | ✗ | ✗ | |
+| Browser Required | ✗ | ✗ | ✗ | ✓ | |
 
 ## Choosing an Interface
 

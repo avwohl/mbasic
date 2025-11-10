@@ -41,29 +41,27 @@ Arrays show:
 - Element count
 - Cannot expand to show individual elements (limitation)
 
-## Modifying Variables
+## Limitations
 
-### Direct Editing Not Available
+### Variable Editing Not Available
 ⚠️ **Not Implemented**: You cannot edit variable values directly in the variables window.
 
-### What the Window Provides
-- View all variables
-- See current values
-- Monitor during execution
-- Update display in real-time
+The variables window is read-only. To modify variables, use immediate mode:
 
-### How to Modify Variables
-Use immediate mode commands instead:
-
-1. Note the variable you want to change
-2. Close variables window (Esc)
-3. Stop program if running ({{kbd:continue:curses}})
-4. Use immediate mode to modify variables:
+1. Close variables window (Esc)
+2. Stop program if running ({{kbd:continue:curses}})
+3. Use immediate mode to modify:
    ```
    A = 100
    B$ = "New Value"
    ```
-5. Continue program or re-run
+4. Continue program or re-run
+
+The variables window provides:
+- View all variables
+- See current values
+- Monitor during execution
+- Update display in real-time
 
 ## Filtering and Searching
 

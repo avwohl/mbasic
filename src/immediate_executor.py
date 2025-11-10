@@ -20,7 +20,13 @@ class ImmediateExecutor:
 
     This class allows visual UIs to provide an "Ok" prompt experience where
     users can execute BASIC statements without line numbers, accessing and
-    modifying the current program state.
+    modifying the current program state. It also handles numbered line editing
+    for program modification.
+
+    Features:
+    - Execute immediate statements (PRINT, LET, etc.) without line numbers
+    - Numbered line editing: add/modify/delete program lines (e.g., "100 PRINT X")
+    - Access and modify current program state (variables, arrays)
 
     IMPORTANT: For tick-based execution (visual UIs), only execute immediate
     mode when the interpreter is in a safe state. The implementation checks:
@@ -47,6 +53,8 @@ class ImmediateExecutor:
         if executor.can_execute_immediate():
             success, output = executor.execute("PRINT X")
             success, output = executor.execute("X = 100")
+            success, output = executor.execute("100 PRINT X")  # Add line 100
+            success, output = executor.execute("100")  # Delete line 100
     """
 
     def __init__(self, runtime=None, interpreter=None, io_handler=None):
@@ -113,19 +121,29 @@ class ImmediateExecutor:
 
     def execute(self, statement):
         """
-        Execute an immediate mode statement.
+        Execute an immediate mode statement or handle numbered line editing.
 
         IMPORTANT: For tick-based interpreters, this should only be called when
         can_execute_immediate() returns True. Calling while the program is actively
         running (halted=False) may corrupt the interpreter state.
 
         Args:
-            statement: BASIC statement without line number (e.g., "PRINT X", "X=5")
+            statement: BASIC statement, which can be:
+                - Immediate statement without line number (e.g., "PRINT X", "X=5")
+                - Numbered line for program editing (e.g., "100 PRINT", "200")
 
         Returns:
             tuple: (success: bool, output: str)
                 - success: True if execution succeeded, False if error
                 - output: Output text or error message
+
+        Numbered Line Editing:
+            When a numbered line is entered (e.g., "100 PRINT X"), this method
+            adds or updates that line in the program via UI integration:
+            - Requires interpreter.interactive_mode to reference the UI object
+            - UI must have add_line() and delete_line() methods
+            - Empty line content (e.g., "100") deletes that line
+            - Returns error tuple if UI integration is missing or incomplete
 
         Examples:
             >>> executor.execute("PRINT 2 + 2")
@@ -136,6 +154,12 @@ class ImmediateExecutor:
 
             >>> executor.execute("? X")
             (True, " 100\\n")
+
+            >>> executor.execute("100 PRINT X")
+            (True, "")  # Adds line 100 to program
+
+            >>> executor.execute("100")
+            (True, "")  # Deletes line 100 from program
 
             >>> executor.execute("SYNTAX ERROR")
             (False, "Syntax error\\n")

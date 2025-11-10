@@ -11,7 +11,7 @@ type: statement
 
 ## Implementation Note
 
-⚠️ **Emulated as No-Op**: This statement is parsed for compatibility but performs no operation.
+⚠️ **Not Implemented**: This statement is parsed for compatibility but performs no operation.
 
 **Behavior**: The simple "WIDTH <number>" statement parses and executes successfully without errors, but does not affect output width (settings are silently ignored).
 

@@ -184,8 +184,8 @@ OPEN "O", #1, "GAME.BAS"      ' No paths allowed
 **Storage and persistence:**
 - Files stored in server-side memory (sandboxed filesystem per session)
 - Files persist during browser session but are lost on page refresh
-- Note: Settings (not files) can persist via Redis if configured - see [Web UI Settings](../ui/web/settings.md)
-- No persistent storage across sessions
+- Note: Settings (not files) persist in browser localStorage by default, or via Redis if configured - see [Web UI Settings](../ui/web/settings.md)
+- No persistent file storage across sessions
 - 50 file limit, 1MB per file
 
 **File naming:**

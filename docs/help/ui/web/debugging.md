@@ -108,11 +108,18 @@ Planned feature to add custom expressions to monitor:
 
 ## Call Stack
 
-**Note:** The call stack panel described below is a planned feature and not yet implemented in the Web UI.
+**Implementation Status:** Basic call stack viewing via Run → Show Stack menu is currently available. It shows the current execution stack in a popup dialog. The advanced stack panel features described below are planned for future releases.
 
-### Stack Panel (Planned)
+### Stack Viewing (Current)
 
-Planned feature that would show execution path:
+Use **Run → Show Stack** to view the current execution stack in a popup dialog showing:
+- GOSUB call chain
+- FOR loop contexts
+- Line number information
+
+### Advanced Stack Panel (Planned)
+
+Planned enhanced features that would show execution path in a dedicated panel:
 
 ```
 Call Stack

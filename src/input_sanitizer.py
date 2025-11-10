@@ -1,13 +1,16 @@
 """Input sanitization utilities for MBASIC editor.
 
-This module provides functions to sanitize user input by:
-1. Filtering out unwanted control characters
-2. Clearing parity bits from incoming characters
+This module provides functions to sanitize user input through a two-step process:
+1. First: Clear parity bits from incoming characters (bit 7)
+2. Then: Filter out unwanted control characters
 
 These utilities help prevent issues with:
-- Control characters corrupting editor content
 - Parity bits (bit 7) causing character mismatches
+- Control characters corrupting editor content
 - Invalid characters in BASIC programs
+
+The main entry point, sanitize_and_clear_parity(), applies these operations
+sequentially to ensure characters are in valid ASCII range before filtering.
 
 Implementation note: Uses standard Python type hints (e.g., tuple[str, bool])
 which require Python 3.9+. For earlier Python versions, use Tuple[str, bool] from typing.
@@ -66,8 +69,12 @@ def sanitize_input(text: str) -> str:
 
     Filters out:
     - Control characters (except tab, newline, CR)
-    - Extended ASCII (128-255)
-    - Non-ASCII Unicode
+    - Characters outside ASCII range 0-127
+
+    Note: This function is typically called after clear_parity_all() in the
+    sanitize_and_clear_parity() pipeline, where parity bits have already been
+    cleared. It validates that characters are in the valid range (32-126, plus
+    tab/newline/CR).
 
     Args:
         text: Input text to sanitize

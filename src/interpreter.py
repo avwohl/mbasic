@@ -1154,8 +1154,11 @@ class Interpreter:
           variables are not processed
         - Returns False (loop finished): That loop is popped, next variable is processed
 
-        This differs from separate statements (NEXT I: NEXT J: NEXT K) which would
-        always execute sequentially, processing all three NEXT statements.
+        Note: This method handles a single NEXT statement, which may contain comma-separated
+        variables (NEXT I, J, K). The parser treats colon-separated NEXT statements
+        (NEXT I: NEXT J: NEXT K) as distinct statements, each calling execute_next()
+        independently. This method does NOT handle the colon-separated case - that's
+        handled by the parser creating multiple statements.
         """
         # Determine which variables to process
         if stmt.variables:
@@ -1663,15 +1666,21 @@ class Interpreter:
                 line = self.state.input_buffer.pop(0)
             else:
                 # No buffered input - need to wait for user input
-                # Show prompt
+                # Show prompt (check suppress_question flag for INPUT; syntax)
                 if stmt.prompt:
                     prompt_value = self.evaluate_expression(stmt.prompt)
                     self.io.output(prompt_value, end='')
-                    self.io.output("? ", end='')
-                    full_prompt = prompt_value + "? "
+                    if not stmt.suppress_question:
+                        self.io.output("? ", end='')
+                        full_prompt = prompt_value + "? "
+                    else:
+                        full_prompt = prompt_value
                 else:
-                    self.io.output("? ", end='')
-                    full_prompt = "? "
+                    if not stmt.suppress_question:
+                        self.io.output("? ", end='')
+                        full_prompt = "? "
+                    else:
+                        full_prompt = ""
 
                 # Set input prompt - execution will pause
                 # Sets: input_prompt (prompt text), input_variables (var list),
@@ -2868,7 +2877,7 @@ class Interpreter:
         The stopped flag allows CONT to resume from the saved position.
 
         PC handling difference:
-        - STOP: execute_stop() explicitly moves NPC to PC (line 2808), ensuring CONT
+        - STOP: execute_stop() explicitly moves PC to NPC (line 2825: pc = npc), ensuring CONT
           resumes from the statement AFTER the STOP.
         - Break (Ctrl+C): BreakException handler (line 376-381) does NOT update PC,
           leaving PC pointing to the statement that was interrupted. This means CONT
@@ -2884,24 +2893,22 @@ class Interpreter:
         self.interactive_mode.cmd_cont()
 
     def execute_step(self, stmt):
-        """Execute STEP statement (debug command) - PARTIALLY IMPLEMENTED
+        """Execute STEP statement (debug command) - NOT IMPLEMENTED
 
         STEP is intended to execute one or more statements, then pause.
 
         CURRENT STATUS: This method outputs an informational message but does NOT
-        actually perform stepping. It's a partial implementation that acknowledges
-        the command but doesn't execute the intended behavior.
+        actually perform stepping. It's a stub that acknowledges the command but
+        doesn't execute the intended behavior.
 
-        The tick_pc() method DOES have working step infrastructure (modes 'step_statement'
-        and 'step_line'), which is used by UI debuggers. However, this STEP command
-        (for typing "STEP" in immediate mode) is not connected to that infrastructure.
+        Note: The tick_pc() method has working step infrastructure (modes 'step_statement'
+        and 'step_line') that is used by UI debuggers. This STEP command (for typing
+        "STEP" in immediate mode) would need to be connected to that infrastructure
+        by setting a runtime flag and coordinating with the UI's tick loop, but this
+        integration does not currently exist.
 
-        UIs should use tick_pc(mode='step_statement') directly, not this command.
-
-        Full STEP command implementation would require:
-        - Integration with tick_pc(mode='step_statement')
-        - State tracking for multi-step commands
-        - UI coordination for displaying position between steps
+        UIs should use tick_pc(mode='step_statement') directly for debugging, not this
+        STEP command which is for interactive use in immediate mode.
         """
         count = stmt.count if stmt.count else 1
         self.io.output(f"STEP {count} - Debug stepping not fully implemented")

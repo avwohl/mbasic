@@ -43,10 +43,11 @@ Quick reference for the curses text UI.
 | Key | Action |
 |-----|--------|
 | **{{kbd:toggle_breakpoint:curses}}** | Toggle breakpoint on current line |
+| **Shift+{{kbd:toggle_breakpoint:curses}}** | Clear all breakpoints |
 | **Delete/Backspace** | Delete current line |
 | **{{kbd:renumber:curses}}** | Renumber all lines (RENUM) |
 
-**Note:** Cut/Copy/Paste are not available - use your terminal's native clipboard (typically Shift+Ctrl+C/V or mouse selection).
+**Note:** Cut/Copy/Paste are not available due to keyboard shortcut conflicts (Ctrl+C is Stop, Ctrl+S is Save). Use your terminal's native clipboard (typically Shift+Ctrl+C/V or mouse selection).
 
 **Note:** Find/Replace is not yet available in Curses UI. See [Find/Replace](find-replace.md) for workarounds.
 

@@ -62,7 +62,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 | **Full-screen editor** | ❌ | ✅ | ✅ | ✅ | CLI is line-based |
 | **Syntax highlighting** | ❌ | ⚠️ | ✅ | ✅ | Curses: basic |
 | **Cut/Copy/Paste** | ❌ | ❌ | ✅ | ✅ | GUI clipboard support |
-| **Find/Replace** | ❌ | ❌ | ✅ | ⚠️ | Tk: implemented, Web: planned |
+| **Find/Replace** | ❌ | ❌ | ✅ | 📋 | Tk: implemented, Web: planned |
 | **Auto-complete** | ❌ | ❌ | ❌ | ✅ | Web suggests keywords |
 | **Smart Insert** | ❌ | ❌ | ✅ | ❌ | Tk exclusive feature |
 
@@ -95,7 +95,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 | **Mouse support** | ❌ | ⚠️ | ✅ | ✅ | Curses: limited, terminal-dependent |
 | **Menus** | ❌ | ✅ | ✅ | ✅ | CLI: commands only |
 | **Keyboard shortcuts** | ⚠️ | ✅ | ✅ | ✅ | CLI: limited |
-| **Resizable panels** | ❌ | ⚠️ | ✅ | ✅ | Curses: fixed 70/30 split (not user-resizable) |
+| **Resizable panels** | ❌ | ❌ | ✅ | ✅ | Curses: fixed 70/30 split (not user-resizable) |
 | **Themes** | ❌ | ❌ | ⚠️ | ✅ | Web: light/dark |
 | **Font options** | ❌ | ❌ | ✅ | ✅ | |
 

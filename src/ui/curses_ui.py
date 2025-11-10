@@ -261,9 +261,14 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         Format: "SNN CODE" where S=status, NN=line number (variable width)
 
-        When user edits line numbers, this finds the last valid number before code starts.
-        Example: User types "10 20" then starts code - returns 20 as the line number.
-        Example: " 100 FOR I=1 TO 10" - returns 100, "FOR" indicates code starts.
+        This finds the last valid line number before code starts. Each number must be
+        followed by a space to be considered a line number (not part of code).
+
+        Examples:
+        - " 10 PRINT" → returns 10 (single line number)
+        - " 10 20 PRINT" → returns 20 (last of multiple numbers)
+        - " 100 FOR I=1 TO 10" → returns 100 (FOR starts code, 1 is in code)
+        - " 10" → returns 10 (number with no code yet)
 
         Args:
             line: Display line string

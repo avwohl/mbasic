@@ -25,8 +25,9 @@ class LineNumberedText(tk.Frame if tk else object):
 
     Status priority (when both error and breakpoint):
     - ? takes priority (error shown)
-    - After fixing error, ● becomes visible (automatically handled by set_error() method
-      which checks has_breakpoint flag when clearing errors)
+    - After fixing error, ● becomes visible
+    - Both set_error() and set_breakpoint() apply the same priority logic:
+      error > breakpoint > blank (no special handling for clearing vs setting)
 
     Automatic blank line removal:
     - When cursor moves away from a blank line, that line is automatically deleted

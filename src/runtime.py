@@ -354,15 +354,17 @@ class Runtime:
             name: Variable name (e.g., 'x', 'foo')
             type_suffix: Type suffix ($, %, !, #) or None
             def_type_map: Optional DEF type mapping
-            token: REQUIRED - Token object for tracking (ValueError raised if None).
+            token: REQUIRED - A token object must be provided (ValueError raised if None).
+                   The token enables source location tracking for this variable access.
 
-                   Token object is required but its attributes are optional:
-                   - token.line: Preferred for tracking, falls back to self.pc.line_num if missing
-                   - token.position: Preferred for tracking, falls back to None if missing
+                   Token attributes have fallback behavior:
+                   - token.line: Used for tracking if present, otherwise falls back to self.pc.line_num
+                   - token.position: Used for tracking if present, otherwise falls back to None
 
-                   This allows robust handling of tokens from various sources (lexer, parser,
-                   fake tokens) while enforcing that some token object must be provided.
-                   For debugging without token requirements, use get_variable_for_debugger().
+                   Why token object is required: Even with attribute fallbacks, the token object
+                   itself is mandatory to distinguish intentional program execution (which must
+                   provide a token) from debugging/inspection (which should use get_variable_for_debugger()).
+                   This design prevents accidental omission of tracking during normal execution.
 
         Returns:
             Variable value (default 0 for numeric, "" for string)

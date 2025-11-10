@@ -56,7 +56,8 @@ This document lists all features implemented in MBASIC-2025 (this implementation
 - **PRINT** - Output with formatting (`;`, `,`, TAB, SPC)
 - **PRINT USING** - Formatted output with format strings
 - **INPUT** - Interactive input with prompts
-- **LINE INPUT** - Full line input
+- **LINE INPUT** - Full line input (Note: Graphics LINE statement is not implemented)
+- **CLS** - Clear screen
 - **LPRINT** - Line printer output (Note: Statement is parsed but produces no output - see [LPRINT](../common/language/statements/lprint-lprint-using.md) for details)
 
 **File I/O:**

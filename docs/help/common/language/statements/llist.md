@@ -15,7 +15,7 @@ type: statement
 
 **Behavior**: Statement is parsed but no listing is sent to a printer
 
-**Why**: Line printers are obsolete hardware. Modern systems use different printing paradigms.
+**Why**: Line printers are obsolete hardware. Modern systems use different printing paradigms (print spooling, PDF generation, etc.).
 
 **Alternative**: Use [LIST](list.md) to display program to console, then redirect output to a file for printing using your operating system's print facilities:
 ```bash

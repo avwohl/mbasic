@@ -26,11 +26,11 @@ class SettingsManager:
 
     Precedence: project > global > default
 
-    Note: File-level settings (per-file settings) infrastructure is FULLY IMPLEMENTED for
-    runtime manipulation (file_settings dict, FILE scope support in get/set/reset methods),
-    but persistence is NOT IMPLEMENTED (load() doesn't populate it, save() doesn't persist it).
-    Files can have temporary settings set programmatically via set() with scope=SettingScope.FILE,
-    but these won't survive program restarts. Reserved for future use with persistence layer.
+    Note: File-level settings (per-file settings) are PARTIALLY IMPLEMENTED. The file_settings
+    dict exists and can be set programmatically via set(key, value, scope=SettingScope.FILE),
+    but there is NO persistence layer (load() doesn't populate it, save() doesn't persist it)
+    and NO UI/command interface to manage them. These are temporary in-memory settings only,
+    reserved for future use when a persistence layer is added.
     """
 
     def __init__(self, project_dir: Optional[str] = None, backend: Optional[SettingsBackend] = None):

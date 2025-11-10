@@ -1161,7 +1161,10 @@ def serialize_statement(stmt):
     # For unhandled statement types, raise an error to prevent silent data corruption
     # Prevention strategy: Explicitly fail (with ValueError) rather than silently omitting
     # statements during RENUM, which would corrupt the program.
-    # All statement types must be handled above - if we reach here, serialization failed.
+    # Note: There is no compile-time verification that all AST statement types are handled.
+    # If new statement types are added to the parser, they won't be caught until runtime
+    # when RENUM is attempted on code containing them. This is acceptable because the error
+    # is explicit and prevents corruption (better than silently dropping statements).
     else:
         from src.debug_logger import debug_log
         error_msg = f"Unhandled statement type '{stmt_type}' in serialize_statement() - cannot serialize during RENUM"

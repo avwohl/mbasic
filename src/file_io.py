@@ -198,8 +198,10 @@ class SandboxedFileIO(FileIO):
               browser's File → Save to persist them locally.
 
     Implementation status:
-    - list_files(): FULLY IMPLEMENTED - delegates to backend.sandboxed_fs to list
-                    in-memory files created by BASIC programs (OPEN/PRINT#/CLOSE)
+    - list_files(): IMPLEMENTED - delegates to backend.sandboxed_fs to list in-memory
+                    files created by BASIC programs (OPEN/PRINT#/CLOSE). Returns empty
+                    list if backend.sandboxed_fs doesn't exist. Catches exceptions and
+                    returns (filename, None, False) for files that can't be stat'd.
     - load_file(): STUB - raises IOError (requires async refactor to load .BAS programs)
     - save_file(): STUB - raises IOError (requires async refactor to save .BAS programs)
     - delete_file(): STUB - raises IOError (requires async refactor)

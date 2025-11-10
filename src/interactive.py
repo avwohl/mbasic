@@ -187,9 +187,10 @@ class InteractiveMode:
 
         Note: We do NOT clear the stopped flag here. The stopped flag is checked
         by CONT to determine if there's anything to continue. When the program is
-        edited, CONT will still see stopped=True but will fail because the PC and
-        execution state are now invalid (this is the intended behavior documented
-        in cmd_cont()).
+        edited, CONT will still see stopped=True and attempt to continue from the
+        (now invalid) PC position. This may crash or behave incorrectly because
+        CONT does not detect that the program was edited. Real MBASIC 5.21 shows
+        "?Can't continue" after editing, but this implementation has no such check.
         """
         if self.program_runtime:
             self.program_runtime.gosub_stack.clear()
@@ -474,12 +475,12 @@ class InteractiveMode:
         - Resumes tick-based execution loop
         - Handles input prompts and errors during execution
 
-        IMPORTANT: CONT will fail with "?Can't continue" if the program has been edited
-        (lines added, deleted, or renumbered). While the stopped flag remains True after
-        editing, the PC and execution stacks (GOSUB/RETURN and FOR/NEXT) become invalid,
-        causing CONT to fail. The stopped flag is intentionally NOT cleared by
-        clear_execution_state() so that CONT can detect the invalid state.
-        See clear_execution_state() for details.
+        BUG: CONT does not detect if the program has been edited (lines added, deleted,
+        or renumbered). It only checks if stopped=True. After editing, the PC position
+        becomes invalid but CONT will attempt to resume anyway, which may crash or
+        behave incorrectly. Real MBASIC 5.21 shows "?Can't continue" after editing.
+        The stopped flag is intentionally NOT cleared by clear_execution_state() to
+        preserve the ability to add edit detection in the future.
         """
         if not self.program_runtime or not self.program_runtime.stopped:
             print("?Can't continue")
@@ -1004,17 +1005,19 @@ class InteractiveMode:
         INTENTIONAL DEVIATION FROM MANUAL:
         This implementation renumbers for ANY binary operator with ERL on left, including
         arithmetic operators (ERL + 100, ERL * 2, etc.), not just comparison operators.
+        This is a deliberate design choice to avoid missing valid line number references.
 
-        Implementation: The code does NOT filter by operator type - it simply checks if the
-        expression is a BinaryOpNode with ERL on left and a NumberNode on right. No operator
-        type checking is performed, so ALL binary operators trigger renumbering.
-
-        Rationale: Without semantic analysis of operator types, we cannot distinguish
-        ERL=100 (comparison) from ERL+100 (arithmetic) at parse time. We conservatively
-        renumber all cases to avoid missing valid line number references in comparisons.
+        Rationale: We cannot reliably distinguish comparison operators (ERL=100) from
+        arithmetic operators (ERL+100) without complex semantic analysis. To ensure we never
+        miss renumbering a valid line reference in a comparison, we conservatively renumber
+        ALL binary operations with ERL on the left side.
 
         Known limitation: Arithmetic like "IF ERL+100 THEN..." will incorrectly renumber
         the 100 if it happens to be an old line number. This is rare in practice.
+
+        Implementation: Checks if expression is BinaryOpNode with ERL (VariableNode) on left
+        and NumberNode on right. Operator type is intentionally NOT checked - all operators
+        are treated the same to implement the conservative renumbering strategy described above.
 
         Args:
             expr: Expression node to check
