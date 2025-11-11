@@ -548,6 +548,10 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_out(stmt)
         elif isinstance(stmt, DefFnStatementNode):
             return self._generate_def_fn(stmt)
+        elif isinstance(stmt, SwapStatementNode):
+            return self._generate_swap(stmt)
+        elif isinstance(stmt, RandomizeStatementNode):
+            return self._generate_randomize(stmt)
         else:
             # Unsupported statement
             self.warnings.append(f"Unsupported statement type: {type(stmt).__name__}")
@@ -1272,6 +1276,79 @@ class Z88dkCBackend(CodeGenBackend):
             code.append('}')
 
         return code
+
+    def _generate_swap(self, stmt: SwapStatementNode) -> List[str]:
+        """Generate SWAP statement
+
+        SWAP var1, var2 - Exchange values of two variables
+        """
+        code = []
+
+        # Get variable types
+        var1_type = self._get_expression_type(stmt.var1)
+        var2_type = self._get_expression_type(stmt.var2)
+
+        # Check that types match
+        if var1_type != var2_type:
+            self.warnings.append(f"SWAP between different types not supported")
+            return [self.indent() + '/* Type mismatch in SWAP */']
+
+        if var1_type == VarType.STRING:
+            # For strings, swap the string IDs
+            var1_id = self._get_string_id(stmt.var1.name)
+            var2_id = self._get_string_id(stmt.var2.name)
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + 'mb25_string temp_str;')
+            code.append(self.indent() + f'mb25_string_copy(&temp_str, &mb25_strings[{var1_id}]);')
+            code.append(self.indent() + f'mb25_string_copy(&mb25_strings[{var1_id}], &mb25_strings[{var2_id}]);')
+            code.append(self.indent() + f'mb25_string_copy(&mb25_strings[{var2_id}], &temp_str);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+        else:
+            # For numeric types
+            var1_name = self._generate_variable_reference(stmt.var1)
+            var2_name = self._generate_variable_reference(stmt.var2)
+
+            # Determine temp variable type
+            c_type = 'int' if var1_type == VarType.INTEGER else 'double'
+
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + f'{c_type} _temp = {var1_name};')
+            code.append(self.indent() + f'{var1_name} = {var2_name};')
+            code.append(self.indent() + f'{var2_name} = _temp;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+
+        return code
+
+    def _generate_randomize(self, stmt: RandomizeStatementNode) -> List[str]:
+        """Generate RANDOMIZE statement
+
+        RANDOMIZE [seed] - Initialize random number generator
+        """
+        code = []
+
+        if stmt.seed is not None:
+            # Use provided seed
+            seed_expr = self._generate_expression(stmt.seed)
+            code.append(self.indent() + f'srand((unsigned int)({seed_expr}));')
+        else:
+            # Use time as seed (requires time.h)
+            code.append(self.indent() + 'srand((unsigned int)time(NULL));')
+            # Note: We'd need to include time.h for this
+
+        return code
+
+    def _generate_variable_reference(self, var_node: VariableNode) -> str:
+        """Generate C code for a variable reference (for SWAP)"""
+        if var_node.subscripts:
+            # Array element
+            return self._generate_array_access(var_node)
+        else:
+            # Simple variable
+            return self._mangle_variable_name(var_node.name)
 
     def _generate_expression(self, expr: Any) -> str:
         """Generate C code for an expression"""
