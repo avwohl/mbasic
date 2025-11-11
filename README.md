@@ -27,28 +27,30 @@ See [Implementation Status](#implementation-status) section below for details, [
 
 ## Installation
 
-### From PyPI (Prepared, Not Yet Published)
+### From PyPI (Beta Release)
 
-**Status**: Package is prepared and tested, awaiting publication to PyPI.
+**Status**: Currently in BETA testing (version 1.0.0b1). We're gathering feedback before the stable 1.0.0 release.
 
-Once published, you'll be able to install with:
+To install the beta version, use the `--pre` flag:
 
 ```bash
 # Minimal install - CLI backend only (zero dependencies)
-pip install mbasic
+pip install --pre mbasic
 
 # With full-screen terminal UI (curses backend)
-pip install mbasic[curses]
+pip install --pre mbasic[curses]
 
 # With graphical UI (tkinter - included with Python)
-pip install mbasic[tk]
+pip install --pre mbasic[tk]
 
 # With all UI backends
-pip install mbasic[all]
+pip install --pre mbasic[all]
 
 # For development
-pip install mbasic[dev]
+pip install --pre mbasic[dev]
 ```
+
+> **Note**: The `--pre` flag is required to install beta/alpha releases. Once we release version 1.0.0, the `--pre` flag will no longer be necessary.
 
 **Building from source**: See [Linux Mint Developer Setup](docs/dev/LINUX_MINT_DEVELOPER_SETUP.md) for complete system setup including all required packages, compiler tools, and development dependencies.
 
