@@ -98,4 +98,12 @@ The Web IDE provides:
 
 ---
 
+## Beyond the Interpreter
+
+The Web IDE runs programs in **interpreter mode**. To compile BASIC programs to native CP/M executables:
+
+**[MBASIC Compiler →](../../common/compiler/index.md)** - Generate native .COM files for Z80 systems (100% complete!)
+
+---
+
 **Welcome to MBASIC!** Choose a section above to get started, or use the search box to find specific topics.

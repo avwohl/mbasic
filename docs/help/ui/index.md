@@ -122,4 +122,14 @@ Then open: **http://localhost:8080**
 
 ---
 
+## Beyond the Interpreter: The Compiler
+
+All interfaces above run BASIC programs in **interpreter mode**. For generating native CP/M executables, see:
+
+**🔧 [MBASIC Compiler](../common/compiler/index.md)** - Compile BASIC to native .COM files for Z80 CP/M systems
+
+The compiler is 100% feature complete and generates real machine code with hardware access!
+
+---
+
 Click any interface above to view detailed documentation, keyboard shortcuts, and feature guides.

@@ -117,4 +117,12 @@ Ok
 
 ---
 
+## Beyond the Interpreter
+
+The CLI runs programs in **interpreter mode**. To compile BASIC programs to native CP/M executables:
+
+**[MBASIC Compiler →](../../common/compiler/index.md)** - Generate native .COM files for Z80 systems (100% complete!)
+
+---
+
 Type `HELP <topic>` for more information on any topic listed above.

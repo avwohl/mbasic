@@ -84,4 +84,12 @@ Press **/** to search across all help content. Results are grouped by section (U
 
 ---
 
+## Beyond the Interpreter
+
+The Curses UI runs programs in **interpreter mode**. To compile BASIC programs to native CP/M executables:
+
+**[MBASIC Compiler →](../../common/compiler/index.md)** - Generate native .COM files for Z80 systems (100% complete!)
+
+---
+
 **Welcome to MBASIC!** Choose a section above to get started, or press `/` to search for a specific topic.

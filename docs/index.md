@@ -42,6 +42,14 @@ MBASIC 5.21 is a classic BASIC dialect from the CP/M era (late 1970s - early 198
 
     [:octicons-arrow-right-24: MBASIC Docs](help/mbasic/index.md)
 
+-   :material-cogs:{ .lg .middle } __Compiler__
+
+    ---
+
+    Compile BASIC to native CP/M executables - 100% feature complete!
+
+    [:octicons-arrow-right-24: Compiler Guide](help/common/compiler/index.md)
+
 -   :material-gamepad-variant:{ .lg .middle } __Games Library__
 
     ---
@@ -62,16 +70,18 @@ MBASIC 5.21 is a classic BASIC dialect from the CP/M era (late 1970s - early 198
 
 ## Key Features
 
-- ✅ **100% MBASIC 5.21 Compatibility** - Run authentic MBASIC programs
+- ✅ **Two Complete Implementations** - Interactive interpreter AND native code compiler
+- ✅ **100% MBASIC 5.21 Compatibility** - Run authentic MBASIC programs unchanged
+- ✅ **Generates CP/M Executables** - Compile to native .COM files for Z80 processors
 - ✅ **Multiple User Interfaces** - CLI, Curses terminal, Tkinter GUI, or Web browser
 - ✅ **Cross-Platform** - Linux, macOS, Windows
-- ✅ **Zero Dependencies** - Pure Python, no external libraries required for core functionality
-- ✅ **Advanced Optimizations** - Semantic analyzer with 18 compiler optimizations
+- ✅ **Zero Dependencies** - Pure Python, no external libraries required for interpreter
+- ✅ **Hardware Access** - Full PEEK/POKE/INP/OUT support in compiled code
 - ✅ **Complete Documentation** - Comprehensive help for every feature
 
 ## Documentation Structure
 
-This documentation is organized into three tiers:
+This documentation is organized into four tiers:
 
 ### 1. User Interfaces (📘)
 
@@ -91,7 +101,16 @@ Implementation-specific documentation:
 - **[Compatibility](help/mbasic/compatibility.md)** - Differences from CP/M MBASIC
 - **[Architecture](help/mbasic/architecture.md)** - How it works
 
-### 3. BASIC-80 Language (📕)
+### 3. MBASIC Compiler (🔧)
+
+Native code compiler documentation:
+
+- **[Compiler Guide](help/common/compiler/index.md)** - Getting started with the compiler
+- **[Setup Instructions](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_SETUP.md)** - Installing z88dk and tools
+- **[Feature Status](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_STATUS_SUMMARY.md)** - 100% complete feature list
+- **[CP/M Emulator](https://github.com/avwohl/mbasic/blob/main/docs/dev/TNYLPO_SETUP.md)** - Testing compiled programs
+
+### 4. BASIC-80 Language (📕)
 
 Complete language reference:
 
