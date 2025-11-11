@@ -1,6 +1,6 @@
-# MBASIC Documentation
+# MBASIC-2025 Documentation
 
-This directory contains all documentation for the MBASIC 5.21 interpreter and compiler project.
+This directory contains all documentation for the MBASIC-2025 interpreter and compiler project.
 
 ## Directory Structure
 

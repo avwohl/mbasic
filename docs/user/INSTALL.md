@@ -1,6 +1,6 @@
 # Installation Guide
 
-This guide will help you install and run the MBASIC 5.21 Interpreter on your computer.
+This guide will help you install and run the MBASIC-2025 Interpreter on your computer.
 
 ## Prerequisites
 
@@ -175,7 +175,7 @@ python3 mbasic
 You should see:
 
 ```
-MBASIC 5.21 Interpreter
+MBASIC-2025 - Modern MBASIC 5.21 Interpreter
 Ready
 
 Ok
@@ -260,7 +260,7 @@ This is a required system package for creating virtual environments on Debian-ba
 
 ## Feature Status
 
-This is a comprehensive implementation of MBASIC 5.21. All core language features and statements are implemented and tested, with some hardware-specific features emulated or adapted for modern systems.
+MBASIC-2025 is a comprehensive implementation of MBASIC 5.21. All core language features and statements are implemented and tested, with some hardware-specific features emulated or adapted for modern systems.
 
 ### What Works
 - ✓ Mathematical calculations and expressions

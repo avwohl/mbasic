@@ -8,7 +8,7 @@ keywords: [help, cli, command-line, repl, interface]
 
 # MBASIC CLI Help
 
-Command-line interface for MBASIC 5.21. Type `HELP <topic>` for specific help or `HELP SEARCH <keyword>` to search all content.
+Command-line interface for MBASIC-2025. Type `HELP <topic>` for specific help or `HELP SEARCH <keyword>` to search all content.
 
 ## 🎮 Games Library
 

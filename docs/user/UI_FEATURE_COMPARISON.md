@@ -36,7 +36,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 
 | Feature | CLI | Curses | Tk | Web | Notes |
 |---------|-----|--------|----|-----|-------|
-| **Run BASIC programs** | ✅ | ✅ | ✅ | ✅ | All UIs run MBASIC 5.21 |
+| **Run BASIC programs** | ✅ | ✅ | ✅ | ✅ | All UIs run MBASIC-2025 |
 | **Edit programs** | ✅ | ✅ | ✅ | ✅ | Different editing styles |
 | **Load/Save files** | ✅ | ✅ | ✅ | ✅ | Web uses browser storage |
 | **Immediate mode** | ✅ | ✅ | ✅ | ✅ | Direct command execution |
@@ -296,7 +296,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 - All UIs use same .bas format
 - Programs are 100% compatible
 - Only UI features differ
-- Same MBASIC 5.21 interpreter
+- Same MBASIC-2025 interpreter
 
 ## Getting Help
 

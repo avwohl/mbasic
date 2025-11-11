@@ -1,10 +1,10 @@
-# MBASIC 5.21 Documentation
+# MBASIC-2025 Documentation
 
-Welcome to the complete documentation for MBASIC 5.21, a Python implementation of MBASIC-80 for CP/M.
+Welcome to the complete documentation for MBASIC-2025, a Python implementation of MBASIC-80 for CP/M.
 
-## What is MBASIC?
+## What is MBASIC-2025?
 
-MBASIC 5.21 is a classic BASIC dialect from the CP/M era (late 1970s - early 1980s). This interpreter provides 100% compatibility with MBASIC 5.21 programs while offering modern user interfaces and cross-platform support.
+MBASIC 5.21 is a classic BASIC dialect from the CP/M era (late 1970s - early 1980s). MBASIC-2025 provides 100% compatibility with MBASIC 5.21 programs while offering modern user interfaces and cross-platform support.
 
 ## Quick Links
 

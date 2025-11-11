@@ -382,7 +382,7 @@ If you know Tk/Web but need CLI:
 
 ### Your Programs Work Everywhere
 
-**Important**: All UIs run the same MBASIC 5.21 interpreter. Your .bas files work identically in any UI.
+**Important**: All UIs run the same MBASIC-2025 interpreter. Your .bas files work identically in any UI.
 
 ## Multi-UI Workflow
 
