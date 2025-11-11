@@ -119,3 +119,6 @@ mkdocs gh-deploy
 - [Compiler Status Summary](dev/COMPILER_STATUS_SUMMARY.md) - **100% complete!**
 - [Compiler Setup](dev/COMPILER_SETUP.md) - z88dk installation
 - [CP/M Emulator Setup](dev/TNYLPO_SETUP.md) - tnylpo installation
+
+### Developer Setup
+- [Linux Mint Developer Setup](dev/LINUX_MINT_DEVELOPER_SETUP.md) - **Complete system setup** (all packages & tools)

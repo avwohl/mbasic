@@ -330,6 +330,7 @@ mbasic/
 - **[CP/M Emulator Setup](docs/dev/TNYLPO_SETUP.md)** - tnylpo installation for testing
 
 ### Developer Documentation
+- **[Linux Mint Developer Setup](docs/dev/LINUX_MINT_DEVELOPER_SETUP.md)** - Complete system setup guide (all packages & tools)
 - **[Parser Implementation](docs/dev/)** - How the parser works (shared by interpreter & compiler)
 - **[Interpreter Architecture](docs/dev/)** - Interpreter design overview
 - **[Interpreter Implementation](docs/dev/)** - Interpreter implementation details
