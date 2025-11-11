@@ -2329,15 +2329,16 @@ class NiceGUIBackend(UIBackend):
         """Help > Help Topics - Opens in web browser."""
         try:
             from ..web_help_launcher import open_help_in_browser
+            from ...docs_config import get_docs_url
             # Note: URL is constructed by web_help_launcher based on topic parameter
-            topic_path = "help/ui/web/"
+            topic_path = "ui/web/"
             success = open_help_in_browser(topic=topic_path, ui_type="web")
 
             if success:
                 self._notify('Opening help in browser...', type='positive', log_to_output=False)
             else:
-                # URL construction matches web_help_launcher logic
-                url = f'http://localhost:8000/docs/{topic_path}'
+                # Get the actual URL from configuration
+                url = get_docs_url(topic_path, "web")
                 msg = f'Could not open browser automatically.\n\nPlease open this URL manually:\n{url}'
                 self._notify(msg, type='warning')
                 self._append_output(f'\n--- Help URL ---\n{url}\n')
@@ -2349,15 +2350,18 @@ class NiceGUIBackend(UIBackend):
         """Help > Games Library - Opens program library in browser."""
         try:
             from ..web_help_launcher import open_help_in_browser
+            from ...docs_config import DOCS_BASE_URL
             # Note: URL is constructed by web_help_launcher based on topic parameter
+            # Library is at root level, not under /help/, so we construct it from base
             topic_path = "library/"
             success = open_help_in_browser(topic=topic_path, ui_type="web")
 
             if success:
                 self._notify('Opening program library in browser...', type='positive', log_to_output=False)
             else:
-                # URL construction matches web_help_launcher logic
-                url = f'http://localhost:8000/docs/{topic_path}'
+                # Get base URL and construct library path
+                base_url = DOCS_BASE_URL.replace('/help/', '/')  # Library is at site root, not under /help/
+                url = f'{base_url.rstrip("/")}/library/'
                 msg = f'Could not open browser automatically.\n\nPlease open this URL manually:\n{url}'
                 self._notify(msg, type='warning')
                 self._append_output(f'\n--- Library URL ---\n{url}\n')

@@ -1,7 +1,7 @@
 """Web browser help launcher for MBASIC.
 
 Opens help documentation in the system's default web browser.
-Points to a web server serving the built MkDocs documentation.
+Points to GitHub Pages by default, with optional override via MBASIC_DOCS_URL environment variable.
 """
 
 import webbrowser
@@ -10,15 +10,14 @@ import socket
 import time
 from pathlib import Path
 from typing import Optional
-
-
-# URL where help documentation is served
-# Local web server serving the built MkDocs site
-HELP_BASE_URL = "http://localhost/mbasic_docs"
+from ..docs_config import get_docs_url, DOCS_BASE_URL
 
 
 def open_help_in_browser(topic=None, ui_type="tk"):
     """Open help documentation in web browser.
+
+    Uses GitHub Pages by default (https://avwohl.github.io/mbasic/help/).
+    Override with MBASIC_DOCS_URL environment variable for local development.
 
     Args:
         topic: Specific help topic (e.g., "statements/print", "ui/tk/index")
@@ -27,17 +26,8 @@ def open_help_in_browser(topic=None, ui_type="tk"):
     Returns:
         bool: True if browser opened successfully, False otherwise
     """
-    # Construct URL
-    if topic:
-        # Handle different topic formats
-        if not topic.startswith('/'):
-            topic = '/' + topic
-        if not topic.endswith('/') and '.' not in topic:
-            topic += '/'
-        url = HELP_BASE_URL + topic
-    else:
-        # Default to UI-specific index
-        url = f"{HELP_BASE_URL}/ui/{ui_type}/"
+    # Get URL using centralized configuration
+    url = get_docs_url(topic, ui_type)
 
     # Check if a browser is available
     try:
@@ -70,7 +60,7 @@ def open_help():
 
 
 # Legacy class kept for compatibility - new code should use direct web URL instead
-# The help site is already built and served at http://localhost/mbasic_docs
+# The help site is built and served at GitHub Pages (https://avwohl.github.io/mbasic/help/)
 #
 # Migration guide for code using this class:
 # OLD: launcher = WebHelpLauncher(); launcher.open_help("statements/print")
@@ -214,17 +204,11 @@ class WebHelpLauncher_DEPRECATED:
             self.server_process = None
 
 
-# Alternative: Use GitHub Pages or other hosted documentation
-def open_online_help(topic: Optional[str] = None):
+# Alias for backwards compatibility
+def open_online_help(topic: Optional[str] = None, ui_type: str = "cli"):
     """Open online help documentation.
 
-    Opens the hosted documentation on GitHub Pages or other hosting service.
+    Opens the hosted documentation on GitHub Pages.
+    This is now an alias for open_help_in_browser() since it uses GitHub Pages by default.
     """
-    base_url = "https://yourusername.github.io/mbasic-docs"
-
-    if topic:
-        url = f"{base_url}/{topic}"
-    else:
-        url = base_url
-
-    webbrowser.open(url)
+    return open_help_in_browser(topic, ui_type)
