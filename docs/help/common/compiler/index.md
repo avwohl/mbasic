@@ -1,6 +1,6 @@
 # MBASIC Compiler
 
-**Status: 100% Complete!** - The MBASIC compiler is fully implemented with every compilable MBASIC 5.21 feature.
+**Status: Core Features Complete!** - The MBASIC-2025 compiler implements all core computational features of MBASIC 5.21. The only unimplemented feature is CHAIN (program chaining), which is planned for a future release.
 
 ## Overview
 
@@ -12,14 +12,15 @@ The MBASIC compiler translates BASIC-80 programs into native CP/M executables fo
 - **Interpreter** - Run BASIC programs interactively with modern UIs
 - **Compiler** - Generate native .COM executables for CP/M systems
 
-**100% Feature Complete:**
+**Core Features Implemented:**
 - All data types (INTEGER %, SINGLE !, DOUBLE #, STRING $)
 - All control structures (IF/THEN/ELSE, FOR/NEXT, WHILE/WEND, GOTO, GOSUB/RETURN)
 - All 50+ built-in functions
 - Complete file I/O (sequential, random access, binary)
 - Error handling (ON ERROR GOTO, RESUME, ERR, ERL)
-- Hardware access (PEEK/POKE/INP/OUT/WAIT)
-- Machine language integration (CALL/USR/VARPTR)
+- Hardware access (PEEK/POKE/INP/OUT/WAIT) - **Works in compiled code!**
+- Machine language integration (CALL/USR/VARPTR) - **Works in compiled code!**
+- Missing: CHAIN (program chaining) - planned for future release
 
 ## Getting Started
 
@@ -88,7 +89,7 @@ The compiler includes a sophisticated runtime library:
 
 ## What Works
 
-**Everything!** The compiler implements 100% of compilable MBASIC 5.21 features:
+**Nearly Everything!** The compiler implements all core computational features of MBASIC 5.21:
 
 ✅ All data types and operators
 ✅ All control flow structures
@@ -102,13 +103,21 @@ The compiler includes a sophisticated runtime library:
 ✅ String manipulation (MID$ assignment)
 ✅ User-defined functions (DEF FN)
 
-## What Doesn't Apply
+## What's Not Yet Implemented
 
-These are interpreter-only features:
+MBASIC-2025 compiler is feature-complete for core computational features. However, some specialized features are not yet implemented:
 
-- Interactive commands (LIST, RUN, SAVE, LOAD) - not applicable to compiled programs
-- CHAIN/COMMON - requires runtime loader infrastructure
-- CLOAD/CSAVE - cassette tape operations
+**Not Implemented (but supported by Microsoft BASCOM):**
+- **CHAIN** - Program chaining to other .COM files
+  - Microsoft's compiler supported basic `CHAIN "filename"` using CP/M warm boot
+  - Could be implemented using the same technique (write to 0080H, jump to 0000H)
+  - Not implemented in MBASIC-2025 compiler yet
+
+**Not Supported by Microsoft BASCOM either:**
+- **COMMON** - Variable passing between chained programs (interpreter-only in MBASIC 5.21)
+- **CHAIN ALL/MERGE/DELETE** - Advanced chaining options (interpreter-only)
+- **Interactive commands** - LIST, RUN, SAVE, LOAD (not applicable to compiled programs)
+- **CLOAD/CSAVE** - Cassette tape operations (obsolete)
 
 ## See Also
 

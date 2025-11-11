@@ -2,9 +2,9 @@
 
 ## Executive Summary
 
-**THE COMPILER IS 100% COMPLETE!** 🎉
+**THE COMPILER CORE FEATURES ARE COMPLETE!** 🎉
 
-All MBASIC 5.21 features that can be implemented in a compiler are now done. This includes the final batch completed today:
+All core computational features of MBASIC 5.21 are now implemented. This includes the final batch completed on 2025-11-11:
 - PEEK/POKE, INP/OUT, WAIT (hardware access)
 - CALL, USR, VARPTR (machine language interface)
 - RESET, NAME, FILES, WIDTH, LPRINT, CLEAR (system operations)
@@ -108,9 +108,15 @@ All MBASIC 5.21 features that can be implemented in a compiler are now done. Thi
 - **LPRINT** - Line printer output ✅
 
 ### Program Chaining
-- **CHAIN** - Load another program (warning - interpreter-only) ⚠️
-- **COMMON** - Declare shared variables (comment only) ⚠️
-- **ERASE** - Deallocate arrays (warning - not supported, matches Microsoft) ⚠️
+- **CHAIN** - Load another program (not yet implemented) ⚠️
+  - Microsoft BASCOM supports basic CHAIN "filename" using CP/M warm boot
+  - Not yet implemented in MBASIC-2025 compiler
+  - Could be added in future release
+- **COMMON** - Declare shared variables (not supported, matches Microsoft) ⚠️
+  - Microsoft BASCOM does NOT support COMMON (interpreter-only in MBASIC 5.21)
+  - Generates warning in MBASIC-2025 compiler
+- **ERASE** - Deallocate arrays (not supported, matches Microsoft) ⚠️
+  - Microsoft BASCOM does NOT support ERASE either
 
 ### Interpreter-Only Features (Not Applicable)
 - LIST, LOAD, SAVE, MERGE, NEW, DELETE, RENUM
@@ -133,7 +139,7 @@ All MBASIC 5.21 features that can be implemented in a compiler are now done. Thi
 | Hardware Access | 100% | PEEK/POKE/INP/OUT/WAIT (2025-11-11) |
 | Machine Language | 100% | CALL/USR/VARPTR (2025-11-11) |
 | File Management | 100% | RESET/NAME implemented (2025-11-11) |
-| Program Chaining | N/A | CHAIN/COMMON (interpreter-only) |
+| Program Chaining | Missing | CHAIN not yet implemented (see note) |
 
 ## What's Actually Left?
 
@@ -142,14 +148,17 @@ All MBASIC 5.21 features that can be implemented in a compiler are now done. Thi
 ~~3. **Hardware Access** (0.5 days)~~ ✅ COMPLETE (2025-11-11)
 ~~4. **Machine Language Interface** (0.5 days)~~ ✅ COMPLETE (2025-11-11)
 
-### Nothing Critical Left!
+### One Non-Critical Feature Remaining
 
-**ALL MBASIC 5.21 COMPILER FEATURES ARE NOW IMPLEMENTED!** 🎉
+**CHAIN** - Microsoft BASCOM supports basic `CHAIN "filename"` using CP/M warm boot (write to 0080H, jump to 0000H). This could be implemented but is not yet done. Not a critical feature for most programs.
 
-The remaining "features" (CHAIN/COMMON/ERASE) are either:
-- Interpreter-only (CHAIN, COMMON)
-- Not supported by Microsoft's compiler (ERASE)
-- Display/system features that generate warnings (WIDTH, FILES, CLEAR parameters)
+**ALL CORE COMPUTATIONAL FEATURES ARE NOW IMPLEMENTED!** 🎉
+
+The remaining features not fully implemented:
+- **CHAIN** - Supported by Microsoft BASCOM, not yet in MBASIC-2025 (could be added)
+- **COMMON** - NOT supported by Microsoft BASCOM either (interpreter-only in MBASIC 5.21)
+- **ERASE** - NOT supported by Microsoft BASCOM either
+- **Display/system features** - Generate warnings (WIDTH, FILES, CLEAR parameters)
 
 ## Surprise Discovery
 
@@ -180,12 +189,13 @@ The documentation was way out of date!
 - ✅ Machine language interface (CALL, USR, VARPTR) ← **Completed today!**
 - ✅ File management (RESET, NAME, LPRINT) ← **Completed today!**
 
-Interpreter-only features (documented with warnings):
-- ⚠️ CHAIN, COMMON - require interpreter/loader
-- ⚠️ ERASE - not supported by Microsoft BASIC Compiler either
-- ⚠️ FILES, WIDTH, CLEAR parameters - display/system features
+Features not yet implemented or not applicable:
+- ⚠️ **CHAIN** - Supported by Microsoft BASCOM, not yet in MBASIC-2025 (could be added)
+- ⚠️ **COMMON** - NOT supported by Microsoft BASCOM either (interpreter-only in MBASIC 5.21)
+- ⚠️ **ERASE** - NOT supported by Microsoft BASCOM either
+- ⚠️ **FILES, WIDTH, CLEAR parameters** - Display/system features (generate warnings)
 
-**Status: 100% feature-complete for MBASIC 5.21 compilation!**
+**Status: Core features complete! CHAIN is the only Microsoft BASCOM feature not yet implemented.**
 
 ## Recent Work (2025-11-11)
 

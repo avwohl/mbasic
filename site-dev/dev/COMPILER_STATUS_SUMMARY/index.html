@@ -1391,9 +1391,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#nothing-critical-left" class="md-nav__link">
+  <a href="#one-non-critical-feature-remaining" class="md-nav__link">
     <span class="md-ellipsis">
-      Nothing Critical Left!
+      One Non-Critical Feature Remaining
     </span>
   </a>
   
@@ -1508,8 +1508,8 @@
 
 <h1 id="mbasic-compiler-actual-status-2025-11-11">MBASIC Compiler - Actual Status (2025-11-11)<a class="headerlink" href="#mbasic-compiler-actual-status-2025-11-11" title="Permanent link">&para;</a></h1>
 <h2 id="executive-summary">Executive Summary<a class="headerlink" href="#executive-summary" title="Permanent link">&para;</a></h2>
-<p><strong>THE COMPILER IS 100% COMPLETE!</strong> 🎉</p>
-<p>All MBASIC 5.21 features that can be implemented in a compiler are now done. This includes the final batch completed today:
+<p><strong>THE COMPILER CORE FEATURES ARE COMPLETE!</strong> 🎉</p>
+<p>All core computational features of MBASIC 5.21 are now implemented. This includes the final batch completed on 2025-11-11:
 - PEEK/POKE, INP/OUT, WAIT (hardware access)
 - CALL, USR, VARPTR (machine language interface)
 - RESET, NAME, FILES, WIDTH, LPRINT, CLEAR (system operations)</p>
@@ -1620,9 +1620,15 @@
 </ul>
 <h3 id="program-chaining">Program Chaining<a class="headerlink" href="#program-chaining" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>CHAIN</strong> - Load another program (warning - interpreter-only) ⚠️</li>
-<li><strong>COMMON</strong> - Declare shared variables (comment only) ⚠️</li>
-<li><strong>ERASE</strong> - Deallocate arrays (warning - not supported, matches Microsoft) ⚠️</li>
+<li><strong>CHAIN</strong> - Load another program (not yet implemented) ⚠️</li>
+<li>Microsoft BASCOM supports basic CHAIN "filename" using CP/M warm boot</li>
+<li>Not yet implemented in MBASIC-2025 compiler</li>
+<li>Could be added in future release</li>
+<li><strong>COMMON</strong> - Declare shared variables (not supported, matches Microsoft) ⚠️</li>
+<li>Microsoft BASCOM does NOT support COMMON (interpreter-only in MBASIC 5.21)</li>
+<li>Generates warning in MBASIC-2025 compiler</li>
+<li><strong>ERASE</strong> - Deallocate arrays (not supported, matches Microsoft) ⚠️</li>
+<li>Microsoft BASCOM does NOT support ERASE either</li>
 </ul>
 <h3 id="interpreter-only-features-not-applicable">Interpreter-Only Features (Not Applicable)<a class="headerlink" href="#interpreter-only-features-not-applicable" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1702,8 +1708,8 @@
 </tr>
 <tr>
 <td>Program Chaining</td>
-<td>N/A</td>
-<td>CHAIN/COMMON (interpreter-only)</td>
+<td>Missing</td>
+<td>CHAIN not yet implemented (see note)</td>
 </tr>
 </tbody>
 </table>
@@ -1712,12 +1718,14 @@
 <del>2. <strong>File Management</strong> (0.5 days)</del> ✅ COMPLETE (2025-11-11)
 <del>3. <strong>Hardware Access</strong> (0.5 days)</del> ✅ COMPLETE (2025-11-11)
 <del>4. <strong>Machine Language Interface</strong> (0.5 days)</del> ✅ COMPLETE (2025-11-11)</p>
-<h3 id="nothing-critical-left">Nothing Critical Left!<a class="headerlink" href="#nothing-critical-left" title="Permanent link">&para;</a></h3>
-<p><strong>ALL MBASIC 5.21 COMPILER FEATURES ARE NOW IMPLEMENTED!</strong> 🎉</p>
-<p>The remaining "features" (CHAIN/COMMON/ERASE) are either:
-- Interpreter-only (CHAIN, COMMON)
-- Not supported by Microsoft's compiler (ERASE)
-- Display/system features that generate warnings (WIDTH, FILES, CLEAR parameters)</p>
+<h3 id="one-non-critical-feature-remaining">One Non-Critical Feature Remaining<a class="headerlink" href="#one-non-critical-feature-remaining" title="Permanent link">&para;</a></h3>
+<p><strong>CHAIN</strong> - Microsoft BASCOM supports basic <code>CHAIN "filename"</code> using CP/M warm boot (write to 0080H, jump to 0000H). This could be implemented but is not yet done. Not a critical feature for most programs.</p>
+<p><strong>ALL CORE COMPUTATIONAL FEATURES ARE NOW IMPLEMENTED!</strong> 🎉</p>
+<p>The remaining features not fully implemented:
+- <strong>CHAIN</strong> - Supported by Microsoft BASCOM, not yet in MBASIC-2025 (could be added)
+- <strong>COMMON</strong> - NOT supported by Microsoft BASCOM either (interpreter-only in MBASIC 5.21)
+- <strong>ERASE</strong> - NOT supported by Microsoft BASCOM either
+- <strong>Display/system features</strong> - Generate warnings (WIDTH, FILES, CLEAR parameters)</p>
 <h2 id="surprise-discovery">Surprise Discovery<a class="headerlink" href="#surprise-discovery" title="Permanent link">&para;</a></h2>
 <p>While auditing what's left, I found that many "TODO" features are <strong>already implemented</strong>:
 - ✅ IF/THEN/ELSE (old docs said missing!)
@@ -1741,11 +1749,12 @@
 - ✅ Hardware access (PEEK/POKE, INP/OUT, WAIT) ← <strong>Completed today!</strong>
 - ✅ Machine language interface (CALL, USR, VARPTR) ← <strong>Completed today!</strong>
 - ✅ File management (RESET, NAME, LPRINT) ← <strong>Completed today!</strong></p>
-<p>Interpreter-only features (documented with warnings):
-- ⚠️ CHAIN, COMMON - require interpreter/loader
-- ⚠️ ERASE - not supported by Microsoft BASIC Compiler either
-- ⚠️ FILES, WIDTH, CLEAR parameters - display/system features</p>
-<p><strong>Status: 100% feature-complete for MBASIC 5.21 compilation!</strong></p>
+<p>Features not yet implemented or not applicable:
+- ⚠️ <strong>CHAIN</strong> - Supported by Microsoft BASCOM, not yet in MBASIC-2025 (could be added)
+- ⚠️ <strong>COMMON</strong> - NOT supported by Microsoft BASCOM either (interpreter-only in MBASIC 5.21)
+- ⚠️ <strong>ERASE</strong> - NOT supported by Microsoft BASCOM either
+- ⚠️ <strong>FILES, WIDTH, CLEAR parameters</strong> - Display/system features (generate warnings)</p>
+<p><strong>Status: Core features complete! CHAIN is the only Microsoft BASCOM feature not yet implemented.</strong></p>
 <h2 id="recent-work-2025-11-11">Recent Work (2025-11-11)<a class="headerlink" href="#recent-work-2025-11-11" title="Permanent link">&para;</a></h2>
 <h3 id="random-file-io-implementation-completed">Random File I/O Implementation - COMPLETED! 🎉<a class="headerlink" href="#random-file-io-implementation-completed" title="Permanent link">&para;</a></h3>
 <p><strong>Implemented full random access file support:</strong>
