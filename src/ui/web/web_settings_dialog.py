@@ -74,17 +74,17 @@ class WebSettingsDialog(ui.dialog):
         ui.label('Auto-Numbering').classes('text-lg font-semibold mb-2')
 
         # Auto-number enable
-        auto_num_enabled = self.settings_manager.get('editor.auto_number')
-        self.widgets['editor.auto_number'] = ui.checkbox(
+        auto_num_enabled = self.settings_manager.get('auto_number')
+        self.widgets['auto_number'] = ui.checkbox(
             'Enable auto-numbering',
             value=auto_num_enabled
         ).classes('mb-2')
 
         # Auto-number step
-        auto_num_step = self.settings_manager.get('editor.auto_number_step')
+        auto_num_step = self.settings_manager.get('auto_number_step')
         with ui.row().classes('items-center gap-2'):
             ui.label('Line number increment:').classes('min-w-40')
-            self.widgets['editor.auto_number_step'] = ui.number(
+            self.widgets['auto_number_step'] = ui.number(
                 value=auto_num_step,
                 min=1,
                 max=1000,
@@ -116,16 +116,16 @@ class WebSettingsDialog(ui.dialog):
         """Handle Save button click."""
         try:
             # Update settings from widgets
-            if 'editor.auto_number' in self.widgets:
+            if 'auto_number' in self.widgets:
                 self.settings_manager.set(
-                    'editor.auto_number',
-                    self.widgets['editor.auto_number'].value
+                    'auto_number',
+                    self.widgets['auto_number'].value
                 )
 
-            if 'editor.auto_number_step' in self.widgets:
-                step_value = int(self.widgets['editor.auto_number_step'].value)
+            if 'auto_number_step' in self.widgets:
+                step_value = int(self.widgets['auto_number_step'].value)
                 self.settings_manager.set(
-                    'editor.auto_number_step',
+                    'auto_number_step',
                     step_value
                 )
 

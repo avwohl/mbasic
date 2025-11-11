@@ -1294,11 +1294,11 @@ class SetSettingStatementNode:
         SET setting_name = value
 
     Examples:
-        SET variables.case_conflict first_wins
-        SET editor.auto_number true
+        SET case_conflict first_wins
+        SET auto_number true
         SET ui.font_size 14
     """
-    setting_name: str  # Setting key (e.g., "variables.case_conflict")
+    setting_name: str  # Setting key (e.g., "case_conflict")
     value: 'ExpressionNode'  # Value to set
     line_num: int = 0
     column: int = 0
@@ -1330,8 +1330,8 @@ class HelpSettingStatementNode:
         HELP SET setting_name
 
     Examples:
-        HELP SET variables.case_conflict
-        HELP SET editor.auto_number
+        HELP SET case_conflict
+        HELP SET auto_number
     """
     setting_name: str  # Setting key to show help for
     line_num: int = 0

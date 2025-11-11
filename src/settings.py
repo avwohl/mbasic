@@ -96,7 +96,7 @@ class SettingsManager:
         This method delegates loading to the backend, which returns settings dicts.
         The backend determines the format (flat vs nested) based on what was saved.
         Internal representation is flexible: _get_from_dict() handles both flat keys like
-        'editor.auto_number' and nested dicts like {'editor': {'auto_number': True}}.
+        'auto_number' and nested dicts like {'editor': {'auto_number': True}}.
         Settings loaded from disk remain flat; settings modified via set() become nested; both work.
         """
         # Load settings from backend (backend handles format/storage details)
@@ -128,7 +128,7 @@ class SettingsManager:
         """Flatten nested settings dict for JSON storage.
 
         Converts: {'editor': {'auto_number': True}}
-        To: {'editor.auto_number': True}
+        To: {'auto_number': True}
         """
         flat = {}
         for key, value in settings_dict.items():
@@ -142,7 +142,7 @@ class SettingsManager:
     def _unflatten_settings(self, flat_dict: Dict[str, Any]) -> Dict[str, Any]:
         """Unflatten settings dict for internal storage.
 
-        Converts: {'editor.auto_number': True}
+        Converts: {'auto_number': True}
         To: {'editor': {'auto_number': True}}
         """
         nested = {}
@@ -170,7 +170,7 @@ class SettingsManager:
         is checked first in the precedence order for theoretical support of per-file overrides.
 
         Args:
-            key: Setting key (e.g., 'variables.case_conflict')
+            key: Setting key (e.g., 'case_conflict')
             default: Optional default value if setting not found
 
         Returns:
@@ -202,7 +202,7 @@ class SettingsManager:
         """Get value from nested settings dict.
 
         Args:
-            key: Dotted key like 'editor.auto_number'
+            key: Dotted key like 'auto_number'
             settings_dict: Nested dict like {'editor': {'auto_number': True}}
 
         Returns:
@@ -220,7 +220,7 @@ class SettingsManager:
         """Set setting value.
 
         Args:
-            key: Setting key (e.g., 'variables.case_conflict')
+            key: Setting key (e.g., 'case_conflict')
             value: New value
             scope: Which scope to set (GLOBAL or PROJECT)
 
@@ -251,7 +251,7 @@ class SettingsManager:
         """Set value in nested settings dict.
 
         Args:
-            key: Dotted key like 'editor.auto_number'
+            key: Dotted key like 'auto_number'
             value: Value to set
             settings_dict: Nested dict to modify
         """

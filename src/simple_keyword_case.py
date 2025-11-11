@@ -24,7 +24,7 @@ entire program (first_wins, preserve, error). This separation allows:
 2. Complex, stateful case management in later phases
 3. Settings changes between phases (though both should use consistent settings)
 
-Note: Both systems SHOULD read from the same settings.get("keywords.case_style") setting
+Note: Both systems SHOULD read from the same settings.get("case_style") setting
 for consistency. SimpleKeywordCase receives policy via __init__ parameter (caller should
 pass settings value), while KeywordCaseManager reads settings directly. Callers are responsible
 for passing consistent policy values from settings to ensure matching behavior across phases.

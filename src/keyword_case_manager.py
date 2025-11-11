@@ -19,7 +19,7 @@ Why two systems:
 When to use which:
 - Lexer (tokenization phase): SimpleKeywordCase with force_lower/force_upper/force_capitalize
 - Parser/Serializer (later phases): KeywordCaseManager for any policy including first_wins/preserve/error
-- Both should read the same settings.get("keywords.case_style") to ensure consistency
+- Both should read the same settings.get("case_style") to ensure consistency
 
 See simple_keyword_case.py for detailed architecture notes on the separation.
 """

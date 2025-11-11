@@ -30,7 +30,7 @@ def create_keyword_case_manager() -> SimpleKeywordCase:
     """
     try:
         from src.settings import get
-        policy = get("keywords.case_style", "force_lower")
+        policy = get("case_style", "force_lower")
         return SimpleKeywordCase(policy=policy)
     except Exception:
         # If settings unavailable, use default

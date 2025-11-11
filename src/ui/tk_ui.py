@@ -115,9 +115,9 @@ class TkBackend(UIBackend):
 
         # Editor auto-numbering configuration (load from settings system)
         from src.settings import get
-        self.auto_number_enabled = get('editor.auto_number')
-        self.auto_number_start = get('editor.auto_number_start')
-        self.auto_number_increment = get('editor.auto_number_step')
+        self.auto_number_enabled = get('auto_number')
+        self.auto_number_start = get('auto_number_start')
+        self.auto_number_increment = get('auto_number_step')
 
         # Tkinter widgets (created in start())
         self.root = None

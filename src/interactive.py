@@ -1294,8 +1294,8 @@ class InteractiveMode:
         """
         # Load defaults from settings
         from src.settings import get
-        start = get('editor.auto_number_start')
-        increment = get('editor.auto_number_step')
+        start = get('auto_number_start')
+        increment = get('auto_number_step')
 
         if args:
             parts = args.split(',')

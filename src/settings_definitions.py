@@ -93,10 +93,12 @@ class SettingDefinition:
 
 
 # All available settings
+# Note: Setting keys no longer use category prefixes (editor., keywords., variables.)
+# The old format is maintained for backward compatibility in loading
 SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
     # Variable settings
-    "variables.case_conflict": SettingDefinition(
-        key="variables.case_conflict",
+    "case_conflict": SettingDefinition(
+        key="case_conflict",
         type=SettingType.ENUM,
         default="first_wins",
         choices=["first_wins", "error", "upper", "lower"],
@@ -105,8 +107,8 @@ SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
         scope=SettingScope.GLOBAL,
     ),
 
-    "variables.show_types_in_window": SettingDefinition(
-        key="variables.show_types_in_window",
+    "show_types_in_window": SettingDefinition(
+        key="show_types_in_window",
         type=SettingType.BOOLEAN,
         default=True,
         description="Show type suffixes ($, %, !, #) in variable window",
@@ -115,8 +117,8 @@ SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
     ),
 
     # Keyword settings
-    "keywords.case_style": SettingDefinition(
-        key="keywords.case_style",
+    "case_style": SettingDefinition(
+        key="case_style",
         type=SettingType.ENUM,
         default="force_lower",
         choices=["force_lower", "force_upper", "force_capitalize"],
@@ -126,8 +128,8 @@ SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
     ),
 
     # Editor settings
-    "editor.auto_number": SettingDefinition(
-        key="editor.auto_number",
+    "auto_number": SettingDefinition(
+        key="auto_number",
         type=SettingType.BOOLEAN,
         default=True,
         description="Automatically number typed lines",
@@ -135,8 +137,8 @@ SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
         scope=SettingScope.PROJECT,
     ),
 
-    "editor.auto_number_start": SettingDefinition(
-        key="editor.auto_number_start",
+    "auto_number_start": SettingDefinition(
+        key="auto_number_start",
         type=SettingType.INTEGER,
         default=10,
         min_value=1,
@@ -146,8 +148,8 @@ SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
         scope=SettingScope.PROJECT,
     ),
 
-    "editor.auto_number_step": SettingDefinition(
-        key="editor.auto_number_step",
+    "auto_number_step": SettingDefinition(
+        key="auto_number_step",
         type=SettingType.INTEGER,
         default=10,
         min_value=1,

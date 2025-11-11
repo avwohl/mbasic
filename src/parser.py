@@ -1646,12 +1646,12 @@ class Parser:
             SETSETTING setting_name value
 
         Args:
-            setting_name: String expression identifying the setting (e.g., "editor.auto_number")
+            setting_name: String expression identifying the setting (e.g., "auto_number")
             value: Expression to evaluate and assign to the setting
         """
         token = self.advance()
 
-        # Parse setting_name (typically a string expression like "editor.auto_number")
+        # Parse setting_name (typically a string expression like "auto_number")
         setting_name_expr = self.parse_expression()
 
         # Parse value expression
@@ -3787,8 +3787,8 @@ class Parser:
             SET "setting.name" = value
 
         Examples:
-            SET "variables.case_conflict" "first_wins"
-            SET "editor.auto_number" 1
+            SET "case_conflict" "first_wins"
+            SET "auto_number" 1
             SET "ui.font_size" 14
 
         Note: Setting names must be string literals to support dots.
@@ -3854,8 +3854,8 @@ class Parser:
             HELP SET "setting.name"
 
         Examples:
-            HELP SET "variables.case_conflict"
-            HELP SET "editor.auto_number"
+            HELP SET "case_conflict"
+            HELP SET "auto_number"
 
         Note: Setting name must be string literal to support dots.
         """

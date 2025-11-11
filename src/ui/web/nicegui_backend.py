@@ -1275,7 +1275,7 @@ class NiceGUIBackend(UIBackend):
         self._start_auto_save()
 
         # Initialize editor with line number prompt if auto-numbering is enabled
-        auto_number_enabled = self.settings_manager.get('editor.auto_number')
+        auto_number_enabled = self.settings_manager.get('auto_number')
         if auto_number_enabled and not self.editor.value:
             # Set initial line number with cursor positioned after it
             self.editor.run_method('setValueAndCursor', '10 ', 0, 3)
@@ -2791,7 +2791,7 @@ class NiceGUIBackend(UIBackend):
                     prev_line_needs_number = True
 
             # Calculate next line numbers
-            auto_number_step = self.settings_manager.get('editor.auto_number_step')
+            auto_number_step = self.settings_manager.get('auto_number_step')
             if highest_line_num > 0:
                 next_line_num = highest_line_num + auto_number_step
             else:
@@ -2844,7 +2844,7 @@ class NiceGUIBackend(UIBackend):
         if self.auto_numbering_in_progress:
             return
 
-        auto_number_enabled = self.settings_manager.get('editor.auto_number')
+        auto_number_enabled = self.settings_manager.get('auto_number')
         if not auto_number_enabled:
             return
 
@@ -2870,7 +2870,7 @@ class NiceGUIBackend(UIBackend):
                     highest_line_num = max(highest_line_num, int(match.group(1)))
 
             # Calculate what next line number should be
-            auto_number_step = self.settings_manager.get('editor.auto_number_step')
+            auto_number_step = self.settings_manager.get('auto_number_step')
             if highest_line_num > 0:
                 next_line_num = highest_line_num + auto_number_step
             else:
@@ -3259,7 +3259,7 @@ class NiceGUIBackend(UIBackend):
         if not hasattr(self, 'auto_line_label') or not self.auto_line_label:
             return
 
-        auto_number_enabled = self.settings_manager.get('editor.auto_number')
+        auto_number_enabled = self.settings_manager.get('auto_number')
         if not auto_number_enabled:
             self.auto_line_label.text = ''
             return
@@ -3277,7 +3277,7 @@ class NiceGUIBackend(UIBackend):
                     highest_line_num = max(highest_line_num, int(match.group(1)))
 
             # Calculate next line number
-            auto_number_step = self.settings_manager.get('editor.auto_number_step')
+            auto_number_step = self.settings_manager.get('auto_number_step')
             if highest_line_num > 0:
                 next_line_num = highest_line_num + auto_number_step
             else:

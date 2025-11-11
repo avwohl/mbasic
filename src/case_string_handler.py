@@ -46,7 +46,7 @@ class CaseStringHandler:
             from src.settings import get
 
             if setting_prefix == "keywords":
-                policy = get("keywords.case_style", "force_lower")
+                policy = get("case_style", "force_lower")
                 table = cls.get_keyword_table(policy)
             elif setting_prefix == "idents":
                 # Identifiers (variable/function names) always preserve original case in display.

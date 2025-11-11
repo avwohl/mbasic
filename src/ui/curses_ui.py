@@ -206,9 +206,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Auto-numbering settings (load from settings system)
         from src.settings import get
-        self.auto_number_start = get('editor.auto_number_start')
-        self.auto_number_increment = get('editor.auto_number_step')
-        self.auto_number_enabled = get('editor.auto_number')
+        self.auto_number_start = get('auto_number_start')
+        self.auto_number_increment = get('auto_number_step')
+        self.auto_number_enabled = get('auto_number')
 
         # Load config file if it exists (for backwards compatibility)
         self._load_config()
@@ -2397,7 +2397,7 @@ class CursesBackend(UIBackend):
         # Calculate insertion point (between prev and current, or before current if at start)
         if prev_line_num is None:
             # At beginning of program - insert numbered line before current
-            insert_num = max(1, current_line_num - self.editor.auto_number_increment)
+            insert_num = max(1, current_line_num - self.auto_number_increment)
             # Make sure we don't conflict with current
             if insert_num >= current_line_num:
                 insert_num = current_line_num - 1 if current_line_num > 1 else None
@@ -2800,13 +2800,13 @@ class CursesBackend(UIBackend):
     def _reload_editor_settings(self):
         """Reload editor settings from settings system."""
         from src.settings import get
-        self.editor.auto_number_start = get('editor.auto_number_start')
-        self.editor.auto_number_increment = get('editor.auto_number_step')
-        self.editor.auto_number_enabled = get('editor.auto_number')
+        self.auto_number_start = get('auto_number_start')
+        self.auto_number_increment = get('auto_number_step')
+        self.auto_number_enabled = get('auto_number')
 
         # If no lines have been entered yet, reset the next line number
         if not self.editor.lines:
-            self.editor.next_auto_line_num = self.editor.auto_number_start
+            self.editor.next_auto_line_num = self.auto_number_start
 
     def _show_settings(self):
         """Toggle settings editor.
@@ -3745,7 +3745,7 @@ class CursesBackend(UIBackend):
         self._update_status_with_errors("Ready")
 
         # Reset auto-numbering to start value
-        self.editor.next_auto_line_num = self.editor.auto_number_start
+        self.editor.next_auto_line_num = self.auto_number_start
 
         # Start autosave for new file
         self.auto_save.start_autosave(

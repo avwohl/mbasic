@@ -64,7 +64,7 @@ class Runtime:
         self._variables = {}
         self._arrays = {}             # name_with_suffix -> {'dims': [...], 'data': [...]}
 
-        # Case tracking for conflict detection (settings.variables.case_conflict)
+        # Case tracking for conflict detection (settings.case_conflict)
         # Stored separately from variable entries for efficient tracking:
         # Maps normalized name (lowercase) to list of all case variants seen: {'targetangle': [('TargetAngle', line, col), ('targetangle', line, col)]}
         self._variable_case_variants = {}
@@ -260,7 +260,7 @@ class Runtime:
         # Get the case conflict setting
         case_conflict_policy = "first_wins"  # Default
         if settings_manager:
-            case_conflict_policy = settings_manager.get("variables.case_conflict", "first_wins")
+            case_conflict_policy = settings_manager.get("case_conflict", "first_wins")
 
         # Track this case variant
         if name not in self._variable_case_variants:
