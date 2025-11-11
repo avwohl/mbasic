@@ -106,11 +106,19 @@ class Z88dkCBackend(CodeGenBackend):
 
         The compiler uses /usr/bin/env to find z88dk.zcc in PATH, making it
         portable across different installation methods.
+
+        CPU Target:
+        - Default: Z80 (z88dk's +cpm defaults to Z80)
+        - Note: -m8080 flag has linking issues with printf in current z88dk
+        - Most CP/M systems use Z80 anyway (backwards compatible with 8080)
         """
         # z88dk.zcc +cpm source.c -create-app -o output
-        # This generates OUTPUT.COM (uppercase .COM file)
-        # -lm links the math library for floating point support
-        return ['/usr/bin/env', 'z88dk.zcc', '+cpm', source_file, '-create-app', '-lm', '-o', output_file]
+        # +cpm: Target CP/M operating system (defaults to Z80)
+        # -create-app: Generate .COM executable
+        # -lm: Link math library for floating point support
+        # Note: -m8080 would be more compatible but has printf linking issues
+        return ['/usr/bin/env', 'z88dk.zcc', '+cpm', source_file,
+                '-create-app', '-lm', '-o', output_file]
 
     def indent(self) -> str:
         """Return current indentation string"""
@@ -217,35 +225,64 @@ class Z88dkCBackend(CodeGenBackend):
         # Reserve space for temporaries (for complex expressions)
         # Estimate based on program complexity
         temp_count = self._estimate_temp_strings_needed(program)
-        self.string_ids['_TEMP_BASE'] = current_id
-        current_id += temp_count
+        if temp_count > 0:
+            self.string_ids['_TEMP_BASE'] = current_id
+            current_id += temp_count
+            self.next_temp_id = self.string_ids['_TEMP_BASE']
+        else:
+            self.next_temp_id = 0
 
         self.string_count = current_id
-        self.next_temp_id = self.string_ids['_TEMP_BASE']
 
     def _estimate_temp_strings_needed(self, program: ProgramNode) -> int:
         """Estimate the maximum number of temporary strings needed"""
         max_temps = 0
+        has_any_strings = False
 
         for line_node in program.lines:
             for stmt in line_node.statements:
                 # Count complexity of string expressions in this statement
                 temps_needed = self._count_expression_temps(stmt)
+                if temps_needed > 0:
+                    has_any_strings = True
                 max_temps = max(max_temps, temps_needed)
 
-        # Add some buffer for safety
-        return max_temps + 3
+        # Only add buffer if we actually have strings
+        if has_any_strings:
+            return max_temps + 3
+        else:
+            return 0
 
     def _count_expression_temps(self, node) -> int:
         """Count temporary strings needed for an expression or statement"""
         if isinstance(node, PrintStatementNode):
-            # Each string expression might need a temp
-            return len(node.expressions)
+            # Only count string expressions that need temps
+            string_count = 0
+            for expr in node.expressions:
+                if self._expression_produces_string(expr):
+                    string_count += 1
+            return string_count
         elif isinstance(node, LetStatementNode):
-            # Complex concatenations need temps
-            return self._count_concat_depth(node.expression)
-        # Add more cases as needed
-        return 1
+            # Only count if it's a string assignment
+            if self._expression_produces_string(node.expression):
+                return self._count_concat_depth(node.expression)
+            return 0
+        elif isinstance(node, IfStatementNode):
+            # IF statements might have string operations in THEN/ELSE parts
+            max_temps = 0
+            if node.then_statements:
+                for stmt in node.then_statements:
+                    max_temps = max(max_temps, self._count_expression_temps(stmt))
+            if node.else_statements:
+                for stmt in node.else_statements:
+                    max_temps = max(max_temps, self._count_expression_temps(stmt))
+            return max_temps
+        # For other statements that don't use strings
+        return 0
+
+    def _expression_produces_string(self, expr) -> bool:
+        """Check if an expression produces a string result"""
+        return self._get_expression_type(expr) == VarType.STRING
 
     def _count_concat_depth(self, expr) -> int:
         """Count depth of concatenation operations"""
@@ -374,6 +411,8 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_assignment(stmt)
         elif isinstance(stmt, InputStatementNode):
             return self._generate_input(stmt)
+        elif isinstance(stmt, IfStatementNode):
+            return self._generate_if(stmt)
         elif isinstance(stmt, EndStatementNode):
             return self._generate_end(stmt)
         elif isinstance(stmt, RemarkStatementNode):
@@ -650,6 +689,52 @@ class Z88dkCBackend(CodeGenBackend):
         """Generate WEND statement (close WHILE loop)"""
         self.indent_level -= 1
         return [self.indent() + '}']
+
+    def _generate_if(self, stmt: IfStatementNode) -> List[str]:
+        """Generate IF/THEN/ELSE statement"""
+        code = []
+
+        # Generate condition
+        condition = self._generate_expression(stmt.condition)
+
+        # Check if it's a simple GOTO style (IF...THEN line_number)
+        if stmt.then_line_number is not None:
+            code.append(self.indent() + f'if ({condition}) {{')
+            self.indent_level += 1
+            code.append(self.indent() + f'goto line_{stmt.then_line_number};')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+
+            if stmt.else_line_number is not None:
+                code.append(self.indent() + 'else {')
+                self.indent_level += 1
+                code.append(self.indent() + f'goto line_{stmt.else_line_number};')
+                self.indent_level -= 1
+                code.append(self.indent() + '}')
+        else:
+            # Regular IF with statements
+            code.append(self.indent() + f'if ({condition}) {{')
+            self.indent_level += 1
+
+            # Generate THEN statements
+            if stmt.then_statements:
+                for then_stmt in stmt.then_statements:
+                    code.extend(self._generate_statement(then_stmt))
+
+            self.indent_level -= 1
+
+            # Generate ELSE statements if present
+            if stmt.else_statements:
+                code.append(self.indent() + '} else {')
+                self.indent_level += 1
+                for else_stmt in stmt.else_statements:
+                    code.extend(self._generate_statement(else_stmt))
+                self.indent_level -= 1
+                code.append(self.indent() + '}')
+            else:
+                code.append(self.indent() + '}')
+
+        return code
 
     def _generate_goto(self, stmt: GotoStatementNode) -> List[str]:
         """Generate GOTO statement"""
@@ -970,6 +1055,8 @@ class Z88dkCBackend(CodeGenBackend):
             TokenType.LESS_EQUAL: '<=',
             TokenType.GREATER_THAN: '>',
             TokenType.GREATER_EQUAL: '>=',
+            TokenType.AND: '&&',
+            TokenType.OR: '||',
         }
 
         c_op = op_map.get(expr.operator, '?')
@@ -989,5 +1076,9 @@ class Z88dkCBackend(CodeGenBackend):
             return f'(-{operand})'
         elif expr.operator == TokenType.PLUS:
             return f'(+{operand})'
+        elif expr.operator == TokenType.NOT:
+            # In BASIC, NOT is bitwise. In C conditions, use logical not
+            # For compatibility, we'll use bitwise NOT (~) but in conditions it will work as logical
+            return f'(!{operand})'
         else:
             return operand

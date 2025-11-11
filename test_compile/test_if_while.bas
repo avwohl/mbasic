@@ -1,0 +1,9 @@
+10 REM Test IF with WHILE/WEND
+20 LET I% = 1
+30 LET SUM% = 0
+40 WHILE I% <= 5
+50   IF I% = 3 THEN LET SUM% = SUM% + 10 ELSE LET SUM% = SUM% + I%
+60   LET I% = I% + 1
+70 WEND
+80 REM SUM should be 1+2+10+4+5 = 22
+90 END

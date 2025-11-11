@@ -1,0 +1,29 @@
+10 REM Complete test of control structures
+20 REM Test IF/THEN/ELSE with logical operators
+30 LET A% = 5
+40 LET B% = 10
+50 LET C% = 15
+60 IF A% < B% AND B% < C% THEN LET RESULT% = 1
+70 IF NOT (A% = B%) OR C% > B% THEN LET CHECK% = 1
+80 REM Test WHILE with IF inside
+90 LET COUNT% = 0
+100 LET SUM% = 0
+110 WHILE COUNT% < 5
+120   LET COUNT% = COUNT% + 1
+130   IF COUNT% = 3 THEN LET SUM% = SUM% + 10 ELSE LET SUM% = SUM% + COUNT%
+140 WEND
+150 REM Test nested WHILE
+160 LET I% = 0
+170 WHILE I% < 3
+180   LET J% = 0
+190   WHILE J% < 2
+200     LET J% = J% + 1
+210   WEND
+220   LET I% = I% + 1
+230 WEND
+240 REM Test FOR/NEXT
+250 LET TOTAL% = 0
+260 FOR K% = 1 TO 10
+270   IF K% > 5 AND K% < 8 THEN LET TOTAL% = TOTAL% + K% * 2 ELSE LET TOTAL% = TOTAL% + K%
+280 NEXT K%
+290 END
