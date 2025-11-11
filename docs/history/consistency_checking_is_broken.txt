@@ -1,0 +1,31 @@
+read the whole question. discuss dont change anything.  there are two questions
+to answer at the end.
+utils/checker/check_docs_consistency3.py makes a report of inconsistancies
+the current one being docs/history/docs_inconsistencies_report-v22.md
+The problem is when I ask you address them so the next report will get smaller
+and smaller it does not happen.  For issues with multiple parts you make changes
+but they never align.  You have tried having me word the requests to solve the issues
+differently.  Here is the wording for processing v21 problems ```
+use 5 agents like usual to fix docs/history/docs_inconsistencies_report-v21.md
+Fix means:
+  - Update ALL comments/docs/code involved in each inconsistency to be consistent
+  - If two comments conflict, fix BOTH to agree
+  - If comment contradicts code, fix whichever is wrong
+  - Don't mark as ignored unless the checker is genuinely wrong (false positive)
+  - For each fix, check for related mentions elsewhere and update those too
+  Show counts when done. ```
+But reading thru v22 I see problems that have been present for many versions, for example
+these two :
+1) handling of ERL in renum
+2) **Description:** Contradictory information about FileIO integration status and
+ filesystem abstraction architecture
+I asked you to write utils/checker/check_docs_consistency3.py to have insconsistancies
+worked out of the code and docs.  But after 22 runs it is a failure as it does not
+converge on code and doc wording that removes most problems from the next runs report.
+The questions for you:
+1) if we look at this system as a failure to learn from, if you back
+to the start of crossrefrencing code and docs and fixing conflicts or bugs convergant
+way, is there anything that could actually work?
+2) Did anyone else work on this problem
+and come up with a working solution
+

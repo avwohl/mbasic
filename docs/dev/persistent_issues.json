@@ -1,0 +1,527 @@
+{
+  "clusters": [
+    {
+      "description": "Contradictory information about Web UI debugger capabilities",
+      "signature": "docs/help/ui/curses/variables.md + docs/help/ui/index.md + docs/help/ui/tk/feature-reference.md + DEBUGGING + FEATURE-REFERENCE + FOR + INDEX + RENUM",
+      "score": 0.8999999999999999,
+      "versions": [
+        10,
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/ui/curses/variables.md",
+        "docs/help/ui/index.md",
+        "docs/help/ui/tk/feature-reference.md",
+        "docs/help/ui/web/debugging.md"
+      ],
+      "keywords": [
+        "DEBUGGING",
+        "FEATURE-REFERENCE",
+        "FOR",
+        "INDEX",
+        "RENUM",
+        "RENUMBER",
+        "STEP",
+        "VARIABLES"
+      ]
+    },
+    {
+      "description": "Contradictory information about FileIO integration status and filesystem abstraction architecture",
+      "signature": "src/codegen_backend.py + src/editing/manager.py + ABSTRACTION + CODEGEN BACKEND + DOCSTRING + FILEIO + FILESYSTEM",
+      "score": 0.8666666666666667,
+      "versions": [
+        21,
+        22
+      ],
+      "files": [
+        "src/codegen_backend.py",
+        "src/editing/manager.py"
+      ],
+      "keywords": [
+        "ABSTRACTION",
+        "CODEGEN BACKEND",
+        "DOCSTRING",
+        "FILEIO",
+        "FILESYSTEM",
+        "FILE_IO",
+        "FOR",
+        "INTEGRATION",
+        "LINE",
+        "MANAGER",
+        "RUNTIME",
+        "SANDBOX"
+      ]
+    },
+    {
+      "description": "Inconsistent documentation about accessing Execution Stack",
+      "signature": "docs/help/ui/curses/feature-reference.md + docs/help/ui/curses/find-replace.md + docs/help/ui/curses/quick-reference.md + FEATURE-REFERENCE + FIND-REPLACE + FOR + IMMEDIATE + LINE",
+      "score": 0.86,
+      "versions": [
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/ui/curses/feature-reference.md",
+        "docs/help/ui/curses/find-replace.md",
+        "docs/help/ui/curses/quick-reference.md"
+      ],
+      "keywords": [
+        "FEATURE-REFERENCE",
+        "FIND-REPLACE",
+        "FOR",
+        "IMMEDIATE",
+        "LINE",
+        "MODE",
+        "QUICK-REFERENCE",
+        "RENUM",
+        "RENUMBER"
+      ]
+    },
+    {
+      "description": "Help URL inconsistency - code uses http://localhost/mbasic_docs but documentation mentions both this and deprecated http://localhost:8000",
+      "signature": "docs/help/README.md + docs/help/common/index.md + src/ui/web_help_launcher.py + COMMENT + FOR + INDEX + LINE + PRINT",
+      "score": 0.8571428571428571,
+      "versions": [
+        7,
+        8,
+        9,
+        10,
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/README.md",
+        "docs/help/common/index.md",
+        "src/ui/web_help_launcher.py"
+      ],
+      "keywords": [
+        "COMMENT",
+        "FOR",
+        "INDEX",
+        "LINE",
+        "PRINT",
+        "README",
+        "STATEMENT",
+        "WEB HELP LAUNCHER"
+      ]
+    },
+    {
+      "description": "FOR-NEXT loop termination test description is ambiguous and potentially contradictory",
+      "signature": "FOR I = 1 TO 10 + FOR I = 10 TO 1 STEP -1 + docs/help/common/language/statements/for-next.md + FOR + FOR I = 1 TO 10 + FOR I = 10 TO 1 STEP -1 + FOR-NEXT + STATEMENT",
+      "score": 0.8533333333333333,
+      "versions": [
+        7,
+        21,
+        22
+      ],
+      "files": [
+        "FOR I = 1 TO 10",
+        "FOR I = 10 TO 1 STEP -1",
+        "docs/help/common/language/statements/for-next.md"
+      ],
+      "keywords": [
+        "FOR",
+        "FOR I = 1 TO 10",
+        "FOR I = 10 TO 1 STEP -1",
+        "FOR-NEXT",
+        "STATEMENT",
+        "STEP"
+      ]
+    },
+    {
+      "description": "Implementation status inconsistency for line printer features",
+      "signature": "docs/help/common/language/statements/llist.md + docs/help/common/language/statements/lprint-lprint-using.md + FOR + LINE + LLIST + LPRINT-LPRINT-USING + PARSE",
+      "score": 0.84,
+      "versions": [
+        7,
+        9,
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/common/language/statements/llist.md",
+        "docs/help/common/language/statements/lprint-lprint-using.md"
+      ],
+      "keywords": [
+        "FOR",
+        "LINE",
+        "LLIST",
+        "LPRINT-LPRINT-USING",
+        "PARSE",
+        "PRINT",
+        "STATEMENT"
+      ]
+    },
+    {
+      "description": "Settings system implementation status contradicts feature status documentation",
+      "signature": "docs/user/INSTALL.md + docs/user/SETTINGS_AND_CONFIGURATION.md + FOR + INSTALL + MODE + SETTINGS AND CONFIGURATION",
+      "score": 0.84,
+      "versions": [
+        8,
+        21,
+        22
+      ],
+      "files": [
+        "docs/user/INSTALL.md",
+        "docs/user/SETTINGS_AND_CONFIGURATION.md"
+      ],
+      "keywords": [
+        "FOR",
+        "INSTALL",
+        "MODE",
+        "SETTINGS AND CONFIGURATION"
+      ]
+    },
+    {
+      "description": "Inconsistent implementation note formatting and detail level between WAIT and WIDTH",
+      "signature": "docs/help/common/language/statements/wait.md + docs/help/common/language/statements/width.md + ERROR + FOR + PARSE + PRINT + STATEMENT",
+      "score": 0.8333333333333333,
+      "versions": [
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/common/language/statements/wait.md",
+        "docs/help/common/language/statements/width.md"
+      ],
+      "keywords": [
+        "ERROR",
+        "FOR",
+        "PARSE",
+        "PRINT",
+        "STATEMENT",
+        "WAIT",
+        "WIDTH"
+      ]
+    },
+    {
+      "description": "Error code reference mismatch",
+      "signature": "docs/help/common/language/appendices/error-codes.md + docs/help/common/language/functions/cvi-cvs-cvd.md + CVI-CVS-CVD + ERROR + ERROR-CODES + FOR",
+      "score": 0.832,
+      "versions": [
+        7,
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/common/language/appendices/error-codes.md",
+        "docs/help/common/language/functions/cvi-cvs-cvd.md"
+      ],
+      "keywords": [
+        "CVI-CVS-CVD",
+        "ERROR",
+        "ERROR-CODES",
+        "FOR"
+      ]
+    },
+    {
+      "description": "Missing SHOWSETTINGS and SETSETTING from features list",
+      "signature": "docs/help/mbasic/features.md + docs/help/ui/cli/settings.md + FEATURES + RENUM + SETTINGS",
+      "score": 0.83,
+      "versions": [
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/mbasic/features.md",
+        "docs/help/ui/cli/settings.md"
+      ],
+      "keywords": [
+        "FEATURES",
+        "RENUM",
+        "SETTINGS"
+      ]
+    },
+    {
+      "description": "Self-contradictory statement about Web UI file uppercasing",
+      "signature": "docs/help/mbasic/compatibility.md + docs/help/mbasic/extensions.md + COMPATIBILITY + EXTENSIONS + FILESYSTEM + FOR + LINE",
+      "score": 0.82875,
+      "versions": [
+        7,
+        8,
+        9,
+        10,
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/mbasic/compatibility.md",
+        "docs/help/mbasic/extensions.md"
+      ],
+      "keywords": [
+        "COMPATIBILITY",
+        "EXTENSIONS",
+        "FILESYSTEM",
+        "FOR",
+        "LINE",
+        "MODE",
+        "PARSE",
+        "PRINT",
+        "SANDBOX",
+        "STATEMENT"
+      ]
+    },
+    {
+      "description": "Inconsistent terminology for step commands between CLI and curses UI",
+      "signature": "src/ui/cli_debug.py + src/ui/curses_keybindings.json + CLI DEBUG + CURSES KEYBINDINGS + DOCSTRING + FOR + LINE",
+      "score": 0.8274999999999999,
+      "versions": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "src/ui/cli_debug.py",
+        "src/ui/curses_keybindings.json"
+      ],
+      "keywords": [
+        "CLI DEBUG",
+        "CURSES KEYBINDINGS",
+        "DOCSTRING",
+        "FOR",
+        "LINE",
+        "STATEMENT",
+        "STEP"
+      ]
+    },
+    {
+      "description": "Inconsistent information about PEEK/POKE implementation",
+      "signature": "docs/help/mbasic/architecture.md + docs/help/mbasic/compatibility.md + ARCHITECTURE + COMPATIBILITY + FOR + LINE + PARSE",
+      "score": 0.822,
+      "versions": [
+        7,
+        8,
+        9,
+        10,
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/mbasic/architecture.md",
+        "docs/help/mbasic/compatibility.md"
+      ],
+      "keywords": [
+        "ARCHITECTURE",
+        "COMPATIBILITY",
+        "FOR",
+        "LINE",
+        "PARSE"
+      ]
+    },
+    {
+      "description": "Contradictory information about variable editing capability in Curses UI",
+      "signature": "docs/help/ui/cli/variables.md + docs/help/ui/curses/feature-reference.md + docs/help/ui/curses/variables.md + FEATURE-REFERENCE + FOR + IMMEDIATE + MODE + VARIABLES",
+      "score": 0.82,
+      "versions": [
+        7,
+        8,
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/ui/cli/variables.md",
+        "docs/help/ui/curses/feature-reference.md",
+        "docs/help/ui/curses/variables.md"
+      ],
+      "keywords": [
+        "FEATURE-REFERENCE",
+        "FOR",
+        "IMMEDIATE",
+        "MODE",
+        "VARIABLES"
+      ]
+    },
+    {
+      "description": "SandboxedFileIO.list_files() documentation claims it catches exceptions from list_files() itself, but code shows it doesn't",
+      "signature": "src/file_io.py + src/filesystem/sandboxed_fs.py + ABSTRACTION + COMMENT + DOCSTRING + ERROR + FILE IO",
+      "score": 0.817,
+      "versions": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "src/file_io.py",
+        "src/filesystem/sandboxed_fs.py"
+      ],
+      "keywords": [
+        "ABSTRACTION",
+        "COMMENT",
+        "DOCSTRING",
+        "ERROR",
+        "FILE IO",
+        "FILEIO",
+        "FILESYSTEM",
+        "FILE_IO",
+        "FOR",
+        "INTEGRATION",
+        "PRINT",
+        "RUNTIME",
+        "SANDBOX",
+        "SANDBOXED FS",
+        "STATEMENT"
+      ]
+    },
+    {
+      "description": "Missing keyboard shortcut for Search Help feature",
+      "signature": "docs/help/ui/tk/feature-reference.md + docs/help/ui/tk/features.md + docs/help/ui/tk/workflows.md + FEATURE-REFERENCE + FEATURES + FOR + PRINT + STATEMENT",
+      "score": 0.8155555555555556,
+      "versions": [
+        7,
+        8,
+        9,
+        10,
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/ui/tk/feature-reference.md",
+        "docs/help/ui/tk/features.md",
+        "docs/help/ui/tk/workflows.md"
+      ],
+      "keywords": [
+        "FEATURE-REFERENCE",
+        "FEATURES",
+        "FOR",
+        "PRINT",
+        "STATEMENT",
+        "STEP",
+        "WORKFLOWS"
+      ]
+    },
+    {
+      "description": "Incomplete information about debugging command availability across UIs",
+      "signature": "docs/help/common/ui/cli/index.md + docs/help/mbasic/compatibility.md + docs/help/mbasic/extensions.md + COMPATIBILITY + EXTENSIONS + FEATURES + FOR + INDEX",
+      "score": 0.8142857142857143,
+      "versions": [
+        7,
+        8,
+        10,
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/common/ui/cli/index.md",
+        "docs/help/mbasic/compatibility.md",
+        "docs/help/mbasic/extensions.md",
+        "docs/help/mbasic/features.md"
+      ],
+      "keywords": [
+        "COMPATIBILITY",
+        "EXTENSIONS",
+        "FEATURES",
+        "FOR",
+        "INDEX",
+        "LINE",
+        "STATEMENT",
+        "STEP"
+      ]
+    },
+    {
+      "description": "Contradictory information about file I/O persistence and storage location",
+      "signature": "docs/help/ui/web/features.md + docs/help/ui/web/web-interface.md + FEATURES + FILESYSTEM + FOR + INPUT + SANDBOX",
+      "score": 0.8114285714285714,
+      "versions": [
+        9,
+        10,
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/ui/web/features.md",
+        "docs/help/ui/web/web-interface.md"
+      ],
+      "keywords": [
+        "FEATURES",
+        "FILESYSTEM",
+        "FOR",
+        "INPUT",
+        "SANDBOX",
+        "STATEMENT",
+        "WEB-INTERFACE"
+      ]
+    },
+    {
+      "description": "Comment claims help navigation keys are hardcoded and not loaded from keybindings JSON, but code actually does load keybindings via HelpMacros",
+      "signature": "src/ui/help_widget.py + src/ui/keybindings.py + COMMENT + DOCSTRING + FILESYSTEM + FOR + HELP WIDGET",
+      "score": 0.8096969696969697,
+      "versions": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "src/ui/help_widget.py",
+        "src/ui/keybindings.py"
+      ],
+      "keywords": [
+        "COMMENT",
+        "DOCSTRING",
+        "FILESYSTEM",
+        "FOR",
+        "HELP WIDGET",
+        "INPUT",
+        "KEYBINDINGS",
+        "LINE",
+        "MODE",
+        "PARSE",
+        "STATEMENT",
+        "STEP"
+      ]
+    },
+    {
+      "description": "Settings dialog implements editor.auto_number settings but debugging.md does not mention auto-numbering configuration",
+      "signature": "docs/help/common/debugging.md + docs/help/common/editor-commands.md + src/ui/web/web_settings_dialog.py + DEBUGGING + EDITOR-COMMANDS + FOR + INPUT + LINE",
+      "score": 0.8085714285714285,
+      "versions": [
+        7,
+        8,
+        9,
+        10,
+        14,
+        21,
+        22
+      ],
+      "files": [
+        "docs/help/common/debugging.md",
+        "docs/help/common/editor-commands.md",
+        "src/ui/web/web_settings_dialog.py"
+      ],
+      "keywords": [
+        "DEBUGGING",
+        "EDITOR-COMMANDS",
+        "FOR",
+        "INPUT",
+        "LINE",
+        "STEP",
+        "WEB SETTINGS DIALOG"
+      ]
+    }
+  ]
+}
