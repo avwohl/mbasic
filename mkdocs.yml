@@ -144,7 +144,6 @@ nav:
         - help/common/language/statements/clear.md
         - help/common/language/statements/cload.md
         - help/common/language/statements/close.md
-        - help/common/language/statements/cls.md
         - help/common/language/statements/common.md
         - help/common/language/statements/cont.md
         - help/common/language/statements/csave.md

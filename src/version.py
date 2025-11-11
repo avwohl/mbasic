@@ -7,7 +7,7 @@ Manual edits to VERSION will be overwritten by the next checkpoint.
 This appears in debug output so Claude can verify the user has latest code.
 """
 
-VERSION = "1.0.833"
+VERSION = "1.0.834"
 PROJECT_NAME = "MBASIC-2025"
 MBASIC_VERSION = "5.21"  # The MBASIC version we implement
 COMPATIBILITY = "100% MBASIC 5.21 compatible with optional extensions"
