@@ -2395,20 +2395,13 @@ class NiceGUIBackend(UIBackend):
     def _menu_help(self):
         """Help > Help Topics - Opens in web browser."""
         try:
-            from ..web_help_launcher import open_help_in_browser
             from ...docs_config import get_docs_url
-            # Note: URL is constructed by web_help_launcher based on topic parameter
             topic_path = "ui/web/"
-            success = open_help_in_browser(topic=topic_path, ui_type="web")
+            url = get_docs_url(topic_path, "web")
 
-            if success:
-                self._notify('Opening help in browser...', type='positive', log_to_output=False)
-            else:
-                # Get the actual URL from configuration
-                url = get_docs_url(topic_path, "web")
-                msg = f'Could not open browser automatically.\n\nPlease open this URL manually:\n{url}'
-                self._notify(msg, type='warning')
-                self._append_output(f'\n--- Help URL ---\n{url}\n')
+            # Use JavaScript to open URL in client's browser
+            ui.run_javascript(f'window.open("{url}", "_blank");')
+            self._notify('Opening help in new tab...', type='positive', log_to_output=False)
         except Exception as e:
             self._log_error("_menu_help", e)
             self._notify(f'Error opening help: {e}', type='negative')
@@ -2416,18 +2409,13 @@ class NiceGUIBackend(UIBackend):
     def _menu_games_library(self):
         """Help > Games Library - Opens program library in browser."""
         try:
-            import webbrowser
             from ...docs_config import get_site_url
             # Library is at site root, not under /help/
             url = get_site_url("library/")
-            success = webbrowser.open(url)
 
-            if success:
-                self._notify('Opening program library in browser...', type='positive', log_to_output=False)
-            else:
-                msg = f'Could not open browser automatically.\n\nPlease open this URL manually:\n{url}'
-                self._notify(msg, type='warning')
-                self._append_output(f'\n--- Library URL ---\n{url}\n')
+            # Use JavaScript to open URL in client's browser
+            ui.run_javascript(f'window.open("{url}", "_blank");')
+            self._notify('Opening program library in new tab...', type='positive', log_to_output=False)
         except Exception as e:
             self._log_error("_menu_games_library", e)
             self._notify(f'Error opening library: {e}', type='negative')
@@ -3703,7 +3691,14 @@ def start_web_ui(port=8080):
             sys.stderr.write(f"Warning: Failed to initialize usage tracking: {e}\n")
             sys.stderr.flush()
 
-    @ui.page('/', viewport='width=device-width, initial-scale=1.0')
+    # Redirect root to IDE
+    @ui.page('/')
+    def landing():
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url='/ide')
+
+    # Serve IDE on /ide path
+    @ui.page('/ide', viewport='width=device-width, initial-scale=1.0')
     def main_page():
         """Create or restore backend instance for each client."""
         import os

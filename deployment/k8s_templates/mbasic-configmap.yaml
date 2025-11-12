@@ -22,7 +22,8 @@ data:
           "user": "${MYSQL_USER}",
           "password": "${MYSQL_PASSWORD}",
           "database": "mbasic_logs",
-          "table": "web_errors"
+          "table": "web_errors",
+          "disable_ssl": true
         },
         "log_expected_errors": false
       },
@@ -39,10 +40,11 @@ data:
         "enabled": true,
         "mysql": {
           "host": "${MYSQL_HOST}",
-          "port": 25060,
+          "port": 3306,
           "user": "${MYSQL_USER}",
           "password": "${MYSQL_PASSWORD}",
-          "database": "mbasic_logs"
+          "database": "mbasic_logs",
+          "disable_ssl": true
         }
       }
     }

@@ -53,6 +53,11 @@ class UsageTracker:
             if 'password' in mysql_config:
                 conn_params['password'] = mysql_config['password']
 
+            # Disable SSL for private network connections (self-signed cert issues)
+            # This is safe since traffic is on DigitalOcean private network
+            if mysql_config.get('disable_ssl', False):
+                conn_params['ssl_disabled'] = True
+
             self.db_connection = mysql.connector.connect(**conn_params)
             logger.info("Usage tracking database connection initialized")
 

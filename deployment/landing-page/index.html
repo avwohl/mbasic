@@ -14,8 +14,8 @@
 
         body {
             font-family: 'Courier New', monospace;
-            background: #000;
-            color: #0f0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
             line-height: 1.6;
             padding: 20px;
         }
@@ -23,30 +23,31 @@
         .container {
             max-width: 900px;
             margin: 0 auto;
-            background: #111;
-            border: 2px solid #0f0;
-            padding: 30px;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            background: #fff;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
 
         h1 {
-            color: #0f0;
+            color: #2c3e50;
             text-align: center;
             font-size: 2.5em;
             margin-bottom: 10px;
-            text-shadow: 0 0 10px #0f0;
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
         }
 
         .subtitle {
             text-align: center;
-            color: #0a0;
+            color: #7f8c8d;
             margin-bottom: 30px;
             font-size: 1.2em;
         }
 
         .ascii-art {
             text-align: center;
-            color: #0a0;
+            color: #95a5a6;
             font-size: 0.7em;
             margin: 20px 0;
             line-height: 1.2;
@@ -54,67 +55,85 @@
 
         .section {
             margin: 30px 0;
-            padding: 20px;
-            border: 1px solid #0a0;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
         }
 
         h2 {
-            color: #0f0;
+            color: #2c3e50;
             margin-bottom: 15px;
             font-size: 1.5em;
+            font-family: 'Arial', sans-serif;
+        }
+
+        p {
+            color: #2c3e50;
+            line-height: 1.8;
+            margin: 10px 0;
         }
 
         ul {
-            list-style: none;
-            margin-left: 20px;
+            list-style: disc;
+            margin-left: 40px;
+            color: #34495e;
+        }
+
+        ul li {
+            margin: 8px 0;
         }
 
         ul li:before {
-            content: "> ";
-            color: #0f0;
+            content: "";
         }
 
         a {
-            color: #0ff;
-            text-decoration: none;
-            transition: all 0.3s;
+            color: #3498db;
+            text-decoration: underline;
+            transition: all 0.2s;
+            font-weight: 500;
         }
 
         a:hover {
-            color: #fff;
-            text-shadow: 0 0 5px #0ff;
+            color: #2980b9;
+            text-decoration: underline;
         }
 
         .button {
             display: inline-block;
-            background: #0f0;
-            color: #000;
-            padding: 15px 40px;
-            margin: 10px 5px;
-            border: 2px solid #0f0;
+            background: #27ae60;
+            color: #fff;
+            padding: 16px 45px;
+            margin: 10px 8px;
+            border: none;
+            border-radius: 6px;
             text-decoration: none;
             font-weight: bold;
-            font-size: 1.2em;
-            transition: all 0.3s;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            font-size: 1.1em;
+            transition: all 0.2s;
+            box-shadow: 0 3px 8px rgba(39, 174, 96, 0.3);
+            cursor: pointer;
+            font-family: 'Arial', sans-serif;
         }
 
         .button:hover {
-            background: #000;
-            color: #0f0;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+            background: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+            text-decoration: none;
         }
 
         .button-secondary {
-            background: transparent;
-            color: #0ff;
-            border-color: #0ff;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            background: #3498db;
+            color: #fff;
+            box-shadow: 0 3px 8px rgba(52, 152, 219, 0.3);
         }
 
         .button-secondary:hover {
-            background: #0ff;
-            color: #000;
+            background: #2980b9;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+            text-decoration: none;
         }
 
         .buttons {
@@ -123,28 +142,36 @@
         }
 
         .warning {
-            background: #220;
-            border: 1px solid #f00;
-            color: #f66;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-left: 4px solid #ffc107;
+            color: #856404;
             padding: 15px;
             margin: 20px 0;
+            border-radius: 4px;
         }
 
         .code-block {
-            background: #000;
-            border: 1px solid #0a0;
-            padding: 15px;
-            margin: 10px 0;
+            background: #2c3e50;
+            color: #2ecc71;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 15px 0;
             overflow-x: auto;
+            font-family: 'Courier New', monospace;
         }
 
         .footer {
             text-align: center;
-            margin-top: 30px;
+            margin-top: 40px;
             padding-top: 20px;
-            border-top: 1px solid #0a0;
-            color: #0a0;
+            border-top: 2px solid #ecf0f1;
+            color: #2c3e50;
             font-size: 0.9em;
+        }
+
+        .footer p {
+            color: #5a6c7d;
         }
 
         @media (max-width: 600px) {
@@ -204,7 +231,7 @@ ___  ___  ______  ___   _____ _____  _____
                 <li>Multiple UI backends (Web, Terminal, GUI)</li>
                 <li>Compiler to CP/M .COM executables</li>
                 <li>Extensive documentation and examples</li>
-                <li>Open source (MIT License)</li>
+                <li>Open source (GPLv3 License)</li>
             </ul>
         </div>
 
