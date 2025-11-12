@@ -482,6 +482,185 @@ class MergeFileDialog(ui.dialog):
         self.open()
 
 
+class BrowseExamplesDialog(ui.dialog):
+    """Dialog for browsing and loading example BASIC programs from server."""
+
+    def __init__(self, backend):
+        super().__init__()
+        self.backend = backend
+
+        # Base directory for examples (sandboxed to this path)
+        from pathlib import Path
+        self.base_path = Path('basic').resolve()
+        self.current_path = self.base_path
+
+        # Directories to exclude from browsing
+        self.excluded_dirs = {'bad_syntax', 'bas_tests', 'tests', 'tests_with_results', 'incompatible', 'dev'}
+
+        self.file_grid = None
+
+    def show(self):
+        """Show the examples browser dialog."""
+        self.clear()
+
+        with self, ui.card().classes('w-full max-w-4xl'):
+            ui.label('Browse Example Programs').classes('text-h6 mb-2')
+
+            # Path breadcrumb
+            with ui.row().classes('items-center gap-2 mb-4'):
+                ui.label('Location:').classes('text-sm')
+                self.path_label = ui.label(self._get_relative_path()).classes('text-sm font-mono')
+                ui.button('⬆ Up', on_click=self._go_up).props('outline dense no-caps').classes('ml-4')
+
+            # File/folder grid
+            self._create_file_grid()
+
+            # Buttons
+            with ui.row().classes('w-full justify-end gap-2 mt-4'):
+                ui.button('Close', on_click=self.close).props('outline no-caps')
+
+        self.open()
+
+    def _get_relative_path(self):
+        """Get path relative to base directory."""
+        try:
+            rel_path = self.current_path.relative_to(self.base_path)
+            return f"basic/{rel_path}" if str(rel_path) != '.' else "basic/"
+        except:
+            return "basic/"
+
+    def _create_file_grid(self):
+        """Create the file/folder grid."""
+        if self.file_grid:
+            self.file_grid.clear()
+
+        # Get files and directories
+        items = []
+
+        try:
+            # List directories first
+            for item in sorted(self.current_path.iterdir()):
+                # Skip excluded directories
+                if item.name in self.excluded_dirs:
+                    continue
+
+                if item.is_dir():
+                    items.append({
+                        'type': '📁',
+                        'name': item.name,
+                        'size': '',
+                        'path': str(item),
+                        'is_dir': True
+                    })
+
+            # Then list .bas files
+            for item in sorted(self.current_path.glob('*.bas')):
+                if item.is_file():
+                    size_kb = item.stat().st_size / 1024
+                    items.append({
+                        'type': '📄',
+                        'name': item.name,
+                        'size': f'{size_kb:.1f} KB',
+                        'path': str(item),
+                        'is_dir': False
+                    })
+
+        except Exception as e:
+            self.backend._notify(f'Error reading directory: {e}', type='negative')
+            return
+
+        # Create grid
+        columns = [
+            {'name': 'type', 'label': '', 'field': 'type', 'align': 'center', 'style': 'width: 40px'},
+            {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left', 'sortable': True},
+            {'name': 'size', 'label': 'Size', 'field': 'size', 'align': 'right', 'style': 'width: 100px'},
+        ]
+
+        self.file_grid = ui.table(
+            columns=columns,
+            rows=items,
+            row_key='name',
+            selection='single'
+        ).classes('w-full').props('dense flat')
+
+        # Handle row clicks
+        self.file_grid.on('rowClick', lambda e: self._handle_row_click(e.args[1]))
+
+    def _handle_row_click(self, row):
+        """Handle clicking on a file or directory."""
+        try:
+            from pathlib import Path
+            path = Path(row['path'])
+
+            # Verify path is within base_path (security check)
+            if not self._is_safe_path(path):
+                self.backend._notify('Access denied: Path outside allowed directory', type='negative')
+                return
+
+            if row['is_dir']:
+                # Navigate into directory
+                self.current_path = path
+                self.path_label.text = self._get_relative_path()
+                self._create_file_grid()
+            else:
+                # Load file
+                self._load_file(path)
+
+        except Exception as e:
+            self.backend._notify(f'Error: {e}', type='negative')
+
+    def _go_up(self):
+        """Navigate to parent directory."""
+        # Don't go above base_path
+        if self.current_path == self.base_path:
+            return
+
+        parent = self.current_path.parent
+        if self._is_safe_path(parent):
+            self.current_path = parent
+            self.path_label.text = self._get_relative_path()
+            self._create_file_grid()
+
+    def _is_safe_path(self, path):
+        """Check if path is within allowed base directory."""
+        try:
+            path.resolve().relative_to(self.base_path)
+            return True
+        except ValueError:
+            return False
+
+    def _load_file(self, filepath):
+        """Load a BASIC file into the editor."""
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Normalize line endings and remove EOF markers
+            content = content.replace('\r\n', '\n').replace('\r', '\n').replace('\x1a', '')
+
+            # Remove blank lines
+            lines = content.split('\n')
+            non_blank_lines = [line for line in lines if line.strip()]
+            content = '\n'.join(non_blank_lines)
+
+            # Load into editor
+            self.backend.editor.value = content
+            if content:
+                self.backend.editor_has_been_used = True
+                self.backend.editor.props('placeholder=""')
+
+            self.backend._save_editor_to_program()
+            self.backend.current_file = filepath.name
+            self.backend._add_recent_file(filepath.name)
+            self.backend._set_status(f'Loaded example: {filepath.name}')
+            self.backend._notify(f'Loaded {filepath.name}', type='positive')
+
+            self.close()
+
+        except Exception as e:
+            self.backend._notify(f'Error loading file: {e}', type='negative')
+
+
 class AboutDialog(ui.dialog):
     """Reusable About dialog."""
 
@@ -1318,7 +1497,11 @@ class NiceGUIBackend(UIBackend):
                         help_menu.close()
 
                     ui.menu_item('Help Topics', on_click=_help_clicked)
-                    ui.menu_item('Games Library', on_click=_library_clicked)
+                    ui.menu_item('Web Games Library', on_click=_library_clicked)
+                    def _browse_examples_clicked():
+                        self._menu_browse_examples()
+                        help_menu.close()
+                    ui.menu_item('Browse Example Programs', on_click=_browse_examples_clicked)
                     ui.separator()
                     ui.menu_item('About', on_click=_about_clicked)
 
@@ -2307,7 +2490,7 @@ class NiceGUIBackend(UIBackend):
             self._notify(f'Error opening help: {e}', type='negative')
 
     def _menu_games_library(self):
-        """Help > Games Library - Opens program library in browser."""
+        """Help > Web Games Library - Opens program library webpage in browser."""
         try:
             from ...docs_config import get_site_url
             # Library is at site root, not under /help/
@@ -2319,6 +2502,17 @@ class NiceGUIBackend(UIBackend):
         except Exception as e:
             self._log_error("_menu_games_library", e)
             self._notify(f'Error opening library: {e}', type='negative')
+
+    def _menu_browse_examples(self):
+        """Help > Browse Example Programs - Browse and load example BASIC programs from server."""
+        try:
+            # Create and show browse examples dialog
+            if not hasattr(self, 'browse_examples_dialog'):
+                self.browse_examples_dialog = BrowseExamplesDialog(self)
+            self.browse_examples_dialog.show()
+        except Exception as e:
+            self._log_error("_menu_browse_examples", e)
+            self._notify(f'Error opening examples browser: {e}', type='negative')
 
     async def _menu_settings(self):
         """Edit > Settings - Open settings dialog."""
