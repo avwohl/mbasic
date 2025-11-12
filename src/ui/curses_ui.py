@@ -3609,9 +3609,11 @@ class CursesBackend(UIBackend):
                     self._update_immediate_status()
                 else:
                     # Paused execution (breakpoint hit or stepping)
-                    self.output_buffer.append(f"→ Paused at line {state.current_line}")
+                    # Use PC line directly since state.current_line may be None at breakpoint
+                    pc_line = self.runtime.pc.line if self.runtime.pc else None
+                    self.output_buffer.append(f"→ Paused at line {pc_line}")
                     self._update_output()
-                    self.status_bar.set_text(f"Paused at line {state.current_line} - {key_to_display(STEP_KEY)}=Step Stmt, {key_to_display(STEP_LINE_KEY)}=Step Line, {key_to_display(CONTINUE_KEY)}=Continue")
+                    self.status_bar.set_text(f"Paused at line {pc_line} - {key_to_display(STEP_KEY)}=Step Stmt, {key_to_display(STEP_LINE_KEY)}=Step Line, {key_to_display(CONTINUE_KEY)}=Continue")
                     self._update_immediate_status()
 
             else:
