@@ -62,7 +62,7 @@ if [ -n "$HELP_CHANGED" ]; then
 fi
 
 # Check if docs were modified - validate mkdocs build
-DOCS_CHANGED=$(git diff --name-only docs/ mkdocs.yml 2>/dev/null || echo "")
+DOCS_CHANGED=$(git diff --name-only docs/ mkdocs.yml .github/workflows/docs.yml 2>/dev/null || echo "")
 
 if [ -n "$DOCS_CHANGED" ]; then
     echo "Documentation changed - regenerating keyboard shortcuts..."
