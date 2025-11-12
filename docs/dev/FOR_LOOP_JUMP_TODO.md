@@ -35,6 +35,18 @@ Need to investigate how real MBASIC 5.21 handles this:
 - Can you start a new FOR loop with same variable after jumping out?
 - What happens to the loop stack?
 
+## Possible Implementation Detail
+
+User recalls reading that real MBASIC used a **circular 8-level buffer for FOR loops**.
+
+This could explain the behavior:
+- Fixed-size circular buffer (8 nested loops max)
+- When jumping out of a loop, the buffer entry might be marked as inactive but not removed
+- Starting a new FOR loop with same variable would overwrite the old entry in the buffer
+- This would naturally allow variable reuse after jumping out
+
+Need to verify this implementation detail and whether it affects the behavior.
+
 ## Investigation Steps
 
 1. **Test with real MBASIC**: Use `tests/HOW_TO_RUN_REAL_MBASIC.md` to run Super Star Trek
@@ -46,6 +58,7 @@ Need to investigate how real MBASIC 5.21 handles this:
    - FOR loop exit behavior
    - GOTO/ON GOTO interaction with FOR loops
    - Loop stack management
+   - Circular 8-level buffer implementation (if documented)
 
 3. **Test edge cases**:
    - Jump out of FOR loop, never return, start new FOR with same variable
