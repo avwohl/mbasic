@@ -344,14 +344,21 @@ class Interpreter:
                 # Check exact PC first (statement-level), then line-level
                 at_breakpoint = False
                 if mode == 'run':
+                    import sys
+                    if pc.line_num == 2065:  # Debug: only log line 2065
+                        print(f"DEBUG: At line 2065, PC={pc}, breakpoints={self.runtime.breakpoints}", file=sys.stderr)
                     if pc in self.runtime.breakpoints:
                         # Exact PC match (statement-level breakpoint)
                         at_breakpoint = True
+                        import sys
+                        print(f"DEBUG: Exact match - breakpoint at {pc}", file=sys.stderr)
                     else:
                         # Check if any breakpoint is set at this line (line-level match)
                         for bp in self.runtime.breakpoints:
                             if bp.line == pc.line_num:
                                 at_breakpoint = True
+                                import sys
+                                print(f"DEBUG: Line match - breakpoint at {bp} matches PC {pc}", file=sys.stderr)
                                 break
 
                 if at_breakpoint:
