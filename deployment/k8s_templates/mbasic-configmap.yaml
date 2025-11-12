@@ -34,5 +34,15 @@ data:
       "autosave": {
         "enabled": true,
         "interval_seconds": 60
+      },
+      "usage_tracking": {
+        "enabled": true,
+        "mysql": {
+          "host": "${MYSQL_HOST}",
+          "port": 25060,
+          "user": "${MYSQL_USER}",
+          "password": "${MYSQL_PASSWORD}",
+          "database": "mbasic_logs"
+        }
       }
     }

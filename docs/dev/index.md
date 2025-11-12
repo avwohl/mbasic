@@ -2,8 +2,8 @@
 
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
-**Last Updated:** 2025-11-11
-**Total Documents:** 194
+**Last Updated:** 2025-11-12
+**Total Documents:** 202
 
 ## What's Here
 
@@ -29,67 +29,65 @@ If you're contributing to MBASIC:
 
 ## Browse by Category
 
-### Web UI & Deployment
+### UI Implementation
 
-**⭐ Start Here for Web Deployments:**
-- **[Web Multi-User Deployment Guide](WEB_MULTIUSER_DEPLOYMENT.md)** - Complete guide for production deployments
-- **[Web Error Logging](WEB_ERROR_LOGGING.md)** - Error logging system for multi-user environments
+- [Web Error Logging](WEB_ERROR_LOGGING.md)
+- [Web Multiuser Deployment](WEB_MULTIUSER_DEPLOYMENT.md)
 
-**Session & Storage:**
-- [Redis Session Storage Setup](REDIS_SESSION_STORAGE_SETUP.md)
-- [Redis Per Session Settings](REDIS_PER_SESSION_SETTINGS.md)
-- [Redis Storage Bug Fix](REDIS_STORAGE_BUG_FIX.md)
-
-### Developer Setup
-
-- **[Linux Mint Developer Setup](LINUX_MINT_DEVELOPER_SETUP.md)** - Development environment setup
-- [Installation for Developers](old_dev_docs/INSTALLATION_FOR_DEVELOPERS.md)
-- [Docs URL Configuration](DOCS_URL_CONFIGURATION.md)
-
-### Compiler & Runtime
-
-- [Compiler Setup](COMPILER_SETUP.md)
-- [Compiler Status Summary](COMPILER_STATUS_SUMMARY.md)
-- [Compiler Remaining Work](COMPILER_REMAINING_WORK.md)
-- [Compiler Missing Features](COMPILER_MISSING_FEATURES.md)
-- [Compiler Memory Config](COMPILER_MEMORY_CONFIG.md)
-- [Compiler CPU Targets](COMPILER_CPU_TARGETS.md)
-- [Compiler Z88dk Path Change](COMPILER_Z88DK_PATH_CHANGE.md)
-- [Mb25 Runtime Library Plan](MB25_RUNTIME_LIBRARY_PLAN.md)
-- [Tnylpo Setup](TNYLPO_SETUP.md)
-
-### Language Features & Implementation
+### Language Features
 
 - [Keybinding Systems](KEYBINDING_SYSTEMS.md)
+- [Mb25 Runtime Library Plan](MB25_RUNTIME_LIBRARY_PLAN.md)
+
+### File I/O
+
+- [Backup Nonversioned Files](BACKUP_NONVERSIONED_FILES.md)
+- [Docs Url Configuration](DOCS_URL_CONFIGURATION.md)
 - [Keybinding Macros Migration](KEYBINDING_MACROS_MIGRATION.md)
-- [Path Based Tools](PATH_BASED_TOOLS.md)
-
-### Configuration & Settings
-
-- [Pip Install Resource Location Plan](PIP_INSTALL_RESOURCE_LOCATION_PLAN.md)
 - [Medium Severity Session Report](MEDIUM_SEVERITY_SESSION_REPORT.md)
+- [Pip Install Resource Location Plan](PIP_INSTALL_RESOURCE_LOCATION_PLAN.md)
+- [Printf Elimination Todo](PRINTF_ELIMINATION_TODO.md)
+- [Redis Per Session Settings](REDIS_PER_SESSION_SETTINGS.md)
+- [Redis Session Storage Setup](REDIS_SESSION_STORAGE_SETUP.md)
 
-### Debugging & Error Handling
+### Debugging & Errors
 
 - [Import Consistency Fix](IMPORT_CONSISTENCY_FIX.md)
 - [Low Severity Fix Report](LOW_SEVERITY_FIX_REPORT.md)
 - [Random Fixes Todo](RANDOM_FIXES_TODO.md)
+- [Redis Storage Bug Fix](REDIS_STORAGE_BUG_FIX.md)
 
-### Code Quality & Maintenance
+### Settings & Configuration
+
+- [Compiler Memory Config](COMPILER_MEMORY_CONFIG.md)
+
+### Refactoring & Cleanup
 
 - [Architecture Cleanup Todo](ARCHITECTURE_CLEANUP_TODO.md)
-- [Printf Elimination Todo](PRINTF_ELIMINATION_TODO.md)
-- [Consistency Checker Convergence Proposal](CONSISTENCY_CHECKER_CONVERGENCE_PROPOSAL.md)
-- [Persistent Issues Analysis](PERSISTENT_ISSUES_ANALYSIS.md)
-- [Persistent Issues Answer](PERSISTENT_ISSUES_ANSWER.md)
-- [Persistent Issues Summary](PERSISTENT_ISSUES_SUMMARY.md)
 
 ### Work in Progress
 
 - [Work In Progress Final Summary](WORK_IN_PROGRESS_FINAL_SUMMARY.md)
+- [Work In Progress](WORK_IN_PROGRESS.md)
 
-### Historical Reference
+### Other
 
+- [Compiler Cpu Targets](COMPILER_CPU_TARGETS.md)
+- [Compiler Missing Features](COMPILER_MISSING_FEATURES.md)
+- [Compiler Remaining Work](COMPILER_REMAINING_WORK.md)
+- [Compiler Setup](COMPILER_SETUP.md)
+- [Compiler Status Summary](COMPILER_STATUS_SUMMARY.md)
+- [Compiler Z88Dk Path Change](COMPILER_Z88DK_PATH_CHANGE.md)
+- [Consistency Checker Convergence Proposal](CONSISTENCY_CHECKER_CONVERGENCE_PROPOSAL.md)
+- [Kubernetes Deployment Plan](KUBERNETES_DEPLOYMENT_PLAN.md)
+- [Kubernetes Deployment Setup](KUBERNETES_DEPLOYMENT_SETUP.md)
+- [Kubernetes Deployment Summary](KUBERNETES_DEPLOYMENT_SUMMARY.md)
+- [Linux Mint Developer Setup](LINUX_MINT_DEVELOPER_SETUP.md)
+- [Path Based Tools](PATH_BASED_TOOLS.md)
+- [Persistent Issues Analysis](PERSISTENT_ISSUES_ANALYSIS.md)
+- [Persistent Issues Answer](PERSISTENT_ISSUES_ANSWER.md)
+- [Persistent Issues Summary](PERSISTENT_ISSUES_SUMMARY.md)
+- [Tnylpo Setup](TNYLPO_SETUP.md)
 
 ## Subdirectories
 
