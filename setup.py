@@ -25,7 +25,7 @@ setup(
     author="Aaron Wohl",
     author_email="mbasic@wohl.com",
     url="https://github.com/avwohl/mbasic",
-    license="MIT",
+    license="GPL-3.0-or-later",
 
     packages=find_packages(exclude=["tests", "basic", "doc", "utils", "bin"]),
 
@@ -61,7 +61,7 @@ setup(
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",

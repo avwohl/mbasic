@@ -4,7 +4,7 @@
 
 ## Overview
 
-The MBASIC compiler translates BASIC-80 programs into native CP/M executables for Z80 processors. Unlike the interpreter, the compiler generates real machine code that runs directly on hardware or emulators.
+The MBASIC compiler translates BASIC-80 programs into native CP/M executables for 8080 or Z80 processors. Unlike the interpreter, the compiler generates real machine code that runs directly on hardware or emulators.
 
 ## What Makes It Special
 
@@ -26,7 +26,7 @@ The MBASIC compiler translates BASIC-80 programs into native CP/M executables fo
 
 ### Requirements
 
-1. **z88dk** - Z80 C cross-compiler
+1. **z88dk** - 8080/Z80 C cross-compiler
    - Installation: `sudo snap install z88dk --beta`
    - See [Compiler Setup Guide](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_SETUP.md)
 

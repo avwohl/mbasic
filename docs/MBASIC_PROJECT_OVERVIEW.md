@@ -17,7 +17,7 @@ MBASIC-2025 is the **only** modern implementation that gives you both a feature-
 - Four UI options: CLI (classic), Curses (full-screen), Tk (GUI), Web (browser-based)
 
 **Native Code Compiler (100% Complete)**
-- Generates real CP/M executables for Z80 processors
+- Generates real CP/M executables for 8080 or Z80 processors
 - **Every** compilable MBASIC 5.21 feature implemented
 - Hardware access features that work: PEEK/POKE/INP/OUT/WAIT
 - Machine language integration: CALL/USR/VARPTR
@@ -51,7 +51,7 @@ Most BASIC compilers skip the "hard parts." Not MBASIC-2025:
 80 RESULT = USR(16384)  ' Call ML function
 ```
 
-These don't just parse - they generate **real Z80 machine code** that works on actual hardware or emulators!
+These don't just parse - they generate **real 8080/Z80 machine code** that works on actual hardware or emulators!
 
 **Efficient Runtime Library**
 - Custom string system with smart garbage collection
@@ -148,7 +148,7 @@ Perfect for teaching programming fundamentals:
 **Building a CP/M system?** MBASIC-2025's compiler generates real CP/M executables:
 - Write in comfortable modern editor
 - Compile to .COM files
-- Run on real Z80 hardware or emulators
+- Run on 8080 or Z80 hardware or emulators
 - Access hardware directly (ports, memory)
 
 ### Education and Training
@@ -162,9 +162,9 @@ Perfect for teaching programming fundamentals:
 
 ### Embedded Systems Development
 
-**Need a simple language for Z80 projects?**
+**Need a simple language for 8080 or Z80 projects?**
 - Write in BASIC (easier than assembly)
-- Compile to efficient Z80 code
+- Compile to efficient 8080/Z80 code
 - Direct hardware access (PEEK/POKE/INP/OUT)
 - Call assembly routines when needed
 - Small runtime footprint
@@ -181,7 +181,7 @@ Perfect for teaching programming fundamentals:
 - Complete semantic analysis phase
 - Type checking and optimization
 - C code generation (portable target)
-- Z80-specific optimizations via z88dk
+- 8080/Z80-specific optimizations via z88dk
 - Sophisticated string management
 
 ### Runtime Library
@@ -267,7 +267,7 @@ See [docs/dev/LINUX_MINT_DEVELOPER_SETUP.md](dev/LINUX_MINT_DEVELOPER_SETUP.md)
 ### For Compiler Users
 
 ```bash
-# Install z88dk (Z80 C compiler)
+# Install z88dk (8080/Z80 C compiler)
 sudo snap install z88dk --beta
 
 # Compile BASIC to CP/M

@@ -72,7 +72,7 @@ MBASIC 5.21 is a classic BASIC dialect from the CP/M era (late 1970s - early 198
 
 - ✅ **Two Complete Implementations** - Interactive interpreter AND native code compiler
 - ✅ **100% MBASIC 5.21 Compatibility** - Run authentic MBASIC programs unchanged
-- ✅ **Generates CP/M Executables** - Compile to native .COM files for Z80 processors
+- ✅ **Generates CP/M Executables** - Compile to native .COM files for 8080 or Z80 processors
 - ✅ **Multiple User Interfaces** - CLI, Curses terminal, Tkinter GUI, or Web browser
 - ✅ **Cross-Platform** - Linux, macOS, Windows
 - ✅ **Zero Dependencies** - Pure Python, no external libraries required for interpreter

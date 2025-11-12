@@ -166,15 +166,15 @@ version = "1.0.112"
 description = "MBASIC 5.21 compatible BASIC interpreter"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
+license = {text = "GPL-3.0-or-later"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Aaron Wohl", email = "mbasic@wohl.com"}
 ]
 keywords = ["basic", "interpreter", "vintage", "retro", "programming"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",

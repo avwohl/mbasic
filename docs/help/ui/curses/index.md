@@ -42,7 +42,7 @@ About this BASIC interpreter:
 
 Compile BASIC programs to native CP/M executables:
 
-- **[Compiler Guide](../../common/compiler/index.md)** - Generate .COM files for Z80 systems (100% complete!)
+- **[Compiler Guide](../../common/compiler/index.md)** - Generate .COM files for 8080 or Z80 systems (100% complete!)
 - [Features](../../common/compiler/features.md) - What the compiler supports
 - [Getting Started](../../common/compiler/getting-started.md) - Compile your first program
 - [Generated Code](../../common/compiler/generated-code.md) - Understanding compiler output
@@ -97,7 +97,7 @@ Press **/** to search across all help content. Results are grouped by section (U
 
 The Curses UI runs programs in **interpreter mode**. To compile BASIC programs to native CP/M executables:
 
-**[MBASIC Compiler →](../../common/compiler/index.md)** - Generate native .COM files for Z80 systems (100% complete!)
+**[MBASIC Compiler →](../../common/compiler/index.md)** - Generate native .COM files for 8080 or Z80 systems (100% complete!)
 
 ---
 

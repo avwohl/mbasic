@@ -18,7 +18,7 @@ A complete implementation of Microsoft BASIC-80 5.21 (CP/M era) with both an int
 
 ### Native Code Compiler (100% Complete)
 - ✅ **100% Feature Complete**: ALL compilable MBASIC 5.21 features implemented
-- ✅ **Generates CP/M Executables**: Produces native .COM files for Z80 CP/M systems
+- ✅ **Generates CP/M Executables**: Produces native .COM files for 8080 or Z80 CP/M systems
 - ✅ **Efficient Runtime**: Optimized string handling with O(n log n) garbage collection
 - ✅ **Hardware Access**: Full support for PEEK/POKE/INP/OUT/WAIT
 - ✅ **Machine Language**: CALL/USR/VARPTR for assembly integration
@@ -202,13 +202,13 @@ SAVE "hello.bas"
 
 ## Compiler (100% Complete)
 
-MBASIC includes a **fully-featured compiler** that generates C code and compiles to native CP/M executables for Z80 processors. The compiler is **100% feature-complete** - every MBASIC 5.21 feature that can be compiled is now implemented!
+MBASIC includes a **fully-featured compiler** that generates C code and compiles to native CP/M executables for 8080 or Z80 processors. The compiler is **100% feature-complete** - every MBASIC 5.21 feature that can be compiled is now implemented!
 
 ### Compiler Requirements
 
 To use the compiler features, you need:
 
-1. **z88dk** (required) - Z80 C compiler
+1. **z88dk** (required) - 8080/Z80 C compiler
    - Must have `z88dk.zcc` in your PATH
    - Installation: snap, source build, or docker
 
@@ -232,7 +232,7 @@ python3 test_compile.py program.bas
 
 # This generates:
 #   program.c    - C source code
-#   PROGRAM.COM  - CP/M executable (runs on Z80 CP/M systems)
+#   PROGRAM.COM  - CP/M executable (runs on 8080 or Z80 CP/M systems)
 ```
 
 ### Compiler Features (100% Complete!)
@@ -276,7 +276,7 @@ python3 test_compile.py program.bas
 - PEEK/POKE - Direct memory access (hardware-specific)
 - INP/OUT/WAIT - I/O port operations (hardware-specific)
 - CALL/USR/VARPTR - Machine language integration
-- These generate proper Z80 assembly calls in compiled code!
+- These generate proper 8080/Z80 assembly calls in compiled code!
 
 For detailed setup instructions and compiler documentation, see:
 - `docs/dev/COMPILER_SETUP.md` - Complete compiler setup guide
@@ -500,10 +500,10 @@ if __name__ == "__main__":
 
 **Compiler Mode:**
 - **EVERYTHING works** - including hardware features!
-- PEEK/POKE - Direct memory access (generates real Z80 memory operations)
-- INP/OUT/WAIT - I/O port operations (generates real Z80 port operations)
+- PEEK/POKE - Direct memory access (generates real 8080/Z80 memory operations)
+- INP/OUT/WAIT - I/O port operations (generates real 8080/Z80 port operations)
 - CALL/USR/VARPTR - Machine language integration
-- Generates native CP/M .COM executables for Z80 processors
+- Generates native CP/M .COM executables for 8080 or Z80 processors
 
 **What's Not Applicable:**
 - Graphics/sound (not part of MBASIC 5.21 core spec)
@@ -556,7 +556,7 @@ See [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for complete project metrics and
 
 ### Hardware Access (Compiler Only)
 
-These features work in the compiler and generate real Z80 machine code:
+These features work in the compiler and generate real 8080/Z80 machine code:
 
 ```basic
 10 REM Hardware access example - works in compiled code!
@@ -578,7 +578,7 @@ Compile this with:
 ```bash
 cd test_compile
 python3 test_compile.py hardware.bas
-# Generates hardware.com - runs on real Z80 CP/M systems!
+# Generates hardware.com - runs on 8080 or Z80 CP/M systems!
 ```
 
 ## Development History

@@ -4,7 +4,7 @@ Code Generation Backend Interface
 
 This module defines the abstract interface for code generation backends.
 Different backends can generate code for different target platforms:
-- C code for z88dk (CP/M, Z80)
+- C code for z88dk (CP/M, 8080 or Z80)
 - Assembly for various processors
 - Other high-level languages
 
@@ -67,7 +67,7 @@ class CodeGenBackend(ABC):
 
 class Z88dkCBackend(CodeGenBackend):
     """
-    C code generator for z88dk compiler targeting CP/M on Z80.
+    C code generator for z88dk compiler targeting CP/M on 8080 or Z80.
 
     Supports:
     - Integer variables (BASIC ! suffix maps to C int)
@@ -144,14 +144,13 @@ class Z88dkCBackend(CodeGenBackend):
 
         CPU Target:
         - Default: Z80 (z88dk's +cpm defaults to Z80)
-        - Note: -m8080 flag has linking issues with printf in current z88dk
-        - Most CP/M systems use Z80 anyway (backwards compatible with 8080)
+        - z88dk supports both 8080 and Z80 backends (-m8080 or default Z80)
+        - Z80 is backwards compatible with 8080 and is used by most CP/M systems
         """
         # z88dk.zcc +cpm source.c -create-app -o output
-        # +cpm: Target CP/M operating system (defaults to Z80)
+        # +cpm: Target CP/M operating system (defaults to Z80, use -m8080 for 8080)
         # -create-app: Generate .COM executable
         # -lm: Link math library for floating point support
-        # Note: -m8080 would be more compatible but has printf linking issues
 
         # Include mb25_string.c if we use strings
         cmd = ['/usr/bin/env', 'z88dk.zcc', '+cpm']
