@@ -766,7 +766,7 @@ ui.run(
 ## Related Documentation
 
 - [WEB_ERROR_LOGGING.md](WEB_ERROR_LOGGING.md) - Error logging system details
-- [config/multiuser.json.example](../../config/multiuser.json.example) - Configuration template
-- [config/setup_mysql_logging.sql](../../config/setup_mysql_logging.sql) - Database schema
-- [utils/view_error_logs.py](../../utils/view_error_logs.py) - Error viewing utility
-- [INSTALLATION_FOR_DEVELOPERS.md](INSTALLATION_FOR_DEVELOPERS.md) - Development setup
+- `config/multiuser.json.example` - Configuration template
+- `config/setup_mysql_logging.sql` - Database schema
+- `utils/view_error_logs.py` - Error viewing utility
+- `old_dev_docs/INSTALLATION_FOR_DEVELOPERS.md` - Development setup (archived)

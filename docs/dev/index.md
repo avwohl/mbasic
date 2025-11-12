@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2025-11-12
-**Total Documents:** 204
+**Total Documents:** 206
 
 ## What's Here
 
@@ -31,6 +31,7 @@ If you're contributing to MBASIC:
 
 ### UI Implementation
 
+- [Curses Editor Scrolling Todo](CURSES_EDITOR_SCROLLING_TODO.md)
 - [Web Error Logging](WEB_ERROR_LOGGING.md)
 - [Web Multiuser Deployment](WEB_MULTIUSER_DEPLOYMENT.md)
 
@@ -71,6 +72,7 @@ If you're contributing to MBASIC:
 
 - [For Loop Jump Todo](FOR_LOOP_JUMP_TODO.md)
 - [Work In Progress Final Summary](WORK_IN_PROGRESS_FINAL_SUMMARY.md)
+- [Work In Progress](WORK_IN_PROGRESS.md)
 
 ### Other
 

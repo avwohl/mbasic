@@ -158,5 +158,5 @@ kubectl scale deployment mbasic-web --replicas=0 -n mbasic
 ## Support
 
 - **Deployment Plan:** [KUBERNETES_DEPLOYMENT_PLAN.md](KUBERNETES_DEPLOYMENT_PLAN.md)
-- **Setup Guide:** [deployment/README.md](../../deployment/README.md)
+- **Setup Guide:** `deployment/README.md` (in repository root)
 - **Issues:** https://github.com/avwohl/mbasic/issues

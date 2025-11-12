@@ -51,9 +51,8 @@ jobs:
         # Builds to ./site with limited navigation (help/, library/)
 
       - name: Build developer documentation
-        run: mkdocs build --verbose -f mkdocs-dev.yml
+        run: mkdocs build --strict --verbose -f mkdocs-dev.yml
         # Builds to ./site-dev with full navigation (includes dev/)
-        # Note: No --strict since dev docs link to source files outside docs/
 
       - name: Merge documentation sites
         run: |

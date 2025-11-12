@@ -118,9 +118,8 @@ if [ "$DOCS_CHANGED" = true ]; then
         echo "✓ User docs build validation passed (no warnings or errors)"
 
         # Build developer docs (full search indexing)
-        # Note: Dev build runs without --strict since it includes history files with broken links
         echo "Building developer documentation (site-dev/)..."
-        BUILD_OUTPUT_DEV=$(mkdocs build -f mkdocs-dev.yml 2>&1)
+        BUILD_OUTPUT_DEV=$(mkdocs build --strict -f mkdocs-dev.yml 2>&1)
         BUILD_EXIT_CODE_DEV=$?
 
         if [ $BUILD_EXIT_CODE_DEV -ne 0 ]; then
