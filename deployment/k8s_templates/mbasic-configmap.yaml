@@ -18,7 +18,7 @@ data:
         "type": "mysql",
         "mysql": {
           "host": "${MYSQL_HOST}",
-          "port": 25060,
+          "port": 3306,
           "user": "${MYSQL_USER}",
           "password": "${MYSQL_PASSWORD}",
           "database": "mbasic_logs",
