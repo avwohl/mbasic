@@ -3825,7 +3825,7 @@ class CursesBackend(UIBackend):
             self.runtime.pc = old_pc
         else:
             # No execution in progress or paused at breakpoint - reset to halted
-            self.runtime.pc = PC.halted_pc()
+            self.runtime.pc = PC.halted()
 
     def _update_output(self):
         """Update the output window with buffered content."""

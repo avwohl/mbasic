@@ -2690,7 +2690,7 @@ class NiceGUIBackend(UIBackend):
         else:
             # Timer is not active - no execution in progress, so reset to halted state
             # (ensures program doesn't start executing unexpectedly when LIST/edit commands run)
-            self.runtime.pc = PC.halted_pc()
+            self.runtime.pc = PC.halted()
 
     def _save_editor_to_program(self):
         """Save editor content to program.
@@ -3662,7 +3662,7 @@ class NiceGUIBackend(UIBackend):
         self.runtime.common_vars = state['common_vars']
         self.runtime.array_base = state['array_base']
         self.runtime.option_base_executed = state['option_base_executed']
-        self.runtime.pc = PC(state['pc']['line'], state['pc']['stmt']) if state['pc'] else PC.halted_pc()
+        self.runtime.pc = PC(state['pc']['line'], state['pc']['stmt']) if state['pc'] else PC.halted()
         self.runtime.npc = PC(state['npc']['line'], state['npc']['stmt']) if state['npc'] else None
         self.runtime.statement_table = pickle.loads(bytes.fromhex(state['statement_table']))
         # Note: halted flag removed - PC is now immutable and indicates running state
