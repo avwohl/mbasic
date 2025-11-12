@@ -46,4 +46,4 @@ USER mbasic
 EXPOSE 8080
 
 # Run MBASIC web UI
-CMD ["python3", "mbasic.py", "--ui", "web", "--port", "8080"]
+CMD ["python3", "mbasic", "--ui", "web", "--port", "8080"]

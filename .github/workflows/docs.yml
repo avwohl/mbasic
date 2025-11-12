@@ -60,6 +60,11 @@ jobs:
           cp -r site-dev/* site/dev-docs/
         # Copy dev docs into site/dev-docs/ so both are deployed
 
+      - name: Add Google site verification file
+        run: |
+          echo "google-site-verification: googlec3ad2b05409cea07.html" > site/googlec3ad2b05409cea07.html
+        # Creates verification file without committing to repo
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
