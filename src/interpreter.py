@@ -313,24 +313,19 @@ class Interpreter:
                 pc = self.runtime.pc
 
                 # Check if not running (stopped/halted/error)
-                if not pc.is_running():
-                    # In step mode, auto-resume if stopped at BREAK or USER (allows stepping from breakpoints)
-                    if mode in ('step_statement', 'step_line') and pc.stop_reason in ('BREAK', 'USER'):
-                        import sys
-                        print(f"DEBUG tick: PC stopped at {pc}, resuming for step", file=sys.stderr)
-                        # Skip the current statement and move to the next one
-                        # When stopped at a breakpoint, we haven't executed the statement yet,
-                        # so we need to execute it, then stop at the next statement
-                        pc = pc.resume()
-                        self.runtime.pc = pc
-                        # Clear the skip flag so we can step past the breakpoint
-                        self.state.skip_next_breakpoint_check = False
-                        print(f"DEBUG tick: Resumed to {pc}", file=sys.stderr)
-                        # Continue to execute the statement
-                    else:
-                        # Already stopped - PC has stop_reason set
-                        self._restore_break_handler()
-                        return self.state
+                # Allow execution to continue in step mode even if stopped at BREAK/USER
+                if not pc.is_running() and not (mode in ('step_statement', 'step_line') and pc.stop_reason in ('BREAK', 'USER')):
+                    # Already stopped - PC has stop_reason set
+                    self._restore_break_handler()
+                    return self.state
+
+                # In step mode from breakpoint: clear stop_reason without messing with flags
+                if mode in ('step_statement', 'step_line') and not pc.is_running():
+                    import sys
+                    print(f"DEBUG tick: Step from stopped PC {pc}, continuing execution", file=sys.stderr)
+                    # Just clear the stop_reason to allow execution, don't touch flags
+                    pc = pc.resume()
+                    self.runtime.pc = pc
 
                 # Check for Ctrl+C break
                 if self.runtime.break_requested:
