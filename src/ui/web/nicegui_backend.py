@@ -3879,6 +3879,7 @@ def start_web_ui(port=8080):
         Used by Docker HEALTHCHECK and Kubernetes probes.
         """
         from fastapi.responses import JSONResponse
+        from src.multiuser_config import get_config
 
         health_status = {
             'status': 'healthy',
