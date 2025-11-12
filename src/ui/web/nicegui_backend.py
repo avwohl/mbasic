@@ -3870,12 +3870,67 @@ def start_web_ui(port=8080):
     # Health check endpoint for Kubernetes liveness/readiness probes
     @app.get('/health')
     def health_check():
-        """Simple health check endpoint for container orchestration.
+        """Health check endpoint for container orchestration.
 
-        Returns 200 OK if the server is running and able to respond.
+        Checks critical dependencies and returns:
+        - 200 OK if all configured services are accessible
+        - 503 Service Unavailable if critical services fail
+
         Used by Docker HEALTHCHECK and Kubernetes probes.
         """
-        return {'status': 'healthy', 'version': VERSION}
+        from fastapi.responses import JSONResponse
+
+        health_status = {
+            'status': 'healthy',
+            'version': VERSION,
+            'checks': {}
+        }
+        all_healthy = True
+
+        # Check MySQL connectivity if configured for error logging or usage tracking
+        config = get_config()
+        if config.enabled:
+            # Check error logging MySQL
+            if config.error_logging.type in ('mysql', 'both') and config.error_logging.mysql:
+                try:
+                    import mysql.connector
+                    conn = mysql.connector.connect(
+                        host=config.error_logging.mysql.host,
+                        port=config.error_logging.mysql.port or 3306,
+                        user=config.error_logging.mysql.user,
+                        password=config.error_logging.mysql.password,
+                        database=config.error_logging.mysql.database,
+                        connection_timeout=3
+                    )
+                    conn.close()
+                    health_status['checks']['mysql_error_logging'] = 'ok'
+                except Exception as e:
+                    health_status['checks']['mysql_error_logging'] = f'failed: {str(e)[:100]}'
+                    all_healthy = False
+
+            # Check usage tracking MySQL
+            if config.usage_tracking.enabled and config.usage_tracking.mysql:
+                try:
+                    import mysql.connector
+                    conn = mysql.connector.connect(
+                        host=config.usage_tracking.mysql.host,
+                        port=config.usage_tracking.mysql.port or 3306,
+                        user=config.usage_tracking.mysql.user,
+                        password=config.usage_tracking.mysql.password,
+                        database=config.usage_tracking.mysql.database,
+                        connection_timeout=3
+                    )
+                    conn.close()
+                    health_status['checks']['mysql_usage_tracking'] = 'ok'
+                except Exception as e:
+                    health_status['checks']['mysql_usage_tracking'] = f'failed: {str(e)[:100]}'
+                    all_healthy = False
+
+        if not all_healthy:
+            health_status['status'] = 'degraded'
+            return JSONResponse(status_code=503, content=health_status)
+
+        return health_status
 
     # Landing page visit tracking endpoint
     @app.post('/api/track-visit')
