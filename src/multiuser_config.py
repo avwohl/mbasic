@@ -99,7 +99,14 @@ def load_config() -> MultiUserConfig:
     if config_path.exists():
         try:
             with open(config_path, 'r') as f:
-                data = json.load(f)
+                json_content = f.read()
+                # Substitute environment variables in the JSON (supports ${VAR} syntax)
+                import re
+                def replace_env_var(match):
+                    var_name = match.group(1)
+                    return os.environ.get(var_name, match.group(0))  # Keep original if not found
+                json_content = re.sub(r'\$\{([A-Z_]+)\}', replace_env_var, json_content)
+                data = json.loads(json_content)
                 config = _parse_config_dict(data)
         except Exception as e:
             import sys
