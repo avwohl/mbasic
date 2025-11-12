@@ -24,6 +24,9 @@ spec:
         - containerPort: 8080
           name: http
         env:
+        # Redis connection for session storage
+        - name: NICEGUI_REDIS_URL
+          value: "redis://redis-service:6379"
         # MySQL connection from secrets
         - name: MYSQL_HOST
           valueFrom:
