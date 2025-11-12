@@ -29,6 +29,8 @@ spec:
         - 256mb
         - --maxmemory-policy
         - allkeys-lru
+        - --maxclients
+        - "50000"
         volumeMounts:
         - name: redis-data
           mountPath: /data

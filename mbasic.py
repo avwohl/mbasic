@@ -34,12 +34,6 @@ def list_backends():
             'module': None,  # Built-in, always available
             'install': None
         },
-        'visual': {
-            'name': 'Visual',
-            'description': 'Generic visual stub',
-            'module': None,  # Built-in, always available
-            'install': None
-        },
         'curses': {
             'name': 'Curses',
             'description': 'Full-screen terminal UI',
@@ -91,7 +85,7 @@ def load_backend(backend_name, io_handler, program_manager):
     """Load a UI backend dynamically using importlib
 
     Args:
-        backend_name: Name of backend ('cli', 'visual', 'curses', 'tk', 'web')
+        backend_name: Name of backend ('cli', 'curses', 'tk', 'web')
         io_handler: IOHandler instance for I/O operations
         program_manager: ProgramManager instance for program storage
 
@@ -232,7 +226,7 @@ Examples:
         '--ui',
         '--backend',  # Keep --backend as alias for backwards compatibility
         dest='backend',
-        choices=['cli', 'visual', 'curses', 'tk', 'web'],
+        choices=['cli', 'curses', 'tk', 'web'],
         default='curses',
         help='UI to use (default: curses)'
     )
