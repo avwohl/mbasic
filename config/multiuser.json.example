@@ -1,0 +1,43 @@
+{
+  "_comment": "Multi-user configuration for MBASIC web UI",
+  "_usage": "Copy this file to multiuser.json and configure as needed",
+
+  "enabled": false,
+
+  "session_storage": {
+    "type": "memory",
+    "_types": ["memory", "redis"],
+    "redis": {
+      "url": "redis://localhost:6379/0",
+      "key_prefix": "mbasic:session:"
+    }
+  },
+
+  "error_logging": {
+    "type": "stderr",
+    "_types": ["stderr", "mysql", "both"],
+    "mysql": {
+      "host": "localhost",
+      "port": 3306,
+      "unix_socket": null,
+      "_unix_socket_comment": "Use Unix socket instead of host/port (e.g., /run/mysqld/mysqld.sock)",
+      "user": "mbasic",
+      "password": "",
+      "database": "mbasic_logs",
+      "table": "web_errors"
+    },
+    "log_expected_errors": false,
+    "_expected_error_types": ["SyntaxError", "LexerError", "ParseError", "SemanticError"]
+  },
+
+  "rate_limiting": {
+    "enabled": false,
+    "max_requests_per_minute": 60,
+    "max_concurrent_sessions": 100
+  },
+
+  "autosave": {
+    "enabled": true,
+    "interval_seconds": 60
+  }
+}

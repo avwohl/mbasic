@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mbasic-config
+  namespace: mbasic
+data:
+  multiuser.json: |
+    {
+      "enabled": true,
+      "session_storage": {
+        "type": "redis",
+        "redis": {
+          "url": "redis://redis-service:6379/0",
+          "key_prefix": "mbasic:session:"
+        }
+      },
+      "error_logging": {
+        "type": "mysql",
+        "mysql": {
+          "host": "${MYSQL_HOST}",
+          "port": 25060,
+          "user": "${MYSQL_USER}",
+          "password": "${MYSQL_PASSWORD}",
+          "database": "mbasic_logs",
+          "table": "web_errors"
+        },
+        "log_expected_errors": false
+      },
+      "rate_limiting": {
+        "enabled": true,
+        "max_requests_per_minute": 60,
+        "max_concurrent_sessions": 100
+      },
+      "autosave": {
+        "enabled": true,
+        "interval_seconds": 60
+      }
+    }

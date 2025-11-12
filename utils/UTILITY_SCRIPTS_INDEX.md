@@ -4,6 +4,16 @@
 
 ## Script Categories
 
+### Error Logging & Analysis
+
+- **`view_error_logs.py`** - View and analyze web UI error logs from MySQL database
+  - `python3 utils/view_error_logs.py` - Show recent errors
+  - `python3 utils/view_error_logs.py --summary` - Show error statistics
+  - `python3 utils/view_error_logs.py --unexpected` - Show only unexpected errors
+  - `python3 utils/view_error_logs.py --session ID` - Filter by session
+  - `python3 utils/view_error_logs.py --detail ID` - Show full error details
+  - `python3 utils/view_error_logs.py --clear` - Clear old logs (>30 days)
+
 ### BASIC Code Fixing/Preprocessing
 
 - **`fix_keyword_spacing.py`** - Fixes missing spaces after BASIC keywords

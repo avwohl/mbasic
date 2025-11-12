@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBASIC - Microsoft BASIC-80 Interpreter</title>
+    <meta name="description" content="MBASIC 5.21 - A faithful implementation of Microsoft BASIC-80 for CP/M, running in your browser">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #111;
+            border: 2px solid #0f0;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        h1 {
+            color: #0f0;
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #0a0;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+
+        .ascii-art {
+            text-align: center;
+            color: #0a0;
+            font-size: 0.7em;
+            margin: 20px 0;
+            line-height: 1.2;
+        }
+
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #0a0;
+        }
+
+        h2 {
+            color: #0f0;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        ul {
+            list-style: none;
+            margin-left: 20px;
+        }
+
+        ul li:before {
+            content: "> ";
+            color: #0f0;
+        }
+
+        a {
+            color: #0ff;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        a:hover {
+            color: #fff;
+            text-shadow: 0 0 5px #0ff;
+        }
+
+        .button {
+            display: inline-block;
+            background: #0f0;
+            color: #000;
+            padding: 15px 40px;
+            margin: 10px 5px;
+            border: 2px solid #0f0;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.2em;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        .button:hover {
+            background: #000;
+            color: #0f0;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+        }
+
+        .button-secondary {
+            background: transparent;
+            color: #0ff;
+            border-color: #0ff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .button-secondary:hover {
+            background: #0ff;
+            color: #000;
+        }
+
+        .buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .warning {
+            background: #220;
+            border: 1px solid #f00;
+            color: #f66;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .code-block {
+            background: #000;
+            border: 1px solid #0a0;
+            padding: 15px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #0a0;
+            color: #0a0;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .ascii-art {
+                font-size: 0.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MBASIC</h1>
+        <div class="subtitle">Microsoft BASIC-80 Version 5.21</div>
+
+        <div class="ascii-art">
+___  ___  ______  ___   _____ _____  _____
+|  \/  | | ___ \/ _ \ /  ___|_   _|/  __ \
+| .  . | | |_/ / /_\ \\ `--.  | |  | /  \/
+| |\/| | | ___ \  _  | `--. \ | |  | |
+| |  | | | |_/ / | | |/\__/ /_| |_ | \__/\
+\_|  |_/ \____/\_| |_/\____/ \___/  \____/
+        </div>
+
+        <div class="buttons">
+            <a href="/ide/" class="button">Launch Web IDE</a>
+            <a href="https://avwohl.github.io/mbasic/" class="button button-secondary">Documentation</a>
+        </div>
+
+        <div class="section">
+            <h2>What is MBASIC?</h2>
+            <p>
+                MBASIC is a faithful recreation of Microsoft BASIC-80 version 5.21, the classic BASIC interpreter
+                that ran on CP/M systems in the late 1970s and early 1980s. This implementation brings the vintage
+                computing experience to your modern browser.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>Features</h2>
+            <ul>
+                <li>Full MBASIC 5.21 language compatibility</li>
+                <li>Web-based IDE with syntax highlighting</li>
+                <li>Line-by-line debugging and breakpoints</li>
+                <li>Variable inspection and modification</li>
+                <li>Multiple UI backends (Web, Terminal, GUI)</li>
+                <li>Compiler to CP/M .COM executables</li>
+                <li>Extensive documentation and examples</li>
+                <li>Open source (MIT License)</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Quick Start</h2>
+            <div class="code-block">
+10 PRINT "HELLO, WORLD!"
+20 FOR I = 1 TO 10
+30 PRINT "COUNT: "; I
+40 NEXT I
+50 END
+            </div>
+            <p>
+                Click "Launch Web IDE" above to start programming in MBASIC right away. No installation needed!
+            </p>
+        </div>
+
+        <div class="warning">
+            <strong>Note:</strong> This is a public shared instance. Your programs are not saved permanently.
+            For local development, see the installation guide in the documentation.
+        </div>
+
+        <div class="section">
+            <h2>Documentation</h2>
+            <ul>
+                <li><a href="https://avwohl.github.io/mbasic/help/mbasic/language/">Language Reference</a></li>
+                <li><a href="https://avwohl.github.io/mbasic/help/mbasic/commands/">Editor Commands</a></li>
+                <li><a href="https://github.com/avwohl/mbasic">GitHub Repository</a></li>
+                <li><a href="https://github.com/avwohl/mbasic/blob/main/README.md">Installation Guide</a></li>
+                <li><a href="https://github.com/avwohl/mbasic/tree/main/examples">Example Programs</a></li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>System Requirements</h2>
+            <ul>
+                <li>Modern web browser (Chrome, Firefox, Safari, Edge)</li>
+                <li>JavaScript enabled</li>
+                <li>No plugins or downloads required</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>About</h2>
+            <p>
+                MBASIC is developed and maintained by the vintage computing community. It aims to preserve
+                and celebrate the heritage of early microcomputer programming by making these classic systems
+                accessible to modern users and new generations of programmers.
+            </p>
+            <p style="margin-top: 10px;">
+                Special thanks to all contributors and the vintage computing community for their support
+                and feedback.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>MBASIC © 2024 | <a href="https://github.com/avwohl/mbasic">GitHub</a> |
+            <a href="https://github.com/avwohl/mbasic/issues">Report Issues</a></p>
+            <p style="margin-top: 10px;">Original Microsoft BASIC-80 © Microsoft Corporation</p>
+        </div>
+    </div>
+
+    <script>
+        // Simple analytics (if needed)
+        console.log('MBASIC Landing Page loaded');
+
+        // Check if browser supports required features
+        if (!window.fetch || !window.Promise) {
+            alert('Your browser may not support all features. Please use a modern browser.');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Tests
+tests/
+*.test.py
+
+# Documentation build
+site/
+mkdocs.yml
+
+# Local config
+config/multiuser.json
+*.log
+
+# Development
+.env
+.env.local
+tmp/
+temp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# BASIC programs (not needed in container)
+basic/
+examples/

@@ -131,16 +131,92 @@ pip install -r requirements-local.txt
 
 For production deployment with multiple concurrent users:
 
+#### Install Redis (Session Storage)
+
 ```bash
-# Redis for session storage
-sudo apt install redis
+# Redis for session storage (load-balanced deployments)
+sudo apt-get install redis-server
 
+# Start and enable Redis
+sudo systemctl start redis
+sudo systemctl enable redis
+
+# Test connection
+redis-cli ping  # Should return: PONG
+```
+
+See [REDIS_SESSION_STORAGE_SETUP.md](REDIS_SESSION_STORAGE_SETUP.md) for Redis configuration.
+
+#### Install MariaDB (Error Logging)
+
+```bash
+# MariaDB for error logging
+sudo apt-get install mariadb-server mariadb-client
+
+# Start and enable MariaDB
+sudo systemctl start mariadb
+sudo systemctl enable mariadb
+```
+
+**Setup database and user:**
+
+```bash
+# Connect to MariaDB as root
+sudo mysql
+
+# In MySQL prompt, run these commands:
+# Replace 'wohl' with the user that will run the web UI
+# Replace '[fill in password]' with a secure password (or leave empty for Unix socket only)
+```
+
+```sql
+-- Create user with password authentication (for remote connections)
+CREATE USER 'wohl'@'%' IDENTIFIED BY '[fill in password]';
+
+-- Create databases
+CREATE DATABASE wohl;
+CREATE DATABASE mbasic_logs;
+
+-- Grant privileges for Unix socket authentication (local, no password needed)
+GRANT ALL PRIVILEGES ON mbasic_logs.* TO 'wohl'@'localhost' IDENTIFIED VIA unix_socket;
+
+-- Grant privileges for password authentication (remote or local with password)
+GRANT ALL PRIVILEGES ON mbasic_logs.* TO 'wohl'@'%';
+
+-- Apply changes
+FLUSH PRIVILEGES;
+
+-- Exit MySQL
+EXIT;
+```
+
+**Create error logging tables:**
+
+```bash
+# From MBASIC project directory
+mysql < config/setup_mysql_logging.sql
+```
+
+**Verify setup:**
+
+```bash
+# Test Unix socket connection (no password)
+mysql mbasic_logs -e "SHOW TABLES;"
+
+# Should show: web_errors, error_summary, recent_errors
+```
+
+See [WEB_ERROR_LOGGING.md](WEB_ERROR_LOGGING.md) for error logging configuration.
+
+#### Install Apache (Documentation Server - Optional)
+
+```bash
 # Apache web server (for serving documentation)
-sudo apt install apache2
+sudo apt-get install apache2
 
-# Install Python dependencies
-source venv/bin/activate
-pip install -r requirements-local.txt
+# Start and enable Apache
+sudo systemctl start apache2
+sudo systemctl enable apache2
 ```
 
 **Configure web server permissions:**
@@ -151,7 +227,20 @@ chmod o+x /home/$USER /home/$USER/cl
 chmod -R o+rx /home/$USER/cl/mbasic
 ```
 
-See [REDIS_SESSION_STORAGE_SETUP.md](REDIS_SESSION_STORAGE_SETUP.md) for Redis configuration.
+#### Install Python Dependencies
+
+```bash
+# Activate virtual environment
+source venv/bin/activate
+
+# Install web UI and multi-user dependencies
+pip install nicegui>=3.2.0
+pip install redis>=5.0.0
+pip install mysql-connector-python>=8.0
+
+# Or install all at once
+pip install -r requirements.txt
+```
 
 ## Claude AI Integration (Optional)
 
@@ -289,9 +378,13 @@ tnylpo test_varptr_simple.com
 - [ ] `tnylpo` - CP/M emulator (built from source)
 
 ### Documentation/Web Deployment
+- [ ] `redis-server` - Session storage (optional, for multi-user)
+- [ ] `mariadb-server` and `mariadb-client` - Error logging database (optional)
+- [ ] Setup MariaDB user and databases
+- [ ] Run `config/setup_mysql_logging.sql`
 - [ ] `apache2` - Web server (optional)
-- [ ] `redis` - Session storage (optional, for multi-user)
 - [ ] Configure directory permissions
+- [ ] Install Python packages: `nicegui`, `redis`, `mysql-connector-python`
 
 ### AI-Assisted Development
 - [ ] Claude CLI
@@ -330,12 +423,44 @@ chmod o+x /home/$USER /home/$USER/cl
 chmod -R o+rx /home/$USER/cl/mbasic
 ```
 
+### MariaDB connection issues
+
+**"Access denied" with Unix socket:**
+```bash
+# Check if user has Unix socket authentication
+sudo mysql -e "SELECT user, host, plugin FROM mysql.user WHERE user='wohl';"
+
+# Should show: unix_socket for localhost
+# If not, run the GRANT command again:
+sudo mysql -e "GRANT ALL PRIVILEGES ON mbasic_logs.* TO 'wohl'@'localhost' IDENTIFIED VIA unix_socket; FLUSH PRIVILEGES;"
+```
+
+**"Can't connect to MySQL server":**
+```bash
+# Check if MariaDB is running
+sudo systemctl status mariadb
+
+# Start if needed
+sudo systemctl start mariadb
+```
+
+**Test connection:**
+```bash
+# Unix socket (no password)
+mysql mbasic_logs -e "SELECT COUNT(*) FROM web_errors;"
+
+# Password authentication
+mysql -u wohl -p mbasic_logs -e "SELECT COUNT(*) FROM web_errors;"
+```
+
 ## See Also
 
 - [User Installation Guide](../user/INSTALL.md) - Simpler setup for end users
+- [Web Multi-User Deployment](WEB_MULTIUSER_DEPLOYMENT.md) - Complete web deployment guide
+- [Web Error Logging](WEB_ERROR_LOGGING.md) - Error logging system setup
+- [Redis Setup](REDIS_SESSION_STORAGE_SETUP.md) - Redis session storage configuration
 - [Compiler Setup](COMPILER_SETUP.md) - Detailed z88dk configuration
 - [tnylpo Setup](TNYLPO_SETUP.md) - CP/M emulator usage
-- [Redis Setup](REDIS_SESSION_STORAGE_SETUP.md) - Multi-user web configuration
 - [Testing Guide](https://github.com/avwohl/mbasic/blob/main/tests/README.md) - Running tests
 
 ## Support

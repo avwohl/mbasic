@@ -19,6 +19,7 @@ from src.version import VERSION
 from src.pc import PC
 from src.ui.web.codemirror5_editor import CodeMirror5Editor
 from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode, get_default_reverse_for_mode
+from src.error_logger import log_web_error
 
 
 class SimpleWebIOHandler(IOHandler):
@@ -517,7 +518,7 @@ class OpenFileDialog(ui.dialog):
             self.close()
 
         except Exception as ex:
-            log_web_error("_open_file", ex)
+            self._log_error("_open_file", ex)
             self.backend._notify(f'Error loading file: {ex}', type='negative')
 
     def _show_upload_option(self):
@@ -704,7 +705,7 @@ class FindReplaceDialog(ui.dialog):
                             result_label.text = 'Not found'
                 except Exception as ex:
                     result_label.text = f'Error: {ex}'
-                    log_web_error("do_find_next", ex)
+                    self._log_error("do_find_next", ex)
 
             def do_replace():
                 """Replace current selection and find next."""
@@ -735,7 +736,7 @@ class FindReplaceDialog(ui.dialog):
                         result_label.text = 'Not found'
                 except Exception as ex:
                     result_label.text = f'Error: {ex}'
-                    log_web_error("do_replace", ex)
+                    self._log_error("do_replace", ex)
 
             def do_replace_all():
                 """Replace all occurrences."""
@@ -764,7 +765,7 @@ class FindReplaceDialog(ui.dialog):
                     self.backend.last_find_position = 0
                 except Exception as ex:
                     result_label.text = f'Error: {ex}'
-                    log_web_error("do_replace_all", ex)
+                    self._log_error("do_replace_all", ex)
 
             def on_close():
                 """Clear dialog reference when closed."""
@@ -1081,6 +1082,18 @@ class NiceGUIBackend(UIBackend):
         # Pending editor content (for state restoration)
         self._pending_editor_content = None
 
+    def _log_error(self, context: str, exception: Exception):
+        """Log an error with session tracking.
+
+        Helper method to log errors with automatic session ID tracking.
+
+        Args:
+            context: Function/method name where error occurred
+            exception: The exception that occurred
+        """
+        session_id = self.sandboxed_fs.user_id if hasattr(self, 'sandboxed_fs') else None
+        self._log_error(context, exception, session_id=session_id)
+
     def build_ui(self):
         """Build the NiceGUI interface.
 
@@ -1389,7 +1402,7 @@ class NiceGUIBackend(UIBackend):
                 localStorage.setItem('mbasic_recent_files', '{files_json}');
             ''')
         except Exception as e:
-            log_web_error("_save_recent_files", e)
+            self._log_error("_save_recent_files", e)
 
     def _add_recent_file(self, filename):
         """Add a file to recent files list."""
@@ -1411,7 +1424,7 @@ class NiceGUIBackend(UIBackend):
             self._update_recent_files_menu()
 
         except Exception as e:
-            log_web_error("_add_recent_file", e)
+            self._log_error("_add_recent_file", e)
 
     def _update_recent_files_menu(self):
         """Update Recent Files submenu."""
@@ -1436,7 +1449,7 @@ class NiceGUIBackend(UIBackend):
                     ui.menu_item('(No recent files)', on_click=lambda: None).props('disable')
 
         except Exception as e:
-            log_web_error("_update_recent_files_menu", e)
+            self._log_error("_update_recent_files_menu", e)
 
     def _open_recent_file(self, filename):
         """Open a file from recent files."""
@@ -1555,7 +1568,7 @@ class NiceGUIBackend(UIBackend):
             await self._update_breakpoint_display()
 
         except Exception as e:
-            log_web_error("_toggle_breakpoint", e)
+            self._log_error("_toggle_breakpoint", e)
             self._notify(f'Error: {e}', type='negative')
 
     async def _update_breakpoint_display(self):
@@ -1596,7 +1609,7 @@ class NiceGUIBackend(UIBackend):
                     self.editor.add_breakpoint(item)
 
         except Exception as e:
-            log_web_error("_update_breakpoint_display", e)
+            self._log_error("_update_breakpoint_display", e)
 
     async def _do_toggle_breakpoint(self, line_num_str, dialog):
         """Actually toggle the breakpoint."""
@@ -1622,7 +1635,7 @@ class NiceGUIBackend(UIBackend):
         except ValueError:
             self._notify('Please enter a valid line number', type='warning')
         except Exception as e:
-            log_web_error("_do_toggle_breakpoint", e)
+            self._log_error("_do_toggle_breakpoint", e)
             self._notify(f'Error: {e}', type='negative')
 
     def _clear_all_breakpoints(self):
@@ -1637,7 +1650,7 @@ class NiceGUIBackend(UIBackend):
             self._notify(f'Cleared {count} breakpoint(s)', type='info')
             self._set_status('All breakpoints cleared')
         except Exception as e:
-            log_web_error("_clear_all_breakpoints", e)
+            self._log_error("_clear_all_breakpoints", e)
             self._notify(f'Error: {e}', type='negative')
 
     # =========================================================================
@@ -1652,7 +1665,7 @@ class NiceGUIBackend(UIBackend):
             self.current_file = None
             self._set_status('New program')
         except Exception as e:
-            log_web_error("_menu_new", e)
+            self._log_error("_menu_new", e)
             self._notify(f'Error: {e}', type='negative')
 
     def cmd_new(self) -> None:
@@ -1720,7 +1733,7 @@ class NiceGUIBackend(UIBackend):
             dialog.close()
 
         except Exception as ex:
-            log_web_error("_handle_file_upload", ex)
+            self._log_error("_handle_file_upload", ex)
             self._notify(f'Error loading file: {ex}', type='negative')
 
     async def _menu_save(self):
@@ -1742,7 +1755,7 @@ class NiceGUIBackend(UIBackend):
             self._notify(f'Downloaded {self.current_file}', type='positive')
 
         except Exception as e:
-            log_web_error("_menu_save", e)
+            self._log_error("_menu_save", e)
             self._notify(f'Error: {e}', type='negative')
 
     async def _menu_save_as(self):
@@ -1771,7 +1784,7 @@ class NiceGUIBackend(UIBackend):
             dialog.close()
 
         except Exception as e:
-            log_web_error("_handle_save_as", e)
+            self._log_error("_handle_save_as", e)
             self._notify(f'Error: {e}', type='negative')
 
     def _handle_merge_upload(self, e, dialog):
@@ -1814,7 +1827,7 @@ class NiceGUIBackend(UIBackend):
             self._set_status(f'Merged {len(merge_lines)} lines')
 
         except Exception as ex:
-            log_web_error("_handle_merge_upload", ex)
+            self._log_error("_handle_merge_upload", ex)
             self._notify(f'Error merging file: {ex}', type='negative')
 
     async def _menu_exit(self):
@@ -1900,7 +1913,7 @@ class NiceGUIBackend(UIBackend):
             self.exec_timer = ui.timer(0.01, self._execute_tick, once=False)
 
         except Exception as e:
-            log_web_error("_menu_run", e)
+            self._log_error("_menu_run", e)
             self._append_output(f"\n--- Error: {e} ---\n")
             self._set_status(f'Error: {e}')
             self.running = False
@@ -2002,7 +2015,7 @@ class NiceGUIBackend(UIBackend):
                     self.exec_timer = None
 
         except Exception as e:
-            log_web_error("_execute_tick", e)
+            self._log_error("_execute_tick", e)
             self._append_output(f"\n--- Tick error: {e} ---\n")
             self._set_status(f"Error: {e}")
             self.running = False
@@ -2095,7 +2108,7 @@ class NiceGUIBackend(UIBackend):
                         state = self.interpreter.tick(mode='step_line', max_statements=100)
                         self._handle_step_result(state, 'line')
                     except Exception as e:
-                        log_web_error("_menu_step_line tick", e)
+                        self._log_error("_menu_step_line tick", e)
                         self._append_output(f"\n--- Step error: {e} ---\n")
                         self._set_status('Error')
                         self.running = False
@@ -2104,7 +2117,7 @@ class NiceGUIBackend(UIBackend):
                     self._notify('No interpreter - program not started', type='warning')
 
         except Exception as e:
-            log_web_error("_menu_step_line", e)
+            self._log_error("_menu_step_line", e)
             self._notify(f'Error: {e}', type='negative')
 
     async def _menu_step_stmt(self):
@@ -2162,17 +2175,17 @@ class NiceGUIBackend(UIBackend):
                         state = self.interpreter.tick(mode='step_statement', max_statements=1)
                         self._handle_step_result(state, 'statement')
                     except Exception as e:
-                        log_web_error("_menu_step_stmt tick", e)
+                        self._log_error("_menu_step_stmt tick", e)
                         self._append_output(f"\n--- Step error: {e} ---\n")
                         self._set_status('Error')
                         self.running = False
                         self.paused = False
                 else:
-                    log_web_error("_menu_step_stmt", "No interpreter")
+                    self._log_error("_menu_step_stmt", "No interpreter")
                     self._notify('No interpreter - program not started', type='warning')
 
         except Exception as e:
-            log_web_error("_menu_step_stmt", e)
+            self._log_error("_menu_step_stmt", e)
             self._notify(f'Error: {e}', type='negative')
 
     def _handle_step_result(self, state, step_type):
@@ -2271,7 +2284,7 @@ class NiceGUIBackend(UIBackend):
                 self._notify('Not paused', type='warning')
 
         except Exception as e:
-            log_web_error("_menu_continue", e)
+            self._log_error("_menu_continue", e)
             self._notify(f'Error: {e}', type='negative')
 
     async def _menu_list(self):
@@ -2298,7 +2311,7 @@ class NiceGUIBackend(UIBackend):
             self._notify('Program lines sorted', type='positive')
             self._set_status('Lines sorted by line number')
         except Exception as e:
-            log_web_error("_menu_sort_lines", e)
+            self._log_error("_menu_sort_lines", e)
             self._notify(f'Error: {e}', type='negative')
 
     async def _menu_find_replace(self):
@@ -2343,7 +2356,7 @@ class NiceGUIBackend(UIBackend):
                 self._notify(msg, type='warning')
                 self._append_output(f'\n--- Help URL ---\n{url}\n')
         except Exception as e:
-            log_web_error("_menu_help", e)
+            self._log_error("_menu_help", e)
             self._notify(f'Error opening help: {e}', type='negative')
 
     def _menu_games_library(self):
@@ -2362,7 +2375,7 @@ class NiceGUIBackend(UIBackend):
                 self._notify(msg, type='warning')
                 self._append_output(f'\n--- Library URL ---\n{url}\n')
         except Exception as e:
-            log_web_error("_menu_games_library", e)
+            self._log_error("_menu_games_library", e)
             self._notify(f'Error opening library: {e}', type='negative')
 
     async def _menu_settings(self):
@@ -2410,7 +2423,7 @@ class NiceGUIBackend(UIBackend):
                     ui.timer(2.0, lambda: setattr(self.status_label, 'text', old_status), once=True)
         except Exception as e:
             # Log but don't crash on auto-save errors
-            log_web_error("_auto_save_tick", e)
+            self._log_error("_auto_save_tick", e)
 
     def _auto_save_to_storage(self, content):
         """Save content to browser localStorage."""
@@ -2422,7 +2435,7 @@ class NiceGUIBackend(UIBackend):
                 localStorage.setItem('mbasic_autosave_time', new Date().toISOString());
             ''')
         except Exception as e:
-            log_web_error("_auto_save_to_storage", e)
+            self._log_error("_auto_save_to_storage", e)
 
     def _load_auto_save(self):
         """Load auto-saved content from localStorage if available."""
@@ -2431,7 +2444,7 @@ class NiceGUIBackend(UIBackend):
             # For now, it's a placeholder for future enhancement
             pass
         except Exception as e:
-            log_web_error("_load_auto_save", e)
+            self._log_error("_load_auto_save", e)
 
     def _check_syntax(self):
         """Check syntax of current program."""
@@ -2497,7 +2510,7 @@ class NiceGUIBackend(UIBackend):
                 self._notify('No syntax errors found', type='positive')
 
         except Exception as e:
-            log_web_error("_check_syntax", e)
+            self._log_error("_check_syntax", e)
             self._notify(f'Error checking syntax: {e}', type='negative')
 
     # =========================================================================
@@ -2613,7 +2626,7 @@ class NiceGUIBackend(UIBackend):
             return True
 
         except Exception as e:
-            log_web_error("_save_editor_to_program", e)
+            self._log_error("_save_editor_to_program", e)
             self._notify(f'Error: {e}', type='negative')
             return False
 
@@ -2626,7 +2639,7 @@ class NiceGUIBackend(UIBackend):
             self.editor.value = '\n'.join(formatted_lines)
             self._set_status(f'Loaded {len(lines)} lines')
         except Exception as e:
-            log_web_error("_load_program_to_editor", e)
+            self._log_error("_load_program_to_editor", e)
             self._notify(f'Error: {e}', type='negative')
 
     def _remove_blank_lines(self, e=None):
@@ -2658,7 +2671,7 @@ class NiceGUIBackend(UIBackend):
                 self.editor.value = '\n'.join(non_blank_lines)
 
         except Exception as ex:
-            log_web_error("_remove_blank_lines", ex)
+            self._log_error("_remove_blank_lines", ex)
 
     def _on_editor_change(self, e):
         """Handle CodeMirror editor content changes.
@@ -2718,7 +2731,7 @@ class NiceGUIBackend(UIBackend):
             ui.timer(0.05, self._check_auto_number, once=True)
 
         except Exception as ex:
-            log_web_error("_on_editor_change", ex)
+            self._log_error("_on_editor_change", ex)
 
     def _on_enter_key(self):
         """Handle Enter key press in editor - triggers auto-numbering.
@@ -2743,7 +2756,7 @@ class NiceGUIBackend(UIBackend):
             ui.timer(0.1, self._remove_blank_lines, once=True)
 
         except Exception as ex:
-            log_web_error("_on_paste", ex)
+            self._log_error("_on_paste", ex)
 
     def _on_key_released(self, e):
         """Handle key release - remove blank lines and schedule auto-number check."""
@@ -2823,7 +2836,7 @@ class NiceGUIBackend(UIBackend):
                 self._update_auto_line_indicator()
 
         except Exception as ex:
-            log_web_error("_add_next_line_number", ex)
+            self._log_error("_add_next_line_number", ex)
 
     async def _check_and_autonumber_on_blur(self):
         """Check auto-number then remove blank lines on blur."""
@@ -2831,7 +2844,7 @@ class NiceGUIBackend(UIBackend):
             await self._check_auto_number()
             self._remove_blank_lines()
         except Exception as ex:
-            log_web_error("_check_and_autonumber_on_blur", ex)
+            self._log_error("_check_and_autonumber_on_blur", ex)
 
     async def _check_auto_number(self):
         """Check if we should auto-number lines without line numbers.
@@ -2915,7 +2928,7 @@ class NiceGUIBackend(UIBackend):
                 self.last_edited_line_text = current_text
 
         except Exception as ex:
-            log_web_error("_check_auto_number", ex)
+            self._log_error("_check_auto_number", ex)
         finally:
             self.auto_numbering_in_progress = False
 
@@ -3209,7 +3222,7 @@ class NiceGUIBackend(UIBackend):
                 self._set_status('Immediate command error')
 
         except Exception as e:
-            log_web_error("_execute_immediate", e)
+            self._log_error("_execute_immediate", e)
             self._notify(f'Error: {e}', type='negative')
 
     def _notify(self, message, type='info', log_to_output=True):
@@ -3285,7 +3298,7 @@ class NiceGUIBackend(UIBackend):
 
             self.auto_line_label.text = f'Auto {next_line_num}'
         except Exception as ex:
-            log_web_error("_update_auto_line_indicator", ex)
+            self._log_error("_update_auto_line_indicator", ex)
 
     # =========================================================================
     # Session State Serialization (for Redis storage support)
@@ -3661,6 +3674,16 @@ def start_web_ui(port=8080):
                 sys.stderr.flush()
 
         ui.context.client.on_disconnect(save_on_disconnect)
+
+    # Health check endpoint for Kubernetes liveness/readiness probes
+    @app.get('/health')
+    def health_check():
+        """Simple health check endpoint for container orchestration.
+
+        Returns 200 OK if the server is running and able to respond.
+        Used by Docker HEALTHCHECK and Kubernetes probes.
+        """
+        return {'status': 'healthy', 'version': VERSION}
 
     # Check if Redis is configured
     import os

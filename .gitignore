@@ -59,3 +59,7 @@ tests/data/
 # MkDocs generated files
 /site/
 .cache/
+
+# Deployment - filled-in configs (templates are in deployment/)
+/k8s/
+/config/multiuser.json
