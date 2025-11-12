@@ -80,6 +80,17 @@ class WebSettingsDialog(ui.dialog):
             value=auto_num_enabled
         ).classes('mb-2')
 
+        # Auto-number start
+        auto_num_start = self.settings_manager.get('auto_number_start')
+        with ui.row().classes('items-center gap-2'):
+            ui.label('Starting line number:').classes('min-w-40')
+            self.widgets['auto_number_start'] = ui.number(
+                value=auto_num_start,
+                min=0,
+                max=65529,
+                step=1
+            ).props('outlined dense').classes('w-32')
+
         # Auto-number step
         auto_num_step = self.settings_manager.get('auto_number_step')
         with ui.row().classes('items-center gap-2'):
@@ -91,7 +102,7 @@ class WebSettingsDialog(ui.dialog):
                 step=1
             ).props('outlined dense').classes('w-32')
 
-        ui.label('Common values: 10 (classic), 100 (large programs), 1 (dense)').classes('text-sm text-gray-600 mt-1')
+        ui.label('Common values: Start 10 or 100, Step 10 (classic) or 1 (dense)').classes('text-sm text-gray-600 mt-1')
 
     def _create_limits_settings(self):
         """Create resource limits settings (read-only for now)."""
@@ -120,6 +131,13 @@ class WebSettingsDialog(ui.dialog):
                 self.settings_manager.set(
                     'auto_number',
                     self.widgets['auto_number'].value
+                )
+
+            if 'auto_number_start' in self.widgets:
+                start_value = int(self.widgets['auto_number_start'].value)
+                self.settings_manager.set(
+                    'auto_number_start',
+                    start_value
                 )
 
             if 'auto_number_step' in self.widgets:
