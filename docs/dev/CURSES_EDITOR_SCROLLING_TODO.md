@@ -52,10 +52,12 @@ TopLeftBox (border)
                  └─ Edit(multiline=True)
 ```
 
-**Expected Behavior** (like vim):
-- Keep cursor in middle 50% of viewport
-- When cursor moves up/down, scroll viewport to maintain centering
-- When at top/bottom of file, cursor can be in top/bottom 50%
+**Expected Behavior** (like vim "soft centering"):
+- **TRY** to keep cursor in middle 50% of viewport when scrolling
+- When cursor moves up/down and there's content, scroll viewport to maintain centering
+- When at **top of file**: cursor can move from top line to middle (don't force centering)
+- When at **bottom of file**: cursor can move from middle to bottom line (don't force centering)
+- User must be able to reach first and last lines with cursor
 
 **Investigation Needed**:
 1. Can Edit widget provide viewport management hints?
