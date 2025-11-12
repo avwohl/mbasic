@@ -347,9 +347,12 @@ class Interpreter:
                     if pc in self.runtime.breakpoints:
                         # Exact PC match (statement-level breakpoint)
                         at_breakpoint = True
-                    elif pc.line_num in self.runtime.breakpoints:
-                        # Line-level breakpoint (backwards compatible)
-                        at_breakpoint = True
+                    else:
+                        # Check if any breakpoint is set at this line (line-level match)
+                        for bp in self.runtime.breakpoints:
+                            if bp.line == pc.line_num:
+                                at_breakpoint = True
+                                break
 
                 if at_breakpoint:
                     if not self.state.skip_next_breakpoint_check:
