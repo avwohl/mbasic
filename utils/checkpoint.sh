@@ -66,7 +66,7 @@ DOCS_CHANGED=$(git diff --name-only docs/ mkdocs.yml 2>/dev/null || echo "")
 
 if [ -n "$DOCS_CHANGED" ]; then
     echo "Documentation changed - regenerating keyboard shortcuts..."
-    python3 mbasic --dump-keymap > docs/user/keyboard-shortcuts.md
+    python3 mbasic.py --dump-keymap > docs/user/keyboard-shortcuts.md
     if [ $? -eq 0 ]; then
         echo "✓ Keyboard shortcuts regenerated"
     else

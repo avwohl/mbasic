@@ -242,6 +242,92 @@ pip install mysql-connector-python>=8.0
 pip install -r requirements.txt
 ```
 
+## Kubernetes & Cloud Deployment (Optional)
+
+For deploying MBASIC web UI to Kubernetes clusters (e.g., DigitalOcean):
+
+### Install Docker
+
+```bash
+# Install Docker
+sudo apt-get install -y docker.io
+
+# Add user to docker group (replace 'wohl' with your username)
+sudo usermod -aG docker wohl
+
+# Start and enable Docker
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Note: Existing logins need to relog to gain the docker group
+# Or use newgrp to activate group in current shell:
+newgrp docker
+```
+
+**Verify Docker installation:**
+```bash
+docker --version
+docker ps  # Should work without sudo
+```
+
+### Install DigitalOcean CLI (doctl)
+
+```bash
+# Install doctl via snap
+sudo snap install doctl
+
+# Connect snap permissions
+sudo snap connect doctl:kube-config
+sudo snap connect doctl:dot-docker
+
+# Initialize doctl with your DigitalOcean API token
+# (Create token at: https://cloud.digitalocean.com/account/api/tokens)
+doctl auth init
+# Follow prompts to enter your API token
+```
+
+**Verify doctl installation:**
+```bash
+doctl account get  # Should show your DigitalOcean account info
+```
+
+### Install kubectl (Kubernetes CLI)
+
+```bash
+# Install kubectl via snap
+sudo snap install kubectl --classic
+
+# Verify installation
+kubectl version --client
+```
+
+### Configure Kubernetes Cluster Access
+
+```bash
+# Download your cluster's kubeconfig (replace CLUSTER_ID with your cluster ID)
+doctl kubernetes cluster kubeconfig save CLUSTER_ID
+
+# Verify cluster access
+kubectl get nodes
+kubectl get namespaces
+```
+
+### Setup hCaptcha (Bot Protection)
+
+For web deployments with bot protection:
+
+1. Sign up at https://www.hcaptcha.com
+2. Create a new site and obtain:
+   - Site Key (public)
+   - Secret Key (private)
+3. Store keys as Kubernetes secrets or environment variables
+
+### Additional Resources
+
+- **Deploy to DigitalOcean Kubernetes:** https://docs.digitalocean.com/products/kubernetes/getting-started/deploy-image-to-cluster/
+- **Kubernetes Deployment Guide:** [KUBERNETES_DEPLOYMENT_SETUP.md](KUBERNETES_DEPLOYMENT_SETUP.md)
+- **Docker Registry Setup:** Configure DigitalOcean Container Registry for storing Docker images
+
 ## Claude AI Integration (Optional)
 
 For AI-assisted development and documentation:
@@ -385,6 +471,16 @@ tnylpo test_varptr_simple.com
 - [ ] `apache2` - Web server (optional)
 - [ ] Configure directory permissions
 - [ ] Install Python packages: `nicegui`, `redis`, `mysql-connector-python`
+
+### Kubernetes/Cloud Deployment
+- [ ] `docker.io` - Container runtime
+- [ ] Add user to docker group (`usermod -aG docker username`)
+- [ ] `doctl` - DigitalOcean CLI (via snap)
+- [ ] Connect doctl snap permissions
+- [ ] Configure doctl authentication (API token)
+- [ ] `kubectl` - Kubernetes CLI (via snap)
+- [ ] Configure cluster kubeconfig
+- [ ] Setup hCaptcha account (optional, for bot protection)
 
 ### AI-Assisted Development
 - [ ] Claude CLI

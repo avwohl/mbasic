@@ -49,6 +49,7 @@ If you're contributing to MBASIC:
 - [Printf Elimination Todo](PRINTF_ELIMINATION_TODO.md)
 - [Redis Per Session Settings](REDIS_PER_SESSION_SETTINGS.md)
 - [Redis Session Storage Setup](REDIS_SESSION_STORAGE_SETUP.md)
+- [Usage Tracking Integration](USAGE_TRACKING_INTEGRATION.md)
 
 ### Debugging & Errors
 
@@ -68,7 +69,6 @@ If you're contributing to MBASIC:
 ### Work in Progress
 
 - [Work In Progress Final Summary](WORK_IN_PROGRESS_FINAL_SUMMARY.md)
-- [Work In Progress](WORK_IN_PROGRESS.md)
 
 ### Other
 
