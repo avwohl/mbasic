@@ -17,7 +17,7 @@ COMMIT_MSG="$1"
 VERSION_FILE="src/version.py"
 
 # Read current version (first match only, to avoid MBASIC_VERSION)
-CURRENT_VERSION=$(grep '^VERSION = ' $VERSION_FILE | head -1 | cut -d'"' -f2)
+CURRENT_VERSION=$(grep '^VERSION = ' $VERSION_FILE | head -1 | cut -d"'" -f2)
 echo "Current version: $CURRENT_VERSION"
 
 # Increment patch version (X.Y.Z -> X.Y.Z+1)
@@ -30,7 +30,7 @@ NEW_VERSION="$major.$minor.$NEW_PATCH"
 echo "New version: $NEW_VERSION"
 
 # Update version file immediately
-sed -i "s/VERSION = \"$CURRENT_VERSION\"/VERSION = \"$NEW_VERSION\"/" $VERSION_FILE
+sed -i "s/VERSION = '$CURRENT_VERSION'/VERSION = '$NEW_VERSION'/" $VERSION_FILE
 
 # Check if dev docs were modified - regenerate index
 DEV_CHANGED=$(git diff --name-only docs/dev/ 2>/dev/null | grep -v "docs/dev/index.md" || echo "")
