@@ -1430,6 +1430,7 @@ class Runtime:
             set_breakpoint(100, 2)        # Statement-level (line 100, statement offset 2 = 3rd statement)
             set_breakpoint(PC(100, 2))    # PC object (preferred)
         """
+        from src.pc import PC
         if isinstance(line_or_pc, PC):
             # PC object passed directly
             self.breakpoints.add(line_or_pc)
@@ -1437,8 +1438,8 @@ class Runtime:
             # Statement-level: (line, offset)
             self.breakpoints.add(PC(line_or_pc, stmt_offset))
         else:
-            # Line-level: just line number
-            self.breakpoints.add(line_or_pc)
+            # Line-level: Create PC with statement=0 (will match any statement on line due to PC.__eq__)
+            self.breakpoints.add(PC(line_or_pc, 0))
 
     def clear_breakpoint(self, line_or_pc, stmt_offset=None):
         """Remove a breakpoint at the specified line or statement.
@@ -1453,6 +1454,7 @@ class Runtime:
             clear_breakpoint(100, 2)        # Statement-level
             clear_breakpoint(PC(100, 2))    # PC object (preferred)
         """
+        from src.pc import PC
         if isinstance(line_or_pc, PC):
             # PC object passed directly
             self.breakpoints.discard(line_or_pc)
@@ -1460,8 +1462,8 @@ class Runtime:
             # Statement-level: (line, offset)
             self.breakpoints.discard(PC(line_or_pc, stmt_offset))
         else:
-            # Line-level: just line number
-            self.breakpoints.discard(line_or_pc)
+            # Line-level: Create PC with statement=0 to match set_breakpoint behavior
+            self.breakpoints.discard(PC(line_or_pc, 0))
 
     def clear_breakpoints(self):
         """Clear all breakpoints."""
