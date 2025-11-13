@@ -13,6 +13,7 @@ from typing import List, Dict, Set, Optional, Any
 from src.ast_nodes import *
 from src.semantic_analyzer import SymbolTable, VarType
 from src.codegen_backend import CodeGenBackend
+from src.tokens import TokenType
 
 
 class JavaScriptBackend(CodeGenBackend):
@@ -61,6 +62,31 @@ class JavaScriptBackend(CodeGenBackend):
     def indent(self) -> str:
         """Return current indentation"""
         return '  ' * self.indent_level
+
+    def _token_to_operator(self, token: TokenType) -> str:
+        """Convert TokenType to operator string"""
+        operator_map = {
+            TokenType.PLUS: '+',
+            TokenType.MINUS: '-',
+            TokenType.MULTIPLY: '*',
+            TokenType.DIVIDE: '/',
+            TokenType.POWER: '^',
+            TokenType.BACKSLASH: '//',  # Integer division (JavaScript doesn't have this, use Math.floor)
+            TokenType.MOD: '%',
+            TokenType.EQUAL: '=',
+            TokenType.LESS_THAN: '<',
+            TokenType.GREATER_THAN: '>',
+            TokenType.LESS_EQUAL: '<=',
+            TokenType.GREATER_EQUAL: '>=',
+            TokenType.NOT_EQUAL: '<>',
+            TokenType.AND: 'AND',
+            TokenType.OR: 'OR',
+            TokenType.NOT: 'NOT',
+            TokenType.XOR: 'XOR',
+            TokenType.EQV: 'EQV',
+            TokenType.IMP: 'IMP',
+        }
+        return operator_map.get(token, str(token))
 
     def generate(self, program: ProgramNode) -> str:
         """Generate JavaScript code for the program"""
@@ -199,20 +225,33 @@ class JavaScriptBackend(CodeGenBackend):
                 elif isinstance(stmt, RestoreStatementNode):
                     self.uses_data = True
                 # Check for RND function in expressions
-                self._check_for_rnd(stmt)
+                self._check_for_rnd(stmt, set())
 
-    def _check_for_rnd(self, node):
-        """Recursively check for RND function usage"""
+    def _check_for_rnd(self, node, visited):
+        """Recursively check for RND function usage (with cycle detection)"""
+        # Avoid infinite recursion on circular references
+        node_id = id(node)
+        if node_id in visited:
+            return
+        visited.add(node_id)
+
         if isinstance(node, FunctionCallNode) and node.name.lower() == 'rnd':
             self.uses_random = True
+            return
+
         # Recursively check children
         if hasattr(node, '__dict__'):
-            for attr_value in node.__dict__.values():
+            for attr_name, attr_value in node.__dict__.items():
+                # Skip certain attributes that create cycles (like parent pointers, line_num, column, etc.)
+                if attr_name in ('line_num', 'column', 'original_case', 'explicit_type_suffix'):
+                    continue
+
                 if isinstance(attr_value, list):
                     for item in attr_value:
-                        self._check_for_rnd(item)
-                elif hasattr(attr_value, '__dict__'):
-                    self._check_for_rnd(attr_value)
+                        if hasattr(item, '__dict__'):
+                            self._check_for_rnd(item, visited)
+                elif hasattr(attr_value, '__dict__') and not isinstance(attr_value, (str, int, float, bool)):
+                    self._check_for_rnd(attr_value, visited)
 
     def _generate_runtime(self) -> List[str]:
         """Generate runtime library functions"""
@@ -594,11 +633,14 @@ class JavaScriptBackend(CodeGenBackend):
         elif isinstance(expr, BinaryOpNode):
             left = self._generate_expression(expr.left)
             right = self._generate_expression(expr.right)
-            op = expr.operator
+            op = self._token_to_operator(expr.operator)
 
             # Map BASIC operators to JavaScript
             if op == '^':
                 return f'Math.pow({left}, {right})'
+            elif op == '//':
+                # Integer division
+                return f'Math.floor({left} / {right})'
             elif op in ['+', '-', '*', '/', '<', '>', '<=', '>=', '=', '<>']:
                 if op == '=':
                     js_op = '==='
@@ -607,6 +649,14 @@ class JavaScriptBackend(CodeGenBackend):
                 else:
                     js_op = op
                 return f'({left} {js_op} {right})'
+            elif op == 'AND':
+                return f'({left} && {right})'
+            elif op == 'OR':
+                return f'({left} || {right})'
+            elif op == 'NOT':
+                return f'(!{right})'
+            elif op == '%':  # MOD
+                return f'({left} % {right})'
             else:
                 return f'({left} {op} {right})'
         elif isinstance(expr, UnaryOpNode):
