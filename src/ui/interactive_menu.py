@@ -96,6 +96,14 @@ class InteractiveMenuBar(urwid.WidgetWrap):
         self._update_display()
         return self._show_dropdown()
 
+    def activate_with_base(self, base_widget):
+        """Activate the menu bar with explicit base widget."""
+        self.active = True
+        self.current_menu_index = 0
+        self.current_item_index = 0
+        self._update_display()
+        return self._show_dropdown(base_widget=base_widget)
+
     def deactivate(self):
         """Deactivate the menu bar (ESC pressed)."""
         self.active = False

@@ -2755,12 +2755,11 @@ class CursesBackend(UIBackend):
         on top of them, allowing menu navigation even when other overlays are present.
         """
         # Get the dropdown overlay from menu bar
-        overlay = self.menu_bar.activate()
+        # Pass self.base_widget explicitly to ensure proper colors
+        overlay = self.menu_bar.activate_with_base(self.base_widget)
 
-        # Extract base widget from current loop.widget to unwrap any existing overlay.
-        # This differs from _show_help/_show_keymap/_show_settings which use self.base_widget
-        # directly, since menu needs to work even when other overlays are already present.
-        main_widget = self.loop.widget.base_widget if hasattr(self.loop.widget, 'base_widget') else self.loop.widget
+        # Use self.base_widget for restoring (always has proper 'body' AttrMap)
+        main_widget = self.base_widget
 
         # Track current menu overlay (updated when refreshing)
         current_overlay = {'widget': overlay}
@@ -2782,13 +2781,13 @@ class CursesBackend(UIBackend):
                     # Keymap was opened from menu, it's already handling the widget
                     pass
                 else:
-                    # Wrap in AttrMap to force black background when redrawing
-                    self.loop.widget = urwid.AttrMap(main_widget, 'body')
+                    # Restore base widget (already has proper AttrMap wrapping)
+                    self.loop.widget = main_widget
                     self.loop.unhandled_input = self._handle_input
             elif result == 'refresh':
-                # Refresh dropdown - rebuild overlay from scratch using main widget
-                # Don't call draw_screen() - it uses default colors (39;49) which may be white
-                new_overlay = self.menu_bar._show_dropdown(base_widget=main_widget)
+                # Refresh dropdown - rebuild overlay from scratch using self.base_widget
+                # This ensures proper 'body' attribute (white on black)
+                new_overlay = self.menu_bar._show_dropdown(base_widget=self.base_widget)
                 self.loop.widget = new_overlay
                 current_overlay['widget'] = new_overlay  # Track new overlay
             # Otherwise continue with menu navigation
