@@ -32,6 +32,9 @@ Bug Fixes (2025-11-13):
 - Fixed UnaryOpNode operator conversion (TokenType to string)
 - Fixed semantic analyzer crash on string comparisons in IF conditions
 
+New Features (2025-11-13):
+- LINE INPUT statement (reads entire line without parsing, browser & Node.js support)
+
 This document tracks what's **not yet implemented** in the JavaScript backend.
 
 ---
@@ -50,6 +53,7 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 - ✓ PRINT USING (formatted output - simplified, basic format specifiers)
 - ✓ READ / DATA / RESTORE
 - ✓ INPUT (browser: prompt, Node.js: readline - note: async in Node.js)
+- ✓ LINE INPUT (reads entire line without parsing, browser & Node.js)
 
 ### Variables & Arrays
 - ✓ LET (assignment)
@@ -86,7 +90,6 @@ _None currently - all previously stubbed features have been implemented_
 ## ❌ NOT IMPLEMENTED
 
 ### I/O Statements
-- LINE INPUT - Read entire line including commas/quotes
 - INPUT # - Read from file
 - PRINT # - Write to file
 - LPRINT - Print to line printer (could map to console)

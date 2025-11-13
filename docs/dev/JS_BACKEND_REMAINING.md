@@ -23,17 +23,12 @@ These features would be useful but are not critical for most programs:
    - Status: Not commonly used in most programs
    - Complexity: Medium
 
-2. **LINE INPUT** - Read entire line including commas/quotes
-   - More robust than INPUT for string input
-   - Status: INPUT works for most cases
-   - Complexity: Low
-
-3. **WRITE Statement** - CSV-formatted output
+2. **WRITE Statement** - CSV-formatted output
    - Example: `WRITE A, B$, C`
    - Status: PRINT works for most cases
    - Complexity: Low
 
-4. **LPRINT** - Print to line printer
+3. **LPRINT** - Print to line printer
    - Could map to console.log or special output
    - Status: PRINT works for screen output
    - Complexity: Low

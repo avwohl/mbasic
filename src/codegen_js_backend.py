@@ -37,6 +37,7 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Track what features are used
         self.uses_input = False
+        self.uses_line_input = False
         self.uses_gosub = False
         self.uses_data = False
         self.uses_random = False
@@ -268,6 +269,8 @@ class JavaScriptBackend(CodeGenBackend):
             for stmt in line.statements:
                 if isinstance(stmt, InputStatementNode):
                     self.uses_input = True
+                elif isinstance(stmt, LineInputStatementNode):
+                    self.uses_line_input = True
                 elif isinstance(stmt, GosubStatementNode):
                     self.uses_gosub = True
                 elif isinstance(stmt, ReadStatementNode):
@@ -595,6 +598,46 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '}')
             code.append('')
 
+        # LINE INPUT function
+        if self.uses_line_input:
+            code.append(self.indent() + '// LINE INPUT function - reads entire line without parsing')
+            code.append(self.indent() + 'function _line_input(prompt) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'if (typeof window !== "undefined") {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Browser')
+            code.append(self.indent() + 'const result = window.prompt(prompt);')
+            code.append(self.indent() + 'return result === null ? "" : result;')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else if (typeof process !== "undefined") {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Node.js - synchronous input (same as _input_str)')
+            code.append(self.indent() + 'process.stdout.write(prompt);')
+            code.append(self.indent() + 'const readline = require("readline");')
+            code.append(self.indent() + 'const rl = readline.createInterface({')
+            self.indent_level += 1
+            code.append(self.indent() + 'input: process.stdin,')
+            code.append(self.indent() + 'output: process.stdout')
+            self.indent_level -= 1
+            code.append(self.indent() + '});')
+            code.append(self.indent() + '// Note: This is async - for true sync input, use readline-sync package')
+            code.append(self.indent() + 'return new Promise((resolve) => {')
+            self.indent_level += 1
+            code.append(self.indent() + 'rl.question("", (answer) => {')
+            self.indent_level += 1
+            code.append(self.indent() + 'rl.close();')
+            code.append(self.indent() + 'resolve(answer);')
+            self.indent_level -= 1
+            code.append(self.indent() + '});')
+            self.indent_level -= 1
+            code.append(self.indent() + '});')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'return "";')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
         # GOSUB/RETURN
         if self.uses_gosub:
             code.append(self.indent() + '// GOSUB/RETURN stack')
@@ -871,6 +914,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.extend(self._generate_if(stmt, line_number))
         elif isinstance(stmt, InputStatementNode):
             code.extend(self._generate_input(stmt))
+        elif isinstance(stmt, LineInputStatementNode):
+            code.extend(self._generate_line_input(stmt))
         elif isinstance(stmt, ReadStatementNode):
             code.extend(self._generate_read(stmt))
         elif isinstance(stmt, RestoreStatementNode):
@@ -1319,6 +1364,27 @@ class JavaScriptBackend(CodeGenBackend):
             else:
                 # Numeric input (single/double precision)
                 code.append(self.indent() + f'{var_name} = _input_num("{prompt_str}");')
+
+        return code
+
+    def _generate_line_input(self, stmt: LineInputStatementNode) -> List[str]:
+        """Generate LINE INPUT statement - reads entire line without parsing"""
+        code = []
+
+        # Skip file I/O for now
+        if stmt.file_number:
+            code.append(self.indent() + '// LINE INPUT #file not supported')
+            return code
+
+        # Build prompt string
+        if stmt.prompt:
+            prompt_expr = self._generate_expression(stmt.prompt)
+        else:
+            prompt_expr = '"? "'
+
+        # LINE INPUT always reads into a string variable
+        var_name = self._mangle_var_name(stmt.variable.name + (stmt.variable.type_suffix or ''))
+        code.append(self.indent() + f'{var_name} = _line_input({prompt_expr});')
 
         return code
 
