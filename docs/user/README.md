@@ -36,7 +36,7 @@ This directory contains documentation intended for end users:
 
 ## In-UI Help vs User Docs
 
-- **In-UI Help** ([../help](../help/)) - Documentation accessible from within MBASIC
+- **In-UI Help** ([../help](../help/index.md)) - Documentation accessible from within MBASIC
 - **User Docs** (this directory) - External documentation, README files, guides
 
 The in-UI help system provides context-sensitive help while using MBASIC, while this directory contains external documentation for reading before or alongside using the interpreter.

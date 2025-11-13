@@ -331,12 +331,9 @@ extra_css:
 docs_dir: docs
 site_dir: site
 
-# Exclude files that conflict or shouldn't be in the site
-# For end-user site: exclude dev docs from search index
+# Exclude historical documents with stale links and README.md files that conflict with index.md
 exclude_docs: |
+  history/docs_inconsistencies_report-*.md
+  dev/old_dev_docs/
   README.md
-  history/
-  dev/
-  future/
-  design/
-  external/
+  help/README.md

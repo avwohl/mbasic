@@ -1,2 +1,2 @@
-VERSION = '1.0.888'
+VERSION = '1.0.889'
 # Test comment
