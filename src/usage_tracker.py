@@ -120,7 +120,8 @@ class UsageTracker:
             cursor.execute(query, params or ())
             last_id = cursor.lastrowid
             cursor.close()
-            logger.debug(f"Usage tracking query executed successfully (lastrowid={last_id})")
+            # Log at INFO level so we can see inserts happening
+            logger.info(f"  → SQL executed successfully (lastrowid={last_id})")
             return last_id
         except Exception as e:
             logger.error(f"✗ Usage tracking query failed: {e}")
@@ -147,13 +148,19 @@ class UsageTracker:
             session_id: Session identifier
         """
         if not self.enabled:
+            logger.debug("track_page_visit called but tracking disabled")
             return
 
+        logger.info(f"📊 Tracking page visit: {page_path} (session: {session_id})")
         query = """
             INSERT INTO page_visits (page_path, referrer, user_agent, ip_address, session_id)
             VALUES (%s, %s, %s, %s, %s)
         """
-        self._execute_query(query, (page_path, referrer, user_agent, ip_address, session_id))
+        result = self._execute_query(query, (page_path, referrer, user_agent, ip_address, session_id))
+        if result:
+            logger.info(f"✓ Page visit recorded (id={result})")
+        else:
+            logger.error(f"✗ Failed to record page visit for {page_path}")
 
     def start_ide_session(self, session_id: str, user_agent: Optional[str] = None,
                          ip_address: Optional[str] = None):
@@ -165,14 +172,20 @@ class UsageTracker:
             ip_address: Client IP address
         """
         if not self.enabled:
+            logger.debug("start_ide_session called but tracking disabled")
             return
 
+        logger.info(f"📊 Starting IDE session: {session_id} (ip: {ip_address})")
         query = """
             INSERT INTO ide_sessions (session_id, user_agent, ip_address, last_activity)
             VALUES (%s, %s, %s, NOW())
             ON DUPLICATE KEY UPDATE last_activity = NOW()
         """
-        self._execute_query(query, (session_id, user_agent, ip_address))
+        result = self._execute_query(query, (session_id, user_agent, ip_address))
+        if result:
+            logger.info(f"✓ IDE session recorded/updated")
+        else:
+            logger.error(f"✗ Failed to record IDE session {session_id}")
 
     def update_session_activity(self, session_id: str):
         """Update the last activity time for a session.
@@ -221,16 +234,22 @@ class UsageTracker:
             error_message: Error message if execution failed
         """
         if not self.enabled:
+            logger.debug("track_program_execution called but tracking disabled")
             return
 
+        logger.info(f"📊 Tracking program execution: {program_lines} lines, {execution_time_ms}ms, success={success}")
         # Insert execution record
         query = """
             INSERT INTO program_executions
             (session_id, program_lines, execution_time_ms, lines_executed, success, error_message)
             VALUES (%s, %s, %s, %s, %s, %s)
         """
-        self._execute_query(query, (session_id, program_lines, execution_time_ms,
+        result = self._execute_query(query, (session_id, program_lines, execution_time_ms,
                                     lines_executed, success, error_message))
+        if result:
+            logger.info(f"✓ Program execution recorded (id={result})")
+        else:
+            logger.error(f"✗ Failed to record program execution")
 
         # Update session statistics
         update_query = """
