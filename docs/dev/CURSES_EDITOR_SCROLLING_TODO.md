@@ -1,15 +1,24 @@
 # Curses Editor Scrolling Issues
 
-**Status**: TESTING NEEDED (implemented in v1.0.896, 2025-11-13)
+**Status**: TODO (attempted fix reverted - see below)
 
-## Solution Implemented
+## Attempted Fix (REVERTED)
 
-Created `ScrollingFiller` custom widget (Option D-style approach) that:
-- Tracks Edit widget cursor position on every render
-- Calculates which line the cursor is on
-- Adjusts visible viewport to keep cursor in middle 50% (between 25%-75%)
-- Uses canvas trimming to show only the visible portion
-- Preserves scroll position across UI changes (like opening/closing ^U menu)
+Implemented `ScrollingFiller` custom widget in commits 84d97d9a through a158ece8, but **reverted in commit 38263715** due to:
+
+**Issues Created:**
+- No scrolling at all - cursor moved but viewport didn't adjust
+- ^U menu caused background color flip (black to white)
+- Too complex to debug - widget wrapping issues finding actual Edit widget
+- Worse user experience than original behavior
+
+**What was tried:**
+- Custom BOX widget with vim-style centering logic
+- Canvas trimming and padding to control viewport
+- Direct Edit widget access through ProgramEditorWidget layers
+- Failed due to complexity of urwid widget wrapping architecture
+
+**Lesson:** The original Filler behavior might be acceptable - "cursor stuck at bottom" may be inherent to urwid's Edit widget limitations.
 
 ## Original Issues
 
