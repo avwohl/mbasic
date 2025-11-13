@@ -203,22 +203,55 @@ The "8-deep circular buffer" mentioned by the user may have been:
 - A misremembering
 - Documentation that described implementation details but not limits
 
-## Recommended Fix
+## Implementation Challenge
 
-Modify `src/runtime.py` to allow FOR variable reuse when jumping out of loops:
+**Current architecture**: Our implementation uses a **unified execution stack** mixing GOSUB, FOR, and WHILE control flow (see `src/runtime.py` lines 83-88):
 
 ```python
-def _execute_for(self, var_name, start, end, step):
-    # If variable already active, check if we jumped out
-    if var_name in self.for_stack:
-        # Option 1: Just replace it (simplest)
-        self._pop_for_loop(var_name)
-
-    # Push new FOR loop
-    self._push_for_loop(var_name, start, end, step, next_line)
+self.execution_stack = []  # Mixed: GOSUB, FOR, WHILE entries
+self.for_loop_vars = {}    # Quick lookup: var_name -> stack index
 ```
 
-This matches the observed behavior where the second FOR with the same variable implicitly replaces the first.
+**Problem**: Can't simply "pop the old FOR" when pushing a new one because:
+1. The old FOR might be deep in the stack (not on top)
+2. There might be GOSUB or WHILE entries between them
+3. `pop_for_loop()` requires the FOR to be on top of stack
+
+**Example scenario**:
+```
+Stack: [FOR I (index 0), GOSUB (index 1), WHILE (index 2)]
+Current: Trying to push new FOR I
+Can't pop index 0 without breaking the stack structure
+```
+
+## Recommended Fix: Separate FOR Loop Stack
+
+After analysis, we recommend splitting FOR loops into a **separate stack** from GOSUB/WHILE (see `docs/dev/FOR_LOOP_STACK_IMPLEMENTATION_OPTIONS.md` for full analysis of 4 options).
+
+**Rationale**:
+1. Real MBASIC tests show no interaction between FOR and GOSUB nesting
+2. Much simpler to implement variable replacement
+3. Matches behavior where variables can be reused immediately after jumping out
+4. No evidence that real MBASIC does explicit GOTO cleanup
+
+**Implementation**:
+```python
+# Separate stacks
+self.for_loop_stack = []      # Only FOR loops
+self.execution_stack = []     # Only GOSUB and WHILE
+self.for_loop_vars = {}       # var_name -> index in for_loop_stack
+
+def push_for_loop(self, var_name, ...):
+    # If variable already active, replace it (implicit cleanup)
+    if var_name in self.for_loop_vars:
+        old_index = self.for_loop_vars[var_name]
+        self.for_loop_stack[old_index] = new_entry  # Replace in place
+    else:
+        self.for_loop_stack.append(new_entry)
+        self.for_loop_vars[var_name] = len(self.for_loop_stack) - 1
+```
+
+This allows the second FOR with the same variable to implicitly replace the first, matching real MBASIC's behavior.
 
 ## Files Referenced
 
