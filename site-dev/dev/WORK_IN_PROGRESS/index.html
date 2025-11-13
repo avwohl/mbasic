@@ -1423,15 +1423,19 @@ Generated code should run in:
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Fixed NEXT without variable</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Fixed DATA value collection (extract from AST nodes)</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Fixed GOTO/GOSUB/IF attribute names (line_number vs target/then_line)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implemented ON GOSUB statement</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Fixed ON GOTO attribute name (line_numbers vs targets)</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Tested compilation with multiple programs</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Successfully compiled Super Star Trek! (3472 lines of JavaScript)</li>
 </ul>
 <h3 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h3>
 <ol>
-<li>Test with more complex programs</li>
-<li>Test Super Star Trek (ultimate test!)</li>
-<li>Optimize generated code</li>
+<li>✓ Test Super Star Trek (ultimate test!) - SUCCESS</li>
+<li>Test generated JavaScript in browser and Node.js</li>
+<li>Optimize generated code (reduce redundant code)</li>
 <li>Consider implementing MID$ assignment</li>
 <li>Consider implementing PRINT USING</li>
+<li>Consider implementing error handling (ON ERROR GOTO)</li>
 </ol>
 <h2 id="key-design-decisions">Key Design Decisions<a class="headerlink" href="#key-design-decisions" title="Permanent link">&para;</a></h2>
 <ol>

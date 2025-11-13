@@ -692,6 +692,7 @@ class JavaScriptBackend(CodeGenBackend):
         return isinstance(stmt, (
             GotoStatementNode,
             OnGotoStatementNode,
+            OnGosubStatementNode,
             GosubStatementNode,
             ReturnStatementNode,
             EndStatementNode,
@@ -712,6 +713,14 @@ class JavaScriptBackend(CodeGenBackend):
             code.extend(self._generate_goto(stmt))
         elif isinstance(stmt, OnGotoStatementNode):
             code.extend(self._generate_on_goto(stmt))
+        elif isinstance(stmt, OnGosubStatementNode):
+            # Calculate return address for ON GOSUB
+            is_last_stmt = (stmt_index == total_stmts - 1)
+            if is_last_stmt:
+                return_address = self.next_line_map.get(line_number, None)
+            else:
+                return_address = line_number  # Next statement on same line
+            code.extend(self._generate_on_gosub(stmt, return_address))
         elif isinstance(stmt, GosubStatementNode):
             # Calculate return address - same logic as FOR loop
             is_last_stmt = (stmt_index == total_stmts - 1)
@@ -933,9 +942,32 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + f'{{')
         self.indent_level += 1
         code.append(self.indent() + f'const _idx = Math.floor({expr});')
-        code.append(self.indent() + f'const _targets = [{", ".join(str(t) for t in stmt.targets)}];')
+        code.append(self.indent() + f'const _targets = [{", ".join(str(t) for t in stmt.line_numbers)}];')
         code.append(self.indent() + f'if (_idx >= 1 && _idx <= _targets.length) {{')
         self.indent_level += 1
+        code.append(self.indent() + f'_pc = _targets[_idx - 1];')
+        code.append(self.indent() + f'break;')
+        self.indent_level -= 1
+        code.append(self.indent() + f'}}')
+        code.append(self.indent() + f'// Fall through if index out of range')
+        self.indent_level -= 1
+        code.append(self.indent() + f'}}')
+        return code
+
+    def _generate_on_gosub(self, stmt: OnGosubStatementNode, return_address: Optional[int]) -> List[str]:
+        """Generate ON...GOSUB statement"""
+        code = []
+        expr = self._generate_expression(stmt.expression)
+        code.append(self.indent() + f'{{')
+        self.indent_level += 1
+        code.append(self.indent() + f'const _idx = Math.floor({expr});')
+        code.append(self.indent() + f'const _targets = [{", ".join(str(t) for t in stmt.line_numbers)}];')
+        code.append(self.indent() + f'if (_idx >= 1 && _idx <= _targets.length) {{')
+        self.indent_level += 1
+        if return_address is not None:
+            code.append(self.indent() + f'_gosub({return_address});')
+        else:
+            code.append(self.indent() + f'_gosub(null);  // End of program')
         code.append(self.indent() + f'_pc = _targets[_idx - 1];')
         code.append(self.indent() + f'break;')
         self.indent_level -= 1

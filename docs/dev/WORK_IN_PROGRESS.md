@@ -69,14 +69,18 @@ Generated code should run in:
 - [x] Fixed NEXT without variable
 - [x] Fixed DATA value collection (extract from AST nodes)
 - [x] Fixed GOTO/GOSUB/IF attribute names (line_number vs target/then_line)
+- [x] Implemented ON GOSUB statement
+- [x] Fixed ON GOTO attribute name (line_numbers vs targets)
 - [x] Tested compilation with multiple programs
+- [x] Successfully compiled Super Star Trek! (3472 lines of JavaScript)
 
 ### Next Steps
-1. Test with more complex programs
-2. Test Super Star Trek (ultimate test!)
-3. Optimize generated code
+1. ✓ Test Super Star Trek (ultimate test!) - SUCCESS
+2. Test generated JavaScript in browser and Node.js
+3. Optimize generated code (reduce redundant code)
 4. Consider implementing MID$ assignment
 5. Consider implementing PRINT USING
+6. Consider implementing error handling (ON ERROR GOTO)
 
 ## Key Design Decisions
 

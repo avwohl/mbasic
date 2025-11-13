@@ -24,7 +24,7 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 
 ### Control Flow
 - ✓ GOTO / ON GOTO
-- ✓ GOSUB / RETURN
+- ✓ GOSUB / ON GOSUB / RETURN
 - ✓ FOR / NEXT (variable-indexed with state tracking)
 - ✓ WHILE / WEND
 - ✓ IF / THEN / ELSE
