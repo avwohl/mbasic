@@ -21,6 +21,7 @@ from src.ui.web.codemirror5_editor import CodeMirror5Editor
 from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode, get_default_reverse_for_mode
 from src.error_logger import log_web_error
 from src.usage_tracker import init_usage_tracker, get_usage_tracker
+from src.bot_protection import get_bot_protection
 
 
 class SimpleWebIOHandler(IOHandler):
@@ -3872,7 +3873,9 @@ def start_web_ui(port=8080):
                 # Use context.client.id for session ID (not app.storage.client.id)
                 session_id = context.client.id if context.client else 'unknown'
                 user_agent = context.client.request.headers.get('user-agent') if context.client and context.client.request else None
-                ip = context.client.request.client.host if context.client and context.client.request and context.client.request.client else None
+                # Get real client IP from X-Forwarded-For header (for Kubernetes ingress)
+                bot_protection = get_bot_protection()
+                ip = bot_protection.get_client_ip(context.client.request) if context.client and context.client.request else None
                 tracker.start_ide_session(session_id, user_agent, ip)
             except Exception as e:
                 sys.stderr.write(f"ERROR: Failed to track session start: {e}\n")
@@ -3995,16 +3998,16 @@ def start_web_ui(port=8080):
 
     # Landing page visit tracking endpoint
     @app.post('/api/track-visit')
-    def track_visit(page: str = '/', referrer: str = None, userAgent: str = None, sessionId: str = None):
+    async def track_visit(page: str = '/', referrer: str = None, userAgent: str = None, sessionId: str = None):
         """Track landing page visit."""
         tracker = get_usage_tracker()
         if tracker:
             try:
-                # Get IP from request (FastAPI context)
-                from starlette.requests import Request
-                from fastapi import Request as FastAPIRequest
-                # Note: IP extraction handled in tracker, pass None for now
-                tracker.track_page_visit(page, referrer, userAgent, None, sessionId)
+                # Get real client IP from X-Forwarded-For header (for Kubernetes ingress)
+                from nicegui import context
+                bot_protection = get_bot_protection()
+                ip = bot_protection.get_client_ip(context.client.request) if context.client and context.client.request else None
+                tracker.track_page_visit(page, referrer, userAgent, ip, sessionId)
             except Exception as e:
                 sys.stderr.write(f"Warning: Failed to track page visit: {e}\n")
                 sys.stderr.flush()
