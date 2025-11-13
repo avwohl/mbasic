@@ -3807,14 +3807,29 @@ def start_web_ui(port=8080):
                 config_str = config_str.replace(f'${{{env_var}}}', os.environ.get(env_var, ''))
             multiuser_config = json.loads(config_str)
 
+            # Configure logging for usage tracker
+            import logging
+            logging.basicConfig(
+                level=logging.INFO,
+                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                stream=sys.stderr
+            )
+            # Set usage_tracker logger to INFO level
+            logging.getLogger('src.usage_tracker').setLevel(logging.INFO)
+
             # Initialize usage tracker
             usage_config = multiuser_config.get('usage_tracking', {})
             if usage_config.get('enabled'):
-                init_usage_tracker(usage_config)
-                sys.stderr.write("Usage tracking enabled\n")
+                sys.stderr.write("=== Initializing Usage Tracking ===\n")
+                sys.stderr.flush()
+                tracker = init_usage_tracker(usage_config)
+                if tracker and tracker.enabled:
+                    sys.stderr.write("✓ Usage tracking enabled and connected\n")
+                else:
+                    sys.stderr.write("✗ Usage tracking FAILED to initialize (check logs above)\n")
                 sys.stderr.flush()
             else:
-                sys.stderr.write("Usage tracking disabled\n")
+                sys.stderr.write("Usage tracking disabled in config\n")
                 sys.stderr.flush()
         except Exception as e:
             sys.stderr.write(f"Warning: Failed to initialize usage tracking: {e}\n")
@@ -3944,6 +3959,27 @@ def start_web_ui(port=8080):
                 except Exception as e:
                     health_status['checks']['mysql_error_logging'] = f'failed: {str(e)[:100]}'
                     all_healthy = False
+
+            # Check usage tracking MySQL
+            tracker = get_usage_tracker()
+            if tracker and tracker.enabled:
+                try:
+                    if tracker.db_connection:
+                        cursor = tracker.db_connection.cursor()
+                        cursor.execute("SELECT 1")
+                        cursor.fetchone()
+                        cursor.close()
+                        health_status['checks']['mysql_usage_tracking'] = 'ok'
+                    else:
+                        health_status['checks']['mysql_usage_tracking'] = 'no connection'
+                        all_healthy = False
+                except Exception as e:
+                    health_status['checks']['mysql_usage_tracking'] = f'failed: {str(e)[:100]}'
+                    all_healthy = False
+            elif tracker:
+                health_status['checks']['mysql_usage_tracking'] = 'disabled'
+            else:
+                health_status['checks']['mysql_usage_tracking'] = 'not initialized'
 
         if not all_healthy:
             health_status['status'] = 'degraded'

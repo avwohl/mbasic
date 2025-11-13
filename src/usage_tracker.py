@@ -37,17 +37,20 @@ class UsageTracker:
             conn_params = {
                 'database': mysql_config.get('database', 'mbasic_logs'),
                 'charset': 'utf8mb4',
-                'autocommit': True
+                'autocommit': True,
+                'connection_timeout': 10
             }
 
             # Use unix socket or host/port
             if 'unix_socket' in mysql_config:
                 conn_params['unix_socket'] = mysql_config['unix_socket']
                 conn_params['user'] = mysql_config.get('user', 'root')
+                logger.info(f"Usage tracking: Connecting via unix socket {conn_params['unix_socket']}")
             else:
                 conn_params['host'] = mysql_config.get('host', 'localhost')
                 conn_params['port'] = mysql_config.get('port', 3306)
                 conn_params['user'] = mysql_config.get('user', 'root')
+                logger.info(f"Usage tracking: Connecting to {conn_params['host']}:{conn_params['port']} as {conn_params['user']}")
 
             # Add password if provided
             if 'password' in mysql_config:
@@ -57,12 +60,45 @@ class UsageTracker:
             # This is safe since traffic is on DigitalOcean private network
             if mysql_config.get('disable_ssl', False):
                 conn_params['ssl_disabled'] = True
+                logger.info("Usage tracking: SSL disabled for MySQL connection")
 
+            # Attempt connection
+            logger.info(f"Usage tracking: Attempting to connect to database '{conn_params['database']}'...")
             self.db_connection = mysql.connector.connect(**conn_params)
-            logger.info("Usage tracking database connection initialized")
+            logger.info("✓ Usage tracking database connection established successfully")
+
+            # Verify connection with test query
+            try:
+                cursor = self.db_connection.cursor()
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+                cursor.close()
+                logger.info("✓ Usage tracking database test query successful")
+            except Exception as test_error:
+                logger.error(f"✗ Usage tracking database test query failed: {test_error}")
+                raise
+
+            # Verify tables exist
+            try:
+                cursor = self.db_connection.cursor()
+                cursor.execute("SHOW TABLES LIKE 'page_visits'")
+                if not cursor.fetchone():
+                    logger.warning("⚠ Usage tracking table 'page_visits' does not exist - schema may not be created")
+                else:
+                    logger.info("✓ Usage tracking tables verified")
+                cursor.close()
+            except Exception as verify_error:
+                logger.warning(f"⚠ Could not verify usage tracking tables: {verify_error}")
 
         except Exception as e:
-            logger.error(f"Failed to initialize usage tracking database: {e}")
+            logger.error(f"✗ Failed to initialize usage tracking database: {e}")
+            logger.error(f"  Connection details: host={mysql_config.get('host', 'N/A')}, "
+                        f"port={mysql_config.get('port', 3306)}, "
+                        f"database={mysql_config.get('database', 'mbasic_logs')}, "
+                        f"user={mysql_config.get('user', 'root')}")
+            logger.error("  Usage tracking will be DISABLED")
+            import traceback
+            logger.error(f"  Full traceback: {traceback.format_exc()}")
             self.enabled = False
 
     def _execute_query(self, query: str, params: tuple = None) -> Optional[int]:
@@ -76,6 +112,7 @@ class UsageTracker:
             Last inserted ID or None on error
         """
         if not self.enabled or not self.db_connection:
+            logger.debug("Usage tracking query skipped: tracking disabled or no connection")
             return None
 
         try:
@@ -83,14 +120,18 @@ class UsageTracker:
             cursor.execute(query, params or ())
             last_id = cursor.lastrowid
             cursor.close()
+            logger.debug(f"Usage tracking query executed successfully (lastrowid={last_id})")
             return last_id
         except Exception as e:
-            logger.error(f"Usage tracking query failed: {e}")
+            logger.error(f"✗ Usage tracking query failed: {e}")
+            logger.error(f"  Query: {query[:100]}...")
+            logger.error(f"  Params: {params}")
             # Try to reconnect
+            logger.info("Attempting to reconnect to usage tracking database...")
             try:
                 self._init_db_connection()
-            except:
-                pass
+            except Exception as reconnect_error:
+                logger.error(f"✗ Reconnection failed: {reconnect_error}")
             return None
 
     def track_page_visit(self, page_path: str, referrer: Optional[str] = None,
