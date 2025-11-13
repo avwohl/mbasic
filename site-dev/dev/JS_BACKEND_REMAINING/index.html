@@ -1340,15 +1340,7 @@
 <p><em>All medium-priority features have been implemented!</em> ✅</p>
 <hr />
 <h3 id="low-priority-specializedadvanced">🔵 LOW Priority (Specialized/Advanced)<a class="headerlink" href="#low-priority-specializedadvanced" title="Permanent link">&para;</a></h3>
-<p>These features are rarely used or not applicable to JavaScript:</p>
-<h4 id="program-control-low-priority">Program Control (Low Priority)<a class="headerlink" href="#program-control-low-priority" title="Permanent link">&para;</a></h4>
-<ul>
-<li><strong>CHAIN</strong> - Load and run another program</li>
-</ul>
-<p><strong>Notes</strong>:
-- Could implement by loading another compiled JS file
-- Rarely used in modern context
-- Complexity: Medium</p>
+<p><em>All low-priority features have been implemented!</em> ✅</p>
 <hr />
 <h3 id="not-applicable-to-compiler-hardwaresystem-features">⚪ Not Applicable to Compiler (Hardware/System Features)<a class="headerlink" href="#not-applicable-to-compiler-hardwaresystem-features" title="Permanent link">&para;</a></h3>
 <p>These were in MBASIC 5.21 but only work with real hardware - not applicable to JavaScript:
@@ -1385,6 +1377,9 @@
 - Node.js: Binary file operations with fs module
 - Browser: localStorage-based random access
 - Record-based read/write with buffer management</p>
+<p><strong>Program Control</strong>: CHAIN
+- Browser: Navigate to new HTML page
+- Node.js: Spawn child process and exit</p>
 <p><strong>Variables &amp; Arrays</strong>: LET, DIM, array access, SWAP, ERASE, MID$ assignment</p>
 <p><strong>Functions</strong>: DEF FN, all math functions (ABS, INT, SQR, SIN, COS, TAN, ATN, LOG, EXP, RND, FIX, SGN, CINT, CSNG, CDBL), all string functions (LEFT<span class="arithmatex"><span class="MathJax_Preview">, RIGHT</span><script type="math/tex">, RIGHT</script></span>, MID<span class="arithmatex"><span class="MathJax_Preview">, LEN, CHR</span><script type="math/tex">, LEN, CHR</script></span>, ASC, STR<span class="arithmatex"><span class="MathJax_Preview">, VAL, INSTR, SPACE</span><script type="math/tex">, VAL, INSTR, SPACE</script></span>, STRING<span class="arithmatex"><span class="MathJax_Preview">, HEX</span><script type="math/tex">, HEX</script></span>, OCT$, POS), print formatting (TAB, SPC)</p>
 <p><strong>Error Handling</strong>: ON ERROR GOTO/GOSUB, RESUME/RESUME NEXT/RESUME line, ERROR, ERL(), ERR()</p>
@@ -1393,20 +1388,20 @@
 <li><strong>Test in browser</strong> - Generate HTML wrapper and test compiled programs</li>
 <li><strong>Test in Node.js</strong> - Run compiled programs with Node.js and real file I/O</li>
 <li><strong>Test random file access</strong> - Test FIELD/GET/PUT with real programs</li>
+<li><strong>Test CHAIN</strong> - Test program chaining in both environments</li>
 <li><strong>Optimize code generation</strong> - Reduce redundant runtime code</li>
-<li><strong>Consider CHAIN statement</strong> - Program chaining (rarely used)</li>
 </ol>
 <h3 id="feature-coverage">📊 Feature Coverage<a class="headerlink" href="#feature-coverage" title="Permanent link">&para;</a></h3>
-<p><strong>Core MBASIC 5.21 Compiler Features</strong>: ~100% complete
+<p><strong>Core MBASIC 5.21 Compiler Features</strong>: 100% complete ✅
 - All essential statements: ✅
 - All builtin functions: ✅
 - String operations: ✅ (including MID$ assignment)
 - Error handling: ✅
 - Formatted output: ✅
 - Sequential file I/O: ✅ (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF, LOF, LOC, KILL, NAME, FILES)
-- Random file access: ✅ (FIELD, LSET, RSET, GET, PUT)</p>
-<p><strong>Program chaining</strong>: Not implemented (CHAIN - rarely used)
-<strong>Hardware access</strong>: Not applicable (JavaScript limitation)</p>
+- Random file access: ✅ (FIELD, LSET, RSET, GET, PUT)
+- Program control: ✅ (CHAIN)</p>
+<p><strong>Hardware access</strong>: Not applicable (POKE/PEEK/INP/OUT - JavaScript limitation)</p>
 <hr />
 <p><strong>Conclusion</strong>: The JavaScript backend is ready for production use with virtually all MBASIC 5.21 programs, including those with sequential and random file I/O!</p>
 

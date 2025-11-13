@@ -121,6 +121,10 @@ Generated code should run in:
   - GET: Read record from file into buffer, update field variables
   - PUT: Write buffer to record in file
   - Node.js: Binary file operations, Browser: localStorage
+- [x] Implemented CHAIN statement (program chaining)
+  - Browser: window.location.href = filename + ".html"
+  - Node.js: spawn child process with inherited stdio, then exit
+  - Matches Z80 backend's CP/M warm boot approach
 
 ### Testing Results
 - [x] Super Star Trek - 3524 lines of JavaScript generated successfully
@@ -132,8 +136,8 @@ Generated code should run in:
 - [x] HTML wrapper generation working with retro terminal styling
 
 ### Completion Status
-✅ **Phase 1-8 COMPLETE + File I/O + File Management + Random File Access**
-- All core MBASIC 5.21 features implemented (~100% coverage)
+✅ **Phase 1-8 COMPLETE + Full File I/O + CHAIN - 100% FEATURE COMPLETE!**
+- All core MBASIC 5.21 features implemented (100% coverage)
 - Successfully compiles complex programs including Super Star Trek
 - Generates clean, working JavaScript for browser and Node.js
 - HTML wrapper with retro terminal styling
@@ -141,13 +145,14 @@ Generated code should run in:
 - Sequential file I/O (Node.js: fs module, Browser: localStorage)
 - File management (KILL, NAME, FILES with wildcard support)
 - Random file access (FIELD, LSET, RSET, GET, PUT)
+- Program chaining (CHAIN statement)
 
-### Next Steps (Optional Enhancements)
+### Next Steps (Testing & Optimization)
 1. Test sequential file I/O with real programs in Node.js
 2. Test random file access with real programs in Node.js
-3. Test file I/O in browser with localStorage
-4. Optimize generated code (reduce redundant runtime functions)
-5. Consider CHAIN statement for program chaining - Low priority
+3. Test CHAIN statement in both Node.js and browser
+4. Test file I/O in browser with localStorage
+5. Optimize generated code (reduce redundant runtime functions)
 
 **Note:** Only implementing features from MBASIC 5.21 manual. CLS/LOCATE/COLOR are NOT in MBASIC 5.21 (those are GW-BASIC/QuickBASIC features).
 

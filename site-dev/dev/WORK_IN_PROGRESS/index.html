@@ -1328,9 +1328,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#next-steps-optional-enhancements" class="md-nav__link">
+  <a href="#next-steps-testing-optimization" class="md-nav__link">
     <span class="md-ellipsis">
-      Next Steps (Optional Enhancements)
+      Next Steps (Testing &amp; Optimization)
     </span>
   </a>
   
@@ -1533,6 +1533,10 @@ Generated code should run in:
 <li>GET: Read record from file into buffer, update field variables</li>
 <li>PUT: Write buffer to record in file</li>
 <li>Node.js: Binary file operations, Browser: localStorage</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implemented CHAIN statement (program chaining)</li>
+<li>Browser: window.location.href = filename + ".html"</li>
+<li>Node.js: spawn child process with inherited stdio, then exit</li>
+<li>Matches Z80 backend's CP/M warm boot approach</li>
 </ul>
 <h3 id="testing-results">Testing Results<a class="headerlink" href="#testing-results" title="Permanent link">&para;</a></h3>
 <ul class="task-list">
@@ -1545,22 +1549,23 @@ Generated code should run in:
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> HTML wrapper generation working with retro terminal styling</li>
 </ul>
 <h3 id="completion-status">Completion Status<a class="headerlink" href="#completion-status" title="Permanent link">&para;</a></h3>
-<p>✅ <strong>Phase 1-8 COMPLETE + File I/O + File Management + Random File Access</strong>
-- All core MBASIC 5.21 features implemented (~100% coverage)
+<p>✅ <strong>Phase 1-8 COMPLETE + Full File I/O + CHAIN - 100% FEATURE COMPLETE!</strong>
+- All core MBASIC 5.21 features implemented (100% coverage)
 - Successfully compiles complex programs including Super Star Trek
 - Generates clean, working JavaScript for browser and Node.js
 - HTML wrapper with retro terminal styling
 - Comprehensive error handling
 - Sequential file I/O (Node.js: fs module, Browser: localStorage)
 - File management (KILL, NAME, FILES with wildcard support)
-- Random file access (FIELD, LSET, RSET, GET, PUT)</p>
-<h3 id="next-steps-optional-enhancements">Next Steps (Optional Enhancements)<a class="headerlink" href="#next-steps-optional-enhancements" title="Permanent link">&para;</a></h3>
+- Random file access (FIELD, LSET, RSET, GET, PUT)
+- Program chaining (CHAIN statement)</p>
+<h3 id="next-steps-testing-optimization">Next Steps (Testing &amp; Optimization)<a class="headerlink" href="#next-steps-testing-optimization" title="Permanent link">&para;</a></h3>
 <ol>
 <li>Test sequential file I/O with real programs in Node.js</li>
 <li>Test random file access with real programs in Node.js</li>
+<li>Test CHAIN statement in both Node.js and browser</li>
 <li>Test file I/O in browser with localStorage</li>
 <li>Optimize generated code (reduce redundant runtime functions)</li>
-<li>Consider CHAIN statement for program chaining - Low priority</li>
 </ol>
 <p><strong>Note:</strong> Only implementing features from MBASIC 5.21 manual. CLS/LOCATE/COLOR are NOT in MBASIC 5.21 (those are GW-BASIC/QuickBASIC features).</p>
 <h2 id="key-design-decisions">Key Design Decisions<a class="headerlink" href="#key-design-decisions" title="Permanent link">&para;</a></h2>

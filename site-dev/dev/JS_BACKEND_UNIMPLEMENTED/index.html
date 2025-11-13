@@ -1256,6 +1256,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#program-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      Program Control
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#variables-arrays" class="md-nav__link">
     <span class="md-ellipsis">
       Variables &amp; Arrays
@@ -1314,15 +1323,6 @@
   
     <nav class="md-nav" aria-label="❌ NOT IMPLEMENTED">
       <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#program-control" class="md-nav__link">
-    <span class="md-ellipsis">
-      Program Control
-    </span>
-  </a>
-  
-</li>
         
           <li class="md-nav__item">
   <a href="#systemhardware-not-applicable-to-compiler" class="md-nav__link">
@@ -1555,7 +1555,10 @@ Phase 5-6: Enhanced features ✓
   - OPEN "R" with record length support
   - FIELD: Define buffer layout
   - LSET/RSET: Left/right-justify strings in buffer
-  - GET/PUT: Read/write records by number</p>
+  - GET/PUT: Read/write records by number
+- CHAIN statement (program chaining)
+  - Browser: Navigate to new HTML page
+  - Node.js: Spawn child process and exit</p>
 <p>This document tracks what's <strong>not yet implemented</strong> in the JavaScript backend.</p>
 <hr />
 <h2 id="implemented-core-features">✅ IMPLEMENTED (Core Features)<a class="headerlink" href="#implemented-core-features" title="Permanent link">&para;</a></h2>
@@ -1603,6 +1606,12 @@ Phase 5-6: Enhanced features ✓
 <li>✓ GET - Read record from random file into buffer</li>
 <li>✓ PUT - Write buffer to record in random file</li>
 </ul>
+<h3 id="program-control">Program Control<a class="headerlink" href="#program-control" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ CHAIN - Load and run another program</li>
+<li>Browser: window.location.href = filename + ".html"</li>
+<li>Node.js: spawn child process and exit</li>
+</ul>
 <h3 id="variables-arrays">Variables &amp; Arrays<a class="headerlink" href="#variables-arrays" title="Permanent link">&para;</a></h3>
 <ul>
 <li>✓ LET (assignment)</li>
@@ -1636,10 +1645,6 @@ Phase 5-6: Enhanced features ✓
 <p><em>None currently - all previously stubbed features have been implemented</em></p>
 <hr />
 <h2 id="not-implemented">❌ NOT IMPLEMENTED<a class="headerlink" href="#not-implemented" title="Permanent link">&para;</a></h2>
-<h3 id="program-control">Program Control<a class="headerlink" href="#program-control" title="Permanent link">&para;</a></h3>
-<ul>
-<li>CHAIN - Load and run another program</li>
-</ul>
 <h3 id="systemhardware-not-applicable-to-compiler">System/Hardware (Not Applicable to Compiler)<a class="headerlink" href="#systemhardware-not-applicable-to-compiler" title="Permanent link">&para;</a></h3>
 <p>These were in MBASIC 5.21 but only work with real hardware:
 - POKE - Write to memory address

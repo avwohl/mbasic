@@ -51,6 +51,9 @@ New Features (2025-11-13):
   - FIELD: Define buffer layout
   - LSET/RSET: Left/right-justify strings in buffer
   - GET/PUT: Read/write records by number
+- CHAIN statement (program chaining)
+  - Browser: Navigate to new HTML page
+  - Node.js: Spawn child process and exit
 
 This document tracks what's **not yet implemented** in the JavaScript backend.
 
@@ -97,6 +100,11 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 - ✓ GET - Read record from random file into buffer
 - ✓ PUT - Write buffer to record in random file
 
+### Program Control
+- ✓ CHAIN - Load and run another program
+  - Browser: window.location.href = filename + ".html"
+  - Node.js: spawn child process and exit
+
 ### Variables & Arrays
 - ✓ LET (assignment)
 - ✓ DIM (array declarations)
@@ -130,10 +138,6 @@ _None currently - all previously stubbed features have been implemented_
 ---
 
 ## ❌ NOT IMPLEMENTED
-
-
-### Program Control
-- CHAIN - Load and run another program
 
 ### System/Hardware (Not Applicable to Compiler)
 These were in MBASIC 5.21 but only work with real hardware:

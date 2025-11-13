@@ -22,15 +22,7 @@ _All medium-priority features have been implemented!_ ✅
 
 ### 🔵 LOW Priority (Specialized/Advanced)
 
-These features are rarely used or not applicable to JavaScript:
-
-#### Program Control (Low Priority)
-- **CHAIN** - Load and run another program
-
-**Notes**:
-- Could implement by loading another compiled JS file
-- Rarely used in modern context
-- Complexity: Medium
+_All low-priority features have been implemented!_ ✅
 
 ---
 
@@ -82,6 +74,10 @@ These are editor commands, not compiler features:
 - Browser: localStorage-based random access
 - Record-based read/write with buffer management
 
+**Program Control**: CHAIN
+- Browser: Navigate to new HTML page
+- Node.js: Spawn child process and exit
+
 **Variables & Arrays**: LET, DIM, array access, SWAP, ERASE, MID$ assignment
 
 **Functions**: DEF FN, all math functions (ABS, INT, SQR, SIN, COS, TAN, ATN, LOG, EXP, RND, FIX, SGN, CINT, CSNG, CDBL), all string functions (LEFT$, RIGHT$, MID$, LEN, CHR$, ASC, STR$, VAL, INSTR, SPACE$, STRING$, HEX$, OCT$, POS), print formatting (TAB, SPC)
@@ -93,12 +89,12 @@ These are editor commands, not compiler features:
 1. **Test in browser** - Generate HTML wrapper and test compiled programs
 2. **Test in Node.js** - Run compiled programs with Node.js and real file I/O
 3. **Test random file access** - Test FIELD/GET/PUT with real programs
-4. **Optimize code generation** - Reduce redundant runtime code
-5. **Consider CHAIN statement** - Program chaining (rarely used)
+4. **Test CHAIN** - Test program chaining in both environments
+5. **Optimize code generation** - Reduce redundant runtime code
 
 ### 📊 Feature Coverage
 
-**Core MBASIC 5.21 Compiler Features**: ~100% complete
+**Core MBASIC 5.21 Compiler Features**: 100% complete ✅
 - All essential statements: ✅
 - All builtin functions: ✅
 - String operations: ✅ (including MID$ assignment)
@@ -106,9 +102,9 @@ These are editor commands, not compiler features:
 - Formatted output: ✅
 - Sequential file I/O: ✅ (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF, LOF, LOC, KILL, NAME, FILES)
 - Random file access: ✅ (FIELD, LSET, RSET, GET, PUT)
+- Program control: ✅ (CHAIN)
 
-**Program chaining**: Not implemented (CHAIN - rarely used)
-**Hardware access**: Not applicable (JavaScript limitation)
+**Hardware access**: Not applicable (POKE/PEEK/INP/OUT - JavaScript limitation)
 
 ---
 
