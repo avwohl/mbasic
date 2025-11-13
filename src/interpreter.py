@@ -1195,30 +1195,53 @@ class Interpreter:
             # If a variable's loop completes, it's popped and the next variable is processed.
             var_list = stmt.variables
         else:
-            # NEXT without variable - use innermost loop
-            if not self.runtime.for_loop_vars:
+            # NEXT without variable - scan back lexically to find most recent FOR
+            var_name = self._find_most_recent_for_variable()
+            if not var_name:
                 raise RuntimeError("NEXT without FOR")
-            var_list = []  # Will process one loop below
+            # Create a dummy list with just this variable
+            class DummyVarNode:
+                def __init__(self, name, suffix):
+                    self.name = name
+                    self.type_suffix = suffix
+            base_name = var_name.rstrip('$%!#')
+            type_suffix = var_name[-1] if var_name and var_name[-1] in '$%!#' else None
+            var_list = [DummyVarNode(base_name, type_suffix)]
 
-        # If no variables specified, process innermost loop only
-        if not var_list:
-            # Find the innermost FOR loop (highest index in execution_stack)
-            innermost_var = None
-            innermost_index = -1
-            for var_name, index in self.runtime.for_loop_vars.items():
-                if index > innermost_index:
-                    innermost_index = index
-                    innermost_var = var_name
-            self._execute_next_single(innermost_var, var_node=None)
-        else:
-            # Process each variable in order
-            for var_node in var_list:
-                var_name = var_node.name + (var_node.type_suffix or "")
-                # Process this NEXT
-                should_continue = self._execute_next_single(var_name, var_node=var_node)
-                # If this loop continues (jumps back), don't process remaining variables
-                if should_continue:
-                    return
+        # Process each variable in order
+        for var_node in var_list:
+            var_name = var_node.name + (var_node.type_suffix or "")
+            # Process this NEXT
+            should_continue = self._execute_next_single(var_name, var_node=var_node)
+            # If this loop continues (jumps back), don't process remaining variables
+            if should_continue:
+                return
+
+    def _find_most_recent_for_variable(self):
+        """Find the variable of the most recent FOR loop by scanning back lexically.
+
+        Returns:
+            Variable name with suffix (e.g., 'i!') or None if no FOR found
+        """
+        # Scan backward from current PC to find most recent FOR statement
+        current_pc = self.runtime.pc
+        if not current_pc.is_running():
+            return None
+
+        # Walk backward through statements
+        pc = PC.running_at(current_pc.line, current_pc.statement - 1)
+        while True:
+            # Try to get previous statement
+            pc = self.runtime.statement_table.prev_pc(pc)
+            if pc is None or not pc.is_running():
+                return None
+
+            # Check if this statement is a FOR
+            stmt = self.runtime.statement_table.get_statement(pc)
+            if stmt and hasattr(stmt, '__class__') and stmt.__class__.__name__ == 'ForStatementNode':
+                # Found a FOR statement - return its variable name
+                var_name = stmt.variable.name + (stmt.variable.type_suffix or "")
+                return var_name
 
     def _execute_next_single(self, var_name, var_node=None):
         """Execute NEXT for a single variable.
@@ -1234,22 +1257,6 @@ class Interpreter:
         loop_info = self.runtime.get_for_loop(var_name)
         if not loop_info:
             raise RuntimeError(f"NEXT without FOR: {var_name}")
-
-        # Validate that this FOR loop is on top of the stack (innermost control structure)
-        # This prevents errors like: FOR X / FOR Y / NEXT X (skipping Y)
-        loop_index = self.runtime.for_loop_vars[var_name]
-        if loop_index != len(self.runtime.execution_stack) - 1:
-            # Find what's actually on top
-            if self.runtime.execution_stack:
-                top_entry = self.runtime.execution_stack[-1]
-                if top_entry['type'] == 'FOR':
-                    top_var = top_entry['var']
-                    raise RuntimeError(f"NEXT {var_name} without FOR - found FOR {top_var} loop instead (improper nesting)")
-                elif top_entry['type'] == 'WHILE':
-                    raise RuntimeError(f"NEXT {var_name} without FOR - found WHILE loop instead (improper nesting)")
-                elif top_entry['type'] == 'GOSUB':
-                    raise RuntimeError(f"NEXT {var_name} without FOR - found GOSUB instead (improper nesting)")
-            raise RuntimeError(f"NEXT {var_name} without FOR - improper nesting")
 
         # Create token info for tracking
         token = self._make_token_info(var_node) if var_node else None

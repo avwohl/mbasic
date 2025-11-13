@@ -81,12 +81,13 @@ class Runtime:
         self.npc = None               # Next program counter (set by GOTO/GOSUB/etc., None = sequential)
         self.statement_table = StatementTable()  # Ordered collection of statements indexed by PC
 
-        # Unified execution stack - tracks all active control flow (GOSUB, FOR, WHILE) in nesting order
-        # Each entry: {'type': 'GOSUB'|'FOR'|'WHILE', ...type-specific fields...}
-        # This allows detection of improper nesting like GOSUB...FOR...RETURN...NEXT
+        # Unified execution stack - tracks GOSUB and WHILE only (FOR loops use variable-indexed approach)
+        # Each entry: {'type': 'GOSUB'|'WHILE', ...type-specific fields...}
         self.execution_stack = []
-        # Quick lookup: var_name -> index in execution_stack (for FOR loops only)
-        self.for_loop_vars = {}
+
+        # FOR loop state storage - maps variable name to loop state
+        # var_name -> {'pc': PC object, 'end': end_value, 'step': step_value}
+        self.for_loop_states = {}
 
         # Line text mapping (for error messages)
         self.line_text_map = line_text_map or {}  # line_number -> source text (for error messages)
@@ -577,6 +578,44 @@ class Runtime:
         """Clear all arrays."""
         self._arrays.clear()
 
+    def bind_for_loop(self, var_name, pc, end_value, step_value):
+        """
+        Bind a variable to a FOR loop.
+
+        Args:
+            var_name: Variable name with suffix (lowercase)
+            pc: PC object pointing to the FOR statement
+            end_value: Loop end value (evaluated once at FOR time)
+            step_value: Loop step value (evaluated once at FOR time)
+        """
+        self.for_loop_states[var_name] = {
+            'pc': pc,
+            'end': end_value,
+            'step': step_value
+        }
+
+    def get_for_loop_state(self, var_name):
+        """
+        Get the FOR loop state for a variable.
+
+        Args:
+            var_name: Variable name with suffix (lowercase)
+
+        Returns:
+            dict with keys 'pc', 'end', 'step' or None if not bound to a loop
+        """
+        return self.for_loop_states.get(var_name)
+
+    def unbind_for_loop(self, var_name):
+        """
+        Unbind a variable from its FOR loop.
+
+        Args:
+            var_name: Variable name with suffix (lowercase)
+        """
+        if var_name in self.for_loop_states:
+            del self.for_loop_states[var_name]
+
 
     def update_variables(self, variables):
         """
@@ -980,68 +1019,56 @@ class Runtime:
         return (entry['return_line'], entry['return_stmt'])
 
     def push_for_loop(self, var_name, end_value, step_value, return_line, return_stmt_index):
-        """Register a FOR loop on the unified execution stack"""
+        """Register a FOR loop by binding the variable to loop state.
+
+        Variable-indexed approach: Each variable is bound to one FOR loop at a time.
+        This allows jumping out of loops and reusing variables (Super Star Trek pattern).
+
+        When NEXT executes, it looks up the loop state and does increment logic.
+        """
         from src.debug_logger import debug_log
+        from src.pc import PC
 
         # Verbose debug logging (only if MBASIC_DEBUG_LEVEL=2)
         debug_log(
             f"push_for_loop({var_name}) at line {return_line}",
-            context={'stack_size_before': len(self.execution_stack)},
             level=2
         )
 
-        # Check if this variable already has an active FOR loop
-        # This prevents nested FOR loops with the same variable
-        # Example of disallowed nesting: FOR I=1 TO 10: FOR I=1 TO 5 (inner FOR reuses outer I)
-        if var_name in self.for_loop_vars:
-            debug_log(
-                f"ERROR: {var_name} already on stack at index {self.for_loop_vars[var_name]}!",
-                level=1  # Always log errors
-            )
-            raise RuntimeError(f"FOR loop variable {var_name} already active - nested FOR loops with same variable not allowed")
+        # Create PC pointing to the FOR statement
+        for_pc = PC.running_at(return_line, return_stmt_index)
 
-        loop_entry = {
-            'type': 'FOR',
-            'var': var_name,
-            'end': end_value,
-            'step': step_value,
-            'return_line': return_line,
-            'return_stmt': return_stmt_index
-        }
-        self.execution_stack.append(loop_entry)
-        # Track index for quick lookup by variable name
-        self.for_loop_vars[var_name] = len(self.execution_stack) - 1
+        # Bind variable to this FOR loop
+        # If variable already bound (jumped out of previous loop), this just overwrites it
+        self.bind_for_loop(var_name, for_pc, end_value, step_value)
 
         debug_log(
-            f"push_for_loop({var_name}) complete",
-            context={'stack_size_after': len(self.execution_stack)},
+            f"push_for_loop({var_name}) complete - bound to PC({return_line},{return_stmt_index})",
             level=2
         )
 
     def pop_for_loop(self, var_name):
-        """Remove a FOR loop - verifies it's on top of stack"""
-        if var_name not in self.for_loop_vars:
-            return  # No loop for this variable
-
-        # Get the index of this FOR loop
-        loop_index = self.for_loop_vars[var_name]
-
-        # Verify this FOR loop is on top of the stack
-        if loop_index != len(self.execution_stack) - 1:
-            # Error: trying to exit a FOR loop that isn't the innermost control structure
-            # This means there's improper nesting (e.g., FOR I / GOSUB / NEXT I / RETURN)
-            raise RuntimeError(f"NEXT {var_name} without matching FOR - improper nesting")
-
-        # Remove from stack
-        self.execution_stack.pop()
-        del self.for_loop_vars[var_name]
+        """Remove a FOR loop binding from the variable."""
+        self.unbind_for_loop(var_name)
 
     def get_for_loop(self, var_name):
-        """Get FOR loop info or None"""
-        if var_name not in self.for_loop_vars:
+        """Get FOR loop info for a variable.
+
+        Returns:
+            dict with keys: 'end', 'step', 'return_line', 'return_stmt'
+            or None if variable not bound to a FOR loop
+        """
+        loop_state = self.get_for_loop_state(var_name)
+        if loop_state is None:
             return None
-        loop_index = self.for_loop_vars[var_name]
-        return self.execution_stack[loop_index]
+
+        # Return loop info in the format expected by interpreter
+        return {
+            'end': loop_state['end'],
+            'step': loop_state['step'],
+            'return_line': loop_state['pc'].line,
+            'return_stmt': loop_state['pc'].statement
+        }
 
     def push_while_loop(self, while_line, while_stmt_index):
         """Register a WHILE loop on the unified execution stack"""
@@ -1089,7 +1116,7 @@ class Runtime:
 
         This is called when user edits code at a breakpoint and then continues.
         We validate that:
-        - FOR loops: return_line still exists
+        - FOR loops: FOR line still exists (tracked separately in for_loop_states)
         - GOSUB: return_line still exists
         - WHILE loops: while_line still exists
 
@@ -1098,23 +1125,14 @@ class Runtime:
         removed_entries = []
         messages = []
 
-        # Validate each entry from bottom to top
+        # Validate execution stack (GOSUB and WHILE only)
         i = 0
         while i < len(self.execution_stack):
             entry = self.execution_stack[i]
             entry_type = entry['type']
             should_remove = False
 
-            if entry_type == 'FOR':
-                var_name = entry['var']
-                return_line = entry['return_line']
-
-                # Check if return line still exists
-                if not self.statement_table.line_exists(return_line):
-                    should_remove = True
-                    messages.append(f"FOR {var_name} loop removed - line {return_line} no longer exists")
-
-            elif entry_type == 'GOSUB':
+            if entry_type == 'GOSUB':
                 return_line = entry['return_line']
 
                 # Check if return line still exists
@@ -1133,16 +1151,20 @@ class Runtime:
             if should_remove:
                 removed_entry = self.execution_stack.pop(i)
                 removed_entries.append(removed_entry)
-
-                # Clean up for_loop_vars tracking if it's a FOR loop
-                if entry_type == 'FOR':
-                    var_name = removed_entry['var']
-                    if var_name in self.for_loop_vars:
-                        del self.for_loop_vars[var_name]
-
                 # Don't increment i - we removed an entry so next entry is now at position i
             else:
                 i += 1
+
+        # Validate FOR loop states (tracked separately)
+        for var_name in list(self.for_loop_states.keys()):
+            loop_state = self.for_loop_states[var_name]
+            for_line = loop_state['pc'].line
+
+            # Check if FOR line still exists
+            if not self.statement_table.line_exists(for_line):
+                del self.for_loop_states[var_name]
+                messages.append(f"FOR {var_name} loop removed - line {for_line} no longer exists")
+                removed_entries.append({'type': 'FOR', 'var': var_name, 'return_line': for_line})
 
         # Stack is valid if we processed everything (even if we removed some entries)
         return (True, removed_entries, messages)
@@ -1168,10 +1190,10 @@ class Runtime:
         """
         if var_name is None:
             # Check if any FOR loop is active
-            return any(entry['type'] == 'FOR' for entry in self.execution_stack)
+            return len(self.for_loop_states) > 0
         else:
             # Check for specific loop variable
-            return var_name in self.for_loop_vars
+            return var_name in self.for_loop_states
 
     # ========================================================================
     # Debugging and Inspection Interface
@@ -1500,7 +1522,7 @@ class Runtime:
 
         # Clear execution state
         self.execution_stack.clear()
-        self.for_loop_vars.clear()
+        self.for_loop_states.clear()
 
         # Clear DATA
         self.data_items.clear()

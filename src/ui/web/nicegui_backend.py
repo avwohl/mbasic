@@ -3690,7 +3690,7 @@ class NiceGUIBackend(UIBackend):
             'statement_table': pickle.dumps(self.runtime.statement_table).hex(),
             # Note: halted flag removed - PC is now immutable and indicates running state
             'execution_stack': self.runtime.execution_stack,
-            'for_loop_vars': self.runtime.for_loop_vars,
+            'for_loop_states': pickle.dumps(self.runtime.for_loop_states).hex(),
             'line_text_map': self.runtime.line_text_map,
             'data_items': self.runtime.data_items,
             'data_pointer': self.runtime.data_pointer,
@@ -3729,7 +3729,13 @@ class NiceGUIBackend(UIBackend):
         # Note: halted flag removed - PC is now immutable and indicates running state
         # Ignore 'halted' key if present (backwards compatibility with old saved states)
         self.runtime.execution_stack = state['execution_stack']
-        self.runtime.for_loop_vars = state['for_loop_vars']
+        # Backwards compatibility: old saves have for_loop_vars, new saves have for_loop_states
+        if 'for_loop_states' in state:
+            self.runtime.for_loop_states = pickle.loads(bytes.fromhex(state['for_loop_states']))
+        else:
+            # Old save format - for_loop_vars existed but was part of old stack-based system
+            # Can't migrate old saves, so just start with empty for_loop_states
+            self.runtime.for_loop_states = {}
         self.runtime.line_text_map = state['line_text_map']
         self.runtime.data_items = state['data_items']
         self.runtime.data_pointer = state['data_pointer']
