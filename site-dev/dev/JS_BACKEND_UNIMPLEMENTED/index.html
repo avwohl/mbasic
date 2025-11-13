@@ -1192,9 +1192,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#status-phase-5-enhancement-complete" class="md-nav__link">
+  <a href="#status-phase-7-error-handling-complete" class="md-nav__link">
     <span class="md-ellipsis">
-      Status: Phase 5 (Enhancement) Complete
+      Status: Phase 7 (Error Handling) Complete
     </span>
   </a>
   
@@ -1241,6 +1241,15 @@
   <a href="#functions-procedures" class="md-nav__link">
     <span class="md-ellipsis">
       Functions &amp; Procedures
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error Handling
     </span>
   </a>
   
@@ -1310,15 +1319,6 @@
   <a href="#program-control" class="md-nav__link">
     <span class="md-ellipsis">
       Program Control
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#error-handling" class="md-nav__link">
-    <span class="md-ellipsis">
-      Error Handling
     </span>
   </a>
   
@@ -1418,9 +1418,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#completed-phase-2" class="md-nav__link">
+  <a href="#completed-phase-2-7" class="md-nav__link">
     <span class="md-ellipsis">
-      ✅ COMPLETED (Phase 2)
+      ✅ COMPLETED (Phase 2-7)
     </span>
   </a>
   
@@ -1492,9 +1492,9 @@
 
 
 <h1 id="javascript-backend-unimplemented-features">JavaScript Backend - Unimplemented Features<a class="headerlink" href="#javascript-backend-unimplemented-features" title="Permanent link">&para;</a></h1>
-<h2 id="status-phase-5-enhancement-complete">Status: Phase 5 (Enhancement) Complete<a class="headerlink" href="#status-phase-5-enhancement-complete" title="Permanent link">&para;</a></h2>
+<h2 id="status-phase-7-error-handling-complete">Status: Phase 7 (Error Handling) Complete<a class="headerlink" href="#status-phase-7-error-handling-complete" title="Permanent link">&para;</a></h2>
 <p>Phase 1-4: Core implementation ✓
-Phase 5: Enhanced features ✓
+Phase 5-6: Enhanced features ✓
 - INPUT statement (browser &amp; Node.js)
 - RANDOMIZE statement
 - STOP statement
@@ -1505,7 +1505,14 @@ Phase 5: Enhanced features ✓
 - FIX(), SGN(), CINT(), CSNG(), CDBL()
 - Fixed GOSUB return address calculation
 - Fixed FOR loop skip when condition not met
-- Fixed NEXT without variable</p>
+- Fixed NEXT without variable
+- ON GOSUB statement
+- ERASE statement</p>
+<p>Phase 7: Error handling ✓
+- ON ERROR GOTO/GOSUB
+- RESUME / RESUME NEXT / RESUME line
+- ERROR statement
+- ERL() and ERR() functions</p>
 <p>This document tracks what's <strong>not yet implemented</strong> in the JavaScript backend.</p>
 <hr />
 <h2 id="implemented-core-features">✅ IMPLEMENTED (Core Features)<a class="headerlink" href="#implemented-core-features" title="Permanent link">&para;</a></h2>
@@ -1535,6 +1542,14 @@ Phase 5: Enhanced features ✓
 <ul>
 <li>✓ DEF FN (user-defined functions)</li>
 <li>✓ FN calls</li>
+</ul>
+<h3 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ ON ERROR GOTO/GOSUB (set error handler)</li>
+<li>✓ RESUME / RESUME NEXT / RESUME line (continue after error)</li>
+<li>✓ ERROR (trigger error)</li>
+<li>✓ ERL() (line number where error occurred)</li>
+<li>✓ ERR() (error code)</li>
 </ul>
 <h3 id="other">Other<a class="headerlink" href="#other" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1590,14 +1605,6 @@ Phase 5: Enhanced features ✓
 <li>NEW - Clear program (interactive)</li>
 <li>DELETE - Delete line range (interactive)</li>
 <li>RENUM - Renumber lines (interactive)</li>
-</ul>
-<h3 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h3>
-<ul>
-<li>ON ERROR GOTO - Set error handler</li>
-<li>RESUME - Resume after error</li>
-<li>ERROR - Trigger error</li>
-<li>ERL - Line number where error occurred (function)</li>
-<li>ERR - Error code (function)</li>
 </ul>
 <h3 id="systemhardware">System/Hardware<a class="headerlink" href="#systemhardware" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1667,7 +1674,7 @@ Phase 5: Enhanced features ✓
 </ul>
 <hr />
 <h2 id="implementation-priority">📊 Implementation Priority<a class="headerlink" href="#implementation-priority" title="Permanent link">&para;</a></h2>
-<h3 id="completed-phase-2">✅ COMPLETED (Phase 2)<a class="headerlink" href="#completed-phase-2" title="Permanent link">&para;</a></h3>
+<h3 id="completed-phase-2-7">✅ COMPLETED (Phase 2-7)<a class="headerlink" href="#completed-phase-2-7" title="Permanent link">&para;</a></h3>
 <ol>
 <li>✓ INPUT - User input (browser: prompt, Node.js: readline)</li>
 <li>✓ RANDOMIZE - Proper random seeding</li>
@@ -1678,6 +1685,9 @@ Phase 5: Enhanced features ✓
 <li>✓ Additional string functions (SPACE<span class="arithmatex"><span class="MathJax_Preview">, STRING</span><script type="math/tex">, STRING</script></span>, HEX<span class="arithmatex"><span class="MathJax_Preview">, OCT</span><script type="math/tex">, OCT</script></span>, POS)</li>
 <li>✓ Additional math functions (FIX, SGN, CINT, CSNG, CDBL)</li>
 <li>✓ STOP statement</li>
+<li>✓ ON GOSUB - Computed subroutine calls</li>
+<li>✓ ERASE - Reset arrays</li>
+<li>✓ Error handling (ON ERROR, RESUME, ERROR, ERL, ERR)</li>
 </ol>
 <h3 id="medium-nice-to-have">MEDIUM (Nice to have)<a class="headerlink" href="#medium-nice-to-have" title="Permanent link">&para;</a></h3>
 <ol>
@@ -1687,10 +1697,9 @@ Phase 5: Enhanced features ✓
 <h3 id="low-specializedadvanced">LOW (Specialized/Advanced)<a class="headerlink" href="#low-specializedadvanced" title="Permanent link">&para;</a></h3>
 <ol>
 <li>File I/O (OPEN, CLOSE, etc.)</li>
-<li>Error handling (ON ERROR, RESUME)</li>
 <li>CHAIN - Program chaining</li>
-<li>Graphics (implementation-specific)</li>
-<li>Sound (implementation-specific)</li>
+<li>Graphics (not in MBASIC 5.21)</li>
+<li>Sound (not in MBASIC 5.21)</li>
 <li>Machine code / hardware access (POKE, PEEK, CALL, etc.)</li>
 </ol>
 <h3 id="not-applicable-interactiveeditor">NOT APPLICABLE (Interactive/Editor)<a class="headerlink" href="#not-applicable-interactiveeditor" title="Permanent link">&para;</a></h3>

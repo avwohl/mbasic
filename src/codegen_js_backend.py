@@ -40,6 +40,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.uses_gosub = False
         self.uses_data = False
         self.uses_random = False
+        self.uses_error_handling = False
 
         # DATA/READ/RESTORE support
         self.data_values: List[Any] = []
@@ -273,6 +274,8 @@ class JavaScriptBackend(CodeGenBackend):
                     self.uses_data = True
                 elif isinstance(stmt, RestoreStatementNode):
                     self.uses_data = True
+                elif isinstance(stmt, (OnErrorStatementNode, ErrorStatementNode, ResumeStatementNode)):
+                    self.uses_error_handling = True
                 # Check for RND function in expressions
                 self._check_for_rnd(stmt, set())
 
@@ -540,6 +543,48 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'const _for_loops = {};  // Map var name -> {end, step, line}')
         code.append('')
 
+        # Error handling
+        if self.uses_error_handling:
+            code.append(self.indent() + '// Error handling')
+            code.append(self.indent() + 'let _error_handler = null;  // Line number of error handler (0 = disabled)')
+            code.append(self.indent() + 'let _error_handler_is_gosub = false;  // True if ON ERROR GOSUB')
+            code.append(self.indent() + 'let _error_line = 0;  // Line where error occurred (ERL)')
+            code.append(self.indent() + 'let _error_code = 0;  // Error code (ERR)')
+            code.append(self.indent() + 'let _in_error_handler = false;  // Prevent recursive errors')
+            code.append(self.indent() + 'function _trigger_error(code, line) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'if (_in_error_handler) {')
+            self.indent_level += 1
+            code.append(self.indent() + '_error("Error in error handler");')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + '_error_code = code;')
+            code.append(self.indent() + '_error_line = line;')
+            code.append(self.indent() + 'if (_error_handler === null) {')
+            self.indent_level += 1
+            code.append(self.indent() + '_error(`Error ${code} at line ${line}`);')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else if (_error_handler === 0) {')
+            self.indent_level += 1
+            code.append(self.indent() + '_error(`Error ${code} at line ${line}`);')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '_in_error_handler = true;')
+            code.append(self.indent() + 'if (_error_handler_is_gosub) {')
+            self.indent_level += 1
+            code.append(self.indent() + '_gosub(line);  // Return to line that caused error')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'return _error_handler;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'function _erl() { return _error_line; }')
+            code.append(self.indent() + 'function _err() { return _error_code; }')
+            code.append('')
+
         # DATA/READ/RESTORE
         if self.uses_data or self.data_values:
             code.append(self.indent() + '// DATA/READ/RESTORE')
@@ -696,6 +741,7 @@ class JavaScriptBackend(CodeGenBackend):
             GosubStatementNode,
             ReturnStatementNode,
             EndStatementNode,
+            ResumeStatementNode,
         ))
 
     def _generate_statement(self, stmt, line_number: int, stmt_index: int, total_stmts: int) -> List[str]:
@@ -761,6 +807,12 @@ class JavaScriptBackend(CodeGenBackend):
             code.extend(self._generate_swap(stmt))
         elif isinstance(stmt, EraseStatementNode):
             code.extend(self._generate_erase(stmt))
+        elif isinstance(stmt, OnErrorStatementNode):
+            code.extend(self._generate_on_error(stmt))
+        elif isinstance(stmt, ErrorStatementNode):
+            code.extend(self._generate_error(stmt, line_number))
+        elif isinstance(stmt, ResumeStatementNode):
+            code.extend(self._generate_resume(stmt, line_number))
         elif isinstance(stmt, DataStatementNode):
             # DATA statements are processed during initialization
             pass
@@ -925,6 +977,9 @@ class JavaScriptBackend(CodeGenBackend):
             # Print formatting
             'tab': '_tab',
             'spc': '_spc',
+            # Error handling
+            'erl': '_erl',
+            'err': '_err',
         }
 
         js_func = js_func_map.get(func_name, func_name)
@@ -1231,4 +1286,62 @@ class JavaScriptBackend(CodeGenBackend):
 
                 # Recreate the array with default values
                 code.append(self.indent() + f'{js_name} = {self._create_array_init(dimensions, init_value)};')
+        return code
+
+    def _generate_on_error(self, stmt: OnErrorStatementNode) -> List[str]:
+        """Generate ON ERROR GOTO/GOSUB statement"""
+        code = []
+        if stmt.line_number == 0:
+            # ON ERROR GOTO 0 - disable error handling
+            code.append(self.indent() + '_error_handler = 0;')
+        else:
+            # ON ERROR GOTO line or ON ERROR GOSUB line
+            code.append(self.indent() + f'_error_handler = {stmt.line_number};')
+            code.append(self.indent() + f'_error_handler_is_gosub = {str(stmt.is_gosub).lower()};')
+        return code
+
+    def _generate_error(self, stmt: ErrorStatementNode, current_line: int) -> List[str]:
+        """Generate ERROR statement - simulate an error"""
+        code = []
+        error_code = self._generate_expression(stmt.error_code)
+        code.append(self.indent() + f'{{')
+        self.indent_level += 1
+        code.append(self.indent() + f'const _next = _trigger_error({error_code}, {current_line});')
+        code.append(self.indent() + f'if (_next !== undefined) {{')
+        self.indent_level += 1
+        code.append(self.indent() + f'_pc = _next;')
+        code.append(self.indent() + f'break;')
+        self.indent_level -= 1
+        code.append(self.indent() + f'}}')
+        self.indent_level -= 1
+        code.append(self.indent() + f'}}')
+        return code
+
+    def _generate_resume(self, stmt: ResumeStatementNode, current_line: int) -> List[str]:
+        """Generate RESUME statement"""
+        code = []
+        code.append(self.indent() + '_in_error_handler = false;')
+
+        if stmt.line_number is None:
+            # RESUME - return to line that caused error
+            code.append(self.indent() + '_pc = _error_line;')
+            code.append(self.indent() + 'break;')
+        elif stmt.line_number == 0:
+            # RESUME NEXT - continue at next line after error
+            code.append(self.indent() + f'const _next_line = {self.next_line_map.get(current_line, "null")};')
+            code.append(self.indent() + 'if (_next_line !== null) {')
+            self.indent_level += 1
+            code.append(self.indent() + '_pc = _next_line;')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '_pc = null;  // End of program')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'break;')
+        else:
+            # RESUME line_number - continue at specific line
+            code.append(self.indent() + f'_pc = {stmt.line_number};')
+            code.append(self.indent() + 'break;')
+
         return code

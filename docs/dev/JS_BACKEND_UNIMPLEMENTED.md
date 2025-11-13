@@ -1,9 +1,9 @@
 # JavaScript Backend - Unimplemented Features
 
-## Status: Phase 5 (Enhancement) Complete
+## Status: Phase 7 (Error Handling) Complete
 
 Phase 1-4: Core implementation ✓
-Phase 5: Enhanced features ✓
+Phase 5-6: Enhanced features ✓
 - INPUT statement (browser & Node.js)
 - RANDOMIZE statement
 - STOP statement
@@ -15,6 +15,14 @@ Phase 5: Enhanced features ✓
 - Fixed GOSUB return address calculation
 - Fixed FOR loop skip when condition not met
 - Fixed NEXT without variable
+- ON GOSUB statement
+- ERASE statement
+
+Phase 7: Error handling ✓
+- ON ERROR GOTO/GOSUB
+- RESUME / RESUME NEXT / RESUME line
+- ERROR statement
+- ERL() and ERR() functions
 
 This document tracks what's **not yet implemented** in the JavaScript backend.
 
@@ -44,6 +52,13 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 ### Functions & Procedures
 - ✓ DEF FN (user-defined functions)
 - ✓ FN calls
+
+### Error Handling
+- ✓ ON ERROR GOTO/GOSUB (set error handler)
+- ✓ RESUME / RESUME NEXT / RESUME line (continue after error)
+- ✓ ERROR (trigger error)
+- ✓ ERL() (line number where error occurred)
+- ✓ ERR() (error code)
 
 ### Other
 - ✓ REM (comments - skipped)
@@ -100,12 +115,6 @@ _None currently - all previously stubbed features have been implemented_
 - DELETE - Delete line range (interactive)
 - RENUM - Renumber lines (interactive)
 
-### Error Handling
-- ON ERROR GOTO - Set error handler
-- RESUME - Resume after error
-- ERROR - Trigger error
-- ERL - Line number where error occurred (function)
-- ERR - Error code (function)
 
 ### System/Hardware
 - POKE - Write to memory address
@@ -172,7 +181,7 @@ _None currently - all previously stubbed features have been implemented_
 
 ## 📊 Implementation Priority
 
-### ✅ COMPLETED (Phase 2)
+### ✅ COMPLETED (Phase 2-7)
 1. ✓ INPUT - User input (browser: prompt, Node.js: readline)
 2. ✓ RANDOMIZE - Proper random seeding
 3. ✓ TAB() / SPC() - Print formatting
@@ -182,6 +191,9 @@ _None currently - all previously stubbed features have been implemented_
 7. ✓ Additional string functions (SPACE$, STRING$, HEX$, OCT$, POS)
 8. ✓ Additional math functions (FIX, SGN, CINT, CSNG, CDBL)
 9. ✓ STOP statement
+10. ✓ ON GOSUB - Computed subroutine calls
+11. ✓ ERASE - Reset arrays
+12. ✓ Error handling (ON ERROR, RESUME, ERROR, ERL, ERR)
 
 ### MEDIUM (Nice to have)
 1. MID$ assignment - String modification
@@ -189,11 +201,10 @@ _None currently - all previously stubbed features have been implemented_
 
 ### LOW (Specialized/Advanced)
 1. File I/O (OPEN, CLOSE, etc.)
-2. Error handling (ON ERROR, RESUME)
-3. CHAIN - Program chaining
-4. Graphics (implementation-specific)
-5. Sound (implementation-specific)
-6. Machine code / hardware access (POKE, PEEK, CALL, etc.)
+2. CHAIN - Program chaining
+3. Graphics (not in MBASIC 5.21)
+4. Sound (not in MBASIC 5.21)
+5. Machine code / hardware access (POKE, PEEK, CALL, etc.)
 
 ### NOT APPLICABLE (Interactive/Editor)
 - LIST, NEW, RUN, LOAD, SAVE, DELETE, RENUM
