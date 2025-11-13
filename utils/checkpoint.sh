@@ -131,6 +131,18 @@ if [ "$DOCS_CHANGED" = true ]; then
             exit 1
         fi
 
+        # Check for strict mode warnings in dev docs too
+        if echo "$BUILD_OUTPUT_DEV" | grep -E "contains an unrecognized relative link|does not contain an anchor|contains an absolute link" > /dev/null; then
+            echo "❌ ERROR: mkdocs-dev build has strict mode warnings!"
+            echo ""
+            echo "The following warnings will cause GitHub deployment to fail:"
+            echo ""
+            echo "$BUILD_OUTPUT_DEV" | grep -E "contains an unrecognized relative link|does not contain an anchor|contains an absolute link"
+            echo ""
+            echo "Run 'mkdocs build --strict -f mkdocs-dev.yml' to see full details"
+            exit 1
+        fi
+
         echo "✓ Developer docs build validation passed"
     else
         echo "❌ ERROR: mkdocs not installed!"
