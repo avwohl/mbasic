@@ -726,7 +726,7 @@ class JavaScriptBackend(CodeGenBackend):
             # Node.js file operations
             code.append(self.indent() + 'nodejs: {')
             self.indent_level += 1
-            code.append(self.indent() + 'open: (filenum, filename, mode) => {')
+            code.append(self.indent() + 'open: (filenum, filename, mode, reclen) => {')
             self.indent_level += 1
             code.append(self.indent() + 'const fs = require("fs");')
             code.append(self.indent() + 'if (mode === "I") {')
@@ -747,6 +747,24 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'try { content = fs.readFileSync(filename, "utf8"); } catch(e) {}')
             code.append(self.indent() + '_files[filenum] = { mode: "A", content, filename };')
             self.indent_level -= 1
+            code.append(self.indent() + '} else if (mode === "R") {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Random access mode')
+            code.append(self.indent() + 'const recordLength = reclen || 128;')
+            code.append(self.indent() + 'let content = "";')
+            code.append(self.indent() + 'try { content = fs.readFileSync(filename, "binary"); } catch(e) {}')
+            code.append(self.indent() + '_files[filenum] = {')
+            self.indent_level += 1
+            code.append(self.indent() + 'mode: "R",')
+            code.append(self.indent() + 'content,')
+            code.append(self.indent() + 'filename,')
+            code.append(self.indent() + 'recordLength,')
+            code.append(self.indent() + 'currentRecord: 1,')
+            code.append(self.indent() + 'buffer: " ".repeat(recordLength),')
+            code.append(self.indent() + 'fields: {}  // Map field variable name -> {start, width}')
+            self.indent_level -= 1
+            code.append(self.indent() + '};')
+            self.indent_level -= 1
             code.append(self.indent() + '} else {')
             self.indent_level += 1
             code.append(self.indent() + '_error("Unsupported file mode: " + mode);')
@@ -763,6 +781,12 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'const fs = require("fs");')
             code.append(self.indent() + 'fs.writeFileSync(file.filename, file.content, "utf8");')
             self.indent_level -= 1
+            code.append(self.indent() + '} else if (file && file.mode === "R") {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Save random file')
+            code.append(self.indent() + 'const fs = require("fs");')
+            code.append(self.indent() + 'fs.writeFileSync(file.filename, file.content, "binary");')
+            self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append(self.indent() + 'delete _files[filenum];')
             self.indent_level -= 1
@@ -773,7 +797,7 @@ class JavaScriptBackend(CodeGenBackend):
             # Browser file operations (using localStorage)
             code.append(self.indent() + 'browser: {')
             self.indent_level += 1
-            code.append(self.indent() + 'open: (filenum, filename, mode) => {')
+            code.append(self.indent() + 'open: (filenum, filename, mode, reclen) => {')
             self.indent_level += 1
             code.append(self.indent() + 'const key = "mbasic_file_" + filename;')
             code.append(self.indent() + 'if (mode === "I") {')
@@ -790,6 +814,23 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'const content = localStorage.getItem(key) || "";')
             code.append(self.indent() + '_files[filenum] = { mode: "A", content, filename };')
             self.indent_level -= 1
+            code.append(self.indent() + '} else if (mode === "R") {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Random access mode')
+            code.append(self.indent() + 'const recordLength = reclen || 128;')
+            code.append(self.indent() + 'const content = localStorage.getItem(key) || "";')
+            code.append(self.indent() + '_files[filenum] = {')
+            self.indent_level += 1
+            code.append(self.indent() + 'mode: "R",')
+            code.append(self.indent() + 'content,')
+            code.append(self.indent() + 'filename,')
+            code.append(self.indent() + 'recordLength,')
+            code.append(self.indent() + 'currentRecord: 1,')
+            code.append(self.indent() + 'buffer: " ".repeat(recordLength),')
+            code.append(self.indent() + 'fields: {}  // Map field variable name -> {start, width}')
+            self.indent_level -= 1
+            code.append(self.indent() + '};')
+            self.indent_level -= 1
             code.append(self.indent() + '} else {')
             self.indent_level += 1
             code.append(self.indent() + '_error("Unsupported file mode: " + mode);')
@@ -801,7 +842,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'close: (filenum) => {')
             self.indent_level += 1
             code.append(self.indent() + 'const file = _files[filenum];')
-            code.append(self.indent() + 'if (file && (file.mode === "O" || file.mode === "A")) {')
+            code.append(self.indent() + 'if (file && (file.mode === "O" || file.mode === "A" || file.mode === "R")) {')
             self.indent_level += 1
             code.append(self.indent() + 'const key = "mbasic_file_" + file.filename;')
             code.append(self.indent() + 'localStorage.setItem(key, file.content);')
@@ -817,15 +858,15 @@ class JavaScriptBackend(CodeGenBackend):
             code.append('')
 
             # Helper functions
-            code.append(self.indent() + 'function _fopen(filenum, filename, mode) {')
+            code.append(self.indent() + 'function _fopen(filenum, filename, mode, reclen) {')
             self.indent_level += 1
             code.append(self.indent() + 'if (typeof process !== "undefined") {')
             self.indent_level += 1
-            code.append(self.indent() + '_fileOps.nodejs.open(filenum, filename, mode);')
+            code.append(self.indent() + '_fileOps.nodejs.open(filenum, filename, mode, reclen);')
             self.indent_level -= 1
             code.append(self.indent() + '} else {')
             self.indent_level += 1
-            code.append(self.indent() + '_fileOps.browser.open(filenum, filename, mode);')
+            code.append(self.indent() + '_fileOps.browser.open(filenum, filename, mode, reclen);')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             self.indent_level -= 1
@@ -1070,6 +1111,125 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '}')
             self.indent_level -= 1
             code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+        # Random file access functions
+        if self.uses_file_io:
+            code.append(self.indent() + '// Random file access functions')
+            code.append(self.indent() + 'function _ffield(filenum, fields) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// FIELD - Define buffer layout for random file')
+            code.append(self.indent() + 'const file = _files[filenum];')
+            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
+            code.append(self.indent() + 'if (file.mode !== "R") _error("File #" + filenum + " not open for random access");')
+            code.append(self.indent() + 'let pos = 0;')
+            code.append(self.indent() + 'for (const [width, varname] of fields) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'file.fields[varname] = { start: pos, width: width };')
+            code.append(self.indent() + 'pos += width;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+            code.append(self.indent() + 'function _flset(varname, value) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// LSET - Left-justify string in field variable')
+            code.append(self.indent() + '// Find which file has this field variable')
+            code.append(self.indent() + 'for (const filenum in _files) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const file = _files[filenum];')
+            code.append(self.indent() + 'if (file.mode === "R" && file.fields[varname]) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const field = file.fields[varname];')
+            code.append(self.indent() + 'const str = String(value).substring(0, field.width).padEnd(field.width, " ");')
+            code.append(self.indent() + 'file.buffer = file.buffer.substring(0, field.start) + str + file.buffer.substring(field.start + field.width);')
+            code.append(self.indent() + 'return;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + '_error("Field variable not found: " + varname);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+            code.append(self.indent() + 'function _frset(varname, value) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// RSET - Right-justify string in field variable')
+            code.append(self.indent() + 'for (const filenum in _files) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const file = _files[filenum];')
+            code.append(self.indent() + 'if (file.mode === "R" && file.fields[varname]) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const field = file.fields[varname];')
+            code.append(self.indent() + 'const str = String(value).substring(0, field.width).padStart(field.width, " ");')
+            code.append(self.indent() + 'file.buffer = file.buffer.substring(0, field.start) + str + file.buffer.substring(field.start + field.width);')
+            code.append(self.indent() + 'return;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + '_error("Field variable not found: " + varname);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+            code.append(self.indent() + 'function _fget(filenum, recnum) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// GET - Read record from random file into buffer')
+            code.append(self.indent() + 'const file = _files[filenum];')
+            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
+            code.append(self.indent() + 'if (file.mode !== "R") _error("File #" + filenum + " not open for random access");')
+            code.append(self.indent() + 'const recordNum = recnum !== undefined ? recnum : file.currentRecord;')
+            code.append(self.indent() + 'const pos = (recordNum - 1) * file.recordLength;')
+            code.append(self.indent() + 'if (pos < 0) _error("Invalid record number");')
+            code.append(self.indent() + '// Read record from file content')
+            code.append(self.indent() + 'if (pos >= file.content.length) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Beyond end of file - fill buffer with spaces')
+            code.append(self.indent() + 'file.buffer = " ".repeat(file.recordLength);')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + 'file.buffer = file.content.substring(pos, pos + file.recordLength).padEnd(file.recordLength, " ");')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + '// Update field variables from buffer')
+            code.append(self.indent() + 'for (const varname in file.fields) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const field = file.fields[varname];')
+            code.append(self.indent() + 'const value = file.buffer.substring(field.start, field.start + field.width);')
+            code.append(self.indent() + 'if (typeof window !== "undefined") window[varname] = value;')
+            code.append(self.indent() + 'else global[varname] = value;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'file.currentRecord = recordNum + 1;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+            code.append(self.indent() + 'function _fput(filenum, recnum) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// PUT - Write buffer to record in random file')
+            code.append(self.indent() + 'const file = _files[filenum];')
+            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
+            code.append(self.indent() + 'if (file.mode !== "R") _error("File #" + filenum + " not open for random access");')
+            code.append(self.indent() + 'const recordNum = recnum !== undefined ? recnum : file.currentRecord;')
+            code.append(self.indent() + 'const pos = (recordNum - 1) * file.recordLength;')
+            code.append(self.indent() + 'if (pos < 0) _error("Invalid record number");')
+            code.append(self.indent() + '// Extend file content if necessary')
+            code.append(self.indent() + 'if (pos + file.recordLength > file.content.length) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'file.content = file.content.padEnd(pos + file.recordLength, " ");')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + '// Write buffer to file content')
+            code.append(self.indent() + 'file.content = file.content.substring(0, pos) + file.buffer + file.content.substring(pos + file.recordLength);')
+            code.append(self.indent() + 'file.currentRecord = recordNum + 1;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append('')
@@ -1382,6 +1542,16 @@ class JavaScriptBackend(CodeGenBackend):
             code.extend(self._generate_name(stmt))
         elif isinstance(stmt, FilesStatementNode):
             code.extend(self._generate_files(stmt))
+        elif isinstance(stmt, FieldStatementNode):
+            code.extend(self._generate_field(stmt))
+        elif isinstance(stmt, LsetStatementNode):
+            code.extend(self._generate_lset(stmt))
+        elif isinstance(stmt, RsetStatementNode):
+            code.extend(self._generate_rset(stmt))
+        elif isinstance(stmt, GetStatementNode):
+            code.extend(self._generate_get(stmt))
+        elif isinstance(stmt, PutStatementNode):
+            code.extend(self._generate_put(stmt))
         elif isinstance(stmt, OnErrorStatementNode):
             code.extend(self._generate_on_error(stmt))
         elif isinstance(stmt, ErrorStatementNode):
@@ -2045,7 +2215,12 @@ class JavaScriptBackend(CodeGenBackend):
         filename_expr = self._generate_expression(stmt.filename)
         mode = stmt.mode  # "I", "O", "A", or "R"
 
-        code.append(self.indent() + f'_fopen({filenum_expr}, {filename_expr}, "{mode}");')
+        # For random files, include record length (default 128 if not specified)
+        if stmt.record_length:
+            reclen_expr = self._generate_expression(stmt.record_length)
+            code.append(self.indent() + f'_fopen({filenum_expr}, {filename_expr}, "{mode}", {reclen_expr});')
+        else:
+            code.append(self.indent() + f'_fopen({filenum_expr}, {filename_expr}, "{mode}");')
         return code
 
     def _generate_close(self, stmt: CloseStatementNode) -> List[str]:
@@ -2090,6 +2265,60 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + f'_ffiles({filespec_expr});')
         else:
             code.append(self.indent() + '_ffiles("*");')
+        return code
+
+    def _generate_field(self, stmt: FieldStatementNode) -> List[str]:
+        """Generate FIELD statement - define random-access file buffer layout"""
+        code = []
+        filenum_expr = self._generate_expression(stmt.file_number)
+
+        # Build array of field definitions: [[width1, var1], [width2, var2], ...]
+        fields_array = []
+        for width, var in stmt.fields:
+            width_expr = self._generate_expression(width)
+            var_name = var.name  # Variable name (string variable)
+            fields_array.append(f'[{width_expr}, "{var_name}"]')
+
+        fields_str = '[' + ', '.join(fields_array) + ']'
+        code.append(self.indent() + f'_ffield({filenum_expr}, {fields_str});')
+        return code
+
+    def _generate_lset(self, stmt: LsetStatementNode) -> List[str]:
+        """Generate LSET statement - left-justify string in field variable"""
+        code = []
+        var_name = stmt.variable.name
+        value_expr = self._generate_expression(stmt.expression)
+        code.append(self.indent() + f'_flset("{var_name}", {value_expr});')
+        return code
+
+    def _generate_rset(self, stmt: RsetStatementNode) -> List[str]:
+        """Generate RSET statement - right-justify string in field variable"""
+        code = []
+        var_name = stmt.variable.name
+        value_expr = self._generate_expression(stmt.expression)
+        code.append(self.indent() + f'_frset("{var_name}", {value_expr});')
+        return code
+
+    def _generate_get(self, stmt: GetStatementNode) -> List[str]:
+        """Generate GET statement - read record from random-access file"""
+        code = []
+        filenum_expr = self._generate_expression(stmt.file_number)
+        if stmt.record_number:
+            rec_expr = self._generate_expression(stmt.record_number)
+            code.append(self.indent() + f'_fget({filenum_expr}, {rec_expr});')
+        else:
+            code.append(self.indent() + f'_fget({filenum_expr});')
+        return code
+
+    def _generate_put(self, stmt: PutStatementNode) -> List[str]:
+        """Generate PUT statement - write record to random-access file"""
+        code = []
+        filenum_expr = self._generate_expression(stmt.file_number)
+        if stmt.record_number:
+            rec_expr = self._generate_expression(stmt.record_number)
+            code.append(self.indent() + f'_fput({filenum_expr}, {rec_expr});')
+        else:
+            code.append(self.indent() + f'_fput({filenum_expr});')
         return code
 
     def _generate_on_error(self, stmt: OnErrorStatementNode) -> List[str]:
