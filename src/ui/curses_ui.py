@@ -213,18 +213,34 @@ class ScrollingFiller(urwid.Widget):
         if not isinstance(edit, urwid.Edit):
             # Fallback: render the wrapped widget directly with proper size
             canvas = self.edit_widget.render((maxcol,), focus)
+            # Ensure canvas is exactly maxrow tall
             if canvas.rows() > maxrow:
                 canvas = urwid.CompositeCanvas(canvas)
                 canvas.trim_end(canvas.rows() - maxrow)
+            elif canvas.rows() < maxrow:
+                blank_rows = maxrow - canvas.rows()
+                blank_canvas = urwid.SolidCanvas(" ", maxcol, blank_rows)
+                canvas = urwid.CanvasCombine([
+                    (canvas, None, False),
+                    (blank_canvas, None, False)
+                ])
             return canvas
 
         text = edit.get_edit_text()
         if not text:
-            # Empty editor - just render and trim to fit
+            # Empty editor - just render and ensure correct height
             canvas = edit.render((maxcol,), focus)
+            # Ensure canvas is exactly maxrow tall
             if canvas.rows() > maxrow:
                 canvas = urwid.CompositeCanvas(canvas)
                 canvas.trim_end(canvas.rows() - maxrow)
+            elif canvas.rows() < maxrow:
+                blank_rows = maxrow - canvas.rows()
+                blank_canvas = urwid.SolidCanvas(" ", maxcol, blank_rows)
+                canvas = urwid.CanvasCombine([
+                    (canvas, None, False),
+                    (blank_canvas, None, False)
+                ])
             return canvas
 
         # Calculate current cursor line
@@ -261,15 +277,25 @@ class ScrollingFiller(urwid.Widget):
         canvas = edit.render((maxcol,), focus)
 
         # Trim canvas to show only visible portion (from _top_line to _top_line + maxrow)
-        if self._top_line > 0 or canvas.rows() > maxrow:
+        if self._top_line > 0:
             # Convert to a canvas we can manipulate
             canvas = urwid.CompositeCanvas(canvas)
             # Trim from top if scrolled down
-            if self._top_line > 0:
-                canvas.trim(self._top_line)
-            # Trim from bottom if too tall
-            if canvas.rows() > maxrow:
-                canvas.trim_end(canvas.rows() - maxrow)
+            canvas.trim(self._top_line)
+
+        # Trim from bottom if too tall
+        if canvas.rows() > maxrow:
+            canvas = urwid.CompositeCanvas(canvas)
+            canvas.trim_end(canvas.rows() - maxrow)
+        # Pad from bottom if too short
+        elif canvas.rows() < maxrow:
+            # Create blank lines to pad
+            blank_rows = maxrow - canvas.rows()
+            blank_canvas = urwid.SolidCanvas(" ", maxcol, blank_rows)
+            canvas = urwid.CanvasCombine([
+                (canvas, None, False),
+                (blank_canvas, None, False)
+            ])
 
         return canvas
 
