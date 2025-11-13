@@ -2324,6 +2324,10 @@ class SemanticAnalyzer:
         if var_node is None or const_value is None:
             return ranges
 
+        # Skip if const_value is not a number (e.g., string comparison)
+        if not isinstance(const_value, (int, float)):
+            return ranges
+
         var_name = var_node.name.upper()
 
         # Determine the range based on operator and branch
