@@ -23,6 +23,30 @@ from src.error_logger import log_web_error
 from src.usage_tracker import init_usage_tracker, get_usage_tracker
 
 
+def get_client_ip(request) -> str:
+    """Get real client IP address from request, handling nginx ingress forwarding.
+
+    Args:
+        request: NiceGUI/Starlette request object
+
+    Returns:
+        Client IP address (from X-Forwarded-For if available, else direct connection IP)
+    """
+    # Check X-Forwarded-For header (set by nginx ingress in k8s cluster)
+    forwarded = request.headers.get('X-Forwarded-For') or request.headers.get('x-forwarded-for')
+    if forwarded:
+        # Take first IP (real client IP before proxies)
+        return forwarded.split(',')[0].strip()
+
+    # Check X-Real-IP header (alternative header used by some proxies)
+    real_ip = request.headers.get('X-Real-IP') or request.headers.get('x-real-ip')
+    if real_ip:
+        return real_ip.strip()
+
+    # Fall back to direct connection IP (will be ingress IP in k8s)
+    return request.client.host if request.client else 'unknown'
+
+
 class SimpleWebIOHandler(IOHandler):
     """Simple IO handler for NiceGUI that appends to textarea."""
 
@@ -3872,7 +3896,8 @@ def start_web_ui(port=8080):
                 # Use context.client.id for session ID (not app.storage.client.id)
                 session_id = context.client.id if context.client else 'unknown'
                 user_agent = context.client.request.headers.get('user-agent') if context.client and context.client.request else None
-                ip = context.client.request.client.host if context.client and context.client.request and context.client.request.client else None
+                # Get real client IP (handles X-Forwarded-For from nginx ingress)
+                ip = get_client_ip(context.client.request) if context.client and context.client.request else 'unknown'
                 tracker.start_ide_session(session_id, user_agent, ip)
             except Exception as e:
                 sys.stderr.write(f"ERROR: Failed to track session start: {e}\n")
@@ -3995,16 +4020,15 @@ def start_web_ui(port=8080):
 
     # Landing page visit tracking endpoint
     @app.post('/api/track-visit')
-    def track_visit(page: str = '/', referrer: str = None, userAgent: str = None, sessionId: str = None):
+    def track_visit(page: str = '/', referrer: str = None, userAgent: str = None, sessionId: str = None, request: Request = None):
         """Track landing page visit."""
+        from starlette.requests import Request
         tracker = get_usage_tracker()
         if tracker:
             try:
-                # Get IP from request (FastAPI context)
-                from starlette.requests import Request
-                from fastapi import Request as FastAPIRequest
-                # Note: IP extraction handled in tracker, pass None for now
-                tracker.track_page_visit(page, referrer, userAgent, None, sessionId)
+                # Get real client IP (handles X-Forwarded-For from nginx ingress)
+                ip = get_client_ip(request) if request else 'unknown'
+                tracker.track_page_visit(page, referrer, userAgent, ip, sessionId)
             except Exception as e:
                 sys.stderr.write(f"Warning: Failed to track page visit: {e}\n")
                 sys.stderr.flush()
