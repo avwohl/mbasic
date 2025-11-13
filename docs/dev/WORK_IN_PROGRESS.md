@@ -103,11 +103,13 @@ Generated code should run in:
 ### New Features (2025-11-13)
 - [x] Implemented LINE INPUT statement (reads entire line without parsing, browser & Node.js)
 - [x] Implemented WRITE statement (CSV-formatted output with automatic quoting)
+- [x] Implemented WRITE# statement (CSV-formatted output to file)
 - [x] Implemented LPRINT statement (print to line printer / console.log)
 - [x] Implemented MID$ assignment (modify substring in place)
-- [x] Implemented file I/O (OPEN, CLOSE, RESET, PRINT#, INPUT#, LINE INPUT#)
+- [x] Implemented file I/O (OPEN, CLOSE, RESET, PRINT#, INPUT#, LINE INPUT#, WRITE#)
   - Node.js: Real filesystem using fs module (readFileSync/writeFileSync)
   - Browser: Virtual filesystem using localStorage
+- [x] Implemented file position functions (EOF, LOF, LOC)
 
 ### Testing Results
 - [x] Super Star Trek - 3524 lines of JavaScript generated successfully

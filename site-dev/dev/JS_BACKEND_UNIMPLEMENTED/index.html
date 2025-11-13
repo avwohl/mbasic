@@ -1229,6 +1229,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#file-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      File Functions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#variables-arrays" class="md-nav__link">
     <span class="md-ellipsis">
       Variables &amp; Arrays
@@ -1307,9 +1316,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#systemhardware" class="md-nav__link">
+  <a href="#systemhardware-not-applicable-to-compiler" class="md-nav__link">
     <span class="md-ellipsis">
-      System/Hardware
+      System/Hardware (Not Applicable to Compiler)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-other" class="md-nav__link">
+    <span class="md-ellipsis">
+      System (Other)
     </span>
   </a>
   
@@ -1328,6 +1346,15 @@
   <a href="#other_1" class="md-nav__link">
     <span class="md-ellipsis">
       Other
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-in-mbasic-521" class="md-nav__link">
+    <span class="md-ellipsis">
+      Not in MBASIC 5.21
     </span>
   </a>
   
@@ -1504,11 +1531,13 @@ Phase 5-6: Enhanced features ✓
 <p>New Features (2025-11-13):
 - LINE INPUT statement (reads entire line without parsing, browser &amp; Node.js support)
 - WRITE statement (CSV-formatted output with automatic quoting)
+- WRITE# statement (CSV-formatted output to file)
 - LPRINT statement (print to line printer / console.log)
 - MID$ assignment (modify substring in place)
-- File I/O support (OPEN, CLOSE, RESET, PRINT#, INPUT#, LINE INPUT#)
+- File I/O support (OPEN, CLOSE, RESET, PRINT#, INPUT#, LINE INPUT#, WRITE#)
   - Node.js: Uses fs module for real file operations
-  - Browser: Uses localStorage as virtual filesystem</p>
+  - Browser: Uses localStorage as virtual filesystem
+- File position functions (EOF, LOF, LOC)</p>
 <p>This document tracks what's <strong>not yet implemented</strong> in the JavaScript backend.</p>
 <hr />
 <h2 id="implemented-core-features">✅ IMPLEMENTED (Core Features)<a class="headerlink" href="#implemented-core-features" title="Permanent link">&para;</a></h2>
@@ -1526,6 +1555,7 @@ Phase 5-6: Enhanced features ✓
 <li>✓ PRINT USING (formatted output - simplified, basic format specifiers)</li>
 <li>✓ PRINT# (write to file)</li>
 <li>✓ WRITE (CSV-formatted output with automatic quoting)</li>
+<li>✓ WRITE# (CSV-formatted output to file)</li>
 <li>✓ LPRINT (print to line printer / console.log)</li>
 <li>✓ READ / DATA / RESTORE</li>
 <li>✓ INPUT (browser: prompt, Node.js: readline - note: async in Node.js)</li>
@@ -1533,6 +1563,12 @@ Phase 5-6: Enhanced features ✓
 <li>✓ LINE INPUT (reads entire line without parsing, browser &amp; Node.js)</li>
 <li>✓ LINE INPUT# (read line from file)</li>
 <li>✓ OPEN / CLOSE / RESET (file operations - Node.js: fs, Browser: localStorage)</li>
+</ul>
+<h3 id="file-functions">File Functions<a class="headerlink" href="#file-functions" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ EOF() - Test for end of file</li>
+<li>✓ LOF() - Length of file in bytes</li>
+<li>✓ LOC() - Current position in file</li>
 </ul>
 <h3 id="variables-arrays">Variables &amp; Arrays<a class="headerlink" href="#variables-arrays" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1569,7 +1605,6 @@ Phase 5-6: Enhanced features ✓
 <h2 id="not-implemented">❌ NOT IMPLEMENTED<a class="headerlink" href="#not-implemented" title="Permanent link">&para;</a></h2>
 <h3 id="file-operations-advanced">File Operations (Advanced)<a class="headerlink" href="#file-operations-advanced" title="Permanent link">&para;</a></h3>
 <ul>
-<li>WRITE # - Write to file (CSV format)</li>
 <li>KILL - Delete file</li>
 <li>NAME - Rename file</li>
 <li>FILES - List directory</li>
@@ -1577,49 +1612,40 @@ Phase 5-6: Enhanced features ✓
 <li>GET - Read random file record</li>
 <li>PUT - Write random file record</li>
 <li>LSET / RSET - Format string for random files</li>
-<li>LOF - Length of file (would be function)</li>
-<li>EOF - End of file test (would be function)</li>
-<li>LOC - Current file position (would be function)</li>
 </ul>
 <h3 id="program-control">Program Control<a class="headerlink" href="#program-control" title="Permanent link">&para;</a></h3>
 <ul>
-<li>STOP - Halt execution (like END but different)</li>
-<li>CONT - Continue after STOP (interactive only)</li>
 <li>CHAIN - Load and run another program</li>
-<li>RUN - Start program execution</li>
-<li>LOAD - Load program (interactive)</li>
-<li>SAVE - Save program (interactive)</li>
-<li>MERGE - Merge another program</li>
-<li>NEW - Clear program (interactive)</li>
-<li>DELETE - Delete line range (interactive)</li>
-<li>RENUM - Renumber lines (interactive)</li>
 </ul>
-<h3 id="systemhardware">System/Hardware<a class="headerlink" href="#systemhardware" title="Permanent link">&para;</a></h3>
+<h3 id="systemhardware-not-applicable-to-compiler">System/Hardware (Not Applicable to Compiler)<a class="headerlink" href="#systemhardware-not-applicable-to-compiler" title="Permanent link">&para;</a></h3>
+<p>These were in MBASIC 5.21 but only work with real hardware:
+- POKE - Write to memory address
+- PEEK - Read memory
+- OUT - Output to I/O port
+- INP - Read I/O port
+- WAIT - Wait for I/O port condition
+- CALL - Call machine language subroutine
+- DEF SEG - Set memory segment
+- USR() - Call machine code</p>
+<h3 id="system-other">System (Other)<a class="headerlink" href="#system-other" title="Permanent link">&para;</a></h3>
 <ul>
-<li>POKE - Write to memory address</li>
-<li>OUT - Output to I/O port</li>
-<li>WAIT - Wait for I/O port condition</li>
 <li>SYSTEM - Exit to operating system</li>
-<li>CLS - Clear screen (could implement in browser)</li>
-<li>LOCATE - Position cursor (could implement)</li>
-<li>COLOR - Set colors (could implement)</li>
 <li>WIDTH - Set screen/printer width</li>
 </ul>
 <h3 id="arrays">Arrays<a class="headerlink" href="#arrays" title="Permanent link">&para;</a></h3>
 <ul>
 <li>OPTION BASE - Set array base 0/1 (handled in semantic analysis)</li>
-<li>COMMON - Share variables between chained programs</li>
 </ul>
 <h3 id="other_1">Other<a class="headerlink" href="#other_1" title="Permanent link">&para;</a></h3>
 <ul>
-<li>RANDOMIZE - Seed random generator (could implement)</li>
-<li>CALL - Call machine language subroutine</li>
-<li>DEF SEG - Set memory segment</li>
 <li>DEF type statements - Type declarations (handled in semantic analysis)</li>
-<li>TRON / TROFF - Trace on/off (debugging)</li>
-<li>CLEAR - Set memory limits</li>
-<li>LIMITS - Show memory limits</li>
-<li>STEP - Single-step execution (debugging)</li>
+</ul>
+<h3 id="not-in-mbasic-521">Not in MBASIC 5.21<a class="headerlink" href="#not-in-mbasic-521" title="Permanent link">&para;</a></h3>
+<ul>
+<li>COMMON - Share variables (planned for next version, never implemented)</li>
+<li>CLS - Clear screen (GW-BASIC/QuickBASIC feature)</li>
+<li>LOCATE - Position cursor (GW-BASIC/QuickBASIC feature)</li>
+<li>COLOR - Set colors (GW-BASIC/QuickBASIC feature)</li>
 </ul>
 <h3 id="interactiveeditor-commands-not-relevant">Interactive/Editor Commands (Not Relevant)<a class="headerlink" href="#interactiveeditor-commands-not-relevant" title="Permanent link">&para;</a></h3>
 <ul>

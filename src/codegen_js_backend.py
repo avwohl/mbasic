@@ -909,6 +909,38 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '}')
             code.append('')
 
+            # File position functions
+            code.append(self.indent() + 'function _eof(filenum) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// EOF() - Test for end of file')
+            code.append(self.indent() + 'const file = _files[filenum];')
+            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
+            code.append(self.indent() + 'if (file.mode !== "I") _error("File #" + filenum + " not open for input");')
+            code.append(self.indent() + 'return file.pos >= file.content.length ? -1 : 0;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+            code.append(self.indent() + 'function _lof(filenum) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// LOF() - Length of file in bytes')
+            code.append(self.indent() + 'const file = _files[filenum];')
+            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
+            code.append(self.indent() + 'return file.content.length;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+            code.append(self.indent() + 'function _loc(filenum) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// LOC() - Current position in file')
+            code.append(self.indent() + 'const file = _files[filenum];')
+            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
+            code.append(self.indent() + 'return file.pos || 0;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
         # GOSUB/RETURN
         if self.uses_gosub:
             code.append(self.indent() + '// GOSUB/RETURN stack')
@@ -1412,6 +1444,10 @@ class JavaScriptBackend(CodeGenBackend):
             # Error handling
             'erl': '_erl',
             'err': '_err',
+            # File I/O functions
+            'eof': '_eof',
+            'lof': '_lof',
+            'loc': '_loc',
         }
 
         js_func = js_func_map.get(func_name, func_name)
@@ -1703,16 +1739,18 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate WRITE statement - CSV formatted output"""
         code = []
 
-        # Skip file I/O for now
+        # Determine output function
         if stmt.file_number:
-            code.append(self.indent() + '// WRITE #file not supported')
-            return code
+            filenum_expr = self._generate_expression(stmt.file_number)
+            print_func = f'_fprint({filenum_expr}, '
+        else:
+            print_func = '_print('
 
         # Build CSV output from expressions
         # WRITE outputs: strings quoted, numbers unquoted, comma separated
         if not stmt.expressions:
             # Empty WRITE - just newline
-            code.append(self.indent() + '_print("");')
+            code.append(self.indent() + f'{print_func}"");')
         else:
             parts = []
             for expr in stmt.expressions:
@@ -1722,7 +1760,7 @@ class JavaScriptBackend(CodeGenBackend):
 
             # Join with commas and print
             output = ' + "," + '.join(parts)
-            code.append(self.indent() + f'_print({output});')
+            code.append(self.indent() + f'{print_func}{output});')
 
         return code
 

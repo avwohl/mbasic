@@ -25,39 +25,40 @@ _All medium-priority features have been implemented!_ ✅
 These features are rarely used or not applicable to JavaScript:
 
 #### File I/O - Advanced Features (Low Priority)
-- **WRITE #** - Write to file (CSV format)
 - **KILL** - Delete file
 - **NAME** - Rename file
 - **FILES** - List directory
 - **FIELD / GET / PUT / LSET / RSET** - Random file access
-- **LOF / EOF / LOC** - File position functions
 
 **Notes**:
-- Basic file I/O is implemented (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#)
+- All basic file I/O is implemented (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#)
+- All file position functions implemented (EOF, LOF, LOC)
 - Node.js uses fs module, Browser uses localStorage
 - Advanced features rarely needed
 
-#### Program Control (Low Priority - mostly interactive)
+#### Program Control (Low Priority)
 - **CHAIN** - Load and run another program
-- **COMMON** - Share variables between chained programs
 
 **Notes**:
 - Could implement by loading another compiled JS file
 - Rarely used in modern context
 - Complexity: Medium
 
-#### Hardware/System Access (NOT APPLICABLE)
-These cannot be implemented in JavaScript:
-- **POKE / PEEK** - Memory access
+---
+
+### ⚪ Not Applicable to Compiler (Hardware/System Features)
+
+These were in MBASIC 5.21 but only work with real hardware - not applicable to JavaScript:
+- **POKE / PEEK** - Direct memory access
 - **OUT / INP** - I/O port access
 - **WAIT** - Wait for I/O port condition
 - **CALL** - Machine language subroutine
 - **DEF SEG** - Set memory segment
 - **USR()** - Call machine code
 
-**Notes**: Not applicable to JavaScript environment
+### ⚪ Not in MBASIC 5.21
 
----
+- **COMMON** - Share variables between programs (planned for next version, never implemented)
 
 ### ⚪ Not Needed (Interactive/Editor Commands)
 
@@ -76,11 +77,13 @@ These are editor commands, not compiler features:
 ### ✅ What's IMPLEMENTED (Complete Feature Set)
 **Control Flow**: GOTO, ON GOTO, GOSUB, ON GOSUB, RETURN, FOR/NEXT, WHILE/WEND, IF/THEN/ELSE, END, STOP
 
-**I/O**: PRINT, PRINT#, PRINT USING, INPUT, INPUT#, LINE INPUT, LINE INPUT#, WRITE, LPRINT, READ/DATA/RESTORE
+**I/O**: PRINT, PRINT#, PRINT USING, INPUT, INPUT#, LINE INPUT, LINE INPUT#, WRITE, WRITE#, LPRINT, READ/DATA/RESTORE
 
 **File Operations**: OPEN (modes: I, O, A), CLOSE, RESET
 - Node.js: Real filesystem using fs module
 - Browser: Virtual filesystem using localStorage
+
+**File Functions**: EOF(), LOF(), LOC()
 
 **Variables & Arrays**: LET, DIM, array access, SWAP, ERASE, MID$ assignment
 

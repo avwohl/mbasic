@@ -35,11 +35,13 @@ Bug Fixes (2025-11-13):
 New Features (2025-11-13):
 - LINE INPUT statement (reads entire line without parsing, browser & Node.js support)
 - WRITE statement (CSV-formatted output with automatic quoting)
+- WRITE# statement (CSV-formatted output to file)
 - LPRINT statement (print to line printer / console.log)
 - MID$ assignment (modify substring in place)
-- File I/O support (OPEN, CLOSE, RESET, PRINT#, INPUT#, LINE INPUT#)
+- File I/O support (OPEN, CLOSE, RESET, PRINT#, INPUT#, LINE INPUT#, WRITE#)
   - Node.js: Uses fs module for real file operations
   - Browser: Uses localStorage as virtual filesystem
+- File position functions (EOF, LOF, LOC)
 
 This document tracks what's **not yet implemented** in the JavaScript backend.
 
@@ -59,6 +61,7 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 - ✓ PRINT USING (formatted output - simplified, basic format specifiers)
 - ✓ PRINT# (write to file)
 - ✓ WRITE (CSV-formatted output with automatic quoting)
+- ✓ WRITE# (CSV-formatted output to file)
 - ✓ LPRINT (print to line printer / console.log)
 - ✓ READ / DATA / RESTORE
 - ✓ INPUT (browser: prompt, Node.js: readline - note: async in Node.js)
@@ -66,6 +69,11 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 - ✓ LINE INPUT (reads entire line without parsing, browser & Node.js)
 - ✓ LINE INPUT# (read line from file)
 - ✓ OPEN / CLOSE / RESET (file operations - Node.js: fs, Browser: localStorage)
+
+### File Functions
+- ✓ EOF() - Test for end of file
+- ✓ LOF() - Length of file in bytes
+- ✓ LOC() - Current position in file
 
 ### Variables & Arrays
 - ✓ LET (assignment)
@@ -102,7 +110,6 @@ _None currently - all previously stubbed features have been implemented_
 ## ❌ NOT IMPLEMENTED
 
 ### File Operations (Advanced)
-- WRITE # - Write to file (CSV format)
 - KILL - Delete file
 - NAME - Rename file
 - FILES - List directory
@@ -110,46 +117,36 @@ _None currently - all previously stubbed features have been implemented_
 - GET - Read random file record
 - PUT - Write random file record
 - LSET / RSET - Format string for random files
-- LOF - Length of file (would be function)
-- EOF - End of file test (would be function)
-- LOC - Current file position (would be function)
 
 ### Program Control
-- STOP - Halt execution (like END but different)
-- CONT - Continue after STOP (interactive only)
 - CHAIN - Load and run another program
-- RUN - Start program execution
-- LOAD - Load program (interactive)
-- SAVE - Save program (interactive)
-- MERGE - Merge another program
-- NEW - Clear program (interactive)
-- DELETE - Delete line range (interactive)
-- RENUM - Renumber lines (interactive)
 
-
-### System/Hardware
+### System/Hardware (Not Applicable to Compiler)
+These were in MBASIC 5.21 but only work with real hardware:
 - POKE - Write to memory address
+- PEEK - Read memory
 - OUT - Output to I/O port
+- INP - Read I/O port
 - WAIT - Wait for I/O port condition
+- CALL - Call machine language subroutine
+- DEF SEG - Set memory segment
+- USR() - Call machine code
+
+### System (Other)
 - SYSTEM - Exit to operating system
-- CLS - Clear screen (could implement in browser)
-- LOCATE - Position cursor (could implement)
-- COLOR - Set colors (could implement)
 - WIDTH - Set screen/printer width
 
 ### Arrays
 - OPTION BASE - Set array base 0/1 (handled in semantic analysis)
-- COMMON - Share variables between chained programs
 
 ### Other
-- RANDOMIZE - Seed random generator (could implement)
-- CALL - Call machine language subroutine
-- DEF SEG - Set memory segment
 - DEF type statements - Type declarations (handled in semantic analysis)
-- TRON / TROFF - Trace on/off (debugging)
-- CLEAR - Set memory limits
-- LIMITS - Show memory limits
-- STEP - Single-step execution (debugging)
+
+### Not in MBASIC 5.21
+- COMMON - Share variables (planned for next version, never implemented)
+- CLS - Clear screen (GW-BASIC/QuickBASIC feature)
+- LOCATE - Position cursor (GW-BASIC/QuickBASIC feature)
+- COLOR - Set colors (GW-BASIC/QuickBASIC feature)
 
 ### Interactive/Editor Commands (Not Relevant)
 - LIST - List program

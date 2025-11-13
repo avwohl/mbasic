@@ -1229,6 +1229,24 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#not-applicable-to-compiler-hardwaresystem-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⚪ Not Applicable to Compiler (Hardware/System Features)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-in-mbasic-521" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⚪ Not in MBASIC 5.21
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#not-needed-interactiveeditor-commands" class="md-nav__link">
     <span class="md-ellipsis">
       ⚪ Not Needed (Interactive/Editor Commands)
@@ -1325,36 +1343,37 @@
 <p>These features are rarely used or not applicable to JavaScript:</p>
 <h4 id="file-io-advanced-features-low-priority">File I/O - Advanced Features (Low Priority)<a class="headerlink" href="#file-io-advanced-features-low-priority" title="Permanent link">&para;</a></h4>
 <ul>
-<li><strong>WRITE #</strong> - Write to file (CSV format)</li>
 <li><strong>KILL</strong> - Delete file</li>
 <li><strong>NAME</strong> - Rename file</li>
 <li><strong>FILES</strong> - List directory</li>
 <li><strong>FIELD / GET / PUT / LSET / RSET</strong> - Random file access</li>
-<li><strong>LOF / EOF / LOC</strong> - File position functions</li>
 </ul>
 <p><strong>Notes</strong>:
-- Basic file I/O is implemented (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#)
+- All basic file I/O is implemented (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#)
+- All file position functions implemented (EOF, LOF, LOC)
 - Node.js uses fs module, Browser uses localStorage
 - Advanced features rarely needed</p>
-<h4 id="program-control-low-priority-mostly-interactive">Program Control (Low Priority - mostly interactive)<a class="headerlink" href="#program-control-low-priority-mostly-interactive" title="Permanent link">&para;</a></h4>
+<h4 id="program-control-low-priority">Program Control (Low Priority)<a class="headerlink" href="#program-control-low-priority" title="Permanent link">&para;</a></h4>
 <ul>
 <li><strong>CHAIN</strong> - Load and run another program</li>
-<li><strong>COMMON</strong> - Share variables between chained programs</li>
 </ul>
 <p><strong>Notes</strong>:
 - Could implement by loading another compiled JS file
 - Rarely used in modern context
 - Complexity: Medium</p>
-<h4 id="hardwaresystem-access-not-applicable">Hardware/System Access (NOT APPLICABLE)<a class="headerlink" href="#hardwaresystem-access-not-applicable" title="Permanent link">&para;</a></h4>
-<p>These cannot be implemented in JavaScript:
-- <strong>POKE / PEEK</strong> - Memory access
+<hr />
+<h3 id="not-applicable-to-compiler-hardwaresystem-features">⚪ Not Applicable to Compiler (Hardware/System Features)<a class="headerlink" href="#not-applicable-to-compiler-hardwaresystem-features" title="Permanent link">&para;</a></h3>
+<p>These were in MBASIC 5.21 but only work with real hardware - not applicable to JavaScript:
+- <strong>POKE / PEEK</strong> - Direct memory access
 - <strong>OUT / INP</strong> - I/O port access
 - <strong>WAIT</strong> - Wait for I/O port condition
 - <strong>CALL</strong> - Machine language subroutine
 - <strong>DEF SEG</strong> - Set memory segment
 - <strong>USR()</strong> - Call machine code</p>
-<p><strong>Notes</strong>: Not applicable to JavaScript environment</p>
-<hr />
+<h3 id="not-in-mbasic-521">⚪ Not in MBASIC 5.21<a class="headerlink" href="#not-in-mbasic-521" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>COMMON</strong> - Share variables between programs (planned for next version, never implemented)</li>
+</ul>
 <h3 id="not-needed-interactiveeditor-commands">⚪ Not Needed (Interactive/Editor Commands)<a class="headerlink" href="#not-needed-interactiveeditor-commands" title="Permanent link">&para;</a></h3>
 <p>These are editor commands, not compiler features:
 - LIST, NEW, RUN, LOAD, SAVE, DELETE, RENUM
@@ -1366,10 +1385,11 @@
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <h3 id="whats-implemented-complete-feature-set">✅ What's IMPLEMENTED (Complete Feature Set)<a class="headerlink" href="#whats-implemented-complete-feature-set" title="Permanent link">&para;</a></h3>
 <p><strong>Control Flow</strong>: GOTO, ON GOTO, GOSUB, ON GOSUB, RETURN, FOR/NEXT, WHILE/WEND, IF/THEN/ELSE, END, STOP</p>
-<p><strong>I/O</strong>: PRINT, PRINT#, PRINT USING, INPUT, INPUT#, LINE INPUT, LINE INPUT#, WRITE, LPRINT, READ/DATA/RESTORE</p>
+<p><strong>I/O</strong>: PRINT, PRINT#, PRINT USING, INPUT, INPUT#, LINE INPUT, LINE INPUT#, WRITE, WRITE#, LPRINT, READ/DATA/RESTORE</p>
 <p><strong>File Operations</strong>: OPEN (modes: I, O, A), CLOSE, RESET
 - Node.js: Real filesystem using fs module
 - Browser: Virtual filesystem using localStorage</p>
+<p><strong>File Functions</strong>: EOF(), LOF(), LOC()</p>
 <p><strong>Variables &amp; Arrays</strong>: LET, DIM, array access, SWAP, ERASE, MID$ assignment</p>
 <p><strong>Functions</strong>: DEF FN, all math functions (ABS, INT, SQR, SIN, COS, TAN, ATN, LOG, EXP, RND, FIX, SGN, CINT, CSNG, CDBL), all string functions (LEFT<span class="arithmatex"><span class="MathJax_Preview">, RIGHT</span><script type="math/tex">, RIGHT</script></span>, MID<span class="arithmatex"><span class="MathJax_Preview">, LEN, CHR</span><script type="math/tex">, LEN, CHR</script></span>, ASC, STR<span class="arithmatex"><span class="MathJax_Preview">, VAL, INSTR, SPACE</span><script type="math/tex">, VAL, INSTR, SPACE</script></span>, STRING<span class="arithmatex"><span class="MathJax_Preview">, HEX</span><script type="math/tex">, HEX</script></span>, OCT$, POS), print formatting (TAB, SPC)</p>
 <p><strong>Error Handling</strong>: ON ERROR GOTO/GOSUB, RESUME/RESUME NEXT/RESUME line, ERROR, ERL(), ERR()</p>
