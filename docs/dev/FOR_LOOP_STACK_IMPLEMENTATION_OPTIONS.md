@@ -183,7 +183,86 @@ def pop_for_loop(self, var_name):
 2. Move FOR entries from unified stack to separate stack
 3. Keep GOSUB and WHILE in unified stack (they may still need nesting detection)
 4. Update `push_for_loop` to replace existing entry with same variable
-5. Update debugger/inspection code to show both stacks
+5. Update `get_execution_stack()` to merge both stacks for UI display
+6. Update serialization (nicegui_backend.py) to save/restore both stacks
+
+## UI/Debugger Considerations
+
+### Current Stack Display
+
+Three UIs display the execution stack:
+- **Curses UI** (`src/ui/curses_ui.py:3371`)
+- **TK UI** (`src/ui/tk_ui.py:1690`)
+- **Web UI** (`src/ui/web/nicegui_backend.py:339`)
+
+All call `runtime.get_execution_stack()` which returns a unified view.
+
+### Display Format
+
+Current display shows interleaved control flow:
+```
+GOSUB from line 100.0
+  FOR I = 1 TO 10 (line 120.0)
+    GOSUB from line 130.2
+      WHILE (line 200.0)
+```
+
+Indentation shows nesting level, making control flow structure visible.
+
+### Implementation for Separate Stacks
+
+**Key insight**: UIs don't need to change if we maintain the unified view!
+
+Modify `get_execution_stack()` to **merge** both stacks:
+
+```python
+def get_execution_stack(self):
+    """Export unified execution stack for UI display.
+
+    Merges GOSUB/WHILE stack with FOR loop stack, maintaining
+    the appearance of unified nesting for debugging.
+    """
+    # Option A: Show FOR loops separately at bottom
+    result = self.execution_stack.copy()  # GOSUB/WHILE
+    result.extend(self.for_loop_stack)     # Add FOR loops
+    return result
+
+    # Option B: Show active FOR loops only
+    result = self.execution_stack.copy()
+    # Add only non-abandoned FOR loops
+    for entry in self.for_loop_stack:
+        if entry and 'var' in entry:
+            result.append(entry)
+    return result
+```
+
+**Trade-off**: We lose true interleaved ordering (can't tell if FOR came before or after a GOSUB), but:
+1. Real MBASIC doesn't enforce FOR/GOSUB nesting anyway
+2. Each section (GOSUB/WHILE vs FOR) still shows its own ordering
+3. Debugger display remains useful
+
+### Serialization Updates
+
+**Web UI serialization** (`src/ui/web/nicegui_backend.py:3692-3693`):
+
+```python
+# Current (lines 3692-3693)
+'execution_stack': self.runtime.execution_stack,
+'for_loop_vars': self.runtime.for_loop_vars,
+
+# After split (add for_loop_stack)
+'execution_stack': self.runtime.execution_stack,      # GOSUB/WHILE only
+'for_loop_stack': self.runtime.for_loop_stack,        # FOR only (new)
+'for_loop_vars': self.runtime.for_loop_vars,
+```
+
+**Backwards compatibility**: Old saved sessions won't have `for_loop_stack`:
+```python
+# Restore (lines 3731-3732)
+self.runtime.execution_stack = state['execution_stack']
+self.runtime.for_loop_stack = state.get('for_loop_stack', [])  # Default to empty
+self.runtime.for_loop_vars = state['for_loop_vars']
+```
 
 **Migration path**:
 - Phase 1: Add separate FOR stack, test all existing programs
