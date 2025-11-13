@@ -1324,23 +1324,7 @@
 <li><strong>MID$ Assignment</strong> - Modify substring in place</li>
 <li>Example: <code>MID$(A$, 3, 2) = "XX"</code></li>
 <li>Status: Not commonly used in most programs</li>
-<li>
-<p>Complexity: Medium</p>
-</li>
-<li>
-<p><strong>WRITE Statement</strong> - CSV-formatted output</p>
-</li>
-<li>Example: <code>WRITE A, B$, C</code></li>
-<li>Status: PRINT works for most cases</li>
-<li>
-<p>Complexity: Low</p>
-</li>
-<li>
-<p><strong>LPRINT</strong> - Print to line printer</p>
-</li>
-<li>Could map to console.log or special output</li>
-<li>Status: PRINT works for screen output</li>
-<li>Complexity: Low</li>
+<li>Complexity: Medium</li>
 </ol>
 <hr />
 <h3 id="low-priority-specializedadvanced">🔵 LOW Priority (Specialized/Advanced)<a class="headerlink" href="#low-priority-specializedadvanced" title="Permanent link">&para;</a></h3>
@@ -1393,7 +1377,7 @@
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <h3 id="whats-implemented-complete-feature-set">✅ What's IMPLEMENTED (Complete Feature Set)<a class="headerlink" href="#whats-implemented-complete-feature-set" title="Permanent link">&para;</a></h3>
 <p><strong>Control Flow</strong>: GOTO, ON GOTO, GOSUB, ON GOSUB, RETURN, FOR/NEXT, WHILE/WEND, IF/THEN/ELSE, END, STOP</p>
-<p><strong>I/O</strong>: PRINT, PRINT USING, INPUT, READ/DATA/RESTORE</p>
+<p><strong>I/O</strong>: PRINT, PRINT USING, INPUT, LINE INPUT, WRITE, LPRINT, READ/DATA/RESTORE</p>
 <p><strong>Variables &amp; Arrays</strong>: LET, DIM, array access, SWAP, ERASE</p>
 <p><strong>Functions</strong>: DEF FN, all math functions (ABS, INT, SQR, SIN, COS, TAN, ATN, LOG, EXP, RND, FIX, SGN, CINT, CSNG, CDBL), all string functions (LEFT<span class="arithmatex"><span class="MathJax_Preview">, RIGHT</span><script type="math/tex">, RIGHT</script></span>, MID<span class="arithmatex"><span class="MathJax_Preview">, LEN, CHR</span><script type="math/tex">, LEN, CHR</script></span>, ASC, STR<span class="arithmatex"><span class="MathJax_Preview">, VAL, INSTR, SPACE</span><script type="math/tex">, VAL, INSTR, SPACE</script></span>, STRING<span class="arithmatex"><span class="MathJax_Preview">, HEX</span><script type="math/tex">, HEX</script></span>, OCT$, POS), print formatting (TAB, SPC)</p>
 <p><strong>Error Handling</strong>: ON ERROR GOTO/GOSUB, RESUME/RESUME NEXT/RESUME line, ERROR, ERL(), ERR()</p>

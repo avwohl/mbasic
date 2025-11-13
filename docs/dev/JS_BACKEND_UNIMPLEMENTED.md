@@ -34,6 +34,8 @@ Bug Fixes (2025-11-13):
 
 New Features (2025-11-13):
 - LINE INPUT statement (reads entire line without parsing, browser & Node.js support)
+- WRITE statement (CSV-formatted output with automatic quoting)
+- LPRINT statement (print to line printer / console.log)
 
 This document tracks what's **not yet implemented** in the JavaScript backend.
 
@@ -51,6 +53,8 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 ### I/O
 - ✓ PRINT (with separators)
 - ✓ PRINT USING (formatted output - simplified, basic format specifiers)
+- ✓ WRITE (CSV-formatted output with automatic quoting)
+- ✓ LPRINT (print to line printer / console.log)
 - ✓ READ / DATA / RESTORE
 - ✓ INPUT (browser: prompt, Node.js: readline - note: async in Node.js)
 - ✓ LINE INPUT (reads entire line without parsing, browser & Node.js)
@@ -92,8 +96,6 @@ _None currently - all previously stubbed features have been implemented_
 ### I/O Statements
 - INPUT # - Read from file
 - PRINT # - Write to file
-- LPRINT - Print to line printer (could map to console)
-- WRITE - CSV-formatted output
 - WRITE # - Write to file
 
 ### File Operations

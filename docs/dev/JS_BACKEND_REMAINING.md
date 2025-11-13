@@ -23,16 +23,6 @@ These features would be useful but are not critical for most programs:
    - Status: Not commonly used in most programs
    - Complexity: Medium
 
-2. **WRITE Statement** - CSV-formatted output
-   - Example: `WRITE A, B$, C`
-   - Status: PRINT works for most cases
-   - Complexity: Low
-
-3. **LPRINT** - Print to line printer
-   - Could map to console.log or special output
-   - Status: PRINT works for screen output
-   - Complexity: Low
-
 ---
 
 ### 🔵 LOW Priority (Specialized/Advanced)
@@ -96,7 +86,7 @@ These are editor commands, not compiler features:
 ### ✅ What's IMPLEMENTED (Complete Feature Set)
 **Control Flow**: GOTO, ON GOTO, GOSUB, ON GOSUB, RETURN, FOR/NEXT, WHILE/WEND, IF/THEN/ELSE, END, STOP
 
-**I/O**: PRINT, PRINT USING, INPUT, READ/DATA/RESTORE
+**I/O**: PRINT, PRINT USING, INPUT, LINE INPUT, WRITE, LPRINT, READ/DATA/RESTORE
 
 **Variables & Arrays**: LET, DIM, array access, SWAP, ERASE
 

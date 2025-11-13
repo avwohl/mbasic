@@ -1520,7 +1520,9 @@ Phase 5-6: Enhanced features ✓
 - Fixed UnaryOpNode operator conversion (TokenType to string)
 - Fixed semantic analyzer crash on string comparisons in IF conditions</p>
 <p>New Features (2025-11-13):
-- LINE INPUT statement (reads entire line without parsing, browser &amp; Node.js support)</p>
+- LINE INPUT statement (reads entire line without parsing, browser &amp; Node.js support)
+- WRITE statement (CSV-formatted output with automatic quoting)
+- LPRINT statement (print to line printer / console.log)</p>
 <p>This document tracks what's <strong>not yet implemented</strong> in the JavaScript backend.</p>
 <hr />
 <h2 id="implemented-core-features">✅ IMPLEMENTED (Core Features)<a class="headerlink" href="#implemented-core-features" title="Permanent link">&para;</a></h2>
@@ -1536,6 +1538,8 @@ Phase 5-6: Enhanced features ✓
 <ul>
 <li>✓ PRINT (with separators)</li>
 <li>✓ PRINT USING (formatted output - simplified, basic format specifiers)</li>
+<li>✓ WRITE (CSV-formatted output with automatic quoting)</li>
+<li>✓ LPRINT (print to line printer / console.log)</li>
 <li>✓ READ / DATA / RESTORE</li>
 <li>✓ INPUT (browser: prompt, Node.js: readline - note: async in Node.js)</li>
 <li>✓ LINE INPUT (reads entire line without parsing, browser &amp; Node.js)</li>
@@ -1577,8 +1581,6 @@ Phase 5-6: Enhanced features ✓
 <ul>
 <li>INPUT # - Read from file</li>
 <li>PRINT # - Write to file</li>
-<li>LPRINT - Print to line printer (could map to console)</li>
-<li>WRITE - CSV-formatted output</li>
 <li>WRITE # - Write to file</li>
 </ul>
 <h3 id="file-operations">File Operations<a class="headerlink" href="#file-operations" title="Permanent link">&para;</a></h3>

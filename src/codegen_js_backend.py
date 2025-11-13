@@ -38,6 +38,8 @@ class JavaScriptBackend(CodeGenBackend):
         # Track what features are used
         self.uses_input = False
         self.uses_line_input = False
+        self.uses_write = False
+        self.uses_lprint = False
         self.uses_gosub = False
         self.uses_data = False
         self.uses_random = False
@@ -271,6 +273,10 @@ class JavaScriptBackend(CodeGenBackend):
                     self.uses_input = True
                 elif isinstance(stmt, LineInputStatementNode):
                     self.uses_line_input = True
+                elif isinstance(stmt, WriteStatementNode):
+                    self.uses_write = True
+                elif isinstance(stmt, LprintStatementNode):
+                    self.uses_lprint = True
                 elif isinstance(stmt, GosubStatementNode):
                     self.uses_gosub = True
                 elif isinstance(stmt, ReadStatementNode):
@@ -638,6 +644,56 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '}')
             code.append('')
 
+        # WRITE function
+        if self.uses_write:
+            code.append(self.indent() + '// WRITE function - format values for CSV output')
+            code.append(self.indent() + 'function _write_format(value) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Strings are quoted, numbers are unquoted')
+            code.append(self.indent() + 'if (typeof value === "string") {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Quote strings and escape internal quotes')
+            code.append(self.indent() + 'return \'"\' + String(value).replace(/"/g, \'\\\\"\') + \'"\';')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Numbers are unquoted')
+            code.append(self.indent() + 'return String(value);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+        # LPRINT function
+        if self.uses_lprint:
+            code.append(self.indent() + '// LPRINT function - print to line printer (console.log)')
+            code.append(self.indent() + 'function _lprint(str, newline = true) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const s = String(str);')
+            code.append(self.indent() + 'if (newline) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'console.log(s);')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Node.js and modern browsers support this')
+            code.append(self.indent() + 'if (typeof process !== "undefined" && process.stdout) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'process.stdout.write(s);')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Browser fallback - no good way to avoid newline')
+            code.append(self.indent() + 'console.log(s);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
         # GOSUB/RETURN
         if self.uses_gosub:
             code.append(self.indent() + '// GOSUB/RETURN stack')
@@ -916,6 +972,10 @@ class JavaScriptBackend(CodeGenBackend):
             code.extend(self._generate_input(stmt))
         elif isinstance(stmt, LineInputStatementNode):
             code.extend(self._generate_line_input(stmt))
+        elif isinstance(stmt, WriteStatementNode):
+            code.extend(self._generate_write(stmt))
+        elif isinstance(stmt, LprintStatementNode):
+            code.extend(self._generate_lprint(stmt))
         elif isinstance(stmt, ReadStatementNode):
             code.extend(self._generate_read(stmt))
         elif isinstance(stmt, RestoreStatementNode):
@@ -1385,6 +1445,68 @@ class JavaScriptBackend(CodeGenBackend):
         # LINE INPUT always reads into a string variable
         var_name = self._mangle_var_name(stmt.variable.name + (stmt.variable.type_suffix or ''))
         code.append(self.indent() + f'{var_name} = _line_input({prompt_expr});')
+
+        return code
+
+    def _generate_write(self, stmt: WriteStatementNode) -> List[str]:
+        """Generate WRITE statement - CSV formatted output"""
+        code = []
+
+        # Skip file I/O for now
+        if stmt.file_number:
+            code.append(self.indent() + '// WRITE #file not supported')
+            return code
+
+        # Build CSV output from expressions
+        # WRITE outputs: strings quoted, numbers unquoted, comma separated
+        if not stmt.expressions:
+            # Empty WRITE - just newline
+            code.append(self.indent() + '_print("");')
+        else:
+            parts = []
+            for expr in stmt.expressions:
+                expr_code = self._generate_expression(expr)
+                # Wrap expression in _write_format() to handle quoting
+                parts.append(f'_write_format({expr_code})')
+
+            # Join with commas and print
+            output = ' + "," + '.join(parts)
+            code.append(self.indent() + f'_print({output});')
+
+        return code
+
+    def _generate_lprint(self, stmt: LprintStatementNode) -> List[str]:
+        """Generate LPRINT statement - print to line printer (console.log)"""
+        code = []
+
+        # Skip file I/O for now
+        if stmt.file_number:
+            code.append(self.indent() + '// LPRINT #file not supported')
+            return code
+
+        # LPRINT is like PRINT but outputs to console.log instead of output div
+        if not stmt.expressions:
+            # Empty LPRINT - just newline
+            code.append(self.indent() + 'console.log("");')
+        else:
+            for i, expr in enumerate(stmt.expressions):
+                is_last = (i == len(stmt.expressions) - 1)
+                separator = stmt.separators[i] if i < len(stmt.separators) else None
+
+                expr_code = self._generate_expression(expr)
+
+                # Determine if we should add a newline
+                # Newline if last item and no separator, or separator is None
+                newline = 'true' if (is_last and separator is None) else 'false'
+
+                code.append(self.indent() + f'_lprint({expr_code}, {newline});')
+
+                # Handle separator (comma for tab, semicolon for no space)
+                if separator == ',':
+                    code.append(self.indent() + '_lprint("\\t", false);')
+                elif separator == ';':
+                    # Semicolon means no space - already handled
+                    pass
 
         return code
 
