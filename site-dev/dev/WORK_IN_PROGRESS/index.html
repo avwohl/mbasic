@@ -1265,6 +1265,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#phase-5-enhanced-features-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 5: Enhanced Features (Complete)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       Next Steps
@@ -1353,7 +1362,7 @@
 <h2 id="task">Task<a class="headerlink" href="#task" title="Permanent link">&para;</a></h2>
 <p>Design and implement JavaScript compiler backend</p>
 <h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
-<p>Phase 1-4: Implementation - Complete</p>
+<p>Phase 1-5: Implementation - Complete</p>
 <h2 id="branch">Branch<a class="headerlink" href="#branch" title="Permanent link">&para;</a></h2>
 <p>js-backend</p>
 <h2 id="goals">Goals<a class="headerlink" href="#goals" title="Permanent link">&para;</a></h2>
@@ -1397,13 +1406,32 @@ Generated code should run in:
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implemented HTML wrapper generation</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Tested with hello world program - successful compilation!</li>
 </ul>
+<h3 id="phase-5-enhanced-features-complete">Phase 5: Enhanced Features (Complete)<a class="headerlink" href="#phase-5-enhanced-features-complete" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implemented INPUT statement (browser: prompt, Node.js: readline)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implemented RANDOMIZE statement (with and without seed)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implemented STOP statement</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implemented SWAP statement</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implemented DEF FN / FN calls</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implemented TAB() and SPC() functions</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implemented INSTR() function</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implemented SPACE<span class="arithmatex"><span class="MathJax_Preview">() and STRING</span><script type="math/tex">() and STRING</script></span>() functions</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implemented HEX<span class="arithmatex"><span class="MathJax_Preview">(), OCT</span><script type="math/tex">(), OCT</script></span>(), POS() functions</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implemented FIX(), SGN(), CINT(), CSNG(), CDBL() functions</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Fixed GOSUB return address calculation</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Fixed FOR loop skip when condition not met</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Fixed NEXT without variable</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Fixed DATA value collection (extract from AST nodes)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Fixed GOTO/GOSUB/IF attribute names (line_number vs target/then_line)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Tested compilation with multiple programs</li>
+</ul>
 <h3 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h3>
 <ol>
-<li>Test with more complex programs (loops, arrays, strings)</li>
+<li>Test with more complex programs</li>
 <li>Test Super Star Trek (ultimate test!)</li>
-<li>Fix any bugs discovered during testing</li>
-<li>Add INPUT support (currently stubbed out)</li>
 <li>Optimize generated code</li>
+<li>Consider implementing MID$ assignment</li>
+<li>Consider implementing PRINT USING</li>
 </ol>
 <h2 id="key-design-decisions">Key Design Decisions<a class="headerlink" href="#key-design-decisions" title="Permanent link">&para;</a></h2>
 <ol>

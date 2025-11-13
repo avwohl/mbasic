@@ -7,7 +7,7 @@
 Design and implement JavaScript compiler backend
 
 ## Status
-Phase 1-4: Implementation - Complete
+Phase 1-5: Implementation - Complete
 
 ## Branch
 js-backend
@@ -53,12 +53,30 @@ Generated code should run in:
 - [x] Implemented HTML wrapper generation
 - [x] Tested with hello world program - successful compilation!
 
+### Phase 5: Enhanced Features (Complete)
+- [x] Implemented INPUT statement (browser: prompt, Node.js: readline)
+- [x] Implemented RANDOMIZE statement (with and without seed)
+- [x] Implemented STOP statement
+- [x] Implemented SWAP statement
+- [x] Implemented DEF FN / FN calls
+- [x] Implemented TAB() and SPC() functions
+- [x] Implemented INSTR() function
+- [x] Implemented SPACE$() and STRING$() functions
+- [x] Implemented HEX$(), OCT$(), POS() functions
+- [x] Implemented FIX(), SGN(), CINT(), CSNG(), CDBL() functions
+- [x] Fixed GOSUB return address calculation
+- [x] Fixed FOR loop skip when condition not met
+- [x] Fixed NEXT without variable
+- [x] Fixed DATA value collection (extract from AST nodes)
+- [x] Fixed GOTO/GOSUB/IF attribute names (line_number vs target/then_line)
+- [x] Tested compilation with multiple programs
+
 ### Next Steps
-1. Test with more complex programs (loops, arrays, strings)
+1. Test with more complex programs
 2. Test Super Star Trek (ultimate test!)
-3. Fix any bugs discovered during testing
-4. Add INPUT support (currently stubbed out)
-5. Optimize generated code
+3. Optimize generated code
+4. Consider implementing MID$ assignment
+5. Consider implementing PRINT USING
 
 ## Key Design Decisions
 

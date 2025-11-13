@@ -48,6 +48,13 @@ class JavaScriptBackend(CodeGenBackend):
         # DEF FN functions
         self.def_fn_functions: List[DefFnStatementNode] = []
 
+        # FOR/NEXT matching - map FOR line to line after NEXT
+        self.for_to_after_next: Dict[int, Optional[int]] = {}
+
+        # Track which variable a NEXT statement should use (for NEXT without variable)
+        # Maps (line_number, stmt_index) -> var_name
+        self.next_var_map: Dict[tuple, str] = {}
+
     def get_file_extension(self) -> str:
         """JavaScript files use .js extension"""
         return '.js'
@@ -95,6 +102,7 @@ class JavaScriptBackend(CodeGenBackend):
         self._collect_data_values(program)
         self._collect_def_fn(program)
         self._analyze_features(program)
+        self._match_for_next(program)
 
         code = []
 
@@ -198,10 +206,18 @@ class JavaScriptBackend(CodeGenBackend):
             for stmt in line.statements:
                 if isinstance(stmt, DataStatementNode):
                     for value in stmt.values:
-                        if isinstance(value, str):
+                        # Extract actual values from AST nodes
+                        if isinstance(value, StringNode):
+                            self.data_values.append(value.value)
+                            self.data_types.append('string')
+                        elif isinstance(value, NumberNode):
+                            self.data_values.append(value.value)
+                            self.data_types.append('number')
+                        elif isinstance(value, str):
                             self.data_values.append(value)
                             self.data_types.append('string')
                         else:
+                            # For other types, try to get the value
                             self.data_values.append(value)
                             self.data_types.append('number')
 
@@ -211,6 +227,39 @@ class JavaScriptBackend(CodeGenBackend):
             for stmt in line.statements:
                 if isinstance(stmt, DefFnStatementNode):
                     self.def_fn_functions.append(stmt)
+
+    def _match_for_next(self, program: ProgramNode):
+        """Match FOR statements with their corresponding NEXT statements"""
+        for_stack = []  # Stack of (line_num, var_name) for nested FOR loops
+
+        for i, line in enumerate(program.lines):
+            for stmt_idx, stmt in enumerate(line.statements):
+                if isinstance(stmt, ForStatementNode):
+                    # Push FOR onto stack
+                    var_name = stmt.variable.name.lower()
+                    for_stack.append((line.line_number, var_name))
+                elif isinstance(stmt, NextStatementNode):
+                    # Match NEXT with FOR
+                    if stmt.variables:
+                        # NEXT with variable(s) - match specific FOR(s)
+                        for var in reversed(stmt.variables):
+                            var_name = var.name.lower()
+                            # Find matching FOR
+                            for j in range(len(for_stack) - 1, -1, -1):
+                                if for_stack[j][1] == var_name:
+                                    for_line = for_stack.pop(j)[0]
+                                    # Map FOR line to line after NEXT
+                                    next_line = self.next_line_map.get(line.line_number)
+                                    self.for_to_after_next[for_line] = next_line
+                                    break
+                    else:
+                        # NEXT without variable - match most recent FOR
+                        if for_stack:
+                            for_line, var_name = for_stack.pop()
+                            next_line = self.next_line_map.get(line.line_number)
+                            self.for_to_after_next[for_line] = next_line
+                            # Record which variable this NEXT should use
+                            self.next_var_map[(line.line_number, stmt_idx)] = var_name
 
     def _analyze_features(self, program: ProgramNode):
         """Analyze which features the program uses"""
@@ -309,6 +358,11 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'const _atn = Math.atan;')
         code.append(self.indent() + 'const _log = Math.log;')
         code.append(self.indent() + 'const _exp = Math.exp;')
+        code.append(self.indent() + 'function _sgn(n) { return n > 0 ? 1 : n < 0 ? -1 : 0; }')
+        code.append(self.indent() + 'function _fix(n) { return n >= 0 ? Math.floor(n) : Math.ceil(n); }')
+        code.append(self.indent() + 'function _cint(n) { return Math.round(n); }')
+        code.append(self.indent() + 'function _csng(n) { return n; }  // Single precision (already JS number)')
+        code.append(self.indent() + 'function _cdbl(n) { return n; }  // Double precision (already JS number)')
         code.append('')
 
         # RND function
@@ -348,7 +402,121 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'function _asc(str) { return String(str).charCodeAt(0) || 0; }')
         code.append(self.indent() + 'function _str(n) { return " " + n; }')
         code.append(self.indent() + 'function _val(str) { return parseFloat(String(str).trim()) || 0; }')
+        code.append(self.indent() + 'function _instr(start, str1, str2) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// INSTR with optional start position')
+        code.append(self.indent() + 'if (str2 === undefined) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// Two argument form: INSTR(str1, str2)')
+        code.append(self.indent() + 'str2 = str1;')
+        code.append(self.indent() + 'str1 = start;')
+        code.append(self.indent() + 'start = 1;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'const pos = String(str1).indexOf(String(str2), start - 1);')
+        code.append(self.indent() + 'return pos === -1 ? 0 : pos + 1;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _space(n) { return " ".repeat(n); }')
+        code.append(self.indent() + 'function _string(n, ch) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// STRING$(n, code) or STRING$(n, string)')
+        code.append(self.indent() + 'const char = typeof ch === "number" ? String.fromCharCode(ch) : String(ch).charAt(0);')
+        code.append(self.indent() + 'return char.repeat(n);')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _hex(n) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// HEX$(n) - convert to hexadecimal string')
+        code.append(self.indent() + 'return Math.floor(n).toString(16).toUpperCase();')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _oct(n) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// OCT$(n) - convert to octal string')
+        code.append(self.indent() + 'return Math.floor(n).toString(8);')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'let _print_pos = 0;  // Track print position for POS()')
+        code.append(self.indent() + 'function _pos() {')
+        self.indent_level += 1
+        code.append(self.indent() + '// POS(0) - current print position (1-based)')
+        code.append(self.indent() + '// Note: Simplified - would need to track actual cursor position')
+        code.append(self.indent() + 'return _print_pos + 1;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
         code.append('')
+
+        # Print formatting functions
+        code.append(self.indent() + '// Print formatting')
+        code.append(self.indent() + 'function _tab(n) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// TAB(n) - move to column n (1-based)')
+        code.append(self.indent() + '// Note: Simplified - just returns spaces')
+        code.append(self.indent() + 'return " ".repeat(Math.max(0, n - 1));')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _spc(n) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// SPC(n) - print n spaces')
+        code.append(self.indent() + 'return " ".repeat(Math.max(0, n));')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append('')
+
+        # INPUT functions
+        if self.uses_input:
+            code.append(self.indent() + '// INPUT functions')
+            code.append(self.indent() + 'function _input_str(prompt) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'if (typeof window !== "undefined") {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Browser')
+            code.append(self.indent() + 'const result = window.prompt(prompt);')
+            code.append(self.indent() + 'return result === null ? "" : result;')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else if (typeof process !== "undefined") {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Node.js - synchronous input')
+            code.append(self.indent() + 'process.stdout.write(prompt);')
+            code.append(self.indent() + 'const readline = require("readline");')
+            code.append(self.indent() + 'const rl = readline.createInterface({')
+            self.indent_level += 1
+            code.append(self.indent() + 'input: process.stdin,')
+            code.append(self.indent() + 'output: process.stdout')
+            self.indent_level -= 1
+            code.append(self.indent() + '});')
+            code.append(self.indent() + '// Note: This is async - for true sync input, use readline-sync package')
+            code.append(self.indent() + 'return new Promise((resolve) => {')
+            self.indent_level += 1
+            code.append(self.indent() + 'rl.question("", (answer) => {')
+            self.indent_level += 1
+            code.append(self.indent() + 'rl.close();')
+            code.append(self.indent() + 'resolve(answer);')
+            self.indent_level -= 1
+            code.append(self.indent() + '});')
+            self.indent_level -= 1
+            code.append(self.indent() + '});')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'return "";')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+            code.append(self.indent() + 'function _input_num(prompt) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const str = _input_str(prompt);')
+            code.append(self.indent() + 'return parseFloat(str) || 0;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+            code.append(self.indent() + 'function _input_int(prompt) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const str = _input_str(prompt);')
+            code.append(self.indent() + 'return parseInt(str) || 0;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
 
         # GOSUB/RETURN
         if self.uses_gosub:
@@ -408,6 +576,9 @@ class JavaScriptBackend(CodeGenBackend):
 
     def _escape_string(self, s: str) -> str:
         """Escape string for JavaScript"""
+        # Handle StringNode if passed by mistake
+        if isinstance(s, StringNode):
+            s = s.value
         return s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
 
     def _generate_variables(self) -> List[str]:
@@ -465,7 +636,24 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_def_fn_functions(self) -> List[str]:
         """Generate DEF FN functions"""
         code = []
-        # TODO: Implement DEF FN
+
+        for def_fn in self.def_fn_functions:
+            # Function name - DEF FNA becomes _fn_a
+            func_name = f'_fn_{def_fn.name.lower()}'
+
+            # Parameters
+            params = [self._mangle_var_name(p.name + (p.type_suffix or '')) for p in def_fn.parameters]
+            param_str = ', '.join(params)
+
+            # Function body
+            expr_code = self._generate_expression(def_fn.expression)
+
+            code.append(self.indent() + f'function {func_name}({param_str}) {{')
+            self.indent_level += 1
+            code.append(self.indent() + f'return {expr_code};')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+
         return code
 
     def _generate_line(self, line: LineNode) -> List[str]:
@@ -525,7 +713,13 @@ class JavaScriptBackend(CodeGenBackend):
         elif isinstance(stmt, OnGotoStatementNode):
             code.extend(self._generate_on_goto(stmt))
         elif isinstance(stmt, GosubStatementNode):
-            code.extend(self._generate_gosub(stmt, line_number))
+            # Calculate return address - same logic as FOR loop
+            is_last_stmt = (stmt_index == total_stmts - 1)
+            if is_last_stmt:
+                return_address = self.next_line_map.get(line_number, None)
+            else:
+                return_address = line_number  # Next statement on same line
+            code.extend(self._generate_gosub(stmt, return_address))
         elif isinstance(stmt, ReturnStatementNode):
             code.extend(self._generate_return(stmt))
         elif isinstance(stmt, ForStatementNode):
@@ -535,9 +729,9 @@ class JavaScriptBackend(CodeGenBackend):
                 return_line = self.next_line_map.get(line_number, None)
             else:
                 return_line = line_number  # Next statement on same line
-            code.extend(self._generate_for(stmt, return_line))
+            code.extend(self._generate_for(stmt, line_number, return_line))
         elif isinstance(stmt, NextStatementNode):
-            code.extend(self._generate_next(stmt))
+            code.extend(self._generate_next(stmt, line_number, stmt_index))
         elif isinstance(stmt, WhileStatementNode):
             code.extend(self._generate_while(stmt))
         elif isinstance(stmt, WendStatementNode):
@@ -550,6 +744,12 @@ class JavaScriptBackend(CodeGenBackend):
             code.extend(self._generate_read(stmt))
         elif isinstance(stmt, RestoreStatementNode):
             code.extend(self._generate_restore(stmt))
+        elif isinstance(stmt, RandomizeStatementNode):
+            code.extend(self._generate_randomize(stmt))
+        elif isinstance(stmt, StopStatementNode):
+            code.extend(self._generate_stop(stmt))
+        elif isinstance(stmt, SwapStatementNode):
+            code.extend(self._generate_swap(stmt))
         elif isinstance(stmt, DataStatementNode):
             # DATA statements are processed during initialization
             pass
@@ -672,8 +872,15 @@ class JavaScriptBackend(CodeGenBackend):
         func_name = func.name.lower()
         args = [self._generate_expression(arg) for arg in func.arguments]
 
+        # Check if it's a DEF FN function (starts with 'fn')
+        # User-defined functions from DEF FN
+        if func_name.startswith('fn'):
+            # FNA -> _fn_a, FNFOO -> _fn_foo
+            return f'_fn_{func_name[2:]}({", ".join(args)})'
+
         # Map BASIC function names to JavaScript
         js_func_map = {
+            # Math functions
             'abs': '_abs',
             'int': '_int',
             'sqr': '_sqr',
@@ -684,6 +891,12 @@ class JavaScriptBackend(CodeGenBackend):
             'log': '_log',
             'exp': '_exp',
             'rnd': '_rnd',
+            'sgn': '_sgn',
+            'fix': '_fix',
+            'cint': '_cint',
+            'csng': '_csng',
+            'cdbl': '_cdbl',
+            # String functions
             'left$': '_left',
             'right$': '_right',
             'mid$': '_mid',
@@ -692,6 +905,15 @@ class JavaScriptBackend(CodeGenBackend):
             'asc': '_asc',
             'str$': '_str',
             'val': '_val',
+            'instr': '_instr',
+            'space$': '_space',
+            'string$': '_string',
+            'hex$': '_hex',
+            'oct$': '_oct',
+            'pos': '_pos',
+            # Print formatting
+            'tab': '_tab',
+            'spc': '_spc',
         }
 
         js_func = js_func_map.get(func_name, func_name)
@@ -700,7 +922,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_goto(self, stmt: GotoStatementNode) -> List[str]:
         """Generate GOTO statement"""
         code = []
-        code.append(self.indent() + f'_pc = {stmt.target};')
+        code.append(self.indent() + f'_pc = {stmt.line_number};')
         code.append(self.indent() + 'break;')
         return code
 
@@ -723,13 +945,14 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + f'}}')
         return code
 
-    def _generate_gosub(self, stmt: GosubStatementNode, current_line: int) -> List[str]:
+    def _generate_gosub(self, stmt: GosubStatementNode, return_address: Optional[int]) -> List[str]:
         """Generate GOSUB statement"""
         code = []
-        # Calculate return line (next statement or next line)
-        # For simplicity, we'll need to track this - for now use current_line as placeholder
-        code.append(self.indent() + f'_gosub({current_line});  // TODO: Calculate return address')
-        code.append(self.indent() + f'_pc = {stmt.target};')
+        if return_address is not None:
+            code.append(self.indent() + f'_gosub({return_address});')
+        else:
+            code.append(self.indent() + f'_gosub(null);  // End of program')
+        code.append(self.indent() + f'_pc = {stmt.line_number};')
         code.append(self.indent() + 'break;')
         return code
 
@@ -740,7 +963,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'break;')
         return code
 
-    def _generate_for(self, stmt: ForStatementNode, return_line: Optional[int]) -> List[str]:
+    def _generate_for(self, stmt: ForStatementNode, for_line: int, return_line: Optional[int]) -> List[str]:
         """Generate FOR statement - variable-indexed approach"""
         code = []
         var_name = self._mangle_var_name(stmt.variable.name + (stmt.variable.type_suffix or ''))
@@ -779,7 +1002,13 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + f'}} else {{')
         self.indent_level += 1
         code.append(self.indent() + f'// Skip loop - condition not met')
-        code.append(self.indent() + f'// TODO: Jump to line after NEXT')
+        # Jump to line after NEXT if we know where it is
+        skip_to_line = self.for_to_after_next.get(for_line)
+        if skip_to_line is not None:
+            code.append(self.indent() + f'_pc = {skip_to_line};')
+            code.append(self.indent() + f'break;')
+        else:
+            code.append(self.indent() + f'// Continue to next statement (NEXT not found)')
         self.indent_level -= 1
         code.append(self.indent() + f'}}')
         self.indent_level -= 1
@@ -787,20 +1016,30 @@ class JavaScriptBackend(CodeGenBackend):
 
         return code
 
-    def _generate_next(self, stmt: NextStatementNode) -> List[str]:
+    def _generate_next(self, stmt: NextStatementNode, line_number: int, stmt_index: int) -> List[str]:
         """Generate NEXT statement - check condition and loop back"""
         code = []
 
         # Get variable names
-        if not stmt.variables:
-            # NEXT without variable - use most recent FOR loop
-            # For now, generate error (TODO: track loop stack)
-            code.append(self.indent() + '_error("NEXT without FOR");')
-            return code
+        variables = stmt.variables
+        if not variables:
+            # NEXT without variable - look up which variable to use
+            var_name_base = self.next_var_map.get((line_number, stmt_index))
+            if var_name_base:
+                # Create a temporary VariableNode for processing
+                class TempVar:
+                    def __init__(self, name):
+                        self.name = name
+                        self.type_suffix = ''
+                variables = [TempVar(var_name_base)]
+            else:
+                # No matching FOR found
+                code.append(self.indent() + '_error("NEXT without FOR");')
+                return code
 
         # Handle each variable (NEXT can have multiple variables: NEXT I, J, K)
-        for var in stmt.variables:
-            var_name = self._mangle_var_name(var.name + (var.type_suffix or ''))
+        for var in variables:
+            var_name = self._mangle_var_name(var.name + (getattr(var, 'type_suffix', '') or ''))
 
             # Increment variable and check condition
             code.append(self.indent() + f'if (_for_loops["{var_name}"]) {{')
@@ -859,11 +1098,11 @@ class JavaScriptBackend(CodeGenBackend):
                 self.indent_level -= 1
 
             code.append(self.indent() + '}')
-        elif stmt.then_line:
+        elif stmt.then_line_number:
             # IF...THEN line_number (GOTO)
             code.append(self.indent() + f'if ({condition}) {{')
             self.indent_level += 1
-            code.append(self.indent() + f'_pc = {stmt.then_line};')
+            code.append(self.indent() + f'_pc = {stmt.then_line_number};')
             code.append(self.indent() + 'break;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -874,13 +1113,26 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate INPUT statement"""
         code = []
 
-        # Generate prompt if present
+        # Build prompt string
         if stmt.prompt:
             prompt_str = self._escape_string(stmt.prompt)
-            code.append(self.indent() + f'_print("{prompt_str}", false);')
+        else:
+            prompt_str = "? "
 
-        # For now, skip INPUT implementation (needs async handling)
-        code.append(self.indent() + '// TODO: INPUT not yet implemented')
+        # Generate input for each variable
+        for var in stmt.variables:
+            var_name = self._mangle_var_name(var.name + (var.type_suffix or ''))
+            var_type = var.type_suffix or ''
+
+            if var_type == '$':
+                # String input
+                code.append(self.indent() + f'{var_name} = _input_str("{prompt_str}");')
+            elif var_type == '%':
+                # Integer input
+                code.append(self.indent() + f'{var_name} = _input_int("{prompt_str}");')
+            else:
+                # Numeric input (single/double precision)
+                code.append(self.indent() + f'{var_name} = _input_num("{prompt_str}");')
 
         return code
 
@@ -896,4 +1148,33 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate RESTORE statement"""
         code = []
         code.append(self.indent() + '_restore();')
+        return code
+
+    def _generate_randomize(self, stmt: RandomizeStatementNode) -> List[str]:
+        """Generate RANDOMIZE statement"""
+        code = []
+        if stmt.seed:
+            # RANDOMIZE with seed
+            seed_expr = self._generate_expression(stmt.seed)
+            code.append(self.indent() + f'_rnd(-{seed_expr});  // Seed random generator')
+        else:
+            # RANDOMIZE without seed - use current time
+            code.append(self.indent() + '_rnd(-(new Date().getTime()));  // Seed with current time')
+        return code
+
+    def _generate_stop(self, stmt: StopStatementNode) -> List[str]:
+        """Generate STOP statement - halts execution"""
+        code = []
+        code.append(self.indent() + '_pc = null;')
+        code.append(self.indent() + 'return;')
+        return code
+
+    def _generate_swap(self, stmt: SwapStatementNode) -> List[str]:
+        """Generate SWAP statement - swaps two variables"""
+        code = []
+        var1_name = self._mangle_var_name(stmt.var1.name + (stmt.var1.type_suffix or ''))
+        var2_name = self._mangle_var_name(stmt.var2.name + (stmt.var2.type_suffix or ''))
+
+        # Use destructuring assignment for clean swap
+        code.append(self.indent() + f'[{var1_name}, {var2_name}] = [{var2_name}, {var1_name}];')
         return code

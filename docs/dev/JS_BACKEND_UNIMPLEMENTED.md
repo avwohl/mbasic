@@ -1,6 +1,20 @@
 # JavaScript Backend - Unimplemented Features
 
-## Status: Phase 1-4 Complete
+## Status: Phase 5 (Enhancement) Complete
+
+Phase 1-4: Core implementation ✓
+Phase 5: Enhanced features ✓
+- INPUT statement (browser & Node.js)
+- RANDOMIZE statement
+- STOP statement
+- SWAP statement
+- DEF FN / FN calls
+- TAB(), SPC(), INSTR()
+- SPACE$(), STRING$(), HEX$(), OCT$(), POS()
+- FIX(), SGN(), CINT(), CSNG(), CDBL()
+- Fixed GOSUB return address calculation
+- Fixed FOR loop skip when condition not met
+- Fixed NEXT without variable
 
 This document tracks what's **not yet implemented** in the JavaScript backend.
 
@@ -18,29 +32,29 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 ### I/O
 - ✓ PRINT (with separators)
 - ✓ READ / DATA / RESTORE
+- ✓ INPUT (browser: prompt, Node.js: readline - note: async in Node.js)
 
 ### Variables & Arrays
 - ✓ LET (assignment)
 - ✓ DIM (array declarations)
 - ✓ Array access (subscripts)
+- ✓ SWAP (variable swapping)
+
+### Functions & Procedures
+- ✓ DEF FN (user-defined functions)
+- ✓ FN calls
 
 ### Other
 - ✓ REM (comments - skipped)
 - ✓ END
+- ✓ STOP (halts execution)
+- ✓ RANDOMIZE (seed random generator)
 
 ---
 
 ## ⚠️ STUBBED (Partially Implemented)
 
-### INPUT
-**Status**: Stub only - prints "TODO" comment
-**Issue**: Requires async handling in browser (prompt) vs Node.js (readline)
-**Priority**: HIGH - needed for interactive programs
-
-### DEF FN
-**Status**: Collection works, generation returns empty
-**Issue**: Need to generate JavaScript functions
-**Priority**: MEDIUM - used in some programs
+_None currently - all previously stubbed features have been implemented_
 
 ---
 
@@ -128,44 +142,51 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 
 ## 🔧 KNOWN ISSUES / TODOs
 
-### Minor Fixes Needed
-1. **GOSUB return address** - Currently uses current_line as placeholder, should calculate next statement/line properly
-2. **FOR loop skip** - When initial condition not met, need to jump to line after NEXT (not implemented)
-3. **NEXT without variable** - Currently errors, should use most recent FOR loop
+### Fixed Issues (Phase 2)
+1. ✓ **GOSUB return address** - Now properly calculates next statement/line
+2. ✓ **FOR loop skip** - When initial condition not met, jumps to line after NEXT
+3. ✓ **NEXT without variable** - Now uses most recent FOR loop
 
-### Missing Runtime Functions
-- TAB() - Tab to column (mentioned in PRINT but not implemented)
-- SPC() - Print N spaces (mentioned in PRINT but not implemented)
-- INSTR() - Find substring position (in spec but not in runtime)
-- SPACE$() - Generate N spaces
-- STRING$() - Repeat character N times
-- FIX() - Truncate to integer
-- SGN() - Sign of number
-- CINT() / CSNG() / CDBL() - Type conversions
-- HEX$() / OCT$() - Number to hex/octal string
-- POS() - Current print position
-- PEEK() - Read memory
-- INP() - Read I/O port
-- USR() - Call machine code
+### Implemented Runtime Functions (Phase 2)
+- ✓ TAB() - Tab to column (simplified implementation)
+- ✓ SPC() - Print N spaces
+- ✓ INSTR() - Find substring position
+- ✓ SPACE$() - Generate N spaces
+- ✓ STRING$() - Repeat character N times
+- ✓ FIX() - Truncate to integer (rounds toward zero)
+- ✓ SGN() - Sign of number
+- ✓ CINT() - Convert to integer (round)
+- ✓ CSNG() - Convert to single precision (no-op in JavaScript)
+- ✓ CDBL() - Convert to double precision (no-op in JavaScript)
+- ✓ HEX$() - Number to hex string
+- ✓ OCT$() - Number to octal string
+- ✓ POS() - Current print position (simplified)
+
+### Missing Runtime Functions (Hardware/System)
+- PEEK() - Read memory (not applicable in JavaScript)
+- POKE - Write to memory (not applicable in JavaScript)
+- INP() - Read I/O port (not applicable in JavaScript)
+- OUT - Output to I/O port (not applicable in JavaScript)
+- USR() - Call machine code (not applicable in JavaScript)
 
 ---
 
 ## 📊 Implementation Priority
 
-### HIGH (Needed for most programs)
-1. INPUT - User input
-2. RANDOMIZE - Proper random seeding
-3. CLS / LOCATE - Screen control (for browser output)
-4. TAB() / SPC() - Print formatting
-5. INSTR() - String searching
+### ✅ COMPLETED (Phase 2)
+1. ✓ INPUT - User input (browser: prompt, Node.js: readline)
+2. ✓ RANDOMIZE - Proper random seeding
+3. ✓ TAB() / SPC() - Print formatting
+4. ✓ INSTR() - String searching
+5. ✓ DEF FN - User-defined functions
+6. ✓ SWAP - Variable swapping
+7. ✓ Additional string functions (SPACE$, STRING$, HEX$, OCT$, POS)
+8. ✓ Additional math functions (FIX, SGN, CINT, CSNG, CDBL)
+9. ✓ STOP statement
 
 ### MEDIUM (Nice to have)
-1. DEF FN - User-defined functions
-2. SWAP - Variable swapping
-3. MID$ assignment - String modification
-4. PRINT USING - Formatted output
-5. Additional string functions (SPACE$, STRING$, etc.)
-6. Additional math functions (FIX, SGN, conversions)
+1. MID$ assignment - String modification
+2. PRINT USING - Formatted output
 
 ### LOW (Specialized/Advanced)
 1. File I/O (OPEN, CLOSE, etc.)

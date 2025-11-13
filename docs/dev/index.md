@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2025-11-13
-**Total Documents:** 213
+**Total Documents:** 214
 
 ## What's Here
 
@@ -90,6 +90,7 @@ If you're contributing to MBASIC:
 - [Compiler Status Summary](COMPILER_STATUS_SUMMARY.md)
 - [Compiler Z88Dk Path Change](COMPILER_Z88DK_PATH_CHANGE.md)
 - [Consistency Checker Convergence Proposal](CONSISTENCY_CHECKER_CONVERGENCE_PROPOSAL.md)
+- [Js Backend Unimplemented](JS_BACKEND_UNIMPLEMENTED.md)
 - [Kubernetes Deployment Plan](KUBERNETES_DEPLOYMENT_PLAN.md)
 - [Kubernetes Deployment Setup](KUBERNETES_DEPLOYMENT_SETUP.md)
 - [Kubernetes Deployment Summary](KUBERNETES_DEPLOYMENT_SUMMARY.md)

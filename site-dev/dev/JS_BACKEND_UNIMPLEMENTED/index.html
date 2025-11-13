@@ -1192,9 +1192,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#status-phase-1-4-complete" class="md-nav__link">
+  <a href="#status-phase-5-enhancement-complete" class="md-nav__link">
     <span class="md-ellipsis">
-      Status: Phase 1-4 Complete
+      Status: Phase 5 (Enhancement) Complete
     </span>
   </a>
   
@@ -1238,6 +1238,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#functions-procedures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Functions &amp; Procedures
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#other" class="md-nav__link">
     <span class="md-ellipsis">
       Other
@@ -1257,30 +1266,6 @@
       ⚠️ STUBBED (Partially Implemented)
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="⚠️ STUBBED (Partially Implemented)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#input" class="md-nav__link">
-    <span class="md-ellipsis">
-      INPUT
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#def-fn" class="md-nav__link">
-    <span class="md-ellipsis">
-      DEF FN
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1391,18 +1376,27 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#minor-fixes-needed" class="md-nav__link">
+  <a href="#fixed-issues-phase-2" class="md-nav__link">
     <span class="md-ellipsis">
-      Minor Fixes Needed
+      Fixed Issues (Phase 2)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#missing-runtime-functions" class="md-nav__link">
+  <a href="#implemented-runtime-functions-phase-2" class="md-nav__link">
     <span class="md-ellipsis">
-      Missing Runtime Functions
+      Implemented Runtime Functions (Phase 2)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#missing-runtime-functions-hardwaresystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Missing Runtime Functions (Hardware/System)
     </span>
   </a>
   
@@ -1424,9 +1418,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#high-needed-for-most-programs" class="md-nav__link">
+  <a href="#completed-phase-2" class="md-nav__link">
     <span class="md-ellipsis">
-      HIGH (Needed for most programs)
+      ✅ COMPLETED (Phase 2)
     </span>
   </a>
   
@@ -1498,7 +1492,20 @@
 
 
 <h1 id="javascript-backend-unimplemented-features">JavaScript Backend - Unimplemented Features<a class="headerlink" href="#javascript-backend-unimplemented-features" title="Permanent link">&para;</a></h1>
-<h2 id="status-phase-1-4-complete">Status: Phase 1-4 Complete<a class="headerlink" href="#status-phase-1-4-complete" title="Permanent link">&para;</a></h2>
+<h2 id="status-phase-5-enhancement-complete">Status: Phase 5 (Enhancement) Complete<a class="headerlink" href="#status-phase-5-enhancement-complete" title="Permanent link">&para;</a></h2>
+<p>Phase 1-4: Core implementation ✓
+Phase 5: Enhanced features ✓
+- INPUT statement (browser &amp; Node.js)
+- RANDOMIZE statement
+- STOP statement
+- SWAP statement
+- DEF FN / FN calls
+- TAB(), SPC(), INSTR()
+- SPACE<span class="arithmatex"><span class="MathJax_Preview">(), STRING</span><script type="math/tex">(), STRING</script></span>(), HEX<span class="arithmatex"><span class="MathJax_Preview">(), OCT</span><script type="math/tex">(), OCT</script></span>(), POS()
+- FIX(), SGN(), CINT(), CSNG(), CDBL()
+- Fixed GOSUB return address calculation
+- Fixed FOR loop skip when condition not met
+- Fixed NEXT without variable</p>
 <p>This document tracks what's <strong>not yet implemented</strong> in the JavaScript backend.</p>
 <hr />
 <h2 id="implemented-core-features">✅ IMPLEMENTED (Core Features)<a class="headerlink" href="#implemented-core-features" title="Permanent link">&para;</a></h2>
@@ -1514,28 +1521,30 @@
 <ul>
 <li>✓ PRINT (with separators)</li>
 <li>✓ READ / DATA / RESTORE</li>
+<li>✓ INPUT (browser: prompt, Node.js: readline - note: async in Node.js)</li>
 </ul>
 <h3 id="variables-arrays">Variables &amp; Arrays<a class="headerlink" href="#variables-arrays" title="Permanent link">&para;</a></h3>
 <ul>
 <li>✓ LET (assignment)</li>
 <li>✓ DIM (array declarations)</li>
 <li>✓ Array access (subscripts)</li>
+<li>✓ SWAP (variable swapping)</li>
+</ul>
+<h3 id="functions-procedures">Functions &amp; Procedures<a class="headerlink" href="#functions-procedures" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✓ DEF FN (user-defined functions)</li>
+<li>✓ FN calls</li>
 </ul>
 <h3 id="other">Other<a class="headerlink" href="#other" title="Permanent link">&para;</a></h3>
 <ul>
 <li>✓ REM (comments - skipped)</li>
 <li>✓ END</li>
+<li>✓ STOP (halts execution)</li>
+<li>✓ RANDOMIZE (seed random generator)</li>
 </ul>
 <hr />
 <h2 id="stubbed-partially-implemented">⚠️ STUBBED (Partially Implemented)<a class="headerlink" href="#stubbed-partially-implemented" title="Permanent link">&para;</a></h2>
-<h3 id="input">INPUT<a class="headerlink" href="#input" title="Permanent link">&para;</a></h3>
-<p><strong>Status</strong>: Stub only - prints "TODO" comment
-<strong>Issue</strong>: Requires async handling in browser (prompt) vs Node.js (readline)
-<strong>Priority</strong>: HIGH - needed for interactive programs</p>
-<h3 id="def-fn">DEF FN<a class="headerlink" href="#def-fn" title="Permanent link">&para;</a></h3>
-<p><strong>Status</strong>: Collection works, generation returns empty
-<strong>Issue</strong>: Need to generate JavaScript functions
-<strong>Priority</strong>: MEDIUM - used in some programs</p>
+<p><em>None currently - all previously stubbed features have been implemented</em></p>
 <hr />
 <h2 id="not-implemented">❌ NOT IMPLEMENTED<a class="headerlink" href="#not-implemented" title="Permanent link">&para;</a></h2>
 <h3 id="io-statements">I/O Statements<a class="headerlink" href="#io-statements" title="Permanent link">&para;</a></h3>
@@ -1627,46 +1636,54 @@
 </ul>
 <hr />
 <h2 id="known-issues-todos">🔧 KNOWN ISSUES / TODOs<a class="headerlink" href="#known-issues-todos" title="Permanent link">&para;</a></h2>
-<h3 id="minor-fixes-needed">Minor Fixes Needed<a class="headerlink" href="#minor-fixes-needed" title="Permanent link">&para;</a></h3>
+<h3 id="fixed-issues-phase-2">Fixed Issues (Phase 2)<a class="headerlink" href="#fixed-issues-phase-2" title="Permanent link">&para;</a></h3>
 <ol>
-<li><strong>GOSUB return address</strong> - Currently uses current_line as placeholder, should calculate next statement/line properly</li>
-<li><strong>FOR loop skip</strong> - When initial condition not met, need to jump to line after NEXT (not implemented)</li>
-<li><strong>NEXT without variable</strong> - Currently errors, should use most recent FOR loop</li>
+<li>✓ <strong>GOSUB return address</strong> - Now properly calculates next statement/line</li>
+<li>✓ <strong>FOR loop skip</strong> - When initial condition not met, jumps to line after NEXT</li>
+<li>✓ <strong>NEXT without variable</strong> - Now uses most recent FOR loop</li>
 </ol>
-<h3 id="missing-runtime-functions">Missing Runtime Functions<a class="headerlink" href="#missing-runtime-functions" title="Permanent link">&para;</a></h3>
+<h3 id="implemented-runtime-functions-phase-2">Implemented Runtime Functions (Phase 2)<a class="headerlink" href="#implemented-runtime-functions-phase-2" title="Permanent link">&para;</a></h3>
 <ul>
-<li>TAB() - Tab to column (mentioned in PRINT but not implemented)</li>
-<li>SPC() - Print N spaces (mentioned in PRINT but not implemented)</li>
-<li>INSTR() - Find substring position (in spec but not in runtime)</li>
-<li>SPACE$() - Generate N spaces</li>
-<li>STRING$() - Repeat character N times</li>
-<li>FIX() - Truncate to integer</li>
-<li>SGN() - Sign of number</li>
-<li>CINT() / CSNG() / CDBL() - Type conversions</li>
-<li>HEX<span class="arithmatex"><span class="MathJax_Preview">() / OCT</span><script type="math/tex">() / OCT</script></span>() - Number to hex/octal string</li>
-<li>POS() - Current print position</li>
-<li>PEEK() - Read memory</li>
-<li>INP() - Read I/O port</li>
-<li>USR() - Call machine code</li>
+<li>✓ TAB() - Tab to column (simplified implementation)</li>
+<li>✓ SPC() - Print N spaces</li>
+<li>✓ INSTR() - Find substring position</li>
+<li>✓ SPACE$() - Generate N spaces</li>
+<li>✓ STRING$() - Repeat character N times</li>
+<li>✓ FIX() - Truncate to integer (rounds toward zero)</li>
+<li>✓ SGN() - Sign of number</li>
+<li>✓ CINT() - Convert to integer (round)</li>
+<li>✓ CSNG() - Convert to single precision (no-op in JavaScript)</li>
+<li>✓ CDBL() - Convert to double precision (no-op in JavaScript)</li>
+<li>✓ HEX$() - Number to hex string</li>
+<li>✓ OCT$() - Number to octal string</li>
+<li>✓ POS() - Current print position (simplified)</li>
+</ul>
+<h3 id="missing-runtime-functions-hardwaresystem">Missing Runtime Functions (Hardware/System)<a class="headerlink" href="#missing-runtime-functions-hardwaresystem" title="Permanent link">&para;</a></h3>
+<ul>
+<li>PEEK() - Read memory (not applicable in JavaScript)</li>
+<li>POKE - Write to memory (not applicable in JavaScript)</li>
+<li>INP() - Read I/O port (not applicable in JavaScript)</li>
+<li>OUT - Output to I/O port (not applicable in JavaScript)</li>
+<li>USR() - Call machine code (not applicable in JavaScript)</li>
 </ul>
 <hr />
 <h2 id="implementation-priority">📊 Implementation Priority<a class="headerlink" href="#implementation-priority" title="Permanent link">&para;</a></h2>
-<h3 id="high-needed-for-most-programs">HIGH (Needed for most programs)<a class="headerlink" href="#high-needed-for-most-programs" title="Permanent link">&para;</a></h3>
+<h3 id="completed-phase-2">✅ COMPLETED (Phase 2)<a class="headerlink" href="#completed-phase-2" title="Permanent link">&para;</a></h3>
 <ol>
-<li>INPUT - User input</li>
-<li>RANDOMIZE - Proper random seeding</li>
-<li>CLS / LOCATE - Screen control (for browser output)</li>
-<li>TAB() / SPC() - Print formatting</li>
-<li>INSTR() - String searching</li>
+<li>✓ INPUT - User input (browser: prompt, Node.js: readline)</li>
+<li>✓ RANDOMIZE - Proper random seeding</li>
+<li>✓ TAB() / SPC() - Print formatting</li>
+<li>✓ INSTR() - String searching</li>
+<li>✓ DEF FN - User-defined functions</li>
+<li>✓ SWAP - Variable swapping</li>
+<li>✓ Additional string functions (SPACE<span class="arithmatex"><span class="MathJax_Preview">, STRING</span><script type="math/tex">, STRING</script></span>, HEX<span class="arithmatex"><span class="MathJax_Preview">, OCT</span><script type="math/tex">, OCT</script></span>, POS)</li>
+<li>✓ Additional math functions (FIX, SGN, CINT, CSNG, CDBL)</li>
+<li>✓ STOP statement</li>
 </ol>
 <h3 id="medium-nice-to-have">MEDIUM (Nice to have)<a class="headerlink" href="#medium-nice-to-have" title="Permanent link">&para;</a></h3>
 <ol>
-<li>DEF FN - User-defined functions</li>
-<li>SWAP - Variable swapping</li>
 <li>MID$ assignment - String modification</li>
 <li>PRINT USING - Formatted output</li>
-<li>Additional string functions (SPACE<span class="arithmatex"><span class="MathJax_Preview">, STRING</span><script type="math/tex">, STRING</script></span>, etc.)</li>
-<li>Additional math functions (FIX, SGN, conversions)</li>
 </ol>
 <h3 id="low-specializedadvanced">LOW (Specialized/Advanced)<a class="headerlink" href="#low-specializedadvanced" title="Permanent link">&para;</a></h3>
 <ol>
