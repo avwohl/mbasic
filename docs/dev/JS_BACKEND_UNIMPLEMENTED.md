@@ -39,6 +39,7 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 - ✓ DIM (array declarations)
 - ✓ Array access (subscripts)
 - ✓ SWAP (variable swapping)
+- ✓ ERASE (reset arrays to default values)
 
 ### Functions & Procedures
 - ✓ DEF FN (user-defined functions)
@@ -117,8 +118,6 @@ _None currently - all previously stubbed features have been implemented_
 - WIDTH - Set screen/printer width
 
 ### Arrays
-- ERASE - Clear array to defaults
-- SWAP - Swap two variables
 - OPTION BASE - Set array base 0/1 (handled in semantic analysis)
 - COMMON - Share variables between chained programs
 

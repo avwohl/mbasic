@@ -53,7 +53,7 @@ Generated code should run in:
 - [x] Implemented HTML wrapper generation
 - [x] Tested with hello world program - successful compilation!
 
-### Phase 5: Enhanced Features (Complete)
+### Phase 5-6: Enhanced Features (Complete)
 - [x] Implemented INPUT statement (browser: prompt, Node.js: readline)
 - [x] Implemented RANDOMIZE statement (with and without seed)
 - [x] Implemented STOP statement
@@ -71,8 +71,11 @@ Generated code should run in:
 - [x] Fixed GOTO/GOSUB/IF attribute names (line_number vs target/then_line)
 - [x] Implemented ON GOSUB statement
 - [x] Fixed ON GOTO attribute name (line_numbers vs targets)
-- [x] Tested compilation with multiple programs
+- [x] Implemented ERASE statement (reset arrays to defaults)
+- [x] Tested compilation with multiple programs (business, games, test suite)
 - [x] Successfully compiled Super Star Trek! (3472 lines of JavaScript)
+- [x] Successfully compiled: combat, hammurabi, craps, train, star, airmiles, mortgage
+- [x] Successfully compiled test suite: def_fn, data_read, dim_arrays
 
 ### Next Steps
 1. ✓ Test Super Star Trek (ultimate test!) - SUCCESS

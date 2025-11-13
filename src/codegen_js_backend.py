@@ -759,6 +759,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.extend(self._generate_stop(stmt))
         elif isinstance(stmt, SwapStatementNode):
             code.extend(self._generate_swap(stmt))
+        elif isinstance(stmt, EraseStatementNode):
+            code.extend(self._generate_erase(stmt))
         elif isinstance(stmt, DataStatementNode):
             # DATA statements are processed during initialization
             pass
@@ -1209,4 +1211,24 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Use destructuring assignment for clean swap
         code.append(self.indent() + f'[{var1_name}, {var2_name}] = [{var2_name}, {var1_name}];')
+        return code
+
+    def _generate_erase(self, stmt: EraseStatementNode) -> List[str]:
+        """Generate ERASE statement - resets arrays to default values"""
+        code = []
+        for array_name in stmt.array_names:
+            # Look up the array in the symbol table to get its type and dimensions
+            var_info = self.symbols.variables.get(array_name)
+            if var_info and var_info.is_array:
+                js_name = self._mangle_var_name(array_name)
+                dimensions = var_info.dimensions or [10]
+
+                # Determine default value based on type
+                if var_info.var_type == VarType.STRING:
+                    init_value = '""'
+                else:
+                    init_value = '0'
+
+                # Recreate the array with default values
+                code.append(self.indent() + f'{js_name} = {self._create_array_init(dimensions, init_value)};')
         return code
