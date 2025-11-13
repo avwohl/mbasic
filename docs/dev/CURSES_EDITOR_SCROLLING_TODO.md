@@ -1,4 +1,17 @@
-# Curses Editor Scrolling Issues TODO
+# Curses Editor Scrolling Issues
+
+**Status**: TESTING NEEDED (implemented in v1.0.896, 2025-11-13)
+
+## Solution Implemented
+
+Created `ScrollingFiller` custom widget (Option D-style approach) that:
+- Tracks Edit widget cursor position on every render
+- Calculates which line the cursor is on
+- Adjusts visible viewport to keep cursor in middle 50% (between 25%-75%)
+- Uses canvas trimming to show only the visible portion
+- Preserves scroll position across UI changes (like opening/closing ^U menu)
+
+## Original Issues
 
 ## Issue 1: ^U Menu Scrolls to Line 1 on Open
 
