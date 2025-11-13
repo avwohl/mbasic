@@ -1020,7 +1020,8 @@ class JavaScriptBackend(CodeGenBackend):
                 return f'({left} {op} {right})'
         elif isinstance(expr, UnaryOpNode):
             operand = self._generate_expression(expr.operand)
-            return f'({expr.operator}{operand})'
+            op = self._token_to_operator(expr.operator)
+            return f'({op}{operand})'
         elif isinstance(expr, FunctionCallNode):
             return self._generate_function_call(expr)
         else:
