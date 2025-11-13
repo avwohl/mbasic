@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2025-11-13
-**Total Documents:** 215
+**Total Documents:** 210
 
 ## What's Here
 
@@ -36,8 +36,6 @@ If you're contributing to MBASIC:
 
 ### Language Features
 
-- [For Loop Compiler Vs Interpreter](FOR_LOOP_COMPILER_VS_INTERPRETER.md)
-- [For Loop Stack Findings](FOR_LOOP_STACK_FINDINGS.md)
 - [Keybinding Systems](KEYBINDING_SYSTEMS.md)
 - [Mb25 Runtime Library Plan](MB25_RUNTIME_LIBRARY_PLAN.md)
 
@@ -45,9 +43,6 @@ If you're contributing to MBASIC:
 
 - [Backup Nonversioned Files](BACKUP_NONVERSIONED_FILES.md)
 - [Docs Url Configuration](DOCS_URL_CONFIGURATION.md)
-- [For Loop Implementation Summary](FOR_LOOP_IMPLEMENTATION_SUMMARY.md)
-- [For Loop Stack Implementation Options](FOR_LOOP_STACK_IMPLEMENTATION_OPTIONS.md)
-- [For Loop Variable Indexed Implementation](FOR_LOOP_VARIABLE_INDEXED_IMPLEMENTATION.md)
 - [Keybinding Macros Migration](KEYBINDING_MACROS_MIGRATION.md)
 - [Medium Severity Session Report](MEDIUM_SEVERITY_SESSION_REPORT.md)
 - [Pip Install Resource Location Plan](PIP_INSTALL_RESOURCE_LOCATION_PLAN.md)
