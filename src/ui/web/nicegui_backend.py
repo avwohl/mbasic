@@ -1296,17 +1296,20 @@ class NiceGUIBackend(UIBackend):
         ui.page_title('MBASIC 5.21 - Web IDE')
 
         # Add global CSS to ensure full viewport height in both Firefox and Chrome
-        # Mobile fix: Use position:fixed instead of height:100% to prevent page scrolling
+        # Mobile fix: Use position:fixed and touch-action to completely prevent page scrolling
         ui.add_head_html('''
             <style>
                 html, body {
                     height: 100%;
+                    width: 100%;
                     margin: 0;
                     padding: 0;
-                    overflow: hidden;
+                    overflow: hidden !important;
                     position: fixed;
-                    width: 100%;
+                    top: 0;
+                    left: 0;
                     -webkit-overflow-scrolling: touch;
+                    touch-action: none; /* Prevent all touch scrolling gestures on body */
                 }
                 #app, .q-page {
                     height: 100%;
@@ -1316,7 +1319,7 @@ class NiceGUIBackend(UIBackend):
                     position: fixed;
                     top: 0;
                     left: 0;
-                    overflow: hidden;
+                    overflow: hidden !important;
                 }
                 /* Force Quasar textarea to fill flex container in Chrome */
                 .q-textarea, .q-field__control {
@@ -1325,10 +1328,10 @@ class NiceGUIBackend(UIBackend):
                 .q-field__control-container {
                     height: 100% !important;
                 }
-                /* Prevent iOS Safari from showing bottom bar on scroll */
-                body {
-                    position: fixed;
-                    width: 100%;
+                /* Allow scrolling only in output textarea */
+                [data-marker="output"] textarea {
+                    touch-action: pan-y; /* Allow vertical scrolling in output only */
+                    -webkit-overflow-scrolling: touch;
                 }
             </style>
         ''')
@@ -3229,30 +3232,32 @@ class NiceGUIBackend(UIBackend):
         # Update the textarea directly
         if self.output:
             self.output.value = self.output_text
-            # Don't call .update() - it triggers re-render that resets scroll on iOS
+            self.output.update()
 
-            # Update and scroll in one JavaScript call to avoid iOS fighting us
-            # Always scroll to bottom - removed the user scroll tracking that was preventing scroll
+            # Force scroll to bottom after update - use multiple attempts for iOS
             ui.run_javascript('''
-                (function() {
-                    let textarea = document.querySelector('[data-marker="output"] textarea');
-                    if (!textarea) {
-                        const textareas = document.querySelectorAll('textarea[readonly]');
-                        textarea = textareas[textareas.length - 1];
-                    }
+                (function scrollToBottom() {
+                    const textarea = document.querySelector('[data-marker="output"] textarea');
                     if (textarea) {
-                        // Always scroll to bottom on new output - this is the expected terminal behavior
-                        // Force scroll multiple times for iOS Safari
+                        // Scroll immediately
                         textarea.scrollTop = textarea.scrollHeight;
+
+                        // Schedule multiple scroll attempts to fight iOS quirks
                         requestAnimationFrame(() => {
                             textarea.scrollTop = textarea.scrollHeight;
                         });
+                        setTimeout(() => {
+                            textarea.scrollTop = textarea.scrollHeight;
+                        }, 10);
                         setTimeout(() => {
                             textarea.scrollTop = textarea.scrollHeight;
                         }, 50);
                         setTimeout(() => {
                             textarea.scrollTop = textarea.scrollHeight;
                         }, 100);
+                        setTimeout(() => {
+                            textarea.scrollTop = textarea.scrollHeight;
+                        }, 200);
                     }
                 })();
             ''')
