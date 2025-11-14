@@ -2427,13 +2427,36 @@ class NiceGUIBackend(UIBackend):
                 }
             }''')
 
-        # Update UI
-        self._set_status('Stopped')
-        self._append_output("\n--- Program stopped ---\n")
+        # Get current line before stopping
+        current_line = None
+        if self.interpreter and self.interpreter.runtime:
+            pc = self.interpreter.runtime.pc
+            if pc and pc.line:
+                current_line = pc.line
 
-        # Hide current line highlight
-        if self.current_line_label:
-            self.current_line_label.visible = False
+        # Update UI
+        if current_line:
+            self._set_status(f'Stopped at line {current_line}')
+            self._append_output(f"\n--- Program stopped at line {current_line} ---\n")
+
+            # Show current line highlight
+            if self.current_line_label:
+                self.current_line_label.set_text(f'>>> Stopped at line {current_line}')
+                self.current_line_label.visible = True
+
+            # Highlight the line in CodeMirror
+            state = self.interpreter.state if self.interpreter else None
+            if state:
+                char_start = state.current_statement_char_start if state.current_statement_char_start > 0 else None
+                char_end = state.current_statement_char_end if state.current_statement_char_end > 0 else None
+                self.editor.set_current_statement(current_line, char_start, char_end)
+        else:
+            self._set_status('Stopped')
+            self._append_output("\n--- Program stopped ---\n")
+
+            # Hide current line highlight
+            if self.current_line_label:
+                self.current_line_label.visible = False
 
     async def _menu_step_line(self):
         """Run > Step Line - Execute all statements on current line and pause."""
