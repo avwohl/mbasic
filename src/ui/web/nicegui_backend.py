@@ -1461,12 +1461,25 @@ class NiceGUIBackend(UIBackend):
             self.editor._value = '10 '
             self.last_line_count = 1  # Initialize line count
         else:
-            # Set initial focus to program editor
-            self.editor.run_method('focus')
+            # Don't auto-focus editor on mobile - it brings up keyboard covering output
+            # User can tap editor when ready to code
+            # self.editor.run_method('focus')
             self.last_line_count = 0
 
         # Update auto-line indicator
         self._update_auto_line_indicator()
+
+        # Aggressively blur all inputs on page load to prevent iOS keyboard
+        ui.run_javascript('''
+            setTimeout(() => {
+                // Blur any focused element
+                if (document.activeElement) {
+                    document.activeElement.blur();
+                }
+                // Blur all inputs and textareas
+                document.querySelectorAll('input, textarea').forEach(el => el.blur());
+            }, 100);
+        ''')
 
     def _create_menu(self):
         """Create menu bar."""
