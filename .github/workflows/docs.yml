@@ -6,8 +6,7 @@ on:
       - main
     paths:
       - 'docs/**'
-      - 'basic/*.bas'  # Games library source files
-      - 'basic/bas_tests/*.bas'  # Games library source files
+      - 'basic/**/*.bas'  # All BASIC library source files (games, tests, etc.)
       - 'mkdocs.yml'
       - 'utils/build_library_docs.py'  # Library build script
       - '.github/workflows/docs.yml'
