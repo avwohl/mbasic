@@ -64,12 +64,15 @@ fi
 # Check if docs were modified - validate mkdocs build
 # Use git diff-index to detect any changes to docs tree or config files
 # This catches all changes (staged, unstaged, and untracked files)
+# IMPORTANT: Must match GitHub workflow triggers in .github/workflows/docs.yml
 
-# Check if docs/ has any changes (uses git's SHA256 internally)
+# Check if docs/, basic/*.bas, or config files have changes
 if ! git diff-index --quiet HEAD docs/ 2>/dev/null || \
    [ -n "$(git ls-files --others --exclude-standard docs/ 2>/dev/null)" ] || \
-   ! git diff --quiet mkdocs.yml .github/workflows/docs.yml 2>/dev/null || \
-   ! git diff --quiet --cached mkdocs.yml .github/workflows/docs.yml 2>/dev/null; then
+   ! git diff --quiet basic/ 2>/dev/null || \
+   ! git diff --quiet --cached basic/ 2>/dev/null || \
+   ! git diff --quiet mkdocs.yml .github/workflows/docs.yml utils/build_library_docs.py 2>/dev/null || \
+   ! git diff --quiet --cached mkdocs.yml .github/workflows/docs.yml utils/build_library_docs.py 2>/dev/null; then
   DOCS_CHANGED=true
 else
   DOCS_CHANGED=false
@@ -82,6 +85,17 @@ if [ "$DOCS_CHANGED" = true ]; then
         echo "✓ Keyboard shortcuts regenerated"
     else
         echo "❌ ERROR: Keyboard shortcut generation failed"
+        exit 1
+    fi
+
+    # Rebuild library documentation (matches GitHub workflow)
+    # This ensures generated docs are up-to-date before mkdocs validation
+    echo "Rebuilding library documentation..."
+    python3 utils/build_library_docs.py
+    if [ $? -eq 0 ]; then
+        echo "✓ Library documentation rebuilt"
+    else
+        echo "❌ ERROR: Library documentation build failed"
         exit 1
     fi
 
