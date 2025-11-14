@@ -2109,8 +2109,9 @@ class NiceGUIBackend(UIBackend):
                     # Verified: INPUT statement calls io.output(prompt) before awaiting user input.
                     # Change placeholder text to indicate we're waiting for input
                     self.immediate_entry.props('placeholder="Input: "')
-                    # Focus the immediate input box for user to type
-                    self.immediate_entry.run_method('focus')
+                    # Don't auto-focus on mobile - it brings up keyboard and hides output
+                    # User can tap the input field if needed
+                    # self.immediate_entry.run_method('focus')
                     # Set status with line number and prompt
                     self._set_status(f"at line {state.current_line}: {state.input_prompt}")
                     # Highlight the INPUT statement in the editor
@@ -2154,8 +2155,9 @@ class NiceGUIBackend(UIBackend):
                     # Verified: INPUT statement calls io.output(prompt) before awaiting user input.
                     # Change placeholder text to indicate we're waiting for input
                     self.immediate_entry.props('placeholder="Input: "')
-                    # Focus the immediate input box for user to type
-                    self.immediate_entry.run_method('focus')
+                    # Don't auto-focus on mobile - it brings up keyboard and hides output
+                    # User can tap the input field if needed
+                    # self.immediate_entry.run_method('focus')
                     # Set status with line number and prompt
                     self._set_status(f"at line {state.current_line}: {state.input_prompt}")
                     # Highlight the INPUT statement in the editor
@@ -2410,9 +2412,10 @@ class NiceGUIBackend(UIBackend):
             self.input_prompt_text = state.input_prompt
             self.running = True
             self.paused = True
-            # Focus the immediate input box for user to type
+            # Don't auto-focus on mobile - it brings up keyboard and hides output
+            # User can tap the input field if needed
             self.immediate_entry.props('placeholder="Input: "')
-            self.immediate_entry.run_method('focus')
+            # self.immediate_entry.run_method('focus')
             # Set status with line number and prompt
             self._set_status(f"at line {state.current_line}: {state.input_prompt}")
             # Show current line highlight
