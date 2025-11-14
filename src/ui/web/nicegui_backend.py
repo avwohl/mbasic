@@ -1296,6 +1296,7 @@ class NiceGUIBackend(UIBackend):
         ui.page_title('MBASIC 5.21 - Web IDE')
 
         # Add global CSS to ensure full viewport height in both Firefox and Chrome
+        # Mobile fix: Use position:fixed instead of height:100% to prevent page scrolling
         ui.add_head_html('''
             <style>
                 html, body {
@@ -1303,11 +1304,19 @@ class NiceGUIBackend(UIBackend):
                     margin: 0;
                     padding: 0;
                     overflow: hidden;
+                    position: fixed;
+                    width: 100%;
+                    -webkit-overflow-scrolling: touch;
                 }
                 #app, .q-page {
                     height: 100%;
+                    width: 100%;
                     display: flex;
                     flex-direction: column;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    overflow: hidden;
                 }
                 /* Force Quasar textarea to fill flex container in Chrome */
                 .q-textarea, .q-field__control {
@@ -1315,6 +1324,11 @@ class NiceGUIBackend(UIBackend):
                 }
                 .q-field__control-container {
                     height: 100% !important;
+                }
+                /* Prevent iOS Safari from showing bottom bar on scroll */
+                body {
+                    position: fixed;
+                    width: 100%;
                 }
             </style>
         ''')
@@ -1339,8 +1353,9 @@ class NiceGUIBackend(UIBackend):
         self.settings_dialog = WebSettingsDialog(self)
 
         # Wrap top rows in column with zero gap to eliminate spacing between them
-        # Use height: 100vh and display: flex to work in both Firefox and Chrome
-        with ui.column().style('row-gap: 0; width: 100%; height: 100vh; display: flex; flex-direction: column; overflow: hidden;'):
+        # Use height: 100% (not 100vh) to avoid iOS Safari issues with viewport units
+        # position: fixed prevents page-level scrolling on mobile
+        with ui.column().style('row-gap: 0; width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; position: fixed; top: 0; left: 0;'):
             # Menu bar
             self._create_menu()
 
@@ -3219,41 +3234,29 @@ class NiceGUIBackend(UIBackend):
             # Don't call .update() - it triggers re-render that resets scroll on iOS
 
             # Update and scroll in one JavaScript call to avoid iOS fighting us
-            ui.run_javascript(f'''
-                (function() {{
+            # Always scroll to bottom - removed the user scroll tracking that was preventing scroll
+            ui.run_javascript('''
+                (function() {
                     let textarea = document.querySelector('[data-marker="output"] textarea');
-                    if (!textarea) {{
+                    if (!textarea) {
                         const textareas = document.querySelectorAll('textarea[readonly]');
                         textarea = textareas[textareas.length - 1];
-                    }}
-                    if (textarea) {{
-                        // Set up scroll listener on first run only
-                        if (!textarea.dataset.scrollListenerAdded) {{
-                            textarea.dataset.scrollListenerAdded = 'true';
-                            textarea.dataset.userScrolledUp = 'false';  // Default to auto-scroll
-
-                            // Track when user manually scrolls up (away from bottom)
-                            textarea.addEventListener('scroll', function() {{
-                                const isNearBottom = (this.scrollHeight - this.scrollTop - this.clientHeight) < 100;
-                                if (!isNearBottom && this.scrollTop > 0) {{
-                                    // User scrolled away from bottom - disable auto-scroll
-                                    this.dataset.userScrolledUp = 'true';
-                                }} else if (isNearBottom) {{
-                                    // User scrolled back to bottom - re-enable auto-scroll
-                                    this.dataset.userScrolledUp = 'false';
-                                }}
-                            }}, {{ passive: true }});
-                        }}
-
-                        // Always scroll to bottom unless user explicitly scrolled up
-                        if (!textarea.dataset.userScrolledUp || textarea.dataset.userScrolledUp !== 'true') {{
-                            // Force scroll for iOS - use multiple methods
+                    }
+                    if (textarea) {
+                        // Always scroll to bottom on new output - this is the expected terminal behavior
+                        // Force scroll multiple times for iOS Safari
+                        textarea.scrollTop = textarea.scrollHeight;
+                        requestAnimationFrame(() => {
                             textarea.scrollTop = textarea.scrollHeight;
-                            setTimeout(() => {{ textarea.scrollTop = textarea.scrollHeight; }}, 0);
-                            setTimeout(() => {{ textarea.scrollTop = textarea.scrollHeight; }}, 50);
-                        }}
-                    }}
-                }})();
+                        });
+                        setTimeout(() => {
+                            textarea.scrollTop = textarea.scrollHeight;
+                        }, 50);
+                        setTimeout(() => {
+                            textarea.scrollTop = textarea.scrollHeight;
+                        }, 100);
+                    }
+                })();
             ''')
 
     def _handle_output_enter(self, e):
