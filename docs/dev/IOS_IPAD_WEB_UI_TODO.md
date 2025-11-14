@@ -5,6 +5,18 @@ Multiple attempts to fix iOS/iPad Safari scrolling and keyboard issues have not 
 
 ## Problems to Solve
 
+### 0. Desktop Regression - Blank Area at Bottom
+**Issue:** The attempts to fix iOS have broken desktop browsers. There is now a blank area at the bottom of the screen on desktop Chrome/Firefox. This was fixed previously and took days to get rid of.
+
+**What caused it:** The iOS fixes added:
+- `max-height: 40vh` on output pane (line ~1438)
+- `position: fixed` on main container
+- `touch-action: none` on body
+
+**Current code:** `src/ui/web/nicegui_backend.py` lines ~1298-1337, ~1358, ~1438
+
+**Priority:** HIGH - Desktop was working perfectly before iOS attempts. Need to restore desktop functionality while keeping iOS fixes separate (media queries or user-agent detection).
+
 ### 1. Output Pane Does Not Auto-Scroll
 **Issue:** When new output appears (e.g., running Super Star Trek), the output pane does not automatically scroll to show the latest output at the bottom.
 
