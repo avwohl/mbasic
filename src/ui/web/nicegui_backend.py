@@ -1431,10 +1431,11 @@ class NiceGUIBackend(UIBackend):
                 with splitter.after:
                     # Output panel
                     # Use important to override Quasar defaults in Chrome
+                    # Limit max-height to 40vh on mobile so iOS keyboard doesn't cover it
                     self.output = ui.textarea(
                         value=f'MBASIC 5.21 Web IDE - {VERSION}\n',
                         placeholder='Output'
-                    ).style('width: 100%; height: 100%; flex: 1 1 auto !important; min-height: 0 !important;').props('readonly outlined dense spellcheck=false').mark('output')
+                    ).style('width: 100%; height: 100%; max-height: 40vh; flex: 1 1 auto !important; min-height: 0 !important;').props('readonly outlined dense spellcheck=false').mark('output')
 
                     # Restore output if restoring from saved state
                     if hasattr(self, 'output_text') and self.output_text:
@@ -1461,25 +1462,12 @@ class NiceGUIBackend(UIBackend):
             self.editor._value = '10 '
             self.last_line_count = 1  # Initialize line count
         else:
-            # Don't auto-focus editor on mobile - it brings up keyboard covering output
-            # User can tap editor when ready to code
-            # self.editor.run_method('focus')
+            # Set initial focus to program editor (now safe with smaller output pane)
+            self.editor.run_method('focus')
             self.last_line_count = 0
 
         # Update auto-line indicator
         self._update_auto_line_indicator()
-
-        # Aggressively blur all inputs on page load to prevent iOS keyboard
-        ui.run_javascript('''
-            setTimeout(() => {
-                // Blur any focused element
-                if (document.activeElement) {
-                    document.activeElement.blur();
-                }
-                // Blur all inputs and textareas
-                document.querySelectorAll('input, textarea').forEach(el => el.blur());
-            }, 100);
-        ''')
 
     def _create_menu(self):
         """Create menu bar."""
@@ -2137,9 +2125,8 @@ class NiceGUIBackend(UIBackend):
                     # Verified: INPUT statement calls io.output(prompt) before awaiting user input.
                     # Change placeholder text to indicate we're waiting for input
                     self.immediate_entry.props('placeholder="Input: "')
-                    # Don't auto-focus on mobile - it brings up keyboard and hides output
-                    # User can tap the input field if needed
-                    # self.immediate_entry.run_method('focus')
+                    # Focus the immediate input box for user to type (output now shorter, won't be covered)
+                    self.immediate_entry.run_method('focus')
                     # Set status with line number and prompt
                     self._set_status(f"at line {state.current_line}: {state.input_prompt}")
                     # Highlight the INPUT statement in the editor
@@ -2183,9 +2170,8 @@ class NiceGUIBackend(UIBackend):
                     # Verified: INPUT statement calls io.output(prompt) before awaiting user input.
                     # Change placeholder text to indicate we're waiting for input
                     self.immediate_entry.props('placeholder="Input: "')
-                    # Don't auto-focus on mobile - it brings up keyboard and hides output
-                    # User can tap the input field if needed
-                    # self.immediate_entry.run_method('focus')
+                    # Focus the immediate input box for user to type (output now shorter, won't be covered)
+                    self.immediate_entry.run_method('focus')
                     # Set status with line number and prompt
                     self._set_status(f"at line {state.current_line}: {state.input_prompt}")
                     # Highlight the INPUT statement in the editor
@@ -2440,10 +2426,9 @@ class NiceGUIBackend(UIBackend):
             self.input_prompt_text = state.input_prompt
             self.running = True
             self.paused = True
-            # Don't auto-focus on mobile - it brings up keyboard and hides output
-            # User can tap the input field if needed
+            # Focus the immediate input box for user to type (output now shorter, won't be covered)
             self.immediate_entry.props('placeholder="Input: "')
-            # self.immediate_entry.run_method('focus')
+            self.immediate_entry.run_method('focus')
             # Set status with line number and prompt
             self._set_status(f"at line {state.current_line}: {state.input_prompt}")
             # Show current line highlight
