@@ -6,10 +6,10 @@ Amateur radio utilities and tools
 
 ### Boka-Ei
 
-Amateur radio callsign lookup - Swedish callsign database and lookup utility (EI = Swedish amateur radio prefix)
+
 
 **Year:** 1980s
-**Tags:** ham-radio, callsign, lookup, swedish
+**Tags:** 
 
 **[Download boka-ei.bas](boka-ei.bas)**
 
@@ -17,10 +17,10 @@ Amateur radio callsign lookup - Swedish callsign database and lookup utility (EI
 
 ### Qsoedit
 
-QSO log editor - edit and update amateur radio contact logs with call signs, names, locations, frequencies, dates, and times
+
 
 **Year:** 1980s
-**Tags:** ham-radio, qso, log, editor
+**Tags:** 
 
 **[Download qsoedit.bas](qsoedit.bas)**
 
@@ -28,10 +28,10 @@ QSO log editor - edit and update amateur radio contact logs with call signs, nam
 
 ### Qsofind
 
-QSO log search - search and find entries in amateur radio contact logs by call sign or other criteria
+
 
 **Year:** 1980s
-**Tags:** ham-radio, qso, search, log
+**Tags:** 
 
 **[Download qsofind.bas](qsofind.bas)**
 
@@ -39,10 +39,10 @@ QSO log search - search and find entries in amateur radio contact logs by call s
 
 ### Rbsclock
 
-RBS clock utility - clock/time management tool for RBS (Remote Bulletin System) ham radio BBS
+
 
 **Year:** 1980s
-**Tags:** ham-radio, rbs, clock, bbs
+**Tags:** 
 
 **[Download rbsclock.bas](rbsclock.bas)**
 
@@ -50,10 +50,10 @@ RBS clock utility - clock/time management tool for RBS (Remote Bulletin System) 
 
 ### Rbspurge
 
-RBS purge utility - maintenance tool to purge old messages from RBS (Remote Bulletin System) ham radio BBS
+
 
 **Year:** 1980s
-**Tags:** ham-radio, rbs, purge, bbs
+**Tags:** 
 
 **[Download rbspurge.bas](rbspurge.bas)**
 
@@ -61,10 +61,10 @@ RBS purge utility - maintenance tool to purge old messages from RBS (Remote Bull
 
 ### Rbsutl31
 
-RBS utilities v3.1 - utility collection for RBS (Remote Bulletin System) ham radio bulletin board system
+
 
 **Year:** 1980s
-**Tags:** ham-radio, rbs, utilities, bbs
+**Tags:** 
 
 **[Download rbsutl31.bas](rbsutl31.bas)**
 
@@ -72,10 +72,10 @@ RBS utilities v3.1 - utility collection for RBS (Remote Bulletin System) ham rad
 
 ### Rsj
 
-RSJ utility - ham radio utility (RSJ likely refers to a specific radio system or protocol)
+
 
 **Year:** 1980s
-**Tags:** ham-radio, utility
+**Tags:** 
 
 **[Download rsj.bas](rsj.bas)**
 
@@ -85,7 +85,7 @@ RSJ utility - ham radio utility (RSJ likely refers to a specific radio system or
 
 1. **Download** the .bas file you want to use
 2. **Open MBASIC** in your preferred UI (Web, Tkinter, Curses, or CLI)
-3. **Open the file:**
+3. **Load the file:**
    - **Web/Tkinter UI:** Click File → Open, select the downloaded file
    - **CLI:** Type `LOAD "filename.bas"`
 4. **Run:** Type `RUN` or press the Run button

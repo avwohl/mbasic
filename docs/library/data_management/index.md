@@ -6,11 +6,10 @@ Database and file management programs
 
 ### Mfil
 
-Message file creator - utility for creating test versions of name/message files for bulletin board systems (by Dick Lieber, 1982)
 
-**Author:** Dick Lieber
-**Year:** 1982
-**Tags:** database, files, bbs
+
+**Year:** 1980s
+**Tags:** 
 
 **[Download mfil.bas](mfil.bas)**
 
@@ -18,10 +17,10 @@ Message file creator - utility for creating test versions of name/message files 
 
 ### Sfamove
 
-SFA Move utility - data movement tool for SFA database system
+
 
 **Year:** 1980s
-**Tags:** database, sfa, utility
+**Tags:** 
 
 **[Download sfamove.bas](sfamove.bas)**
 
@@ -29,10 +28,10 @@ SFA Move utility - data movement tool for SFA database system
 
 ### Sfaobdes
 
-SFA Object Designer - design tool for SFA database objects and structures
+
 
 **Year:** 1980s
-**Tags:** database, sfa, design
+**Tags:** 
 
 **[Download sfaobdes.bas](sfaobdes.bas)**
 
@@ -40,10 +39,10 @@ SFA Object Designer - design tool for SFA database objects and structures
 
 ### Sfavoc
 
-SFA Vocabulary - vocabulary/dictionary manager for SFA database system
+
 
 **Year:** 1980s
-**Tags:** database, sfa, vocabulary
+**Tags:** 
 
 **[Download sfavoc.bas](sfavoc.bas)**
 
@@ -51,10 +50,10 @@ SFA Vocabulary - vocabulary/dictionary manager for SFA database system
 
 ### Xlabels
 
-Label printer - database label printing utility for mailing labels and address lists
+
 
 **Year:** 1980s
-**Tags:** database, labels, printing
+**Tags:** 
 
 **[Download xlabels.bas](xlabels.bas)**
 
@@ -64,7 +63,7 @@ Label printer - database label printing utility for mailing labels and address l
 
 1. **Download** the .bas file you want to use
 2. **Open MBASIC** in your preferred UI (Web, Tkinter, Curses, or CLI)
-3. **Open the file:**
+3. **Load the file:**
    - **Web/Tkinter UI:** Click File → Open, select the downloaded file
    - **CLI:** Type `LOAD "filename.bas"`
 4. **Run:** Type `RUN` or press the Run button

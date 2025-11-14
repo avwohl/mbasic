@@ -270,15 +270,12 @@ Classic BASIC games from the CP/M era
 
 ### Calendar
 
-Full-year calendar display program - shows entire year's calendar at once (Creative Computing, 1979)
 
-**Source:** Creative Computing, Morristown, NJ
-**Year:** 1979
-**Tags:** calendar, display, year-view
+
+**Year:** 1980s
+**Tags:** 
 
 **[Download calendar.bas](calendar.bas)**
-
-**Note:** A different calendar program (month/year selector, 1900-2099) is available in the [Utilities Library](../utilities/index.md#calendar)
 
 ---
 
@@ -557,7 +554,7 @@ Full-year calendar display program - shows entire year's calendar at once (Creat
 
 ---
 
-### Hangman
+### \t\tHANGMAN.BAS\tDEMO
 
 
 
@@ -1255,7 +1252,7 @@ Full-year calendar display program - shows entire year's calendar at once (Creat
 
 1. **Download** the .bas file you want to use
 2. **Open MBASIC** in your preferred UI (Web, Tkinter, Curses, or CLI)
-3. **Open the file:**
+3. **Load the file:**
    - **Web/Tkinter UI:** Click File → Open, select the downloaded file
    - **CLI:** Type `LOAD "filename.bas"`
 4. **Run:** Type `RUN` or press the Run button

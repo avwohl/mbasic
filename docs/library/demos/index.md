@@ -6,10 +6,10 @@ Demonstration programs and test suites
 
 ### Benchmk
 
-Interpreter benchmark program - performance testing suite for BASIC interpreter speed comparison
+
 
 **Year:** 1980s
-**Tags:** benchmark, performance, test
+**Tags:** 
 
 **[Download benchmk.bas](benchmk.bas)**
 
@@ -17,10 +17,10 @@ Interpreter benchmark program - performance testing suite for BASIC interpreter 
 
 ### Test Curses Features
 
-Curses UI feature test - comprehensive test suite for curses terminal interface features in MBASIC
 
-**Year:** Modern
-**Tags:** test, curses, ui
+
+**Year:** 1980s
+**Tags:** test
 
 **[Download test_curses_features.bas](test_curses_features.bas)**
 
@@ -28,10 +28,10 @@ Curses UI feature test - comprehensive test suite for curses terminal interface 
 
 ### Test Curses Input
 
-Curses input test - test program for keyboard input handling in curses terminal interface
 
-**Year:** Modern
-**Tags:** test, curses, input
+
+**Year:** 1980s
+**Tags:** test
 
 **[Download test_curses_input.bas](test_curses_input.bas)**
 
@@ -39,10 +39,10 @@ Curses input test - test program for keyboard input handling in curses terminal 
 
 ### Test Curses Simple
 
-Simple curses test - basic test program for curses terminal interface functionality
 
-**Year:** Modern
-**Tags:** test, curses, basic
+
+**Year:** 1980s
+**Tags:** test
 
 **[Download test_curses_simple.bas](test_curses_simple.bas)**
 
@@ -50,10 +50,10 @@ Simple curses test - basic test program for curses terminal interface functional
 
 ### Test Immediate Input
 
-Immediate input test - test program for INKEY$ and immediate keyboard input functions
 
-**Year:** Modern
-**Tags:** test, input, inkey
+
+**Year:** 1980s
+**Tags:** test
 
 **[Download test_immediate_input.bas](test_immediate_input.bas)**
 
@@ -63,7 +63,7 @@ Immediate input test - test program for INKEY$ and immediate keyboard input func
 
 1. **Download** the .bas file you want to use
 2. **Open MBASIC** in your preferred UI (Web, Tkinter, Curses, or CLI)
-3. **Open the file:**
+3. **Load the file:**
    - **Web/Tkinter UI:** Click File → Open, select the downloaded file
    - **CLI:** Type `LOAD "filename.bas"`
 4. **Run:** Type `RUN` or press the Run button

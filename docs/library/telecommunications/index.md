@@ -6,10 +6,10 @@ Modem, terminal, and BBS programs
 
 ### Bmodem
 
-Batch modem file transfer - modem communication program for batch file transfers using CP/M modems
+
 
 **Year:** 1980s
-**Tags:** modem, transfer, communication
+**Tags:** 
 
 **[Download bmodem.bas](bmodem.bas)**
 
@@ -17,10 +17,10 @@ Batch modem file transfer - modem communication program for batch file transfers
 
 ### Bmodem1
 
-Batch modem v1 - early version of batch modem file transfer program for CP/M systems
+
 
 **Year:** 1980s
-**Tags:** modem, transfer, communication
+**Tags:** 
 
 **[Download bmodem1.bas](bmodem1.bas)**
 
@@ -28,10 +28,10 @@ Batch modem v1 - early version of batch modem file transfer program for CP/M sys
 
 ### Command
 
-Command processor - terminal command interpreter or BBS command processing system
+
 
 **Year:** 1980s
-**Tags:** terminal, command, bbs
+**Tags:** 
 
 **[Download command.bas](command.bas)**
 
@@ -39,10 +39,10 @@ Command processor - terminal command interpreter or BBS command processing syste
 
 ### Exitbbs1
 
-BBS exit utility v1 - exit/logout utility for bulletin board systems with cleanup and housekeeping
+
 
 **Year:** 1980s
-**Tags:** bbs, exit, utility
+**Tags:** 
 
 **[Download exitbbs1.bas](exitbbs1.bas)**
 
@@ -50,10 +50,10 @@ BBS exit utility v1 - exit/logout utility for bulletin board systems with cleanu
 
 ### Xtel
 
-Terminal emulator - communications terminal program for modem connections and BBS access
+
 
 **Year:** 1980s
-**Tags:** terminal, modem, emulator
+**Tags:** 
 
 **[Download xtel.bas](xtel.bas)**
 
@@ -63,7 +63,7 @@ Terminal emulator - communications terminal program for modem connections and BB
 
 1. **Download** the .bas file you want to use
 2. **Open MBASIC** in your preferred UI (Web, Tkinter, Curses, or CLI)
-3. **Open the file:**
+3. **Load the file:**
    - **Web/Tkinter UI:** Click File → Open, select the downloaded file
    - **CLI:** Type `LOAD "filename.bas"`
 4. **Run:** Type `RUN` or press the Run button

@@ -6,11 +6,10 @@ Utility programs for file management, conversion, and system tools
 
 ### Bigcal2
 
-Extended precision calculator with up to 100-digit precision for arithmetic operations
 
-**Author:** Judson D. McClendon, modified by R.J. Sandel
+
 **Year:** 1980s
-**Tags:** calculator, math, precision
+**Tags:** 
 
 **[Download bigcal2.bas](bigcal2.bas)**
 
@@ -18,25 +17,21 @@ Extended precision calculator with up to 100-digit precision for arithmetic oper
 
 ### Calendar
 
-Month/year calendar generator - prompts for specific month and year (1900-2099), prints formatted calendar (Dr Dobbs, 1982)
 
-**Source:** Dr Dobbs Nov 1981
-**Year:** 1982
-**Tags:** date, calendar, utility, month-view
+
+**Year:** 1980s
+**Tags:** 
 
 **[Download calendar.bas](calendar.bas)**
-
-**Note:** A different calendar program (full-year display) is available in the [Games Library](../games/index.md#calendar)
 
 ---
 
 ### Calendr5
 
-Gregorian calendar utilities - compute day of week, days between dates, and astronomical Julian dates
 
-**Author:** D. Mc Lanahan
+
 **Year:** 1980s
-**Tags:** calendar, date, astronomy, julian
+**Tags:** 
 
 **[Download calendr5.bas](calendr5.bas)**
 
@@ -44,10 +39,10 @@ Gregorian calendar utilities - compute day of week, days between dates, and astr
 
 ### Charfreq
 
-Character frequency analyzer - counts occurrence of each character in text
+
 
 **Year:** 1980s
-**Tags:** text, analysis, frequency
+**Tags:** 
 
 **[Download charfreq.bas](charfreq.bas)**
 
@@ -55,11 +50,10 @@ Character frequency analyzer - counts occurrence of each character in text
 
 ### Convert
 
-Convert BASICODE2 programs to MBASIC format
 
-**Author:** Henk Wevers, Dutch Hobby Computerclub
+
 **Year:** 1980s
-**Tags:** conversion, basicode, translator
+**Tags:** 
 
 **[Download convert.bas](convert.bas)**
 
@@ -67,10 +61,10 @@ Convert BASICODE2 programs to MBASIC format
 
 ### Dow
 
-Day of Week calculator - determine what day of the week any date falls on
+
 
 **Year:** 1980s
-**Tags:** date, calendar, dow
+**Tags:** 
 
 **[Download dow.bas](dow.bas)**
 
@@ -78,22 +72,21 @@ Day of Week calculator - determine what day of the week any date falls on
 
 ### Fprime
 
-Prime number generator - finds and prints all prime numbers up to 1000
+
 
 **Year:** 1980s
-**Tags:** math, prime, numbers
+**Tags:** 
 
 **[Download fprime.bas](fprime.bas)**
 
 ---
 
-### Hex2Data
+### Remarks:  This program will con
 
-Convert Intel Hex Format data files to BASIC DATA statements
 
-**Author:** Ian Cottrell, Ottawa, Ontario
-**Year:** 1983
-**Tags:** conversion, assembly, hex
+
+**Year:** 1980s
+**Tags:** 
 
 **[Download hex2data.bas](hex2data.bas)**
 
@@ -101,12 +94,10 @@ Convert Intel Hex Format data files to BASIC DATA statements
 
 ### Million
 
-Millionaire life simulation game - make financial decisions to accumulate wealth
 
-**Author:** Craig Gunnett
-**Source:** Creative Computing
+
 **Year:** 1980s
-**Tags:** simulation, financial, game
+**Tags:** 
 
 **[Download million.bas](million.bas)**
 
@@ -114,10 +105,10 @@ Millionaire life simulation game - make financial decisions to accumulate wealth
 
 ### Rotate
 
-Letter rotation puzzle game - order letters A-P by rotating groups clockwise
+
 
 **Year:** 1980s
-**Tags:** puzzle, game, logic
+**Tags:** 
 
 **[Download rotate.bas](rotate.bas)**
 
@@ -125,10 +116,10 @@ Letter rotation puzzle game - order letters A-P by rotating groups clockwise
 
 ### Search
 
-Library search system - search computer journals and general files by keywords
+
 
 **Year:** 1980s
-**Tags:** database, search, library
+**Tags:** 
 
 **[Download search.bas](search.bas)**
 
@@ -136,11 +127,10 @@ Library search system - search computer journals and general files by keywords
 
 ### Sort
 
-BASICODE 2 utility routines collection
 
-**Author:** Henk Wevers
+
 **Year:** 1980s
-**Tags:** basicode, utilities, routines
+**Tags:** 
 
 **[Download sort.bas](sort.bas)**
 
@@ -148,10 +138,10 @@ BASICODE 2 utility routines collection
 
 ### Ucase
 
-Convert lowercase characters to uppercase using bit masking function
+
 
 **Year:** 1980s
-**Tags:** string, conversion, uppercase
+**Tags:** 
 
 **[Download ucase.bas](ucase.bas)**
 
@@ -159,11 +149,10 @@ Convert lowercase characters to uppercase using bit masking function
 
 ### Un-Prot
 
-Fixup utility for UN.COM unprotect program - modifies UN.COM to work with MBASIC 5.2 protected files (by B. Norris, 1983)
+Fixup for ** UN.COM **
 
-**Author:** B. Norris
-**Year:** 1983
-**Tags:** utility, unprotect, mbasic, tool
+**Year:** 1980s
+**Tags:** 
 
 **[Download un-prot.bas](un-prot.bas)**
 
@@ -171,10 +160,10 @@ Fixup utility for UN.COM unprotect program - modifies UN.COM to work with MBASIC
 
 ### Unprotct
 
-Self-unprotecting program for MBASIC 5.21 protected files
+
 
 **Year:** 1980s
-**Tags:** utility, unprotect, mbasic
+**Tags:** 
 
 **[Download unprotct.bas](unprotct.bas)**
 
@@ -182,10 +171,10 @@ Self-unprotecting program for MBASIC 5.21 protected files
 
 ### Uudecode
 
-Decode uuencoded files back to binary format
+
 
 **Year:** 1980s
-**Tags:** decode, uuencode, conversion
+**Tags:** 
 
 **[Download uudecode.bas](uudecode.bas)**
 
@@ -193,10 +182,10 @@ Decode uuencoded files back to binary format
 
 ### Xextract
 
-Database extract utility - reads database files and extracts selected items (phone/address records) to output file
+0 -->END PAGE / 1-20 -->EXTRACT ITEM / 21 -->RESTART
 
 **Year:** 1980s
-**Tags:** database, extract, utility, records
+**Tags:** 
 
 **[Download xextract.bas](xextract.bas)**
 
@@ -204,10 +193,10 @@ Database extract utility - reads database files and extracts selected items (pho
 
 ### Xscan
 
-Database scan and delete utility - reads database files and allows deletion of selected items (phone/address records)
+0 -->END PAGE / 1-20 -->DELETE ITEM / 21 -->RESTART
 
 **Year:** 1980s
-**Tags:** database, delete, utility, records
+**Tags:** 
 
 **[Download xscan.bas](xscan.bas)**
 
@@ -217,7 +206,7 @@ Database scan and delete utility - reads database files and allows deletion of s
 
 1. **Download** the .bas file you want to use
 2. **Open MBASIC** in your preferred UI (Web, Tkinter, Curses, or CLI)
-3. **Open the file:**
+3. **Load the file:**
    - **Web/Tkinter UI:** Click File → Open, select the downloaded file
    - **CLI:** Type `LOAD "filename.bas"`
 4. **Run:** Type `RUN` or press the Run button
