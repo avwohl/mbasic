@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mbasic"
-version = "1.0.0"
+dynamic = ["version"]
 description = "MBASIC2025 5.21 BASIC language - Independent open-source implementation"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -106,6 +106,9 @@ macro_expander = "utils.mkdocs_plugins.macro_expander:MacroExpanderPlugin"
 # Include both the entry point module and the src package
 py-modules = ["mbasic"]  # Entry point: mbasic
 packages = ["src", "src.ui", "src.ui.web", "src.editing", "src.filesystem", "src.iohandler"]  # All src packages
+
+[tool.setuptools.dynamic]
+version = {attr = "src.version.VERSION"}
 
 # Tell setuptools not to look for __init__.py in src (flat namespace)
 # This allows imports like: from runtime import Runtime
