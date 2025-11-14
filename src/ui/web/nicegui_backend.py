@@ -149,7 +149,9 @@ class VariablesDialog(ui.dialog):
 
     def show(self):
         """Show the variables dialog with current variables."""
-        if not self.backend.runtime:
+        # Get runtime from interpreter (the authoritative source)
+        runtime = self.backend.interpreter.runtime if self.backend.interpreter else None
+        if not runtime:
             self.backend._notify('No program running', type='warning')
             return
 
@@ -160,7 +162,7 @@ class VariablesDialog(ui.dialog):
         self.backend._update_resource_usage()
 
         # Get all variables from runtime
-        variables = self.backend.runtime.get_all_variables()
+        variables = runtime.get_all_variables()
 
         if not variables:
             self.backend._notify('No variables defined yet', type='info')
@@ -277,15 +279,17 @@ class VariablesDialog(ui.dialog):
 
                         def save_edit():
                             try:
+                                # Get runtime from interpreter (the authoritative source)
+                                rt = self.backend.interpreter.runtime
                                 new_val = value_input.value
                                 if suffix == '$':
-                                    self.backend.runtime.set_variable(var_name, new_val, line=-1, position=0)
+                                    rt.set_variable(var_name, new_val, line=-1, position=0)
                                 elif suffix == '%':
-                                    self.backend.runtime.set_variable(var_name, int(new_val), line=-1, position=0)
+                                    rt.set_variable(var_name, int(new_val), line=-1, position=0)
                                 elif suffix in ('#', '!'):
-                                    self.backend.runtime.set_variable(var_name, float(new_val), line=-1, position=0)
+                                    rt.set_variable(var_name, float(new_val), line=-1, position=0)
                                 else:
-                                    self.backend.runtime.set_variable(var_name, float(new_val), line=-1, position=0)
+                                    rt.set_variable(var_name, float(new_val), line=-1, position=0)
                                 edit_dialog.close()
                                 # Refresh the variables dialog
                                 self.close()
@@ -328,7 +332,9 @@ class StackDialog(ui.dialog):
 
     def show(self):
         """Show the stack dialog with current execution stack."""
-        if not self.backend.runtime:
+        # Get runtime from interpreter (the authoritative source)
+        runtime = self.backend.interpreter.runtime if self.backend.interpreter else None
+        if not runtime:
             self.backend._notify('No program running', type='warning')
             return
 
@@ -336,7 +342,7 @@ class StackDialog(ui.dialog):
         self.clear()
 
         # Get execution stack from runtime
-        stack = self.backend.runtime.get_execution_stack()
+        stack = runtime.get_execution_stack()
 
         if not stack:
             self.backend._notify('Stack is empty', type='info')
@@ -424,7 +430,16 @@ class OpenFileDialog(ui.dialog):
         """Handle file upload."""
         try:
             # Read uploaded file content
-            content_bytes = await e.content.read()
+            # NiceGUI v3.0.0+ uses e.file instead of e.content
+            if hasattr(e, 'file'):
+                # NiceGUI v3.0.0+ API
+                content_bytes = await e.file.read()
+                filename = e.file.name
+            else:
+                # Legacy API (pre-v3.0.0)
+                content_bytes = await e.content.read()
+                filename = e.name
+
             content = content_bytes.decode('utf-8')
 
             # Normalize line endings and remove CP/M EOF markers
@@ -447,13 +462,13 @@ class OpenFileDialog(ui.dialog):
             self.backend._save_editor_to_program()
 
             # Store filename
-            self.backend.current_file = e.name
+            self.backend.current_file = filename
 
             # Add to recent files
-            self.backend._add_recent_file(e.name)
+            self.backend._add_recent_file(filename)
 
-            self.backend._set_status(f'Opened: {e.name}')
-            self.backend._notify(f'Loaded {e.name}', type='positive')
+            self.backend._set_status(f'Opened: {filename}')
+            self.backend._notify(f'Loaded {filename}', type='positive')
             self.close()
 
         except Exception as ex:

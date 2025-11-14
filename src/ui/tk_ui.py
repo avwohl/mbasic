@@ -1502,10 +1502,9 @@ class TkBackend(UIBackend):
 
             # Format stack depths
             gosub_text = f"GOSUB: {limits.current_gosub_depth}/{limits.max_gosub_depth}"
-            for_text = f"FOR: {limits.current_for_depth}/{limits.max_for_depth}"
             while_text = f"WHILE: {limits.current_while_depth}/{limits.max_while_depth}"
 
-            resource_text = f"{mem_text}\n{gosub_text}  {for_text}  {while_text}"
+            resource_text = f"{mem_text}\n{gosub_text}  {while_text}"
             self.resource_label.config(text=resource_text)
         else:
             self.resource_label.config(text="Resource Usage: --")

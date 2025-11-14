@@ -1158,10 +1158,9 @@ class Interpreter:
             settings_manager=self.settings_manager
         )
 
-        # Check resource limits
-        self.limits.push_for_loop(var_name)
-
         # Register loop - use PC for position
+        # Note: No nesting tracking needed - FOR loops are variable-indexed, not stack-based.
+        # Re-entering "FOR I=1 TO 10" just replaces the loop info in variable I.
         self.runtime.push_for_loop(
             var_name,
             end,
@@ -1308,8 +1307,8 @@ class Interpreter:
             self.runtime.npc = next_pc
             return True  # Loop continues
         else:
-            # Loop finished
-            self.limits.pop_for_loop()
+            # Loop finished - unbind the variable from this loop
+            # Note: No nesting tracking to pop - FOR loops are variable-indexed, not stack-based
             self.runtime.pop_for_loop(var_name)
             return False  # Loop finished
 

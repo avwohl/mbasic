@@ -36,7 +36,6 @@ class ResourceLimits:
     def __init__(self,
                  # Stack limits
                  max_gosub_depth: int = 100,
-                 max_for_depth: int = 50,
                  max_while_depth: int = 50,
 
                  # Memory limits
@@ -57,7 +56,6 @@ class ResourceLimits:
 
         Args:
             max_gosub_depth: Maximum GOSUB call nesting depth
-            max_for_depth: Maximum FOR loop nesting depth
             max_while_depth: Maximum WHILE loop nesting depth
             max_total_memory: Maximum total memory for all variables/arrays (bytes)
             max_array_size: Maximum size for a single array (bytes)
@@ -71,7 +69,6 @@ class ResourceLimits:
         """
         # Store limits
         self.max_gosub_depth = max_gosub_depth
-        self.max_for_depth = max_for_depth
         self.max_while_depth = max_while_depth
         self.max_total_memory = max_total_memory
         self.max_array_size = max_array_size
@@ -85,7 +82,6 @@ class ResourceLimits:
         # Track current usage
         self.current_memory_usage = 0
         self.current_gosub_depth = 0
-        self.current_for_depth = 0
         self.current_while_depth = 0
         self.current_open_files = 0
         self.execution_start_time: Optional[float] = None
@@ -112,22 +108,9 @@ class ResourceLimits:
         """Track RETURN from GOSUB."""
         self.current_gosub_depth = max(0, self.current_gosub_depth - 1)
 
-    def push_for_loop(self, var_name: str) -> None:
-        """Track FOR loop entry.
-
-        Args:
-            var_name: Loop variable name
-
-        Raises:
-            RuntimeError: If FOR loop nesting limit exceeded
-        """
-        self.current_for_depth += 1
-        if self.current_for_depth > self.max_for_depth:
-            raise RuntimeError(f"FOR loop nesting too deep (limit: {self.max_for_depth})")
-
-    def pop_for_loop(self) -> None:
-        """Track NEXT (loop exit)."""
-        self.current_for_depth = max(0, self.current_for_depth - 1)
+    # NOTE: FOR loop depth tracking removed - no longer needed
+    # FOR loops are variable-indexed, not stack-based. Re-entering "FOR I=1 TO 10"
+    # just replaces the loop info in variable I, so there's no nesting to track.
 
     def push_while_loop(self) -> None:
         """Track WHILE loop entry.
@@ -280,7 +263,6 @@ class ResourceLimits:
         self.allocations.clear()
         self.current_memory_usage = 0
         self.current_gosub_depth = 0
-        self.current_for_depth = 0
         self.current_while_depth = 0
 
     def check_string_length(self, string_value: str) -> None:
@@ -341,7 +323,6 @@ class ResourceLimits:
             f"({self.current_memory_usage / self.max_total_memory * 100:.1f}%)"
         )
         lines.append(f"  GOSUB depth: {self.current_gosub_depth} / {self.max_gosub_depth}")
-        lines.append(f"  FOR depth: {self.current_for_depth} / {self.max_for_depth}")
         lines.append(f"  WHILE depth: {self.current_while_depth} / {self.max_while_depth}")
 
         if self.execution_start_time:
@@ -369,7 +350,6 @@ def create_web_limits() -> ResourceLimits:
     """
     return ResourceLimits(
         max_gosub_depth=50,
-        max_for_depth=25,
         max_while_depth=25,
         max_total_memory=5*1024*1024,      # 5MB
         max_array_size=512*1024,            # 512KB per array
@@ -392,7 +372,6 @@ def create_local_limits() -> ResourceLimits:
     """
     return ResourceLimits(
         max_gosub_depth=500,
-        max_for_depth=100,
         max_while_depth=100,
         max_total_memory=100*1024*1024,     # 100MB
         max_array_size=10*1024*1024,        # 10MB per array
@@ -419,7 +398,6 @@ def create_unlimited_limits() -> ResourceLimits:
     """
     return ResourceLimits(
         max_gosub_depth=10000,
-        max_for_depth=1000,
         max_while_depth=1000,
         max_total_memory=1024*1024*1024,    # 1GB
         max_array_size=100*1024*1024,       # 100MB per array

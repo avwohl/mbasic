@@ -2921,7 +2921,7 @@ class CursesBackend(UIBackend):
             mem_line = f"Memory: {limits.current_memory_usage:,} / {limits.max_total_memory:,} ({mem_pct:.1f}%)"
 
             # Format stack depths
-            stack_line = f"Stacks: GOSUB={limits.current_gosub_depth}/{limits.max_gosub_depth} FOR={limits.current_for_depth}/{limits.max_for_depth} WHILE={limits.current_while_depth}/{limits.max_while_depth}"
+            stack_line = f"Stacks: GOSUB={limits.current_gosub_depth}/{limits.max_gosub_depth} WHILE={limits.current_while_depth}/{limits.max_while_depth}"
 
             # Add resource lines with divider
             self.variables_walker.append(make_output_line(mem_line))

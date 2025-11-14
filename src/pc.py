@@ -375,6 +375,33 @@ class StatementTable:
 
         return PC.halted()
 
+    def prev_pc(self, pc):
+        """
+        Get previous PC before given PC (backward navigation).
+
+        Used for finding the most recent FOR statement when NEXT is used
+        without a variable name.
+
+        Args:
+            pc: Current program counter
+
+        Returns:
+            Previous PC in sequence, or None if at beginning or PC not found in table
+        """
+        # Build/rebuild keys cache if needed
+        if self._keys_cache is None:
+            self._keys_cache = list(self.statements.keys())
+
+        try:
+            idx = self._keys_cache.index(pc)
+            if idx > 0:
+                return self._keys_cache[idx - 1]
+        except ValueError:
+            # PC not found in table
+            pass
+
+        return None
+
     def __contains__(self, pc):
         """Check if PC exists in table (for breakpoint checks)"""
         return pc in self.statements
