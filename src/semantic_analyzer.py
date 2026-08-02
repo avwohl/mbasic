@@ -2524,7 +2524,9 @@ class SemanticAnalyzer:
                 # Check for IV strength reduction BEFORE analyzing (which transforms expressions)
                 if self.current_loop:
                     for subscript in expr.subscripts:
-                        self._detect_iv_strength_reduction(var_name, subscript)
+                        # Bare name: this only feeds the optimization report text,
+                        # and the other call site passes a bare name too.
+                        self._detect_iv_strength_reduction(expr.name.upper(), subscript)
 
                 # Now analyze each subscript expression
                 for subscript in expr.subscripts:
@@ -2532,10 +2534,12 @@ class SemanticAnalyzer:
 
                 # If multi-dimensional, flatten the subscripts
                 if len(expr.subscripts) > 1:
-                    var_info = self.symbols.variables.get(var_name)
+                    # var_key, not the bare name: symbols.variables is keyed by
+                    # the type-suffixed name (A!, A%), so a bare lookup misses.
+                    var_info = self.symbols.variables.get(var_key)
                     if var_info and var_info.is_array and var_info.dimensions:
                         # Transform multi-dimensional subscripts to flat index
-                        flattened = self._flatten_array_subscripts(var_name, expr.subscripts, var_info.dimensions)
+                        flattened = self._flatten_array_subscripts(var_key, expr.subscripts, var_info.dimensions)
                         # Replace the subscripts list with a single flattened expression
                         expr.subscripts = [flattened]
 
@@ -4752,9 +4756,11 @@ class SemanticAnalyzer:
                     modified.add(stmt.variable.name.upper())
 
             elif isinstance(stmt, ForStatementNode):
-                # stmt.variable is a VariableNode
-                from parser import VariableNode as VarNode
-                if isinstance(stmt.variable, VarNode):
+                # stmt.variable is a VariableNode. Use the module-level import
+                # from src.ast_nodes rather than a flat `from parser import ...`,
+                # which loaded a second copy of the module under another name and
+                # made this file unimportable when only src.* is on sys.path.
+                if isinstance(stmt.variable, VariableNode):
                     modified.add(stmt.variable.name.upper())
                 elif isinstance(stmt.variable, str):
                     modified.add(stmt.variable.upper())
