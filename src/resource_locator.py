@@ -107,6 +107,26 @@ def find_library_dir() -> Path:
     return find_docs_dir() / "library"
 
 
+def find_c_runtime_dir() -> Optional[Path]:
+    """Find runtime/strings, the C support library used by --compile-c.
+
+    It sits beside src/ in a source checkout, and is shipped inside the package
+    (as src/runtime/strings) when installed with pip.
+
+    Returns:
+        Path to the directory containing mb25_string.c, or None if not found
+    """
+    here = Path(__file__).resolve().parent
+    candidates = [
+        here.parent / "runtime" / "strings",  # Source checkout: <root>/runtime/strings
+        here / "runtime" / "strings",         # Installed: <site-packages>/src/runtime/strings
+    ]
+    for candidate in candidates:
+        if (candidate / "mb25_string.c").is_file():
+            return candidate
+    return None
+
+
 def find_basic_dir() -> Optional[Path]:
     """Find the basic programs directory (development only).
 

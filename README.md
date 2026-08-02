@@ -41,17 +41,24 @@ See [Implementation Status](#implementation-status) section below for details, [
 pip install mbasic
 
 # With full-screen terminal UI (curses backend)
-pip install mbasic[curses]
+pip install "mbasic[curses]"
 
 # With graphical UI (tkinter - included with Python)
-pip install mbasic[tk]
+pip install "mbasic[tk]"
+
+# With browser-based UI (web backend)
+pip install "mbasic[web]"
 
 # With all UI backends
-pip install mbasic[all]
+pip install "mbasic[all]"
 
 # For development
-pip install mbasic[dev]
+pip install "mbasic[dev]"
 ```
+
+Running `mbasic` with no `--ui` starts the full-screen curses UI when it is
+installed, and otherwise falls back to the CLI UI. `mbasic --list-backends`
+shows what is installed and how to add the rest.
 
 **Building from source**: See [Linux Mint Developer Setup](docs/dev/LINUX_MINT_DEVELOPER_SETUP.md) for complete system setup including all required packages, compiler tools, and development dependencies.
 

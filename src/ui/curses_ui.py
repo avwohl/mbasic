@@ -1446,6 +1446,12 @@ class CursesBackend(UIBackend):
         # (but don't start the loop yet - that happens in start())
         self._create_ui()
 
+        # Load auto-numbering settings now that self.editor exists. These were
+        # previously only set when the Settings dialog was closed, so ^N (New)
+        # and ^Y (smart insert) crashed in a session that never opened Settings.
+        # reset_editor=False preserves the editor's own .mbasic.conf overrides.
+        self._reload_editor_settings(reset_editor=False)
+
     def _save_editor_to_program(self):
         """Save editor content back to program.
 
@@ -1913,7 +1919,9 @@ class CursesBackend(UIBackend):
     def _handle_input(self, key):
         """Handle global keyboard shortcuts."""
         if (QUIT_KEY and key == QUIT_KEY) or key == QUIT_ALT_KEY:
-            # Quit (QUIT_KEY is menu-only, but QUIT_ALT_KEY is Ctrl+C)
+            # Quit (QUIT_KEY is None/menu-only; QUIT_ALT_KEY comes from
+            # curses_keybindings.json and is ^Q. ^C is separate: it arrives as
+            # SIGINT, not as a key, and is handled by the signal handler.)
             raise urwid.ExitMainLoop()
 
         elif key == TAB_KEY:
@@ -2796,15 +2804,26 @@ class CursesBackend(UIBackend):
         self.loop.widget = overlay
         self.loop.unhandled_input = menu_input
 
-    def _reload_editor_settings(self):
-        """Reload editor settings from settings system."""
+    def _reload_editor_settings(self, reset_editor=True):
+        """Load auto-numbering settings from the settings system.
+
+        Called once from __init__ and again whenever the Settings dialog closes.
+        The __init__ call matters: _new_program() (^N / File->New) and
+        _smart_insert_line() (^Y) read these attributes, so without it they
+        raised AttributeError in any session where Settings was never opened.
+
+        Args:
+            reset_editor: Also reset the editor's next auto line number. False at
+                startup, where ProgramEditorWidget has already applied any
+                .mbasic.conf overrides that this would otherwise discard.
+        """
         from src.settings import get
         self.auto_number_start = get('auto_number_start')
         self.auto_number_increment = get('auto_number_step')
         self.auto_number_enabled = get('auto_number')
 
         # If no lines have been entered yet, reset the next line number
-        if not self.editor.lines:
+        if reset_editor and not self.editor.lines:
             self.editor.next_auto_line_num = self.auto_number_start
 
     def _show_settings(self):

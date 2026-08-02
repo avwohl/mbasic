@@ -57,8 +57,15 @@ curses = ["urwid>=2.0.0"]
 # requires python3-tk package: sudo apt-get install python3-tk
 tk = []
 
-# All UI backends
-all = ["urwid>=2.0.0"]
+# Web UI backend (browser-based, NiceGUI)
+web = ["nicegui>=3.2.0"]
+
+# All UI backends plus the in-UI help browser
+all = [
+    "urwid>=2.0.0",
+    "nicegui>=3.2.0",
+    "python-frontmatter>=1.0.0",
+]
 
 # Development dependencies
 dev = [
@@ -81,6 +88,7 @@ docs = [
 # Full development environment
 full = [
     "urwid>=2.0.0",
+    "nicegui>=3.2.0",
     "pytest>=7.0",
     "pexpect>=4.8.0",
     "python-frontmatter>=1.0.0",
@@ -97,15 +105,17 @@ Issues = "https://github.com/avwohl/mbasic/issues"
 Changelog = "https://github.com/avwohl/mbasic/blob/main/docs/dev/WORK_IN_PROGRESS.md"
 
 [project.scripts]
-mbasic = "mbasic:main"
-
-[project.entry-points."mkdocs.plugins"]
-macro_expander = "utils.mkdocs_plugins.macro_expander:MacroExpanderPlugin"
+mbasic = "src.mbasic_main:main"
 
 [tool.setuptools]
-# Include both the entry point module and the src package
-py-modules = ["mbasic"]  # Entry point: mbasic
-packages = ["src", "src.ui", "src.ui.web", "src.editing", "src.filesystem", "src.iohandler"]  # All src packages
+# The `mbasic` console script lives in src/mbasic_main.py (the extensionless
+# ./mbasic file at the repo root is only a launcher for source checkouts and is
+# deliberately NOT packaged - setuptools cannot ship an extensionless module).
+packages = [
+    "src", "src.ui", "src.ui.web", "src.editing", "src.filesystem", "src.iohandler",
+    "src.docs",     # docs/   -> in-UI help browser content
+    "src.runtime",  # runtime/ -> C support library used by --compile-c
+]
 
 [tool.setuptools.dynamic]
 version = {attr = "src.version.VERSION"}
@@ -114,13 +124,23 @@ version = {attr = "src.version.VERSION"}
 # This allows imports like: from runtime import Runtime
 [tool.setuptools.package-dir]
 "" = "."  # Root is current directory
+# Ship docs/ inside the installed package so the in-UI help browser works after
+# `pip install` (src/resource_locator.py looks for <src>/docs/help/index.md).
+"src.docs" = "docs"
+"src.runtime" = "runtime"
 
 [tool.setuptools.package-data]
-# Include documentation and example files
-"mbasic" = [
-    "docs/**/*.md",
-    "docs/**/*.json",
-    "basic/**/*.bas",
-    "basic/**/*.BAS",
-    "basic/**/*.txt",
+# Keybinding definitions loaded at import time by src/ui/keybindings.py
+"src.ui" = ["*.json"]
+# Editor assets served by the web backend
+"src.ui.web" = ["*.js", "*.css"]
+# In-UI help browser content and the bundled example/library programs
+"src.docs" = [
+    "help/**/*.md",
+    "help/**/*.json",
+    "library/**/*.md",
+    "library/**/*.bas",
+    "library/**/*.BAS",
 ]
+# C sources linked by --compile-c
+"src.runtime" = ["strings/*.c", "strings/*.h"]

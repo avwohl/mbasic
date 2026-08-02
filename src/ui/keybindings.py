@@ -206,14 +206,15 @@ HELP_KEY = 'ctrl f'
 # Menu system (not in JSON, hardcoded)
 MENU_KEY = 'ctrl u'
 
-# Quit - No dedicated keybinding in QUIT_KEY (most Ctrl keys intercepted by terminal or already assigned)
-# Primary method: Use menu (Ctrl+U -> File -> Quit)
-# Alternative method: Ctrl+C (interrupt signal) - handled by QUIT_ALT_KEY below
-QUIT_KEY = None  # No standard keybinding (use menu or Ctrl+C instead)
+# Quit - QUIT_KEY intentionally has no value here; the keyboard binding lives in
+# QUIT_ALT_KEY below, which is loaded from curses_keybindings.json.
+# Ways to quit: the menu (^U -> File -> Quit), QUIT_ALT_KEY, or ^C (which is not
+# a keybinding at all - it arrives as SIGINT and is handled in curses_ui.py).
+QUIT_KEY = None  # See QUIT_ALT_KEY for the actual key
 
-# Alternative quit keybinding (loaded from JSON config)
-# Note: QUIT_ALT_KEY is loaded from the JSON config (defaults to 'ctrl c')
-# and provides an additional way to quit the program via keyboard.
+# Alternative quit keybinding, loaded from curses_keybindings.json ("editor" ->
+# "quit"), currently ^Q. The 'ctrl c' below is only a fallback for a missing or
+# unreadable JSON config - it is not what QUIT_ALT_KEY normally evaluates to.
 _quit_alt_from_json = _get_key('editor', 'quit')
 QUIT_ALT_KEY = _ctrl_key_to_urwid(_quit_alt_from_json) if _quit_alt_from_json else 'ctrl c'
 

@@ -29,5 +29,32 @@ jobs:
       - name: Build package
         run: python -m build
 
+      # Guards against shipping a wheel whose console script or package data is
+      # missing - mbasic 1.0.995 was published with neither and was unusable.
+      - name: Smoke test the built wheel
+        run: |
+          set -eux
+          python -m venv /tmp/smoke
+          /tmp/smoke/bin/pip install --quiet dist/*.whl
+
+          # The console script must exist and run (issue #1).
+          /tmp/smoke/bin/mbasic --list-backends
+          /tmp/smoke/bin/mbasic --help > /dev/null
+
+          # A minimal install must be able to execute a program.
+          cd /tmp
+          printf '10 PRINT "SMOKE OK"\n' > smoke.bas
+          printf 'RUN\nSYSTEM\n' | /tmp/smoke/bin/mbasic --ui cli smoke.bas | grep -q "SMOKE OK"
+
+          # Package data the UI reads at runtime must be present.
+          /tmp/smoke/bin/python - <<'PY'
+          from pathlib import Path
+          import src.ui.keybindings  # reads curses_keybindings.json at import time
+          from src.resource_locator import find_help_dir, find_c_runtime_dir
+          assert (find_help_dir() / "index.md").is_file(), "help docs missing from wheel"
+          assert find_c_runtime_dir() is not None, "C runtime missing from wheel"
+          print("package data OK")
+          PY
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

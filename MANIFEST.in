@@ -4,20 +4,29 @@ include docs/user/INSTALL.md
 include LICENSE
 include requirements.txt
 
+# Include the source-checkout launcher (extensionless, so no glob matches it)
+include mbasic
+
 # Include all Python source files
 recursive-include src *.py
 
 # Include UI configuration files
 recursive-include src/ui *.json
 
+# Include web backend editor assets
+recursive-include src/ui/web *.js *.css
+
+# Include the C runtime library used by --compile-c
+recursive-include runtime *.c *.h
+
 # Include documentation directory (use 'docs' not 'doc')
 recursive-include docs *.md
 
+# Include help browser search indexes
+recursive-include docs/help *.json
+
 # Include example BASIC programs
 recursive-include basic *.bas *.BAS *.txt
-
-# Include game files
-recursive-include games *.bas *.BAS
 
 # Include demo files
 recursive-include demos *.bas *.BAS

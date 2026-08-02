@@ -43,19 +43,30 @@ Only needed if you want to use the Tkinter GUI backend. Skip this if you only ne
 **If you just want to install and use MBASIC**, the easiest method is via PyPI:
 
 ```bash
-# Install MBASIC
+# Install MBASIC (CLI UI, no dependencies)
 pip install mbasic
 
 # Or with full-screen terminal UI support
-pip install mbasic[curses]
+pip install "mbasic[curses]"
+
+# Or with browser-based UI support
+pip install "mbasic[web]"
 
 # Or with all UI backends
-pip install mbasic[all]
+pip install "mbasic[all]"
 ```
 
 After installation, run:
 ```bash
 mbasic
+```
+
+With no `--ui` option MBASIC starts the curses UI if it is installed, and
+otherwise falls back to the CLI UI. To see which UIs are installed on your
+system and how to add the others:
+
+```bash
+mbasic --list-backends
 ```
 
 **If you prefer to install from source**, continue reading the sections below.
