@@ -105,7 +105,9 @@ Homepage = "https://github.com/avwohl/mbasic"
 Documentation = "https://avwohl.github.io/mbasic/"
 Repository = "https://github.com/avwohl/mbasic"
 Issues = "https://github.com/avwohl/mbasic/issues"
-Changelog = "https://github.com/avwohl/mbasic/blob/main/docs/dev/WORK_IN_PROGRESS.md"
+# The GitHub releases page, not docs/dev/WORK_IN_PROGRESS.md: that file is
+# deliberately deleted when work completes, so the PyPI Changelog link 404'd.
+Changelog = "https://github.com/avwohl/mbasic/releases"
 
 [project.scripts]
 mbasic = "src.mbasic_main:main"
