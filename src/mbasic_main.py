@@ -350,10 +350,15 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False):
     import subprocess
 
     try:
-        # Import required modules
-        from lexer import Lexer
-        from parser import Parser
-        from semantic_analyzer import SemanticAnalyzer
+        # Import via src.* to match the codegen backend. These modules are
+        # importable under two names (flat, because src/ is on sys.path, and as
+        # src.*), and Python treats those as separate modules with separate
+        # class objects. Mixing them made every `var_info.var_type == VarType.X`
+        # comparison in the backend false, so no variable declarations were
+        # emitted and string variables were treated as numeric.
+        from src.lexer import Lexer
+        from src.parser import Parser
+        from src.semantic_analyzer import SemanticAnalyzer
         from src.codegen_backend import Z88dkCBackend
 
         # Read source file
@@ -402,6 +407,11 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False):
         backend = Z88dkCBackend(analyzer.symbols, config)
         c_code = backend.generate(ast)
 
+        # --compile-c takes a base name, but users reasonably pass "out.c" and
+        # got "out.c.c". Treat a trailing .c as the base name they meant.
+        if output_file.endswith('.c'):
+            output_file = output_file[:-2]
+
         # Write C file
         c_file = output_file + '.c'
         with open(c_file, 'w') as f:
@@ -425,18 +435,34 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False):
         runtime_dir = str(runtime_path)
         runtime_c = os.path.join(runtime_dir, 'mb25_string.c')
 
+        # --math-mbf32 selects Microsoft Binary Format floats, matching MBASIC.
+        # Both targets need it: without it the z80 link fails on any program
+        # with a float variable ("undefined symbol: init_floatpack").
+        # -o names the output exactly, so ask for the .com name we advertise
+        # below - otherwise z88dk writes an extensionless file and the --run
+        # step silently finds nothing.
         if cpu == '8080':
             zcc_cmd = ['z88dk.zcc', '+cpm', '-clib=8080', '--math-mbf32',
                        f'-I{runtime_dir}', c_file, runtime_c,
-                       '-o', output_file, '-create-app']
+                       '-o', com_file, '-create-app']
         else:
-            zcc_cmd = ['z88dk.zcc', '+cpm', f'-I{runtime_dir}',
-                       c_file, runtime_c, '-o', output_file, '-create-app']
+            zcc_cmd = ['z88dk.zcc', '+cpm', '--math-mbf32', f'-I{runtime_dir}',
+                       c_file, runtime_c, '-o', com_file, '-create-app']
 
         if debug:
             print(f"  Running: {' '.join(zcc_cmd)}", file=sys.stderr)
 
-        result = subprocess.run(zcc_cmd, capture_output=True, text=True)
+        try:
+            result = subprocess.run(zcc_cmd, capture_output=True, text=True)
+        except FileNotFoundError:
+            # Without this the outer handler blames the BASIC source file,
+            # reporting "File not found: <program>.bas" for a file that exists.
+            print("Error: z88dk not found - cannot compile the generated C.",
+                  file=sys.stderr)
+            print(f"The C source was written to {c_file}.", file=sys.stderr)
+            print("Install z88dk (https://z88dk.org) to build a CP/M .com binary.",
+                  file=sys.stderr)
+            sys.exit(1)
 
         if result.returncode != 0:
             print(f"z88dk compilation failed:", file=sys.stderr)

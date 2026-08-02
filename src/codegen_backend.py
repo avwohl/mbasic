@@ -779,6 +779,50 @@ class Z88dkCBackend(CodeGenBackend):
 
         return decls
 
+    def _generate_index_expression(self, subscript: Any) -> str:
+        """Generate an array subscript, cast to int when it is not already.
+
+        BASIC array indices are frequently plain (single-precision) variables:
+        `DIM A(5) : I = 2 : PRINT A(I)`. Emitting a[i] with `float i` is invalid
+        C, and sccz80 accepts it while indexing with the raw low word of the
+        MBF32 value - which is 0 for small integers, so every element access
+        silently hit element 0.
+        """
+        expr = self._generate_expression(subscript)
+        if self._get_expression_type(subscript) == VarType.INTEGER:
+            return expr
+        return f'(int)({expr})'
+
+    def _canonical_basic_name(self, var_node: Any) -> str:
+        """BASIC name including its type suffix, as the symbol table keys it.
+
+        The parser strips the suffix (A$ becomes VariableNode(name='a',
+        type_suffix='$')), but the symbol table and the string-ID map are keyed
+        on the suffixed name. Looking up the bare name silently missed, which
+        made _mangle_variable_name emit a different C identifier for a reference
+        (i) than for its declaration (i_int), and made every string variable
+        collapse to ID 0 in _get_string_id.
+        """
+        base = getattr(var_node, 'name', '').upper()
+        suffix = getattr(var_node, 'type_suffix', None)
+
+        # The parser fills in type_suffix from the DEF tables even when the
+        # source did not write one (DEFINT I makes a bare I carry '%'), so
+        # honouring it is what keeps a reference consistent with its
+        # declaration.
+        if suffix and (base + suffix) in self.symbols.variables:
+            return base + suffix
+        if base in self.symbols.variables:
+            return base
+
+        # Deliberately do NOT search the other suffixes here. A variable the
+        # analyzer never registered (SWAP only registers neither operand) would
+        # then alias onto an unrelated variable that merely shares a base name:
+        # `SWAP V, W` next to `V% = 42` silently became a swap of V% and W%,
+        # turning a loud "Unknown symbol: v" build failure into a wrong answer.
+        # Falling through leaves the name unresolved, which still fails loudly.
+        return base + (suffix or '')
+
     def _mangle_variable_name(self, basic_name: str) -> str:
         """
         Convert BASIC variable name to valid C identifier.
@@ -952,11 +996,14 @@ class Z88dkCBackend(CodeGenBackend):
         elif isinstance(expr, StringNode):
             return VarType.STRING
         elif isinstance(expr, VariableNode):
-            var_name = expr.name.upper()
-            if var_name in self.symbols.variables:
-                return self.symbols.variables[var_name].var_type
-            else:
-                return VarType.SINGLE  # Default
+            # Resolve through the same helper the name mangler uses, so the
+            # type we report here cannot disagree with the C identifier we
+            # emit. (They did disagree: under DEFINT I, a bare I mangled to
+            # i_int but typed as SINGLE, producing printf("%g", i_int).)
+            var_info = self.symbols.variables.get(self._canonical_basic_name(expr))
+            if var_info is not None:
+                return var_info.var_type
+            return VarType.SINGLE  # Default
         elif isinstance(expr, BinaryOpNode):
             # For string concatenation
             left_type = self._get_expression_type(expr.left)
@@ -1126,7 +1173,7 @@ class Z88dkCBackend(CodeGenBackend):
         """Generate FOR loop code"""
         code = []
 
-        var_name = self._mangle_variable_name(stmt.variable.name)
+        var_name = self._mangle_variable_name(self._canonical_basic_name(stmt.variable))
         start = self._generate_expression(stmt.start_expr)
         end = self._generate_expression(stmt.end_expr)
         step = '1'
@@ -1167,14 +1214,14 @@ class Z88dkCBackend(CodeGenBackend):
 
         if var_type == VarType.STRING:
             # String assignment
-            var_str_id = self._get_string_id(stmt.variable.name)
+            var_str_id = self._get_string_id(self._canonical_basic_name(stmt.variable))
 
             if isinstance(stmt.expression, StringNode):
                 # String literal assignment
                 return [self.indent() + f'mb25_string_alloc_const({var_str_id}, "{self._escape_string(stmt.expression.value)}");']
             elif isinstance(stmt.expression, VariableNode):
                 # Simple variable copy
-                src_str_id = self._get_string_id(stmt.expression.name)
+                src_str_id = self._get_string_id(self._canonical_basic_name(stmt.expression))
                 return [self.indent() + f'mb25_string_copy({var_str_id}, {src_str_id});']
             elif isinstance(stmt.expression, FunctionCallNode):
                 # String function result
@@ -1189,7 +1236,7 @@ class Z88dkCBackend(CodeGenBackend):
                 return [self.indent() + f'/* Unsupported string expression */']
         else:
             # Numeric assignment
-            var_name = self._mangle_variable_name(stmt.variable.name)
+            var_name = self._mangle_variable_name(self._canonical_basic_name(stmt.variable))
             expr = self._generate_expression(stmt.expression)
             return [self.indent() + f'{var_name} = {expr};']
 
@@ -1250,7 +1297,7 @@ class Z88dkCBackend(CodeGenBackend):
                 code.append(self.indent() + '/* Parse next field */')
 
                 if var_type == VarType.STRING:
-                    var_str_id = self._get_string_id(var_node.name)
+                    var_str_id = self._get_string_id(self._canonical_basic_name(var_node))
                     # Handle quoted strings from WRITE#
                     code.append(self.indent() + 'if (*_ptr == \'\\"\') {')
                     self.indent_level += 1
@@ -1292,7 +1339,7 @@ class Z88dkCBackend(CodeGenBackend):
                     code.append(self.indent() + '}')
                 else:
                     # Numeric input
-                    var_name = self._mangle_variable_name(var_node.name)
+                    var_name = self._mangle_variable_name(self._canonical_basic_name(var_node))
                     code.append(self.indent() + '{')
                     self.indent_level += 1
                     if var_type == VarType.INTEGER:
@@ -1314,7 +1361,7 @@ class Z88dkCBackend(CodeGenBackend):
 
                 if var_type == VarType.STRING:
                     # String input
-                    var_str_id = self._get_string_id(var_node.name)
+                    var_str_id = self._get_string_id(self._canonical_basic_name(var_node))
                     code.append(self.indent() + f'if (fgets(input_buffer, 256, {input_stream})) {{')
                     self.indent_level += 1
                     code.append(self.indent() + 'size_t len = strlen(input_buffer);')
@@ -1328,7 +1375,7 @@ class Z88dkCBackend(CodeGenBackend):
                     code.append(self.indent() + '}')
                 else:
                     # Numeric input
-                    var_name = self._mangle_variable_name(var_node.name)
+                    var_name = self._mangle_variable_name(self._canonical_basic_name(var_node))
                     if var_type == VarType.INTEGER:
                         code.append(self.indent() + f'fscanf({input_stream}, "%d", &{var_name});')
                     else:
@@ -1504,11 +1551,11 @@ class Z88dkCBackend(CodeGenBackend):
 
             # Read value based on variable type
             var_type = self._get_expression_type(var_node)
-            var_name = self._mangle_variable_name(var_node.name)
+            var_name = self._mangle_variable_name(self._canonical_basic_name(var_node))
 
             if var_type == VarType.STRING:
                 # String variable - read from appropriate source based on DATA type
-                str_id = self._get_string_id(var_node.name)
+                str_id = self._get_string_id(self._canonical_basic_name(var_node))
                 code.append(self.indent() + 'if (data_types[data_pointer] == \'S\') {')
                 self.indent_level += 1
                 # Read string directly
@@ -1573,17 +1620,13 @@ class Z88dkCBackend(CodeGenBackend):
         BASIC arrays can be multi-dimensional, but we flatten them to 1D in C.
         The semantic analyzer has already computed the flattened index expression.
         """
-        var_name = self._mangle_variable_name(var_node.name)
-        # Need to include type suffix when looking up in symbol table
-        lookup_name = var_node.name.upper()
-        if var_node.type_suffix and var_node.explicit_type_suffix:
-            # Only add suffix if it was explicitly in the source
-            lookup_name += var_node.type_suffix
-        var_info = self.symbols.variables.get(lookup_name)
-
-        # If not found, try without suffix (for implicitly typed variables)
-        if not var_info:
-            var_info = self.symbols.variables.get(var_node.name.upper())
+        # _canonical_basic_name resolves the implicit-suffix case too: DIM A(5)
+        # is stored as 'A!', so looking up the bare 'A' found nothing and this
+        # fell through to the not-an-array branch below, silently dropping the
+        # subscript and emitting `a = ...` for `A(I) = ...`.
+        canonical_name = self._canonical_basic_name(var_node)
+        var_name = self._mangle_variable_name(canonical_name)
+        var_info = self.symbols.variables.get(canonical_name)
 
         if not var_info or not var_info.is_array:
             self.warnings.append(f"Variable {var_node.name} is not an array")
@@ -1593,7 +1636,7 @@ class Z88dkCBackend(CodeGenBackend):
         # (it should have transformed multi-dimensional to single index)
         if len(var_node.subscripts) == 1:
             # Simple 1D access or already flattened
-            index = self._generate_expression(var_node.subscripts[0])
+            index = self._generate_index_expression(var_node.subscripts[0])
             return f'{var_name}[{index}]'
         else:
             # Multi-dimensional - need to flatten
@@ -1607,7 +1650,7 @@ class Z88dkCBackend(CodeGenBackend):
             # Build the flattened index expression
             index_parts = []
             for i, subscript in enumerate(var_node.subscripts):
-                sub_expr = self._generate_expression(subscript)
+                sub_expr = self._generate_index_expression(subscript)
 
                 # Calculate stride for this dimension
                 stride = 1
@@ -2061,7 +2104,7 @@ class Z88dkCBackend(CodeGenBackend):
             return [self.indent() + '/* LINE INPUT requires a string variable */']
 
         # String input - read entire line including spaces
-        var_str_id = self._get_string_id(stmt.variable.name)
+        var_str_id = self._get_string_id(self._canonical_basic_name(stmt.variable))
         code.append(self.indent() + f'if (!fgets(input_buffer, 256, {input_stream})) {{')
         self.indent_level += 1
         # If fgets fails, we've hit EOF or an error - set a flag or break
@@ -2433,7 +2476,7 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_array_access(var_node)
         else:
             # Simple variable
-            return self._mangle_variable_name(var_node.name)
+            return self._mangle_variable_name(self._canonical_basic_name(var_node))
 
     def _generate_expression(self, expr: Any) -> str:
         """Generate C code for an expression"""
@@ -2464,7 +2507,7 @@ class Z88dkCBackend(CodeGenBackend):
                     self.needs_error_handling = True
                     return 'basic_erl'
                 else:
-                    return self._mangle_variable_name(expr.name)
+                    return self._mangle_variable_name(self._canonical_basic_name(expr))
         elif isinstance(expr, BinaryOpNode):
             return self._generate_binary_op(expr)
         elif isinstance(expr, UnaryOpNode):
@@ -2485,7 +2528,7 @@ class Z88dkCBackend(CodeGenBackend):
             return f'(mb25_string_alloc_const({temp_id}, "{self._escape_string(expr.value)}"), {temp_id})'
         elif isinstance(expr, VariableNode):
             # String variable reference
-            return str(self._get_string_id(expr.name))
+            return str(self._get_string_id(self._canonical_basic_name(expr)))
         elif isinstance(expr, BinaryOpNode) and expr.operator == TokenType.PLUS:
             # String concatenation - need to generate inline concat and return result ID
             left_str = self._generate_string_expression(expr.left)
@@ -3109,7 +3152,7 @@ class Z88dkCBackend(CodeGenBackend):
     def _get_string_var_id(self, expr) -> str:
         """Get string ID for a variable or expression"""
         if isinstance(expr, VariableNode):
-            return self._get_string_id(expr.name)
+            return self._get_string_id(self._canonical_basic_name(expr))
         else:
             # For complex expressions, need to evaluate into temp
             return self._generate_string_expression(expr)
@@ -3163,7 +3206,7 @@ class Z88dkCBackend(CodeGenBackend):
             # Need to allocate the constant first
             return f'(mb25_string_alloc_const({temp_id}, "{self._escape_string(expr.value)}"), {temp_id})'
         elif isinstance(expr, VariableNode):
-            return self._get_string_id(expr.name)
+            return self._get_string_id(self._canonical_basic_name(expr))
         else:
             return self._generate_string_expression(expr)
 
@@ -3454,7 +3497,7 @@ class Z88dkCBackend(CodeGenBackend):
         code = []
         code.append(self.indent() + '/* LSET - left justify in field */')
 
-        var_id = self._get_string_id(stmt.variable.name)
+        var_id = self._get_string_id(self._canonical_basic_name(stmt.variable))
         value_expr = self._generate_string_expression(stmt.expression)
 
         # Check if this is a field variable
@@ -3491,7 +3534,7 @@ class Z88dkCBackend(CodeGenBackend):
         code = []
         code.append(self.indent() + '/* RSET - right justify in field */')
 
-        var_id = self._get_string_id(stmt.variable.name)
+        var_id = self._get_string_id(self._canonical_basic_name(stmt.variable))
         value_expr = self._generate_string_expression(stmt.expression)
 
         # Check if this is a field variable

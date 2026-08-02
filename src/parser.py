@@ -1145,17 +1145,37 @@ class Parser:
     def split_name_and_suffix(self, name: str) -> tuple[str, Optional[str]]:
         """Split variable name into base name and type suffix
 
+        With no explicit suffix the DEF type map supplies one, matching how
+        variables are parsed elsewhere (see parse_variable). Without this,
+        `DEFINT A-Z : INPUT J` produced a node with no suffix while `PRINT J`
+        produced one carrying '%', so the two referred to different variables
+        by the time they reached the compiler backends.
+
         Returns:
-            (base_name, type_suffix) tuple
-            If no suffix, returns (name, None)
+            (base_name, type_suffix) tuple. type_suffix is None only when the
+            name has no explicit suffix and no DEF rule applies.
 
         Example:
             "A$" -> ("A", "$")
-            "X" -> ("X", None)
+            "X"  -> ("X", None)          # no DEF rule for X
+            "J"  -> ("J", "%")           # after DEFINT J
         """
         type_suffix = self.get_type_suffix(name)
         if type_suffix:
             return (name[:-1], type_suffix)
+
+        first_letter = name[0].lower() if name else ''
+        if first_letter in self.def_type_map:
+            var_type = self.def_type_map[first_letter]
+            if var_type == TypeInfo.STRING:
+                return (name, '$')
+            elif var_type == TypeInfo.INTEGER:
+                return (name, '%')
+            elif var_type == TypeInfo.DOUBLE:
+                return (name, '#')
+            elif var_type == TypeInfo.SINGLE:
+                return (name, '!')
+
         return (name, None)
 
     def get_variable_type(self, name: str) -> str:
