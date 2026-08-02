@@ -421,7 +421,10 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False):
         with open(c_file, 'w') as f:
             f.write(c_code)
 
-        print(f"Generated C: {c_file}")
+        # Flush so this line cannot appear AFTER a z88dk error: stdout is block
+        # buffered when redirected while stderr is not, which reversed the two
+        # and made it look as though the C file was never written.
+        print(f"Generated C: {c_file}", flush=True)
 
         # Compile with z88dk
         com_file = output_file + '.com'
@@ -469,8 +472,17 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False):
             sys.exit(1)
 
         if result.returncode != 0:
-            print(f"z88dk compilation failed:", file=sys.stderr)
-            print(result.stderr, file=sys.stderr)
+            # Exit non-zero: the .com was NOT produced, so a script must not
+            # treat this as success. Say what did and did not happen, because
+            # z88dk's own message can be baffling on its own - it reports
+            # "file '<name>.c' not found" for a file that plainly exists when
+            # it cannot reach the directory (the snap package cannot read /tmp
+            # or hidden directories, for example).
+            print(f"z88dk compilation failed - {com_file} was not created.",
+                  file=sys.stderr)
+            print(f"The generated C source is at {c_file}.", file=sys.stderr)
+            print("z88dk reported:", file=sys.stderr)
+            print(result.stderr.rstrip() or "(no output)", file=sys.stderr)
             sys.exit(1)
 
         print(f"Generated COM: {com_file}")
