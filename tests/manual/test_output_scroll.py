@@ -14,7 +14,7 @@ def test_output_scrolling():
     print("Manual test procedure:")
     print()
     print("1. Start curses UI:")
-    print("   python3 mbasic.py")
+    print("   python3 mbasic --ui curses")
     print()
     print("2. Enter test program:")
     print("   10 FOR I = 1 TO 30")

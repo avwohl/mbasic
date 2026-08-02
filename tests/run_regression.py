@@ -26,6 +26,10 @@ class TestRunner:
         self.passed = []
         self.failed = []
         self.errors = []
+        # Tests that exited 2 to report they could not run (e.g. an optional
+        # dependency such as urwid is absent). Reported separately so they are
+        # never mistaken for passes.
+        self.skipped = []
 
     def discover_tests(self, base_dir: Path, category=None):
         """
@@ -76,7 +80,15 @@ class TestRunner:
                 env=env
             )
 
-            if result.returncode == 0:
+            if result.returncode == 2:
+                # Exit code 2 means "could not run", not "passed". Counting it
+                # as a pass would put a green tick on untested code.
+                self.skipped.append((test_path, result.stdout.strip()))
+                print(f"⊘ SKIP: {test_path.relative_to(test_path.parent.parent.parent)}")
+                if result.stdout.strip():
+                    print(f"  {result.stdout.strip()}")
+                return True
+            elif result.returncode == 0:
                 self.passed.append(test_path)
                 if self.verbose:
                     print(f"✓ PASS: {test_path.relative_to(test_path.parent.parent.parent)}")
@@ -119,8 +131,15 @@ class TestRunner:
         print("=" * 60)
         print(f"✓ Passed:  {len(self.passed)}")
         print(f"✗ Failed:  {len(self.failed)}")
+        print(f"⊘ Skipped: {len(self.skipped)}")
         print(f"❌ Errors:  {len(self.errors)}")
         print(f"Total:    {len(tests)}")
+
+        if self.skipped:
+            print("\nSkipped (not run - these verified nothing):")
+            for test_path, reason in self.skipped:
+                print(f"  {test_path.relative_to(test_path.parent.parent.parent)}"
+                      f"{': ' + reason if reason else ''}")
 
         if self.failed or self.errors:
             print("\n❌ REGRESSION TESTS FAILED")

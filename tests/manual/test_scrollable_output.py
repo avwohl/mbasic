@@ -20,7 +20,7 @@ def test_scrollable_output():
 
     print("How to test manually:")
     print("1. Start the curses UI:")
-    print("   python3 mbasic.py")
+    print("   python3 mbasic --ui curses")
     print()
     print("2. Enter a program with lots of output:")
     print("   10 FOR I = 1 TO 100")
