@@ -203,6 +203,9 @@ class Z88dkCBackend(CodeGenBackend):
         # Collect file I/O usage
         self._collect_file_usage(program)
 
+        # Numeric INPUT needs input_buffer even without string variables
+        self.has_input = self._uses_input(program)
+
         # Collect binary data function usage
         self._collect_binary_function_usage(program)
 
@@ -618,6 +621,24 @@ class Z88dkCBackend(CodeGenBackend):
                 if isinstance(stmt, DefFnStatementNode):
                     self.def_fn_functions.append(stmt)
 
+    def _uses_input(self, program: ProgramNode) -> bool:
+        """True if the program has an INPUT statement anywhere.
+
+        Numeric INPUT reads a line into input_buffer before converting it with
+        atof, so the buffer must be declared even when the program has no
+        string variables.
+        """
+        def scan(statements) -> bool:
+            for stmt in statements or []:
+                if isinstance(stmt, InputStatementNode):
+                    return True
+                if isinstance(stmt, IfStatementNode):
+                    if scan(stmt.then_statements) or scan(stmt.else_statements):
+                        return True
+            return False
+
+        return any(scan(line_node.statements) for line_node in program.lines)
+
     def _collect_file_usage(self, program: ProgramNode):
         """Collect maximum file number used for file I/O array"""
         self.max_file_number = 0
@@ -773,8 +794,9 @@ class Z88dkCBackend(CodeGenBackend):
         if doubles:
             decls.append(self.indent() + 'double ' + ', '.join(doubles) + ';')
 
-        # Add buffer for INPUT if we have strings
-        if self.string_count > 0:
+        # Buffer for INPUT: needed for string input, and for numeric input too
+        # since that reads a line and converts it with atof.
+        if self.string_count > 0 or getattr(self, 'has_input', False):
             decls.append(self.indent() + 'char input_buffer[256];  /* For INPUT statements */')
 
         return decls
@@ -1345,7 +1367,11 @@ class Z88dkCBackend(CodeGenBackend):
                     if var_type == VarType.INTEGER:
                         code.append(self.indent() + f'sscanf(_ptr, "%d", &{var_name});')
                     else:
-                        code.append(self.indent() + f'sscanf(_ptr, "%f", &{var_name});')
+                        # atof, not sscanf("%f"): z88dk's scanf float converter
+                        # is built against the f48 float pack and needs
+                        # init_floatpack, which --math-mbf32 does not provide,
+                        # so any numeric INPUT failed to link. atof is mbf32-safe.
+                        code.append(self.indent() + f'{var_name} = atof(_ptr);')
                     # Skip to next comma
                     code.append(self.indent() + 'char *_comma3 = strchr(_ptr, \',\');')
                     code.append(self.indent() + 'if (_comma3) _ptr = _comma3 + 1;')
@@ -1379,7 +1405,18 @@ class Z88dkCBackend(CodeGenBackend):
                     if var_type == VarType.INTEGER:
                         code.append(self.indent() + f'fscanf({input_stream}, "%d", &{var_name});')
                     else:
-                        code.append(self.indent() + f'fscanf({input_stream}, "%f", &{var_name});')
+                        # Read a line and convert with atof rather than
+                        # fscanf("%f") - see the sscanf note above; the scanf
+                        # float converter cannot link against --math-mbf32.
+                        code.append(self.indent() + '{')
+                        self.indent_level += 1
+                        code.append(self.indent() + f'if (fgets(input_buffer, 256, {input_stream})) {{')
+                        self.indent_level += 1
+                        code.append(self.indent() + f'{var_name} = atof(input_buffer);')
+                        self.indent_level -= 1
+                        code.append(self.indent() + '}')
+                        self.indent_level -= 1
+                        code.append(self.indent() + '}')
 
                 # If there are more variables and it's keyboard input, show another prompt
                 if i < len(stmt.variables) - 1 and not stmt.file_number:
