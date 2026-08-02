@@ -20,15 +20,18 @@ from typing import Dict, List, Set, Optional, Tuple, Any, Union
 from dataclasses import dataclass, field
 from enum import Enum
 from src.ast_nodes import *
+# Explicit re-import of VarType, not left to the wildcard above.
+#
+# There used to be a SECOND enum also called VarType defined here, with the same
+# four members as the one in ast_nodes. Both were live: ast_nodes.VarType backs
+# TypeInfo and the parser's DEF type map, this one backed VariableInfo.var_type
+# and every comparison in the code generators. Members of two enum classes are
+# never equal, so which one a module saw depended purely on whether its explicit
+# import happened to follow `from src.ast_nodes import *` - reordering those two
+# lines would have silently broken type comparisons, exactly the failure that
+# hit --compile-c and then --compile-js. There is now one class.
+from src.ast_nodes import VarType
 from src.tokens import TokenType
-
-
-class VarType(Enum):
-    """Variable types in BASIC"""
-    INTEGER = 1
-    SINGLE = 2
-    DOUBLE = 3
-    STRING = 4
 
 
 class IntegerSize(Enum):
