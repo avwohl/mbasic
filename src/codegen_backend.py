@@ -868,6 +868,13 @@ class Z88dkCBackend(CodeGenBackend):
         # Make lowercase for consistency
         c_name = base_name.lower()
 
+        # MBASIC allows '.' in names (REC.NUM, OLD.FILE), which is not a valid C
+        # identifier character - `int rec.num;` made z88dk stop with
+        # "Missing token, expecting ; got .". Same substitution as
+        # _mangle_string_name. BASIC names cannot contain '_', so mapping '.'
+        # to '_' cannot collide with another BASIC variable.
+        c_name = ''.join(ch if ch.isalnum() else '_' for ch in c_name)
+
         # Add type suffix to distinguish different typed variables
         if basic_name.endswith('%'):
             c_name = c_name + '_int'
