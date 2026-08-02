@@ -44,7 +44,10 @@ jobs:
           # A minimal install must be able to execute a program.
           cd /tmp
           printf '10 PRINT "SMOKE OK"\n' > smoke.bas
-          printf 'RUN\nSYSTEM\n' | /tmp/smoke/bin/mbasic --ui cli smoke.bas | grep -q "SMOKE OK"
+          # Redirect to a file rather than piping into grep, so grep -q closing
+          # the pipe early cannot make a passing run log a BrokenPipeError.
+          printf 'RUN\nSYSTEM\n' | /tmp/smoke/bin/mbasic --ui cli smoke.bas > smoke.out
+          grep -q "SMOKE OK" smoke.out
 
           # Package data the UI reads at runtime must be present.
           /tmp/smoke/bin/python - <<'PY'
