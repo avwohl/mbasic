@@ -234,10 +234,14 @@ def compile_to_javascript(input_file, output_file, generate_html=False, debug=Fa
         debug: Enable debug output
     """
     try:
-        # Import required modules
-        from lexer import Lexer
-        from parser import Parser
-        from semantic_analyzer import SemanticAnalyzer
+        # Import via src.* to match the codegen backend, for the same reason as
+        # compile_to_c: these modules are importable under two names (flat,
+        # because src/ is on sys.path, and as src.*), and Python treats those as
+        # separate modules with separate class objects. Mixing them made every
+        # `VarType.X` comparison in the backend false.
+        from src.lexer import Lexer
+        from src.parser import Parser
+        from src.semantic_analyzer import SemanticAnalyzer
         from src.codegen_js_backend import JavaScriptBackend
 
         # Read source file
