@@ -12,6 +12,13 @@ if ! cd "$REPO_DIR"; then
     exit 1
 fi
 
+# mkdocs lives in the checkout's venv, not on the deploying user's PATH. Activating
+# it here mirrors utils/checkpoint.sh, so a standalone run works the same as one
+# invoked from checkpoint.
+if [ -d "venv" ] && [ -f "venv/bin/activate" ]; then
+    source venv/bin/activate
+fi
+
 LOCAL_URL="https://mbasic.awohl.com/docs"
 GITHUB_URL="https://avwohl.github.io/mbasic"
 
