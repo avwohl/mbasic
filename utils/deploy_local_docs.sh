@@ -34,25 +34,49 @@ if [ -d "verification_files/local" ]; then
     cp verification_files/local/google*.html site/ 2>/dev/null || true
 fi
 
-# Deploy by pointing the /local/site symlink at a freshly staged build directory.
-LIVE_LINK="/local/site"
+# Deploy by pointing the deploy symlink at a freshly staged build directory.
+#
+# Everything written here stays under /local/mbasic, which the mbasic user owns.
+# /local itself is deliberately NOT writable by mbasic, so the swap area cannot
+# live there. Apache serves /local/site, a stable symlink to /local/mbasic/site
+# that root sets up once and this script never touches - so a deploy only ever
+# rewrites paths it actually controls.
+DEPLOY_ROOT="/local/mbasic"
+LIVE_LINK="${DEPLOY_ROOT}/site"
 TIMESTAMP=$(date +%s)
-NEW_DIR="/local/site-${TIMESTAMP}"
+NEW_DIR="${DEPLOY_ROOT}/site-${TIMESTAMP}"
 
-if ! cp -r site "$NEW_DIR"; then
+if [ ! -d "$DEPLOY_ROOT" ] || [ ! -w "$DEPLOY_ROOT" ]; then
+    echo "❌ ERROR: $DEPLOY_ROOT is missing or not writable by $(id -un) - local docs NOT deployed" >&2
+    echo "   Create it as root:  mkdir -p $DEPLOY_ROOT && chown mbasic:mbasic $DEPLOY_ROOT" >&2
+    exit 1
+fi
+
+# The timestamp only has second resolution, so two deploys in the same second would
+# collide on this name - and 'cp -r site <existing-dir>' copies *into* it, nesting
+# the build at site-<ts>/site/ and leaving the old content live while still
+# reporting success. Pick an unused name, and use -T so the copy can never be
+# reinterpreted as "copy into the destination".
+suffix=1
+while [ -e "$NEW_DIR" ]; do
+    NEW_DIR="${DEPLOY_ROOT}/site-${TIMESTAMP}-${suffix}"
+    suffix=$((suffix + 1))
+done
+
+if ! cp -rT site "$NEW_DIR"; then
     echo "❌ ERROR: could not stage the new build in $NEW_DIR" >&2
     rm -rf "$NEW_DIR"
     exit 1
 fi
 
-# Swap with 'ln' to a staging path followed by 'mv -T', NOT 'ln -sfn <dir> /local/site'.
-# If /local/site is a real directory, ln treats it as a destination *directory* and
-# silently creates /local/site/site-<timestamp> inside it: the swap never happens,
-# nginx keeps serving the old build, and the script still reports success. 'mv -T'
-# always replaces the path itself, and being a rename it is atomic, so nginx never
-# observes a missing /local/site.
+# Swap with 'ln' to a staging path followed by 'mv -T', NOT 'ln -sfn <dir> $LIVE_LINK'.
+# If $LIVE_LINK is a real directory, ln treats it as a destination *directory* and
+# silently creates $LIVE_LINK/site-<timestamp> inside it: the swap never happens,
+# the server keeps serving the old build, and the script still reports success.
+# 'mv -T' always replaces the path itself, and being a rename it is atomic, so the
+# server never observes a missing $LIVE_LINK.
 # The staging link is named .site-new-* so the cleanup glob below cannot match it.
-STAGING_LINK="/local/.site-new-$$"
+STAGING_LINK="${DEPLOY_ROOT}/.site-new-$$"
 ln -sfn "$NEW_DIR" "$STAGING_LINK"
 
 # One-time migration: if a real directory still occupies the symlink's path, rename
@@ -62,7 +86,7 @@ ln -sfn "$NEW_DIR" "$STAGING_LINK"
 OLD_DIR=""
 if [ -d "$LIVE_LINK" ] && [ ! -L "$LIVE_LINK" ]; then
     echo "Converting $LIVE_LINK from a real directory into a deploy symlink..."
-    OLD_DIR="/local/.site-replaced-$$"
+    OLD_DIR="${DEPLOY_ROOT}/.site-replaced-$$"
     if ! mv "$LIVE_LINK" "$OLD_DIR"; then
         echo "❌ ERROR: could not move the existing $LIVE_LINK directory aside" >&2
         rm -f "$STAGING_LINK"
@@ -95,9 +119,9 @@ fi
 # Clean up old versions (keep only current). nullglob stops the loop from running
 # once on the literal pattern when no previous build directories exist.
 shopt -s nullglob
-for old in /local/site-*; do
+for old in "${DEPLOY_ROOT}"/site-*; do
     [ "$old" != "$NEW_DIR" ] && rm -rf "$old"
 done
 shopt -u nullglob
 
-echo "✓ Local docs deployed to $LIVE_LINK -> $NEW_DIR"
+echo "✓ Local docs deployed to $LIVE_LINK -> $NEW_DIR (served via /local/site)"
