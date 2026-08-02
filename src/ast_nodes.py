@@ -2,7 +2,8 @@
 Abstract Syntax Tree (AST) node definitions for MBASIC 5.21
 
 Note: 5.21 refers to the Microsoft BASIC-80 language version, not this package version.
-This is an independent open-source implementation (package version 0.99.0).
+This is an independent open-source implementation; its own version lives in
+src/version.py and is what `mbasic --version` reports.
 
 This module defines all AST node types for representing BASIC programs.
 Nodes are organized into:

@@ -28,6 +28,7 @@ import src.ast_nodes as ast_nodes
 from src.input_sanitizer import sanitize_and_clear_parity
 from src.debug_logger import debug_log_error, is_debug_mode
 from src.ui.keybinding_loader import KeybindingLoader
+from src.version import VERSION
 
 # Try to import readline for better line editing
 # This enhances input() with:
@@ -263,7 +264,9 @@ class InteractiveMode:
         if READLINE_AVAILABLE:
             self._setup_readline()
 
-        print("MBASIC-2025 - Modern MBASIC 5.21 Interpreter")
+        # '5.21' is the MBASIC language version (intentionally hardcoded); VERSION
+        # is this implementation's package version, the same one --version prints.
+        print(f"MBASIC-2025 v{VERSION} - Modern MBASIC 5.21 Interpreter")
         if not READLINE_AVAILABLE:
             print("(Note: readline not available - line editing limited)")
         else:

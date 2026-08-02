@@ -18,6 +18,7 @@ from src.debug_logger import debug_log_error, is_debug_mode
 from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode, get_default_reverse_for_mode
 from src.pc import PC
 from src.ast_nodes import EndStatementNode
+from src.version import VERSION
 import tkinter as tk
 from tkinter import filedialog, messagebox, font, scrolledtext, ttk, simpledialog
 
@@ -1827,6 +1828,9 @@ class TkBackend(UIBackend):
         messagebox.showinfo(
             "About MBASIC-2025",
             "MBASIC-2025\n"
+            # '5.21' below is the MBASIC language version (intentionally
+            # hardcoded); VERSION is this implementation's package version.
+            f"Version {VERSION}\n"
             "Modern MBASIC 5.21 Interpreter\n\n"
             "100% compatible with Microsoft BASIC-80 5.21\n"
             "Plus modern debugging and UI features\n\n"

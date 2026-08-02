@@ -197,6 +197,16 @@ After this, you can run `mbasic` from anywhere on your system.
 
 ## Verifying the Installation
 
+### Check the Version
+
+```bash
+python3 mbasic --version
+```
+
+This prints the package version, for example `mbasic 1.0.1006 (implements MBASIC
+5.21)`. The `5.21` is the Microsoft BASIC-80 dialect being implemented; the
+leading number is this package's own version.
+
 ### Test Interactive Mode
 
 Run the interpreter without arguments:
@@ -205,10 +215,10 @@ Run the interpreter without arguments:
 python3 mbasic
 ```
 
-You should see:
+You should see (with your installed version in place of `<version>`):
 
 ```
-MBASIC-2025 - Modern MBASIC 5.21 Interpreter
+MBASIC-2025 v<version> - Modern MBASIC 5.21 Interpreter
 Ready
 
 Ok

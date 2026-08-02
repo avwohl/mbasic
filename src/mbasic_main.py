@@ -34,6 +34,11 @@ for _p in (str(_SRC_DIR), str(_SRC_DIR.parent)):
 
 from parser import TypeInfo
 
+# Single source of truth for the package version: pyproject.toml reads the same
+# attribute (see [tool.setuptools.dynamic]), so `mbasic --version` and the
+# version pip records can never disagree.
+from src.version import VERSION
+
 
 # Single source of truth for UI backend metadata. Used by --list-backends, by
 # load_backend()'s error messages, and by default-backend selection, so the
@@ -665,6 +670,17 @@ Examples:
         'program',
         nargs='?',
         help='BASIC program file to load and run'
+    )
+
+    # The version number is this package's, not the language's: MBASIC 5.21 is
+    # the dialect being implemented and never changes. Both are named here
+    # because the docs use "MBASIC 5.21" everywhere and a bare "1.0.1006" would
+    # look like it contradicts them.
+    parser.add_argument(
+        '--version', '-V',
+        action='version',
+        version=f'mbasic {VERSION} (implements MBASIC 5.21)',
+        help="Show this interpreter's version and exit"
     )
 
     parser.add_argument(
