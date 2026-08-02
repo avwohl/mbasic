@@ -1,5 +1,8 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+# 77.0 is the first release that accepts a PEP 639 SPDX `license` string and
+# `license-files` (see [project] below). This is a build-time requirement only;
+# the built wheel is pure Python and still installs on any requires-python.
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +11,8 @@ dynamic = ["version"]
 description = "MBASIC2025 5.21 BASIC language - Independent open-source implementation"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "GPL-3.0-or-later"}
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 authors = [
     {name = "Aaron Wohl", email = "mbasic@wohl.com"}
 ]
@@ -29,7 +33,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Education",
     "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
