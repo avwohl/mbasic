@@ -6,10 +6,18 @@ Runtime string allocator and garbage collector for MBASIC 2025 compiled to Z80.
 
 ```bash
 cd runtime/strings
-./build.sh test      # Build and run tests
-./build.sh clean     # Clean build artifacts
-./build.sh z80       # Build for Z80 (requires z88dk)
+./build.sh test        # Build and run tests natively
+./build.sh clean       # Clean build artifacts
+./build.sh z80         # Cross-build for Z80/CP/M (uc80 + um80 + ul80)
+./build.sh z80-run     # ...and run the result under cpmemu
+./build.sh z80-z88dk   # Cross-build with z88dk (alternate toolchain)
 ```
+
+The Z80 build uses uc80 (C to assembly), um80 (assembler) and ul80 (linker), and the
+result runs under the cpmemu CP/M emulator. z88dk and tnylpo remain supported
+alternates - use them when you need Microsoft Binary Format floats, true Intel 8080
+output, or `INP`/`OUT`/`WAIT` port I/O, none of which uc80 provides. See
+[../../docs/dev/TOOLCHAIN_POLICY.md](../../docs/dev/TOOLCHAIN_POLICY.md).
 
 ## Overview
 
@@ -171,8 +179,12 @@ The system successfully eliminates the O(n²) bottleneck that could cause the or
    - Clean up at program end
 
 4. **Z80 Compilation**
-   - Build with z88dk: `zcc +cpm -O2`
-   - Test on real hardware or emulator
+   - Build with uc80: `make z80` runs uc80 -> um80 -> ul80 and produces
+     `mb25_string_z80.com`
+   - Assemble `mb25_uc80_shim.mac` separately with um80 and link the `.rel` - uc80
+     silently relocates a hand-written `.mac` into BSS if you pass it as an input
+   - Test with `make z80-run` (cpmemu) or on real hardware
+   - Alternate: `make z80-z88dk` builds the same program with `zcc +cpm -O2`
    - Optimize for size if needed
 
 ## Conclusion

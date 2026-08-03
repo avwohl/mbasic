@@ -3,6 +3,22 @@
 ## Summary
 Changed from malloc-based heap allocation to direct memory allocation from BSS_tail.
 
+## Toolchain note
+
+The scheme itself is compiler-independent — the pool always occupies the gap between the
+end of BSS and the stack. What differs is how the program obtains those two addresses:
+
+- **uc80** (preferred, with um80/ul80): it has no inline assembly, and C cannot name the
+  linker symbols directly (`extern char __BSS_END[]` emits `EXTRN ___BSS_END` and fails
+  to link). Both the BSS end and the stack pointer therefore come from the assembly shim
+  `runtime/strings/mb25_uc80_shim.mac`, which is assembled separately with `um80` and
+  linked in as its own `.rel`.
+- **z88dk** (alternate): supplies `__BSS_tail` and accepts a `__naked` function with
+  inline `__asm__`. That is the form shown below, because z88dk was the only toolchain
+  in use when this change was made.
+
+See [TOOLCHAIN_POLICY.md](TOOLCHAIN_POLICY.md) for the full comparison.
+
 ## OLD SYSTEM (REMOVED)
 - String pool allocated via `malloc()` from z88dk heap
 - Compiled with `-DAMALLOC` flag to enable heap
@@ -48,7 +64,8 @@ Changed from malloc-based heap allocation to direct memory allocation from BSS_t
 - `src/codegen_backend.py` - Remove -DAMALLOC, generate pool calculation code
 
 ## Codegen Changes
-Generated startup code now includes:
+Generated startup code now includes (z88dk form; under uc80 the same two values arrive
+through the `.mac` shim described in the toolchain note above):
 ```c
 /* Get BSS end and SP for pool calculation */
 extern unsigned char __BSS_tail;

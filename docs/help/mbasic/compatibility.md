@@ -273,14 +273,25 @@ Minor differences may occur in the least significant digits due to:
 
 ## Testing Against Real MBASIC
 
-You can verify behavior against authentic MBASIC 5.21 using the included CP/M emulator:
+You can verify behavior against authentic MBASIC 5.21 by running the original
+interpreter (`com/mbasic.com`) under a CP/M emulator. **cpmemu** is the preferred
+one - it maps host files directly, so no disk image is needed and the test files
+can stay in `tests/`:
+
+```bash
+cd tests/
+(cat test.bas && echo "RUN") | timeout 10 cpmemu ../com/mbasic.com
+```
+
+**tnylpo** is a supported alternate and takes the same command line:
 
 ```bash
 cd tests/
 (cat test.bas && echo "RUN") | timeout 10 tnylpo ../com/mbasic.com
 ```
 
-See `tests/HOW_TO_RUN_REAL_MBASIC.md` for details.
+See `tests/HOW_TO_RUN_REAL_MBASIC.md` for details, and
+[Toolchain Policy](../../dev/TOOLCHAIN_POLICY.md) for why cpmemu is preferred.
 
 ## Porting Programs to This MBASIC
 

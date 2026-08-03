@@ -50,8 +50,15 @@ typedef struct mb25_string_R {
 
 typedef mb25_string_t *mb25_string_pt;
 
-/* Static array of string descriptors - size known at compile time */
-extern mb25_string_t mb25_strings[MB25_NUM_STRINGS];
+/* Static array of string descriptors - size known at compile time.
+ *
+ * Declared UNSIZED on purpose.  Repeating the size here (`[MB25_NUM_STRINGS]`)
+ * beside the sized definition in mb25_string.c crashes uc80:
+ *     uc80: internal error: '<' not supported between instances of 'Token' and 'Token'
+ * (uc80/codegen.py:2769, _merge_array_size).  An unsized extern is valid C, is
+ * accepted by both compilers, and sidesteps it.  See docs/dev/TOOLCHAIN_POLICY.md.
+ */
+extern mb25_string_t mb25_strings[];
 
 /* Global state for string management */
 typedef struct mb25_globals_R {

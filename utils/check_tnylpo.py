@@ -2,6 +2,10 @@
 """
 Check if tnylpo (CP/M emulator) is properly installed and in PATH.
 
+tnylpo is the ALTERNATE CP/M emulator. The preferred one is cpmemu - to check the
+whole toolchain, run utils/check_compiler_tools.py instead, which covers cpmemu
+first. See docs/dev/TOOLCHAIN_POLICY.md.
+
 This utility verifies that the MBASIC test scripts can find tnylpo.
 """
 

@@ -165,7 +165,10 @@ None currently - all high priority tasks complete
 - ✅ Unit tests (Python)
 - ✅ Integration tests (BASIC programs)
 - ✅ UI tests (automated where possible)
-- ✅ Comparison tests with real MBASIC 5.21 (via tnylpo)
+- ✅ Comparison tests with real MBASIC 5.21 (run under a CP/M emulator — cpmemu is the
+  preferred one; see `tests/HOW_TO_RUN_REAL_MBASIC.md`)
+- ✅ Cross-toolchain tests: `utils/compare_toolchains.sh` builds the same BASIC program
+  with uc80 and with z88dk and diffs what the two executables print
 
 ## Build & Deployment
 
@@ -174,6 +177,16 @@ None currently - all high priority tasks complete
 - Optional: urwid (curses UI)
 - Optional: tkinter (TK UI)
 - Optional: NiceGUI (web UI)
+
+Optional Z80/CP/M toolchain — only for building and running CP/M executables, never for
+the interpreter itself:
+
+	Role	Preferred	Supported alternate
+	C compiler	uc80 (+ um80, ul80)	z88dk (zcc)
+	CP/M emulator	cpmemu	tnylpo
+
+See [Toolchain Policy](dev/TOOLCHAIN_POLICY.md) for what each alternate is still needed
+for (MBF floats, true 8080 output, port I/O).
 
 ### Installation
 ```bash

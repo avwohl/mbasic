@@ -87,24 +87,54 @@
 
 ### Compilation/Build Tools
 
-- **`check_z88dk.py`** - Check if z88dk compiler is properly installed
+The preferred Z80/CP/M toolchain is **uc80** (with the **um80** assembler and **ul80**
+linker) for compiling and **cpmemu** for running. **z88dk** and **tnylpo** are supported
+alternates, still needed for Microsoft Binary Format floats, true Intel 8080 output, and
+`INP`/`OUT`/`WAIT` port I/O. Full rules: [../docs/dev/TOOLCHAIN_POLICY.md](../docs/dev/TOOLCHAIN_POLICY.md).
+
+- **`check_compiler_tools.py`** - Check the whole Z80/CP/M toolchain at once (start here)
+  - Preferred first: uc80, um80, ul80, and uc80's `libc.lib`/`runtime.lib`
+  - Then cpmemu, the preferred CP/M emulator
+  - Then the alternates, z88dk and tnylpo
+  - Prints a summary saying which toolchain is usable and which flags to pass
+    (`--toolchain z88dk`, `--emulator tnylpo`) when only the alternate is present
+  - Exits 0 if any usable compile+run pair is installed, 1 if none is
+  - Use before compiling BASIC to CP/M executables
+
+- **`compare_toolchains.sh`** - Build the same BASIC program with both toolchains and
+  diff what the two executables print
+  - `utils/compare_toolchains.sh program.bas [more.bas ...]`
+  - Builds with uc80 and with z88dk, runs both under cpmemu, compares output
+  - Strips CR before comparing: z88dk emits CRLF (as real CP/M does), uc80 emits LF
+  - Reports per-program SAME/DIFFER plus both `.COM` sizes; exits 1 if any differ
+  - `KEEP=1` or `BUILDDIR=dir` keeps the build tree; `EMULATOR=tnylpo` to use tnylpo
+  - Builds under `$HOME`, never `/tmp` - the z88dk snap cannot read `/tmp`
+  - Expect last-digit float differences: uc80 is IEEE 754, z88dk here is MBF32
+
+- **`check_toolchain_policy.py`** - Enforce the uc80 + cpmemu preference in docs and code
+  - Scans every non-exempt `.md`/`.py`/`.sh`/`.txt`/config file that names one of the
+    four tools
+  - Fails if a file mentions z88dk without also mentioning uc80 first, or tnylpo
+    without cpmemu first
+  - Fails on phrasing that calls z88dk or tnylpo "required" - they are alternates
+  - `--list` prints the governed files without checking them
+  - Exempt: `docs/history/`, `docs/future/`, `docs/external/`, and the docs whose
+    subject genuinely *is* the alternate toolchain
+  - Run automatically by `utils/checkpoint.sh` on every commit
+  - If it fails, fix the document - do not weaken the check
+
+- **`check_z88dk.py`** - Check if the alternate z88dk compiler is installed
   - Verifies z88dk.zcc is in PATH
   - Tests if compiler is accessible via /usr/bin/env
   - Provides installation suggestions if not found
-  - Use before compiling BASIC to CP/M executables
+  - Only needed for MBF32 floats, `--cpu 8080`, or port I/O; otherwise use uc80
 
-- **`check_tnylpo.py`** - Check if tnylpo CP/M emulator is properly installed
+- **`check_tnylpo.py`** - Check if the alternate tnylpo CP/M emulator is installed
   - Verifies tnylpo is in PATH
   - Tests if emulator is accessible via /usr/bin/env
   - Tests basic CP/M program execution
   - Provides build instructions if not found
-  - Use before running compiled .COM files
-
-- **`check_compiler_tools.py`** - Check entire compiler toolchain at once
-  - Runs both check_z88dk.py and check_tnylpo.py
-  - Shows summary of what's installed
-  - Indicates if toolchain is ready for compilation/testing
-  - Convenient single check for all requirements
+  - Only needed if cpmemu is unavailable; cpmemu runs .COM files from either compiler
 
 ### Documentation Tools
 
@@ -171,8 +201,10 @@
 - **`convert_to_cpm.py`** - Convert files to CP/M format (CRLF + EOF marker)
   - Converts LF (\n) → CRLF (\r\n)
   - Adds CP/M EOF marker (\x1a)
-  - Use for transferring files to CP/M emulators (tnylpo, etc.)
+  - Use for transferring files to CP/M emulators (cpmemu, tnylpo, etc.)
   - Usage: `python3 utils/convert_to_cpm.py input.bas [output.bas]`
+  - cpmemu maps host files directly, so no disk image is needed - but CP/M-era
+    programs still expect CRLF and the `\x1a` EOF marker in the file itself
 
 ### Duplicate/Cleanup
 
@@ -240,6 +272,15 @@ python3 utils/unsqueeze2.py squeezed.bas > normal.bas
 **For documentation:**
 1. `build_help_indexes.py` - After editing help files
 2. `check_help_links.py` - Verify documentation
+
+**Before compiling BASIC to a CP/M executable:**
+1. `check_compiler_tools.py` - Confirms uc80 + um80 + ul80 and cpmemu are ready
+2. `check_z88dk.py`, `check_tnylpo.py` - Only when you specifically need the alternate
+   toolchain (MBF32 floats, `--cpu 8080`, or `INP`/`OUT`/`WAIT`)
+
+**Before committing anything that names a Z80 compiler or CP/M emulator:**
+1. `check_toolchain_policy.py` - uc80 must be named before z88dk, cpmemu before tnylpo,
+   and neither alternate may be called "required" (`checkpoint.sh` runs this for you)
 
 ## Adding New Scripts
 

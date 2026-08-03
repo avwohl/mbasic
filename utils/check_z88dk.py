@@ -2,6 +2,13 @@
 """
 Check if z88dk is properly installed and in PATH.
 
+z88dk is the ALTERNATE C toolchain. The preferred one is uc80 - to check the whole
+toolchain, run utils/check_compiler_tools.py instead, which covers uc80/um80/ul80
+and cpmemu first. See docs/dev/TOOLCHAIN_POLICY.md.
+
+z88dk is still needed for Microsoft Binary Format floats, true Intel 8080 output,
+and the INP/OUT/WAIT port statements, so this check is not obsolete.
+
 This utility verifies that the MBASIC compiler can find z88dk.zcc.
 """
 

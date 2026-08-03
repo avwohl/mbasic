@@ -10,6 +10,16 @@
 - **Before writing a utility script**: Check `utils/UTILITY_SCRIPTS_INDEX.md` - one may already exist
 - **When importing old BASIC**: Read `utils/UTILITY_SCRIPTS_INDEX.md` for processing pipeline
 
+## 🚨 CRITICAL: Z80/CP/M Toolchain Preference (uc80 + cpmemu)
+**Read `docs/dev/TOOLCHAIN_POLICY.md` before editing ANY file that mentions a Z80 C compiler or a CP/M emulator.**
+- **Preferred C compiler: `uc80`** (sister project, with `um80` assembler + `ul80` linker) — NOT z88dk
+- **Preferred CP/M emulator: `cpmemu`** (sister project) — NOT tnylpo
+- z88dk and tnylpo are **supported alternates**, never "required" and never listed first.
+  z88dk is still genuinely needed for MBF32 floats and true 8080 output — do not remove it, just don't prefer it.
+- Why: this has been reverted to z88dk/tnylpo many times and corrected many times. Don't do it again.
+- Enforced by `python3 utils/check_toolchain_policy.py` (runs from `utils/checkpoint.sh`).
+  If it fails, fix the document — do NOT weaken the check.
+
 ## 🚨 CRITICAL: Comparing with Real MBASIC
 **When user asks to compare with real MBASIC 5.21**: Read `tests/HOW_TO_RUN_REAL_MBASIC.md` and follow instructions EXACTLY
 - Why: "every day when i ask you to compare... it takes you like 10 tries to get it work"

@@ -53,12 +53,39 @@ Unlike the interpreter, compilers generate standalone code that runs without the
 
 ### Requirements
 
-1. **z88dk** - 8080/Z80 C cross-compiler
-   - Installation: `sudo snap install z88dk --beta`
+The compiler emits C, so you need a C compiler that targets CP/M, plus a CP/M
+emulator if you want to run the result on your own machine.
+
+**Preferred toolchain**
+
+1. **uc80** - C compiler for Z80/CP/M, optimized for small code size
+   - Uses the `um80` assembler and `ul80` linker from the same family
+   - Installation: `pip install uc80 um80` (`ul80` ships inside `um80`)
+   - https://github.com/avwohl/uc80
    - See [Compiler Setup Guide](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_SETUP.md)
 
-2. **tnylpo** (optional) - CP/M emulator for testing
+2. **cpmemu** - CP/M 2.2 emulator with Z80 and 8080 CPU cores
+   - Translates CP/M's BDOS/BIOS calls to the host file system, so no disk image
+     is needed and your programs can live anywhere in your directory tree
+   - Installation: `.deb`/`.rpm` from the releases page, or build from source
+   - https://github.com/avwohl/cpmemu
+
+**Supported alternates**
+
+3. **z88dk** (alternate) - 8080/Z80 C cross-compiler
+   - Installation: `sudo snap install z88dk --beta`
+
+4. **tnylpo** (alternate) - CP/M emulator
    - See [CP/M Emulator Setup](https://github.com/avwohl/mbasic/blob/main/docs/dev/TNYLPO_SETUP.md)
+
+z88dk and tnylpo are fully supported, and three things still go through z88dk
+because uc80 cannot do them: Microsoft Binary Format floats (matching MBASIC's
+exact bit patterns), true Intel 8080 output (uc80 is Z80-only), and the
+`INP`/`OUT`/`WAIT` port statements. cpmemu runs `.COM` files from either
+compiler, so the emulator choice is independent of the compiler choice.
+
+See the [Toolchain Policy](https://github.com/avwohl/mbasic/blob/main/docs/dev/TOOLCHAIN_POLICY.md)
+for which tool covers what.
 
 ### Quick Example (Z80/8080)
 
@@ -76,6 +103,21 @@ python3 test_compile.py hello.bas
 # This generates:
 #   hello.c      - C source code
 #   HELLO.COM    - CP/M executable
+
+# Run it right here - no disk image needed
+cpmemu HELLO.COM
+```
+
+`mbasic --compile-c` does the same job and defaults to the preferred pair. Add
+`--toolchain z88dk` to build with the alternate compiler, and `--emulator tnylpo`
+to pick the alternate emulator for `--run`:
+
+```bash
+# Preferred: uc80 to build, cpmemu to run
+mbasic --compile-c hello --run hello.bas
+
+# Alternate toolchain
+mbasic --compile-c hello --toolchain z88dk --run --emulator tnylpo hello.bas
 ```
 
 ### Hardware Access Example (Z80/8080 Only)
@@ -92,6 +134,11 @@ These features only work in Z80/8080 compiled code:
 70 ADDR = VARPTR(A)      ' Get variable address
 80 END
 ```
+
+**Note:** `PEEK`, `POKE`, `CALL`, `USR`, and `VARPTR` compile under either
+toolchain. `INP`, `OUT`, and `WAIT` need the port I/O routines that only z88dk
+provides, so a program using them is built with the alternate compiler. The
+resulting `.COM` still runs under cpmemu.
 
 ---
 
@@ -190,8 +237,9 @@ Learn about the optimization techniques used by the compiler to improve performa
 ### Complete Documentation
 
 - **[Feature Status](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_STATUS_SUMMARY.md)** - Complete feature list (100%!)
-- **[Setup Guide](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_SETUP.md)** - z88dk installation
-- **[CP/M Emulator](https://github.com/avwohl/mbasic/blob/main/docs/dev/TNYLPO_SETUP.md)** - Testing compiled programs
+- **[Setup Guide](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_SETUP.md)** - Installing uc80/um80/ul80, and z88dk as the alternate
+- **[Toolchain Policy](https://github.com/avwohl/mbasic/blob/main/docs/dev/TOOLCHAIN_POLICY.md)** - Why uc80 and cpmemu are preferred, and what each alternate still covers
+- **[CP/M Emulator](https://github.com/avwohl/mbasic/blob/main/docs/dev/TNYLPO_SETUP.md)** - Building tnylpo, the alternate emulator
 - **[Memory Configuration](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_MEMORY_CONFIG.md)** - Runtime library details
 
 ## Runtime Library

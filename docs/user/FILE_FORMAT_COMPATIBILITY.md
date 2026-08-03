@@ -22,7 +22,9 @@ MBASIC saves all program files using **LF line endings** (Line Feed, `\n`, Unix-
 
 ### Using Files with CP/M Emulators
 
-If you want to transfer saved BASIC files to a **CP/M emulator** (such as `tnylpo`), you may need to convert the line endings from LF (`\n`) to CRLF (`\r\n`), as CP/M systems expect CRLF line endings.
+If you want to transfer saved BASIC files to a **CP/M emulator** - `cpmemu` is the preferred one here, and `tnylpo` is a supported alternate - you may need to convert the line endings from LF (`\n`) to CRLF (`\r\n`), as CP/M systems expect CRLF line endings.
+
+With `cpmemu` there is no disk image step: it maps host files straight into CP/M, so a converted `.bas` file in your working directory is visible to the emulated program as-is. See [Toolchain Policy](../dev/TOOLCHAIN_POLICY.md) for the full emulator and compiler preferences.
 
 #### Converting to CP/M Format
 

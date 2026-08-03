@@ -6,18 +6,23 @@ This script tests the complete compilation pipeline:
 1. Parse BASIC source
 2. Semantic analysis
 3. Code generation
-4. Compilation with z88dk
-5. Execution with tnylpo
+4. Compilation with uc80 (preferred) or z88dk (alternate)
+5. Execution with cpmemu (preferred) or tnylpo (alternate)
 
-Requirements:
+Requirements (preferred toolchain):
+- uc80, um80, and ul80 must be in PATH   (pip install uc80 um80)
+- cpmemu should be in PATH, to run the result
+
+Requirements (alternate toolchain):
 - z88dk must be installed and z88dk.zcc must be in PATH
-- tnylpo should be installed and tnylpo must be in PATH (for testing)
+- tnylpo must be in PATH
 
 To verify installation:
   python3 utils/check_compiler_tools.py
 
 For installation instructions:
-- z88dk: See docs/dev/COMPILER_SETUP.md
+- Policy and the full uc80 build pipeline: docs/dev/TOOLCHAIN_POLICY.md
+- Setup: docs/dev/COMPILER_SETUP.md
 - tnylpo: See docs/dev/TNYLPO_SETUP.md
 """
 

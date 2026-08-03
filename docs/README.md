@@ -24,9 +24,11 @@ Current development notes, plans, and technical documentation.
 - **`/dev/archive/`** - Completed development sessions and obsolete notes
 - **Interpreter** implementation guides
 - **Compiler** implementation and status:
+  - `TOOLCHAIN_POLICY.md` - **Read first.** Which Z80 C compiler and CP/M emulator the
+    project prefers: uc80 (with um80/ul80) and cpmemu
   - `COMPILER_STATUS_SUMMARY.md` - Complete feature list (100% complete!)
-  - `COMPILER_SETUP.md` - z88dk installation and configuration
-  - `TNYLPO_SETUP.md` - CP/M emulator setup
+  - `COMPILER_SETUP.md` - Toolchain installation and configuration (uc80; z88dk alternate)
+  - `TNYLPO_SETUP.md` - CP/M emulator setup for the tnylpo alternate
 - Technical specifications
 - Implementation guides
 
@@ -119,9 +121,10 @@ mkdocs gh-deploy
 - [Development Status](dev/STATUS.md) - Current project status
 
 ### Compiler
+- [Toolchain Policy](dev/TOOLCHAIN_POLICY.md) - Preferred: uc80 (+ um80/ul80) and cpmemu
 - [Compiler Status Summary](dev/COMPILER_STATUS_SUMMARY.md) - **100% complete!**
-- [Compiler Setup](dev/COMPILER_SETUP.md) - z88dk installation
-- [CP/M Emulator Setup](dev/TNYLPO_SETUP.md) - tnylpo installation
+- [Compiler Setup](dev/COMPILER_SETUP.md) - uc80 installation; z88dk (alternate)
+- [CP/M Emulator Setup](dev/TNYLPO_SETUP.md) - tnylpo (alternate) installation
 
 ### Developer Setup
 - [Linux Mint Developer Setup](dev/LINUX_MINT_DEVELOPER_SETUP.md) - **Complete system setup** (all packages & tools)

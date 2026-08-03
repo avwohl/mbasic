@@ -315,19 +315,48 @@ def compile_to_javascript(input_file, output_file, generate_html=False, debug=Fa
         sys.exit(1)
 
 
+def uc80_lib_dir():
+    """Locate the directory holding uc80's libc.lib and runtime.lib.
+
+    uc80 offers no flag or environment variable for this, and the .lib files are
+    build artifacts that do not always sit beside the Python package: in a source
+    checkout they land in the repo's top-level lib/, two levels above src/uc80/.
+    Try the plausible spots and let MBASIC_UC80_LIB override.
+
+    Returns the directory, or None if no libc.lib was found.
+    """
+    candidates = []
+    env = os.environ.get('MBASIC_UC80_LIB')
+    if env:
+        candidates.append(env)
+    try:
+        import uc80
+        pkg = os.path.dirname(uc80.__file__)
+        candidates.append(os.path.join(pkg, 'lib'))
+        # Source checkout: <repo>/src/uc80/ -> <repo>/lib/
+        candidates.append(os.path.join(os.path.dirname(os.path.dirname(pkg)), 'lib'))
+    except ImportError:
+        pass
+    for path in candidates:
+        if os.path.isfile(os.path.join(path, 'libc.lib')):
+            return path
+    return None
+
+
 def sanitize_cpm_filename(name):
     """Sanitize filename for CP/M 8.3 format.
 
     CP/M filenames must:
     - Be max 8 characters (before extension)
     - Use only A-Z, 0-9 (no underscores, hyphens, etc.)
-    - tnylpo requires lowercase filenames
+    - Lowercase. cpmemu, the preferred emulator, maps host names itself and does
+      not need this; tnylpo does. A portable name costs nothing, so do it for both.
 
     Args:
         name: Input filename (without extension)
 
     Returns:
-        Sanitized filename suitable for tnylpo/CP/M
+        Sanitized filename suitable for cpmemu/tnylpo/CP/M
     """
     import re
     # Remove extension if present
@@ -346,15 +375,133 @@ def sanitize_cpm_filename(name):
     return name
 
 
-def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False):
-    """Compile BASIC program to C for z88dk/CP/M
+def _run_tool(cmd, what, c_file, debug, install_hint=None):
+    """Run one build tool, failing loudly and non-zero if it did not work."""
+    import subprocess
+    if debug:
+        print(f"  Running: {' '.join(cmd)}", file=sys.stderr)
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+    except FileNotFoundError:
+        # Without this the outer handler blames the BASIC source file, reporting
+        # "File not found: <program>.bas" for a file that exists.
+        print(f"Error: {cmd[0]} not found - cannot build the generated C.",
+              file=sys.stderr)
+        print(f"The C source was written to {c_file}.", file=sys.stderr)
+        if install_hint:
+            print(install_hint, file=sys.stderr)
+        sys.exit(1)
+    if result.returncode != 0:
+        # Exit non-zero: no .com was produced, so a script must not treat this
+        # as success.
+        print(f"{what} failed - no executable was created.", file=sys.stderr)
+        print(f"The generated C source is at {c_file}.", file=sys.stderr)
+        print(f"{cmd[0]} reported:", file=sys.stderr)
+        print((result.stderr or result.stdout).rstrip() or "(no output)",
+              file=sys.stderr)
+        sys.exit(1)
+    return result
+
+
+def build_with_uc80(c_file, com_file, runtime_dir, runtime_c, string_count, debug):
+    """Build a CP/M .com with the preferred toolchain: uc80 -> um80 -> ul80.
+
+    uc80 is a C-to-assembly translator only; it never invokes an assembler or
+    linker, so the three steps are orchestrated here.  The subtleties (all of them
+    learned the hard way, see docs/dev/TOOLCHAIN_POLICY.md):
+
+    - MB25_NUM_STRINGS goes on the command line, not in the generated C.  uc80
+      compiles every translation unit together, so a #define that disagreed with
+      the runtime's view of the header silently corrupted the descriptor array.
+    - The assembly shim is assembled SEPARATELY.  Handing a .mac to uc80 links
+      cleanly but places the code in BSS, where crt0 zeroes it before main runs.
+    - --printf flags accumulate rather than replace; float alone loses %d.
+    - --no-embed-runtime is required because we link runtime.lib explicitly.
+    """
+    lib = uc80_lib_dir()
+    if lib is None:
+        print("Error: uc80's libc.lib was not found - cannot link the generated C.",
+              file=sys.stderr)
+        print(f"The C source was written to {c_file}.", file=sys.stderr)
+        print("Install the toolchain with: pip install uc80 um80", file=sys.stderr)
+        print("If uc80 is installed, its libraries may not be built yet - run "
+              "'python3 -m uc80.lib.build_libs', or point MBASIC_UC80_LIB at the "
+              "directory holding libc.lib.", file=sys.stderr)
+        print("Or build with the alternate toolchain: --toolchain z88dk",
+              file=sys.stderr)
+        sys.exit(1)
+
+    base = com_file[:-4] if com_file.endswith('.com') else com_file
+    mac_file, rel_file = base + '.mac', base + '.rel'
+    shim_mac = os.path.join(runtime_dir, 'mb25_uc80_shim.mac')
+    shim_rel = base + '_shim.rel'
+
+    uc80_cmd = ['uc80', f'-I{runtime_dir}']
+    if string_count > 0:
+        uc80_cmd.append(f'-DMB25_NUM_STRINGS={string_count}')
+    uc80_cmd += [c_file, runtime_c,
+                 '--printf', 'int', '--printf', 'float',
+                 '--scanf', 'int', '--scanf', 'float',
+                 '--no-embed-runtime', '-o', mac_file]
+    _run_tool(uc80_cmd, 'uc80 compilation', c_file, debug,
+              'Install it with: pip install uc80 um80')
+
+    _run_tool(['um80', mac_file, '-o', rel_file], 'um80 assembly', c_file, debug,
+              'Install it with: pip install um80')
+
+    link_inputs = [rel_file]
+    if string_count > 0:
+        if not os.path.exists(shim_mac):
+            print(f"Error: {shim_mac} not found - it supplies the string-pool "
+                  "helpers that uc80 cannot express in C.", file=sys.stderr)
+            sys.exit(1)
+        _run_tool(['um80', shim_mac, '-o', shim_rel], 'um80 assembly of the uc80 shim',
+                  c_file, debug)
+        link_inputs.append(shim_rel)
+
+    _run_tool(['ul80'] + link_inputs +
+              [os.path.join(lib, 'libc.lib'), os.path.join(lib, 'runtime.lib'),
+               '-o', com_file],
+              'ul80 link', c_file, debug, 'Install it with: pip install um80')
+
+
+def build_with_z88dk(c_file, com_file, runtime_dir, runtime_c, cpu, debug):
+    """Build a CP/M .com with the alternate toolchain, z88dk.
+
+    Still the route for Microsoft Binary Format floats and for real 8080 output.
+
+    --math-mbf32 selects Microsoft Binary Format floats, matching MBASIC.  Both
+    targets need it: without it the z80 link fails on any program with a float
+    variable ("undefined symbol: init_floatpack").  -o names the output exactly,
+    so ask for the .com name we advertise - otherwise z88dk writes an
+    extensionless file and the --run step silently finds nothing.
+
+    z88dk's own errors can be baffling: it reports "file '<name>.c' not found"
+    for a file that plainly exists when it cannot reach the directory (the snap
+    package cannot read /tmp or hidden directories, for example).
+    """
+    zcc_cmd = ['z88dk.zcc', '+cpm']
+    if cpu == '8080':
+        zcc_cmd.append('-clib=8080')
+    zcc_cmd += ['--math-mbf32', f'-I{runtime_dir}', c_file, runtime_c,
+                '-o', com_file, '-create-app']
+    _run_tool(zcc_cmd, 'z88dk compilation', c_file, debug,
+              'Install z88dk (https://z88dk.org) to build a CP/M .com binary.')
+
+
+def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False,
+                 toolchain='uc80', emulator='cpmemu'):
+    """Compile BASIC program to C, then to a CP/M .com executable.
 
     Args:
         input_file: Path to BASIC source file
         output_file: Path to output (without extension - generates .c and .com)
         cpu: Target CPU - 'z80' (default) or '8080'
-        run: Run the compiled program with tnylpo after compilation
+        run: Run the compiled program under the emulator after compilation
         debug: Enable debug output
+        toolchain: 'uc80' (preferred) or 'z88dk' (alternate).  See
+            docs/dev/TOOLCHAIN_POLICY.md.  '8080' forces z88dk - uc80 is Z80-only.
+        emulator: 'cpmemu' (preferred) or 'tnylpo' (alternate)
     """
     import subprocess
 
@@ -408,10 +555,18 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False):
         if debug:
             print(f"  Semantic analysis complete", file=sys.stderr)
 
+        # uc80 emits Z80 only.  Rather than produce a binary that hangs the moment
+        # it hits an 8080 core, fall back to z88dk and say so.
+        if cpu == '8080' and toolchain == 'uc80':
+            print("Note: --cpu 8080 requires the z88dk toolchain (uc80 is Z80-only) "
+                  "- building with z88dk.", file=sys.stderr)
+            toolchain = 'z88dk'
+
         # Generate C code
         config = {
             'source_file': os.path.basename(input_file),
-            'cpu_target': cpu
+            'cpu_target': cpu,
+            'dialect': toolchain,
         }
         backend = Z88dkCBackend(analyzer.symbols, config)
         c_code = backend.generate(ast)
@@ -447,54 +602,21 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False):
         runtime_dir = str(runtime_path)
         runtime_c = os.path.join(runtime_dir, 'mb25_string.c')
 
-        # --math-mbf32 selects Microsoft Binary Format floats, matching MBASIC.
-        # Both targets need it: without it the z80 link fails on any program
-        # with a float variable ("undefined symbol: init_floatpack").
-        # -o names the output exactly, so ask for the .com name we advertise
-        # below - otherwise z88dk writes an extensionless file and the --run
-        # step silently finds nothing.
-        if cpu == '8080':
-            zcc_cmd = ['z88dk.zcc', '+cpm', '-clib=8080', '--math-mbf32',
-                       f'-I{runtime_dir}', c_file, runtime_c,
-                       '-o', com_file, '-create-app']
+        if toolchain == 'uc80':
+            build_with_uc80(c_file, com_file, runtime_dir, runtime_c,
+                            backend.string_count, debug)
         else:
-            zcc_cmd = ['z88dk.zcc', '+cpm', '--math-mbf32', f'-I{runtime_dir}',
-                       c_file, runtime_c, '-o', com_file, '-create-app']
+            build_with_z88dk(c_file, com_file, runtime_dir, runtime_c, cpu, debug)
 
-        if debug:
-            print(f"  Running: {' '.join(zcc_cmd)}", file=sys.stderr)
-
-        try:
-            result = subprocess.run(zcc_cmd, capture_output=True, text=True)
-        except FileNotFoundError:
-            # Without this the outer handler blames the BASIC source file,
-            # reporting "File not found: <program>.bas" for a file that exists.
-            print("Error: z88dk not found - cannot compile the generated C.",
-                  file=sys.stderr)
-            print(f"The C source was written to {c_file}.", file=sys.stderr)
-            print("Install z88dk (https://z88dk.org) to build a CP/M .com binary.",
-                  file=sys.stderr)
-            sys.exit(1)
-
-        if result.returncode != 0:
-            # Exit non-zero: the .com was NOT produced, so a script must not
-            # treat this as success. Say what did and did not happen, because
-            # z88dk's own message can be baffling on its own - it reports
-            # "file '<name>.c' not found" for a file that plainly exists when
-            # it cannot reach the directory (the snap package cannot read /tmp
-            # or hidden directories, for example).
-            print(f"z88dk compilation failed - {com_file} was not created.",
-                  file=sys.stderr)
-            print(f"The generated C source is at {c_file}.", file=sys.stderr)
-            print("z88dk reported:", file=sys.stderr)
-            print(result.stderr.rstrip() or "(no output)", file=sys.stderr)
-            sys.exit(1)
-
-        print(f"Generated COM: {com_file}")
+        # Flush for the same reason as "Generated C" above: the emulator started
+        # below writes straight to fd 1, so an unflushed buffer prints this line
+        # after the program's own output.
+        print(f"Generated COM: {com_file}", flush=True)
 
         # Run with tnylpo if requested
         if run and os.path.exists(com_file):
-            # tnylpo requires CP/M 8.3 filenames - sanitize if needed
+            # tnylpo requires lowercase CP/M 8.3 filenames - sanitize if needed.
+            # cpmemu maps host names itself, but a portable name costs nothing.
             basename = os.path.basename(output_file)
             safe_name = sanitize_cpm_filename(basename)
             run_file = com_file
@@ -507,13 +629,25 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False):
                 if debug:
                     print(f"  Copied to CP/M-safe name: {run_file}", file=sys.stderr)
 
+            # Flush before handing the terminal to the emulator, which writes
+            # straight to fd 1 - otherwise this banner surfaces after the
+            # program's own output.
             print(f"\nRunning {run_file}...")
-            print("-" * 40)
+            print("-" * 40, flush=True)
+            emu_cmd = [emulator]
+            if emulator == 'cpmemu' and cpu == '8080':
+                emu_cmd.append('--8080')
+            emu_cmd.append(run_file)
             try:
-                subprocess.run(['tnylpo', run_file], check=True)
+                subprocess.run(emu_cmd, check=True)
             except FileNotFoundError:
-                print("tnylpo not found - install tnylpo to run CP/M programs")
-                print("See docs/dev/TNYLPO_SETUP.md for installation instructions")
+                if emulator == 'cpmemu':
+                    print("cpmemu not found - install it to run CP/M programs")
+                    print("See https://github.com/avwohl/cpmemu (.deb/.rpm on the "
+                          "releases page), or use --emulator tnylpo")
+                else:
+                    print("tnylpo not found - install tnylpo to run CP/M programs")
+                    print("See docs/dev/TNYLPO_SETUP.md for installation instructions")
             except subprocess.CalledProcessError as e:
                 print(f"Execution failed: {e}", file=sys.stderr)
 
@@ -745,9 +879,25 @@ Examples:
     )
 
     parser.add_argument(
+        '--toolchain',
+        choices=['uc80', 'z88dk'],
+        default='uc80',
+        help='C toolchain for --compile-c (default: uc80). z88dk is the alternate, '
+             'and is used automatically for --cpu 8080 since uc80 is Z80-only.'
+    )
+
+    parser.add_argument(
+        '--emulator',
+        choices=['cpmemu', 'tnylpo'],
+        default='cpmemu',
+        help='CP/M emulator used by --run (default: cpmemu)'
+    )
+
+    parser.add_argument(
         '--run',
         action='store_true',
-        help='Run compiled program with tnylpo after compilation (use with --compile-c)'
+        help='Run compiled program under the CP/M emulator after compilation '
+             '(use with --compile-c; see --emulator)'
     )
 
     args = parser.parse_args()
@@ -804,7 +954,9 @@ Examples:
             args.compile_c,
             cpu=args.cpu,
             run=args.run,
-            debug=args.debug
+            debug=args.debug,
+            toolchain=args.toolchain,
+            emulator=args.emulator
         )
         sys.exit(0)
 

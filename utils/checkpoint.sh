@@ -32,6 +32,17 @@ echo "New version: $NEW_VERSION"
 # Update version file immediately
 sed -i "s/VERSION = '$CURRENT_VERSION'/VERSION = '$NEW_VERSION'/" $VERSION_FILE
 
+# Enforce the Z80/CP/M toolchain preference (uc80 + cpmemu preferred over
+# z88dk + tnylpo).  This kept drifting back in the docs, so it is checked here.
+echo "Checking toolchain policy..."
+python3 utils/check_toolchain_policy.py
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ ERROR: toolchain policy violations (see docs/dev/TOOLCHAIN_POLICY.md)"
+    echo "Fix the documents before committing - do not weaken the check."
+    exit 1
+fi
+
 # Check if dev docs were modified - regenerate index
 DEV_CHANGED=$(git diff --name-only docs/dev/ 2>/dev/null | grep -v "docs/dev/index.md" || echo "")
 

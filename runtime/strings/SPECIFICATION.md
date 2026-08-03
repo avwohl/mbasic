@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides the complete specification for the MBASIC 2025 string allocation and garbage collection system designed for compilation to z88dk/Z80. The new system eliminates the O(n²) performance problem of the original MBASIC 5.21 while maintaining compatibility with BASIC string semantics.
+This document provides the complete specification for the MBASIC 2025 string allocation and garbage collection system, designed for compilation to Z80/CP/M with the uc80 toolchain (uc80, um80, ul80) and equally with the alternate z88dk toolchain. The new system eliminates the O(n²) performance problem of the original MBASIC 5.21 while maintaining compatibility with BASIC string semantics.
 
 ## Historical Context
 
@@ -185,10 +185,22 @@ The new algorithm achieves O(n log n) performance using shell sort (no stdlib qs
 
 Pool size is calculated at runtime from available memory:
 ```c
-pool_start = __BSS_tail;           // End of program BSS section
-pool_size = SP - 1024 - pool_start; // All memory up to stack reserve
+pool_start = _mb25_get_bss_tail(); // End of program BSS section
+pool_size = _mb25_get_sp() - 1024 - pool_start; // All memory up to stack reserve
 mb25_init((uint8_t*)pool_start, pool_size);
 ```
+
+The two helpers are toolchain-specific:
+
+- **uc80** - supplied by `mb25_uc80_shim.mac`, assembled separately with um80 and
+  linked as a `.rel`. uc80 has no inline assembly, and GCC-style `asm("...")` parses
+  cleanly and is then silently discarded, so the code has to live in a `.mac` file.
+  The end-of-BSS symbol is spelled `__bss_end` by ul80, and C cannot name it directly
+  because uc80 prefixes C identifiers with an underscore - another reason for the shim.
+- **z88dk** (alternate) - emitted inline by the code generator as `__naked` functions
+  containing `#asm`/`#endasm` blocks, referencing z88dk's `__BSS_tail`.
+
+Either way the string system itself sees only a pool pointer and a size.
 
 ## Implementation Notes
 

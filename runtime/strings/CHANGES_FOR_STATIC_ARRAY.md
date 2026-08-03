@@ -9,6 +9,12 @@ Updated the MBASIC 2025 string system to use a static array of string descriptor
 - **Before**: String descriptors were malloc'd at runtime
 - **After**: Static array `mb25_string_t mb25_strings[MB25_NUM_STRINGS]` - size known at compile time
 - **Benefit**: More efficient for microprocessors, no dynamic allocation overhead
+- **Declaration note**: `mb25_string.h` declares the array *unsized*
+  (`extern mb25_string_t mb25_strings[];`); only `mb25_string.c` states the size.
+  Giving the size in both places is the ordinary C idiom, but it crashes uc80 - the
+  preferred compiler - with an internal error in `_merge_array_size` (the alternate
+  z88dk accepts it). The unsized extern is valid C and builds with both.
+  See [../../docs/dev/TOOLCHAIN_POLICY.md](../../docs/dev/TOOLCHAIN_POLICY.md).
 
 ### 2. Removed Sort Buffer
 - **Before**: Used `mb25_global.sort_buffer` for sorting pointers during GC

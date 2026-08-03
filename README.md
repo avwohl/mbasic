@@ -219,15 +219,39 @@ Both compilers are **100% feature-complete** - every MBASIC 5.21 feature that ca
 
 ### Z80/8080 Compiler Requirements
 
-To use the Z80/8080 compiler features, you need:
+The Z80/8080 compiler emits C, so you need a C compiler that targets CP/M, and
+optionally a CP/M emulator to run the result.
 
-1. **z88dk** (required) - 8080/Z80 C compiler
+**Preferred toolchain**
+
+1. **uc80** (preferred) - C compiler for Z80/CP/M, optimized for small code size
+   - Needs the `um80` assembler and `ul80` linker from the same family
+   - Installation: `pip install uc80 um80`
+   - https://github.com/avwohl/uc80
+
+2. **cpmemu** (preferred) - CP/M 2.2 emulator with Z80 and 8080 CPU cores
+   - Translates BDOS/BIOS calls to the host file system, so no disk image is
+     needed and test programs can live anywhere in your tree
+   - Installation: `.deb`/`.rpm` from the releases page, or build from source
+   - https://github.com/avwohl/cpmemu
+
+**Supported alternates**
+
+z88dk and tnylpo also work, and are still used for the cases uc80 does not cover:
+Microsoft Binary Format floats (`--math-mbf32`, matching MBASIC's exact bit
+patterns), true Intel 8080 output, and the `INP`/`OUT`/`WAIT` port statements.
+Building and testing with both toolchains is supported and encouraged.
+
+3. **z88dk** (alternate) - 8080/Z80 C compiler
    - Must have `z88dk.zcc` in your PATH
    - Installation: snap, source build, or docker
 
-2. **tnylpo** (optional) - CP/M emulator for testing
+4. **tnylpo** (alternate) - CP/M emulator
    - Must have `tnylpo` in your PATH
    - Installation: build from source
+
+See `docs/dev/TOOLCHAIN_POLICY.md` for the full policy, the exact uc80 build
+pipeline, and the toolchain gotchas worth knowing before you touch this code.
 
 ### JavaScript Compiler Requirements
 

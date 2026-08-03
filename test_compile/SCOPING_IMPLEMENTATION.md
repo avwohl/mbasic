@@ -2,7 +2,9 @@
 
 ## Overview
 
-Implemented proper lexical scoping for control flow structures in the MBASIC-2025 compiler backend, targeting CP/M via z88dk C compilation.
+Implemented proper lexical scoping for control flow structures in the MBASIC-2025 compiler backend, targeting CP/M via C compilation.
+
+The C shown here is generated for the preferred toolchain — **uc80** (with the **um80** assembler and **ul80** linker), run under the **cpmemu** emulator. **z88dk** and **tnylpo** remain supported alternates and produce the same behaviour for everything in this document. See [../docs/dev/TOOLCHAIN_POLICY.md](../docs/dev/TOOLCHAIN_POLICY.md) for which one to pick.
 
 ## Features Implemented
 
@@ -130,6 +132,15 @@ This ensures all RETURN statements have complete switch cases even when RETURN a
 - Comments marking subroutines and return points
 - Efficient switch-based dispatch for RETURN
 
+### Compiler-specific detail: a label may not end a block
+
+Because every BASIC line gets a C label, the generator can produce a label as the last
+thing in a block. uc80 enforces the C17 rule that a label must be followed by a
+statement, so the emitted form is `line_NNNN: ;` with an explicit null statement rather
+than a bare `line_NNNN:` before the closing brace. GCC and z88dk accept the bare form as
+an extension, so the null statement is harmless there and keeps one code path for both
+compilers.
+
 ### Example Generated Code
 ```c
 int gosub_stack[100];
@@ -170,7 +181,10 @@ line_220:
 
 - Microsoft BASIC Compiler 1980 Manual (docs/external/Microsoft_BASIC_Compiler_1980.pdf)
 - MBASIC 5.21 Language Reference
-- z88dk C Compiler Documentation
+- Toolchain policy: [../docs/dev/TOOLCHAIN_POLICY.md](../docs/dev/TOOLCHAIN_POLICY.md)
+- uc80 C Compiler (preferred) — https://github.com/avwohl/uc80
+- cpmemu CP/M Emulator (preferred) — https://github.com/avwohl/cpmemu
+- z88dk C Compiler Documentation (alternate)
 
 ## Files Modified
 
@@ -179,7 +193,12 @@ line_220:
 
 ## Compatibility
 
-- ✓ CP/M executable via z88dk
-- ✓ Runs on tnylpo CP/M emulator
+- ✓ CP/M executable via uc80 + um80 + ul80 (preferred), or z88dk (alternate)
+- ✓ Runs on the cpmemu CP/M emulator (preferred), or tnylpo (alternate)
 - ✓ Compatible with BASIC-80 semantics
 - ✓ Maintains MBASIC 5.21 language compatibility
+
+Nothing in this design depends on the choice of compiler or emulator: the generated
+code is ordinary C control flow, and cpmemu runs the resulting `.COM` from either
+compiler. The one code-generation detail that differs is noted under "Code Generation
+Quality" above.

@@ -67,5 +67,7 @@ with open('custom_mem.c', 'w') as f:
     f.write(c_code)
 
 print("\n=== Saved to custom_mem.c ===")
-print("\nTo compile:")
+print("\nTo compile with the preferred toolchain (uc80):")
+print("  python3 mbasic --compile-c custom_mem custom_mem.bas")
+print("\nTo compile with the alternate toolchain (z88dk):")
 print("  z88dk.zcc +cpm custom_mem.c test_compile/mb25_string.c -Itest_compile -create-app -lm -o custom_mem")

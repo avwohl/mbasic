@@ -2,8 +2,8 @@
 
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
-**Last Updated:** 2025-11-24
-**Total Documents:** 30
+**Last Updated:** 2026-08-03
+**Total Documents:** 31
 
 ## What's Here
 
@@ -26,6 +26,20 @@ If you're contributing to MBASIC:
 2. Check `WORK_IN_PROGRESS.md` for current tasks
 3. Review relevant implementation docs before making changes
 4. Add new docs here when implementing significant features
+
+## Z80/CP/M Toolchain
+
+The compiler backend targets CP/M through a Z80 C toolchain and a CP/M emulator:
+
+	Role	Preferred	Supported alternate
+	C compiler	uc80 (+ um80, ul80)	z88dk (zcc)
+	CP/M emulator	cpmemu	tnylpo
+
+uc80 and cpmemu are the default pair. z88dk and tnylpo remain supported and are still
+the route for Microsoft Binary Format floats, true Intel 8080 output, and `INP`/`OUT`/`WAIT`
+port I/O — but they are not required. Read
+[Toolchain Policy](TOOLCHAIN_POLICY.md) before editing any doc that names them, and
+[Compiler Setup](COMPILER_SETUP.md) to install either pair.
 
 ## Browse by Category
 
@@ -79,6 +93,7 @@ If you're contributing to MBASIC:
 - [Persistent Issues Summary](PERSISTENT_ISSUES_SUMMARY.md)
 - [String Pool Changes 2025 11 23](STRING_POOL_CHANGES_2025_11_23.md)
 - [Tnylpo Setup](TNYLPO_SETUP.md)
+- [Toolchain Policy](TOOLCHAIN_POLICY.md)
 
 ## See Also
 

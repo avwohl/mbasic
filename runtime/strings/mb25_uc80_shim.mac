@@ -1,0 +1,52 @@
+; mb25_uc80_shim.mac - uc80/um80/ul80 equivalents of the z88dk inline-assembly
+; helpers that compiled BASIC programs use to size the string pool.
+;
+; The z88dk backend emits these as __naked functions containing #asm/#endasm
+; blocks.  uc80 has no inline assembly at all - and, worse, GCC-style asm("...")
+; parses cleanly and is then SILENTLY DISCARDED - so on uc80 the generated C
+; declares them extern and this file supplies them.
+;
+; BUILD NOTE - this file must be assembled SEPARATELY and linked as a .rel:
+;
+;     um80 mb25_uc80_shim.mac -o shim.rel
+;     ul80 program.rel shim.rel $UCLIB/libc.lib $UCLIB/runtime.lib -o program.com
+;
+; Do NOT pass it to uc80 as `uc80 program.c mb25_uc80_shim.mac`.  That appears to
+; work and links without error, but uc80 strips the CSEG directive and appends the
+; file after its own BSS directive, so this code lands in BSS and is zeroed by crt0
+; before main() runs.  The symptom is a routine that returns garbage instead of the
+; value it plainly loads.
+;
+; The .z80 directive is required.  Without it um80 assembles in 8080 mode, where it
+; accepts `ADD HL,SP` while generating wrong code, and still writes an output file.
+;
+; uc80 prefixes C identifiers with an underscore, so C's `_mb25_get_sp` is
+; `__mb25_get_sp` here.
+;
+; See docs/dev/TOOLCHAIN_POLICY.md.
+
+	.z80
+	CSEG
+
+	PUBLIC	__mb25_get_sp
+	PUBLIC	__mb25_get_bss_tail
+	EXTRN	__bss_end
+
+; uint16_t _mb25_get_sp(void)
+; Returns the current stack pointer.  The string pool grows up towards it, so the
+; caller uses it (less a reserve) as the ceiling of free memory.
+__mb25_get_sp:
+	LD	HL,0
+	ADD	HL,SP
+	RET
+
+; uint16_t _mb25_get_bss_tail(void)
+; Returns the first byte of free memory above the program's static storage.
+; z88dk spells this __BSS_tail; the ul80 linker spells it __bss_end.  C cannot name
+; it directly - uc80's extra leading underscore would emit EXTRN ___bss_end - which
+; is the other reason this shim exists.
+__mb25_get_bss_tail:
+	LD	HL,__bss_end
+	RET
+
+	END

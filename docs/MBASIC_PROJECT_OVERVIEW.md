@@ -208,7 +208,8 @@ Perfect for teaching programming fundamentals:
 - Complete semantic analysis phase
 - Type checking and optimization
 - C code generation (portable target)
-- 8080/Z80-specific optimizations via z88dk
+- Z80 code generation via uc80 + um80/ul80 — preferred, ~22% smaller binaries
+- z88dk alternate for true Intel 8080 output, MBF floats, and INP/OUT/WAIT
 - Sophisticated string management
 
 ### Runtime Library
@@ -284,25 +285,45 @@ python3 mbasic
 
 Complete setup guide for Linux Mint/Ubuntu/Debian includes:
 - Python virtual environment
-- z88dk compiler toolchain
-- tnylpo CP/M emulator
+- uc80 C compiler with the um80 assembler and ul80 linker (preferred)
+- cpmemu CP/M emulator (preferred)
+- z88dk compiler toolchain (alternate)
+- tnylpo CP/M emulator (alternate)
 - Web server configuration
 - Development tools
 
 See [docs/dev/LINUX_MINT_DEVELOPER_SETUP.md](dev/LINUX_MINT_DEVELOPER_SETUP.md)
 
+Which toolchain to reach for, and why both are kept, is spelled out in
+[docs/dev/TOOLCHAIN_POLICY.md](dev/TOOLCHAIN_POLICY.md).
+
 ### For Compiler Users
 
 **Z80/8080 Backend (CP/M Targets):**
 ```bash
-# Install z88dk (8080/Z80 C compiler)
-sudo snap install z88dk --beta
+# Install the preferred toolchain: uc80 compiler + um80 assembler + ul80 linker
+pip install uc80 um80
+
+# Install cpmemu, the preferred CP/M emulator, to run what you build
+# (.deb / .rpm from https://github.com/avwohl/cpmemu/releases, or build from source)
 
 # Compile BASIC to CP/M
 cd test_compile
 python3 test_compile.py yourprogram.bas
 
 # Creates: yourprogram.com (runs on CP/M!)
+
+# Run it without a disk image - cpmemu maps host files directly
+cpmemu yourprogram.com
+```
+
+The z88dk toolchain and the tnylpo emulator remain supported alternates. Install them if
+you need what uc80 cannot do — true Intel 8080 output (`--cpu 8080`), Microsoft Binary
+Format floats, or `INP`/`OUT`/`WAIT` port I/O:
+
+```bash
+# Alternate toolchain
+sudo snap install z88dk --beta
 ```
 
 **JavaScript Backend (Modern Platforms):**
@@ -366,7 +387,9 @@ mbasic --compile-js yourprogram.js --html yourprogram.bas
 
 **Built with:**
 - Python 3 (interpreter)
-- z88dk (compiler backend)
+- uc80 / um80 / ul80 (Z80 compiler backend)
+- cpmemu (CP/M emulator for testing)
+- z88dk and tnylpo (supported alternates)
 - Love for vintage computing
 - Commitment to completeness
 

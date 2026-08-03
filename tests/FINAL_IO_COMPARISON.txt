@@ -3,6 +3,27 @@ COMPREHENSIVE FILE I/O COMPARISON
 Our MBASIC Implementation vs Real MBASIC 5.21 (CP/M)
 ================================================================================
 
+NOTE ON THE EMULATOR USED (added after the fact)
+================================================================================
+
+This is a captured record of a comparison run, kept as-is.
+
+The preferred CP/M emulator is cpmemu (https://github.com/avwohl/cpmemu). If you re-run
+any of these comparisons today, use cpmemu: it runs the same com/mbasic.com binary with
+the same piping procedure.
+
+The runs captured below predate that and were made with tnylpo, the emulator in use at
+the time. tnylpo remains a supported alternate.
+
+The findings below are about MBASIC 5.21's own behaviour, not the emulator's, so they
+stand regardless of which one you use. Only two mechanical details change with cpmemu:
+it writes its startup and exit lines to stderr (redirect with 2>/dev/null), and MBASIC
+reports a slightly smaller "Bytes free" figure under it.
+
+See tests/HOW_TO_RUN_REAL_MBASIC.md for the exact commands, and
+docs/dev/TOOLCHAIN_POLICY.md for the policy.
+
+
 EXECUTIVE SUMMARY
 ================================================================================
 
@@ -224,7 +245,8 @@ Real MBASIC environment:
   - BASIC-80 Rev. 5.21 [CP/M Version]
   - Copyright 1977-1981 (C) by Microsoft
   - Created: 28-Jul-81
-  - Running under tnylpo CP/M emulator
+  - Running under the tnylpo CP/M emulator, which was in use at the time
+    (cpmemu is the preferred emulator now - see the note at the top of this file)
 
 Our MBASIC environment:
   - Python implementation (mbasic.py)

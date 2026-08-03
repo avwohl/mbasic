@@ -50,11 +50,48 @@ sudo apt install emacs-gtk
 # Alternatives: vim, nano, code (VS Code), etc.
 ```
 
-## Compiler Tools (z88dk)
+## Compiler Tools
 
-To compile BASIC programs to CP/M executables:
+To compile BASIC programs to CP/M executables. The preferred compiler is **uc80** (with
+the **um80** assembler and **ul80** linker); **z88dk** is a supported alternate. See
+[TOOLCHAIN_POLICY.md](TOOLCHAIN_POLICY.md) for which tool covers what.
 
-### Install z88dk via Snap
+### Install uc80, um80 and ul80 (preferred)
+
+uc80 is a Z80/CP/M C compiler optimized for small code size. It installs from PyPI, so
+there is no snap to enable and nothing to build:
+
+```bash
+# Activate the project virtual environment first
+# (see "Python Development Environment" below)
+source venv/bin/activate
+
+pip install uc80 um80
+```
+
+`ul80` ships inside the `um80` package, so those two installs give all three binaries.
+
+**Verify installation:**
+```bash
+which uc80 um80 ul80
+uc80 -h
+```
+
+If you used `pip install --user` instead of a virtual environment, the binaries land in
+`~/.local/bin`, which is not on the default PATH on Linux Mint:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+Project page: https://github.com/avwohl/uc80
+
+### Install z88dk via Snap (alternate)
+
+z88dk is still the route for three things uc80 cannot do: Microsoft Binary Format floats
+(`--math-mbf32`), true Intel 8080 output (`--cpu 8080`), and `INP`/`OUT`/`WAIT` port I/O.
+Install it if you need any of those, or if you want to build both ways and compare.
 
 ```bash
 # Enable snap if disabled on Linux Mint
@@ -74,18 +111,39 @@ z88dk-zcc --version
 
 See [COMPILER_SETUP.md](COMPILER_SETUP.md) for detailed compiler documentation.
 
-## CP/M Emulator (tnylpo)
+## CP/M Emulator
 
-For testing compiled programs and running real MBASIC.com:
+For testing compiled programs and running real MBASIC.com. The preferred emulator is
+**cpmemu**; **tnylpo** is a supported alternate. cpmemu runs `.COM` files produced by
+either compiler, so the choice of emulator is independent of the choice of compiler.
 
-### Install Dependencies
+### Install cpmemu (preferred)
+
+cpmemu is a CP/M 2.2 emulator with Z80 (`--z80`, the default) and 8080 (`--8080`) CPU
+cores. It translates BDOS/BIOS calls straight to the host file system, so there is no
+disk image to build and test programs can live anywhere in the Linux tree.
 
 ```bash
-# NCurses libraries required by tnylpo
+# Download the .deb from the releases page, then:
+sudo dpkg -i cpmemu_*.deb
+```
+
+Releases (`.deb` and `.rpm`) and source: https://github.com/avwohl/cpmemu
+
+**Verify installation:**
+```bash
+which cpmemu
+cpmemu          # prints usage and the CPU mode
+```
+
+### Install Dependencies for tnylpo (alternate)
+
+```bash
+# NCurses libraries used by tnylpo
 sudo apt install 'ncurses*' 'lib64ncurses*'
 ```
 
-### Build and Install tnylpo
+### Build and Install tnylpo (alternate)
 
 ```bash
 # Clone tnylpo repository
@@ -433,12 +491,15 @@ Verify everything works:
 # Test interpreter
 python3 mbasic
 
-# Test compiler (if z88dk installed)
+# Test compiler (needs uc80/um80/ul80, or z88dk)
 cd test_compile
 python3 test_compile.py test_varptr_simple.bas
 # Should generate test_varptr_simple.com
 
-# Test with tnylpo (if installed)
+# Run the result under cpmemu
+cpmemu test_varptr_simple.com
+
+# Or under tnylpo, if that is what you installed
 tnylpo test_varptr_simple.com
 ```
 
@@ -458,10 +519,12 @@ tnylpo test_varptr_simple.com
 
 ### Compiler Development
 - [ ] All minimal setup items
-- [ ] `snapd` - Snap package manager
-- [ ] `z88dk` - Z80 cross-compiler
-- [ ] `ncurses*` and `lib64ncurses*` - NCurses libraries
-- [ ] `tnylpo` - CP/M emulator (built from source)
+- [ ] `pip install uc80 um80` - preferred compiler (installs uc80, um80 and ul80)
+- [ ] `cpmemu` - preferred CP/M emulator (`.deb`/`.rpm` from releases, or build from source)
+- [ ] `snapd` - Snap package manager (only needed for the z88dk alternate)
+- [ ] `z88dk` - alternate Z80 cross-compiler, for MBF floats, `--cpu 8080`, `INP`/`OUT`/`WAIT`
+- [ ] `ncurses*` and `lib64ncurses*` - NCurses libraries (only needed for tnylpo)
+- [ ] `tnylpo` - alternate CP/M emulator (built from source)
 
 ### Documentation/Web Deployment
 - [ ] `redis-server` - Session storage (optional, for multi-user)
@@ -493,6 +556,24 @@ tnylpo test_varptr_simple.com
 ```bash
 # Try with version-specific package
 sudo apt install python3-venv python3.12-venv
+```
+
+### "uc80: command not found" after pip install
+```bash
+# pip install --user puts them in ~/.local/bin, which Mint does not add to PATH
+export PATH="$HOME/.local/bin:$PATH"
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+
+# If you installed into the venv instead, activate it first
+source venv/bin/activate
+which uc80 um80 ul80
+```
+
+### "ul80: cannot open libc.lib"
+```bash
+# The uc80 libraries live inside the installed package - there is no flag for the
+# path, so derive it from the module location
+python3 -c "import uc80,os;print(os.path.join(os.path.dirname(uc80.__file__),'lib'))"
 ```
 
 ### "z88dk-zcc not found after snap install"
@@ -555,13 +636,16 @@ mysql -u wohl -p mbasic_logs -e "SELECT COUNT(*) FROM web_errors;"
 - [Web Multi-User Deployment](WEB_MULTIUSER_DEPLOYMENT.md) - Complete web deployment guide
 - [Web Error Logging](WEB_ERROR_LOGGING.md) - Error logging system setup
 - [Redis Setup](REDIS_SESSION_STORAGE_SETUP.md) - Redis session storage configuration
-- [Compiler Setup](COMPILER_SETUP.md) - Detailed z88dk configuration
-- [tnylpo Setup](TNYLPO_SETUP.md) - CP/M emulator usage
+- [Toolchain Policy](TOOLCHAIN_POLICY.md) - Which compiler and emulator to use, and why
+- [Compiler Setup](COMPILER_SETUP.md) - Full uc80/cpmemu build pipeline, plus z88dk configuration
+- [tnylpo Setup](TNYLPO_SETUP.md) - Alternate CP/M emulator usage
 - [Testing Guide](https://github.com/avwohl/mbasic/blob/main/tests/README.md) - Running tests
 
 ## Support
 
 For issues specific to:
+- **uc80 / um80 / ul80:** https://github.com/avwohl/uc80/issues
+- **cpmemu:** https://github.com/avwohl/cpmemu/issues
 - **z88dk:** https://github.com/z88dk/z88dk/issues
 - **tnylpo:** https://gitlab.com/gbrein/tnylpo/-/issues
 - **MBASIC:** https://github.com/avwohl/mbasic/issues

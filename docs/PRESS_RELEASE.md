@@ -140,6 +140,12 @@ Our compiler generates REAL machine code for hardware access:
 
 Compile this. Run it on CP/M. **It just works.**
 
+One footnote, because we would rather be honest than glossy: `INP`, `OUT`, and `WAIT`
+reach the hardware through port instructions that the preferred uc80 toolchain does not
+emit, so a program using those three compiles through the z88dk alternate. Everything
+else in the listing above — `PEEK`, `POKE`, `CALL`, `VARPTR`, `USR` — builds on either
+toolchain. The split is documented in [docs/dev/TOOLCHAIN_POLICY.md](dev/TOOLCHAIN_POLICY.md).
+
 ## Technical Excellence
 
 ### Parser Engineering
@@ -155,7 +161,7 @@ Compile this. Run it on CP/M. **It just works.**
 **Z80/8080 Backend:**
 - Complete semantic analysis
 - Type checking and optimization
-- C code generation (via z88dk)
+- C code generation, compiled by uc80 (preferred) or z88dk (alternate)
 - 8080 and Z80 backend support
 - Sophisticated string management
 - O(n log n) garbage collection (shell sort, no stdlib)
@@ -266,14 +272,29 @@ mbasic --help
 ### Compile BASIC to CP/M (8080/Z80 Targets)
 
 ```bash
-# Install z88dk compiler (8080/Z80 backend)
-sudo snap install z88dk --beta
+# Install the preferred toolchain: uc80 compiler + um80 assembler + ul80 linker
+pip install uc80 um80
+
+# Install cpmemu to run the result (.deb / .rpm from
+# https://github.com/avwohl/cpmemu/releases, or build from source)
 
 # Compile BASIC to CP/M executable
 cd test_compile
 python3 test_compile.py myprogram.bas
 
 # Creates: MYPROGRAM.COM (runs on CP/M systems!)
+
+# Try it right here - no disk image needed
+cpmemu MYPROGRAM.COM
+```
+
+Prefer a different toolchain, or need true Intel 8080 output, Microsoft Binary Format
+floats, or `INP`/`OUT`/`WAIT` port I/O? The z88dk compiler and the tnylpo emulator are
+supported alternates and cover exactly those cases:
+
+```bash
+# Alternate toolchain
+sudo snap install z88dk --beta
 ```
 
 ### Compile BASIC to JavaScript (Modern Platforms)
@@ -328,7 +349,10 @@ We didn't just build MBASIC 2025. We documented every single piece of it:
 - Optional: tkinter for GUI (usually included with Python)
 
 ### Compiler (Optional — For CP/M Executable Generation)
-- z88dk compiler toolchain (`sudo snap install z88dk --beta`)
+- uc80 C compiler with the um80 assembler and ul80 linker (`pip install uc80 um80`)
+- cpmemu CP/M emulator to run the .COM files you build (https://github.com/avwohl/cpmemu)
+- Alternates, for 8080 output / MBF floats / port I/O: z88dk (`sudo snap install z88dk --beta`)
+  and tnylpo
 - See compiler documentation: https://avwohl.github.io/mbasic/help/common/compiler/
 
 ## Open Source & Free
@@ -376,7 +400,8 @@ pip install mbasic
 
 **Built With:**
 - Python 3 (interpreter and tooling)
-- z88dk (compiler backend for 8080/Z80)
+- uc80 / um80 / ul80 (compiler backend for Z80) and cpmemu (CP/M emulator)
+- z88dk and tnylpo (supported alternates for 8080 output and MBF floats)
 - Passion for vintage computing
 - Commitment to completeness
 - Over 1 million words of documentation

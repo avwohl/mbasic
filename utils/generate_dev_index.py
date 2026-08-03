@@ -51,6 +51,20 @@ If you're contributing to MBASIC:
 3. Review relevant implementation docs before making changes
 4. Add new docs here when implementing significant features
 
+## Z80/CP/M Toolchain
+
+The compiler backend targets CP/M through a Z80 C toolchain and a CP/M emulator:
+
+\tRole\tPreferred\tSupported alternate
+\tC compiler\tuc80 (+ um80, ul80)\tz88dk (zcc)
+\tCP/M emulator\tcpmemu\ttnylpo
+
+uc80 and cpmemu are the default pair. z88dk and tnylpo remain supported and are still
+the route for Microsoft Binary Format floats, true Intel 8080 output, and `INP`/`OUT`/`WAIT`
+port I/O — but they are not required. Read
+[Toolchain Policy](TOOLCHAIN_POLICY.md) before editing any doc that names them, and
+[Compiler Setup](COMPILER_SETUP.md) to install either pair.
+
 ## Browse by Category
 
 """

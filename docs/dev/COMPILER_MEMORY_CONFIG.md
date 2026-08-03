@@ -2,7 +2,14 @@
 
 ## Overview
 
-The MBASIC-2025 compiler generates CP/M programs that use all available memory for strings.
+The MBASIC-2025 compiler generates CP/M programs that use all available memory for
+strings.
+
+The layout below is the same whichever C toolchain builds the program — uc80 (with
+um80/ul80), the preferred compiler, or z88dk, the supported alternate. What differs is
+the *name* of the symbol marking the end of BSS and how C reaches it; both are covered
+under "Finding the end of BSS" below. See
+[TOOLCHAIN_POLICY.md](TOOLCHAIN_POLICY.md).
 
 ## CP/M Memory Layout
 
@@ -26,8 +33,8 @@ CP/M Memory Map:
        │  Static Variables       │
        │  String Descriptors     │
        │  GOSUB Return Stack     │ ← int gosub_stack[100] array
-       │  File Control Blocks    │ ← z88dk FCBs are static, not heap
-       ├─────────────────────────┤ __BSS_tail
+       │  File Control Blocks    │ ← FCBs are static, not heap
+       ├─────────────────────────┤ end of BSS
        │                         │
        │  STRING POOL            │ ← All available memory (~56KB on 64K)
        │  (dynamic size)         │
@@ -43,9 +50,34 @@ CP/M Memory Map:
 
 ## String Pool Allocation
 
-The string pool uses **all available memory** from `__BSS_tail` to `SP - stack_reserve`.
+The string pool uses **all available memory** from the end of BSS to
+`SP - stack_reserve`.
 
 **No heap/malloc needed** - the pool is allocated directly at startup:
+
+```c
+uint16_t pool_size = SP - 1024 - (uint16_t)bss_end;
+mb25_init((uint8_t *)bss_end, pool_size);
+```
+
+Key points:
+- The end-of-BSS symbol marks the end of program data
+- File I/O buffers (FCBs) are in BSS, not heap - already counted at that boundary
+- 1024 bytes reserved for stack safety margin
+- Typical pool size: ~56KB on 64K CP/M system
+
+## Finding the end of BSS
+
+This is the one part of the layout that is compiler-specific.
+
+**uc80 (preferred)** exposes `__END__`, `__BSS_START`, and `__BSS_END` from the
+linker, but C cannot name them directly. uc80 prefixes every C identifier with `_`, so
+`extern char __END__[];` emits `EXTRN ___END__` and fails to link. Reach them through
+an assembly shim instead — the same `mb25_uc80_shim.mac` that supplies `mb25_get_sp`,
+assembled separately with `um80` and linked as a `.rel`. (Passing a hand-written `.mac`
+to `uc80` itself puts the code in BSS, where `crt0` zeroes it.)
+
+**z88dk (alternate)** exposes the boundary as `__BSS_tail`, which C can name directly:
 
 ```c
 extern unsigned char __BSS_tail;
@@ -53,11 +85,20 @@ uint16_t pool_size = SP - 1024 - (uint16_t)&__BSS_tail;
 mb25_init((uint8_t *)&__BSS_tail, pool_size);
 ```
 
-Key points:
-- `__BSS_tail` is the z88dk symbol marking end of BSS (end of program data)
-- File I/O buffers (FCBs) are in BSS, not heap - already counted in `__BSS_tail`
-- 1024 bytes reserved for stack safety margin
-- Typical pool size: ~56KB on 64K CP/M system
+## String Descriptor Table
+
+The descriptor array sits in BSS, sized by `MB25_NUM_STRINGS`. Two declaration details
+exist because of uc80:
+
+- The header declares the array **unsized** (`extern mb25_string_t mb25_strings[];`).
+  An `extern T a[N];` followed by `T a[N];` — the ordinary header-declares,
+  source-defines idiom — crashes uc80 outright. The unsized form is valid C and works
+  with both compilers.
+- `MB25_NUM_STRINGS` must be passed on the command line (`-DMB25_NUM_STRINGS=N`), not
+  `#define`d in one `.c` file. uc80 merges all translation units into one compilation,
+  so generated code defining 4 while the runtime saw the default of 100 is not two
+  independent builds — it is a mismatched array size and memory corruption. Under
+  z88dk's separate compilation the same code happened to work.
 
 ## GOSUB Stack
 
@@ -68,7 +109,8 @@ int gosub_stack[100];  /* Return IDs */
 int gosub_sp = 0;      /* Stack pointer */
 ```
 
-The C stack (CRT_STACK_SIZE) is only for z88dk library function calls.
+The C stack is only for C library function calls (z88dk sizes it with
+`CRT_STACK_SIZE`).
 
 ## Garbage Collection
 

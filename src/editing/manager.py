@@ -13,7 +13,8 @@ Current implementation (LOCAL UIs):
 - LOAD/SAVE/MERGE commands (interactive.py) call ProgramManager methods directly
 - UI menu operations (File > Open/Save) also call ProgramManager methods directly
 - Local UIs (CLI, Curses, Tk) use direct filesystem access via ProgramManager
-- Cross-platform compiler paths are hardcoded (e.g., z88dk snap path)
+- Cross-platform compiler paths are hardcoded (e.g., the uc80 library directory,
+  or the z88dk snap path when building with the alternate toolchain)
 
 Planned improvements:
 - FileIO (src/file_io.py) - Abstraction layer for cross-platform support
@@ -31,7 +32,8 @@ Related filesystem abstractions:
    - Separate from program loading (LOAD/SAVE which load .BAS source files)
 
 2. CodeGenBackend (src/codegen_backend.py) - For compiler path handling
-   - Currently hardcodes z88dk snap path - temporary until FileIO integration
+   - Currently hardcodes toolchain paths (uc80's library directory, and the
+     z88dk snap path) - temporary until FileIO integration
 
 ProgramManager.load_from_file() returns (success, errors) tuple where errors
 is a list of (line_number, error_message) tuples for direct UI error reporting.

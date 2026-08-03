@@ -6279,14 +6279,15 @@ class SemanticAnalyzer:
         lines.append("=" * 70)
         return '\n'.join(lines)
 
-    def compile(self, program: ProgramNode, backend_name: str = 'z88dk',
+    def compile(self, program: ProgramNode, backend_name: str = 'uc80',
                 output_file: str = 'a.out') -> bool:
         """
         Compile the analyzed program using the specified backend.
 
         Args:
             program: The analyzed AST to compile
-            backend_name: Name of backend to use ('z88dk', etc.)
+            backend_name: C dialect to emit - 'uc80' (preferred) or 'z88dk'
+                (alternate). See docs/dev/TOOLCHAIN_POLICY.md.
             output_file: Desired output executable name
 
         Returns:
@@ -6297,9 +6298,10 @@ class SemanticAnalyzer:
         from pathlib import Path
         from src.codegen_backend import Z88dkCBackend
 
-        # Select backend
-        if backend_name == 'z88dk':
-            backend = Z88dkCBackend(self.symbols)
+        # Select backend. One class emits both C dialects; they differ in how the
+        # string pool bootstraps and in which printf conversions are available.
+        if backend_name in ('uc80', 'z88dk'):
+            backend = Z88dkCBackend(self.symbols, {'dialect': backend_name})
         else:
             self.errors.append(f"Unknown backend: {backend_name}")
             return False
@@ -6335,7 +6337,8 @@ class SemanticAnalyzer:
             self.errors.append(f"Compiler invocation failed: {e}")
             return False
 
-        # z88dk creates both OUTPUT.COM and output files, clean up and rename
+        # z88dk creates both OUTPUT.COM and output files, clean up and rename.
+        # The uc80 toolchain names its output exactly, so this is z88dk-only.
         if backend_name == 'z88dk':
             # z88dk creates UPPERCASE.COM, rename to lowercase
             uppercase_com = output_file.upper() + '.COM'

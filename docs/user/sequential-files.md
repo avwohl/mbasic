@@ -172,7 +172,7 @@ The text " more text" after ^Z is **not read**, and the partial line "Line 2 has
 ### Compatibility
 
 This behavior matches:
-- ✅ MBASIC 5.21 on CP/M (tested with tnylpo emulator)
+- ✅ MBASIC 5.21 on CP/M (tested under the cpmemu emulator, and with tnylpo as well)
 - ✅ CP/M text file conventions
 - ✅ Most CP/M-era BASIC interpreters
 
@@ -232,11 +232,18 @@ cd tests/
 # Test with our MBASIC
 python3 ../mbasic testeof.bas
 
-# Test with real MBASIC 5.21 (requires tnylpo)
+# Test with real MBASIC 5.21 under cpmemu, the preferred CP/M emulator
+(cat testeof.bas && echo "RUN") | cpmemu ../com/mbasic.com
+
+# tnylpo is a supported alternate and takes the same command line
 (cat testeof.bas && echo "RUN") | tnylpo ../com/mbasic.com
 ```
 
-Both should produce identical output.
+Both should produce identical output. cpmemu needs no disk image - it maps the
+files in `tests/` straight into CP/M - so the test data files above are visible
+to the emulated interpreter without any extra setup. See
+[Toolchain Policy](../dev/TOOLCHAIN_POLICY.md) for the emulator and compiler
+preferences.
 
 ### Summary
 
