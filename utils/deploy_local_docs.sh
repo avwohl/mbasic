@@ -2,13 +2,26 @@
 # Build and deploy local documentation to /local/site for nginx
 # Replaces GitHub URLs with local URLs for mbasic.awohl.com/docs
 
-# This script always deploys the checkout below, whoever invokes it. Without the
-# check, a failed cd left the script running in the caller's directory and it went
-# on to build and publish whatever checkout that happened to be.
-REPO_DIR="/home/mbasic/cl/mbasic"
+# Deploy the checkout this script belongs to, derived from its own path - NOT the
+# caller's working directory and NOT a hardcoded path.
+#
+# Both of those were tried and both were wrong. Using the cwd meant a failed cd
+# published whatever checkout the caller happened to be sitting in. Hardcoding
+# /home/mbasic/cl/mbasic then made the script impossible to run as anyone but the
+# mbasic user - that directory is mode 0750 - so every deploy from a developer's
+# checkpoint failed, silently, for six releases. Resolving $0 gives one unambiguous
+# answer that is correct for whoever runs it.
+#
+# DEPLOY_REPO_DIR overrides, for the case where you really do want to publish a
+# different checkout than the one holding this script.
+REPO_DIR="${DEPLOY_REPO_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 if ! cd "$REPO_DIR"; then
     echo "❌ ERROR: cannot enter $REPO_DIR - local docs NOT deployed" >&2
-    echo "   This script publishes that checkout specifically; run it as the user that owns it." >&2
+    exit 1
+fi
+if [ ! -f "mkdocs-local.yml" ]; then
+    echo "❌ ERROR: $REPO_DIR is not an mbasic checkout (no mkdocs-local.yml)" >&2
+    echo "   local docs NOT deployed" >&2
     exit 1
 fi
 
@@ -53,9 +66,16 @@ LIVE_LINK="${DEPLOY_ROOT}/site"
 TIMESTAMP=$(date +%s)
 NEW_DIR="${DEPLOY_ROOT}/site-${TIMESTAMP}"
 
-if [ ! -d "$DEPLOY_ROOT" ] || [ ! -w "$DEPLOY_ROOT" ]; then
-    echo "❌ ERROR: $DEPLOY_ROOT is missing or not writable by $(id -un) - local docs NOT deployed" >&2
-    echo "   Create it as root:  mkdir -p $DEPLOY_ROOT && chown mbasic:mbasic $DEPLOY_ROOT" >&2
+# Distinguish "this machine does not host the local site" from "the deploy broke".
+# Exit 2 means nothing to do here and is not a failure; exit 1 means a real failure.
+# Callers must tell them apart, or a broken deploy looks like a laptop again.
+if [ ! -d "$DEPLOY_ROOT" ]; then
+    echo "ℹ Skipping local docs deploy: $DEPLOY_ROOT does not exist (not a docs host)."
+    exit 2
+fi
+if [ ! -w "$DEPLOY_ROOT" ]; then
+    echo "❌ ERROR: $DEPLOY_ROOT exists but is not writable by $(id -un) - local docs NOT deployed" >&2
+    echo "   Grant access, e.g.:  sudo setfacl -m u:$(id -un):rwx $DEPLOY_ROOT" >&2
     exit 1
 fi
 
@@ -125,9 +145,19 @@ fi
 
 # Clean up old versions (keep only current). nullglob stops the loop from running
 # once on the literal pattern when no previous build directories exist.
+#
+# A build left by a different user can be unremovable - the ACL mask on it can cut
+# this user down to r-x - and an unguarded 'rm -rf' then prints one line per file,
+# thousands of them, burying the deploy result. The swap has already happened by
+# this point, so a leftover directory wastes disk but does not affect what is
+# served: warn once, name it, and carry on.
 shopt -s nullglob
 for old in "${DEPLOY_ROOT}"/site-*; do
-    [ "$old" != "$NEW_DIR" ] && rm -rf "$old"
+    [ "$old" = "$NEW_DIR" ] && continue
+    if ! rm -rf "$old" 2>/dev/null || [ -e "$old" ]; then
+        echo "⚠ Could not remove the old build $old (owned by $(stat -c %U "$old" 2>/dev/null))." >&2
+        echo "  The new site is live; remove it with: sudo rm -rf $old" >&2
+    fi
 done
 shopt -u nullglob
 

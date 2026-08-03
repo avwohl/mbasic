@@ -142,8 +142,25 @@ if [ "$DOCS_CHANGED" = true ]; then
 
         echo "✓ Docs build validation passed (no warnings or errors)"
 
-        # Build and deploy local site with correct URLs
+        # Build and deploy local site with correct URLs.
+        #
+        # Check the exit status. It used to be ignored, so the deploy failed on
+        # every checkpoint for six releases without anyone noticing - each attempt
+        # to fix the deploy looked like it had worked because nothing ever said
+        # otherwise. Exit 2 means "not a docs host", which is fine; anything else
+        # non-zero is a real failure and must not pass quietly.
         ./utils/deploy_local_docs.sh
+        DEPLOY_STATUS=$?
+        if [ $DEPLOY_STATUS -eq 2 ]; then
+            DEPLOY_STATUS=0        # nothing to deploy here; not a failure
+        elif [ $DEPLOY_STATUS -ne 0 ]; then
+            echo ""
+            echo "❌ ERROR: local docs deploy FAILED (exit $DEPLOY_STATUS)"
+            echo "   The commit below still happens - this is a publishing failure,"
+            echo "   not a code failure - but checkpoint will exit non-zero so it"
+            echo "   cannot go unnoticed. Fix it or run utils/deploy_local_docs.sh"
+            echo "   by hand once the cause is resolved."
+        fi
     else
         echo "❌ ERROR: mkdocs not installed!"
         echo ""
@@ -165,3 +182,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 git push
 
 echo "✓ Checkpoint complete: Version $NEW_VERSION committed and pushed"
+
+# Surface a failed docs deploy in the exit status. The commit and push above have
+# already succeeded, so nothing is lost - but the checkpoint did not do everything
+# it set out to do, and must not report success.
+if [ "${DEPLOY_STATUS:-0}" -ne 0 ]; then
+    echo "❌ ...but the local docs deploy failed - the published site is STALE."
+    exit 1
+fi
