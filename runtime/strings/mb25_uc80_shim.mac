@@ -17,8 +17,16 @@
 ; before main() runs.  The symptom is a routine that returns garbage instead of the
 ; value it plainly loads.
 ;
-; The .z80 directive is required.  Without it um80 assembles in 8080 mode, where it
-; accepts `ADD HL,SP` while generating wrong code, and still writes an output file.
+; The .z80 directive is required.  Without it um80 assembles in 8080 mode, where
+; `LD` is not a known mnemonic and `ADD HL,SP` is rejected as taking too many
+; operands.  That failure is loud: um80 reports each error, exits non-zero, and
+; writes no output file.
+;
+; (An earlier revision of this comment said 8080 mode ACCEPTS `ADD HL,SP` and
+; mis-assembles it, and that um80 writes output despite errors.  Both claims were
+; wrong - um80 has rejected every `ADD HL,rr` form since its first commit.  The
+; behaviour described is real MACRO-80 3.44's, not um80's.  See
+; docs/dev/UC80_BUGS_TODO.md.)
 ;
 ; uc80 prefixes C identifiers with an underscore, so C's `_mb25_get_sp` is
 ; `__mb25_get_sp` here.

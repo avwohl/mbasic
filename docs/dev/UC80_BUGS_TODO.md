@@ -15,6 +15,50 @@ them worth fixing ahead of anything that merely errors out.
 
 ---
 
+## Corrections from the upstream triage (2026-08-03)
+
+uc80 reproduced and root-caused every item. Two findings change how the text below should be
+read, and are recorded here so the original wording is not taken at face value. Per-item fix
+status is appended at the end of this file once the upstream work is verified.
+
+**Item 3 does not reproduce, and never did.** um80 rejects `ADD HL,BC` and `ADD HL,SP`
+*identically*, exits non-zero, and writes no output file:
+
+```
+$ um80 opc.mac -o opc.rel
+Error at line 4: Unknown instruction or directive: LD
+Error at line 5: ADD requires one operand
+Error at line 6: ADD requires one operand
+EXIT=1
+$ ls opc.rel
+ls: cannot access 'opc.rel': No such file or directory
+```
+
+Three errors, not one - the report quoted only the line-6 error and omitted the other two.
+The `len(ops) != 1` guard has been present since um80's first commit, so um80 never behaved
+as described. What item 3 describes is genuine **MACRO-80 3.44** behaviour (M80 emits `0x84`
+with a `Q` warning and writes the `.REL` anyway); um80 is already stricter and safer. Nothing
+in um80's `ADD HL,rr` handling should be "fixed". The same false claim was corrected in
+`runtime/strings/mb25_uc80_shim.mac`.
+
+There *is* a real um80 bug next door, which is presumably what was actually being chased: in
+8080 mode, a Z80 mnemonic that spells an 8080 no-operand instruction **silently drops its
+operand**, with a warning only and exit 0 - `RET NZ` assembles as an unconditional `RET`.
+That one is being fixed, as a hard error.
+
+**The open `FRE(A$)` question is attributed: it is a uc80 miscompile.** uc80 never inferred the
+*result type* of a comma expression, so `(mb25_garbage_collect(), (double)mb25_get_free_space())`
+was treated as `int` - a bogus `int`-to-`double` conversion was emitted on top of the correct
+one, and in variadic-argument position only 2 of the `double`'s 4 bytes were pushed. Every
+`(a, b)` yielding `double`/`float`/`long`/`long long` was silently wrong. The instinct that it
+was "not the cast alone" was right; it was not the cast at all.
+
+The reported `23808` vs z88dk's `47043` was a red herring - no transformation relates the two
+numbers, they are simply different string-pool sizes in two different builds. The reproducible
+symptom was the reduced case returning 0.
+
+---
+
 ## 1. `asm("...")` is parsed and then silently discarded
 
 **Severity: high - silent miscompile.** No error, no warning, no code. Anyone porting
