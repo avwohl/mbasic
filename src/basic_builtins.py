@@ -15,6 +15,8 @@ import select
 import tty
 import termios
 
+from src.terminal_errors import TERMINAL_ERRORS
+
 
 # Special marker classes for TAB and SPC functions
 class TabMarker:
@@ -993,8 +995,12 @@ class BuiltinFunctions:
                 else:
                     # No input available
                     return ""
-            except (OSError, IOError):
-                # If anything goes wrong with terminal operations, return empty string
+            except TERMINAL_ERRORS:
+                # If anything goes wrong with terminal operations, return empty
+                # string. The shared tuple is what makes termios.error part of
+                # this - it is not an OSError subclass, so the (OSError,
+                # IOError) that used to be here could never catch it, and
+                # IOError is just an alias of OSError anyway.
                 return ""
 
     def INPUT(self, num, file_num=None):

@@ -26,6 +26,8 @@ from src.runtime import Runtime
 from src.interpreter import Interpreter, ChainException
 import src.ast_nodes as ast_nodes
 from src.input_sanitizer import sanitize_and_clear_parity
+from src.iohandler.console import input_without_history
+from src.terminal_errors import TERMINAL_ERRORS
 from src.debug_logger import debug_log, debug_log_error, is_debug_mode
 from src.ui.keybinding_loader import KeybindingLoader
 from src.version import VERSION
@@ -509,7 +511,7 @@ class InteractiveMode:
                     # Handle input synchronously for CLI
                     if state.input_prompt:
                         try:
-                            value = input()
+                            value = input_without_history()
                             state = interpreter.provide_input(value)
                         except KeyboardInterrupt:
                             self.io.output("")
@@ -561,7 +563,7 @@ class InteractiveMode:
                 # Handle input synchronously for CLI
                 if state.input_prompt:
                     try:
-                        value = input()
+                        value = input_without_history()
                         state = self.program_interpreter.provide_input(value)
                     except KeyboardInterrupt:
                         self.io.output("")
@@ -1309,24 +1311,46 @@ class InteractiveMode:
     def _read_char(self):
         """Read a single character from stdin"""
         import sys
-        import tty
-        import termios
 
+        def read_cooked():
+            """Read without raw mode - piped input, or no terminal control."""
+            ch = sys.stdin.read(1)
+            return ch if ch else None
+
+        try:
+            import tty
+            import termios
+        except ImportError:
+            # tty/termios are POSIX-only; on Windows there is no raw mode to
+            # set. This has to be caught around the import itself - putting
+            # ImportError in the handler below never fired, because by then
+            # the import had already succeeded or already propagated.
+            return read_cooked()
+
+        ch = None
+        got_char = False
         try:
             fd = sys.stdin.fileno()
             old_settings = termios.tcgetattr(fd)
             try:
                 tty.setraw(fd)
                 ch = sys.stdin.read(1)
-                return ch if ch else None
+                got_char = True
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        except (AttributeError, OSError, ImportError):
-            # Fallback for non-TTY/piped input or terminal errors
-            # (AttributeError: fd not available, OSError/termios.error: raw mode failed,
-            #  ImportError: termios not available on Windows)
-            ch = sys.stdin.read(1)
-            return ch if ch else None
+        except TERMINAL_ERRORS:
+            # Fallback for non-TTY/piped input or terminal errors. See
+            # TERMINAL_ERRORS for why each is listed; termios.error in
+            # particular is NOT an OSError subclass, and leaving it out made
+            # EDIT fail on piped input with
+            # "?error: (25, 'Inappropriate ioctl for device')".
+            if got_char:
+                # Only the restore failed. The character was already read, so
+                # reading again here would swallow a second one and return the
+                # wrong character.
+                return ch if ch else None
+            return read_cooked()
+        return ch if ch else None
 
     def _read_until_escape(self):
         """Read characters until Escape ($) is pressed"""

@@ -175,14 +175,15 @@ Homebrew's python links GNU readline, pyenv does when Homebrew's readline is
 present at build time, and Apple's system Python does not. Nothing above changes
 that - it makes mbasic behave on either.
 
-Left alone deliberately, and worth separate reports:
+Two bugs first recorded here as deferred have since been fixed - see
+[CLI_INPUT_HANDLING_FIXES.md](CLI_INPUT_HANDLING_FIXES.md): `termios.error`
+escaping the raw-mode reads, and program `INPUT` answers being filed in the
+command history.
 
-- `src/interactive.py` `_read_char()` catches `(AttributeError, OSError,
-  ImportError)` and its comment claims that covers `termios.error`. It does not:
-  `issubclass(termios.error, OSError)` is `False`.
-- Program `INPUT` responses go through a bare `input()` in
-  `src/iohandler/console.py`, so they are recorded in `~/.mbasic_history`
-  alongside commands. `readline.set_auto_history(False)` around those reads is
-  the fix.
+Still left alone:
+
 - A read-only `$HOME` still produces a `?PermissionError` for the `~/.mbasic`
   settings directory, unrelated to history.
+- Immediate-mode `INPUT` (typing `INPUT "NAME"; N$` at the `Ok` prompt) does not
+  work at all: the prompt prints, control returns to the REPL, and the answer is
+  read as a command. Pre-existing and unrelated to readline.

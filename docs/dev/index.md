@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2026-08-04
-**Total Documents:** 33
+**Total Documents:** 34
 
 ## What's Here
 
@@ -64,6 +64,7 @@ port I/O — but they are not required. Read
 
 ### Debugging & Errors
 
+- [Cli Input Handling Fixes](CLI_INPUT_HANDLING_FIXES.md)
 - [Random Fixes Todo](RANDOM_FIXES_TODO.md)
 - [Uc80 Bugs Todo](UC80_BUGS_TODO.md)
 - [Usage Tracking Debug](USAGE_TRACKING_DEBUG.md)

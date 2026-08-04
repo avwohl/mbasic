@@ -8,6 +8,37 @@ I/O handler for the command-line MBASIC interpreter.
 import sys
 import os
 from .base import IOHandler
+from src.terminal_errors import TERMINAL_ERRORS
+
+
+def input_without_history() -> str:
+    """Read a line like input(), but keep it out of the command history.
+
+    Answers to a program's INPUT statement are data, not commands. Without
+    this they are recorded by readline alongside the commands the user typed,
+    so pressing Up at the "Ok" prompt scrolls back through whatever a program
+    asked for - and they are then persisted to ~/.mbasic_history.
+
+    set_auto_history() is a flag inside CPython's readline module rather than
+    something the C library does, so this behaves the same on GNU readline and
+    on libedit. When readline is missing (or is a shim that predates the call)
+    there is no history being kept, so there is nothing to suppress.
+    """
+    try:
+        import readline
+        set_auto_history = readline.set_auto_history
+    except (ImportError, AttributeError):
+        return input()
+
+    # There is no getter for this flag, but mbasic never turns it off
+    # globally, so restoring it to True restores the status quo. The disable
+    # is inside the try so that even an exception raised between it and the
+    # read cannot leave history switched off for the rest of the session.
+    try:
+        set_auto_history(False)
+        return input()
+    finally:
+        set_auto_history(True)
 
 
 class ConsoleIOHandler(IOHandler):
@@ -35,7 +66,7 @@ class ConsoleIOHandler(IOHandler):
         if prompt:
             print(prompt, end='')
             sys.stdout.flush()
-        return input()
+        return input_without_history()
 
     def input_line(self, prompt: str = '') -> str:
         """Input a complete line from console.
@@ -86,13 +117,27 @@ class ConsoleIOHandler(IOHandler):
                 # Unix/Linux: read single char
                 import tty
                 import termios
-                fd = sys.stdin.fileno()
-                old_settings = termios.tcgetattr(fd)
+                ch = None
+                got_char = False
                 try:
-                    tty.setraw(fd)
-                    ch = sys.stdin.read(1)
-                finally:
-                    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+                    fd = sys.stdin.fileno()
+                    old_settings = termios.tcgetattr(fd)
+                    try:
+                        tty.setraw(fd)
+                        ch = sys.stdin.read(1)
+                        got_char = True
+                    finally:
+                        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+                except TERMINAL_ERRORS:
+                    # No terminal to put in raw mode (piped input, or stdin
+                    # replaced by something without a real fd). Read cooked
+                    # instead of dying: termios.error is not an OSError
+                    # subclass, so an unguarded tcgetattr escapes as
+                    # "(25, 'Inappropriate ioctl for device')".
+                    if not got_char:
+                        return sys.stdin.read(1)
+                    # Only the restore failed - the character is already in
+                    # hand, and reading again would consume a second one.
                 return ch
             else:
                 # Windows: use msvcrt
@@ -112,7 +157,9 @@ class ConsoleIOHandler(IOHandler):
                         "(waits for Enter, not single character)",
                         RuntimeWarning
                     )
-                    line = input()
+                    # Whole line for a single-character request, so keep it out
+                    # of the command history like every other program read.
+                    line = input_without_history()
                     return line[:1] if line else ""
 
     def clear_screen(self) -> None:

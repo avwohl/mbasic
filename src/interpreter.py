@@ -601,7 +601,10 @@ class Interpreter:
                     if state.input_prompt:
                         # Synchronous input for CLI
                         try:
-                            value = input()  # Use built-in input() for CLI
+                            from src.iohandler.console import input_without_history
+                            # Program INPUT answers are data, not commands -
+                            # they must not land in the readline history.
+                            value = input_without_history()
                             state = self.provide_input(value)
                         except KeyboardInterrupt:
                             # User pressed Ctrl+C during input
