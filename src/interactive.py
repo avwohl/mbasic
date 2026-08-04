@@ -207,6 +207,12 @@ class InteractiveMode:
             readline.read_history_file(history_file)
         except FileNotFoundError:
             pass  # No history file yet
+        except OSError:
+            # Some libedit/readline builds (notably macOS's system Python,
+            # which links libedit instead of GNU readline) raise
+            # PermissionError/OSError reading a perfectly normal history
+            # file. Treat it the same as "no history available".
+            pass
 
         # Save history on exit
         atexit.register(readline.write_history_file, history_file)
