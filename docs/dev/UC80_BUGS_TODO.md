@@ -1,8 +1,10 @@
 # uc80 / um80 Bugs Found While Making Them the Preferred Toolchain
 
 **Created:** 2026-08-03
-**Status:** Not Started - these are upstream bugs in the sister projects
-**Priority:** Medium - all have workarounds in place, none currently block a build
+**Status:** RESOLVED 2026-08-04 - all seven fixed upstream and verified end to end.
+See [Fix status](#fix-status-verified-2026-08-04) at the end for what mbasic can now
+stop working around, and for what the verification pass found on top.
+**Priority:** Was medium - all had workarounds, none blocked a build
 **Upstream:** https://github.com/avwohl/uc80 and https://github.com/avwohl/um80_and_friends
 
 Found while switching mbasic's Z80/CP/M build over to uc80 + cpmemu (see
@@ -255,12 +257,106 @@ or a `uc80 --print-lib-dir`.
 - **`label: }` rejected.** uc80 is right and mbasic was wrong - a label must precede a
   statement in C17. Fixed on our side in `_finalize_lines()`, which emits `label: ;`.
 
-## Open question, not yet attributed
+## Fix status (verified 2026-08-04)
 
-- **`FRE(A$)` returns a wrong value in uc80 builds** (23808 where z88dk reports 47043,
-  and 0 in a reduced case). The pool bootstrap is *not* the cause: an instrumented build
-  showed `bss=16208 sp=64760 size=47530`, which matches z88dk's pool almost exactly. So
-  the fault is downstream in `mb25_get_free_space()` or in how the comma expression
-  `(mb25_garbage_collect(), (double)mb25_get_free_space())` is compiled. A direct
-  `uint16_t`-to-`double` conversion test passed, so it is not the cast alone. Needs
-  isolating before it can be filed against either project.
+**All seven items are fixed.** Upstream re-verified every one end to end -- built,
+linked and run under cpmemu -- using verifiers working from this document rather than
+from the fixes, then fixed what that pass turned up as well. uc80 is at 630 passing
+tests, um80/ul80 at 190.
+
+Two of the fixes below are for regressions introduced in uc80 0.6.0 itself, so treat
+0.6.0 as superseded rather than merely improved on. Build against uc80 after
+`1fb6474` and um80 after `54e9a20`.
+
+| # | Item | Status | Commit(s) |
+|---|------|--------|-----------|
+| 1 | `asm("...")` discarded | Fixed | `cfeed03`, `44487a7` |
+| 2 | Appended `.mac` lands in BSS | Fixed | `e422207`, `ee5ef8e` |
+| 3 | um80 operand handling | Report was wrong; a real bug next door is fixed | um80 `a38cc15` |
+| 4 | `printf` `%e` and `%g` empty | Fixed, and in the rest of the family too | `215b864`, `ea8b824` |
+| 5 | `extern T a[N];` internal error | Fixed | `f96c829`, `744c3f2`, `f90c57a` |
+| 6 | Console `LF` instead of `CRLF` | Fixed | `96d866f` |
+| 7 | `.lib` files unshipped | Fixed | `bc0463e`, `84ca138` |
+| - | `FRE(A$)` (was unattributed) | Fixed; it was a uc80 miscompile | `11cbd0d`, `c000f4c` |
+
+### What mbasic can stop doing
+
+- **Item 2 - the separate-assembly shim.** `uc80 program.c mb25_uc80_shim.mac` now
+  places the code in CSEG ahead of the BSS block, so it survives crt0. It is also
+  fenced from the peephole, which until `1563862` rewrote hand-written assembly (it
+  fused `LD A,(HL)` + `LD C,A` with A still live, and deleted a label caught between
+  them). Assembling the shim separately still works and remains a perfectly good
+  choice; it is no longer a workaround for anything. `mb25_uc80_shim.mac` still has to
+  exist for `__bss_end`, which C cannot name.
+
+- **Item 5 - the unsized extern in `mb25_string.h`.** `extern int arr[100];` followed
+  by `int arr[100];` compiles, and a genuine size conflict is now diagnosed instead of
+  crashing. Confirm with:
+
+      printf 'extern int a[100];\nint a[100];\n' > t.c && uc80 t.c -o t.mac
+
+  One caveat before changing the header: if the bound is spelled with an enum
+  constant, that only started working in `f90c57a`. Before it, `enum {N=8}; extern int
+  a[N]; int a[];` allocated **zero bytes** and the next global was written through it.
+
+- **Item 4 - `%f` in generated `PRINT`.** `%g` works, in every printf-family entry
+  point, so BASIC `PRINT` can use it and get MBASIC's trailing-zero behaviour. Two
+  things to know first: `%lg` is **not** registered by auto-detection or
+  `--printf float` (see Still open), so spell it `%g` or pass `--printf all`; and
+  `%f` itself was wrong for every value >= 65536 until `9306503` -- `1000000.0`
+  printed as `3906.00///`. If mbasic ever printed a large number and got something
+  that was not even digits, that was this.
+
+### Confirm any of it yourself
+
+    LIB=$(uc80 --print-lib-dir)
+    uc80 t.c -o t.mac && um80 t.mac -o t.rel \
+      && ul80 t.rel $LIB/libc.lib $LIB/runtime.lib -o t.com && cpmemu t.com
+
+| Item | One-line check |
+|------|----------------|
+| 1 | `void f(void){ asm("ld hl,1234\n\tld (_marker),hl"); }` -> prints 1234 |
+| 2 | the `kconst` helper from this document -> prints 4660, not 65281 |
+| 3 | `um80` on `LD HL,0` / `ADD HL,SP` with no `.z80` -> three errors, exit 1, no output |
+| 4 | `printf("[%e][%g]", 28.0, 28.0)` -> `[2.800000e+01][28]`, and the same from `sprintf` |
+| 5 | `extern int a[100]; int a[100];` -> compiles; `int a[200];` -> diagnosed |
+| 6 | `cpmemu prog.com \| cat -A` -> lines end `^M$` |
+| 7 | `uc80 --print-lib-dir` -> one line, exit 0, holds `libc.lib` |
+
+### Corrections to this document, confirmed
+
+Both corrections recorded in the earlier triage section hold up:
+
+- **Item 3 does not reproduce and never did.** The `len(ops) != 1` guard has been in
+  um80 since its first commit. What item 3 describes is MACRO-80 3.44 behaviour.
+  There *was* a real operand-dropping bug beside it, and checking that one turned up
+  two more, all now fixed: a Z80 mnemonic spelling an 8080 no-operand instruction
+  dropped its operand (`RET NZ` -> `RET`); `SUB`/`AND`/`XOR`/`OR`/`CP` dropped the
+  operand of their `A,` form, so **`CP A,5` assembled as `CP A`** -- a comparison that
+  always compares equal, exit 0, no diagnostic; and `.Z80` anywhere in a file
+  retroactively assembled every line above it as Z80 on the second pass.
+
+- **`FRE(A$)` was a uc80 miscompile**, as the triage concluded. Two further defects in
+  that same work were found afterwards: a comma yielding a 64-bit *literal*
+  (`(f(), 42LL)`) evaluated to whatever the 64-bit accumulator last held -- a
+  regression introduced by the FRE fix itself -- and struct-valued commas produced
+  garbage and silently skipped the left operand in argument position.
+
+### Still open
+
+Nothing here blocks mbasic, and nothing here is one of the seven reported items.
+Full list with repros in `uc80/todo.txt`. The ones most likely to matter to mbasic:
+
+- **`%lf`, `%le` and `%lg` are not registered** by auto-detection or `--printf float`.
+  Silent: the conversion is echoed verbatim and every later one in that call reads the
+  wrong argument. mbasic's generated C emits `%lg`. Use `%g`, or `--printf all`.
+- **`%.*f` and `%*f` are unsupported**, with the same silent argument desync.
+- **Field width and the `-`, `+` and ` ` flags do nothing on a float conversion.**
+  `%10.2f` prints `1.50`. Not float-specific -- the format parser discards those
+  flags for every conversion, so they have never worked.
+- **`printf` in a `default:` label or an initializer list is invisible** to
+  auto-detection, so its conversions go unregistered. Silent.
+- Under `--no-whole-program`, the printf dispatch table is emitted by the unit
+  defining `main()`. A unit that prints conversions `main`'s unit does not now warns
+  and tells you to pass an explicit `--printf`. mbasic compiles both its files in one
+  invocation, so this does not apply to it.
