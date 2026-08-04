@@ -12,10 +12,12 @@ from .visual import VisualBackend
 try:
     from .tk_ui import TkBackend
     _has_tk = True
-except (ImportError, OSError):
+except (ImportError, OSError, ValueError):
     # Tkinter UI not available (may need: apt install python3-tk).
-    # OSError covers a missing/unreadable keybindings JSON, which must not
-    # prevent the dependency-free CLI backend from being importable.
+    # OSError covers a missing/unreadable keybindings JSON, and ValueError
+    # covers UnicodeDecodeError from one that will not decode in the current
+    # locale - neither must prevent the dependency-free CLI backend from
+    # being importable.
     _has_tk = False
     TkBackend = None
 
@@ -23,9 +25,10 @@ except (ImportError, OSError):
 try:
     from .curses_ui import CursesBackend
     _has_curses = True
-except (ImportError, OSError):
+except (ImportError, OSError, ValueError):
     # Curses UI not available (requires urwid: pip install urwid).
-    # OSError covers a missing/unreadable keybindings JSON (see above).
+    # OSError/ValueError cover an unreadable or undecodable keybindings JSON
+    # (see above).
     _has_curses = False
     CursesBackend = None
 

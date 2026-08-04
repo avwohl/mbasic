@@ -97,7 +97,7 @@ class HelpWidget(urwid.WidgetWrap):
 
         try:
             if merged_index_path.exists():
-                with open(merged_index_path, 'r') as f:
+                with open(merged_index_path, 'r', encoding='utf-8') as f:
                     return json.load(f)
         except Exception:
             pass
@@ -380,7 +380,7 @@ class HelpWidget(urwid.WidgetWrap):
 
         # Read and render the markdown
         try:
-            with open(full_path, 'r') as f:
+            with open(full_path, 'r', encoding='utf-8') as f:
                 markdown = f.read()
 
             # Expand macros before rendering

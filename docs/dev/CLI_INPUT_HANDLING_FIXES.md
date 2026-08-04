@@ -112,10 +112,10 @@ would be caught.
 
 ## Not fixed here
 
-- **`src/basic_builtins.py` imports `tty` and `termios` at module scope**, so
-  the module - and therefore the interpreter - cannot be imported on Windows at
-  all. `src/iohandler/__init__.py` has the same problem with `import curses`.
-  Fixing either alone will not make Windows work; they need doing together.
+- **The Windows import failures** noted here (`tty`/`termios` at module scope in
+  `src/basic_builtins.py`, `import curses` via `src/iohandler/__init__.py`) have
+  since been fixed, along with a third one nobody had spotted - see
+  [WINDOWS_IMPORT_COMPATIBILITY.md](WINDOWS_IMPORT_COMPATIBILITY.md).
 - **Immediate-mode `INPUT`** (`INPUT "NAME"; N$` typed at the `Ok` prompt) does
   not work: `execute_immediate()` calls the interpreter directly and never
   drives the input state machine, so the prompt prints, control returns to the

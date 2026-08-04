@@ -12,8 +12,16 @@ import math
 import random
 import sys
 import select
-import tty
-import termios
+
+try:
+    import tty
+    import termios
+except ImportError:
+    # POSIX only. On Windows INKEY$ uses msvcrt instead, but the import used to
+    # be unguarded here - which made this module, and therefore the whole
+    # interpreter, impossible to import on Windows at all.
+    tty = None
+    termios = None
 
 from src.terminal_errors import TERMINAL_ERRORS
 
@@ -972,12 +980,19 @@ class BuiltinFunctions:
                 return ""
         else:
             # Unix/Linux/Mac implementation using select
-            # Check if stdin is a TTY first
-            if not sys.stdin.isatty():
-                # Not a TTY (probably piped input or file), can't do non-blocking read
+            if termios is None or tty is None:
+                # No POSIX terminal control available, and this is not the
+                # Windows branch either - there is no way to read a key here.
                 return ""
 
             try:
+                # Check if stdin is a TTY first. This is inside the try because
+                # isatty() itself raises on a closed or substituted stdin, and
+                # those are exactly the errors TERMINAL_ERRORS exists to absorb.
+                if not sys.stdin.isatty():
+                    # Not a TTY (probably piped input or file), can't do non-blocking read
+                    return ""
+
                 # Check if stdin has data available without blocking
                 readable, _, _ = select.select([sys.stdin], [], [], 0)
 

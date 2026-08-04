@@ -115,8 +115,14 @@ class ConsoleIOHandler(IOHandler):
             # Blocking: wait for single character
             if sys.platform != 'win32':
                 # Unix/Linux: read single char
-                import tty
-                import termios
+                try:
+                    import tty
+                    import termios
+                except ImportError:
+                    # POSIX only, and the guard has to wrap the import itself -
+                    # putting ImportError in the handler below never fires,
+                    # because by then the import has already propagated.
+                    return sys.stdin.read(1)
                 ch = None
                 got_char = False
                 try:

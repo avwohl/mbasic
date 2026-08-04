@@ -15,7 +15,11 @@ from pathlib import Path
 
 # Load keybindings from JSON
 _config_path = Path(__file__).parent / 'curses_keybindings.json'
-with open(_config_path, 'r') as f:
+# encoding is explicit: this file ships with UTF-8 arrows (U+2191/U+2193)
+# and is read at import time, so on a Windows whose ANSI codepage is not
+# UTF-8 (cp932 and friends) the default would raise UnicodeDecodeError and
+# make this module - and every UI backend - unimportable.
+with open(_config_path, 'r', encoding='utf-8') as f:
     _config = json.load(f)
 
 

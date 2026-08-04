@@ -18,6 +18,16 @@ They are not exported here to keep this module focused on core I/O handlers:
 
 from .base import IOHandler
 from .console import ConsoleIOHandler
-from .curses_io import CursesIOHandler
+
+# curses is POSIX-only in the standard library, so the curses I/O handler is
+# optional here - the same treatment the curses UI backend already gets in
+# src/ui/__init__.py. Importing it unconditionally made this package, and so
+# every module that imports an I/O handler, unimportable on Windows.
+try:
+    from .curses_io import CursesIOHandler
+    _has_curses_io = True
+except ImportError:
+    _has_curses_io = False
+    CursesIOHandler = None
 
 __all__ = ['IOHandler', 'ConsoleIOHandler', 'CursesIOHandler']

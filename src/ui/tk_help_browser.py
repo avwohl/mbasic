@@ -178,7 +178,7 @@ class TkHelpBrowser(tk.Toplevel):
 
         try:
             if merged_index_path.exists():
-                with open(merged_index_path, 'r') as f:
+                with open(merged_index_path, 'r', encoding='utf-8') as f:
                     return json.load(f)
         except Exception:
             pass
@@ -195,7 +195,7 @@ class TkHelpBrowser(tk.Toplevel):
             return False
 
         try:
-            with open(full_path, 'r') as f:
+            with open(full_path, 'r', encoding='utf-8') as f:
                 content = f.read()
 
             # Skip YAML front matter

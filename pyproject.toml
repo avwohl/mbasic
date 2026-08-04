@@ -10,7 +10,11 @@ name = "mbasic"
 dynamic = ["version"]
 description = "MBASIC2025 5.21 BASIC language - Independent open-source implementation"
 readme = "README.md"
-requires-python = ">=3.8"
+# 3.9, not 3.8: src/parser.py and src/input_sanitizer.py annotate with
+# PEP 585 builtin generics (tuple[str, bool]), which are evaluated at
+# import time and are a syntax error to subscript before 3.9. Both are on
+# the unconditional startup path, so a 3.8 install could never have run.
+requires-python = ">=3.9"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 authors = [
@@ -35,7 +39,6 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

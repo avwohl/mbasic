@@ -34,7 +34,10 @@ class KeybindingLoader:
 
         if config_path.exists():
             try:
-                with open(config_path, 'r') as f:
+                # UTF-8: the shipped keybinding JSON is UTF-8, and the
+                # except below would otherwise swallow a codepage
+                # mismatch and silently return no keybindings at all.
+                with open(config_path, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception:
                 pass
@@ -225,7 +228,8 @@ def dump_keymap(ui_name: str) -> None:
         return
 
     try:
-        with open(config_path, 'r') as f:
+        # UTF-8: same shipped JSON, same codepage trap as above.
+        with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
     except Exception as e:
         print(f"Error loading keybindings: {e}")
