@@ -2,20 +2,35 @@
 ; helpers that compiled BASIC programs use to size the string pool.
 ;
 ; The z88dk backend emits these as __naked functions containing #asm/#endasm
-; blocks.  uc80 has no inline assembly at all - and, worse, GCC-style asm("...")
-; parses cleanly and is then SILENTLY DISCARDED - so on uc80 the generated C
-; declares them extern and this file supplies them.
+; blocks.  uc80 has no #asm/#endasm and no __naked, so on uc80 the generated C
+; declares these extern and this file supplies them.
 ;
-; BUILD NOTE - this file must be assembled SEPARATELY and linked as a .rel:
+; uc80 also still needs this file for __bss_end, which C cannot name at all -
+; see the note on _mb25_get_bss_tail below.  That reason does not go away, so
+; the shim stays even though uc80 0.6.0 could now express _mb25_get_sp inline.
+;
+; BUILD NOTE - assemble this SEPARATELY and link it as a .rel:
 ;
 ;     um80 mb25_uc80_shim.mac -o shim.rel
 ;     ul80 program.rel shim.rel $UCLIB/libc.lib $UCLIB/runtime.lib -o program.com
 ;
-; Do NOT pass it to uc80 as `uc80 program.c mb25_uc80_shim.mac`.  That appears to
-; work and links without error, but uc80 strips the CSEG directive and appends the
-; file after its own BSS directive, so this code lands in BSS and is zeroed by crt0
-; before main() runs.  The symptom is a routine that returns garbage instead of the
-; value it plainly loads.
+; That route works on every uc80 version and is what mbasic uses.
+;
+; VERSION NOTE - two uc80 defects that shaped this file are fixed in uc80 0.6.0.
+; If you are building against an OLDER uc80, both still apply:
+;
+;   - Before 0.6.0, GCC-style asm("...") parsed cleanly and was then SILENTLY
+;     DISCARDED - no error, no warning, no code.  0.6.0 emits basic asm("...")
+;     verbatim and hard-errors on the extended (operand-list) form it does not
+;     support.
+;
+;   - Before 0.6.0, `uc80 program.c mb25_uc80_shim.mac` appeared to work and
+;     linked without error, but uc80 stripped the CSEG directive and appended
+;     the file after its own BSS directive, so this code landed in BSS and was
+;     zeroed by crt0 before main() ran.  The symptom was a routine returning
+;     garbage instead of the value it plainly loads.  0.6.0 splices appended
+;     .mac content in ahead of the BSS block, so that invocation is now correct
+;     - but the separate-assembly route above remains the supported one here.
 ;
 ; The .z80 directive is required.  Without it um80 assembles in 8080 mode, where
 ; `LD` is not a known mnemonic and `ADD HL,SP` is rejected as taking too many
