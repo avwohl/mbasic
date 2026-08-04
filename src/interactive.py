@@ -26,7 +26,7 @@ from src.runtime import Runtime
 from src.interpreter import Interpreter, ChainException
 import src.ast_nodes as ast_nodes
 from src.input_sanitizer import sanitize_and_clear_parity
-from src.debug_logger import debug_log_error, is_debug_mode
+from src.debug_logger import debug_log, debug_log_error, is_debug_mode
 from src.ui.keybinding_loader import KeybindingLoader
 from src.version import VERSION
 
@@ -197,43 +197,93 @@ class InteractiveMode:
             self.program_runtime.for_loops.clear()
 
     def _setup_readline(self):
-        """Configure readline for better line editing"""
+        """Configure readline for better line editing.
+
+        Handles both of the C libraries Python's readline module is built on:
+        GNU readline, and libedit (what macOS system Python links). They differ
+        in the syntax parse_and_bind() accepts and in how their history files
+        behave. See docs/dev/MACOS_LIBEDIT_READLINE.md before changing this.
+        """
         import readline
         import atexit
+
+        # Which library is behind the readline module? readline.backend exists
+        # on Python 3.13+; before that the documented test is the module
+        # docstring. macOS system Python is 3.9, so the docstring path is the
+        # one that actually runs on the platform this matters for.
+        backend = getattr(readline, 'backend', None)
+        if backend is None:
+            backend = 'editline' if 'libedit' in (readline.__doc__ or '') else 'readline'
 
         # Set up history file
         history_file = os.path.expanduser('~/.mbasic_history')
         try:
             readline.read_history_file(history_file)
         except FileNotFoundError:
-            pass  # No history file yet
-        except OSError:
-            # Some libedit/readline builds (notably macOS's system Python,
-            # which links libedit instead of GNU readline) raise
-            # PermissionError/OSError reading a perfectly normal history
-            # file. Treat it the same as "no history available".
-            pass
+            pass  # No history file yet - normal on the first run
+        except OSError as e:
+            # History is a convenience. A history file readline declines to read
+            # must never stop the interpreter from starting. Cases seen:
+            #  - macOS system Python (libedit): read_history() returns a boolean
+            #    "loaded nothing" flag, which CPython raises from as though it
+            #    were an errno, so an empty history file arrives here as
+            #    PermissionError [Errno 1] on a perfectly normal 0600 file.
+            #  - a directory at that path: OSError [Errno 22] on GNU readline.
+            #  - a root-owned file left behind by running mbasic under sudo.
+            debug_log(f"Could not read history file {history_file}",
+                      {'error': repr(e)})
 
-        # Save history on exit
-        atexit.register(readline.write_history_file, history_file)
+        # Save history on exit. Guarded: write_history_file() fails the same
+        # ways the read does, and an exception escaping an atexit callback
+        # prints "Exception ignored in atexit callback" after the user has
+        # already typed SYSTEM.
+        def save_history():
+            try:
+                if readline.get_current_history_length() == 0:
+                    # Nothing to save. Skipping matters twice over: it will not
+                    # overwrite a history file we failed to read, and it stops
+                    # us writing the empty history file that is itself what
+                    # trips libedit on the next run.
+                    return
+                readline.write_history_file(history_file)
+            except Exception as e:
+                debug_log(f"Could not write history file {history_file}",
+                          {'error': repr(e)})
+
+        atexit.register(save_history)
 
         # Set history length
         readline.set_history_length(1000)
 
         # Setup tab completion for BASIC keywords
         readline.set_completer(self._completer)
-        readline.parse_and_bind('tab: complete')
 
-        # Use emacs-style keybindings (default, but be explicit)
-        readline.parse_and_bind('set editing-mode emacs')
+        # parse_and_bind() takes GNU readline syntax on GNU readline and
+        # editrc(5) syntax on libedit, and each ignores the other's strings
+        # silently - no error, the binding simply never happens. Emacs mode is
+        # set first in both branches because it reinitializes the keymap, which
+        # would otherwise undo the bindings that follow.
+        if backend == 'editline':
+            readline.parse_and_bind('bind -e')              # emacs keybindings
+            # libedit binds ^I itself at startup, but 'bind -e' above wipes
+            # that, so this is required rather than belt-and-braces.
+            readline.parse_and_bind('bind ^I rl_complete')  # tab completion
+            # ed-insert is libedit's spelling of self-insert; it inserts the
+            # character that triggered it, so ^A becomes 0x01 in the buffer
+            # exactly as in the GNU branch below.
+            readline.parse_and_bind('bind ^A ed-insert')
+        else:
+            # Use emacs-style keybindings (default, but be explicit)
+            readline.parse_and_bind('set editing-mode emacs')
+            readline.parse_and_bind('tab: complete')
 
-        # Bind Ctrl+A to insert the character (ASCII 0x01) into the input line,
-        # overriding the default Ctrl+A (beginning-of-line) behavior.
-        # When the user presses Ctrl+A, readline's 'self-insert' action inserts the
-        # 0x01 character into the input buffer (the input line becomes just "^A").
-        # When the user then presses Enter, the input is returned to the application.
-        # The start() method detects this character in the returned input and enters edit mode.
-        readline.parse_and_bind('Control-a: self-insert')
+            # Bind Ctrl+A to insert the character (ASCII 0x01) into the input line,
+            # overriding the default Ctrl+A (beginning-of-line) behavior.
+            # When the user presses Ctrl+A, readline's 'self-insert' action inserts the
+            # 0x01 character into the input buffer (the input line becomes just "^A").
+            # When the user then presses Enter, the input is returned to the application.
+            # The start() method detects this character in the returned input and enters edit mode.
+            readline.parse_and_bind('Control-a: self-insert')
 
     def _completer(self, text, state):
         """Tab completion for BASIC keywords and commands"""
