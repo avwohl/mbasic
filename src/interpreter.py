@@ -12,6 +12,7 @@ from src.runtime import Runtime
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
 from src.pc import PC
+from src.win_console import win_flush_pending
 import src.ast_nodes as ast_nodes
 
 
@@ -233,6 +234,12 @@ class Interpreter:
             InterpreterState: Initial state (typically 'idle' or 'error' if setup fails)
         """
         try:
+            # Drop any half-delivered keystroke left by the previous program.
+            # On Windows a special key expands to several characters and INKEY$
+            # hands back one per call, so a program that stops mid-sequence
+            # would otherwise leak the remainder into this one. No-op elsewhere.
+            win_flush_pending()
+
             # Setup runtime tables
             self.runtime.setup()
 

@@ -122,15 +122,10 @@ classifier dropped.
 
 Fixing the imports gets mbasic to start. It does not make it work well:
 
-- **`INKEY$` and `INPUT$` swallow special keys.** `msvcrt.getch()` returns
-  `b'\xe0'` or `b'\x00'` plus a scancode for arrows and function keys, and the
-  code does `.decode('utf-8', errors='ignore')` - which yields `''` after
-  eating the prefix, so the next read returns the scancode as a letter.
-  Non-ASCII keys arrive in the OEM codepage, not UTF-8, and vanish the same way.
-- **`LOCATE` prints garbage.** `ConsoleIOHandler.locate()` emits the ANSI cursor
-  sequence unconditionally; Windows conhost does not have
-  `ENABLE_VIRTUAL_TERMINAL_PROCESSING` on by default. `clear_screen()` right
-  below it does branch on the platform - `locate()` does not.
+- ~~**`INKEY$` and `INPUT$` swallow special keys.**~~ and ~~**`LOCATE` prints
+  garbage.**~~ Both fixed - see
+  [WINDOWS_CONSOLE_KEYS.md](WINDOWS_CONSOLE_KEYS.md), which also covers the
+  POSIX `INKEY$` bug found underneath them.
 - **No line editing or history.** `readline` is absent; `pyreadline3` is the
   usual remedy and is not offered in any extra in `pyproject.toml`.
 - **`SAVE` writes CRLF and mangles high-bit program text**, because

@@ -9,6 +9,7 @@ import sys
 import os
 from .base import IOHandler
 from src.terminal_errors import TERMINAL_ERRORS
+from src.win_console import win_read_key, win_locate
 
 
 def input_without_history() -> str:
@@ -95,22 +96,18 @@ class ConsoleIOHandler(IOHandler):
             if sys.platform != 'win32':
                 # Unix/Linux: use select
                 if select.select([sys.stdin], [], [], 0.0)[0]:
-                    return sys.stdin.read(1)
+                    # os.read rather than sys.stdin.read(1): the TextIOWrapper
+                    # drains the whole kernel queue into its decode buffer,
+                    # leaving select() blind to bytes still pending.
+                    data = os.read(sys.stdin.fileno(), 1)
+                    return data.decode('latin-1') if data else ""
                 else:
                     return ""
             else:
-                # Windows: use msvcrt if available
-                try:
-                    import msvcrt
-                    if msvcrt.kbhit():
-                        return msvcrt.getch().decode('utf-8', errors='ignore')
-                    else:
-                        return ""
-                except ImportError:
-                    # Fallback: return empty string (msvcrt not available)
-                    import warnings
-                    warnings.warn("msvcrt not available on Windows - non-blocking input_char() not supported", RuntimeWarning)
-                    return ""
+                # Windows: resolve the two-call extended-key protocol and the
+                # console codepage, neither of which survived the old
+                # decode('utf-8', errors='ignore').
+                return win_read_key(blocking=False)
         else:
             # Blocking: wait for single character
             if sys.platform != 'win32':
@@ -129,8 +126,11 @@ class ConsoleIOHandler(IOHandler):
                     fd = sys.stdin.fileno()
                     old_settings = termios.tcgetattr(fd)
                     try:
-                        tty.setraw(fd)
-                        ch = sys.stdin.read(1)
+                        # TCSANOW, not setraw()'s TCSAFLUSH default, which
+                        # discards input that has arrived but not been read.
+                        tty.setraw(fd, termios.TCSANOW)
+                        data = os.read(fd, 1)
+                        ch = data.decode('latin-1') if data else ""
                         got_char = True
                     finally:
                         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
@@ -146,27 +146,28 @@ class ConsoleIOHandler(IOHandler):
                     # hand, and reading again would consume a second one.
                 return ch
             else:
-                # Windows: use msvcrt
-                try:
-                    import msvcrt
-                    return msvcrt.getch().decode('utf-8', errors='ignore')
-                except ImportError:
-                    # Fallback for Windows without msvcrt: use input() with severe limitations
-                    # WARNING: This fallback calls input() which:
-                    # - Waits for Enter key (defeats the purpose of single-char input)
-                    # - Reads the entire line but returns only the first character
-                    # This is a known limitation when msvcrt is unavailable.
-                    # For proper single-character input on Windows, msvcrt is required.
-                    import warnings
-                    warnings.warn(
-                        "msvcrt not available on Windows - input_char() falling back to input() "
-                        "(waits for Enter, not single character)",
-                        RuntimeWarning
-                    )
-                    # Whole line for a single-character request, so keep it out
-                    # of the command history like every other program read.
-                    line = input_without_history()
-                    return line[:1] if line else ""
+                # Windows: the shared helper resolves prefix+scan-code pairs
+                # and returns one character per call.
+                ch = win_read_key(blocking=True)
+                if ch:
+                    return ch
+
+                # Empty from a blocking read means there is no console to read
+                # from at all - msvcrt missing, or a detached process such as
+                # pythonw.exe where CONIN$ cannot be opened.
+                # WARNING: this fallback calls input(), which:
+                # - waits for Enter (defeating single-character input)
+                # - reads a whole line and returns only its first character
+                import warnings
+                warnings.warn(
+                    "no console available for input_char() - falling back to "
+                    "input() (waits for Enter, not single character)",
+                    RuntimeWarning
+                )
+                # Whole line for a single-character request, so keep it out
+                # of the command history like every other program read.
+                line = input_without_history()
+                return line[:1] if line else ""
 
     def clear_screen(self) -> None:
         """Clear the console screen."""
@@ -192,10 +193,37 @@ class ConsoleIOHandler(IOHandler):
         Args:
             row: Row number (1-based)
             col: Column number (1-based)
+
+        Does nothing when the output is not an interactive console. The escape
+        is a control language addressed to a terminal; written into a
+        redirected file it is just corruption of the output.
         """
-        # ANSI escape sequence for cursor positioning
-        print(f'\033[{row};{col}H', end='')
-        sys.stdout.flush()
+        try:
+            row = max(1, int(row))
+            col = max(1, int(col))
+        except (TypeError, ValueError):
+            return
+
+        if sys.platform == 'win32':
+            # conhost does not interpret ANSI unless asked, so writing the
+            # escape blind put literal garbage on the screen. win_locate()
+            # turns on ENABLE_VIRTUAL_TERMINAL_PROCESSING once per process and
+            # returns False when stdout is not a console, or when the console
+            # is too old to support it (Windows 8, Windows 10 before 1511).
+            if not win_locate(row, col):
+                return
+        else:
+            try:
+                if not sys.stdout.isatty():
+                    return
+            except (AttributeError, ValueError):
+                return      # stdout replaced by something odd, or closed
+
+        try:
+            print(f'\033[{row};{col}H', end='')
+            sys.stdout.flush()
+        except (OSError, ValueError):
+            pass
 
     def get_cursor_position(self) -> tuple[int, int]:
         """Get current cursor position.

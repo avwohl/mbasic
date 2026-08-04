@@ -9,6 +9,7 @@ reference implementation for maximum compatibility with classic BASIC programs.
 """
 
 import math
+import os
 import random
 import sys
 import select
@@ -24,6 +25,7 @@ except ImportError:
     termios = None
 
 from src.terminal_errors import TERMINAL_ERRORS
+from src.win_console import win_read_key
 
 
 # Special marker classes for TAB and SPC functions
@@ -965,19 +967,13 @@ class BuiltinFunctions:
         """
         # Platform-specific implementation
         if sys.platform == 'win32':
-            # Windows implementation
-            try:
-                import msvcrt
-                if msvcrt.kbhit():
-                    char = msvcrt.getch()
-                    # Handle bytes on Python 3
-                    if isinstance(char, bytes):
-                        return char.decode('utf-8', errors='ignore')
-                    return char
-                return ""
-            except ImportError:
-                # msvcrt not available, return empty string
-                return ""
+            # Arrows and F-keys arrive as a prefix byte plus a scan code. The
+            # old decode('utf-8', errors='ignore') turned the 0xE0 prefix into
+            # "" - so INKEY$ said "no key" having already eaten the prefix, and
+            # the scan code came back as a letter on the next call. Up looked
+            # like "H". win_read_key() resolves the pair and hands back the same
+            # escape sequence a POSIX terminal sends, one character per call.
+            return win_read_key(blocking=False)
         else:
             # Unix/Linux/Mac implementation using select
             if termios is None or tty is None:
@@ -1002,9 +998,19 @@ class BuiltinFunctions:
                     fd = sys.stdin.fileno()
                     old_settings = termios.tcgetattr(fd)
                     try:
-                        tty.setraw(fd)
-                        char = sys.stdin.read(1)
-                        return char
+                        # TCSANOW, not tty.setraw()'s TCSAFLUSH default:
+                        # FLUSH discards received-but-unread input, which is
+                        # exactly the keystroke select() just reported. An
+                        # arrow key was being thrown away entirely.
+                        tty.setraw(fd, termios.TCSANOW)
+                        # os.read, not sys.stdin.read(1): the TextIOWrapper
+                        # pulls every available byte into its decode buffer, so
+                        # the kernel queue empties and the select() above then
+                        # reports "no key" while the rest of an escape sequence
+                        # sits invisible in userspace. latin-1 keeps this
+                        # byte-transparent, matching the Windows branch.
+                        data = os.read(fd, 1)
+                        return data.decode('latin-1') if data else ""
                     finally:
                         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
                 else:

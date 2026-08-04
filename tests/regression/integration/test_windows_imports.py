@@ -57,7 +57,8 @@ MUST_IMPORT = [
     'src.basic_builtins', 'src.interpreter', 'src.interactive',
     'src.immediate_executor', 'src.iohandler', 'src.iohandler.console',
     'src.ui', 'src.ui.cli', 'src.ui.keybindings', 'src.ui.keybinding_loader',
-    'src.lexer', 'src.parser', 'src.terminal_errors', 'src.mbasic_main',
+    'src.lexer', 'src.parser', 'src.terminal_errors', 'src.win_console',
+    'src.mbasic_main',
 ]
 
 # Allowed to fail: genuinely requires a blocked module.

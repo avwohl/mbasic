@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2026-08-04
-**Total Documents:** 35
+**Total Documents:** 36
 
 ## What's Here
 
@@ -97,6 +97,7 @@ port I/O — but they are not required. Read
 - [String Pool Changes 2025 11 23](STRING_POOL_CHANGES_2025_11_23.md)
 - [Tnylpo Setup](TNYLPO_SETUP.md)
 - [Toolchain Policy](TOOLCHAIN_POLICY.md)
+- [Windows Console Keys](WINDOWS_CONSOLE_KEYS.md)
 - [Windows Import Compatibility](WINDOWS_IMPORT_COMPATIBILITY.md)
 
 ## See Also
