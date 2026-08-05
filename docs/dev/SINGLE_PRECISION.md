@@ -151,11 +151,24 @@ Only the maths library moved. The conversions still say what they say: CSNG
 returns a single, CDBL and VAL a double, CINT an integer, and INT, FIX, ABS and
 SGN keep the type they were given, integers included.
 
-One of the 200 programs in `basic/` notices: `business/log10k.bas` says
-`DEFDBL E,X,Y,Z` and then sums `LOG(Y)` ten thousand times, so its error term
-moves from `.546215616443078` to `.5457254793072934`, against
-`.5461504873501326` on the real binary. It is further from 1981 and closer to
-the logarithm.
+One of the 200 programs in `basic/` notices, and it turns out to be the best
+evidence there is that this is the right change. `business/log10k.bas` is the
+1987 Elkins benchmark: it says `DEFDBL E,X,Y,Z`, sums `LOG(Y)` ten thousand
+times, and prints how far the result is from the exact answer. Its own header
+tabulates what the interpreters of the day printed:
+
+	AmigaBASIC     0.5457      IEEE doubles
+	MBASIC 5.0     0.5462      single-precision LOG
+
+Our error term moves from `.546215616443078` to `.5457254793072934` - that is,
+from MBASIC's published number to AmigaBASIC's. Both were measured in 1987 by
+someone who had neither interpreter's source, and we now land on whichever one
+matches the precision we compute in. The real binary gives
+`.5461504873501326`, which rounds to its own published 0.5462.
+
+That is pinned: `basic/dev/tests_with_results/log10k.{bas,txt}` runs it in the
+expected-output suite, so a future change to LOG's typing shows up as a failing
+benchmark rather than a quietly different last digit.
 
 Worth knowing while reading the tests: for a *single* argument our rounded
 result and MBASIC's agree exactly for SQR, LOG, EXP, COS and `^`. They differ
