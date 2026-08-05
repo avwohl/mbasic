@@ -968,8 +968,16 @@ class Interpreter:
     # ------------------------------------------------------------------
 
     #: Functions whose result is not single precision. Everything else in
-    #: MBASIC's library returns single, including SQR, SIN and the rest -
-    #: PRINT SQR(2) gives 1.41421, not 1.4142135623730951.
+    #: MBASIC's library returns single *by signature*, the way C's sqrtf does,
+    #: including SQR, SIN and the rest - PRINT SQR(2) gives 1.41421, not
+    #: 1.4142135623730951, and SQR(2#) is a single too.
+    #:
+    #: That is a typing rule, not emulated arithmetic: the value is computed by
+    #: libm in double and then rounded to binary32, so it is the correctly
+    #: rounded single rather than MBASIC's answer. It does mean a double
+    #: argument comes back with binary32 accuracy. See the "maths functions are
+    #: single" section of docs/dev/SINGLE_PRECISION.md, which says what to
+    #: change if that is ever not wanted.
     _FUNCTION_PRECISION = {
         'CDBL': DOUBLE_DIGITS, 'CVD': DOUBLE_DIGITS, 'VAL': DOUBLE_DIGITS,
         'CINT': INTEGER_DIGITS, 'ASC': INTEGER_DIGITS, 'LEN': INTEGER_DIGITS,

@@ -107,13 +107,55 @@ one step:
 
 	FOR L=1 TO 2 STEP .1: NEXT L      real 2.000000238418579     was 1.9
 
-## What still differs
+## The arithmetic is native, and deliberately so
 
-* **SIN, TAN and ATN**, by about one float32 ulp - `SIN(1)` is `.841471016407013`
-  there and `.8414709568023682` here. These are MBASIC's own polynomial
-  approximations, not a precision question: SQR, LOG, EXP, COS and `^` all match
-  exactly now. Reproducing them means emulating the 8080 maths library's
-  coefficients, which is a different job.
+Single is IEEE binary32 and double is IEEE binary64 - a C++ `float` and a C++
+`double`. Nothing here emulates Microsoft Binary Format arithmetic. `to_single`
+is a `struct` round-trip because MBF and binary32 carry the same 24 mantissa
+bits, not because MBF is being reproduced, and the maths functions call libm.
+
+That is a decision, not an accident: MBASIC's arithmetic was poor, and
+reproducing its errors would mean writing worse code to get worse answers. The
+only place in the interpreter that touches MBF byte layout is
+`src/mbasic_rnd.py`, and that is an algorithm being reproduced rather than an
+arithmetic - even there the multiply and add are done in binary32.
+
+### The one thing this leaves crooked: the maths functions are single
+
+MBASIC's library functions are single-precision *by signature*, the way C's
+`sqrtf` is. `_FUNCTION_PRECISION` in `src/interpreter.py` reproduces that: SQR,
+SIN, COS, TAN, ATN, LOG, EXP, CSNG and the rest return a single whatever they
+are given, and only CDBL, CVD and VAL return a double.
+
+So a double argument still comes back with binary32 accuracy:
+
+	A# = SQR(2#)     1.414213538169861    here, and on the real machine
+	                 1.4142135623730951   what binary64 would give
+
+This is a typing rule rather than emulated arithmetic - the value is computed
+by libm in double and *then* rounded to binary32, so it is the correctly
+rounded single, not MBASIC's answer. It is worth knowing that the two are
+usually the same thing: measured against the binary, SQR, LOG, EXP, COS and `^`
+agree exactly once rounded to single.
+
+Where they do not agree is SIN, TAN and ATN, by about one ulp - `SIN(1)` is
+`.841471016407013` there and `.8414709568023682` here. That is not a gap on our
+side. MBASIC evaluated its own polynomial and got the last bit wrong; we call
+libm and get it right. The difference grows where cancellation magnifies it -
+`SIN(3.14159)` is `2.8088E-06` there and `2.53518E-06` here - and it is the
+real machine that is wrong in that pair.
+
+To make the functions follow their argument's type instead, `_numeric_digits`
+would return the argument's precision for them rather than consulting
+`_FUNCTION_PRECISION`. That is a few lines, and it would make `A# = SQR(2#)`
+more accurate and no longer what MBASIC printed. It has not been done, because
+the type of an expression is language semantics and the accuracy of the
+arithmetic is not.
+
+## What still differs
+* **SIN, TAN and ATN**, by about one ulp, because we are right and MBASIC was
+  not - see above. Listed here only so nobody re-measures it and files it as a
+  bug.
 * **Double literals at extreme exponents.** `1D-16` is `9.999998845134855D-17`
   there and `1.000000016862384D-16` here: MBASIC's ASCII-to-float routine is
   less accurate than IEEE's correctly-rounded conversion. Arithmetic on ordinary
