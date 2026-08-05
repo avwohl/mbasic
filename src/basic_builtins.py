@@ -525,18 +525,31 @@ class BuiltinFunctions:
         """
         if x is None or x > 0:
             # Generate new random number
+            self._note_random()
             value = random.random()
             self.runtime.rnd_last = value
             return value
         elif x == 0:
-            # Return last random number
+            # Return last random number (no draw, nothing to undo)
             return self.runtime.rnd_last
         else:
             # Seed random number generator
+            self._note_random()
             random.seed(abs(x))
             value = random.random()
             self.runtime.rnd_last = value
             return value
+
+    def _note_random(self):
+        """Let a statement that may be retried put the generator back.
+
+        A statement that pauses for a key runs again, and drawing again would
+        skip the sequence forward - see src/statement_attempt.py. No attempt
+        in progress (every statement on a terminal) means nothing to record.
+        """
+        attempt = getattr(self.runtime, 'statement_attempt', None)
+        if attempt is not None:
+            attempt.note_random(self.runtime)
 
     # ========================================================================
     # Type Conversion Functions
@@ -1008,7 +1021,22 @@ class BuiltinFunctions:
 
             file_info = self.runtime.files[file_num]
             file_handle = file_info['handle']
-            return file_handle.read(num)
+            # Same reason as _note_random: a retried statement would read the
+            # NEXT bytes rather than the ones the abandoned attempt saw.
+            attempt = getattr(self.runtime, 'statement_attempt', None)
+            if attempt is not None:
+                attempt.note_file_position(file_num, file_handle)
+
+            data = file_handle.read(num)
+            if isinstance(data, bytes):
+                # Mode 'I' files are opened 'rb' so EOF can spot a ^Z, so the
+                # read comes back as bytes and the string it produced was a
+                # Python repr: PRINT showed b'ABC', and the help page's own
+                # example - PRINT HEX$(ASC(INPUT$(1,#1))) - read the 'b' and
+                # answered 98 instead of 65. latin-1 keeps it byte-transparent,
+                # the same as the keyboard path.
+                data = data.decode('latin-1')
+            return data
 
     # ------------------------------------------------------------------
     # INPUT$ keyboard reading

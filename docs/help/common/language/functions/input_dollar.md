@@ -19,7 +19,7 @@ INPUT$(X[,[#]Y])
 
 ## Description
 
-Returns a string of X characters, read from the terminal or from file number Y.
+Returns a string of X characters, read from the terminal or from file number Y. The file number may be written with or without a `#`.
 
 If the terminal is used for input, nothing is echoed, no Enter is required, and all control characters are passed through except Control-C, which interrupts the INPUT$.
 

@@ -119,6 +119,12 @@ class Runtime:
         # Random number seed
         self.rnd_last = 0.5
 
+        # The statement attempt currently in progress, or None. Set by the
+        # interpreter only when the I/O handler can pause a statement for a
+        # key (the web UI); the builtins record what they change into it so an
+        # abandoned attempt can be undone. See src/statement_attempt.py.
+        self.statement_attempt = None
+
         # Breakpoints - persist across runs (not cleared by RUN/CLEAR)
         self.breakpoints = set()          # Set of PC objects for breakpoints
 

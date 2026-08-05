@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2026-08-05
-**Total Documents:** 42
+**Total Documents:** 43
 
 ## What's Here
 
@@ -100,6 +100,7 @@ port I/O — but they are not required. Read
 - [Persistent Issues Analysis](PERSISTENT_ISSUES_ANALYSIS.md)
 - [Persistent Issues Answer](PERSISTENT_ISSUES_ANSWER.md)
 - [Persistent Issues Summary](PERSISTENT_ISSUES_SUMMARY.md)
+- [Statement Attempt Undo](STATEMENT_ATTEMPT_UNDO.md)
 - [String Pool Changes 2025 11 23](STRING_POOL_CHANGES_2025_11_23.md)
 - [Tnylpo Setup](TNYLPO_SETUP.md)
 - [Toolchain Policy](TOOLCHAIN_POLICY.md)

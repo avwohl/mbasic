@@ -194,6 +194,11 @@ class Interpreter:
         # Callback should take (line_number, statement_index) and return True to continue, False to stop
         self.breakpoint_callback = breakpoint_callback
 
+        # Undo record for a statement that has to be retried after pausing for
+        # a key. Built on first use and reused, since it is touched once per
+        # statement on the one backend that needs it.
+        self._statement_attempt = None
+
         # Execution state for tick-based execution
         self.state = InterpreterState(_interpreter=self)
 
@@ -414,6 +419,16 @@ class Interpreter:
                 deferring = getattr(self.io, 'defers_key_reads', False)
                 if deferring:
                     self.io.begin_key_transaction()
+                    # RND and INPUT$(n,#f) record into this what they change,
+                    # so an abandoned attempt does not leave the generator
+                    # advanced or a file read past. Reused rather than rebuilt
+                    # per statement.
+                    if self._statement_attempt is None:
+                        from src.statement_attempt import StatementAttempt
+                        self._statement_attempt = StatementAttempt()
+                    else:
+                        self._statement_attempt.reset()
+                    self.runtime.statement_attempt = self._statement_attempt
 
                 # Execute statement
                 try:
@@ -423,6 +438,9 @@ class Interpreter:
                     self.execute_statement(stmt)
                     statements_in_tick += 1
                     self.state.statements_executed += 1
+                    if deferring:
+                        # Finished: what it changed, it meant to change.
+                        self.runtime.statement_attempt = None
 
                 except KeyInputPending:
                     # INKEY$/INPUT$ on a handler that cannot wait without
@@ -432,10 +450,16 @@ class Interpreter:
                     # the start, and by then a key is queued.
                     if deferring:
                         self.io.rollback_key_transaction()
+                        self._statement_attempt.rollback(self.runtime)
+                        self.runtime.statement_attempt = None
                     self.state.waiting_for_key = True
                     return self.state
 
                 except BreakException:
+                    # A break is the user's decision, not a retry: what the
+                    # statement changed stands, and CONT re-runs it as it
+                    # always has.
+                    self.runtime.statement_attempt = None
                     # Ctrl+C during INPUT$. Nothing raised this until INPUT$
                     # started reading in raw mode, where ISIG is off and the
                     # 0x03 byte is delivered to the reader instead of becoming
@@ -455,6 +479,7 @@ class Interpreter:
                     return self.state
 
                 except Exception as e:
+                    self.runtime.statement_attempt = None
                     # Check if we're already in an error handler (prevent recursive errors)
                     already_in_error_handler = (self.state.error_info is not None)
 

@@ -1086,6 +1086,16 @@ class Parser:
         # Parse arguments
         args: List[ExpressionNode] = []
         while not self.match(TokenType.RPAREN):
+            # INPUT$(X[,[#]Y]) - the manual writes the file number with an
+            # optional '#', and the help page's own example uses it:
+            #     30 PRINT HEX$(ASC(INPUT$(1, #1)));
+            # which failed to parse at all. It is a marker rather than an
+            # operator, and the INPUT statement's parser drops it the same way.
+            # Narrow to INPUT$ on purpose: '#' is also a double-precision type
+            # suffix, and only this function documents the form.
+            if args and func_name == 'INPUT$' and self.match(TokenType.HASH):
+                self.advance()
+
             args.append(self.parse_expression())
 
             if self.match(TokenType.COMMA):

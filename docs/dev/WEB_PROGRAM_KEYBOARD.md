@@ -161,20 +161,20 @@ missing.
 
 ## Known limitations
 
-**A statement that pauses runs again from its start**, so anything in it that
-is not a keyboard read happens once per attempt. In practice that is narrower
-than it sounds, and it was originally documented here as worse than it is:
+**A statement that pauses runs again from its start** - but everything a BASIC
+program can see is now put back, and the caveat originally recorded here was
+wrong about what that even was:
 
 - Output does *not* duplicate. `PRINT "A";INPUT$(1)` prints `A` once. Measured:
   `execute_print` evaluates its expressions into a list and writes at the end,
   so an attempt that pauses mid-expression has written nothing.
-- Keyboard reads do not duplicate either, since the fix above.
-- `RND` does. `PRINT RND;INPUT$(1)` advances the generator once per attempt,
-  so a program that pauses skips forward in the sequence. The printed value is
-  correct - it is the one from the attempt that finished - but the sequence a
-  later `RND` continues from is not the one it would have been. This is the
-  only side effect left that a BASIC program can observe, and covering it would
-  mean a transactional runtime rather than a transactional read.
+- Keyboard reads do not duplicate, since the transaction above.
+- `RND` and `INPUT$(n,#f)` do not either, since
+  [src/statement_attempt.py](STATEMENT_ATTEMPT_UNDO.md) - the generator is
+  rewound and the file is seeked back.
+
+What is left is invisible to a program: `EOF` sets a flag at end of file, and
+setting it twice is the same as setting it once.
 
 **Terminals cannot roll back.** The same double-read shape exists in the CLI
 after a Ctrl+C break: `X$=INPUT$(1)+INPUT$(1)`, interrupted after one
