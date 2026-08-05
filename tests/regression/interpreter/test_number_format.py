@@ -219,7 +219,8 @@ def test_str_dollar_matches_print():
 
 
 def test_print_using_keeps_the_sign():
-    """A negative number must not print as positive.
+    """A negative number must not print as positive, and a positive one must
+    not print its sign twice.
 
     The sign was worked out and then never written, so PRINT USING "###.##"
     turned -3.14 into "  3.14" - silently, in a statement whose whole purpose
@@ -234,6 +235,17 @@ def test_print_using_keeps_the_sign():
         ('10 PRINT USING "#####"; -42', '  -42'),
         ('10 PRINT USING "##.##"; -123.456', '%-123.46'),
         ('10 PRINT USING "###.##"; 3.14159', '  3.14'),
+        # A '+' format emits its own sign. Appending sign_char as well printed
+        # ++42 and --42 - the fix for the missing minus, overshooting.
+        ('10 PRINT USING "+###"; 42', ' +42'),
+        ('10 PRINT USING "+###"; -42', ' -42'),
+        ('10 PRINT USING "+##.##"; 3.5', ' +3.50'),
+        ('10 PRINT USING "+##.##"; -3.5', ' -3.50'),
+        ('10 PRINT USING "+#####"; 12345', '+12345'),
+        ('10 PRINT USING "###+"; 42', ' 42+'),
+        ('10 PRINT USING "###+"; -42', ' 42-'),
+        ('10 PRINT USING "###-"; 42', ' 42 '),
+        ('10 PRINT USING "###-"; -42', ' 42-'),
     ]:
         got = run(source)
         check(got == expected,

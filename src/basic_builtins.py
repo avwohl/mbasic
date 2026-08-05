@@ -342,7 +342,8 @@ class UsingFormatter:
         # Build output with padding
         sign_char = ''
         if spec['leading_sign']:
-            sign_char = '-' if is_negative else '+'
+            sign_char = ''  # emitted with the padding below, not here - a
+                            # '+' format was printing ++42 when both did it
         elif spec['trailing_sign']:
             sign_char = ''  # Will be added at end
         elif spec['trailing_minus_only'] and is_negative:
