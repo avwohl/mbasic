@@ -17,9 +17,27 @@ class CapturingIOHandler(ConsoleKeyboardMixin):
     and it should be reading urwid's keys, not competing for the same fd.
     """
 
-    def __init__(self):
+    def __init__(self, keyboard=None):
+        """
+        Args:
+            keyboard: optional object with input_char()/input_chars(), used
+                for INKEY$ and INPUT$ instead of the process's terminal. The
+                curses UI passes a UrwidKeyboard so a program gets the keys
+                urwid collected rather than racing urwid for the same fd.
+        """
         self.output_buffer = []
         self.debug_enabled = False
+        self.keyboard = keyboard
+
+    def input_char(self, blocking=True):
+        if self.keyboard is not None:
+            return self.keyboard.input_char(blocking=blocking)
+        return super().input_char(blocking=blocking)
+
+    def input_chars(self, count, interrupted=None):
+        if self.keyboard is not None:
+            return self.keyboard.input_chars(count, interrupted=interrupted)
+        return super().input_chars(count, interrupted=interrupted)
 
     def output(self, text, end='\n'):
         if end == '\n':

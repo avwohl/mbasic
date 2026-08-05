@@ -81,7 +81,10 @@ replaced. There is a test for exactly this.
   by accident, so nothing changes; the difference is that it is now a stated
   choice in one place instead of an accident in two. It is still wrong - a
   urwid UI owns that terminal and should be handing over its own keys - but it
-  is wrong on purpose and in a single overridable method.
+  is wrong on purpose and in a single overridable method. *(Since overridden:
+  the curses UI passes a real keyboard, see
+  [CURSES_PROGRAM_KEYBOARD.md](CURSES_PROGRAM_KEYBOARD.md). The mixin remains
+  the fallback for the immediate-mode handler.)*
 - **Tk** - `TkIOHandler.input_char` opens a modal "INPUT$ (Single Character)"
   dialog, written for this and unreachable until now. It already returns `""`
   for a non-blocking read, so a polling `INKEY$` does not open dialogs.
@@ -105,10 +108,11 @@ The terminal behavior it all has to keep: 33 checks, unchanged by the move.
 
 ## Not fixed here
 
-**No backend implements a real keyboard yet.** The seam exists; curses, Tk and
-the web UI each still need to answer `input_char`/`input_chars` from their own
-input queue. That is UI work, one method at a time, and it can now be done
-without touching the interpreter.
+**~~No backend implements a real keyboard yet.~~** The curses UI does now -
+see [CURSES_PROGRAM_KEYBOARD.md](CURSES_PROGRAM_KEYBOARD.md), which is what
+this seam was for. Tk and the web UI still answer from `input_char` alone (a
+modal dialog per character, and `""` respectively); each is one method away
+from a real implementation, and none of it touches the interpreter.
 
 **`WebIOHandler` and `CursesIOHandler` are still dead** (`src/iohandler/web_io.py`,
 `src/iohandler/curses_io.py`) - neither is instantiated in production. They

@@ -18,7 +18,7 @@ from .keybindings import (
     VARS_SORT_MODE_KEY, VARS_SORT_DIR_KEY, VARS_EDIT_KEY, VARS_FILTER_KEY, VARS_CLEAR_KEY,
     DIALOG_YES_KEY, DIALOG_NO_KEY,
     STATUS_BAR_SHORTCUTS,
-    key_to_display
+    key_to_display, key_to_char
 )
 from .markdown_renderer import MarkdownRenderer
 from .help_widget import HelpWidget
@@ -1399,6 +1399,18 @@ class CursesBackend(UIBackend):
         # Create capturing IO handler for execution (created once, reused)
         # Import shared CapturingIOHandler
         from .capturing_io_handler import CapturingIOHandler
+        from .urwid_keyboard import UrwidKeyboard
+
+        # The keyboard a running program reads through (INKEY$, INPUT$). Built
+        # here with a callable for the loop, which does not exist yet.
+        # STOP_KEY reaches the program as Ctrl+C, because while INPUT$ blocks
+        # the UI is not reading the keyboard and this is the only thing that
+        # can honour a request to stop.
+        self.program_keyboard = UrwidKeyboard(
+            get_loop=lambda: self.loop,
+            on_wait=self._flush_program_output,
+            stop_chars=self._stop_characters(),
+        )
 
         # IO Handler Lifecycle:
         # 1. self.io_handler (CapturingIOHandler) - Used for RUN program execution
@@ -1406,7 +1418,7 @@ class CursesBackend(UIBackend):
         # 2. immediate_io (OutputCapturingIOHandler) - Used for immediate mode commands
         #    Created here temporarily, then RECREATED in start() with fresh instance each time
         #    OutputCapturingIOHandler is imported from immediate_executor module
-        self.io_handler = CapturingIOHandler()
+        self.io_handler = CapturingIOHandler(keyboard=self.program_keyboard)
 
         # Interpreter Lifecycle:
         # Created ONCE here in __init__ and reused throughout the session.
@@ -1722,6 +1734,7 @@ class CursesBackend(UIBackend):
         self.loop = urwid.MainLoop(
             self.base_widget,
             palette=self._get_palette(),
+            input_filter=self._filter_input,
             unhandled_input=self._handle_input,
             handle_mouse=False
         )
@@ -1915,6 +1928,83 @@ class CursesBackend(UIBackend):
 
         # Show the overlay
         self.loop.widget = overlay
+
+    @staticmethod
+    def _stop_characters():
+        """The characters that mean "stop the program" while it owns the keys.
+
+        Derived from the keybindings rather than hardcoded, so a rebound stop
+        key keeps working. key_to_char returns "" for a key with no single
+        character (a named key like ESC), which here means there is no byte to
+        watch for.
+        """
+        chars = set()
+        for key in (STOP_KEY, QUIT_ALT_KEY):
+            if not key:
+                continue
+            char = key_to_char(key)
+            if char:            # "" means the key is not a single character
+                chars.add(char)
+        return chars
+
+    def _flush_program_output(self):
+        """Show what the program has printed, before it waits for a key.
+
+        A tick collects output only after it returns, and INPUT$ blocks inside
+        the tick - so without this a program that prints "PRESS A KEY"; and
+        waits would leave the user staring at an unchanged screen.
+        """
+        try:
+            new_output = self.io_handler.get_and_clear_output()
+            if new_output:
+                self.output_buffer.extend(new_output)
+                self._update_output()
+            if self.loop and self.loop_running:
+                self.loop.draw_screen()
+        except Exception as exc:            # noqa: BLE001
+            debug_log_error("failed to flush output before a keyboard wait",
+                            exception=exc)
+
+    def _program_owns_keyboard(self):
+        """True when typed keys belong to the running program, not the UI.
+
+        `self.running` alone is not enough: it is set by the debug run and
+        CONT paths but never by _run_program, so a plain RUN would leave the
+        program with no keyboard at all. The interpreter's own PC is the
+        reliable answer to "is a program executing".
+
+        Any overlay - the INPUT statement's dialog, a menu, help, settings -
+        means the UI owns the keys, or the dialog the program is waiting on
+        would never receive an answer.
+        """
+        if getattr(self, 'paused_at_breakpoint', False):
+            return False
+        loop = getattr(self, 'loop', None)
+        if loop is None or loop.widget is not self.base_widget:
+            return False
+        if self.running:
+            return True
+        pc = getattr(getattr(self, 'runtime', None), 'pc', None)
+        return bool(pc is not None and pc.is_running())
+
+    def _filter_input(self, keys, raw):
+        """urwid input_filter: give a running program the keys it is owed.
+
+        Between ticks urwid reads the terminal itself, so without this a key
+        meant for INKEY$ is typed into the program listing instead. A running
+        program owns the console, the way it does on a real terminal - except
+        for the stop and quit keys, which stay with the UI so it can always be
+        regained. (While INPUT$ is *blocked* the loop is not running at all and
+        the keyboard reads the screen itself, where the stop key is translated
+        to Ctrl+C instead - see UrwidKeyboard.)
+        """
+        if not self._program_owns_keyboard():
+            return keys
+        for key in keys:
+            if key in (STOP_KEY, QUIT_ALT_KEY, QUIT_KEY):
+                return keys
+        self.program_keyboard.push_raw(raw)
+        return []
 
     def _handle_input(self, key):
         """Handle global keyboard shortcuts."""
@@ -3427,6 +3517,10 @@ class CursesBackend(UIBackend):
         Args:
             start_line: Optional line number to start execution at
         """
+        # Keys typed at the previous program - or half of an escape sequence
+        # left by one that stopped mid-arrow - are not input for this one.
+        self.program_keyboard.clear()
+
         # Parse editor content into program
         self._parse_editor_content()
 
@@ -4447,7 +4541,8 @@ class CursesBackend(UIBackend):
                     # Import shared CapturingIOHandler from dedicated module
                     from .capturing_io_handler import CapturingIOHandler
 
-                    io_handler = CapturingIOHandler()
+                    io_handler = CapturingIOHandler(
+                        keyboard=self.program_keyboard)
                     self.interpreter.io = io_handler
                     self.io_handler = io_handler
 

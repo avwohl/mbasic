@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2026-08-05
-**Total Documents:** 39
+**Total Documents:** 40
 
 ## What's Here
 
@@ -45,6 +45,7 @@ port I/O — but they are not required. Read
 
 ### UI Implementation
 
+- [Curses Program Keyboard](CURSES_PROGRAM_KEYBOARD.md)
 - [Ios Ipad Web Ui Todo](IOS_IPAD_WEB_UI_TODO.md)
 - [Web Error Logging](WEB_ERROR_LOGGING.md)
 - [Web Multiuser Deployment](WEB_MULTIUSER_DEPLOYMENT.md)
