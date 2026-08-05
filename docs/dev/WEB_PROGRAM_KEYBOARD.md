@@ -57,14 +57,47 @@ tests.
 
 Two rules fall out of it, and both are silent when broken, so both are tested:
 
-- **Nothing may be consumed on the way out.** `INPUT$(3)` with two keys queued
-  takes *neither* and raises, or the retry would read the third character into
-  a variable missing the first two. Take all of them or none.
+- **A single read consumes nothing on the way out.** `INPUT$(3)` with two keys
+  queued takes *neither* and raises, or the retry would read the third
+  character into a variable missing the first two. Take all of them or none.
 - **`INKEY$` must never raise.** "No key pending" is an answer it can always
   give, and a polling loop that paused the program would never poll again.
 
 A Ctrl+C in the queue ends a short read immediately rather than waiting for the
 rest - the user asked to interrupt, and `INPUT$` turns `CHR$(3)` into a break.
+
+## A statement can read more than once
+
+Taking all or nothing is enough for one read per statement. It is not enough
+for two:
+
+	10 X$=INPUT$(1)+INPUT$(1)
+
+The first read succeeds and takes a character. The second raises. The retry
+runs the first read *again* and takes another. Measured before the fix: four
+keys queued, four keys consumed, line 20 never reached - the program ate every
+key it was given and never finished. `10 X$=INKEY$+INPUT$(2)` did the same.
+
+So an attempt is bracketed. `KeyReadTransaction` in `src/iohandler/base.py`
+adds two methods and a flag; the interpreter calls them around each statement:
+
+	deferring = getattr(self.io, 'defers_key_reads', False)
+	if deferring:
+	    self.io.begin_key_transaction()
+	try:
+	    self.execute_statement(stmt)
+	except KeyInputPending:
+	    if deferring:
+	        self.io.rollback_key_transaction()
+
+`WebKeyboard` records what each attempt reads - including `INKEY$`, which never
+pauses but does consume - and puts it back at the front of the queue, in order.
+The retry then starts from exactly the state the abandoned attempt did.
+
+`defers_key_reads` is what keeps this off everywhere else. A terminal handler
+blocks instead of raising, so it never needs a rollback - and could not do one
+anyway, since its characters came out of the kernel and cannot be pushed back.
+The CLI, curses and Tk paths do not execute a line of this.
 
 ## Browser keys
 
@@ -128,13 +161,26 @@ missing.
 
 ## Known limitations
 
-**A statement that pauses runs again from its start.** `A$=INPUT$(1)` is
-idempotent, but `PRINT "A";INPUT$(1)` prints `A` once per key that fails to be
-there. This is inherited from the CONT resume model rather than introduced
-here - the same thing happens after a Ctrl+C break in the CLI - but the web is
-the first place it can happen without the user asking for a break. Fixing it
-properly means making the expression evaluator resumable, which is a much
-larger change than a keyboard.
+**A statement that pauses runs again from its start**, so anything in it that
+is not a keyboard read happens once per attempt. In practice that is narrower
+than it sounds, and it was originally documented here as worse than it is:
+
+- Output does *not* duplicate. `PRINT "A";INPUT$(1)` prints `A` once. Measured:
+  `execute_print` evaluates its expressions into a list and writes at the end,
+  so an attempt that pauses mid-expression has written nothing.
+- Keyboard reads do not duplicate either, since the fix above.
+- `RND` does. `PRINT RND;INPUT$(1)` advances the generator once per attempt,
+  so a program that pauses skips forward in the sequence. The printed value is
+  correct - it is the one from the attempt that finished - but the sequence a
+  later `RND` continues from is not the one it would have been. This is the
+  only side effect left that a BASIC program can observe, and covering it would
+  mean a transactional runtime rather than a transactional read.
+
+**Terminals cannot roll back.** The same double-read shape exists in the CLI
+after a Ctrl+C break: `X$=INPUT$(1)+INPUT$(1)`, interrupted after one
+character, loses that character when `CONT` re-runs the statement. Its
+characters came from the kernel and there is nowhere to put them back. The web
+can only do better because its keys are already in a queue of its own.
 
 **Nothing stops a program that never reads a key.** The curses and Tk UIs have
 a stop key that reaches a blocked read. Here a program parked on

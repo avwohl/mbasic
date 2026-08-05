@@ -79,6 +79,34 @@ class WebKeyboard:
         """
         self._pending = []
         self._on_key = on_key
+        self._taken_this_attempt = []
+
+    #: The interpreter brackets each statement attempt, because a statement it
+    #: has to retry may already have read keys. See KeyReadTransaction.
+    defers_key_reads = True
+
+    def begin_key_transaction(self):
+        """Start recording what this statement attempt reads."""
+        self._taken_this_attempt = []
+
+    def rollback_key_transaction(self):
+        """Put back everything read since begin_key_transaction().
+
+        In front of the queue and in order, so the retry reads exactly what
+        the abandoned attempt did. Without this
+        `10 X$=INPUT$(1)+INPUT$(1)` consumes a character per attempt and never
+        completes - the first read succeeds, the second raises, and the retry
+        starts over one character poorer.
+        """
+        if self._taken_this_attempt:
+            self._pending[:0] = self._taken_this_attempt
+            self._taken_this_attempt = []
+
+    def _take(self, count):
+        """Consume count queued characters, remembering them for a rollback."""
+        taken, self._pending = self._pending[:count], self._pending[count:]
+        self._taken_this_attempt.extend(taken)
+        return ''.join(taken)
 
     # ------------------------------------------------------------------
     # Filling the queue
@@ -148,7 +176,9 @@ class WebKeyboard:
         always give.
         """
         if not blocking:
-            return self._pending.pop(0) if self._pending else ""
+            # Recorded like any other read: a statement that mixes INKEY$ with
+            # an INPUT$ that pauses must not consume the INKEY$ twice.
+            return self._take(1) if self._pending else ""
         return self.input_chars(1)
 
     def input_chars(self, count: int, interrupted=None) -> str:
@@ -168,13 +198,10 @@ class WebKeyboard:
         # ignore the interrupt the user just asked for.
         head = self._pending[:count]
         if INTERRUPT_CHAR in head:
-            cut = head.index(INTERRUPT_CHAR) + 1
-            taken, self._pending = self._pending[:cut], self._pending[cut:]
-            return ''.join(taken)
+            return self._take(head.index(INTERRUPT_CHAR) + 1)
 
         if len(self._pending) < count:
             raise KeyInputPending(
                 f"{count} characters wanted, {len(self._pending)} queued")
 
-        taken, self._pending = self._pending[:count], self._pending[count:]
-        return ''.join(taken)
+        return self._take(count)

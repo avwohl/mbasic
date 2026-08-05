@@ -133,6 +133,23 @@ class SimpleWebIOHandler(IOHandler):
             return ""
         return self.keyboard.input_chars(count, interrupted=interrupted)
 
+    # A statement that pauses for a key is retried, so the interpreter needs
+    # to be able to give back what the abandoned attempt read. It asks the
+    # handler, so the handler passes it on to the keyboard that did the
+    # reading. See KeyReadTransaction in src/iohandler/base.py.
+
+    @property
+    def defers_key_reads(self):
+        return getattr(self.keyboard, 'defers_key_reads', False)
+
+    def begin_key_transaction(self):
+        if self.keyboard is not None:
+            self.keyboard.begin_key_transaction()
+
+    def rollback_key_transaction(self):
+        if self.keyboard is not None:
+            self.keyboard.rollback_key_transaction()
+
     def error(self, message: str) -> None:
         """Output error message."""
         self.output(f"Error: {message}\n")

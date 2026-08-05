@@ -117,7 +117,9 @@ The terminal behavior it all has to keep: 33 checks, unchanged by the move.
 ([WEB_PROGRAM_KEYBOARD.md](WEB_PROGRAM_KEYBOARD.md)) - which is what this seam
 was for. Each solves waiting differently, and only the web one needed anything
 added to the interface: `KeyInputPending`, for a handler that cannot wait
-without deadlocking the loop that would deliver the key.
+without deadlocking the loop that would deliver the key, and
+`KeyReadTransaction`, so a statement that is retried after pausing can give
+back the keys its abandoned attempt read.
 
 **`WebIOHandler` and `CursesIOHandler` are still dead** (`src/iohandler/web_io.py`,
 `src/iohandler/curses_io.py`) - neither is instantiated in production. They

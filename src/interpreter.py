@@ -405,6 +405,16 @@ class Interpreter:
                 # is over: either the key arrived or the UI gave up on it.
                 self.state.waiting_for_key = False
 
+                # A statement that pauses for a key runs again from the start,
+                # so the keys it read have to be given back first - a
+                # statement can read more than once, and the second read is
+                # what pauses. Only handlers that defer pay for this; a
+                # terminal blocks instead of raising and could not put a
+                # keystroke back anyway.
+                deferring = getattr(self.io, 'defers_key_reads', False)
+                if deferring:
+                    self.io.begin_key_transaction()
+
                 # Execute statement
                 try:
                     import sys
@@ -419,8 +429,9 @@ class Interpreter:
                     # deadlocking - the web UI, whose keys arrive on the same
                     # asyncio loop that runs this. Leave the PC exactly where
                     # it is: when the UI ticks again the statement runs from
-                    # the start, and by then a key is queued. The handler
-                    # guarantees it consumed nothing, so re-reading is safe.
+                    # the start, and by then a key is queued.
+                    if deferring:
+                        self.io.rollback_key_transaction()
                     self.state.waiting_for_key = True
                     return self.state
 

@@ -219,6 +219,18 @@ class PendingHandler(IOHandler):
     def input_chars(self, count, interrupted=None):
         return self.keyboard.input_chars(count, interrupted=interrupted)
 
+    # SimpleWebIOHandler forwards these to its keyboard; so must this, or the
+    # statement bracketing under test would never be switched on.
+    @property
+    def defers_key_reads(self):
+        return self.keyboard.defers_key_reads
+
+    def begin_key_transaction(self):
+        self.keyboard.begin_key_transaction()
+
+    def rollback_key_transaction(self):
+        self.keyboard.rollback_key_transaction()
+
     def clear_screen(self):
         pass
 
@@ -317,6 +329,95 @@ def test_inkey_does_not_pause_a_program():
 
 
 
+
+def test_rollback_puts_reads_back_in_order():
+    """A statement attempt that is abandoned must leave the queue as it was."""
+    print("\nrollback restores what the attempt read")
+    print("-" * 60)
+    keyboard = WebKeyboard()
+    keyboard.push('ABC')
+
+    keyboard.begin_key_transaction()
+    check(keyboard.input_chars(2) == 'AB', "two characters read")
+    check(keyboard.pending() == 1, "one left queued")
+    keyboard.rollback_key_transaction()
+    check(keyboard.pending() == 3, "all three are queued again")
+    check(keyboard.input_chars(3) == 'ABC', "and in the original order")
+
+
+def test_a_committed_attempt_is_not_rolled_back():
+    """Only the current attempt is restorable - a finished one is finished."""
+    print("\nthe next attempt does not restore the previous one's reads")
+    print("-" * 60)
+    keyboard = WebKeyboard()
+    keyboard.push('ABC')
+
+    keyboard.begin_key_transaction()
+    keyboard.input_chars(1)                 # statement 1 succeeds
+    keyboard.begin_key_transaction()        # statement 2 starts
+    keyboard.input_chars(1)
+    keyboard.rollback_key_transaction()     # statement 2 pauses
+
+    check(keyboard.pending() == 2,
+          f"only statement 2's character came back (queue {keyboard.pending()})")
+    check(keyboard.input_chars(2) == 'BC', "and statement 1 kept its 'A'")
+
+
+def test_terminal_handlers_do_not_defer():
+    """The bracketing must stay off for handlers that block instead."""
+    print("\na terminal handler is not bracketed")
+    print("-" * 60)
+    from src.iohandler.console import ConsoleIOHandler
+
+    check(not ConsoleIOHandler().defers_key_reads,
+          "ConsoleIOHandler does not defer key reads")
+    check(WebKeyboard().defers_key_reads, "and the web keyboard does")
+
+
+def test_two_reads_in_one_statement_complete():
+    """The bug this fixes: a statement reading twice consumed a key per try.
+
+    `X$=INPUT$(1)+INPUT$(1)` used to take a character on the first read, raise
+    on the second, and start over one character poorer - eating every key it
+    was given and never reaching the next line. Measured before the fix: four
+    keys queued, four consumed, no output at all.
+    """
+    print("\na statement with two reads completes")
+    print("-" * 60)
+    keyboard = WebKeyboard()
+    interpreter, handler = run_program(
+        '10 X$=INPUT$(1)+INPUT$(1)\n20 PRINT "GOT";LEN(X$);X$\n', keyboard)
+
+    for char in 'AB':
+        interpreter.tick(mode='run', max_statements=100)
+        keyboard.push(char)
+    state = interpreter.tick(mode='run', max_statements=100)
+
+    text = handler.text()
+    check(not state.waiting_for_key, "it finished")
+    check('AB' in text, f"with both characters, in order (got {text.strip()!r})")
+    check(keyboard.pending() == 0, "and consumed exactly what it used")
+
+
+def test_inkey_in_the_same_statement_is_restored():
+    """INKEY$ never pauses, but it does consume - so it must roll back too."""
+    print("\nan INKEY$ alongside a paused INPUT$ is not consumed twice")
+    print("-" * 60)
+    keyboard = WebKeyboard()
+    interpreter, handler = run_program(
+        '10 X$=INKEY$+INPUT$(2)\n20 PRINT "GOT";LEN(X$);X$\n', keyboard)
+
+    for char in 'ABC':
+        interpreter.tick(mode='run', max_statements=100)
+        keyboard.push(char)
+    state = interpreter.tick(mode='run', max_statements=100)
+
+    text = handler.text()
+    check(not state.waiting_for_key, "it finished")
+    check('ABC' in text,
+          f"all three characters survived the retries (got {text.strip()!r})")
+
+
 # ---------------------------------------------------------------------------
 # The backend's half: who owns the keyboard, and what wakes a paused program
 # ---------------------------------------------------------------------------
@@ -403,6 +504,12 @@ if __name__ == "__main__":
     test_the_program_resumes_when_a_key_arrives()
     test_a_multi_character_read_resumes_intact()
     test_inkey_does_not_pause_a_program()
+
+    test_rollback_puts_reads_back_in_order()
+    test_a_committed_attempt_is_not_rolled_back()
+    test_terminal_handlers_do_not_defer()
+    test_two_reads_in_one_statement_complete()
+    test_inkey_in_the_same_statement_is_restored()
 
     test_the_backend_gives_a_running_program_its_keys()
     test_the_ui_keeps_its_keys_when_no_program_is_running()

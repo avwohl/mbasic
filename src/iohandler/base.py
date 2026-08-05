@@ -32,7 +32,41 @@ class KeyInputPending(Exception):
     """
 
 
-class IOHandler(ABC):
+class KeyReadTransaction:
+    """Mixin for a handler whose reads have to survive a retried statement.
+
+    A handler that raises KeyInputPending makes the interpreter run the
+    statement again, and a statement can read the keyboard more than once:
+
+        10 X$=INPUT$(1)+INPUT$(1)
+
+    The first read succeeds and takes a character; the second raises; the
+    retry runs the first read AGAIN and takes another. Without this the
+    program eats every key it is given and never completes - measured before
+    the fix: four keys queued, four keys consumed, line 20 never reached.
+
+    So an attempt is bracketed. Everything read since begin_key_transaction()
+    is remembered, and rollback_key_transaction() puts it back in order, so
+    the retry starts from exactly the state the first attempt did.
+
+    A terminal handler cannot do this - its characters came out of the kernel
+    and cannot be pushed back - which is why `defers_key_reads` is what turns
+    the bracketing on rather than it being unconditional. Terminals never need
+    it: they block instead of raising.
+    """
+
+    #: Set True by a handler whose input_chars() may raise KeyInputPending.
+    #: The interpreter only pays for the bracketing when this is on.
+    defers_key_reads = False
+
+    def begin_key_transaction(self) -> None:
+        """Start recording what this statement attempt reads."""
+
+    def rollback_key_transaction(self) -> None:
+        """Put back everything read since begin_key_transaction()."""
+
+
+class IOHandler(ABC, KeyReadTransaction):
     """Abstract interface for I/O operations.
 
     All I/O backends (console, GUI, etc.) must implement this interface.
