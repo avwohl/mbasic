@@ -9,8 +9,10 @@ wrong in a way that reached users: ``EDIT`` on piped input died with
 
 (``ConsoleIOHandler.input_char`` was long described as the INPUT$ reader. It
 is not, and never was: ``BuiltinFunctions`` is built without an I/O handler, so
-INPUT$ has always read ``sys.stdin`` itself. Nothing in ``src/`` calls
-``input_char`` at all - see docs/dev/INPUT_DOLLAR_RAW_READ.md.)
+INPUT$ has always read ``sys.stdin`` itself. Nothing reaches ``input_char`` at
+all - its one call site in ``src/`` is ``web_io.py``'s own deprecated
+``get_char()`` alias, which has no callers either. See
+docs/dev/INPUT_DOLLAR_RAW_READ.md.)
 
 The subtle one is ``termios.error``. It is a direct subclass of ``Exception``,
 *not* of ``OSError``::

@@ -85,9 +85,11 @@ class IOHandler(ABC):
     def input_char(self, blocking: bool = True) -> str:
         """Input single character.
 
-        NOT CURRENTLY CALLED BY ANYTHING. This was meant to be how INKEY$ and
-        INPUT$(1) read a key, and the examples below still describe the
-        intent - but BuiltinFunctions is constructed without an I/O handler
+        NOT REACHED BY ANYTHING (the one call site in src/ is web_io.py's own
+        deprecated get_char() alias, which has no callers either). This was
+        meant to be how INKEY$ and INPUT$(1) read a key, and the examples below
+        still describe the intent - but BuiltinFunctions is built with no
+        I/O handler
         (see Interpreter.__init__), so both builtins read sys.stdin directly
         and no backend can intercept them. Under the curses, web and Tk UIs
         that means they read the server or launching terminal instead of the

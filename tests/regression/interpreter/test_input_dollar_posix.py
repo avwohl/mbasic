@@ -25,10 +25,13 @@ an explicit Ctrl+C check. TCSANOW matters twice over: setraw()'s TCSAFLUSH
 default would discard keys typed ahead of the statement, which worked before
 and has to keep working.
 
-Every test that types at an INPUT$ prompt waits for the program to print a
-"RDY" marker first. Without that the keystroke can arrive while the terminal
-is still cooked, and the line discipline gets it instead - most visibly for
-Enter, which ICRNL rewrites to LF before INPUT$ ever switches to raw mode.
+A test that types at an INPUT$ prompt waits for the program to print a CHR$(6)
+marker and then settles, except where it is deliberately testing type-ahead
+(test_type_ahead_before_the_statement_is_honoured) or has no marker to wait for
+(the CONT resume, which re-enters the INPUT$ without re-running line 10, and so
+settles on the clock alone). Without that wait the keystroke arrives while the
+terminal is still cooked and the line discipline gets it instead - most visibly
+for Enter, which ICRNL rewrites to LF before INPUT$ switches to raw mode.
 
 Needs a pty, so it is skipped where one cannot be allocated.
 """
@@ -36,8 +39,10 @@ Needs a pty, so it is skipped where one cannot be allocated.
 import os
 import pty
 import select
+import signal
 import subprocess
 import sys
+import termios
 import time
 
 # Add project root to path (3 levels up from tests/regression/*/)
@@ -45,9 +50,22 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
 
-# Printed by the test programs just before INPUT$, to synchronise on. No 'A' in
-# it, so it cannot be mistaken for an echo of a typed 'A'.
-READY = b'RDY'
+# Printed by the test programs just before INPUT$, to synchronise on. A control
+# byte, produced with CHR$(6), because the CLI echoes a typed-ahead program line
+# twice - once by the line discipline, once by readline when it finally reads
+# it - and a printable marker matches the echo of its own source line. With
+# READY = b'RDY' the sync landed on `10 PRINT "RDY";` instead of on the running
+# program, which flaked 2 runs in 13 under load. CHR$(6) cannot appear in the
+# echo, because the source says the digit 6.
+READY = b'\x06'
+
+# The whole file must finish inside tests/run_regression.py's 30-second
+# per-test timeout, whose TimeoutExpired arm discards the captured output. A
+# FAILING run is the one at risk - every drain whose marker never appears waits
+# out its full timeout - and a failing run that prints nothing is the one case
+# where this file most needs to speak.
+BUDGET_SECONDS = 20.0
+_deadline = time.time() + BUDGET_SECONDS
 
 # The marker is flushed a few hundred microseconds BEFORE INPUT$ reaches
 # tty.setraw(), so a test that types the instant it sees RDY is racing the
@@ -78,7 +96,8 @@ def drain(fd, seconds, until=None):
     until the deadline expires.
     """
     out = b''
-    deadline = time.time() + seconds
+    # Never wait past the file's overall budget - see BUDGET_SECONDS.
+    deadline = min(time.time() + seconds, _deadline)
     while True:
         if until is not None and until in out:
             break
@@ -158,8 +177,10 @@ class Session:
         return False
 
 
-#: The common shape: announce, read one character, report its code.
-ONE_KEY = ['10 PRINT "RDY";', '20 A$=INPUT$(1)', '30 PRINT "GOT";ASC(A$)']
+#: The common shape: announce, read one character, report its code. Note that
+#: no line contains a 'Q', so an echo of the source can never be mistaken for
+#: an echo of the 'Q' the echo test types.
+ONE_KEY = ['10 PRINT CHR$(6);', '20 V$=INPUT$(1)', '30 PRINT "GOT";ASC(V$)']
 
 
 def test_single_key_no_enter_no_echo():
@@ -168,12 +189,14 @@ def test_single_key_no_enter_no_echo():
     print("-" * 60)
     with Session(ONE_KEY) as s:
         s.run()
-        got = s.send(b'A', until=b'GOT65')
+        got = s.send(b'Q', until=b'GOT81')
 
-    check(b'GOT65' in got,
-          f"a single 'A' completed INPUT$(1) with no Enter (got {got!r})")
-    # A cooked terminal would echo an 'A' of its own before GOT.
-    check(b'A' not in got,
+    check(b'GOT81' in got,
+          f"a single 'Q' completed INPUT$(1) with no Enter (got {got!r})")
+    # A cooked terminal would echo a 'Q' of its own before GOT. 'Q' appears
+    # nowhere in the program listing, so this cannot misfire on an echo of the
+    # source arriving late.
+    check(b'Q' not in got,
           f"the keystroke was not echoed (got {got!r})")
 
 
@@ -181,9 +204,9 @@ def test_multiple_characters_in_one_burst():
     """INPUT$(3) collects three characters without an Enter."""
     print("\nINPUT$(3) collects three characters")
     print("-" * 60)
-    with Session(['10 PRINT "RDY";',
-                  '20 A$=INPUT$(3)',
-                  '30 PRINT "GOT";ASC(MID$(A$,1,1));ASC(MID$(A$,2,1));ASC(MID$(A$,3,1))']) as s:
+    with Session(['10 PRINT CHR$(6);',
+                  '20 V$=INPUT$(3)',
+                  '30 PRINT "GOT";ASC(MID$(V$,1,1));ASC(MID$(V$,2,1));ASC(MID$(V$,3,1))']) as s:
         s.run()
         got = s.send(b'ABC', until=b'GOT656667')
         after = s.send(b'PRINT "ZZZ"\r', until=b'ZZZ\r\n')
@@ -274,6 +297,12 @@ def test_ctrl_c_breaks_and_cont_resumes():
         s.run()
         broke = s.send(b'\x03', until=b'Break in 20')
         s.send(b'CONT\r', until=b'CONT\r\n')
+        # CONT resumes *at* the INPUT$, so line 10's marker does not print
+        # again and there is nothing to sync on but the clock. Without this
+        # the 'K' goes in while the terminal is still cooked and the check
+        # passes for the wrong reason - exercising type-ahead, which has its
+        # own test, rather than the blocking raw read.
+        time.sleep(RAW_MODE_SETTLE)
         resumed = s.send(b'K', until=b'GOT75')
 
     check(b'Break in 20' in broke,
@@ -289,12 +318,97 @@ def test_ctrl_c_breaks_and_cont_resumes():
           f"CONT re-entered the INPUT$ and it read the 'K' (got {resumed!r})")
 
 
+def test_ctrl_c_interrupts_a_multi_character_read():
+    """One Ctrl+C must end an INPUT$(3) - not wait for two more keys.
+
+    Checking the finished string instead of each byte made this worse than the
+    cooked read it replaced: raw mode had already taken ISIG away, so nothing
+    became a SIGINT either, and the program could not be interrupted at all
+    until the user supplied the remaining n-1 characters, which the break then
+    threw away.
+    """
+    print("\none Ctrl+C ends INPUT$(3) without further typing")
+    print("-" * 60)
+    with Session(['10 PRINT CHR$(6);',
+                  '20 V$=INPUT$(3)',
+                  '30 PRINT "GOT";LEN(V$)']) as s:
+        s.run()
+        broke = s.send(b'\x03', until=b'Break in 20')
+        alive = s.send(b'PRINT "ALIVE"\r', until=b'ALIVE\r\n')
+
+    check(b'Break in 20' in broke,
+          f"a single Ctrl+C broke the three-character read (got {broke!r})")
+    check(b'GOT' not in broke,
+          f"and the program did not get a partial string (got {broke!r})")
+    check(b'ALIVE' in alive,
+          f"the REPL is responsive afterwards (got {alive!r})")
+
+
+def test_break_keeps_type_ahead_typed_after_it():
+    """A key typed after the Ctrl+C belongs to whatever reads next.
+
+    The break aborts the read, so the characters before it are gone - but the
+    ones after it were never part of this read and must stay queued. Reading
+    the whole remainder in one os.read consumed them too, and the break then
+    destroyed them.
+    """
+    print("\na key typed after the Ctrl+C is not consumed by the break")
+    print("-" * 60)
+    with Session(['10 PRINT CHR$(6);',
+                  '20 V$=INPUT$(3)',
+                  '30 PRINT "GOT";LEN(V$)']) as s:
+        s.run()
+        broke = s.send(b'A\x03B', until=b'Break in 20')
+        # The queued 'B' is now type-ahead at the Ok prompt; Enter submits it,
+        # and the REPL says what it made of it. Waiting for that reply rather
+        # than for the first newline, which is only the echo of the Enter.
+        after = s.send(b'\r', wait=3.0, until=b"'b'")
+
+    check(b'Break in 20' in broke,
+          f"the Ctrl+C broke mid-read (got {broke!r})")
+    check(b'B' in after or b"'b'" in after,
+          f"the 'B' typed after it survived for the next reader (got {after!r})")
+
+
+def test_terminal_is_restored_if_the_process_is_killed():
+    """SIGTERM while blocked in INPUT$ must not leave the tty raw.
+
+    Raw mode is held for the whole blocking wait now, and the restoring
+    tcsetattr lives in a finally that a signal never reaches - so `timeout 5
+    python3 mbasic ...`, a CI kill or a closed window would have left the
+    user's terminal with no echo and no Ctrl+C, needing `stty sane`.
+    """
+    print("\nkilling a program blocked in INPUT$ leaves the terminal usable")
+    print("-" * 60)
+    s = Session(ONE_KEY)
+    try:
+        s.run()
+        blocked = termios.tcgetattr(s.fd)
+        os.kill(s.pid, signal.SIGTERM)
+        deadline = time.time() + 3.0
+        while time.time() < deadline:
+            try:
+                if os.waitpid(s.pid, os.WNOHANG)[0]:
+                    break
+            except ChildProcessError:
+                break
+            time.sleep(0.05)
+        restored = termios.tcgetattr(s.fd)
+    finally:
+        s.close()
+
+    check(not blocked[3] & termios.ICANON,
+          "the read really was in raw mode (control check)")
+    check(bool(restored[3] & termios.ICANON) and bool(restored[3] & termios.ECHO),
+          f"ICANON and ECHO are back after the kill (lflag {restored[3]:#x})")
+
+
 def test_ctrl_c_in_immediate_mode():
     """The same break at the Ok prompt is a return to the prompt, not an error."""
     print("\nCtrl+C during an immediate-mode INPUT$")
     print("-" * 60)
     with Session() as s:
-        os.write(s.fd, b'PRINT "RDY";:X$=INPUT$(1)\r')
+        os.write(s.fd, b'PRINT CHR$(6);:X$=INPUT$(1)\r')
         drain(s.fd, 5.0, until=READY)
         time.sleep(RAW_MODE_SETTLE)
         broke = s.send(b'\x03', until=b'Break\r\n')
@@ -331,6 +445,34 @@ def test_piped_stdin_still_works():
           f"the next two arrived from the same line (got {out!r})")
 
 
+def test_piped_control_c_is_data_not_a_break():
+    """0x03 from a pipe is a byte, not a keypress.
+
+    Nobody pressed anything: a pipe has no ISIG to reclaim, so the reasoning
+    that makes Ctrl+C a break on a terminal does not apply, and INPUT$ returns
+    CHR$(3) here exactly as it did before the raw read existed. (Real 5.21
+    under cpmemu does break on this, because piped input is the only console
+    it has. Here it is not.)
+    """
+    print("\na 0x03 byte in piped input is data")
+    print("-" * 60)
+    script = ('10 A$=INPUT$(1)\n'
+              '20 PRINT "GOT";ASC(A$)\n'
+              'RUN\n\x03\nSYSTEM\n')
+    try:
+        proc = subprocess.run(
+            [sys.executable, 'mbasic', '--ui', 'cli'],
+            input=script, capture_output=True, text=True,
+            cwd=PROJECT_ROOT, timeout=20)
+        out = proc.stdout
+    except subprocess.TimeoutExpired:
+        out = '<timed out>'
+
+    check('GOT 3' in out or 'GOT3' in out,
+          f"the program received CHR$(3) (got {out!r})")
+    check('Break' not in out, f"and the run was not broken (got {out!r})")
+
+
 if __name__ == "__main__":
     print("INPUT$ keyboard reading on POSIX")
     print("=" * 60)
@@ -351,8 +493,12 @@ if __name__ == "__main__":
     test_type_ahead_before_the_statement_is_honoured()
     test_control_characters_pass_through()
     test_ctrl_c_breaks_and_cont_resumes()
+    test_ctrl_c_interrupts_a_multi_character_read()
+    test_break_keeps_type_ahead_typed_after_it()
+    test_terminal_is_restored_if_the_process_is_killed()
     test_ctrl_c_in_immediate_mode()
     test_piped_stdin_still_works()
+    test_piped_control_c_is_data_not_a_break()
 
     failed = results.count(False)
     print("\n" + "=" * 60)

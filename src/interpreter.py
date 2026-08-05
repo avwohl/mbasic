@@ -342,6 +342,7 @@ class Interpreter:
                 if self.runtime.break_requested:
                     self.runtime.break_requested = False
                     self.runtime.pc = pc.stop("BREAK")
+                    self._restore_break_handler()       # see the arm below
                     self.io.output("")
                     # pc.line_num, not pc: MBASIC reports "Break in 30", and
                     # str(PC) is a debugging repr - this printed the literal
@@ -404,6 +405,12 @@ class Interpreter:
                     # a SIGINT - so this arm had never actually run, and its
                     # message would have printed "Break in PC(30.0)".
                     self.runtime.pc = pc.stop("BREAK")
+                    # Without this the interpreter's own SIGINT handler stays
+                    # installed after the program stops, and since all it does
+                    # is set break_requested, the REPL's Ctrl+C - including
+                    # three-presses-to-quit - is dead for the rest of the
+                    # session. Every other exit from this loop restores it.
+                    self._restore_break_handler()
                     # Raw mode does not echo the ^C, and the program may have
                     # left the cursor mid-line with a trailing-semicolon PRINT.
                     self.io.output("")

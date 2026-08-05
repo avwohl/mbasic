@@ -283,6 +283,11 @@ class ImmediateExecutor:
             # CONT into, so report it the way execute_stop() reports a STOP
             # with no line number rather than as "?BreakException".
             output = self.io.get_output() if self.io else ""
+            if output and not output.endswith("\n"):
+                # A trailing-semicolon PRINT before the INPUT$ leaves the line
+                # open, and curses_ui splits this string into output rows - so
+                # without this the two run together as one row, "IMBreak".
+                output += "\n"
             return (True, output + "Break\n")
 
         except Exception as e:
