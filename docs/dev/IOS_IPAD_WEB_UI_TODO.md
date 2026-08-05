@@ -159,7 +159,7 @@ bf96dffa - Fix auto-scroll and prevent window scrolling with touch-action
 ## References
 - NiceGUI docs: https://nicegui.io/
 - iOS Safari quirks: https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/
-- Mobile web best practices: https://web.dev/mobile/
+- Mobile web best practices: https://web.dev/learn/design/
 
 ## Status
 **TODO** - Needs testing on dedicated test machine, not production site.

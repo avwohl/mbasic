@@ -41,7 +41,7 @@ sudo pacman -S ncurses
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/agn453/tnylpo.git
+git clone https://gitlab.com/gbrein/tnylpo.git
 cd tnylpo
 ```
 
@@ -192,16 +192,16 @@ tnylpo hello.com
 If tnylpo doesn't work for your system, alternatives include:
 
 - **RunCPM**: https://github.com/MockbaTheBorg/RunCPM
-- **z80pack**: http://www.z80.info/z80pack.htm
+- **z80pack**: https://github.com/udo-munk/z80pack
 - **YAZE-AG**: http://www.mathematik.uni-ulm.de/users/ag/yaze-ag/
 
 However, test scripts are configured for tnylpo specifically.
 
 ## References
 
-- tnylpo GitHub: https://github.com/agn453/tnylpo
+- tnylpo GitHub: https://gitlab.com/gbrein/tnylpo
 - CP/M 2.2 Manual: http://www.cpm.z80.de/manuals/cpm22-m.pdf
-- Z80 Instruction Set: http://www.z80.info/z80ins.htm
+- Z80 Instruction Set: http://www.z80.info/z80ins.txt
 
 ## Implementation Note
 

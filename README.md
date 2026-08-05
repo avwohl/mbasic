@@ -30,7 +30,7 @@ A complete implementation of Microsoft BASIC-80 5.21 (CP/M era) with an interact
 - ✅ **Full File I/O**: localStorage in browser, fs module in Node.js
 - ✅ **Standalone HTML**: Optional HTML wrapper for browser deployment
 
-See [Implementation Status](#implementation-status) section below for details, [Extensions](docs/help/mbasic/extensions.md) for modern features, [Compiler Features](#compiler-100-complete) for compiler information, and [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for current project health and metrics.
+See [Implementation Status](#implementation-status) section below for details, [Extensions](docs/help/mbasic/extensions.md) for modern features, [Compiler Features](#compiler-features-100-complete) for compiler information, and [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for current project health and metrics.
 
 ## Installation
 

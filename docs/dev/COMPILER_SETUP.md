@@ -90,7 +90,7 @@ See [TNYLPO_SETUP.md](TNYLPO_SETUP.md) for detailed installation instructions.
 Quick install:
 ```bash
 # Clone and build
-git clone https://github.com/agn453/tnylpo.git
+git clone https://gitlab.com/gbrein/tnylpo.git
 cd tnylpo
 make
 sudo make install  # Or copy to ~/bin and add to PATH
