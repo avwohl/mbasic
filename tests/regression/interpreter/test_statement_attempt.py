@@ -29,7 +29,6 @@ that turned it on everywhere would be invisible.
 """
 
 import os
-import random
 import sys
 import tempfile
 from pathlib import Path
@@ -42,6 +41,7 @@ from src.iohandler.base import IOHandler, KeyInputPending
 from src.lexer import Lexer
 from src.parser import Parser
 from src.runtime import Runtime
+from src.mbasic_rnd import MbasicRandom
 from src.statement_attempt import StatementAttempt
 
 results = []
@@ -131,7 +131,7 @@ def run_program(source, handler, keys_per_tick=(), ticks=10):
 
 class FakeRuntime:
     def __init__(self):
-        self.rnd_last = 0.5
+        self.rnd = MbasicRandom()
         self.files = {}
 
 
@@ -141,34 +141,39 @@ def test_the_generator_is_snapshotted_once():
     print("-" * 60)
     runtime = FakeRuntime()
     attempt = StatementAttempt()
-    random.seed(99)
 
-    expected = [random.random() for _ in range(3)]
-    random.seed(99)
+    reference = MbasicRandom()
+    expected = [reference.next() for _ in range(3)]
 
     attempt.note_random(runtime)
-    drawn = [random.random()]
+    drawn = [runtime.rnd.next()]
     attempt.note_random(runtime)        # a second draw in the same attempt
-    drawn.append(random.random())
+    drawn.append(runtime.rnd.next())
     attempt.rollback(runtime)
 
     check(drawn == expected[:2], "two numbers were drawn")
-    after = [random.random(), random.random(), random.random()]
+    after = [runtime.rnd.next() for _ in range(3)]
     check(after == expected,
           "and the sequence starts again from the beginning, not the middle")
 
 
-def test_rollback_restores_rnd_last():
-    """RND(0) returns the last number, so that has to go back too."""
-    print("\nRND(0)'s value is restored as well")
+def test_rollback_restores_the_whole_generator_state():
+    """RND(0) returns the last number, and the counters pick the next
+    constants, so seed and counters all have to go back together."""
+    print("\nthe seed and all three counters are restored")
     print("-" * 60)
     runtime = FakeRuntime()
-    runtime.rnd_last = 0.25
+    for _ in range(5):
+        runtime.rnd.next()
+    before = runtime.rnd.state()
     attempt = StatementAttempt()
     attempt.note_random(runtime)
-    runtime.rnd_last = 0.75
+    for _ in range(3):
+        runtime.rnd.next()
+    check(runtime.rnd.state() != before, "the state moved")
     attempt.rollback(runtime)
-    check(runtime.rnd_last == 0.25, f"back to 0.25 (got {runtime.rnd_last})")
+    check(runtime.rnd.state() == before,
+          f"and came back ({runtime.rnd.state()} vs {before})")
 
 
 def test_file_positions_are_restored():
@@ -202,12 +207,11 @@ def test_reset_forgets_the_previous_attempt():
     print("-" * 60)
     runtime = FakeRuntime()
     attempt = StatementAttempt()
-    random.seed(7)
     attempt.note_random(runtime)
-    drawn = random.random()
+    drawn = runtime.rnd.next()
     attempt.reset()                     # the statement finished
     attempt.rollback(runtime)           # a later statement pauses
-    check(random.random() != drawn,
+    check(runtime.rnd.next() != drawn,
           "the generator was not wound back to the finished statement")
 
 
@@ -221,11 +225,11 @@ def test_rnd_is_not_advanced_by_a_pause():
     print("-" * 60)
     source = '10 X$=STR$(RND)+INPUT$(1)\n20 PRINT X$\n'
 
-    random.seed(4242)
+    # No seeding needed: MBASIC's generator starts from a fixed seed and each
+    # run resets it, so the two runs are comparable by construction.
     paused = DeferringHandler()
     run_program(source, paused, keys_per_tick=['', '', '', 'Q'])
 
-    random.seed(4242)
     direct = DeferringHandler('Q')
     run_program(source, direct)
 
@@ -346,7 +350,7 @@ if __name__ == "__main__":
     print("=" * 60)
 
     test_the_generator_is_snapshotted_once()
-    test_rollback_restores_rnd_last()
+    test_rollback_restores_the_whole_generator_state()
     test_file_positions_are_restored()
     test_reset_forgets_the_previous_attempt()
 

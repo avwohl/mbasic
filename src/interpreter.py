@@ -1815,6 +1815,11 @@ class Interpreter:
         # Clear resource limits tracking
         self.limits.clear_all()
 
+        # Restart the random sequence. CLEAR, RUN and NEW share one routine on
+        # the real machine (0x4358), which reloads the seed and zeroes the
+        # counters - so CLEAR then RND gives .245121 again, measured.
+        self.runtime.rnd.reset()
+
         # Clear all variables
         self.runtime.clear_variables()
 
@@ -1857,24 +1862,38 @@ class Interpreter:
         Reseeds the random number generator.
 
         Syntax:
-            RANDOMIZE           - Use timer/system value as seed
-            RANDOMIZE seed      - Use specific seed value
+            RANDOMIZE           - ask for a seed, the way the real binary does
+            RANDOMIZE seed      - use this seed
 
         Example:
             10 RANDOMIZE
             20 RANDOMIZE 42
-            30 RANDOMIZE TIMER
-        """
-        import random
-        import time
 
+        The seed is a 16-bit integer that replaces the middle two bytes of the
+        generator's seed - see src/mbasic_rnd.py. With no argument MBASIC 5.21
+        prints "Random number seed (-32768 to 32767)? " and waits, which is
+        what the pause below does; seeding from the clock instead would make a
+        program that says RANDOMIZE unrepeatable, and MBASIC's is repeatable.
+        """
         if stmt.seed:
-            # Use specified seed value
             seed = self.evaluate_expression(stmt.seed)
-            random.seed(int(seed))
+        elif self.state.input_buffer:
+            answer = self.state.input_buffer.pop(0).strip()
+            try:
+                seed = float(answer) if answer else 0
+            except ValueError:
+                raise RuntimeError("Redo from start")
         else:
-            # Use timer/system value (current time)
-            random.seed(time.time())
+            prompt = "Random number seed (-32768 to 32767)? "
+            self.io.output(prompt, end='')
+            # Pause exactly as INPUT does; the statement runs again with the
+            # answer waiting in the buffer.
+            self.state.input_prompt = prompt
+            self.state.input_variables = []
+            self.state.input_file_number = None
+            return
+
+        self.runtime.rnd.randomize(to_integer(seed))
 
     def execute_optionbase(self, stmt):
         """Execute OPTION BASE statement

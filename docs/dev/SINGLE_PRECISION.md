@@ -127,12 +127,11 @@ one step:
 
 All of them were run before and after, and 35 printed something different.
 
-Twenty-seven of those use RND, which is seeded per run here, so they differ
-between two runs of the *same* build - noise, not a change. (The real binary's
-RND is deterministic without RANDOMIZE, giving `.245121 .305003 .311866` every
-time. Ours does not match that sequence, before or after; a separate gap.) Two
-more, `ykw1` and `ykw2`, are long enough to hit the sweep's timeout at a
-different point each run.
+Twenty-seven of those use RND, which was seeded per run here, so they differed
+between two runs of the *same* build - noise, not a change. (That gap is now
+closed: RND reproduces the real binary's sequence, `.245121 .305003 .311866`
+and on. See `RND_ALGORITHM.md`.) Two more, `ykw1` and `ykw2`, are long enough
+to hit the sweep's timeout at a different point each run.
 
 The six that genuinely changed all changed the way they should, and where the
 program is self-running it was checked against the real binary:

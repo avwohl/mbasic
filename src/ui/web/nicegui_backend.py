@@ -4112,7 +4112,7 @@ class NiceGUIBackend(UIBackend):
             'field_buffers': self.runtime.field_buffers,
             'error_handler': self.runtime.error_handler,
             'error_handler_is_gosub': self.runtime.error_handler_is_gosub,
-            'rnd_last': self.runtime.rnd_last,
+            'rnd_state': list(self.runtime.rnd.state()),
             # Note: stopped flag removed - PC.stop_reason now indicates stop state (display only)
             'breakpoints': [{'line': bp.line_num, 'stmt': bp.stmt_offset} for bp in self.runtime.breakpoints],
             'break_requested': self.runtime.break_requested,
@@ -4157,7 +4157,11 @@ class NiceGUIBackend(UIBackend):
         self.runtime.field_buffers = state['field_buffers']
         self.runtime.error_handler = state['error_handler']
         self.runtime.error_handler_is_gosub = state['error_handler_is_gosub']
-        self.runtime.rnd_last = state['rnd_last']
+        # The random state is a seed plus three counters - see src/mbasic_rnd.py.
+        # Fetched with .get() so a session stored by an older build still loads.
+        rnd_state = state.get('rnd_state')
+        if rnd_state:
+            self.runtime.rnd.restore(tuple(rnd_state))
         # Note: stopped flag removed - PC.stop_reason now indicates stop state (display only)
         # Ignore 'stopped' key if present (backwards compatibility with old saved states)
         self.runtime.breakpoints = {PC(bp['line'], bp['stmt']) for bp in state['breakpoints']}

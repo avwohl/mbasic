@@ -85,6 +85,12 @@ the precision, the same value at both precisions, STR$, and six PRINT USING
 fields with negative numbers. Every expectation is what the real binary
 printed.
 
+## Since fixed: singles are rounded twice
+
+A single is rounded to seven digits and then to six, because that is what
+MBASIC's conversion routine does - `.04349604...` prints as `.0434961`, not
+`.043496`. Found while checking RANDOMIZE; see `RND_ALGORITHM.md`.
+
 ## Since fixed: single-precision arithmetic
 
 This was left open here, and is now done - see `SINGLE_PRECISION.md`.
@@ -105,3 +111,9 @@ A second, smaller gap sits underneath it and is still there: MBASIC's double is
 a 56-bit binary format, not IEEE 754, so the sixteenth digit can differ -
 `2#/3#` is `.6666666666666667` there and `.6666666666666666` here. That one
 needs the arithmetic to be emulated, not just the storage.
+
+The same gap shows in printing rather than arithmetic: for about one value in
+eight, MBASIC's binary-to-decimal conversion rounds the sixteenth digit up
+where correct rounding rounds it down. The value is right; the last digit it
+prints is not. Rounding doubles twice, the way singles are rounded, was
+measured and makes *more* values wrong, so they are left rounding once.

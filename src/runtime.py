@@ -14,6 +14,7 @@ This module manages:
 
 import time
 from src.ast_nodes import DataStatementNode, DefFnStatementNode
+from src.mbasic_rnd import MbasicRandom
 from src.number_format import coerce_to_type
 from src.pc import PC, StatementTable
 
@@ -118,7 +119,10 @@ class Runtime:
         # ERL%, ERS%, and ERR% system variables are set from ErrorInfo
 
         # Random number seed
-        self.rnd_last = 0.5
+        # MBASIC's own generator, not Python's - see src/mbasic_rnd.py. It
+        # starts from a fixed seed, so a program that does not say RANDOMIZE
+        # gets the same numbers every run, exactly as on the real machine.
+        self.rnd = MbasicRandom()
 
         # The statement attempt currently in progress, or None. Set by the
         # interpreter only when the I/O handler can pause a statement for a
@@ -1602,8 +1606,8 @@ class Runtime:
         self.error_handler = None
         self.error_handler_is_gosub = False
 
-        # Reset RND
-        self.rnd_last = 0.5
+        # Reset RND - RUN reloads the seed and zeroes the counters (0x4358)
+        self.rnd.reset()
 
         # Reset break handling
         self.break_requested = False

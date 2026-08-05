@@ -10,7 +10,8 @@ two things an *expression* can change that a second attempt would change again.
 ``RND`` advances the generator. `X$=STR$(RND)+INPUT$(1)` that pauses three
 times draws four random numbers and uses the last, so a program that waits for
 a key silently skips forward in the sequence - and a sequence is the only thing
-a random number generator is for.
+a random number generator is for. MBASIC's sequence is reproduced exactly here,
+which makes skipping forward in it visible rather than merely wrong.
 
 ``INPUT$(n,#f)`` advances the file. `X$=INPUT$(1,#1)+INPUT$(1)` that pauses
 reads byte 1, pauses, then reads byte 2 on the retry and pairs it with the key.
@@ -25,8 +26,6 @@ Not covered, because a BASIC program cannot see it: ``EOF`` sets a flag when it
 reaches the end of a file, and setting it twice is the same as setting it once.
 """
 
-import random
-
 
 class StatementAttempt:
     """What one attempt at a statement changed, and how to put it back."""
@@ -36,8 +35,7 @@ class StatementAttempt:
 
     def reset(self):
         """Begin a fresh attempt, forgetting the previous one's record."""
-        self._rng_state = None
-        self._rnd_last = None
+        self._rnd_state = None
         self._file_positions = {}
 
     # ------------------------------------------------------------------
@@ -50,10 +48,14 @@ class StatementAttempt:
         Snapshotted once per attempt: the state saved is the one before the
         *first* draw, which is what the retry has to start from however many
         times the statement draws.
+
+        MBASIC's generator keeps a seed and three counters and all four move
+        together, so the whole lot is saved - see src/mbasic_rnd.py.
         """
-        if self._rng_state is None:
-            self._rng_state = random.getstate()
-            self._rnd_last = getattr(runtime, 'rnd_last', None)
+        if self._rnd_state is None:
+            rnd = getattr(runtime, 'rnd', None)
+            if rnd is not None:
+                self._rnd_state = rnd.state()
 
     def note_file_position(self, file_num, handle):
         """About to read from an open file.
@@ -76,10 +78,10 @@ class StatementAttempt:
 
     def rollback(self, runtime):
         """Put back everything this attempt changed."""
-        if self._rng_state is not None:
-            random.setstate(self._rng_state)
-            if self._rnd_last is not None:
-                runtime.rnd_last = self._rnd_last
+        if self._rnd_state is not None:
+            rnd = getattr(runtime, 'rnd', None)
+            if rnd is not None:
+                rnd.restore(self._rnd_state)
 
         for file_num, position in self._file_positions.items():
             file_info = getattr(runtime, 'files', {}).get(file_num)

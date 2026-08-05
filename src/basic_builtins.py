@@ -531,29 +531,20 @@ class BuiltinFunctions:
 
     def RND(self, x=None):
         """
-        Random number.
+        Random number, from MBASIC 5.21's own generator.
 
-        MBASIC RND behavior:
-        - RND(1) or RND: return random number 0 to 1
-        - RND(0): return last random number
-        - RND(negative): seed and return random number
+        - RND, RND(x>0): the next value in the sequence
+        - RND(0):        the last value again, without drawing
+        - RND(x<0):      restart from a value derived from x
+
+        The sequence is the real machine's, value for value - see
+        src/mbasic_rnd.py. RND(0) draws nothing, so there is nothing for a
+        retried statement to put back.
         """
-        if x is None or x > 0:
-            # Generate new random number
-            self._note_random()
-            value = random.random()
-            self.runtime.rnd_last = value
-            return value
-        elif x == 0:
-            # Return last random number (no draw, nothing to undo)
-            return self.runtime.rnd_last
-        else:
-            # Seed random number generator
-            self._note_random()
-            random.seed(abs(x))
-            value = random.random()
-            self.runtime.rnd_last = value
-            return value
+        if x is not None and x == 0:
+            return self.runtime.rnd.next(0)
+        self._note_random()
+        return self.runtime.rnd.next(x)
 
     def _note_random(self):
         """Let a statement that may be retried put the generator back.

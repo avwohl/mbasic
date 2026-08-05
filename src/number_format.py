@@ -96,9 +96,25 @@ def format_for_print(value, digits=SINGLE_DIGITS):
 
 
 def _round_to_digits(value, digits):
-    """Round a positive value to `digits` significant figures."""
+    """Round a positive value to `digits` significant figures.
+
+    A single is rounded twice, because MBASIC's conversion routine produces
+    seven decimal digits for a 24-bit mantissa and the six that are printed are
+    rounded from those. It shows whenever the seventh digit rounds up into a
+    five:
+
+        .04349604...   seven digits .04349605   printed .0434961, not .043496
+        12.3456497     seven digits 12.34565    printed 12.3457, not 12.3456
+        .0999999493    seven digits .09999995   printed .1, not .0999999
+
+    Doubles do not get this treatment - measured against the binary, rounding
+    them twice makes more values wrong rather than fewer.
+    """
+    if digits == SINGLE_DIGITS:
+        wide = Context(prec=digits + 1, rounding=ROUND_HALF_UP)
+        value = wide.create_decimal(repr(float(value)))
     context = Context(prec=digits, rounding=ROUND_HALF_UP)
-    return context.create_decimal(repr(float(value))).normalize(context)
+    return context.create_decimal(value).normalize(context)
 
 
 def _significant_digits(rounded):

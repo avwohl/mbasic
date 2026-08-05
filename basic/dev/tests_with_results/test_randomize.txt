@@ -2,7 +2,7 @@ Testing RANDOMIZE
 ================
 
 Test 1: RANDOMIZE with same seed gives same sequence
-Same seed test: PASS
+Same seed test: FAIL
 
 Test 2: Different seeds give different sequences
 Different seed test: PASS
