@@ -1251,14 +1251,21 @@ class BuiltinFunctions:
                 except (ValueError, OSError, RuntimeError):
                     pass
 
-    @staticmethod
-    def _read_console_cooked(num):
+    @classmethod
+    def _read_console_cooked(cls, num):
         """Read without raw mode: piped input, or no terminal control at all.
 
         Deliberately still sys.stdin rather than os.read. With no tty there is
         no readline either, so the REPL and the INPUT statement are reading
         through this same TextIOWrapper - matching them is what keeps the
         characters in order.
+
+        Ctrl+C breaks here too. There is no keypress to speak of - it is a
+        byte in a stream - but real 5.21 under cpmemu aborts on it whether the
+        input is typed or piped, because piped input is the only console it
+        has, and matching that was a deliberate call. The cost is that INPUT$
+        cannot read a 0x03 out of redirected input; INPUT$(n,#f) from a file
+        still can, and is where binary data belongs.
         """
         chars = ""
         try:
@@ -1266,6 +1273,11 @@ class BuiltinFunctions:
                 ch = sys.stdin.read(1)
                 if not ch:
                     break               # EOF
+                if ch == cls._BREAK_CHAR:
+                    # Checked per character, so whatever follows it stays in
+                    # the buffer for the next reader rather than being
+                    # consumed and then thrown away by the break.
+                    cls._raise_break()
                 chars += ch
         except TERMINAL_ERRORS:
             # This is the end of the line for a keyboard read, so it has to
@@ -1305,11 +1317,9 @@ class BuiltinFunctions:
         nothing until two more keys were typed, which is worse than the
         cooked read it replaced.
 
-        A keyboard only. Bytes from a pipe or a file are data - nobody pressed
-        anything - so the cooked path deliberately does not call this, and
-        INPUT$(n) still returns CHR$(3) from redirected input as it always
-        has. Real 5.21 under cpmemu breaks there too, since piped input is the
-        only console it has; this does not, because here it is not.
+        Every console read, typed or piped, matching real 5.21 under cpmemu -
+        which aborts on a piped 0x03 exactly as it does on a typed one. Only
+        INPUT$(n,#f) is exempt, because a file is not the console.
 
         The break is resumable, as it is under real 5.21: CONT re-enters the
         INPUT$. One deliberate difference - 5.21 returns silently to "Ok" and

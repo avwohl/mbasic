@@ -445,20 +445,19 @@ def test_piped_stdin_still_works():
           f"the next two arrived from the same line (got {out!r})")
 
 
-def test_piped_control_c_is_data_not_a_break():
-    """0x03 from a pipe is a byte, not a keypress.
+def test_piped_control_c_breaks():
+    """0x03 breaks whether it was typed or piped, as it does under cpmemu.
 
-    Nobody pressed anything: a pipe has no ISIG to reclaim, so the reasoning
-    that makes Ctrl+C a break on a terminal does not apply, and INPUT$ returns
-    CHR$(3) here exactly as it did before the raw read existed. (Real 5.21
-    under cpmemu does break on this, because piped input is the only console
-    it has. Here it is not.)
+    Real 5.21 aborts an INPUT$ on a piped 0x03 exactly as it does on a typed
+    one - piped input is the only console it has - and matching that was a
+    deliberate call. What follows the 0x03 must still survive for the next
+    reader, the same as on a terminal.
     """
-    print("\na 0x03 byte in piped input is data")
+    print("\na 0x03 byte in piped input breaks, like cpmemu")
     print("-" * 60)
     script = ('10 A$=INPUT$(1)\n'
               '20 PRINT "GOT";ASC(A$)\n'
-              'RUN\n\x03\nSYSTEM\n')
+              'RUN\n\x03\nPRINT "AFTER"\nSYSTEM\n')
     try:
         proc = subprocess.run(
             [sys.executable, 'mbasic', '--ui', 'cli'],
@@ -468,9 +467,11 @@ def test_piped_control_c_is_data_not_a_break():
     except subprocess.TimeoutExpired:
         out = '<timed out>'
 
-    check('GOT 3' in out or 'GOT3' in out,
-          f"the program received CHR$(3) (got {out!r})")
-    check('Break' not in out, f"and the run was not broken (got {out!r})")
+    check('Break in 10' in out, f"the run broke at the INPUT$ (got {out!r})")
+    check('GOT' not in out,
+          f"and the program did not receive CHR$(3) (got {out!r})")
+    check('AFTER' in out,
+          f"the rest of the piped input still reached the REPL (got {out!r})")
 
 
 if __name__ == "__main__":
@@ -498,7 +499,7 @@ if __name__ == "__main__":
     test_terminal_is_restored_if_the_process_is_killed()
     test_ctrl_c_in_immediate_mode()
     test_piped_stdin_still_works()
-    test_piped_control_c_is_data_not_a_break()
+    test_piped_control_c_breaks()
 
     failed = results.count(False)
     print("\n" + "=" * 60)

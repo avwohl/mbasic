@@ -162,18 +162,21 @@ happened - was rejected because raw mode is held for the whole blocking wait.
 A program sitting in `INPUT$` would have become impossible to interrupt from
 the keyboard at all.
 
-A keyboard only. The cooked path does not check for it, so `INPUT$(n)` still
-returns `CHR$(3)` from redirected input exactly as it did before any of this -
-nobody pressed anything there, and a pipe has no ISIG to reclaim, which is the
-whole argument above. `INPUT$(n,#f)` from a file was never in question.
+Every console read, typed or piped. Real 5.21 under cpmemu aborts on a piped
+0x03 exactly as it does on a typed one - piped input is the only console it has
+- and matching that is a deliberate call, taken knowing the cost: `INPUT$(n)`
+cannot read a 0x03 out of redirected input, so a program that wants binary
+bytes from stdin cannot have that one. `INPUT$(n,#f)` from a file is exempt and
+is where binary data belongs.
 
-Three deliberate differences from 5.21, the first two noted in the help page:
+What follows the 0x03 survives either way. The check is per character on both
+paths, so the rest of a piped script stays in the buffer and reaches the REPL
+rather than being consumed by the read that is being abandoned.
+
+Two deliberate differences from 5.21, noted in the help page:
 
 - 5.21 returns silently to `Ok`; this prints `Break in nn`, matching what STOP
   and Ctrl+C during `INPUT` already print here.
-- Real 5.21 under cpmemu breaks on a 0x03 in *piped* input too, because piped
-  input is the only console it has. Here it is not one, so that byte stays
-  data.
 - `INKEY$` is left alone. It only enters raw mode once `select()` has already
   reported a key, so on POSIX the terminal is cooked while a program polls it
   and Ctrl+C usually becomes a SIGINT before `INKEY$` can see the byte -
@@ -211,9 +214,11 @@ original bug:
 - **A SIGINT arriving before raw mode still hung the read** and still swallowed
   whatever key ended it - the original bug, in the window the fix did not
   cover. Now polled, see above.
-- **A 0x03 byte from a *pipe* raised a break.** Nobody pressed anything there;
-  it is data, as it always was. The break check is now on the keyboard paths
-  only.
+- **A 0x03 byte from a *pipe* raised a break** where the pre-fix code returned
+  `CHR$(3)`, and the review called it a regression. It was reverted to data and
+  then deliberately put back: real 5.21 breaks there too, and fidelity won. The
+  reviewers were split on this one for the same reason - the mechanism is real
+  either way, and only the intent settles it.
 - **The SIGINT handler was never restored** on the new break path, so after a
   Ctrl+C in `INPUT$` the REPL's own Ctrl+C - including three-presses-to-quit -
   was dead for the rest of the session. Restored on both break arms.

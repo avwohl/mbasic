@@ -25,7 +25,7 @@ If the terminal is used for input, nothing is echoed, no Enter is required, and 
 
 Enter arrives as CHR$(13), as it does on a CP/M console - but a key typed *before* the INPUT$ statement is reached is still waiting in the terminal's own queue, and one typed there arrives as CHR$(10). Test for both if a program can be typed ahead of.
 
-**Note**: Control-C breaks the program at the INPUT$ statement and CONT resumes it, as in MBASIC 5.21. Two differences: 5.21 returns silently to the `Ok` prompt, while this implementation prints `Break in nn` - the same message it prints for STOP and for Control-C during INPUT; and a CHR$(3) arriving through redirected input is data rather than a break, since nobody pressed anything. INKEY$ behaves differently; see [INKEY$](inkey_dollar.md).
+**Note**: Control-C breaks the program at the INPUT$ statement and CONT resumes it, as in MBASIC 5.21. This applies to a CHR$(3) arriving through redirected input as well, which is what MBASIC 5.21 does - so INPUT$ cannot read that byte from the terminal or from stdin. Read binary data from a file instead, with INPUT$(n,#f), where every byte is passed through. One difference from 5.21: it returns silently to the `Ok` prompt, while this implementation prints `Break in nn` - the same message it prints for STOP and for Control-C during INPUT. INKEY$ behaves differently; see [INKEY$](inkey_dollar.md).
 
 ## Example
 
