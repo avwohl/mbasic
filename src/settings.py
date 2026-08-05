@@ -214,7 +214,25 @@ class SettingsManager:
             subkey = parts[1]
             if category in settings_dict and isinstance(settings_dict[category], dict):
                 return settings_dict[category].get(subkey)
-        return settings_dict.get(key)
+
+        value = settings_dict.get(key)
+        if value is not None:
+            return value
+
+        # Settings were written with a category prefix until fe2046c6
+        # ("Simplify settings: remove category prefixes"), and those files are
+        # still on people's disks. Without this the values in them are silently
+        # ignored - measured before the fix: a file saying
+        # editor.auto_number_step = 25 produced the default 10, with nothing
+        # said. The comment in settings_definitions.py has always claimed this
+        # compatibility; now it is true.
+        suffix = '.' + key
+        for stored_key, stored_value in settings_dict.items():
+            if stored_key.endswith(suffix):
+                return stored_value                 # "editor.auto_number": 25
+            if isinstance(stored_value, dict) and key in stored_value:
+                return stored_value[key]            # {"editor": {...}}
+        return None
 
     def set(self, key: str, value: Any, scope: SettingScope = SettingScope.GLOBAL):
         """Set setting value.

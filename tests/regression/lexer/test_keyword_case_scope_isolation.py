@@ -25,15 +25,15 @@ class TestKeywordCaseScopeIsolation(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         # Save original setting
-        self.original_policy = settings_get('keywords.case_style', 'force_lower')
+        self.original_policy = settings_get('case_style', 'force_lower')
 
     def tearDown(self):
         """Restore original setting."""
-        settings_set('keywords.case_style', self.original_policy)
+        settings_set('case_style', self.original_policy)
 
     def test_separate_tokenizations_isolated(self):
         """Test that separate tokenize() calls don't share case managers."""
-        settings_set('keywords.case_style', 'force_lower')
+        settings_set('case_style', 'force_lower')
 
         # First tokenization with PRINT (uppercase)
         code1 = '10 PRINT "test"'
@@ -48,7 +48,7 @@ class TestKeywordCaseScopeIsolation(unittest.TestCase):
 
     def test_conflict_within_same_tokenization(self):
         """Test that conflicts ARE detected within same tokenization."""
-        settings_set('keywords.case_style', 'force_lower')
+        settings_set('case_style', 'force_lower')
 
         # Single tokenization with mixed case
         code = '''10 PRINT "First"
@@ -60,7 +60,7 @@ class TestKeywordCaseScopeIsolation(unittest.TestCase):
 
     def test_immediate_mode_simulation(self):
         """Test simulating immediate mode vs program mode."""
-        settings_set('keywords.case_style', 'force_lower')
+        settings_set('case_style', 'force_lower')
 
         # Simulate program with RUN (uppercase)
         program = '10 RUN'
@@ -77,7 +77,7 @@ class TestKeywordCaseScopeIsolation(unittest.TestCase):
 
     def test_adding_lines_individually(self):
         """Test that adding program lines one at a time works."""
-        settings_set('keywords.case_style', 'force_lower')
+        settings_set('case_style', 'force_lower')
 
         # Simulate adding lines individually (as in interactive mode)
         # Each line gets its own tokenization
@@ -94,7 +94,7 @@ class TestKeywordCaseScopeIsolation(unittest.TestCase):
 
     def test_whole_program_tokenization(self):
         """Test that whole program tokenization detects conflicts."""
-        settings_set('keywords.case_style', 'force_lower')
+        settings_set('case_style', 'force_lower')
 
         # When running the program, all lines tokenized together
         whole_program = '''10 PRINT "First"
@@ -105,7 +105,7 @@ class TestKeywordCaseScopeIsolation(unittest.TestCase):
 
     def test_consistent_case_no_error(self):
         """Test that consistent case never errors."""
-        settings_set('keywords.case_style', 'force_lower')
+        settings_set('case_style', 'force_lower')
 
         # All uppercase - should work
         code_upper = '''10 PRINT "test"
@@ -123,7 +123,7 @@ class TestKeywordCaseScopeIsolation(unittest.TestCase):
 
     def test_multiple_keywords_same_line(self):
         """Test case consistency for multiple keywords on same line."""
-        settings_set('keywords.case_style', 'force_lower')
+        settings_set('case_style', 'force_lower')
 
         # Consistent case - should work
         code_ok = '10 IF X>0 THEN PRINT "positive" ELSE PRINT "non-positive"'

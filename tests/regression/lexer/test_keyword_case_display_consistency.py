@@ -26,11 +26,11 @@ class TestKeywordCaseDisplayConsistency(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         # Save original setting
-        self.original_policy = settings_get('keywords.case_style', 'force_lower')
+        self.original_policy = settings_get('case_style', 'force_lower')
 
     def tearDown(self):
         """Restore original setting."""
-        settings_set('keywords.case_style', self.original_policy)
+        settings_set('case_style', self.original_policy)
 
     def get_keyword_cases(self, code):
         """Helper to extract keyword display cases from tokenized code."""
@@ -41,7 +41,7 @@ class TestKeywordCaseDisplayConsistency(unittest.TestCase):
 
     def test_force_lower_policy(self):
         """Test that force_lower converts all to lowercase."""
-        settings_set('keywords.case_style', 'force_lower')
+        settings_set('case_style', 'force_lower')
 
         code = '''10 Print "First"
 20 PRINT "Second"
@@ -52,7 +52,7 @@ class TestKeywordCaseDisplayConsistency(unittest.TestCase):
 
     def test_force_upper_policy(self):
         """Test that force_upper converts all to UPPERCASE."""
-        settings_set('keywords.case_style', 'force_upper')
+        settings_set('case_style', 'force_upper')
 
         code = '''10 Print "First"
 20 PRINT "Second"
@@ -63,7 +63,7 @@ class TestKeywordCaseDisplayConsistency(unittest.TestCase):
 
     def test_force_capitalize_policy(self):
         """Test that force_capitalize converts all to Capitalized."""
-        settings_set('keywords.case_style', 'force_capitalize')
+        settings_set('case_style', 'force_capitalize')
 
         code = '''10 PRINT "First"
 20 print "Second"
@@ -74,7 +74,7 @@ class TestKeywordCaseDisplayConsistency(unittest.TestCase):
 
     def test_multiple_keywords_same_line(self):
         """Test that all keywords on same line follow policy."""
-        settings_set('keywords.case_style', 'force_upper')
+        settings_set('case_style', 'force_upper')
 
         code = '10 if x>0 then print "yes" else print "no"'
 
@@ -85,7 +85,7 @@ class TestKeywordCaseDisplayConsistency(unittest.TestCase):
 
     def test_different_keywords_share_policy(self):
         """Test that different keywords all follow same policy."""
-        settings_set('keywords.case_style', 'force_capitalize')
+        settings_set('case_style', 'force_capitalize')
 
         code = '''10 FOR i=1 TO 10
 20   PRINT i
@@ -97,7 +97,7 @@ class TestKeywordCaseDisplayConsistency(unittest.TestCase):
 
     def test_consistency_across_program(self):
         """Test that all occurrences of same keyword are consistent."""
-        settings_set('keywords.case_style', 'force_capitalize')
+        settings_set('case_style', 'force_capitalize')
 
         code = '''10 Print "1"
 20 FOR I=1 TO 5

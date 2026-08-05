@@ -75,7 +75,12 @@ def test_curses_loader():
 
     test_cases = [
         ('editor', 'help', 'Ctrl+H'),
-        ('editor', 'save', 'Ctrl+S'),
+        # Ctrl+V, not Ctrl+S: ^S is XOFF, so binding Save to it in a terminal
+        # would stop output rather than save anything. Changed deliberately in
+        # c2e17465 - see the description in src/ui/curses_keybindings.json -
+        # and this expectation was never updated. Tk keeps Ctrl+S, where the
+        # terminal's flow control does not apply.
+        ('editor', 'save', 'Ctrl+V'),
         ('editor', 'run', 'Ctrl+R'),
         ('editor', 'new', 'Ctrl+N'),
         ('editor', 'quit', 'Ctrl+Q'),

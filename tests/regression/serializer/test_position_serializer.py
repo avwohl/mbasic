@@ -130,8 +130,19 @@ def test_all_games():
         print(f"❌ basic/ directory not found at {basic_dir}")
         return False
 
-    bas_files = list(basic_dir.rglob("*.bas"))
-    print(f"Found {len(bas_files)} .bas files")
+    # basic/dev/bad_syntax/ holds programs that are deliberately broken - the
+    # project keeps them so the parser's error handling has something to chew
+    # on (see CLAUDE.md: "basic/ (working), basic/bad_syntax/ (broken)").
+    # Counting the parser's correct refusal of them as a serializer failure
+    # made this number meaningless: 222 of the 229 remaining errors were files
+    # that are supposed to fail. They are reported separately below.
+    skipped_dirs = {'bad_syntax'}
+    all_bas_files = list(basic_dir.rglob("*.bas"))
+    bas_files = [f for f in all_bas_files
+                 if not skipped_dirs.intersection(f.parts)]
+    deliberately_broken = len(all_bas_files) - len(bas_files)
+    print(f"Found {len(bas_files)} .bas files "
+          f"({deliberately_broken} skipped as deliberately broken)")
 
     unchanged_count = 0
     changed_count = 0
@@ -210,7 +221,11 @@ def test_all_games():
     if error_count == 0:
         print(f"\n✅ SUCCESS: All {len(bas_files)} files parsed and serialized without errors")
         return True
-    elif success_rate >= 50:  # At least 50% success is acceptable
+    elif success_rate >= 95:
+        # Was 50%, which passed while 462 of 535 files failed to serialize at
+        # all. With the deliberately-broken programs excluded and every
+        # statement type serializable, anything below this is a real
+        # regression rather than a known gap.
         print(f"\n⚠️  PARTIAL SUCCESS: {success_rate:.1f}% of files processed successfully")
         return True
     else:
@@ -218,9 +233,62 @@ def test_all_games():
         return False
 
 
+
+def test_parentheses_survive_serialization():
+    """Brackets that change the meaning must come back.
+
+    The AST does not record parentheses - the parser builds the tree they
+    imply - so a serializer has to put them back wherever precedence would
+    otherwise say something different. It did not, and RENUM wrote the result
+    straight into the user's program:
+
+        10 Y=(12*Y0+M)/12       became    10 Y = 12 * Y0 + M / 12
+
+    which is different arithmetic. Silent, and in a documented command.
+    """
+    from src.ui.ui_helpers import serialize_statement
+
+    print("Testing Parenthesis Preservation")
+    print("=" * 60)
+
+    cases = [
+        # (source, expected serialization)
+        ("10 Y=(12*Y0+M)/12", "Y = (12 * Y0 + M) / 12"),
+        ("10 I=(J+K)*(L+M)", "I = (J + K) * (L + M)"),
+        ("10 N=O+P*Q", "N = O + P * Q"),           # no brackets needed
+        ("10 Q=A+(B+C)", "Q = A + B + C"),         # associative: droppable
+        ("10 W=A-(B-C)", "W = A - (B - C)"),       # not associative
+        ("10 X=(A-B)-C", "X = A - B - C"),
+        ("10 Y=A/(B/C)", "Y = A / (B / C)"),
+        ("10 Z=(A/B)/C", "Z = A / B / C"),
+        # '^' is right-associative here (2^3^2 is 512), so at equal precedence
+        # it is the LEFT operand that has to keep its brackets.
+        ("10 R=(S^T)^U", "R = (S ^ T) ^ U"),
+        ("10 V=S^(T^U)", "V = S ^ T ^ U"),
+        ("10 C=(A<B)*(C>D)", "C = (A < B) * (C > D)"),
+        ("10 F=(A OR B) AND C", "F = (A OR B) AND C"),
+    ]
+
+    all_passed = True
+    for source, expected in cases:
+        lexer = Lexer(source)
+        parser = Parser(lexer.tokenize(), source=source)
+        line_node = parser.parse_line()
+        got = serialize_statement(line_node.statements[0])
+        ok = got == expected
+        if not ok:
+            all_passed = False
+        print(f"{'✓' if ok else '✗'} {source:24} -> {got}"
+              + ("" if ok else f"   (expected: {expected})"))
+
+    print()
+    return all_passed
+
+
 if __name__ == "__main__":
     success1 = test_spacing_preservation()
     test_conflict_detection()
     success2 = test_all_games()
+    success3 = test_parentheses_survive_serialization()
 
-    sys.exit(0 if (success1 and success2) else 1)
+    sys.exit(0 if (success1 and success2 and success3) else 1)

@@ -126,8 +126,8 @@ async def test_auto_numbering_on_enter(user: User):
     await user.open('/')
 
     # Enable auto-numbering
-    backend.settings_manager.set('editor.auto_number', True)
-    backend.settings_manager.set('editor.auto_number_step', 10)
+    backend.settings_manager.set('auto_number', True)
+    backend.settings_manager.set('auto_number_step', 10)
 
     # Type in editor
     editor = user.find(marker='editor')
@@ -173,8 +173,8 @@ async def test_auto_numbering_increments(user: User):
     await user.open('/')
 
     # Enable auto-numbering
-    backend.settings_manager.set('editor.auto_number', True)
-    backend.settings_manager.set('editor.auto_number_step', 10)
+    backend.settings_manager.set('auto_number', True)
+    backend.settings_manager.set('auto_number_step', 10)
 
     # Put existing lines in editor
     backend.editor.value = '10 PRINT "A"\n20 PRINT "B"\n'

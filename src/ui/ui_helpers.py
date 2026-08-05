@@ -1165,11 +1165,332 @@ def serialize_statement(stmt):
     # If new statement types are added to the parser, they won't be caught until runtime
     # when RENUM is attempted on code containing them. This is acceptable because the error
     # is explicit and prevents corruption (better than silently dropping statements).
+    # ------------------------------------------------------------------
+    # Statements below this line were unserializable until now, which meant
+    # RENUM refused to run on any program containing one - INPUT, DIM, DEF FN,
+    # OPEN and DATA between them cover almost every real BASIC program. 462 of
+    # the 535 .bas files in this repo failed to round-trip.
+    # ------------------------------------------------------------------
+
+    elif stmt_type == 'InputStatementNode':
+        parts = ['INPUT']
+        if stmt.file_number is not None:
+            parts.append(f" #{serialize_expression(stmt.file_number)},")
+        if stmt.prompt is not None:
+            # The separator is the syntax: ';' keeps the "? ", ',' suppresses
+            # it, and getting this backwards changes what the user sees.
+            separator = ',' if stmt.suppress_question else ';'
+            parts.append(f" {serialize_expression(stmt.prompt)}{separator}")
+        parts.append(' ' + ', '.join(serialize_variable(v) for v in stmt.variables))
+        return ''.join(parts)
+
+    elif stmt_type == 'LineInputStatementNode':
+        parts = ['LINE INPUT']
+        if stmt.file_number is not None:
+            parts.append(f" #{serialize_expression(stmt.file_number)},")
+        if stmt.prompt is not None:
+            parts.append(f" {serialize_expression(stmt.prompt)};")
+        parts.append(' ' + serialize_variable(stmt.variable))
+        return ''.join(parts)
+
+    elif stmt_type == 'DimStatementNode':
+        declarations = []
+        for array in stmt.arrays:
+            dimensions = ', '.join(serialize_expression(d) for d in array.dimensions)
+            declarations.append(f"{array.name}({dimensions})")
+        return 'DIM ' + ', '.join(declarations)
+
+    elif stmt_type == 'ReadStatementNode':
+        return 'READ ' + ', '.join(serialize_variable(v) for v in stmt.variables)
+
+    elif stmt_type == 'DataStatementNode':
+        return 'DATA ' + ', '.join(serialize_expression(v) for v in stmt.values)
+
+    elif stmt_type == 'RestoreStatementNode':
+        if getattr(stmt, 'line_number', None) is not None:
+            return f"RESTORE {stmt.line_number}"
+        return 'RESTORE'
+
+    elif stmt_type == 'ClearStatementNode':
+        parts = ['CLEAR']
+        if stmt.string_space is not None:
+            parts.append(f" {serialize_expression(stmt.string_space)}")
+            if stmt.stack_space is not None:
+                parts.append(f", {serialize_expression(stmt.stack_space)}")
+        return ''.join(parts)
+
+    elif stmt_type == 'DefTypeStatementNode':
+        # DEFINT I-K collapses back to ranges: the AST keeps the letters, and
+        # writing them out one per line would be correct but unrecognisable.
+        keyword = {
+            'INTEGER': 'DEFINT', 'SINGLE': 'DEFSNG',
+            'DOUBLE': 'DEFDBL', 'STRING': 'DEFSTR',
+        }.get(getattr(stmt.var_type, 'name', str(stmt.var_type)), 'DEFINT')
+        letters = sorted(letter.upper() for letter in stmt.letters)
+        ranges = []
+        start = previous = None
+        for letter in letters:
+            if start is None:
+                start = previous = letter
+            elif ord(letter) == ord(previous) + 1:
+                previous = letter
+            else:
+                ranges.append((start, previous))
+                start = previous = letter
+        if start is not None:
+            ranges.append((start, previous))
+        spans = [first if first == last else f"{first}-{last}"
+                 for first, last in ranges]
+        return f"{keyword} {','.join(spans)}"
+
+    elif stmt_type == 'DefFnStatementNode':
+        parameters = ', '.join(serialize_variable(p) for p in stmt.parameters)
+        body = serialize_expression(stmt.expression)
+        if parameters:
+            return f"DEF FN{stmt.name}({parameters}) = {body}"
+        return f"DEF FN{stmt.name} = {body}"
+
+    elif stmt_type == 'OpenStatementNode':
+        parts = [f'OPEN "{stmt.mode}", #{serialize_expression(stmt.file_number)}',
+                 f", {serialize_expression(stmt.filename)}"]
+        if stmt.record_length is not None:
+            parts.append(f", {serialize_expression(stmt.record_length)}")
+        return ''.join(parts)
+
+    elif stmt_type == 'CloseStatementNode':
+        if not stmt.file_numbers:
+            return 'CLOSE'
+        numbers = ', '.join(f"#{serialize_expression(n)}"
+                            for n in stmt.file_numbers)
+        return f"CLOSE {numbers}"
+
+    elif stmt_type == 'ResetStatementNode':
+        return 'RESET'
+
+    elif stmt_type == 'FilesStatementNode':
+        if getattr(stmt, 'filespec', None) is not None:
+            return f"FILES {serialize_expression(stmt.filespec)}"
+        return 'FILES'
+
+    elif stmt_type == 'LprintStatementNode':
+        parts = ['LPRINT']
+        for i, expr in enumerate(stmt.expressions):
+            if i > 0:
+                separator = (stmt.separators[i - 1]
+                             if i - 1 < len(stmt.separators) else '')
+                parts.append(separator or ' ')
+            parts.append(' ' if not parts[-1].endswith((' ', ';', ',')) else '')
+            parts.append(serialize_expression(expr))
+        return ''.join(parts)
+
+    elif stmt_type == 'PrintUsingStatementNode':
+        parts = ['PRINT']
+        if stmt.file_number is not None:
+            parts.append(f" #{serialize_expression(stmt.file_number)},")
+        parts.append(f" USING {serialize_expression(stmt.format_string)};")
+        parts.append(' ' + '; '.join(serialize_expression(e)
+                                     for e in stmt.expressions))
+        return ''.join(parts)
+
+    elif stmt_type == 'WidthStatementNode':
+        if stmt.device is not None:
+            return (f"WIDTH {serialize_expression(stmt.device)},"
+                    f" {serialize_expression(stmt.width)}")
+        return f"WIDTH {serialize_expression(stmt.width)}"
+
+    elif stmt_type == 'RandomizeStatementNode':
+        if stmt.seed is not None:
+            return f"RANDOMIZE {serialize_expression(stmt.seed)}"
+        return 'RANDOMIZE'
+
+    elif stmt_type == 'SwapStatementNode':
+        return (f"SWAP {serialize_variable(stmt.var1)},"
+                f" {serialize_variable(stmt.var2)}")
+
+    elif stmt_type == 'EraseStatementNode':
+        return 'ERASE ' + ', '.join(stmt.array_names)
+
+    elif stmt_type == 'MidAssignmentStatementNode':
+        target = serialize_expression(stmt.string_var)
+        start = serialize_expression(stmt.start)
+        value = serialize_expression(stmt.value)
+        if stmt.length is not None:
+            length = serialize_expression(stmt.length)
+            return f"MID$({target}, {start}, {length}) = {value}"
+        return f"MID$({target}, {start}) = {value}"
+
+    elif stmt_type == 'PokeStatementNode':
+        return (f"POKE {serialize_expression(stmt.address)},"
+                f" {serialize_expression(stmt.value)}")
+
+    elif stmt_type == 'OutStatementNode':
+        return (f"OUT {serialize_expression(stmt.port)},"
+                f" {serialize_expression(stmt.value)}")
+
+    elif stmt_type == 'OptionBaseStatementNode':
+        return f"OPTION BASE {stmt.base}"
+
+    elif stmt_type == 'ResumeStatementNode':
+        if stmt.line_number is None:
+            return 'RESUME'
+        if stmt.line_number == 0:
+            return 'RESUME NEXT'
+        return f"RESUME {stmt.line_number}"
+
+    elif stmt_type == 'TronStatementNode':
+        return 'TRON'
+
+    elif stmt_type == 'TroffStatementNode':
+        return 'TROFF'
+
+    elif stmt_type == 'SystemStatementNode':
+        return 'SYSTEM'
+
+    elif stmt_type == 'SaveStatementNode':
+        if getattr(stmt, 'ascii_flag', False):
+            return f"SAVE {serialize_expression(stmt.filename)}, A"
+        return f"SAVE {serialize_expression(stmt.filename)}"
+
+    elif stmt_type == 'MergeStatementNode':
+        return f"MERGE {serialize_expression(stmt.filename)}"
+
+    elif stmt_type in ('LsetStatementNode', 'RsetStatementNode'):
+        keyword = 'LSET' if stmt_type == 'LsetStatementNode' else 'RSET'
+        return (f"{keyword} {serialize_variable(stmt.variable)}"
+                f" = {serialize_expression(stmt.expression)}")
+
+    elif stmt_type in ('GetStatementNode', 'PutStatementNode'):
+        keyword = 'GET' if stmt_type == 'GetStatementNode' else 'PUT'
+        parts = [f"{keyword} #{serialize_expression(stmt.file_number)}"]
+        if getattr(stmt, 'record_number', None) is not None:
+            parts.append(f", {serialize_expression(stmt.record_number)}")
+        return ''.join(parts)
+
+    elif stmt_type == 'WriteStatementNode':
+        parts = ['WRITE']
+        if getattr(stmt, 'file_number', None) is not None:
+            parts.append(f" #{serialize_expression(stmt.file_number)},")
+        if stmt.expressions:
+            parts.append(' ' + ', '.join(serialize_expression(e)
+                                         for e in stmt.expressions))
+        return ''.join(parts)
+
+    elif stmt_type == 'CallStatementNode':
+        target = serialize_expression(stmt.target)
+        if getattr(stmt, 'arguments', None):
+            arguments = ', '.join(serialize_expression(a) for a in stmt.arguments)
+            return f"CALL {target}({arguments})"
+        return f"CALL {target}"
+
+    elif stmt_type == 'KillStatementNode':
+        return f"KILL {serialize_expression(stmt.filename)}"
+
+    elif stmt_type == 'NameStatementNode':
+        return (f"NAME {serialize_expression(stmt.old_filename)}"
+                f" AS {serialize_expression(stmt.new_filename)}")
+
+    elif stmt_type == 'LoadStatementNode':
+        if getattr(stmt, 'run_flag', False):
+            return f"LOAD {serialize_expression(stmt.filename)}, R"
+        return f"LOAD {serialize_expression(stmt.filename)}"
+
+    elif stmt_type == 'WaitStatementNode':
+        parts = [f"WAIT {serialize_expression(stmt.port)},"
+                 f" {serialize_expression(stmt.mask)}"]
+        if getattr(stmt, 'select', None) is not None:
+            parts.append(f", {serialize_expression(stmt.select)}")
+        return ''.join(parts)
+
+    elif stmt_type == 'CommonStatementNode':
+        return 'COMMON ' + ', '.join(stmt.variables)
+
+    elif stmt_type == 'NewStatementNode':
+        return 'NEW'
+
+    elif stmt_type == 'ContStatementNode':
+        return 'CONT'
+
+    elif stmt_type == 'FieldStatementNode':
+        fields = ', '.join(
+            f"{serialize_expression(width)} AS {serialize_variable(variable)}"
+            for width, variable in stmt.fields)
+        return f"FIELD #{serialize_expression(stmt.file_number)}, {fields}"
+
+    elif stmt_type == 'RunStatementNode':
+        if getattr(stmt, 'target', None) is not None:
+            return f"RUN {serialize_expression(stmt.target)}"
+        return 'RUN'
+
+    elif stmt_type == 'ChainStatementNode':
+        parts = ['CHAIN']
+        if getattr(stmt, 'merge', False):
+            parts.append(' MERGE')
+        parts.append(f" {serialize_expression(stmt.filename)}")
+        if getattr(stmt, 'start_line', None) is not None:
+            parts.append(f", {serialize_expression(stmt.start_line)}")
+        if getattr(stmt, 'all_flag', False):
+            parts.append(', ALL')
+        delete_range = getattr(stmt, 'delete_range', None)
+        if delete_range:
+            parts.append(f", DELETE {delete_range[0]}-{delete_range[1]}")
+        return ''.join(parts)
+
     else:
         from src.debug_logger import debug_log
         error_msg = f"Unhandled statement type '{stmt_type}' in serialize_statement() - cannot serialize during RENUM"
         debug_log(f"ERROR: {error_msg}")
         raise ValueError(error_msg)
+
+
+
+#: Binding power of each binary operator, loosest first. Used to decide when a
+#: sub-expression has to be parenthesised on the way back out to source; the
+#: order follows the parser's own precedence climb (parse_expression ->
+#: parse_or -> parse_and -> parse_relational -> parse_additive ->
+#: parse_multiplicative -> parse_power).
+_OPERATOR_PRECEDENCE = {
+    'OR': 1, 'XOR': 1, 'EQV': 1, 'IMP': 1,
+    'AND': 2,
+    'EQUAL': 3, 'NOT_EQUAL': 3, 'LESS_THAN': 3, 'GREATER_THAN': 3,
+    'LESS_EQUAL': 3, 'GREATER_EQUAL': 3,
+    'PLUS': 4, 'MINUS': 4,
+    'MULTIPLY': 5, 'DIVIDE': 5, 'INT_DIVIDE': 5, 'MOD': 5,
+    'POWER': 6,
+}
+
+#: Left-associative operators where a RIGHT operand of equal precedence still
+#: needs brackets: a-(b-c) is not a-b-c, and a/(b/c) is not a/b/c. Addition and
+#: multiplication are safe either way.
+_BRACKET_EQUAL_RIGHT = {'MINUS', 'DIVIDE', 'INT_DIVIDE', 'MOD'}
+
+#: '^' is right-associative in this parser - parse_power() recurses on the
+#: right, and 2^3^2 evaluates to 512 - so at equal precedence it is the LEFT
+#: operand that has to keep its brackets: (S^T)^U is not S^T^U.
+_BRACKET_EQUAL_LEFT = {'POWER'}
+
+
+def _operator_name(operator):
+    """The TokenType name of an operator, however it is stored."""
+    return getattr(operator, 'name', str(operator))
+
+
+def _serialize_operand(operand, parent_operator, is_right):
+    """Serialize one side of a binary operation, bracketing it if needed."""
+    text = serialize_expression(operand)
+    if type(operand).__name__ != 'BinaryOpNode':
+        return text
+
+    parent = _OPERATOR_PRECEDENCE.get(_operator_name(parent_operator), 0)
+    child = _OPERATOR_PRECEDENCE.get(_operator_name(operand.operator), 0)
+    if child < parent:
+        return f"({text})"
+    if child == parent:
+        name = _operator_name(parent_operator)
+        if is_right and name in _BRACKET_EQUAL_RIGHT:
+            return f"({text})"
+        if not is_right and name in _BRACKET_EQUAL_LEFT:
+            return f"({text})"
+    return text
 
 
 def serialize_variable(var):
@@ -1210,11 +1531,16 @@ def token_to_operator(token_type):
         str: Operator string
 
     Example:
-        >>> from tokens import TokenType
+        >>> from src.tokens import TokenType
         >>> token_to_operator(TokenType.PLUS)
         '+'
     """
-    from tokens import TokenType
+    # src.tokens, not tokens: the flat name only resolves when src/ happens to
+    # be on sys.path, which is true when mbasic starts the UI and false for
+    # anything importing src.* directly - so serializing an expression with an
+    # operator raised ModuleNotFoundError. 75 of the 535 .bas files in this
+    # repo failed to round-trip on it alone.
+    from src.tokens import TokenType
 
     operator_map = {
         TokenType.PLUS: '+',
@@ -1274,10 +1600,13 @@ def serialize_expression(expr):
         return serialize_variable(expr)
 
     elif expr_type == 'BinaryOpNode':
-        left = serialize_expression(expr.left)
-        right = serialize_expression(expr.right)
-        # Convert TokenType operator to string
+        # Parentheses have to be put back where precedence would otherwise
+        # change the meaning. The AST does not record them, so serializing
+        # (12*Y0+M)/12 produced 12 * Y0 + M / 12 - different arithmetic, and
+        # RENUM wrote it straight back into the user's program.
         op_str = token_to_operator(expr.operator)
+        left = _serialize_operand(expr.left, expr.operator, is_right=False)
+        right = _serialize_operand(expr.right, expr.operator, is_right=True)
         return f"{left} {op_str} {right}"
 
     elif expr_type == 'UnaryOpNode':

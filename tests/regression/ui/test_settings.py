@@ -39,10 +39,10 @@ def test_settings_manager_basic():
         manager = SettingsManager(project_dir=tmpdir)
 
         test_cases = [
-            ("editor.auto_number", True),
-            ("editor.auto_number_step", 100),
-            ("keywords.case_style", "force_upper"),
-            ("variables.case_conflict", "error"),
+            ("auto_number", True),
+            ("auto_number_step", 100),
+            ("case_style", "force_upper"),
+            ("case_conflict", "error"),
         ]
 
         all_passed = True
@@ -74,20 +74,20 @@ def test_settings_persistence():
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create manager and set values
         manager1 = SettingsManager(project_dir=tmpdir)
-        manager1.set("editor.auto_number_step", 100, SettingScope.GLOBAL)
-        manager1.set("editor.auto_number", True, SettingScope.GLOBAL)
+        manager1.set("auto_number_step", 100, SettingScope.GLOBAL)
+        manager1.set("auto_number", True, SettingScope.GLOBAL)
         manager1.save(SettingScope.GLOBAL)
 
         # Create new manager and verify values persisted
         manager2 = SettingsManager(project_dir=tmpdir)
-        step = manager2.get("editor.auto_number_step")
-        auto_num = manager2.get("editor.auto_number")
+        step = manager2.get("auto_number_step")
+        auto_num = manager2.get("auto_number")
 
         step_ok = step == 100
         auto_num_ok = auto_num == True
 
-        print(f"{'✓' if step_ok else '✗'} editor.auto_number_step persisted: {step}")
-        print(f"{'✓' if auto_num_ok else '✗'} editor.auto_number persisted: {auto_num}")
+        print(f"{'✓' if step_ok else '✗'} auto_number_step persisted: {step}")
+        print(f"{'✓' if auto_num_ok else '✗'} auto_number persisted: {auto_num}")
 
     print()
     return step_ok and auto_num_ok
@@ -101,15 +101,15 @@ def test_settings_validation():
 
     test_cases = [
         # (key, value, should_pass)
-        ("editor.auto_number", True, True),
-        ("editor.auto_number", "yes", False),
-        ("editor.auto_number_step", 10, True),
-        ("editor.auto_number_step", -5, False),
-        ("editor.auto_number_step", 2000, False),
-        ("keywords.case_style", "force_upper", True),
-        ("keywords.case_style", "invalid", False),
-        ("variables.case_conflict", "error", True),
-        ("variables.case_conflict", "invalid_value", False),
+        ("auto_number", True, True),
+        ("auto_number", "yes", False),
+        ("auto_number_step", 10, True),
+        ("auto_number_step", -5, False),
+        ("auto_number_step", 2000, False),
+        ("case_style", "force_upper", True),
+        ("case_style", "invalid", False),
+        ("case_conflict", "error", True),
+        ("case_conflict", "invalid_value", False),
     ]
 
     all_passed = True
@@ -137,20 +137,20 @@ def test_settings_scope_precedence():
         manager = SettingsManager(project_dir=tmpdir)
 
         # Set global value
-        manager.set("editor.auto_number_step", 10, SettingScope.GLOBAL)
+        manager.set("auto_number_step", 10, SettingScope.GLOBAL)
 
         # Set project value (should override global)
-        manager.set("editor.auto_number_step", 100, SettingScope.PROJECT)
+        manager.set("auto_number_step", 100, SettingScope.PROJECT)
 
         # Get should return project value
-        value = manager.get("editor.auto_number_step")
+        value = manager.get("auto_number_step")
         project_ok = value == 100
 
         print(f"{'✓' if project_ok else '✗'} Project scope overrides global: {value} (expected 100)")
 
         # Set file value (should override project)
-        manager.file_settings["editor.auto_number_step"] = 1000
-        value = manager.get("editor.auto_number_step")
+        manager.file_settings["auto_number_step"] = 1000
+        value = manager.get("auto_number_step")
         file_ok = value == 1000
 
         print(f"{'✓' if file_ok else '✗'} File scope overrides project: {value} (expected 1000)")
@@ -166,11 +166,11 @@ def test_settings_definitions():
     print()
 
     required_keys = [
-        "editor.auto_number",
-        "editor.auto_number_step",
-        "keywords.case_style",
-        "variables.case_conflict",
-        "variables.show_types_in_window",
+        "auto_number",
+        "auto_number_step",
+        "case_style",
+        "case_conflict",
+        "show_types_in_window",
     ]
 
     all_passed = True
@@ -340,8 +340,8 @@ def test_json_serialization():
         manager = SettingsManager(project_dir=tmpdir)
 
         # Set some values
-        manager.set("editor.auto_number_step", 100)
-        manager.set("editor.auto_number", False)
+        manager.set("auto_number_step", 100)
+        manager.set("auto_number", False)
         manager.save(SettingScope.GLOBAL)
 
         # Check JSON file was created
@@ -372,6 +372,64 @@ def test_json_serialization():
     return success
 
 
+
+def test_settings_file_from_before_the_rename():
+    """A settings file written with category prefixes must still be read.
+
+    Settings were saved as "editor.auto_number_step" until fe2046c6 dropped
+    the prefixes, and those files are still on people's disks. Before this was
+    fixed the values in them were silently ignored - a file asking for a step
+    of 25 produced the default 10, with nothing said - even though
+    settings_definitions.py claimed the old format was still supported.
+    """
+    print("Settings Files From Before The Rename")
+    print("=" * 60)
+    print()
+
+    class StoredSettings:
+        """A backend serving one fixed settings dict."""
+
+        def __init__(self, data):
+            self.data = data
+
+        def load_global(self):
+            return dict(self.data)
+
+        def load_project(self):
+            return {}
+
+        def save_global(self, settings):
+            pass
+
+        def save_project(self, settings):
+            pass
+
+    formats = [
+        ("flat, prefixed (pre-rename on-disk format)",
+         {"editor.auto_number_step": 25, "keywords.case_style": "force_upper"}),
+        ("nested by category",
+         {"editor": {"auto_number_step": 25},
+          "keywords": {"case_style": "force_upper"}}),
+        ("current format",
+         {"auto_number_step": 25, "case_style": "force_upper"}),
+    ]
+
+    success = True
+    for label, stored in formats:
+        manager = SettingsManager(backend=StoredSettings(stored))
+        manager.load()
+        step = manager.get('auto_number_step')
+        style = manager.get('case_style')
+        ok = step == 25 and style == 'force_upper'
+        print(f"{'✓' if ok else '✗'} {label}: "
+              f"auto_number_step={step}, case_style={style}")
+        if not ok:
+            success = False
+
+    print()
+    return success
+
+
 if __name__ == '__main__':
     print("MBASIC Settings System Test Suite")
     print("=" * 60)
@@ -396,6 +454,9 @@ if __name__ == '__main__':
         success = False
 
     if not test_all_settings_accessible():
+        success = False
+
+    if not test_settings_file_from_before_the_rename():
         success = False
 
     if not test_json_serialization():

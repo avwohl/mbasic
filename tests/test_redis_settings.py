@@ -44,38 +44,38 @@ def test_per_session_isolation():
     # Verify both start with default settings
     print("\n--- Initial State ---")
     default_step = 10  # Default from settings_definitions.py
-    print(f"Session 1 auto_number_step: {mgr1.get('editor.auto_number_step')} (expected: {default_step})")
-    print(f"Session 2 auto_number_step: {mgr2.get('editor.auto_number_step')} (expected: {default_step})")
+    print(f"Session 1 auto_number_step: {mgr1.get('auto_number_step')} (expected: {default_step})")
+    print(f"Session 2 auto_number_step: {mgr2.get('auto_number_step')} (expected: {default_step})")
 
-    assert mgr1.get('editor.auto_number_step') == default_step, "Session 1 should have default value"
-    assert mgr2.get('editor.auto_number_step') == default_step, "Session 2 should have default value"
+    assert mgr1.get('auto_number_step') == default_step, "Session 1 should have default value"
+    assert mgr2.get('auto_number_step') == default_step, "Session 2 should have default value"
     print("✓ Both sessions start with defaults")
 
     # Modify settings in session 1
     print("\n--- Modifying Session 1 ---")
     from src.settings_definitions import SettingScope
-    mgr1.set('editor.auto_number_step', 100)
+    mgr1.set('auto_number_step', 100)
     mgr1.save(SettingScope.GLOBAL)
-    print(f"Session 1 changed auto_number_step to: {mgr1.get('editor.auto_number_step')}")
+    print(f"Session 1 changed auto_number_step to: {mgr1.get('auto_number_step')}")
 
     # Verify session 2 is unaffected
     print("\n--- Checking Session 2 (should be unchanged) ---")
-    print(f"Session 2 auto_number_step: {mgr2.get('editor.auto_number_step')} (expected: {default_step})")
-    assert mgr2.get('editor.auto_number_step') == default_step, "Session 2 should still have default value"
+    print(f"Session 2 auto_number_step: {mgr2.get('auto_number_step')} (expected: {default_step})")
+    assert mgr2.get('auto_number_step') == default_step, "Session 2 should still have default value"
     print("✓ Session 2 unaffected by Session 1 changes")
 
     # Modify settings in session 2
     print("\n--- Modifying Session 2 ---")
-    mgr2.set('editor.auto_number_step', 1)
+    mgr2.set('auto_number_step', 1)
     mgr2.save(SettingScope.GLOBAL)
-    print(f"Session 2 changed auto_number_step to: {mgr2.get('editor.auto_number_step')}")
+    print(f"Session 2 changed auto_number_step to: {mgr2.get('auto_number_step')}")
 
     # Verify both sessions have different values
     print("\n--- Verifying Isolation ---")
-    print(f"Session 1: {mgr1.get('editor.auto_number_step')} (expected: 100)")
-    print(f"Session 2: {mgr2.get('editor.auto_number_step')} (expected: 1)")
-    assert mgr1.get('editor.auto_number_step') == 100, "Session 1 should still have 100"
-    assert mgr2.get('editor.auto_number_step') == 1, "Session 2 should have 1"
+    print(f"Session 1: {mgr1.get('auto_number_step')} (expected: 100)")
+    print(f"Session 2: {mgr2.get('auto_number_step')} (expected: 1)")
+    assert mgr1.get('auto_number_step') == 100, "Session 1 should still have 100"
+    assert mgr2.get('auto_number_step') == 1, "Session 2 should have 1"
     print("✓ Sessions have independent settings")
 
     # Test persistence: recreate managers with same session IDs
@@ -86,10 +86,10 @@ def test_per_session_isolation():
     backend2_new = create_settings_backend(session_id=session2_id)
     mgr2_new = SettingsManager(backend=backend2_new)
 
-    print(f"Session 1 (reloaded): {mgr1_new.get('editor.auto_number_step')} (expected: 100)")
-    print(f"Session 2 (reloaded): {mgr2_new.get('editor.auto_number_step')} (expected: 1)")
-    assert mgr1_new.get('editor.auto_number_step') == 100, "Session 1 settings should persist"
-    assert mgr2_new.get('editor.auto_number_step') == 1, "Session 2 settings should persist"
+    print(f"Session 1 (reloaded): {mgr1_new.get('auto_number_step')} (expected: 100)")
+    print(f"Session 2 (reloaded): {mgr2_new.get('auto_number_step')} (expected: 1)")
+    assert mgr1_new.get('auto_number_step') == 100, "Session 1 settings should persist"
+    assert mgr2_new.get('auto_number_step') == 1, "Session 2 settings should persist"
     print("✓ Settings persist across manager instances")
 
     # Check Redis keys

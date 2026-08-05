@@ -17,7 +17,7 @@ def test_update_variables_preserves_case():
     # Create first runtime with variables
     runtime1 = Runtime({})
     settings = SettingsManager()
-    settings.set("variables.case_conflict", "first_wins")
+    settings.set("case_conflict", "first_wins")
 
     # Simulate setting variables with specific cases
     class TestToken:
