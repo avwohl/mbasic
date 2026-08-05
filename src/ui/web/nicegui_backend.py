@@ -69,16 +69,21 @@ def is_uptime_probe(request) -> bool:
 class SimpleWebIOHandler(IOHandler):
     """Simple IO handler for NiceGUI that appends to textarea."""
 
-    def __init__(self, output_callback, input_callback):
+    def __init__(self, output_callback, input_callback, keyboard=None):
         """
         Initialize web IO handler.
 
         Args:
             output_callback: Function to call with output text
             input_callback: Function to call to get input from user (blocking)
+            keyboard: WebKeyboard for INKEY$ and INPUT$, collecting the
+                browser's key events. Without one those builtins have no
+                keyboard at all and report no key, which is what they did
+                before there was a WebKeyboard.
         """
         self.output_callback = output_callback
         self.input_callback = input_callback
+        self.keyboard = keyboard
 
     def output(self, text: str, end: str = '\n') -> None:
         """Output text to the web UI."""
@@ -112,8 +117,21 @@ class SimpleWebIOHandler(IOHandler):
         return self.input(prompt)
 
     def input_char(self, blocking: bool = True) -> str:
-        """Get single character (not implemented for web)."""
-        return ""
+        """Get single character - INKEY$, and INPUT$(1)."""
+        if self.keyboard is None:
+            return ""
+        return self.keyboard.input_char(blocking=blocking)
+
+    def input_chars(self, count: int, interrupted=None) -> str:
+        """Read count characters for INPUT$(n).
+
+        Raises KeyInputPending when they have not arrived yet - the web UI
+        cannot wait for a key without deadlocking the loop that delivers it.
+        See src/ui/web/web_keyboard.py.
+        """
+        if self.keyboard is None:
+            return ""
+        return self.keyboard.input_chars(count, interrupted=interrupted)
 
     def error(self, message: str) -> None:
         """Output error message."""
@@ -1155,6 +1173,14 @@ class NiceGUIBackend(UIBackend):
 
         self.runtime = Runtime({}, {})
 
+        # The keyboard a running program reads through (INKEY$, INPUT$).
+        # Per backend instance, which is per browser session - one user's
+        # keystrokes are not another's input. on_key restarts the tick timer,
+        # because a program parked on KeyInputPending has nothing else to wake
+        # it: the key that arrives IS the event it was waiting for.
+        from .web_keyboard import WebKeyboard
+        self.program_keyboard = WebKeyboard(on_key=self._on_program_key_queued)
+
         # Create session ID for this backend instance
         # Used for sandboxed filesystem and settings isolation
         session_id = str(id(self))  # Unique ID for this backend instance
@@ -1192,7 +1218,8 @@ class NiceGUIBackend(UIBackend):
 
         # Create one interpreter for the session - don't create multiple!
         # Create IO handler for immediate mode
-        immediate_io = SimpleWebIOHandler(self._append_output, self._get_input)
+        immediate_io = SimpleWebIOHandler(self._append_output, self._get_input,
+                                             keyboard=self.program_keyboard)
         sandboxed_file_io = SandboxedFileIO(self)
         self.interpreter = Interpreter(self.runtime, immediate_io,
                                       limits=create_local_limits(),
@@ -1490,6 +1517,14 @@ class NiceGUIBackend(UIBackend):
                 self.immediate_entry = ui.input(placeholder='BASIC command...').classes('flex-grow').props('dense outlined autocomplete=off autocorrect=off autocapitalize=off spellcheck=false').mark('immediate_entry')
                 self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
                 ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').props('dense flat').mark('btn_immediate')
+
+            # Keys for a running program (INKEY$, INPUT$). Not restricted to
+            # any pane: while a program runs it owns the console, the way it
+            # does on a real terminal. ignore=[] is what lets it hear keys
+            # typed with the editor or immediate line focused - and
+            # _handle_program_key is what makes sure it only takes them while
+            # a program is actually running and not waiting on INPUT.
+            ui.keyboard(on_key=self._on_browser_key, ignore=[])
 
             # Status bar - use fixed height for mobile
             status_height = 'height: 32px; min-height: 32px; max-height: 32px;' if mobile_layout else 'min-height: 28px;'
@@ -2229,7 +2264,8 @@ class NiceGUIBackend(UIBackend):
             self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
             # Update interpreter's IO handler to output to execution pane
-            self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
+            self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input,
+                                             keyboard=self.program_keyboard)
             self.interpreter.io = self.exec_io
 
             # Start interpreter (sets up statement table, etc.)
@@ -2259,6 +2295,9 @@ class NiceGUIBackend(UIBackend):
             # Mark as running (for display and state tracking - spinner, status, continue/step logic)
             self.running = True
 
+            # Keys typed at the previous program are not input for this one.
+            self.program_keyboard.clear()
+
             # Track execution start time
             import time
             self._exec_start_time = time.time()
@@ -2272,6 +2311,64 @@ class NiceGUIBackend(UIBackend):
             self._append_output(f"\n--- Error: {e} ---\n")
             self._set_status(f'Error: {e}')
             self.running = False
+
+    def _program_owns_keyboard(self):
+        """True when typed keys belong to the running program, not the UI."""
+        if not self.running or self.waiting_for_input:
+            # waiting_for_input is the INPUT statement's inline field - those
+            # keystrokes are its answer, not a program's INKEY$.
+            return False
+        return not getattr(self, 'paused_at_breakpoint', False)
+
+    def _on_browser_key(self, event):
+        """ui.keyboard handler: hand a running program the keys it is owed.
+
+        Only keydown, or every key would arrive twice - the browser reports
+        the press and the release, and a program reading INKEY$ would see two.
+        """
+        try:
+            action = getattr(event, 'action', None)
+            if action is not None and not getattr(action, 'keydown', True):
+                return
+            self._handle_program_key(event)
+        except Exception as e:      # noqa: BLE001 - a keypress must not raise
+            self._log_error("_on_browser_key", e)
+
+    def _handle_program_key(self, event):
+        """Browser key event -> the running program's keyboard.
+
+        Returns True when the key was taken.
+        """
+        if not self._program_owns_keyboard():
+            return False
+        key = getattr(getattr(event, 'key', None), 'name', None) or str(
+            getattr(event, 'key', ''))
+        modifiers = []
+        modifier_source = getattr(event, 'modifiers', None)
+        for name in ('ctrl', 'alt', 'shift', 'meta'):
+            if getattr(modifier_source, name, False) or getattr(event, name, False):
+                modifiers.append(name)
+        return self.program_keyboard.push_browser_key(key, modifiers)
+
+    def _on_program_key_queued(self):
+        """A key arrived: start ticking again if a program is parked on one.
+
+        The interpreter left the statement in place and stopped; nothing else
+        will restart it, because in this UI a keypress is the only event that
+        can change the answer.
+        """
+        try:
+            state = getattr(self.interpreter, 'state', None)
+            if state is None or not getattr(state, 'waiting_for_key', False):
+                return
+            if not self.running:
+                return
+            if self.exec_timer is None:
+                from nicegui import ui
+                self.exec_timer = ui.timer(0.01, self._execute_tick,
+                                           once=False)
+        except Exception as e:      # noqa: BLE001 - a keypress must not raise
+            self._log_error("_on_program_key_queued", e)
 
     def _execute_tick(self):
         """Execute one tick of the interpreter.
@@ -2323,6 +2420,17 @@ class NiceGUIBackend(UIBackend):
             state = self.interpreter.tick(mode='run', max_statements=1000)
 
             # Handle state using microprocessor model
+            if state.waiting_for_key:
+                # INKEY$/INPUT$ needs a key that has not been typed. The
+                # statement is still pending, so stop ticking rather than
+                # re-running it every 10ms - _on_program_key_queued starts the
+                # timer again when a key actually arrives.
+                self._set_status("Waiting for a keypress")
+                if self.exec_timer:
+                    self.exec_timer.cancel()
+                    self.exec_timer = None
+                return
+
             if state.error_info:
                 error_msg = state.error_info.error_message
                 self._append_output(f"\n--- Error: {error_msg} ---\n")
@@ -2504,7 +2612,8 @@ class NiceGUIBackend(UIBackend):
                     self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
                 # Create new IO handler for execution
-                self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
+                self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input,
+                                             keyboard=self.program_keyboard)
                 self.interpreter.io = self.exec_io
                 self.interpreter.limits = create_local_limits()
 
@@ -2579,7 +2688,8 @@ class NiceGUIBackend(UIBackend):
                 # Create new IO handler for execution
                 # Note: Interpreter/runtime objects are reused across runs (not recreated each time).
                 # The runtime.reset_for_run() call above clears variables but preserves breakpoints.
-                self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
+                self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input,
+                                             keyboard=self.program_keyboard)
                 self.interpreter.io = self.exec_io
                 self.interpreter.limits = create_local_limits()
 
@@ -3641,6 +3751,15 @@ class NiceGUIBackend(UIBackend):
 
             # Create output capturing IO handler
             output_io = OutputCapturingIOHandler()
+            # Its keyboard would otherwise be ConsoleKeyboardMixin, which
+            # reads the *server's* terminal - so `PRINT INPUT$(1)` typed in a
+            # browser would block the server on a keypress at the machine
+            # running it. This handler has no keys of its own, so give it the
+            # session's: at worst the read pauses, which is what it does for a
+            # running program.
+            output_io.keyboard = self.program_keyboard
+            output_io.input_char = self.program_keyboard.input_char
+            output_io.input_chars = self.program_keyboard.input_chars
 
             # Use the session's single interpreter and runtime
             # Don't create temporary ones!
@@ -4047,7 +4166,8 @@ class NiceGUIBackend(UIBackend):
         from src.file_io import SandboxedFileIO
 
         # Create IO handler for immediate mode
-        immediate_io = SimpleWebIOHandler(self._append_output, self._get_input)
+        immediate_io = SimpleWebIOHandler(self._append_output, self._get_input,
+                                             keyboard=self.program_keyboard)
         sandboxed_file_io = SandboxedFileIO(self)
 
         # Recreate interpreter with restored runtime

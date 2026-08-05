@@ -116,7 +116,8 @@ for no benefit; a looser one would feel sluggish.
 backend, which is the only way to reach it now. It is the honest fallback for a
 handler with no UI behind it.
 
-**The web backend still has no keyboard.** `SimpleWebIOHandler.input_char`
-returns `""`. It is the last one, and the same shape of problem - except that
-the browser's keys arrive over a websocket in another coroutine, so the answer
-there is a queue rather than a pump.
+**~~The web backend still has no keyboard.~~** It has one now - see
+[WEB_PROGRAM_KEYBOARD.md](WEB_PROGRAM_KEYBOARD.md). It could neither block nor
+pump, because its keys arrive on the same asyncio loop that runs the
+interpreter, so it pauses the program instead and resumes it when a key
+arrives.

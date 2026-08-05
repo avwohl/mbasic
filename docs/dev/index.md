@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2026-08-05
-**Total Documents:** 41
+**Total Documents:** 42
 
 ## What's Here
 
@@ -50,6 +50,7 @@ port I/O — but they are not required. Read
 - [Tk Program Keyboard](TK_PROGRAM_KEYBOARD.md)
 - [Web Error Logging](WEB_ERROR_LOGGING.md)
 - [Web Multiuser Deployment](WEB_MULTIUSER_DEPLOYMENT.md)
+- [Web Program Keyboard](WEB_PROGRAM_KEYBOARD.md)
 
 ### Language Features
 

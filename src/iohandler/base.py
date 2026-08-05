@@ -9,6 +9,29 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 
+class KeyInputPending(Exception):
+    """Raised by input_chars() when it cannot answer without blocking.
+
+    For a handler whose keyboard arrives on the same thread that would have to
+    wait for it. The web UI is the case: its keys come over a websocket served
+    by the asyncio loop that also ticks the interpreter, so blocking for a
+    keypress deadlocks - the key can never arrive - and every other session on
+    the server stops with it.
+
+    The interpreter treats this as "not yet": the statement is left where it
+    is, execution pauses, and the same statement runs again once the handler
+    says it can answer. INPUT$ is idempotent, and this is the resume model
+    Ctrl+C/CONT already uses on that statement.
+
+    A handler that raises this MUST NOT consume anything on the way out, or
+    the retry will ask for characters that have already been taken. Take all
+    of them or none.
+
+    Terminal handlers never raise it: they block, which is what a terminal is
+    for.
+    """
+
+
 class IOHandler(ABC):
     """Abstract interface for I/O operations.
 

@@ -89,9 +89,11 @@ replaced. There is a test for exactly this.
   dialog, written for this and unreachable until now. *(Since replaced by a
   real keyboard, see [TK_PROGRAM_KEYBOARD.md](TK_PROGRAM_KEYBOARD.md); the
   dialog remains only for a handler built without a backend.)*
-- **web (nicegui)** - `SimpleWebIOHandler.input_char` returns `""`. Previously
+- **web (nicegui)** - `SimpleWebIOHandler.input_char` returned `""`. Previously
   these builtins read the *server's* stdin from inside the asyncio loop, which
-  would have blocked every session on the machine; now they cannot.
+  would have blocked every session on the machine; now they cannot. *(Since
+  given a real keyboard, see
+  [WEB_PROGRAM_KEYBOARD.md](WEB_PROGRAM_KEYBOARD.md).)*
 
 ## Verifying
 
@@ -109,11 +111,13 @@ The terminal behavior it all has to keep: 33 checks, unchanged by the move.
 
 ## Not fixed here
 
-**~~No backend implements a real keyboard yet.~~** Two do now - the curses UI
-([CURSES_PROGRAM_KEYBOARD.md](CURSES_PROGRAM_KEYBOARD.md)) and the Tk UI
-([TK_PROGRAM_KEYBOARD.md](TK_PROGRAM_KEYBOARD.md)) - which is what this seam
-was for. The web UI still answers `""` from `SimpleWebIOHandler.input_char`;
-it is one method away, and none of it touches the interpreter.
+**~~No backend implements a real keyboard yet.~~** All three do now - curses
+([CURSES_PROGRAM_KEYBOARD.md](CURSES_PROGRAM_KEYBOARD.md)), Tk
+([TK_PROGRAM_KEYBOARD.md](TK_PROGRAM_KEYBOARD.md)) and the web UI
+([WEB_PROGRAM_KEYBOARD.md](WEB_PROGRAM_KEYBOARD.md)) - which is what this seam
+was for. Each solves waiting differently, and only the web one needed anything
+added to the interface: `KeyInputPending`, for a handler that cannot wait
+without deadlocking the loop that would deliver the key.
 
 **`WebIOHandler` and `CursesIOHandler` are still dead** (`src/iohandler/web_io.py`,
 `src/iohandler/curses_io.py`) - neither is instantiated in production. They

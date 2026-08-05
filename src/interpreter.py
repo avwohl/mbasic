@@ -13,6 +13,7 @@ from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingForm
 from src.tokens import TokenType
 from src.pc import PC
 from src.win_console import win_flush_pending
+from src.iohandler.base import KeyInputPending
 import src.ast_nodes as ast_nodes
 
 
@@ -61,6 +62,11 @@ class InterpreterState:
 
     # Input handling (THE CRITICAL STATE - blocks execution)
     input_prompt: Optional[str] = None
+    #: True when the program is paused inside INPUT$/INKEY$ because the I/O
+    #: handler cannot answer without blocking - see KeyInputPending. The UI
+    #: stops ticking and starts again when a key arrives; the statement is
+    #: re-executed, which is why nothing may be consumed on the way out.
+    waiting_for_key: bool = False
     input_variables: list = field(default_factory=list)  # Variables waiting for input
     input_buffer: list = field(default_factory=list)  # Buffered input values
     input_file_number: Optional[int] = None  # If reading from file
@@ -395,6 +401,10 @@ class Interpreter:
                 if stmt is None:
                     raise RuntimeError(f"Invalid PC: {pc}")
 
+                # About to run a statement, so any earlier "waiting for a key"
+                # is over: either the key arrived or the UI gave up on it.
+                self.state.waiting_for_key = False
+
                 # Execute statement
                 try:
                     import sys
@@ -403,6 +413,16 @@ class Interpreter:
                     self.execute_statement(stmt)
                     statements_in_tick += 1
                     self.state.statements_executed += 1
+
+                except KeyInputPending:
+                    # INKEY$/INPUT$ on a handler that cannot wait without
+                    # deadlocking - the web UI, whose keys arrive on the same
+                    # asyncio loop that runs this. Leave the PC exactly where
+                    # it is: when the UI ticks again the statement runs from
+                    # the start, and by then a key is queued. The handler
+                    # guarantees it consumed nothing, so re-reading is safe.
+                    self.state.waiting_for_key = True
+                    return self.state
 
                 except BreakException:
                     # Ctrl+C during INPUT$. Nothing raised this until INPUT$
