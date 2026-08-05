@@ -1080,6 +1080,48 @@ class Interpreter:
         else:
             self.io.output(output)
 
+    def execute_clause_statements(self, statements, resume_pc=None):
+        """Run the statements of a THEN or ELSE clause.
+
+        A clause is not addressable by PC - the statement table holds one entry
+        for the whole IF - so a GOSUB inside one has nowhere to point its return
+        address except the statement *after* the IF. The rest of the clause was
+        therefore dropped:
+
+            30 IF I > 0 THEN GOSUB 100: PRINT "NEVER PRINTED"
+
+        Real MBASIC 5.21 prints it. In basic/games/startrek.bas this is how
+        every Klingon and star is placed -
+
+            380 IF I > 0 THEN GOSUB 540: S(X, Y) = 5: I = I - 1: GOTO 380
+
+        - so the galaxy came up empty: the GOSUB picked a free sector and the
+        three statements that used it never ran.
+
+        The tail is handed to the GOSUB frame instead, and RETURN finishes it.
+        """
+        for index, clause_stmt in enumerate(statements):
+            self.execute_statement(clause_stmt)
+            if self.runtime.npc is None:
+                continue
+            remaining = statements[index + 1:]
+            if type(clause_stmt).__name__ == 'GosubStatementNode':
+                if resume_pc is not None:
+                    # This GOSUB is itself running from a clause tail, so it
+                    # worked out its return address from inside the subroutine
+                    # that just returned. Where it should come back to is where
+                    # the clause was going to end up.
+                    self.runtime.set_gosub_return(
+                        resume_pc.line_num if resume_pc.is_running() else 0,
+                        resume_pc.stmt_offset if resume_pc.is_running() else 0)
+            if remaining and type(clause_stmt).__name__ == 'GosubStatementNode':
+                # The frame this GOSUB just pushed is on top; the rest of the
+                # clause belongs to it. Any other jump (GOTO, THEN <line>) is
+                # a departure, and what follows it is unreachable - which is
+                # what MBASIC does too.
+                self.runtime.set_gosub_continuation(remaining)
+            break
+
     def execute_if(self, stmt):
         """Execute IF statement"""
         condition = self.evaluate_expression(stmt.condition)
@@ -1091,22 +1133,14 @@ class Interpreter:
                 # THEN line_number
                 self.runtime.npc = PC.from_line(stmt.then_line_number)
             elif stmt.then_statements:
-                # THEN statement(s)
-                for then_stmt in stmt.then_statements:
-                    self.execute_statement(then_stmt)
-                    if self.runtime.npc is not None:
-                        break
+                self.execute_clause_statements(stmt.then_statements)
         else:
             # Execute ELSE clause
             if stmt.else_line_number is not None:
                 # ELSE line_number
                 self.runtime.npc = PC.from_line(stmt.else_line_number)
             elif stmt.else_statements:
-                # ELSE statement(s)
-                for else_stmt in stmt.else_statements:
-                    self.execute_statement(else_stmt)
-                    if self.runtime.npc is not None:
-                        break
+                self.execute_clause_statements(stmt.else_statements)
 
     def execute_goto(self, stmt):
         """Execute GOTO statement"""
@@ -1192,7 +1226,9 @@ class Interpreter:
         # Pop from resource limits
         self.limits.pop_gosub()
 
-        # Pop return address
+        # Pop return address, and any tail of a THEN/ELSE clause the GOSUB was
+        # sitting in - see execute_clause_statements().
+        continuation = self.runtime.peek_gosub_continuation()
         return_line, return_stmt = self.runtime.pop_gosub()
 
         # If returning from error handler, clear error state
@@ -1217,6 +1253,17 @@ class Interpreter:
 
         # Jump back to the line and statement after GOSUB
         self.runtime.npc = PC.running_at(return_line, return_stmt)
+
+        if continuation:
+            # The GOSUB was inside a THEN/ELSE clause and the rest of that
+            # clause has been waiting for it. Run it now, before the return
+            # address takes effect - and let it win if it jumps somewhere
+            # itself, which is how "THEN GOSUB x: ... : GOTO y" loops work.
+            resume_pc = self.runtime.npc
+            self.runtime.npc = None
+            self.execute_clause_statements(continuation, resume_pc=resume_pc)
+            if self.runtime.npc is None:
+                self.runtime.npc = resume_pc
 
     def execute_for(self, stmt):
         """Execute FOR statement - initialize loop variable and register loop.
@@ -1307,30 +1354,34 @@ class Interpreter:
                 return
 
     def _find_most_recent_for_variable(self):
-        """Find the variable of the most recent FOR loop by scanning back lexically.
+        """Find the variable of the FOR loop a bare NEXT belongs to.
+
+        MBASIC matches a NEXT with no variable to the innermost FOR that is
+        currently *running*, which is a question about runtime state rather
+        than about the text. This used to scan backwards through the source
+        instead, and that fails whenever the NEXT is reached by a jump:
+
+            580 FOR I = 0 TO 7: IF K3(I) <= 0 THEN 605
+            ...
+            605 NEXT: RETURN
+
+        is line 580 in basic/games/startrek.bas jumping over its own body to
+        its own NEXT - the scan walked back from 605 and never found the FOR,
+        so the game died with "NEXT without FOR". (It also called a
+        StatementTable method that does not exist, so before that it died with
+        AttributeError.)
+
+        runtime.for_loop_states is keyed by variable and, being a dict, keeps
+        the order the loops were entered - so the innermost active loop is
+        simply the last one still in it.
 
         Returns:
-            Variable name with suffix (e.g., 'i!') or None if no FOR found
+            Variable name with suffix (e.g. 'i!'), or None if no loop is running
         """
-        # Scan backward from current PC to find most recent FOR statement
-        current_pc = self.runtime.pc
-        if not current_pc.is_running():
+        states = getattr(self.runtime, 'for_loop_states', None)
+        if not states:
             return None
-
-        # Walk backward through statements
-        pc = PC.running_at(current_pc.line, current_pc.statement - 1)
-        while True:
-            # Try to get previous statement
-            pc = self.runtime.statement_table.prev_pc(pc)
-            if pc is None or not pc.is_running():
-                return None
-
-            # Check if this statement is a FOR
-            stmt = self.runtime.statement_table.get_statement(pc)
-            if stmt and hasattr(stmt, '__class__') and stmt.__class__.__name__ == 'ForStatementNode':
-                # Found a FOR statement - return its variable name
-                var_name = stmt.variable.name + (stmt.variable.type_suffix or "")
-                return var_name
+        return next(reversed(states))
 
     def _execute_next_single(self, var_name, var_node=None):
         """Execute NEXT for a single variable.

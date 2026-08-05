@@ -1,0 +1,86 @@
+                    S T A R   T R E K
+              ADAPTED BY L.E. COCHRAN  2/29/76
+
+OBJECTIVE
+  You command the Enterprise.  Destroy every Klingon battle
+  cruiser in the galaxy before your time runs out.  The number
+  of Klingons, the number of starbases and the time you have
+  are all printed when the game begins.
+
+THE GALAXY
+  The galaxy is 8 by 8 quadrants, and each quadrant is 8 by 8
+  sectors.  The short range sensor display shows the sectors
+  of the quadrant you are in, using these symbols:
+
+      E   the Enterprise            K   a Klingon cruiser
+      B   a starbase                *   a star
+      .   empty space
+
+  Beside the display you are shown the stardate, your
+  condition, quadrant, sector, energy, torpedoes remaining and
+  the number of Klingons left.  Condition is GREEN normally,
+  YELLOW when energy runs low, RED when Klingons are in the
+  quadrant, and DOCKED when you are next to a starbase.
+
+  The long range sensors and the galactic records show three
+  digits per quadrant: Klingons, starbases and stars.  So 205
+  means two Klingons, no starbase, five stars.
+
+COMMANDS
+  At the COMMAND prompt enter a number:
+
+      1  WARP ENGINES           move the Enterprise
+      2  SHORT RANGE SENSORS    look at this quadrant
+      3  LONG RANGE SENSORS     look at the nine quadrants
+                                around you
+      4  PHASERS                fire energy at the Klingons
+      5  PHOTON TORPEDOES       fire a torpedo
+      6  GALACTIC RECORDS       the map you have built up
+
+  Any other number lists the commands again.  Enter -99 to
+  give up and leave the game.
+
+COURSE
+  Warp engines and torpedoes both ask for a course from 1 to
+  8.9.  The directions run anticlockwise:
+
+                        3  2  1
+                         \ | /
+                       4 - E - 8
+                         / | \
+                        5  6  7
+
+  Fractions point between: 1.5 is halfway between 1 and 2.
+
+WARP
+  Warp factor runs from 0 to 12, and moves you that many
+  sectors.  Anything over one quadrant carries you into a
+  neighbouring quadrant.  Moving costs energy and time, and a
+  damaged warp drive limits you to warp .2 until it is fixed.
+
+PHASERS
+  Phasers ask how many energy units to fire.  The energy is
+  taken from the ship and divided among the Klingons in the
+  quadrant; the further away a Klingon is, the less damage it
+  takes.  You cannot fire more energy than you have.
+
+PHOTON TORPEDOES
+  A torpedo flies the course you give it until it hits
+  something.  It destroys a Klingon, a star or - be careful -
+  a starbase.  You start with ten and they are not replaced
+  except by docking.
+
+DAMAGE AND REPAIR
+  Klingon hits and space storms damage the ship's systems, and
+  a damaged system is unusable until repaired.  Repairs happen
+  as time passes.  Occasionally Mr Spock finds a new repair
+  technique and fixes something early.
+
+STARBASES
+  Move next to a starbase and you dock automatically: energy
+  and torpedoes are restored to full, and the starbase
+  protects you from Klingon fire while you are there.
+
+WINNING
+  Destroy the last Klingon and the Federation is saved.  Run
+  out of time or energy and you are demoted to cabin boy.

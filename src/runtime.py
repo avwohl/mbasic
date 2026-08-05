@@ -998,6 +998,41 @@ class Runtime:
         }
         self.execution_stack.append(gosub_entry)
 
+    def set_gosub_continuation(self, statements):
+        """Attach the rest of a THEN/ELSE clause to the newest GOSUB frame.
+
+        A clause has no PC of its own, so a GOSUB inside one cannot point its
+        return address at the statement that follows it. The tail rides on the
+        frame instead, and RETURN runs it. See
+        Interpreter.execute_clause_statements().
+        """
+        for entry in reversed(self.execution_stack):
+            if entry.get('type') == 'GOSUB':
+                entry['continuation'] = list(statements)
+                return
+
+    def set_gosub_return(self, return_line, return_stmt_index):
+        """Correct the newest GOSUB frame's return address.
+
+        A GOSUB executed from a clause tail (see
+        Interpreter.execute_clause_statements) computes its return address from
+        wherever the interpreter happens to be standing - inside the subroutine
+        that just returned - which is not where it should come back to. The
+        caller knows the right answer and sets it here.
+        """
+        for entry in reversed(self.execution_stack):
+            if entry.get('type') == 'GOSUB':
+                entry['return_line'] = return_line
+                entry['return_stmt'] = return_stmt_index
+                return
+
+    def peek_gosub_continuation(self):
+        """The clause tail waiting on the newest GOSUB frame, if any."""
+        for entry in reversed(self.execution_stack):
+            if entry.get('type') == 'GOSUB':
+                return entry.get('continuation')
+        return None
+
     def pop_gosub(self):
         """
         Pop GOSUB return address from unified execution stack.
