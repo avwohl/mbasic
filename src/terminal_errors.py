@@ -1,11 +1,16 @@
 """The exceptions a terminal raw-mode read can raise.
 
-Three places put the terminal into raw mode to read a single keystroke -
-``InteractiveMode._read_char`` (EDIT mode), ``ConsoleIOHandler.input_char``
-(INPUT$) and the ``INKEY$`` builtin. Each grew its own idea of what to catch,
-the three drifted apart, and one of them was wrong in a way that reached users:
-``EDIT`` on piped input died with ``?error: (25, 'Inappropriate ioctl for
-device')``. They now share this tuple.
+Four places put the terminal into raw mode to read from the keyboard -
+``InteractiveMode._read_char`` (EDIT mode), ``BuiltinFunctions._read_console``
+(INPUT$), the ``INKEY$`` builtin, and ``ConsoleIOHandler.input_char``. Each
+grew its own idea of what to catch, they drifted apart, and one of them was
+wrong in a way that reached users: ``EDIT`` on piped input died with
+``?error: (25, 'Inappropriate ioctl for device')``. They now share this tuple.
+
+(``ConsoleIOHandler.input_char`` was long described as the INPUT$ reader. It
+is not, and never was: ``BuiltinFunctions`` is built without an I/O handler, so
+INPUT$ has always read ``sys.stdin`` itself. Nothing in ``src/`` calls
+``input_char`` at all - see docs/dev/INPUT_DOLLAR_RAW_READ.md.)
 
 The subtle one is ``termios.error``. It is a direct subclass of ``Exception``,
 *not* of ``OSError``::

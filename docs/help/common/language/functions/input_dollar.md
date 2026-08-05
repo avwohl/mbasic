@@ -21,9 +21,11 @@ INPUT$(X[,[#]Y])
 
 Returns a string of X characters, read from the terminal or from file number Y.
 
-If the terminal is used for input, no characters will be echoed and all control characters are passed through.
+If the terminal is used for input, nothing is echoed, no Enter is required, and all control characters are passed through except Control-C, which interrupts the INPUT$.
 
-**Note**: Control-C behavior varied in original implementations. In MBASIC 5.21 interpreter mode, Control-C would terminate the program. This implementation passes Control-C through (CHR$(3)) for program detection and handling, allowing programs to detect and handle it explicitly.
+Enter arrives as CHR$(13), as it does on a CP/M console.
+
+**Note**: Control-C breaks the program at the INPUT$ statement and CONT resumes it, as in MBASIC 5.21. One difference: 5.21 returns silently to the `Ok` prompt, while this implementation prints `Break in nn` - the same message it prints for STOP and for Control-C during INPUT. INKEY$ behaves differently; see [INKEY$](inkey_dollar.md).
 
 ## Example
 

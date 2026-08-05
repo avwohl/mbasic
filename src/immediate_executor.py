@@ -9,7 +9,7 @@ of the current runtime state.
 from src.lexer import tokenize
 from src.parser import Parser
 from src.runtime import Runtime
-from src.interpreter import Interpreter
+from src.interpreter import Interpreter, BreakException
 import traceback
 import os
 
@@ -276,6 +276,14 @@ class ImmediateExecutor:
             output = self.io.get_output() if self.io else ""
 
             return (True, output)
+
+        except BreakException:
+            # Ctrl+C inside an immediate-mode INPUT$. Not an error, and not a
+            # failure of the command: there is no line to name and nothing to
+            # CONT into, so report it the way execute_stop() reports a STOP
+            # with no line number rather than as "?BreakException".
+            output = self.io.get_output() if self.io else ""
+            return (True, output + "Break\n")
 
         except Exception as e:
             # Format error message

@@ -19,7 +19,7 @@ INKEY$
 
 Returns either a one-character string containing a character read from the terminal or a null string if no character is pending at the terminal. No characters will be echoed and all characters are passed through to the program.
 
-**Note**: Control-C behavior varied in original implementations. In MBASIC 5.21 interpreter mode, Control-C would terminate the program. This implementation passes Control-C through (CHR$(3)) for program detection and handling, allowing programs to detect and handle it explicitly.
+**Note**: Control-C behavior varied in original implementations. In MBASIC 5.21 interpreter mode, Control-C would terminate the program. This implementation passes Control-C through as CHR$(3) whenever INKEY$ actually receives the byte - but on a POSIX terminal it usually does not, because INKEY$ only switches the terminal out of cooked mode once a key is already waiting, and until then Control-C is a SIGINT that breaks the program. INPUT$ always breaks; see [INPUT$](input_dollar.md).
 
 ## Example
 

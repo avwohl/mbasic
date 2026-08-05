@@ -343,7 +343,11 @@ class Interpreter:
                     self.runtime.break_requested = False
                     self.runtime.pc = pc.stop("BREAK")
                     self.io.output("")
-                    self.io.output(f"Break in {pc}")
+                    # pc.line_num, not pc: MBASIC reports "Break in 30", and
+                    # str(PC) is a debugging repr - this printed the literal
+                    # text "Break in PC(30.0)". STOP already gets this right
+                    # (see execute_stop).
+                    self.io.output(f"Break in {pc.line_num}")
                     # PC keeps current position for resume via CONT
                     return self.state
 
@@ -394,9 +398,16 @@ class Interpreter:
                     self.state.statements_executed += 1
 
                 except BreakException:
-                    # User pressed Ctrl+C during INPUT
+                    # Ctrl+C during INPUT$. Nothing raised this until INPUT$
+                    # started reading in raw mode, where ISIG is off and the
+                    # 0x03 byte is delivered to the reader instead of becoming
+                    # a SIGINT - so this arm had never actually run, and its
+                    # message would have printed "Break in PC(30.0)".
                     self.runtime.pc = pc.stop("BREAK")
-                    self.io.output(f"Break in {pc}")
+                    # Raw mode does not echo the ^C, and the program may have
+                    # left the cursor mid-line with a trailing-semicolon PRINT.
+                    self.io.output("")
+                    self.io.output(f"Break in {pc.line_num}")
                     return self.state
 
                 except Exception as e:

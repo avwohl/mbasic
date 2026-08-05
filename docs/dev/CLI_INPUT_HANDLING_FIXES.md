@@ -36,7 +36,10 @@ what to catch:
   OSError, ImportError)`. This is the one users hit. Its `ImportError` arm was
   also dead code: `import tty, termios` sat *outside* the `try`, so on Windows
   the import raised before the handler could see it.
-- `src/iohandler/console.py` `input_char()` - `INPUT$`. No `try` at all.
+- `src/iohandler/console.py` `input_char()` - believed at the time to be the
+  `INPUT$` reader. No `try` at all. It is not that reader and never was:
+  nothing in `src/` calls `input_char()`, and `INPUT$` reads `sys.stdin`
+  itself. See [INPUT_DOLLAR_RAW_READ.md](INPUT_DOLLAR_RAW_READ.md).
 - `src/basic_builtins.py` - `INKEY$`. Caught `(OSError, IOError)`, and `IOError`
   is merely an alias of `OSError`, so it added nothing. Guarded by an `isatty()`
   check, so this one was close to unreachable in practice.
@@ -95,6 +98,8 @@ program source lines, which belong in history.
 
 `INPUT$` and `INKEY$` never reached history - they read single characters
 without readline. The curses, Tk and web backends do not use readline at all.
+(`INPUT$` was still reading cooked and buffered at this point; that is
+[INPUT_DOLLAR_RAW_READ.md](INPUT_DOLLAR_RAW_READ.md).)
 
 ## Verifying
 

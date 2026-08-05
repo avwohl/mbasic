@@ -23,7 +23,7 @@ from pathlib import Path
 from src.lexer import tokenize
 from src.parser import Parser
 from src.runtime import Runtime
-from src.interpreter import Interpreter, ChainException
+from src.interpreter import Interpreter, ChainException, BreakException
 import src.ast_nodes as ast_nodes
 from src.input_sanitizer import sanitize_and_clear_parity
 from src.iohandler.console import input_without_history
@@ -1642,6 +1642,15 @@ class InteractiveMode:
                 # Restore previous PC to maintain stopped program position
                 # This reverts any GOTO/GOSUB PC changes from above execution
                 runtime.pc = old_pc
+
+        except BreakException:
+            # Ctrl+C inside an immediate-mode INPUT$ ("PRINT INPUT$(1)" at the
+            # Ok prompt). A return to the prompt, not an error: there is no
+            # line to name and nothing to CONT into, so this matches what
+            # execute_stop() prints for a STOP with no line number. Without
+            # this arm the generic handler below reports "?BreakException".
+            print()
+            print("Break")
 
         except Exception as e:
             # Use helper function for consistent error reporting

@@ -83,7 +83,15 @@ class IOHandler(ABC):
 
     @abstractmethod
     def input_char(self, blocking: bool = True) -> str:
-        """Input single character (INKEY$, INPUT$).
+        """Input single character.
+
+        NOT CURRENTLY CALLED BY ANYTHING. This was meant to be how INKEY$ and
+        INPUT$(1) read a key, and the examples below still describe the
+        intent - but BuiltinFunctions is constructed without an I/O handler
+        (see Interpreter.__init__), so both builtins read sys.stdin directly
+        and no backend can intercept them. Under the curses, web and Tk UIs
+        that means they read the server or launching terminal instead of the
+        UI. See docs/dev/INPUT_DOLLAR_RAW_READ.md, "Not fixed here".
 
         Args:
             blocking: If True, wait for keypress. If False, return "" if no key ready.

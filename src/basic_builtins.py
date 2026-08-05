@@ -1041,18 +1041,15 @@ class BuiltinFunctions:
 
         Note: The file_num parameter (when provided) is a numeric value, not the original
         BASIC source syntax with # prefix. The parser removes the # during parsing.
+
+        A keyboard read is raw: nothing is echoed, Enter is not required, and
+        Ctrl+C breaks rather than being returned. See _read_console.
         """
         num = int(num)
 
         if file_num is None:
             # Read from keyboard
-            result = ""
-            for i in range(num):
-                char = sys.stdin.read(1)
-                if not char:
-                    break
-                result += char
-            return result
+            return self._read_console(num)
         else:
             # Read from file
             file_num = int(file_num)
@@ -1062,3 +1059,154 @@ class BuiltinFunctions:
             file_info = self.runtime.files[file_num]
             file_handle = file_info['handle']
             return file_handle.read(num)
+
+    # ------------------------------------------------------------------
+    # INPUT$ keyboard reading
+    #
+    # MBASIC 5.21 reads these characters raw: nothing is echoed, no Enter is
+    # required, and every control character reaches the program except
+    # Ctrl+C, which interrupts the read. The cooked sys.stdin.read(1) loop
+    # that used to be here did none of that, and its buffering leaked
+    # keystrokes across programs - see _read_console below.
+    # ------------------------------------------------------------------
+
+    #: Ctrl+C. Reachable only because raw mode clears ISIG; in cooked mode the
+    #: line discipline turns it into SIGINT and the byte never arrives.
+    _BREAK_CHAR = '\x03'
+
+    def _read_console(self, num):
+        """Read num characters from the keyboard for INPUT$(n).
+
+        Raw, unbuffered and byte-transparent, for the same reasons INKEY$ and
+        the EDIT-mode reader are:
+
+        - ``sys.stdin.read(1)`` - what this replaces - goes through a
+          TextIOWrapper that pulls the whole kernel queue into a userspace
+          buffer no other reader can see. Typing "AB" then Enter at INPUT$(1)
+          gave the program "A" and stranded "B\\n" there, invisible to the
+          REPL and to the INPUT statement, which both read at the file
+          descriptor. It was not discarded either: the *next* RUN's INPUT$
+          picked it up as though freshly typed.
+        - ``tty.setraw()`` defaults to TCSAFLUSH, which discards input that has
+          arrived but not been read. Keys typed ahead of INPUT$ are delivered
+          today and must stay that way, so this uses TCSANOW.
+
+        Raw mode is entered once for the whole read rather than per character:
+        dropping back to cooked mode between characters would echo the rest of
+        what the user typed and wait for Enter before delivering it.
+        """
+        if num <= 0:
+            return ""
+
+        if sys.platform == 'win32':
+            return self._check_break(self._read_console_windows(num))
+
+        if termios is None or tty is None:
+            # No POSIX terminal control, and not the Windows branch either -
+            # there is no raw mode to be had, so stdin had better be a pipe.
+            return self._check_break(self._read_console_cooked(num))
+
+        try:
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+        except TERMINAL_ERRORS:
+            # Not a terminal: piped input, a file, or a stdin replacement with
+            # no real fd. termios.error is why this tuple exists - it is not
+            # an OSError subclass, so "this is not a terminal" escaped the
+            # handlers that used to be written as except OSError.
+            return self._check_break(self._read_console_cooked(num))
+
+        chars = ""
+        raw_failed = False
+        try:
+            tty.setraw(fd, termios.TCSANOW)
+            while len(chars) < num:
+                data = os.read(fd, num - len(chars))
+                if not data:
+                    break               # EOF - the terminal went away
+                # latin-1 keeps this byte-transparent, so ASC() means the same
+                # here as it does under INKEY$ and on Windows.
+                chars += data.decode('latin-1')
+        except TERMINAL_ERRORS:
+            # Falling back is only safe if nothing was read. Reading again
+            # after a partial read would deliver those characters twice.
+            raw_failed = not chars
+        finally:
+            try:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            except TERMINAL_ERRORS:
+                # The characters are already in hand; a failure to put the
+                # terminal back must not lose them or read a second time.
+                pass
+
+        if raw_failed:
+            return self._check_break(self._read_console_cooked(num))
+        return self._check_break(chars)
+
+    def _read_console_windows(self, num):
+        """Read num characters through the Windows console."""
+        chars = ""
+        while len(chars) < num:
+            ch = win_read_key(blocking=True)
+            if not ch:
+                # "" from a *blocking* read means there is no console at all
+                # (pythonw.exe, a detached process), not "no key pending" -
+                # see win_read_key. Nothing will ever arrive, so read the rest
+                # the only way left.
+                return chars + self._read_console_cooked(num - len(chars))
+            chars += ch
+        return chars
+
+    @staticmethod
+    def _read_console_cooked(num):
+        """Read without raw mode: piped input, or no terminal control at all.
+
+        Deliberately still sys.stdin rather than os.read. With no tty there is
+        no readline either, so the REPL and the INPUT statement are reading
+        through this same TextIOWrapper - matching them is what keeps the
+        characters in order.
+        """
+        chars = ""
+        try:
+            for _ in range(num):
+                ch = sys.stdin.read(1)
+                if not ch:
+                    break               # EOF
+                chars += ch
+        except TERMINAL_ERRORS:
+            # This is the end of the line for a keyboard read, so it has to
+            # degrade rather than raise: under pythonw.exe sys.stdin is None
+            # (AttributeError), and a closed or substituted stdin gives the
+            # other two. INPUT$ comes back short, as it does at EOF.
+            pass
+        return chars
+
+    @classmethod
+    def _check_break(cls, chars):
+        """Turn a typed Ctrl+C into a break, the way MBASIC 5.21 does.
+
+        The 5.21 manual: "all control characters are passed through except
+        Control-C, which is used to interrupt the execution of the INPUT$
+        function". Raw mode is what makes this ours to decide - it clears
+        ISIG, so the byte is delivered here instead of becoming a SIGINT, and
+        without this a program sitting in INPUT$ could not be interrupted from
+        the keyboard at all.
+
+        The break is resumable, as it is under real 5.21: CONT re-enters the
+        INPUT$. One deliberate difference - 5.21 returns silently to "Ok" and
+        this prints "Break in nn", matching what STOP and Ctrl+C during INPUT
+        already print here.
+
+        INKEY$ is deliberately left alone. It only enters raw mode once
+        select() has already reported a key, so on POSIX the terminal is
+        cooked while a program polls it and Ctrl+C usually becomes a SIGINT
+        before INKEY$ can see the byte at all - measured: "Break in 10", not
+        CHR$(3). It also never blocks, so it cannot trap the user the way a
+        pending INPUT$ would.
+        """
+        if cls._BREAK_CHAR not in chars:
+            return chars
+        # Imported here because src.interpreter imports this module: at module
+        # scope this would be a circular import.
+        from src.interpreter import BreakException
+        raise BreakException()

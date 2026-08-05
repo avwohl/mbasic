@@ -76,7 +76,10 @@ The non-tty paths of this same reader are covered separately by
 `tests/regression/ui/test_cli_input_isolation.py`, so the piped case is not
 repeated here.
 
-## Still open
+## Was still open - now fixed
+
+**Fixed in [INPUT_DOLLAR_RAW_READ.md](INPUT_DOLLAR_RAW_READ.md).** What was
+recorded here at the time:
 
 `BuiltinFunctions.INPUT` (`INPUT$` from the keyboard,
 `src/basic_builtins.py`) is now the only stdin reader still using
