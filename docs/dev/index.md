@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2026-08-04
-**Total Documents:** 36
+**Total Documents:** 37
 
 ## What's Here
 
@@ -85,6 +85,7 @@ port I/O — but they are not required. Read
 - [Compiler Setup](COMPILER_SETUP.md)
 - [Compiler Variable Types](COMPILER_VARIABLE_TYPES.md)
 - [Compiler Z88Dk Path Change](COMPILER_Z88DK_PATH_CHANGE.md)
+- [Edit Mode Typeahead](EDIT_MODE_TYPEAHEAD.md)
 - [Kubernetes Deployment Plan](KUBERNETES_DEPLOYMENT_PLAN.md)
 - [Kubernetes Deployment Setup](KUBERNETES_DEPLOYMENT_SETUP.md)
 - [Kubernetes Deployment Summary](KUBERNETES_DEPLOYMENT_SUMMARY.md)

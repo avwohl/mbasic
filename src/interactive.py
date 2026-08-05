@@ -1195,6 +1195,8 @@ class InteractiveMode:
         else:
             original_text = current_line
 
+        self._drop_leftover_newline()
+
         # Edit state
         text = original_text
         cursor = 0
@@ -1308,9 +1310,53 @@ class InteractiveMode:
             print()
             return
 
+    def _drop_leftover_newline(self):
+        """Discard one line terminator left over from the EDIT command itself.
+
+        Entering EDIT means typing "EDIT 10" and pressing Enter, and <CR> is
+        also the EDIT subcommand for "save and exit". If the terminator that
+        submitted the command is still queued when the edit loop starts, EDIT
+        exits immediately without editing anything and the keys meant for it
+        fall through to the REPL as commands.
+
+        That used to be masked by the TCSAFLUSH in _read_char, which discarded
+        the whole queue on every keystroke - and hung the interpreter doing it.
+        This takes at most one byte, only if something is already waiting, and
+        keeps it unless it really is a terminator. Sending "\\r\\n" - paste,
+        pexpect, tmux send-keys - is what leaves one behind, because ICRNL
+        turns the CR into a second newline.
+        """
+        import os
+        import select
+        import sys
+
+        try:
+            if not sys.stdin.isatty():
+                return          # piped input: the reader is cooked anyway
+            fd = sys.stdin.fileno()
+            if not select.select([fd], [], [], 0)[0]:
+                return          # nothing queued - the ordinary interactive case
+            data = os.read(fd, 1)
+        except TERMINAL_ERRORS:
+            return
+
+        if data and data not in (b'\r', b'\n'):
+            # Genuine type-ahead. Hand it to the next _read_char rather than
+            # eating it - discarding input is the bug being fixed here.
+            self._pending_char = data.decode('latin-1')
+
     def _read_char(self):
         """Read a single character from stdin"""
+        import os
         import sys
+
+        # A byte _drop_leftover_newline() looked at and decided to keep.
+        # getattr because this reader is also called unbound from tests, and
+        # because nothing else in the class needs the attribute to exist.
+        pending = getattr(self, '_pending_char', None)
+        if pending is not None:
+            self._pending_char = None
+            return pending
 
         def read_cooked():
             """Read without raw mode - piped input, or no terminal control."""
@@ -1333,8 +1379,19 @@ class InteractiveMode:
             fd = sys.stdin.fileno()
             old_settings = termios.tcgetattr(fd)
             try:
-                tty.setraw(fd)
-                ch = sys.stdin.read(1)
+                # TCSANOW, not setraw()'s TCSAFLUSH default. FLUSH discards
+                # input that has arrived but not been read, and this function
+                # is called once per keystroke in a loop - so everything typed
+                # between two calls was being thrown away. Worse, if the user
+                # typed ahead and then stopped, the read below waited forever
+                # for a character that had just been discarded, and EDIT hung.
+                tty.setraw(fd, termios.TCSANOW)
+                # os.read rather than sys.stdin.read(1), matching INKEY$ and
+                # ConsoleIOHandler.input_char: the TextIOWrapper would buffer
+                # bytes in userspace where the other readers cannot see them.
+                # latin-1 keeps it byte-transparent, so ^A stays 0x01.
+                data = os.read(fd, 1)
+                ch = data.decode('latin-1') if data else ""
                 got_char = True
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)

@@ -148,6 +148,7 @@ legacy conhost; and `pythonw.exe`.
 - **Redirected stdin does not feed `INKEY$`.** `kbhit`/`getch` open `CONIN$`
   directly and are structurally blind to redirection, so `mbasic < prog.txt`
   reads the physical keyboard on Windows where POSIX returns `""`.
-- **`src/interactive.py` `_read_char()`** (EDIT mode) still uses the
-  `TCSAFLUSH` default. Being a blocking read it does not hang, but type-ahead
-  is discarded. Left alone as a separate change.
+- ~~**`src/interactive.py` `_read_char()`** (EDIT mode) still uses the
+  `TCSAFLUSH` default.~~ Fixed - and the guess that "being a blocking read it
+  does not hang" was wrong. See
+  [EDIT_MODE_TYPEAHEAD.md](EDIT_MODE_TYPEAHEAD.md).
