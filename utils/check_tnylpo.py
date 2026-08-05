@@ -126,7 +126,7 @@ def suggest_installation():
 tnylpo must be built from source. Here's how:
 
 1. Clone the repository:
-   git clone https://github.com/agn453/tnylpo.git
+   git clone https://gitlab.com/gbrein/tnylpo.git
    cd tnylpo
 
 2. Build tnylpo:

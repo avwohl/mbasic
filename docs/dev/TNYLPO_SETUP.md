@@ -199,7 +199,7 @@ However, test scripts are configured for tnylpo specifically.
 
 ## References
 
-- tnylpo GitHub: https://gitlab.com/gbrein/tnylpo
+- tnylpo on GitLab: https://gitlab.com/gbrein/tnylpo
 - CP/M 2.2 Manual: http://www.cpm.z80.de/manuals/cpm22-m.pdf
 - Z80 Instruction Set: http://www.z80.info/z80ins.txt
 
