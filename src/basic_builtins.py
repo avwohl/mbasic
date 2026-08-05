@@ -832,10 +832,19 @@ class BuiltinFunctions:
 
     def PEEK(self, _addr):
         """
-        Peek memory (compatibility implementation).
+        A random byte, 0-255. This is a decision, not a stub.
 
-        Returns random value 0-255. Most programs use PEEK to seed
-        random number generators, so this provides reasonable compatibility.
+        There is no memory model in this interpreter - a variable is a Python
+        object, not bytes at an address - so there is nothing for PEEK to read.
+        What programs actually use PEEK for is seeding a random number
+        generator from whatever happens to be in memory, and a random byte is
+        the answer that makes that work. Returning a fixed 0 would be
+        deterministic and would defeat the only line that asks for it.
+
+        Do not "fix" this to return 0 or to emulate a 64K space without reading
+        docs/dev/NO_MEMORY_MODEL.md first, which records why. Byte-level
+        fidelity belongs in an 8080 emulator running the real com/mbasic.com,
+        not here.
         """
         import random
         return random.randint(0, 255)

@@ -1685,10 +1685,12 @@ class Interpreter:
         pass
 
     def execute_poke(self, stmt):
-        """Execute POKE statement (no-op for compatibility).
+        """Accepted and discarded, deliberately.
 
-        POKE cannot modify memory in Python interpreter but is parsed and accepted
-        for compatibility with MBASIC programs that use it.
+        There is no memory model to write to - see PEEK, and
+        docs/dev/NO_MEMORY_MODEL.md. A program that POKEs and then PEEKs the
+        same address does not get its byte back. A program that needs that
+        should run the real com/mbasic.com under an 8080 emulator.
         """
         pass
 

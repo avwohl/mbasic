@@ -114,11 +114,21 @@ binary-to-decimal conversion rounds the sixteenth digit up where correct
 rounding rounds it down, for about one value in eight. That is a difference in
 its printing, and it is the gap `NUMBER_FORMATTING.md` already records.
 
-## Not done
+## PEEK stays random, and that is deliberate
 
-`BuiltinFunctions.PEEK` still returns `random.randint(0, 255)`. It is a stub
-for a machine with no memory to peek at, and it has nothing to do with RND -
-but it is the last thing here that is random when the real one is not.
+`BuiltinFunctions.PEEK` returns `random.randint(0, 255)`, which looks like the
+last unfixed thing in this area and is not. There is no memory model here for
+it to read, and what programs use PEEK for is seeding a generator from whatever
+is lying about in memory - so a random byte is the useful answer and a fixed 0
+would not be. POKE and VARPTR are the same decision. Recorded in
+`NO_MEMORY_MODEL.md`; byte-level fidelity belongs in an 8080 emulator running
+the real binary.
+
+The two sit together: RND is deterministic exactly where MBASIC is
+deterministic, and a program that wants variety asks for it, with RANDOMIZE or
+by seeding from PEEK.
+
+## Not done
 
 The two code generators emit their own RND (`codegen_js_backend.py` uses
 `Math.random()`). Compiled output is a separate target and was left alone.
