@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2026-08-05
-**Total Documents:** 46
+**Total Documents:** 47
 
 ## What's Here
 
@@ -67,6 +67,7 @@ port I/O — but they are not required. Read
 - [Redis Per Session Settings](REDIS_PER_SESSION_SETTINGS.md)
 - [Redis Session Storage Setup](REDIS_SESSION_STORAGE_SETUP.md)
 - [Renum Serialization Fixes](RENUM_SERIALIZATION_FIXES.md)
+- [Single Precision](SINGLE_PRECISION.md)
 - [Usage Tracking Integration](USAGE_TRACKING_INTEGRATION.md)
 
 ### Debugging & Errors

@@ -85,24 +85,23 @@ the precision, the same value at both precisions, STR$, and six PRINT USING
 fields with negative numbers. Every expectation is what the real binary
 printed.
 
-## Known limitation: single-precision arithmetic
+## Since fixed: single-precision arithmetic
 
-Values are computed and stored as IEEE doubles. MBASIC computes in single
+This was left open here, and is now done - see `SINGLE_PRECISION.md`.
+
+Values were computed and stored as IEEE doubles. MBASIC computes in single
 precision unless everything involved is double, so a single-precision result
-*widened* into a double shows the difference:
+*widened* into a double showed the difference:
 
-	F# = 1/3      real 5.21 .3333333432674408    here .3333333333333333
-	E# = 1/7      real 5.21 .1428571492433548    here .1428571428571429
+	F# = 1/3      real 5.21 .3333333432674408    was .3333333333333333
+	E# = 1/7      real 5.21 .1428571492433548    was .1428571428571429
 
 The division happened in single on the real machine, and the error is preserved
-when the result is stored in a double. Printing cannot recover that - it needs
-single-precision storage (a float32 round-trip on assignment) and type-directed
-arithmetic, which changes every computed value in the interpreter rather than
-just its presentation.
+when the result is stored in a double. Printing could not recover that; it took
+single-precision storage and type-directed arithmetic, which changes every
+computed value in the interpreter rather than just its presentation.
 
-Everything that does not cross precisions this way now matches exactly.
-
-A second, smaller gap sits underneath it: MBASIC's double is a 56-bit binary
-format, not IEEE 754, so the sixteenth digit can differ - `2#/3#` is
-`.6666666666666667` there and `.6666666666666666` here. That one needs the
-arithmetic to be emulated, not just the storage.
+A second, smaller gap sits underneath it and is still there: MBASIC's double is
+a 56-bit binary format, not IEEE 754, so the sixteenth digit can differ -
+`2#/3#` is `.6666666666666667` there and `.6666666666666666` here. That one
+needs the arithmetic to be emulated, not just the storage.

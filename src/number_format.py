@@ -1,4 +1,4 @@
-"""How MBASIC 5.21 prints a number.
+"""How MBASIC 5.21 represents and prints a number.
 
 Derived from the real binary under cpmemu rather than from the manual, which is
 wrong about the boundaries: it says 10^-7 prints as 1E-7, and the binary prints
@@ -29,6 +29,7 @@ Interpreter._numeric_digits(). A single-precision 1/3 prints as .333333 and a
 double-precision one as .3333333333333333.
 """
 
+import struct
 from decimal import Decimal, ROUND_HALF_UP, Context
 
 #: Significant figures MBASIC keeps for each precision. None means the
@@ -127,3 +128,80 @@ def _scaled(rounded, digits):
     letter = 'D' if digits > SINGLE_DIGITS else 'E'
     sign = '+' if exponent >= 0 else '-'
     return f"{text}{letter}{sign}{abs(exponent):02d}"
+
+
+def to_single(value):
+    """Round to MBASIC single precision.
+
+    MBASIC stores a single as Microsoft Binary Format: sign, 8-bit exponent,
+    24-bit mantissa. The mantissa is the same width as IEEE float32, so a
+    round-trip through float32 reproduces it - 1/3 becomes .3333333432674408
+    and 1/7 becomes .1428571492433548, which is exactly what the real binary
+    prints for a single-precision result stored in a double.
+
+    The two formats are not identical: MBF has no infinities or denormals, and
+    its ASCII-to-float routine is a little less accurate than IEEE's correct
+    rounding, so a decimal literal at the extremes can land an ulp or two away
+    (1E-16 is 9.999998845134855E-17 there and 1.0000000168623835E-16 here).
+    Arithmetic on ordinary values agrees.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return value
+    try:
+        return struct.unpack('f', struct.pack('f', value))[0]
+    except (OverflowError, struct.error, ValueError):
+        # Outside float32's range - MBF would say "Overflow"; leaving the value
+        # alone keeps the existing behaviour rather than inventing an error.
+        return value
+
+
+def to_integer(value):
+    """Round to MBASIC's integer type: nearest, with halves away from zero.
+
+    A% = 3.7 is 4 and A% = -3.7 is -4, measured against the real binary -
+    assignment to an integer variable rounds, it does not truncate. A% = 2.5
+    is 3, so it is not Python's banker's rounding either.
+
+    The same rule applies everywhere MBASIC wants an integer and is handed a
+    fraction: LEFT$("ABCDEF",2.7) is "ABC", CHR$(65.7) is "B", and A(2.7) is
+    A(3). INT and FIX are the exceptions - flooring and truncating is their job.
+    """
+    if isinstance(value, str):
+        # Rounding a string is not something to be quiet about, and every
+        # caller wants an integer, so this is the error the real binary gives.
+        raise TypeError("Type mismatch")
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return value
+    if isinstance(value, int):
+        return value
+    try:
+        return int(Decimal(repr(value)).quantize(Decimal(1), ROUND_HALF_UP))
+    except (ValueError, ArithmeticError):
+        return int(value)
+
+
+def coerce_to_type(value, suffix):
+    """Store a value the way a variable of this type would hold it.
+
+    This is what makes a single-precision variable lose the digits it cannot
+    hold: F# = 1/3 shows .3333333432674408 because the division happened in
+    single precision, not because printing rounded it.
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        if suffix in ('%', '!', '#', None):
+            # A% = "X" is a Type mismatch on the real binary. It has to be
+            # caught here: rounding a string is not something to be quiet
+            # about, and silently storing it would let the wrong type through.
+            raise TypeError("Type mismatch")
+        return value
+    if not isinstance(value, (int, float)):
+        return value
+    if suffix == '%':
+        return to_integer(value)
+    if suffix == '#':
+        return float(value)
+    if suffix in ('!', None):
+        return to_single(value)
+    return value

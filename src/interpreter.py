@@ -13,10 +13,14 @@ from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingForm
 from src.tokens import TokenType
 from src.pc import PC
 from src.win_console import win_flush_pending
-from src.number_format import (format_for_print, INTEGER_DIGITS,
-                               SINGLE_DIGITS, DOUBLE_DIGITS)
+from src.number_format import (format_for_print, to_integer, to_single,
+                               INTEGER_DIGITS, SINGLE_DIGITS, DOUBLE_DIGITS)
 from src.iohandler.base import KeyInputPending
 import src.ast_nodes as ast_nodes
+
+#: Marker for "this node has not been typed yet" - None is a real answer
+#: (INTEGER_DIGITS), so it cannot stand for the missing value.
+_UNCACHED = object()
 
 
 class BreakException(Exception):
@@ -872,8 +876,9 @@ class Interpreter:
 
         # Type coercion based on type suffix
         if stmt.variable.type_suffix == '%':
-            # Integer - truncate towards zero
-            value = int(value)
+            # Integer - MBASIC rounds to nearest, halves away from zero.
+            # A% = 3.7 is 4 on the real binary, not 3, and A% = -3.7 is -4.
+            value = to_integer(value)
         elif stmt.variable.type_suffix == '$':
             # String
             value = str(value)
@@ -884,7 +889,7 @@ class Interpreter:
 
         if stmt.variable.subscripts:
             # Array assignment
-            subscripts = [int(self.evaluate_expression(sub)) for sub in stmt.variable.subscripts]
+            subscripts = [to_integer(self.evaluate_expression(sub)) for sub in stmt.variable.subscripts]
             self.runtime.set_array_element(
                 stmt.variable.name,
                 stmt.variable.type_suffix,
@@ -909,7 +914,7 @@ class Interpreter:
         # Get values of both variables
         if stmt.var1.subscripts:
             # Array element
-            subscripts1 = [int(self.evaluate_expression(sub)) for sub in stmt.var1.subscripts]
+            subscripts1 = [to_integer(self.evaluate_expression(sub)) for sub in stmt.var1.subscripts]
             value1 = self.runtime.get_array_element(stmt.var1.name, stmt.var1.type_suffix, subscripts1, token=self._make_token_info(stmt.var1))
         else:
             # Simple variable
@@ -917,7 +922,7 @@ class Interpreter:
 
         if stmt.var2.subscripts:
             # Array element
-            subscripts2 = [int(self.evaluate_expression(sub)) for sub in stmt.var2.subscripts]
+            subscripts2 = [to_integer(self.evaluate_expression(sub)) for sub in stmt.var2.subscripts]
             value2 = self.runtime.get_array_element(stmt.var2.name, stmt.var2.type_suffix, subscripts2, token=self._make_token_info(stmt.var2))
         else:
             # Simple variable
@@ -966,7 +971,7 @@ class Interpreter:
     #: MBASIC's library returns single, including SQR, SIN and the rest -
     #: PRINT SQR(2) gives 1.41421, not 1.4142135623730951.
     _FUNCTION_PRECISION = {
-        'CDBL': DOUBLE_DIGITS, 'CVD': DOUBLE_DIGITS,
+        'CDBL': DOUBLE_DIGITS, 'CVD': DOUBLE_DIGITS, 'VAL': DOUBLE_DIGITS,
         'CINT': INTEGER_DIGITS, 'ASC': INTEGER_DIGITS, 'LEN': INTEGER_DIGITS,
         'INSTR': INTEGER_DIGITS, 'CVI': INTEGER_DIGITS, 'POS': INTEGER_DIGITS,
         'LPOS': INTEGER_DIGITS, 'PEEK': INTEGER_DIGITS, 'INP': INTEGER_DIGITS,
@@ -1003,6 +1008,12 @@ class Interpreter:
 
         if node == 'FunctionCallNode':
             name = getattr(expr, 'name', '').upper().rstrip('$')
+            if name.startswith('FN'):
+                # A user-defined function is typed by its name, exactly like a
+                # variable: FNA is single and FNA# is double. The suffix is
+                # stripped from the name for lookup, so it is read from the
+                # node - see FunctionCallNode.
+                return self._suffix_digits(getattr(expr, 'type_suffix', None))
             if name in self._FUNCTION_PRECISION:
                 return self._FUNCTION_PRECISION[name]
             if name in ('INT', 'FIX', 'ABS', 'SGN') and expr.arguments:
@@ -1035,10 +1046,17 @@ class Interpreter:
         PRINT 1234567 gives 1.23457E+06 but PRINT 12345678 gives 12345678:
         the first is single, the second is double.
         """
-        # NumberNode.literal is documented as the original text but actually
-        # holds the value (1E6 arrives as 1000000.0), so an explicit marker is
-        # only usable when it happens to be a string.
+        # NumberNode.literal holds the source text where the lexer kept it -
+        # see Token.literal_text. Older nodes built elsewhere in the parser
+        # (line-number ranges, for instance) still carry the value, which
+        # str() renders harmlessly.
         literal = str(getattr(expr, 'literal', '') or '').upper()
+        if literal.startswith('&'):
+            # A hex or octal constant is an integer, and the D in &HD1 is a
+            # digit rather than an exponent.
+            return SINGLE_DIGITS
+        if literal.endswith('!'):
+            return SINGLE_DIGITS            # explicitly single, however long
         if '#' in literal or 'D' in literal:
             return DOUBLE_DIGITS
 
@@ -1281,7 +1299,7 @@ class Interpreter:
         value = self.evaluate_expression(stmt.expression)
 
         # Convert to integer (round towards zero like MBASIC)
-        index = int(value)
+        index = to_integer(value)      # ON 1.7 GOTO takes the second target
 
         # Check if index is valid (1-based indexing)
         if 1 <= index <= len(stmt.line_numbers):
@@ -1305,7 +1323,7 @@ class Interpreter:
         value = self.evaluate_expression(stmt.expression)
 
         # Convert to integer (round towards zero like MBASIC)
-        index = int(value)
+        index = to_integer(value)      # ON 1.7 GOTO takes the second target
 
         # Check if index is valid (1-based indexing)
         if 1 <= index <= len(stmt.line_numbers):
@@ -1520,6 +1538,12 @@ class Interpreter:
         step = loop_info['step']
         new_value = current + step
 
+        # MBASIC increments first and leaves the variable at the value that
+        # ended the loop, so FOR I=1 TO 3: NEXT: PRINT I prints 4, not 3.
+        # Storing it only on the continuing branch left the last value that
+        # still fit, which is what a program reads after the loop.
+        self.runtime.set_variable(base_name, type_suffix, new_value, token=token, limits=self.limits)
+
         # Check if loop should continue
         if (step > 0 and new_value <= loop_info['end']) or (step < 0 and new_value >= loop_info['end']):
             # Validate that the FOR return address still exists
@@ -1541,8 +1565,6 @@ class Interpreter:
             if return_stmt > len(line_statements):
                 raise RuntimeError(f"NEXT error: FOR statement in line {return_line} no longer exists")
 
-            # Continue loop - update variable and jump to statement AFTER the FOR
-            self.runtime.set_variable(base_name, type_suffix, new_value, token=token, limits=self.limits)
             # Jump back to statement AFTER the FOR
             for_pc = PC.running_at(return_line, return_stmt)
             next_pc = self.runtime.statement_table.next_pc(for_pc)
@@ -1706,7 +1728,8 @@ class Interpreter:
             if var_node.type_suffix == '$':
                 value = str(value)
             elif var_node.type_suffix == '%':
-                value = int(value)
+                value = to_integer(value)      # rounds, like every other
+                                               # assignment to an integer
             else:
                 # Ensure numeric types are float
                 if not isinstance(value, (int, float)):
@@ -1717,7 +1740,7 @@ class Interpreter:
 
             # Store in variable
             if var_node.subscripts:
-                subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
+                subscripts = [to_integer(self.evaluate_expression(sub)) for sub in var_node.subscripts]
                 self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value, token=self._make_token_info(var_node))
             else:
                 self.runtime.set_variable(
@@ -1740,7 +1763,8 @@ class Interpreter:
 
         for array_def in stmt.arrays:
             # array_def is an ArrayDeclNode with name and dimensions
-            dimensions = [int(self.evaluate_expression(dim)) for dim in array_def.dimensions]
+            dimensions = [to_integer(self.evaluate_expression(dim))
+                          for dim in array_def.dimensions]   # DIM B(2.7) is B(3)
             # Extract type suffix from name if present
             name = array_def.name
             type_suffix = None
@@ -1994,7 +2018,7 @@ class Interpreter:
 
             # Store
             if var_node.subscripts:
-                subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
+                subscripts = [to_integer(self.evaluate_expression(sub)) for sub in var_node.subscripts]
                 self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value, token=self._make_token_info(var_node))
             else:
                 self.runtime.set_variable(
@@ -2128,7 +2152,7 @@ class Interpreter:
         # Assign entire line to variable (no parsing)
         var_node = stmt.variable
         if var_node.subscripts:
-            subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
+            subscripts = [to_integer(self.evaluate_expression(sub)) for sub in var_node.subscripts]
             self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, line, token=self._make_token_info(var_node))
         else:
             self.runtime.set_variable(
@@ -2995,7 +3019,7 @@ class Interpreter:
             var_node = stmt.string_var
             if var_node.subscripts:
                 # Array element
-                subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
+                subscripts = [to_integer(self.evaluate_expression(sub)) for sub in var_node.subscripts]
                 self.runtime.set_array_element(
                     var_node.name,
                     var_node.type_suffix,
@@ -3212,8 +3236,25 @@ class Interpreter:
             raise NotImplementedError(f"Expression not implemented: {expr_type}")
 
     def evaluate_number(self, expr):
-        """Evaluate number literal"""
-        return expr.value
+        """Evaluate a numeric literal, in the precision it was written in.
+
+        A single-precision literal loses what a single cannot hold at the
+        moment it is read, not when it is used: B# = .1 is .1000000014901161
+        on the real binary, and B# = .1# is .1.
+
+        Cached on the node - the answer never changes, and this runs on every
+        pass through a loop.
+        """
+        value = getattr(expr, '_mb_value', _UNCACHED)
+        if value is _UNCACHED:
+            value = expr.value
+            if type(value) is float and self._expression_digits(expr) == SINGLE_DIGITS:
+                value = to_single(value)
+            try:
+                expr._mb_value = value
+            except AttributeError:
+                pass                    # a node with __slots__: recompute
+        return value
 
     def evaluate_string(self, expr):
         """Evaluate string literal"""
@@ -3223,7 +3264,7 @@ class Interpreter:
         """Evaluate variable reference"""
         if expr.subscripts:
             # Array access - track access
-            subscripts = [int(self.evaluate_expression(sub)) for sub in expr.subscripts]
+            subscripts = [to_integer(self.evaluate_expression(sub)) for sub in expr.subscripts]
             return self.runtime.get_array_element(expr.name, expr.type_suffix, subscripts, token=self._make_token_info(expr))
         else:
             # Simple variable
@@ -3236,7 +3277,42 @@ class Interpreter:
             )
 
     def evaluate_binaryop(self, expr):
-        """Evaluate binary operation"""
+        """Evaluate a binary operation at the precision MBASIC would use.
+
+        MBASIC computes in single precision unless something in the expression
+        is double, and a single holds 24 bits of mantissa. Rounding each
+        result rather than only the final assignment is what reproduces the
+        real machine digit for digit: 1/3 stored in a double really is
+        .3333333432674408 there, because the division itself was single.
+
+        Exact integer results are left alone - rounding them would turn
+        subscripts and string lengths into floats for no gain, and MBASIC's
+        integers are 16-bit anyway, far inside what a single holds exactly.
+        """
+        result = self._binaryop_value(expr)
+        if type(result) is float and self._expression_digits(expr) == SINGLE_DIGITS:
+            return to_single(result)
+        return result
+
+    def _expression_digits(self, expr):
+        """_numeric_digits, cached on the node.
+
+        Every arithmetic operation asks, so an inner loop would otherwise walk
+        its subtree once per iteration. The answer is static - it comes from
+        the shape of the expression, which does not change - so it is computed
+        once and kept.
+        """
+        digits = getattr(expr, '_mb_digits', _UNCACHED)
+        if digits is _UNCACHED:
+            digits = self._numeric_digits(expr)
+            try:
+                expr._mb_digits = digits
+            except AttributeError:
+                pass                    # a node with __slots__: just recompute
+        return digits
+
+    def _binaryop_value(self, expr):
+        """The arithmetic itself, before precision is applied."""
         left = self.evaluate_expression(expr.left)
         right = self.evaluate_expression(expr.right)
 
@@ -3333,6 +3409,17 @@ class Interpreter:
 
     def evaluate_functioncall(self, expr):
         """Evaluate function call (built-in or user-defined)"""
+        result = self._functioncall_value(expr)
+        # SQR(2) is 1.414213538169861 on the real binary even when the result
+        # is put straight into a double, and SQR(2#) is the same: MBASIC's
+        # maths functions work in single precision. CDBL and VAL say otherwise
+        # in _FUNCTION_PRECISION, and a DEF FN goes by its name.
+        if type(result) is float and self._expression_digits(expr) == SINGLE_DIGITS:
+            return to_single(result)
+        return result
+
+    def _functioncall_value(self, expr):
+        """The call itself, before precision is applied."""
         # First, check if it's a built-in function
         # Strip $ suffix for builtin lookup (CHR$ -> CHR, INPUT$ -> INPUT, etc.)
         func_name = expr.name.rstrip('$')

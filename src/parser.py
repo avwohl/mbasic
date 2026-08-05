@@ -884,7 +884,10 @@ class Parser:
             self.advance()
             return NumberNode(
                 value=float(token.value),
-                literal=token.value,
+                # As written, when the lexer kept it: NumberNode.literal has
+                # always been documented as the original text, and the type
+                # suffix in it is what makes 1#/3# double precision.
+                literal=token.value if token.literal_text is None else token.literal_text,
                 line_num=token.line,
                 column=token.column
             )
@@ -986,6 +989,7 @@ class Parser:
                 return FunctionCallNode(
                     name=name,
                     arguments=args,
+                    type_suffix=type_suffix,
                     line_num=token.line,
                     column=token.column
                 )
@@ -1008,6 +1012,7 @@ class Parser:
                 return FunctionCallNode(
                     name=name,
                     arguments=[],
+                    type_suffix=type_suffix,
                     line_num=token.line,
                     column=token.column
                 )

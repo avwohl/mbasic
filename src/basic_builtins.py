@@ -11,7 +11,7 @@ reference implementation for maximum compatibility with classic BASIC programs.
 import math
 import random
 
-from src.number_format import SINGLE_DIGITS
+from src.number_format import SINGLE_DIGITS, to_integer, to_single
 
 # tty, termios, os, sys and win_console used to be imported here for INKEY$ and
 # INPUT$.
@@ -571,12 +571,16 @@ class BuiltinFunctions:
     # ========================================================================
 
     def CINT(self, x):
-        """Convert to integer (round to nearest)"""
-        return int(round(x))
+        """Convert to integer: nearest, with halves away from zero.
+
+        Python's round() is banker's rounding, which sends 2.5 to 2. The real
+        binary says CINT(2.5) is 3 and CINT(-2.5) is -3.
+        """
+        return to_integer(float(x))
 
     def CSNG(self, x):
-        """Convert to single precision"""
-        return float(x)
+        """Convert to single precision, losing what a single cannot hold."""
+        return to_single(float(x))
 
     def CDBL(self, x):
         """Convert to double precision"""
@@ -686,8 +690,8 @@ class BuiltinFunctions:
         return ord(s[0])
 
     def CHR(self, x):
-        """CHR$ - Character from ASCII code"""
-        code = int(x)
+        """CHR$ - Character from ASCII code. CHR$(65.7) is "B" - see to_integer."""
+        code = to_integer(x)
         if code < 0 or code > 255:
             raise ValueError("Illegal function call: CHR code out of range")
         return chr(code)
@@ -710,7 +714,7 @@ class BuiltinFunctions:
             haystack, needle = args
         elif len(args) == 3:
             start, haystack, needle = args
-            start = int(start)
+            start = to_integer(start)
         else:
             raise ValueError("INSTR requires 2 or 3 arguments")
 
@@ -726,8 +730,8 @@ class BuiltinFunctions:
         return pos + 1 if pos >= 0 else 0
 
     def LEFT(self, s, n):
-        """Left n characters of string"""
-        n = int(n)
+        """Left n characters of string. A fractional n rounds: 2.7 gives 3."""
+        n = to_integer(n)
         return s[:n]
 
     def LEN(self, s):
@@ -745,12 +749,12 @@ class BuiltinFunctions:
         """
         if len(args) == 2:
             s, start = args
-            start = int(start)
+            start = to_integer(start)
             return s[start-1:] if start > 0 else s
         elif len(args) == 3:
             s, start, length = args
-            start = int(start)
-            length = int(length)
+            start = to_integer(start)
+            length = to_integer(length)
             if start < 1:
                 start = 1
             return s[start-1:start-1+length]
@@ -762,13 +766,13 @@ class BuiltinFunctions:
         return oct(int(x))[2:]  # Remove '0o' prefix
 
     def RIGHT(self, s, n):
-        """Right n characters of string"""
-        n = int(n)
+        """Right n characters of string. A fractional n rounds."""
+        n = to_integer(n)
         return s[-n:] if n > 0 else ""
 
     def SPACE(self, n):
-        """String of n spaces"""
-        n = int(n)
+        """String of n spaces. A fractional n rounds: SPACE$(2.7) is 3 spaces."""
+        n = to_integer(n)
         return " " * n
 
     def STR(self, x):
@@ -793,14 +797,16 @@ class BuiltinFunctions:
 
         STRING$(n, code) - repeat CHR$(code) n times
         STRING$(n, string) - repeat first char of string n times
+
+        Both arguments round: STRING$(3, 65.7) is "BBB".
         """
-        n = int(n)
+        n = to_integer(n)
         if isinstance(char, str):
             # String argument - use first character
             c = char[0] if char else " "
         else:
             # Numeric argument - convert to character
-            c = chr(int(char))
+            c = chr(to_integer(char))
         return c * n
 
     def VAL(self, s):
@@ -869,7 +875,7 @@ class BuiltinFunctions:
         Returns a marker object that PRINT interprets as "move to column n".
         Column numbering is 1-based (column 1 is leftmost).
         """
-        return TabMarker(int(n))
+        return TabMarker(to_integer(n))     # TAB(4.7) is column 5
 
     def SPC(self, n):
         """
@@ -877,7 +883,7 @@ class BuiltinFunctions:
 
         Returns a marker object that PRINT interprets as "print n spaces".
         """
-        return SpcMarker(int(n))
+        return SpcMarker(to_integer(n))     # SPC(3.7) is four spaces
 
     def EOF(self, file_num):
         """

@@ -14,6 +14,7 @@ This module manages:
 
 import time
 from src.ast_nodes import DataStatementNode, DefFnStatementNode
+from src.number_format import coerce_to_type
 from src.pc import PC, StatementTable
 
 
@@ -450,6 +451,14 @@ class Runtime:
         else:
             canonical_case = original_case or name
 
+        # Store the value the way a variable of this type holds it: a single
+        # keeps 24 bits of mantissa, an integer rounds to nearest. Without
+        # this a single-precision variable quietly held full double precision,
+        # so F# = 1/3 printed .3333333333333333 where MBASIC says
+        # .3333333432674408 - the error the real machine keeps.
+        # See src/number_format.py.
+        value = coerce_to_type(value, resolved_suffix)
+
         # Enforce 255 byte string limit (MBASIC 5.21 compatibility)
         if resolved_suffix == '$' and isinstance(value, str) and len(value) > 255:
             raise RuntimeError("String too long")
@@ -769,7 +778,11 @@ class Runtime:
                    If None, write access is not tracked.
         """
         # Resolve full array name
-        full_name, _ = self._resolve_variable_name(name, type_suffix, def_type_map)
+        full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
+
+        # An array element holds its type the way a scalar does: a single keeps
+        # 24 mantissa bits, an integer rounds to nearest. See set_variable.
+        value = coerce_to_type(value, resolved_suffix)
 
         # Auto-dimension array to (10) if not explicitly dimensioned (MBASIC behavior)
         if full_name not in self._arrays:

@@ -125,7 +125,8 @@ class Lexer:
                     value = int(num_str[2:], 16) if len(num_str) > 2 else 0
                 except ValueError:
                     raise LexerError(f"Invalid hex number: {num_str}", start_line, start_column)
-                return Token(TokenType.NUMBER, value, start_line, start_column)
+                return Token(TokenType.NUMBER, value, start_line, start_column,
+                             literal_text=num_str)
 
             elif next_char and next_char.upper() == 'O':
                 # Octal with &O prefix
@@ -136,7 +137,8 @@ class Lexer:
                     value = int(num_str[2:], 8) if len(num_str) > 2 else 0
                 except ValueError:
                     raise LexerError(f"Invalid octal number: {num_str}", start_line, start_column)
-                return Token(TokenType.NUMBER, value, start_line, start_column)
+                return Token(TokenType.NUMBER, value, start_line, start_column,
+                             literal_text=num_str)
 
             elif next_char and next_char in '01234567':
                 # Octal with just & prefix
@@ -146,7 +148,8 @@ class Lexer:
                     value = int(num_str[1:], 8) if len(num_str) > 1 else 0
                 except ValueError:
                     raise LexerError(f"Invalid octal number: {num_str}", start_line, start_column)
-                return Token(TokenType.NUMBER, value, start_line, start_column)
+                return Token(TokenType.NUMBER, value, start_line, start_column,
+                             literal_text=num_str)
 
         # Check for leading decimal point (.5 syntax)
         if self.current_char() == '.' and self.peek_char() and self.peek_char().isdigit():
@@ -196,7 +199,11 @@ class Lexer:
         except ValueError:
             raise LexerError(f"Invalid number: {num_str}", start_line, start_column)
 
-        return Token(TokenType.NUMBER, value, start_line, start_column)
+        # Keep the source text: the type suffix decides whether this literal
+        # is single or double precision, and it cannot be recovered from the
+        # value afterwards - 1# and 1 both arrive as 1.0.
+        return Token(TokenType.NUMBER, value, start_line, start_column,
+                     literal_text=num_str + (type_suffix or ''))
 
     def read_string(self) -> Token:
         """Read a string literal enclosed in double quotes"""

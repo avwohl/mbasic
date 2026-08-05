@@ -220,6 +220,7 @@ class Token:
         column: Column number where token starts
         original_case: Original case for user-defined identifiers (variable names) before normalization.
                       Only set for IDENTIFIER tokens. Example: "myVar" stored here, "myvar" in value.
+        literal_text: Source text of a NUMBER token, suffix included. Only set for NUMBER tokens.
         original_case_keyword: Original case for keywords, determined by keyword case policy.
                               Only set for keyword tokens (PRINT, IF, GOTO, etc.). Used by serializer
                               to output keywords with consistent or preserved case style.
@@ -240,6 +241,10 @@ class Token:
     column: int
     original_case: Any = None  # Original case for user identifiers (variables only, not keywords)
     original_case_keyword: str = None  # Display case for keywords (policy-determined, not identifiers)
+    literal_text: str = None   # NUMBER tokens: the number exactly as written,
+                               # including any type suffix. "1#" and "1" have
+                               # the same value and different precision, and
+                               # the suffix is not recoverable from the value.
 
     def __repr__(self):
         # Show both original cases if available

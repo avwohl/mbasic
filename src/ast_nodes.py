@@ -1275,11 +1275,17 @@ class FunctionCallNode:
         SIN(X)      - Built-in function
         FNcalc(A,B) - User-defined function (DEF FN)
         LEN(A$)     - String function
+
+    Attributes:
+        type_suffix: For a DEF FN call, the suffix it was written with, which
+            is what types the result - FNA is single and FNA# is double. The
+            name has it stripped for lookup, so it is kept separately.
     """
     name: str
     arguments: List['ExpressionNode']
     line_num: int = 0
     column: int = 0
+    type_suffix: str = None
 
 
 # ============================================================================
