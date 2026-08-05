@@ -189,9 +189,9 @@ def test_single_key_no_enter_no_echo():
     print("-" * 60)
     with Session(ONE_KEY) as s:
         s.run()
-        got = s.send(b'Q', until=b'GOT81')
+        got = s.send(b'Q', until=b'GOT 81')
 
-    check(b'GOT81' in got,
+    check(b'GOT 81' in got,
           f"a single 'Q' completed INPUT$(1) with no Enter (got {got!r})")
     # A cooked terminal would echo a 'Q' of its own before GOT. 'Q' appears
     # nowhere in the program listing, so this cannot misfire on an echo of the
@@ -208,10 +208,10 @@ def test_multiple_characters_in_one_burst():
                   '20 V$=INPUT$(3)',
                   '30 PRINT "GOT";ASC(MID$(V$,1,1));ASC(MID$(V$,2,1));ASC(MID$(V$,3,1))']) as s:
         s.run()
-        got = s.send(b'ABC', until=b'GOT656667')
+        got = s.send(b'ABC', until=b'GOT 65  66  67')
         after = s.send(b'PRINT "ZZZ"\r', until=b'ZZZ\r\n')
 
-    check(b'GOT656667' in got,
+    check(b'GOT 65  66  67' in got,
           f"all three characters arrived in order (got {got!r})")
     check(b'ZZZ' in after,
           f"the REPL still works afterwards (got {after!r})")
@@ -221,24 +221,24 @@ def test_no_stale_keystroke_into_the_next_run():
     """Type-ahead beyond what INPUT$ asked for must not cross into a later RUN.
 
     This is the buffering bug proper. Before the fix: RUN #1 consumed the 'A'
-    and hid "B\\n" in the TextIOWrapper, RUN #2 then printed GOT66 with nobody
-    touching the keyboard, and RUN #3 printed GOT10 from the stranded newline.
+    and hid "B\\n" in the TextIOWrapper, RUN #2 then printed GOT 66 with nobody
+    touching the keyboard, and RUN #3 printed GOT 10 from the stranded newline.
     """
     print("\nleftover type-ahead does not leak into the next RUN")
     print("-" * 60)
     with Session(ONE_KEY) as s:
         s.run()
-        first = s.send(b'AB\r', until=b'GOT65')
+        first = s.send(b'AB\r', until=b'GOT 65')
         s.send(b'PRINT "SYNC"\r', until=b'SYNC\r\n')
         s.run()
         untouched = s.send(b'', wait=0.8)       # nobody types anything here
         second = s.send(b'Q', until=b'GOT')
 
-    check(b'GOT65' in first,
+    check(b'GOT 65' in first,
           f"RUN #1 got the 'A' that was typed (got {first!r})")
     check(b'GOT' not in untouched,
           f"RUN #2 read nothing until a key was typed (got {untouched!r})")
-    check(b'GOT81' in second,
+    check(b'GOT 81' in second,
           f"RUN #2 received the 'Q' actually typed at it (got {second!r})")
 
 
@@ -255,9 +255,9 @@ def test_type_ahead_before_the_statement_is_honoured():
                   '30 PRINT "GOT";ASC(A$)']) as s:
         # Deliberately no RDY sync: the 'Z' rides in with the RUN and has to
         # survive in the tty queue until line 20 gets there.
-        got = s.send(b'RUN\rZ', wait=8.0, until=b'GOT90')
+        got = s.send(b'RUN\rZ', wait=8.0, until=b'GOT 90')
 
-    check(b'GOT90' in got,
+    check(b'GOT 90' in got,
           f"the 'Z' typed during line 10 reached INPUT$ (got {got!r})")
 
 
@@ -267,18 +267,18 @@ def test_control_characters_pass_through():
     print("-" * 60)
     with Session(ONE_KEY) as s:
         s.run()
-        ctrl_a = s.send(b'\x01', until=b'GOT1\r\n')
+        ctrl_a = s.send(b'\x01', until=b'GOT 1 \r\n')
         s.run()
-        enter = s.send(b'\r', until=b'GOT13\r\n')
+        enter = s.send(b'\r', until=b'GOT 13\r\n')
         s.run()
-        high = s.send(b'\x81', until=b'GOT129\r\n')
+        high = s.send(b'\x81', until=b'GOT 129\r\n')
 
-    check(b'GOT1\r\n' in ctrl_a, f"Ctrl+A arrives as CHR$(1) (got {ctrl_a!r})")
+    check(b'GOT 1 \r\n' in ctrl_a, f"Ctrl+A arrives as CHR$(1) (got {ctrl_a!r})")
     check(b'^A' not in ctrl_a,
           f"and unechoed - a cooked terminal would show ^A (got {ctrl_a!r})")
     # Raw mode means no ICRNL: Enter is CR, which is what CP/M sends.
-    check(b'GOT13' in enter, f"Enter arrives as CHR$(13) (got {enter!r})")
-    check(b'GOT129' in high,
+    check(b'GOT 13' in enter, f"Enter arrives as CHR$(13) (got {enter!r})")
+    check(b'GOT 129' in high,
           f"a byte above 127 survives rather than being mangled (got {high!r})")
 
 
@@ -303,18 +303,18 @@ def test_ctrl_c_breaks_and_cont_resumes():
         # passes for the wrong reason - exercising type-ahead, which has its
         # own test, rather than the blocking raw read.
         time.sleep(RAW_MODE_SETTLE)
-        resumed = s.send(b'K', until=b'GOT75')
+        resumed = s.send(b'K', until=b'GOT 75')
 
     check(b'Break in 20' in broke,
           f"Ctrl+C reported a break at the INPUT$ line (got {broke!r})")
     # str(PC) is a debugging repr; MBASIC says "Break in 20".
     check(b'PC(' not in broke,
           f"the break names the line, not a PC repr (got {broke!r})")
-    check(b'GOT3' not in broke,
+    check(b'GOT 3' not in broke,
           f"Ctrl+C was not handed to the program as CHR$(3) (got {broke!r})")
     check(b'^C' not in broke,
           f"raw mode meant the terminal did not echo it either (got {broke!r})")
-    check(b'GOT75' in resumed,
+    check(b'GOT 75' in resumed,
           f"CONT re-entered the INPUT$ and it read the 'K' (got {resumed!r})")
 
 
@@ -440,8 +440,8 @@ def test_piped_stdin_still_works():
     except subprocess.TimeoutExpired:
         out = '<timed out>'
 
-    check('GOT65' in out, f"the first character arrived (got {out!r})")
-    check('GOT26667' in out,
+    check('GOT 65' in out, f"the first character arrived (got {out!r})")
+    check('GOT2 66  67' in out,
           f"the next two arrived from the same line (got {out!r})")
 
 

@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2026-08-05
-**Total Documents:** 45
+**Total Documents:** 46
 
 ## What's Here
 
@@ -98,6 +98,7 @@ port I/O — but they are not required. Read
 - [Kubernetes Deployment Summary](KUBERNETES_DEPLOYMENT_SUMMARY.md)
 - [Linux Mint Developer Setup](LINUX_MINT_DEVELOPER_SETUP.md)
 - [Macos Libedit Readline](MACOS_LIBEDIT_READLINE.md)
+- [Number Formatting](NUMBER_FORMATTING.md)
 - [Path Based Tools](PATH_BASED_TOOLS.md)
 - [Persistent Issues Analysis](PERSISTENT_ISSUES_ANALYSIS.md)
 - [Persistent Issues Answer](PERSISTENT_ISSUES_ANSWER.md)

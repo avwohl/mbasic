@@ -11,6 +11,8 @@ reference implementation for maximum compatibility with classic BASIC programs.
 import math
 import random
 
+from src.number_format import SINGLE_DIGITS
+
 # tty, termios, os, sys and win_console used to be imported here for INKEY$ and
 # INPUT$.
 # Both now read through the I/O handler, so the terminal details - and the
@@ -331,7 +333,10 @@ class UsingFormatter:
 
         # Check for overflow
         if len(num_str) > available_width:
-            # Number too large - prepend % and return as-is
+            # Number too large - prepend % and return as-is, sign included:
+            # the real binary prints %-123.46, not %123.46.
+            if is_negative:
+                return '%-' + num_str
             return '%' + num_str
 
         # Build output with padding
@@ -353,6 +358,10 @@ class UsingFormatter:
         # Note: trailing_minus_only adds - for negative OR space for non-negative (always reserves 1 char)
         if spec['leading_sign'] or spec['trailing_sign'] or spec['trailing_minus_only']:
             content_width += 1
+        elif sign_char:
+            # A plain field takes a character for the minus too, or the field
+            # comes out one wider than it was asked for.
+            content_width += 1
 
         padding_needed = field_width - content_width
 
@@ -370,6 +379,12 @@ class UsingFormatter:
                 result_parts.append('*' * max(0, padding_needed))
             else:
                 result_parts.append(' ' * max(0, padding_needed))
+
+        # Minus for a plain field, before the $ - the real binary prints
+        # -$12.50 for USING "$$###.##" with -12.5, and **-12.50 for "**###.##"
+        # (the sign goes after asterisk fill but before the digits).
+        if sign_char:
+            result_parts.append(sign_char)
 
         # Dollar sign (immediately before number)
         if spec['dollar_sign']:
@@ -760,12 +775,17 @@ class BuiltinFunctions:
         """
         Convert number to string.
 
-        BASIC STR$ adds a leading space for positive numbers
+        The same characters PRINT would show, which means MBASIC's number
+        formatting rather than Python's: STR$(-2) is "-2", not "-2.0", and
+        STR$(1/3) is " .333333". A leading space for positives, and - unlike
+        PRINT - no trailing one. See src/number_format.py.
+
+        The caller's precision is not known here, so single is assumed: STR$
+        has no expression to inspect, and single is the default type.
         """
-        if x >= 0:
-            return " " + str(x)
-        else:
-            return str(x)
+        from src.number_format import format_number
+        text = format_number(x, SINGLE_DIGITS)
+        return " " + text if x >= 0 else text
 
     def STRING(self, n, char):
         """

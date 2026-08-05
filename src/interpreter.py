@@ -13,6 +13,8 @@ from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingForm
 from src.tokens import TokenType
 from src.pc import PC
 from src.win_console import win_flush_pending
+from src.number_format import (format_for_print, INTEGER_DIGITS,
+                               SINGLE_DIGITS, DOUBLE_DIGITS)
 from src.iohandler.base import KeyInputPending
 import src.ast_nodes as ast_nodes
 
@@ -956,6 +958,108 @@ class Interpreter:
                 limits=self.limits
             )
 
+    # ------------------------------------------------------------------
+    # How many digits PRINT shows
+    # ------------------------------------------------------------------
+
+    #: Functions whose result is not single precision. Everything else in
+    #: MBASIC's library returns single, including SQR, SIN and the rest -
+    #: PRINT SQR(2) gives 1.41421, not 1.4142135623730951.
+    _FUNCTION_PRECISION = {
+        'CDBL': DOUBLE_DIGITS, 'CVD': DOUBLE_DIGITS,
+        'CINT': INTEGER_DIGITS, 'ASC': INTEGER_DIGITS, 'LEN': INTEGER_DIGITS,
+        'INSTR': INTEGER_DIGITS, 'CVI': INTEGER_DIGITS, 'POS': INTEGER_DIGITS,
+        'LPOS': INTEGER_DIGITS, 'PEEK': INTEGER_DIGITS, 'INP': INTEGER_DIGITS,
+        'LOC': INTEGER_DIGITS, 'LOF': INTEGER_DIGITS, 'EOF': INTEGER_DIGITS,
+        'VARPTR': INTEGER_DIGITS, 'FRE': INTEGER_DIGITS,
+    }
+
+    def _numeric_digits(self, expr):
+        """Significant figures PRINT should show for this expression.
+
+        MBASIC decides by *type*, not by value: a single-precision 1/3 prints
+        as .333333 and a double-precision one as .3333333333333333. The type is
+        a static property of the expression, so it is read off the tree rather
+        than tracked through the arithmetic - which keeps the evaluator, and
+        every result it computes, exactly as it was.
+
+        Returns SINGLE_DIGITS, DOUBLE_DIGITS, or INTEGER_DIGITS (None).
+        """
+        node = type(expr).__name__
+
+        if node == 'NumberNode':
+            return self._literal_digits(expr)
+
+        if node == 'VariableNode':
+            return self._suffix_digits(getattr(expr, 'type_suffix', None))
+
+        if node == 'BinaryOpNode':
+            # BASIC promotes to the wider of the two operands.
+            return self._wider(self._numeric_digits(expr.left),
+                               self._numeric_digits(expr.right))
+
+        if node == 'UnaryOpNode':
+            return self._numeric_digits(expr.operand)
+
+        if node == 'FunctionCallNode':
+            name = getattr(expr, 'name', '').upper().rstrip('$')
+            if name in self._FUNCTION_PRECISION:
+                return self._FUNCTION_PRECISION[name]
+            if name in ('INT', 'FIX', 'ABS', 'SGN') and expr.arguments:
+                # These keep the type they were given.
+                return self._numeric_digits(expr.arguments[0])
+            return SINGLE_DIGITS
+
+        if node == 'ArrayAccessNode':
+            return self._suffix_digits(getattr(expr, 'type_suffix', None))
+
+        return SINGLE_DIGITS
+
+    @staticmethod
+    def _suffix_digits(suffix):
+        """Digits implied by a type suffix. No suffix means single (or
+        whatever DEFINT/DEFDBL made the default, which the parser has already
+        resolved into the suffix)."""
+        if suffix == '%':
+            return INTEGER_DIGITS
+        if suffix == '#':
+            return DOUBLE_DIGITS
+        return SINGLE_DIGITS
+
+    @staticmethod
+    def _literal_digits(expr):
+        """Digits implied by how a numeric literal was written.
+
+        A literal is double if it says so - a '#' suffix or a 'D' exponent -
+        or if it carries more than 7 significant figures. That is why
+        PRINT 1234567 gives 1.23457E+06 but PRINT 12345678 gives 12345678:
+        the first is single, the second is double.
+        """
+        # NumberNode.literal is documented as the original text but actually
+        # holds the value (1E6 arrives as 1000000.0), so an explicit marker is
+        # only usable when it happens to be a string.
+        literal = str(getattr(expr, 'literal', '') or '').upper()
+        if '#' in literal or 'D' in literal:
+            return DOUBLE_DIGITS
+
+        # Otherwise count the significant figures the value carries: seven or
+        # fewer is single, more is double. That is MBASIC's rule applied to
+        # the value rather than to the typed text, which agrees except for a
+        # literal padded with trailing zeros (1000000.0 is eight typed digits
+        # but one significant one).
+        try:
+            mantissa = repr(float(getattr(expr, 'value', 0))).split('e')[0]
+        except (TypeError, ValueError):
+            return SINGLE_DIGITS
+        significant = mantissa.replace('-', '').replace('.', '').strip('0')
+        return DOUBLE_DIGITS if len(significant) > 7 else SINGLE_DIGITS
+
+    @staticmethod
+    def _wider(left, right):
+        """The wider of two precisions, INTEGER < SINGLE < DOUBLE."""
+        order = {INTEGER_DIGITS: 0, SINGLE_DIGITS: 1, DOUBLE_DIGITS: 2}
+        return left if order.get(left, 1) >= order.get(right, 1) else right
+
     def execute_print(self, stmt):
         """Execute PRINT statement - print to screen or file"""
         # Check if printing to file
@@ -980,17 +1084,14 @@ class Interpreter:
                 # Keep marker object for later processing
                 output_parts.append(value)
             # Convert to string
-            elif isinstance(value, float):
-                # Format numbers like BASIC does
-                if value == int(value):
-                    s = str(int(value))
-                else:
-                    s = str(value)
-                # Add space for positive numbers
-                if value >= 0:
-                    s = " " + s
-                s = s + " "
-                output_parts.append(s)
+            elif isinstance(value, (int, float)) and not isinstance(value, bool):
+                # MBASIC shows 6 significant figures for a single-precision
+                # value and 16 for a double, with a leading space unless the
+                # number is negative and a trailing space always. Which of the
+                # two applies is a property of the expression, not the value -
+                # see _numeric_digits(). src/number_format.py has the rules.
+                output_parts.append(
+                    format_for_print(value, self._numeric_digits(expr)))
             else:
                 s = str(value)
                 output_parts.append(s)
