@@ -85,9 +85,10 @@ replaced. There is a test for exactly this.
   the curses UI passes a real keyboard, see
   [CURSES_PROGRAM_KEYBOARD.md](CURSES_PROGRAM_KEYBOARD.md). The mixin remains
   the fallback for the immediate-mode handler.)*
-- **Tk** - `TkIOHandler.input_char` opens a modal "INPUT$ (Single Character)"
-  dialog, written for this and unreachable until now. It already returns `""`
-  for a non-blocking read, so a polling `INKEY$` does not open dialogs.
+- **Tk** - `TkIOHandler.input_char` opened a modal "INPUT$ (Single Character)"
+  dialog, written for this and unreachable until now. *(Since replaced by a
+  real keyboard, see [TK_PROGRAM_KEYBOARD.md](TK_PROGRAM_KEYBOARD.md); the
+  dialog remains only for a handler built without a backend.)*
 - **web (nicegui)** - `SimpleWebIOHandler.input_char` returns `""`. Previously
   these builtins read the *server's* stdin from inside the asyncio loop, which
   would have blocked every session on the machine; now they cannot.
@@ -108,11 +109,11 @@ The terminal behavior it all has to keep: 33 checks, unchanged by the move.
 
 ## Not fixed here
 
-**~~No backend implements a real keyboard yet.~~** The curses UI does now -
-see [CURSES_PROGRAM_KEYBOARD.md](CURSES_PROGRAM_KEYBOARD.md), which is what
-this seam was for. Tk and the web UI still answer from `input_char` alone (a
-modal dialog per character, and `""` respectively); each is one method away
-from a real implementation, and none of it touches the interpreter.
+**~~No backend implements a real keyboard yet.~~** Two do now - the curses UI
+([CURSES_PROGRAM_KEYBOARD.md](CURSES_PROGRAM_KEYBOARD.md)) and the Tk UI
+([TK_PROGRAM_KEYBOARD.md](TK_PROGRAM_KEYBOARD.md)) - which is what this seam
+was for. The web UI still answers `""` from `SimpleWebIOHandler.input_char`;
+it is one method away, and none of it touches the interpreter.
 
 **`WebIOHandler` and `CursesIOHandler` are still dead** (`src/iohandler/web_io.py`,
 `src/iohandler/curses_io.py`) - neither is instantiated in production. They

@@ -89,6 +89,21 @@ class TkBackend(UIBackend):
         self.breakpoints = set()  # Set of line numbers with breakpoints
         self.tick_timer_id = None  # ID of pending after() call
 
+        # The keyboard a running program reads through (INKEY$, INPUT$).
+        # Run > Stop is what ends a blocking read: it clears self.running,
+        # which still_running reports, and the keyboard turns that into the
+        # Ctrl+C that INPUT$ already treats as a break.
+        from .tk_keyboard import TkKeyboard
+        self.program_keyboard = TkKeyboard(
+            get_root=lambda: self.root,
+            on_wait=self._flush_program_output,
+            still_running=lambda: bool(self.running),
+        )
+        # Set while a blocking read is pumping the event loop, so a tick
+        # scheduled by something that pump runs cannot re-enter the
+        # interpreter underneath it.
+        self._waiting_for_program_key = False
+
         # Variables window state
         self.variables_window = None
         self.variables_tree = None
@@ -181,6 +196,11 @@ class TkBackend(UIBackend):
         self.editor_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # Bind events for auto-sort on navigation
+        # Bound first, so a running program gets the key before the editor
+        # inserts it. Returns 'break' when it takes one, which stops the rest
+        # of the chain including the widget's own class binding.
+        self.editor_text.text.bind('<Key>', self._on_program_key, add='+')
+
         self.editor_text.text.bind('<KeyRelease-Up>', self._on_cursor_move)
         self.editor_text.text.bind('<KeyRelease-Down>', self._on_cursor_move)
         self.editor_text.text.bind('<KeyRelease-Prior>', self._on_cursor_move)  # Page Up
@@ -224,6 +244,9 @@ class TkBackend(UIBackend):
             state=tk.DISABLED
         )
         self.output_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # The output pane can take focus by being clicked, so a program has to
+        # be able to hear keys typed at it there too.
+        self.output_text.bind('<Key>', self._on_program_key, add='+')
 
         # INPUT row (hidden by default, shown when INPUT statement needs input)
         # Visibility controlled via pack() when showing, pack_forget() when hiding
@@ -270,6 +293,10 @@ class TkBackend(UIBackend):
                                         state='normal', takefocus=True,
                                         exportselection=False)
         self.immediate_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        # Bound before <Return> so a running program gets the key first - the
+        # immediate line keeps the focus during a RUN, so this is usually the
+        # widget a keystroke actually lands on.
+        self.immediate_entry.bind('<Key>', self._on_program_key, add='+')
         self.immediate_entry.bind('<Return>', lambda e: self._execute_immediate())
 
         # Bind Tab key to move focus to editor
@@ -2719,6 +2746,37 @@ class TkBackend(UIBackend):
             # Clipboard empty or error - allow default behavior
             return None
 
+    def _program_owns_keyboard(self):
+        """True when typed keys belong to the running program, not the UI."""
+        return bool(self.running) and not self.paused_at_breakpoint
+
+    def _on_program_key(self, event):
+        """Give a running program the keys, before any widget sees them.
+
+        Bound ahead of the editor's own handlers, and returns 'break' so the
+        character is not also typed into the program listing. While a program
+        runs it owns the console, the way it does on a real terminal; the menus
+        stay reachable with the mouse, and Run > Stop ends it.
+        """
+        if not self._program_owns_keyboard():
+            return None
+        self.program_keyboard.push_from_event(event)
+        return 'break'
+
+    def _flush_program_output(self):
+        """Make sure the program's prompt is visible before it waits.
+
+        A blocking INPUT$ runs inside a tick callback with the event loop
+        stopped, so without this the text a program printed just before asking
+        for a key would not be on screen yet.
+        """
+        try:
+            if self.root is not None:
+                self.root.update_idletasks()
+        except Exception as e:      # noqa: BLE001 - a repaint must not raise
+            debug_log_error("failed to repaint before a keyboard wait",
+                            exception=e)
+
     def _on_key_press(self, event):
         """Handle key press - filter invalid characters.
 
@@ -3095,6 +3153,14 @@ class TkBackend(UIBackend):
         if not self.running or not self.interpreter:
             return
 
+        if self._waiting_for_program_key:
+            # A tick is already running and is blocked in INPUT$, pumping the
+            # event loop - which is how this callback got to run at all.
+            # Entering the interpreter again from here would execute the
+            # program twice over. The blocked tick reschedules when it
+            # finishes, so nothing is lost by dropping this one.
+            return
+
         try:
             # Execute one quantum of work
             state = self.interpreter.tick(mode='run', max_statements=100)
@@ -3246,6 +3312,10 @@ class TkBackend(UIBackend):
             # Clear output
             self._menu_clear_output()
             self._set_status("Running...")
+
+            # Keys typed at the previous program - or half an escape sequence
+            # left by one that stopped mid-arrow - are not input for this one.
+            self.program_keyboard.clear()
 
             # Get program AST
             program_ast = self.program.get_program_ast()
@@ -4113,16 +4183,28 @@ class TkIOHandler(IOHandler):
 
         return result
 
+    def _keyboard(self):
+        """The running program's keyboard, if the backend has one."""
+        return getattr(self.backend, 'program_keyboard', None)
+
     def input_char(self, blocking: bool = True) -> str:
-        """Input single character via modal dialog.
+        """Input single character - INKEY$, and INPUT$(1).
 
-        Used by INKEY$ and INPUT$ for single character input.
-        For Tk UI, shows a simple input dialog limited to 1 character.
+        Read from the program's keyboard (src/ui/tk_keyboard.py), which
+        collects real key events. The modal dialog below is what this did
+        before there was one, and remains the fallback for a handler built
+        without a backend - the only way it can now be reached.
         """
-        if not blocking:
-            # Non-blocking: no key available (would need background monitoring)
-            return ""
+        keyboard = self._keyboard()
+        if keyboard is not None:
+            if not blocking:
+                return keyboard.input_char(blocking=False)
+            return self.input_chars(1)
 
+        if not blocking:
+            # No keyboard and no way to poll one: INKEY$ reports no key rather
+            # than opening a dialog on every pass of a polling loop.
+            return ""
 
         # Show modal input dialog
         result = simpledialog.askstring(
@@ -4137,7 +4219,29 @@ class TkIOHandler(IOHandler):
 
         # Return first character only
         return result[0] if result else ""
-    
+
+    def input_chars(self, count: int, interrupted=None) -> str:
+        """Read up to count characters for INPUT$(n). See IOHandler.
+
+        One dialog per character is not a keyboard, so this waits on real key
+        events instead - which means pumping Tk's event loop, because INPUT$
+        blocks inside an after() callback with the loop stopped behind it. The
+        flag tells _execute_tick not to enter the interpreter again from
+        anything that pump happens to run.
+        """
+        keyboard = self._keyboard()
+        if keyboard is None:
+            return super().input_chars(count, interrupted=interrupted)
+
+        backend = self.backend
+        if backend is not None:
+            backend._waiting_for_program_key = True
+        try:
+            return keyboard.input_chars(count, interrupted=interrupted)
+        finally:
+            if backend is not None:
+                backend._waiting_for_program_key = False
+
     def clear_screen(self) -> None:
         """Clear screen - no-op for Tk UI.
 

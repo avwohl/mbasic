@@ -129,7 +129,7 @@ expression evaluator to be resumable - a much larger change than a keyboard.
 for a BASIC console, but it means the menu and the editor are unreachable
 during a long-running program that never reads a key. `^X` stops it.
 
-**Tk and the web UI still have no keyboard.** Tk opens a modal dialog per
-character (`TkIOHandler.input_char`), which at least works now that it is
-reachable; the web backend returns "" - `SimpleWebIOHandler` never had one.
-Both are now one method away from a real implementation.
+**~~Tk and the web UI still have no keyboard.~~** Tk has one now - see
+[TK_PROGRAM_KEYBOARD.md](TK_PROGRAM_KEYBOARD.md), which solves the same problem
+with a pumped event loop instead of a direct screen read. The web backend still
+returns "" from `SimpleWebIOHandler.input_char`.
