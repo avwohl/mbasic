@@ -987,6 +987,14 @@ class Interpreter:
         'VARPTR': INTEGER_DIGITS, 'FRE': INTEGER_DIGITS,
     }
 
+    #: The maths library. On the real machine these are single by signature and
+    #: SQR(2#) comes back with 24 bits; here they follow their argument, so a
+    #: double argument is computed and returned in double. A deliberate
+    #: divergence - see docs/dev/SINGLE_PRECISION.md. The result is never
+    #: narrower than single: SQR of an integer is not an integer.
+    _ARGUMENT_TYPED = frozenset(
+        ('SQR', 'SIN', 'COS', 'TAN', 'ATN', 'LOG', 'EXP'))
+
     def _numeric_digits(self, expr):
         """Significant figures PRINT should show for this expression.
 
@@ -1025,8 +1033,12 @@ class Interpreter:
             if name in self._FUNCTION_PRECISION:
                 return self._FUNCTION_PRECISION[name]
             if name in ('INT', 'FIX', 'ABS', 'SGN') and expr.arguments:
-                # These keep the type they were given.
+                # These keep the type they were given, integers included.
                 return self._numeric_digits(expr.arguments[0])
+            if name in self._ARGUMENT_TYPED and expr.arguments:
+                # Single unless the argument is double - never an integer.
+                return self._wider(SINGLE_DIGITS,
+                                   self._numeric_digits(expr.arguments[0]))
             return SINGLE_DIGITS
 
         if node == 'ArrayAccessNode':

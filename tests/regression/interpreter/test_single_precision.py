@@ -22,9 +22,13 @@ suffix on a numeric literal, which the lexer used to discard (1# and 1 both
 arrived as 1.0), and the suffix on a DEF FN call, which the parser strips from
 the name for lookup.
 
-Every expectation here was read off `com/mbasic.com` under cpmemu. The values
-are printed through a double so the digits a single cannot hold are visible -
-PRINT on a single would round them away again and prove nothing.
+Every expectation here was read off `com/mbasic.com` under cpmemu, with one
+marked exception: the maths functions follow their argument's type here and are
+single by signature there, so `SQR(2#)` is deliberately more accurate than the
+real machine. Those cases carry the binary's value beside them.
+
+The values are printed through a double so the digits a single cannot hold are
+visible - PRINT on a single would round them away again and prove nothing.
 """
 
 import sys
@@ -170,9 +174,8 @@ PROGRAMS = [
     ('10 C# = 100!/7!: PRINT C#', ' 14.2857141494751 '),
     ('10 B# = 1/3*3: PRINT B#', ' 1 '),
     ('10 F# = -(1/3): PRINT F#', '-.3333333432674408 '),
-    # Functions work in single, even when handed a double.
+    # A function of a single is single, and matches the real binary exactly.
     ('10 D# = SQR(2): PRINT D#', ' 1.414213538169861 '),
-    ('10 E# = SQR(2#): PRINT E#', ' 1.414213538169861 '),
     ('10 K# = EXP(1): PRINT K#', ' 2.718281745910645 '),
     ('10 L# = 10^0.5: PRINT L#', ' 3.162277698516846 '),
     ('10 A# = LOG(2): PRINT A#', ' .6931471824645996 '),
@@ -274,6 +277,54 @@ def test_a_string_in_a_number_is_a_type_mismatch():
     check(got == 'ERR= 13 ', f"A% = \"X\" raises error 13 ({got!r})")
 
 
+#: The maths functions follow their argument's type here, where MBASIC's are
+#: single by signature. A deliberate divergence: these are the only
+#: expectations in this file that are NOT what the real binary printed, and
+#: what it printed is given alongside.
+ARGUMENT_TYPED_FUNCTIONS = [
+    ('10 E# = SQR(2#): PRINT E#', ' 1.414213562373095 ', '1.414213538169861'),
+    ('10 C# = SIN(1#): PRINT C#', ' .8414709848078965 ', '.841471016407013'),
+    ('10 E# = LOG(2#): PRINT E#', ' .6931471805599453 ', '.6931471824645996'),
+    ('10 F# = EXP(1#): PRINT F#', ' 2.718281828459045 ', '2.718281745910645'),
+    ('10 I# = ATN(1#)*4: PRINT I#', ' 3.141592653589793 ', '3.141592979431152'),
+]
+
+
+def test_maths_functions_follow_their_argument():
+    """SQR(2#) is computed in double here, and in single on the real machine.
+
+    MBASIC's library functions are single by signature, the way C's sqrtf is,
+    so a double argument came back with 24 bits of mantissa. This interpreter
+    uses native binary32 and binary64 and does not reproduce MBASIC's
+    arithmetic, so a double argument is computed in double - which is more
+    accurate and no longer bit-identical to 1981. See
+    docs/dev/SINGLE_PRECISION.md.
+    """
+    print("\nthe maths functions take their precision from their argument")
+    print("-" * 62)
+    for source, expected, real in ARGUMENT_TYPED_FUNCTIONS:
+        got = one(source)
+        check(got == expected, f"{source[3:30]:30} -> {got!r}"
+              + ("" if got == expected else f"   (want {expected!r})")
+              + f"   [real 5.21: {real}]")
+
+
+def test_a_single_argument_still_gives_a_single():
+    """The divergence is only for double arguments; everything else still
+    matches the binary exactly."""
+    print("\nand a single argument is still single")
+    print("-" * 62)
+    for source, expected in [
+        ('10 PRINT SQR(2)', ' 1.41421 '),
+        ('10 D# = SQR(2): PRINT D#', ' 1.414213538169861 '),
+        ('10 H# = SQR(4%): PRINT H#', ' 2 '),          # never narrower than single
+        ('10 D# = SIN(1): PRINT D#', ' .8414709568023682 '),
+    ]:
+        got = one(source)
+        check(got == expected, f"{source[3:30]:30} -> {got!r}"
+              + ("" if got == expected else f"   (want {expected!r})"))
+
+
 def test_input_stores_a_single():
     """INPUT into a single-precision variable loses what a single cannot hold."""
     print("\nINPUT")
@@ -347,6 +398,8 @@ if __name__ == "__main__":
     test_integer_assignment_rounds()
     test_coerce_by_suffix()
     test_programs_match_the_real_binary()
+    test_maths_functions_follow_their_argument()
+    test_a_single_argument_still_gives_a_single()
     test_fractional_arguments_round()
     test_a_string_in_a_number_is_a_type_mismatch()
     test_input_stores_a_single()
