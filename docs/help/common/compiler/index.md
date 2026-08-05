@@ -236,7 +236,7 @@ Learn about the optimization techniques used by the compiler to improve performa
 
 ### Complete Documentation
 
-- **[Feature Status](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_STATUS_SUMMARY.md)** - Complete feature list (100%!)
+- **[Feature Status](https://github.com/avwohl/mbasic/blob/main/docs/history/COMPILER_STATUS_SUMMARY.md)** - Complete feature list (100%!)
 - **[Setup Guide](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_SETUP.md)** - Installing uc80/um80/ul80, and z88dk as the alternate
 - **[Toolchain Policy](https://github.com/avwohl/mbasic/blob/main/docs/dev/TOOLCHAIN_POLICY.md)** - Why uc80 and cpmemu are preferred, and what each alternate still covers
 - **[CP/M Emulator](https://github.com/avwohl/mbasic/blob/main/docs/dev/TNYLPO_SETUP.md)** - Building tnylpo, the alternate emulator

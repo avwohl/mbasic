@@ -118,11 +118,11 @@ mkdocs gh-deploy
 
 ### Interpreter
 - [MBASIC Documentation](help/mbasic/index.md) - Interpreter docs
-- [Development Status](dev/STATUS.md) - Current project status
+- [Development Status](history/STATUS.md) - Current project status
 
 ### Compiler
 - [Toolchain Policy](dev/TOOLCHAIN_POLICY.md) - Preferred: uc80 (+ um80/ul80) and cpmemu
-- [Compiler Status Summary](dev/COMPILER_STATUS_SUMMARY.md) - **100% complete!**
+- [Compiler Status Summary](history/COMPILER_STATUS_SUMMARY.md) - **100% complete!**
 - [Compiler Setup](dev/COMPILER_SETUP.md) - uc80 installation; z88dk (alternate)
 - [CP/M Emulator Setup](dev/TNYLPO_SETUP.md) - tnylpo (alternate) installation
 

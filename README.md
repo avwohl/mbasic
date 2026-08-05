@@ -2,7 +2,7 @@
 
 A complete implementation of Microsoft BASIC-80 5.21 (CP/M era) with an interactive interpreter and TWO compiler backends (Z80/8080 + JavaScript), written in Python.
 
-> **About MBASIC:** MBASIC was a BASIC interpreter originally developed by Microsoft in the late 1970s. This is an independent, open-source reimplementation created for educational purposes and historical software preservation. See [MBASIC History](docs/MBASIC_HISTORY.md) for more information.
+> **About MBASIC:** MBASIC was a BASIC interpreter originally developed by Microsoft in the late 1970s. This is an independent, open-source reimplementation created for educational purposes and historical software preservation. See [MBASIC History](docs/history/MBASIC_HISTORY.md) for more information.
 >
 > **📄 Want the full story?** See [MBASIC Project Overview](docs/MBASIC_PROJECT_OVERVIEW.md) for a comprehensive feature showcase.
 
@@ -184,7 +184,7 @@ The **curses screen editor** (default) provides a full-screen terminal interface
 - `Ctrl+T` - Step (execute one line)
 - `Ctrl+X` - Stop execution
 
-See **[Curses Editor Documentation](docs/user/URWID_UI.md)** for complete guide.
+See **[Curses Editor Documentation](docs/help/ui/curses/index.md)** for complete guide.
 
 ### CLI Mode (Line-by-line REPL)
 
@@ -351,7 +351,7 @@ mbasic --compile-js program.js --html program.bas
 For detailed setup instructions and compiler documentation, see:
 - `docs/help/common/compiler/index.md` - Compiler guide for both backends
 - `docs/dev/COMPILER_SETUP.md` - Z80/8080 compiler setup guide
-- `docs/dev/COMPILER_STATUS_SUMMARY.md` - Z80/8080 full feature list and status
+- `docs/history/COMPILER_STATUS_SUMMARY.md` - Z80/8080 full feature list and status
 - `docs/dev/JS_BACKEND_REMAINING.md` - JavaScript compiler feature list
 - `docs/dev/TNYLPO_SETUP.md` - CP/M emulator installation (for Z80/8080 testing)
 
@@ -399,12 +399,12 @@ mbasic/
 ## Documentation
 
 ### User Documentation
-- **[Curses Screen Editor](docs/user/URWID_UI.md)** - Full-screen terminal editor (default UI)
+- **[Curses Screen Editor](docs/help/ui/curses/index.md)** - Full-screen terminal editor (default UI)
 - **[Quick Reference](docs/user/QUICK_REFERENCE.md)** - Command reference
 - **[Installation Guide](docs/user/INSTALL.md)** - Detailed installation instructions
 
 ### Compiler Documentation
-- **[Compiler Status Summary](docs/dev/COMPILER_STATUS_SUMMARY.md)** - Complete feature list (100% complete!)
+- **[Compiler Status Summary](docs/history/COMPILER_STATUS_SUMMARY.md)** - Complete feature list (100% complete!)
 - **[Compiler Setup](docs/dev/COMPILER_SETUP.md)** - z88dk installation and configuration
 - **[CP/M Emulator Setup](docs/dev/TNYLPO_SETUP.md)** - tnylpo installation for testing
 
@@ -583,7 +583,7 @@ if __name__ == "__main__":
 - Interpreter commands in compiler (LIST, LOAD, SAVE - these are for interactive mode only)
 - CHAIN/COMMON (program chaining - requires interpreter/loader infrastructure)
 
-See [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for complete project metrics and health information, and [docs/dev/COMPILER_STATUS_SUMMARY.md](docs/dev/COMPILER_STATUS_SUMMARY.md) for detailed compiler feature list.
+See [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for complete project metrics and health information, and [docs/history/COMPILER_STATUS_SUMMARY.md](docs/history/COMPILER_STATUS_SUMMARY.md) for detailed compiler feature list.
 
 ## Example Programs
 
@@ -705,7 +705,7 @@ python3 test_compile.py hardware.bas
 
 ## Credits and Disclaimers
 
-**Original Language:** MBASIC 5.21 was created by Microsoft Corporation (1970s-1980s). See [MBASIC History](docs/MBASIC_HISTORY.md) for the historical context and Microsoft's role in creating BASIC interpreters.
+**Original Language:** MBASIC 5.21 was created by Microsoft Corporation (1970s-1980s). See [MBASIC History](docs/history/MBASIC_HISTORY.md) for the historical context and Microsoft's role in creating BASIC interpreters.
 
 **This Implementation:**
 - Every line of code written by CLAUDE.ai

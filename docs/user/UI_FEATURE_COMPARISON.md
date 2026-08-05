@@ -308,7 +308,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 ## Reporting Issues
 
 Found a bug or missing feature? Report at:
-https://github.com/anthropics/mbasic/issues
+https://github.com/avwohl/mbasic/issues
 
 Include:
 - Which UI you're using

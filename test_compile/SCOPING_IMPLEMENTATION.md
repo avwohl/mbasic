@@ -179,7 +179,7 @@ line_220:
 
 ## References
 
-- Microsoft BASIC Compiler 1980 Manual (docs/external/Microsoft_BASIC_Compiler_1980.pdf)
+- Microsoft BASIC Compiler 1980 Manual (https://github.com/avwohl/retro_docs/blob/main/mbasic/Microsoft_BASIC_Compiler_1980.pdf)
 - MBASIC 5.21 Language Reference
 - Toolchain policy: [../docs/dev/TOOLCHAIN_POLICY.md](../docs/dev/TOOLCHAIN_POLICY.md)
 - uc80 C Compiler (preferred) — https://github.com/avwohl/uc80

@@ -109,7 +109,7 @@ Compiler documentation for both backends:
 - **[Compiler Guide](help/common/compiler/index.md)** - Getting started with Z80/8080 and JavaScript compilers
 - **[Toolchain Policy](dev/TOOLCHAIN_POLICY.md)** - uc80 + cpmemu are preferred; z88dk + tnylpo are supported alternates
 - **[Z80/8080 Setup](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_SETUP.md)** - Installing uc80 (or the z88dk alternate) for CP/M targets
-- **[Feature Status](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_STATUS_SUMMARY.md)** - 100% complete feature list
+- **[Feature Status](https://github.com/avwohl/mbasic/blob/main/docs/history/COMPILER_STATUS_SUMMARY.md)** - 100% complete feature list
 - **[CP/M Emulator](https://github.com/avwohl/mbasic/blob/main/docs/dev/TNYLPO_SETUP.md)** - Setting up the tnylpo alternate for testing Z80/8080 compiled programs
 
 ### 4. BASIC-80 Language (📕)
