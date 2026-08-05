@@ -1,18 +1,16 @@
 """The exceptions a terminal raw-mode read can raise.
 
-Four places put the terminal into raw mode to read from the keyboard -
-``InteractiveMode._read_char`` (EDIT mode), ``BuiltinFunctions._read_console``
-(INPUT$), the ``INKEY$`` builtin, and ``ConsoleIOHandler.input_char``. Each
-grew its own idea of what to catch, they drifted apart, and one of them was
-wrong in a way that reached users: ``EDIT`` on piped input died with
-``?error: (25, 'Inappropriate ioctl for device')``. They now share this tuple.
+Four places put the terminal into raw mode to read from the keyboard, each grew
+its own idea of what to catch, they drifted apart, and one of them was wrong in
+a way that reached users: ``EDIT`` on piped input died with ``?error: (25,
+'Inappropriate ioctl for device')``. They now share this tuple.
 
-(``ConsoleIOHandler.input_char`` was long described as the INPUT$ reader. It
-is not, and never was: ``BuiltinFunctions`` is built without an I/O handler, so
-INPUT$ has always read ``sys.stdin`` itself. Nothing reaches ``input_char`` at
-all - its one call site in ``src/`` is ``web_io.py``'s own deprecated
-``get_char()`` alias, which has no callers either. See
-docs/dev/INPUT_DOLLAR_RAW_READ.md.)
+Two of the four are left. ``ConsoleIOHandler.input_char``/``input_chars``
+(``src/iohandler/console.py``) is the keyboard: ``INKEY$`` and ``INPUT$`` read
+through the I/O handler, so their inline copies are gone and the terminal
+details live in one place - see docs/dev/KEY_INPUT_ROUTING.md.
+``InteractiveMode._read_char`` (EDIT mode) is separate because it reads the
+REPL's own terminal rather than a program's input.
 
 The subtle one is ``termios.error``. It is a direct subclass of ``Exception``,
 *not* of ``OSError``::

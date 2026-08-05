@@ -85,15 +85,9 @@ class IOHandler(ABC):
     def input_char(self, blocking: bool = True) -> str:
         """Input single character.
 
-        NOT REACHED BY ANYTHING (the one call site in src/ is web_io.py's own
-        deprecated get_char() alias, which has no callers either). This was
-        meant to be how INKEY$ and INPUT$(1) read a key, and the examples below
-        still describe the intent - but BuiltinFunctions is built with no
-        I/O handler
-        (see Interpreter.__init__), so both builtins read sys.stdin directly
-        and no backend can intercept them. Under the curses, web and Tk UIs
-        that means they read the server or launching terminal instead of the
-        UI. See docs/dev/INPUT_DOLLAR_RAW_READ.md, "Not fixed here".
+        This is how INKEY$ reads a key. A backend that has its own keyboard -
+        curses, Tk, the web UI - implements it and the builtin gets whatever
+        it returns; nothing else in the interpreter touches the keyboard.
 
         Args:
             blocking: If True, wait for keypress. If False, return "" if no key ready.
@@ -103,9 +97,46 @@ class IOHandler(ABC):
 
         Examples:
             key = input_char(blocking=False)  # INKEY$ - non-blocking
-            ch = input_char(blocking=True)    # INPUT$(1) - blocking
+            ch = input_char(blocking=True)    # one character, waiting for it
         """
         pass
+
+    def input_chars(self, count: int, interrupted=None) -> str:
+        """Input up to count characters, waiting for them (INPUT$(n)).
+
+        Separate from input_char() because a terminal cannot do this by
+        calling that n times: it has to hold the terminal in one mode for the
+        whole read, or the characters after the first are echoed and the read
+        waits for Enter. ConsoleIOHandler overrides this; a backend with its
+        own keyboard usually does not need to.
+
+        May return fewer than count characters - at end of input, if
+        `interrupted` becomes true, or when an interrupt character is read.
+
+        Args:
+            count: how many characters to read.
+            interrupted: optional zero-argument callable polled while waiting.
+                Returning True abandons the read. The console handler uses it
+                to notice a SIGINT that arrived before the terminal was in raw
+                mode; a backend that never blocks the interpreter can ignore
+                it.
+
+        Returns:
+            The characters read. Ctrl+C (CHR$(3)) is returned like any other
+            character, as the last one - deciding what it means belongs to the
+            caller, not here.
+        """
+        chars = ""
+        for _ in range(count):
+            if interrupted is not None and interrupted():
+                break
+            char = self.input_char(blocking=True)
+            if not char:
+                break                       # end of input
+            chars += char
+            if char == '\x03':
+                break                       # let the caller act on it
+        return chars
 
     @abstractmethod
     def clear_screen(self) -> None:

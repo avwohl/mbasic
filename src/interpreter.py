@@ -144,13 +144,19 @@ class Interpreter:
 
     def __init__(self, runtime, io_handler=None, breakpoint_callback=None, filesystem_provider=None, limits=None, settings_manager=None, file_io=None):
         self.runtime = runtime
-        self.builtins = BuiltinFunctions(runtime)
 
         # I/O handler (defaults to console if not provided)
         if io_handler is None:
             from src.iohandler.console import ConsoleIOHandler
             io_handler = ConsoleIOHandler(debug_enabled=False)
         self.io = io_handler
+
+        # INKEY$ and INPUT$ read the keyboard through the handler, so they are
+        # given a way to reach it. A lambda rather than the handler itself
+        # because the curses UI assigns interpreter.io after construction
+        # (src/ui/curses_ui.py), and a builtin holding the handler it was built
+        # with would go on reading the one being replaced.
+        self.builtins = BuiltinFunctions(runtime, io_provider=lambda: self.io)
 
         # Filesystem provider (defaults to real filesystem if not provided)
         if filesystem_provider is None:

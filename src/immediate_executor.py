@@ -10,6 +10,7 @@ from src.lexer import tokenize
 from src.parser import Parser
 from src.runtime import Runtime
 from src.interpreter import Interpreter, BreakException
+from src.iohandler.console import ConsoleKeyboardMixin
 import traceback
 import os
 
@@ -408,7 +409,7 @@ Press Ctrl+H (UI help) for keyboard shortcuts and UI features.
         return (True, help_text)
 
 
-class OutputCapturingIOHandler:
+class OutputCapturingIOHandler(ConsoleKeyboardMixin):
     """
     Simple IOHandler that captures output to a string buffer.
 

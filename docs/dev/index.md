@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2026-08-05
-**Total Documents:** 38
+**Total Documents:** 39
 
 ## What's Here
 
@@ -52,6 +52,7 @@ port I/O — but they are not required. Read
 ### Language Features
 
 - [Input Dollar Raw Read](INPUT_DOLLAR_RAW_READ.md)
+- [Key Input Routing](KEY_INPUT_ROUTING.md)
 - [Keybinding Systems](KEYBINDING_SYSTEMS.md)
 
 ### File I/O

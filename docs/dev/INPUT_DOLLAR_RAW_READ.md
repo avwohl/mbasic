@@ -303,24 +303,24 @@ remainder in the tty queue, where the REPL reports it. Pre-existing in
 
 ## Not fixed here
 
-**`IOHandler.input_char()` is dead API.** Seven implementations exist behind
-one `@abstractmethod`, and nothing reaches any of them: the only call site in
-`src/` is `web_io.py`'s own deprecated `get_char()` alias, which has no callers
-either. `src/iohandler/base.py`,
-`src/terminal_errors.py` and `CLI_INPUT_HANDLING_FIXES.md` all describe
-`ConsoleIOHandler.input_char` as "the `INPUT$` reader", and it never was - the
-comments have been corrected. `BuiltinFunctions` is constructed with only the
-runtime (`src/interpreter.py`), so `INPUT$` and `INKEY$` cannot reach the
-interpreter's I/O handler at all.
+**~~`IOHandler.input_char()` is dead API.~~** Fixed since - see
+[KEY_INPUT_ROUTING.md](KEY_INPUT_ROUTING.md). `INKEY$` and `INPUT$` now read
+through the I/O handler, and the terminal machinery described above moved to
+`ConsoleIOHandler`, which is where this document's own references to
+`_read_console` and `_check_break` should now be read: same code, same
+behavior, one layer down. What was recorded here at the time:
 
-The consequence is that under the curses, web and Tk backends both builtins
-read the *server or launching terminal's* `sys.stdin` rather than the backend's
-input. Measured with a `CapturingIOHandler` whose `input_char` returns `""`:
-`INPUT$(1)` still returned the byte piped to the process. Since each of those
-UIs ticks the interpreter from inside its own event loop, a blocking `INPUT$`
-freezes the UI - for the web backend, every session on the server. Routing the
-two builtins through the I/O handler would fix that, and is a change to the
-interpreter's construction rather than to a terminal-mode read.
+Seven implementations exist behind one `@abstractmethod`, and nothing reaches
+any of them - the only call site in `src/` is `web_io.py`'s own deprecated
+`get_char()` alias, which has no callers either. `src/iohandler/base.py`,
+`src/terminal_errors.py` and `CLI_INPUT_HANDLING_FIXES.md` all describe
+`ConsoleIOHandler.input_char` as "the `INPUT$` reader", and it never was.
+`BuiltinFunctions` is constructed with only the runtime, so `INPUT$` and
+`INKEY$` cannot reach the interpreter's I/O handler at all. The consequence is
+that under the curses, web and Tk backends both builtins read the *server or
+launching terminal's* `sys.stdin` rather than the backend's input - measured
+with a `CapturingIOHandler` whose `input_char` returns `""`: `INPUT$(1)` still
+returned the byte piped to the process.
 
 **Immediate-mode `INPUT`** (the statement, not the function) still does not
 work - see the same note in

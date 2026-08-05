@@ -8,27 +8,14 @@ Microsoft BASIC-80 as implemented for CP/M systems. This version was chosen as t
 reference implementation for maximum compatibility with classic BASIC programs.
 """
 
-import contextlib
 import math
-import os
 import random
-import signal
-import sys
-import select
 
-try:
-    import tty
-    import termios
-except ImportError:
-    # POSIX only. On Windows INKEY$ uses msvcrt instead, but the import used to
-    # be unguarded here - which made this module, and therefore the whole
-    # interpreter, impossible to import on Windows at all.
-    tty = None
-    termios = None
-
-from src.debug_logger import debug_log
-from src.terminal_errors import TERMINAL_ERRORS
-from src.win_console import win_read_key
+# tty, termios, os, sys and win_console used to be imported here for INKEY$ and
+# INPUT$.
+# Both now read through the I/O handler, so the terminal details - and the
+# POSIX-only imports that once made this module unimportable on Windows - live
+# in src/iohandler/console.py.
 
 
 # Special marker classes for TAB and SPC functions
@@ -456,8 +443,19 @@ class UsingFormatter:
 class BuiltinFunctions:
     """MBASIC 5.21 built-in functions"""
 
-    def __init__(self, runtime):
+    def __init__(self, runtime, io_provider=None):
+        """
+        Args:
+            runtime: the Runtime whose files and state these functions act on.
+            io_provider: zero-argument callable returning the I/O handler to
+                read the keyboard through (INKEY$, INPUT$). A callable rather
+                than the handler itself because the curses UI replaces
+                interpreter.io after construction. Defaults to a console
+                handler when absent, which is what direct construction in
+                tests gets.
+        """
         self.runtime = runtime
+        self.io_provider = io_provider
 
     # ========================================================================
     # Numeric Functions
@@ -967,65 +965,14 @@ class BuiltinFunctions:
         (Method name is INKEY since Python doesn't allow $ in names)
 
         Returns a single character if a key is pressed, or empty string if not.
+
+        Goes through the I/O handler, so the backend that owns the keyboard is
+        the one asked for it. The terminal machinery this used to hold inline -
+        isatty, select, raw mode, the Windows prefix+scan-code protocol - now
+        lives in ConsoleIOHandler.input_char, which is where three separate
+        comments always claimed it was.
         """
-        # Platform-specific implementation
-        if sys.platform == 'win32':
-            # Arrows and F-keys arrive as a prefix byte plus a scan code. The
-            # old decode('utf-8', errors='ignore') turned the 0xE0 prefix into
-            # "" - so INKEY$ said "no key" having already eaten the prefix, and
-            # the scan code came back as a letter on the next call. Up looked
-            # like "H". win_read_key() resolves the pair and hands back the same
-            # escape sequence a POSIX terminal sends, one character per call.
-            return win_read_key(blocking=False)
-        else:
-            # Unix/Linux/Mac implementation using select
-            if termios is None or tty is None:
-                # No POSIX terminal control available, and this is not the
-                # Windows branch either - there is no way to read a key here.
-                return ""
-
-            try:
-                # Check if stdin is a TTY first. This is inside the try because
-                # isatty() itself raises on a closed or substituted stdin, and
-                # those are exactly the errors TERMINAL_ERRORS exists to absorb.
-                if not sys.stdin.isatty():
-                    # Not a TTY (probably piped input or file), can't do non-blocking read
-                    return ""
-
-                # Check if stdin has data available without blocking
-                readable, _, _ = select.select([sys.stdin], [], [], 0)
-
-                if readable:
-                    # There's input available - read one character
-                    # We need to set terminal to raw mode temporarily
-                    fd = sys.stdin.fileno()
-                    old_settings = termios.tcgetattr(fd)
-                    try:
-                        # TCSANOW, not tty.setraw()'s TCSAFLUSH default:
-                        # FLUSH discards received-but-unread input, which is
-                        # exactly the keystroke select() just reported. An
-                        # arrow key was being thrown away entirely.
-                        tty.setraw(fd, termios.TCSANOW)
-                        # os.read, not sys.stdin.read(1): the TextIOWrapper
-                        # pulls every available byte into its decode buffer, so
-                        # the kernel queue empties and the select() above then
-                        # reports "no key" while the rest of an escape sequence
-                        # sits invisible in userspace. latin-1 keeps this
-                        # byte-transparent, matching the Windows branch.
-                        data = os.read(fd, 1)
-                        return data.decode('latin-1') if data else ""
-                    finally:
-                        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-                else:
-                    # No input available
-                    return ""
-            except TERMINAL_ERRORS:
-                # If anything goes wrong with terminal operations, return empty
-                # string. The shared tuple is what makes termios.error part of
-                # this - it is not an OSError subclass, so the (OSError,
-                # IOError) that used to be here could never catch it, and
-                # IOError is just an alias of OSError anyway.
-                return ""
+        return self._io().input_char(blocking=False)
 
     def INPUT(self, num, file_num=None):
         """
@@ -1068,227 +1015,87 @@ class BuiltinFunctions:
     #
     # MBASIC 5.21 reads these characters raw: nothing is echoed, no Enter is
     # required, and every control character reaches the program except
-    # Ctrl+C, which interrupts the read. The cooked sys.stdin.read(1) loop
-    # that used to be here did none of that, and its buffering leaked
-    # keystrokes across programs - see _read_console below.
+    # Ctrl+C, which interrupts the read. How that is done on a given terminal
+    # is the I/O handler's business; what it MEANS is decided here.
     # ------------------------------------------------------------------
 
-    #: Ctrl+C. Reachable only because raw mode clears ISIG; in cooked mode the
-    #: line discipline turns it into SIGINT and the byte never arrives.
+    #: Ctrl+C, as the I/O handler hands it back. The console handler only sees
+    #: it at all because raw mode clears ISIG; in cooked mode the line
+    #: discipline turns it into a SIGINT instead - which is what
+    #: _take_break_request picks up.
     _BREAK_CHAR = '\x03'
 
-    #: How often the blocking read looks up from the keyboard to see whether a
-    #: SIGINT arrived while it was waiting. Only costs a wakeup: select()
-    #: returns the instant a key is actually typed.
-    _BREAK_POLL = 0.1
-
     def _read_console(self, num):
-        """Read num characters from the keyboard for INPUT$(n).
-
-        Raw, unbuffered and byte-transparent, for the same reasons INKEY$ and
-        the EDIT-mode reader are:
-
-        - ``sys.stdin.read(1)`` - what this replaces - goes through a
-          TextIOWrapper that pulls the whole kernel queue into a userspace
-          buffer no other reader can see. Typing "AB" then Enter at INPUT$(1)
-          gave the program "A" and stranded "B\\n" there, invisible to the
-          REPL and to the INPUT statement, which both read at the file
-          descriptor. It was not discarded either: the *next* RUN's INPUT$
-          picked it up as though freshly typed.
-        - ``tty.setraw()`` defaults to TCSAFLUSH, which discards input that has
-          arrived but not been read. Keys typed ahead of INPUT$ are delivered
-          today and must stay that way, so this uses TCSANOW.
-
-        Raw mode is entered once for the whole read rather than per character:
-        dropping back to cooked mode between characters would echo the rest of
-        what the user typed and wait for Enter before delivering it.
-        """
+        """Read num characters from the keyboard for INPUT$(n)."""
         if num <= 0:
             return ""
 
-        if sys.platform == 'win32':
-            return self._read_console_windows(num)
-
-        if termios is None or tty is None:
-            # No POSIX terminal control, and not the Windows branch either -
-            # there is no raw mode to be had, so stdin had better be a pipe.
-            return self._read_console_cooked(num)
-
-        try:
-            fd = sys.stdin.fileno()
-            old_settings = termios.tcgetattr(fd)
-        except TERMINAL_ERRORS:
-            # Not a terminal: piped input, a file, or a stdin replacement with
-            # no real fd. termios.error is why this tuple exists - it is not
-            # an OSError subclass, so "this is not a terminal" escaped the
-            # handlers that used to be written as except OSError.
-            return self._read_console_cooked(num)
-
-        chars = ""
-        raw_failed = False
-        try:
-            with self._terminal_restored_if_killed(fd, old_settings):
-                tty.setraw(fd, termios.TCSANOW)
-                while len(chars) < num:
-                    # A SIGINT that arrived before setraw() - the window
-                    # between the program's prompt and this line - set a flag
-                    # rather than interrupting anything, and PEP 475 restarts
-                    # the read underneath it. Polling is what turns that into
-                    # a break instead of a wait that then swallows whatever
-                    # key finally ends it.
-                    if self._take_break_request():
-                        self._raise_break()
-                    if not select.select([fd], [], [], self._BREAK_POLL)[0]:
-                        continue
-                    # One byte at a time, deliberately. Reading the whole
-                    # remainder in one call would consume anything typed
-                    # *after* a Ctrl+C along with it, and the break would then
-                    # destroy keystrokes that should have stayed queued.
-                    data = os.read(fd, 1)
-                    if not data:
-                        break           # EOF - the terminal went away
-                    # latin-1 keeps this byte-transparent, so ASC() means the
-                    # same here as it does under INKEY$ and on Windows.
-                    char = data.decode('latin-1')
-                    if char == self._BREAK_CHAR:
-                        self._raise_break()
-                    chars += char
-        except TERMINAL_ERRORS:
-            # Falling back is only safe if nothing was read. Reading again
-            # after a partial read would deliver those characters twice.
-            raw_failed = not chars
-            if not raw_failed:
-                debug_log(f"INPUT$ read failed after {len(chars)} of {num} "
-                          f"characters; returning a short string")
-        finally:
-            try:
-                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-            except TERMINAL_ERRORS:
-                # The characters are already in hand; a failure to put the
-                # terminal back must not lose them or read a second time.
-                pass
-
-        if raw_failed:
-            return self._read_console_cooked(num)
+        # Consumed by _interrupted() below, and read after the handler
+        # returns: the handler reports "I stopped", not why.
+        self._break_seen = False
+        chars = self._io_read(num)
+        if self._break_seen or self._BREAK_CHAR in chars:
+            self._raise_break()
         return chars
 
-    def _read_console_windows(self, num):
-        """Read num characters through the Windows console."""
-        try:
-            redirected = not sys.stdin.isatty()
-        except TERMINAL_ERRORS:
-            redirected = True
-        if redirected:
-            # msvcrt.getch() reads CONIN$ - the physical console - not stdin,
-            # so under `mbasic prog.bas < in.txt` it would ignore the
-            # redirection completely and block on a keypress that is never
-            # coming. POSIX gets this check for free, because tcgetattr fails
-            # on a pipe; Windows has to ask.
-            return self._read_console_cooked(num)
+    def _io_read(self, num):
+        """Ask the I/O handler for num characters, however it can manage it."""
+        handler = self._io()
 
+        def interrupted():
+            if self._take_break_request():
+                self._break_seen = True
+                return True
+            return False
+
+        reader = getattr(handler, 'input_chars', None)
+        if reader is not None:
+            return reader(num, interrupted=interrupted)
+
+        # A handler predating input_chars, or one that is not an IOHandler
+        # subclass at all - CapturingIOHandler is a plain class. One call per
+        # character is what the base class does anyway; it is only the console
+        # that needs to hold the terminal across the whole read.
         chars = ""
-        while len(chars) < num:
-            try:
-                ch = win_read_key(blocking=True)
-            except KeyboardInterrupt:
-                # getch() cannot read Ctrl+C - the console turns it into a
-                # CTRL_C_EVENT and Python raises here instead. Same keypress,
-                # same meaning as the 0x03 byte on POSIX, so same outcome:
-                # without this it would sail past the tick loop as a
-                # BaseException and abandon the program with no "Break in nn".
-                self._raise_break()
-            if not ch:
-                # "" from a *blocking* read means there is no console at all
-                # (pythonw.exe, a detached process), not "no key pending" -
-                # see win_read_key. Nothing will ever arrive, so read the rest
-                # the only way left.
-                return chars + self._read_console_cooked(num - len(chars))
-            if ch == self._BREAK_CHAR:
-                self._raise_break()
-            chars += ch
+        for _ in range(num):
+            if interrupted():
+                break
+            char = handler.input_char(blocking=True)
+            if not char:
+                break
+            chars += char
+            if char == self._BREAK_CHAR:
+                break
         return chars
 
-    @staticmethod
-    @contextlib.contextmanager
-    def _terminal_restored_if_killed(fd, old_settings):
-        """Put the terminal back if the process is killed during the read.
+    def _io(self):
+        """The I/O handler to read the keyboard through.
 
-        Raw mode is held for the whole blocking wait, and the restoring
-        tcsetattr lives in a `finally` that a SIGTERM never reaches - so
-        `timeout 5 python3 mbasic ...`, a CI kill, or closing the window while
-        a program sits at INPUT$ would leave the user's terminal with no echo
-        and no Ctrl+C, needing `stty sane`. Neither SIGINT (raw mode has
-        already turned it into a plain byte) nor SIGKILL (uncatchable) is
-        involved here.
+        Resolved per call, not cached: the curses UI swaps out
+        interpreter.io after construction (src/ui/curses_ui.py), and a reader
+        holding the handler it was built with would keep reading the wrong one.
 
-        A no-op off the main thread, where signal.signal() cannot be called.
+        Falling back to a console handler covers BuiltinFunctions built
+        directly, which the tests do with __new__ and no runtime at all.
         """
-        previous = {}
-        signals = [s for s in ('SIGTERM', 'SIGHUP') if hasattr(signal, s)]
-
-        def restore_and_die(signum, _frame):
-            try:
-                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-            except TERMINAL_ERRORS:
-                pass
-            # Hand the signal back to whoever had it and re-raise, so the
-            # process still dies exactly as it was told to.
-            signal.signal(signum, previous.get(signum, signal.SIG_DFL))
-            os.kill(os.getpid(), signum)
-
-        for name in signals:
-            number = getattr(signal, name)
-            try:
-                previous[number] = signal.signal(number, restore_and_die)
-            except (ValueError, OSError, RuntimeError):
-                pass            # not the main thread, or not supported here
-        try:
-            yield
-        finally:
-            for number, handler in previous.items():
-                try:
-                    signal.signal(number, handler)
-                except (ValueError, OSError, RuntimeError):
-                    pass
-
-    @classmethod
-    def _read_console_cooked(cls, num):
-        """Read without raw mode: piped input, or no terminal control at all.
-
-        Deliberately still sys.stdin rather than os.read. With no tty there is
-        no readline either, so the REPL and the INPUT statement are reading
-        through this same TextIOWrapper - matching them is what keeps the
-        characters in order.
-
-        Ctrl+C breaks here too. There is no keypress to speak of - it is a
-        byte in a stream - but real 5.21 under cpmemu aborts on it whether the
-        input is typed or piped, because piped input is the only console it
-        has, and matching that was a deliberate call. The cost is that INPUT$
-        cannot read a 0x03 out of redirected input; INPUT$(n,#f) from a file
-        still can, and is where binary data belongs.
-        """
-        chars = ""
-        try:
-            for _ in range(num):
-                ch = sys.stdin.read(1)
-                if not ch:
-                    break               # EOF
-                if ch == cls._BREAK_CHAR:
-                    # Checked per character, so whatever follows it stays in
-                    # the buffer for the next reader rather than being
-                    # consumed and then thrown away by the break.
-                    cls._raise_break()
-                chars += ch
-        except TERMINAL_ERRORS:
-            # This is the end of the line for a keyboard read, so it has to
-            # degrade rather than raise: under pythonw.exe sys.stdin is None
-            # (AttributeError), and a closed or substituted stdin gives the
-            # other two. INPUT$ comes back short, as it does at EOF.
-            pass
-        return chars
+        provider = getattr(self, 'io_provider', None)
+        handler = provider() if provider is not None else None
+        if handler is not None:
+            return handler
+        handler = getattr(self, '_fallback_io', None)
+        if handler is None:
+            from src.iohandler.console import ConsoleIOHandler
+            handler = ConsoleIOHandler()
+            self._fallback_io = handler
+        return handler
 
     def _take_break_request(self):
         """Consume the flag the SIGINT handler sets, if it is set.
+
+        This is the Ctrl+C that arrived before the terminal was in raw mode -
+        it became a SIGINT, and `_setup_break_handler` only sets a flag, so
+        without noticing it here the read stays blocked and then swallows
+        whatever key finally ends it.
 
         Cleared here rather than left for the tick loop's own check, or the
         break would fire a second time on the statement CONT resumes into.

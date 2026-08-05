@@ -4,9 +4,18 @@ This module provides a simple IO handler that captures output to a buffer,
 used by various UI backends for executing commands and capturing their output.
 """
 
+from src.iohandler.console import ConsoleKeyboardMixin
 
-class CapturingIOHandler:
-    """IO handler that captures output to a buffer."""
+
+class CapturingIOHandler(ConsoleKeyboardMixin):
+    """IO handler that captures output to a buffer.
+
+    Keyboard reads come from ConsoleKeyboardMixin, which reads the process's
+    own terminal. That is what INKEY$ and INPUT$ did before they were routed
+    through the I/O handler, so the curses UI behaves as it did - but it is a
+    placeholder: this handler belongs to a urwid UI that owns the terminal,
+    and it should be reading urwid's keys, not competing for the same fd.
+    """
 
     def __init__(self):
         self.output_buffer = []
@@ -33,9 +42,6 @@ class CapturingIOHandler:
         return ""
 
     def input_line(self, prompt=''):
-        return ""
-
-    def input_char(self, blocking=True):
         return ""
 
     def clear_screen(self):

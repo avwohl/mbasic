@@ -326,11 +326,21 @@ class TestCallSites(unittest.TestCase):
     execute.
     """
 
-    def _read_through(self, call, keys, count):
+    def _read_through(self, call, keys, count, console=True):
+        """Run `call` as if on Windows, with `keys` waiting at the console.
+
+        stdin is faked as well as the platform, because a blocking read now
+        asks isatty() first: msvcrt.getch() reads CONIN$ rather than stdin, so
+        under redirection it would ignore the redirect and block on a keypress
+        that never comes. Pass console=False to simulate `prog.bas < in.txt`.
+        """
         fake = FakeMsvcrt(keys)
+        fake_stdin = mock.MagicMock()
+        fake_stdin.isatty.return_value = console
         win_console._win_pending.clear()
         with mock.patch.dict(sys.modules, {'msvcrt': fake}), \
-                mock.patch.object(sys, 'platform', 'win32'):
+                mock.patch.object(sys, 'platform', 'win32'), \
+                mock.patch.object(sys, 'stdin', fake_stdin):
             return [call() for _ in range(count)]
 
     def test_inkey_routes_through_win_read_key(self):
@@ -362,6 +372,26 @@ class TestCallSites(unittest.TestCase):
         got = self._read_through(
             lambda: handler.input_char(blocking=True), b'\xe0H', 3)
         self.assertEqual(got, ['\x1b', '[', 'A'])
+
+    def test_input_chars_reads_stdin_when_it_is_redirected(self):
+        """`prog.bas < in.txt` must not go to the physical console.
+
+        getch() reads CONIN$, not stdin, so without the isatty() gate this
+        ignored the redirection entirely and blocked on a keypress that was
+        never coming - while the redirected bytes sat unread.
+        """
+        from src.iohandler.console import ConsoleIOHandler
+        handler = ConsoleIOHandler()
+        fake = FakeMsvcrt(b'ZZZ')       # what the console would have offered
+        fake_stdin = mock.MagicMock()
+        fake_stdin.isatty.return_value = False
+        fake_stdin.read.side_effect = list('AB')
+        win_console._win_pending.clear()
+        with mock.patch.dict(sys.modules, {'msvcrt': fake}), \
+                mock.patch.object(sys, 'platform', 'win32'), \
+                mock.patch.object(sys, 'stdin', fake_stdin):
+            got = handler.input_chars(2)
+        self.assertEqual(got, 'AB', "the redirected bytes must win")
 
     def test_locate_writes_nothing_on_windows_without_a_console(self):
         import io
