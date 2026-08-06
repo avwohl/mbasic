@@ -12,12 +12,59 @@ For each test:
 - **`test_name.bas`** - The MBASIC program
 - **`test_name.txt`** - The expected output when the program is run
 
+## Where the expected output comes from
+
+**From the real 5.21 binary, not from us.** This matters more than it sounds.
+
+These `.txt` files were originally captured from our own output, which makes
+them a record of what we happened to print rather than of what MBASIC prints.
+Fix a formatting bug and they break, because they were pinning the bug -
+eighteen of them had drifted that way by the time anyone looked.
+
+They now come from `com/mbasic.com` running under cpmemu. To re-check them:
+
+```bash
+python3 utils/crosscheck_tests.py
+```
+
+which runs every program both ways and reports MATCH or DIFF per test. 34 of
+the 39 match character for character. The five that do not are listed - with
+the reason for each - in
+[docs/dev/TESTS_VERIFIED_AGAINST_BINARY.md](../../../docs/dev/TESTS_VERIFIED_AGAINST_BINARY.md).
+
+If you change a test, or add one, run the cross-check before saving its `.txt`.
+`--write` will rewrite them from our output, which is the right thing for a
+MATCH and the wrong thing for a DIFF.
+
 ## Running Tests
 
 To validate the interpreter/compiler:
 1. Run the `.bas` file
 2. Compare the output to the `.txt` file
 3. Output should match exactly (or within acceptable floating-point tolerance)
+
+`python3 utils/run_tests.py` does all of that for every test here.
+
+## Writing tests that the real binary can run
+
+Four of these could never have been checked against the binary as written.
+Worth knowing before adding another:
+
+- **CP/M has no directories and no long names.** `OPEN "O", 1, "/tmp/x.txt"`
+  fails with `Too many files`. Use an 8.3 name in the working directory, and
+  `KILL` it at the end.
+- **No `""` escape inside a string.** To get a quote into a literal, build it
+  with `CHR$(34)`.
+- **Reserved words are reserved even with a type suffix.** `NAME$` is a syntax
+  error, because `NAME` is the CP/M file-rename statement. So are `LEN%`,
+  `FOR$` and `TO%`. A reserved word *inside* a longer name is fine - `TOTAL`
+  and `NAMES$` are ordinary variables.
+- **Keep lines under 80 characters** if you want the transcript to be easy to
+  read; MBASIC breaks its echo at the WIDTH column. The cross-check harness
+  copes either way.
+- **A program that needs another program** - CHAIN, MERGE - should write it
+  first rather than expect a fixture on disk, since the two engines run in
+  different directories. See `test_chain.bas`.
 
 ## Current Tests
 

@@ -10,8 +10,10 @@ reference implementation for maximum compatibility with classic BASIC programs.
 
 import math
 import random
+from decimal import Decimal, ROUND_HALF_UP
 
-from src.number_format import SINGLE_DIGITS, to_integer, to_single
+from src.number_format import (SINGLE_DIGITS, _round_to_digits, to_integer,
+                               to_single)
 
 # tty, termios, os, sys and win_console used to be imported here for INKEY$ and
 # INPUT$.
@@ -37,6 +39,60 @@ class SpcMarker:
 
     def __str__(self):
         return f"<SPC({self.count})>"
+
+
+def _mid_start(start):
+    """MID$ counts from 1, and 0 is not a position.
+
+    MID$("A", 0) is "Illegal function call" on the real binary; we returned
+    the whole string. Anything past 255 is out of range too.
+    """
+    if start < 1 or start > 255:
+        raise ValueError("Illegal function call")
+    return start
+
+
+def _is_negative(value):
+    """Whether PRINT USING should show a minus sign.
+
+    The sign is the value's, not the rounded result's: -0.001 in "#.##" is
+    -0.00 on the real binary, and 0.001 is 0.00.
+
+    IEEE's negative zero is not one of them. MBF has no such thing, so on the
+    real binary 0 * (-1) is plain zero and prints as $0.00 in "$$#####.##" -
+    treating it as negative put a minus in front of every zero total in
+    basic/business/budget.bas, which reaches them as TD * (-1).
+    """
+    try:
+        return value < 0
+    except TypeError:
+        return False
+
+
+def _mbasic_decimal(value, digits):
+    """The magnitude of `value` as MBASIC's conversion routine sees it.
+
+    PRINT USING does not read the stored binary directly - it goes through the
+    same routine PRINT does, which yields six significant figures for a single
+    and sixteen for a double. That is why a single-precision 12345.67 prints as
+    12,345.70 in "##,###.##": six digits make it 12345.7, and the field then
+    pads the tenths place with a zero.
+    """
+    if isinstance(value, bool):
+        value = int(value)
+    if not isinstance(value, (int, float)):
+        raise ValueError("not a number")
+    if isinstance(value, float) and (value != value or value in (
+            float('inf'), float('-inf'))):
+        raise ValueError("not finite")
+
+    magnitude = abs(value)
+    if digits is None:
+        # An INTEGER-typed value is exact - there is nothing to round away.
+        return Decimal(int(magnitude))
+    if magnitude == 0:
+        return Decimal(0)
+    return _round_to_digits(magnitude, digits)
 
 
 class UsingFormatter:
@@ -95,19 +151,23 @@ class UsingFormatter:
                     continue
 
             # Check for numeric field markers
-            if ch in '#.+-' or (ch == '*' and i + 1 < len(self.format_string) and
-                               self.format_string[i + 1] in '*$'):
-                # Start of numeric field
+            if (ch in '#.+-'
+                    or (ch == '*' and i + 1 < len(self.format_string)
+                        and self.format_string[i + 1] in '*$')
+                    or (ch == '$' and i + 1 < len(self.format_string)
+                        and self.format_string[i + 1] == '$')):
                 num_spec = self.parse_numeric_field(i)
-                self.fields.append(('numeric', num_spec))
-                i = num_spec['end_pos']
-                continue
-
-            # Check for $$ at start of numeric field
-            if ch == '$' and i + 1 < len(self.format_string) and self.format_string[i + 1] == '$':
-                num_spec = self.parse_numeric_field(i)
-                self.fields.append(('numeric', num_spec))
-                i = num_spec['end_pos']
+                if num_spec['digit_count']:
+                    self.fields.append(('numeric', num_spec))
+                    i = num_spec['end_pos']
+                    continue
+                # No digit positions, so it was never a field: a '.' with no
+                # '#' after it, or a '+' or '-' with nothing to sign. MBASIC
+                # prints the character and moves on - that is what PLSPRT is
+                # for, flushing a '+' that turned out not to begin a field -
+                # so "A.B" prints A.B, and "-#" of 5 prints -5.
+                self.fields.append(('literal', ch))
+                i += 1
                 continue
 
             # Literal character
@@ -195,8 +255,11 @@ class UsingFormatter:
             spec['exponential'] = True
             i += 4
 
-        # Check for trailing sign
-        if i < len(format_str):
+        # Check for trailing sign. A field that already opened with '+' does
+        # not get one - ENDNUS tests the leading-plus flag and jumps straight
+        # past this scan - so the '+' or '-' after "+###" is an ordinary
+        # character and "+###+" of 42 prints " +42+".
+        if i < len(format_str) and not spec['leading_sign']:
             if format_str[i] == '+':
                 spec['trailing_sign'] = True
                 i += 1
@@ -205,29 +268,59 @@ class UsingFormatter:
                 i += 1
 
         spec['end_pos'] = i
+
+        # The two counts PUFOUT actually works in - see format_numeric_field.
+        #   lead  the character positions to the left of the point. Every #
+        #         counts, and so does every comma, the two characters of $$ or
+        #         ** (three for **$), and a leading + .
+        #   trail zero if the field has no point, otherwise the point itself
+        #         plus the digits after it.
+        spec['lead'] = (spec['digit_count'] - spec['digits_after_decimal']
+                        + (1 if spec['leading_sign'] else 0))
+        spec['trail'] = spec['digits_after_decimal'] + 1 if spec['has_decimal'] else 0
         return spec
 
-    def format_values(self, values):
-        """Format a list of values using the parsed format fields
+    def has_field(self):
+        """Whether the format string has anywhere to put a value at all."""
+        return any(kind != 'literal' for kind, _ in self.fields)
+
+    def format_values(self, values, digits=None):
+        """Format a list of values using the parsed format fields.
+
+        The format string is used over and over until the value list runs out,
+        which is the part that was missing: PRINT USING "###"; 1; 2; 3 prints
+        "  1  2  3" on the real binary, not just "  1". Scanning stops the
+        moment a field finds no value left - the literal text passed on the way
+        has already been printed by then, which is why
+        PRINT USING "### ###"; 10; 20; 30 ends with a trailing space.
+
+        Args:
+            values: the values from the PRINT USING list.
+            digits: significant figures to convert each value through, one per
+                value - SINGLE_DIGITS, DOUBLE_DIGITS or None for an INTEGER.
+                MBASIC hands PRINT USING the same conversion routine PRINT
+                uses, so a single-precision 12345.67 is six digits there too
+                and prints as 12345.70. Defaults to single for every value.
 
         Returns formatted string
         """
         result = []
         value_idx = 0
+        fields = self.fields
 
-        for field_type, field_spec in self.fields:
-            if field_type == 'literal':
-                result.append(field_spec)
-            elif field_type == 'string':
-                if value_idx < len(values):
-                    value = str(values[value_idx])
-                    result.append(self.format_string_field(value, field_spec))
-                    value_idx += 1
+        while True:
+            for field_type, field_spec in fields:
+                if field_type == 'literal':
+                    result.append(field_spec)
+                    continue
+
+                if value_idx >= len(values):
+                    return ''.join(result)
+
+                if field_type == 'string':
+                    result.append(
+                        self.format_string_field(str(values[value_idx]), field_spec))
                 else:
-                    # No more values, field remains empty
-                    pass
-            elif field_type == 'numeric':
-                if value_idx < len(values):
                     value = values[value_idx]
                     # Convert to number if needed
                     if isinstance(value, str):
@@ -235,13 +328,17 @@ class UsingFormatter:
                             value = float(value)
                         except ValueError:
                             value = 0
-                    result.append(self.format_numeric_field(value, field_spec))
-                    value_idx += 1
-                else:
-                    # No more values
-                    pass
+                    value_digits = SINGLE_DIGITS
+                    if digits is not None and value_idx < len(digits):
+                        value_digits = digits[value_idx]
+                    result.append(
+                        self.format_numeric_field(value, field_spec, value_digits))
+                value_idx += 1
 
-        return ''.join(result)
+            if value_idx >= len(values) or not self.has_field():
+                # Nothing left to place, or nowhere to place it - the caller
+                # reports the second case, once the literal text is out.
+                return ''.join(result)
 
     def format_string_field(self, value, spec):
         """Format a string according to string field specification"""
@@ -261,186 +358,146 @@ class UsingFormatter:
                 return value.ljust(width)
         return value
 
-    def format_numeric_field(self, value, spec):
-        """Format a number according to numeric field specification"""
-        # Handle exponential format
+    def format_numeric_field(self, value, spec, digits=SINGLE_DIGITS):
+        """Format a number into a numeric field, the way PUFOUT does.
+
+        The field is described by two counts, which is how the assembler
+        carries it (f4.mac, the comment block above PUFOUT):
+
+            lead    character positions to the left of the decimal point,
+                    not counting the point
+            trail   the point plus the positions to its right, or zero if
+                    the field has no point
+
+        The number is right-justified in lead+trail characters and trailing
+        zeros are kept. Four rules are easy to miss, and all four were wrong
+        here:
+
+        * The value goes through the same conversion routine PRINT uses, so it
+          is rounded to six significant figures (single) or sixteen (double)
+          *before* the field rounds it to its own decimal places.
+          PRINT USING "##,###.##"; 12345.67 is 12,345.70 on the real binary.
+        * That second rounding is half away from zero, not Python's half to
+          even: "##.##" of 1.005 is 1.01 and of -0.005 is -0.01.
+        * The sign occupies one of the lead positions unless it is a trailing
+          sign - or unless it is the space in front of a positive number,
+          which is only ever written over padding. So "####" holds 1234 but
+          overflows on -1234, which prints as %-1234.
+
+        * A value below one keeps its leading zero only while there is room
+          for it: "#.###" of -0.5 is -.500, and "##.###" of -0.5 is -0.500.
+        """
+        lead = spec['lead']
+        trail = spec['trail']
+        decimals = trail - 1 if trail else 0
+
+        # b+c > 24 is "Illegal function call" on the real binary.
+        if lead + trail > 24:
+            raise ValueError("Illegal function call")
+
+        try:
+            magnitude = _mbasic_decimal(value, digits)
+        except (ValueError, ArithmeticError):
+            return str(value)                   # NaN/Infinity: nothing to imitate
+
+        negative = _is_negative(value)
+
         if spec['exponential']:
-            return self.format_exponential(value, spec)
-
-        # Determine precision
-        if spec['decimal_pos'] >= 0:
-            precision = spec['digits_after_decimal']
+            int_str, frac_str, suffix = self._exponential_parts(
+                magnitude, lead, decimals, spec, digits)
         else:
-            precision = 0
+            int_str, frac_str = self._fixed_parts(magnitude, decimals, spec)
+            suffix = ''
 
-        # Determine sign BEFORE rounding (for negative zero handling)
-        original_negative = value < 0
+        return self._assemble(int_str, frac_str, suffix, negative, lead, trail, spec)
 
-        # Round to precision
-        if precision > 0:
-            rounded = round(value, precision)
-        else:
-            rounded = round(value)
-
-        # Determine sign - preserve negative sign for values that round to zero.
-        # This matches MBASIC 5.21 behavior: -0.001 rounds to 0 but displays as "-0".
-        # We use original_negative (captured before rounding) to detect this case,
-        # ensuring: negative values that round to zero display "-0", positive display "0".
-        if rounded == 0 and original_negative:
-            is_negative = True
-        else:
-            # For non-zero values, use the rounded value's sign (normal case)
-            is_negative = rounded < 0
-        abs_value = abs(rounded)
-
-        # Format number string
-        if precision > 0:
-            num_str = f"{abs_value:.{precision}f}"
-            # Special case: if format has no digits before decimal (like .##),
-            # and value < 1, omit the leading zero
-            if spec['decimal_pos'] == 0 and abs_value < 1:
-                # Remove leading "0" from "0.xx"
-                if num_str.startswith('0.'):
-                    num_str = num_str[1:]  # Keep just ".xx"
-        else:
-            num_str = f"{int(abs_value)}"
-
-        # Add thousand separators if requested
-        if spec['comma'] and '.' in num_str:
-            int_part, dec_part = num_str.split('.')
-            int_part = self.add_thousand_separators(int_part)
-            num_str = int_part + '.' + dec_part
+    def _fixed_parts(self, magnitude, decimals, spec):
+        """The integer and fraction digits of a fixed-point field."""
+        quantum = Decimal(1).scaleb(-decimals)
+        rounded = magnitude.quantize(quantum, rounding=ROUND_HALF_UP)
+        text = format(rounded, 'f')
+        int_str, _, frac_str = text.partition('.')
+        if int_str == '0':
+            # Written back in by _assemble only if the field has room - the
+            # zero in front of the point is not worth an overflow.
+            int_str = ''
         elif spec['comma']:
-            num_str = self.add_thousand_separators(num_str)
+            int_str = self.add_thousand_separators(int_str)
+        return int_str, frac_str
 
-        # Calculate total field width (includes decimal point if present)
-        field_width = spec['digit_count']
-        if spec['has_decimal']:
-            field_width += 1  # Decimal point takes up space
+    def _exponential_parts(self, magnitude, lead, decimals, spec, digits):
+        """The mantissa digits and E/D exponent of a ^^^^ field.
 
-        # Add space for sign if needed
-        if spec['leading_sign'] or spec['trailing_sign'] or spec['trailing_minus_only']:
-            field_width += 1  # Sign takes up one position
+        How many digits the mantissa carries in front of the point is the
+        field's business, not the value's: it is one per lead position, less
+        the one the sign sits in. PRINT USING "#.#^^^^"; 1.5 is 0.2E+01 and
+        "###.#^^^^"; 1.5 is  15.0E-01. A trailing sign leaves the lead
+        positions alone, so "#.#^^^^-"; -1.5 is 1.5E+00-.
+        """
+        trailing = spec['trailing_sign'] or spec['trailing_minus_only']
+        int_digits = lead if trailing else lead - 1
+        if int_digits < 0:
+            int_digits = 0
 
-        # Available width for the number itself (excluding sign/space)
-        available_width = field_width
-        if spec['leading_sign'] or spec['trailing_sign'] or spec['trailing_minus_only']:
-            available_width -= 1  # Reserve space for sign (or space for trailing_minus_only)
-
-        # Adjust for dollar sign
-        if spec['dollar_sign']:
-            available_width -= 1  # Reserve space for $
-
-        # Check for overflow
-        if len(num_str) > available_width:
-            # Number too large - prepend % and return as-is, sign included:
-            # the real binary prints %-123.46, not %123.46.
-            if is_negative:
-                return '%-' + num_str
-            return '%' + num_str
-
-        # Build output with padding
-        sign_char = ''
-        if spec['leading_sign']:
-            sign_char = ''  # emitted with the padding below, not here - a
-                            # '+' format was printing ++42 when both did it
-        elif spec['trailing_sign']:
-            sign_char = ''  # Will be added at end
-        elif spec['trailing_minus_only'] and is_negative:
-            sign_char = ''  # Will be added at end
-        elif is_negative and not spec['trailing_minus_only']:
-            sign_char = '-'
-
-        # Calculate padding
-        content_width = len(num_str)
-        if spec['dollar_sign']:
-            content_width += 1
-        # Add sign to content width
-        # Note: trailing_minus_only adds - for negative OR space for non-negative (always reserves 1 char)
-        if spec['leading_sign'] or spec['trailing_sign'] or spec['trailing_minus_only']:
-            content_width += 1
-        elif sign_char:
-            # A plain field takes a character for the minus too, or the field
-            # comes out one wider than it was asked for.
-            content_width += 1
-
-        padding_needed = field_width - content_width
-
-        # Build result
-        result_parts = []
-
-        # For leading sign: padding comes first (spaces only), then sign immediately before number
-        # Note: Leading sign format uses spaces for padding, never asterisks (even if ** specified)
-        if spec['leading_sign']:
-            result_parts.append(' ' * max(0, padding_needed))
-            result_parts.append('-' if is_negative else '+')
+        exponent = 0
+        if magnitude:
+            # Scale so the mantissa has exactly int_digits digits in front of
+            # the point - or lies in [0.1, 1) when the field allows none.
+            exponent = magnitude.adjusted() + 1 - int_digits
+            magnitude = magnitude.scaleb(-exponent)
+            quantum = Decimal(1).scaleb(-decimals)
+            magnitude = magnitude.quantize(quantum, rounding=ROUND_HALF_UP)
+            # Rounding 9.99 in a one-digit mantissa carries into 10.0.
+            limit = Decimal(1).scaleb(int_digits)
+            if magnitude >= limit:
+                magnitude = magnitude.scaleb(-1).quantize(quantum,
+                                                          rounding=ROUND_HALF_UP)
+                exponent += 1
         else:
-            # No leading sign: add padding/asterisk fill first
-            if spec['asterisk_fill']:
-                result_parts.append('*' * max(0, padding_needed))
-            else:
-                result_parts.append(' ' * max(0, padding_needed))
+            magnitude = magnitude.quantize(Decimal(1).scaleb(-decimals))
 
-        # Minus for a plain field, before the $ - the real binary prints
-        # -$12.50 for USING "$$###.##" with -12.5, and **-12.50 for "**###.##"
-        # (the sign goes after asterisk fill but before the digits).
-        if sign_char:
-            result_parts.append(sign_char)
+        text = format(magnitude, 'f')
+        int_str, _, frac_str = text.partition('.')
+        if int_str == '0':
+            int_str = ''
+        letter = 'D' if digits is not None and digits > SINGLE_DIGITS else 'E'
+        sign = '+' if exponent >= 0 else '-'
+        return int_str, frac_str, f"{letter}{sign}{abs(exponent):02d}"
 
-        # Dollar sign (immediately before number)
-        if spec['dollar_sign']:
-            result_parts.append('$')
+    def _assemble(self, int_str, frac_str, suffix, negative, lead, trail, spec):
+        """Lay the digits, sign, dollar and fill into the field."""
+        trailing_sign = spec['trailing_sign'] or spec['trailing_minus_only']
+        # A leading space in front of a positive number is only ever written
+        # over padding, so it costs nothing; a '-', or the '+' of a +field,
+        # takes a position of its own.
+        sign_slot = not trailing_sign and (negative or spec['leading_sign'])
 
-        # Number
-        result_parts.append(num_str)
+        needed = len(int_str) + (1 if spec['dollar_sign'] else 0) + (1 if sign_slot else 0)
+        if not int_str and needed + 1 <= lead:
+            int_str = '0'                       # room for it after all
+            needed += 1
 
-        # Trailing sign
+        body = int_str + ('.' + frac_str if trail else '') + suffix
+
+        if sign_slot:
+            sign = '-' if negative else '+'
+        else:
+            sign = ''
+
+        if needed > lead:
+            # Too big for the field: MBASIC prints % and lets the number run
+            # over rather than truncating it.
+            out = '%' + sign + ('$' if spec['dollar_sign'] else '') + body
+        else:
+            content = sign + ('$' if spec['dollar_sign'] else '') + body
+            fill = '*' if spec['asterisk_fill'] else ' '
+            out = fill * max(0, lead + trail + len(suffix) - len(content)) + content
+
         if spec['trailing_sign']:
-            result_parts.append('-' if is_negative else '+')
+            out += '-' if negative else '+'
         elif spec['trailing_minus_only']:
-            # Add '-' for negative, ' ' for positive
-            result_parts.append('-' if is_negative else ' ')
-
-        return ''.join(result_parts)
-
-    def format_exponential(self, value, spec):
-        """Format number in exponential notation"""
-        # Determine precision
-        precision = spec['digits_after_decimal'] if spec['digits_after_decimal'] > 0 else 2
-
-        # Format in exponential notation
-        if value == 0:
-            exp_str = f"0.{'0' * precision}E+00"
-        else:
-            # Python's format gives us e+00 or e-00, we need E+00 or E-00
-            exp_str = f"{value:.{precision}e}"
-            exp_str = exp_str.upper()
-
-            # Adjust exponent format to always have sign and 2 digits
-            parts = exp_str.split('E')
-            mantissa = parts[0]
-            exponent = int(parts[1])
-            exp_str = f"{mantissa}E{exponent:+03d}"
-
-        # Handle signs
-        if spec['leading_sign']:
-            if not exp_str.startswith('-'):
-                exp_str = '+' + exp_str
-        elif spec['trailing_sign']:
-            if exp_str.startswith('-'):
-                exp_str = exp_str[1:] + '-'
-            else:
-                exp_str = exp_str + '+'
-        elif spec['trailing_minus_only']:
-            if exp_str.startswith('-'):
-                exp_str = exp_str[1:] + '-'
-            else:
-                exp_str = ' ' + exp_str
-        elif not exp_str.startswith('-'):
-            # Add leading space for positive numbers
-            exp_str = ' ' + exp_str
-
-        return exp_str
+            out += '-' if negative else ' '
+        return out
 
     def add_thousand_separators(self, num_str):
         """Add thousand separators to integer part"""
@@ -741,15 +798,15 @@ class BuiltinFunctions:
         """
         if len(args) == 2:
             s, start = args
-            start = to_integer(start)
-            return s[start-1:] if start > 0 else s
+            start = _mid_start(to_integer(start))
+            return s[start - 1:]
         elif len(args) == 3:
             s, start, length = args
-            start = to_integer(start)
+            start = _mid_start(to_integer(start))
             length = to_integer(length)
-            if start < 1:
-                start = 1
-            return s[start-1:start-1+length]
+            if length < 0 or length > 255:
+                raise ValueError("Illegal function call")
+            return s[start - 1:start - 1 + length]
         else:
             raise ValueError("MID$ requires 2 or 3 arguments")
 

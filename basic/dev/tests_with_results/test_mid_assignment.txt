@@ -32,4 +32,3 @@ After changing pos 1 and 4:
 Result: BESKING
 
 MID$ assignment tests complete!
-

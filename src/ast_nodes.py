@@ -163,6 +163,10 @@ class PrintUsingStatementNode:
     format_string: 'ExpressionNode'  # Format string expression
     expressions: List['ExpressionNode']  # Values to format
     file_number: Optional['ExpressionNode'] = None  # For PRINT #n, USING...
+    #: True when the value list ended with ';' or ',', which suppresses the
+    #: newline exactly as it does on a plain PRINT - FLDFIN only calls CRDO
+    #: when a delimiter did not end the list.
+    trailing_separator: bool = False
     line_num: int = 0
     column: int = 0
 

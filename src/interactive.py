@@ -31,6 +31,18 @@ from src.terminal_errors import TERMINAL_ERRORS
 from src.debug_logger import debug_log, debug_log_error, is_debug_mode
 from src.ui.keybinding_loader import KeybindingLoader
 from src.version import VERSION
+from src.error_codes import error_code_for, format_error_message
+
+
+def _with_default_extension(filename):
+    """Supply .bas the way MBASIC supplies .BAS - only when the name has none.
+
+    The test used to be `not filename.endswith('.bas')`, which is both
+    case-sensitive and blind to any other extension, so CHAIN "CHNTGT.BAS"
+    went looking for CHNTGT.BAS.bas and failed with "File not found". CP/M
+    names are upper case, so every name a program builds for itself hit this.
+    """
+    return filename if '.' in Path(filename).name else filename + '.bas'
 
 # Try to import readline for better line editing
 # This enhances input() with:
@@ -74,15 +86,21 @@ def print_error(e, runtime=None):
         context=context
     )
 
-    # Normal mode - print error with line number if available
-    if runtime and runtime.pc and runtime.pc.line_num:
-        line_num = runtime.pc.line_num
-        print(f"?{type(e).__name__} in {line_num}: {e}")
-        # Also print the source code line if available
-        if hasattr(runtime, 'line_text_map') and line_num in runtime.line_text_map:
-            print(f"  {runtime.line_text_map[line_num]}")
-    else:
-        print(f"?{type(e).__name__}: {e}")
+    # What the real binary prints: the MBASIC message, and " in <line>" only
+    # for an error in a program line.
+    #
+    #     File not found in 50
+    #
+    # It was
+    #
+    #     ?RuntimeError in 50: Cannot open NOSUCH.DAT: Cannot open NOSUCH.DAT: No such file or directory
+    #       50 OPEN "I",1,"NOSUCH.DAT"
+    #
+    # - a Python class name, a Python message, and an echo of the source line,
+    # none of which MBASIC has. The Python detail is not lost: it still goes to
+    # stderr through debug_log_error above, which is where it belongs.
+    line_num = runtime.pc.line_num if runtime and runtime.pc else None
+    print(format_error_message(error_code_for(e), line_num or None))
 
     # In debug mode, print a hint about stderr
     if is_debug_mode():
@@ -637,9 +655,7 @@ class InteractiveMode:
             return
 
         try:
-            # Add .bas extension if not present
-            if not filename.endswith('.bas'):
-                filename += '.bas'
+            filename = _with_default_extension(filename)
 
             self.program.save_to_file(filename)
             self.current_file = filename
@@ -662,9 +678,7 @@ class InteractiveMode:
             return
 
         try:
-            # Add .bas extension if not present
-            if not filename.endswith('.bas'):
-                filename += '.bas'
+            filename = _with_default_extension(filename)
 
             success, errors = self.program.load_from_file(filename)
 
@@ -685,7 +699,7 @@ class InteractiveMode:
         except Exception as e:
             print(f"?{type(e).__name__}: {e}")
 
-    def cmd_merge(self, filename):
+    def cmd_merge(self, filename, quiet=False):
         """MERGE "filename" - Merge program from file into current program
 
         MERGE adds or replaces lines from a file without clearing existing lines.
@@ -694,6 +708,11 @@ class InteractiveMode:
         - Existing lines not in the file are kept
         - If merge is successful AND program_runtime exists, updates runtime's statement_table
           (for CONT support). Runtime update only happens after successful merge.
+
+        Args:
+            quiet: suppress the "Merged from ..." summary. MBASIC prints
+                nothing when a running program MERGEs, so the statement passes
+                quiet=True and only the interactive command reports.
         """
         if not filename:
             print("?Syntax error")
@@ -725,14 +744,19 @@ class InteractiveMode:
                         line_ast = self.program.line_asts[line_num]
                         self.program_runtime.statement_table.replace_line(line_num, line_ast)
 
-                print(f"Merged from {filename}")
-                print(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
+                if not quiet:
+                    print(f"Merged from {filename}")
+                    print(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
                 print("Ready")
             else:
                 print("?No lines merged")
 
         except FileNotFoundError:
-            print(f"?File not found: {filename}")
+            # Raise rather than print: a printed message leaves the PC alone,
+            # so a MERGE of a missing file inside a running program reported
+            # the failure and then carried on to the next line. The real binary
+            # stops. Raising also lets ON ERROR trap it, which it should.
+            raise RuntimeError(f"File not found: {filename}") from None
         except Exception as e:
             print(f"?{type(e).__name__}: {e}")
 
@@ -761,9 +785,7 @@ class InteractiveMode:
             return
 
         try:
-            # Add .bas extension if not present
-            if not filename.endswith('.bas'):
-                filename += '.bas'
+            filename = _with_default_extension(filename)
 
             with open(filename, 'r') as f:
                 program_text = f.read()
@@ -914,7 +936,8 @@ class InteractiveMode:
                 interpreter.run()
 
         except FileNotFoundError:
-            print(f"?File not found: {filename}")
+            # See cmd_merge: printing let the program run on past a failed CHAIN.
+            raise RuntimeError(f"File not found: {filename}") from None
         except ChainException:
             # Re-raise ChainException so it can be caught by interpreter.run() loop
             raise

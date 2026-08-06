@@ -4,7 +4,7 @@
 40 PRINT
 50 REM Test 1: Write to file
 60 PRINT "Test 1: Writing to file"
-70 OPEN "O", 1, "/tmp/test_file.txt"
+70 OPEN "O", 1, "TESTFIL.TXT"
 80 PRINT #1, "Line 1: Hello from MBASIC"
 90 PRINT #1, "Line 2: Testing file output"
 100 PRINT #1, "Line 3: Numbers:"; 10; 20; 30
@@ -13,7 +13,7 @@
 130 PRINT
 140 REM Test 2: Read from file
 150 PRINT "Test 2: Reading from file"
-160 OPEN "I", 1, "/tmp/test_file.txt"
+160 OPEN "I", 1, "TESTFIL.TXT"
 170 LINE INPUT #1, L$
 180 PRINT "Read: "; L$
 190 LINE INPUT #1, L$
@@ -24,14 +24,14 @@
 240 PRINT
 250 REM Test 3: Append to file
 260 PRINT "Test 3: Appending to file"
-270 OPEN "A", 1, "/tmp/test_file.txt"
+270 OPEN "A", 1, "TESTFIL.TXT"
 280 PRINT #1, "Line 4: Appended line"
 290 CLOSE 1
 300 PRINT "Appended to file"
 310 PRINT
 320 REM Test 4: Read appended content
 330 PRINT "Test 4: Reading all lines"
-340 OPEN "I", 1, "/tmp/test_file.txt"
+340 OPEN "I", 1, "TESTFIL.TXT"
 350 C = 0
 360 WHILE NOT EOF(1)
 370 LINE INPUT #1, L$
@@ -42,7 +42,7 @@
 420 PRINT
 430 REM Test 5: WRITE# (comma-delimited)
 440 PRINT "Test 5: WRITE# with delimiters"
-450 OPEN "O", 1, "/tmp/test_data.txt"
+450 OPEN "O", 1, "TESTDAT.TXT"
 460 WRITE #1, "Alice", 25, 1250.50
 470 WRITE #1, "Bob", 30, 1500.75
 480 CLOSE 1
@@ -50,7 +50,7 @@
 500 PRINT
 510 REM Test 6: INPUT# (read delimited data)
 520 PRINT "Test 6: INPUT# reading delimited data"
-530 OPEN "I", 1, "/tmp/test_data.txt"
+530 OPEN "I", 1, "TESTDAT.TXT"
 540 INPUT #1, N$, A, S
 550 PRINT "Name:"; N$; "Age:"; A; "Salary:"; S
 560 INPUT #1, N$, A, S
@@ -59,7 +59,7 @@
 590 PRINT
 600 REM Test 7: EOF function
 610 PRINT "Test 7: EOF function"
-620 OPEN "I", 1, "/tmp/test_file.txt"
+620 OPEN "I", 1, "TESTFIL.TXT"
 630 LC = 0
 640 WHILE NOT EOF(1)
 650 LINE INPUT #1, L$
@@ -69,8 +69,8 @@
 690 CLOSE 1
 700 PRINT
 710 REM Cleanup
-720 KILL "/tmp/test_file.txt"
-730 KILL "/tmp/test_data.txt"
+720 KILL "TESTFIL.TXT"
+730 KILL "TESTDAT.TXT"
 740 PRINT "Test files deleted"
 750 PRINT
 760 PRINT "File I/O tests complete!"

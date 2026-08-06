@@ -4,9 +4,6 @@ Testing CHAIN
 Test 1: CHAIN with ALL flag (preserves variables)
 Before CHAIN: X = 42 , Y$ = Hello
 
-About to CHAIN to /tmp/chain_target.bas
-=== Chained Program ===
-Variable X from main: 42 
-Variable Y$ from main: Hello
-CHAIN with ALL successful!
-
+In the chained program
+X = 42 , Y$ = Hello
+CHAIN tests complete!

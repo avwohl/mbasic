@@ -1,17 +1,17 @@
 Testing EQV (equivalence) operator:
--1 EQV -1 = -1 (expected: -1)
--1 EQV 0 = 0 (expected: 0)
-0 EQV -1 = 0 (expected: 0)
-0 EQV 0 = -1 (expected: -1)
+-1 EQV -1 = -1  (expected: -1)
+-1 EQV 0 =  0  (expected: 0)
+0 EQV -1 =  0  (expected: 0)
+0 EQV 0 = -1  (expected: -1)
 
 Testing IMP (implication) operator:
--1 IMP -1 = -1 (expected: -1)
--1 IMP 0 = 0 (expected: 0)
-0 IMP -1 = -1 (expected: -1)
-0 IMP 0 = -1 (expected: -1)
+-1 IMP -1 = -1  (expected: -1)
+-1 IMP 0 =  0  (expected: 0)
+0 IMP -1 = -1  (expected: -1)
+0 IMP 0 = -1  (expected: -1)
 
 Bitwise tests:
-5 EQV 3 = -7 (5=101b, 3=011b)
-5 IMP 3 = -5 (5=101b, 3=011b)
-15 EQV 7 = -9 (15=1111b, 7=0111b)
-15 IMP 7 = -9 (15=1111b, 7=0111b)
+5 EQV 3 = -7  (5=101b, 3=011b)
+5 IMP 3 = -5  (5=101b, 3=011b)
+15 EQV 7 = -9  (15=1111b, 7=0111b)
+15 IMP 7 = -9  (15=1111b, 7=0111b)

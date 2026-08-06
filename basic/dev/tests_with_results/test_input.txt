@@ -21,13 +21,12 @@ Enter a number 99
 You entered: 99 
 
 Test 7: Type coercion
-Integer from 123.456:123
+Integer from 123.456: 123 
 
 Test 8: Comma-separated INPUT
 Values: 1  2  3  4  5 
 
 Test 9: String input variations
-S1 len:0S2 len:9S3 len:0
+S1 len: 0 S2 len: 9 S3 len: 0 
 
 INPUT tests complete!
-

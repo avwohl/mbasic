@@ -7,19 +7,19 @@ Test 1: ABS
   PASS: ABS works
 
 Test 2: SGN
-  SGN(-5) =-1
-  SGN(0) =0
-  SGN(5) =1
+  SGN(-5) =-1 
+  SGN(0) = 0 
+  SGN(5) = 1 
   PASS: SGN works
 
 Test 3: INT
-  INT(10.9) =10
-  INT(-10.9) =-11
+  INT(10.9) = 10 
+  INT(-10.9) =-11 
   PASS: INT works
 
 Test 4: FIX
-  FIX(10.9) =10
-  FIX(-10.9) =-10
+  FIX(10.9) = 10 
+  FIX(-10.9) =-10 
   PASS: FIX works
 
 Test 5: SQR
@@ -48,9 +48,8 @@ Test 9: ATN
   PASS: ATN works
 
 Test 10: CINT
-  CINT(10.4) =10
-  CINT(10.6) =11
+  CINT(10.4) = 10 
+  CINT(10.6) = 11 
   PASS: CINT works
 
 All math function tests complete!
-

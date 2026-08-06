@@ -24,8 +24,8 @@
 240 REM Test 4: Mixed input types
 250 PRINT "Test 4: Mixed numeric and string INPUT"
 260 DATA "Alice", 25, 1250.50
-270 READ NAME$, AGE, SALARY
-280 PRINT "Name:"; NAME$; "Age:"; AGE; "Salary:"; SALARY
+270 READ NM$, AGE, SALARY
+280 PRINT "Name:"; NM$; "Age:"; AGE; "Salary:"; SALARY
 290 PRINT
 300 REM Test 5: Multiple string inputs
 310 PRINT "Test 5: Multiple strings"

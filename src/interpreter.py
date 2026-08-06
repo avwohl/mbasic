@@ -13,10 +13,77 @@ from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingForm
 from src.tokens import TokenType
 from src.pc import PC
 from src.win_console import win_flush_pending
-from src.number_format import (format_for_print, to_integer, to_single,
+from src.number_format import (format_for_print, int_divide, int_modulo,
+                               MBF_INFINITY_SINGLE, to_int_operand,
+                               to_integer, to_single,
                                INTEGER_DIGITS, SINGLE_DIGITS, DOUBLE_DIGITS)
 from src.iohandler.base import KeyInputPending
+from src.error_codes import error_code_for, get_error_message
 import src.ast_nodes as ast_nodes
+
+
+def _while_wend_walk(statement):
+    """Every WHILE and WEND in a statement, including inside THEN/ELSE clauses.
+
+    Yields (node, nested). Same reasoning as _for_next_walk: a clause has no PC
+    of its own, but it still counts towards the nesting.
+    """
+    if isinstance(statement, (ast_nodes.WhileStatementNode, ast_nodes.WendStatementNode)):
+        yield statement, False
+        return
+    if isinstance(statement, ast_nodes.IfStatementNode):
+        for clause in (statement.then_statements, statement.else_statements):
+            for inner in clause or ():
+                for node, _ in _while_wend_walk(inner):
+                    yield node, True
+
+
+def _for_next_walk(statement):
+    """Every FOR and NEXT in a statement, including inside THEN/ELSE clauses.
+
+    Yields (node, nested). A clause is not addressable by PC - the statement
+    table holds one entry for the whole IF - but it still counts towards the
+    nesting, and missing that was fatal:
+
+        0 PRINT "...":FOR I=-32767 TO 32767:X$=INKEY$:IF LEN(X$)=1 THEN GOTO 1 ELSE NEXT I
+
+    is how basic/utilities/million.bas waits for a keypress. Counting only
+    top-level statements found no NEXT at all and called it "FOR Without NEXT".
+    """
+    if isinstance(statement, (ast_nodes.ForStatementNode, ast_nodes.NextStatementNode)):
+        yield statement, False
+        return
+    if isinstance(statement, ast_nodes.IfStatementNode):
+        for clause in (statement.then_statements, statement.else_statements):
+            for inner in clause or ():
+                for node, _ in _for_next_walk(inner):
+                    yield node, True
+
+
+class MBasicError(RuntimeError):
+    """An error raised as an MBASIC error *number* rather than as a message.
+
+    ERROR n needs to report code n whatever the wording, so it carries the code
+    and lets error_code_for() read it straight off.
+    """
+
+    def __init__(self, code):
+        super().__init__(get_error_message(code)[1])
+        self.mbasic_code = code
+
+
+def _loop_is_done(current, end, step):
+    """Whether a FOR loop has passed its limit.
+
+    MBASIC's test (FINNXT in bimisc.mac) compares the control variable with the
+    limit and subtracts the sign of the step: the loop ends when
+    sign(current - end) equals sign(step). Written as two inequalities the
+    zero-step case falls through the gap - sign(0) is 0, so a STEP 0 loop only
+    ends when it lands exactly on the limit, which is why FOR I = 1 TO 0 STEP 0
+    runs for ever on the real binary and FOR I = 5 TO 5 STEP 0 does not run
+    at all.
+    """
+    return ((current > end) - (current < end)) == ((step > 0) - (step < 0))
 
 #: Marker for "this node has not been typed yet" - None is a real answer
 #: (INTEGER_DIGITS), so it cannot stand for the missing value.
@@ -156,6 +223,11 @@ class Interpreter:
 
     def __init__(self, runtime, io_handler=None, breakpoint_callback=None, filesystem_provider=None, limits=None, settings_manager=None, file_io=None):
         self.runtime = runtime
+
+        # Set by a zero-trip FOR for the NEXT it jumps to, and cleared there:
+        # which name in that NEXT to enter at, and a signal to skip the
+        # increment. See execute_for.
+        self._for_entry_index = None
 
         # I/O handler (defaults to console if not provided)
         if io_handler is None:
@@ -329,7 +401,6 @@ class Interpreter:
         import time
         start_time = time.time()
         statements_in_tick = 0
-        last_traced_line = None
 
         try:
             while statements_in_tick < max_statements:
@@ -397,15 +468,24 @@ class Interpreter:
                     else:
                         self.state.skip_next_breakpoint_check = False
 
-                # Trace output
+                # Trace output. MBASIC prints the line number as it *enters* a
+                # line, with no newline of its own, so a traced program reads
+                #
+                #     [130][140][150][160]Result: 50
+                #
+                # and not one bracket per line. Entering the line is the whole
+                # test: a RETURN that lands back in the middle of 440 does not
+                # re-print [440], a NEXT that jumps back to the PRINT in
+                # "370 FOR I=1 TO 3 : PRINT I; : NEXT I" does not re-print
+                # [370], and "490 TRON : X = 100 : TROFF" prints nothing at all
+                # because the trace was off when 490 started.
                 if self.runtime.trace_on:
                     if self.runtime.trace_detail == 'statement':
-                        # Statement-level trace: show [10.0], [10.1], [10.2]
-                        self.io.output(f"[{pc}]")
-                    elif pc.line_num != last_traced_line:
-                        # Line-level trace: show [10] only once per line
-                        self.io.output(f"[{pc.line_num}]")
-                        last_traced_line = pc.line_num
+                        # Statement-level trace: show [10.0], [10.1], [10.2].
+                        # Ours, not MBASIC's - the debugger uses it.
+                        self.io.output(f"[{pc}]", end='')
+                    elif pc.stmt_offset == 0:
+                        self.io.output(f"[{pc.line_num}]", end='')
 
                 # Get statement
                 stmt = self.runtime.statement_table.get(pc)
@@ -730,48 +810,14 @@ class Interpreter:
     # The CONT command now uses tick() directly with PC positioning
 
     def _map_exception_to_error_code(self, exception):
-        """Map Python exception to MBASIC error code"""
-        error_msg = str(exception).lower()
+        """The MBASIC error number for a Python exception.
 
-        # Division by zero
-        if isinstance(exception, ZeroDivisionError) or "division by zero" in error_msg:
-            return 11  # Division by zero
-
-        # Type mismatch
-        if isinstance(exception, (TypeError, ValueError)):
-            # Check for specific type mismatch messages
-            if "type mismatch" in error_msg or "invalid literal" in error_msg:
-                return 13  # Type mismatch
-            return 5  # Illegal function call
-
-        # Out of range
-        if isinstance(exception, IndexError) or "subscript out of range" in error_msg:
-            return 9  # Subscript out of range
-
-        # Key errors (undefined variable/function)
-        if isinstance(exception, KeyError) or "undefined" in error_msg:
-            if "function" in error_msg:
-                return 18  # Undefined user function
-            return 8  # Undefined line number
-
-        # Out of data
-        if "out of data" in error_msg:
-            return 4  # Out of DATA
-
-        # NEXT without FOR
-        if "next without for" in error_msg:
-            return 1  # NEXT without FOR
-
-        # RETURN without GOSUB
-        if "return without gosub" in error_msg:
-            return 3  # RETURN without GOSUB
-
-        # Overflow
-        if isinstance(exception, OverflowError):
-            return 6  # Overflow
-
-        # Default to illegal function call
-        return 5  # Illegal function call
+        This used to be a second, looser copy of the same guesswork that the
+        reporter does, and the two disagreed: the printed message came out
+        right while ERR read 5 for a dozen errors that have codes of their own.
+        Both now go through src/error_codes.py.
+        """
+        return error_code_for(exception)
 
     def _invoke_error_handler(self, error_code, error_pc):
         """Invoke the error handler"""
@@ -793,6 +839,60 @@ class Interpreter:
 
         # Jump to error handler line
         self.runtime.npc = PC.from_line(self.runtime.error_handler)
+
+    def find_matching_next(self, start_line, start_stmt):
+        """Find the NEXT that closes a FOR, the way MBASIC's NXTSCN does.
+
+        The scan is a pure nesting count and never looks at variable names:
+        every FOR pushes the count up by one and every *variable* on a NEXT
+        brings it down by one, so "NEXT J,I" closes two loops. That is how
+        MBASIC decides where a loop ends - by counting, not by matching names,
+        which is why the name on the NEXT it lands on can turn out to be the
+        wrong one and be rejected there.
+
+        Returns:
+            (line_number, stmt_index, variable_index, nested) of the matching
+            NEXT, or None. variable_index is which name in a "NEXT J,I" it was
+            that brought the count to zero - the scan stops on that one, and it
+            is the one the loop is entered through. `nested` is True when the
+            NEXT is inside a THEN or ELSE clause, where it has no PC of its own
+            and stmt_index addresses the IF that contains it.
+        """
+        depth = 1
+
+        line_numbers = sorted(set(pc.line_num
+                                  for pc in self.runtime.statement_table.statements.keys()))
+        try:
+            line_idx = line_numbers.index(start_line)
+        except ValueError:
+            return None
+
+        stmt_idx = start_stmt + 1
+
+        while line_idx < len(line_numbers):
+            line_num = line_numbers[line_idx]
+            line_statements = self.runtime.statement_table.get_line_statements(line_num)
+
+            while stmt_idx < len(line_statements):
+                for stmt, nested in _for_next_walk(line_statements[stmt_idx]):
+                    if isinstance(stmt, ast_nodes.ForStatementNode):
+                        depth += 1
+                        continue
+                    # A bare NEXT closes exactly one loop; NEXT I,J closes two.
+                    # DECNXT counts them down one at a time and returns the
+                    # moment the count reaches zero, so a NEXT can be entered
+                    # part way along its own list.
+                    names = max(1, len(stmt.variables or []))
+                    if depth <= names:
+                        return (line_num, stmt_idx, depth - 1, nested)
+                    depth -= names
+
+                stmt_idx += 1
+
+            line_idx += 1
+            stmt_idx = 0
+
+        return None
 
     def find_matching_wend(self, start_line, start_stmt):
         """Find the matching WEND for a WHILE statement
@@ -823,15 +923,14 @@ class Interpreter:
 
             # Search through statements in this line
             while stmt_idx < len(line_statements):
-                stmt = line_statements[stmt_idx]
-
-                if isinstance(stmt, ast_nodes.WhileStatementNode):
-                    depth += 1
-                elif isinstance(stmt, ast_nodes.WendStatementNode):
+                for stmt, nested in _while_wend_walk(line_statements[stmt_idx]):
+                    if isinstance(stmt, ast_nodes.WhileStatementNode):
+                        depth += 1
+                        continue
                     depth -= 1
                     if depth == 0:
                         # Found matching WEND
-                        return (line_num, stmt_idx)
+                        return (line_num, stmt_idx, nested)
 
                 stmt_idx += 1
 
@@ -874,16 +973,22 @@ class Interpreter:
         """
         value = self.evaluate_expression(stmt.expression)
 
-        # Type coercion based on type suffix
+        # Type coercion based on type suffix. BASIC does not convert across the
+        # string/number line in either direction - A$ = 5 and A = "X" are both
+        # "Type mismatch" on the real binary. str(value) quietly turned the
+        # first into A$ = "5", so a mistyped expression showed up much later as
+        # something else.
         if stmt.variable.type_suffix == '%':
             # Integer - MBASIC rounds to nearest, halves away from zero.
             # A% = 3.7 is 4 on the real binary, not 3, and A% = -3.7 is -4.
-            value = to_integer(value)
+            value = to_int_operand(value)
         elif stmt.variable.type_suffix == '$':
-            # String
-            value = str(value)
+            if not isinstance(value, str):
+                raise TypeError("Type mismatch")
         elif stmt.variable.type_suffix in ('!', '#', None):
             # Single or double precision float (or no suffix) - ensure it's numeric
+            if isinstance(value, str):
+                raise TypeError("Type mismatch")
             if not isinstance(value, (int, float)):
                 value = float(value) if value else 0
 
@@ -1202,22 +1307,35 @@ class Interpreter:
         if not format_str:
             raise RuntimeError("Illegal function call")
 
-        # Evaluate all expressions
+        # Evaluate all expressions, keeping each one's precision: PRINT USING
+        # converts through the same routine PRINT does, so a single-precision
+        # value is six significant figures there too and 12345.67 comes out of
+        # "##,###.##" as 12,345.70. See UsingFormatter.format_numeric_field.
         values = []
+        digits = []
         for expr in stmt.expressions:
-            value = self.evaluate_expression(expr)
-            values.append(value)
+            values.append(self.evaluate_expression(expr))
+            digits.append(self._expression_digits(expr))
 
         # Create formatter and format values
         formatter = UsingFormatter(format_str)
-        output = formatter.format_values(values)
+        output = formatter.format_values(values, digits)
 
-        # Output to file or screen
+        # Output to file or screen. A ';' or ',' at the end of the value list
+        # suppresses the newline, as it does on a plain PRINT.
+        newline = '' if getattr(stmt, 'trailing_separator', False) else '\n'
         if file_handle:
-            file_handle.write(output + '\n')
+            file_handle.write(output + newline)
             file_handle.flush()
         else:
-            self.io.output(output)
+            self.io.output(output, end=newline)
+
+        if values and not formatter.has_field():
+            # MBASIC scans the whole USING string, prints the literal text it
+            # found, and only then complains that there was never a field to
+            # put the value in: PRINT USING "A.B"; 5 prints A.B and stops with
+            # Illegal function call.
+            raise RuntimeError("Illegal function call")
 
     def execute_clause_statements(self, statements, resume_pc=None):
         """Run the statements of a THEN or ELSE clause.
@@ -1270,16 +1388,82 @@ class Interpreter:
             # Execute THEN clause
             if stmt.then_line_number is not None:
                 # THEN line_number
-                self.runtime.npc = PC.from_line(stmt.then_line_number)
+                self._jump_to(stmt.then_line_number)
             elif stmt.then_statements:
                 self.execute_clause_statements(stmt.then_statements)
         else:
             # Execute ELSE clause
             if stmt.else_line_number is not None:
                 # ELSE line_number
-                self.runtime.npc = PC.from_line(stmt.else_line_number)
+                self._jump_to(stmt.else_line_number)
             elif stmt.else_statements:
                 self.execute_clause_statements(stmt.else_statements)
+
+    def _matching_next(self, stmt):
+        """The NEXT that closes this FOR, found once and remembered.
+
+        MBASIC scans for it every time a FOR is set up, and says
+        "FOR Without NEXT" at the FOR's own line when there is none. Scanning
+        the program on every entry to an inner loop would be far too slow here,
+        so the answer is cached on the statement - keyed on the statement table
+        and its version, so that MERGE or an edit invalidates it.
+        """
+        table = self.runtime.statement_table
+        key = (id(table), table.version)
+        cached = getattr(stmt, '_mb_next', None)
+        if cached is not None and cached[0] == key:
+            return cached[1]
+        target = self.find_matching_next(
+            self.runtime.pc.line_num, self.runtime.pc.stmt_offset)
+        if target is None:
+            raise RuntimeError("FOR without NEXT")
+        try:
+            stmt._mb_next = (key, target)
+        except AttributeError:
+            pass                            # a node with __slots__: recompute
+        return target
+
+    def _divide_by_zero(self, dividend):
+        r"""What a floating-point divide by zero does on 5.21.
+
+        Not an error at all, unless a handler is armed. The ANSI overflow
+        routine prints a bare "Division by zero" - no line number, no "Ok" -
+        substitutes machine infinity with the dividend's sign, and returns to
+        the middle of the expression it was called from, so the statement
+        finishes and the program carries on:
+
+            10 A = 1/0
+            15 PRINT "A=";A        ->  Division by zero
+            20 PRINT "AFTER"           A= 1.70141E+38
+                                       AFTER
+
+        We used to raise, which stopped the program. The integer forms - 5 \ 0
+        and 5 MOD 0 - are different: those go through the normal error
+        dispatcher and do stop, which is why they still raise.
+
+        With ON ERROR armed it IS trappable, with ERR 11, and the assignment
+        never completes - so there the ordinary error path is the right one.
+        """
+        if self.runtime.has_error_handler():
+            raise RuntimeError("Division by zero")
+        self.io.output("Division by zero")
+        infinity = MBF_INFINITY_SINGLE
+        try:
+            return -infinity if dividend < 0 else infinity
+        except TypeError:
+            return infinity
+
+    def _jump_to(self, line_number):
+        """Set the next PC to a program line, checking that it is there.
+
+        Without the check the bad line number travels all the way to the
+        statement fetch, which reported it as "Invalid PC: PC(9999.0)" - a
+        Python repr, at the line being jumped TO rather than the line doing the
+        jumping. The real binary says "Undefined line number in 10".
+        """
+        if not self.runtime.statement_table.line_exists(line_number):
+            raise RuntimeError(f"Undefined line number {line_number}")
+        self.runtime.npc = PC.from_line(line_number)
 
     def execute_goto(self, stmt):
         """Execute GOTO statement"""
@@ -1288,7 +1472,7 @@ class Interpreter:
             self.state.error_info = None
             self.runtime.set_variable_raw('err%', 0)
         # Set both old and new PC
-        self.runtime.npc = PC.from_line(stmt.line_number)
+        self._jump_to(stmt.line_number)
 
     def execute_gosub(self, stmt):
         """Execute GOSUB statement"""
@@ -1304,7 +1488,7 @@ class Interpreter:
         )
 
         # Jump to subroutine
-        self.runtime.npc = PC.from_line(stmt.line_number)
+        self._jump_to(stmt.line_number)
 
     def execute_ongoto(self, stmt):
         """Execute ON...GOTO statement - computed GOTO
@@ -1327,7 +1511,7 @@ class Interpreter:
             if self.state.error_info is not None:
                 self.state.error_info = None
                 self.runtime.set_variable_raw('err%', 0)
-            self.runtime.npc = PC.from_line(stmt.line_numbers[index - 1])
+            self._jump_to(stmt.line_numbers[index - 1])
         # If index is out of range, just continue to next statement (no jump)
 
     def execute_ongosub(self, stmt):
@@ -1357,7 +1541,7 @@ class Interpreter:
                 return_pc.stmt_offset if return_pc.is_running() else 0
             )
             # Jump to subroutine
-            self.runtime.npc = PC.from_line(stmt.line_numbers[index - 1])
+            self._jump_to(stmt.line_numbers[index - 1])
         # If index is out of range, just continue to next statement (no jump)
 
     def execute_return(self, stmt):
@@ -1445,6 +1629,31 @@ class Interpreter:
             self.runtime.pc.statement
         )
 
+        # MBASIC tests the loop before running it, so FOR I = 10 TO 1 runs the
+        # body no times at all and leaves I at 10. It does that by never
+        # falling into the body: FOR scans forward for its NEXT (NXTSCN) and
+        # jumps *to* it with the increment suppressed, so the ordinary
+        # termination test in NEXT is what ends the loop.
+        #
+        # Entering through the NEXT rather than skipping past it is what makes
+        #   10 FOR I=10 TO 1 / 20 PRINT "BODY" / 30 NEXT J
+        # report "NEXT without FOR in 30": the NEXT still runs, and still
+        # checks the name it was given.
+        target = self._matching_next(stmt)
+        if _loop_is_done(start, end, step):
+            next_line, next_stmt, var_index, nested = target
+            if nested:
+                # The NEXT is inside a THEN or ELSE clause, which has no PC to
+                # jump to. Finish the loop here instead and carry on after the
+                # statement that contains it - where the clause would have left
+                # us anyway, the NEXT being the last thing in it.
+                self.runtime.pop_for_loop(var_name)
+                self.runtime.npc = self.runtime.statement_table.next_pc(
+                    PC.running_at(next_line, next_stmt))
+            else:
+                self._for_entry_index = var_index
+                self.runtime.npc = PC.running_at(next_line, next_stmt)
+
     def execute_next(self, stmt):
         """Execute NEXT statement
 
@@ -1463,6 +1672,12 @@ class Interpreter:
         independently. This method does NOT handle the colon-separated case - that's
         handled by the parser creating multiple statements.
         """
+        # A zero-trip FOR jumps straight here with the increment suppressed and,
+        # for a NEXT that closes several loops, with the name it is to be
+        # entered at - see execute_for.
+        entry_index = self._for_entry_index
+        self._for_entry_index = None
+
         # Determine which variables to process
         if stmt.variables:
             # Process variables left-to-right: NEXT I, J, K processes I first, then J, then K.
@@ -1483,11 +1698,18 @@ class Interpreter:
             type_suffix = var_name[-1] if var_name and var_name[-1] in '$%!#' else None
             var_list = [DummyVarNode(base_name, type_suffix)]
 
-        # Process each variable in order
-        for var_node in var_list:
+        # Process each variable in order. Coming from a zero-trip FOR, the
+        # names before the one the scan stopped on belong to loops that were
+        # never entered, so they are not touched at all.
+        if entry_index and entry_index < len(var_list):
+            var_list = var_list[entry_index:]
+
+        for index, var_node in enumerate(var_list):
             var_name = var_node.name + (var_node.type_suffix or "")
             # Process this NEXT
-            should_continue = self._execute_next_single(var_name, var_node=var_node)
+            should_continue = self._execute_next_single(
+                var_name, var_node=var_node,
+                suppress_increment=(entry_index is not None and index == 0))
             # If this loop continues (jumps back), don't process remaining variables
             if should_continue:
                 return
@@ -1522,12 +1744,16 @@ class Interpreter:
             return None
         return next(reversed(states))
 
-    def _execute_next_single(self, var_name, var_node=None):
+    def _execute_next_single(self, var_name, var_node=None, suppress_increment=False):
         """Execute NEXT for a single variable.
 
         Args:
             var_name: Full variable name with suffix
             var_node: Optional VariableNode for token info
+            suppress_increment: leave the control variable where it is instead
+                of stepping it. This is how a zero-trip FOR arrives - MBASIC
+                enters the NEXT with NXTFLG clear so that the termination test
+                runs against the start value.
 
         Returns:
             True if loop continues (jumped back), False if loop finished
@@ -1556,7 +1782,7 @@ class Interpreter:
             current = self.runtime.get_variable(base_name, type_suffix, token=token)
 
         step = loop_info['step']
-        new_value = current + step
+        new_value = current if suppress_increment else current + step
 
         # MBASIC increments first and leaves the variable at the value that
         # ended the loop, so FOR I=1 TO 3: NEXT: PRINT I prints 4, not 3.
@@ -1564,8 +1790,9 @@ class Interpreter:
         # still fit, which is what a program reads after the loop.
         self.runtime.set_variable(base_name, type_suffix, new_value, token=token, limits=self.limits)
 
-        # Check if loop should continue
-        if (step > 0 and new_value <= loop_info['end']) or (step < 0 and new_value >= loop_info['end']):
+        # Check if loop should continue - see _loop_is_done for why this is a
+        # sign comparison and not two inequalities.
+        if not _loop_is_done(new_value, loop_info['end'], step):
             # Validate that the FOR return address still exists
             return_line = loop_info['return_line']
             return_stmt = loop_info['return_stmt']
@@ -1596,22 +1823,42 @@ class Interpreter:
             self.runtime.pop_for_loop(var_name)
             return False  # Loop finished
 
+    def _matching_wend(self, stmt):
+        """The WEND that closes this WHILE, found once and remembered.
+
+        Same reasoning as _matching_next: the check has to happen whether the
+        condition is true or not, because "WHILE without WEND" is raised when
+        the loop is set up, and scanning on every entry would be too slow.
+        """
+        table = self.runtime.statement_table
+        key = (id(table), table.version)
+        cached = getattr(stmt, '_mb_wend', None)
+        if cached is not None and cached[0] == key:
+            return cached[1]
+        target = self.find_matching_wend(
+            self.runtime.pc.line_num, self.runtime.pc.stmt_offset)
+        if target is None:
+            raise RuntimeError("WHILE without WEND")
+        try:
+            stmt._mb_wend = (key, target)
+        except AttributeError:
+            pass
+        return target
+
     def execute_while(self, stmt):
         """Execute WHILE statement"""
+        # Checked whether or not the loop is entered - the real binary reports
+        # a missing WEND at the WHILE, before running the body.
+        wend_pos = self._matching_wend(stmt)
+
         # Evaluate the condition
         condition = self.evaluate_expression(stmt.condition)
 
         if not condition:
-            # Condition is false - skip to after matching WEND
-            wend_pos = self.find_matching_wend(
-                self.runtime.pc.line_num,
-                self.runtime.pc.stmt_offset
-            )
-
-            if wend_pos is None:
-                raise RuntimeError(f"WHILE without matching WEND at line {self.runtime.pc.line_num}")
-
-            wend_line, wend_stmt = wend_pos
+            # Condition is false - skip to after matching WEND. When the WEND
+            # is inside a clause it has no PC of its own and wend_stmt is the
+            # statement containing it, which is where we want to land anyway.
+            wend_line, wend_stmt, _nested = wend_pos
 
             # Jump to the statement AFTER the WEND using statement_table
             wend_pc = PC.running_at(wend_line, wend_stmt)
@@ -1694,7 +1941,7 @@ class Interpreter:
                 self.runtime.npc = next_pc
         else:
             # RESUME line_number - jump to specific line
-            self.runtime.npc = PC.from_line(stmt.line_number)
+            self._jump_to(stmt.line_number)
 
     def execute_end(self, stmt):
         """Execute END statement"""
@@ -1815,9 +2062,9 @@ class Interpreter:
             # Free from resource limits tracking
             self.limits.free_variable(array_name.lower())
 
-            # Array name already includes type suffix from parser
-            # Delete using raw method (already have full name)
-            self.runtime.delete_array_raw(array_name)
+            # The parser gives the name as written, which for a single has no
+            # suffix - the storage key does. See Runtime.erase_array.
+            self.runtime.erase_array(array_name)
 
     def execute_clear(self, stmt):
         """Execute CLEAR statement
@@ -1968,8 +2215,11 @@ class Interpreter:
             self.runtime.set_variable_raw('erl%', 0)
             self.runtime.set_variable_raw('ers%', 0)
 
-        # Raise the error
-        raise RuntimeError(f"ERROR {error_code}")
+        # Raise it as the error it is. The message used to be the literal text
+        # "ERROR 21", which mapped back to code 5 and printed "Illegal function
+        # call"; MBASIC looks the number up in its message table, so ERROR 21
+        # is "Unprintable error in 10" and ERR reads 21.
+        raise MBasicError(error_code)
 
     def execute_input(self, stmt):
         """Execute INPUT statement - read from keyboard or file
@@ -2312,7 +2562,7 @@ class Interpreter:
                     self.runtime.clear_variables()
                     # Set NPC to target line (like GOTO)
                     # On next tick(), NPC will be moved to PC
-                    self.runtime.npc = PC.from_line(line_num)
+                    self._jump_to(line_num)
                     # PC stays running - execution continues at new line
         else:
             # RUN without arguments - CLEAR + signal restart needed
@@ -2460,7 +2710,9 @@ class Interpreter:
 
         # Delegate to interactive mode if available
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            self.interactive_mode.cmd_merge(filename)
+            # quiet: MBASIC prints nothing when a running program MERGEs -
+            # the summary belongs to the interactive command only.
+            self.interactive_mode.cmd_merge(filename, quiet=True)
         else:
             raise RuntimeError("MERGE not available in this context")
 
@@ -3374,16 +3626,18 @@ class Interpreter:
             return left * right
         elif op == TokenType.DIVIDE:
             if right == 0:
-                raise RuntimeError("Division by zero")
+                return self._divide_by_zero(left)
             return left / right
         elif op == TokenType.BACKSLASH:  # Integer division
-            if right == 0:
-                raise RuntimeError("Division by zero")
-            return int(left // right)
+            # Not Python's // : MBASIC truncates toward zero, rounds both
+            # operands to integers first and requires them to fit 16 bits.
+            # See src/number_format.py.
+            return int_divide(left, right)
         elif op == TokenType.POWER:
             return left ** right
         elif op == TokenType.MOD:
-            return left % right
+            # Not Python's % : the remainder takes the sign of the dividend.
+            return int_modulo(left, right)
 
         # Relational
         elif op == TokenType.EQUAL:

@@ -21,10 +21,10 @@
 210 PRINT "j% = 20.7 becomes"; j%
 220 PRINT
 230 REM Test string suffix
-240 name$ = "MBASIC"
+240 nm$ = "MBASIC"
 250 version$ = "5.21"
 260 PRINT "String variables with $ suffix:"
-270 PRINT "name$ ="; name$
+270 PRINT "nm$ ="; nm$
 280 PRINT "version$ ="; version$
 290 PRINT
 300 REM Test mixed case variables

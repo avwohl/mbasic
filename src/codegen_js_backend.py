@@ -1894,8 +1894,12 @@ class JavaScriptBackend(CodeGenBackend):
             if op == '^':
                 return f'Math.pow({left}, {right})'
             elif op == '//':
-                # Integer division
-                return f'Math.floor({left} / {right})'
+                # Integer division truncates toward zero in MBASIC, so -10 \ 3
+                # is -3. Math.floor gave -4. (JavaScript's % already takes the
+                # sign of the dividend, which is what MOD wants, so that one
+                # needs nothing. Neither yet rounds its operands to integers
+                # first - see docs/dev/MBASIC_521_DIVERGENCES_TODO.md.)
+                return f'Math.trunc({left} / {right})'
             elif op in ['+', '-', '*', '/', '<', '>', '<=', '>=', '=', '<>']:
                 if op == '=':
                     js_op = '==='

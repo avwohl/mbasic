@@ -7,7 +7,7 @@ Test 1: FN SQUARE(5) = 25 (expected: 25)
 Test 2: FN ADD(3, 7) = 10 (expected: 10)
         FN ADD(100, 50) = 150 (expected: 150)
 
-Test 3: FN CIRCLE(5) = 78.53975 (area of circle r=5)
+Test 3: FN CIRCLE(5) = 78.5398 (area of circle r=5)
         FN CIRCLE(10) = 314.159 (area of circle r=10)
 
 Test 4: FN QUAD(5) = 20 (expected: 20)
@@ -18,7 +18,7 @@ Test 5: FN GREET$("World") =
 Test 6: FN MAX%(10, 20) = 20 (expected: 20)
         FN MAX%(50, 30) = 50 (expected: 50)
 
-Test 7: FN DEGREES(1.5708) = 90.00024264 (~90 degrees)
+Test 7: FN DEGREES(1.5708) = 90.0002 (~90 degrees)
 
 Test 8: 10 + FN CUBE(3) = 37 (expected: 37)
 
@@ -28,4 +28,3 @@ Test 9: FN AVG(10, 20) = 15 (expected: 15)
 Test 10: FN F1(10) = 11 , FN F2(10) = 12 , FN F3(10) = 13 
 
 DEF FN tests complete!
-

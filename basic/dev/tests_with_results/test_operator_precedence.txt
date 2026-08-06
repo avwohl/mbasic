@@ -14,10 +14,10 @@ PASS: Got-4 as expected
 PASS: Got 18 as expected
 PASS: Got 9 as expected
 PASS: Got 1 as expected
-PASS: Got-1as expected
-PASS: Got-1as expected
-PASS: Got0as expected
-PASS: Got1as expected
+PASS: Got-1 as expected
+PASS: Got-1 as expected
+PASS: Got 0 as expected
+PASS: Got 1 as expected
 PASS: Got 48 as expected
 PASS: Got 5 as expected
 PASS: Got 12 as expected
@@ -26,4 +26,3 @@ PASS: Got 12 as expected
 Tests passed: 20 
 Tests failed: 0 
 All tests PASSED!
-

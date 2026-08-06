@@ -311,6 +311,11 @@ class StatementTable:
         """Initialize empty statement table"""
         self.statements = {}  # PC -> stmt_node (insertion-ordered)
         self._keys_cache = None  # Cache for next_pc() lookups
+        #: Bumped on every change to the table. MERGE and line editing mutate
+        #: a table in place, so identity alone is not enough to tell a cached
+        #: answer about the program's shape - the FOR/NEXT and WHILE/WEND
+        #: matches in the interpreter - from a stale one.
+        self.version = 0
 
     def add(self, pc, stmt_node):
         """
@@ -322,6 +327,7 @@ class StatementTable:
         """
         self.statements[pc] = stmt_node
         self._keys_cache = None  # Invalidate cache when table changes
+        self.version += 1
 
     def get(self, pc):
         """
@@ -454,6 +460,7 @@ class StatementTable:
         for pc in to_remove:
             del self.statements[pc]
         self._keys_cache = None  # Invalidate cache
+        self.version += 1
 
     def replace_line(self, line_num, line_node):
         """

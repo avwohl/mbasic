@@ -923,6 +923,12 @@ class Runtime:
                 'timestamp': time.perf_counter()
             }
 
+        if full_name in self._arrays:
+            # DIM A(3) twice is "Duplicate Definition in <line>" on the real
+            # binary - it does not silently re-dimension, which is what we did,
+            # quietly throwing away everything the array held.
+            raise RuntimeError("Duplicate Definition")
+
         # Create array with access tracking
         self._arrays[full_name] = {
             'dims': dimensions,
@@ -965,6 +971,21 @@ class Runtime:
         """
         if full_name in self._arrays:
             del self._arrays[full_name]
+
+    def erase_array(self, name, def_type_map=None):
+        """Delete an array by the name ERASE was given.
+
+        ERASE A has to find the array DIM A(5) created, and DIM stores it under
+        the *resolved* name - a! for a single, a% for an integer - so deleting
+        the raw "a" found nothing and quietly did nothing at all. The array
+        stayed dimensioned, which only became visible once re-dimensioning
+        started reporting Duplicate Definition, as it does on the real binary.
+        """
+        type_suffix = None
+        if name and name[-1] in '$%!#':
+            name, type_suffix = name[:-1], name[-1]
+        full_name, _ = self._resolve_variable_name(name, type_suffix, def_type_map)
+        self._arrays.pop(full_name, None)
 
     def read_data(self):
         """

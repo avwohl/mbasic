@@ -3,4 +3,4 @@ Elkins Log(10k!) Benchmark
 Note the Start Time!
 Note the End Time!
 
-Error:  .5457254793072934
+Error:  .5457254793072934 

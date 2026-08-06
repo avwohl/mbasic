@@ -5,46 +5,23 @@ Test 1: Without trace
 Result: 30 
 
 Test 2: TRON with single statements
-[130]
-[140]
-[150]
-[160]
-Result: 50 
+[130][140][150][160]Result: 50 
 [170]
-
 Test 3: TRON with multiple statements
-[220]
-[230]
-[240]
-A= 1 B= 2 C= 3 
-[250]
-D= 3 E= 6 
+[220][230][240]A= 1 B= 2 C= 3 
+[250]D= 3 E= 6 
 [260]
-
 Test 4: TRON with IF/THEN
-[310]
-Less
+[310]Less
 [320]
-
 Test 5: TRON with FOR loop
-[370]
- 1  2  3 [380]
-
+[370] 1  2  3 [380]
 
 Test 6: TRON with GOSUB
-[440]
-[1000]
-[1010]
-In sub, S= 99 
-[1020]
-[440]
-Back
+[440][1000][1010]In sub, S= 99 
+[1020]Back
 [450]
-
 Test 7: Toggle TRON/TROFF
-[490]
-[510]
 Final: 300 
 
 TRON/TROFF tests complete!
-

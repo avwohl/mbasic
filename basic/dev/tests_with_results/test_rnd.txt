@@ -20,4 +20,3 @@ Test 6: RND produces variety
 Values differ: OK
 
 RND tests complete!
-

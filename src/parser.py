@@ -801,9 +801,52 @@ class Parser:
 
     def parse_additive(self) -> ExpressionNode:
         """Parse addition and subtraction: +, -"""
-        left = self.parse_multiplicative()
+        left = self.parse_modulo()
 
         while self.match(TokenType.PLUS, TokenType.MINUS):
+            op = self.advance()
+            right = self.parse_modulo()
+            left = BinaryOpNode(
+                operator=op.type,
+                left=left,
+                right=right,
+                line_num=op.line,
+                column=op.column
+            )
+
+        return left
+
+    def parse_modulo(self) -> ExpressionNode:
+        """Parse MOD.
+
+        MOD is not at the same level as * and / . MBASIC's operator table
+        (bintrp.mac) gives * and / 124, \\ 123, MOD 122 and + and - 121 - four
+        separate levels - so 12 MOD 5 * 2 is 12 MOD 10, which is 2, and not
+        (12 MOD 5) * 2, which is 4.
+        """
+        left = self.parse_integer_division()
+
+        while self.match(TokenType.MOD):
+            op = self.advance()
+            right = self.parse_integer_division()
+            left = BinaryOpNode(
+                operator=op.type,
+                left=left,
+                right=right,
+                line_num=op.line,
+                column=op.column
+            )
+
+        return left
+
+    def parse_integer_division(self) -> ExpressionNode:
+        """Parse integer division: \\ - looser than * and /, tighter than MOD.
+
+        12 \\ 2 * 3 is 12 \\ 6, which is 2, not (12 \\ 2) * 3.
+        """
+        left = self.parse_multiplicative()
+
+        while self.match(TokenType.BACKSLASH):
             op = self.advance()
             right = self.parse_multiplicative()
             left = BinaryOpNode(
@@ -817,10 +860,10 @@ class Parser:
         return left
 
     def parse_multiplicative(self) -> ExpressionNode:
-        """Parse multiplication, division, integer division, modulo: *, /, \\, MOD"""
+        """Parse multiplication and division: *, /"""
         left = self.parse_unary()
 
-        while self.match(TokenType.MULTIPLY, TokenType.DIVIDE, TokenType.BACKSLASH, TokenType.MOD):
+        while self.match(TokenType.MULTIPLY, TokenType.DIVIDE):
             op = self.advance()
             right = self.parse_unary()
             left = BinaryOpNode(
@@ -1334,15 +1377,20 @@ class Parser:
             raise ParseError(f"Expected ';' after PRINT USING format string at line {self.current().line}")
         self.advance()
 
-        # Parse list of expressions (separated by semicolons)
+        # Parse the value list. Either delimiter will do - PRINUS accepts a
+        # comma as readily as a semicolon, and neither does anything beyond
+        # separating, so PRINT USING "###"; 1, 2 prints "  1  2" exactly as
+        # the semicolon form does. A comma here was a syntax error.
         expressions: List[ExpressionNode] = []
+        trailing_separator = False
 
         while not self.at_end_of_line() and not self.match(TokenType.COLON) and not self.match(TokenType.ELSE):
             # Check for separator first (skip it)
-            if self.match(TokenType.SEMICOLON):
+            if self.match(TokenType.SEMICOLON, TokenType.COMMA):
                 self.advance()
                 # Check if more expressions follow
                 if self.at_end_of_line() or self.match(TokenType.COLON) or self.match(TokenType.ELSE):
+                    trailing_separator = True
                     break
                 continue
 
@@ -1354,6 +1402,7 @@ class Parser:
             format_string=format_string,
             expressions=expressions,
             file_number=file_number,
+            trailing_separator=trailing_separator,
             line_num=print_token.line,
             column=print_token.column
         )
@@ -2610,6 +2659,19 @@ class Parser:
             column=token.column
         )
 
+    def _apply_def_type(self, name: str) -> str:
+        """Add the suffix a DEF statement gives a name that has none."""
+        if not name or name[-1] in '$%!#':
+            return name
+        var_type = self.def_type_map.get(name[0].lower())
+        if var_type == TypeInfo.STRING:
+            return name + '$'
+        if var_type == TypeInfo.INTEGER:
+            return name + '%'
+        if var_type == TypeInfo.DOUBLE:
+            return name + '#'
+        return name             # SINGLE is the default and carries no suffix
+
     def parse_erase(self) -> EraseStatementNode:
         """Parse ERASE statement
 
@@ -2625,9 +2687,13 @@ class Parser:
         array_names: List[str] = []
 
         while not self.at_end_of_line() and not self.match(TokenType.COLON):
-            # Parse array name (just identifier, no subscripts)
+            # Parse array name (just identifier, no subscripts). DIM resolves a
+            # bare name against the DEF type map, and ERASE has to resolve it
+            # the same way or the two disagree about which array is meant:
+            # under DEFINT A-Z, DIM M(64) is m% and ERASE M was looking for m!,
+            # so the ERASE/DIM idiom on one line silently erased nothing.
             name_token = self.expect(TokenType.IDENTIFIER)
-            array_names.append(name_token.value)
+            array_names.append(self._apply_def_type(name_token.value))
 
             # Check for comma (more arrays)
             if self.match(TokenType.COMMA):

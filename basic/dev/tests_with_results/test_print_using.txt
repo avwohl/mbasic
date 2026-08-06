@@ -15,7 +15,7 @@ $1234.56
 
 Test 4: Comma separators
 1,234
-12,345.67
+12,345.70
 
 Test 5: Sign formatting
  +42
@@ -42,4 +42,3 @@ Test 10: Overflow handling
 %123.46
 
 PRINT USING tests complete!
-

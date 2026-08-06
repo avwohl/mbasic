@@ -2,34 +2,33 @@ Testing Binary Conversion
 =========================
 
 Test 1: MKI$ and CVI (Integer)
-Original integer:12345
-Binary string length:2
-Converted back:12345
+Original integer: 12345 
+Binary string length: 2 
+Converted back: 12345 
 Match: OK
 
 Test 2: MKS$ and CVS (Single)
 Original single: 3.14159 
-Binary string length:4
-Converted back: 3.141590118408203 
+Binary string length: 4 
+Converted back: 3.14159 
 
 Test 3: MKD$ and CVD (Double)
 Original double: 123.456789012345 
-Binary string length:8
+Binary string length: 8 
 Converted back: 123.456789012345 
 
 Test 4: Negative numbers
-Integer -500 -> binary -> back:-500
+Integer -500 -> binary -> back:-500 
 Single -2.5 -> binary -> back:-2.5 
 
 Test 5: Zero values
-MKI$(0) then CVI:0
+MKI$(0) then CVI: 0 
 MKS$(0) then CVS: 0 
 MKD$(0) then CVD: 0 
 
 Test 6: Array of integers
-A%( 0 ) =100-> binary ->100OK
-A%( 1 ) =200-> binary ->200OK
-A%( 2 ) =300-> binary ->300OK
+A%( 0 ) = 100 -> binary -> 100 OK
+A%( 1 ) = 200 -> binary -> 200 OK
+A%( 2 ) = 300 -> binary -> 300 OK
 
 Binary conversion tests complete!
-

@@ -16,4 +16,3 @@ Test 4: Numeric data in fields
 Numeric field conversion: PASS
 
 Random access file tests complete!
-

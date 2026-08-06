@@ -3,7 +3,7 @@ Testing Error Handling
 
 Test 1: ON ERROR with RESUME NEXT
 Before error
-Error caught! ERR =11
+Error caught! ERR = 11 
 After error (via RESUME NEXT)
 
 Test 2: RESUME to retry (with fix)
@@ -15,8 +15,8 @@ Resuming to line 360
 Target line reached
 
 Test 4: Check ERR and ERL values
-ERR =11(division by zero)
-ERL =440(should be 440)
+ERR = 11 (division by zero)
+ERL = 440 (should be 440)
 
 Test 5: ON ERROR GOTO 0 (disable)
 No error: 10 / 2 = 5 
@@ -25,4 +25,3 @@ Test 6: Count multiple errors
 Errors caught: 3 
 
 Error handling tests complete!
-

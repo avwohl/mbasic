@@ -16,4 +16,3 @@ Test 4: Multiple GOTO sequence
   Step 3
 
 All GOTO tests complete!
-

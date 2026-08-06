@@ -3,25 +3,24 @@ Testing ERASE
 
 Test 1: ERASE numeric array
 Before ERASE: A(2) = 20 
-After ERASE: A(2) =0(should be 0)
+After ERASE: A(2) = 0 (should be 0)
 
 Test 2: ERASE string array
 Before ERASE: B$(1) = World
 After ERASE: B$(1) = '' (empty)
-Length:0
+Length: 0 
 
 Test 3: ERASE multiple arrays
 Before: C(1) = 200 D(1) = 400 
-After: C(1) =0D(1) =0
+After: C(1) = 0 D(1) = 0 
 
 Test 4: Re-dimension after ERASE
 Original DIM E(10), E(5) = 555 
-After ERASE and DIM E(20), E(5) =0
+After ERASE and DIM E(20), E(5) = 0 
 E(15) = 999 (now accessible)
 
 Test 5: Multi-dimensional array
 Before: F(1,1) = 11 F(2,2) = 22 
-After: F(1,1) =0F(2,2) =0
+After: F(1,1) = 0 F(2,2) = 0 
 
 ERASE tests complete!
-

@@ -20,6 +20,7 @@ from typing import Dict, List, Set, Optional, Tuple, Any, Union
 from dataclasses import dataclass, field
 from enum import Enum
 from src.ast_nodes import *
+from src.number_format import int_divide, int_modulo
 # Explicit re-import of VarType, not left to the wildcard above.
 #
 # There used to be a SECOND enum also called VarType defined here, with the same
@@ -561,9 +562,14 @@ class ConstantEvaluator:
                 elif op == '/':
                     return left / right
                 elif op == '\\':
-                    return int(left) // int(right)
+                    # int()//int() truncates the operands and then floors the
+                    # result; MBASIC rounds the operands and truncates the
+                    # result, so the folded value has to come from the same
+                    # helper the interpreter uses or 10\3 and -10\3 disagree
+                    # depending on whether the expression got folded.
+                    return int_divide(left, right)
                 elif op == 'MOD':
-                    return int(left) % int(right)
+                    return int_modulo(left, right)
                 elif op == '^':
                     return left ** right
                 # Relational operators (return -1 for true, 0 for false in BASIC)
@@ -590,7 +596,10 @@ class ConstantEvaluator:
                     return ~(int(left) ^ int(right))
                 elif op == 'IMP':
                     return ~int(left) | int(right)
-            except (ZeroDivisionError, ValueError, TypeError):
+            except (ZeroDivisionError, ValueError, TypeError, OverflowError):
+                # OverflowError is the 16-bit range check on a \ or MOD
+                # operand. Folding has to give up rather than raise: the error
+                # belongs to running the statement, not to analysing it.
                 return None
 
         if isinstance(expr, UnaryOpNode):

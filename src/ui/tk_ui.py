@@ -3470,7 +3470,7 @@ class TkBackend(UIBackend):
             self._add_output(f"Load error: {e}\n")
             self._set_status("Load error")
 
-    def cmd_merge(self, filename: str) -> None:
+    def cmd_merge(self, filename: str, quiet: bool = False) -> None:
         """Execute MERGE command - merge file into current program.
 
         MERGE adds or replaces lines from a file without clearing existing lines.
@@ -3489,8 +3489,10 @@ class TkBackend(UIBackend):
                 self._refresh_editor()
                 # Re-validate to show error markers for merged lines
                 self._validate_editor_syntax()
-                self._add_output(f"Merged from {filename}\n")
-                self._add_output(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced\n")
+                if not quiet:
+                    self._add_output(f"Merged from {filename}\n")
+                    self._add_output(
+                        f"{lines_added} line(s) added, {lines_replaced} line(s) replaced\n")
                 self._set_status(f"Merged from {filename}")
             else:
                 self._add_output("No lines merged\n")

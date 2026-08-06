@@ -32,4 +32,3 @@ Test 8: SPC with expressions
 A    B        C
 
 TAB/SPC tests complete!
-

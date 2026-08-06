@@ -18,4 +18,3 @@ INKEY$ tests complete!
 Note: INKEY$ is designed for interactive use.
 In automated tests (non-TTY), it returns empty string.
 For interactive testing, use a program that waits for keypresses.
-

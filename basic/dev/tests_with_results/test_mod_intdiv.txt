@@ -7,40 +7,40 @@ Test 1: Basic MOD
 20 MOD 4 = 0 (expected: 0)
 
 Test 2: MOD with negatives
--10 MOD 3 = 2 
-10 MOD -3 =-2 
+-10 MOD 3 =-1 
+10 MOD -3 = 1 
 -10 MOD -3 =-1 
 
 Test 3: Integer division (\)
-10 \ 3 =3(expected: 3)
-17 \ 5 =3(expected: 3)
-20 \ 4 =5(expected: 5)
-25 \ 7 =3(expected: 3)
+10 \ 3 = 3 (expected: 3)
+17 \ 5 = 3 (expected: 3)
+20 \ 4 = 5 (expected: 5)
+25 \ 7 = 3 (expected: 3)
 
 Test 4: Integer div vs regular div
-10 / 3 = 3.3333333333333335 (regular)
-10 \ 3 =3(integer)
+10 / 3 = 3.33333 (regular)
+10 \ 3 = 3 (integer)
 15 / 4 = 3.75 (regular)
-15 \ 4 =3(integer)
+15 \ 4 = 3 (integer)
 
 Test 5: Integer div with negatives
--10 \ 3 =-4
-10 \ -3 =-4
--10 \ -3 =3
+-10 \ 3 =-3 
+10 \ -3 =-3 
+-10 \ -3 = 3 
 
 Test 6: MOD in expressions
  100 MOD 7 = 2 
 Result * 2 = 4 
 
 Test 7: Integer div in expressions
- 50 \ 8 =6
+ 50 \ 8 = 6 
 Result + 1 = 7 
 
 Test 8: Even/odd with MOD
  1 O 2 E 3 O 4 E 5 O 6 E 7 O 8 E 9 O 10 E
 
 Test 9: Combined MOD and \
- 47 \ 10 =4(tens digit)
+ 47 \ 10 = 4 (tens digit)
  47 MOD 10 = 7 (ones digit)
 
 Test 10: Precedence (MOD before +)
@@ -48,4 +48,3 @@ Test 10: Precedence (MOD before +)
 10 + 5 \ 2 = 12 (expected: 12)
 
 MOD and integer division tests complete!
-

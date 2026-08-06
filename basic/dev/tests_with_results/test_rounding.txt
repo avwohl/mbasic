@@ -2,55 +2,55 @@ Testing Math Rounding Functions
 ================================
 
 INT function (rounds toward negative infinity):
-INT(2.3) =2(expected: 2)
-INT(2.7) =2(expected: 2)
-INT(-2.3) =-3(expected: -3)
-INT(-2.7) =-3(expected: -3)
-INT(5.0) =5(expected: 5)
-INT(0.9) =0(expected: 0)
-INT(-0.9) =-1(expected: -1)
+INT(2.3) = 2 (expected: 2)
+INT(2.7) = 2 (expected: 2)
+INT(-2.3) =-3 (expected: -3)
+INT(-2.7) =-3 (expected: -3)
+INT(5.0) = 5 (expected: 5)
+INT(0.9) = 0 (expected: 0)
+INT(-0.9) =-1 (expected: -1)
 
 FIX function (truncates toward zero):
-FIX(2.3) =2(expected: 2)
-FIX(2.7) =2(expected: 2)
-FIX(-2.3) =-2(expected: -2)
-FIX(-2.7) =-2(expected: -2)
-FIX(5.0) =5(expected: 5)
-FIX(0.9) =0(expected: 0)
-FIX(-0.9) =0(expected: 0)
+FIX(2.3) = 2 (expected: 2)
+FIX(2.7) = 2 (expected: 2)
+FIX(-2.3) =-2 (expected: -2)
+FIX(-2.7) =-2 (expected: -2)
+FIX(5.0) = 5 (expected: 5)
+FIX(0.9) = 0 (expected: 0)
+FIX(-0.9) = 0 (expected: 0)
 
 CINT function (rounds to nearest integer):
-CINT(2.3) =2(expected: 2)
-CINT(2.7) =3(expected: 3)
-CINT(-2.3) =-2(expected: -2)
-CINT(-2.7) =-3(expected: -3)
-CINT(5.0) =5(expected: 5)
-CINT(0.9) =1(expected: 1)
-CINT(-0.9) =-1(expected: -1)
+CINT(2.3) = 2 (expected: 2)
+CINT(2.7) = 3 (expected: 3)
+CINT(-2.3) =-2 (expected: -2)
+CINT(-2.7) =-3 (expected: -3)
+CINT(5.0) = 5 (expected: 5)
+CINT(0.9) = 1 (expected: 1)
+CINT(-0.9) =-1 (expected: -1)
 
 CINT with .5 values (banker's rounding):
-CINT(2.5) =2(expected: 2 - round to even)
-CINT(3.5) =4(expected: 4 - round to even)
-CINT(4.5) =4(expected: 4 - round to even)
-CINT(5.5) =6(expected: 6 - round to even)
-CINT(-2.5) =-2(expected: -2 - round to even)
-CINT(-3.5) =-4(expected: -4 - round to even)
+CINT(2.5) = 3 (expected: 2 - round to even)
+CINT(3.5) = 4 (expected: 4 - round to even)
+CINT(4.5) = 5 (expected: 4 - round to even)
+CINT(5.5) = 6 (expected: 6 - round to even)
+CINT(-2.5) =-3 (expected: -2 - round to even)
+CINT(-3.5) =-4 (expected: -4 - round to even)
 
 Key difference - INT vs FIX with negatives:
-INT(-2.7) =-3, FIX(-2.7) =-2
+INT(-2.7) =-3 , FIX(-2.7) =-2 
 INT rounds DOWN, FIX truncates TOWARD ZERO
 
 Testing integer type suffix (%):
-A% = 10.7 becomes10(uses CINT)
-B% = 20.3 becomes20(uses CINT)
-C% = -5.9 becomes-5(uses CINT)
+A% = 10.7 becomes 11 (uses CINT)
+B% = 20.3 becomes 20 (uses CINT)
+C% = -5.9 becomes-6 (uses CINT)
 
 Edge cases:
-INT(0) =0
-FIX(0) =0
-CINT(0) =0
-INT(1) =1
-FIX(1) =1
-CINT(1) =1
+INT(0) = 0 
+FIX(0) = 0 
+CINT(0) = 0 
+INT(1) = 1 
+FIX(1) = 1 
+CINT(1) = 1 
 
 Test complete!

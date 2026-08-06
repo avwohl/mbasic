@@ -2,27 +2,27 @@ Testing Type Conversion
 =======================
 
 Test 1: CINT (convert to integer)
-CINT(3.2) =3(expected: 3)
-CINT(3.7) =4(expected: 4)
-CINT(-2.3) =-2(expected: -2)
-CINT(-2.7) =-3(expected: -3)
+CINT(3.2) = 3 (expected: 3)
+CINT(3.7) = 4 (expected: 4)
+CINT(-2.3) =-2 (expected: -2)
+CINT(-2.7) =-3 (expected: -3)
 
 Test 2: CSNG (convert to single)
 Double: 123.456789012345 
-Single: 123.456789012345 
+Single: 123.457 
 
 Test 3: CDBL (convert to double)
 Single: 3.14 
-Double: 3.14 
+Double: 3.140000104904175 
 
 Test 4: STR$ and VAL
-Number to string: STR$(42) = 42.0
-String to number: VAL( 42.0) = 42 
+Number to string: STR$(42) = 42
+String to number: VAL( 42) = 42 
 
 Test 5: CINT vs % suffix
 X! = 10.7
-Y% = X! gives10
-CINT(X!) gives11
+Y% = X! gives 11 
+CINT(X!) gives 11 
 
 Test 6: Implicit type conversion
 Integer 5 + Single 2.5 = 7.5 
@@ -34,19 +34,18 @@ VAL("-42") =-42
 VAL("12.5E2") = 1250 
 
 Test 8: STR$ with various numbers
-STR$(100) = 100.0
-STR$(-50) =-50.0
+STR$(100) = 100
+STR$(-50) =-50
 STR$(3.14159) = 3.14159
 
 Test 9: ASC and CHR$ conversion
-ASC("A") =65
+ASC("A") = 65 
 CHR$(65) =A
-ASC("0") =48
+ASC("0") = 48 
 CHR$(48) =0
 
 Test 10: Conversions in expressions
-CINT(10.6) + CINT(20.4) =31
+CINT(10.6) + CINT(20.4) = 31 
 STR$(CINT(3.7)) = 4
 
 Type conversion tests complete!
-

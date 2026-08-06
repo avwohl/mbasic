@@ -4,4 +4,3 @@ Reading colors:
  3 : Blue
 Restoring and reading again:
 First color: Red
-

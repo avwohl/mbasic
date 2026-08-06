@@ -30,7 +30,7 @@ ERROR_CODES = {
     7: ("OM", "Out of memory"),
     8: ("UL", "Undefined line number"),
     9: ("BS", "Subscript out of range"),
-    10: ("DD", "Duplicate definition"),
+    10: ("DD", "Duplicate Definition"),
     11: ("/0", "Division by zero"),
     12: ("ID", "Illegal direct"),
     13: ("TM", "Type mismatch"),
@@ -41,11 +41,16 @@ ERROR_CODES = {
     18: ("UF", "Undefined user function"),
     19: ("NR", "No RESUME"),
     20: ("RE", "RESUME without error"),
-    # 21-23 reserved
+    21: ("UE", "Unprintable error"),
+    22: ("MO", "Missing operand"),
+    23: ("LB", "Line buffer overflow"),
     24: ("DT", "Device timeout"),
     25: ("DF", "Device fault"),
-    26: ("FO", "FOR without NEXT"),
-    # 27-49 reserved
+    26: ("FO", "FOR Without NEXT"),
+    # 27-28 reserved
+    29: ("WH", "WHILE without WEND"),
+    30: ("WE", "WEND without WHILE"),
+    # 31-49 reserved
     50: ("FE", "FIELD overflow"),
     51: ("IE", "Internal error"),
     52: ("BN", "Bad file number"),
@@ -87,7 +92,7 @@ def get_error_message(error_code):
     if error_code in ERROR_CODES:
         two_letter, message = ERROR_CODES[error_code]
         return two_letter, message
-    return None, f"Error {error_code}"
+    return "UE", "Unprintable error"
 
 
 def format_error(error_code, line_number=None):
@@ -99,9 +104,115 @@ def format_error(error_code, line_number=None):
 
     Returns:
         Formatted error string like "?SN Error in 100" or "?SN Error"
+
+    Note:
+        This is the two-letter form, which the CP/M build does NOT use. What
+        the real binary prints is format_error_message() below - measured, not
+        taken from the manual.
     """
     two_letter, message = get_error_message(error_code)
     if line_number is not None:
         return f"?{two_letter} Error in {line_number}"
     else:
         return f"?{two_letter} Error"
+
+
+def format_error_message(error_code, line_number=None):
+    """The line the real binary prints for an untrapped error.
+
+    Measured byte for byte against com/mbasic.com under cpmemu:
+
+        program mode    File not found in 50
+        direct mode     File not found
+
+    There is no leading "?", no two-letter code, no trailing period and no echo
+    of the source line - all four of which we used to print, along with the
+    Python exception class name. The " in <line>" is there only for an error in
+    a program line; a statement typed at the Ok prompt gets the message alone.
+    """
+    _, message = get_error_message(error_code)
+    if line_number is None:
+        return message
+    return f"{message} in {line_number}"
+
+
+#: Message fragments that identify an MBASIC error, most specific first. Our
+#: code raises ordinary Python exceptions carrying Python wording, so the code
+#: has to be recovered from what was said - and once it is, the *canonical*
+#: text is what gets printed, which is why "Cannot open X: No such file or
+#: directory" comes out as "File not found".
+_MESSAGE_CODES = (
+    ("next without for", 1),
+    ("return without gosub", 3),
+    ("out of data", 4),
+    ("division by zero", 11),
+    ("subscript out of range", 9),
+    ("duplicate definition", 10),
+    ("type mismatch", 13),
+    ("string too long", 15),
+    ("can't continue", 17),
+    ("undefined function", 18),
+    ("undefined user function", 18),
+    ("no resume", 19),
+    ("resume without error", 20),
+    ("for without next", 26),
+    ("while without wend", 29),
+    # Ours says "WEND without matching WHILE at line 10".
+    ("wend without", 30),
+    ("field overflow", 50),
+    ("bad file number", 52),
+    ("file not found", 53),
+    ("cannot open", 53),
+    ("no such file", 53),
+    ("bad file mode", 54),
+    # "File #1 not open for input" is a mode error; "File #9 not open" - a
+    # number that was never opened at all - is a bad file NUMBER, so the
+    # longer fragment has to be tested first.
+    ("not open for", 54),
+    ("invalid open mode", 54),
+    ("not open", 52),
+    ("already open", 55),
+    ("file already exists", 58),
+    ("input past end", 62),
+    ("bad record number", 63),
+    ("bad file name", 64),
+    ("too many files", 67),
+    ("out of memory", 7),
+    ("stack overflow", 7),
+    ("undefined line", 8),
+    ("overflow", 6),
+    ("illegal function call", 5),
+    ("syntax error", 2),
+)
+
+#: Exception types that identify an error on their own, when the wording did
+#: not. Checked after the message, because a ValueError carrying "Type
+#: mismatch" is a type mismatch, not an illegal function call.
+_TYPE_CODES = (
+    (ZeroDivisionError, 11),
+    (OverflowError, 6),
+    (IndexError, 9),
+    (MemoryError, 7),
+    (RecursionError, 7),
+)
+
+
+def error_code_for(exception):
+    """The MBASIC error number for a Python exception we raised.
+
+    Falls back to 5, "Illegal function call", which is what MBASIC uses for
+    anything it cannot be more specific about.
+    """
+    explicit = getattr(exception, 'mbasic_code', None)
+    if explicit is not None:
+        return explicit
+    text = str(exception).lower()
+    for fragment, code in _MESSAGE_CODES:
+        if fragment in text:
+            return code
+    for exception_type, code in _TYPE_CODES:
+        if isinstance(exception, exception_type):
+            return code
+    if isinstance(exception, (TypeError, ValueError)):
+        return 5
+    return 5

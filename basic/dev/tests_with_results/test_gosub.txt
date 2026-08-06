@@ -9,4 +9,3 @@ Depth:         8
 Depth:         9 
 Depth:         10 
 Maximum depth reached:       10 
-

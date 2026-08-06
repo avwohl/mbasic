@@ -14,16 +14,16 @@ Test 3: MID$
   PASS: MID$ works
 
 Test 4: LEN
-  LEN('HELLO WORLD') =11
+  LEN('HELLO WORLD') = 11 
   PASS: LEN works
 
 Test 5: ASC and CHR$
-  ASC('A') =65
+  ASC('A') = 65 
   CHR$(65) =A
   PASS: ASC and CHR$ work
 
 Test 6: STR$ and VAL
-  STR$(123) = 123.0
+  STR$(123) = 123
   VAL('123') = 123 
   PASS: STR$ and VAL work
 
@@ -32,7 +32,7 @@ Test 7: String concatenation (+)
   PASS: String concatenation works
 
 Test 8: INSTR
-  INSTR('ABCDEFGH', 'DEF') =4
+  INSTR('ABCDEFGH', 'DEF') = 4 
   PASS: INSTR works
 
 Test 9: SPACE$
@@ -44,4 +44,3 @@ Test 10: STRING$
   PASS: STRING$ works
 
 All string function tests complete!
-

@@ -196,6 +196,57 @@ def to_integer(value):
         return int(value)
 
 
+#: MBASIC's "machine infinity" - the largest number MBF can hold, and what a
+#: float divide by zero leaves behind. It is finite, and overflows again if you
+#: keep multiplying it.
+MBF_INFINITY_SINGLE = 1.7014117331926443e+38
+MBF_INFINITY_DOUBLE = 1.7014118346046923e+38
+
+
+def to_int_operand(value):
+    """Convert an operand of \\ or MOD the way MBASIC's FRCINT does.
+
+    Both operators are integer-only. The operand is rounded to the nearest
+    integer with halves away from zero - so 7.6 MOD 3 is 2, because 7.6 becomes
+    8, and 2.5 \\ 1 is 3 - and must then fit a signed 16-bit word. It is the
+    range check that makes 40000 \\ 2 print "Overflow" on the real binary
+    rather than 20000, and it happens before the divisor is tested for zero.
+    """
+    number = to_integer(value)
+    if isinstance(number, bool) or not isinstance(number, int):
+        raise TypeError("Type mismatch")
+    if not -32768 <= number <= 32767:
+        raise OverflowError("Overflow")
+    return number
+
+
+def int_divide(left, right):
+    """MBASIC's \\ : truncates toward zero, unlike Python's floor division.
+
+    -10 \\ 3 is -3 on the real binary and -4 in Python. IMULDV negates both
+    operands to positive, divides, and puts the sign back on afterwards.
+    """
+    a, b = to_int_operand(left), to_int_operand(right)
+    if b == 0:
+        raise ZeroDivisionError("Division by zero")
+    quotient = abs(a) // abs(b)
+    return -quotient if (a < 0) != (b < 0) else quotient
+
+
+def int_modulo(left, right):
+    """MBASIC's MOD: the remainder takes the sign of the *dividend*.
+
+    -10 MOD 3 is -1 and 10 MOD -3 is 1, which is C's % and not Python's -
+    Python gives 2 and -2, taking the sign of the divisor. IMOD saves the
+    dividend's sign before dividing and re-applies it at the end.
+    """
+    a, b = to_int_operand(left), to_int_operand(right)
+    if b == 0:
+        raise ZeroDivisionError("Division by zero")
+    remainder = abs(a) % abs(b)
+    return -remainder if a < 0 else remainder
+
+
 def coerce_to_type(value, suffix):
     """Store a value the way a variable of this type would hold it.
 
@@ -214,8 +265,15 @@ def coerce_to_type(value, suffix):
         return value
     if not isinstance(value, (int, float)):
         return value
+    if suffix == '$':
+        # And the other way round: A$ = 5 is a Type mismatch too. We stored the
+        # number in the string variable and said nothing, so the mistake
+        # surfaced later as something else entirely.
+        raise TypeError("Type mismatch")
     if suffix == '%':
-        return to_integer(value)
+        # An integer variable holds a signed 16-bit word, so C% = 40000 is
+        # "Overflow" rather than a silently wrong number.
+        return to_int_operand(value)
     if suffix == '#':
         return float(value)
     if suffix in ('!', None):

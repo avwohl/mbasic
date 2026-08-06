@@ -2,37 +2,37 @@ Testing Logical Operators
 =========================
 
 Test 1: AND operator
--1 AND -1 =-1(TRUE AND TRUE)
--1 AND 0 =0(TRUE AND FALSE)
-0 AND -1 =0(FALSE AND TRUE)
-0 AND 0 =0(FALSE AND FALSE)
+-1 AND -1 =-1 (TRUE AND TRUE)
+-1 AND 0 = 0 (TRUE AND FALSE)
+0 AND -1 = 0 (FALSE AND TRUE)
+0 AND 0 = 0 (FALSE AND FALSE)
 
 Test 2: OR operator
--1 OR -1 =-1(TRUE OR TRUE)
--1 OR 0 =-1(TRUE OR FALSE)
-0 OR -1 =-1(FALSE OR TRUE)
-0 OR 0 =0(FALSE OR FALSE)
+-1 OR -1 =-1 (TRUE OR TRUE)
+-1 OR 0 =-1 (TRUE OR FALSE)
+0 OR -1 =-1 (FALSE OR TRUE)
+0 OR 0 = 0 (FALSE OR FALSE)
 
 Test 3: NOT operator
-NOT -1 =0(NOT TRUE)
-NOT 0 =-1(NOT FALSE)
-NOT 5 =-6(bitwise complement)
+NOT -1 = 0 (NOT TRUE)
+NOT 0 =-1 (NOT FALSE)
+NOT 5 =-6 (bitwise complement)
 
 Test 4: XOR operator
--1 XOR -1 =0(TRUE XOR TRUE)
--1 XOR 0 =-1(TRUE XOR FALSE)
-0 XOR -1 =-1(FALSE XOR TRUE)
-0 XOR 0 =0(FALSE XOR FALSE)
+-1 XOR -1 = 0 (TRUE XOR TRUE)
+-1 XOR 0 =-1 (TRUE XOR FALSE)
+0 XOR -1 =-1 (FALSE XOR TRUE)
+0 XOR 0 = 0 (FALSE XOR FALSE)
 
 Test 5: Combined operations
-(A AND B) OR C =-1
-A AND (B OR C) =-1
-NOT (A AND B) =-1
+(A AND B) OR C =-1 
+A AND (B OR C) =-1 
+NOT (A AND B) =-1 
 
 Test 6: Bitwise operations
-5 AND 3 =1(binary 101 AND 011)
-5 OR 3 =7(binary 101 OR 011)
-5 XOR 3 =6(binary 101 XOR 011)
+5 AND 3 = 1 (binary 101 AND 011)
+5 OR 3 = 7 (binary 101 OR 011)
+5 XOR 3 = 6 (binary 101 XOR 011)
 
 Test 7: Logical operators in IF
 Both conditions true
@@ -40,4 +40,3 @@ At least one true
 X not > 15
 
 Logical operator tests complete!
-

@@ -1290,6 +1290,11 @@ def serialize_statement(stmt):
         parts.append(f" USING {serialize_expression(stmt.format_string)};")
         parts.append(' ' + '; '.join(serialize_expression(e)
                                      for e in stmt.expressions))
+        if getattr(stmt, 'trailing_separator', False):
+            # It suppresses the newline, so dropping it on the way back out
+            # would put a line break into a report RENUM only meant to
+            # renumber.
+            parts.append(';')
         return ''.join(parts)
 
     elif stmt_type == 'WidthStatementNode':
@@ -1447,21 +1452,33 @@ def serialize_statement(stmt):
 #: sub-expression has to be parenthesised on the way back out to source; the
 #: order follows the parser's own precedence climb (parse_expression ->
 #: parse_or -> parse_and -> parse_relational -> parse_additive ->
-#: parse_multiplicative -> parse_power).
+#: parse_modulo -> parse_integer_division -> parse_multiplicative ->
+#: parse_power).
+#:
+#: MOD and \ each have a level of their own, as they do in MBASIC's operator
+#: table - they are not at the same level as * and / . Leaving them there let
+#: RENUM re-emit (12 \ 2) * 3 as "12 \ 2 * 3", which now reads back as
+#: 12 \ (2 * 3) and is a different number.
 _OPERATOR_PRECEDENCE = {
     'OR': 1, 'XOR': 1, 'EQV': 1, 'IMP': 1,
     'AND': 2,
     'EQUAL': 3, 'NOT_EQUAL': 3, 'LESS_THAN': 3, 'GREATER_THAN': 3,
     'LESS_EQUAL': 3, 'GREATER_EQUAL': 3,
     'PLUS': 4, 'MINUS': 4,
-    'MULTIPLY': 5, 'DIVIDE': 5, 'INT_DIVIDE': 5, 'MOD': 5,
-    'POWER': 6,
+    'MOD': 5,
+    # BACKSLASH, not INT_DIVIDE - the AST carries the TokenType, whose name is
+    # BACKSLASH. The old key never matched, so \ fell to the default 0: it was
+    # bracketed as a child whether it needed it or not, and never bracketed a
+    # child of its own, which turned (A + B) \ C into A + B \ C.
+    'BACKSLASH': 6,
+    'MULTIPLY': 7, 'DIVIDE': 7,
+    'POWER': 8,
 }
 
 #: Left-associative operators where a RIGHT operand of equal precedence still
 #: needs brackets: a-(b-c) is not a-b-c, and a/(b/c) is not a/b/c. Addition and
 #: multiplication are safe either way.
-_BRACKET_EQUAL_RIGHT = {'MINUS', 'DIVIDE', 'INT_DIVIDE', 'MOD'}
+_BRACKET_EQUAL_RIGHT = {'MINUS', 'DIVIDE', 'BACKSLASH', 'MOD'}
 
 #: '^' is right-associative in this parser - parse_power() recurses on the
 #: right, and 2^3^2 evaluates to 512 - so at equal precedence it is the LEFT

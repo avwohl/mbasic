@@ -21,4 +21,3 @@ Test 4: Loop with BASE 1
 Array E: 10  20  30  40  50 
 
 OPTION BASE tests complete!
-

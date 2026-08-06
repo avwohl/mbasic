@@ -253,6 +253,163 @@ def test_print_using_keeps_the_sign():
               + ("" if got == expected else f"   (want {expected!r})"))
 
 
+def test_print_using_matches_the_real_binary():
+    """PRINT USING as PUFOUT does it.
+
+    Every line below was read off the real 5.21 binary. Four rules were being
+    broken, and the assembler in f4.mac agrees with the binary on all four:
+
+    * The value is converted by the same routine PRINT uses, so a single is
+      six significant figures here too: "##,###.##" of 12345.67 is 12,345.70.
+      This was the one the cross-check caught - the field was reading the
+      stored float straight off and printing 12,345.67.
+    * The field's own rounding is half away from zero, not Python's half to
+      even. 1.005 in "##.##" is 1.01, and -0.005 is -0.01.
+    * A minus sign, or the plus of a "+" field, uses up one of the positions
+      to the left of the point. "####" holds 1234 but overflows on -1234.
+    * The zero in front of the point is only printed when there is room left
+      for it, so "#.###" of -0.5 is -.500 while "##.###" of -0.5 is -0.500.
+
+    A ^^^^ mantissa takes its integer-digit count from the field rather than
+    normalising to one digit, which is why "#.#^^^^" of 1.5 is 0.2E+01.
+    """
+    print("\nPRINT USING against the binary")
+    print("-" * 60)
+    for source, expected in [
+        # Six significant figures for a single, sixteen for a double.
+        ('10 PRINT USING "##,###.##"; 12345.67', '12,345.70'),
+        ('10 PRINT USING "######.##"; 12345.67', ' 12345.70'),
+        ('10 PRINT USING "#######.##"; 12345.67#', '  12345.67'),
+        ('10 PRINT USING "#######.#"; 123456.7', ' 123457.0'),
+        ('10 PRINT USING "#,###,###"; 1234567', '1,234,570'),
+        # Half away from zero, on the six-digit value not the stored float.
+        ('10 PRINT USING "##.##"; 1.005', ' 1.01'),
+        ('10 PRINT USING "##.##"; 2.675', ' 2.68'),
+        ('10 PRINT USING "##.##"; 1.005#', ' 1.01'),
+        ('10 PRINT USING "#.#"; .45', '0.5'),
+        ('10 PRINT USING "##.##"; -0.005', '-0.01'),
+        ('10 PRINT USING "#.##"; -0.005', '-.01'),
+        ('10 PRINT USING "#.##"; 0.005', '0.01'),
+        ('10 PRINT USING "#####"; -1234.5', '-1235'),
+        ('10 PRINT USING "#"; 0.5', '1'),
+        # The sign takes a digit position - unless it is trailing, or the
+        # space in front of a positive number.
+        ('10 PRINT USING "####"; 1234', '1234'),
+        ('10 PRINT USING "####"; -1234', '%-1234'),
+        ('10 PRINT USING "###.##"; -123.45', '%-123.45'),
+        ('10 PRINT USING "###.##"; -12.34', '-12.34'),
+        ('10 PRINT USING "+###"; 1234', '%+1234'),
+        ('10 PRINT USING "+####"; 1234', '+1234'),
+        ('10 PRINT USING "###-"; 1234', '%1234 '),
+        ('10 PRINT USING "#,###"; -1234', '%-1,234'),
+        ('10 PRINT USING "$$##.##"; 1234.5', '%$1234.50'),
+        # The leading zero, only while it fits.
+        ('10 PRINT USING "#.###"; -0.5', '-.500'),
+        ('10 PRINT USING "##.###"; -0.5', '-0.500'),
+        ('10 PRINT USING ".##"; 0.5', '.50'),
+        ('10 PRINT USING ".##"; -0.5', '%-.50'),
+        ('10 PRINT USING "#####.##"; 0', '    0.00'),
+        # A value that is negative but rounds to zero keeps its sign; IEEE's
+        # negative zero does not have one to keep. MBF has no signed zero, so
+        # 0 * (-1) is plain zero - basic/business/budget.bas reaches every
+        # total that way and had a minus in front of each one.
+        ('10 PRINT USING "###.##"; -0.001', ' -0.00'),
+        ('10 PRINT USING "###.##"; 0*(-1)', '  0.00'),
+        ('10 PRINT USING "$$#####.##"; 0*(-1)', '     $0.00'),
+        # ^^^^ takes its mantissa width from the field, and a double prints D.
+        ('10 PRINT USING "#.#^^^^"; 1.5', '0.2E+01'),
+        ('10 PRINT USING "#.#^^^^"; -1.5', '-.2E+01'),
+        ('10 PRINT USING "##.#^^^^"; 1.5', ' 1.5E+00'),
+        ('10 PRINT USING "###.#^^^^"; 1.5', ' 15.0E-01'),
+        ('10 PRINT USING "#^^^^"; 1234.5', '0E+04'),
+        ('10 PRINT USING "##^^^^"; 1234.5', ' 1E+03'),
+        ('10 PRINT USING "+#.#^^^^"; 1.5', '+1.5E+00'),
+        ('10 PRINT USING "#.#^^^^-"; -1.5', '1.5E+00-'),
+        ('10 PRINT USING "##.##^^^^"; 3.14159#', ' 3.14D+00'),
+        ('10 PRINT USING "#.#^^^^"; 0', '0.0E+00'),
+    ]:
+        got = run(source)
+        check(got == expected,
+              f"{source[3:40]:39} -> {got!r}"
+              + ("" if got == expected else f"   (want {expected!r})"))
+
+
+def test_the_using_string_is_reused():
+    """The format string runs again until the value list is exhausted.
+
+    This was missing altogether: PRINT USING "###"; 1; 2; 3 printed "  1" and
+    dropped the rest. MBASIC scans the string, and when it reaches the end with
+    values still in hand it starts the string over (PRINUS -> REUSIN).
+
+    Scanning stops the moment a *field* finds no value left - the literal text
+    passed on the way out has already been printed by then, which is why
+    "### ###" with three values ends in a trailing space rather than stopping
+    cleanly after the third.
+    """
+    print("\nThe USING string is reused")
+    print("-" * 60)
+    for source, expected in [
+        ('10 PRINT USING "###"; 1; 2; 3', '  1  2  3'),
+        ('10 PRINT USING "## ##"; 1; 2; 3; 4', ' 1  2 3  4'),
+        ('10 PRINT USING "[#]"; 7; 8', '[7][8]'),
+        ('10 PRINT USING "!"; "AB"; "CD"', 'AC'),
+        ('10 PRINT USING "### ###"; 10; 20; 30', ' 10  20 30 '),
+        # A comma delimits the value list just as a semicolon does, and does
+        # not tab to a print zone. This was a syntax error.
+        ('10 PRINT USING "###"; 1, 2', '  1  2'),
+        ('10 PRINT USING "## ##"; 1; 2, 3; 4', ' 1  2 3  4'),
+    ]:
+        got = run(source)
+        check(got == expected, f"{source[3:40]:39} -> {got!r}"
+              + ("" if got == expected else f"   (want {expected!r})"))
+
+    # A trailing ';' or ',' suppresses the newline, as on a plain PRINT.
+    got = run('10 PRINT USING "###"; 1;\n20 PRINT "X"')
+    check(got == '  1X', f"{'trailing ; joins the next PRINT':39} -> {got!r}")
+    got = run('10 PRINT USING "###"; 1,\n20 PRINT "Y"')
+    check(got == '  1Y', f"{'trailing , does the same':39} -> {got!r}")
+    got = run('10 PRINT USING "###"; 1\n20 PRINT "Z"')
+    check(got == '  1\nZ', f"{'without one, the newline stays':39} -> {got!r}")
+
+
+def test_punctuation_that_is_not_a_field():
+    """A '+', '-' or '.' with no digit positions after it is a literal.
+
+    MBASIC only commits to a numeric field once it has seen a digit position,
+    and prints the character otherwise - PLSPRT exists precisely to flush a '+'
+    that turned out not to begin one. We were building a zero-width field out
+    of it and formatting the value into nothing.
+    """
+    print("\nPunctuation that is not a field")
+    print("-" * 60)
+    for source, expected in [
+        # "+###" already emits its own sign, so the '+' after it is not a
+        # trailing sign - it is an ordinary character.
+        ('10 PRINT USING "+###+"; 42', ' +42+'),
+        ('10 PRINT USING "+###+"; -42', ' -42+'),
+        ('10 PRINT USING "+###-"; -42', ' -42-'),
+        # A leading '-' never starts a field, so this prints a minus and then
+        # formats 5 into "#".
+        ('10 PRINT USING "-#"; 5', '-5'),
+        ('10 PRINT USING "-.##"; 0.5', '-.50'),
+    ]:
+        got = run(source)
+        check(got == expected, f"{source[3:40]:39} -> {got!r}"
+              + ("" if got == expected else f"   (want {expected!r})"))
+
+    # With no field anywhere, MBASIC prints the literal text - a '.' with no
+    # '#' after it is a literal too - and only then complains that it never
+    # found somewhere to put the value.
+    for source, text in [('10 PRINT USING "A.B"; 5', 'A.B'),
+                         ('10 PRINT USING "+X"; 5', '+X')]:
+        try:
+            got, raised = run(source), None
+        except RuntimeError as error:
+            got, raised = text, str(error)
+        check(got == text and raised == 'Illegal function call',
+              f"{source[3:40]:39} -> {got!r} then {raised!r}")
+
+
 if __name__ == "__main__":
     print("MBASIC 5.21 number formatting")
     print("=" * 60)
@@ -263,6 +420,9 @@ if __name__ == "__main__":
     test_the_same_value_at_two_precisions()
     test_str_dollar_matches_print()
     test_print_using_keeps_the_sign()
+    test_print_using_matches_the_real_binary()
+    test_the_using_string_is_reused()
+    test_punctuation_that_is_not_a_field()
 
     failed = results.count(False)
     print("\n" + "=" * 60)

@@ -4674,8 +4674,12 @@ class CursesBackend(UIBackend):
         except Exception as e:
             self._append_to_output(f"?Error during renumber: {e}")
 
-    def cmd_merge(self, filename):
-        """Execute MERGE command using ProgramManager."""
+    def cmd_merge(self, filename, quiet=False):
+        """Execute MERGE command using ProgramManager.
+
+        quiet suppresses the summary, which a MERGE inside a running program
+        asks for - the real binary prints nothing there.
+        """
         try:
             if not filename:
                 self._append_to_output("?Syntax error: filename required")
@@ -4691,8 +4695,10 @@ class CursesBackend(UIBackend):
 
             if success:
                 self._refresh_editor()
-                self._append_to_output(f"Merged from {filename}")
-                self._append_to_output(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
+                if not quiet:
+                    self._append_to_output(f"Merged from {filename}")
+                    self._append_to_output(
+                        f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
             else:
                 self._append_to_output("?No lines merged")
 

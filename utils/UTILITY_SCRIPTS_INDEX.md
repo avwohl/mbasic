@@ -72,6 +72,18 @@
 
 ### Testing Tools
 
+- **`crosscheck_tests.py`** - Check `basic/dev/tests_with_results/` against the real
+  MBASIC 5.21 binary
+  - `python3 utils/crosscheck_tests.py [test_name ...] [--write]`
+  - Runs each program through `com/mbasic.com` under cpmemu and through us, and
+    reports MATCH / DIFF / NORUN per test with a diff for each disagreement
+  - Use this before saving a new `.txt` expected-output file: captured from our own
+    output they pin our behaviour, bugs included, which is how eighteen of them
+    went stale
+  - `--write` rewrites the `.txt` files from our output - right for a MATCH,
+    wrong for a DIFF, so read the report first
+  - Known differences: `docs/dev/TESTS_VERIFIED_AGAINST_BINARY.md`
+
 - **`run_tests_with_results.py`** - Run tests and capture results
 
 - **`debug_test.py`** - Debug specific test cases
