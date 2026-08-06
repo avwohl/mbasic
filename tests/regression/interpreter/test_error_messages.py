@@ -34,6 +34,7 @@ Three other things were wrong and are covered here:
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -108,8 +109,16 @@ CASES = [
 def test_the_message_and_the_halt():
     print("Untrapped errors: the message, and stopping")
     print("-" * 60)
-    for name, program, expected in CASES:
-        got = run(program + '\n20 PRINT "AFTER"\n30 SYSTEM')
+    # One CLI subprocess per case, and these dominate the file's runtime: 22 of
+    # them, about eight tenths of a second each, took it to 30s - which is
+    # exactly run_regression.py's per-test timeout, so it was being killed on
+    # roughly half of all runs, and a killed test reports no output at all.
+    # The cases are independent and each already runs in its own temp
+    # directory, so let them overlap; map keeps the results in order.
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        outputs = list(pool.map(
+            lambda case: run(case[1] + '\n20 PRINT "AFTER"\n30 SYSTEM'), CASES))
+    for (name, _program, expected), got in zip(CASES, outputs):
         check(got == expected, f"{name:36} -> {got}"
               + ("" if got == expected else f"   (want {expected})"))
 

@@ -75,7 +75,14 @@ class TestRunner:
                 [sys.executable, str(test_path)],
                 capture_output=True,
                 text=True,
-                timeout=30,  # 30 second timeout per test
+                # Long enough that a legitimately slow test is not killed, short
+                # enough to catch a hang. It was 30s, which
+                # regression/interpreter/test_error_messages.py sits right on:
+                # it starts an interpreter per provocation, and on a two-core
+                # machine that is ~25s, so it was being timed out on about half
+                # of all runs. A timed-out test reports no output at all, so it
+                # read as a mystery rather than as "this one needs longer".
+                timeout=120,
                 cwd=project_root,  # Run from project root
                 env=env
             )

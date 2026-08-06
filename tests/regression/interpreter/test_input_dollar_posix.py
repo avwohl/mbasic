@@ -59,11 +59,12 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..
 # echo, because the source says the digit 6.
 READY = b'\x06'
 
-# The whole file must finish inside tests/run_regression.py's 30-second
-# per-test timeout, whose TimeoutExpired arm discards the captured output. A
-# FAILING run is the one at risk - every drain whose marker never appears waits
-# out its full timeout - and a failing run that prints nothing is the one case
-# where this file most needs to speak.
+# The whole file must finish inside tests/run_regression.py's per-test timeout,
+# whose TimeoutExpired arm discards the captured output. A FAILING run is the
+# one at risk - every drain whose marker never appears waits out its full
+# timeout - and a failing run that prints nothing is the one case where this
+# file most needs to speak. The budget is well under that timeout deliberately:
+# it is what makes this file report its own overrun rather than be killed.
 BUDGET_SECONDS = 20.0
 _deadline = time.time() + BUDGET_SECONDS
 
@@ -78,6 +79,9 @@ RAW_MODE_SETTLE = 0.2
 
 results = []
 
+#: Set by drain() if it is ever called with the budget already spent.
+_budget_ran_out = False
+
 
 def check(condition, label):
     """Record one check; print pass/fail immediately."""
@@ -91,12 +95,19 @@ def drain(fd, seconds, until=None):
     select() with a deadline rather than a bare os.read: the bugs under test
     are hangs, and a blocking read on the master would hang the test runner
     instead of reporting them. `until` is what keeps the whole file inside
-    run_regression.py's 30-second budget - without it every step pays the full
+    run_regression.py's budget - without it every step pays the full
     timeout, since a quiet interpreter is indistinguishable from a hung one
     until the deadline expires.
     """
+    global _budget_ran_out
     out = b''
-    # Never wait past the file's overall budget - see BUDGET_SECONDS.
+    # Never wait past the file's overall budget - see BUDGET_SECONDS. Once it
+    # is gone every drain returns b'' at once, so the checks after that point
+    # fail for want of a clock rather than for anything the interpreter did.
+    # Record it, and say so in the summary, rather than reporting eight honest
+    # passes and two mystery failures.
+    if time.time() >= _deadline:
+        _budget_ran_out = True
     deadline = min(time.time() + seconds, _deadline)
     while True:
         if until is not None and until in out:
@@ -267,11 +278,16 @@ def test_control_characters_pass_through():
     print("-" * 60)
     with Session(ONE_KEY) as s:
         s.run()
+        # MBASIC prints a number with a trailing space as well as the leading
+        # one for the sign, so the line is "GOT 13 " - a marker of "GOT 13\r\n"
+        # never matches and the send waits out its whole timeout instead. Two
+        # of those were half this file's time budget, which is what made the
+        # last tests in it fail: their drains had nothing left to wait with.
         ctrl_a = s.send(b'\x01', until=b'GOT 1 \r\n')
         s.run()
-        enter = s.send(b'\r', until=b'GOT 13\r\n')
+        enter = s.send(b'\r', until=b'GOT 13 \r\n')
         s.run()
-        high = s.send(b'\x81', until=b'GOT 129\r\n')
+        high = s.send(b'\x81', until=b'GOT 129 \r\n')
 
     check(b'GOT 1 \r\n' in ctrl_a, f"Ctrl+A arrives as CHR$(1) (got {ctrl_a!r})")
     check(b'^A' not in ctrl_a,
@@ -362,12 +378,27 @@ def test_break_keeps_type_ahead_typed_after_it():
         # The queued 'B' is now type-ahead at the Ok prompt; Enter submits it,
         # and the REPL says what it made of it. Waiting for that reply rather
         # than for the first newline, which is only the echo of the Enter.
-        after = s.send(b'\r', wait=3.0, until=b"'b'")
+        #
+        # The marker is the reply itself. It used to be "'b'", the offending
+        # token as the old parse error quoted it back - but the wording is
+        # MBASIC's now and a bare "Syntax error" names nothing, so the marker
+        # could never match, and the check below was left racing the echo with
+        # whatever had arrived when the timeout expired.
+        after = s.send(b'\r', wait=3.0, until=b'Syntax error')
 
     check(b'Break in 20' in broke,
           f"the Ctrl+C broke mid-read (got {broke!r})")
-    check(b'B' in after or b"'b'" in after,
-          f"the 'B' typed after it survived for the next reader (got {after!r})")
+    # Assert over both windows, not just the second. The prompt starts reading
+    # - and so echoing the queued key - the moment the break is printed, so the
+    # 'B' lands at the end of the *first* drain about one run in three:
+    #     broke=b'\r\nBreak in 20\r\nB'   after=b'\r\nSyntax error\r\n'
+    # "B\r\n" spans the join in that case, which is why the two are
+    # concatenated rather than searched separately. It cannot be a fragment of
+    # "Break in 20", so it is the queued key and not a stray break message.
+    transcript = broke + after
+    check(b'B\r\n' in transcript and b'Syntax error' in transcript,
+          "the 'B' typed after it survived for the next reader "
+          f"(got {broke!r} then {after!r})")
 
 
 def test_terminal_is_restored_if_the_process_is_killed():
@@ -504,6 +535,14 @@ if __name__ == "__main__":
     failed = results.count(False)
     print("\n" + "=" * 60)
     print(f"Results: {results.count(True)} passed, {failed} failed")
+
+    if _budget_ran_out:
+        print(f"⚠  The {BUDGET_SECONDS:.0f}s budget ran out before the last test "
+              f"finished (this run took {time.time() - _deadline + BUDGET_SECONDS:.1f}s).")
+        print("   Drains after that returned immediately, so any failure above may "
+              "be the clock and not the code.")
+        print("   Look for an `until=` marker that never matches: it costs its "
+              "whole timeout, every time.")
 
     if failed:
         print("❌ Some tests failed")
