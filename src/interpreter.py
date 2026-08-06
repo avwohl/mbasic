@@ -18,7 +18,8 @@ from src.number_format import (format_for_print, int_divide, int_modulo,
                                to_integer, to_single,
                                INTEGER_DIGITS, SINGLE_DIGITS, DOUBLE_DIGITS)
 from src.iohandler.base import KeyInputPending
-from src.error_codes import error_code_for, get_error_message
+from src.error_codes import (error_code_for, format_error_message,
+                             get_error_message)
 import src.ast_nodes as ast_nodes
 
 
@@ -102,10 +103,29 @@ class ChainException(Exception):
 
 @dataclass
 class ErrorInfo:
-    """Information about a runtime error"""
+    """Information about a runtime error.
+
+    error_message is the Python exception's own text, kept for the debug log.
+    It is not what a user should be shown - see message().
+    """
     error_code: int
     pc: PC
     error_message: str
+
+    def message(self, with_line=True):
+        """The line MBASIC prints for this error.
+
+        Every UI had been showing error_message, which is the Python
+        exception's wording: "Cannot open NOSUCH.DAT: Cannot open
+        NOSUCH.DAT: No such file or directory" where the binary says
+        "File not found in 50". Six backends each spelled that badly in their
+        own way, so the rendering lives here instead.
+
+        Pass with_line=False where the surface already shows the line number
+        separately - the curses UI's error box does.
+        """
+        return format_error_message(
+            self.error_code, self.pc.line_num if with_line else None)
 
 
 @dataclass
@@ -764,7 +784,7 @@ class Interpreter:
                 state = self.start()
 
                 if state.error_info:
-                    raise RuntimeError(state.error_info.error_message)
+                    raise MBasicError(state.error_info.error_code)
 
                 # Run until done
                 while self.runtime.pc.is_running() and not state.error_info:
@@ -789,7 +809,7 @@ class Interpreter:
 
                 # Handle final errors
                 if state.error_info:
-                    raise RuntimeError(state.error_info.error_message)
+                    raise MBasicError(state.error_info.error_code)
 
                 # Normal completion - exit the outer loop
                 break

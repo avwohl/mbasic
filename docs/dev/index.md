@@ -2,8 +2,8 @@
 
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
-**Last Updated:** 2026-08-05
-**Total Documents:** 50
+**Last Updated:** 2026-08-06
+**Total Documents:** 52
 
 ## What's Here
 
@@ -59,6 +59,10 @@ port I/O — but they are not required. Read
 - [Keybinding Systems](KEYBINDING_SYSTEMS.md)
 - [Startrek And Gosub In Then](STARTREK_AND_GOSUB_IN_THEN.md)
 
+### Testing & Quality
+
+- [Tests Verified Against Binary](TESTS_VERIFIED_AGAINST_BINARY.md)
+
 ### File I/O
 
 - [Backup Nonversioned Files](BACKUP_NONVERSIONED_FILES.md)
@@ -86,6 +90,10 @@ port I/O — but they are not required. Read
 
 - [Architecture Cleanup Todo](ARCHITECTURE_CLEANUP_TODO.md)
 - [Page Visits Cleanup](PAGE_VISITS_CLEANUP.md)
+
+### Work in Progress
+
+- [Mbasic 521 Divergences Todo](MBASIC_521_DIVERGENCES_TODO.md)
 
 ### Other
 

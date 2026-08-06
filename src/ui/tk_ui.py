@@ -15,6 +15,9 @@ from src.immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 from src.iohandler.base import IOHandler
 from src.input_sanitizer import sanitize_and_clear_parity, is_valid_input_char
 from src.debug_logger import debug_log_error, is_debug_mode
+from src.error_codes import (message_for, format_error_message,
+                             CANT_CONTINUE, FILE_NOT_FOUND,
+                             UNDEFINED_LINE_NUMBER)
 from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode, get_default_reverse_for_mode
 from src.pc import PC
 from src.ast_nodes import EndStatementNode
@@ -756,7 +759,7 @@ class TkBackend(UIBackend):
             self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
             state = self.interpreter.start()
             if state.error_info:
-                self._add_output(f"\n--- Setup error: {state.error_info.error_message} ---\n")
+                self._add_output(f"\n--- {state.error_info.message()} ---\n")
                 self._set_status("Error")
                 return
 
@@ -769,9 +772,9 @@ class TkBackend(UIBackend):
             # Handle interpreter state (error, halted, or running)
             if state.error_info:
                 # Error state
-                error_msg = state.error_info.error_message
+                error_msg = state.error_info.message()
                 line_num = state.error_info.pc.line_num
-                self._add_output(f"\n--- Error at line {line_num}: {error_msg} ---\n")
+                self._add_output(f"\n--- {error_msg} ---\n")
                 self._set_status("Error")
                 self._clear_statement_highlight()
             elif not self.runtime.pc.is_running():
@@ -806,7 +809,7 @@ class TkBackend(UIBackend):
             self._update_stack()
 
         except Exception as e:
-            self._add_output(f"Step error: {e}\n")
+            self._add_output(message_for(e) + "\n")
             self._set_status("Error")
 
     def _menu_step(self):
@@ -821,7 +824,7 @@ class TkBackend(UIBackend):
             self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
             state = self.interpreter.start()
             if state.error_info:
-                self._add_output(f"\n--- Setup error: {state.error_info.error_message} ---\n")
+                self._add_output(f"\n--- {state.error_info.message()} ---\n")
                 self._set_status("Error")
                 return
 
@@ -834,9 +837,9 @@ class TkBackend(UIBackend):
             # Handle interpreter state (error, halted, or running)
             if state.error_info:
                 # Error state
-                error_msg = state.error_info.error_message
+                error_msg = state.error_info.message()
                 line_num = state.error_info.pc.line_num
-                self._add_output(f"\n--- Error at line {line_num}: {error_msg} ---\n")
+                self._add_output(f"\n--- {error_msg} ---\n")
                 self._set_status("Error")
                 self._clear_statement_highlight()
             elif not self.runtime.pc.is_running():
@@ -872,7 +875,7 @@ class TkBackend(UIBackend):
             self._update_stack()
 
         except Exception as e:
-            self._add_output(f"Step error: {e}\n")
+            self._add_output(message_for(e) + "\n")
             self._set_status("Error")
 
     def _menu_continue(self):
@@ -936,7 +939,7 @@ class TkBackend(UIBackend):
 
         except Exception as e:
             import traceback
-            self._add_output(f"Continue error: {e}\n")
+            self._add_output(message_for(e) + "\n")
             self._add_output(f"Traceback: {traceback.format_exc()}\n")
             self._set_status("Error")
 
@@ -961,7 +964,7 @@ class TkBackend(UIBackend):
             self._update_immediate_status()
 
         except Exception as e:
-            self._add_output(f"Stop error: {e}\n")
+            self._add_output(message_for(e) + "\n")
             self._set_status("Error")
 
     def _toggle_breakpoint(self):
@@ -2114,7 +2117,10 @@ class TkBackend(UIBackend):
                 # Save the original line (with formatting), not stripped
                 success, error = self.program.add_line(line_num, line.rstrip('\r\n'))
                 if not success:
-                    self._add_output(f"Parse error at line {line_num}: {error}\n")
+                    # ProgramManager already worded this "Syntax error in
+                    # <line>: <detail>", so wrapping it in another copy of that
+                    # prefix said it twice.
+                    self._add_output(f"{error}\n")
                     # Mark line as having error with message
                     self.editor_text.set_error(line_num, True, error)
                     had_errors = True
@@ -3183,9 +3189,9 @@ class TkBackend(UIBackend):
                 # Error state
                 self.running = False
                 self.paused_at_breakpoint = True  # Allow Continue to work after error
-                error_msg = state.error_info.error_message
+                error_msg = state.error_info.message()
                 line_num = state.error_info.pc.line_num
-                self._add_output(f"\n--- Execution error: {error_msg} ---\n")
+                self._add_output(f"\n--- {error_msg} ---\n")
                 self._add_output("(Edit the line and click Continue to retry, or Stop to end)\n")
                 self._set_status(f"Error at line {line_num} - Edit and Continue, or Stop")
                 self._update_immediate_status()
@@ -3263,18 +3269,25 @@ class TkBackend(UIBackend):
                 context['error_line'] = state.error_info.pc.line_num
 
             # Log error (outputs to stderr in debug mode)
-            error_msg = debug_log_error(
+            debug_log_error(
                 "Execution error",
                 exception=e,
                 context=context
             )
 
-            # Display error in UI
-            self._add_output(f"\n--- {error_msg} ---\n")
-            if is_debug_mode():
-                self._add_output("(Full traceback sent to stderr - check console)\n")
+            # Display error in UI. A BASIC error the program made gets MBASIC's
+            # message; only an internal failure gets a Python traceback, which
+            # a user can do nothing with. The curses UI already told the two
+            # apart this way - here they both landed in the same handler and
+            # everything came out as a traceback.
+            if state.error_info is not None:
+                self._add_output(f"\n--- {state.error_info.message()} ---\n")
             else:
-                self._add_output(traceback.format_exc())
+                self._add_output(f"\n--- {type(e).__name__}: {e} ---\n")
+                if is_debug_mode():
+                    self._add_output("(Full traceback sent to stderr - check console)\n")
+                else:
+                    self._add_output(traceback.format_exc())
             self._add_output("(Edit the line and click Continue to retry, or Stop to end)\n")
 
             # Get error line from state
@@ -3332,7 +3345,7 @@ class TkBackend(UIBackend):
             # Start interpreter (sets up statement table, etc.)
             state = self.interpreter.start()
             if state.error_info:
-                self._add_output(f"\n--- Setup error: {state.error_info.error_message} ---\n")
+                self._add_output(f"\n--- {state.error_info.message()} ---\n")
                 self._set_status("Error")
                 self.running = False
                 return
@@ -3349,7 +3362,7 @@ class TkBackend(UIBackend):
                 from src.runtime import PC
                 # Verify the line exists
                 if start_line not in self.program.line_asts:
-                    self._add_output(f"?Undefined line {start_line}\n")
+                    self._add_output(format_error_message(UNDEFINED_LINE_NUMBER) + "\n")
                     self._set_status("Error")
                     self.running = False
                     return
@@ -3441,7 +3454,7 @@ class TkBackend(UIBackend):
                 interval=30
             )
         except Exception as e:
-            self._add_output(f"Save error: {e}\n")
+            self._add_output(message_for(e) + "\n")
             self._set_status("Save error")
 
     def cmd_load(self, filename: str) -> None:
@@ -3450,7 +3463,8 @@ class TkBackend(UIBackend):
             success, errors = self.program.load_from_file(filename)
             if errors:
                 for line_num, error in errors:
-                    self._add_output(f"Parse error at line {line_num}: {error}\n")
+                    # Already prefixed by ProgramManager - see _parse_editor_content.
+                    self._add_output(f"{error}\n")
                     # Mark line as having error with message
                     self.editor_text.set_error(line_num, True, error)
             if success:
@@ -3467,7 +3481,7 @@ class TkBackend(UIBackend):
                     interval=30
                 )
         except Exception as e:
-            self._add_output(f"Load error: {e}\n")
+            self._add_output(message_for(e) + "\n")
             self._set_status("Load error")
 
     def cmd_merge(self, filename: str, quiet: bool = False) -> None:
@@ -3482,7 +3496,8 @@ class TkBackend(UIBackend):
             success, errors, lines_added, lines_replaced = self.program.merge_from_file(filename)
             if errors:
                 for line_num, error in errors:
-                    self._add_output(f"Parse error at line {line_num}: {error}\n")
+                    # Already prefixed by ProgramManager - see _parse_editor_content.
+                    self._add_output(f"{error}\n")
                     # Mark line as having error with message
                     self.editor_text.set_error(line_num, True, error)
             if success:
@@ -3498,10 +3513,10 @@ class TkBackend(UIBackend):
                 self._add_output("No lines merged\n")
                 self._set_status("Merge failed")
         except FileNotFoundError:
-            self._add_output(f"?File not found: {filename}\n")
+            self._add_output(format_error_message(FILE_NOT_FOUND) + "\n")
             self._set_status("File not found")
         except Exception as e:
-            self._add_output(f"Merge error: {e}\n")
+            self._add_output(message_for(e) + "\n")
             self._set_status("Merge error")
 
     def cmd_files(self, filespec: str = "") -> None:
@@ -3534,7 +3549,7 @@ class TkBackend(UIBackend):
             self._add_output(f"\n{len(files)} file(s)\n")
 
         except Exception as e:
-            self._add_output(f"?Error listing files: {e}\n")
+            self._add_output(message_for(e) + "\n")
 
     def cmd_delete(self, args: str) -> None:
         """Execute DELETE command - delete line range using ui_helpers.
@@ -3561,9 +3576,9 @@ class TkBackend(UIBackend):
                 self._write_output(f"Deleted {len(deleted)} lines ({min(deleted)}-{max(deleted)})")
 
         except ValueError as e:
-            self._write_output(f"?{e}")
+            self._write_output(message_for(e))
         except Exception as e:
-            self._write_output(f"?Error during delete: {e}")
+            self._write_output(message_for(e))
 
     def cmd_renum(self, args: str) -> None:
         """Execute RENUM command - renumber lines using AST serialization.
@@ -3596,10 +3611,10 @@ class TkBackend(UIBackend):
             self._add_output(f"Renumbered ({new_start} to {final_num})\n")
 
         except ValueError as e:
-            self._add_output(f"?{e}\n")
+            self._add_output(message_for(e) + "\n")
         except Exception as e:
             import traceback
-            self._add_output(f"Error during renumber: {e}\n")
+            self._add_output(message_for(e) + "\n")
             self._add_output(traceback.format_exc())
 
     def _renum_statement(self, stmt, line_map):
@@ -3708,7 +3723,7 @@ class TkBackend(UIBackend):
         """
         # Check if runtime exists and is in stopped state
         if not self.runtime or self.runtime.pc.is_running():
-            self._write_output("?Can't continue")
+            self._write_output(format_error_message(CANT_CONTINUE))
             return
 
         try:
@@ -3723,7 +3738,7 @@ class TkBackend(UIBackend):
             self._execute_tick()
 
         except Exception as e:
-            self._write_output(f"?Error continuing: {e}")
+            self._write_output(message_for(e))
 
     # Immediate mode methods
 

@@ -119,6 +119,95 @@ erasing nothing at all.
 halting alike. They are pinned in
 `tests/regression/interpreter/test_error_messages.py`.
 
+### The same wording in every UI
+
+`docs/user/UI_FEATURE_COMPARISON.md` promised "Standard MBASIC errors" in all
+four UIs, and it was true of none of them. Each backend built its own string
+out of the Python exception, so one failure read four different ways:
+
+    CLI      ?RuntimeError in 20: Cannot open NOSUCH.XYZ: Cannot open NOSUCH.XYZ: No such file...
+    curses   | Error: Cannot open NOSUCH.XYZ: Cannot open NOSUCH.XYZ: No such file or directory
+    Tk       --- Error at line 20: Cannot open NOSUCH.XYZ: ... ---
+    web      --- Error: Cannot open NOSUCH.XYZ: ... ---
+
+against `File not found in 20`.
+
+The rendering now happens once, in `ErrorInfo.message()`, on top of
+`src/error_codes.py`; `message_for(exception, line)` is the same thing for the
+sites that hold an exception rather than an ErrorInfo. Each UI keeps its own
+presentation around it - the curses box still draws its box and shows the
+offending source line, because that is a deliberate affordance of a UI
+documented as an IDE. What it no longer does is invent the wording.
+
+The command handlers went the same way. Measured at the Ok prompt, the binary
+answers `LOAD "NOSUCH.BAS"` with `File not found`, `SAVE` with `Missing
+operand`, `ZZZ 1` with `Syntax error`, `RUN 9999` with `Undefined line
+number` and `CONT` with `Can't continue` - no `?`, no filename, no Python
+detail. All four backends now do too. `tests/regression/ui/test_error_message_parity.py`
+pins the text, and deliberately does not pin the chrome.
+
+Two of those handlers were wrong in a way the first pass preserved, because
+both cases had been written as `?Syntax error` and the binary calls neither
+one that:
+
+    SAVE        Missing operand     nothing after the keyword
+    SAVE ""     Bad file name       an operand, but an empty one
+
+`LOAD`, `MERGE` and `CHAIN` measure the same. `_usable_filename` in
+`src/interactive.py` is now the single check, and `Bad file name` (error 64)
+had not been reachable before.
+
+### Missing operand is not "the statement ran out"
+
+`SAVE` is `Missing operand` and `ZZZ 1` is `Syntax error`, so `error_code_for`
+has to tell one parse failure from another. The first rule tried was "did the
+text mention EOF", on the reasoning that running out of input is what a missing
+operand *is*. It is not, and the binary is precise about the difference:
+
+    PRINT 1 +          Missing operand      an operator with nothing after it
+    PRINT EOF(         Missing operand      an open bracket, then nothing
+    FOR I = 1 TO       Missing operand
+    LET X =            Missing operand
+    DIM A(             Missing operand
+    PRINT #            Missing operand
+    OPEN "I",1,        Missing operand
+    PRINT MID$(        Missing operand
+    PRINT EOF          Syntax error         EOF wanted a bracket, not an operand
+    PRINT (1           Syntax error         so did the bracket
+    X = EOF(1          Syntax error
+    PRINT EOF)         Syntax error
+    PRINT LEFT$("a"    Syntax error
+    GOTO               Syntax error
+    ON 1 GOTO          Syntax error
+
+Measured under cpmemu. Across our parser's whole message vocabulary the split
+falls on exactly one message - `Unexpected token in expression: EOF` - and on
+nothing else, so that is what the code keys on. Matching "EOF" anywhere in the
+text got all seven of the second group wrong, because there `EOF` is either the
+token a bracket was wanted before or the name of the `EOF` function. Both
+groups are pinned in the parity test.
+
+Deciding a parse failure *before* searching `_MESSAGE_CODES` also settles a
+trap that predates the change: the fragment list contains "overflow", "type
+mismatch" and "syntax error", and an unknown statement's name is quoted back
+inside the message. `OVERFLOW 1` therefore used to read as error 6. The binary
+calls it, and `TYPE MISMATCH` and `SYNTAX 1` with it, a plain `Syntax error`.
+
+### Said once, not twice
+
+`ProgramManager.parse_single_line` already returns `Syntax error in 20: <detail>`,
+and four callers wrapped that in a second prefix of their own, so a bad line in
+a LOADed or MERGEd file came out as
+
+    curses   ?Parse error at line 20: Syntax error in 20: column 4: ...
+    Tk       Parse error at line 20: Syntax error in 20: column 4: ...
+    web      20: Syntax error in 20: column 4: ...
+
+The prefix now belongs to whoever builds the message, and the callers print it
+unchanged. (The `<detail>` after the colon is still ours rather than MBASIC's -
+the binary does not diagnose a line until RUN at all, which is divergence 6 in
+[MBASIC_521_DIVERGENCES_TODO.md](MBASIC_521_DIVERGENCES_TODO.md).)
+
 ### The TRON trace
 
 `[nnn]` is written with no newline of its own, and only when execution *enters*

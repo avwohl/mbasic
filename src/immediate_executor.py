@@ -7,6 +7,7 @@ of the current runtime state.
 """
 
 from src.lexer import tokenize
+from src.error_codes import message_for
 from src.parser import Parser
 from src.runtime import Runtime
 from src.interpreter import Interpreter, BreakException
@@ -206,7 +207,9 @@ class ImmediateExecutor:
                         complete_line = f"{line_num} {line_content}"
                         success, error = ui.program.add_line(line_num, complete_line)
                         if not success:
-                            return (False, f"Syntax error: {error}\n")
+                            # add_line already worded this "Syntax error in
+                            # <line>: <detail>"; the old prefix said it twice.
+                            return (False, f"{error}\n")
                     else:
                         # Delete line (numbered line with no content)
                         ui.program.delete_line(line_num)
@@ -300,46 +303,27 @@ class ImmediateExecutor:
         """
         Format an error message for user display.
 
+        Immediate mode is reached from all four UIs, so this is the one place
+        their error wording used to come from - and it was a partial, drifting
+        copy of the exception-to-MBASIC-error mapping: a handful of
+        `if "Type mismatch" in str(e)` branches, with
+        `f"?{type(exception).__name__}: {exception}"` for everything they did
+        not cover. It now uses the same mapping the rest of the interpreter
+        does, so `PRINT SQR(-1)` at the prompt says "Illegal function call"
+        wherever it is typed.
+
         Args:
             exception: The exception that occurred
             statement: The statement that caused the error
 
         Returns:
-            str: Formatted error message
+            str: Formatted error message, newline-terminated
         """
-        # Check if DEBUG mode is enabled
+        message = message_for(exception)
         if os.environ.get('DEBUG'):
-            # Return full traceback in debug mode
-            return f"?{type(exception).__name__}: {exception}\n{traceback.format_exc()}"
-        else:
-            # Normal mode - just error type and message
-            error_name = type(exception).__name__
-
-            # Common error name simplifications
-            if error_name == "RuntimeError":
-                # Extract BASIC error names if present
-                error_str = str(exception)
-                if "Type mismatch" in error_str:
-                    return "Type mismatch\n"
-                elif "Overflow" in error_str:
-                    return "Overflow\n"
-                elif "Division by zero" in error_str:
-                    return "Division by zero\n"
-                elif "Illegal function call" in error_str:
-                    return "Illegal function call\n"
-                elif "Subscript out of range" in error_str:
-                    return "Subscript out of range\n"
-                elif "Undefined" in error_str:
-                    return f"{error_str}\n"
-                else:
-                    return f"{error_str}\n"
-            elif error_name == "SyntaxError":
-                return "Syntax error\n"
-            elif error_name == "KeyError":
-                # Variable not defined
-                return f"Undefined variable\n"
-            else:
-                return f"?{error_name}: {exception}\n"
+            # The MBASIC line first, then the detail a developer wants.
+            return f"{message}\n{traceback.format_exc()}"
+        return f"{message}\n"
 
     def _show_help(self):
         """

@@ -79,6 +79,19 @@ ERROR_CODES = {
 }
 
 
+#: The codes the command handlers reach for by name. MBASIC prints these at
+#: the Ok prompt with no "?" and no detail of its own - LOAD "NOSUCH.BAS" is
+#: "File not found", not "?File not found: NOSUCH.BAS", and SAVE with no
+#: filename is "Missing operand", not "?Syntax error". All measured.
+SYNTAX_ERROR = 2
+ILLEGAL_FUNCTION_CALL = 5
+UNDEFINED_LINE_NUMBER = 8
+CANT_CONTINUE = 17
+MISSING_OPERAND = 22
+FILE_NOT_FOUND = 53
+BAD_FILE_NAME = 64
+
+
 def get_error_message(error_code):
     """Get the full error message for an error code.
 
@@ -134,6 +147,22 @@ def format_error_message(error_code, line_number=None):
     if line_number is None:
         return message
     return f"{message} in {line_number}"
+
+
+def message_for(exception, line_number=None):
+    """The line MBASIC prints for this exception. One call, for the UIs.
+
+    Every backend needs the same two steps - recover the error number from the
+    Python exception, then look up the message - so they get one function
+    rather than a two-line idiom each, spelled differently in six places.
+
+        except Exception as error:
+            self.output(message_for(error, self.runtime.pc.line_num))
+
+    Pass line_number=None for a statement typed at the prompt, or when the
+    surface already shows the line separately.
+    """
+    return format_error_message(error_code_for(exception), line_number)
 
 
 #: Message fragments that identify an MBASIC error, most specific first. Our
@@ -207,6 +236,24 @@ def error_code_for(exception):
     if explicit is not None:
         return explicit
     text = str(exception).lower()
+    if 'parse error' in text or 'unknown statement' in text:
+        # A parse failure is a syntax error - except when what ran out was an
+        # *operand*. Measured across this parser's whole message vocabulary,
+        # the binary's split falls exactly on one of our messages:
+        #
+        #     PRINT 1 +      Unexpected token in expression: EOF  Missing operand
+        #     SAVE           Unexpected token in expression: EOF  Missing operand
+        #     PRINT EOF      Expected LPAREN, got EOF             Syntax error
+        #     PRINT (1       Expected RPAREN, got EOF             Syntax error
+        #     X = EOF(1      Expected , or ) in EOF function      Syntax error
+        #     GOTO           Expected line number after GOTO      Syntax error
+        #
+        # Testing for "eof" anywhere in the text got the last four wrong: there
+        # EOF is the token some *bracket* was wanted before, or the name of the
+        # EOF function, not an operand that never arrived.
+        return (MISSING_OPERAND
+                if 'unexpected token in expression: eof' in text
+                else SYNTAX_ERROR)
     for fragment, code in _MESSAGE_CODES:
         if fragment in text:
             return code

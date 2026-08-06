@@ -16,6 +16,7 @@ from src.runtime import Runtime
 from src.interpreter import Interpreter
 from src.iohandler.base import IOHandler
 from src.version import VERSION
+from src.error_codes import message_for
 from src.pc import PC
 from src.ui.web.codemirror5_editor import CodeMirror5Editor
 from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode, get_default_reverse_for_mode
@@ -703,7 +704,7 @@ class BrowseExamplesDialog(ui.dialog):
                 self._load_file(path)
 
         except Exception as e:
-            self.backend._notify(f'Error: {e}', type='negative')
+            self.backend._notify(f'Error: {message_for(e)}', type='negative')
 
     def _go_up(self):
         """Navigate to parent directory."""
@@ -1971,7 +1972,7 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             self._log_error("_toggle_breakpoint", e)
-            self._notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {message_for(e)}', type='negative')
 
     async def _update_breakpoint_display(self):
         """Update the editor to show breakpoint markers using CodeMirror."""
@@ -2038,7 +2039,7 @@ class NiceGUIBackend(UIBackend):
             self._notify('Please enter a valid line number', type='warning')
         except Exception as e:
             self._log_error("_do_toggle_breakpoint", e)
-            self._notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {message_for(e)}', type='negative')
 
     def _clear_all_breakpoints(self):
         """Clear all breakpoints."""
@@ -2053,7 +2054,7 @@ class NiceGUIBackend(UIBackend):
             self._set_status('All breakpoints cleared')
         except Exception as e:
             self._log_error("_clear_all_breakpoints", e)
-            self._notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {message_for(e)}', type='negative')
 
     # =========================================================================
     # Menu Handlers
@@ -2068,7 +2069,7 @@ class NiceGUIBackend(UIBackend):
             self._set_status('New program')
         except Exception as e:
             self._log_error("_menu_new", e)
-            self._notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {message_for(e)}', type='negative')
 
     def cmd_new(self) -> None:
         """Execute NEW command - clear program and variables (called by interpreter)."""
@@ -2158,7 +2159,7 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             self._log_error("_menu_save", e)
-            self._notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {message_for(e)}', type='negative')
 
     async def _menu_save_as(self):
         """File > Save As - Save with new filename."""
@@ -2187,7 +2188,7 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             self._log_error("_handle_save_as", e)
-            self._notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {message_for(e)}', type='negative')
 
     def _handle_merge_upload(self, e, dialog):
         """Handle file upload from Merge dialog."""
@@ -2288,8 +2289,8 @@ class NiceGUIBackend(UIBackend):
             # Start interpreter (sets up statement table, etc.)
             state = self.interpreter.start()
             if state.error_info:
-                error_msg = state.error_info.error_message
-                self._append_output(f"\n--- Setup error: {error_msg} ---\n")
+                error_msg = state.error_info.message()
+                self._append_output(f"\n--- {error_msg} ---\n")
                 self._set_status('Error')
                 self.running = False  # Mark as not running (updates UI spinner/status)
                 return
@@ -2325,8 +2326,8 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             self._log_error("_menu_run", e)
-            self._append_output(f"\n--- Error: {e} ---\n")
-            self._set_status(f'Error: {e}')
+            self._append_output(f"\n--- {message_for(e)} ---\n")
+            self._set_status(f'Error: {message_for(e)}')
             self.running = False
 
     def _program_owns_keyboard(self):
@@ -2449,8 +2450,8 @@ class NiceGUIBackend(UIBackend):
                 return
 
             if state.error_info:
-                error_msg = state.error_info.error_message
-                self._append_output(f"\n--- Error: {error_msg} ---\n")
+                error_msg = state.error_info.message()
+                self._append_output(f"\n--- {error_msg} ---\n")
                 self._set_status("Error")
                 self.running = False
 
@@ -2527,8 +2528,8 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             self._log_error("_execute_tick", e)
-            self._append_output(f"\n--- Tick error: {e} ---\n")
-            self._set_status(f"Error: {e}")
+            self._append_output(f"\n--- {message_for(e)} ---\n")
+            self._set_status(f"Error: {message_for(e)}")
             self.running = False
 
     async def _menu_stop(self):
@@ -2640,8 +2641,8 @@ class NiceGUIBackend(UIBackend):
                 # Start interpreter
                 state = self.interpreter.start()
                 if state.error_info:
-                    error_msg = state.error_info.error_message
-                    self._append_output(f"\n--- Setup error: {error_msg} ---\n")
+                    error_msg = state.error_info.message()
+                    self._append_output(f"\n--- {error_msg} ---\n")
                     self._set_status('Error')
                     return
 
@@ -2658,7 +2659,7 @@ class NiceGUIBackend(UIBackend):
                         self._handle_step_result(state, 'line')
                     except Exception as e:
                         self._log_error("_menu_step_line tick", e)
-                        self._append_output(f"\n--- Step error: {e} ---\n")
+                        self._append_output(f"\n--- {message_for(e)} ---\n")
                         self._set_status('Error')
                         self.running = False
                         self.paused = False
@@ -2667,7 +2668,7 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             self._log_error("_menu_step_line", e)
-            self._notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {message_for(e)}', type='negative')
 
     async def _menu_step_stmt(self):
         """Run > Step Statement - Execute one statement and pause."""
@@ -2716,8 +2717,8 @@ class NiceGUIBackend(UIBackend):
                 # Start interpreter
                 state = self.interpreter.start()
                 if state.error_info:
-                    error_msg = state.error_info.error_message
-                    self._append_output(f"\n--- Setup error: {error_msg} ---\n")
+                    error_msg = state.error_info.message()
+                    self._append_output(f"\n--- {error_msg} ---\n")
                     self._set_status('Error')
                     return
 
@@ -2734,7 +2735,7 @@ class NiceGUIBackend(UIBackend):
                         self._handle_step_result(state, 'statement')
                     except Exception as e:
                         self._log_error("_menu_step_stmt tick", e)
-                        self._append_output(f"\n--- Step error: {e} ---\n")
+                        self._append_output(f"\n--- {message_for(e)} ---\n")
                         self._set_status('Error')
                         self.running = False
                         self.paused = False
@@ -2744,7 +2745,7 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             self._log_error("_menu_step_stmt", e)
-            self._notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {message_for(e)}', type='negative')
 
     def _handle_step_result(self, state, step_type):
         """Handle result of a step operation."""
@@ -2769,8 +2770,8 @@ class NiceGUIBackend(UIBackend):
             char_end = state.current_statement_char_end if state.current_statement_char_end > 0 else None
             self.editor.set_current_statement(state.current_line, char_start, char_end)
         elif state.error_info:
-            error_msg = state.error_info.error_message
-            self._append_output(f"\n--- Error: {error_msg} ---\n")
+            error_msg = state.error_info.message()
+            self._append_output(f"\n--- {error_msg} ---\n")
             self._set_status("Error")
             self.running = False
             self.paused = False
@@ -2848,7 +2849,7 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             self._log_error("_menu_continue", e)
-            self._notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {message_for(e)}', type='negative')
 
     async def _menu_list(self):
         """Run > List Program - List to output."""
@@ -2875,7 +2876,7 @@ class NiceGUIBackend(UIBackend):
             self._set_status('Lines sorted by line number')
         except Exception as e:
             self._log_error("_menu_sort_lines", e)
-            self._notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {message_for(e)}', type='negative')
 
     async def _menu_find_replace(self):
         """Find and replace text in the program with proper cursor positioning."""
@@ -3160,7 +3161,9 @@ class NiceGUIBackend(UIBackend):
                 # Add to program
                 success, error = self.program.add_line(line_num, line_text)
                 if not success:
-                    errors.append(f'{line_num}: {error}')
+                    # Already worded "Syntax error in <line>: <detail>" by
+                    # ProgramManager - the line number was being said twice.
+                    errors.append(error)
 
             if errors:
                 error_msg = '; '.join(errors[:3])
@@ -3182,7 +3185,7 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             self._log_error("_save_editor_to_program", e)
-            self._notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {message_for(e)}', type='negative')
             return False
 
     def _load_program_to_editor(self):
@@ -3195,7 +3198,7 @@ class NiceGUIBackend(UIBackend):
             self._set_status(f'Loaded {len(lines)} lines')
         except Exception as e:
             self._log_error("_load_program_to_editor", e)
-            self._notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {message_for(e)}', type='negative')
 
     def _remove_blank_lines(self, e=None):
         """Remove blank lines from editor except the last line.
@@ -3832,7 +3835,7 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as e:
             self._log_error("_execute_immediate", e)
-            self._notify(f'Error: {e}', type='negative')
+            self._notify(f'Error: {message_for(e)}', type='negative')
 
     def _notify(self, message, type='info', log_to_output=True):
         """Show notification popup and optionally log to output.

@@ -32,6 +32,10 @@ from src.parser import Parser
 from src.immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 from src.input_sanitizer import is_valid_input_char, clear_parity
 from src.debug_logger import debug_log_error, is_debug_mode
+from src.error_codes import (message_for, format_error_message,
+                             CANT_CONTINUE, FILE_NOT_FOUND,
+                             ILLEGAL_FUNCTION_CALL, MISSING_OPERAND,
+                             UNDEFINED_LINE_NUMBER)
 from src.ui.variable_sorting import sort_variables, get_sort_mode_label
 
 
@@ -2176,7 +2180,7 @@ class CursesBackend(UIBackend):
                 # Not paused - inform user
                 self._append_to_output("Not paused")
         except Exception as e:
-            self._append_to_output(f"Continue error: {e}")
+            self._append_to_output(message_for(e))
 
     def _debug_step(self):
         """Execute one statement and pause (single-step debugging)."""
@@ -2235,7 +2239,7 @@ class CursesBackend(UIBackend):
             elif state.error_info:
                 # Clear highlighting on error
                 self.editor._update_display()
-                error_msg = state.error_info.error_message
+                error_msg = state.error_info.message(with_line=False)
                 line_num = state.error_info.pc.line_num
                 self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
                 self._update_output()
@@ -2252,13 +2256,20 @@ class CursesBackend(UIBackend):
             import traceback
 
             # Log error (outputs to stderr in debug mode)
-            error_msg = debug_log_error("Step error", exception=e)
+            debug_log_error("Step error", exception=e)
 
-            self.output_buffer.append(f"Step error: {e}")
-            if is_debug_mode():
-                self.output_buffer.append("(Full traceback sent to stderr - check console)")
+            # A BASIC error the program made can reach here as well as through
+            # state.error_info above - _run_program tells the two apart the
+            # same way. Only an internal failure earns a traceback.
+            state = self.interpreter.state if self.interpreter and hasattr(self.interpreter, 'state') else None
+            if state and state.error_info is not None:
+                self.output_buffer.append(state.error_info.message(with_line=False))
             else:
-                self.output_buffer.append(traceback.format_exc())
+                self.output_buffer.append(message_for(e))
+                if is_debug_mode():
+                    self.output_buffer.append("(Full traceback sent to stderr - check console)")
+                else:
+                    self.output_buffer.append(traceback.format_exc())
             self._update_output()
             # Don't update immediate status on exception - error is in output
 
@@ -2313,7 +2324,7 @@ class CursesBackend(UIBackend):
                 self._update_immediate_status()
             elif state.error_info:
                 self.editor._update_display()
-                error_msg = state.error_info.error_message
+                error_msg = state.error_info.message(with_line=False)
                 line_num = state.error_info.pc.line_num
                 self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
                 self._update_output()
@@ -2329,13 +2340,19 @@ class CursesBackend(UIBackend):
             import traceback
 
             # Log error (outputs to stderr in debug mode)
-            error_msg = debug_log_error("Step line error", exception=e)
+            debug_log_error("Step line error", exception=e)
 
-            self.output_buffer.append(f"Step line error: {e}")
-            if is_debug_mode():
-                self.output_buffer.append("(Full traceback sent to stderr - check console)")
+            # See _debug_step: a BASIC error gets MBASIC's wording, an internal
+            # one gets the traceback.
+            state = self.interpreter.state if self.interpreter and hasattr(self.interpreter, 'state') else None
+            if state and state.error_info is not None:
+                self.output_buffer.append(state.error_info.message(with_line=False))
             else:
-                self.output_buffer.append(traceback.format_exc())
+                self.output_buffer.append(message_for(e))
+                if is_debug_mode():
+                    self.output_buffer.append("(Full traceback sent to stderr - check console)")
+                else:
+                    self.output_buffer.append(traceback.format_exc())
             self._update_output()
             # Don't update immediate status on exception - error is in output
 
@@ -3264,7 +3281,7 @@ class CursesBackend(UIBackend):
                 self.status_bar.set_text("Invalid subscripts (must be integers)")
                 return
             except Exception as e:
-                self.status_bar.set_text(f"Error: {e}")
+                self.status_bar.set_text(f"Error: {message_for(e)}")
                 return
 
             # Step 2: Show current value and get new value
@@ -3300,7 +3317,7 @@ class CursesBackend(UIBackend):
                 self.status_bar.set_text(f"{variable_name}({subscripts_str}) = {new_value}")
 
             except Exception as e:
-                self.status_bar.set_text(f"Error: {e}")
+                self.status_bar.set_text(f"Error: {message_for(e)}")
 
         else:
             # Simple variable
@@ -3339,7 +3356,7 @@ class CursesBackend(UIBackend):
                 self.status_bar.set_text(f"{variable_name} = {new_value}")
 
             except Exception as e:
-                self.status_bar.set_text(f"Error: {e}")
+                self.status_bar.set_text(f"Error: {message_for(e)}")
 
     def _set_variables_filter(self):
         """Prompt for and set a filter for the variables window."""
@@ -3581,7 +3598,7 @@ class CursesBackend(UIBackend):
             from src.runtime import PC
             # Verify the line exists
             if start_line not in self.program.line_asts:
-                self.output_buffer.append(f"?Undefined line {start_line}")
+                self.output_buffer.append(format_error_message(UNDEFINED_LINE_NUMBER))
                 self._update_output()
                 # Don't update immediate status here - error is in output
                 self.running = False
@@ -3601,7 +3618,7 @@ class CursesBackend(UIBackend):
         self._update_immediate_status()
 
         if state.error_info:
-            error_msg = state.error_info.error_message
+            error_msg = state.error_info.message(with_line=False)
             self.output_buffer.append("")
             self.output_buffer.append("┌─ Startup Error ──────────────────────────────────┐")
             self.output_buffer.append(f"│ Error: {error_msg}")
@@ -3680,8 +3697,10 @@ class CursesBackend(UIBackend):
                 if error_output:
                     self.output_buffer.extend(error_output)
 
-                # Format error with context
-                error_msg = state.error_info.error_message
+                # Format error with context. The message is MBASIC's, not the
+                # Python exception's - the box already shows the line, so the
+                # " in <line>" suffix would only repeat it.
+                error_msg = state.error_info.message(with_line=False)
                 line_num = state.error_info.pc.line_num
 
                 # Build error display with box and context
@@ -3741,8 +3760,8 @@ class CursesBackend(UIBackend):
 
             if is_user_error:
                 # User program error (like FOR/NEXT nesting) - don't spam stderr
-                # Format nicely for the user
-                error_msg = state.error_info.error_message
+                # Format nicely for the user, with MBASIC's wording
+                error_msg = state.error_info.message(with_line=False)
                 line_num = state.error_info.pc.line_num
 
                 self.output_buffer.append("")
@@ -4231,7 +4250,10 @@ class CursesBackend(UIBackend):
             )
 
         except Exception as e:
-            self.output_buffer.append(f"Error loading file: {e}")
+            # LOAD of a missing file reached the user as the raw OSError -
+            # "Error loading file: [Errno 2] No such file or directory:
+            # 'NOSUCH.bas'" - where the binary says "File not found".
+            self.output_buffer.append(message_for(e))
             self._update_output()
 
     def _save_program(self):
@@ -4611,7 +4633,7 @@ class CursesBackend(UIBackend):
         """Execute SAVE command."""
         try:
             if not filename:
-                self._append_to_output("?Syntax error: filename required")
+                self._append_to_output(format_error_message(MISSING_OPERAND))
                 return
 
             # Remove quotes if present
@@ -4622,7 +4644,7 @@ class CursesBackend(UIBackend):
             self._append_to_output(f"Saved to {filename}")
 
         except Exception as e:
-            self._append_to_output(f"?Error saving file: {e}")
+            self._append_to_output(message_for(e))
 
     def cmd_delete(self, args):
         """Execute DELETE command using ui_helpers.
@@ -4641,9 +4663,9 @@ class CursesBackend(UIBackend):
                 self._append_to_output(f"Deleted {len(deleted)} lines ({min(deleted)}-{max(deleted)})")
 
         except ValueError as e:
-            self._append_to_output(f"?{e}")
+            self._append_to_output(message_for(e))
         except Exception as e:
-            self._append_to_output(f"?Error during delete: {e}")
+            self._append_to_output(message_for(e))
 
     def cmd_renum(self, args):
         """Execute RENUM command using ui_helpers.
@@ -4655,7 +4677,7 @@ class CursesBackend(UIBackend):
         # Need access to InteractiveMode's _renum_statement
         # Curses UI has self.interpreter which should have interactive_mode
         if not hasattr(self, 'interpreter') or not hasattr(self.interpreter, 'interactive_mode'):
-            self._append_to_output("?RENUM not available in this mode")
+            self._append_to_output(format_error_message(ILLEGAL_FUNCTION_CALL))
             return
 
         try:
@@ -4670,9 +4692,9 @@ class CursesBackend(UIBackend):
             self._append_to_output("Renumbered")
 
         except ValueError as e:
-            self._append_to_output(f"?{e}")
+            self._append_to_output(message_for(e))
         except Exception as e:
-            self._append_to_output(f"?Error during renumber: {e}")
+            self._append_to_output(message_for(e))
 
     def cmd_merge(self, filename, quiet=False):
         """Execute MERGE command using ProgramManager.
@@ -4682,16 +4704,18 @@ class CursesBackend(UIBackend):
         """
         try:
             if not filename:
-                self._append_to_output("?Syntax error: filename required")
+                self._append_to_output(format_error_message(MISSING_OPERAND))
                 return
 
             # Use ProgramManager's merge_from_file
             success, errors, lines_added, lines_replaced = self.program.merge_from_file(filename)
 
-            # Show parse errors if any
+            # Show parse errors if any. Each is already worded "Syntax error in
+            # <line>: <detail>" by ProgramManager, so adding that prefix here
+            # said it twice.
             if errors:
                 for line_num, error in errors:
-                    self._append_to_output(f"?Parse error at line {line_num}: {error}")
+                    self._append_to_output(error)
 
             if success:
                 self._refresh_editor()
@@ -4700,12 +4724,12 @@ class CursesBackend(UIBackend):
                     self._append_to_output(
                         f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
             else:
-                self._append_to_output("?No lines merged")
+                self._append_to_output(format_error_message(FILE_NOT_FOUND))
 
         except FileNotFoundError:
-            self._append_to_output(f"?File not found: {filename}")
+            self._append_to_output(format_error_message(FILE_NOT_FOUND))
         except Exception as e:
-            self._append_to_output(f"?{e}")
+            self._append_to_output(message_for(e))
 
     def cmd_files(self, filespec=""):
         """Execute FILES command using ui_helpers."""
@@ -4732,13 +4756,13 @@ class CursesBackend(UIBackend):
             self._append_to_output(f"\n{len(files)} file(s)")
 
         except Exception as e:
-            self._append_to_output(f"?Error listing files: {e}")
+            self._append_to_output(message_for(e))
 
     def cmd_cont(self):
         """Execute CONT command - continue after STOP."""
         # Check if in stopped state (PC has stop_reason set)
         if self.runtime.pc.is_running():
-            self._append_to_output("?Can't continue")
+            self._append_to_output(format_error_message(CANT_CONTINUE))
             return
 
         try:
@@ -4749,7 +4773,7 @@ class CursesBackend(UIBackend):
             self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
 
         except Exception as e:
-            self._append_to_output(f"?Error: {e}")
+            self._append_to_output(message_for(e))
 
     def cmd_system(self):
         """Execute SYSTEM command - Exit to operating system."""

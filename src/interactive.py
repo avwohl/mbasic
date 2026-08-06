@@ -23,7 +23,8 @@ from pathlib import Path
 from src.lexer import tokenize
 from src.parser import Parser
 from src.runtime import Runtime
-from src.interpreter import Interpreter, ChainException, BreakException
+from src.interpreter import (Interpreter, ChainException, BreakException,
+                            MBasicError)
 import src.ast_nodes as ast_nodes
 from src.input_sanitizer import sanitize_and_clear_parity
 from src.iohandler.console import input_without_history
@@ -31,7 +32,10 @@ from src.terminal_errors import TERMINAL_ERRORS
 from src.debug_logger import debug_log, debug_log_error, is_debug_mode
 from src.ui.keybinding_loader import KeybindingLoader
 from src.version import VERSION
-from src.error_codes import error_code_for, format_error_message
+from src.error_codes import (message_for, format_error_message,
+                             BAD_FILE_NAME, CANT_CONTINUE, FILE_NOT_FOUND,
+                             ILLEGAL_FUNCTION_CALL, MISSING_OPERAND,
+                             SYNTAX_ERROR, UNDEFINED_LINE_NUMBER)
 
 
 def _with_default_extension(filename):
@@ -43,6 +47,36 @@ def _with_default_extension(filename):
     names are upper case, so every name a program builds for itself hit this.
     """
     return filename if '.' in Path(filename).name else filename + '.bas'
+
+
+def _usable_filename(filename):
+    """The name a file command was given, stripped, or None if unusable.
+
+    MBASIC tells the two failures apart, and neither one is a syntax error:
+
+        SAVE        Missing operand     nothing after the keyword
+        SAVE ""     Bad file name       an operand, but an empty one
+
+    Both were "?Syntax error" here, in four handlers with the same eight
+    lines copied into each. Measured on 5.21 - see
+    docs/dev/TESTS_VERIFIED_AGAINST_BINARY.md.
+
+    The first case never reaches these handlers: the parser rejects `SAVE`
+    with nothing after it and "Missing operand" comes from there, so an empty
+    string arriving here is `SAVE ""` and gets "Bad file name". None is
+    accepted as missing anyway, for callers that hand-build a command.
+    """
+    if filename is None:
+        print(format_error_message(MISSING_OPERAND))
+        return None
+
+    cleaned = filename.strip().strip('"').strip("'")
+    if not cleaned:
+        print(format_error_message(BAD_FILE_NAME))
+        return None
+
+    return cleaned
+
 
 # Try to import readline for better line editing
 # This enhances input() with:
@@ -66,7 +100,7 @@ def print_error(e, runtime=None):
     # For ParseError (user input mistakes), just print simple message
     # Don't log verbose debug info since these are expected user errors, not bugs
     if isinstance(e, ParseError):
-        print(f"?{e}")
+        print(message_for(e))
         return
 
     # For runtime errors, gather context for debug logging
@@ -100,7 +134,7 @@ def print_error(e, runtime=None):
     # none of which MBASIC has. The Python detail is not lost: it still goes to
     # stderr through debug_log_error above, which is where it belongs.
     line_num = runtime.pc.line_num if runtime and runtime.pc else None
-    print(format_error_message(error_code_for(e), line_num or None))
+    print(message_for(e, line_num or None))
 
     # In debug mode, print a hint about stderr
     if is_debug_mode():
@@ -375,7 +409,7 @@ class InteractiveMode:
                         if self.lines:
                             line_num = max(self.lines.keys())
                         else:
-                            print("?No lines to edit")
+                            print(format_error_message(ILLEGAL_FUNCTION_CALL))
                             continue
 
                     self.cmd_edit(str(line_num))
@@ -485,7 +519,11 @@ class InteractiveMode:
             start_line: Optional line number to start execution at (for RUN line_number)
         """
         if not self.lines:
-            print("?No program")
+            # RUN with nothing loaded is not an error on the binary - it just
+            # returns to the prompt. RUN <line> is, because the line is not
+            # there: "Undefined line number".
+            if start_line is not None:
+                print(format_error_message(UNDEFINED_LINE_NUMBER))
             return
 
         try:
@@ -508,7 +546,7 @@ class InteractiveMode:
                 from src.pc import PC
                 # Verify the line exists
                 if start_line not in self.line_asts:
-                    print(f"?Undefined line {start_line}")
+                    print(format_error_message(UNDEFINED_LINE_NUMBER))
                     return
 
                 # Clear variables (RUN line_number clears variables per MBASIC spec)
@@ -517,7 +555,7 @@ class InteractiveMode:
                 # Start the interpreter (which calls setup() and resets PC to first line)
                 state = interpreter.start()
                 if state.error_info:
-                    raise RuntimeError(state.error_info.error_message)
+                    raise MBasicError(state.error_info.error_code)
 
                 # NOW set PC to the target line (after setup has built the statement table)
                 runtime.pc = PC.from_line(start_line)
@@ -561,12 +599,12 @@ class InteractiveMode:
         """
         # Check if we have a stopped program
         if not self.program_runtime or self.program_runtime.pc.is_running():
-            print("?Can't continue")
+            print(format_error_message(CANT_CONTINUE))
             return
 
         # Check if PC position is still valid (program may have been edited)
         if not self.program_runtime.pc.is_valid(self.program_runtime.statement_table):
-            print("?Can't continue")
+            print(format_error_message(CANT_CONTINUE))
             return
 
         try:
@@ -593,7 +631,7 @@ class InteractiveMode:
 
             # Handle final errors
             if state.error_info:
-                raise RuntimeError(state.error_info.error_message)
+                raise MBasicError(state.error_info.error_code)
 
         except Exception as e:
             print_error(e, self.program_runtime)
@@ -643,15 +681,8 @@ class InteractiveMode:
 
     def cmd_save(self, filename):
         """SAVE "filename" - Save program to file"""
-        if not filename:
-            print("?Syntax error")
-            return
-
-        # Remove quotes if present
-        filename = filename.strip().strip('"').strip("'")
-
-        if not filename:
-            print("?Syntax error")
+        filename = _usable_filename(filename)
+        if filename is None:
             return
 
         try:
@@ -662,19 +693,12 @@ class InteractiveMode:
             print(f"Saved to {filename}")
 
         except Exception as e:
-            print(f"?{type(e).__name__}: {e}")
+            print(message_for(e))
 
     def cmd_load(self, filename):
         """LOAD "filename" - Load program from file"""
-        if not filename:
-            print("?Syntax error")
-            return
-
-        # Remove quotes if present
-        filename = filename.strip().strip('"').strip("'")
-
-        if not filename:
-            print("?Syntax error")
+        filename = _usable_filename(filename)
+        if filename is None:
             return
 
         try:
@@ -692,12 +716,12 @@ class InteractiveMode:
                 print(f"Loaded from {filename}")
                 print("Ready")
             else:
-                print("?No lines loaded")
+                print(format_error_message(FILE_NOT_FOUND))
 
         except FileNotFoundError:
-            print(f"?File not found: {filename}")
+            print(format_error_message(FILE_NOT_FOUND))
         except Exception as e:
-            print(f"?{type(e).__name__}: {e}")
+            print(message_for(e))
 
     def cmd_merge(self, filename, quiet=False):
         """MERGE "filename" - Merge program from file into current program
@@ -714,15 +738,8 @@ class InteractiveMode:
                 nothing when a running program MERGEs, so the statement passes
                 quiet=True and only the interactive command reports.
         """
-        if not filename:
-            print("?Syntax error")
-            return
-
-        # Remove quotes if present
-        filename = filename.strip().strip('"').strip("'")
-
-        if not filename:
-            print("?Syntax error")
+        filename = _usable_filename(filename)
+        if filename is None:
             return
 
         try:
@@ -732,10 +749,11 @@ class InteractiveMode:
             # Show parse errors if any
             if errors:
                 for line_num, error in errors:
-                    # Error message from merge_from_file:
-                    # Format: "Syntax error in {line_num}: {message}" (no "?" prefix)
-                    # Add "?" prefix for MBASIC error style
-                    print(f"?{error}")
+                    # A per-line parse error from merge_from_file, already
+                    # worded "Syntax error in <line>: <detail>". No "?" - the
+                    # binary does not print one, and parse_single_line's
+                    # equivalent never did either.
+                    print(error)
 
             if success:
                 # Update runtime if it exists (for CONT support)
@@ -749,7 +767,7 @@ class InteractiveMode:
                     print(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
                 print("Ready")
             else:
-                print("?No lines merged")
+                print(format_error_message(FILE_NOT_FOUND))
 
         except FileNotFoundError:
             # Raise rather than print: a printed message leaves the PC alone,
@@ -758,7 +776,7 @@ class InteractiveMode:
             # stops. Raising also lets ON ERROR trap it, which it should.
             raise RuntimeError(f"File not found: {filename}") from None
         except Exception as e:
-            print(f"?{type(e).__name__}: {e}")
+            print(message_for(e))
 
     def cmd_chain(self, filename, start_line=None, merge=False, all_flag=False, delete_range=None):
         """CHAIN [MERGE] filename$ [, [line_number] [, ALL] [, DELETE range]]
@@ -773,15 +791,8 @@ class InteractiveMode:
         run() loop to restart with the new program. This avoids recursive run() calls.
         When called from command line (not during execution), runs the program directly.
         """
-        if not filename:
-            print("?Syntax error")
-            return
-
-        # Remove quotes if present
-        filename = filename.strip().strip('"').strip("'")
-
-        if not filename:
-            print("?Syntax error")
+        filename = _usable_filename(filename)
+        if filename is None:
             return
 
         try:
@@ -971,9 +982,9 @@ class InteractiveMode:
             # delete_lines_from_program returns list of deleted line numbers (not used here)
             delete_lines_from_program(self, args, self.program_runtime)
         except ValueError as e:
-            print(f"?{e}")
+            print(message_for(e))
         except Exception as e:
-            print(f"?Syntax error")
+            print(format_error_message(SYNTAX_ERROR))
 
     def cmd_renum(self, args):
         """RENUM [new_start][,[old_start][,increment]] - Renumber program lines and update references
@@ -1017,9 +1028,9 @@ class InteractiveMode:
             print("Renumbered")
 
         except ValueError as e:
-            print(f"?{e}")
+            print(message_for(e))
         except Exception as e:
-            print(f"?Error during renumber: {e}")
+            print(message_for(e))
 
 
     def _renum_statement(self, stmt, line_map):
@@ -1195,18 +1206,18 @@ class InteractiveMode:
         explicit digit parsing to accumulate count prefixes for commands like [n]D, [n]C, [n]S.
         """
         if not args or not args.strip():
-            print("?Syntax error - specify line number")
+            print(format_error_message(SYNTAX_ERROR))
             return
 
         try:
             line_num = int(args.strip())
         except ValueError:
-            print("?Syntax error - invalid line number")
+            print(format_error_message(SYNTAX_ERROR))
             return
 
         # Check if line exists
         if line_num not in self.lines:
-            print(f"?Undefined line number: {line_num}")
+            print(format_error_message(UNDEFINED_LINE_NUMBER))
             return
 
         # Get the current line text (without line number prefix)
@@ -1467,14 +1478,14 @@ class InteractiveMode:
                 try:
                     start = int(parts[0].strip())
                 except ValueError:
-                    print("?Syntax error")
+                    print(format_error_message(SYNTAX_ERROR))
                     return
             # Handle "AUTO ,increment" or "AUTO start,increment"
             if len(parts) > 1 and parts[1].strip():
                 try:
                     increment = int(parts[1].strip())
                 except ValueError:
-                    print("?Syntax error")
+                    print(format_error_message(SYNTAX_ERROR))
                     return
 
         # Enter AUTO mode
@@ -1599,7 +1610,7 @@ class InteractiveMode:
             print(f"\n{len(files)} File(s)")
 
         except Exception as e:
-            print(f"?{type(e).__name__}: {e}")
+            print(message_for(e))
 
     def execute_immediate(self, statement):
         """Execute a statement in immediate mode (no line number)

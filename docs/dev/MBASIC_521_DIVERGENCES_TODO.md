@@ -33,7 +33,7 @@ One more is wrong rather than missing:
 - `PRINT 1E38*1E38` gives `1E+76`. On the binary a *floating-point* overflow is
   a warning like division by zero - it prints `Overflow`, substitutes machine
   infinity and carries on. Ours has no MBF range to overflow out of, which is
-  the deliberate IEEE decision in section 9; the message is the part that is
+  the deliberate IEEE decision in section 10; the message is the part that is
   missing. The integer overflows (`C% = 40000`, `40000 \ 2`, `CINT(40000)`)
   are fatal and do now match.
 
@@ -67,21 +67,36 @@ and ERL, and RESUME NEXT lands in the right place. The edges do not:
   resuming.
 
 
-## 3. Errors are reported, but not everywhere
+## 3. No `Ok` prompt
 
-`print_error` in `src/interactive.py` is now the single formatter, and the CLI
-goes through it. The other five backends do not: `src/ui/curses_ui.py`,
-`src/ui/tk_ui.py` and `src/ui/web/nicegui_backend.py` between them carry about
-ninety hand-rolled format strings - boxed "┌─ Runtime Error ─┐" displays,
-`f"Error at line {n}: {msg}"`, `f"{type(e).__name__}: {e}"` - each inventing
-its own wording. They should call `format_error_message(error_code_for(e), n)`.
+The binary prints `Ok` after every direct statement and after every program
+stop, error or not. We print it only when a program finishes. Typing three
+commands at the prompt gives
 
-Also in `interactive.py`, roughly forty `print(...)` calls bypass `self.io`
-entirely, so in curses, Tk and the web UI they go to a terminal nobody is
-looking at.
+    binary    Illegal function call / Ok / RETURN without GOSUB / Ok / Type mismatch / Ok
+    ours      Illegal function call / RETURN without GOSUB / Type mismatch
+
+It is a visible piece of the 5.21 feel and the messages themselves now match,
+so this is the largest remaining difference in an interactive session. It is
+also a change to how every UI looks, which is why it is here rather than done.
 
 
-## 4. Reserved words followed by a type suffix
+## 4. Errors reach the user through `print()`, not through the I/O handler
+
+The *wording* is now consistent everywhere - see
+[TESTS_VERIFIED_AGAINST_BINARY.md](TESTS_VERIFIED_AGAINST_BINARY.md) - but
+`src/interactive.py` still writes roughly forty of its messages with a bare
+`print(...)` rather than `self.io.output(...)`. In the CLI that is the same
+thing; in curses, Tk and the web UI it goes to a terminal nobody is looking at.
+
+The UI backends each carry their own copy of the command handlers - `cmd_load`,
+`cmd_merge`, `cmd_renum` and the rest exist four times over, once per backend,
+which is why the same message had to be fixed in four places. Collapsing them
+onto one implementation that reports through the I/O handler would fix both
+problems at once, and is the larger piece of work behind this entry.
+
+
+## 5. Reserved words followed by a type suffix
 
 `NAME$`, `LEN%`, `FOR$`, `TO%`, `ERR`, `ERL` are all syntax errors on the real
 binary, and we accept them. Two of the tests here were written using `NAME$`
@@ -112,7 +127,7 @@ Two traps for anyone implementing the real rule:
   dollar are ordinary variables.
 
 
-## 5. Syntax errors are found at the wrong time
+## 6. Syntax errors are found at the wrong time
 
 We reject a bad line when it is *entered*, print the complaint there, store the
 line anyway, and then silently skip it when the program runs. The binary
@@ -121,7 +136,7 @@ at RUN - after which it opens the line editor on the offending line, which is
 its own piece of behaviour we do not have.
 
 
-## 6. The compiler backends are out of step with the interpreter
+## 7. The compiler backends are out of step with the interpreter
 
 The precedence fix is in the parser, so every backend gets it. The operator
 semantics are not:
@@ -139,7 +154,7 @@ semantics are not:
   wrong in the opposite direction from the bug fixed in the interpreter.
 
 
-## 7. `serialize_expression` does not bracket under a unary minus
+## 8. `serialize_expression` does not bracket under a unary minus
 
 Found while checking the precedence change did not break RENUM. Pre-existing,
 and unrelated to any of the above:
@@ -157,7 +172,7 @@ bracketing an operand whose precedence is looser than unary minus.
 `-(a \ b)` and `(-a) \ b` agree), but `-(A + B)` is a plain wrong answer.
 
 
-## 8. Statements where we are ahead of 5.21
+## 9. Statements where we are ahead of 5.21
 
 Not bugs so much as decisions to record - each one is a place where a program
 that works here would not work on the real thing.
@@ -170,7 +185,7 @@ that works here would not work on the real thing.
   when a running program merges, which is what the binary does.)
 
 
-## 9. Deliberate, and staying that way
+## 10. Deliberate, and staying that way
 
 MBASIC's arithmetic is Microsoft Binary Format and ours is IEEE - a project
 decision, see `src/number_format.py` and the note in
