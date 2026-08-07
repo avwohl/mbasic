@@ -11,13 +11,17 @@ child died instantly, so `isalive()` was False and the test reported "exited
 cleanly" - it would have passed against any nonexistent command. The assertion
 that the UI is genuinely running *before* the exit key is sent is what keeps
 this test honest.
+
+It waits for the UI to paint rather than sleeping at it, because a key sent
+before urwid has started its screen is discarded and never arrives - see
+wait_until_painted().
 """
 
 import sys
-import time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(PROJECT_ROOT))
 
 # Exit code 2 tells tests/run_regression.py the test could not run. Exiting 0
 # instead would score a green tick on completely untested code.
@@ -34,6 +38,13 @@ try:
 except ImportError:
     print("SKIP: urwid not installed (pip install \"mbasic[curses]\")")
     sys.exit(SKIP)
+
+from src.ui.keybindings import STATUS_BAR_SHORTCUTS
+
+# The head of the status bar - row 24, and the last text the UI's first full
+# paint writes. Taken from the UI's own constant so that renaming it cannot
+# leave this waiting for something that is never coming.
+PAINTED = STATUS_BAR_SHORTCUTS.split(' - ')[0]
 
 
 def spawn_ui():
@@ -59,6 +70,31 @@ def disable_ixon(child):
     termios.tcsetattr(child.child_fd, termios.TCSANOW, attrs)
 
 
+def wait_until_painted(child, timeout=30):
+    """Wait for the UI to be up, rather than for a clock.
+
+    urwid starts its screen with tty.setcbreak(), whose termios default is
+    TCSAFLUSH - which *discards* input that arrived first, so a key sent before
+    that point is thrown away and the UI never sees it. This used to sleep 1.5s
+    and hope; startup measures 0.6-1.2s here, which is not the margin it looks
+    like on a loaded box. Once PAINTED arrives the flush is behind us.
+    """
+    try:
+        child.expect(PAINTED, timeout=timeout)
+        return True
+    except Exception:       # TIMEOUT, EOF - both mean "never came up"
+        return False
+
+
+def wait_for_exit(child, timeout=15):
+    """Wait for the child to actually go, rather than for a clock."""
+    try:
+        child.expect(pexpect.EOF, timeout=timeout)
+        child.wait()        # reap it, so isalive() below is the truth
+    except Exception:       # TIMEOUT - check_exit reports it; already reaped
+        pass
+
+
 def check_exit(child, label):
     """Verify the process ended and printed no error output."""
     if child.isalive():
@@ -81,12 +117,15 @@ def run_exit_test(label, send, clear_ixon=False):
     print(f"\n=== {label} ===")
     child = spawn_ui()
     try:
-        time.sleep(1.5)
-
         # The assertion that makes this test non-vacuous: if the UI failed to
-        # start, everything below would "pass" for the wrong reason.
-        if not child.isalive():
-            print(f"✗ {label}: UI did not start\n{child.before or ''}")
+        # start, everything below would "pass" for the wrong reason. Waiting
+        # for the paint is the stronger form of it - a live process is not yet
+        # a UI that can receive a keystroke.
+        if not wait_until_painted(child):
+            alive = "still running" if child.isalive() else "already dead"
+            print(f"✗ {label}: UI did not come up ({alive})\n{child.before or ''}")
+            if child.isalive():
+                child.terminate(force=True)
             return False
         print("✓ UI started")
 
@@ -94,7 +133,7 @@ def run_exit_test(label, send, clear_ixon=False):
             disable_ixon(child)
 
         child.send(send)
-        time.sleep(1.5)
+        wait_for_exit(child)
         return check_exit(child, label)
 
     except Exception as e:

@@ -15,10 +15,12 @@ Two traps this test is written to avoid:
     typed program text matches the echo rather than the program's output. The
     program below builds its output with CHR$ so the expected text cannot
     appear in the keystrokes.
+  - The pty echoes them even when nothing is listening, so typing at a UI that
+    has not painted yet looks exactly like typing at one that has - see
+    wait_until_painted().
 """
 
 import sys
-import time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -40,7 +42,8 @@ except ImportError:
     print("SKIP: urwid not installed (pip install \"mbasic[curses]\")")
     sys.exit(SKIP)
 
-from src.ui.keybindings import RUN_KEY, QUIT_ALT_KEY, key_to_char
+from src.ui.keybindings import (RUN_KEY, QUIT_ALT_KEY, STATUS_BAR_SHORTCUTS,
+                                key_to_char)
 
 # key_to_char is documented as the single source of truth for key character
 # codes; deriving the bytes here instead would silently go out of sync, and a
@@ -51,6 +54,11 @@ QUIT_BYTE = key_to_char(QUIT_ALT_KEY)
 # 'JKL' via CHR$ so the expected output never appears in the typed keystrokes.
 PROGRAM = '10 PRINT CHR$(74)+CHR$(75)+CHR$(76)'
 EXPECTED = 'JKL'
+
+# The head of the status bar - row 24, and the last text the UI's first full
+# paint writes. Taken from the UI's own constant so that renaming it cannot
+# leave this waiting for something that is never coming.
+PAINTED = STATUS_BAR_SHORTCUTS.split(' - ')[0]
 
 
 def spawn_ui():
@@ -72,15 +80,41 @@ def disable_ixon(child):
     termios.tcsetattr(child.child_fd, termios.TCSANOW, attrs)
 
 
+def wait_until_painted(child, timeout=30):
+    """Wait for the UI to be up, rather than for a clock.
+
+    urwid starts its screen with tty.setcbreak(), whose termios default is
+    TCSAFLUSH - which *discards* input that arrived first, so a keystroke sent
+    before that point is thrown away and the UI never sees it. This used to
+    sleep 1.5s and hope; startup measures 0.6-1.2s here, which is not the
+    margin it looks like on a loaded box. Once PAINTED arrives the flush is
+    behind us.
+    """
+    try:
+        child.expect(PAINTED, timeout=timeout)
+        return True
+    except Exception:       # TIMEOUT, EOF - both mean "never came up"
+        return False
+
+
+def wait_for_exit(child, timeout=15):
+    """Wait for the child to actually go, rather than for a clock."""
+    try:
+        child.expect(pexpect.EOF, timeout=timeout)
+        child.wait()        # reap it, so isalive() is the truth afterwards
+    except Exception:       # TIMEOUT - the caller reports it; already reaped
+        pass
+
+
 def quit_ui(child):
     """Exit via QUIT_ALT_KEY, falling back to ^C (SIGINT), then SIGKILL."""
     if child.isalive():
         disable_ixon(child)
         child.send(QUIT_BYTE)
-        time.sleep(1.5)
+        wait_for_exit(child)
     if child.isalive():
         child.send('\x03')
-        time.sleep(1.5)
+        wait_for_exit(child)
     if child.isalive():
         child.terminate(force=True)
         return False
@@ -92,19 +126,27 @@ def test_program_runs():
     print("=== Program execution in the curses UI ===")
     child = spawn_ui()
     try:
-        time.sleep(1.5)
-
         # Without this, a UI that failed to start would let everything below
-        # "succeed" for the wrong reason.
-        if not child.isalive():
-            print(f"✗ UI did not start\n{child.before or ''}")
+        # "succeed" for the wrong reason - and so would one that simply had
+        # not painted yet, whose discarded keystrokes the pty echoes anyway.
+        if not wait_until_painted(child):
+            alive = "still running" if child.isalive() else "already dead"
+            print(f"✗ UI did not come up ({alive})\n{child.before or ''}")
             return False
         print("✓ UI started")
 
-        child.send(f'{PROGRAM}\r')
-        time.sleep(0.4)
-        child.send('20 END\r')
-        time.sleep(0.4)
+        for line in (PROGRAM, '20 END'):
+            child.send(line + '\r')
+            # The editor echoes the line it took, which is the only proof that
+            # it took it. Matching the whole line means these have to fit the
+            # editor pane - about 76 columns - because a wrapped one is not
+            # contiguous in the stream.
+            try:
+                child.expect_exact(line, timeout=10)
+            except (pexpect.TIMEOUT, pexpect.EOF):
+                print(f"✗ the editor never showed {line!r}")
+                return False
+        print("✓ editor took the program")
 
         child.send(RUN_BYTE)
         try:
@@ -128,15 +170,17 @@ def test_quit_key():
     print("\n=== Quit via QUIT_ALT_KEY ===")
     child = spawn_ui()
     try:
-        time.sleep(1.5)
-        if not child.isalive():
-            print(f"✗ UI did not start\n{child.before or ''}")
+        if not wait_until_painted(child):
+            alive = "still running" if child.isalive() else "already dead"
+            print(f"✗ UI did not come up ({alive})\n{child.before or ''}")
+            if child.isalive():
+                child.terminate(force=True)
             return False
         print("✓ UI started")
 
         disable_ixon(child)
         child.send(QUIT_BYTE)
-        time.sleep(1.5)
+        wait_for_exit(child)
 
         if child.isalive():
             print("✗ UI still running after QUIT_ALT_KEY")

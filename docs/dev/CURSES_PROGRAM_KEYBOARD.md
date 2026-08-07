@@ -100,7 +100,7 @@ equivalent of `win_flush_pending()`.
 
 	python3 tests/regression/ui/test_curses_keyboard.py
 
-28 checks in about 15 seconds. The first nine drive `UrwidKeyboard` directly
+33 checks in about 20 seconds. The first nine drive `UrwidKeyboard` directly
 with a fake screen - it imports no urwid on purpose, so the queue, the byte
 transparency, the stop-key mapping, the interrupt callback and the flush-once
 rule are testable anywhere, including where the UI cannot run at all. The last
@@ -111,6 +111,39 @@ answer.
 
 The pty half skips loudly if `urwid` or `pexpect` is missing, and the unit half
 still runs - verified by blocking both imports: 20 checks, still green.
+
+### Never type at a UI that has not painted
+
+urwid starts its screen with `tty.setcbreak()`, and `termios`' default for that
+is `TCSAFLUSH` - which **discards** input that arrived first
+(`urwid/display/_posix_raw_display.py`, `_start`). Anything typed before that
+point is echoed by the still-cooked tty and then thrown away.
+
+The pty harness used to sleep 1.2s and start typing. Startup measured 0.6-1.2s
+here, so on a loaded box it lost the race, and the program that ran was missing
+however many lines went in early: without line 10 it is `NEXT without FOR`,
+without 10 through 40 what is left runs straight to its `END`. That surfaced as
+`INKEY$` intermittently "not seeing" a key - about one run in twelve - and never
+as a lost line, because the cooked tty's echo of a discarded line looks exactly
+like the editor taking it.
+
+So `UI.__init__` waits for the last text of the first paint, and then waits for
+the editor to echo each program line before sending the next. Measured against
+a UI launched behind `sleep 2`: the old harness lost 6 of 6 lines, the new one
+none. Under nothing worse than a loaded box, the old harness lost 4 of 6.
+
+`tests/regression/ui/test_curses_pexpect.py` and
+`tests/regression/ui/test_curses_exit.py` slept 1.5s at the same spot and had
+the same exposure; both now wait for the paint too, and wait for `EOF` rather
+than sleeping at an exit. Behind `sleep 2` the old versions lost the typed
+program and lost `^Q` respectively - the UI never exited - and the new ones do
+neither. Waiting for `EOF` also gave `test_curses_exit.py` its "no error
+output" check back: it read `child.before`, which no `expect` had ever set, so
+it had been scanning `None`.
+
+Any future pty test should wait for `PAINTED` before it types. The trap is
+quiet, because the pty echoes what it discards: a lost keystroke looks exactly
+like one the UI accepted.
 
 Note that `python3 tests/run_regression.py` reports many more tests once urwid
 is installed. Without it, 8 files fail on `ModuleNotFoundError` and 2 skip;

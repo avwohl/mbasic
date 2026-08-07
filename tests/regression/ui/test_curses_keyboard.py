@@ -19,6 +19,12 @@ urwid, on purpose, so the queue and the interrupt mapping are testable
 anywhere. The second half drives the real UI over a pty, which is the only way
 to prove the wiring: the input_filter, the flush before waiting, and the stop
 key reaching a program that is blocked while the event loop is not running.
+
+Nothing in the pty half waits on a clock for something it can wait on
+directly. It types nothing until the UI has painted (urwid throws typed-ahead
+keys away - see UI.__init__), and it types no program line without seeing the
+editor take it, so a program that fails to load says so instead of failing a
+check three steps later for a reason nothing on screen names.
 """
 
 import io
@@ -201,7 +207,7 @@ def test_on_wait_runs_once_before_waiting():
 # The real UI, over a pty
 # ---------------------------------------------------------------------------
 
-RUN_BYTE = STOP_BYTE = None
+RUN_BYTE = STOP_BYTE = PAINTED = None
 pexpect = None
 
 
@@ -220,10 +226,35 @@ class UI:
             encoding='latin-1', timeout=10, dimensions=(24, 80),
             cwd=str(PROJECT_ROOT))
         self.child.logfile_read = self.log
-        time.sleep(1.2)
-        for line in program:
-            self.child.send(line + '\r')
-            time.sleep(0.25)
+
+        # Wait for the UI to be up, not for a clock. urwid starts its screen
+        # with tty.setcbreak(), whose termios default is TCSAFLUSH - which
+        # *discards* input that arrived first. Anything typed before that point
+        # is echoed by the still-cooked tty and then thrown away, and the
+        # program that runs is missing whichever lines lost the race: without
+        # line 10 it is "NEXT without FOR", without 10 through 40 what is left
+        # runs straight to its END and prints NONE. Startup here measures
+        # 0.6-1.2s against the 1.2s this used to sleep, so it lost that race
+        # about once in twelve - as an INKEY$ failure, never as a lost line.
+        # PAINTED is the last text of the first full paint, so by the time it
+        # arrives the flush is behind us.
+        trouble = "" if self.saw(PAINTED, timeout=30) else "it never painted"
+
+        lost = []
+        if not trouble:
+            for line in program:
+                self.child.send(line + '\r')
+                # The editor echoes the line it took, which is the only proof
+                # that it took it. Matching the whole line means program lines
+                # have to fit the editor pane - about 76 columns - because a
+                # wrapped one is not contiguous in the stream.
+                if not self.saw_exact(line, timeout=10):
+                    lost.append(line)
+            if lost:
+                trouble = f"the editor never showed {lost}"
+
+        check(not trouble, "the UI came up with the program loaded"
+                           + (f" - {trouble}" if trouble else ""))
 
     def run(self):
         self.child.send(RUN_BYTE)
@@ -238,6 +269,15 @@ class UI:
             self.child.expect(pattern, timeout=timeout)
             return True
         except Exception:       # TIMEOUT, EOF - both mean "never appeared"
+            return False
+
+    def saw_exact(self, text, timeout=5):
+        """saw() for text that is not a pattern - program lines are full of
+        $, (, ) and " and mean them literally."""
+        try:
+            self.child.expect_exact(text, timeout=timeout)
+            return True
+        except Exception:
             return False
 
     def screen(self):
@@ -287,16 +327,22 @@ def test_inkey_sees_a_key_typed_mid_run():
     """A key typed at a polling program must not go to the editor instead."""
     print("\nINKEY$ during a run")
     print("-" * 60)
-    with UI(['10 FOR I=1 TO 30000',
+    # Line 5 is the program saying it has started, so the key is typed at a
+    # program that is demonstrably polling rather than after a guessed pause.
+    # The loop itself is 30000 iterations, about 26 seconds of ticks, so it
+    # cannot run out from under the check - NONE means the program was wrong,
+    # not that the test was slow.
+    with UI(['5 PRINT CHR$(80)+CHR$(79)+CHR$(76)+CHR$(76)',
+             '10 FOR I=1 TO 30000',
              '20 A$=INKEY$',
              '30 IF A$<>"" THEN 60',
              '40 NEXT I',
              '50 PRINT CHR$(78)+CHR$(79)+CHR$(78)+CHR$(69):END',
              '60 PRINT CHR$(71)+CHR$(79)+CHR$(84);ASC(A$)']) as ui:
         ui.run()
-        time.sleep(0.4)
+        check(ui.saw('POLL', timeout=10), "the program is running and polling")
         ui.send('Z')
-        check(ui.saw('GOT ?90', timeout=6),
+        check(ui.saw('GOT ?90', timeout=10),
               "INKEY$ returned the key typed while the program was running")
 
 
@@ -361,9 +407,14 @@ if __name__ == "__main__":
     if missing:
         print(f"\nSKIPPING the pty half: {missing}")
     else:
-        from src.ui.keybindings import RUN_KEY, STOP_KEY, key_to_char
+        from src.ui.keybindings import (RUN_KEY, STOP_KEY,
+                                        STATUS_BAR_SHORTCUTS, key_to_char)
         RUN_BYTE = key_to_char(RUN_KEY)
         STOP_BYTE = key_to_char(STOP_KEY)
+        # The head of the status bar - row 24, and the last text the first full
+        # paint writes. Taken from the UI's own constant so that renaming it
+        # cannot leave this waiting for something that is never coming.
+        PAINTED = STATUS_BAR_SHORTCUTS.split(' - ')[0]
 
         test_input_dollar_in_the_ui()
         test_inkey_sees_a_key_typed_mid_run()
