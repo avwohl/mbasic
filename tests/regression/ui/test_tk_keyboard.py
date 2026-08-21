@@ -390,6 +390,19 @@ if __name__ == "__main__":
     try:
         import tkinter
         probe = tkinter.Tk()
+        # withdraw() keeps the probe off the screen; update() is load-bearing.
+        # On Tcl/Tk 9.0 + Aqua, a root destroyed before it has ever processed
+        # an event leaves the toolkit in a state where the NEXT root aborts
+        # the process (SIGTRAP) the moment it enters mainloop - so this probe
+        # for a display was itself killing every windowed test below it.
+        # Reproducible with no mbasic code at all:
+        #     p = tkinter.Tk(); p.destroy()
+        #     r = tkinter.Tk(); r.after(300, r.quit); r.mainloop()   # SIGTRAP
+        # Full create/mainloop/destroy cycles nest and repeat fine, which is
+        # why drive() can build a window per test; only the never-ran root is
+        # poisonous.
+        probe.withdraw()
+        probe.update()
         probe.destroy()
     except ImportError:
         missing = "tkinter not installed"
