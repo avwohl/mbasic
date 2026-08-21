@@ -64,11 +64,23 @@
 
 - **`find_gosub_limit.py`** - Test GOSUB stack depth limits
 
-- **`extract_statements.py`** - Extract all statements from BASIC programs
-  - For documentation generation
+- **`basic_ref.py`** - Find the BASIC-80 reference manual and extract its text
+  - The manual is a Microsoft document, so it lives in the
+    [retro_docs](https://github.com/avwohl/retro_docs/tree/main/mbasic) archive,
+    not in this repository
+  - Looks for a sibling `../retro_docs/` clone; `MBASIC_BASIC_REF_PDF` overrides
+  - Explains how to fetch the manual if no copy is found
+  - Used by `extract_statements.py` and `extract_functions.py`
 
-- **`extract_functions.py`** - Extract all functions from BASIC programs
-  - For documentation generation
+- **`extract_statements.py`** - Extract statement pages from the reference manual
+  - One-shot bootstrap for `docs/help/common/language/statements/`
+  - Needs the manual - see `basic_ref.py`
+
+- **`extract_functions.py`** - Extract function pages from the reference manual
+  - One-shot bootstrap for `docs/help/common/language/functions/`
+  - Needs the manual - see `basic_ref.py`
+  - Both were hand-corrected after their first run (the manual's text layer
+    garbles CDBL, CHR$, INPUT#) - diff before overwriting the help tree
 
 ### Testing Tools
 
@@ -130,7 +142,7 @@ alternates, still needed for Microsoft Binary Format floats, true Intel 8080 out
     without cpmemu first
   - Fails on phrasing that calls z88dk or tnylpo "required" - they are alternates
   - `--list` prints the governed files without checking them
-  - Exempt: `docs/history/`, `docs/future/`, `docs/external/`, and the docs whose
+  - Exempt: `docs/history/`, `docs/future/`, and the docs whose
     subject genuinely *is* the alternate toolchain
   - Run automatically by `utils/checkpoint.sh` on every commit
   - If it fails, fix the document - do not weaken the check

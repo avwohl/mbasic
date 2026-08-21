@@ -41,7 +41,6 @@ POLICY_DOC = "docs/dev/TOOLCHAIN_POLICY.md"
 EXEMPT_PREFIXES = (
     "docs/history/",
     "docs/future/",
-    "docs/external/",
     "site/",
     "build/",
     ".git/",

@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 """
-Extract BASIC function documentation from basic_ref.txt into individual markdown files.
+Extract BASIC function documentation from the reference manual into markdown files.
+
+The manual is not kept in this repository - see utils/basic_ref.py for where it
+lives and how to get it.
+
+This is a one-shot bootstrap tool, not a regenerator.  The pages under
+docs/help/common/language/ were hand-corrected after it first ran: the manual's
+text layer garbles some names (CDBL reads as COBL, CHR$ as CRR$, INPUT# as
+INPUTI) and drops others entirely.  Re-running overwrites the corrected pages
+with the raw extraction and adds the garbled names alongside them, so diff the
+output before letting it near the help tree.
 """
 
 import re
@@ -188,16 +198,13 @@ def format_function_markdown(name, content):
     return md
 
 if __name__ == '__main__':
-    import subprocess
-    import os
+    import sys
 
-    # First, extract text from PDF with layout preservation
-    pdf_file = 'docs/external/basic_ref.pdf'
-    txt_file = '/tmp/basic_ref_layout.txt'
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from basic_ref import basic_ref_layout_text
 
-    if not os.path.exists(txt_file) or os.path.getmtime(pdf_file) > os.path.getmtime(txt_file):
-        print(f"Extracting text from {pdf_file}...")
-        subprocess.run(['pdftotext', '-layout', pdf_file, txt_file], check=True)
+    # The manual lives in the retro_docs archive, not in this repository.
+    txt_file = basic_ref_layout_text()
 
     extract_functions(
         txt_file,

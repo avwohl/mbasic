@@ -169,7 +169,7 @@ rather than return the carriage.
 1. Where both are named, **uc80 before z88dk** and **cpmemu before tnylpo**.
 2. Never write "z88dk is required", "requires z88dk", or "**z88dk** (required)". Same for
    tnylpo. Label them "(alternate)".
-3. `docs/history/`, `docs/future/`, and `docs/external/` are exempt — they are a record of
+3. `docs/history/` and `docs/future/` are exempt — they are a record of
    what was true at the time.
 4. Docs whose subject *is* the alternate toolchain (`docs/dev/TNYLPO_SETUP.md`,
    `docs/dev/COMPILER_Z88DK_PATH_CHANGE.md`) may lead with it, but still may not call it

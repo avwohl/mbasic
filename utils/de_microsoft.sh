@@ -5,10 +5,10 @@
 set -e
 
 # Exclude directories
-EXCLUDES="--exclude-dir=.git --exclude-dir=venv --exclude-dir=venv-build --exclude-dir=__pycache__ --exclude-dir=docs/external"
+EXCLUDES="--exclude-dir=.git --exclude-dir=venv --exclude-dir=venv-build --exclude-dir=__pycache__"
 
 echo "De-Microsofting codebase..."
-echo "Excluding: external docs, venv, git"
+echo "Excluding: venv, git"
 echo
 
 # Pattern 1: "MBASIC" -> "MBASIC"
@@ -51,4 +51,4 @@ echo "- MBASIC_HISTORY.md preserves historical Microsoft references"
 echo "- All other references updated to clarify independent implementation"
 echo
 echo "Remaining 'Microsoft' references (should be historical only):"
-grep -r $EXCLUDES -i "microsoft" . 2>/dev/null | grep -v "docs/external" | wc -l
+grep -r $EXCLUDES -i "microsoft" . 2>/dev/null | wc -l

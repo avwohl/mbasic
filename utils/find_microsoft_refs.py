@@ -57,10 +57,6 @@ def categorize_reference(file_path, line_num, line):
     file_str = str(file_path)
     line_lower = line.lower()
 
-    # External documentation - leave as-is
-    if 'docs/external/' in file_str:
-        return 'EXTERNAL_DOC', 'Historical document - leave as-is'
-
     # PyPI metadata
     if 'pyproject.toml' in file_str or 'setup.py' in file_str:
         if 'description' in line_lower or 'summary' in line_lower:
@@ -87,7 +83,6 @@ def main():
     """Find and categorize all Microsoft references."""
     root = Path('.')
     results = {
-        'EXTERNAL_DOC': [],
         'METADATA': [],
         'URL': [],
         'PHRASE': [],
@@ -130,7 +125,7 @@ def main():
     total = sum(len(refs) for refs in results.values())
     print(f"Found {total} Microsoft references\n")
 
-    for category in ['EXTERNAL_DOC', 'METADATA', 'URL', 'PHRASE', 'GENERIC']:
+    for category in ['METADATA', 'URL', 'PHRASE', 'GENERIC']:
         refs = results[category]
         if not refs:
             continue

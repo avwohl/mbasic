@@ -143,7 +143,6 @@ None currently - all high priority tasks complete
 - ✅ docs/dev/ - Implementation guides and status
 - ✅ docs/history/ - Completed tasks archive (68 items)
 - ✅ docs/design/ - Architecture decisions
-- ✅ docs/external/ - External references
 
 ### Help System
 - ✅ Multi-backend support (CLI, Curses, TK, Web)
