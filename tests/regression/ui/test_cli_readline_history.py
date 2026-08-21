@@ -27,10 +27,15 @@ import sys
 import tempfile
 import types
 
-# Add project root to path (3 levels up from tests/regression/*/)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+# Add project root to path (3 levels up from tests/regression/*/), and src/
+# alongside it the way mbasic_main does: constructing an InteractiveMode pulls
+# in the flat imports (editing, parser, ...) that only resolve from src/.
+_ROOT = os.path.join(os.path.dirname(__file__), '../../..')
+sys.path.insert(0, os.path.join(_ROOT, 'src'))
+sys.path.insert(0, _ROOT)
 
-from src.interactive import InteractiveMode
+from src.interactive import (InteractiveMode, _ctrl_key_to_char,
+                            _format_key_for_display)
 
 
 class FakeReadline(types.ModuleType):
@@ -79,7 +84,15 @@ class FakeReadline(types.ModuleType):
 
 
 class StubInteractive:
-    """Minimal stand-in for InteractiveMode - _setup_readline needs only this."""
+    """Minimal stand-in for InteractiveMode - _setup_readline needs only this.
+
+    edit_key is what __init__ reads out of cli_keybindings.json; it is a
+    constructor argument here so a test can rebind the key the way a user
+    editing that file would.
+    """
+
+    def __init__(self, edit_key='Ctrl+A'):
+        self.edit_key = edit_key
 
     def _completer(self, text, state):
         return None
@@ -134,10 +147,10 @@ class Harness:
         self.hooks.append((func, args, kwargs))
         return func
 
-    def setup(self):
+    def setup(self, edit_key='Ctrl+A'):
         """Run _setup_readline(); return the exception it raised, or None."""
         try:
-            InteractiveMode._setup_readline(StubInteractive())
+            InteractiveMode._setup_readline(StubInteractive(edit_key))
         except Exception as e:
             return e
         return None
@@ -309,6 +322,69 @@ def test_libedit_bindings():
               f"emacs mode is set first, before the other binds ({label})")
 
 
+def test_edit_key_follows_the_keybinding_config():
+    """The key readline binds must be the key the banner advertises.
+
+    _setup_readline used to bind ^A outright while the startup tip was printed
+    from cli_keybindings.json, so rebinding editor.edit changed what mbasic
+    promised without changing what it listened for.
+    """
+    print("\nThe bound key follows editor.edit in cli_keybindings.json")
+    print("-" * 60)
+
+    cases = [
+        # (edit_key, GNU binding, editrc binding, character start() looks for)
+        ('Ctrl+A', 'Control-a: self-insert', 'bind ^A ed-insert', '\x01'),
+        ('Ctrl+W', 'Control-w: self-insert', 'bind ^W ed-insert', '\x17'),
+        ('Ctrl+z', 'Control-z: self-insert', 'bind ^Z ed-insert', '\x1a'),
+    ]
+    for edit_key, gnu, editrc, expected_char in cases:
+        for backend, wanted, unwanted in (('readline', gnu, editrc),
+                                          ('editline', editrc, gnu)):
+            fake = FakeReadline(backend=backend)
+            with Harness(fake) as h:
+                error = h.setup(edit_key=edit_key)
+            binds = fake.bindings()
+            check(error is None and wanted in binds,
+                  f"{edit_key} binds {wanted!r} on {backend}")
+            check(unwanted not in binds,
+                  f"{edit_key} does not emit the other dialect on {backend}")
+        check(_ctrl_key_to_char(edit_key) == expected_char,
+              f"{edit_key} is the character start() tests for "
+              f"({expected_char!r})")
+
+    # A non-control key cannot be carried back through input(), so there is
+    # nothing to bind and nothing for start() to match. Binding ^A anyway
+    # would resurrect exactly the mismatch this test exists to prevent.
+    for backend in ('readline', 'editline'):
+        fake = FakeReadline(backend=backend)
+        with Harness(fake) as h:
+            error = h.setup(edit_key='SYSTEM')
+        binds = fake.bindings()
+        check(error is None, f"a non-control edit key still sets up ({backend})")
+        check(not any('insert' in spec for spec in binds),
+              f"a non-control edit key binds no insert action ({backend})")
+        check(any('complete' in spec for spec in binds),
+              f"tab completion is unaffected by it ({backend})")
+    check(_ctrl_key_to_char('SYSTEM') == '',
+          "a non-control edit key yields '', which no input character equals")
+
+
+def test_edit_mode_triggers_on_the_configured_key():
+    """start() must react to the configured key, and only to that key."""
+    print("\nEDIT mode fires on the configured key")
+    print("-" * 60)
+    interactive = InteractiveMode()
+    check(interactive.edit_key_char == _ctrl_key_to_char(interactive.edit_key),
+          "the character and the configured key agree")
+    check(interactive.edit_key_display ==
+          _format_key_for_display(interactive.edit_key),
+          "the advertised key and the configured key agree")
+    # The shipped config; if it ever changes, this states what changed.
+    check(interactive.edit_key == 'Ctrl+A' and interactive.edit_key_char == '\x01',
+          "mbasic ships editor.edit = Ctrl+A")
+
+
 if __name__ == "__main__":
     print("CLI readline history setup (GitHub PR #3 regression)")
     print("=" * 60)
@@ -321,6 +397,8 @@ if __name__ == "__main__":
     test_empty_history_is_never_written()
     test_gnu_readline_bindings()
     test_libedit_bindings()
+    test_edit_key_follows_the_keybinding_config()
+    test_edit_mode_triggers_on_the_configured_key()
 
     failed = results.count(False)
     print("\n" + "=" * 60)

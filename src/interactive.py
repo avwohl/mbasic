@@ -85,7 +85,8 @@ def _usable_filename(filename):
 # - Command history (up/down arrows)
 # - Ctrl+E (end of line)
 # - Other Emacs keybindings (Ctrl+K, Ctrl+U, etc.)
-# Note: Ctrl+A is rebound for EDIT mode to insert ASCII 0x01 (see _setup_readline)
+# Note: the editor.edit key from cli_keybindings.json (Ctrl+A as shipped) is
+# rebound for EDIT mode to insert its own control character (see _setup_readline)
 try:
     import readline
     READLINE_AVAILABLE = True
@@ -158,6 +159,49 @@ def _format_key_for_display(key_string):
     return key_string
 
 
+def _ctrl_key_letter(key_string):
+    """
+    Return the letter of a "Ctrl+X" keybinding, uppercased.
+
+    The CLI can only use a keybinding as an in-band sentinel if it is a
+    control character, because the only thing input() hands back is the text
+    of the line. Anything else - "SYSTEM", a function key - has no character
+    to look for, so this returns None and the caller leaves the key unbound.
+
+    Examples:
+        "Ctrl+A" -> 'A'
+        "Ctrl+w" -> 'W'
+        "SYSTEM" -> None
+    """
+    if not key_string.startswith("Ctrl+"):
+        return None
+    letter = key_string[5:]
+    if len(letter) != 1 or not letter.isalpha() or not letter.isascii():
+        return None
+    return letter.upper()
+
+
+def _ctrl_key_to_char(key_string):
+    """
+    Convert a "Ctrl+X" keybinding to the control character it produces.
+
+    Returns '' when the keybinding is not a control key, which is what makes
+    ``line[0] == self.edit_key_char`` safe to evaluate unconditionally: no
+    single character ever equals the empty string, so the edit-mode test
+    simply never fires when there is no control key bound.
+
+    Examples:
+        "Ctrl+A" -> '\\x01'
+        "Ctrl+W" -> '\\x17'
+        "SYSTEM" -> ''
+    """
+    letter = _ctrl_key_letter(key_string)
+    if letter is None:
+        return ''
+    # Ctrl+A = 1, Ctrl+B = 2, etc.
+    return chr(ord(letter) - ord('A') + 1)
+
+
 class InteractiveMode:
     """MBASIC 5.21 interactive command mode"""
 
@@ -201,8 +245,13 @@ class InteractiveMode:
         # Cache formatted key displays
         edit_key = self.keybindings.get_primary('editor', 'edit') or 'Ctrl+A'
         stop_key = self.keybindings.get_primary('editor', 'stop') or 'Ctrl+C'
+        self.edit_key = edit_key
         self.edit_key_display = _format_key_for_display(edit_key)
         self.stop_key_display = _format_key_for_display(stop_key)
+        # The character the edit key actually puts in the input line. Derived
+        # from the same config entry as the display string above, so the tip
+        # the banner prints and the key start() listens for cannot disagree.
+        self.edit_key_char = _ctrl_key_to_char(edit_key)
 
     # Properties for backward compatibility
     @property
@@ -317,27 +366,38 @@ class InteractiveMode:
         # silently - no error, the binding simply never happens. Emacs mode is
         # set first in both branches because it reinitializes the keymap, which
         # would otherwise undo the bindings that follow.
+
+        # The edit key comes from cli_keybindings.json, the same entry the
+        # startup tip is printed from. Binding a hardcoded ^A here would let
+        # the banner advertise one key while readline listened for another.
+        # None means the configured key is not a control key and so cannot be
+        # carried back through input(); leave readline's defaults alone.
+        edit_letter = _ctrl_key_letter(self.edit_key)
+
         if backend == 'editline':
             readline.parse_and_bind('bind -e')              # emacs keybindings
             # libedit binds ^I itself at startup, but 'bind -e' above wipes
             # that, so this is required rather than belt-and-braces.
             readline.parse_and_bind('bind ^I rl_complete')  # tab completion
             # ed-insert is libedit's spelling of self-insert; it inserts the
-            # character that triggered it, so ^A becomes 0x01 in the buffer
-            # exactly as in the GNU branch below.
-            readline.parse_and_bind('bind ^A ed-insert')
+            # character that triggered it, so the edit key arrives in the
+            # buffer as its control code exactly as in the GNU branch below.
+            if edit_letter:
+                readline.parse_and_bind(f'bind ^{edit_letter} ed-insert')
         else:
             # Use emacs-style keybindings (default, but be explicit)
             readline.parse_and_bind('set editing-mode emacs')
             readline.parse_and_bind('tab: complete')
 
-            # Bind Ctrl+A to insert the character (ASCII 0x01) into the input line,
-            # overriding the default Ctrl+A (beginning-of-line) behavior.
-            # When the user presses Ctrl+A, readline's 'self-insert' action inserts the
-            # 0x01 character into the input buffer (the input line becomes just "^A").
+            # Bind the edit key to insert its control character into the input
+            # line, overriding whatever readline does with it by default (for
+            # the shipped Ctrl+A, that is beginning-of-line).
+            # readline's 'self-insert' action inserts the character into the
+            # input buffer, so the line becomes just "^A" for the default key.
             # When the user then presses Enter, the input is returned to the application.
             # The start() method detects this character in the returned input and enters edit mode.
-            readline.parse_and_bind('Control-a: self-insert')
+            if edit_letter:
+                readline.parse_and_bind(f'Control-{edit_letter.lower()}: self-insert')
 
     def _completer(self, text, state):
         """Tab completion for BASIC keywords and commands"""
@@ -389,16 +449,18 @@ class InteractiveMode:
                 line = input()
 
                 # Sanitize input: clear parity bits and filter control characters
-                # (except Ctrl+A which is used for edit mode)
-                if line and line[0] != '\x01':
+                # (except the edit key, which is used for edit mode)
+                if line and line[0] != self.edit_key_char:
                     line, _ = sanitize_and_clear_parity(line)
 
                 # Reset Ctrl+C counter on successful input
                 self.ctrl_c_count = 0
 
-                # Check for Ctrl+A (edit mode) - character code 0x01
-                if line and line[0] == '\x01':
-                    # Ctrl+A pressed - enter edit mode
+                # Check for the edit key (edit mode). edit_key_char is '' when
+                # no control key is bound, and no character equals '', so this
+                # is simply never true in that case.
+                if line and line[0] == self.edit_key_char:
+                    # Edit key pressed - enter edit mode
                     # If rest of line has a number, edit that line
                     # Otherwise edit the last line
                     rest = line[1:].strip()

@@ -118,7 +118,17 @@ commands are issued instead:
 
 `ed-insert` is libedit's spelling of `self-insert`; it inserts the character
 that triggered the binding, so `^A` puts a real 0x01 in the buffer and the
-`line[0] == '\x01'` test in `start()` sees what it expects.
+`line[0] == self.edit_key_char` test in `start()` sees what it expects.
+
+`^A` above is not a constant. Both branches bind whatever `editor.edit` names
+in `cli_keybindings.json`, which is the entry the startup tip is printed from,
+and `start()` matches the control character derived from that same entry. They
+used to disagree: the tip followed the config while the bindings said `^A`
+outright, so rebinding `editor.edit` changed what mbasic advertised without
+changing what it listened for. A key that is not `Ctrl+`*letter* has no
+character to carry back through `input()`, so nothing is bound and the
+edit-mode test can never fire - `_ctrl_key_to_char()` returns `''` for it, and
+no single character equals the empty string.
 
 Two ordering traps, both pinned by the regression test:
 
