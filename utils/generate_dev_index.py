@@ -89,14 +89,16 @@ port I/O — but they are not required. Read
         title = name.replace('_', ' ').title()
         link = f"[{title}]({f.name})"
 
-        # Categorize
-        if any(x in name.upper() for x in ['UI', 'TK', 'CURSES', 'WEB', 'VISUAL', 'EDITOR']):
+        # Categorize.  The two-letter keys UI and IO match whole words only:
+        # as substrings they match GUIDE, BUILD, VERSION and the like.
+        words = set(name.upper().split('_'))
+        if 'UI' in words or any(x in name.upper() for x in ['TK', 'CURSES', 'WEB', 'VISUAL', 'EDITOR']):
             categories["UI Implementation"].append(link)
         elif any(x in name.upper() for x in ['TEST', 'COVERAGE', 'INVENTORY']):
             categories["Testing & Quality"].append(link)
         elif any(x in name.upper() for x in ['HELP', 'DOCUMENTATION']):
             categories["Help System"].append(link)
-        elif any(x in name.upper() for x in ['FILE', 'IO', 'FILESYSTEM']):
+        elif 'IO' in words or any(x in name.upper() for x in ['FILE', 'FILESYSTEM']):
             categories["File I/O"].append(link)
         elif any(x in name.upper() for x in ['DEBUG', 'ERROR', 'FIX', 'BUG']):
             categories["Debugging & Errors"].append(link)

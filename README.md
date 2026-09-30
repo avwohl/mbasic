@@ -2,9 +2,9 @@
 
 A complete implementation of Microsoft BASIC-80 5.21 (CP/M era) with an interactive interpreter and TWO compiler backends (Z80/8080 + JavaScript), written in Python.
 
-> **About MBASIC:** MBASIC was a BASIC interpreter originally developed by Microsoft in the late 1970s. This is an independent, open-source reimplementation created for educational purposes and historical software preservation. See [MBASIC History](docs/history/MBASIC_HISTORY.md) for more information.
+> **About MBASIC:** MBASIC was a BASIC interpreter originally developed by Microsoft in the late 1970s. This is an independent, open-source reimplementation created for educational purposes and historical software preservation. See [MBASIC History](https://github.com/avwohl/mbasic/blob/main/docs/history/MBASIC_HISTORY.md) for more information.
 >
-> **📄 Want the full story?** See [MBASIC Project Overview](docs/MBASIC_PROJECT_OVERVIEW.md) for a comprehensive feature showcase.
+> **📄 Want the full story?** See [MBASIC Project Overview](https://github.com/avwohl/mbasic/blob/main/docs/MBASIC_PROJECT_OVERVIEW.md) for a comprehensive feature showcase.
 
 **Status:** Full MBASIC 5.21 implementation complete with 100% compatibility in interpreter and both compiler backends.
 
@@ -30,7 +30,7 @@ A complete implementation of Microsoft BASIC-80 5.21 (CP/M era) with an interact
 - ✅ **Full File I/O**: localStorage in browser, fs module in Node.js
 - ✅ **Standalone HTML**: Optional HTML wrapper for browser deployment
 
-See [Features and Implementation Status](docs/user/FEATURES_AND_STATUS.md) for details, [Extensions](docs/help/mbasic/extensions.md) for modern features, [Compilers](docs/user/COMPILERS.md) for compiler information, and [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for current project health and metrics.
+See [Features and Implementation Status](https://github.com/avwohl/mbasic/blob/main/docs/user/FEATURES_AND_STATUS.md) for details, [Extensions](https://github.com/avwohl/mbasic/blob/main/docs/help/mbasic/extensions.md) for modern features, [Compilers](https://github.com/avwohl/mbasic/blob/main/docs/user/COMPILERS.md) for compiler information, and [PROJECT_STATUS.md](https://github.com/avwohl/mbasic/blob/main/docs/PROJECT_STATUS.md) for current project health and metrics.
 
 ## Installation
 
@@ -45,13 +45,13 @@ pip install "mbasic[all]"
 ```
 
 The other extras (`curses`, `tk`, `web`, `dev`) and the Tkinter notes are in the
-[Installation Guide](docs/user/INSTALL.md).
+[Installation Guide](https://github.com/avwohl/mbasic/blob/main/docs/user/INSTALL.md).
 
 ### From Source
 
-**For end users** (interpreter only): See **[INSTALL.md](docs/user/INSTALL.md)** for detailed installation instructions.
+**For end users** (interpreter only): See **[INSTALL.md](https://github.com/avwohl/mbasic/blob/main/docs/user/INSTALL.md)** for detailed installation instructions.
 
-**For developers** (full development environment including compiler): See **[Linux Mint Developer Setup](docs/dev/LINUX_MINT_DEVELOPER_SETUP.md)** for comprehensive system setup with all packages and tools.
+**For developers** (full development environment including compiler): See **[Linux Mint Developer Setup](https://github.com/avwohl/mbasic/blob/main/docs/dev/LINUX_MINT_DEVELOPER_SETUP.md)** for comprehensive system setup with all packages and tools.
 
 ## Quick Start
 
@@ -63,7 +63,7 @@ python3 mbasic --list-backends # Show which UI backends are available
 ```
 
 The curses editor keys, the debugger keys, and a CLI session example are in
-[Interactive Mode](docs/user/INTERACTIVE_MODE.md).
+[Interactive Mode](https://github.com/avwohl/mbasic/blob/main/docs/user/INTERACTIVE_MODE.md).
 
 To compile BASIC to JavaScript (no external dependencies):
 
@@ -73,32 +73,32 @@ node program.js
 ```
 
 The Z80/8080 compiler emits C and prefers the uc80 compiler and the cpmemu
-emulator. The Z80/8080 compiler setup is in [Compilers](docs/user/COMPILERS.md).
+emulator. The Z80/8080 compiler setup is in [Compilers](https://github.com/avwohl/mbasic/blob/main/docs/user/COMPILERS.md).
 
 ## Documentation
 
-- [Features and Implementation Status](docs/user/FEATURES_AND_STATUS.md) - Full feature list and implementation status
-- [Interactive Mode](docs/user/INTERACTIVE_MODE.md) - Curses screen editor and CLI REPL
-- [Compilers](docs/user/COMPILERS.md) - Z80/8080 and JavaScript compilers: requirements, usage, features
-- [Example Programs](docs/user/EXAMPLE_PROGRAMS.md) - Sample BASIC programs, including hardware access
-- **[Curses Screen Editor](docs/help/ui/curses/index.md)** - Full-screen terminal editor (default UI)
-- **[Quick Reference](docs/user/QUICK_REFERENCE.md)** - Command reference
-- **[Installation Guide](docs/user/INSTALL.md)** - Detailed installation instructions
-- **[Compiler Status Summary](docs/history/COMPILER_STATUS_SUMMARY.md)** - Complete feature list (100% complete!)
-- **[Compiler Setup](docs/dev/COMPILER_SETUP.md)** - z88dk installation and configuration
-- **[CP/M Emulator Setup](docs/dev/TNYLPO_SETUP.md)** - tnylpo installation for testing
-- **[Linux Mint Developer Setup](docs/dev/LINUX_MINT_DEVELOPER_SETUP.md)** - Complete system setup guide (all packages & tools)
-- [Testing](docs/dev/TESTING.md) - Running and writing tests (`python3 tests/run_regression.py`)
-- [Project Structure](docs/dev/PROJECT_STRUCTURE.md) - Source tree layout
-- [Developer Documentation](docs/dev/) - Parser, interpreter, and compiler architecture and implementation notes
-- [Development History](docs/history/DEVELOPMENT_HISTORY.md) - How the project was built, phase by phase
-- [Credits and Disclaimers](docs/CREDITS_AND_DISCLAIMERS.md) - Credit to Microsoft and disclaimers
+- [Features and Implementation Status](https://github.com/avwohl/mbasic/blob/main/docs/user/FEATURES_AND_STATUS.md) - Full feature list and implementation status
+- [Interactive Mode](https://github.com/avwohl/mbasic/blob/main/docs/user/INTERACTIVE_MODE.md) - Curses screen editor and CLI REPL
+- [Compilers](https://github.com/avwohl/mbasic/blob/main/docs/user/COMPILERS.md) - Z80/8080 and JavaScript compilers: requirements, usage, features
+- [Example Programs](https://github.com/avwohl/mbasic/blob/main/docs/user/EXAMPLE_PROGRAMS.md) - Sample BASIC programs, including hardware access
+- **[Curses Screen Editor](https://github.com/avwohl/mbasic/blob/main/docs/help/ui/curses/index.md)** - Full-screen terminal editor (default UI)
+- **[Quick Reference](https://github.com/avwohl/mbasic/blob/main/docs/user/QUICK_REFERENCE.md)** - Command reference
+- **[Installation Guide](https://github.com/avwohl/mbasic/blob/main/docs/user/INSTALL.md)** - Detailed installation instructions
+- **[Compiler Status Summary](https://github.com/avwohl/mbasic/blob/main/docs/history/COMPILER_STATUS_SUMMARY.md)** - Complete feature list (100% complete!)
+- **[Compiler Setup](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_SETUP.md)** - z88dk installation and configuration
+- **[CP/M Emulator Setup](https://github.com/avwohl/mbasic/blob/main/docs/dev/TNYLPO_SETUP.md)** - tnylpo installation for testing
+- **[Linux Mint Developer Setup](https://github.com/avwohl/mbasic/blob/main/docs/dev/LINUX_MINT_DEVELOPER_SETUP.md)** - Complete system setup guide (all packages & tools)
+- [Testing](https://github.com/avwohl/mbasic/blob/main/docs/dev/TESTING.md) - Running and writing tests (`python3 tests/run_regression.py`)
+- [Project Structure](https://github.com/avwohl/mbasic/blob/main/docs/dev/PROJECT_STRUCTURE.md) - Source tree layout
+- [Developer Documentation](https://github.com/avwohl/mbasic/blob/main/docs/dev/) - Parser, interpreter, and compiler architecture and implementation notes
+- [Development History](https://github.com/avwohl/mbasic/blob/main/docs/history/DEVELOPMENT_HISTORY.md) - How the project was built, phase by phase
+- [Credits and Disclaimers](https://github.com/avwohl/mbasic/blob/main/docs/CREDITS_AND_DISCLAIMERS.md) - Credit to Microsoft and disclaimers
 
-See the **[docs/](docs/)** directory for complete documentation.
+See the **[docs/](https://github.com/avwohl/mbasic/blob/main/docs/)** directory for complete documentation.
 
 ## License
 
-GPLv3 License - see [LICENSE](LICENSE) file for details.
+GPLv3 License - see [LICENSE](https://github.com/avwohl/mbasic/blob/main/LICENSE) file for details.
 
 This project is an independent implementation created for educational and historical preservation purposes. It is not affiliated with, endorsed by, or supported by Microsoft Corporation. MBASIC and Microsoft BASIC are historical products of Microsoft Corporation.
 

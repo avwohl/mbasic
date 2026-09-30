@@ -87,3 +87,17 @@ Collection of miscellaneous fixes and improvements identified during documentati
 These issues were identified during docs_inconsistencies_report-v12 review on 2025-11-07.
 
 Priority: Medium - not blocking, but affects UX and maintainability
+
+---
+
+## Web UI Guide Is Out of Date
+
+**Issue:** `docs/dev/WEB_UI_NICEGUI_BACKEND.md` (moved out of `src/ui/web/README.md` on 2026-09-30) still describes an early web UI. For example, the guide says INPUT is a placeholder and that programs using INPUT hang. The guide is built into the published docs site.
+
+**Files:**
+- `docs/dev/WEB_UI_NICEGUI_BACKEND.md`
+- `src/ui/web/nicegui_backend.py` (the current behaviour to check the guide against)
+
+**Goal:** Check each status claim in the guide against the code and update the guide, or mark the guide as historical and move the guide to `docs/history/`.
+
+**Status:** Not started

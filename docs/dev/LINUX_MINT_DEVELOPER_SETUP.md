@@ -639,7 +639,7 @@ mysql -u wohl -p mbasic_logs -e "SELECT COUNT(*) FROM web_errors;"
 - [Toolchain Policy](TOOLCHAIN_POLICY.md) - Which compiler and emulator to use, and why
 - [Compiler Setup](COMPILER_SETUP.md) - Full uc80/cpmemu build pipeline, plus z88dk configuration
 - [tnylpo Setup](TNYLPO_SETUP.md) - Alternate CP/M emulator usage
-- [Testing Guide](https://github.com/avwohl/mbasic/blob/main/tests/README.md) - Running tests
+- [Testing Guide](TESTING_GUIDE.md) - Running tests
 
 ## Support
 

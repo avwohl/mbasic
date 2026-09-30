@@ -200,7 +200,8 @@ If you lose the secrets backup:
 
 ## See Also
 
-- `deployment/README.md` - Deployment instructions
+- `deployment/README.md` - Deployment quick start
+- `docs/dev/KUBERNETES_DEPLOYMENT_GUIDE.md` - Full deployment instructions
 - `config/README.md` - Configuration documentation
 - `deployment/k8s_templates/mbasic-secrets.yaml.example` - Secrets template
 - `.gitignore` - Files excluded from git

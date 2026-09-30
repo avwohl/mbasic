@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2026-09-30
-**Total Documents:** 54
+**Total Documents:** 57
 
 ## What's Here
 
@@ -51,6 +51,7 @@ port I/O — but they are not required. Read
 - [Web Error Logging](WEB_ERROR_LOGGING.md)
 - [Web Multiuser Deployment](WEB_MULTIUSER_DEPLOYMENT.md)
 - [Web Program Keyboard](WEB_PROGRAM_KEYBOARD.md)
+- [Web Ui Nicegui Backend](WEB_UI_NICEGUI_BACKEND.md)
 
 ### Language Features
 
@@ -61,24 +62,19 @@ port I/O — but they are not required. Read
 
 ### Testing & Quality
 
+- [Testing Guide](TESTING_GUIDE.md)
 - [Testing](TESTING.md)
 - [Tests Verified Against Binary](TESTS_VERIFIED_AGAINST_BINARY.md)
 
 ### File I/O
 
 - [Backup Nonversioned Files](BACKUP_NONVERSIONED_FILES.md)
-- [Checkpoint Validation](CHECKPOINT_VALIDATION.md)
-- [Docs Url Configuration](DOCS_URL_CONFIGURATION.md)
-- [Redis Per Session Settings](REDIS_PER_SESSION_SETTINGS.md)
-- [Redis Session Storage Setup](REDIS_SESSION_STORAGE_SETUP.md)
-- [Renum Serialization Fixes](RENUM_SERIALIZATION_FIXES.md)
-- [Single Precision](SINGLE_PRECISION.md)
-- [Usage Tracking Integration](USAGE_TRACKING_INTEGRATION.md)
 
 ### Debugging & Errors
 
 - [Cli Input Handling Fixes](CLI_INPUT_HANDLING_FIXES.md)
 - [Random Fixes Todo](RANDOM_FIXES_TODO.md)
+- [Renum Serialization Fixes](RENUM_SERIALIZATION_FIXES.md)
 - [Uc80 Bugs Todo](UC80_BUGS_TODO.md)
 - [Usage Tracking Debug](USAGE_TRACKING_DEBUG.md)
 - [Usage Tracking Enhanced Debug](USAGE_TRACKING_ENHANCED_DEBUG.md)
@@ -86,6 +82,8 @@ port I/O — but they are not required. Read
 ### Settings & Configuration
 
 - [Compiler Memory Config](COMPILER_MEMORY_CONFIG.md)
+- [Docs Url Configuration](DOCS_URL_CONFIGURATION.md)
+- [Redis Per Session Settings](REDIS_PER_SESSION_SETTINGS.md)
 
 ### Refactoring & Cleanup
 
@@ -98,11 +96,13 @@ port I/O — but they are not required. Read
 
 ### Other
 
+- [Checkpoint Validation](CHECKPOINT_VALIDATION.md)
 - [Compiler Cpu Targets](COMPILER_CPU_TARGETS.md)
 - [Compiler Setup](COMPILER_SETUP.md)
 - [Compiler Variable Types](COMPILER_VARIABLE_TYPES.md)
 - [Compiler Z88Dk Path Change](COMPILER_Z88DK_PATH_CHANGE.md)
 - [Edit Mode Typeahead](EDIT_MODE_TYPEAHEAD.md)
+- [Kubernetes Deployment Guide](KUBERNETES_DEPLOYMENT_GUIDE.md)
 - [Kubernetes Deployment Plan](KUBERNETES_DEPLOYMENT_PLAN.md)
 - [Kubernetes Deployment Setup](KUBERNETES_DEPLOYMENT_SETUP.md)
 - [Kubernetes Deployment Summary](KUBERNETES_DEPLOYMENT_SUMMARY.md)
@@ -116,11 +116,14 @@ port I/O — but they are not required. Read
 - [Persistent Issues Answer](PERSISTENT_ISSUES_ANSWER.md)
 - [Persistent Issues Summary](PERSISTENT_ISSUES_SUMMARY.md)
 - [Project Structure](PROJECT_STRUCTURE.md)
+- [Redis Session Storage Setup](REDIS_SESSION_STORAGE_SETUP.md)
 - [Rnd Algorithm](RND_ALGORITHM.md)
+- [Single Precision](SINGLE_PRECISION.md)
 - [Statement Attempt Undo](STATEMENT_ATTEMPT_UNDO.md)
 - [String Pool Changes 2025 11 23](STRING_POOL_CHANGES_2025_11_23.md)
 - [Tnylpo Setup](TNYLPO_SETUP.md)
 - [Toolchain Policy](TOOLCHAIN_POLICY.md)
+- [Usage Tracking Integration](USAGE_TRACKING_INTEGRATION.md)
 - [Windows Console Keys](WINDOWS_CONSOLE_KEYS.md)
 - [Windows Import Compatibility](WINDOWS_IMPORT_COMPATIBILITY.md)
 

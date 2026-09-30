@@ -98,6 +98,10 @@ nav:
     - user/QUICK_REFERENCE.md
     - user/INSTALL.md
     - user/INSTALLATION.md
+    - Features and Status: user/FEATURES_AND_STATUS.md
+    - Interactive Mode: user/INTERACTIVE_MODE.md
+    - Compilers: user/COMPILERS.md
+    - Example Programs: user/EXAMPLE_PROGRAMS.md
     - Choosing Your UI: user/CHOOSING_YOUR_UI.md
     - UI Features: user/UI_FEATURE_COMPARISON.md
     - Settings: user/SETTINGS_AND_CONFIGURATION.md
@@ -318,10 +322,16 @@ nav:
     - Demos: library/demos/index.md
   - Developer:
     - dev/index.md
+    - Project Structure: dev/PROJECT_STRUCTURE.md
+    - Testing: dev/TESTING.md
+    - Testing Guide: dev/TESTING_GUIDE.md
     - dev/KEYBINDING_SYSTEMS.md
     - dev/REDIS_PER_SESSION_SETTINGS.md
     - dev/REDIS_SESSION_STORAGE_SETUP.md
-  - Project Status: PROJECT_STATUS.md
+  - Project Status:
+    - PROJECT_STATUS.md
+    - Development History: history/DEVELOPMENT_HISTORY.md
+    - Credits and Disclaimers: CREDITS_AND_DISCLAIMERS.md
 
 extra:
   social:

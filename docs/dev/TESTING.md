@@ -89,7 +89,7 @@ if __name__ == "__main__":
         sys.exit(1)
 ```
 
-**See [tests/README.md](https://github.com/avwohl/mbasic/blob/main/tests/README.md) for complete testing guide.**
+**See the [Testing Guide](TESTING_GUIDE.md) for the complete testing guide. The short overview is [tests/README.md](https://github.com/avwohl/mbasic/blob/main/tests/README.md).**
 
 ## Test Coverage
 
