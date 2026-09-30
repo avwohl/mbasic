@@ -2,8 +2,8 @@
 
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
-**Last Updated:** 2026-08-21
-**Total Documents:** 52
+**Last Updated:** 2026-09-30
+**Total Documents:** 54
 
 ## What's Here
 
@@ -61,6 +61,7 @@ port I/O — but they are not required. Read
 
 ### Testing & Quality
 
+- [Testing](TESTING.md)
 - [Tests Verified Against Binary](TESTS_VERIFIED_AGAINST_BINARY.md)
 
 ### File I/O
@@ -114,6 +115,7 @@ port I/O — but they are not required. Read
 - [Persistent Issues Analysis](PERSISTENT_ISSUES_ANALYSIS.md)
 - [Persistent Issues Answer](PERSISTENT_ISSUES_ANSWER.md)
 - [Persistent Issues Summary](PERSISTENT_ISSUES_SUMMARY.md)
+- [Project Structure](PROJECT_STRUCTURE.md)
 - [Rnd Algorithm](RND_ALGORITHM.md)
 - [Statement Attempt Undo](STATEMENT_ATTEMPT_UNDO.md)
 - [String Pool Changes 2025 11 23](STRING_POOL_CHANGES_2025_11_23.md)

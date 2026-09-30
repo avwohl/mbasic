@@ -72,3 +72,6 @@
 - **Run tests**: `python3 mbasic <program.bas>`
 - **Testing with real MBASIC**: See `tests/HOW_TO_RUN_REAL_MBASIC.md`
 - **Testing curses UI**: `python3 utils/test_curses_comprehensive.py` (see `docs/dev/CURSES_UI_TESTING.md` for details)
+
+## README stays short
+README.md is at most 150 lines. New detail goes in docs/<topic>.md with a one-line link from the README; never add sections to the README.

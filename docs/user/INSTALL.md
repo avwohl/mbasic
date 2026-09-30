@@ -38,6 +38,11 @@ Only needed if you want to use the Tkinter GUI backend. Skip this if you only ne
 
 **On other systems** (Fedora, macOS, Windows), virtual environment support and tkinter are usually included with Python.
 
+**Note:** Tkinter is included with most Python installations. If missing:
+- **Debian/Ubuntu:** `sudo apt-get install python3-tk`
+- **RHEL/Fedora:** `sudo dnf install python3-tkinter`
+- **macOS/Windows:** Reinstall Python from [python.org](https://python.org)
+
 ## Quick Install from PyPI
 
 **If you just want to install and use MBASIC**, the easiest method is via PyPI:
@@ -49,11 +54,17 @@ pip install mbasic
 # Or with full-screen terminal UI support
 pip install "mbasic[curses]"
 
+# With graphical UI (tkinter - included with Python)
+pip install "mbasic[tk]"
+
 # Or with browser-based UI support
 pip install "mbasic[web]"
 
 # Or with all UI backends
 pip install "mbasic[all]"
+
+# For development
+pip install "mbasic[dev]"
 ```
 
 After installation, run:
