@@ -151,4 +151,4 @@ version = {attr = "src.version.VERSION"}
     "library/**/*.BAS",
 ]
 # C sources linked by --compile-c
-"src.runtime" = ["strings/*.c", "strings/*.h"]
+"src.runtime" = ["strings/*.c", "strings/*.h", "strings/*.mac"]
