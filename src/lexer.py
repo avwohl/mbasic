@@ -166,22 +166,31 @@ class Lexer:
             # MBASIC allows trailing dot: 100. is valid (same as 100.0)
             if self.current_char() == '.':
                 next_char = self.peek_char()
-                # Allow trailing dot or dot followed by digits
-                if next_char is None or next_char.isdigit() or not next_char.isalnum():
+                # Allow trailing dot or dot followed by digits.  "5.E2" is 500: the
+                # dot is part of the number when an exponent with digits follows.
+                after_e = self.peek_char(2)
+                if after_e is not None and after_e in '+-':
+                    after_e = self.peek_char(3)
+                exp_follows = (next_char is not None and next_char.upper() in ['E', 'D'] and
+                               after_e is not None and after_e.isdigit())
+                if next_char is None or next_char.isdigit() or not next_char.isalnum() or exp_follows:
                     num_str += self.advance()  # Consume '.'
                     # Read digits after decimal point (if any)
                     while self.current_char() is not None and self.current_char().isdigit():
                         num_str += self.advance()
 
-        # Check for scientific notation (E or D)
-        if self.current_char() and self.current_char().upper() in ['E', 'D']:
+        # Check for scientific notation (E or D).  MBASIC 5.21 FIN takes the
+        # letter as an exponent marker even when no digits follow ("1E" is 1),
+        # with one exception: E followed by L or Q ends the number, because
+        # that is the start of ELSE or EQV ("PRINT 1ELSE PRINT 2").
+        if self.current_char() and self.current_char().upper() in ['E', 'D'] and \
+           not (self.current_char().upper() == 'E' and
+                self.peek_char() is not None and self.peek_char().upper() in ['L', 'Q']):
             num_str += self.advance()
             # Optional sign
             if self.current_char() in ['+', '-']:
                 num_str += self.advance()
-            # Exponent digits
-            if not (self.current_char() and self.current_char().isdigit()):
-                raise LexerError(f"Invalid number format: {num_str}", start_line, start_column)
+            # Exponent digits (none is allowed)
             while self.current_char() is not None and self.current_char().isdigit():
                 num_str += self.advance()
 
@@ -193,7 +202,11 @@ class Lexer:
         try:
             # Parse the number
             if '.' in num_str or 'E' in num_str.upper() or 'D' in num_str.upper():
-                value = float(num_str.replace('D', 'E').replace('d', 'e'))
+                # An exponent without digits ("1E", "1D+") means exponent 0
+                value_str = num_str.replace('D', 'E').replace('d', 'e')
+                if value_str[-1] in 'Ee+-':
+                    value_str = value_str.rstrip('+-').rstrip('Ee')
+                value = float(value_str)
             else:
                 value = int(num_str)
         except ValueError:
@@ -204,6 +217,34 @@ class Lexer:
         # value afterwards - 1# and 1 both arrive as 1.0.
         return Token(TokenType.NUMBER, value, start_line, start_column,
                      literal_text=num_str + (type_suffix or ''))
+
+    def _read_go_to_sub(self, ident: str, start_line: int, start_column: int) -> Optional[Token]:
+        """Join "GO TO" / "GO SUB" into GOTO / GOSUB.
+
+        MBASIC 5.21 CRUNCH joins the bare word GO, one space, and TO or SUB.
+        Real MBASIC mishandles the odd forms: "GO  TO" (two spaces) becomes
+        GOSUB, "GO  SUB" stays two words, and "GO TO30" is a syntax error.
+        This method joins only the form that works in real MBASIC: one space,
+        TO or SUB, then a character that cannot continue a name.  Any other
+        text stays an ordinary identifier.
+        Returns None, with nothing consumed, when the text is not that form.
+        """
+        if ident.lower() != 'go' or self.current_char() != ' ':
+            return None
+        rest = self.source[self.pos + 1:self.pos + 6].lower()
+        for word, keyword in (('to', 'goto'), ('sub', 'gosub')):
+            if rest.startswith(word):
+                after = rest[len(word):len(word) + 1]
+                if after.isalnum() or after == '.':
+                    return None
+                typed = ident + self.source[self.pos + 1:self.pos + 1 + len(word)]
+                for _ in range(1 + len(word)):
+                    self.advance()
+                token = Token(KEYWORDS[keyword], keyword, start_line, start_column)
+                token.original_case_keyword = self.keyword_case_manager.register_keyword(
+                    keyword, typed, start_line, start_column)
+                return token
+        return None
 
     def read_string(self) -> Token:
         """Read a string literal enclosed in double quotes"""
@@ -260,6 +301,11 @@ class Lexer:
                 break
             else:
                 break
+
+        # "GO TO" / "GO SUB" with spaces (MBASIC 5.21 CRUNCH joins them)
+        go_token = self._read_go_to_sub(ident, start_line, start_column)
+        if go_token is not None:
+            return go_token
 
         # Check if it's a keyword (case-insensitive, normalize to lowercase)
         ident_lower = ident.lower()

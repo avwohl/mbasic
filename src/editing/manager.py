@@ -289,7 +289,7 @@ class ProgramManager:
                 line, was_modified = sanitize_and_clear_parity(line)
 
                 # Extract line number
-                match = re.match(r'^(\d+)\s', line)
+                match = re.match(r'^(\d+)(?=.)', line)
                 if not match:
                     continue  # Skip lines without line numbers
 
@@ -341,7 +341,7 @@ class ProgramManager:
                 line, was_modified = sanitize_and_clear_parity(line)
 
                 # Extract line number
-                match = re.match(r'^(\d+)\s', line)
+                match = re.match(r'^(\d+)(?=.)', line)
                 if not match:
                     continue  # Skip lines without line numbers
 
