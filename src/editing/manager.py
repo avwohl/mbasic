@@ -300,6 +300,7 @@ class ProgramManager:
                 if not line[match.end():].strip():
                     # Bare line number: like typing it, this deletes the line
                     self.delete_line(line_num)
+                    success_count += 1
                     continue
                 success, error = self.add_line(line_num, line)
 
@@ -341,6 +342,7 @@ class ProgramManager:
         errors = []
         lines_added = 0
         lines_replaced = 0
+        lines_deleted = 0
 
         with open(filename, 'r') as f:
             for file_line, line in enumerate(f, 1):
@@ -361,6 +363,7 @@ class ProgramManager:
                 if not line[match.end():].strip():
                     # Bare line number: like typing it, this deletes the line
                     self.delete_line(line_num)
+                    lines_deleted += 1
                     continue
 
                 # Check if line already exists
@@ -377,7 +380,7 @@ class ProgramManager:
                     errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
 
         total_success = lines_added + lines_replaced
-        if total_success > 0:
+        if total_success > 0 or lines_deleted > 0:
             return (True, errors, lines_added, lines_replaced)
         else:
             if not errors:

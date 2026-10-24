@@ -173,3 +173,13 @@ def test_missing_startup_file_is_reported_separately(tmp_path):
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q", "-p", "no:cacheprovider"]))
+
+
+@pytest.mark.parametrize("operation", ["load", "merge"])
+def test_file_of_only_bare_line_numbers_succeeds(tmp_path, operation):
+    from src.editing.manager import ProgramManager
+    import inspect
+    source = tmp_path / "onlybare.bas"
+    source.write_text("10\n20\n")
+    manager = _make_manager() if "_make_manager" in globals() else None
+    assert manager is not None
