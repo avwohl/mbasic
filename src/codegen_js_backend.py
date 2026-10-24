@@ -1998,7 +1998,8 @@ class JavaScriptBackend(CodeGenBackend):
             'inkey$': '_inkey',
         }
 
-        js_func = js_func_map.get(func_name, func_name)
+        # Lexer token names can omit the BASIC string-function suffix.
+        js_func = js_func_map.get(func_name, js_func_map.get(func_name + "$", func_name))
         return f'{js_func}({", ".join(args)})'
 
     def _generate_goto(self, stmt: GotoStatementNode) -> List[str]:
