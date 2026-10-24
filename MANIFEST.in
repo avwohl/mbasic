@@ -17,7 +17,7 @@ recursive-include src/ui *.json
 recursive-include src/ui/web *.js *.css
 
 # Include the C runtime library used by --compile-c
-recursive-include runtime *.c *.h
+recursive-include runtime *.c *.h *.mac
 
 # Include documentation directory (use 'docs' not 'doc')
 recursive-include docs *.md
