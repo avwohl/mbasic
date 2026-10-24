@@ -164,6 +164,18 @@ def test_bare_line_number_deletes_line(tmp_path, operation, bare):
     assert sorted(program.line_asts) == [10, 30]
 
 
+@pytest.mark.parametrize("operation", ["load_from_file", "merge_from_file"])
+def test_file_of_only_bare_line_numbers_succeeds(tmp_path, operation):
+    source = tmp_path / "onlybare.bas"
+    source.write_text("10\n20\n")
+    program = ProgramManager({})
+    program.add_line(10, '10 PRINT "x"')
+    result = getattr(program, operation)(str(source))
+    assert result[0] is True
+    assert result[1] == []
+    assert 10 not in program.lines
+
+
 def test_missing_startup_file_is_reported_separately(tmp_path):
     source = tmp_path / "missing.bas"
     result = cli(source)
@@ -174,12 +186,3 @@ def test_missing_startup_file_is_reported_separately(tmp_path):
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q", "-p", "no:cacheprovider"]))
 
-
-@pytest.mark.parametrize("operation", ["load", "merge"])
-def test_file_of_only_bare_line_numbers_succeeds(tmp_path, operation):
-    from src.editing.manager import ProgramManager
-    import inspect
-    source = tmp_path / "onlybare.bas"
-    source.write_text("10\n20\n")
-    manager = _make_manager() if "_make_manager" in globals() else None
-    assert manager is not None
