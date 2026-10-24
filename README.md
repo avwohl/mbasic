@@ -56,11 +56,20 @@ The other extras (`curses`, `tk`, `web`, `dev`) and the Tkinter notes are in the
 ## Quick Start
 
 ```bash
-python3 mbasic myprogram.bas   # Run a BASIC program
+python3 mbasic myprogram.bas   # Load a BASIC program, then enter RUN
 python3 mbasic                 # Curses screen editor (default UI)
 python3 mbasic --ui cli        # CLI mode (line-by-line REPL)
 python3 mbasic --list-backends # Show which UI backends are available
 ```
+
+On Windows PowerShell, from a source checkout:
+
+```powershell
+py .\mbasic .\myprogram.bas --ui cli
+```
+
+The CLI reports the loaded filename and waits at `MBASIC> `; enter `RUN` to
+execute it. For a PyPI install, use `mbasic myprogram.bas --ui cli` instead.
 
 The curses editor keys, the debugger keys, and a CLI session example are in
 [Interactive Mode](https://github.com/avwohl/mbasic/blob/main/docs/user/INTERACTIVE_MODE.md).
