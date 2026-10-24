@@ -26,6 +26,7 @@ do not notice. Each prints nothing at all where the binary raises:
 | `OPEN "O",1,"A:B:C*?.X Y"` | `Too many files in 10` |
 | a line longer than the 255-byte buffer | `Line buffer overflow in 10` |
 | `LOAD` of a file with a line that has no number | `Direct statement in file` |
+| `LOAD` or `MERGE` of a file with a bare line number for a missing line | `Undefined line number` (the REPL gives the same error) |
 | running off the end of the program inside a handler | `No RESUME in <last line>` |
 
 One more is wrong rather than missing:

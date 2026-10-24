@@ -74,6 +74,10 @@ For an installed package, use `mbasic myprogram.bas --ui cli`. On Linux and macO
 
 LOAD and MERGE accept both `10 PRINT "hello"` and `10PRINT "hello"`. A file line that holds only a line number deletes that program line, as when you type the number at the prompt. No error occurs if the line does not exist.
 
-Each load message names the file, the file line, and the BASIC line number (when the line has one). The message then gives the reason for the error. A file with no numbered lines gives the message "No numbered program lines found". The loader reports each line without a line number and continues with the next line. The loader loads the valid lines and reports the rejected lines. Read these messages before you run a partly loaded program.
+Each load message names the file, the file line, and the BASIC line number (when the line has one). The message then gives the reason for the error. A file with no numbered lines gives the message "No numbered program lines found". The loader reports each line without a line number and continues with the next line. The loader loads the valid lines and reports the rejected lines.
+
+Real MBASIC stops the load at the first line without a line number. The loader ignores a CP/M end-of-file mark (^Z) and all text after the mark.
+
+Read these messages before you run a partly loaded program.
 
 A missing file gets a separate message.

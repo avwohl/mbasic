@@ -183,6 +183,20 @@ def test_missing_startup_file_is_reported_separately(tmp_path):
     assert f"File not found: {source}" in result.stderr
 
 
+@pytest.mark.parametrize("operation", ["load_from_file", "merge_from_file"])
+@pytest.mark.parametrize("tail", ["\x1a", "\r\n\x1a", "\x1a\x1a\x1a", "\x1a\n30 PRINT 3\n"])
+def test_trailing_ctrl_z_is_end_of_file(tmp_path, operation, tail):
+    source = tmp_path / "ctrlz.bas"
+    prefix = "10 PRINT 1\r\n20 END"
+    sep = "" if tail.startswith("\r") else "\r\n"
+    source.write_bytes((prefix + sep + tail).encode())
+    program = ProgramManager({})
+    result = getattr(program, operation)(str(source))
+    assert result[0] is True
+    assert result[1] == []
+    assert sorted(program.lines) == [10, 20]
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q", "-p", "no:cacheprovider"]))
 

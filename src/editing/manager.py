@@ -50,6 +50,21 @@ from src.parser import Parser
 from src.debug_logger import debug_log
 
 
+def _lines_until_eof_mark(f):
+    """Yield lines from f, stopping at the CP/M end of file mark (^Z, 0x1A).
+
+    Text before the mark on the same line is kept. Real MBASIC treats ^Z as
+    end of file, and CP/M files are often padded with it.
+    """
+    for line in f:
+        if '\x1a' in line:
+            line = line.split('\x1a', 1)[0]
+            if line:
+                yield line
+            return
+        yield line
+
+
 class ProgramManager:
     """Manages BASIC program lines and ASTs.
 
@@ -282,7 +297,7 @@ class ProgramManager:
         success_count = 0
 
         with open(filename, 'r') as f:
-            for file_line, line in enumerate(f, 1):
+            for file_line, line in enumerate(_lines_until_eof_mark(f), 1):
                 line = line.strip()
                 if not line:
                     continue
@@ -345,7 +360,7 @@ class ProgramManager:
         lines_deleted = 0
 
         with open(filename, 'r') as f:
-            for file_line, line in enumerate(f, 1):
+            for file_line, line in enumerate(_lines_until_eof_mark(f), 1):
                 line = line.strip()
                 if not line:
                     continue
