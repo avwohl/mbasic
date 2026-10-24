@@ -3466,7 +3466,8 @@ class TkBackend(UIBackend):
                     # Already prefixed by ProgramManager - see _parse_editor_content.
                     self._add_output(f"{error}\n")
                     # Mark line as having error with message
-                    self.editor_text.set_error(line_num, True, error)
+                    if line_num:  # 0 means a file-level error
+                        self.editor_text.set_error(line_num, True, error)
             if success:
                 self._refresh_editor()
                 # Re-validate to show error markers for loaded lines
@@ -3499,7 +3500,8 @@ class TkBackend(UIBackend):
                     # Already prefixed by ProgramManager - see _parse_editor_content.
                     self._add_output(f"{error}\n")
                     # Mark line as having error with message
-                    self.editor_text.set_error(line_num, True, error)
+                    if line_num:  # 0 means a file-level error
+                        self.editor_text.set_error(line_num, True, error)
             if success:
                 self._refresh_editor()
                 # Re-validate to show error markers for merged lines

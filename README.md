@@ -56,7 +56,7 @@ The other extras (`curses`, `tk`, `web`, `dev`) and the Tkinter notes are in the
 ## Quick Start
 
 ```bash
-python3 mbasic myprogram.bas   # Run a BASIC program
+python3 mbasic myprogram.bas   # Load a BASIC program, then enter RUN
 python3 mbasic                 # Curses screen editor (default UI)
 python3 mbasic --ui cli        # CLI mode (line-by-line REPL)
 python3 mbasic --list-backends # Show which UI backends are available

@@ -50,6 +50,21 @@ from src.parser import Parser
 from src.debug_logger import debug_log
 
 
+def _lines_until_eof_mark(f):
+    """Yield lines from f, stopping at the CP/M end of file mark (^Z, 0x1A).
+
+    Text before the mark on the same line is kept. Real MBASIC treats ^Z as
+    end of file, and CP/M files are often padded with it.
+    """
+    for line in f:
+        if '\x1a' in line:
+            line = line.split('\x1a', 1)[0]
+            if line:
+                yield line
+            return
+        yield line
+
+
 class ProgramManager:
     """Manages BASIC program lines and ASTs.
 
@@ -267,7 +282,9 @@ class ProgramManager:
         Returns:
             Tuple of (success, errors)
             success: True if at least one line loaded successfully
-            errors: List of (line_number, error_message) for failed lines
+            errors: List of (BASIC line number, diagnostic) for rejected lines.
+                Diagnostics include filename and physical file line; number 0
+                denotes an unnumbered line or file-level error.
 
         Raises:
             FileNotFoundError: If file doesn't exist
@@ -280,7 +297,7 @@ class ProgramManager:
         success_count = 0
 
         with open(filename, 'r') as f:
-            for line in f:
+            for file_line, line in enumerate(_lines_until_eof_mark(f), 1):
                 line = line.strip()
                 if not line:
                     continue
@@ -289,22 +306,30 @@ class ProgramManager:
                 line, was_modified = sanitize_and_clear_parity(line)
 
                 # Extract line number
-                match = re.match(r'^(\d+)\s', line)
+                match = re.match(r'^(\d+)', line)
                 if not match:
-                    continue  # Skip lines without line numbers
+                    errors.append((0, f'{filename}: file line {file_line}: expected a BASIC line number'))
+                    continue
 
                 line_num = int(match.group(1))
+                if not line[match.end():].strip():
+                    # Bare line number: like typing it, this deletes the line
+                    self.delete_line(line_num)
+                    success_count += 1
+                    continue
                 success, error = self.add_line(line_num, line)
 
                 if success:
                     success_count += 1
                 else:
-                    errors.append((line_num, error))
+                    errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
 
         if success_count > 0:
             self.current_file = filename
             return (True, errors)
         else:
+            if not errors:
+                errors.append((0, f'{filename}: No numbered program lines found'))
             return (False, errors)
 
     def merge_from_file(self, filename: str) -> Tuple[bool, List[Tuple[int, str]], int, int]:
@@ -319,7 +344,9 @@ class ProgramManager:
         Returns:
             Tuple of (success, errors, lines_added, lines_replaced)
             success: True if at least one line loaded successfully
-            errors: List of (line_number, error_message) for failed lines
+            errors: List of (BASIC line number, diagnostic) for rejected lines.
+                Diagnostics include filename and physical file line; number 0
+                denotes an unnumbered line or file-level error.
             lines_added: Count of new lines added
             lines_replaced: Count of existing lines replaced
 
@@ -330,9 +357,10 @@ class ProgramManager:
         errors = []
         lines_added = 0
         lines_replaced = 0
+        lines_deleted = 0
 
         with open(filename, 'r') as f:
-            for line in f:
+            for file_line, line in enumerate(_lines_until_eof_mark(f), 1):
                 line = line.strip()
                 if not line:
                     continue
@@ -341,11 +369,17 @@ class ProgramManager:
                 line, was_modified = sanitize_and_clear_parity(line)
 
                 # Extract line number
-                match = re.match(r'^(\d+)\s', line)
+                match = re.match(r'^(\d+)', line)
                 if not match:
-                    continue  # Skip lines without line numbers
+                    errors.append((0, f'{filename}: file line {file_line}: expected a BASIC line number'))
+                    continue
 
                 line_num = int(match.group(1))
+                if not line[match.end():].strip():
+                    # Bare line number: like typing it, this deletes the line
+                    self.delete_line(line_num)
+                    lines_deleted += 1
+                    continue
 
                 # Check if line already exists
                 is_replacement = line_num in self.lines
@@ -358,12 +392,14 @@ class ProgramManager:
                     else:
                         lines_added += 1
                 else:
-                    errors.append((line_num, error))
+                    errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
 
         total_success = lines_added + lines_replaced
-        if total_success > 0:
+        if total_success > 0 or lines_deleted > 0:
             return (True, errors, lines_added, lines_replaced)
         else:
+            if not errors:
+                errors.append((0, f'{filename}: No numbered program lines found'))
             return (False, errors, 0, 0)
 
     def get_program_ast(self) -> 'ProgramNode':

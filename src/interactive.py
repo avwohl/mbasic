@@ -441,12 +441,17 @@ class InteractiveMode:
             print("(Note: readline not available - line editing limited)")
         else:
             print(f"(Tip: Press {self.edit_key_display} to edit last line, or {self.edit_key_display} followed by line number)")
+        # Prompt and hint only on a terminal; piped runs match main's output.
+        interactive_tty = sys.stdin.isatty() and sys.stdout.isatty()
+        if interactive_tty and self.program.current_file:
+            print(f"Loaded from {self.program.current_file}")
+            print("Type RUN to execute it, or LIST to view the program.")
         print("Ready")
 
         while True:
             try:
                 # Read input
-                line = input()
+                line = input("MBASIC> " if interactive_tty else "")
 
                 # Sanitize input: clear parity bits and filter control characters
                 # (except the edit key, which is used for edit mode)
@@ -778,7 +783,7 @@ class InteractiveMode:
                 print(f"Loaded from {filename}")
                 print("Ready")
             else:
-                print(format_error_message(FILE_NOT_FOUND))
+                print(f"Failed to load program: {filename}")
 
         except FileNotFoundError:
             print(format_error_message(FILE_NOT_FOUND))
@@ -829,7 +834,7 @@ class InteractiveMode:
                     print(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
                 print("Ready")
             else:
-                print(format_error_message(FILE_NOT_FOUND))
+                print(f"Failed to merge program: {filename}")
 
         except FileNotFoundError:
             # Raise rather than print: a printed message leaves the PC alone,
