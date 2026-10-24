@@ -3,7 +3,18 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
+try:
+    import pytest
+except ImportError:
+    if __name__ == "__main__":
+        print("pytest unavailable: CLI loading feedback tests skipped")
+        sys.exit(2)  # tests/run_regression.py counts exit code 2 as a skip
+    raise
+
+try:
+    import pexpect
+except ImportError:
+    pexpect = None
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
@@ -29,22 +40,62 @@ def test_compact_numbered_source(tmp_path, operation):
     assert len(program.line_asts) == 2
 
 
-def test_startup_reports_loaded_file_and_prompt(tmp_path):
+def test_piped_startup_has_no_prompt_or_banner(tmp_path):
     source = tmp_path / "hello world.bas"
     source.write_text('10PRINT "executed"\n20END\n')
     result = cli(source, commands="RUN\nSYSTEM\n")
     assert result.returncode == 0, result.stderr
-    assert f"Loaded from {source}" in result.stdout
-    assert "Type RUN to execute" in result.stdout
-    assert "MBASIC> " in result.stdout
+    assert "MBASIC> " not in result.stdout
+    assert "Loaded from" not in result.stdout
+    assert "Type RUN to execute" not in result.stdout
     assert "executed" in result.stdout
 
 
-def test_empty_startup_has_prompt_without_loaded_notice():
+def test_piped_empty_startup_has_no_prompt():
     result = cli()
     assert result.returncode == 0, result.stderr
-    assert "MBASIC> " in result.stdout
+    assert "MBASIC> " not in result.stdout
     assert "Loaded from" not in result.stdout
+
+
+@pytest.mark.skipif(pexpect is None, reason="pexpect is needed for pty tests")
+def test_tty_startup_shows_banner_and_prompt(tmp_path):
+    source = tmp_path / "hello.bas"
+    source.write_text('10PRINT "executed"\n20END\n')
+    child = pexpect.spawn(sys.executable, ["mbasic", "--ui", "cli", str(source)],
+                          cwd=str(ROOT), encoding="utf-8", timeout=20)
+    try:
+        child.expect("MBASIC> ")
+        assert f"Loaded from {source}" in child.before
+        assert "Type RUN to execute" in child.before
+        child.sendline("RUN")
+        child.expect("executed")
+        child.expect("MBASIC> ")
+        child.sendline("SYSTEM")
+        child.expect(pexpect.EOF)
+    finally:
+        child.close()
+
+
+@pytest.mark.skipif(pexpect is None, reason="pexpect is needed for pty tests")
+def test_tty_edit_key_still_enters_edit_mode_with_prompt(tmp_path):
+    source = tmp_path / "edit.bas"
+    source.write_text('10PRINT "A"\n')
+    child = pexpect.spawn(sys.executable, ["mbasic", "--ui", "cli", str(source)],
+                          cwd=str(ROOT), encoding="utf-8", timeout=20)
+    try:
+        child.expect("MBASIC> ")
+        child.send("\x01")    # the default edit key, ^A
+        child.send("\r")
+        child.expect("10")     # EDIT prints the line number, then reads subcommands
+        child.send("L")        # L lists the rest of the line
+        child.expect("PRINT")
+        child.send("Q")
+        child.expect("MBASIC> ")
+        child.sendline("SYSTEM")
+        child.expect(pexpect.EOF)
+    finally:
+        child.close()
 
 
 @pytest.mark.parametrize("text", ["\n", "PRINT 1\n", "10 PRINT (\n"])
@@ -96,6 +147,21 @@ def test_partial_load_reports_each_rejected_physical_line(tmp_path, operation):
     assert "file line 3" in result[1][0][1]
     assert "expected a BASIC line number" in result[1][0][1]
     assert "file line 4, BASIC line 20" in result[1][1][1]
+
+
+@pytest.mark.parametrize("operation", ["load_from_file", "merge_from_file"])
+@pytest.mark.parametrize("bare", ["20", "20 "])
+def test_bare_line_number_deletes_line(tmp_path, operation, bare):
+    source = tmp_path / "bare.bas"
+    source.write_text(f'10 PRINT "a"\n20 PRINT "b"\n{bare}\n30 PRINT "c"\n99\n')
+    program = ProgramManager({})
+    if operation == "merge_from_file":
+        program.add_line(20, '20 PRINT "old"')
+    result = getattr(program, operation)(str(source))
+    assert result[0] is True
+    assert result[1] == []
+    assert sorted(program.lines) == [10, 30]
+    assert sorted(program.line_asts) == [10, 30]
 
 
 def test_missing_startup_file_is_reported_separately(tmp_path):
