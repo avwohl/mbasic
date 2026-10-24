@@ -16,6 +16,180 @@ from src.codegen_backend import CodeGenBackend
 from src.tokens import TokenType
 
 
+JS_FILL_KEYS = r'''
+function _fill_keys(want, soft) {
+    // Add keys to _inkey_buffer. Returns false only at end of input, and only when soft is set.
+    if (typeof window !== "undefined") {
+        const r = window.prompt("INPUT$: enter " + want + " character(s)");
+        if (r === null || r === "") _error("Break");
+        _inkey_buffer += r;
+        return true;
+    }
+    // Node: block on fd 0. A chunk may hold several lines; the rest stays in _inkey_buffer.
+    const fs = require("fs");
+    const buf = Buffer.alloc(want);
+    for (;;) {
+        let got = 0;
+        try {
+            got = fs.readSync(0, buf, 0, want, null);
+        } catch (e) {
+            if (e.code === "EAGAIN") continue;  // stdin not ready yet: keep waiting
+            if (e.code === "EOF") got = 0; else throw e;
+        }
+        if (got === 0) {
+            if (soft) return false;
+            _error("Input past end");
+        }
+        _inkey_buffer += buf.toString("latin1", 0, got);
+        return true;
+    }
+}
+'''
+
+JS_INPUT_RUNTIME = r'''
+// INPUT and LINE INPUT. The generated program is synchronous: Node reads stdin with a blocking
+// fs.readSync (through _fill_keys, one buffer shared with INPUT$), the browser uses window.prompt.
+// At end of stdin Node stops with "?Input past end" (exit 1) instead of waiting or looping.
+function _read_line(prompt) {
+    if (typeof window !== "undefined") {
+        const r = window.prompt(prompt);
+        return r === null ? "" : r;
+    }
+    _print(prompt, false);
+    for (;;) {
+        const nl = _inkey_buffer.indexOf("\n");
+        if (nl >= 0) {
+            let line = _inkey_buffer.slice(0, nl);
+            _inkey_buffer = _inkey_buffer.slice(nl + 1);
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            return line;
+        }
+        if (!_fill_keys(4096, true)) {
+            if (_inkey_buffer.length === 0) _error("Input past end");
+            const rest = _inkey_buffer;
+            _inkey_buffer = "";
+            return rest;
+        }
+    }
+}
+
+function _line_input(prompt) {
+    return _read_line(prompt);
+}
+
+function _input_fields(line) {
+    // Split an INPUT line at commas. A field may be "quoted" (commas allowed inside).
+    // Returns null when the line is malformed, as MBASIC then prints ?Redo from start.
+    const out = [];
+    const n = line.length;
+    let i = 0;
+    for (;;) {
+        while (i < n && (line[i] === " " || line[i] === "\t")) i++;
+        let s, q = false;
+        if (line[i] === '"') {
+            q = true;
+            i++;
+            const j = line.indexOf('"', i);
+            if (j < 0) { s = line.slice(i); i = n; } else { s = line.slice(i, j); i = j + 1; }
+            while (i < n && (line[i] === " " || line[i] === "\t")) i++;
+            if (i < n && line[i] !== ",") return null;
+        } else {
+            let j = line.indexOf(",", i);
+            if (j < 0) j = n;
+            s = line.slice(i, j).replace(/[ \t]+$/, "");
+            i = j;
+        }
+        out.push({s: s, q: q});
+        if (i >= n) break;
+        i++;  // the comma
+    }
+    return out;
+}
+
+function _input_number(text, type) {
+    // type: "I" integer, "F" single, "N" double. Returns null for ?Redo from start.
+    const s = text.replace(/[ \t]/g, "");  // MBASIC ignores blanks inside a number: "1 2" is 12
+    if (s === "") return 0;
+    let v;
+    const radix = /^&([HhOo])([0-9A-Fa-f]*)$/.exec(s);
+    if (radix) {
+        const hex = radix[1] === "H" || radix[1] === "h";
+        if (!(hex ? /^[0-9A-Fa-f]*$/ : /^[0-7]*$/).test(radix[2])) return null;
+        v = radix[2] === "" ? 0 : parseInt(radix[2], hex ? 16 : 8);
+        if (v > 65535) return null;
+        if (v >= 32768) v -= 65536;
+    } else {
+        const m = /^([+-]?)(\d*\.?\d*)(?:[EeDd]([+-]?\d*))?[%!#]?$/.exec(s);
+        if (!m) return null;
+        let digits = m[2] === "." ? "" : m[2];
+        let exp = m[3] === undefined || m[3] === "" || m[3] === "+" || m[3] === "-" ? "0" : m[3];
+        v = Number(m[1] + (digits === "" ? "0" : digits) + "e" + exp);
+    }
+    if (type === "I") {
+        v = v < 0 ? -Math.round(-v) : Math.round(v);  // INPUT rounds, half away from zero
+        if (v > 32767 || v < -32768) _error("Overflow");
+    } else if (type === "F") {
+        v = Math.fround(v);
+        if (!isFinite(v)) { _print("Overflow"); return null; }
+    } else if (!isFinite(v)) {
+        _print("Overflow");
+        return null;
+    }
+    return v === 0 ? 0 : v;
+}
+
+function _input_parse(line, types) {
+    const fields = _input_fields(line);
+    if (fields === null || fields.length !== types.length) return null;
+    const vals = [];
+    for (let k = 0; k < types.length; k++) {
+        if (types[k] === "S") {
+            vals.push(fields[k].s);
+        } else {
+            if (fields[k].q) return null;
+            const v = _input_number(fields[k].s, types[k]);
+            if (v === null) return null;
+            vals.push(v);
+        }
+    }
+    return vals;
+}
+
+function _input_vals(prompt, types) {
+    // types has one letter per variable: S string, I integer, F single, N double.
+    for (;;) {
+        const vals = _input_parse(_read_line(prompt), types);
+        if (vals !== null) return vals;
+        _print("?Redo from start");
+    }
+}
+'''
+
+
+JS_FINPUT_BODY = r'''
+// Read one value: leading blanks and line ends are skipped, a "quoted" value may hold commas,
+// an unquoted value ends at a comma or line end. Past the last value: ?Input past end.
+const text = file.content;
+let p = file.pos;
+while (p < text.length && " \t\r\n".indexOf(text[p]) >= 0) p++;
+if (p >= text.length) { file.pos = p; _error("Input past end"); }
+let value = "";
+if (text[p] === '"') {
+    p++;
+    while (p < text.length && text[p] !== '"') value += text[p++];
+    if (p < text.length) p++;
+    while (p < text.length && (text[p] === " " || text[p] === "\t")) p++;
+} else {
+    while (p < text.length && text[p] !== "," && text[p] !== "\n") value += text[p++];
+    value = value.trim();
+}
+if (text[p] === ",") p++;
+else if (text[p] === "\r" && text[p + 1] === "\n") p += 2;
+else if (text[p] === "\n") p++;
+file.pos = p;
+return value;
+'''
+
 class JavaScriptBackend(CodeGenBackend):
     """
     JavaScript code generator for browser and Node.js execution.
@@ -590,98 +764,10 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '}')
         code.append('')
 
-        # INPUT functions
-        if self.uses_input:
-            code.append(self.indent() + '// INPUT functions')
-            code.append(self.indent() + 'function _input_str(prompt) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'if (typeof window !== "undefined") {')
-            self.indent_level += 1
-            code.append(self.indent() + '// Browser')
-            code.append(self.indent() + 'const result = window.prompt(prompt);')
-            code.append(self.indent() + 'return result === null ? "" : result;')
-            self.indent_level -= 1
-            code.append(self.indent() + '} else if (typeof process !== "undefined") {')
-            self.indent_level += 1
-            code.append(self.indent() + '// Node.js - synchronous input')
-            code.append(self.indent() + 'process.stdout.write(prompt);')
-            code.append(self.indent() + 'const readline = require("readline");')
-            code.append(self.indent() + 'const rl = readline.createInterface({')
-            self.indent_level += 1
-            code.append(self.indent() + 'input: process.stdin,')
-            code.append(self.indent() + 'output: process.stdout')
-            self.indent_level -= 1
-            code.append(self.indent() + '});')
-            code.append(self.indent() + '// Note: This is async - for true sync input, use readline-sync package')
-            code.append(self.indent() + 'return new Promise((resolve) => {')
-            self.indent_level += 1
-            code.append(self.indent() + 'rl.question("", (answer) => {')
-            self.indent_level += 1
-            code.append(self.indent() + 'rl.close();')
-            code.append(self.indent() + 'resolve(answer);')
-            self.indent_level -= 1
-            code.append(self.indent() + '});')
-            self.indent_level -= 1
-            code.append(self.indent() + '});')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
-            code.append(self.indent() + 'return "";')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
-            code.append('')
-            code.append(self.indent() + 'function _input_num(prompt) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'const str = _input_str(prompt);')
-            code.append(self.indent() + 'return parseFloat(str) || 0;')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
-            code.append('')
-            code.append(self.indent() + 'function _input_int(prompt) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'const str = _input_str(prompt);')
-            code.append(self.indent() + 'return _toInt(parseFloat(str) || 0);')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
-            code.append('')
-
-        # LINE INPUT function
-        if self.uses_line_input:
-            code.append(self.indent() + '// LINE INPUT function - reads entire line without parsing')
-            code.append(self.indent() + 'function _line_input(prompt) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'if (typeof window !== "undefined") {')
-            self.indent_level += 1
-            code.append(self.indent() + '// Browser')
-            code.append(self.indent() + 'const result = window.prompt(prompt);')
-            code.append(self.indent() + 'return result === null ? "" : result;')
-            self.indent_level -= 1
-            code.append(self.indent() + '} else if (typeof process !== "undefined") {')
-            self.indent_level += 1
-            code.append(self.indent() + '// Node.js - synchronous input (same as _input_str)')
-            code.append(self.indent() + 'process.stdout.write(prompt);')
-            code.append(self.indent() + 'const readline = require("readline");')
-            code.append(self.indent() + 'const rl = readline.createInterface({')
-            self.indent_level += 1
-            code.append(self.indent() + 'input: process.stdin,')
-            code.append(self.indent() + 'output: process.stdout')
-            self.indent_level -= 1
-            code.append(self.indent() + '});')
-            code.append(self.indent() + '// Note: This is async - for true sync input, use readline-sync package')
-            code.append(self.indent() + 'return new Promise((resolve) => {')
-            self.indent_level += 1
-            code.append(self.indent() + 'rl.question("", (answer) => {')
-            self.indent_level += 1
-            code.append(self.indent() + 'rl.close();')
-            code.append(self.indent() + 'resolve(answer);')
-            self.indent_level -= 1
-            code.append(self.indent() + '});')
-            self.indent_level -= 1
-            code.append(self.indent() + '});')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
-            code.append(self.indent() + 'return "";')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
+        # INPUT / LINE INPUT functions
+        if self.uses_input or self.uses_line_input:
+            for line in JS_INPUT_RUNTIME.strip('\n').split('\n'):
+                code.append(self.indent() + line if line else '')
             code.append('')
 
         # WRITE function
@@ -939,16 +1025,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'const file = _files[filenum];')
             code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
             code.append(self.indent() + 'if (file.mode !== "I") _error("File #" + filenum + " not open for input");')
-            code.append(self.indent() + '// Read one value (comma or newline delimited)')
-            code.append(self.indent() + 'let value = "";')
-            code.append(self.indent() + 'while (file.pos < file.content.length) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'const ch = file.content[file.pos++];')
-            code.append(self.indent() + 'if (ch === "," || ch === "\\n") break;')
-            code.append(self.indent() + 'value += ch;')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
-            code.append(self.indent() + 'return value.trim();')
+            for line in JS_FINPUT_BODY.strip('\n').split('\n'):
+                code.append(self.indent() + line)
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append('')
@@ -958,7 +1036,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'const file = _files[filenum];')
             code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
             code.append(self.indent() + 'if (file.mode !== "I") _error("File #" + filenum + " not open for input");')
-            code.append(self.indent() + '// Read one line')
+            code.append(self.indent() + '// Read one line (CR LF ends it too)')
+            code.append(self.indent() + 'if (file.pos >= file.content.length) _error("Input past end");')
             code.append(self.indent() + 'let line = "";')
             code.append(self.indent() + 'while (file.pos < file.content.length) {')
             self.indent_level += 1
@@ -967,7 +1046,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'line += ch;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
-            code.append(self.indent() + 'return line;')
+            code.append(self.indent() + 'return line.endsWith("\\r") ? line.slice(0, -1) : line;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append('')
@@ -1490,28 +1569,12 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '    }')
             code.append(self.indent() + '    return out;')
             code.append(self.indent() + '}')
-            code.append(self.indent() + 'function _fill_keys(want) {')
-            code.append(self.indent() + '    if (typeof window !== "undefined") {')
-            code.append(self.indent() + '        const r = window.prompt("INPUT$: enter " + want + " character(s)");')
-            code.append(self.indent() + '        if (r === null || r === "") _error("Break");')
-            code.append(self.indent() + '        _inkey_buffer += r;')
-            code.append(self.indent() + '        return;')
-            code.append(self.indent() + '    }')
-            code.append(self.indent() + '    const fs = require("fs");')
-            code.append(self.indent() + '    const buf = Buffer.alloc(want);')
-            code.append(self.indent() + '    for (;;) {')
-            code.append(self.indent() + '        let got = 0;')
-            code.append(self.indent() + '        try {')
-            code.append(self.indent() + '            got = fs.readSync(0, buf, 0, want, null);')
-            code.append(self.indent() + '        } catch (e) {')
-            code.append(self.indent() + '            if (e.code === "EAGAIN") continue;  // stdin not ready yet: keep waiting')
-            code.append(self.indent() + '            if (e.code === "EOF") got = 0; else throw e;')
-            code.append(self.indent() + '        }')
-            code.append(self.indent() + '        if (got === 0) _error("Input past end");')
-            code.append(self.indent() + '        _inkey_buffer += buf.toString("latin1", 0, got);')
-            code.append(self.indent() + '        return;')
-            code.append(self.indent() + '    }')
-            code.append(self.indent() + '}')
+            code.append('')
+
+        # Keyboard fill, shared by INPUT$, INPUT and LINE INPUT (one stdin buffer: _inkey_buffer)
+        if self.uses_input_func or self.uses_input or self.uses_line_input:
+            for line in JS_FILL_KEYS.strip('\n').split('\n'):
+                code.append(self.indent() + line)
             code.append('')
 
         return code
@@ -2303,7 +2366,7 @@ class JavaScriptBackend(CodeGenBackend):
             # Generate input for each variable from file
             for var in stmt.variables:
                 var_key = var.name + (var.type_suffix or '')
-                var_name = self._mangle_var_name(var_key)
+                var_name = self._input_lvalue(var)
                 var_type = self._get_var_type(var_key)
 
                 if var_type == VarType.STRING:
@@ -2319,33 +2382,38 @@ class JavaScriptBackend(CodeGenBackend):
                     # Double precision or unknown - no coercion needed
                     code.append(self.indent() + f'{var_name} = parseFloat(_finput({filenum_expr})) || 0;')
         else:
-            # Interactive input
-            # Build prompt string
+            # Interactive input. A comma after the prompt string drops the "? " (real MBASIC 5.21);
+            # a semicolon after INPUT only keeps the cursor on the line, which a script cannot show.
             if stmt.prompt:
                 prompt_str = self._escape_string(stmt.prompt)
+                if not stmt.prompt_comma:
+                    prompt_str += "? "
             else:
                 prompt_str = "? "
 
-            # Generate input for each variable
+            letters = []
+            targets = []
             for var in stmt.variables:
                 var_key = var.name + (var.type_suffix or '')
-                var_name = self._mangle_var_name(var_key)
-                var_type = self._get_var_type(var_key)
-
-                if var_type == VarType.STRING:
-                    # String input
-                    code.append(self.indent() + f'{var_name} = _input_str("{prompt_str}");')
-                elif var_type == VarType.INTEGER:
-                    # Integer input - _input_int already uses _toInt
-                    code.append(self.indent() + f'{var_name} = _input_int("{prompt_str}");')
-                elif var_type == VarType.SINGLE:
-                    # Single precision input
-                    code.append(self.indent() + f'{var_name} = _toSingle(_input_num("{prompt_str}"));')
-                else:
-                    # Double precision or unknown - no coercion needed
-                    code.append(self.indent() + f'{var_name} = _input_num("{prompt_str}");')
+                type_name = self._type_name(self._get_var_type(var_key))
+                letters.append({'STRING': 'S', 'INTEGER': 'I', 'SINGLE': 'F'}.get(type_name, 'N'))
+                targets.append(self._input_lvalue(var))
+            # One _input_vals call reads the whole line for all variables (Redo covers them together)
+            assigns = ' '.join(f'{t} = _iv[{k}];' for k, t in enumerate(targets))
+            code.append(self.indent() + f'{{ const _iv = _input_vals("{prompt_str}", "{"".join(letters)}"); {assigns} }}')
 
         return code
+
+    @staticmethod
+    def _type_name(var_type) -> str:
+        return var_type.name if hasattr(var_type, 'name') else str(var_type)
+
+    def _input_lvalue(self, var) -> str:
+        """JavaScript assignment target for an INPUT variable (plain variable or array element)."""
+        access = self._mangle_var_name(var.name + (var.type_suffix or ''))
+        for idx_expr in (var.subscripts or []):
+            access = f'{access}[{self._generate_expression(idx_expr)}]'
+        return access
 
     def _generate_line_input(self, stmt: LineInputStatementNode) -> List[str]:
         """Generate LINE INPUT statement - reads entire line without parsing"""
@@ -2364,7 +2432,7 @@ class JavaScriptBackend(CodeGenBackend):
             if stmt.prompt:
                 prompt_expr = self._generate_expression(stmt.prompt)
             else:
-                prompt_expr = '"? "'
+                prompt_expr = '""'  # LINE INPUT shows no "? "
 
             code.append(self.indent() + f'{var_name} = _line_input({prompt_expr});')
 

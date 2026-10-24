@@ -217,6 +217,7 @@ class InputStatementNode:
     variables: List['VariableNode']
     file_number: Optional['ExpressionNode'] = None  # For INPUT #n, ...
     suppress_question: bool = False  # True if INPUT; (semicolon immediately after INPUT, no prompt)
+    prompt_comma: bool = False  # True if a comma (not a semicolon) follows the prompt: real MBASIC then omits "? "
     line_num: int = 0
     column: int = 0
 
