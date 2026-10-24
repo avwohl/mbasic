@@ -4,7 +4,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
+try:
+    import pytest
+except ImportError:
+    if __name__ == "__main__":
+        print("pytest unavailable: JavaScript execution tests skipped")
+        sys.exit(2)  # tests/run_regression.py counts exit code 2 as a skip
+    raise
 
 ROOT = Path(__file__).resolve().parents[3]
 NODE = shutil.which("node")

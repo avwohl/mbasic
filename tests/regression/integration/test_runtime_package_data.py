@@ -9,13 +9,24 @@ import tarfile
 import zipfile
 from pathlib import Path
 
+try:
+    import pytest
+except ImportError:
+    if __name__ == "__main__":
+        print("pytest unavailable: distribution build tests skipped")
+        sys.exit(2)  # tests/run_regression.py counts exit code 2 as a skip
+    raise
+
 ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_runtime_shim_in_sdist_and_wheel(tmp_path):
+    pytest.importorskip("build")
+    pytest.importorskip("wheel")
     source = tmp_path / "source"
     shutil.copytree(ROOT, source, ignore=shutil.ignore_patterns(
-        ".git", "build", "dist", "*.egg-info", "__pycache__", ".pytest_cache",
+        ".git", ".claude", "build", "dist", "*.egg-info", "__pycache__",
+        ".pytest_cache", "*.o",
     ))
     result = subprocess.run(
         [sys.executable, "-m", "build", "--no-isolation"], cwd=source,
@@ -41,5 +52,4 @@ if __name__ == "__main__":
     if importlib.util.find_spec("build") is None:
         print("Install the dev extra to run distribution build tests")
         sys.exit(2)
-    import pytest
     sys.exit(pytest.main([__file__, "-q", "-p", "no:cacheprovider"]))
