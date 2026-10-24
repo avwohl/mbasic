@@ -58,3 +58,22 @@ RUN
 LIST
 SAVE "hello.bas"
 ```
+
+Opening a file at startup loads it for editing; it does not automatically run it:
+
+```powershell
+# Windows PowerShell, from the source checkout
+py .\mbasic .\myprogram.bas --ui cli
+```
+
+The CLI displays `Loaded from ...`, a hint to type `RUN`, and the `MBASIC> `
+command prompt. Enter `RUN` to execute or `LIST` to inspect the loaded program.
+For an installed package, use `mbasic myprogram.bas --ui cli`. On Linux/macOS,
+use `python3 mbasic myprogram.bas --ui cli` from a checkout.
+
+Both `10 PRINT "hello"` and `10PRINT "hello"` are accepted by LOAD and MERGE.
+Load diagnostics name the file, physical file line, and BASIC line number (when
+present), followed by the parser's reason. An empty file reports that no numbered
+program lines were found. If some lines are valid, they are loaded and the rejected
+lines are reported; inspect those diagnostics before running a partially loaded
+program. A missing file is reported separately from invalid source.

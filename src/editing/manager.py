@@ -267,7 +267,9 @@ class ProgramManager:
         Returns:
             Tuple of (success, errors)
             success: True if at least one line loaded successfully
-            errors: List of (line_number, error_message) for failed lines
+            errors: List of (BASIC line number, diagnostic) for rejected lines.
+                Diagnostics include filename and physical file line; number 0
+                denotes an unnumbered line or file-level error.
 
         Raises:
             FileNotFoundError: If file doesn't exist
@@ -280,7 +282,7 @@ class ProgramManager:
         success_count = 0
 
         with open(filename, 'r') as f:
-            for line in f:
+            for file_line, line in enumerate(f, 1):
                 line = line.strip()
                 if not line:
                     continue
@@ -289,9 +291,10 @@ class ProgramManager:
                 line, was_modified = sanitize_and_clear_parity(line)
 
                 # Extract line number
-                match = re.match(r'^(\d+)\s', line)
+                match = re.match(r'^(\d+)', line)
                 if not match:
-                    continue  # Skip lines without line numbers
+                    errors.append((0, f'{filename}: file line {file_line}: expected a BASIC line number'))
+                    continue
 
                 line_num = int(match.group(1))
                 success, error = self.add_line(line_num, line)
@@ -299,12 +302,14 @@ class ProgramManager:
                 if success:
                     success_count += 1
                 else:
-                    errors.append((line_num, error))
+                    errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
 
         if success_count > 0:
             self.current_file = filename
             return (True, errors)
         else:
+            if not errors:
+                errors.append((0, f'{filename}: No numbered program lines found'))
             return (False, errors)
 
     def merge_from_file(self, filename: str) -> Tuple[bool, List[Tuple[int, str]], int, int]:
@@ -319,7 +324,9 @@ class ProgramManager:
         Returns:
             Tuple of (success, errors, lines_added, lines_replaced)
             success: True if at least one line loaded successfully
-            errors: List of (line_number, error_message) for failed lines
+            errors: List of (BASIC line number, diagnostic) for rejected lines.
+                Diagnostics include filename and physical file line; number 0
+                denotes an unnumbered line or file-level error.
             lines_added: Count of new lines added
             lines_replaced: Count of existing lines replaced
 
@@ -332,7 +339,7 @@ class ProgramManager:
         lines_replaced = 0
 
         with open(filename, 'r') as f:
-            for line in f:
+            for file_line, line in enumerate(f, 1):
                 line = line.strip()
                 if not line:
                     continue
@@ -341,9 +348,10 @@ class ProgramManager:
                 line, was_modified = sanitize_and_clear_parity(line)
 
                 # Extract line number
-                match = re.match(r'^(\d+)\s', line)
+                match = re.match(r'^(\d+)', line)
                 if not match:
-                    continue  # Skip lines without line numbers
+                    errors.append((0, f'{filename}: file line {file_line}: expected a BASIC line number'))
+                    continue
 
                 line_num = int(match.group(1))
 
@@ -358,12 +366,14 @@ class ProgramManager:
                     else:
                         lines_added += 1
                 else:
-                    errors.append((line_num, error))
+                    errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
 
         total_success = lines_added + lines_replaced
         if total_success > 0:
             return (True, errors, lines_added, lines_replaced)
         else:
+            if not errors:
+                errors.append((0, f'{filename}: No numbered program lines found'))
             return (False, errors, 0, 0)
 
     def get_program_ast(self) -> 'ProgramNode':

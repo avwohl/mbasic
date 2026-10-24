@@ -759,7 +759,7 @@ def run_file(program_path, backend, debug_enabled=False):
         # Report any errors
         if errors:
             for line_num, error_msg in errors:
-                print(f"Parse error at line {line_num}: {error_msg}", file=sys.stderr)
+                print(error_msg, file=sys.stderr)
 
         if not success:
             print(f"Failed to load program: {program_path}", file=sys.stderr)
