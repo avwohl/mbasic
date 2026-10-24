@@ -59,21 +59,21 @@ LIST
 SAVE "hello.bas"
 ```
 
-Opening a file at startup loads it for editing; it does not automatically run it:
+Opening a file at startup loads the file for editing. The CLI does not run the program automatically.
 
 ```powershell
 # Windows PowerShell, from the source checkout
 py .\mbasic .\myprogram.bas --ui cli
 ```
 
-The CLI displays `Loaded from ...`, a hint to type `RUN`, and the `MBASIC> `
-command prompt. Enter `RUN` to execute or `LIST` to inspect the loaded program.
-For an installed package, use `mbasic myprogram.bas --ui cli`. On Linux/macOS,
-use `python3 mbasic myprogram.bas --ui cli` from a checkout.
+On a terminal, the CLI shows `Loaded from ...` and a hint to type `RUN`. The CLI then shows the `MBASIC> ` command prompt. Enter `RUN` to run the program. Enter `LIST` to view the program.
 
-Both `10 PRINT "hello"` and `10PRINT "hello"` are accepted by LOAD and MERGE.
-Load diagnostics name the file, physical file line, and BASIC line number (when
-present), followed by the parser's reason. An empty file reports that no numbered
-program lines were found. If some lines are valid, they are loaded and the rejected
-lines are reported; inspect those diagnostics before running a partially loaded
-program. A missing file is reported separately from invalid source.
+When input or output is not a terminal, the CLI shows no prompt and no hint. Piped and batch runs then produce only the program output.
+
+For an installed package, use `mbasic myprogram.bas --ui cli`. On Linux and macOS, use `python3 mbasic myprogram.bas --ui cli` from a checkout.
+
+LOAD and MERGE accept both `10 PRINT "hello"` and `10PRINT "hello"`. A file line that holds only a line number deletes that program line, as when you type the number at the prompt. No error occurs if the line does not exist.
+
+Each load message names the file, the file line, and the BASIC line number (when the line has one). The message then gives the reason for the error. A file with no numbered lines gives the message "No numbered program lines found". The loader reports each line without a line number and continues with the next line. The loader loads the valid lines and reports the rejected lines. Read these messages before you run a partly loaded program.
+
+A missing file gets a separate message.

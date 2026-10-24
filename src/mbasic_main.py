@@ -790,7 +790,7 @@ def main():
         epilog="""
 Examples:
   ./mbasic                                  # Interactive mode (curses if installed, else cli)
-  ./mbasic program.bas                      # Run program and enter interactive mode
+  ./mbasic program.bas                      # Load program and enter interactive mode (type RUN)
   ./mbasic --ui curses                      # Curses text UI (urwid, full-screen terminal)
   ./mbasic --ui cli                         # CLI backend (line-based)
   ./mbasic --ui tk                          # Tkinter GUI (graphical)

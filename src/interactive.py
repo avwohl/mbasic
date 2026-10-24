@@ -441,7 +441,9 @@ class InteractiveMode:
             print("(Note: readline not available - line editing limited)")
         else:
             print(f"(Tip: Press {self.edit_key_display} to edit last line, or {self.edit_key_display} followed by line number)")
-        if self.program.current_file:
+        # Prompt and hint only on a terminal; piped runs match main's output.
+        interactive_tty = sys.stdin.isatty() and sys.stdout.isatty()
+        if interactive_tty and self.program.current_file:
             print(f"Loaded from {self.program.current_file}")
             print("Type RUN to execute it, or LIST to view the program.")
         print("Ready")
@@ -449,7 +451,7 @@ class InteractiveMode:
         while True:
             try:
                 # Read input
-                line = input("MBASIC> ")
+                line = input("MBASIC> " if interactive_tty else "")
 
                 # Sanitize input: clear parity bits and filter control characters
                 # (except the edit key, which is used for edit mode)

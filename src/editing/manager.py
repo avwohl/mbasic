@@ -297,6 +297,10 @@ class ProgramManager:
                     continue
 
                 line_num = int(match.group(1))
+                if not line[match.end():].strip():
+                    # Bare line number: like typing it, this deletes the line
+                    self.delete_line(line_num)
+                    continue
                 success, error = self.add_line(line_num, line)
 
                 if success:
@@ -354,6 +358,10 @@ class ProgramManager:
                     continue
 
                 line_num = int(match.group(1))
+                if not line[match.end():].strip():
+                    # Bare line number: like typing it, this deletes the line
+                    self.delete_line(line_num)
+                    continue
 
                 # Check if line already exists
                 is_replacement = line_num in self.lines
