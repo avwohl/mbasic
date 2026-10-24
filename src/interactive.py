@@ -909,7 +909,7 @@ class InteractiveMode:
                     # Sanitize input: clear parity bits and filter control characters
                     line, _ = sanitize_and_clear_parity(line)
 
-                    match = re.match(r'^(\d+)\s', line)
+                    match = re.match(r'^(\d+)(?=.)', line)
                     if match:
                         line_num = int(match.group(1))
                         self.lines[line_num] = line
@@ -929,7 +929,7 @@ class InteractiveMode:
                     # Sanitize input: clear parity bits and filter control characters
                     line, _ = sanitize_and_clear_parity(line)
 
-                    match = re.match(r'^(\d+)\s', line)
+                    match = re.match(r'^(\d+)(?=.)', line)
                     if match:
                         line_num = int(match.group(1))
                         self.lines[line_num] = line
