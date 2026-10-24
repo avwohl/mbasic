@@ -168,11 +168,9 @@ class Lexer:
                 next_char = self.peek_char()
                 # Allow trailing dot or dot followed by digits.  "5.E2" is 500: the
                 # dot is part of the number when an exponent with digits follows.
-                after_e = self.peek_char(2)
-                if after_e is not None and after_e in '+-':
-                    after_e = self.peek_char(3)
-                exp_follows = (next_char is not None and next_char.upper() in ['E', 'D'] and
-                               after_e is not None and after_e.isdigit())
+                # FIN takes the dot first, so "1.E" and "1.ELSE" both keep the
+                # dot; the E+L/Q rule below then ends the number before ELSE/EQV.
+                exp_follows = next_char is not None and next_char.upper() in ['E', 'D']
                 if next_char is None or next_char.isdigit() or not next_char.isalnum() or exp_follows:
                     num_str += self.advance()  # Consume '.'
                     # Read digits after decimal point (if any)

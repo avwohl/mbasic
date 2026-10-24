@@ -92,6 +92,9 @@ check("1D2", lex("10 PRINT 1D2")[1], (T.NUMBER, 100.0))
 check("5.E2", lex("10 PRINT 5.E2")[1], (T.NUMBER, 500.0))
 check("1.5E", lex("10 PRINT 1.5E")[1], (T.NUMBER, 1.5))
 check("1EQV 0", types("10 PRINT 1EQV 0")[:3], [T.PRINT, T.NUMBER, T.EQV])
+check("1.E is 1", lex("10 PRINT 1.E")[1], (T.NUMBER, 1.0))
+check("1.ELSE", types("10 PRINT 1.ELSE PRINT 2")[:3], [T.PRINT, T.NUMBER, T.ELSE])
+check("1.EQV 0", types("10 PRINT 1.EQV 0")[:3], [T.PRINT, T.NUMBER, T.EQV])
 check("30ELSE 40", types("10 IF X=1THEN 30ELSE 40")[-3:], [T.NUMBER, T.ELSE, T.NUMBER])
 
 # --- GO TO / GO SUB ----------------------------------------------------------
