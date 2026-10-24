@@ -27,6 +27,9 @@ function _fill_keys(want, soft) {
     }
     // Node: block on fd 0. A chunk may hold several lines; the rest stays in _inkey_buffer.
     const fs = require("fs");
+    // Decode as UTF-8 (StringDecoder keeps a multi-byte character split across reads whole), so text
+    // read here prints back unchanged. Consequence: INPUT$(n) counts characters, not bytes.
+    if (typeof _stdin_decoder === "undefined") globalThis._stdin_decoder = new (require("string_decoder").StringDecoder)("utf8");
     const buf = Buffer.alloc(want);
     for (;;) {
         let got = 0;
@@ -40,7 +43,9 @@ function _fill_keys(want, soft) {
             if (soft) return false;
             _error("Input past end");
         }
-        _inkey_buffer += buf.toString("latin1", 0, got);
+        const txt = _stdin_decoder.write(buf.subarray(0, got));
+        if (txt === "") continue;  // only part of a multi-byte character so far
+        _inkey_buffer += txt;
         return true;
     }
 }
