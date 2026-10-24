@@ -242,3 +242,27 @@ if __name__ == "__main__":
         print("Node.js unavailable: JavaScript execution tests skipped")
         sys.exit(2)
     sys.exit(pytest.main([__file__, "-q", "-p", "no:cacheprovider"]))
+
+
+@needs_node
+def test_non_ascii_text_round_trips_as_utf8(tmp_path):
+    result = run_node(tmp_path, '''10 LINE INPUT A$
+20 INPUT B$
+30 PRINT A$;"|";B$
+''', "café €\nnaïve\n")
+    assert result.returncode == 0, result.stderr
+    assert "café €|naïve" in result.stdout
+    assert "�" not in result.stdout
+
+
+@needs_node
+def test_multibyte_character_split_across_reads(tmp_path):
+    # INPUT$(1) reads one byte per readSync, so the two-byte e-acute and the three-byte euro sign
+    # arrive split across chunks; the decoder must hold the partial bytes until the character is whole.
+    result = run_node(tmp_path, '''10 A$ = INPUT$(1)
+20 B$ = INPUT$(1)
+30 C$ = INPUT$(1)
+40 PRINT A$;"|";B$;"|";C$
+''', "é€z")
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "é|€|z\n"
