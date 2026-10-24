@@ -25,11 +25,21 @@ def test_runtime_shim_in_sdist_and_wheel(tmp_path):
     expected = (ROOT / "runtime/strings/mb25_uc80_shim.mac").read_bytes()
     sdist, = (source / "dist").glob("*.tar.gz")
     with tarfile.open(sdist) as archive:
-        member, = [name for name in archive.getnames()
+        members = [name for name in archive.getnames()
                    if name.endswith("/runtime/strings/mb25_uc80_shim.mac")]
-        assert archive.extractfile(member).read() == expected
+        assert len(members) == 1, "sdist is missing the uc80 string assembly shim"
+        assert archive.extractfile(members[0]).read() == expected
     wheel, = (source / "dist").glob("*.whl")
     with zipfile.ZipFile(wheel) as archive:
         assert archive.read("src/runtime/strings/mb25_uc80_shim.mac") == expected
         assert "src/runtime/strings/mb25_string.c" in archive.namelist()
         assert "src/runtime/strings/mb25_string.h" in archive.namelist()
+
+
+if __name__ == "__main__":
+    import importlib.util
+    if importlib.util.find_spec("build") is None:
+        print("Install the dev extra to run distribution build tests")
+        sys.exit(2)
+    import pytest
+    sys.exit(pytest.main([__file__, "-q", "-p", "no:cacheprovider"]))
