@@ -26,6 +26,7 @@ def compile_js(tmp_path, source):
 @pytest.mark.parametrize("browser", [False, True])
 def test_string_builtins_use_runtime_helpers(tmp_path, browser):
     output = compile_js(tmp_path, '''10 PRINT MID$("ABCDE",2,3)
+15 PRINT MID$("ABCDE",3)
 20 PRINT LEFT$("ABCDE",2)
 30 PRINT RIGHT$("ABCDE",2)
 40 PRINT CHR$(65)
@@ -53,6 +54,13 @@ setTimeout(() => process.stdout.write(element.textContent), 20);
     assert result.returncode == 0, result.stderr
     assert not result.stderr
     lines = result.stdout.splitlines()
-    for expected in ["BCD", "AB", "DE", "A", "  !", "XXX", "FF", "10"]:
+    for expected in ["BCD", "CDE", "AB", "DE", "A", "  !", "XXX", "FF", "10"]:
         assert expected in lines
     assert any(line.strip() == "2" for line in lines)
+
+
+if __name__ == "__main__":
+    if NODE is None:
+        print("Node.js unavailable: JavaScript execution tests skipped")
+        sys.exit(2)
+    sys.exit(pytest.main([__file__, "-q", "-p", "no:cacheprovider"]))
