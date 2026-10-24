@@ -45,6 +45,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.uses_random = False
         self.uses_error_handling = False
         self.uses_file_io = False
+        self.uses_input_func = False  # INPUT$(n) / INPUT$(n, #f) function
 
         # DATA/READ/RESTORE support
         self.data_values: List[Any] = []
@@ -314,9 +315,17 @@ class JavaScriptBackend(CodeGenBackend):
             return
         visited.add(node_id)
 
-        if isinstance(node, FunctionCallNode) and node.name.lower() == 'rnd':
-            self.uses_random = True
-            return
+        if isinstance(node, FunctionCallNode):
+            fname = node.name.lower()
+            if fname == 'rnd':
+                self.uses_random = True
+            elif fname in ('input$', 'input'):
+                self.uses_input_func = True
+                # INPUT$(n, #f) reads an open file, so it needs the file helpers
+                if len(node.arguments) > 1:
+                    self.uses_file_io = True
+            elif fname in ('eof', 'lof', 'loc'):
+                self.uses_file_io = True
 
         # Recursively check children
         if hasattr(node, '__dict__'):
@@ -1450,6 +1459,61 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '}')
         code.append('')
 
+        # INPUT$ function
+        if self.uses_input_func:
+            code.append(self.indent() + '// INPUT$(n) / INPUT$(n, #f) - read n characters, no echo, no Enter')
+            code.append(self.indent() + '// Keyboard: characters already in _inkey_buffer come first, then the host is asked.')
+            code.append(self.indent() + '// The generated program is synchronous, so Node reads stdin with fs.readSync (it blocks)')
+            code.append(self.indent() + '// and a browser, which cannot wait for keys, asks the missing ones with window.prompt.')
+            code.append(self.indent() + 'function _input_chars(n, filenum) {')
+            code.append(self.indent() + '    n = Math.trunc(n);')
+            code.append(self.indent() + '    if (n < 1 || n > 255) _error("Illegal function call");')
+            code.append(self.indent() + '    if (filenum !== undefined) {')
+            code.append(self.indent() + '        const file = _files[filenum];')
+            code.append(self.indent() + '        if (!file) _error("File #" + filenum + " not open");')
+            code.append(self.indent() + '        if (file.mode !== "I") _error("Bad file mode");')
+            code.append(self.indent() + '        if (file.pos + n > file.content.length) {')
+            code.append(self.indent() + '            file.pos = file.content.length;')
+            code.append(self.indent() + '            _error("Input past end");')
+            code.append(self.indent() + '        }')
+            code.append(self.indent() + '        const text = file.content.substr(file.pos, n);')
+            code.append(self.indent() + '        file.pos += n;')
+            code.append(self.indent() + '        return text;')
+            code.append(self.indent() + '    }')
+            code.append(self.indent() + '    let out = "";')
+            code.append(self.indent() + '    while (out.length < n) {')
+            code.append(self.indent() + '        if (_inkey_buffer.length === 0) _fill_keys(n - out.length);')
+            code.append(self.indent() + '        const take = _inkey_buffer.slice(0, n - out.length);')
+            code.append(self.indent() + '        _inkey_buffer = _inkey_buffer.slice(take.length);')
+            code.append(self.indent() + '        if (take.indexOf("\\x03") >= 0) _error("Break");')
+            code.append(self.indent() + '        out += take;')
+            code.append(self.indent() + '    }')
+            code.append(self.indent() + '    return out;')
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'function _fill_keys(want) {')
+            code.append(self.indent() + '    if (typeof window !== "undefined") {')
+            code.append(self.indent() + '        const r = window.prompt("INPUT$: enter " + want + " character(s)");')
+            code.append(self.indent() + '        if (r === null || r === "") _error("Break");')
+            code.append(self.indent() + '        _inkey_buffer += r;')
+            code.append(self.indent() + '        return;')
+            code.append(self.indent() + '    }')
+            code.append(self.indent() + '    const fs = require("fs");')
+            code.append(self.indent() + '    const buf = Buffer.alloc(want);')
+            code.append(self.indent() + '    for (;;) {')
+            code.append(self.indent() + '        let got = 0;')
+            code.append(self.indent() + '        try {')
+            code.append(self.indent() + '            got = fs.readSync(0, buf, 0, want, null);')
+            code.append(self.indent() + '        } catch (e) {')
+            code.append(self.indent() + '            if (e.code === "EAGAIN") continue;  // stdin not ready yet: keep waiting')
+            code.append(self.indent() + '            if (e.code === "EOF") got = 0; else throw e;')
+            code.append(self.indent() + '        }')
+            code.append(self.indent() + '        if (got === 0) _error("Input past end");')
+            code.append(self.indent() + '        _inkey_buffer += buf.toString("latin1", 0, got);')
+            code.append(self.indent() + '        return;')
+            code.append(self.indent() + '    }')
+            code.append(self.indent() + '}')
+            code.append('')
+
         return code
 
     def _format_data_array(self) -> str:
@@ -1996,6 +2060,7 @@ class JavaScriptBackend(CodeGenBackend):
             'usr': '_usr',
             # Input
             'inkey$': '_inkey',
+            'input$': '_input_chars',
         }
 
         # Lexer token names can omit the BASIC string-function suffix.
