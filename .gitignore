@@ -66,3 +66,6 @@ docs/googlec3ad2b05409cea07.html
 # Deployment - filled-in configs (templates are in deployment/)
 /k8s/
 /config/multiuser.json
+
+# Agent worktrees (Claude Code workflows)
+.claude/worktrees/
