@@ -9,12 +9,313 @@ Generates JavaScript code from BASIC programs that runs in:
 Generated code uses a switch-based control flow system for GOTO/GOSUB.
 """
 
+import json
 from typing import List, Dict, Set, Optional, Any
 from src.ast_nodes import *
 from src.semantic_analyzer import SymbolTable, VarType
 from src.codegen_backend import CodeGenBackend
 from src.tokens import TokenType
+from src.number_format import (numeric_digits, to_single, INTEGER_DIGITS,
+                               SINGLE_DIGITS, DOUBLE_DIGITS)
 
+
+JS_NUMBER_RUNTIME = r'''
+// ===== MBASIC number formatting (port of src/number_format.py) =====
+// digits: 0 = INTEGER, 6 = single, 16 = double. The caller knows the type of
+// the expression; the value alone cannot say.
+function _round_digits(ds, exp, n) {
+    // Round a decimal digit string half up to n significant digits.
+    if (ds.length > n) {
+        const up = ds.charCodeAt(n) >= 53;
+        const head = ds.slice(0, n).split("").map(Number);
+        if (up) {
+            let i = n - 1;
+            while (i >= 0) {
+                if (head[i] === 9) { head[i] = 0; i--; } else { head[i]++; break; }
+            }
+            if (i < 0) { head.unshift(1); head.pop(); exp++; }
+        }
+        ds = head.join("");
+    }
+    ds = ds.replace(/0+$/, "");
+    return [ds === "" ? "0" : ds, exp];
+}
+function _sig_digits(a, digits) {
+    // The digits of a > 0 rounded to 6 (single) or 16 (double) significant figures, as [digit string, exponent].
+    // A single is rounded twice - to the 7 digits MBASIC's conversion makes, then to the 6 printed - starting
+    // from its shortest decimal form. A double is rounded once, from its exact binary value.
+    const m = /^(\d)(?:\.(\d+))?e([+-]\d+)$/.exec(digits === 6 ? a.toExponential() : a.toExponential(digits - 1));
+    let ds = m[1] + (m[2] || ""), exp = parseInt(m[3], 10);
+    if (digits === 6) [ds, exp] = _round_digits(ds, exp, 7);
+    return _round_digits(ds, exp, digits);
+}
+function _fmt_num(v, digits) {
+    if (v === true) v = -1; else if (v === false) v = 0;
+    if (digits === 0) return String(Math.trunc(v) + 0);
+    if (v !== v || v === Infinity || v === -Infinity) return String(v);
+    if (v === 0) return "0";
+    const neg = v < 0;
+    const [ds, exp] = _sig_digits(Math.abs(v), digits);
+    const sig = ds.length;
+    const unscaled = exp >= 0 ? exp + 1 <= digits : (-exp - 1) + sig <= digits + 1;
+    let text;
+    if (unscaled) {
+        if (exp >= 0) {
+            text = sig <= exp + 1 ? ds + "0".repeat(exp + 1 - sig) : ds.slice(0, exp + 1) + "." + ds.slice(exp + 1);
+        } else {
+            text = "." + "0".repeat(-exp - 1) + ds;
+        }
+    } else {
+        text = ds[0] + (sig > 1 ? "." + ds.slice(1) : "") + (digits > 6 ? "D" : "E") +
+            (exp >= 0 ? "+" : "-") + String(Math.abs(exp)).padStart(2, "0");
+    }
+    return neg ? "-" + text : text;
+}
+function _fmt_print(v, digits) {
+    // As printed in a PRINT list: a leading space unless negative, a trailing space always.
+    const t = _fmt_num(v, digits);
+    return (t[0] === "-" ? "" : " ") + t + " ";
+}
+function _pstr(v, digits) {
+    return typeof v === "string" ? v : _fmt_print(v, digits);
+}
+function _sg(x) {
+    // Result of single-precision arithmetic: rounded to binary32. Whole numbers are left alone, as the interpreter does.
+    return typeof x === "number" && !Number.isInteger(x) ? Math.fround(x) : x;
+}
+function _round_half_away(n) {
+    return n < 0 ? -Math.floor(-n + 0.5) : Math.floor(n + 0.5);
+}
+'''
+
+JS_PRINT_RUNTIME = r'''
+// ===== PRINT: columns, zones, TAB and SPC =====
+let _col = 0;  // cursor column on the screen, 0-based
+function _advance(col, s) {
+    const i = s.lastIndexOf("\n");
+    return i < 0 ? col + s.length : s.length - i - 1;
+}
+// items: [0, value, digits] | [1, tabColumn] | [2, count]; seps: ";" "," or "\n" after each item.
+function _print_list(f, items, seps) {
+    for (let i = 0; i < items.length; i++) {
+        const it = items[i], sep = seps[i];
+        if (it[0] === 1) {
+            const target = _round_half_away(it[1]), col = _cur_col(f) + 1;
+            if (col < target) _emit(f, " ".repeat(target - col));
+        } else if (it[0] === 2) {
+            _emit(f, " ".repeat(Math.max(0, _round_half_away(it[1]))));
+        } else {
+            _emit(f, _pstr(it[1], it[2]));
+        }
+        if (sep === ",") {
+            const c = _cur_col(f);
+            _emit(f, " ".repeat((Math.floor(c / 14) + 1) * 14 - c));
+        }
+    }
+    const last = seps.length ? seps[seps.length - 1] : "\n";
+    if (last !== ";" && last !== ",") _emit(f, "\n");
+}
+'''
+
+JS_PRINT_FILES = r'''
+function _cur_col(f) {
+    if (f === null || f === undefined) return _col;
+    const file = _files[f];
+    if (!file || typeof file.content !== "string") return 0;
+    return file.content.length - (file.content.lastIndexOf("\n") + 1);
+}
+function _emit(f, s) {
+    if (f === null || f === undefined) _print(s, false); else _fprint(f, s, false);
+}
+'''
+
+JS_PRINT_SCREEN = r'''
+function _cur_col(f) { return _col; }
+function _emit(f, s) { _print(s, false); }
+'''
+
+JS_USING_RUNTIME = r'''
+// ===== PRINT USING (port of UsingFormatter in src/basic_builtins.py) =====
+function _using_parse_numeric(fmt, start) {
+    const spec = {digit_count: 0, has_decimal: false, digits_after_decimal: 0, leading_sign: false,
+        trailing_sign: false, trailing_minus_only: false, dollar_sign: false, asterisk_fill: false,
+        comma: false, exponential: false, end_pos: start};
+    let i = start;
+    if (fmt.substr(i, 3) === "**$") { spec.asterisk_fill = true; spec.dollar_sign = true; spec.digit_count += 3; i += 3; }
+    else if (fmt.substr(i, 2) === "**") { spec.asterisk_fill = true; spec.digit_count += 2; i += 2; }
+    else if (fmt.substr(i, 2) === "$$") { spec.dollar_sign = true; spec.digit_count += 2; i += 2; }
+    else if (fmt[i] === "+") { spec.leading_sign = true; i += 1; }
+    let decimal_found = false;
+    while (i < fmt.length) {
+        const ch = fmt[i];
+        if (ch === "#") { spec.digit_count++; if (decimal_found) spec.digits_after_decimal++; i++; }
+        else if (ch === ".") { if (!decimal_found) { spec.has_decimal = true; decimal_found = true; i++; } else break; }
+        else if (ch === ",") { spec.comma = true; spec.digit_count++; i++; }
+        else break;
+    }
+    if (fmt.substr(i, 4) === "^^^^") { spec.exponential = true; i += 4; }
+    if (i < fmt.length && !spec.leading_sign) {
+        if (fmt[i] === "+") { spec.trailing_sign = true; i++; }
+        else if (fmt[i] === "-") { spec.trailing_minus_only = true; i++; }
+    }
+    spec.end_pos = i;
+    spec.lead = spec.digit_count - spec.digits_after_decimal + (spec.leading_sign ? 1 : 0);
+    spec.trail = spec.has_decimal ? spec.digits_after_decimal + 1 : 0;
+    return spec;
+}
+function _using_parse(fmt) {
+    const fields = [];
+    let i = 0;
+    while (i < fmt.length) {
+        const ch = fmt[i];
+        if (ch === "_" && i + 1 < fmt.length) { fields.push({kind: "literal", text: fmt[i + 1]}); i += 2; continue; }
+        if (ch === "!") { fields.push({kind: "string", type: "first"}); i++; continue; }
+        if (ch === "&") { fields.push({kind: "string", type: "full"}); i++; continue; }
+        if (ch === "\\") {
+            let j = i + 1, spaces = 0;
+            while (j < fmt.length && fmt[j] === " ") { spaces++; j++; }
+            if (j < fmt.length && fmt[j] === "\\") {
+                fields.push({kind: "string", type: "fixed", width: 2 + spaces});
+                i = j + 1;
+            } else {
+                fields.push({kind: "literal", text: ch});
+                i++;
+            }
+            continue;
+        }
+        if ("#.+-".includes(ch) || (ch === "*" && i + 1 < fmt.length && "*$".includes(fmt[i + 1])) ||
+            (ch === "$" && i + 1 < fmt.length && fmt[i + 1] === "$")) {
+            const spec = _using_parse_numeric(fmt, i);
+            if (spec.digit_count) { spec.kind = "numeric"; fields.push(spec); i = spec.end_pos; continue; }
+            fields.push({kind: "literal", text: ch});
+            i++;
+            continue;
+        }
+        fields.push({kind: "literal", text: ch});
+        i++;
+    }
+    return fields;
+}
+// The magnitude of v as [digits, exp10] (digits[0] has weight 10^exp), rounded the way PRINT rounds.
+function _using_magnitude(v, digits) {
+    const a = Math.abs(digits === 0 ? Math.trunc(v) : v);
+    if (a === 0) return ["0", 0];
+    if (digits === 0) {
+        const m = /^(\d)(?:\.(\d+))?e([+-]\d+)$/.exec(a.toExponential());
+        return [(m[1] + (m[2] || "")).replace(/0+$/, ""), parseInt(m[3], 10)];
+    }
+    return _sig_digits(a, digits);
+}
+// Round [ds, exp] to `decimals` places: returns [int digits without leading zeros, fraction digits].
+function _using_fixed(ds, exp, decimals) {
+    let ip, fp;
+    if (exp >= 0) { ip = ds.slice(0, exp + 1).padEnd(exp + 1, "0"); fp = ds.slice(exp + 1); }
+    else { ip = "0"; fp = "0".repeat(-exp - 1) + ds; }
+    if (fp.length > decimals) {
+        const up = fp.charCodeAt(decimals) >= 53;
+        fp = fp.slice(0, decimals);
+        if (up) {
+            let all = (BigInt(ip + fp) + 1n).toString().padStart(ip.length + decimals, "0");
+            ip = all.slice(0, all.length - decimals);
+            fp = all.slice(all.length - decimals);
+        }
+    } else {
+        fp = fp.padEnd(decimals, "0");
+    }
+    return [ip.replace(/^0+/, ""), fp];
+}
+function _using_commas(s) {
+    let out = "";
+    for (let i = 0; i < s.length; i++) {
+        if (i > 0 && (s.length - i) % 3 === 0) out += ",";
+        out += s[i];
+    }
+    return out;
+}
+function _using_number(v, spec, digits) {
+    const lead = spec.lead, trail = spec.trail, decimals = trail ? trail - 1 : 0;
+    if (lead + trail > 24) _error("Illegal function call");
+    if (v !== v || v === Infinity || v === -Infinity) return String(v);
+    const negative = v < 0;
+    let [ds, exp] = _using_magnitude(v, digits);
+    let int_str, frac_str, suffix = "";
+    if (spec.exponential) {
+        const trailing = spec.trailing_sign || spec.trailing_minus_only;
+        const int_digits = Math.max(0, trailing ? lead : lead - 1);
+        let exponent = 0;
+        if (ds !== "0") {
+            exponent = exp + 1 - int_digits;
+            [int_str, frac_str] = _using_fixed(ds, exp - exponent, decimals);
+            if (int_str.length > int_digits) {
+                // Rounding 9.99 in a one-digit mantissa carries into 10.0.
+                const all = int_str + frac_str;
+                const nz = all.search(/[^0]/);
+                const ds2 = all.slice(nz).replace(/0+$/, "") || "0";
+                [int_str, frac_str] = _using_fixed(ds2, int_str.length - 1 - nz - 1, decimals);
+                exponent += 1;
+            }
+        } else {
+            [int_str, frac_str] = _using_fixed("0", 0, decimals);
+        }
+        suffix = (digits > 6 ? "D" : "E") + (exponent >= 0 ? "+" : "-") + String(Math.abs(exponent)).padStart(2, "0");
+    } else {
+        [int_str, frac_str] = _using_fixed(ds, exp, decimals);
+        if (spec.comma) int_str = _using_commas(int_str);
+    }
+    // Lay the digits, sign, dollar and fill into the field.
+    const trailing_sign = spec.trailing_sign || spec.trailing_minus_only;
+    const sign_slot = !trailing_sign && (negative || spec.leading_sign);
+    let needed = int_str.length + (spec.dollar_sign ? 1 : 0) + (sign_slot ? 1 : 0);
+    if (!int_str && needed + 1 <= lead) { int_str = "0"; needed += 1; }
+    const body = int_str + (trail ? "." + frac_str : "") + suffix;
+    const sign = sign_slot ? (negative ? "-" : "+") : "";
+    let out;
+    if (needed > lead) {
+        out = "%" + sign + (spec.dollar_sign ? "$" : "") + body;
+    } else {
+        const content = sign + (spec.dollar_sign ? "$" : "") + body;
+        out = (spec.asterisk_fill ? "*" : " ").repeat(Math.max(0, lead + trail + suffix.length - content.length)) + content;
+    }
+    if (spec.trailing_sign) out += negative ? "-" : "+";
+    else if (spec.trailing_minus_only) out += negative ? "-" : " ";
+    return out;
+}
+function _using_string(v, f) {
+    v = String(v);
+    if (f.type === "first") return v ? v[0] : " ";
+    if (f.type === "full") return v;
+    return v.length >= f.width ? v.slice(0, f.width) : v.padEnd(f.width, " ");
+}
+function _print_using(fmt, values, digits) {
+    if (!fmt) _error("Illegal function call");
+    const fields = _using_parse(fmt);
+    const has_field = fields.some(f => f.kind !== "literal");
+    let result = "", idx = 0;
+    outer:
+    for (;;) {
+        for (const f of fields) {
+            if (f.kind === "literal") { result += f.text; continue; }
+            if (idx >= values.length) break outer;
+            if (f.kind === "string") {
+                result += _using_string(values[idx], f);
+            } else {
+                let v = values[idx];
+                if (typeof v === "string") { v = parseFloat(v); if (v !== v) v = 0; }
+                else if (v === true) v = -1; else if (v === false) v = 0;
+                result += _using_number(v, f, digits[idx] === undefined ? 6 : digits[idx]);
+            }
+            idx++;
+        }
+        if (idx >= values.length || !has_field) break;
+    }
+    return [result, values.length > 0 && !has_field];
+}
+function _print_using_stmt(f, fmt, values, digits, trailing) {
+    const [text, bad] = _print_using(fmt, values, digits);
+    _emit(f, text + (trailing ? "" : "\n"));
+    if (bad) _error("Illegal function call");
+}
+'''
 
 JS_FILL_KEYS = r'''
 function _fill_keys(want, soft) {
@@ -587,10 +888,15 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '}')
         code.append('')
 
+        for line in (JS_NUMBER_RUNTIME + JS_PRINT_RUNTIME + (JS_PRINT_FILES if self.uses_file_io else JS_PRINT_SCREEN)).strip('\n').split('\n'):
+            code.append(self.indent() + line if line else '')
+        code.append('')
+
         # Print function
         code.append(self.indent() + 'function _print(str, newline = true) {')
         self.indent_level += 1
         code.append(self.indent() + 'const s = String(str);')
+        code.append(self.indent() + '_col = newline ? 0 : _advance(_col, s);')
         code.append(self.indent() + 'if (typeof window !== "undefined") {')
         self.indent_level += 1
         code.append(self.indent() + '// Browser')
@@ -620,78 +926,9 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '}')
         code.append('')
 
-        # PRINT USING function (simplified)
-        code.append(self.indent() + 'function _print_using(format, values) {')
-        self.indent_level += 1
-        code.append(self.indent() + '// Simplified PRINT USING - handles basic numeric and string formatting')
-        code.append(self.indent() + 'let result = "";')
-        code.append(self.indent() + 'let valueIdx = 0;')
-        code.append(self.indent() + 'let i = 0;')
-        code.append(self.indent() + 'while (i < format.length) {')
-        self.indent_level += 1
-        code.append(self.indent() + 'const ch = format[i];')
-        code.append(self.indent() + 'if (ch === "#") {')
-        self.indent_level += 1
-        code.append(self.indent() + '// Numeric field - count # symbols')
-        code.append(self.indent() + 'let fieldWidth = 0;')
-        code.append(self.indent() + 'let decimals = 0;')
-        code.append(self.indent() + 'let sawDecimal = false;')
-        code.append(self.indent() + 'while (i < format.length && (format[i] === "#" || format[i] === ".")) {')
-        self.indent_level += 1
-        code.append(self.indent() + 'if (format[i] === ".") sawDecimal = true;')
-        code.append(self.indent() + 'else if (sawDecimal) decimals++;')
-        code.append(self.indent() + 'else fieldWidth++;')
-        code.append(self.indent() + 'i++;')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
-        code.append(self.indent() + 'if (valueIdx < values.length) {')
-        self.indent_level += 1
-        code.append(self.indent() + 'const val = Number(values[valueIdx++]);')
-        code.append(self.indent() + 'result += val.toFixed(decimals).padStart(fieldWidth + decimals + (decimals > 0 ? 1 : 0));')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
-        code.append(self.indent() + 'continue;')
-        self.indent_level -= 1
-        code.append(self.indent() + '} else if (ch === "!" && valueIdx < values.length) {')
-        self.indent_level += 1
-        code.append(self.indent() + '// First character of string')
-        code.append(self.indent() + 'result += String(values[valueIdx++]).charAt(0);')
-        code.append(self.indent() + 'i++;')
-        code.append(self.indent() + 'continue;')
-        self.indent_level -= 1
-        code.append(self.indent() + '} else if (ch === "&" && valueIdx < values.length) {')
-        self.indent_level += 1
-        code.append(self.indent() + '// Entire string')
-        code.append(self.indent() + 'result += String(values[valueIdx++]);')
-        code.append(self.indent() + 'i++;')
-        code.append(self.indent() + 'continue;')
-        self.indent_level -= 1
-        code.append(self.indent() + '} else if (ch === "\\\\" && i + 1 < format.length && format[i + 1] === "\\\\") {')
-        self.indent_level += 1
-        code.append(self.indent() + '// String field \\\\...\\\\')
-        code.append(self.indent() + 'let width = 2;')
-        code.append(self.indent() + 'i += 2;')
-        code.append(self.indent() + 'while (i < format.length && format[i] !== "\\\\") { width++; i++; }')
-        code.append(self.indent() + 'if (i < format.length) i++;')
-        code.append(self.indent() + 'if (valueIdx < values.length) {')
-        self.indent_level += 1
-        code.append(self.indent() + 'result += String(values[valueIdx++]).substring(0, width);')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
-        code.append(self.indent() + 'continue;')
-        self.indent_level -= 1
-        code.append(self.indent() + '} else {')
-        self.indent_level += 1
-        code.append(self.indent() + '// Literal character')
-        code.append(self.indent() + 'result += ch;')
-        code.append(self.indent() + 'i++;')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
-        code.append(self.indent() + 'return result;')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
+        # PRINT USING
+        for line in JS_USING_RUNTIME.strip('\n').split('\n'):
+            code.append(self.indent() + line if line else '')
         code.append('')
 
         # Math functions
@@ -707,20 +944,19 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'const _exp = Math.exp;')
         code.append(self.indent() + 'function _sgn(n) { return n > 0 ? 1 : n < 0 ? -1 : 0; }')
         code.append(self.indent() + 'function _fix(n) { return n >= 0 ? Math.floor(n) : Math.ceil(n); }')
-        code.append(self.indent() + 'function _cint(n) { return Math.round(n); }')
         code.append(self.indent() + 'function _csng(n) { return Math.fround(n); }  // Single precision via ES6')
         code.append(self.indent() + 'function _cdbl(n) { return n; }  // Double precision (already JS number)')
         code.append('')
         code.append(self.indent() + '// Type coercion for DEFINT/DEFSNG/DEFDBL variable assignment')
         code.append(self.indent() + 'function _toInt(n) {')
         self.indent_level += 1
-        code.append(self.indent() + '// BASIC INTEGER: truncate toward zero, clamp to -32768..32767')
-        code.append(self.indent() + 'n = n >= 0 ? Math.floor(n) : Math.ceil(n);')
-        code.append(self.indent() + 'if (n > 32767) return 32767;')
-        code.append(self.indent() + 'if (n < -32768) return -32768;')
-        code.append(self.indent() + 'return n;')
+        code.append(self.indent() + '// BASIC INTEGER: round to nearest (halves away from zero); outside -32768..32767 is Overflow')
+        code.append(self.indent() + 'n = _round_half_away(n);')
+        code.append(self.indent() + 'if (n > 32767 || n < -32768) _error("Overflow");')
+        code.append(self.indent() + 'return n + 0;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _cint(n) { return _toInt(n); }')
         code.append(self.indent() + 'function _toSingle(n) { return Math.fround(n); }  // ES6 single-precision')
         code.append(self.indent() + 'function _toDouble(n) { return n; }  // JS Number is already 64-bit double')
         code.append('')
@@ -760,7 +996,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'function _len(str) { return String(str).length; }')
         code.append(self.indent() + 'function _chr(n) { return String.fromCharCode(n); }')
         code.append(self.indent() + 'function _asc(str) { return String(str).charCodeAt(0) || 0; }')
-        code.append(self.indent() + 'function _str(n) { return " " + n; }')
+        code.append(self.indent() + 'function _str(n, d = 6) { const t = _fmt_num(n, d); return n >= 0 ? " " + t : t; }')
         code.append(self.indent() + 'function _val(str) { return parseFloat(String(str).trim()) || 0; }')
         code.append(self.indent() + 'function _instr(start, str1, str2) {')
         self.indent_level += 1
@@ -802,7 +1038,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.indent_level += 1
         code.append(self.indent() + '// POS(0) - current print position (1-based)')
         code.append(self.indent() + '// Note: Simplified - would need to track actual cursor position')
-        code.append(self.indent() + 'return _print_pos + 1;')
+        code.append(self.indent() + 'return _col + 1;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
         code.append('')
@@ -831,22 +1067,13 @@ class JavaScriptBackend(CodeGenBackend):
             code.append('')
 
         # WRITE function
-        if self.uses_write:
+        if True:  # small, and WRITE can hide in an IF clause the scan does not enter
             code.append(self.indent() + '// WRITE function - format values for CSV output')
-            code.append(self.indent() + 'function _write_format(value) {')
+            code.append(self.indent() + 'function _write_format(value, digits = 6) {')
             self.indent_level += 1
-            code.append(self.indent() + '// Strings are quoted, numbers are unquoted')
-            code.append(self.indent() + 'if (typeof value === "string") {')
-            self.indent_level += 1
-            code.append(self.indent() + '// Quote strings and escape internal quotes')
-            code.append(self.indent() + 'return \'"\' + String(value).replace(/"/g, \'\\\\"\') + \'"\';')
-            self.indent_level -= 1
-            code.append(self.indent() + '} else {')
-            self.indent_level += 1
-            code.append(self.indent() + '// Numbers are unquoted')
-            code.append(self.indent() + 'return String(value);')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
+            code.append(self.indent() + '// Strings are quoted, numbers are unquoted and unpadded')
+            code.append(self.indent() + 'if (typeof value === "string") return \'"\' + value + \'"\';')
+            code.append(self.indent() + 'return _fmt_num(value, digits);')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append('')
@@ -1936,61 +2163,42 @@ class JavaScriptBackend(CodeGenBackend):
 
         return code
 
+    @staticmethod
+    def _js_digits(expr) -> int:
+        """Digits argument of the JS number formatters: 0 for INTEGER, else 6 or 16."""
+        digits = numeric_digits(expr)
+        return 0 if digits == INTEGER_DIGITS else digits
+
     def _generate_print(self, stmt: PrintStatementNode) -> List[str]:
-        """Generate PRINT statement"""
-        code = []
+        """Generate PRINT statement.
 
-        # Choose print function based on file number
-        if stmt.file_number:
-            filenum_expr = self._generate_expression(stmt.file_number)
-            print_func = f'_fprint({filenum_expr}, '
-        else:
-            print_func = '_print('
-
-        if not stmt.expressions:
-            # Empty PRINT - just newline
-            code.append(self.indent() + f'{print_func}"");')
-        else:
-            for i, expr in enumerate(stmt.expressions):
-                is_last = (i == len(stmt.expressions) - 1)
-                separator = stmt.separators[i] if i < len(stmt.separators) else None
-
-                expr_code = self._generate_expression(expr)
-
-                # Determine if we should add a newline
-                # Newline if last item and no separator (None or '\n' means end of statement)
-                newline = 'true' if (is_last and separator in (None, '\n')) else 'false'
-
-                code.append(self.indent() + f'{print_func}{expr_code}, {newline});')
-
-                # Handle separator (comma for tab, semicolon for no space)
-                if separator == ',':
-                    code.append(self.indent() + f'{print_func}"\\t", false);')
-                elif separator == ';':
-                    # Semicolon means no space - already handled
-                    pass
-
-        return code
+        The whole item list goes to the _print_list runtime function, which
+        formats numbers the MBASIC way and tracks the cursor column for the
+        comma zones, TAB and SPC.
+        """
+        items = []
+        seps = []
+        for i, expr in enumerate(stmt.expressions):
+            sep = stmt.separators[i] if i < len(stmt.separators) else '\n'
+            seps.append(sep or '\n')
+            name = getattr(expr, 'name', '').lower() if isinstance(expr, FunctionCallNode) else ''
+            if name in ('tab', 'spc') and len(expr.arguments) == 1:
+                kind = 1 if name == 'tab' else 2
+                items.append(f'[{kind}, {self._generate_expression(expr.arguments[0])}]')
+            else:
+                items.append(f'[0, {self._generate_expression(expr)}, {self._js_digits(expr)}]')
+        filenum = self._generate_expression(stmt.file_number) if stmt.file_number else 'null'
+        sep_js = '[' + ', '.join(json.dumps(x) for x in seps) + ']'
+        return [self.indent() + f'_print_list({filenum}, [{", ".join(items)}], {sep_js});']
 
     def _generate_print_using(self, stmt: PrintUsingStatementNode) -> List[str]:
         """Generate PRINT USING statement"""
-        code = []
-
-        # Skip file I/O for now
-        if stmt.file_number:
-            code.append(self.indent() + '// PRINT #file, USING not supported')
-            return code
-
+        filenum = self._generate_expression(stmt.file_number) if stmt.file_number else 'null'
         format_expr = self._generate_expression(stmt.format_string)
-
-        # Generate array of expressions to format
-        expr_codes = [self._generate_expression(expr) for expr in stmt.expressions]
-        expr_array = '[' + ', '.join(expr_codes) + ']'
-
-        # Call _print_using runtime function
-        code.append(self.indent() + f'_print(_print_using({format_expr}, {expr_array}));')
-
-        return code
+        values = ', '.join(self._generate_expression(expr) for expr in stmt.expressions)
+        digits = ', '.join(str(self._js_digits(expr)) for expr in stmt.expressions)
+        trailing = 'true' if getattr(stmt, 'trailing_separator', False) else 'false'
+        return [self.indent() + f'_print_using_stmt({filenum}, {format_expr}, [{values}], [{digits}], {trailing});']
 
     def _generate_let(self, stmt: LetStatementNode) -> List[str]:
         """Generate LET statement (assignment)"""
@@ -2062,7 +2270,10 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_expression(self, expr) -> str:
         """Generate JavaScript expression"""
         if isinstance(expr, NumberNode):
-            return str(expr.value)
+            value = expr.value
+            if isinstance(value, float) and numeric_digits(expr) == SINGLE_DIGITS:
+                value = to_single(value)    # a single-precision literal holds 24 bits
+            return repr(value) if isinstance(value, float) else str(value)
         elif isinstance(expr, StringNode):
             return f'"{self._escape_string(expr.value)}"'
         elif isinstance(expr, VariableNode):
@@ -2083,6 +2294,8 @@ class JavaScriptBackend(CodeGenBackend):
 
             # Map BASIC operators to JavaScript
             if op == '^':
+                if numeric_digits(expr) == SINGLE_DIGITS:
+                    return f'_sg(Math.pow({left}, {right}))'
                 return f'Math.pow({left}, {right})'
             elif op == '//':
                 # Integer division truncates toward zero in MBASIC, so -10 \ 3
@@ -2098,20 +2311,27 @@ class JavaScriptBackend(CodeGenBackend):
                     js_op = '!=='
                 else:
                     js_op = op
+                if op in ('+', '-', '*', '/') and numeric_digits(expr) == SINGLE_DIGITS:
+                    return f'_sg({left} {js_op} {right})'
+                if op not in ('+', '-', '*', '/'):
+                    # A comparison is -1 for true and 0 for false in BASIC
+                    return f'(({left} {js_op} {right}) ? -1 : 0)'
                 return f'({left} {js_op} {right})'
             elif op == 'AND':
                 return f'({left} && {right})'
             elif op == 'OR':
                 return f'({left} || {right})'
             elif op == 'NOT':
-                return f'(!{right})'
+                return f'(-({right}) - 1)'  # NOT is bitwise: -1 for 0, 0 for -1
             elif op == '%':  # MOD
-                return f'({left} % {right})'
+                return f'(_round_half_away({left}) % _round_half_away({right}))'
             else:
                 return f'({left} {op} {right})'
         elif isinstance(expr, UnaryOpNode):
             operand = self._generate_expression(expr.operand)
             op = self._token_to_operator(expr.operator)
+            if op == 'NOT':
+                return f'(-({operand}) - 1)'  # bitwise: -1 for 0, 0 for -1
             return f'({op}{operand})'
         elif isinstance(expr, FunctionCallNode):
             return self._generate_function_call(expr)
@@ -2193,8 +2413,17 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Lexer token names can omit the BASIC string-function suffix.
         js_func = js_func_map.get(func_name, js_func_map.get(func_name + "$", func_name))
+        if js_func == '_str' and func.arguments:
+            # STR$ formats like PRINT, so it needs the argument's type
+            args.append(str(self._js_digits(func.arguments[0])))
         call = f'{js_func}({", ".join(args)})'
-        return f'(await {call})' if js_func == '_input_chars' else call
+        if js_func == '_input_chars':
+            return f'(await {call})'
+        if func_name in ('sqr', 'sin', 'cos', 'tan', 'atn', 'log', 'exp', 'rnd') \
+                and numeric_digits(func) == SINGLE_DIGITS:
+            # MBASIC's maths functions return single precision
+            return f'_sg({call})'
+        return call
 
     def _generate_goto(self, stmt: GotoStatementNode) -> List[str]:
         """Generate GOTO statement"""
@@ -2515,8 +2744,8 @@ class JavaScriptBackend(CodeGenBackend):
         else:
             print_func = '_print('
 
-        # Build CSV output from expressions
-        # WRITE outputs: strings quoted, numbers unquoted, comma separated
+        # WRITE outputs: strings quoted, numbers in MBASIC format without
+        # padding spaces, comma separated
         if not stmt.expressions:
             # Empty WRITE - just newline
             code.append(self.indent() + f'{print_func}"");')
@@ -2524,8 +2753,7 @@ class JavaScriptBackend(CodeGenBackend):
             parts = []
             for expr in stmt.expressions:
                 expr_code = self._generate_expression(expr)
-                # Wrap expression in _write_format() to handle quoting
-                parts.append(f'_write_format({expr_code})')
+                parts.append(f'_write_format({expr_code}, {self._js_digits(expr)})')
 
             # Join with commas and print
             output = ' + "," + '.join(parts)
@@ -2557,7 +2785,7 @@ class JavaScriptBackend(CodeGenBackend):
                 # Newline if last item and no separator (None or '\n' means end of statement)
                 newline = 'true' if (is_last and separator in (None, '\n')) else 'false'
 
-                code.append(self.indent() + f'_lprint({expr_code}, {newline});')
+                code.append(self.indent() + f'_lprint(_pstr({expr_code}, {self._js_digits(expr)}), {newline});')
 
                 # Handle separator (comma for tab, semicolon for no space)
                 if separator == ',':

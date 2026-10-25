@@ -1313,27 +1313,27 @@ class Parser:
 
         expressions: List[ExpressionNode] = []
         separators: List[str] = []
+        after_expression = False    # was the last thing parsed an expression?
 
+        # separators[i] is the separator after expressions[i], so the two
+        # lists stay aligned. A separator with no expression in front of it
+        # (PRINT ,X and PRINT A,,B) gets an empty string to sit after, and two
+        # expressions side by side (PRINT "A" "B") get an implied ';'.
         while not self.at_end_of_line() and not self.match(TokenType.COLON) and not self.match(TokenType.ELSE) and not self.match(TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE):
             # Check for separator first
-            if self.match(TokenType.SEMICOLON):
-                separators.append(';')
+            if self.match(TokenType.SEMICOLON, TokenType.COMMA):
+                if not after_expression:
+                    expressions.append(StringNode(value="", line_num=token.line, column=token.column))
+                separators.append(';' if self.match(TokenType.SEMICOLON) else ',')
+                after_expression = False
                 self.advance()
-                # Check if more expressions follow
-                if self.at_end_of_line() or self.match(TokenType.COLON) or self.match(TokenType.ELSE) or self.match(TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE):
-                    break
-                continue
-            elif self.match(TokenType.COMMA):
-                separators.append(',')
-                self.advance()
-                # Check if more expressions follow
-                if self.at_end_of_line() or self.match(TokenType.COLON) or self.match(TokenType.ELSE) or self.match(TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE):
-                    break
                 continue
 
-            # Parse expression
+            if after_expression:
+                separators.append(';')
             expr = self.parse_expression()
             expressions.append(expr)
+            after_expression = True
 
         # Add newline if there's no trailing separator
         # Logic: After parsing N expressions, we have either N-1 or N separators.

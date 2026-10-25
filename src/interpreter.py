@@ -13,7 +13,8 @@ from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingForm
 from src.tokens import TokenType
 from src.pc import PC
 from src.win_console import win_flush_pending
-from src.number_format import (format_for_print, int_divide, int_modulo,
+from src.number_format import (format_for_print, format_number, int_divide, int_modulo,
+                               numeric_digits,
                                MBF_INFINITY_SINGLE, to_int_operand,
                                to_integer, to_single, coerce_to_type,
                                INTEGER_DIGITS, SINGLE_DIGITS, DOUBLE_DIGITS)
@@ -1094,136 +1095,13 @@ class Interpreter:
     # How many digits PRINT shows
     # ------------------------------------------------------------------
 
-    #: Functions whose result is not single precision. Everything else in
-    #: MBASIC's library returns single *by signature*, the way C's sqrtf does,
-    #: including SQR, SIN and the rest - PRINT SQR(2) gives 1.41421, not
-    #: 1.4142135623730951, and SQR(2#) is a single too.
-    #:
-    #: That is a typing rule, not emulated arithmetic: the value is computed by
-    #: libm in double and then rounded to binary32, so it is the correctly
-    #: rounded single rather than MBASIC's answer. It does mean a double
-    #: argument comes back with binary32 accuracy. See the "maths functions are
-    #: single" section of docs/dev/SINGLE_PRECISION.md, which says what to
-    #: change if that is ever not wanted.
-    _FUNCTION_PRECISION = {
-        'CDBL': DOUBLE_DIGITS, 'CVD': DOUBLE_DIGITS, 'VAL': DOUBLE_DIGITS,
-        'CINT': INTEGER_DIGITS, 'ASC': INTEGER_DIGITS, 'LEN': INTEGER_DIGITS,
-        'INSTR': INTEGER_DIGITS, 'CVI': INTEGER_DIGITS, 'POS': INTEGER_DIGITS,
-        'LPOS': INTEGER_DIGITS, 'PEEK': INTEGER_DIGITS, 'INP': INTEGER_DIGITS,
-        'LOC': INTEGER_DIGITS, 'LOF': INTEGER_DIGITS, 'EOF': INTEGER_DIGITS,
-        'VARPTR': INTEGER_DIGITS, 'FRE': INTEGER_DIGITS,
-    }
-
-    #: The maths library. On the real machine these are single by signature and
-    #: SQR(2#) comes back with 24 bits; here they follow their argument, so a
-    #: double argument is computed and returned in double. A deliberate
-    #: divergence - see docs/dev/SINGLE_PRECISION.md. The result is never
-    #: narrower than single: SQR of an integer is not an integer.
-    _ARGUMENT_TYPED = frozenset(
-        ('SQR', 'SIN', 'COS', 'TAN', 'ATN', 'LOG', 'EXP'))
-
     def _numeric_digits(self, expr):
         """Significant figures PRINT should show for this expression.
 
-        MBASIC decides by *type*, not by value: a single-precision 1/3 prints
-        as .333333 and a double-precision one as .3333333333333333. The type is
-        a static property of the expression, so it is read off the tree rather
-        than tracked through the arithmetic - which keeps the evaluator, and
-        every result it computes, exactly as it was.
-
-        Returns SINGLE_DIGITS, DOUBLE_DIGITS, or INTEGER_DIGITS (None).
+        The rules live in number_format.numeric_digits(), shared with the
+        JavaScript code generator.
         """
-        node = type(expr).__name__
-
-        if node == 'NumberNode':
-            return self._literal_digits(expr)
-
-        if node == 'VariableNode':
-            return self._suffix_digits(getattr(expr, 'type_suffix', None))
-
-        if node == 'BinaryOpNode':
-            # BASIC promotes to the wider of the two operands.
-            return self._wider(self._numeric_digits(expr.left),
-                               self._numeric_digits(expr.right))
-
-        if node == 'UnaryOpNode':
-            return self._numeric_digits(expr.operand)
-
-        if node == 'FunctionCallNode':
-            name = getattr(expr, 'name', '').upper().rstrip('$')
-            if name.startswith('FN'):
-                # A user-defined function is typed by its name, exactly like a
-                # variable: FNA is single and FNA# is double. The suffix is
-                # stripped from the name for lookup, so it is read from the
-                # node - see FunctionCallNode.
-                return self._suffix_digits(getattr(expr, 'type_suffix', None))
-            if name in self._FUNCTION_PRECISION:
-                return self._FUNCTION_PRECISION[name]
-            if name in ('INT', 'FIX', 'ABS', 'SGN') and expr.arguments:
-                # These keep the type they were given, integers included.
-                return self._numeric_digits(expr.arguments[0])
-            if name in self._ARGUMENT_TYPED and expr.arguments:
-                # Single unless the argument is double - never an integer.
-                return self._wider(SINGLE_DIGITS,
-                                   self._numeric_digits(expr.arguments[0]))
-            return SINGLE_DIGITS
-
-        if node == 'ArrayAccessNode':
-            return self._suffix_digits(getattr(expr, 'type_suffix', None))
-
-        return SINGLE_DIGITS
-
-    @staticmethod
-    def _suffix_digits(suffix):
-        """Digits implied by a type suffix. No suffix means single (or
-        whatever DEFINT/DEFDBL made the default, which the parser has already
-        resolved into the suffix)."""
-        if suffix == '%':
-            return INTEGER_DIGITS
-        if suffix == '#':
-            return DOUBLE_DIGITS
-        return SINGLE_DIGITS
-
-    @staticmethod
-    def _literal_digits(expr):
-        """Digits implied by how a numeric literal was written.
-
-        A literal is double if it says so - a '#' suffix or a 'D' exponent -
-        or if it carries more than 7 significant figures. That is why
-        PRINT 1234567 gives 1.23457E+06 but PRINT 12345678 gives 12345678:
-        the first is single, the second is double.
-        """
-        # NumberNode.literal holds the source text where the lexer kept it -
-        # see Token.literal_text. Older nodes built elsewhere in the parser
-        # (line-number ranges, for instance) still carry the value, which
-        # str() renders harmlessly.
-        literal = str(getattr(expr, 'literal', '') or '').upper()
-        if literal.startswith('&'):
-            # A hex or octal constant is an integer, and the D in &HD1 is a
-            # digit rather than an exponent.
-            return SINGLE_DIGITS
-        if literal.endswith('!'):
-            return SINGLE_DIGITS            # explicitly single, however long
-        if '#' in literal or 'D' in literal:
-            return DOUBLE_DIGITS
-
-        # Otherwise count the significant figures the value carries: seven or
-        # fewer is single, more is double. That is MBASIC's rule applied to
-        # the value rather than to the typed text, which agrees except for a
-        # literal padded with trailing zeros (1000000.0 is eight typed digits
-        # but one significant one).
-        try:
-            mantissa = repr(float(getattr(expr, 'value', 0))).split('e')[0]
-        except (TypeError, ValueError):
-            return SINGLE_DIGITS
-        significant = mantissa.replace('-', '').replace('.', '').strip('0')
-        return DOUBLE_DIGITS if len(significant) > 7 else SINGLE_DIGITS
-
-    @staticmethod
-    def _wider(left, right):
-        """The wider of two precisions, INTEGER < SINGLE < DOUBLE."""
-        order = {INTEGER_DIGITS: 0, SINGLE_DIGITS: 1, DOUBLE_DIGITS: 2}
-        return left if order.get(left, 1) >= order.get(right, 1) else right
+        return numeric_digits(expr)
 
     def execute_print(self, stmt):
         """Execute PRINT statement - print to screen or file"""
@@ -2554,12 +2432,10 @@ class Interpreter:
             if isinstance(value, str):
                 # Quote strings
                 output_parts.append(f'"{value}"')
-            elif isinstance(value, float):
-                # Numbers without spaces
-                if value == int(value):
-                    output_parts.append(str(int(value)))
-                else:
-                    output_parts.append(str(value))
+            elif isinstance(value, (int, float)):
+                # Numbers in PRINT's format, minus the padding spaces
+                output_parts.append(
+                    format_number(value, self._numeric_digits(expr)))
             else:
                 output_parts.append(str(value))
 
@@ -3788,6 +3664,9 @@ class Interpreter:
         if func:
             # It's a builtin function
             args = [self.evaluate_expression(arg) for arg in expr.arguments]
+            if func_name == 'STR' and len(args) == 1:
+                # STR$ converts like PRINT, so the argument's type matters
+                return func(args[0], self._numeric_digits(expr.arguments[0]))
             return func(*args)
 
         # Not a builtin, check for user-defined function
