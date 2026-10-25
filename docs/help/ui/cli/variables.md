@@ -14,18 +14,18 @@ PRINT A; " = "; A  ' Show with label
 
 **Example session:**
 ```
-Ready
+Ok
 10 A = 5
 20 B = 10
 30 C$ = "Hello"
 RUN
-Ready
+Ok
 PRINT A
  5
-Ready
+Ok
 PRINT A, B, C$
  5            10           Hello
-Ready
+Ok
 ```
 
 ## Checking Variables During Debugging
@@ -33,7 +33,7 @@ Ready
 Add PRINT statements to your program to inspect variables:
 
 ```
-Ready
+Ok
 10 FOR I = 1 TO 5
 15   PRINT "Loop I="; I; "A="; A    ' Debug output
 20   A = A + I
@@ -46,7 +46,7 @@ Loop I= 3 A= 3
 Loop I= 4 A= 6
 Loop I= 5 A= 10
 Sum: 15
-Ready
+Ok
 PRINT I, A         ' Check final values after program ends
  6            15
 ```
@@ -93,7 +93,7 @@ Arrays require DIM and can be inspected element by element:
 30   ARR(I) = I * 10
 40 NEXT I
 RUN
-Ready
+Ok
 PRINT ARR(1), ARR(2), ARR(3)
  10           20           30
 ```
@@ -116,7 +116,7 @@ The CLI does not have a Variables Window feature. For visual variable inspection
 ## Example: Debugging with PRINT
 
 ```basic
-Ready
+Ok
 10 FOR I = 1 TO 10
 20   F = F + 1
 25   PRINT "DEBUG: I="; I; "F="; F; "N="; N
@@ -129,7 +129,7 @@ DEBUG: I= 2 F= 2 N= 1
 DEBUG: I= 3 F= 3 N= 3
 ...
 Result: 55
-Ready
+Ok
 PRINT I, F, N         ' Check final values
  11           10           55
 ```

@@ -1244,6 +1244,11 @@ class NiceGUIBackend(UIBackend):
                                       limits=create_local_limits(),
                                       file_io=sandboxed_file_io,
                                       filesystem_provider=self.sandboxed_fs)
+        # Commands typed in the immediate line (RENUM, DELETE, LOAD, ...) are
+        # carried out by this backend's cmd_* methods, as in the curses and Tk
+        # UIs. Without this they failed with "Illegal function call" until a
+        # program had been stepped.
+        self.interpreter.interactive_mode = self
 
         self.running = False
         self.paused = False
@@ -2098,6 +2103,180 @@ class NiceGUIBackend(UIBackend):
 
         self._set_status('Ready')
         self.io.output("New")
+
+    # ------------------------------------------------------------------
+    # Immediate-line commands (called through interpreter.interactive_mode)
+    #
+    # self.program is the source of truth; each command changes it, then
+    # refreshes the editor and the runtime. Files are the session's in-memory
+    # files (self.sandboxed_fs) - the server's disk is never touched.
+    # ------------------------------------------------------------------
+
+    def _refresh_editor(self) -> None:
+        """Show self.program in the editor and bring the runtime up to date."""
+        self.editor.value = '\n'.join(text for _num, text in self.program.get_lines())
+        self._sync_program_to_runtime()
+
+    def _program_file_name(self, filename):
+        """The in-memory file name for a file command, or None after saying why.
+
+        MBASIC adds .BAS when the name has no extension.
+        """
+        from src.error_codes import format_error_message, MISSING_OPERAND, BAD_FILE_NAME
+        if filename is None:
+            self._append_output(format_error_message(MISSING_OPERAND) + "\n")
+            return None
+        cleaned = filename.strip().strip('"').strip("'")
+        if not cleaned:
+            self._append_output(format_error_message(BAD_FILE_NAME) + "\n")
+            return None
+        return cleaned if '.' in Path(cleaned).name else cleaned + '.bas'
+
+    def _read_program_file(self, filename):
+        """The text of an in-memory file, or None after saying it is not found."""
+        from src.error_codes import format_error_message, FILE_NOT_FOUND
+        try:
+            handle = self.sandboxed_fs.open(filename, 'r')
+        except OSError:
+            self._append_output(format_error_message(FILE_NOT_FOUND) + "\n")
+            return None
+        try:
+            return handle.read()
+        finally:
+            handle.close()
+
+    def cmd_renum(self, args) -> None:
+        """RENUM typed in the immediate line. Like MBASIC, success prints nothing;
+        a reference to a missing line is reported as "Undefined line n in m"."""
+        from src.ui.ui_helpers import renum_program
+        messages = []
+        try:
+            renum_program(self.program, args, runtime=None, messages=messages)
+            self._refresh_editor()
+        except Exception as e:
+            self._append_output(message_for(e) + "\n")
+        for message in messages:
+            self._append_output(message + "\n")
+
+    def cmd_delete(self, args) -> None:
+        """DELETE typed in the immediate line. Prints nothing on success."""
+        from src.ui.ui_helpers import delete_lines_from_program
+        try:
+            delete_lines_from_program(self.program, args, runtime=None)
+            self._refresh_editor()
+        except Exception as e:
+            self._append_output(message_for(e) + "\n")
+
+    def cmd_load(self, filename) -> None:
+        """LOAD an in-memory file as the program."""
+        name = self._program_file_name(filename)
+        if name is None:
+            return
+        text = self._read_program_file(name)
+        if text is None:
+            return
+        success, errors = self.program.load_from_text(text, name)
+        for _line_num, error in errors:
+            self._append_output(error + "\n")
+        if success:
+            self.current_file = name
+        self._refresh_editor()
+
+    def cmd_save(self, filename) -> None:
+        """SAVE the program as an in-memory file."""
+        name = self._program_file_name(filename)
+        if name is None:
+            return
+        try:
+            handle = self.sandboxed_fs.open(name, 'w')
+            try:
+                for _num, text in self.program.get_lines():
+                    handle.write(text + '\n')
+            finally:
+                handle.close()
+            self.current_file = name
+        except Exception as e:
+            self._append_output(message_for(e) + "\n")
+
+    def cmd_merge(self, filename, quiet=False) -> None:
+        """MERGE an in-memory file into the program. MBASIC prints nothing."""
+        name = self._program_file_name(filename)
+        if name is None:
+            return
+        text = self._read_program_file(name)
+        if text is None:
+            return
+        success, errors, _added, _replaced = self.program.merge_from_text(text, name)
+        for _line_num, error in errors:
+            self._append_output(error + "\n")
+        if success:
+            self._refresh_editor()
+
+    def cmd_list(self, args="") -> None:
+        """LIST [start][-][end] typed in the immediate line."""
+        start = end = None
+        try:
+            if args:
+                if '-' in args:
+                    first, last = args.split('-', 1)
+                    start = int(first) if first.strip() else None
+                    end = int(last) if last.strip() else None
+                else:
+                    start = end = int(args)
+        except ValueError:
+            from src.error_codes import format_error_message, SYNTAX_ERROR
+            self._append_output(format_error_message(SYNTAX_ERROR) + "\n")
+            return
+        for num, text in self.program.get_lines():
+            if (start is None or num >= start) and (end is None or num <= end):
+                self._append_output(text + "\n")
+
+    def cmd_run(self, start_line=None) -> None:
+        """RUN typed in the immediate line.
+
+        Sets the program up as _menu_run does. The immediate line starts the
+        tick timer afterwards, because the interpreter has work.
+        """
+        from src.error_codes import format_error_message, UNDEFINED_LINE_NUMBER
+        if self.exec_timer:
+            self.exec_timer.cancel()
+            self.exec_timer = None
+        if start_line is not None and start_line not in self.program.line_asts:
+            self._append_output(format_error_message(UNDEFINED_LINE_NUMBER) + "\n")
+            return
+        self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
+        self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input,
+                                          keyboard=self.program_keyboard)
+        self.interpreter.io = self.exec_io
+        state = self.interpreter.start()
+        if state.error_info:
+            self._append_output(f"\n--- {state.error_info.message()} ---\n")
+            self.running = False
+            return
+        if start_line is not None:
+            self.runtime.pc = PC.from_line(start_line)
+        self.running = bool(self.program.lines)
+
+    def cmd_cont(self) -> None:
+        """CONT typed in the immediate line: resume at the saved PC.
+
+        The immediate line starts the tick timer afterwards.
+        """
+        from src.error_codes import format_error_message, CANT_CONTINUE
+        if self.runtime.pc.is_running():
+            self._append_output(format_error_message(CANT_CONTINUE) + "\n")
+            return
+        self.runtime.pc = self.runtime.pc.resume()
+        self.running = True
+        self.paused = False
+
+    def cmd_chain(self, *_args, **_kwargs) -> None:
+        """CHAIN is not available in the web UI (no program file to run on)."""
+        raise IOError("CHAIN is not available in the web UI")
+
+    def cmd_system(self) -> None:
+        """SYSTEM cannot end a shared server session."""
+        self.interpreter.file_io.system_exit()
 
     async def _menu_open(self):
         """File > Open - Load program from file."""

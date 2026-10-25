@@ -449,7 +449,9 @@ class InteractiveMode:
         if interactive_tty and self.program.current_file:
             print(f"Loaded from {self.program.current_file}")
             print("Type RUN to execute it, or LIST to view the program.")
-        print("Ready")
+        # MBASIC prints Ok at start-up, after every direct command (also after
+        # an error or a Break) and not after a numbered line.
+        self.io.output("Ok")
 
         while True:
             try:
@@ -489,7 +491,16 @@ class InteractiveMode:
                 if not line.strip():
                     continue
 
-                self.process_line(line)
+                try:
+                    self.process_line(line)
+                except KeyboardInterrupt:
+                    raise
+                except Exception as e:
+                    print_error(e)
+                    self.ctrl_c_count = 0
+                # Ok follows a direct command, also one that raised.
+                if not re.match(r'\s*\d', line):
+                    self._print_ok()
 
             except EOFError:
                 # Ctrl+D to exit
@@ -515,6 +526,11 @@ class InteractiveMode:
                 print_error(e)
                 # Reset Ctrl+C counter on other exceptions
                 self.ctrl_c_count = 0
+
+    def _print_ok(self):
+        """Print the Ok prompt line, on a fresh line when the cursor is not at column 0."""
+        self._end_partial_line()
+        self.io.output("Ok")
 
     def process_line(self, line):
         """Process a line of input (numbered line or direct command)"""
@@ -644,11 +660,10 @@ class InteractiveMode:
                     # Handle input synchronously for CLI
                     if state.input_prompt is not None:
                         try:
-                            value = input_without_history()
+                            value = interpreter.read_input_line()
                             state = interpreter.provide_input(value)
                         except KeyboardInterrupt:
-                            self.io.output("")
-                            self.io.output(f"Break in {state.current_line or '?'}")
+                            interpreter.break_at_input()
                             return
                         except EOFError:
                             self.io.output("")
@@ -700,6 +715,8 @@ class InteractiveMode:
         try:
             # Resume execution by creating new running PC at same position
             self.program_runtime.pc = self.program_runtime.pc.resume()
+            # ^C during the resumed run sets the break flag, as it does for RUN.
+            self.program_interpreter.arm_break_handler()
 
             # Resume execution using tick-based loop (same as run())
             state = self.program_interpreter.state
@@ -709,11 +726,10 @@ class InteractiveMode:
                 # Handle input synchronously for CLI
                 if state.input_prompt is not None:
                     try:
-                        value = input_without_history()
+                        value = self.program_interpreter.read_input_line()
                         state = self.program_interpreter.provide_input(value)
                     except KeyboardInterrupt:
-                        self.io.output("")
-                        self.io.output(f"Break in {state.current_line or '?'}")
+                        self.program_interpreter.break_at_input()
                         return
                     except EOFError:
                         self.io.output("")
@@ -726,6 +742,8 @@ class InteractiveMode:
         except Exception as e:
             self._end_partial_line()
             print_error(e, self.program_runtime)
+        finally:
+            self.program_interpreter.release_break_handler()
 
     def cmd_list(self, args):
         """LIST [start][-][end] - List program lines"""
@@ -768,7 +786,6 @@ class InteractiveMode:
         # Clear execution stacks (GOSUB/FOR/STOP state) when program is cleared
         # Note: program_runtime object persists, only its stacks are cleared
         self.clear_execution_state()
-        print("Ready")
 
     def cmd_save(self, filename):
         """SAVE "filename" - Save program to file"""
@@ -805,7 +822,6 @@ class InteractiveMode:
             if success:
                 self.current_file = filename
                 print(f"Loaded from {filename}")
-                print("Ready")
             else:
                 print(f"Failed to load program: {filename}")
 
@@ -856,7 +872,6 @@ class InteractiveMode:
                 if not quiet:
                     print(f"Merged from {filename}")
                     print(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
-                print("Ready")
             else:
                 print(f"Failed to merge program: {filename}")
 

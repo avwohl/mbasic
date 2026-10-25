@@ -41,8 +41,10 @@ def run_program(path):
         [sys.executable, str(PROJECT_ROOT / "mbasic"), str(path), "--ui", "cli"],
         cwd=PROJECT_ROOT, input="RUN\nSYSTEM\n", capture_output=True, text=True, timeout=120)
     lines = run.stdout.split("\n")
-    start = lines.index("Ready") + 1
+    start = lines.index("Ok") + 1
     end = max(i for i, line in enumerate(lines) if line == "Goodbye")
+    if lines[end - 1] == "Ok":             # the Ok that follows RUN
+        end -= 1
     return "\n".join(lines[start:end])
 
 

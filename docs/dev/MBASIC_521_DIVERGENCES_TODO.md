@@ -123,28 +123,20 @@ and ERL, and RESUME NEXT lands in the right place. The edges do not:
   END line. The binary just prints `Ok` (#46).
 - An error raised inside a handler crashes us with a Python `AttributeError`
   about `on_error_goto` (#47, high severity).
-- The first ^C prints `Break in <line>` once, and CONT resumes. After CONT, a
-  second ^C prints a bare `Break`, and CONT then gives `Can't continue`. The
-  binary prints `Break in <line>` each time, and CONT works each time. A ^C
-  at an `INPUT` prompt does not break until the user types the next line
-  (#48). (The older note said that `Break in` prints twice. The double
-  `Break` does not occur now.)
+- Done (#48): after CONT, a second ^C prints `Break in <line>` and CONT works
+  again, as on the binary. CONT arms the break handler, as RUN does. A ^C at
+  an `INPUT` prompt breaks at once, and CONT asks the question again. Tests:
+  `tests/regression/ui/test_cli_break.py`.
 
 
-## 3. No `Ok` prompt
+## 3. No `Ok` prompt - done
 
-The binary prints `Ok` after every direct statement and after every program
-stop, error or not. The CLI never prints `Ok`. The CLI prints `Ready` at start-up
-and after NEW, LOAD and MERGE only (#49). Typing three commands at the prompt
-gives
-
-    binary    Illegal function call / Ok / RETURN without GOSUB / Ok / Type mismatch / Ok
-    ours      Illegal function call / RETURN without GOSUB / Type mismatch
-
-It is a visible piece of the 5.21 feel and the messages themselves now match,
-so this is the largest remaining difference in an interactive session. The
-curses, Tk and web UIs have their own status areas, so #49 changes the CLI
-only.
+Done (#49): the CLI prints `Ok` once at start-up (in place of `Ready`), after
+every direct command, after an error message and after a program stops or
+breaks. A numbered line and a blank line print no `Ok`, as on the binary.
+Tests:
+`tests/regression/ui/test_cli_ok_prompt.py`. The curses, Tk and web UIs have
+their own status areas and did not change.
 
 
 ## 4. Errors reach the user through `print()`, not through the I/O handler
@@ -164,14 +156,17 @@ handlers onto one implementation that reports through the I/O handler is
 also code cleanup.
 
 RENUM is already collapsed: all backends call `ui_helpers.renum_program()`.
-Curses and Tk set `interactive_mode` and define `cmd_renum`, so RENUM in the
-immediate line works there. Two differences are left:
+Curses, Tk and the web UI set `interactive_mode` and define `cmd_renum`, so
+RENUM in the immediate line works in all of them.
 
-- The web UI sets `interactive_mode` only when RUN starts, and it defines only
-  `cmd_new`. RENUM, DELETE, LOAD, SAVE, MERGE and CHAIN in the immediate line
-  fail (#50).
-- Tk prints `Renumbered (a to b)` after RENUM. Real MBASIC prints nothing, and
-  the CLI and curses print nothing (#51).
+- Done (#50): the web UI sets `interactive_mode` when it starts, and defines
+  `cmd_renum`, `cmd_delete`, `cmd_load`, `cmd_save`, `cmd_merge`, `cmd_list`,
+  `cmd_run`, `cmd_cont` and `cmd_system`. LOAD, SAVE and MERGE use the
+  session's in-memory files, never the server disk. CHAIN in the immediate
+  line gives an error: the web UI has no way to restart a running program
+  with a new program. Tests: `tests/regression/ui/test_web_immediate_commands.py`.
+- Done (#51): Tk prints nothing after RENUM. A reference to a missing line is
+  still reported. Tests: `tests/regression/ui/test_tk_renum_silent.py`.
 
 
 ## 5. Reserved words followed by a type suffix

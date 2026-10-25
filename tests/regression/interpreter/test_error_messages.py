@@ -69,7 +69,7 @@ def run(program):
             cwd=tmp, timeout=60)
         out = done.stdout
     keep = [l for l in out.split('\n')
-            if not l.startswith(CHROME) and l not in ('Ready', 'Goodbye')]
+            if not l.startswith(CHROME) and l not in ('Ok', 'Goodbye')]
     while keep and keep[-1].strip() == '':
         keep.pop()
     return keep
@@ -192,7 +192,7 @@ def test_a_direct_statement_has_no_line_number():
         input='RETURN\nPRINT SQR(-1)\nSYSTEM\n', capture_output=True, text=True,
         cwd=tempfile.gettempdir(), timeout=60)
     keep = [l for l in done.stdout.split('\n')
-            if not l.startswith(CHROME) and l not in ('Ready', 'Goodbye', '')]
+            if not l.startswith(CHROME) and l not in ('Ok', 'Goodbye', '')]
     check(keep == ['RETURN without GOSUB', 'Illegal function call'],
           f"{'no line number when typed':36} -> {keep}")
 

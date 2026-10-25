@@ -41,6 +41,7 @@ This integrated parsing + error reporting is why LOAD commands currently bypass
 the FileIO abstraction and call ProgramManager directly.
 """
 
+import io
 import re
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
@@ -275,6 +276,16 @@ class ProgramManager:
             FileNotFoundError: If file doesn't exist
             IOError: If file cannot be read
         """
+        with open(filename, 'r') as f:
+            return self._load_from_stream(f, filename)
+
+    def load_from_text(self, text: str, filename: str) -> Tuple[bool, List[Tuple[int, str]]]:
+        """Load program from text already read (a UI that has no disk file, such
+        as the web UI's in-memory files). Same result and rules as load_from_file;
+        filename is only used in the diagnostics and as current_file."""
+        return self._load_from_stream(io.StringIO(text), filename)
+
+    def _load_from_stream(self, f, filename: str) -> Tuple[bool, List[Tuple[int, str]]]:
         # Clear existing program
         self.clear()
         self.notices = []
@@ -282,33 +293,32 @@ class ProgramManager:
         errors = []
         success_count = 0
 
-        with open(filename, 'r') as f:
-            for file_line, line in enumerate(_lines_until_eof_mark(f), 1):
-                line = line.strip()
-                if not line:
-                    continue
+        for file_line, line in enumerate(_lines_until_eof_mark(f), 1):
+            line = line.strip()
+            if not line:
+                continue
 
-                # Sanitize input: clear parity bits and filter control characters
-                line, was_modified = sanitize_and_clear_parity(line)
+            # Sanitize input: clear parity bits and filter control characters
+            line, was_modified = sanitize_and_clear_parity(line)
 
-                # Extract line number
-                match = re.match(r'^(\d+)', line)
-                if not match:
-                    errors.append((0, f'{filename}: file line {file_line}: expected a BASIC line number'))
-                    continue
+            # Extract line number
+            match = re.match(r'^(\d+)', line)
+            if not match:
+                errors.append((0, f'{filename}: file line {file_line}: expected a BASIC line number'))
+                continue
 
-                line_num = int(match.group(1))
-                if not line[match.end():].strip():
-                    # Bare line number: like typing it, this deletes the line
-                    self.delete_line(line_num)
-                    success_count += 1
-                    continue
-                success, error = self.add_line(line_num, line)
+            line_num = int(match.group(1))
+            if not line[match.end():].strip():
+                # Bare line number: like typing it, this deletes the line
+                self.delete_line(line_num)
+                success_count += 1
+                continue
+            success, error = self.add_line(line_num, line)
 
-                if success:
-                    success_count += 1
-                else:
-                    errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
+            if success:
+                success_count += 1
+            else:
+                errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
 
         if success_count > 0:
             self.current_file = filename
@@ -340,45 +350,52 @@ class ProgramManager:
             FileNotFoundError: If file doesn't exist
             IOError: If file cannot be read
         """
+        with open(filename, 'r') as f:
+            return self._merge_from_stream(f, filename)
+
+    def merge_from_text(self, text: str, filename: str) -> Tuple[bool, List[Tuple[int, str]], int, int]:
+        """Merge program lines from text already read; see merge_from_file."""
+        return self._merge_from_stream(io.StringIO(text), filename)
+
+    def _merge_from_stream(self, f, filename: str) -> Tuple[bool, List[Tuple[int, str]], int, int]:
         errors = []
         lines_added = 0
         lines_replaced = 0
         lines_deleted = 0
 
-        with open(filename, 'r') as f:
-            for file_line, line in enumerate(_lines_until_eof_mark(f), 1):
-                line = line.strip()
-                if not line:
-                    continue
+        for file_line, line in enumerate(_lines_until_eof_mark(f), 1):
+            line = line.strip()
+            if not line:
+                continue
 
-                # Sanitize input: clear parity bits and filter control characters
-                line, was_modified = sanitize_and_clear_parity(line)
+            # Sanitize input: clear parity bits and filter control characters
+            line, was_modified = sanitize_and_clear_parity(line)
 
-                # Extract line number
-                match = re.match(r'^(\d+)', line)
-                if not match:
-                    errors.append((0, f'{filename}: file line {file_line}: expected a BASIC line number'))
-                    continue
+            # Extract line number
+            match = re.match(r'^(\d+)', line)
+            if not match:
+                errors.append((0, f'{filename}: file line {file_line}: expected a BASIC line number'))
+                continue
 
-                line_num = int(match.group(1))
-                if not line[match.end():].strip():
-                    # Bare line number: like typing it, this deletes the line
-                    self.delete_line(line_num)
-                    lines_deleted += 1
-                    continue
+            line_num = int(match.group(1))
+            if not line[match.end():].strip():
+                # Bare line number: like typing it, this deletes the line
+                self.delete_line(line_num)
+                lines_deleted += 1
+                continue
 
-                # Check if line already exists
-                is_replacement = line_num in self.lines
+            # Check if line already exists
+            is_replacement = line_num in self.lines
 
-                success, error = self.add_line(line_num, line)
+            success, error = self.add_line(line_num, line)
 
-                if success:
-                    if is_replacement:
-                        lines_replaced += 1
-                    else:
-                        lines_added += 1
+            if success:
+                if is_replacement:
+                    lines_replaced += 1
                 else:
-                    errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
+                    lines_added += 1
+            else:
+                errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
 
         total_success = lines_added + lines_replaced
         if total_success > 0 or lines_deleted > 0:

@@ -139,7 +139,7 @@ class Session:
                          [sys.executable, 'mbasic', '--ui', 'cli'])
             finally:
                 os._exit(1)
-        drain(self.fd, 10.0, until=b'Ready')    # banner and the first prompt
+        drain(self.fd, 10.0, until=b'Ok')    # banner and the first prompt
         for line in program:
             self.type_line(line)
 

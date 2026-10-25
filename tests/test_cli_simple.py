@@ -17,12 +17,12 @@ def test_cli():
 
     try:
         # Wait for initial prompt
-        proc.expect('Ready')
+        proc.expect('Ok')
         print("\n✓ Got initial prompt")
 
         # Enter a simple line
         proc.sendline('10 PRINT "HELLO"')
-        # CLI doesn't echo "Ready" after each line entry
+        # CLI prints no "Ok" after each line entry
         # It just accepts the line
 
         # Try LIST command
