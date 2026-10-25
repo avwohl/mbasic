@@ -2601,7 +2601,13 @@ class Interpreter:
                 raise RuntimeError(f"File #{file_num} not open for output")
             file_handle = file_info['handle']
         else:
+            file_info = None
             file_handle = None
+
+        # WRITE #n with no ',' and no items is a Syntax error when it runs
+        if (stmt.file_number is not None and not stmt.expressions
+                and not getattr(stmt, 'file_comma', True)):
+            raise MBasicError(2)
 
         # Format values
         output_parts = []
@@ -2620,13 +2626,20 @@ class Interpreter:
 
         output = ','.join(output_parts)
 
+        # WRITE with a ',' or ';' after the last item: MBASIC writes the items
+        # and a ',' with no end of line, then stops with Missing operand.
+        # Measured on 5.21, on the screen and in a file alike.
+        if getattr(stmt, 'bad_separator', False):
+            # A leading or doubled separator: the items before it and a ','
+            # go out, then Syntax error.
+            self._send_output(file_info, file_handle, output + (',' if output else ''))
+            raise MBasicError(2)
+        if getattr(stmt, 'trailing_separator', None):
+            self._send_output(file_info, file_handle, output + ',')
+            raise MBasicError(22)
+
         # Output to file or screen
-        if file_handle:
-            file_handle.write(output + '\n')
-            file_handle.flush()
-            self.runtime.files[file_num]['col'] = 0
-        else:
-            self.io.output(output)
+        self._send_output(file_info, file_handle, output + '\n')
 
     def execute_load(self, stmt):
         """Execute LOAD statement"""

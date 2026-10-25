@@ -113,6 +113,7 @@ class Z88dkCBackend(CodeGenBackend):
 
         # Error handling support
         self.needs_error_handling = False
+        self.current_basic_line = 0  # BASIC line number being generated
         self.error_handler_line = 0  # Line to jump to on error (0 = no handler)
 
         # Memory configuration (can be overridden via config)
@@ -773,6 +774,19 @@ class Z88dkCBackend(CodeGenBackend):
                     self.needs_error_handling = True
                 elif isinstance(stmt, ErrorStatementNode):
                     self.needs_error_handling = True
+                elif isinstance(stmt, WriteStatementNode) and self._write_error_code(stmt):
+                    self.needs_error_handling = True
+
+    @staticmethod
+    def _write_error_code(stmt) -> int:
+        """Error a WRITE raises when it runs, 0 for none (see the WriteStatementNode fields)."""
+        if getattr(stmt, 'bad_separator', False):
+            return 2
+        if stmt.file_number and not stmt.expressions and not getattr(stmt, 'file_comma', True):
+            return 2
+        if getattr(stmt, 'trailing_separator', None):
+            return 22
+        return 0
 
     def _generate_variable_declarations(self) -> List[str]:
         """Generate C variable declarations from symbol table"""
@@ -943,6 +957,7 @@ class Z88dkCBackend(CodeGenBackend):
     def _generate_line(self, line_node: LineNode) -> List[str]:
         """Generate code for one line of BASIC"""
         code = []
+        self.current_basic_line = line_node.line_number
 
         # Add line label if needed
         if line_node.line_number in self.line_labels:
@@ -2570,6 +2585,17 @@ class Z88dkCBackend(CodeGenBackend):
                 format_spec = self._get_format_specifier(expr_type)
                 value = self._generate_expression(expr)
                 code.append(self.indent() + f'{output_func}({output_stream}"{format_spec}", {value});')
+
+        error_code = self._write_error_code(stmt)
+        if error_code:
+            # The items and a ',' go out with no end of line, then the error
+            if stmt.expressions:
+                code.append(self.indent() + f'{output_func}({output_stream}",");')
+            code.append(self.indent() + f'basic_err = {error_code};')
+            code.append(self.indent() + f'basic_erl = {self.current_basic_line};')
+            code.append(self.indent() + f'error_resume_line = {self.current_basic_line};')
+            code.append(self.indent() + 'longjmp(error_jmp, 1);  /* Syntax error or Missing operand */')
+            return code
 
         # WRITE always ends with a newline (CRLF for files, LF for console)
         if stmt.file_number:

@@ -1269,10 +1269,17 @@ def serialize_statement(stmt):
     elif stmt_type == 'WriteStatementNode':
         parts = ['WRITE']
         if getattr(stmt, 'file_number', None) is not None:
-            parts.append(f" #{serialize_expression(stmt.file_number)},")
-        if stmt.expressions:
+            parts.append(f" #{serialize_expression(stmt.file_number)}")
+            if getattr(stmt, 'file_comma', True):
+                parts.append(',')
+        if getattr(stmt, 'sequence', None):
+            parts.append(' ' + ''.join(x if isinstance(x, str) else serialize_expression(x)
+                                       for x in stmt.sequence))
+        elif stmt.expressions:
             parts.append(' ' + ', '.join(serialize_expression(e)
                                          for e in stmt.expressions))
+        if getattr(stmt, 'trailing_separator', None):
+            parts.append(stmt.trailing_separator)
         return ''.join(parts)
 
     elif stmt_type == 'CallStatementNode':

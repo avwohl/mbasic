@@ -192,6 +192,20 @@ at RUN - after which it opens the line editor on the offending line, which is
 its own piece of behaviour we do not have.
 
 
+One case is fixed. `WRITE` with a `,` or `;` after the last item (`WRITE 1;`,
+`WRITE #1,2,`) is accepted at entry and on LOAD, and LIST and RENUM keep its
+text. When the line runs, the interpreter and the JavaScript runtime write the
+items and a `,` with no end of line, then raise `Missing operand` (error 22).
+The same happens in a file. `WRITE #1,` with no items writes an empty line.
+`WRITE #1` with no comma and no items is a Syntax error (error 2) when it
+runs. A `,` or `;` before the first item or twice in a row (`WRITE ,1`,
+`WRITE 1,,2`, `WRITE ;`) is also accepted at entry and on LOAD. When the line
+runs, the items before the bad separator and a `,` go out with no end of line
+(nothing, if no item comes first), then Syntax error (error 2) occurs.
+The interpreter, the JavaScript runtime and the C backend all do this. The C
+backend writes the error text to the error stream and stops, as it does for
+other errors without an `ON ERROR` handler.
+
 ## 7. The compiler backends are out of step with the interpreter
 
 The precedence fix is in the parser, so every backend gets it. The operator

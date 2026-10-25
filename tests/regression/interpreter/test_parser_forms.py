@@ -187,7 +187,9 @@ finally:
     os.chdir(old)
 
 # Forms that real MBASIC rejects stay rejected.
-for bad in ["10 WRITE #1;3", "10 WRITE ;1", "10 WRITE 1;;2", "10 LINE INPUT A$()"]:
+# (WRITE with a leading or doubled separator is accepted at entry and fails at
+# run time, as in MBASIC; see test_write_trailing_separator.py.)
+for bad in ["10 LINE INPUT A$()"]:
     try:
         parse(bad)
         rejected = False
