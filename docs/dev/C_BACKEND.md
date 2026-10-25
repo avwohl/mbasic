@@ -46,8 +46,8 @@ The backend asks `number_format.numeric_digits()`, the function that the interpr
 `/` always gives a floating-point result: `5/2` is 2.5. `\` and `MOD` round their
 operands to integers. A rounded operand of `\`, `MOD`, `AND`, `OR`, `XOR`, `EQV`,
 `IMP` or `NOT` outside -32768..32767 stops the program with `Overflow`, and `\` or
-`MOD` by 0 stops it with `Division by zero`. A comparison gives -1 for true. `AND`, `OR`, `XOR`, `EQV`,
-`IMP` and `NOT` work bit by bit on 16-bit integers. `^` with a whole exponent uses
+`MOD` by 0 stops it with `Division by zero`. A comparison gives -1 for true.
+`AND`, `OR`, `XOR`, `EQV`, `IMP` and `NOT` work bit by bit on 16-bit integers. `^` with a whole exponent uses
 repeated multiplication, because the uc80 `pow()` is not exact (`3^8` gave 6560.98).
 
 The formatter builds the exact decimal value of the float in a digit array and then
@@ -140,8 +140,11 @@ These differences are known. They are not fixed.
   before it carries on. `ON ERROR` does not see it. The operators `\`, `MOD`, `AND`,
   `OR`, `XOR`, `EQV`, `IMP` and `NOT` are an exception: they stop with `Overflow` or
   `Division by zero` (the program ends, as for any run-time error). `+`, `-` and `*`
-  on integers wrap at 16 bits and do not give `Overflow`. The compiler warns when it can happen. A float product
-  that is too large also gives `1.70141E+38` and not `Overflow`.
+  on integers wrap at 16 bits and do not give `Overflow`. The compiler warns when
+  it can happen. A float product that is too large also gives `1.70141E+38` and not `Overflow`.
+- **`-32768 \ -1` gives -32768.** MBASIC gives 32768, because the quotient does
+  not fit in an integer. The result of `\` is an integer in the compiled program, so
+  the quotient wraps. `-32768 MOD -1` is 0 in both.
 - **The float range is that of uc80**: about 1.2E-38 to 1.7E38. A number in the program
   outside this range is wrong in the compiled program (`3E38` prints as `2.59085E-39`,
   `-1E-38` as `0`), and the compiler warns about such a number. `2^126` prints with one
