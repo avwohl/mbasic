@@ -780,7 +780,9 @@ class JavaScriptBackend(CodeGenBackend):
                 if isinstance(stmt, ForStatementNode):
                     # Push FOR onto stack
                     var_name = stmt.variable.name.lower()
-                    for_stack.append((line.line_number, var_name))
+                    # JS name of the loop variable (type suffix and DEFINT type included), as _generate_for writes it
+                    js_name = self._mangle_var_name(stmt.variable.name + (stmt.variable.type_suffix or ''))
+                    for_stack.append((line.line_number, var_name, js_name))
                 elif isinstance(stmt, NextStatementNode):
                     # Match NEXT with FOR
                     if stmt.variables:
@@ -798,11 +800,11 @@ class JavaScriptBackend(CodeGenBackend):
                     else:
                         # NEXT without variable - match most recent FOR
                         if for_stack:
-                            for_line, var_name = for_stack.pop()
+                            for_line, var_name, js_name = for_stack.pop()
                             next_line = self.next_line_map.get(line.line_number)
                             self.for_to_after_next[for_line] = next_line
-                            # Record which variable this NEXT should use
-                            self.next_var_map[(line.line_number, stmt_idx)] = var_name
+                            # Record which variable this NEXT should use (the JS name, not the BASIC name)
+                            self.next_var_map[(line.line_number, stmt_idx)] = js_name
 
     def _analyze_features(self, program: ProgramNode):
         """Analyze which features the program uses"""
@@ -2579,12 +2581,8 @@ class JavaScriptBackend(CodeGenBackend):
             # NEXT without variable - look up which variable to use
             var_name_base = self.next_var_map.get((line_number, stmt_index))
             if var_name_base:
-                # Create a temporary VariableNode for processing
-                class TempVar:
-                    def __init__(self, name):
-                        self.name = name
-                        self.type_suffix = ''
-                variables = [TempVar(var_name_base)]
+                # next_var_map holds the JS name of the FOR variable, used as it is
+                variables = [var_name_base]
             else:
                 # No matching FOR found
                 code.append(self.indent() + '_error("NEXT without FOR");')
@@ -2592,7 +2590,10 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Handle each variable (NEXT can have multiple variables: NEXT I, J, K)
         for var in variables:
-            var_name = self._mangle_var_name(var.name + (getattr(var, 'type_suffix', '') or ''))
+            if isinstance(var, str):
+                var_name = var
+            else:
+                var_name = self._mangle_var_name(var.name + (getattr(var, 'type_suffix', '') or ''))
 
             # Increment variable and check condition
             code.append(self.indent() + f'if (_for_loops["{var_name}"]) {{')

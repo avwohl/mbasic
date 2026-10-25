@@ -100,5 +100,3 @@ output follows the interpreter.
 ## Faults found and not fixed
 
 * `FOR` and `NEXT` on one line loop for ever in the JavaScript.
-* `NEXT` after `FOR` with an INTEGER variable (`DEFINT`) does not find the
-  loop.
