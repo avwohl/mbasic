@@ -227,8 +227,8 @@ D# = 1/3      ' Double precision: 0.333333333333333
 - Node.js uses `console.log()` and `process.stdout.write()`
 
 **INPUT Handling:**
-- Browser: `window.prompt()` dialogs
-- Node.js: Synchronous readline with `readline-sync` fallback
+- Browser: INPUT, LINE INPUT and INPUT$ wait for key presses. INPUT and LINE INPUT show the typed characters on the page, accept Backspace, and end the line at Enter. INPUT$ shows nothing. INKEY$ does not wait. The generated `main()` is an async function when the program uses INPUT, LINE INPUT or INPUT$.
+- Node.js: INPUT, LINE INPUT and INPUT$ read standard input with a blocking read.
 
 ## HTML Wrapper
 

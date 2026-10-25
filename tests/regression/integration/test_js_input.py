@@ -209,32 +209,85 @@ def test_file_input_and_line_input_are_synchronous(tmp_path):
     assert result.stdout == "[hello, world]\nxy ok\n[q,r]\nz ok\n[last line]\n"
 
 
-@needs_node
-def test_browser_branch_keeps_window_prompt(tmp_path):
-    output = compile_js(tmp_path, '''10 INPUT "N";N
-20 IF N = 12 THEN PRINT "n ok"
-30 LINE INPUT "S";S$
-40 PRINT "[";S$;"]"
-50 A$ = INPUT$(2)
-60 PRINT A$
-''')
-    runner = tmp_path / "browser.cjs"
-    runner.write_text("""const fs = require('fs'), vm = require('vm');
+BROWSER_RUNNER = """const fs = require('fs'), vm = require('vm');
 const element = {textContent: ''};
-const answers = ['abc', '12', 'x,y', 'kl'];
-const asked = [];
+const handlers = {};
 const context = {console, setTimeout, clearTimeout,
- window: {prompt: (p) => { asked.push(p); return answers.shift(); }},
- document: {getElementById: () => element, addEventListener: () => {}}};
+ window: {prompt: () => { throw new Error('window.prompt must not be used'); }},
+ document: {getElementById: () => element, addEventListener: (t, f) => { handlers[t] = f; }}};
 vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), context);
-setTimeout(() => process.stdout.write(JSON.stringify({out: element.textContent, asked})), 20);
-""")
-    result = subprocess.run([NODE, str(runner), str(output)], capture_output=True, text=True, timeout=30)
-    assert result.returncode == 0, result.stderr
+// steps: [{wait: text}] snapshots the page output, strings are typed key by key
+const steps = JSON.parse(process.argv[3]);
+const snaps = [];
+let prevented = 0;
+function key(k) {
+  const e = typeof k === 'string' ? {key: k} : k;
+  e.preventDefault = () => { prevented++; };
+  handlers.keydown(e);
+}
+function run(i) {
+  if (i >= steps.length) { setTimeout(() => process.stdout.write(JSON.stringify({snaps, out: element.textContent, prevented, keypress: !!handlers.keypress})), 20); return; }
+  const st = steps[i];
+  if (st === 'snap') { snaps.push(element.textContent); return setTimeout(() => run(i + 1), 10); }
+  for (const k of st) key(k === '\\n' ? 'Enter' : k === '\\b' ? 'Backspace' : k);
+  setTimeout(() => run(i + 1), 10);
+}
+setTimeout(() => run(0), 20);
+"""
+
+
+def run_browser(tmp_path, source, steps):
     import json
-    data = json.loads(result.stdout)
-    assert data["out"] == "?Redo from start\nn ok\n[x,y]\nkl\n"
-    assert data["asked"][:3] == ["N? ", "N? ", "S"]
+    output = compile_js(tmp_path, source)
+    runner = tmp_path / "browser.cjs"
+    runner.write_text(BROWSER_RUNNER)
+    result = subprocess.run([NODE, str(runner), str(output), json.dumps(steps)],
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout)
+
+
+@needs_node
+def test_browser_input_waits_for_keydown_events(tmp_path):
+    # Issue #11: the browser used window.prompt (stubbed to throw here). INPUT must echo the typed
+    # characters, handle Backspace, end at Enter, and leave the earlier output visible while waiting.
+    data = run_browser(tmp_path, '''10 PRINT "start"
+20 INPUT "N";N
+30 IF N = 12 THEN PRINT "n ok"
+40 LINE INPUT "S";S$
+50 PRINT "[";S$;"]"
+60 A$ = INPUT$(2)
+70 PRINT A$
+''', ["snap", "ab\n", "snap", "13\b2\n", "snap", "x, y\n", "snap", "kl"])
+    assert data["snaps"][0] == "start\nN? "
+    assert data["snaps"][1] == "start\nN? ab\n?Redo from start\nN? "
+    assert data["snaps"][2] == "start\nN? ab\n?Redo from start\nN? 12\nn ok\nS"
+    assert data["snaps"][3].endswith("Sx, y\n[x, y]\n")  # INPUT$ shows no echo yet
+    assert data["out"].endswith("[x, y]\nkl\n")
+    assert "kl" not in data["snaps"][3]
+    assert data["prevented"] > 0
+    assert data["keypress"] is False
+
+
+@needs_node
+def test_browser_input_dollar_takes_keys_without_echo_or_enter(tmp_path):
+    data = run_browser(tmp_path, '''10 A$ = INPUT$(3)
+20 PRINT "<";A$;">"
+30 DEF FNK(X) = ASC(INPUT$(1)) + X
+40 IF FNK(1) = 91 THEN PRINT "fn ok"
+''', ["snap", "a", "b", "snap", "c", "snap", "Z"])
+    assert data["snaps"] == ["", "", "<abc>\n"]
+    assert data["out"] == "<abc>\nfn ok\n"
+
+
+@needs_node
+def test_browser_inkey_stays_non_blocking(tmp_path):
+    data = run_browser(tmp_path, '''10 A$ = INKEY$
+20 IF A$ = "" THEN PRINT "none"
+30 PRINT "done"
+''', [])
+    assert data["out"] == "none\ndone\n"
+
 
 
 if __name__ == "__main__":

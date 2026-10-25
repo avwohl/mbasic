@@ -97,23 +97,23 @@ def test_file_form_on_output_file_is_bad_file_mode(tmp_path):
     assert "Bad file mode" in result.stdout + result.stderr
 
 
-def test_browser_branch_uses_buffered_keys_then_prompt(tmp_path):
+def test_browser_branch_takes_keys_from_keydown_buffer(tmp_path):
     output = compile_js(tmp_path, '10 A$=INPUT$(3)\n20 B$=INPUT$(2)\n30 PRINT A$;"|";B$\n40 END\n')
     runner = tmp_path / "browser.cjs"
     runner.write_text("""const fs = require('fs'), vm = require('vm');
 const element = {textContent: ''};
-let prompts = 0;
+const handlers = {};
 const context = {console, setTimeout, clearTimeout,
- window: {prompt: () => { prompts++; return 'hello'; }},
- document: {getElementById: () => element, addEventListener: () => {}}};
+ window: {prompt: () => { throw new Error('window.prompt must not be used'); }},
+ document: {getElementById: () => element, addEventListener: (t, f) => { handlers[t] = f; }}};
 vm.runInNewContext(fs.readFileSync(process.argv[2], 'utf8'), context);
-setTimeout(() => process.stdout.write(element.textContent + '#' + prompts), 20);
+// Five keys arrive at once: "hel" feed the first INPUT$, "lo" stay buffered for the second.
+setTimeout(() => { for (const k of 'hello') handlers.keydown({key: k}); }, 10);
+setTimeout(() => process.stdout.write(element.textContent), 30);
 """)
     result = subprocess.run([NODE, str(runner), str(output)], capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, result.stderr
-    # One prompt supplies "hello"; the leftover "lo" is buffered for the next INPUT$.
-    assert "hel|lo" in result.stdout
-    assert result.stdout.endswith("#1")
+    assert result.stdout == "hel|lo\n"
 
 
 if __name__ == "__main__":
