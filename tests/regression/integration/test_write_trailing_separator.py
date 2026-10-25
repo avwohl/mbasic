@@ -103,5 +103,74 @@ def test_javascript_compiles_and_raises_at_run_time(tmp_path):
     check_files(tmp_path)
 
 
+BAD_PROGRAM = '''10 ON ERROR GOTO 100
+20 WRITE ,1
+30 PRINT "X"
+40 WRITE 1,,2
+50 PRINT "Y"
+60 WRITE ;
+70 PRINT "Z"
+80 WRITE 1;;2
+90 PRINT "END"
+95 SYSTEM
+100 PRINT "ERR";ERR;"ERL";ERL
+110 RESUME NEXT
+'''
+
+BAD_EXPECTED = ('ERR 2 ERL 20 \nX\n1,ERR 2 ERL 40 \nY\nERR 2 ERL 60 \nZ\n'
+                '1,ERR 2 ERL 80 \nEND\n')
+
+
+def test_leading_and_doubled_separators_fail_at_run_time(tmp_path):
+    result = run_cli(tmp_path, BAD_PROGRAM, "RUN\nSYSTEM\n")
+    assert BAD_EXPECTED in result.stdout.replace("\r", ""), result.stdout + result.stderr
+    assert "Syntax error in" not in result.stdout
+
+
+def test_bad_separators_list_as_typed(tmp_path):
+    result = run_cli(tmp_path, '10 WRITE ,1\n20 WRITE 1,,2:PRINT "x"\n30 WRITE ;\n',
+                     "LIST\nSYSTEM\n")
+    for text in ("10 WRITE ,1", '20 WRITE 1,,2:PRINT "x"', "30 WRITE ;"):
+        assert text in result.stdout, (text, result.stdout)
+    assert "Syntax error" not in result.stdout
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is needed to execute generated JavaScript")
+def test_javascript_bad_separators(tmp_path):
+    (tmp_path / "w.bas").write_text(BAD_PROGRAM)
+    compiled = subprocess.run(
+        [sys.executable, str(ROOT / "mbasic"), str(tmp_path / "w.bas"),
+         "--compile-js", str(tmp_path / "w.js")],
+        cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert compiled.returncode == 0, compiled.stdout + compiled.stderr
+    result = subprocess.run([NODE, str(tmp_path / "w.js")], cwd=tmp_path,
+                            capture_output=True, text=True, timeout=60)
+    assert result.stdout == BAD_EXPECTED, result.stdout + result.stderr
+
+
+CPMEMU = shutil.which("cpmemu")
+UC80 = shutil.which("uc80")
+
+
+@pytest.mark.skipif(CPMEMU is None or UC80 is None, reason="uc80 and cpmemu are needed for the C backend")
+@pytest.mark.parametrize("line, shown", [
+    ('WRITE 5;"a";', '5,"a",?Error 22 in line 20'),
+    ('WRITE 1,,2', '1,?Error 2 in line 20'),
+    ('WRITE ,1', '?Error 2 in line 20'),
+])
+def test_c_backend_raises_the_error(tmp_path, line, shown):
+    (tmp_path / "w.bas").write_text(f'10 PRINT "A"\n20 {line}\n30 PRINT "no"\n')
+    compiled = subprocess.run(
+        [sys.executable, str(ROOT / "mbasic"), str(tmp_path / "w.bas"),
+         "--compile-c", str(tmp_path / "w")],
+        cwd=tmp_path, capture_output=True, text=True, timeout=300)
+    assert (tmp_path / "w.com").exists(), compiled.stdout + compiled.stderr
+    ran = subprocess.run([CPMEMU, "w.com"], cwd=tmp_path, capture_output=True,
+                         text=True, timeout=60)
+    out = (ran.stdout + ran.stderr).replace("\r", "")
+    assert "A\n" + shown in out, out
+    assert "no" not in out.split("Program exit")[0].replace("Loaded", ""), out
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))

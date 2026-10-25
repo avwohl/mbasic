@@ -1161,6 +1161,12 @@ class WriteStatementNode:
     # False for WRITE #n with no ',' after the file number and no items. That
     # form is a Syntax error at run time in MBASIC; WRITE #n, is an empty line.
     file_comma: bool = True
+    # True when a separator comes first or twice in a row (WRITE ,1; WRITE 1,,2).
+    # MBASIC fails with Syntax error when the line runs, after it has written the
+    # items before the bad separator (and a ',' after them). `expressions` holds
+    # only those items; `sequence` holds every item and separator as typed.
+    bad_separator: bool = False
+    sequence: Optional[list] = None
 
 
 # ============================================================================

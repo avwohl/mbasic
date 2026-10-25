@@ -16,7 +16,7 @@ Expression parsing notes:
   (this is specific to these two functions, not a general MBASIC feature)
 """
 
-from typing import List, Optional, Dict, Set, Tuple
+from typing import Any, List, Optional, Dict, Set, Tuple
 from src.tokens import Token, TokenType
 from src.ast_nodes import *
 from src.keyword_case_manager import KeywordCaseManager
@@ -3447,32 +3447,46 @@ class Parser:
             else:
                 file_comma = False
 
-        # Parse expressions
+        # Parse items and separators. MBASIC accepts a line with a leading or
+        # doubled separator and fails when it runs, so the whole run of items
+        # and separators is kept in `sequence` for LIST.
         expressions: List[ExpressionNode] = []
+        sequence: List[Any] = []
         trailing_separator = None
+        irregular = False
+        expect_item = True
 
-        if not self.at_end_of_line() and not self.match(TokenType.COLON):
-            while True:
-                expr = self.parse_expression()
-                expressions.append(expr)
-
-                # MBASIC 5.21 accepts ; between WRITE items like ,
-                if self.match(TokenType.COMMA, TokenType.SEMICOLON):
-                    separator = self.advance()
+        while not self.at_end_of_line() and not self.match(TokenType.COLON):
+            if self.match(TokenType.COMMA, TokenType.SEMICOLON):
+                separator = self.advance()
+                sep = ',' if separator.type == TokenType.COMMA else ';'
+                sequence.append(sep)
+                if expect_item:
+                    irregular = True
+                else:
+                    expect_item = True
                     if self.at_end_of_line() or self.match(TokenType.COLON):
                         # WRITE 1; is accepted; the error comes when it runs
-                        trailing_separator = ',' if separator.type == TokenType.COMMA else ';'
+                        trailing_separator = sep
                         break
-                else:
-                    break
+            elif expect_item:
+                expr = self.parse_expression()
+                sequence.append(expr)
+                if not irregular:
+                    expressions.append(expr)
+                expect_item = False
+            else:
+                break
 
         return WriteStatementNode(
             file_number=file_number,
             expressions=expressions,
             line_num=token.line,
             column=token.column,
-            trailing_separator=trailing_separator,
-            file_comma=file_comma
+            trailing_separator=None if irregular else trailing_separator,
+            file_comma=file_comma,
+            bad_separator=irregular,
+            sequence=sequence if irregular else None
         )
 
     def parse_read(self) -> ReadStatementNode:

@@ -3258,8 +3258,11 @@ class JavaScriptBackend(CodeGenBackend):
         # WRITE outputs: strings quoted, numbers in MBASIC format without
         # padding spaces, comma separated
         trailing = getattr(stmt, 'trailing_separator', None)
+        bad = getattr(stmt, 'bad_separator', False)
         if stmt.file_number and not stmt.expressions and not getattr(stmt, 'file_comma', True):
             # WRITE #n alone is a Syntax error when it runs
+            code.append(self.indent() + '_error("Syntax error");')
+        elif bad and not stmt.expressions:
             code.append(self.indent() + '_error("Syntax error");')
         elif not stmt.expressions:
             # Empty WRITE - just newline
@@ -3272,10 +3275,11 @@ class JavaScriptBackend(CodeGenBackend):
 
             # Join with commas and print
             output = ' + "," + '.join(parts)
-            if trailing:
-                # Items and a ',' with no end of line, then Missing operand
+            if trailing or bad:
+                # Items and a ',' with no end of line, then the error
                 code.append(self.indent() + f'{print_func}{output} + ",", false);')
-                code.append(self.indent() + '_error("Missing operand");')
+                code.append(self.indent() + ('_error("Syntax error");' if bad
+                                             else '_error("Missing operand");'))
             else:
                 code.append(self.indent() + f'{print_func}{output});')
 

@@ -1272,7 +1272,10 @@ def serialize_statement(stmt):
             parts.append(f" #{serialize_expression(stmt.file_number)}")
             if getattr(stmt, 'file_comma', True):
                 parts.append(',')
-        if stmt.expressions:
+        if getattr(stmt, 'sequence', None):
+            parts.append(' ' + ''.join(x if isinstance(x, str) else serialize_expression(x)
+                                       for x in stmt.sequence))
+        elif stmt.expressions:
             parts.append(' ' + ', '.join(serialize_expression(e)
                                          for e in stmt.expressions))
         if getattr(stmt, 'trailing_separator', None):

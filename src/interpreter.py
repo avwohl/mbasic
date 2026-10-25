@@ -2629,6 +2629,11 @@ class Interpreter:
         # WRITE with a ',' or ';' after the last item: MBASIC writes the items
         # and a ',' with no end of line, then stops with Missing operand.
         # Measured on 5.21, on the screen and in a file alike.
+        if getattr(stmt, 'bad_separator', False):
+            # A leading or doubled separator: the items before it and a ','
+            # go out, then Syntax error.
+            self._send_output(file_info, file_handle, output + (',' if output else ''))
+            raise MBasicError(2)
         if getattr(stmt, 'trailing_separator', None):
             self._send_output(file_info, file_handle, output + ',')
             raise MBasicError(22)
