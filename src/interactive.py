@@ -296,8 +296,8 @@ class InteractiveMode:
         matching MBASIC 5.21 behavior.
         """
         if self.program_runtime:
-            self.program_runtime.gosub_stack.clear()
-            self.program_runtime.for_loops.clear()
+            # The Runtime keeps GOSUB, FOR and WHILE entries in one stack.
+            self.program_runtime.execution_stack.clear()
 
     def _setup_readline(self):
         """Configure readline for better line editing.
