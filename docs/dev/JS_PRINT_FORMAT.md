@@ -76,6 +76,23 @@ output follows the interpreter.
   already at or past column n. Neither implementation does this.
 * Single-precision multiplication that overflows binary32 gives a large
   number in the JavaScript. The interpreter gives `inf`.
+* Errors in arithmetic do not stop the JavaScript. `PRINT 1/0` prints
+  ` Infinity `. `PRINT SQR(-1)` prints ` NaN `. `PRINT LOG(0)` prints
+  `-Infinity`. `PRINT 10^40` prints ` 1E+40 `. Real MBASIC reports
+  `Division by zero`, `Illegal function call` or `Overflow`. For
+  `1/0` and for overflow it then prints ` 1.70141E+38 `. The interpreter
+  also differs from real MBASIC here (it can print `inf`).
+* A single value below about 2.9E-39 prints as a binary32 denormal
+  (`1.4013E-45`). Real MBASIC reads such a value as 0. The interpreter
+  prints the same text as the JavaScript.
+* `&HFFFF` is 65535 here and -1 in real MBASIC. `VAL("&H10")` is 0 here
+  and 16 in real MBASIC. The interpreter has the same two faults.
+* `^` with a double base and a fractional exponent keeps double precision
+  (`X#^.5`). Real MBASIC gives a single.
+* The compiler writes `AND` and `OR` as `&&` and `||`, so `PRINT 3 AND 5`
+  prints 5 (real MBASIC: 1). `XOR`, `EQV` and `IMP` make the JavaScript
+  invalid. Only the JavaScript backend has this fault.
+* `PRINT 2^-1` gives a parse error in the compiler.
 * `LPRINT` shows the number format only. `PRINT #n, USING` works.
 * A single-precision whole number above 2^24 is not rounded, because the
   interpreter keeps Python integers exact.
