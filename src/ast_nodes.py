@@ -1155,6 +1155,12 @@ class WriteStatementNode:
     expressions: List['ExpressionNode']
     line_num: int = 0
     column: int = 0
+    # The ',' or ';' typed after the last item, or None. MBASIC accepts the
+    # line and fails only when it runs: the items go out, then Missing operand.
+    trailing_separator: Optional[str] = None
+    # False for WRITE #n with no ',' after the file number and no items. That
+    # form is a Syntax error at run time in MBASIC; WRITE #n, is an empty line.
+    file_comma: bool = True
 
 
 # ============================================================================

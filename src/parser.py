@@ -3435,6 +3435,7 @@ class Parser:
         token = self.advance()
 
         file_number = None
+        file_comma = True
 
         # Check for # (file output)
         if self.match(TokenType.HASH):
@@ -3443,9 +3444,12 @@ class Parser:
 
             if self.match(TokenType.COMMA):
                 self.advance()
+            else:
+                file_comma = False
 
         # Parse expressions
         expressions: List[ExpressionNode] = []
+        trailing_separator = None
 
         if not self.at_end_of_line() and not self.match(TokenType.COLON):
             while True:
@@ -3454,7 +3458,11 @@ class Parser:
 
                 # MBASIC 5.21 accepts ; between WRITE items like ,
                 if self.match(TokenType.COMMA, TokenType.SEMICOLON):
-                    self.advance()
+                    separator = self.advance()
+                    if self.at_end_of_line() or self.match(TokenType.COLON):
+                        # WRITE 1; is accepted; the error comes when it runs
+                        trailing_separator = ',' if separator.type == TokenType.COMMA else ';'
+                        break
                 else:
                     break
 
@@ -3462,7 +3470,9 @@ class Parser:
             file_number=file_number,
             expressions=expressions,
             line_num=token.line,
-            column=token.column
+            column=token.column,
+            trailing_separator=trailing_separator,
+            file_comma=file_comma
         )
 
     def parse_read(self) -> ReadStatementNode:

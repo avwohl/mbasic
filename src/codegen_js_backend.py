@@ -3257,7 +3257,11 @@ class JavaScriptBackend(CodeGenBackend):
 
         # WRITE outputs: strings quoted, numbers in MBASIC format without
         # padding spaces, comma separated
-        if not stmt.expressions:
+        trailing = getattr(stmt, 'trailing_separator', None)
+        if stmt.file_number and not stmt.expressions and not getattr(stmt, 'file_comma', True):
+            # WRITE #n alone is a Syntax error when it runs
+            code.append(self.indent() + '_error("Syntax error");')
+        elif not stmt.expressions:
             # Empty WRITE - just newline
             code.append(self.indent() + f'{print_func}"");')
         else:
@@ -3268,7 +3272,12 @@ class JavaScriptBackend(CodeGenBackend):
 
             # Join with commas and print
             output = ' + "," + '.join(parts)
-            code.append(self.indent() + f'{print_func}{output});')
+            if trailing:
+                # Items and a ',' with no end of line, then Missing operand
+                code.append(self.indent() + f'{print_func}{output} + ",", false);')
+                code.append(self.indent() + '_error("Missing operand");')
+            else:
+                code.append(self.indent() + f'{print_func}{output});')
 
         return code
 
