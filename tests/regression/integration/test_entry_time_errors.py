@@ -118,7 +118,7 @@ def test_editor_opens_on_the_bad_line(tmp_path):
 def test_reserved_word_with_suffix_is_a_syntax_error(tmp_path, line):
     # Real MBASIC: "Syntax error in 10" for every one of these lines.
     out = run_cli(tmp_path, "RUN\n\nSYSTEM\n", source=line + "\n")
-    assert out.split("Ready\n", 1)[1].startswith("Syntax error in 10\n"), out
+    assert out.split("Ok\n", 1)[1].startswith("Syntax error in 10\n"), out
 
 
 @pytest.mark.parametrize("line, shown", [
@@ -133,19 +133,19 @@ def test_reserved_word_with_suffix_is_a_syntax_error(tmp_path, line):
 def test_names_that_only_contain_a_reserved_word_still_work(tmp_path, line, shown):
     # Real MBASIC runs all of these.
     out = run_cli(tmp_path, "RUN\nSYSTEM\n", source=line + "\n")
-    assert out.split("Ready\n", 1)[1].startswith(shown), out
+    assert out.split("Ok\n", 1)[1].startswith(shown), out
 
 
 def test_input_dollar_still_works(tmp_path):
     out = run_cli(tmp_path, "RUN\nxSYSTEM\n", source="10 A$=INPUT$(1):PRINT A$\n")
-    assert out.split("Ready\n", 1)[1].startswith("x\n"), out
+    assert out.split("Ok\n", 1)[1].startswith("x\n"), out
     assert "Syntax error" not in out, out
 
 
 def test_file_io_hash_forms_still_work(tmp_path):
     program = '10 OPEN "O",#1,"x.tmp":PRINT#1,1:CLOSE#1:KILL "x.tmp":PRINT "ok"\n'
     out = run_cli(tmp_path, "RUN\nSYSTEM\n", source=program)
-    assert out.split("Ready\n", 1)[1].startswith("ok\n"), out
+    assert out.split("Ok\n", 1)[1].startswith("ok\n"), out
 
 
 # --- 38 ---------------------------------------------------------------------

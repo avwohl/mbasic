@@ -13,8 +13,11 @@ cpmemu, tests/HOW_TO_RUN_REAL_MBASIC.md). The binary:
 - keeps the handler "live" after a GOTO out of it: only RESUME ends the
   handler, so the next error is untrapped.
 
-The JavaScript compiler has no " in <line>" on any error, so its expected
-text is the bare message.
+The JavaScript compiler (issue 41) now prints "<message> in <line>" like the
+binary. Two differences remain and are kept in the expected text below: after
+ON ERROR GOTO 0 in a handler (#44) the line is the line inside the handler,
+where the binary names the line that first failed, and "No RESUME" (#37) has
+no " in <line>".
 """
 import shutil
 import subprocess
@@ -39,11 +42,11 @@ CASES = {
     "error_in_handler": (
         '10 ON ERROR GOTO 100\n20 ERROR 5\n30 PRINT "no"\n40 END\n'
         '100 PRINT "H"\n110 ERROR 7\n120 PRINT "x"\n130 END\n',
-        "H\nOut of memory in 110\n", "Illegal function call", "H\n?Out of memory\n"),
+        "H\nOut of memory in 110\n", "Illegal function call", "H\nOut of memory in 110\n"),
     # #47: READ with no DATA in the handler
     "read_in_handler": (
         '10 ON ERROR GOTO 100\n20 ERROR 5\n40 END\n100 PRINT "H"\n110 READ Q\n130 END\n',
-        "H\nOut of DATA in 110\n", "Illegal function call", "H\n?Out of DATA\n"),
+        "H\nOut of DATA in 110\n", "Illegal function call", "H\nOut of DATA in 110\n"),
     # #47: type mismatch in the handler
     "mismatch_in_handler": (
         '10 ON ERROR GOTO 100\n20 ERROR 5\n40 END\n100 PRINT "H"\n110 A=1:A$=A\n130 END\n',
@@ -53,21 +56,21 @@ CASES = {
     "rearmed_in_handler": (
         '10 ON ERROR GOTO 100\n20 ERROR 5\n30 END\n100 ON ERROR GOTO 200\n'
         '110 PRINT "after"\n120 ERROR 9\n200 PRINT "h2"\n210 END\n',
-        "after\nSubscript out of range in 120\n", "h2", "after\n?Subscript out of range\n"),
+        "after\nSubscript out of range in 120\n", "h2", "after\nSubscript out of range in 120\n"),
     # #44: ON ERROR GOTO 0 in the handler raises the pending error at line 30
     "goto0_in_handler": (
         '10 ON ERROR GOTO 100\n20 PRINT "A"\n30 ERROR 5\n40 PRINT "not here"\n50 END\n'
         '100 PRINT "H";ERR;ERL\n110 ON ERROR GOTO 0\n120 PRINT "after"\n130 END\n',
         "A\nH 5  30 \nIllegal function call in 30\n", "after",
-        "A\nH 5  30 \n?Illegal function call\n"),
+        "A\nH 5  30 \nIllegal function call in 110\n"),
     "goto0_in_handler_division": (
         '10 ON ERROR GOTO 100\n20 X=1/0\n30 END\n100 ON ERROR GOTO 0\n110 PRINT "after"\n',
-        "Division by zero in 20\n", "after", "?Division by zero\n"),
+        "Division by zero in 20\n", "after", "Division by zero in 100\n"),
     # #45: the line is looked up when ON ERROR runs
     "missing_handler_line": (
         '10 PRINT "start"\n20 ON ERROR GOTO 999\n30 PRINT "after on error"\n40 END\n',
         "start\nUndefined line number in 20\n", "after on error",
-        "start\n?Undefined line number\n"),
+        "start\nUndefined line number in 20\n"),
     # #46: END ends the handler and the program, no error
     "end_in_handler": (
         '10 ON ERROR GOTO 100\n20 ERROR 5\n30 PRINT "no"\n100 PRINT "H"\n110 END\n',
@@ -76,14 +79,14 @@ CASES = {
     "off_the_end": (
         '10 ON ERROR GOTO 100\n20 PRINT "A"\n30 ERROR 5\n40 END\n100 PRINT "H"\n110 PRINT ERR;ERL\n',
         "A\nH\n 5  30 \nNo RESUME in 110\n", "Illegal function call",
-        "A\nH\n 5  30 \n?No RESUME\n"),
+        "A\nH\n 5  30 \nNo RESUME\n"),
     "off_the_end_division": (
         '10 ON ERROR GOTO 100\n20 X=1/0\n30 END\n100 PRINT "H"\n',
-        "H\nNo RESUME in 100\n", "Division by zero", "H\n?No RESUME\n"),
+        "H\nNo RESUME in 100\n", "Division by zero", "H\nNo RESUME\n"),
     # a GOTO out of a handler does not end the handler: the next error is fatal
     "goto_out_then_error": (
         '10 ON ERROR GOTO 100\n20 ERROR 5\n30 ERROR 9\n40 END\n100 PRINT "H";ERR\n110 GOTO 30\n',
-        "H 5 \nSubscript out of range in 30\n", "H 9", "H 5 \n?Subscript out of range\n"),
+        "H 5 \nSubscript out of range in 30\n", "H 9", "H 5 \nSubscript out of range in 30\n"),
     # a handler that ends with RESUME NEXT still works
     "resume_next": (
         '10 ON ERROR GOTO 100\n20 ERROR 5\n30 PRINT "back"\n40 ERROR 9\n50 PRINT "again"\n60 END\n'

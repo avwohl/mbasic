@@ -184,9 +184,11 @@ and ERL, and RESUME NEXT lands in the right place. The edges do not:
   longer see a handled error as a failure. Only RESUME ends a handler. A GOTO
   out of a handler does not end it: the binary leaves the next error
   untrapped, and so do we now.
-- The JavaScript compiler has the same edges, except that it prints no
-  ` in <line>` for any error and does not check `A$=A` at run time. The C
-  backend refuses programs with `ON ERROR`, so it has no handler edges.
+- The JavaScript compiler has the same edges (it prints ` in <line>` since
+  #41), with three differences. It does not check `A$=A` at run time. After
+  `ON ERROR GOTO 0` in a handler it names the line inside the handler, where
+  the binary names the line that first failed. It prints `No RESUME` with no
+  ` in <line>`. The C backend refuses programs with `ON ERROR`, so it has no handler edges.
 - `ON ERROR GOSUB` is a `Syntax error` on the binary. The interpreter and the
   JavaScript compiler still accept the form.
 - Done (#48): after CONT, a second ^C prints `Break in <line>` and CONT works

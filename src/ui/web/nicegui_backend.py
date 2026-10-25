@@ -2167,20 +2167,39 @@ class NiceGUIBackend(UIBackend):
         except Exception as e:
             self._append_output(message_for(e) + "\n")
 
-    def cmd_load(self, filename) -> None:
-        """LOAD an in-memory file as the program."""
+    def _report_read_abort(self) -> bool:
+        """Report a file read that MBASIC stops with an error (a line over 255
+        bytes, a line with no number, a bare number of a missing line): the
+        bare message, no ON ERROR handler. True when that happened; the lines
+        read before the bad line stay, as in MBASIC."""
+        if self.program.read_abort is None:
+            return False
+        self._append_output(self.program.read_abort[1] + "\n")
+        return True
+
+    def cmd_load(self, filename, from_program=False):
+        """LOAD an in-memory file as the program. Returns True when the read
+        was aborted, so that a running program stops (as in the CLI)."""
         name = self._program_file_name(filename)
         if name is None:
-            return
+            return None
         text = self._read_program_file(name)
         if text is None:
-            return
+            return None
         success, errors = self.program.load_from_text(text, name)
+        for notice in self.program.take_notices():
+            self._append_output(notice + "\n")     # "Overflow" for 1E39
+        if self.program.read_abort is not None:
+            if success:
+                self.current_file = name
+            self._refresh_editor()
+            return self._report_read_abort()
         for _line_num, error in errors:
             self._append_output(error + "\n")
         if success:
             self.current_file = name
         self._refresh_editor()
+        return None
 
     def cmd_save(self, filename) -> None:
         """SAVE the program as an in-memory file."""
@@ -2198,19 +2217,29 @@ class NiceGUIBackend(UIBackend):
         except Exception as e:
             self._append_output(message_for(e) + "\n")
 
-    def cmd_merge(self, filename, quiet=False) -> None:
-        """MERGE an in-memory file into the program. MBASIC prints nothing."""
+    def cmd_merge(self, filename, quiet=False, from_program=False):
+        """MERGE an in-memory file into the program. MBASIC prints nothing.
+        Returns True when the read was aborted (see cmd_load). A missing file
+        inside a running program raises, so that ON ERROR can trap it."""
         name = self._program_file_name(filename)
         if name is None:
-            return
+            return None
+        if from_program and not self.sandboxed_fs.exists(name):
+            raise RuntimeError(f"File not found: {name}")
         text = self._read_program_file(name)
         if text is None:
-            return
+            return None
         success, errors, _added, _replaced = self.program.merge_from_text(text, name)
+        for notice in self.program.take_notices():
+            self._append_output(notice + "\n")
+        if self.program.read_abort is not None:
+            self._refresh_editor()
+            return self._report_read_abort()
         for _line_num, error in errors:
             self._append_output(error + "\n")
         if success:
             self._refresh_editor()
+        return None
 
     def cmd_list(self, args="") -> None:
         """LIST [start][-][end] typed in the immediate line."""
@@ -2298,6 +2327,12 @@ class NiceGUIBackend(UIBackend):
             success, errors, _added, _replaced = self.program.merge_from_text(text, name)
         else:
             success, errors = self.program.load_from_text(text, name)
+        for notice in self.program.take_notices():
+            self._append_output(notice + "\n")
+        if self.program.read_abort is not None:
+            self._refresh_editor()
+            self._report_read_abort()
+            return
         for _line_num, error in errors:
             self._append_output(error + "\n")
         if not success:

@@ -82,7 +82,7 @@ def run_case(tmp_path, statement):
     result = subprocess.run(
         [sys.executable, str(ROOT / "mbasic"), str(tmp_path / "case.bas"), "--ui", "cli"],
         input="RUN\nSYSTEM\n", cwd=tmp_path, capture_output=True, text=True, timeout=60)
-    text = result.stdout.replace("\r", "").split("Ready\n", 1)[-1].split("Goodbye")[0]
+    text = result.stdout.replace("\r", "").split("Ok\n", 1)[-1].split("Goodbye")[0]
     return text.strip("\n").strip()
 
 

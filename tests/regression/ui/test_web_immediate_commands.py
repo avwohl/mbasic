@@ -160,5 +160,32 @@ def test_cont_without_a_stopped_program_is_an_error(backend):
     assert not backend.running
 
 
+def test_load_and_merge_report_a_read_abort_and_overflow(backend):
+    # The same rules as the CLI (fix-load-merge): a line with no number stops
+    # the read with the bare message and keeps the lines read before it; a
+    # literal such as 1E39 prints Overflow while the file is read.
+    handle = backend.sandboxed_fs.open("BAD.BAS", "w")
+    handle.write("10 PRINT 1\nPRINT 2\n20 PRINT 3\n")
+    handle.close()
+    assert backend.cmd_load("BAD") is True
+    assert backend.output == ["Direct statement in file\n"]
+    assert backend.editor.value == "10 PRINT 1"
+    backend.output.clear()
+    assert backend.cmd_merge("BAD", quiet=True, from_program=True) is True
+    assert backend.output == ["Direct statement in file\n"]
+    handle = backend.sandboxed_fs.open("OVF.BAS", "w")
+    handle.write("10 X=1E39\n")
+    handle.close()
+    backend.output.clear()
+    assert backend.cmd_load("OVF") is None
+    assert backend.output == ["Overflow\n"]
+
+
+def test_merge_of_a_missing_file_in_a_program_raises(backend):
+    # CLI cmd_merge raises so that ON ERROR can trap the error.
+    with pytest.raises(RuntimeError, match="File not found"):
+        backend.cmd_merge("NOPE", quiet=True, from_program=True)
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))
