@@ -164,7 +164,7 @@ def _val_radix(s):
 def val_text(text):
     """MBASIC's VAL: the number at the start of the text, 0 if there is none.
 
-    Spaces and tabs are skipped everywhere in a decimal number ("1 2" is 12,
+    Spaces, tabs and line feeds are skipped everywhere in a decimal number ("1 2" is 12,
     "- 5" is -5, "1 E 2" is 100). The exponent letter is E or D in either
     case, and with no digits after it the exponent is 0. The number ends at
     the second point, at a second E, and at any other character. A % right
@@ -174,10 +174,10 @@ def val_text(text):
     A number too big for a double comes back as infinity; the interpreter
     turns that into Overflow.
     """
-    s = text.lstrip(' \t')
+    s = text.lstrip(' \t\n')
     if s[:1] == '&':
         return _val_radix(s)
-    s = s.replace(' ', '').replace('\t', '')
+    s = s.replace(' ', '').replace('\t', '').replace('\n', '')
     m = _VAL_MANTISSA.match(s)
     if not m.group(2) and not m.group(4):
         return 0

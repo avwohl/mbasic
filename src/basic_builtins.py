@@ -13,7 +13,7 @@ import random
 from decimal import Decimal, ROUND_HALF_UP
 
 from src.input_fields import val_text
-from src.number_format import (SINGLE_DIGITS, _round_to_digits, radix_word,
+from src.number_format import (SINGLE_DIGITS, DOUBLE_DIGITS, _round_to_digits, radix_word,
                                to_integer, to_single)
 
 # tty, termios, os, sys and win_console used to be imported here for INKEY$ and
@@ -93,6 +93,12 @@ def _mbasic_decimal(value, digits):
         return Decimal(int(magnitude))
     if magnitude == 0:
         return Decimal(0)
+    if digits == DOUBLE_DIGITS:
+        # Start from the shortest decimal that reads back as the same double.
+        # 1D-11 is stored as 9.99999999999999939E-12; the real binary holds
+        # extra mantissa bits and has no such carry, so rounding the exact
+        # binary value to 16 figures would invent one.
+        magnitude = Decimal(repr(float(magnitude)))
     return _round_to_digits(magnitude, digits)
 
 

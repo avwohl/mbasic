@@ -362,6 +362,7 @@ class Interpreter:
 
             # Setup runtime tables
             self.runtime.setup()
+            self._print_column = 0
 
             # Initialize state
             self.state = InterpreterState(_interpreter=self)
@@ -1132,6 +1133,7 @@ class Interpreter:
             nonlocal output
             if output:
                 self.io.output(output, end='')
+                self._track_column(output)
                 output = ""
 
         if file_handle is None:
@@ -1187,6 +1189,13 @@ class Interpreter:
             raise
         except Exception:
             flush_partial()
+            # The binary starts a new line before a fatal error message when
+            # the cursor is not in column 0 ("AB" then a line break, then
+            # "Overflow in 10"). With ON ERROR armed nothing is printed.
+            if (file_handle is None and self._print_column > 0
+                    and not self.runtime.has_error_handler()):
+                self.io.output('')
+                self._print_column = 0
             raise
         finally:
             self._partial_print = None
@@ -1203,8 +1212,10 @@ class Interpreter:
             # Print to screen (don't add newline if last separator was ; or , or \n)
             if stmt.separators and stmt.separators[-1] in [';', ',', '\n']:
                 self.io.output(output, end='')
+                self._track_column(output)
             else:
                 self.io.output(output)
+                self._print_column = 0
 
     def execute_printusing(self, stmt):
         """Execute PRINT USING statement - formatted print to screen or file"""
@@ -1374,6 +1385,14 @@ class Interpreter:
             return machine_infinity(digits)
 
     _partial_print = None
+    _print_column = 0
+
+    def _track_column(self, text):
+        """Remember the output column after `text` (0 after a line break)."""
+        if '\n' in text:
+            self._print_column = len(text) - text.rfind('\n') - 1
+        else:
+            self._print_column += len(text)
 
     def _notice(self, text):
         """Print a bare error message that does not stop the program.

@@ -32,6 +32,9 @@ The JavaScript runtime has these parts:
 * `_str` takes the digits of its argument, so `STR$(1/3#)` has 16 digits.
 * `_write_format` leaves out the padding spaces around numbers.
 * `_print_using` is a port of `UsingFormatter`.
+  For a double, the port starts from the shortest decimal form of the value,
+  as `UsingFormatter` does. The exact binary of 1D-11 is just below 1E-11, and
+  the real binary has no carry there, so `##.##^^^^` shows 1.00D-11.
 * `_toInt` rounds halves away from zero and raises Overflow outside
   -32768 to 32767, like the interpreter.
 * Arithmetic follows the interpreter (`docs/dev/MBASIC_521_DIVERGENCES_TODO.md`,

@@ -64,6 +64,17 @@ def test_programs_match_real_mbasic():
                 print(f"    want {len(want_lines)} lines, got {len(got_lines)}")
 
 
+def test_error_after_partial_print_line(tmp_path=None):
+    print("\nA fatal error after a partial PRINT line starts a new line")
+    print("-" * 60)
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        bas = Path(d) / "partial.bas"
+        bas.write_text('10 PRINT "AB";HEX$(-32769)\n')
+        got = run_program(bas)
+    check(got.startswith("AB\nOverflow in 10"), f"AB, line break, Overflow in 10 (got {got!r})")
+
+
 def test_val():
     print("\nVAL")
     print("-" * 60)
@@ -165,6 +176,7 @@ if __name__ == "__main__":
     print("MBASIC 5.21 overflow, VAL and radix constants")
     print("=" * 60)
     test_programs_match_real_mbasic()
+    test_error_after_partial_print_line()
     test_val()
     test_hex_and_octal()
     test_constants_in_the_lexer()

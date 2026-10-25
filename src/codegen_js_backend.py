@@ -163,9 +163,9 @@ function _val_radix(s) {
 function _val(str) {
     // MBASIC's VAL (same rules as input_fields.val_text): blanks and tabs are skipped inside the number, E and D
     // are exponent letters, an exponent without digits is 0, and the number ends at the first other character.
-    let s = String(str).replace(/^[ \t]+/, "");
+    let s = String(str).replace(/^[ \t\n]+/, "");
     if (s[0] === "&") return _val_radix(s);
-    s = s.replace(/[ \t]/g, "");
+    s = s.replace(/[ \t\n]/g, "");
     const m = /^([+-]?)(\d*)(\.?)(\d*)/.exec(s);
     if (m[2] === "" && m[4] === "") return 0;
     let rest = s.slice(m[0].length), exp = "0", hasExp = false;
@@ -312,6 +312,11 @@ function _using_magnitude(v, digits) {
     if (digits === 0) {
         const m = /^(\d)(?:\.(\d+))?e([+-]\d+)$/.exec(a.toExponential());
         return [(m[1] + (m[2] || "")).replace(/0+$/, ""), parseInt(m[3], 10)];
+    }
+    if (digits === 16) {
+        // Start from the shortest decimal form of the double, as the interpreter does (1D-11 must not carry).
+        const m = /^(\d)(?:\.(\d+))?e([+-]\d+)$/.exec(a.toExponential());
+        return _round_digits(m[1] + (m[2] || ""), parseInt(m[3], 10), 16);
     }
     return _sig_digits(a, digits);
 }
@@ -3227,6 +3232,8 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
         code.append(self.indent() + '_in_error_handler = false;')
 
+        # ERR reads 0 after RESUME; ERL keeps the line number.
+        code.append(self.indent() + '_error_code = 0;')
         if stmt.line_number is None or stmt.line_number == 0:
             # RESUME (or RESUME 0) - return to line that caused error
             code.append(self.indent() + '_pc = _error_line;')
