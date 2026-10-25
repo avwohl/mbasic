@@ -154,9 +154,9 @@ UC80 = shutil.which("uc80")
 
 @pytest.mark.skipif(CPMEMU is None or UC80 is None, reason="uc80 and cpmemu are needed for the C backend")
 @pytest.mark.parametrize("line, shown", [
-    ('WRITE 5;"a";', '5,"a",?Error 22 in line 20'),
-    ('WRITE 1,,2', '1,?Error 2 in line 20'),
-    ('WRITE ,1', '?Error 2 in line 20'),
+    ('WRITE 5;"a";', '5,"a",\nMissing operand in 20'),
+    ('WRITE 1,,2', '1,\nSyntax error in 20'),
+    ('WRITE ,1', 'Syntax error in 20'),
 ])
 def test_c_backend_raises_the_error(tmp_path, line, shown):
     (tmp_path / "w.bas").write_text(f'10 PRINT "A"\n20 {line}\n30 PRINT "no"\n')

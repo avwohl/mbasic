@@ -101,6 +101,10 @@ separate compilation, memory corruption under uc80. Pass it with `-D` so every u
 Those two produce *empty output*, silently. Generated code must use `%f` on uc80.
 Also pass `--printf int --printf float` — the flags accumulate, they do not replace, and
 `--printf float` alone drops integer conversions.
+Each converter costs code (the float one is about 2 KB). `--compile-c` therefore passes
+only the converters that the generated C text uses (`uc80_stdio_flags()` in
+`src/mbasic_main.py`). `PRINT` does not use `printf`: the runtime formats numbers
+itself (see [C_BACKEND.md](C_BACKEND.md)).
 
 **5. C symbol naming adds an underscore.**
 uc80 prefixes C identifiers with `_`, so C's `_mb25_get_sp` is `__mb25_get_sp` in

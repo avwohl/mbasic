@@ -360,3 +360,101 @@ Full list with repros in `uc80/todo.txt`. The ones most likely to matter to mbas
   defining `main()`. A unit that prints conversions `main`'s unit does not now warns
   and tells you to pass an explicit `--printf`. mbasic compiles both its files in one
   invocation, so this does not apply to it.
+
+
+## Found while writing the C backend (uc80 0.7.0, 2026-10)
+
+Found with the work in [C_BACKEND.md](C_BACKEND.md). Each fault is silent: the compile
+succeeds and the program does the wrong thing. The backend works around each one.
+The repros are small enough to paste into a uc80 test.
+
+**1. A float times an integer constant such as 8 or 16 gives the float.**
+
+```c
+float g = 3, r;
+r = 8 * g;      /* 3, not 24 */
+r = g * 16;     /* 3, not 48 */
+r = 3 * g;      /* 9, correct */
+r = 8.0 * g;    /* 24, correct */
+```
+
+`2*g`, `3*g` and `10*g` are correct. The fault looks like a shift for a power of two
+that is applied to the wrong operand type. The backend writes a constant that
+meets a float as a float constant (`8.0`).
+
+**2. The word `near` is deleted from string literals.**
+
+```c
+mb25_print_cstr("a near b");   /* prints "a  b" */
+```
+
+`far`, `huge`, `Near`, `NEAR` and `nearly` are not affected. The backend writes the
+word as two adjacent literals: `"ne" "ar"`.
+
+**3. A run of backslashes in a string literal is halved.**
+
+```c
+mb25_print_cstr("1 \\ 2");     /* prints "1  2" */
+mb25_print_cstr("x\\\\y");     /* prints "x\y" */
+mb25_print_cstr("A\134B");     /* prints "AB" */
+```
+
+The backend writes four backslashes for each backslash in the BASIC text.
+
+**4. `atof` and `strtod` give wrong results or end the program.**
+
+```c
+v = strtod("12.5", &e);        /* 6.71089E+07 */
+v = atof("12.5");              /* jumps to address 0 */
+```
+
+The runtime has its own `mb25_atof()`.
+
+**5. Library `pow()` is not exact for whole exponents.** `pow(3, 8)` gives 6560.98.
+The runtime uses repeated multiplication for a whole exponent (`mb25_pow()`).
+
+**6. `double` is 4 bytes.** `sizeof(double)` is 4, so there is no double precision.
+This is a limit, not a fault. The backend warns when a program uses double precision.
+
+**7. Two negative floats compare the wrong way round.**
+
+```c
+float x = -30, y = -27;
+if (x > y) ...                  /* true; should be false */
+if ((x - y) > 0) ...            /* false, correct */
+```
+
+A comparison of a negative float with a positive one or with zero is correct,
+and so is `==`. The backend tests the sign of the difference. A FOR loop with a
+negative start (`FOR X=-30 TO -27 STEP 1.5`) ran for ever before this change.
+
+**8. A label before a closing brace needs a statement, even with a comment after it.**
+This is standard C before C23. `gosub_return_2:  /* Return point */` followed by `}`
+stops the compile with `unexpected token 'RBRACE'`. The backend writes `label: ;`.
+
+**9. Float multiplication does not round like IEEE binary32.** `1/3*3` is not exactly 1
+(the interpreter and real MBASIC give exactly 1, so `1/3*3=1` is -1 there and 0 here).
+`2/3*3`, `10/3*3`, `1/10*10` and `1/7*7` have the same fault. `0.1*3=0.3` agrees.
+The value prints as 1 because the formatter keeps 7 digits, so only a test for
+equality shows the fault. The backend does not work around this fault. Report
+to uc80.
+
+**10. The AST optimizer reads the wrong variable after a copy.** After `k = j`, uc80
+reads `j` where the program reads `k`, also after `k` changes in a loop.
+
+```c
+float i = 1, j = 0, k = 0;
+j = i;
+k = j;
+loop:
+    if (k == 4) goto done;      /* tests j (always 1) */
+    k += 1;
+    goto loop;
+done: ;
+```
+
+The loop never ends. `FOR K=J TO 3` compiled to this shape and ran for ever, and
+so did every FOR loop whose start is a variable (`FOR J=I TO N`). `k = (float)(j)` and
+`k = j + 0.0` avoid the fault, but any copy can hit it, so the backend passes
+`--no-ast-optimize` to uc80 (about 130 bytes more in the `.com`).
+Report to uc80.

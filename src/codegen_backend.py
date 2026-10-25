@@ -13,11 +13,13 @@ Each backend receives a fully analyzed AST from the semantic analyzer
 and generates executable code in the target language.
 """
 
+import dataclasses
 import re
 from abc import ABC, abstractmethod
 from typing import List, Dict, Set, Optional, Any
 from src.ast_nodes import *
 from src.semantic_analyzer import SymbolTable, VarType
+from src.number_format import numeric_digits, SINGLE_DIGITS, DOUBLE_DIGITS, INTEGER_DIGITS
 
 
 class CodeGenBackend(ABC):
@@ -77,9 +79,11 @@ class Z88dkCBackend(CodeGenBackend):
     - PRINT statements for integers
     - String variables and operations (using mb25_string runtime)
 
-    Known limitations (not yet implemented):
-    - Arrays (partial - string arrays need work)
-    - Complex expressions beyond simple binary operations
+    Anything this backend cannot compile correctly is a compile error
+    (self.errors, shown by --compile-c, which then writes no C file).  A
+    construct that would be compiled to different behaviour than the
+    interpreter shows is never accepted silently.  Messages that are only
+    advice go to self.warnings, which --compile-c also prints.
     """
 
     def __init__(self, symbols: SymbolTable, config: Optional[Dict[str, Any]] = None):
@@ -91,7 +95,7 @@ class Z88dkCBackend(CodeGenBackend):
         self.string_count = 0  # Total number of string descriptors needed
         self.string_ids = {}  # Maps variable name to string ID
         self.next_temp_id = 0  # For temporary string allocation
-        self.max_temps_per_statement = 5  # Estimate max temporaries needed
+        self.temp_string_count = 0  # Size of the temporary-string pool
 
         # DATA/READ/RESTORE support
         self.data_values: List[Any] = []  # All DATA values in order
@@ -113,7 +117,6 @@ class Z88dkCBackend(CodeGenBackend):
 
         # Error handling support
         self.needs_error_handling = False
-        self.current_basic_line = 0  # BASIC line number being generated
         self.error_handler_line = 0  # Line to jump to on error (0 = no handler)
 
         # Memory configuration (can be overridden via config)
@@ -128,8 +131,32 @@ class Z88dkCBackend(CodeGenBackend):
         # everything else is shared.  See docs/dev/TOOLCHAIN_POLICY.md.
         self.dialect = self.config.get('dialect', 'z88dk')
 
+        # OPTION BASE (0 or 1) as the semantic analyzer saw it
+        self.array_base = self.config.get('array_base', 0)
+        # Number of subscripts each array is used with, by symbol-table key
+        self.array_ranks: Dict[str, int] = {}
+        # Dimension maxima of the arrays a DIM sizes, by key
+        self.array_dims: Dict[str, List[int]] = {}
+        # Keys of the plain (not subscripted) variables the program uses.  BASIC
+        # keeps A and A(1) apart, and so do the C names: arrays end in _arr and
+        # string arrays have their own STR_ macro.
+        self.scalar_keys: Set[str] = set()
+        # First-letter type defaults from DEFINT and friends
+        self.def_suffix: Dict[str, str] = {}
+        self.current_line = 0
+
     def get_file_extension(self) -> str:
         return '.c'
+
+    def _unsupported(self, message: str) -> None:
+        """Record a construct that cannot be compiled correctly.
+
+        Compiling it anyway would write C that behaves differently from the
+        interpreter, with nothing to tell the user.  --compile-c stops on any
+        entry in self.errors.
+        """
+        where = f"line {self.current_line}: " if self.current_line else ""
+        self.errors.append(where + message)
 
     def get_compiler_command(self, source_file: str, output_file: str) -> List[str]:
         """Return z88dk.zcc command for CP/M compilation.
@@ -196,6 +223,16 @@ class Z88dkCBackend(CodeGenBackend):
         # First pass: count GOSUB statements
         self._count_gosubs(program)
 
+        # Which arrays exist and how many subscripts each takes
+        self._collect_array_usage(program)
+
+        # Which NEXT closes which FOR
+        self._pair_for_loops(program)
+
+        self._warn_about_double_precision(program)
+        self._warn_about_integer_overflow(program)
+        self._warn_about_literal_range(program)
+
         # Count strings and allocate IDs
         self._count_strings_and_allocate_ids(program)
 
@@ -241,7 +278,8 @@ class Z88dkCBackend(CodeGenBackend):
             code.append('/* Do NOT use #pragma printf/scanf - it forces inclusion and increases size */')
             code.append('')
 
-        # String system defines and includes
+        # String system defines and includes.  The header is always needed: PRINT
+        # and number formatting live in the same runtime as the strings.
         if self.string_count > 0:
             if uc80:
                 # uc80 merges all translation units, so a #define here would disagree
@@ -251,8 +289,9 @@ class Z88dkCBackend(CodeGenBackend):
                 code.append('/* translation unit agrees - uc80 compiles them together. */')
             else:
                 code.append(f'#define MB25_NUM_STRINGS {self.string_count}')
-            code.append('#include "mb25_string.h"')
-            code.append('')
+        code.append('#include "mb25_string.h"')
+        code.append('')
+        if self.string_count > 0:
             # Generate string ID defines
             for var_name, str_id in sorted(self.string_ids.items(), key=lambda x: x[1]):
                 code.append(f'#define STR_{self._mangle_string_name(var_name)} {str_id}')
@@ -390,7 +429,10 @@ class Z88dkCBackend(CodeGenBackend):
 
         # GOSUB return stack - for implementing GOSUB/RETURN
         code.append(self.indent() + '/* GOSUB return stack */')
-        code.append(self.indent() + 'int gosub_stack[100];  /* Return IDs (0, 1, 2...) - not line numbers */')
+        code.append(f'#define GOSUB_PUSH(id) do {{ if (gosub_sp >= {self.GOSUB_DEPTH}) {{ '
+                    'fprintf(stderr, "?Out of memory\\n"); return 1; } '
+                    'gosub_stack[gosub_sp++] = (id); } while (0)')
+        code.append(self.indent() + f'int gosub_stack[{self.GOSUB_DEPTH}];  /* Return IDs (0, 1, 2...) - not line numbers */')
         code.append(self.indent() + 'int gosub_sp = 0;      /* Stack pointer */')
         code.append('')
 
@@ -488,6 +530,10 @@ class Z88dkCBackend(CodeGenBackend):
         code.append('')
         code.append('program_end:')
         code.append('    return 0;')
+        if self.total_gosubs > 0 or any(isinstance(n, ReturnStatementNode)
+                                        for line in program.lines for n in self._walk(line.statements)):
+            code.append('')
+            code.extend(self._gosub_dispatcher())
         self.indent_level -= 1
         code.append('}')
         code.append('')
@@ -502,7 +548,7 @@ class Z88dkCBackend(CodeGenBackend):
         which GCC and z88dk accept as an extension but uc80 rejects (and C23 only
         legalised in 2023).  Emit an explicit null statement in that position.
         """
-        label_only = re.compile(r'^\s*[A-Za-z_]\w*:\s*$')
+        label_only = re.compile(r'^\s*[A-Za-z_]\w*:\s*(/\*.*\*/\s*)?$')
         out = []
         for i, line in enumerate(code):
             if label_only.match(line):
@@ -510,30 +556,32 @@ class Z88dkCBackend(CodeGenBackend):
                 # would be dangling.
                 nxt = next((c for c in code[i + 1:] if c.strip()), '')
                 if nxt.lstrip().startswith('}'):
-                    line = line.rstrip() + ' ;'
+                    # the null statement goes before any trailing comment
+                    line = re.sub(r':(\s*)(/\*.*\*/)?\s*$', r': ;\1\2', line).rstrip()
             out.append(line)
         return out
 
     def _count_strings_and_allocate_ids(self, program: ProgramNode):
-        """Count string variables and allocate string IDs"""
+        """Count string variables and allocate string IDs.
+
+        A scalar takes one descriptor.  A string array takes one per element,
+        in a run of consecutive IDs, so element n is the array's base ID + n.
+        """
         current_id = 0
 
-        # Allocate IDs for string variables from symbol table
-        for var_name, var_info in self.symbols.variables.items():
-            if var_info.var_type == VarType.STRING:
-                if var_info.is_array:
-                    # For arrays, allocate IDs for all elements
-                    # TODO: Need proper array dimension info from symbol table
-                    # For now, allocate a reasonable default
-                    array_size = 11  # Default DIM A$(10) = 0-10 = 11 elements
-                    self.string_ids[var_name] = current_id
-                    current_id += array_size
-                else:
-                    self.string_ids[var_name] = current_id
-                    current_id += 1
+        scalar_strings = {name for name, info in self.symbols.variables.items()
+                          if info.var_type == VarType.STRING and not info.is_array}
+        scalar_strings |= {k for k in self.scalar_keys if self._key_type(k) == VarType.STRING}
+        for var_name in sorted(scalar_strings):
+            self.string_ids[var_name] = current_id
+            current_id += 1
+
+        for key in sorted(self.array_ranks):
+            if self._key_type(key) == VarType.STRING:
+                self.string_ids[key + '()'] = current_id
+                current_id += self._array_total(key)
 
         # Reserve space for temporaries (for complex expressions)
-        # Estimate based on program complexity
         temp_count = self._estimate_temp_strings_needed(program)
         if temp_count > 0:
             self.string_ids['_TEMP_BASE'] = current_id
@@ -541,67 +589,35 @@ class Z88dkCBackend(CodeGenBackend):
             self.next_temp_id = self.string_ids['_TEMP_BASE']
         else:
             self.next_temp_id = 0
+        self.temp_string_count = temp_count
 
         self.string_count = current_id
+        if current_id > 16383:
+            self._unsupported(
+                f"the program needs {current_id} string descriptors; the string "
+                "runtime numbers them with 14 bits (16383 at most)")
 
     def _estimate_temp_strings_needed(self, program: ProgramNode) -> int:
-        """Estimate the maximum number of temporary strings needed"""
-        max_temps = 0
-        has_any_strings = False
+        """Temporary string descriptors the busiest statement can need.
 
+        Every string literal, string operation and function call in a
+        statement may take one temporary.  Counting them all over-estimates,
+        which only costs a few descriptors.  The temporaries are handed out
+        round-robin, so a statement stays correct as long as the pool is at
+        least as big as the number of temporaries that statement takes.
+        """
+        most = 0
         for line_node in program.lines:
             for stmt in line_node.statements:
-                # Count complexity of string expressions in this statement
-                temps_needed = self._count_expression_temps(stmt)
-                if temps_needed > 0:
-                    has_any_strings = True
-                max_temps = max(max_temps, temps_needed)
-
-        # Only add buffer if we actually have strings
-        if has_any_strings:
-            return max_temps + 3
-        else:
+                count = 0
+                for n in self._walk(stmt):
+                    if isinstance(n, (StringNode, FunctionCallNode, BinaryOpNode,
+                                      MidAssignmentStatementNode)):
+                        count += 1
+                most = max(most, count)
+        if most == 0:
             return 0
-
-    def _count_expression_temps(self, node) -> int:
-        """Count temporary strings needed for an expression or statement"""
-        if isinstance(node, PrintStatementNode):
-            # Only count string expressions that need temps
-            string_count = 0
-            for expr in node.expressions:
-                if self._expression_produces_string(expr):
-                    string_count += 1
-            return string_count
-        elif isinstance(node, LetStatementNode):
-            # Only count if it's a string assignment
-            if self._expression_produces_string(node.expression):
-                return self._count_concat_depth(node.expression)
-            return 0
-        elif isinstance(node, IfStatementNode):
-            # IF statements might have string operations in THEN/ELSE parts
-            max_temps = 0
-            if node.then_statements:
-                for stmt in node.then_statements:
-                    max_temps = max(max_temps, self._count_expression_temps(stmt))
-            if node.else_statements:
-                for stmt in node.else_statements:
-                    max_temps = max(max_temps, self._count_expression_temps(stmt))
-            return max_temps
-        # For other statements that don't use strings
-        return 0
-
-    def _expression_produces_string(self, expr) -> bool:
-        """Check if an expression produces a string result"""
-        return self._get_expression_type(expr) == VarType.STRING
-
-    def _count_concat_depth(self, expr) -> int:
-        """Count depth of concatenation operations"""
-        if isinstance(expr, BinaryOpNode) and expr.operator == TokenType.PLUS:
-            # For string concatenation
-            left_depth = self._count_concat_depth(expr.left)
-            right_depth = self._count_concat_depth(expr.right)
-            return left_depth + right_depth + 1
-        return 0
+        return most + 3
 
     def _mangle_string_name(self, basic_name: str) -> str:
         """Convert BASIC string variable name to valid C identifier for defines"""
@@ -615,9 +631,11 @@ class Z88dkCBackend(CodeGenBackend):
         """Count total number of GOSUB statements in the program"""
         self.total_gosubs = 0
         for line_node in program.lines:
-            for stmt in line_node.statements:
-                if isinstance(stmt, GosubStatementNode):
+            for node in self._walk(line_node.statements):
+                if isinstance(node, GosubStatementNode):
                     self.total_gosubs += 1
+                elif isinstance(node, OnGosubStatementNode):
+                    self.total_gosubs += len(node.line_numbers)
 
     def _collect_line_labels(self, program: ProgramNode):
         """
@@ -660,9 +678,9 @@ class Z88dkCBackend(CodeGenBackend):
                                 else:
                                     self.data_types.append('float')
                             else:
-                                self.warnings.append(f"Complex expression in DATA not supported: {type(value_expr.operand).__name__}")
+                                self._unsupported(f"Complex expression in DATA not supported: {type(value_expr.operand).__name__}")
                         else:
-                            self.warnings.append(f"Complex expression in DATA not supported: {type(value_expr).__name__}")
+                            self._unsupported(f"Complex expression in DATA not supported: {type(value_expr).__name__}")
 
     def _collect_def_fn(self, program: ProgramNode):
         """Collect all DEF FN functions for generation before main()"""
@@ -704,6 +722,9 @@ class Z88dkCBackend(CodeGenBackend):
                     else:
                         # If not constant, default to supporting up to 10 files
                         self.max_file_number = max(self.max_file_number, 10)
+                # A bare CLOSE closes every file, so it needs the full table
+                elif isinstance(stmt, CloseStatementNode) and not stmt.file_numbers:
+                    self.max_file_number = max(self.max_file_number, 255)
                 # Check CLOSE, INPUT#, PRINT#, etc.
                 elif hasattr(stmt, 'file_number') and stmt.file_number:
                     if isinstance(stmt.file_number, NumberNode):
@@ -788,6 +809,197 @@ class Z88dkCBackend(CodeGenBackend):
             return 22
         return 0
 
+    # ------------------------------------------------------------------
+    # Arrays
+    # ------------------------------------------------------------------
+
+    def _walk(self, node):
+        """Yield an AST node and every AST node below it."""
+        stack = [node]
+        while stack:
+            n = stack.pop()
+            if isinstance(n, (list, tuple)):
+                stack.extend(n)
+            elif dataclasses.is_dataclass(n) and not isinstance(n, type):
+                yield n
+                for f in dataclasses.fields(n):
+                    stack.append(getattr(n, f.name))
+
+    def _array_key(self, var_node: Any) -> str:
+        """Symbol-table style key of an array reference: NAME plus its suffix.
+
+        The semantic analyzer keys a name without a suffix on '!', so this does.
+        """
+        base = getattr(var_node, 'name', '').upper()
+        suffix = getattr(var_node, 'type_suffix', None)
+        if not suffix and base and base[-1] in '$%!#':
+            return base
+        return base + (suffix or self.def_suffix.get(base[:1].lower(), '!'))
+
+    def _key_type(self, key: str) -> VarType:
+        """Type of a variable from the suffix on its key."""
+        return {'%': VarType.INTEGER, '$': VarType.STRING,
+                '#': VarType.DOUBLE}.get(key[-1], VarType.SINGLE)
+
+    def _collect_array_usage(self, program: ProgramNode):
+        """Find every array the program uses and how many subscripts it takes.
+
+        The symbol table only knows the arrays that a DIM declares or that an
+        assignment names; an array that is only read, or that is used without
+        a DIM (so it has 11 elements per subscript), is missing from it.
+
+        The semantic analyzer rewrites a read of A(I,J) into A(I*n+J), so a DIM
+        gives the true number of subscripts and a use may show just one.
+        """
+        suffix_of = {VarType.INTEGER: '%', VarType.SINGLE: '!',
+                     VarType.DOUBLE: '#', VarType.STRING: '$'}
+        for line in program.lines:
+            for n in self._walk(line.statements):
+                if isinstance(n, DefTypeStatementNode):
+                    for letter in n.letters:
+                        self.def_suffix[letter.lower()] = suffix_of.get(n.var_type, '!')
+
+        dimmed: Set[str] = set()
+        used: Dict[str, int] = {}
+        for line in program.lines:
+            self.current_line = line.line_number
+            for n in self._walk(line.statements):
+                if isinstance(n, VariableNode):
+                    key = self._array_key(n)
+                    if n.subscripts:
+                        used[key] = max(used.get(key, 0), len(n.subscripts))
+                    elif n.subscripts is None and key[:-1] not in ('ERR', 'ERL'):
+                        self.scalar_keys.add(key)
+                elif isinstance(n, DimStatementNode):
+                    for decl in n.arrays:
+                        name = decl.name.upper()
+                        if name[-1] not in '$%!#':
+                            name += self.def_suffix.get(name[0].lower(), '!')
+                        dimmed.add(name)
+                        self.array_ranks[name] = len(decl.dimensions)
+                        maxima = [self._constant_value(d) for d in decl.dimensions]
+                        info = self.symbols.variables.get(name)
+                        if any(m is None for m in maxima) and info is not None \
+                                and info.dimensions:
+                            maxima = list(info.dimensions)
+                        if any(m is None for m in maxima):
+                            self._unsupported(
+                                f"DIM {name}: the size is not a constant the compiler can work out")
+                            maxima = [10] * len(decl.dimensions)
+                        self.array_dims[name] = [int(m) for m in maxima]
+        for key, rank in used.items():
+            if key not in dimmed:
+                self.array_ranks[key] = rank
+        self.current_line = 0
+
+    def _array_sizes(self, key: str) -> List[int]:
+        """Number of elements along each subscript of an array."""
+        if key in self.array_dims:
+            maxima = self.array_dims[key]
+        else:
+            # No DIM: BASIC gives every subscript 0..10
+            maxima = [10] * self.array_ranks.get(key, 1)
+        return [max(1, m + 1 - self.array_base) for m in maxima]
+
+    def _array_total(self, key: str) -> int:
+        total = 1
+        for size in self._array_sizes(key):
+            total *= size
+        return total
+
+    def _array_element_index(self, var_node: Any) -> str:
+        """C expression for the zero-based flat index of an array element.
+
+        Each subscript is rounded to an integer the way BASIC does, moved down
+        by OPTION BASE, and range-checked by mb25_subscript(), which stops the
+        program with "Subscript out of range" instead of writing past the array.
+        The first subscript varies slowest, as in the interpreter's flattening.
+        """
+        key = self._array_key(var_node)
+        sizes = self._array_sizes(key)
+        if len(var_node.subscripts) == 1 and len(sizes) > 1:
+            # Already flattened by the semantic analyzer, and already moved
+            # down by OPTION BASE
+            total = self._array_total(key)
+            return f'mb25_subscript({self._integer_value(var_node.subscripts[0])}, {total}, 0)'
+        if len(sizes) != len(var_node.subscripts):
+            self._unsupported(
+                f"array {key} has {len(sizes)} subscripts, used with {len(var_node.subscripts)}")
+            return '0'
+        parts = []
+        for i, sub in enumerate(var_node.subscripts):
+            stride = 1
+            for size in sizes[i + 1:]:
+                stride *= size
+            expr = self._integer_value(sub)
+            if self.array_base:
+                expr = f'({expr} - {self.array_base})'
+            expr = f'mb25_subscript({expr}, {sizes[i]}, {self.array_base or 0})'
+            parts.append(f'{expr} * {stride}' if stride > 1 else expr)
+        return ' + '.join(parts)
+
+    def _str_number(self, arg: Any, result_id: str) -> str:
+        """C call that stores STR$(arg) in the string result_id."""
+        if self._numeric_kind(arg) == VarType.INTEGER:
+            return f'mb25_str_int({result_id}, {self._integer_value(arg)})'
+        kind = 1 if self._numeric_kind(arg) == VarType.DOUBLE else 0
+        return f'mb25_str_num({result_id}, (double)({self._generate_expression(arg)}), {kind})'
+
+    def _read_line(self, input_stream: str) -> str:
+        """C condition that reads one line into input_buffer; true when it got one.
+
+        At the end of the keyboard input the interpreter ends the program, so
+        the compiled program does too (otherwise a loop that asks again would
+        never stop).  A file reports the end through EOF() instead.
+        """
+        if input_stream == 'stdin':
+            return 'fgets(input_buffer, 256, stdin) || mb25_input_eof()'
+        return f'fgets(input_buffer, 256, {input_stream})'
+
+    def _numeric_lvalue(self, var_node: Any) -> str:
+        """C lvalue of a numeric variable or array element ('' for a string)."""
+        if self._get_expression_type(var_node) == VarType.STRING:
+            return ''
+        if var_node.subscripts:
+            return self._generate_array_access(var_node)
+        return self._mangle_variable_name(self._canonical_basic_name(var_node))
+
+    def _string_var_id(self, var_node: Any) -> str:
+        """C expression for the string-pool ID of a string variable or element.
+
+        A string array owns a run of consecutive descriptors starting at the ID
+        the STR_<name> macro gives, so an element is that ID plus the flat index.
+        """
+        if getattr(var_node, 'subscripts', None):
+            key = self._array_key(var_node)
+            base = self._get_string_id(key + '()')
+            return f'({base} + {self._array_element_index(var_node)})'
+        return self._get_string_id(self._canonical_basic_name(var_node))
+
+    # ------------------------------------------------------------------
+    # Numeric types
+    # ------------------------------------------------------------------
+
+    def _numeric_kind(self, expr: Any) -> VarType:
+        """INTEGER, SINGLE or DOUBLE for a numeric expression.
+
+        Uses the interpreter's own rule (number_format.numeric_digits), so a
+        compiled PRINT shows as many digits as an interpreted one.
+        """
+        digits = numeric_digits(expr)
+        if digits == INTEGER_DIGITS:
+            return VarType.INTEGER
+        if digits == DOUBLE_DIGITS:
+            return VarType.DOUBLE
+        return VarType.SINGLE
+
+    def _integer_value(self, expr: Any) -> str:
+        """C int expression for a numeric expression, rounded like CINT."""
+        c_expr = self._generate_expression(expr)
+        if self._get_expression_type(expr) == VarType.INTEGER:
+            return c_expr
+        return f'mb25_cint({c_expr})'
+
     def _generate_variable_declarations(self) -> List[str]:
         """Generate C variable declarations from symbol table"""
         decls = []
@@ -797,50 +1009,39 @@ class Z88dkCBackend(CodeGenBackend):
         singles = []
         doubles = []
 
-        # First, handle arrays
+        # First, handle arrays.  String arrays have no C storage: their
+        # elements are runs of descriptors in the string pool (see
+        # _count_strings_and_allocate_ids).
         arrays = []
-        seen_arrays = set()  # Track which arrays we've already declared
-        for var_name, var_info in self.symbols.variables.items():
-            if var_info.is_array and var_info.flattened_size is not None:
-                # Generate array declaration (skip duplicates without dimension info)
-                var_name_c = self._mangle_variable_name(var_name)
-
-                # Skip if we've already declared this array
-                if var_name_c in seen_arrays:
-                    continue
-                seen_arrays.add(var_name_c)
-
-                if var_info.var_type == VarType.STRING:
-                    # String arrays need special handling with mb25_string
-                    continue  # Skip for now, TODO: implement string arrays
-
-                # Calculate total size for flattened array
-                total_size = var_info.flattened_size or 1
-
-                if var_info.var_type == VarType.INTEGER:
-                    arrays.append(f'int {var_name_c}[{total_size}];')
-                elif var_info.var_type == VarType.SINGLE:
-                    arrays.append(f'float {var_name_c}[{total_size}];')
-                elif var_info.var_type == VarType.DOUBLE:
-                    arrays.append(f'double {var_name_c}[{total_size}];')
-                continue  # Don't process as regular variable
+        array_clears = []
+        for key in sorted(self.array_ranks):
+            var_type = self._key_type(key)
+            if var_type == VarType.STRING:
+                continue
+            c_name = self._mangle_variable_name(key) + '_arr'
+            c_type = {VarType.INTEGER: 'int', VarType.DOUBLE: 'double'}.get(var_type, 'float')
+            arrays.append(f'{c_type} {c_name}[{self._array_total(key)}];')
+            array_clears.append(f'memset({c_name}, 0, sizeof({c_name}));')
 
         # Then, handle regular variables
-        for var_name, var_info in self.symbols.variables.items():
-            if var_info.is_array:
-                continue  # Already handled above
+        scalar_decls = {name: info.var_type for name, info in self.symbols.variables.items()
+                        if not info.is_array}
+        for key in self.scalar_keys:
+            scalar_decls.setdefault(key, self._key_type(key))
+        for var_name in sorted(scalar_decls):
+            var_type = scalar_decls[var_name]
 
             # Skip string variables - they're handled by mb25_string system
-            if var_info.var_type == VarType.STRING:
+            if var_type == VarType.STRING:
                 continue
 
             c_name = self._mangle_variable_name(var_name)
 
-            if var_info.var_type == VarType.INTEGER:
+            if var_type == VarType.INTEGER:
                 integers.append(c_name)
-            elif var_info.var_type == VarType.SINGLE:
+            elif var_type == VarType.SINGLE:
                 singles.append(c_name)
-            elif var_info.var_type == VarType.DOUBLE:
+            elif var_type == VarType.DOUBLE:
                 doubles.append(c_name)
 
         # Generate declarations
@@ -851,12 +1052,25 @@ class Z88dkCBackend(CodeGenBackend):
                 decls.append(self.indent() + array_decl)
 
         # Then regular variables
+        # BASIC variables start at 0, so every C variable starts there too
         if integers:
-            decls.append(self.indent() + 'int ' + ', '.join(integers) + ';')
+            decls.append(self.indent() + 'int ' + ', '.join(f'{n} = 0' for n in integers) + ';')
         if singles:
-            decls.append(self.indent() + 'float ' + ', '.join(singles) + ';')
+            decls.append(self.indent() + 'float ' + ', '.join(f'{n} = 0' for n in singles) + ';')
         if doubles:
-            decls.append(self.indent() + 'double ' + ', '.join(doubles) + ';')
+            decls.append(self.indent() + 'double ' + ', '.join(f'{n} = 0' for n in doubles) + ';')
+
+        for clear in array_clears:
+            decls.append(self.indent() + clear)
+
+        # The end value and step of a FOR loop whose bounds are not constants
+        for number, loop in sorted(self.for_vars.items()):
+            c_type = {VarType.INTEGER: 'int', VarType.DOUBLE: 'double'}.get(
+                self._get_expression_type(loop.variable), 'float')
+            if self._constant_value(loop.end_expr) is None:
+                decls.append(self.indent() + f'{c_type} _fe{number} = 0;')
+            if loop.step_expr is not None and self._constant_value(loop.step_expr) is None:
+                decls.append(self.indent() + f'{c_type} _fs{number} = 0;')
 
         # Buffer for INPUT: needed for string input, and for numeric input too
         # since that reads a line and converts it with atof.
@@ -864,20 +1078,6 @@ class Z88dkCBackend(CodeGenBackend):
             decls.append(self.indent() + 'char input_buffer[256];  /* For INPUT statements */')
 
         return decls
-
-    def _generate_index_expression(self, subscript: Any) -> str:
-        """Generate an array subscript, cast to int when it is not already.
-
-        BASIC array indices are frequently plain (single-precision) variables:
-        `DIM A(5) : I = 2 : PRINT A(I)`. Emitting a[i] with `float i` is invalid
-        C, and sccz80 accepts it while indexing with the raw low word of the
-        MBF32 value - which is 0 for small integers, so every element access
-        silently hit element 0.
-        """
-        expr = self._generate_expression(subscript)
-        if self._get_expression_type(subscript) == VarType.INTEGER:
-            return expr
-        return f'(int)({expr})'
 
     def _canonical_basic_name(self, var_node: Any) -> str:
         """BASIC name including its type suffix, as the symbol table keys it.
@@ -908,6 +1108,22 @@ class Z88dkCBackend(CodeGenBackend):
         # turning a loud "Unknown symbol: v" build failure into a wrong answer.
         # Falling through leaves the name unresolved, which still fails loudly.
         return base + (suffix or '')
+
+    # Names a BASIC variable must not take in C: the keywords, and the library and
+    # runtime functions that the generated code calls.  BASIC lets a program use
+    # any of them (REGISTER, FLOOR, EXIT) as a variable.
+    _C_RESERVED = frozenset("""
+        auto break case char const continue default do double else enum extern float
+        for goto if inline int long register restrict return short signed sizeof static
+        struct switch typedef union unsigned void volatile while near far main
+        int_int float_int double_int double_dbl
+        pow floor trunc sqrt sin cos tan atan exp log fabs round abs atoi atof strlen
+        strchr strcpy strncpy strstr memcpy memset printf fprintf sprintf sscanf fscanf
+        putchar fputc fputs fgets fopen fclose fseek ftell feof free malloc exit rand
+        srand setjmp longjmp stdin stdout stderr size_t uint8_t uint16_t NULL
+        data_pointer data_numeric data_strings data_types gosub_stack gosub_sp
+        input_buffer file_handles file_modes basic_err basic_erl
+        """.split())
 
     def _mangle_variable_name(self, basic_name: str) -> str:
         """
@@ -948,8 +1164,7 @@ class Z88dkCBackend(CodeGenBackend):
         # STRING ($) is handled by string pool, not as C variables
 
         # Add prefix to avoid C keyword conflicts
-        if c_name in ('int', 'float', 'double', 'char', 'void', 'if', 'for', 'while', 'return',
-                      'int_int', 'float_int', 'double_int', 'double_dbl'):
+        if c_name in self._C_RESERVED or c_name.startswith('mb25') or c_name.startswith('_'):
             c_name = 'v_' + c_name
 
         return c_name
@@ -957,12 +1172,17 @@ class Z88dkCBackend(CodeGenBackend):
     def _generate_line(self, line_node: LineNode) -> List[str]:
         """Generate code for one line of BASIC"""
         code = []
-        self.current_basic_line = line_node.line_number
+        self.current_line = line_node.line_number
 
         # Add line label if needed
         if line_node.line_number in self.line_labels:
             # Use goto label syntax: line_100:
             code.append(f'line_{line_node.line_number}:')
+        # Run-time errors say which line they happened in.  REM and DATA
+        # lines cannot fail, so they skip the store.
+        if any(not isinstance(st, (RemarkStatementNode, DataStatementNode))
+               for st in line_node.statements):
+            code.append(self.indent() + f'mb25_line = {line_node.line_number}u;')
 
         # Generate code for each statement on the line
         for stmt in line_node.statements:
@@ -1074,22 +1294,54 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_chain(stmt)
         elif isinstance(stmt, CommonStatementNode):
             return self._generate_common(stmt)
+        elif isinstance(stmt, (DefTypeStatementNode, OptionBaseStatementNode)):
+            # Handled when compiling: the parser typed every name, and
+            # _array_sizes() applies OPTION BASE
+            return []
+        elif isinstance(stmt, SystemStatementNode):
+            return [self.indent() + 'goto program_end;']
+        elif isinstance(stmt, StopStatementNode):
+            # The interpreter stops and offers CONT; a compiled program ends
+            return [self.indent() + f'mb25_print_cstr("Break in {self.current_line}");',
+                    self.indent() + 'mb25_print_nl();',
+                    self.indent() + 'goto program_end;']
         else:
             # Unsupported statement
-            self.warnings.append(f"Unsupported statement type: {type(stmt).__name__}")
+            self._unsupported(f"Unsupported statement type: {type(stmt).__name__}")
             return [self.indent() + f'/* Unsupported: {type(stmt).__name__} */']
 
+    # How many GOSUBs can be active at once (2 bytes each)
+    GOSUB_DEPTH = 256
+
+    _STRING_FUNCTIONS = ('LEFT', 'RIGHT', 'MID', 'CHR', 'STR', 'STRING$', 'STRING',
+                         'SPACE', 'HEX', 'OCT', 'INKEY', 'INKEY$', 'INPUT$',
+                         'MKI', 'MKS', 'MKD')
+    _INTEGER_FUNCTIONS = ('LEN', 'ASC', 'INSTR', 'CINT', 'EOF', 'CVI', 'PEEK', 'INP')
+    _COMPARISONS = (TokenType.EQUAL, TokenType.NOT_EQUAL, TokenType.LESS_THAN,
+                    TokenType.LESS_EQUAL, TokenType.GREATER_THAN,
+                    TokenType.GREATER_EQUAL)
+    _LOGICAL = (TokenType.AND, TokenType.OR, TokenType.XOR, TokenType.EQV,
+                TokenType.IMP)
+
     def _get_expression_type(self, expr: Any) -> VarType:
-        """Determine the type of an expression"""
+        """The type the C expression for this BASIC expression has.
+
+        STRING for a string-pool ID, INTEGER for a C int, and SINGLE for
+        anything C computes in floating point.  How many digits PRINT shows is
+        a separate question, answered by _numeric_kind().
+        """
         if isinstance(expr, NumberNode):
-            # Check if it's a float or integer
-            if isinstance(expr.value, float) and expr.value != int(expr.value):
-                return VarType.SINGLE  # Default float type
-            else:
+            # A whole number that fits an INTEGER is a C int
+            if (isinstance(expr.value, (int, float)) and expr.value == int(expr.value)
+                    and -32768 <= expr.value <= 32767
+                    and not any(c in str(expr.literal).upper() for c in '.E#D!')):
                 return VarType.INTEGER
+            return self._numeric_kind(expr)
         elif isinstance(expr, StringNode):
             return VarType.STRING
         elif isinstance(expr, VariableNode):
+            if expr.subscripts:
+                return self._key_type(self._array_key(expr))
             # Resolve through the same helper the name mangler uses, so the
             # type we report here cannot disagree with the C identifier we
             # emit. (They did disagree: under DEFINT I, a bare I mangled to
@@ -1097,253 +1349,335 @@ class Z88dkCBackend(CodeGenBackend):
             var_info = self.symbols.variables.get(self._canonical_basic_name(expr))
             if var_info is not None:
                 return var_info.var_type
-            return VarType.SINGLE  # Default
+            return self._numeric_kind(expr)
+        elif isinstance(expr, (UnaryOpNode, BinaryOpNode)) and self._constant_value(expr) is not None:
+            value = self._constant_value(expr)
+            if value == int(value) and -32768 <= value <= 32767:
+                return VarType.INTEGER
+            return self._numeric_kind(expr)
+        elif isinstance(expr, UnaryOpNode):
+            if expr.operator == TokenType.NOT:
+                return VarType.INTEGER
+            return self._get_expression_type(expr.operand)
         elif isinstance(expr, BinaryOpNode):
-            # For string concatenation
-            left_type = self._get_expression_type(expr.left)
-            if left_type == VarType.STRING:
-                return VarType.STRING
-            # For numeric operations
-            return left_type
-        elif isinstance(expr, FunctionCallNode):
-            # String functions (parser removes $ from function names)
-            if expr.name.upper() in ('LEFT', 'RIGHT', 'MID', 'CHR', 'STR', 'STRING$',
-                                    'SPACE', 'HEX', 'OCT', 'INKEY', 'INKEY$',
-                                    'INPUT$', 'MKI', 'MKS', 'MKD'):
-                return VarType.STRING
-            # LEN returns integer
-            elif expr.name.upper() == 'LEN':
+            left = self._get_expression_type(expr.left)
+            if expr.operator in self._COMPARISONS or expr.operator in self._LOGICAL \
+                    or expr.operator in (TokenType.MOD, TokenType.BACKSLASH):
                 return VarType.INTEGER
-            # ASC returns integer
-            elif expr.name.upper() == 'ASC':
-                return VarType.INTEGER
-            # INSTR returns integer (position)
-            elif expr.name.upper() == 'INSTR':
-                return VarType.INTEGER
-            # VAL returns numeric
-            elif expr.name.upper() == 'VAL':
+            if left == VarType.STRING:
+                return VarType.STRING        # concatenation
+            right = self._get_expression_type(expr.right)
+            if expr.operator in (TokenType.DIVIDE, TokenType.POWER):
                 return VarType.SINGLE
-            else:
-                return VarType.SINGLE  # Default for other functions
-        else:
-            return VarType.SINGLE  # Default
+            if left == VarType.INTEGER and right == VarType.INTEGER:
+                return VarType.INTEGER
+            return VarType.SINGLE
+        elif isinstance(expr, FunctionCallNode):
+            name = expr.name.upper()
+            if name.startswith('FN'):
+                return self._key_type('X' + (expr.type_suffix or '!'))
+            if name in self._STRING_FUNCTIONS:
+                return VarType.STRING
+            if name in self._INTEGER_FUNCTIONS:
+                return VarType.INTEGER
+            return VarType.SINGLE
+        return VarType.SINGLE
 
-    def _float_fmt(self, long_form: bool = False) -> str:
-        """printf conversion for a floating-point value in the target dialect.
-
-        uc80's printf implements %f but NOT %e or %g - those produce empty output
-        with no diagnostic - so uc80 builds have to use %f.  z88dk supports %g, which
-        is preferred there because it drops trailing zeros the way MBASIC does.
-        """
-        if self.dialect == 'uc80':
-            return '%f'
-        return '%lg' if long_form else '%g'
-
-    def _get_format_specifier(self, var_type: VarType) -> str:
-        """Get printf format specifier for a variable type"""
-        if var_type == VarType.INTEGER:
-            return '%d'
-        elif var_type == VarType.SINGLE:
-            return self._float_fmt()  # %g uses shortest representation (no trailing zeros)
-        elif var_type == VarType.DOUBLE:
-            return self._float_fmt(long_form=True)
-        elif var_type == VarType.STRING:
-            return '%s'
-        else:
-            return self._float_fmt()
-
-    def _generate_print(self, stmt: PrintStatementNode) -> List[str]:
-        """Generate PRINT statement code"""
+    def _open_output_file(self, file_number: Any) -> List[str]:
+        """Code that checks a PRINT#/WRITE# file is open and aims the runtime at it."""
         code = []
-
-        # Determine output stream
-        if stmt.file_number:
-            # PRINT# to file
-            file_num_expr = self._generate_expression(stmt.file_number)
-            self.max_file_number = max(self.max_file_number, 255)  # Assume max 255 files
-            file_ptr = f'file_handles[(int)({file_num_expr})]'
-
-            # Check if file is open
-            code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
-            self.indent_level += 1
-            code.append(self.indent() + f'fprintf(stderr, "?File not open\\n");')
-            code.append(self.indent() + 'return 1;')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
-
-            # Use fprintf for file output
-            output_func = 'fprintf'
-            output_stream = file_ptr + ', '
-        else:
-            # Regular PRINT to stdout
-            output_func = 'printf'
-            output_stream = ''
-
-        # Print each expression with appropriate format
-        for i, expr in enumerate(stmt.expressions):
-            separator = stmt.separators[i] if i < len(stmt.separators) else None
-
-            # Check for special TAB() and SPC() functions first
-            if isinstance(expr, FunctionCallNode):
-                func_name = expr.name.upper()
-                if func_name == 'TAB':
-                    # TAB(n) - move to column n
-                    if len(expr.arguments) != 1:
-                        self.warnings.append("TAB requires 1 argument")
-                    else:
-                        tab_col = self._generate_expression(expr.arguments[0])
-                        code.append(self.indent() + '{')
-                        self.indent_level += 1
-                        code.append(self.indent() + f'int _tab = (int)({tab_col});')
-                        code.append(self.indent() + '/* TAB to column - simplified */')
-                        code.append(self.indent() + 'for (int _i = 0; _i < _tab; _i++) {')
-                        self.indent_level += 1
-                        code.append(self.indent() + f'{output_func}({output_stream}" ");')
-                        self.indent_level -= 1
-                        code.append(self.indent() + '}')
-                        self.indent_level -= 1
-                        code.append(self.indent() + '}')
-                    continue  # Skip normal expression handling
-                elif func_name == 'SPC':
-                    # SPC(n) - output n spaces
-                    if len(expr.arguments) != 1:
-                        self.warnings.append("SPC requires 1 argument")
-                    else:
-                        spc_count = self._generate_expression(expr.arguments[0])
-                        code.append(self.indent() + '{')
-                        self.indent_level += 1
-                        code.append(self.indent() + f'int _spc = (int)({spc_count});')
-                        code.append(self.indent() + 'for (int _i = 0; _i < _spc; _i++) {')
-                        self.indent_level += 1
-                        code.append(self.indent() + f'{output_func}({output_stream}" ");')
-                        self.indent_level -= 1
-                        code.append(self.indent() + '}')
-                        self.indent_level -= 1
-                        code.append(self.indent() + '}')
-                    continue  # Skip normal expression handling
-
-            # Determine format based on expression type
-            expr_type = self._get_expression_type(expr)
-
-            if expr_type == VarType.STRING:
-                # Print string directly using mb25_print_string (no malloc!)
-                if isinstance(expr, StringNode):
-                    # For string literals, allocate as const then print
-                    temp_id = self._get_temp_string_id()
-                    code.append(self.indent() + f'mb25_string_alloc_const({temp_id}, "{self._escape_string(expr.value)}");')
-                    code.append(self.indent() + f'mb25_print_string({temp_id});')
-                else:
-                    # For variables and expressions, get string ID and print
-                    str_expr = self._generate_string_expression(expr)
-                    code.append(self.indent() + f'mb25_print_string({str_expr});')
-
-                # Add separator using putchar (no printf formatting overhead)
-                if separator == ',':
-                    code.append(self.indent() + 'putchar(\' \');')
-                elif separator != ';':
-                    # Newline - use CRLF for CP/M file output
-                    if stmt.file_number:
-                        code.append(self.indent() + 'putchar(\'\\r\');')
-                    code.append(self.indent() + 'putchar(\'\\n\');')
-            else:
-                # Numeric types
-                c_expr = self._generate_expression(expr)
-                fmt = self._get_format_specifier(expr_type)
-
-                if separator == ';':
-                    code.append(self.indent() + f'{output_func}({output_stream}"{fmt}", {c_expr});')
-                elif separator == ',':
-                    code.append(self.indent() + f'{output_func}({output_stream}"{fmt} ", {c_expr});')
-                else:
-                    # Use CRLF for CP/M compatibility when writing to files
-                    if stmt.file_number:
-                        code.append(self.indent() + f'{output_func}({output_stream}"{fmt}\\r\\n", {c_expr});')
-                    else:
-                        code.append(self.indent() + f'{output_func}({output_stream}"{fmt}\\n", {c_expr});')
-
-        # If no expressions or last separator was ; add newline
-        if not stmt.expressions or (stmt.separators and stmt.separators[-1] != ';'):
-            if not stmt.expressions:
-                if stmt.file_number:
-                    file_num_expr = self._generate_expression(stmt.file_number)
-                    file_ptr = f'file_handles[(int)({file_num_expr})]'
-                    # Use CRLF for CP/M compatibility
-                    code.append(self.indent() + f'fprintf({file_ptr}, "\\r\\n");')
-                else:
-                    code.append(self.indent() + 'printf("\\n");')
-
+        file_num_expr = self._generate_expression(file_number)
+        self.max_file_number = max(self.max_file_number, 255)  # Assume max 255 files
+        file_ptr = f'file_handles[(int)({file_num_expr})]'
+        code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
+        self.indent_level += 1
+        code.append(self.indent() + 'mb25_fail("File not open");')
+        code.append(self.indent() + 'return 1;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + f'mb25_set_out({file_ptr});')
         return code
 
-    def _generate_for(self, stmt: ForStatementNode) -> List[str]:
-        """Generate FOR loop code"""
+    def _print_number(self, expr: Any, write: bool = False) -> str:
+        """C statement that prints one number the way MBASIC does.
+
+        PRINT puts a space before a number that is not negative and one after
+        it; WRITE (write=True) prints the digits alone.  How many digits show
+        depends on the type of the expression (6 for single precision), not on
+        its value - see number_format.numeric_digits().
+        """
+        kind = self._numeric_kind(expr)
+        prefix = 'mb25_write_' if write else 'mb25_print_'
+        if kind == VarType.INTEGER:
+            return f'{prefix}int({self._integer_value(expr)});'
+        c_expr = self._generate_expression(expr)
+        return f'{prefix}num((double)({c_expr}), {1 if kind == VarType.DOUBLE else 0});'
+
+    def _print_string(self, expr: Any) -> str:
+        """C statement that prints one string expression."""
+        if isinstance(expr, StringNode):
+            return f'mb25_print_cstr("{self._escape_string(expr.value)}");'
+        return f'mb25_print_string({self._generate_string_expression(expr)});'
+
+    def _generate_print(self, stmt: PrintStatementNode) -> List[str]:
+        """Generate PRINT statement code
+
+        Everything goes through the mb25 runtime, which knows the cursor
+        column: comma zones every 14 columns, TAB, the 80-column wrap and the
+        number format (a leading space or minus sign, a trailing space, 6
+        significant digits for a single) are all done there.
+        """
         code = []
+        if stmt.file_number:
+            code.extend(self._open_output_file(stmt.file_number))
+
+        for i, expr in enumerate(stmt.expressions):
+            separator = stmt.separators[i] if i < len(stmt.separators) else '\n'
+
+            if isinstance(expr, FunctionCallNode) and expr.name.upper() in ('TAB', 'SPC'):
+                func_name = expr.name.upper()
+                if len(expr.arguments) != 1:
+                    self._unsupported(f"{func_name} needs 1 argument")
+                    continue
+                arg = self._integer_value(expr.arguments[0])
+                code.append(self.indent() + f'mb25_print_{func_name.lower()}({arg});')
+            elif self._get_expression_type(expr) == VarType.STRING:
+                code.append(self.indent() + self._print_string(expr))
+            else:
+                code.append(self.indent() + self._print_number(expr))
+
+            if separator == ',':
+                code.append(self.indent() + 'mb25_print_zone();')
+            elif separator != ';':
+                code.append(self.indent() + 'mb25_print_nl();')
+
+        if not stmt.expressions:
+            code.append(self.indent() + 'mb25_print_nl();')
+
+        if stmt.file_number:
+            code.append(self.indent() + 'mb25_set_out(NULL);')
+        return code
+
+    def _warn_about_double_precision(self, program: ProgramNode):
+        """uc80 has no 64-bit float: a double is stored in 32 bits.
+
+        So a program that asks for double precision (a # variable, a literal
+        with more than seven digits, DEFDBL, CDBL) gets about seven digits and
+        prints them in D notation, where the interpreter shows sixteen.
+        """
+        if self.dialect != 'uc80':
+            return
+        uses_double = any(k.endswith('#') for k in list(self.scalar_keys) + list(self.array_ranks))
+        if not uses_double:
+            for line in program.lines:
+                for n in self._walk(line.statements):
+                    if (isinstance(n, NumberNode) and numeric_digits(n) == DOUBLE_DIGITS) \
+                            or (isinstance(n, FunctionCallNode) and n.name.upper() == 'CDBL') \
+                            or (isinstance(n, DefTypeStatementNode) and n.var_type == VarType.DOUBLE):
+                        uses_double = True
+                        break
+                if uses_double:
+                    break
+        if uses_double:
+            self.warnings.append(
+                "double precision is stored in 32 bits by uc80: values keep about 7 digits, "
+                "where the interpreter keeps 16")
+
+    def _warn_about_literal_range(self, program: ProgramNode):
+        """Say so when a number in the program is outside the uc80 float range.
+
+        A uc80 float holds about 1.2E-38 to 1.7E38.  A bigger literal wraps to
+        a small wrong value, and a smaller one becomes 0, with no error.
+        """
+        if self.dialect != 'uc80':
+            return
+        for line in program.lines:
+            for n in self._walk(line.statements):
+                if isinstance(n, NumberNode) and isinstance(n.value, (int, float)):
+                    size = abs(float(n.value))
+                    if size > 1.7e38 or 0 < size < 1.18e-38:
+                        self.warnings.append(
+                            f"line {line.line_number}: the number {n.value!r} is outside the "
+                            "range of a uc80 float (about 1.2E-38 to 1.7E38) and is wrong in "
+                            "the compiled program")
+                        return
+
+    def _warn_about_integer_overflow(self, program: ProgramNode):
+        """Say so when integer + - * can wrap at 16 bits.
+
+        The interpreter turns an integer result that does not fit into a
+        single-precision number.  The C int wraps, and nothing tells the user.
+        A sum of constants is worked out by the compiler and does not count.
+        """
+        for line in program.lines:
+            for n in self._walk(line.statements):
+                if (isinstance(n, BinaryOpNode)
+                        and n.operator in (TokenType.PLUS, TokenType.MINUS, TokenType.MULTIPLY)
+                        and self._constant_value(n) is None
+                        and self._get_expression_type(n) == VarType.INTEGER
+                        and self._get_expression_type(n.left) == VarType.INTEGER
+                        and self._get_expression_type(n.right) == VarType.INTEGER):
+                    self.warnings.append(
+                        f"line {line.line_number}: integer + - * wraps at 16 bits in the "
+                        "compiled program; the interpreter gives a larger single-precision result")
+                    return
+
+    def _statements_in_order(self, statements):
+        """The statements of a list in program order, IF branches included."""
+        for stmt in statements:
+            yield stmt
+            if isinstance(stmt, IfStatementNode):
+                yield from self._statements_in_order(stmt.then_statements or [])
+                yield from self._statements_in_order(stmt.else_statements or [])
+
+    def _pair_for_loops(self, program: ProgramNode):
+        """Give each FOR a number and say which loops each NEXT closes.
+
+        NEXT pairs with the FOR that is nearest above it in the program text,
+        as it does in the JavaScript backend.  A C `for` block cannot do this:
+        a NEXT may sit on another line than the body, inside an IF, or after a
+        GOSUB that jumps around it.  So a loop is compiled to labels and gotos.
+        """
+        self.for_ids: Dict[int, int] = {}      # id(FOR node) -> loop number
+        self.next_ids: Dict[int, List[int]] = {}   # id(NEXT node) -> loop numbers
+        self.for_vars: Dict[int, Any] = {}     # loop number -> FOR node
+        stack: List[Any] = []
+        count = 0
+        for line in program.lines:
+            self.current_line = line.line_number
+            for stmt in self._statements_in_order(line.statements):
+                if isinstance(stmt, ForStatementNode):
+                    count += 1
+                    self.for_ids[id(stmt)] = count
+                    self.for_vars[count] = stmt
+                    stack.append((count, self._canonical_basic_name(stmt.variable)))
+                elif isinstance(stmt, NextStatementNode):
+                    closes = []
+                    names = [self._canonical_basic_name(v) for v in stmt.variables or []]
+                    for name in names or [None]:
+                        if not stack:
+                            self._unsupported("NEXT without FOR")
+                            break
+                        number, for_name = stack.pop()
+                        if name is not None and name != for_name:
+                            self._unsupported(f"NEXT {name} does not match the FOR {for_name}")
+                        closes.append(number)
+                    self.next_ids[id(stmt)] = closes
+        if stack:
+            self.current_line = self.for_vars[stack[-1][0]].line_num or 0
+            self._unsupported("FOR without a NEXT below it (the C backend pairs each NEXT "
+                              "with the nearest FOR above it in the text)")
+        self.current_line = 0
+
+    def _generate_for(self, stmt: ForStatementNode) -> List[str]:
+        """Generate FOR loop code
+
+        FOR v = a TO b STEP s becomes
+            v = a; end = b; step = s;
+          for_N_top:  if v is past end, goto for_N_end
+        and the matching NEXT adds step to v and jumps back.  BASIC reads b and
+        s once, when the loop starts.  A constant bound or step is written
+        straight into the test.
+        """
+        code = []
+        number = self.for_ids.get(id(stmt))
+        if number is None:
+            self._unsupported("FOR loop that the compiler could not pair with a NEXT")
+            return code
 
         var_name = self._mangle_variable_name(self._canonical_basic_name(stmt.variable))
         start = self._generate_expression(stmt.start_expr)
-        end = self._generate_expression(stmt.end_expr)
-        step = '1'
-        if stmt.step_expr:
-            step = self._generate_expression(stmt.step_expr)
+        if self._get_expression_type(stmt.variable) == VarType.INTEGER:
+            start = self._integer_value(stmt.start_expr)
 
-        # Generate C for loop
-        # BASIC: FOR I = 1 TO 10 STEP 2
-        # C: for (i = 1; i <= 10; i += 2)
+        def constant_or_temp(expr, name):
+            value = self._constant_value(expr)
+            if value is not None:
+                return self._number_literal(value), value
+            return name, None
 
-        # Determine comparison operator based on step
-        # LIMITATION: Currently only handles positive steps correctly
-        # Negative steps (e.g., FOR I = 10 TO 1 STEP -1) would generate incorrect C code
-        # and loop indefinitely. This is a known limitation that requires runtime step detection.
-        comp = '<='
+        end, end_const = constant_or_temp(stmt.end_expr, f'_fe{number}')
+        if stmt.step_expr is None:
+            step, step_const = '1', 1
+        else:
+            step, step_const = constant_or_temp(stmt.step_expr, f'_fs{number}')
 
-        code.append(self.indent() + f'for ({var_name} = {start}; {var_name} {comp} {end}; {var_name} += {step}) {{')
-        self.indent_level += 1
+        code.append(self.indent() + f'{var_name} = {start};')
+        if end_const is None:
+            code.append(self.indent() + f'_fe{number} = {self._generate_expression(stmt.end_expr)};')
+        if step_const is None:
+            code.append(self.indent() + f'_fs{number} = {self._generate_expression(stmt.step_expr)};')
 
+        # The sign of STEP picks the direction of the test
+        var_is_int = self._get_expression_type(stmt.variable) == VarType.INTEGER
+        end_is_int = end_const is not None and float(end_const).is_integer() \
+            or end_const is None and self._get_expression_type(stmt.end_expr) == VarType.INTEGER
+        both_int = var_is_int and end_is_int
+        past_up = self._compare(var_name, '>', end, both_int)
+        past_down = self._compare(var_name, '<', end, both_int)
+        if step_const is None:
+            test = f'(({step}) >= 0 ? ({past_up}) : ({past_down}))'
+        elif step_const >= 0:
+            test = past_up
+        else:
+            test = past_down
+        code.append(f'for_{number}_top:')
+        code.append(self.indent() + f'if ({test}) goto for_{number}_end;')
         return code
 
     def _generate_next(self, stmt: NextStatementNode) -> List[str]:
-        """Generate NEXT statement (close FOR loop)"""
-        self.indent_level -= 1
-        return [self.indent() + '}']
+        """Generate NEXT statement: step the variable and test again.  NEXT J,I closes two loops."""
+        code = []
+        for number in self.next_ids.get(id(stmt), []):
+            loop = self.for_vars[number]
+            var_name = self._mangle_variable_name(self._canonical_basic_name(loop.variable))
+            if loop.step_expr is None:
+                step = '1'
+            else:
+                value = self._constant_value(loop.step_expr)
+                step = self._number_literal(value) if value is not None else f'_fs{number}'
+            code.append(self.indent() + f'{var_name} += {step};')
+            code.append(self.indent() + f'goto for_{number}_top;')
+            code.append(f'for_{number}_end: ;')
+        return code
 
     def _generate_assignment(self, stmt: LetStatementNode) -> List[str]:
         """Generate assignment statement"""
-        # Check if it's a string assignment
         var_type = self._get_expression_type(stmt.variable)
+        expr_type = self._get_expression_type(stmt.expression)
 
-        # Handle array assignment - check if variable has subscripts
-        if hasattr(stmt.variable, 'subscripts') and stmt.variable.subscripts is not None and len(stmt.variable.subscripts) > 0:
-            # Array element assignment
-            array_access = self._generate_array_access(stmt.variable)
-            expr = self._generate_expression(stmt.expression)
-            return [self.indent() + f'{array_access} = {expr};']
+        if (var_type == VarType.STRING) != (expr_type == VarType.STRING):
+            self._unsupported("assignment of a string to a number or a number to "
+                              "a string (Type mismatch)")
+            return []
 
         if var_type == VarType.STRING:
-            # String assignment
-            var_str_id = self._get_string_id(self._canonical_basic_name(stmt.variable))
+            dest = self._string_var_id(stmt.variable)
+            expr = stmt.expression
 
-            if isinstance(stmt.expression, StringNode):
-                # String literal assignment
-                return [self.indent() + f'mb25_string_alloc_const({var_str_id}, "{self._escape_string(stmt.expression.value)}");']
-            elif isinstance(stmt.expression, VariableNode):
-                # Simple variable copy
-                src_str_id = self._get_string_id(self._canonical_basic_name(stmt.expression))
-                return [self.indent() + f'mb25_string_copy({var_str_id}, {src_str_id});']
-            elif isinstance(stmt.expression, FunctionCallNode):
-                # String function result
-                func_code = self._generate_string_function_statement(stmt.expression, var_str_id)
+            if isinstance(expr, StringNode):
+                return [self.indent() + f'mb25_string_alloc_const({dest}, "{self._escape_string(expr.value)}");']
+            elif isinstance(expr, VariableNode):
+                return [self.indent() + f'mb25_string_copy({dest}, {self._string_var_id(expr)});']
+            elif isinstance(expr, FunctionCallNode):
+                func_code = self._generate_string_function_statement(expr, dest)
                 return [self.indent() + f'{func_code};']
-            elif isinstance(stmt.expression, BinaryOpNode) and stmt.expression.operator == TokenType.PLUS:
-                # String concatenation - generate step by step
-                return self._generate_concat_assignment(var_str_id, stmt.expression)
+            elif isinstance(expr, BinaryOpNode) and expr.operator == TokenType.PLUS:
+                return self._generate_concat_assignment(dest, expr)
             else:
-                # Other string expression
-                self.warnings.append(f"Unsupported string expression: {type(stmt.expression).__name__}")
-                return [self.indent() + f'/* Unsupported string expression */']
+                self._unsupported(f"string expression {type(expr).__name__}")
+                return []
+
+        # Numeric assignment
+        if stmt.variable.subscripts:
+            target = self._generate_array_access(stmt.variable)
         else:
-            # Numeric assignment
-            var_name = self._mangle_variable_name(self._canonical_basic_name(stmt.variable))
-            expr = self._generate_expression(stmt.expression)
-            return [self.indent() + f'{var_name} = {expr};']
+            target = self._mangle_variable_name(self._canonical_basic_name(stmt.variable))
+        if var_type == VarType.INTEGER:
+            value = self._integer_value(stmt.expression)
+        else:
+            value = self._generate_expression(stmt.expression)
+        return [self.indent() + f'{target} = {value};']
 
     def _generate_input(self, stmt: InputStatementNode) -> List[str]:
         """Generate INPUT statement"""
@@ -1359,7 +1693,7 @@ class Z88dkCBackend(CodeGenBackend):
             # Check if file is open
             code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
             self.indent_level += 1
-            code.append(self.indent() + f'fprintf(stderr, "?File not open\\n");')
+            code.append(self.indent() + f'mb25_fail("File not open");')
             code.append(self.indent() + 'return 1;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -1377,22 +1711,22 @@ class Z88dkCBackend(CodeGenBackend):
                 else:
                     # For expressions, we'd need to evaluate - not implemented yet
                     prompt_str = ""
-                    self.warnings.append("Complex prompt expressions not yet supported")
+                    self._unsupported("Complex prompt expressions not yet supported")
 
-                # Add question mark if not suppressed
-                if not stmt.suppress_question:
+                # A comma after the prompt leaves out the "? "; INPUT; does not
+                if not stmt.prompt_comma:
                     prompt_str += "? "
 
-                code.append(self.indent() + f'printf("{self._escape_string(prompt_str)}");')
-            elif not stmt.suppress_question:
-                # No prompt but show "? " unless suppressed
-                code.append(self.indent() + 'printf("? ");')
+                code.append(self.indent() + f'mb25_print_cstr("{self._escape_string(prompt_str)}");')
+            else:
+                code.append(self.indent() + 'mb25_print_cstr("? ");')
 
-        # For file input with multiple variables, read entire line and parse
-        if stmt.file_number and len(stmt.variables) > 1:
+        # With several variables, read one line and split it at the commas
+        if len(stmt.variables) > 1:
             # Read entire line first
-            code.append(self.indent() + f'if (fgets(input_buffer, 256, {input_stream})) {{')
+            code.append(self.indent() + f'if ({self._read_line(input_stream)}) {{')
             self.indent_level += 1
+            code.append(self.indent() + 'mb25_chomp(input_buffer);')
             code.append(self.indent() + 'char *_ptr = input_buffer;')
             code.append(self.indent() + 'char _field[256];')
 
@@ -1402,7 +1736,7 @@ class Z88dkCBackend(CodeGenBackend):
                 code.append(self.indent() + '/* Parse next field */')
 
                 if var_type == VarType.STRING:
-                    var_str_id = self._get_string_id(self._canonical_basic_name(var_node))
+                    var_str_id = self._string_var_id(var_node)
                     # Handle quoted strings from WRITE#
                     code.append(self.indent() + 'if (*_ptr == \'\\"\') {')
                     self.indent_level += 1
@@ -1444,17 +1778,17 @@ class Z88dkCBackend(CodeGenBackend):
                     code.append(self.indent() + '}')
                 else:
                     # Numeric input
-                    var_name = self._mangle_variable_name(self._canonical_basic_name(var_node))
+                    var_name = self._numeric_lvalue(var_node)
                     code.append(self.indent() + '{')
                     self.indent_level += 1
                     if var_type == VarType.INTEGER:
-                        code.append(self.indent() + f'sscanf(_ptr, "%d", &{var_name});')
+                        code.append(self.indent() + f'{var_name} = mb25_cint(mb25_atof(_ptr));')
                     else:
                         # atof, not sscanf("%f"): z88dk's scanf float converter
                         # is built against the f48 float pack and needs
                         # init_floatpack, which --math-mbf32 does not provide,
                         # so any numeric INPUT failed to link. atof is mbf32-safe.
-                        code.append(self.indent() + f'{var_name} = atof(_ptr);')
+                        code.append(self.indent() + f'{var_name} = mb25_atof(_ptr);')
                     # Skip to next comma
                     code.append(self.indent() + 'char *_comma3 = strchr(_ptr, \',\');')
                     code.append(self.indent() + 'if (_comma3) _ptr = _comma3 + 1;')
@@ -1470,41 +1804,37 @@ class Z88dkCBackend(CodeGenBackend):
 
                 if var_type == VarType.STRING:
                     # String input
-                    var_str_id = self._get_string_id(self._canonical_basic_name(var_node))
-                    code.append(self.indent() + f'if (fgets(input_buffer, 256, {input_stream})) {{')
+                    var_str_id = self._string_var_id(var_node)
+                    code.append(self.indent() + f'if ({self._read_line(input_stream)}) {{')
                     self.indent_level += 1
-                    code.append(self.indent() + 'size_t len = strlen(input_buffer);')
-                    code.append(self.indent() + 'if (len > 0 && input_buffer[len-1] == \'\\n\') {')
-                    self.indent_level += 1
-                    code.append(self.indent() + 'input_buffer[len-1] = \'\\0\';')
-                    self.indent_level -= 1
-                    code.append(self.indent() + '}')
+                    code.append(self.indent() + 'mb25_chomp(input_buffer);')
                     code.append(self.indent() + f'mb25_string_alloc_init({var_str_id}, input_buffer);')
                     self.indent_level -= 1
                     code.append(self.indent() + '}')
                 else:
                     # Numeric input
-                    var_name = self._mangle_variable_name(self._canonical_basic_name(var_node))
-                    if var_type == VarType.INTEGER:
-                        code.append(self.indent() + f'fscanf({input_stream}, "%d", &{var_name});')
-                    else:
-                        # Read a line and convert with atof rather than
-                        # fscanf("%f") - see the sscanf note above; the scanf
-                        # float converter cannot link against --math-mbf32.
-                        code.append(self.indent() + '{')
-                        self.indent_level += 1
-                        code.append(self.indent() + f'if (fgets(input_buffer, 256, {input_stream})) {{')
-                        self.indent_level += 1
-                        code.append(self.indent() + f'{var_name} = atof(input_buffer);')
-                        self.indent_level -= 1
-                        code.append(self.indent() + '}')
-                        self.indent_level -= 1
-                        code.append(self.indent() + '}')
+                    var_name = self._numeric_lvalue(var_node)
+                    # Read a line and convert it with atof: fscanf("%d") leaves
+                    # the newline behind for the next INPUT, and the scanf float
+                    # converter cannot link against --math-mbf32.
+                    convert = 'mb25_cint(mb25_atof(input_buffer))' if var_type == VarType.INTEGER \
+                        else 'mb25_atof(input_buffer)'
+                    code.append(self.indent() + '{')
+                    self.indent_level += 1
+                    code.append(self.indent() + f'if ({self._read_line(input_stream)}) {{')
+                    self.indent_level += 1
+                    code.append(self.indent() + f'{var_name} = {convert};')
+                    self.indent_level -= 1
+                    code.append(self.indent() + '}')
+                    self.indent_level -= 1
+                    code.append(self.indent() + '}')
 
                 # If there are more variables and it's keyboard input, show another prompt
                 if i < len(stmt.variables) - 1 and not stmt.file_number:
-                    code.append(self.indent() + 'printf("?? ");  /* Next variable prompt */')
+                    code.append(self.indent() + 'mb25_print_cstr("?? ");  /* Next variable prompt */')
 
+        if not stmt.file_number:
+            code.append(self.indent() + 'mb25_set_col(0);  /* Enter moved the cursor to column 0 */')
         return code
 
     def _generate_end(self, stmt: EndStatementNode) -> List[str]:
@@ -1538,49 +1868,30 @@ class Z88dkCBackend(CodeGenBackend):
         return [self.indent() + '}']
 
     def _generate_if(self, stmt: IfStatementNode) -> List[str]:
-        """Generate IF/THEN/ELSE statement"""
-        code = []
+        """Generate IF/THEN/ELSE statement
 
-        # Generate condition
+        Each branch is either a line number (a GOTO) or a list of statements,
+        and the two kinds mix: IF X THEN PRINT "A" ELSE 160.
+        """
+        code = []
         condition = self._generate_expression(stmt.condition)
 
-        # Check if it's a simple GOTO style (IF...THEN line_number)
-        if stmt.then_line_number is not None:
-            code.append(self.indent() + f'if ({condition}) {{')
+        def branch(line_number, statements):
+            lines = []
             self.indent_level += 1
-            code.append(self.indent() + f'goto line_{stmt.then_line_number};')
+            if line_number is not None:
+                lines.append(self.indent() + f'goto line_{line_number};')
+            for inner in statements or []:
+                lines.extend(self._generate_statement(inner))
             self.indent_level -= 1
-            code.append(self.indent() + '}')
+            return lines
 
-            if stmt.else_line_number is not None:
-                code.append(self.indent() + 'else {')
-                self.indent_level += 1
-                code.append(self.indent() + f'goto line_{stmt.else_line_number};')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-        else:
-            # Regular IF with statements
-            code.append(self.indent() + f'if ({condition}) {{')
-            self.indent_level += 1
-
-            # Generate THEN statements
-            if stmt.then_statements:
-                for then_stmt in stmt.then_statements:
-                    code.extend(self._generate_statement(then_stmt))
-
-            self.indent_level -= 1
-
-            # Generate ELSE statements if present
-            if stmt.else_statements:
-                code.append(self.indent() + '} else {')
-                self.indent_level += 1
-                for else_stmt in stmt.else_statements:
-                    code.extend(self._generate_statement(else_stmt))
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-            else:
-                code.append(self.indent() + '}')
-
+        code.append(self.indent() + f'if ({condition}) {{')
+        code.extend(branch(stmt.then_line_number, stmt.then_statements))
+        if stmt.else_line_number is not None or stmt.else_statements:
+            code.append(self.indent() + '} else {')
+            code.extend(branch(stmt.else_line_number, stmt.else_statements))
+        code.append(self.indent() + '}')
         return code
 
     def _generate_goto(self, stmt: GotoStatementNode) -> List[str]:
@@ -1590,14 +1901,12 @@ class Z88dkCBackend(CodeGenBackend):
     def _generate_dim(self, stmt: DimStatementNode) -> List[str]:
         """Generate DIM statement
 
-        Arrays are already declared at the top of main(), so DIM is mostly
-        a no-op in C. However, we might want to initialize them here.
+        The size of every array is fixed when the program is compiled, so the
+        storage exists from the start of main() and is zeroed there; DIM itself
+        has nothing left to do.  (The semantic analyzer has already refused a
+        DIM whose size is not a constant.)
         """
-        code = []
-        # For now, DIM is handled at declaration time
-        # We could add array initialization here if needed
-        # e.g., memset(array, 0, sizeof(array));
-        return code
+        return []
 
     def _generate_data_array(self) -> List[str]:
         """Generate static DATA array and pointer"""
@@ -1615,7 +1924,7 @@ class Z88dkCBackend(CodeGenBackend):
             if typ == 'int':
                 code.append(self.indent() + f'{int(val)}.0f,  /* int: {int(val)} */')
             elif typ == 'float':
-                code.append(self.indent() + f'{float(val):.6f}f,  /* float: {float(val)} */')
+                code.append(self.indent() + f'{float(val)!r}f,  /* float: {float(val)} */')
             elif typ == 'string':
                 # Use 0 as placeholder for string values
                 code.append(self.indent() + f'0.0f,  /* string placeholder */')
@@ -1630,8 +1939,7 @@ class Z88dkCBackend(CodeGenBackend):
             for i, (val, typ) in enumerate(zip(self.data_values, self.data_types)):
                 if typ == 'string':
                     # Escape quotes in string
-                    escaped_str = val.replace('\\', '\\\\').replace('"', '\\"')
-                    code.append(self.indent() + f'"{escaped_str}",')
+                    code.append(self.indent() + f'"{self._escape_string(val)}",')
                 else:
                     code.append(self.indent() + 'NULL,  /* numeric */')
             self.indent_level -= 1
@@ -1657,62 +1965,67 @@ class Z88dkCBackend(CodeGenBackend):
         return []
 
     def _generate_read(self, stmt: ReadStatementNode) -> List[str]:
-        """Generate READ statement"""
+        """Generate READ statement
+
+        The DATA arrays are only emitted for the kinds of value the program
+        has: data_strings exists when some DATA item is text, so a READ must
+        not name it otherwise.
+        """
         code = []
+        has_strings = 'string' in self.data_types
+        has_numbers = any(t != 'string' for t in self.data_types)
+        number_test = "data_types[data_pointer] == 'I' || data_types[data_pointer] == 'F'"
+
+        if not self.data_values:
+            # No DATA anywhere: the first READ is "Out of DATA"
+            code.append(self.indent() + 'mb25_fail("Out of DATA");')
+            code.append(self.indent() + 'return 1;')
+            return code
 
         for var_node in stmt.variables:
             # Check if we're out of data
             code.append(self.indent() + f'if (data_pointer >= {len(self.data_values)}) {{')
             self.indent_level += 1
-            code.append(self.indent() + 'fprintf(stderr, "?Out of DATA\\n");')
+            code.append(self.indent() + 'mb25_fail("Out of DATA");')
             code.append(self.indent() + 'return 1;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
 
-            # Read value based on variable type
             var_type = self._get_expression_type(var_node)
-            var_name = self._mangle_variable_name(self._canonical_basic_name(var_node))
+            target = self._numeric_lvalue(var_node)
 
             if var_type == VarType.STRING:
-                # String variable - read from appropriate source based on DATA type
-                str_id = self._get_string_id(self._canonical_basic_name(var_node))
-                code.append(self.indent() + 'if (data_types[data_pointer] == \'S\') {')
-                self.indent_level += 1
-                # Read string directly
-                code.append(self.indent() + f'mb25_string_alloc_const({str_id}, data_strings[data_pointer]);')
-                self.indent_level -= 1
-                code.append(self.indent() + '} else if (data_types[data_pointer] == \'I\' || data_types[data_pointer] == \'F\') {')
-                self.indent_level += 1
-                # Convert number to string
-                code.append(self.indent() + 'char _num_str[32];')
-                code.append(self.indent() + f'sprintf(_num_str, "{self._float_fmt()}", data_numeric[data_pointer]);')
-                code.append(self.indent() + f'mb25_string_alloc_init({str_id}, _num_str);')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-            elif var_type == VarType.INTEGER:
-                # Integer variable - read from appropriate source based on DATA type
-                code.append(self.indent() + 'if (data_types[data_pointer] == \'I\' || data_types[data_pointer] == \'F\') {')
-                self.indent_level += 1
-                code.append(self.indent() + f'{var_name} = (int)data_numeric[data_pointer];')
-                self.indent_level -= 1
-                code.append(self.indent() + '} else if (data_types[data_pointer] == \'S\') {')
-                self.indent_level += 1
-                # Convert string to int
-                code.append(self.indent() + f'{var_name} = data_strings[data_pointer] ? atoi(data_strings[data_pointer]) : 0;')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
+                str_id = self._string_var_id(var_node)
+                if has_strings:
+                    code.append(self.indent() + "if (data_types[data_pointer] == 'S') {")
+                    code.append(self.indent() + f'    mb25_string_alloc_const({str_id}, data_strings[data_pointer]);')
+                    code.append(self.indent() + ('} else {' if has_numbers else '}'))
+                else:
+                    code.append(self.indent() + '{')
+                if has_numbers:
+                    code.append(self.indent() + '    char _num_str[40];')
+                    code.append(self.indent() + '    mb25_fmt_num(_num_str, data_numeric[data_pointer], 1);')
+                    code.append(self.indent() + f'    mb25_string_alloc_init({str_id}, _num_str);')
+                    code.append(self.indent() + '}')
+                elif not has_strings:
+                    code.append(self.indent() + '}')
             else:
-                # Float/double variable - read from appropriate source based on DATA type
-                code.append(self.indent() + 'if (data_types[data_pointer] == \'I\' || data_types[data_pointer] == \'F\') {')
-                self.indent_level += 1
-                code.append(self.indent() + f'{var_name} = data_numeric[data_pointer];')
-                self.indent_level -= 1
-                code.append(self.indent() + '} else if (data_types[data_pointer] == \'S\') {')
-                self.indent_level += 1
-                # Convert string to float
-                code.append(self.indent() + f'{var_name} = data_strings[data_pointer] ? atof(data_strings[data_pointer]) : 0.0;')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
+                if var_type == VarType.INTEGER:
+                    from_number = f'{target} = mb25_cint(data_numeric[data_pointer]);'
+                    from_string = f'{target} = mb25_cint(mb25_atof(data_strings[data_pointer]));'
+                else:
+                    from_number = f'{target} = data_numeric[data_pointer];'
+                    from_string = f'{target} = mb25_atof(data_strings[data_pointer]);'
+                if has_numbers and has_strings:
+                    code.append(self.indent() + f'if ({number_test}) {{')
+                    code.append(self.indent() + f'    {from_number}')
+                    code.append(self.indent() + '} else {')
+                    code.append(self.indent() + f'    {from_string}')
+                    code.append(self.indent() + '}')
+                elif has_numbers:
+                    code.append(self.indent() + from_number)
+                else:
+                    code.append(self.indent() + from_string)
 
             code.append(self.indent() + 'data_pointer++;')
 
@@ -1730,61 +2043,19 @@ class Z88dkCBackend(CodeGenBackend):
             # For simplicity, just reset to beginning
             code.append(self.indent() + '/* RESTORE to specific line not supported - resetting to beginning */')
             code.append(self.indent() + 'data_pointer = 0;')
-            self.warnings.append(f"RESTORE to line {stmt.line_number} not supported - resetting to beginning")
+            self._unsupported(f"RESTORE to line {stmt.line_number} not supported - resetting to beginning")
 
         return code
 
     def _generate_array_access(self, var_node: VariableNode) -> str:
-        """Generate C code for array access
+        """C lvalue for a numeric array element.
 
-        BASIC arrays can be multi-dimensional, but we flatten them to 1D in C.
-        The semantic analyzer has already computed the flattened index expression.
+        BASIC arrays can have several subscripts; the C array is flat, and
+        _array_element_index() works out the position (with OPTION BASE and a
+        range check).  A string array has no C lvalue: see _string_var_id().
         """
-        # _canonical_basic_name resolves the implicit-suffix case too: DIM A(5)
-        # is stored as 'A!', so looking up the bare 'A' found nothing and this
-        # fell through to the not-an-array branch below, silently dropping the
-        # subscript and emitting `a = ...` for `A(I) = ...`.
-        canonical_name = self._canonical_basic_name(var_node)
-        var_name = self._mangle_variable_name(canonical_name)
-        var_info = self.symbols.variables.get(canonical_name)
-
-        if not var_info or not var_info.is_array:
-            self.warnings.append(f"Variable {var_node.name} is not an array")
-            return var_name
-
-        # If the semantic analyzer has already flattened the subscripts
-        # (it should have transformed multi-dimensional to single index)
-        if len(var_node.subscripts) == 1:
-            # Simple 1D access or already flattened
-            index = self._generate_index_expression(var_node.subscripts[0])
-            return f'{var_name}[{index}]'
-        else:
-            # Multi-dimensional - need to flatten
-            # Calculate flattened index: for A(i,j,k) with dims (d1,d2,d3)
-            # index = i*(d2+1)*(d3+1) + j*(d3+1) + k (for OPTION BASE 0)
-            dimensions = var_info.dimensions or []
-            if not dimensions:
-                self.warnings.append(f"No dimension info for array {var_node.name}")
-                return var_name
-
-            # Build the flattened index expression
-            index_parts = []
-            for i, subscript in enumerate(var_node.subscripts):
-                sub_expr = self._generate_index_expression(subscript)
-
-                # Calculate stride for this dimension
-                stride = 1
-                for j in range(i + 1, len(dimensions)):
-                    # Assuming OPTION BASE 0 by default
-                    stride *= (dimensions[j] + 1)
-
-                if stride > 1:
-                    index_parts.append(f'({sub_expr} * {stride})')
-                else:
-                    index_parts.append(sub_expr)
-
-            flattened_index = ' + '.join(index_parts)
-            return f'{var_name}[{flattened_index}]'
+        key = self._array_key(var_node)
+        return f'{self._mangle_variable_name(key)}_arr[{self._array_element_index(var_node)}]'
 
     def _generate_gosub(self, stmt: GosubStatementNode) -> List[str]:
         """Generate GOSUB statement with proper return mechanism"""
@@ -1794,32 +2065,34 @@ class Z88dkCBackend(CodeGenBackend):
         self.gosub_return_counter += 1
 
         # Push return ID onto stack
-        code.append(self.indent() + f'gosub_stack[gosub_sp++] = {return_id};  /* Push return ID */')
+        code.append(self.indent() + f'GOSUB_PUSH({return_id});  /* Push return ID */')
         code.append(self.indent() + f'goto line_{stmt.line_number};  /* Jump to subroutine */')
         code.append(f'gosub_return_{return_id}:  /* Return point */')
+        code.append(self.indent() + f'mb25_line = {self.current_line}u;')
         return code
 
     def _generate_return(self, stmt: ReturnStatementNode) -> List[str]:
-        """Generate RETURN statement"""
-        code = []
-        # Pop return ID from stack and jump to appropriate return point
-        code.append(self.indent() + 'if (gosub_sp > 0) {')
-        self.indent_level += 1
-        code.append(self.indent() + 'switch (gosub_stack[--gosub_sp]) {')
-        self.indent_level += 1
+        """Generate RETURN statement
 
-        # Generate case statements for each GOSUB in the program
-        # (iterating over GOSUB count from the first pass)
+        Every RETURN jumps to one shared dispatcher (see _gosub_dispatcher).
+        A switch at each RETURN made the code grow with the square of the
+        number of GOSUBs: 70 subroutines gave a .com that did not fit in memory.
+        """
+        return [self.indent() + 'goto gosub_dispatch;']
+
+    def _gosub_dispatcher(self) -> List[str]:
+        """The code that sends RETURN back to the GOSUB that called."""
+        code = ['gosub_dispatch:']
+        code.append('    if (gosub_sp <= 0) {')
+        code.append('        mb25_fail("RETURN without GOSUB");')
+        code.append('        return 1;')
+        code.append('    }')
+        code.append('    switch (gosub_stack[--gosub_sp]) {')
         for return_id in range(self.total_gosubs):
-            code.append(self.indent() + f'case {return_id}: goto gosub_return_{return_id};')
-
-        # Default case (should never happen if program is correct)
-        code.append(self.indent() + 'default: break;  /* Error: invalid return address */')
-
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
+            code.append(f'    case {return_id}: goto gosub_return_{return_id};')
+        code.append('    default: break;')
+        code.append('    }')
+        code.append('    goto program_end;')
         return code
 
     def _generate_on_goto(self, stmt: OnGotoStatementNode) -> List[str]:
@@ -1870,9 +2143,10 @@ class Z88dkCBackend(CodeGenBackend):
             # Push return address and jump
             return_id = self.gosub_return_counter
             self.gosub_return_counter += 1
-            code.append(self.indent() + f'gosub_stack[gosub_sp++] = {return_id};')
+            code.append(self.indent() + f'GOSUB_PUSH({return_id});')
             code.append(self.indent() + f'goto line_{line_num};')
             code.append(f'gosub_return_{return_id}:')
+            code.append(self.indent() + f'mb25_line = {self.current_line}u;')
             code.append(self.indent() + 'break;')
 
             self.indent_level -= 1
@@ -1961,13 +2235,18 @@ class Z88dkCBackend(CodeGenBackend):
         code.append('/* User-defined functions (DEF FN) */')
 
         for fn_stmt in self.def_fn_functions:
+            self.current_line = getattr(fn_stmt, 'line_num', 0) or 0
+            if self._get_expression_type(fn_stmt.expression) == VarType.STRING or any(
+                    getattr(p, 'type_suffix', None) == '$' for p in fn_stmt.parameters or []):
+                self._unsupported(f"string DEF FN functions are not supported: {fn_stmt.name}")
+                continue
             # Determine return type from function name
             return_type = 'double'  # Default to double
             if fn_stmt.name.endswith('%'):
                 return_type = 'int'
             elif fn_stmt.name.endswith('$'):
                 # String functions would need special handling
-                self.warnings.append(f"String DEF FN functions not yet supported: {fn_stmt.name}")
+                self._unsupported(f"String DEF FN functions not yet supported: {fn_stmt.name}")
                 continue
 
             # Function name without type suffix
@@ -1988,7 +2267,7 @@ class Z88dkCBackend(CodeGenBackend):
                         param_type = 'int'
                     elif param.name.endswith('$'):
                         # String parameters would need special handling
-                        self.warnings.append(f"String parameters in DEF FN not yet supported")
+                        self._unsupported(f"String parameters in DEF FN not yet supported")
                         param_type = 'char*'
                     param_name = self._mangle_variable_name(param.name)
                     params.append(f'{param_type} {param_name}')
@@ -2010,39 +2289,28 @@ class Z88dkCBackend(CodeGenBackend):
     def _generate_swap(self, stmt: SwapStatementNode) -> List[str]:
         """Generate SWAP statement
 
-        SWAP var1, var2 - Exchange values of two variables
+        SWAP var1, var2 - Exchange values of two variables.  Two strings
+        exchange their descriptors, so no text is copied.
         """
         code = []
-
-        # Get variable types
         var1_type = self._get_expression_type(stmt.var1)
         var2_type = self._get_expression_type(stmt.var2)
 
-        # Check that types match
+        if (var1_type == VarType.STRING) != (var2_type == VarType.STRING):
+            self._unsupported("SWAP of a string and a number (Type mismatch)")
+            return code
         if var1_type != var2_type:
-            self.warnings.append(f"SWAP between different types not supported")
-            return [self.indent() + '/* Type mismatch in SWAP */']
+            # BASIC stops with Type mismatch here too, but only at run time
+            self._unsupported("SWAP of two variables of different types (Type mismatch)")
+            return code
 
         if var1_type == VarType.STRING:
-            # For strings, swap the string IDs
-            var1_id = self._get_string_id(stmt.var1.name)
-            var2_id = self._get_string_id(stmt.var2.name)
-            code.append(self.indent() + '{')
-            self.indent_level += 1
-            code.append(self.indent() + 'mb25_string temp_str;')
-            code.append(self.indent() + f'mb25_string_copy(&temp_str, &mb25_strings[{var1_id}]);')
-            code.append(self.indent() + f'mb25_string_copy(&mb25_strings[{var1_id}], &mb25_strings[{var2_id}]);')
-            code.append(self.indent() + f'mb25_string_copy(&mb25_strings[{var2_id}], &temp_str);')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
+            code.append(self.indent() +
+                        f'mb25_string_swap({self._string_var_id(stmt.var1)}, {self._string_var_id(stmt.var2)});')
         else:
-            # For numeric types
             var1_name = self._generate_variable_reference(stmt.var1)
             var2_name = self._generate_variable_reference(stmt.var2)
-
-            # Determine temp variable type
-            c_type = 'int' if var1_type == VarType.INTEGER else 'double'
-
+            c_type = {VarType.INTEGER: 'int', VarType.DOUBLE: 'double'}.get(var1_type, 'float')
             code.append(self.indent() + '{')
             self.indent_level += 1
             code.append(self.indent() + f'{c_type} _temp = {var1_name};')
@@ -2050,7 +2318,6 @@ class Z88dkCBackend(CodeGenBackend):
             code.append(self.indent() + f'{var2_name} = _temp;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
-
         return code
 
     def _generate_randomize(self, stmt: RandomizeStatementNode) -> List[str]:
@@ -2105,7 +2372,7 @@ class Z88dkCBackend(CodeGenBackend):
             elif stmt.mode == 'R':
                 c_mode = 'r+b'  # Random access (binary read/write)
             else:
-                self.warnings.append(f"Unknown file mode: {stmt.mode}")
+                self._unsupported(f"Unknown file mode: {stmt.mode}")
                 c_mode = 'r'
 
             # Open the file
@@ -2115,7 +2382,7 @@ class Z88dkCBackend(CodeGenBackend):
             code.append(self.indent() + f'file_modes[_file_num] = \'{stmt.mode}\';')
             code.append(self.indent() + 'if (!file_handles[_file_num]) {')
             self.indent_level += 1
-            code.append(self.indent() + 'fprintf(stderr, "?File not found\\n");')
+            code.append(self.indent() + 'mb25_fail("File not found");')
             # In a real implementation, should trigger ON ERROR GOTO if set
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2128,7 +2395,7 @@ class Z88dkCBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + '}')
         else:
-            self.warnings.append("OPEN requires string filename")
+            self._unsupported("OPEN requires string filename")
             code.append(self.indent() + '/* OPEN error: filename must be string */')
 
         return code
@@ -2195,7 +2462,7 @@ class Z88dkCBackend(CodeGenBackend):
             # Check if file is open
             code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
             self.indent_level += 1
-            code.append(self.indent() + f'fprintf(stderr, "?File not open\\n");')
+            code.append(self.indent() + f'mb25_fail("File not open");')
             code.append(self.indent() + 'return 1;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2213,24 +2480,19 @@ class Z88dkCBackend(CodeGenBackend):
                 else:
                     # For expressions, we'd need to evaluate - not implemented yet
                     prompt_str = ""
-                    self.warnings.append("Complex prompt expressions not yet supported")
+                    self._unsupported("Complex prompt expressions not yet supported")
 
-                code.append(self.indent() + f'printf("{self._escape_string(prompt_str)}");')
-
-        # String arrays are not supported by this backend (same as INPUT)
-        if stmt.variable.subscripts:
-            self.warnings.append("LINE INPUT into an array element is not supported by the C backend")
-            return [self.indent() + '/* LINE INPUT into an array element is not supported */']
+                code.append(self.indent() + f'mb25_print_cstr("{self._escape_string(prompt_str)}");')
 
         # LINE INPUT always reads a string into a string variable
         var_type = self._get_expression_type(stmt.variable)
         if var_type != VarType.STRING:
-            self.warnings.append("LINE INPUT requires a string variable")
+            self._unsupported("LINE INPUT requires a string variable")
             return [self.indent() + '/* LINE INPUT requires a string variable */']
 
         # String input - read entire line including spaces
-        var_str_id = self._get_string_id(self._canonical_basic_name(stmt.variable))
-        code.append(self.indent() + f'if (!fgets(input_buffer, 256, {input_stream})) {{')
+        var_str_id = self._string_var_id(stmt.variable)
+        code.append(self.indent() + f'if (!({self._read_line(input_stream)})) {{')
         self.indent_level += 1
         # If fgets fails, we've hit EOF or an error - set a flag or break
         if stmt.file_number:
@@ -2243,11 +2505,7 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + '} else {')
         self.indent_level += 1
         code.append(self.indent() + 'size_t len = strlen(input_buffer);')
-        code.append(self.indent() + 'if (len > 0 && input_buffer[len-1] == \'\\n\') {')
-        self.indent_level += 1
-        code.append(self.indent() + 'input_buffer[len-1] = \'\\0\';')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
+        code.append(self.indent() + 'mb25_chomp(input_buffer);')
         # Check for CP/M ^Z EOF marker
         code.append(self.indent() + 'if (len > 0 && input_buffer[0] == 0x1A) {')
         self.indent_level += 1
@@ -2265,6 +2523,8 @@ class Z88dkCBackend(CodeGenBackend):
         self.indent_level -= 1
         code.append(self.indent() + '}')
 
+        if not stmt.file_number:
+            code.append(self.indent() + 'mb25_set_col(0);  /* Enter moved the cursor to column 0 */')
         return code
 
     def _generate_kill(self, stmt: KillStatementNode) -> List[str]:
@@ -2273,7 +2533,7 @@ class Z88dkCBackend(CodeGenBackend):
 
         # Generate the filename expression (must be a string)
         if self._get_expression_type(stmt.filename) != VarType.STRING:
-            self.warnings.append("KILL requires a string filename")
+            self._unsupported("KILL requires a string filename")
             return [self.indent() + '/* KILL requires a string filename */']
 
         filename_str_id = self._generate_string_expression(stmt.filename)
@@ -2286,7 +2546,7 @@ class Z88dkCBackend(CodeGenBackend):
         self.indent_level += 1
         code.append(self.indent() + 'if (remove(_filename) != 0) {')
         self.indent_level += 1
-        code.append(self.indent() + 'fprintf(stderr, "?File not found\\n");')
+        code.append(self.indent() + 'mb25_fail("File not found");')
         self.indent_level -= 1
         code.append(self.indent() + '}')
         # No free needed - temp string will be GC'd
@@ -2303,21 +2563,21 @@ class Z88dkCBackend(CodeGenBackend):
 
         # Get the string variable ID
         if not isinstance(stmt.string_var, VariableNode):
-            self.warnings.append("MID$ statement requires a string variable")
+            self._unsupported("MID$ statement requires a string variable")
             return [self.indent() + '/* MID$ requires string variable */']
 
-        var_str_id = self._get_string_id(stmt.string_var.name)
+        var_str_id = self._string_var_id(stmt.string_var)
 
         # Get the replacement value
         if self._get_expression_type(stmt.value) != VarType.STRING:
-            self.warnings.append("MID$ assignment requires string value")
+            self._unsupported("MID$ assignment requires string value")
             return [self.indent() + '/* MID$ requires string value */']
 
         value_str_expr = self._generate_string_expression(stmt.value)
 
         # Generate start position and length
-        start_expr = self._generate_expression(stmt.start)
-        length_expr = self._generate_expression(stmt.length)
+        start_expr = self._integer_value(stmt.start)
+        length_expr = self._integer_value(stmt.length) if stmt.length is not None else '255'
 
         code.append(self.indent() + '{')
         self.indent_level += 1
@@ -2362,247 +2622,47 @@ class Z88dkCBackend(CodeGenBackend):
         return code
 
     def _generate_print_using(self, stmt: PrintUsingStatementNode) -> List[str]:
-        """Generate PRINT USING statement - formatted output"""
-        code = []
+        """PRINT USING is not supported.
 
-        # Get format string
-        if self._get_expression_type(stmt.format_string) != VarType.STRING:
-            self.warnings.append("PRINT USING requires a string format")
-            return [self.indent() + '/* PRINT USING requires string format */']
-
-        format_str_expr = self._generate_string_expression(stmt.format_string)
-
-        # Determine output stream
-        if stmt.file_number:
-            # PRINT# USING to file
-            file_num_expr = self._generate_expression(stmt.file_number)
-            self.max_file_number = max(self.max_file_number, 255)
-            file_ptr = f'file_handles[(int)({file_num_expr})]'
-
-            # Check if file is open
-            code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
-            self.indent_level += 1
-            code.append(self.indent() + f'fprintf(stderr, "?File not open\\n");')
-            code.append(self.indent() + 'return 1;')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
-
-            output_func = 'fprintf'
-            output_stream = file_ptr + ', '
-        else:
-            # Regular PRINT USING to stdout
-            output_func = 'printf'
-            output_stream = ''
-
-        # Generate the formatting code
-        code.append(self.indent() + '{')
-        self.indent_level += 1
-
-        # Get format string as C string using temp pool (no malloc!)
-        fmt_temp_id = self._get_temp_string_id()
-        code.append(self.indent() + f'char *_fmt = mb25_get_c_string_temp({format_str_expr}, {fmt_temp_id});')
-        code.append(self.indent() + 'if (_fmt) {')
-        self.indent_level += 1
-
-        code.append(self.indent() + 'char _output[512];  /* Output buffer */')
-        code.append(self.indent() + 'char *_out = _output;')
-        code.append(self.indent() + 'char *_f = _fmt;  /* Format pointer */')
-
-        # Process each expression with the format
-        for i, expr in enumerate(stmt.expressions):
-            expr_type = self._get_expression_type(expr)
-
-            code.append(self.indent() + f'/* Format expression {i+1} */')
-
-            if expr_type == VarType.STRING:
-                # String expression
-                str_expr = self._generate_string_expression(expr)
-                str_temp_id = self._get_temp_string_id()
-                code.append(self.indent() + '{')
-                self.indent_level += 1
-                code.append(self.indent() + f'char *_str = mb25_get_c_string_temp({str_expr}, {str_temp_id});')
-                code.append(self.indent() + 'if (_str) {')
-                self.indent_level += 1
-
-                # Parse format for strings (!, &, or \...\)
-                code.append(self.indent() + 'if (*_f == \'!\') {')
-                self.indent_level += 1
-                code.append(self.indent() + '/* Single character */')
-                code.append(self.indent() + '*_out++ = _str[0] ? _str[0] : \' \';')
-                code.append(self.indent() + '_f++;')
-                self.indent_level -= 1
-                code.append(self.indent() + '} else if (*_f == \'&\') {')
-                self.indent_level += 1
-                code.append(self.indent() + '/* Entire string */')
-                code.append(self.indent() + 'strcpy(_out, _str);')
-                code.append(self.indent() + '_out += strlen(_str);')
-                code.append(self.indent() + '_f++;')
-                self.indent_level -= 1
-                code.append(self.indent() + '} else if (*_f == \'\\\\\') {')
-                self.indent_level += 1
-                code.append(self.indent() + '/* Fixed width field \\....\\ */')
-                code.append(self.indent() + 'char *_end = strchr(_f + 1, \'\\\\\');')
-                code.append(self.indent() + 'if (_end) {')
-                self.indent_level += 1
-                code.append(self.indent() + 'int _width = _end - _f + 1;')
-                code.append(self.indent() + 'int _len = strlen(_str);')
-                code.append(self.indent() + 'if (_len > _width) _len = _width;')
-                code.append(self.indent() + 'memcpy(_out, _str, _len);')
-                code.append(self.indent() + '_out += _len;')
-                code.append(self.indent() + 'while (_len < _width) { *_out++ = \' \'; _len++; }')
-                code.append(self.indent() + '_f = _end + 1;')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-
-                # No free needed - temp string will be GC'd
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-            else:
-                # Numeric expression
-                value = self._generate_expression(expr)
-                code.append(self.indent() + '{')
-                self.indent_level += 1
-                code.append(self.indent() + f'double _val = (double)({value});')
-
-                # Parse numeric format
-                code.append(self.indent() + '/* Parse numeric format */')
-                code.append(self.indent() + 'int _digits = 0, _decimals = -1;')
-                code.append(self.indent() + 'int _has_comma = 0, _has_dollar = 0;')
-                code.append(self.indent() + 'char *_fmt_start = _f;')
-
-                # Count format specifiers
-                code.append(self.indent() + 'while (*_f) {')
-                self.indent_level += 1
-                code.append(self.indent() + 'if (*_f == \'#\') _digits++;')
-                code.append(self.indent() + 'else if (*_f == \'.\') _decimals = 0;')
-                code.append(self.indent() + 'else if (*_f == \',\' && _decimals < 0) _has_comma = 1;')
-                code.append(self.indent() + 'else if (*_f == \'$\') _has_dollar = 1;')
-                code.append(self.indent() + 'else if (*_f != \'#\' && *_f != \'.\' && *_f != \',\') break;')
-                code.append(self.indent() + 'if (_decimals >= 0 && *_f == \'#\') _decimals++;')
-                code.append(self.indent() + '_f++;')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-
-                # Format the number
-                code.append(self.indent() + 'if (_has_dollar) *_out++ = \'$\';')
-                code.append(self.indent() + 'if (_decimals >= 0) {')
-                self.indent_level += 1
-                code.append(self.indent() + 'sprintf(_out, "%.*f", _decimals, _val);')
-                self.indent_level -= 1
-                code.append(self.indent() + '} else {')
-                self.indent_level += 1
-                code.append(self.indent() + 'sprintf(_out, "%.0f", _val);')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-
-                # Add commas if requested
-                code.append(self.indent() + 'if (_has_comma) {')
-                self.indent_level += 1
-                code.append(self.indent() + '/* Add comma separators - simplified */')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-
-                code.append(self.indent() + '_out += strlen(_out);')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-
-            # Add space between values
-            if i < len(stmt.expressions) - 1:
-                code.append(self.indent() + '*_out++ = \' \';')
-
-        code.append(self.indent() + '*_out = \'\\0\';  /* Null terminate */')
-
-        # Output the formatted string
-        if stmt.file_number:
-            code.append(self.indent() + f'{output_func}({output_stream}"%s\\r\\n", _output);')
-        else:
-            code.append(self.indent() + f'{output_func}({output_stream}"%s\\n", _output);')
-
-        # No free needed - temp string will be GC'd
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
-
-        return code
+        The code that this backend used to write for it printed the text %.*f
+        for most formats (the uc80 printf has no '*' width) and got the field
+        width wrong for the others, so a program that used it compiled to wrong
+        output without a message.
+        """
+        self._unsupported("PRINT USING (the C backend has no formatter for it; "
+                          "use the interpreter, or compile to JavaScript)")
+        return []
 
     def _generate_write(self, stmt: WriteStatementNode) -> List[str]:
-        """Generate WRITE statement - output with comma delimiters and quotes for strings"""
+        """Generate WRITE statement - values separated by commas, strings quoted"""
         code = []
-
-        # Determine output stream
         if stmt.file_number:
-            # WRITE# to file
-            file_num_expr = self._generate_expression(stmt.file_number)
-            self.max_file_number = max(self.max_file_number, 255)  # Assume max 255 files
-            file_ptr = f'file_handles[(int)({file_num_expr})]'
+            code.extend(self._open_output_file(stmt.file_number))
 
-            # Check if file is open
-            code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
-            self.indent_level += 1
-            code.append(self.indent() + f'fprintf(stderr, "?File not open\\n");')
-            code.append(self.indent() + 'return 1;')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
-
-            # Use fprintf for file output
-            output_func = 'fprintf'
-            output_stream = file_ptr + ', '
-        else:
-            # Regular WRITE to stdout
-            output_func = 'printf'
-            output_stream = ''
-
-        # WRITE outputs each expression with proper formatting
         for i, expr in enumerate(stmt.expressions):
-            # Add comma separator if not the first item
             if i > 0:
-                code.append(self.indent() + f'{output_func}({output_stream}",");')
-
-            # Determine format based on expression type
-            expr_type = self._get_expression_type(expr)
-
-            if expr_type == VarType.STRING:
-                # For strings, output with quotes using efficient character-by-character output
-                str_expr = self._generate_string_expression(expr)
-                if stmt.file_number:
-                    # File output: use fputc
-                    code.append(self.indent() + f'fputc(\'"\\"\', {file_ptr});')
-                    code.append(self.indent() + f'mb25_fprint_string({file_ptr}, {str_expr});')
-                    code.append(self.indent() + f'fputc(\'"\\"\', {file_ptr});')
-                else:
-                    # Console output: use putchar
-                    code.append(self.indent() + 'putchar(\'"\\"\');')
-                    code.append(self.indent() + f'mb25_print_string({str_expr});')
-                    code.append(self.indent() + 'putchar(\'"\\"\');')
+                code.append(self.indent() + 'mb25_putc(\',\');')
+            if self._get_expression_type(expr) == VarType.STRING:
+                code.append(self.indent() + 'mb25_putc(\'"\');')
+                code.append(self.indent() + self._print_string(expr))
+                code.append(self.indent() + 'mb25_putc(\'"\');')
             else:
-                # Numeric expression - no quotes
-                expr_type = self._get_expression_type(expr)
-                format_spec = self._get_format_specifier(expr_type)
-                value = self._generate_expression(expr)
-                code.append(self.indent() + f'{output_func}({output_stream}"{format_spec}", {value});')
+                code.append(self.indent() + self._print_number(expr, write=True))
 
         error_code = self._write_error_code(stmt)
         if error_code:
             # The items and a ',' go out with no end of line, then the error
             if stmt.expressions:
-                code.append(self.indent() + f'{output_func}({output_stream}",");')
-            code.append(self.indent() + f'basic_err = {error_code};')
-            code.append(self.indent() + f'basic_erl = {self.current_basic_line};')
-            code.append(self.indent() + f'error_resume_line = {self.current_basic_line};')
-            code.append(self.indent() + 'longjmp(error_jmp, 1);  /* Syntax error or Missing operand */')
+                code.append(self.indent() + 'mb25_putc(\',\');')
+            if stmt.file_number:
+                code.append(self.indent() + 'mb25_set_out(NULL);')
+            message = 'Missing operand' if error_code == 22 else 'Syntax error'
+            code.append(self.indent() + f'mb25_fail("{message}");')
             return code
 
-        # WRITE always ends with a newline (CRLF for files, LF for console)
+        code.append(self.indent() + 'mb25_print_nl();')
         if stmt.file_number:
-            code.append(self.indent() + f'{output_func}({output_stream}"\\r\\n");')
-        else:
-            code.append(self.indent() + f'{output_func}({output_stream}"\\n");')
-
+            code.append(self.indent() + 'mb25_set_out(NULL);')
         return code
 
     def _generate_variable_reference(self, var_node: VariableNode) -> str:
@@ -2614,21 +2674,54 @@ class Z88dkCBackend(CodeGenBackend):
             # Simple variable
             return self._mangle_variable_name(self._canonical_basic_name(var_node))
 
+    def _constant_value(self, expr: Any):
+        """The value of an expression made only of numbers and + - *, else None.
+
+        BASIC adds, subtracts and multiplies two integers in single precision
+        when the result does not fit 16 bits (PRINT 200*200 is 40000).  C ints
+        would wrap, so such a constant is worked out here and written as the
+        number it is.
+        """
+        if isinstance(expr, NumberNode):
+            return expr.value
+        if isinstance(expr, UnaryOpNode) and expr.operator in (TokenType.MINUS, TokenType.PLUS):
+            v = self._constant_value(expr.operand)
+            if v is None:
+                return None
+            return -v if expr.operator == TokenType.MINUS else v
+        if isinstance(expr, BinaryOpNode) and expr.operator in (
+                TokenType.PLUS, TokenType.MINUS, TokenType.MULTIPLY):
+            a = self._constant_value(expr.left)
+            b = self._constant_value(expr.right)
+            if a is None or b is None:
+                return None
+            if expr.operator == TokenType.PLUS:
+                return a + b
+            if expr.operator == TokenType.MINUS:
+                return a - b
+            return a * b
+        return None
+
+    def _number_literal(self, value: Any) -> str:
+        """C text of a numeric constant: an int when it is a whole INTEGER."""
+        if isinstance(value, (int, float)) and value == int(value) \
+                and -32768 <= value <= 32767:
+            return str(int(value))
+        return repr(float(value))
+
     def _generate_expression(self, expr: Any) -> str:
         """Generate C code for an expression"""
         # Check if it's a string expression
         expr_type = self._get_expression_type(expr)
         if expr_type == VarType.STRING:
             # This shouldn't be called for strings - use _generate_string_expression
-            self.warnings.append("String expression in numeric context")
-            return '0  /* string in numeric context */'
+            self._unsupported("a string where a number is needed (Type mismatch)")
+            return '0'
 
         if isinstance(expr, NumberNode):
-            # Format numbers appropriately - if it's a whole number, output as integer
-            if isinstance(expr.value, (int, float)) and expr.value == int(expr.value):
-                return str(int(expr.value))
-            else:
-                return str(expr.value)
+            return self._number_literal(expr.value)
+        elif isinstance(expr, (BinaryOpNode, UnaryOpNode)) and self._constant_value(expr) is not None:
+            return self._number_literal(self._constant_value(expr))
         elif isinstance(expr, VariableNode):
             # Check if it's an array access
             if expr.subscripts:
@@ -2637,9 +2730,13 @@ class Z88dkCBackend(CodeGenBackend):
                 # Check for special built-in variables
                 var_upper = expr.name.upper()
                 if var_upper == 'ERR':
+                    self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
                     self.needs_error_handling = True
                     return 'basic_err'
                 elif var_upper == 'ERL':
+                    self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
                     self.needs_error_handling = True
                     return 'basic_erl'
                 else:
@@ -2651,8 +2748,8 @@ class Z88dkCBackend(CodeGenBackend):
         elif isinstance(expr, FunctionCallNode):
             return self._generate_function_call(expr)
         else:
-            self.warnings.append(f"Unsupported expression type: {type(expr).__name__}")
-            return '0  /* unsupported expression */'
+            self._unsupported(f"expression type {type(expr).__name__}")
+            return '0'
 
     def _generate_string_expression(self, expr: Any) -> str:
         """Generate C code for a string expression"""
@@ -2663,8 +2760,8 @@ class Z88dkCBackend(CodeGenBackend):
             # We need to call it and then use the string ID
             return f'(mb25_string_alloc_const({temp_id}, "{self._escape_string(expr.value)}"), {temp_id})'
         elif isinstance(expr, VariableNode):
-            # String variable reference
-            return str(self._get_string_id(self._canonical_basic_name(expr)))
+            # String variable or array element
+            return self._string_var_id(expr)
         elif isinstance(expr, BinaryOpNode) and expr.operator == TokenType.PLUS:
             # String concatenation - need to generate inline concat and return result ID
             left_str = self._generate_string_expression(expr.left)
@@ -2675,136 +2772,89 @@ class Z88dkCBackend(CodeGenBackend):
         elif isinstance(expr, FunctionCallNode):
             return self._generate_string_function(expr)
         else:
-            self.warnings.append(f"Unsupported string expression: {type(expr).__name__}")
-            return '0  /* unsupported string expression */'
+            self._unsupported(f"string expression {type(expr).__name__}")
+            return '0'
 
-    def _generate_string_function(self, expr: FunctionCallNode) -> str:
-        """Generate code for string functions"""
+    def _generate_string_function(self, expr: FunctionCallNode, result_id: Optional[str] = None) -> str:
+        """Generate C for a string function: an expression whose value is the
+        ID of the string that holds the result.
+
+        result_id is the descriptor to build the result in; without one a
+        temporary is taken.  The runtime builds the result in that descriptor
+        and the expression evaluates to the same ID.
+        """
         func_name = expr.name.upper()
-        result_id = self._get_temp_string_id()
+        if result_id is None:
+            result_id = self._get_temp_string_id()
+        args = expr.arguments
 
-        if func_name == 'LEFT':
-            if len(expr.arguments) != 2:
-                self.warnings.append("LEFT$ requires 2 arguments")
-                return '0'
-            str_arg = self._generate_string_expression(expr.arguments[0])
-            len_arg = self._generate_expression(expr.arguments[1])
-            return f'(mb25_string_left({result_id}, {str_arg}, {len_arg}), {result_id})'
+        def need(count_min: int, count_max: int, label: str) -> bool:
+            if not count_min <= len(args) <= count_max:
+                self._unsupported(f"{label} needs {count_min}"
+                                  + ("" if count_min == count_max else f" to {count_max}")
+                                  + " argument(s)")
+                return False
+            return True
 
-        elif func_name == 'RIGHT':
-            if len(expr.arguments) != 2:
-                self.warnings.append("RIGHT$ requires 2 arguments")
+        if func_name in ('LEFT', 'RIGHT'):
+            if not need(2, 2, func_name + '$'):
                 return '0'
-            str_arg = self._generate_string_expression(expr.arguments[0])
-            len_arg = self._generate_expression(expr.arguments[1])
-            return f'(mb25_string_right({result_id}, {str_arg}, {len_arg}), {result_id})'
+            str_arg = self._generate_string_expression(args[0])
+            len_arg = self._integer_value(args[1])
+            return f'(mb25_string_{func_name.lower()}({result_id}, {str_arg}, {len_arg}), {result_id})'
 
         elif func_name == 'MID':
-            if len(expr.arguments) < 2 or len(expr.arguments) > 3:
-                self.warnings.append("MID$ requires 2 or 3 arguments")
+            if not need(2, 3, 'MID$'):
                 return '0'
-            str_arg = self._generate_string_expression(expr.arguments[0])
-            start_arg = self._generate_expression(expr.arguments[1])
-            if len(expr.arguments) == 3:
-                len_arg = self._generate_expression(expr.arguments[2])
-                return f'(mb25_string_mid({result_id}, {str_arg}, {start_arg}, {len_arg}), {result_id})'
-            else:
-                # MID$ without length - to end of string
-                return f'(mb25_string_mid({result_id}, {str_arg}, {start_arg}, 255), {result_id})'
+            str_arg = self._generate_string_expression(args[0])
+            start_arg = self._integer_value(args[1])
+            len_arg = self._integer_value(args[2]) if len(args) == 3 else '255'
+            return f'(mb25_string_mid({result_id}, {str_arg}, {start_arg}, {len_arg}), {result_id})'
 
         elif func_name == 'CHR':
-            if len(expr.arguments) != 1:
-                self.warnings.append("CHR$ requires 1 argument")
+            if not need(1, 1, 'CHR$'):
                 return '0'
-            code_arg = self._generate_expression(expr.arguments[0])
-            # Create a single-character string
-            return f'({{ char _chr[2] = {{(char){code_arg}, \'\\0\'}}; mb25_string_alloc_init({result_id}, _chr); }}, {result_id})'
+            return f'mb25_chr({result_id}, {self._integer_value(args[0])})'
 
         elif func_name == 'STR':
-            if len(expr.arguments) != 1:
-                self.warnings.append("STR$ requires 1 argument")
+            if not need(1, 1, 'STR$'):
                 return '0'
-            num_arg = self._generate_expression(expr.arguments[0])
-            # Convert number to string
-            return f'({{ char _str[32]; sprintf(_str, "{self._float_fmt()}", (double){num_arg}); mb25_string_alloc_init({result_id}, _str); }}, {result_id})'
+            return f'({self._str_number(args[0], result_id)}, {result_id})'
 
         elif func_name == 'SPACE':
-            if len(expr.arguments) != 1:
-                self.warnings.append("SPACE$ requires 1 argument")
+            if not need(1, 1, 'SPACE$'):
                 return '0'
-            count_arg = self._generate_expression(expr.arguments[0])
-            # Create string of spaces - allocate directly in string pool, no malloc needed
-            return f'({{ int _n = {count_arg}; if (_n > 0 && _n <= 255) {{ mb25_string_alloc({result_id}, _n); uint8_t *_d = mb25_get_data({result_id}); if (_d) memset(_d, \' \', _n); }} }}, {result_id})'
+            return f'mb25_string_of({result_id}, {self._integer_value(args[0])}, 32)'
 
-        elif func_name == 'STRING$':
-            if len(expr.arguments) != 2:
-                self.warnings.append("STRING$ requires 2 arguments")
+        elif func_name in ('STRING$', 'STRING'):
+            if not need(2, 2, 'STRING$'):
                 return '0'
-            count_arg = self._generate_expression(expr.arguments[0])
-            # Second arg can be either a number (ASCII code) or string (use first char)
-            # Allocate directly in string pool, no malloc needed
-            if self._get_expression_type(expr.arguments[1]) == VarType.STRING:
-                str_arg = self._generate_string_expression(expr.arguments[1])
-                return f'({{ int _n = {count_arg}; uint8_t *_data = mb25_get_data({str_arg}); char _ch = (_data && mb25_get_length({str_arg}) > 0) ? _data[0] : \' \'; if (_n > 0 && _n <= 255) {{ mb25_string_alloc({result_id}, _n); uint8_t *_d = mb25_get_data({result_id}); if (_d) memset(_d, _ch, _n); }} }}, {result_id})'
-            else:
-                char_arg = self._generate_expression(expr.arguments[1])
-                return f'({{ int _n = {count_arg}; char _ch = (char){char_arg}; if (_n > 0 && _n <= 255) {{ mb25_string_alloc({result_id}, _n); uint8_t *_d = mb25_get_data({result_id}); if (_d) memset(_d, _ch, _n); }} }}, {result_id})'
+            count_arg = self._integer_value(args[0])
+            if self._get_expression_type(args[1]) == VarType.STRING:
+                return (f'mb25_string_of_first({result_id}, {count_arg}, '
+                        f'{self._generate_string_expression(args[1])})')
+            return f'mb25_string_of({result_id}, {count_arg}, {self._integer_value(args[1])})'
 
-        elif func_name == 'HEX':
-            if len(expr.arguments) != 1:
-                self.warnings.append("HEX$ requires 1 argument")
+        elif func_name in ('HEX', 'OCT'):
+            if not need(1, 1, func_name + '$'):
                 return '0'
-            num_arg = self._generate_expression(expr.arguments[0])
-            # Convert number to hex string
-            return f'({{ char _hex[17]; sprintf(_hex, "%X", (int){num_arg}); mb25_string_alloc_init({result_id}, _hex); }}, {result_id})'
+            base = 16 if func_name == 'HEX' else 8
+            return f'mb25_radix({result_id}, {self._integer_value(args[0])}, {base})'
 
-        elif func_name == 'OCT':
-            if len(expr.arguments) != 1:
-                self.warnings.append("OCT$ requires 1 argument")
-                return '0'
-            num_arg = self._generate_expression(expr.arguments[0])
-            # Convert number to octal string
-            return f'({{ char _oct[23]; sprintf(_oct, "%o", (int){num_arg}); mb25_string_alloc_init({result_id}, _oct); }}, {result_id})'
-
-        elif func_name == 'INKEY' or func_name == 'INKEY$':
-            # INKEY$ reads a key without waiting (non-blocking)
-            # For compiled code, this is runtime-specific
-            self.warnings.append("INKEY$ requires runtime support - returning empty string")
-            return f'(mb25_string_alloc_init({result_id}, ""), {result_id})'
-
-        elif func_name == 'MKI$' or func_name == 'MKI':
-            # Convert integer to 2-byte string
-            if len(expr.arguments) != 1:
-                self.warnings.append("MKI$ requires 1 argument")
-                return '0'
-            num_arg = self._generate_expression(expr.arguments[0])
-            # Generate helper function call for z88dk compatibility
-            self.needs_mki_helper = True
-            return f'mb25_mki({result_id}, {num_arg})'
-
-        elif func_name == 'MKS$' or func_name == 'MKS':
-            # Convert single to 4-byte string
-            if len(expr.arguments) != 1:
-                self.warnings.append("MKS$ requires 1 argument")
-                return '0'
-            num_arg = self._generate_expression(expr.arguments[0])
-            # Generate helper function call for z88dk compatibility
-            self.needs_mks_helper = True
-            return f'mb25_mks({result_id}, {num_arg})'
-
-        elif func_name == 'MKD$' or func_name == 'MKD':
-            # Convert double to 8-byte string
-            if len(expr.arguments) != 1:
-                self.warnings.append("MKD$ requires 1 argument")
-                return '0'
-            num_arg = self._generate_expression(expr.arguments[0])
-            # Generate helper function call for z88dk compatibility
-            self.needs_mkd_helper = True
-            return f'mb25_mkd({result_id}, {num_arg})'
-
-        else:
-            self.warnings.append(f"Unsupported string function: {func_name}")
+        elif func_name in ('INKEY', 'INKEY$'):
+            self._unsupported("INKEY$ (the compiled program cannot poll the keyboard)")
             return '0'
+
+        elif func_name in ('MKI$', 'MKI', 'MKS$', 'MKS', 'MKD$', 'MKD'):
+            label = func_name.rstrip('$')
+            if not need(1, 1, label + '$'):
+                return '0'
+            num_arg = self._generate_expression(args[0])
+            setattr(self, f'needs_{label.lower()}_helper', True)
+            return f'{label.lower().replace("mk", "mb25_mk")}({result_id}, {num_arg})'
+
+        self._unsupported(f"string function {func_name}")
+        return '0'
 
     def _generate_function_call(self, expr: FunctionCallNode) -> str:
         """Generate code for numeric function calls"""
@@ -2824,61 +2874,36 @@ class Z88dkCBackend(CodeGenBackend):
 
         if func_name == 'LEN':
             if len(expr.arguments) != 1:
-                self.warnings.append("LEN requires 1 argument")
+                self._unsupported("LEN requires 1 argument")
                 return '0'
-            str_arg = self._generate_string_expression(expr.arguments[0])
-            return f'mb25_get_length({str_arg})'
+            return f'mb25_get_length({self._generate_string_expression(expr.arguments[0])})'
 
         elif func_name == 'ASC':
             if len(expr.arguments) != 1:
-                self.warnings.append("ASC requires 1 argument")
+                self._unsupported("ASC requires 1 argument")
                 return '0'
-            str_arg = self._generate_string_expression(expr.arguments[0])
-            return f'({{ uint8_t *_data = mb25_get_data({str_arg}); (_data && mb25_get_length({str_arg}) > 0) ? _data[0] : 0; }})'
+            return f'mb25_asc({self._generate_string_expression(expr.arguments[0])})'
 
         elif func_name == 'VAL':
             if len(expr.arguments) != 1:
-                self.warnings.append("VAL requires 1 argument")
+                self._unsupported("VAL requires 1 argument")
                 return '0'
-            str_arg = self._generate_string_expression(expr.arguments[0])
-            temp_id = self._get_temp_string_id()
-            return f'({{ char *_s = mb25_get_c_string_temp({str_arg}, {temp_id}); double _v = _s ? atof(_s) : 0; _v; }})'
+            return f'mb25_val({self._generate_string_expression(expr.arguments[0])})'
 
         elif func_name == 'INSTR':
-            # INSTR can have 2 or 3 arguments: INSTR([start,] string1, string2)
-            if len(expr.arguments) < 2 or len(expr.arguments) > 3:
-                self.warnings.append("INSTR requires 2 or 3 arguments")
+            # INSTR([start,] string1, string2)
+            if len(expr.arguments) not in (2, 3):
+                self._unsupported("INSTR requires 2 or 3 arguments")
                 return '0'
-
-            if len(expr.arguments) == 2:
-                # INSTR(string1, string2) - search from beginning
-                str1_arg = self._generate_string_expression(expr.arguments[0])
-                str2_arg = self._generate_string_expression(expr.arguments[1])
-                temp1_id = self._get_temp_string_id()
-                temp2_id = self._get_temp_string_id()
-                # Allocate both temps first (before getting pointers) in case GC moves them
-                return f'({{ char *_s1 = mb25_get_c_string_temp({str1_arg}, {temp1_id}); ' \
-                       f'char *_s2 = mb25_get_c_string_temp({str2_arg}, {temp2_id}); ' \
-                       f'int _pos = 0; if (_s1 && _s2) {{ char *_p = strstr(_s1, _s2); _pos = _p ? (_p - _s1 + 1) : 0; }} ' \
-                       f'_pos; }})'
-            else:
-                # INSTR(start, string1, string2) - search from position
-                start_arg = self._generate_expression(expr.arguments[0])
-                str1_arg = self._generate_string_expression(expr.arguments[1])
-                str2_arg = self._generate_string_expression(expr.arguments[2])
-                temp1_id = self._get_temp_string_id()
-                temp2_id = self._get_temp_string_id()
-                # Allocate both temps first (before getting pointers) in case GC moves them
-                return f'({{ int _start = {start_arg}; char *_s1 = mb25_get_c_string_temp({str1_arg}, {temp1_id}); ' \
-                       f'char *_s2 = mb25_get_c_string_temp({str2_arg}, {temp2_id}); ' \
-                       f'int _pos = 0; if (_s1 && _s2 && _start > 0) {{ int _len = strlen(_s1); if (_start <= _len) ' \
-                       f'{{ char *_p = strstr(_s1 + _start - 1, _s2); _pos = _p ? (_p - _s1 + 1) : 0; }} }} ' \
-                       f'_pos; }})'
+            start = self._integer_value(expr.arguments[0]) if len(expr.arguments) == 3 else '1'
+            str1 = self._generate_string_expression(expr.arguments[-2])
+            str2 = self._generate_string_expression(expr.arguments[-1])
+            return f'mb25_instr({start}, {str1}, {str2})'
 
         # Math functions - single argument
         elif func_name in ('ABS', 'SGN', 'INT', 'FIX', 'SIN', 'COS', 'TAN', 'ATN', 'EXP', 'LOG', 'SQR'):
             if len(expr.arguments) != 1:
-                self.warnings.append(f"{func_name} requires 1 argument")
+                self._unsupported(f"{func_name} requires 1 argument")
                 return '0'
             arg = self._generate_expression(expr.arguments[0])
 
@@ -2890,10 +2915,10 @@ class Z88dkCBackend(CodeGenBackend):
                 return f'(({arg}) > 0 ? 1 : ({arg}) < 0 ? -1 : 0)'
             elif func_name == 'INT':
                 # INT truncates towards negative infinity
-                return f'floor({arg})'
+                return f'mb25_int({arg})'
             elif func_name == 'FIX':
                 # FIX truncates towards zero
-                return f'trunc({arg})'
+                return f'mb25_fix({arg})'
             elif func_name == 'SIN':
                 return f'sin({arg})'
             elif func_name == 'COS':
@@ -2907,9 +2932,9 @@ class Z88dkCBackend(CodeGenBackend):
             elif func_name == 'LOG':
                 return f'log({arg})'  # Natural log in C
             elif func_name == 'SQR':
-                return f'sqrt({arg})'
+                return f'mb25_sqr((double)({arg}))'
             else:
-                self.warnings.append(f"Function {func_name} not yet implemented")
+                self._unsupported(f"Function {func_name} not yet implemented")
                 return '0'
 
         # RND function - random number
@@ -2924,40 +2949,44 @@ class Z88dkCBackend(CodeGenBackend):
                 # A full implementation would need to handle seed management
                 return f'(({arg}), ((float)rand() / (float)RAND_MAX))'
             else:
-                self.warnings.append("RND requires 0 or 1 argument")
+                self._unsupported("RND requires 0 or 1 argument")
                 return '0'
 
         # Error handling functions
         elif func_name == 'ERR':
             # ERR returns current error code
             if len(expr.arguments) != 0:
-                self.warnings.append("ERR takes no arguments")
+                self._unsupported("ERR takes no arguments")
                 return '0'
+            self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
             self.needs_error_handling = True
             return 'basic_err'
 
         elif func_name == 'ERL':
             # ERL returns error line number
             if len(expr.arguments) != 0:
-                self.warnings.append("ERL takes no arguments")
+                self._unsupported("ERL takes no arguments")
                 return '0'
+            self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
             self.needs_error_handling = True
             return 'basic_erl'
 
         # File I/O functions
         elif func_name == 'EOF':
             if len(expr.arguments) != 1:
-                self.warnings.append("EOF requires 1 argument (file number)")
+                self._unsupported("EOF requires 1 argument (file number)")
                 return '0'
             file_num = self._generate_expression(expr.arguments[0])
             self.max_file_number = max(self.max_file_number, 255)
             # EOF returns -1 (true) if end of file, 0 (false) otherwise
-            return f'(file_handles[(int)({file_num})] ? feof(file_handles[(int)({file_num})]) : -1)'
+            return f'mb25_eof(file_handles[(int)({file_num})])'
 
         elif func_name == 'LOC':
             # LOC returns current position in file
             if len(expr.arguments) != 1:
-                self.warnings.append("LOC requires 1 argument (file number)")
+                self._unsupported("LOC requires 1 argument (file number)")
                 return '0'
             file_num = self._generate_expression(expr.arguments[0])
             self.max_file_number = max(self.max_file_number, 255)
@@ -2967,7 +2996,7 @@ class Z88dkCBackend(CodeGenBackend):
         elif func_name == 'LOF':
             # LOF returns length of file
             if len(expr.arguments) != 1:
-                self.warnings.append("LOF requires 1 argument (file number)")
+                self._unsupported("LOF requires 1 argument (file number)")
                 return '0'
             file_num = self._generate_expression(expr.arguments[0])
             self.max_file_number = max(self.max_file_number, 255)
@@ -2982,21 +3011,21 @@ class Z88dkCBackend(CodeGenBackend):
         # Type conversion functions
         elif func_name == 'CINT':
             if len(expr.arguments) != 1:
-                self.warnings.append("CINT requires 1 argument")
+                self._unsupported("CINT requires 1 argument")
                 return '0'
             arg = self._generate_expression(expr.arguments[0])
-            return f'((int)round({arg}))'
+            return f'mb25_cint({arg})'
 
         elif func_name == 'CSNG':
             if len(expr.arguments) != 1:
-                self.warnings.append("CSNG requires 1 argument")
+                self._unsupported("CSNG requires 1 argument")
                 return '0'
             arg = self._generate_expression(expr.arguments[0])
             return f'((float)({arg}))'
 
         elif func_name == 'CDBL':
             if len(expr.arguments) != 1:
-                self.warnings.append("CDBL requires 1 argument")
+                self._unsupported("CDBL requires 1 argument")
                 return '0'
             arg = self._generate_expression(expr.arguments[0])
             return f'((double)({arg}))'
@@ -3005,7 +3034,7 @@ class Z88dkCBackend(CodeGenBackend):
         elif func_name == 'CVI':
             # Convert 2-byte string to integer
             if len(expr.arguments) != 1:
-                self.warnings.append("CVI requires 1 argument")
+                self._unsupported("CVI requires 1 argument")
                 return '0'
             str_arg = self._generate_string_expression(expr.arguments[0])
             # Generate helper function call for z88dk compatibility
@@ -3015,7 +3044,7 @@ class Z88dkCBackend(CodeGenBackend):
         elif func_name == 'CVS':
             # Convert 4-byte string to single
             if len(expr.arguments) != 1:
-                self.warnings.append("CVS requires 1 argument")
+                self._unsupported("CVS requires 1 argument")
                 return '0'
             str_arg = self._generate_string_expression(expr.arguments[0])
             # Generate helper function call for z88dk compatibility
@@ -3025,7 +3054,7 @@ class Z88dkCBackend(CodeGenBackend):
         elif func_name == 'CVD':
             # Convert 8-byte string to double
             if len(expr.arguments) != 1:
-                self.warnings.append("CVD requires 1 argument")
+                self._unsupported("CVD requires 1 argument")
                 return '0'
             str_arg = self._generate_string_expression(expr.arguments[0])
             # Generate helper function call for z88dk compatibility
@@ -3037,7 +3066,7 @@ class Z88dkCBackend(CodeGenBackend):
             # FRE(numeric) - return total free memory
             # FRE(string) - trigger garbage collection and return free string pool space
             if len(expr.arguments) > 1:
-                self.warnings.append("FRE requires 0 or 1 argument")
+                self._unsupported("FRE requires 0 or 1 argument")
                 return '0'
 
             # Check if argument is present
@@ -3061,7 +3090,7 @@ class Z88dkCBackend(CodeGenBackend):
         # PEEK function - read memory byte
         elif func_name == 'PEEK':
             if len(expr.arguments) != 1:
-                self.warnings.append("PEEK requires 1 argument")
+                self._unsupported("PEEK requires 1 argument")
                 return '0'
             addr = self._generate_expression(expr.arguments[0])
             # Direct memory access - read byte at address
@@ -3070,7 +3099,7 @@ class Z88dkCBackend(CodeGenBackend):
         # INP function - read I/O port
         elif func_name == 'INP':
             if len(expr.arguments) != 1:
-                self.warnings.append("INP requires 1 argument")
+                self._unsupported("INP requires 1 argument")
                 return '0'
             port = self._generate_expression(expr.arguments[0])
             # z88dk provides inp() function for CP/M port I/O
@@ -3080,7 +3109,7 @@ class Z88dkCBackend(CodeGenBackend):
         # VARPTR function - get address of variable
         elif func_name == 'VARPTR':
             if len(expr.arguments) != 1:
-                self.warnings.append("VARPTR requires 1 argument")
+                self._unsupported("VARPTR requires 1 argument")
                 return '0'
 
             # Get the variable reference
@@ -3110,13 +3139,13 @@ class Z88dkCBackend(CodeGenBackend):
                 subscript_str = ']['.join(subscripts)
                 return f'(float)((long)&{c_array}[{subscript_str}])'
             else:
-                self.warnings.append("VARPTR requires a variable or array element")
+                self._unsupported("VARPTR requires a variable or array element")
                 return '0'
 
         # USR function - call user machine language function
         elif func_name == 'USR':
             if len(expr.arguments) < 1:
-                self.warnings.append("USR requires at least 1 argument (address)")
+                self._unsupported("USR requires at least 1 argument (address)")
                 return '0'
 
             # First argument is the address to call
@@ -3131,12 +3160,12 @@ class Z88dkCBackend(CodeGenBackend):
                 # For simplicity, we'll pass one float argument
                 arg1 = self._generate_expression(expr.arguments[1])
                 if len(expr.arguments) > 2:
-                    self.warnings.append("USR with multiple arguments not fully supported - only first argument passed")
+                    self._unsupported("USR with multiple arguments not fully supported - only first argument passed")
                 return f'((float (*)(float))(int)({addr}))({arg1})'
 
         else:
             # Other numeric functions not yet implemented
-            self.warnings.append(f"Function {func_name} not yet implemented")
+            self._unsupported(f"Function {func_name} not yet implemented")
             return '0'
 
     def _get_string_id(self, var_name: str) -> str:
@@ -3145,15 +3174,17 @@ class Z88dkCBackend(CodeGenBackend):
         if upper_name in self.string_ids:
             return f'STR_{self._mangle_string_name(upper_name)}'
         else:
-            self.warnings.append(f"Unknown string variable: {var_name}")
+            self._unsupported(f"Unknown string variable: {var_name}")
             return '0'
 
     def _get_temp_string_id(self) -> str:
         """Allocate a temporary string ID"""
+        if self.temp_string_count == 0:
+            self._unsupported("internal error: a temporary string was needed but none was reserved")
         # Reuse temporaries within a statement
         base_temp = self.string_ids.get('_TEMP_BASE', 0)
         # Use modulo to wrap around and reuse temps
-        temp_offset = (self.next_temp_id - base_temp) % self.max_temps_per_statement
+        temp_offset = (self.next_temp_id - base_temp) % max(1, self.temp_string_count)
         temp_id = base_temp + temp_offset
         self.next_temp_id += 1
         return str(temp_id)
@@ -3163,135 +3194,41 @@ class Z88dkCBackend(CodeGenBackend):
         self.next_temp_id = self.string_ids.get('_TEMP_BASE', 0)
 
     def _escape_string(self, s: str) -> str:
-        """Escape a string for C"""
-        # Basic escaping for C strings
-        s = s.replace('\\', '\\\\')
-        s = s.replace('"', '\\"')
-        s = s.replace('\n', '\\n')
-        s = s.replace('\r', '\\r')
-        s = s.replace('\t', '\\t')
-        return s
+        """Escape text for a C string literal.
+
+        uc80 has two faults in string literals, and this works around both:
+        - It halves every run of backslashes, so one backslash needs four.
+        - It deletes the word "near" (a leftover keyword): "a near b" comes out
+          as "a  b".  Writing the word as two adjacent literals avoids that.
+        Control characters and characters above 126 are written as octal
+        escapes, which end after three digits and so cannot swallow the next
+        character the way hexadecimal escapes can.
+        """
+        uc80 = self.dialect == 'uc80'
+        out = []
+        for ch in s:
+            if ch == '\\':
+                out.append('\\\\\\\\' if uc80 else '\\\\')
+            elif ch == '"':
+                out.append('\\"')
+            elif ch == '\n':
+                out.append('\\n')
+            elif ch == '\r':
+                out.append('\\r')
+            elif ch == '\t':
+                out.append('\\t')
+            elif ord(ch) < 32 or ord(ch) >= 127:
+                out.append('\\%03o' % (ord(ch) & 0xFF))
+            else:
+                out.append(ch)
+        text = ''.join(out)
+        if uc80:
+            text = re.sub(r'\bnear\b', 'ne" "ar', text)
+        return text
 
     def _generate_string_function_statement(self, expr: FunctionCallNode, result_id: str) -> str:
-        """Generate code for string function directly into result variable"""
-        func_name = expr.name.upper()
-
-        if func_name == 'LEFT':
-            if len(expr.arguments) != 2:
-                self.warnings.append("LEFT$ requires 2 arguments")
-                return '/* LEFT$ error */'
-            str_arg = self._get_string_var_id(expr.arguments[0])
-            len_arg = self._generate_expression(expr.arguments[1])
-            return f'mb25_string_left({result_id}, {str_arg}, {len_arg})'
-
-        elif func_name == 'RIGHT':
-            if len(expr.arguments) != 2:
-                self.warnings.append("RIGHT$ requires 2 arguments")
-                return '/* RIGHT$ error */'
-            str_arg = self._get_string_var_id(expr.arguments[0])
-            len_arg = self._generate_expression(expr.arguments[1])
-            return f'mb25_string_right({result_id}, {str_arg}, {len_arg})'
-
-        elif func_name == 'MID':
-            if len(expr.arguments) < 2 or len(expr.arguments) > 3:
-                self.warnings.append("MID$ requires 2 or 3 arguments")
-                return '/* MID$ error */'
-            str_arg = self._get_string_var_id(expr.arguments[0])
-            start_arg = self._generate_expression(expr.arguments[1])
-            if len(expr.arguments) == 3:
-                len_arg = self._generate_expression(expr.arguments[2])
-                return f'mb25_string_mid({result_id}, {str_arg}, {start_arg}, {len_arg})'
-            else:
-                return f'mb25_string_mid({result_id}, {str_arg}, {start_arg}, 255)'
-
-        elif func_name == 'CHR':
-            if len(expr.arguments) != 1:
-                self.warnings.append("CHR$ requires 1 argument")
-                return '/* CHR$ error */'
-            code_arg = self._generate_expression(expr.arguments[0])
-            return f'{{ char _chr[2] = {{(char){code_arg}, \'\\0\'}}; mb25_string_alloc_init({result_id}, _chr); }}'
-
-        elif func_name == 'STR':
-            if len(expr.arguments) != 1:
-                self.warnings.append("STR$ requires 1 argument")
-                return '/* STR$ error */'
-            num_arg = self._generate_expression(expr.arguments[0])
-            return f'{{ char _str[32]; sprintf(_str, "{self._float_fmt()}", (double){num_arg}); mb25_string_alloc_init({result_id}, _str); }}'
-
-        elif func_name == 'SPACE':
-            if len(expr.arguments) != 1:
-                self.warnings.append("SPACE$ requires 1 argument")
-                return '/* SPACE$ error */'
-            count_arg = self._generate_expression(expr.arguments[0])
-            # Allocate directly in string pool, no malloc needed
-            return f'{{ int _n = {count_arg}; if (_n > 0 && _n <= 255) {{ mb25_string_alloc({result_id}, _n); uint8_t *_d = mb25_get_data({result_id}); if (_d) memset(_d, \' \', _n); }} }}'
-
-        elif func_name == 'STRING$':
-            if len(expr.arguments) != 2:
-                self.warnings.append("STRING$ requires 2 arguments")
-                return '/* STRING$ error */'
-            count_arg = self._generate_expression(expr.arguments[0])
-            # Second arg can be number or string
-            # Allocate directly in string pool, no malloc needed
-            if self._get_expression_type(expr.arguments[1]) == VarType.STRING:
-                str_arg = self._get_string_var_id(expr.arguments[1])
-                return f'{{ int _n = {count_arg}; uint8_t *_data = mb25_get_data({str_arg}); char _ch = (_data && mb25_get_length({str_arg}) > 0) ? _data[0] : \' \'; if (_n > 0 && _n <= 255) {{ mb25_string_alloc({result_id}, _n); uint8_t *_d = mb25_get_data({result_id}); if (_d) memset(_d, _ch, _n); }} }}'
-            else:
-                char_arg = self._generate_expression(expr.arguments[1])
-                return f'{{ int _n = {count_arg}; char _ch = (char){char_arg}; if (_n > 0 && _n <= 255) {{ mb25_string_alloc({result_id}, _n); uint8_t *_d = mb25_get_data({result_id}); if (_d) memset(_d, _ch, _n); }} }}'
-
-        elif func_name == 'HEX':
-            if len(expr.arguments) != 1:
-                self.warnings.append("HEX$ requires 1 argument")
-                return '/* HEX$ error */'
-            num_arg = self._generate_expression(expr.arguments[0])
-            return f'{{ char _hex[17]; sprintf(_hex, "%X", (int){num_arg}); mb25_string_alloc_init({result_id}, _hex); }}'
-
-        elif func_name == 'OCT':
-            if len(expr.arguments) != 1:
-                self.warnings.append("OCT$ requires 1 argument")
-                return '/* OCT$ error */'
-            num_arg = self._generate_expression(expr.arguments[0])
-            return f'{{ char _oct[23]; sprintf(_oct, "%o", (int){num_arg}); mb25_string_alloc_init({result_id}, _oct); }}'
-
-        elif func_name == 'MKI':
-            # Convert integer to 2-byte string
-            if len(expr.arguments) != 1:
-                self.warnings.append("MKI$ requires 1 argument")
-                return '/* MKI$ error */'
-            num_arg = self._generate_expression(expr.arguments[0])
-            self.needs_mki_helper = True
-            return f'mb25_mki({result_id}, {num_arg})'
-
-        elif func_name == 'MKS':
-            # Convert single to 4-byte string
-            if len(expr.arguments) != 1:
-                self.warnings.append("MKS$ requires 1 argument")
-                return '/* MKS$ error */'
-            num_arg = self._generate_expression(expr.arguments[0])
-            self.needs_mks_helper = True
-            return f'mb25_mks({result_id}, {num_arg})'
-
-        elif func_name == 'MKD':
-            # Convert double to 8-byte string
-            if len(expr.arguments) != 1:
-                self.warnings.append("MKD$ requires 1 argument")
-                return '/* MKD$ error */'
-            num_arg = self._generate_expression(expr.arguments[0])
-            self.needs_mkd_helper = True
-            return f'mb25_mkd({result_id}, {num_arg})'
-
-        else:
-            self.warnings.append(f"Unsupported string function: {func_name}")
-            return '/* unsupported function */'
-
-    def _get_string_var_id(self, expr) -> str:
-        """Get string ID for a variable or expression"""
-        if isinstance(expr, VariableNode):
-            return self._get_string_id(self._canonical_basic_name(expr))
-        else:
-            # For complex expressions, need to evaluate into temp
-            return self._generate_string_expression(expr)
+        """Generate C that builds a string function's result directly in a variable"""
+        return self._generate_string_function(expr, result_id)
 
     def _generate_concat_assignment(self, dest_id: str, expr: BinaryOpNode) -> List[str]:
         """Generate string concatenation assignment step by step"""
@@ -3342,55 +3279,101 @@ class Z88dkCBackend(CodeGenBackend):
             # Need to allocate the constant first
             return f'(mb25_string_alloc_const({temp_id}, "{self._escape_string(expr.value)}"), {temp_id})'
         elif isinstance(expr, VariableNode):
-            return self._get_string_id(self._canonical_basic_name(expr))
+            return self._string_var_id(expr)
         else:
             return self._generate_string_expression(expr)
 
     def _generate_binary_op(self, expr: BinaryOpNode) -> str:
-        """Generate C code for binary operation"""
+        """Generate C code for binary operation
+
+        BASIC differs from C in several places:
+        - / always divides in floating point (5/2 is 2.5), \\ and MOD work on
+          integers rounded the way CINT rounds.
+        - A comparison is -1 when true (not 1), and AND, OR, XOR, EQV, IMP
+          and NOT work bit by bit on 16-bit integers.
+        - Strings compare byte by byte.
+        """
+        op = expr.operator
+        c_compare = {
+            TokenType.EQUAL: '==', TokenType.NOT_EQUAL: '!=',
+            TokenType.LESS_THAN: '<', TokenType.LESS_EQUAL: '<=',
+            TokenType.GREATER_THAN: '>', TokenType.GREATER_EQUAL: '>=',
+        }
+        left_type = self._get_expression_type(expr.left)
+        right_type = self._get_expression_type(expr.right)
+
+        if left_type == VarType.STRING or right_type == VarType.STRING:
+            if left_type != right_type or op not in c_compare:
+                self._unsupported("a string mixed with a number in an expression "
+                                  "(Type mismatch)")
+                return '0'
+            left = self._generate_string_expression(expr.left)
+            right = self._generate_string_expression(expr.right)
+            return f'(-(mb25_string_compare({left}, {right}) {c_compare[op]} 0))'
+
+        if op in c_compare:
+            left = self._generate_expression(expr.left)
+            right = self._generate_expression(expr.right)
+            both_int = left_type == VarType.INTEGER and right_type == VarType.INTEGER
+            return f'(-({self._compare(left, c_compare[op], right, both_int)}))'
+
+        if op in (TokenType.AND, TokenType.OR, TokenType.XOR, TokenType.EQV, TokenType.IMP,
+                  TokenType.MOD, TokenType.BACKSLASH):
+            a = self._integer_value(expr.left)
+            b = self._integer_value(expr.right)
+            return {
+                TokenType.AND: f'({a} & {b})',
+                TokenType.OR: f'({a} | {b})',
+                TokenType.XOR: f'({a} ^ {b})',
+                TokenType.EQV: f'(~({a} ^ {b}))',
+                TokenType.IMP: f'((~{a}) | {b})',
+                TokenType.MOD: f'({a} % {b})',
+                TokenType.BACKSLASH: f'({a} / {b})',
+            }[op]
+
         left = self._generate_expression(expr.left)
         right = self._generate_expression(expr.right)
-
-        # Map BASIC operators to C operators
-        op_map = {
-            TokenType.PLUS: '+',
-            TokenType.MINUS: '-',
-            TokenType.MULTIPLY: '*',
-            TokenType.DIVIDE: '/',
-            TokenType.POWER: '**',  # Need to handle this specially
-            TokenType.EQUAL: '==',
-            TokenType.NOT_EQUAL: '!=',
-            TokenType.LESS_THAN: '<',
-            TokenType.LESS_EQUAL: '<=',
-            TokenType.GREATER_THAN: '>',
-            TokenType.GREATER_EQUAL: '>=',
-            TokenType.AND: '&&',
-            TokenType.OR: '||',
-        }
-
-        c_op = op_map.get(expr.operator, '?')
-
-        # Special handling for power operator (not in C)
-        if expr.operator == TokenType.POWER:
-            # Use pow() function from math.h
-            return f'pow({left}, {right})'
-
+        if op == TokenType.DIVIDE:
+            return f'((double)({left}) / ({right}))'
+        if op == TokenType.POWER:
+            return f'mb25_pow((double)({left}), (double)({right}))'
+        c_op = {TokenType.PLUS: '+', TokenType.MINUS: '-', TokenType.MULTIPLY: '*'}.get(op)
+        if c_op is None:
+            self._unsupported(f"operator {getattr(op, 'name', op)}")
+            return '0'
+        # uc80 miscompiles a float times an int constant such as 8 or 16 (the
+        # product comes out as the float itself), so a constant that meets a
+        # float is written as a float constant.
+        if left_type == VarType.INTEGER and right_type != VarType.INTEGER \
+                and self._constant_value(expr.left) is not None:
+            left = repr(float(self._constant_value(expr.left)))
+        elif right_type == VarType.INTEGER and left_type != VarType.INTEGER \
+                and self._constant_value(expr.right) is not None:
+            right = repr(float(self._constant_value(expr.right)))
         return f'({left} {c_op} {right})'
+
+    def _compare(self, left: str, c_op: str, right: str, both_int: bool) -> str:
+        """C comparison of two numbers.
+
+        uc80 compares two negative floats the wrong way round (-30 > -27 is
+        true), so an ordering test on floats looks at the sign of the difference
+        instead.  Equality is not affected.  Two ints compare directly.
+        """
+        if both_int or c_op in ('==', '!='):
+            return f'{left} {c_op} {right}'
+        return f'((double)({left}) - (double)({right})) {c_op} 0'
 
     def _generate_unary_op(self, expr: UnaryOpNode) -> str:
         """Generate C code for unary operation"""
+        if expr.operator == TokenType.NOT:
+            return f'(~{self._integer_value(expr.operand)})'
         operand = self._generate_expression(expr.operand)
-
         if expr.operator == TokenType.MINUS:
             return f'(-{operand})'
         elif expr.operator == TokenType.PLUS:
             return f'(+{operand})'
-        elif expr.operator == TokenType.NOT:
-            # In BASIC, NOT is bitwise. In C conditions, use logical not
-            # For compatibility, we'll use bitwise NOT (~) but in conditions it will work as logical
-            return f'(!{operand})'
-        else:
-            return operand
+        self._unsupported(f"unary operator {getattr(expr.operator, 'name', expr.operator)}")
+        return '0'
 
     def _generate_on_error(self, stmt: OnErrorStatementNode) -> List[str]:
         """Generate ON ERROR GOTO/GOSUB statement"""
@@ -3400,6 +3383,8 @@ class Z88dkCBackend(CodeGenBackend):
             # ON ERROR GOTO 0 - disable error handling
             code.append(self.indent() + 'error_handler = 0;  /* Disable error handling */')
         else:
+            self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
             # ON ERROR GOTO line_number - set error handler
             code.append(self.indent() + f'error_handler = {stmt.line_number};  /* Set error handler */')
             # Ensure the target line has a label
@@ -3410,6 +3395,8 @@ class Z88dkCBackend(CodeGenBackend):
     def _generate_resume(self, stmt: ResumeStatementNode) -> List[str]:
         """Generate RESUME statement"""
         code = []
+        self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
 
         if stmt.line_number is None:
             # RESUME - retry the statement that caused the error
@@ -3452,6 +3439,8 @@ class Z88dkCBackend(CodeGenBackend):
     def _generate_error(self, stmt: ErrorStatementNode) -> List[str]:
         """Generate ERROR statement - trigger an error"""
         code = []
+        self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
 
         error_code = self._generate_expression(stmt.error_code)
         code.append(self.indent() + f'/* ERROR statement */')
@@ -3489,7 +3478,7 @@ class Z88dkCBackend(CodeGenBackend):
             # Map this variable to the field
             # Check if it's a string variable (has $ suffix)
             if var.name.endswith('$') or (hasattr(var, 'type_suffix') and var.type_suffix == '$'):
-                var_id = self._get_string_id(var.name)
+                var_id = self._string_var_id(var)
                 # Extract the numeric ID from STR_VARNAME
                 code.append(self.indent() + f'field_var_files[{var_id}] = _file_num;')
                 code.append(self.indent() + f'field_var_offsets[{var_id}] = _field_offset;')
@@ -3633,7 +3622,7 @@ class Z88dkCBackend(CodeGenBackend):
         code = []
         code.append(self.indent() + '/* LSET - left justify in field */')
 
-        var_id = self._get_string_id(self._canonical_basic_name(stmt.variable))
+        var_id = self._string_var_id(stmt.variable)
         value_expr = self._generate_string_expression(stmt.expression)
 
         # Check if this is a field variable
@@ -3670,7 +3659,7 @@ class Z88dkCBackend(CodeGenBackend):
         code = []
         code.append(self.indent() + '/* RSET - right justify in field */')
 
-        var_id = self._get_string_id(self._canonical_basic_name(stmt.variable))
+        var_id = self._string_var_id(stmt.variable)
         value_expr = self._generate_string_expression(stmt.expression)
 
         # Check if this is a field variable
@@ -3704,18 +3693,30 @@ class Z88dkCBackend(CodeGenBackend):
         return code
 
     def _generate_erase(self, stmt: EraseStatementNode) -> List[str]:
-        """Generate ERASE statement - not implemented (matches Microsoft BASIC Compiler)
+        """Generate ERASE statement: empty the named arrays.
 
-        The Microsoft BASIC Compiler did NOT implement ERASE - it was interpreter-only.
-        ERASE deallocates array memory and removes variable names in the interpreter,
-        but the compiler does not support dynamic deallocation.
-
-        We generate a comment to document this limitation, matching Microsoft's behavior.
+        An interpreted ERASE frees the array so that a later DIM can size it
+        again.  Compiled arrays have a fixed size, so ERASE here clears the
+        elements (0, or the empty string) and a later DIM of the same array
+        changes nothing.  A DIM with another size is refused by the semantic
+        analyzer.
         """
         code = []
-        code.append(self.indent() + '/* ERASE statement not implemented - interpreter-only feature */')
-        code.append(self.indent() + f'/* Arrays cannot be deallocated in compiled code: {", ".join(stmt.array_names)} */')
-        self.warnings.append(f"ERASE not supported in compiled code (matches Microsoft BASIC Compiler) - arrays: {', '.join(stmt.array_names)}")
+        for name in stmt.array_names:
+            name = name.upper()
+            keys = [k for k in self.array_ranks
+                    if k == name or (name[-1] not in '$%!#' and k[:-1] == name)]
+            if not keys:
+                self._unsupported(f"ERASE {name}: no such array")
+                continue
+            key = keys[0]
+            total = self._array_total(key)
+            if self._key_type(key) == VarType.STRING:
+                base = self._get_string_id(key + '()')
+                code.append(self.indent() + f'{{ int _e; for (_e = 0; _e < {total}; _e++) mb25_string_clear({base} + _e); }}')
+            else:
+                c_name = self._mangle_variable_name(key) + '_arr'
+                code.append(self.indent() + f'memset({c_name}, 0, sizeof({c_name}));')
         return code
 
     def _generate_reset(self, stmt: ResetStatementNode) -> List[str]:
@@ -3768,7 +3769,7 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + f'mb25_get_string_data({new_filename}, _new_name, sizeof(_new_name));')
         code.append(self.indent() + 'if (rename(_old_name, _new_name) != 0) {')
         self.indent_level += 1
-        code.append(self.indent() + 'fprintf(stderr, "?File not found\\n");')
+        code.append(self.indent() + 'mb25_fail("File not found");')
         self.indent_level -= 1
         code.append(self.indent() + '}')
 
@@ -3790,7 +3791,7 @@ class Z88dkCBackend(CodeGenBackend):
             code.append(self.indent() + f'/* Would list files matching: {filespec} */')
         else:
             code.append(self.indent() + '/* Would list all files */')
-        self.warnings.append("FILES statement not implemented - requires CP/M BDOS calls")
+        self._unsupported("FILES statement not implemented - requires CP/M BDOS calls")
         return code
 
     def _generate_width(self, stmt: WidthStatementNode) -> List[str]:
@@ -3810,67 +3811,14 @@ class Z88dkCBackend(CodeGenBackend):
         return code
 
     def _generate_lprint(self, stmt: LprintStatementNode) -> List[str]:
-        """Generate LPRINT statement - print to line printer
+        """Generate LPRINT statement.
 
-        LPRINT sends output to the line printer (LPT1: in DOS/CP/M).
-        We'll implement this by opening/using a special file handle for the printer.
-        For simplicity in compiled code, we'll just output to stdout like PRINT.
+        The compiled program has no printer, so LPRINT writes to the console
+        exactly as PRINT does.
         """
-        code = []
-
-        # If file number specified, treat like PRINT #
-        if stmt.file_number:
-            # Generate similar to PRINT #
-            file_num_expr = self._generate_expression(stmt.file_number)
-            file_ptr = f'file_handles[(int)({file_num_expr})]'
-
-            for i, expr in enumerate(stmt.expressions):
-                expr_code = self._generate_expression(expr)
-                separator = stmt.separators[i] if i < len(stmt.separators) else None
-
-                # Determine type and print accordingly
-                expr_type = self._get_expression_type(expr)
-                if expr_type == VarType.STRING:
-                    code.append(self.indent() + '{')
-                    self.indent_level += 1
-                    code.append(self.indent() + 'char _buf[256];')
-                    code.append(self.indent() + f'mb25_get_string_data({expr_code}, _buf, sizeof(_buf));')
-                    code.append(self.indent() + f'fprintf({file_ptr}, "%s", _buf);')
-                    self.indent_level -= 1
-                    code.append(self.indent() + '}')
-                else:
-                    code.append(self.indent() + f'fprintf({file_ptr}, "{self._float_fmt()}", (double)({expr_code}));')
-
-                # Handle separator
-                if separator == ',':
-                    code.append(self.indent() + f'fprintf({file_ptr}, "\\t");')
-                elif separator == ';':
-                    pass  # No spacing
-                elif separator is None and i == len(stmt.expressions) - 1:
-                    code.append(self.indent() + f'fprintf({file_ptr}, "\\n");')
-        else:
-            # Regular LPRINT - output to stdout like PRINT
-            # (In a real CP/M system, this would go to LPT1:)
-            for i, expr in enumerate(stmt.expressions):
-                expr_code = self._generate_expression(expr)
-                separator = stmt.separators[i] if i < len(stmt.separators) else None
-
-                # Determine type and print accordingly
-                expr_type = self._get_expression_type(expr)
-                if expr_type == VarType.STRING:
-                    code.append(self.indent() + 'mb25_print_string(' + expr_code + ');')
-                else:
-                    code.append(self.indent() + f'printf("{self._float_fmt()}", (double)({expr_code}));')
-
-                # Handle separator
-                if separator == ',':
-                    code.append(self.indent() + 'printf("\\t");')
-                elif separator == ';':
-                    pass  # No spacing
-                elif separator is None and i == len(stmt.expressions) - 1:
-                    code.append(self.indent() + 'putchar(\'\\n\');')
-
-        return code
+        return self._generate_print(PrintStatementNode(
+            expressions=stmt.expressions, separators=stmt.separators,
+            file_number=stmt.file_number))
 
     def _generate_clear(self, stmt: ClearStatementNode) -> List[str]:
         """Generate CLEAR statement - clear variables and set memory limits
@@ -3960,23 +3908,23 @@ class Z88dkCBackend(CodeGenBackend):
         # Warn about unsupported options (Microsoft BASCOM doesn't support these either)
         if stmt.merge:
             code.append(self.indent() + '/* MERGE option not supported in compiled code */')
-            self.warnings.append("CHAIN MERGE not supported - Microsoft BASCOM doesn't support this either")
+            self._unsupported("CHAIN MERGE not supported - Microsoft BASCOM doesn't support this either")
         if stmt.start_line:
             code.append(self.indent() + '/* Start line not supported in compiled code */')
-            self.warnings.append("CHAIN line number not supported - Microsoft BASCOM doesn't support this either")
+            self._unsupported("CHAIN line number not supported - Microsoft BASCOM doesn't support this either")
         if stmt.all_flag:
             code.append(self.indent() + '/* ALL option not supported in compiled code */')
-            self.warnings.append("CHAIN ALL not supported - use COMMON in interpreter mode")
+            self._unsupported("CHAIN ALL not supported - use COMMON in interpreter mode")
         if stmt.delete_range:
             code.append(self.indent() + '/* DELETE option not supported in compiled code */')
-            self.warnings.append("CHAIN DELETE not supported - Microsoft BASCOM doesn't support this either")
+            self._unsupported("CHAIN DELETE not supported - Microsoft BASCOM doesn't support this either")
 
         # Get filename as C string (need to handle string expression)
         if self._get_expression_type(stmt.filename) == VarType.STRING:
             filename_str_id = self._generate_string_expression(stmt.filename)
             temp_id = self._get_temp_string_id()
         else:
-            self.warnings.append("CHAIN requires string filename")
+            self._unsupported("CHAIN requires string filename")
             code.append(self.indent() + '/* ERROR: CHAIN requires string filename */')
             return code
 
