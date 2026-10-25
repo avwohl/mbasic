@@ -28,14 +28,22 @@ do not notice. Each prints nothing at all where the binary raises:
 | `DIM A$(300)` filled with 200-character strings | `Out of string space in 20` | #31 |
 | `FIELD #1, 100 AS A$` on a 16-byte record | `FIELD overflow in 20` | #32 |
 | `OPEN "O",1,"A:B:C*?.X Y"` | `Too many files in 10` | #33 |
-| `LOAD` of a file with a line longer than the 255-byte buffer (a typed line gives no error) | `Line buffer overflow in 10` | #34 |
-| `LOAD` of a file with a line that has no number | `Direct statement in file` | #35 |
-| `LOAD` or `MERGE` of a file with a bare line number for a missing line | `Undefined line number` (the REPL gives the same error) | #36 |
 | running off the end of the program inside a handler | `No RESUME in <last line>` | #37 |
 
 The old recipe for `String formula too complex` (`STRING$(200,65)` and twelve
 concatenations) gives `String too long` on the binary and here. Use the recipe
 in #30.
+
+Done (#34, #35, #36): `LOAD` and `MERGE` of a file stop reading at the first bad
+line, as the binary does. The bad line is a line over 255 bytes (`Line buffer
+overflow in <number>`, 0 if the line has no number), a line with no number
+(`Direct statement in file`) or a bare number of a missing line (`Undefined
+line number`). The message is bare. The lines read before it stay: `LOAD` of a
+file with a bad first line leaves an empty program, and `MERGE` keeps the old
+program. A bare number of a missing line typed at the prompt also prints
+`Undefined line number`. Inside a running program the error is raised, so
+`ON ERROR` traps it (error 23, 66 or 8). The Tk and curses UIs print the same
+message. The web UI loads files through the editor and does not use the loader.
 
 A floating-point overflow is now reported. The binary prints a bare `Overflow`
 (no line number, no `Ok`). It substitutes machine infinity with the sign of the

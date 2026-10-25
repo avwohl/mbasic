@@ -213,7 +213,9 @@ class ImmediateExecutor:
                             return (False, f"{error}\n")
                     else:
                         # Delete line (numbered line with no content)
-                        ui.program.delete_line(line_num)
+                        if not ui.program.delete_line(line_num):
+                            # A bare number of a missing line, as at the Ok prompt
+                            return (False, format_error_message(UNDEFINED_LINE_NUMBER) + "\n")
 
                     # Refresh the editor display
                     if hasattr(ui, '_refresh_editor'):

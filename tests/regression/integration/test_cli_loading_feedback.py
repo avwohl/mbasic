@@ -98,7 +98,7 @@ def test_tty_edit_key_still_enters_edit_mode_with_prompt(tmp_path):
         child.close()
 
 
-@pytest.mark.parametrize("text", ["\n", "PRINT 1\n", "10 PRINT (\n"])
+@pytest.mark.parametrize("text", ["\n", "10 PRINT (\n"])
 def test_failed_startup_explains_reason(tmp_path, text):
     source = tmp_path / "bad.bas"
     source.write_text(text)
@@ -109,6 +109,16 @@ def test_failed_startup_explains_reason(tmp_path, text):
         assert "file line 1" in result.stderr
     else:
         assert "No numbered program lines" in result.stderr
+
+
+def test_unnumbered_startup_file_reports_direct_statement(tmp_path):
+    # Measured on MBASIC 5.21: LOAD stops at a line with no number.
+    source = tmp_path / "bad.bas"
+    source.write_text("PRINT 1\n")
+    result = cli(source)
+    assert result.returncode != 0
+    assert "Direct statement in file" in result.stderr
+    assert str(source) in result.stderr
 
 
 def test_load_command_does_not_call_parse_failure_file_not_found(tmp_path):
@@ -138,22 +148,20 @@ def test_mandelbrot_fixture_runs_with_compact_line_numbers(tmp_path):
 @pytest.mark.parametrize("operation", ["load_from_file", "merge_from_file"])
 def test_partial_load_reports_each_rejected_physical_line(tmp_path, operation):
     source = tmp_path / "partial.bas"
-    source.write_text('\n10PRINT "kept"\nnot numbered\n20 PRINT (\n30END\n')
+    source.write_text('\n10PRINT "kept"\n20 PRINT (\n30END\n')
     program = ProgramManager({})
     result = getattr(program, operation)(str(source))
     assert result[0] is True
     assert sorted(program.lines) == [10, 30]
-    assert len(result[1]) == 2
-    assert "file line 3" in result[1][0][1]
-    assert "expected a BASIC line number" in result[1][0][1]
-    assert "file line 4, BASIC line 20" in result[1][1][1]
+    assert len(result[1]) == 1
+    assert "file line 3, BASIC line 20" in result[1][0][1]
 
 
 @pytest.mark.parametrize("operation", ["load_from_file", "merge_from_file"])
 @pytest.mark.parametrize("bare", ["20", "20 "])
 def test_bare_line_number_deletes_line(tmp_path, operation, bare):
     source = tmp_path / "bare.bas"
-    source.write_text(f'10 PRINT "a"\n20 PRINT "b"\n{bare}\n30 PRINT "c"\n99\n')
+    source.write_text(f'10 PRINT "a"\n20 PRINT "b"\n{bare}\n30 PRINT "c"\n')
     program = ProgramManager({})
     if operation == "merge_from_file":
         program.add_line(20, '20 PRINT "old"')
@@ -167,7 +175,7 @@ def test_bare_line_number_deletes_line(tmp_path, operation, bare):
 @pytest.mark.parametrize("operation", ["load_from_file", "merge_from_file"])
 def test_file_of_only_bare_line_numbers_succeeds(tmp_path, operation):
     source = tmp_path / "onlybare.bas"
-    source.write_text("10\n20\n")
+    source.write_text("10 PRINT 1\n10\n")
     program = ProgramManager({})
     program.add_line(10, '10 PRINT "x"')
     result = getattr(program, operation)(str(source))

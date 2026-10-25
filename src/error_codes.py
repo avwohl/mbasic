@@ -88,8 +88,15 @@ ILLEGAL_FUNCTION_CALL = 5
 UNDEFINED_LINE_NUMBER = 8
 CANT_CONTINUE = 17
 MISSING_OPERAND = 22
+LINE_BUFFER_OVERFLOW = 23
 FILE_NOT_FOUND = 53
 BAD_FILE_NAME = 64
+DIRECT_STATEMENT_IN_FILE = 66
+
+
+class FileReadAbort(RuntimeError):
+    """LOAD or MERGE stopped reading a file with an MBASIC error. Raised only
+    for a running program; carries the error number as mbasic_code."""
 
 
 def get_error_message(error_code):
@@ -188,6 +195,8 @@ _MESSAGE_CODES = (
     ("while without wend", 29),
     # Ours says "WEND without matching WHILE at line 10".
     ("wend without", 30),
+    ("line buffer overflow", 23),
+    ("direct statement in file", 66),
     ("field overflow", 50),
     ("bad file number", 52),
     ("file not found", 53),
