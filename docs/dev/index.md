@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2026-10-25
-**Total Documents:** 60
+**Total Documents:** 64
 
 ## What's Here
 
@@ -60,6 +60,7 @@ port I/O — but they are not required. Read
 - [Js Print Format](JS_PRINT_FORMAT.md)
 - [Key Input Routing](KEY_INPUT_ROUTING.md)
 - [Keybinding Systems](KEYBINDING_SYSTEMS.md)
+- [Print Columns](PRINT_COLUMNS.md)
 - [Startrek And Gosub In Then](STARTREK_AND_GOSUB_IN_THEN.md)
 
 ### Testing & Quality
@@ -105,6 +106,9 @@ port I/O — but they are not required. Read
 - [Compiler Variable Types](COMPILER_VARIABLE_TYPES.md)
 - [Compiler Z88Dk Path Change](COMPILER_Z88DK_PATH_CHANGE.md)
 - [Edit Mode Typeahead](EDIT_MODE_TYPEAHEAD.md)
+- [Js Browser Yield](JS_BROWSER_YIELD.md)
+- [Js Control Flow](JS_CONTROL_FLOW.md)
+- [Js Logical Operators](JS_LOGICAL_OPERATORS.md)
 - [Kubernetes Deployment Guide](KUBERNETES_DEPLOYMENT_GUIDE.md)
 - [Kubernetes Deployment Plan](KUBERNETES_DEPLOYMENT_PLAN.md)
 - [Kubernetes Deployment Setup](KUBERNETES_DEPLOYMENT_SETUP.md)
