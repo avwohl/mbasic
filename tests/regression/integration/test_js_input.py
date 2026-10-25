@@ -122,7 +122,7 @@ def test_input_percent_and_ampersand_forms(tmp_path):
 70 INPUT D
 80 PRINT D
 ''', "1.5%\n1E5%\n3\n&10\n&O 17\n")
-    assert result.stdout == "? 2\n? ?Redo from start\n? 3\n? 8\n? 15\n"
+    assert result.stdout == "?  2 \n? ?Redo from start\n?  3 \n?  8 \n?  15 \n"
 
 
 @needs_node
