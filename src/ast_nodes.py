@@ -1047,11 +1047,16 @@ class ClearStatementNode:
 
     Syntax:
         CLEAR
-        CLEAR string_space
-        CLEAR string_space, stack_space
+        CLEAR [string_space] [, [memory_top] [, stack_space]]
+
+    On MBASIC 5.21 the first number is not used (CLEAR 500 changes nothing);
+    the number after the first comma is the highest memory address BASIC may
+    use, and the one after that is the stack space. String space is what is
+    left in between.
     """
     string_space: Optional['ExpressionNode']
     stack_space: Optional['ExpressionNode']
+    memory_top: Optional['ExpressionNode'] = None
     line_num: int = 0
     column: int = 0
 

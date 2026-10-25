@@ -178,6 +178,7 @@ _MESSAGE_CODES = (
     ("subscript out of range", 9),
     ("duplicate definition", 10),
     ("type mismatch", 13),
+    ("out of string space", 14),
     ("string too long", 15),
     ("can't continue", 17),
     ("undefined function", 18),

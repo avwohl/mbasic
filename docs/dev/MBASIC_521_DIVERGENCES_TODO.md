@@ -24,18 +24,32 @@ do not notice. Each prints nothing at all where the binary raises:
 
 | provocation | binary says | issue |
 |---|---|---|
-| a string expression with more than 10 pending function results, such as twelve nested `CHR$(65)+(...)` | `String formula too complex in 10` | #30 |
-| `DIM A$(300)` filled with 200-character strings | `Out of string space in 20` | #31 |
-| `FIELD #1, 100 AS A$` on a 16-byte record | `FIELD overflow in 20` | #32 |
-| `OPEN "O",1,"A:B:C*?.X Y"` | `Too many files in 10` | #33 |
 | `LOAD` of a file with a line longer than the 255-byte buffer (a typed line gives no error) | `Line buffer overflow in 10` | #34 |
 | `LOAD` of a file with a line that has no number | `Direct statement in file` | #35 |
 | `LOAD` or `MERGE` of a file with a bare line number for a missing line | `Undefined line number` (the REPL gives the same error) | #36 |
 | running off the end of the program inside a handler | `No RESUME in <last line>` | #37 |
 
-The old recipe for `String formula too complex` (`STRING$(200,65)` and twelve
-concatenations) gives `String too long` on the binary and here. Use the recipe
-in #30.
+Done (GitHub issues 30 to 33, `docs/dev/STRING_SPACE_AND_FILE_ERRORS.md`):
+
+- Done (#30): a string expression that needs more than 10 string temporaries
+  gives `String formula too complex` (error 16), as on the binary. The test
+  recipe is a nest of eleven `CHR$(65)+(...)`. The old recipe
+  (`STRING$(200,65)` and twelve concatenations) gives `String too long`.
+  The body of a DEF FN function is not counted.
+- Done (#31): `Out of string space` (error 14) when the live strings do not fit
+  in the string space. The space is a byte budget (39168 at start-up, as FRE
+  reports), not a memory model, so the error comes a little later than on the
+  binary. `CLEAR ,n` and `CLEAR ,,n` change the budget, and `FRE` is new.
+- Done (#32): `OPEN "R"` keeps the record length (0 to 128, default 128), `FIELD`
+  gives `FIELD overflow` when the widths are more than the record length, and
+  `GET` and `PUT` use the record length. The binary binds the variables
+  before the one that overflows. The interpreter changes nothing.
+- Done (#33): `Bad file name` and `Too many files` for names that CP/M cannot
+  hold, in OPEN, KILL, NAME, LOAD, SAVE, MERGE, CHAIN and RUN in a program. A name
+  with a slash or backslash passes as a host path, and the setting
+  `cpm_file_names` turns the check off. A command typed at the prompt is not
+  checked.
+- The JavaScript and C backends do not raise any of these four errors.
 
 A floating-point overflow is now reported. The binary prints a bare `Overflow`
 (no line number, no `Ok`). It substitutes machine infinity with the sign of the

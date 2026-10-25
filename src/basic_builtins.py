@@ -896,6 +896,16 @@ class BuiltinFunctions:
     # System Functions
     # ========================================================================
 
+    def FRE(self, _arg=0):
+        """
+        Free memory: the string space not taken by live strings.
+
+        FRE(0) and FRE("") are the same here. The binary's FRE(0) leaves out a
+        garbage collection that FRE("") does; there is no garbage to count.
+        See Runtime.string_space_size for what the figure is an estimate of.
+        """
+        return self.runtime.free_string_space()
+
     def PEEK(self, _addr):
         """
         A random byte, 0-255. This is a decision, not a stub.

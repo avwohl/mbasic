@@ -1110,8 +1110,14 @@ def serialize_statement(stmt):
         parts = ['CLEAR']
         if stmt.string_space is not None:
             parts.append(f" {serialize_expression(stmt.string_space)}")
+        memory_top = getattr(stmt, 'memory_top', None)
+        if memory_top is not None or stmt.stack_space is not None:
+            parts.append(' ' if stmt.string_space is None else '')
+            parts.append(',')
+            if memory_top is not None:
+                parts.append(serialize_expression(memory_top))
             if stmt.stack_space is not None:
-                parts.append(f", {serialize_expression(stmt.stack_space)}")
+                parts.append(f",{serialize_expression(stmt.stack_space)}")
         return ''.join(parts)
 
     elif stmt_type == 'DefTypeStatementNode':

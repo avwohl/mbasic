@@ -16,6 +16,7 @@ from src.semantic_analyzer import SymbolTable, VarType
 from src.codegen_backend import CodeGenBackend
 from src.tokens import TokenType
 from src.error_codes import ERROR_CODES
+from src.string_temps import string_temps, STRING_TEMPORARIES
 from src.number_format import (numeric_digits, to_single, INTEGER_DIGITS,
                                SINGLE_DIGITS, DOUBLE_DIGITS, machine_infinity)
 
@@ -1655,7 +1656,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '} else if (mode === "R") {')
             self.indent_level += 1
             code.append(self.indent() + '// Random access mode')
-            code.append(self.indent() + 'const recordLength = reclen || 128;')
+            code.append(self.indent() + 'if (reclen !== undefined && (reclen < 0 || reclen > 128)) _error("Illegal function call");')
+            code.append(self.indent() + 'const recordLength = reclen === undefined ? 128 : reclen;')
             code.append(self.indent() + 'let content = "";')
             code.append(self.indent() + 'try { content = fs.readFileSync(filename, "binary"); } catch(e) {}')
             code.append(self.indent() + '_files[filenum] = {')
@@ -1722,7 +1724,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '} else if (mode === "R") {')
             self.indent_level += 1
             code.append(self.indent() + '// Random access mode')
-            code.append(self.indent() + 'const recordLength = reclen || 128;')
+            code.append(self.indent() + 'if (reclen !== undefined && (reclen < 0 || reclen > 128)) _error("Illegal function call");')
+            code.append(self.indent() + 'const recordLength = reclen === undefined ? 128 : reclen;')
             code.append(self.indent() + 'const content = localStorage.getItem(key) || "";')
             code.append(self.indent() + '_files[filenum] = {')
             self.indent_level += 1
@@ -2022,6 +2025,13 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'const file = _files[filenum];')
             code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
             code.append(self.indent() + 'if (file.mode !== "R") _error("File #" + filenum + " not open for random access");')
+            code.append(self.indent() + '// The widths must fit in the record length of OPEN; nothing changes when they do not')
+            code.append(self.indent() + 'let total = 0;')
+            code.append(self.indent() + 'for (const [width] of fields) {')
+            code.append(self.indent() + '    if (width < 0) _error("Illegal function call");')
+            code.append(self.indent() + '    total += width;')
+            code.append(self.indent() + '    if (total > file.recordLength) _error("FIELD overflow");')
+            code.append(self.indent() + '}')
             code.append(self.indent() + 'let pos = 0;')
             code.append(self.indent() + 'for (const [width, varname] of fields) {')
             self.indent_level += 1
@@ -2766,7 +2776,27 @@ class JavaScriptBackend(CodeGenBackend):
             return expr_code
         return expr_code
 
+    #: True while the code of a string expression that is too complex is made,
+    #: so the check is made once, at the outermost node.
+    _in_complex_string = False
+
     def _generate_expression(self, expr) -> str:
+        """Generate JavaScript expression
+
+        An expression that needs more than ten string temporaries stops with
+        String formula too complex (error 16) when it is reached, as MBASIC does.
+        """
+        if (not self._in_complex_string and isinstance(expr, (BinaryOpNode, FunctionCallNode))
+                and string_temps(expr)[0] > STRING_TEMPORARIES):
+            self._in_complex_string = True
+            try:
+                code = self._generate_expression_plain(expr)
+            finally:
+                self._in_complex_string = False
+            return f'(_error("String formula too complex"), {code})'
+        return self._generate_expression_plain(expr)
+
+    def _generate_expression_plain(self, expr) -> str:
         """Generate JavaScript expression"""
         if isinstance(expr, NumberNode):
             value = expr.value

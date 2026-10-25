@@ -3823,7 +3823,7 @@ class Z88dkCBackend(CodeGenBackend):
     def _generate_clear(self, stmt: ClearStatementNode) -> List[str]:
         """Generate CLEAR statement - clear variables and set memory limits
 
-        CLEAR [string_space] [, stack_space]
+        CLEAR [string_space] [, [memory_top] [, stack_space]]
 
         In the interpreter, CLEAR:
         - Closes all files
@@ -3857,10 +3857,12 @@ class Z88dkCBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + '}')
 
-        if stmt.string_space or stmt.stack_space:
+        if stmt.string_space or stmt.memory_top or stmt.stack_space:
             msg = "CLEAR memory parameters ignored in compiled code"
             if stmt.string_space:
                 msg += f" (string_space={self._generate_expression(stmt.string_space)})"
+            if stmt.memory_top:
+                msg += f" (memory_top={self._generate_expression(stmt.memory_top)})"
             if stmt.stack_space:
                 msg += f" (stack_space={self._generate_expression(stmt.stack_space)})"
             self.warnings.append(msg)

@@ -19,6 +19,20 @@ from src.number_format import coerce_to_type
 from src.pc import PC, StatementTable
 
 
+#: Free memory of MBASIC 5.21 at start-up (FRE(0) of a program of a few lines,
+#: measured under cpmemu), the highest memory address it then uses, and its
+#: stack space. String data lives in that free memory, so these set how much
+#: string data there is room for. CLEAR ,n and CLEAR ,,n move the last two.
+#: The size is an estimate: the binary also spends memory on the program text
+#: and on the variables and arrays themselves, which are not counted here.
+FREE_MEMORY = 39168
+HIGHEST_MEMORY = 64766
+STACK_SPACE = 512
+
+#: The least stack space CLEAR accepts (82 works, 81 is Out of memory).
+MIN_STACK_SPACE = 82
+
+
 def split_variable_name_and_suffix(full_name):
     """
     Split a full variable name into base name and type suffix.
@@ -107,6 +121,13 @@ class Runtime:
         # _resolve_variable_name() to determine variable types when no explicit suffix is present
 
         # File I/O
+        # Highest memory address and stack space (CLEAR ,n and CLEAR ,,n),
+        # which set the string space. _string_slack is how many bytes of
+        # strings may still be stored before the live strings are counted again.
+        self.memory_top = HIGHEST_MEMORY
+        self.stack_space = STACK_SPACE
+        self._string_slack = 0
+
         self.files = {}               # file_number -> file_handle
         self.field_buffers = {}       # file_number -> buffer_dict
 
@@ -467,6 +488,9 @@ class Runtime:
         if resolved_suffix == '$' and isinstance(value, str) and len(value) > 255:
             raise RuntimeError("String too long")
 
+        if resolved_suffix == '$' and isinstance(value, str) and not debugger_set:
+            self._reserve_string_space(len(value))
+
         # Check string length limit if limits provided and it's a string
         if limits and resolved_suffix == '$' and isinstance(value, str):
             limits.check_string_length(value)
@@ -589,6 +613,53 @@ class Runtime:
 
         # Call set_variable for uniform handling
         self.set_variable(name, type_suffix, value, token=fake_token)
+
+    @property
+    def string_space_size(self):
+        """Bytes of memory for string data: what FRE reports on an empty heap."""
+        return max(0, FREE_MEMORY + (self.memory_top - HIGHEST_MEMORY)
+                   - (self.stack_space - STACK_SPACE))
+
+    def set_memory(self, memory_top=None, stack_space=None):
+        """CLEAR ,memory_top,stack_space: change the string space."""
+        if memory_top is not None:
+            self.memory_top = memory_top
+        if stack_space is not None:
+            self.stack_space = stack_space
+        self._string_slack = 0
+
+    def live_string_bytes(self):
+        """Bytes of string data held by the variables and arrays."""
+        total = 0
+        for full_name, info in self._variables.items():
+            if full_name.endswith('$') and isinstance(info['value'], str):
+                total += len(info['value'])
+        for full_name, info in self._arrays.items():
+            if full_name.endswith('$'):
+                total += sum(len(item) for item in info['data'] if isinstance(item, str))
+        return total
+
+    def free_string_space(self):
+        """What FRE returns: string space not taken by live strings."""
+        return max(0, self.string_space_size - self.live_string_bytes())
+
+    def _reserve_string_space(self, size):
+        """Out of string space, raised before a string of size bytes is stored.
+
+        MBASIC counts the live strings only when the space runs out (garbage
+        collection). The same is done here: the live strings are added up
+        when the bytes stored since the last count could fill the space, and
+        the room left then is spent a store at a time. The old value of the
+        variable being set still counts, as it does on the binary until the
+        collection runs.
+        """
+        if size <= self._string_slack:
+            self._string_slack -= size
+            return
+        free = self.string_space_size - self.live_string_bytes()
+        if size > free:
+            raise RuntimeError("Out of string space")
+        self._string_slack = free - size
 
     def clear_variables(self):
         """Clear all variables."""
@@ -787,6 +858,9 @@ class Runtime:
         # An array element holds its type the way a scalar does: a single keeps
         # 24 mantissa bits, an integer rounds to nearest. See set_variable.
         value = coerce_to_type(value, resolved_suffix)
+
+        if resolved_suffix == '$' and isinstance(value, str):
+            self._reserve_string_space(len(value))
 
         # Auto-dimension array to (10) if not explicitly dimensioned (MBASIC behavior)
         if full_name not in self._arrays:

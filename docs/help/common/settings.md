@@ -60,6 +60,14 @@ Settings are stored in JSON format:
 - `force_upper` - Convert to UPPERCASE (PRINT, FOR, IF)
 - `force_capitalize` - Capitalize (Print, For, If)
 
+### File Name Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `cpm_file_names` | boolean | `true` | Refuse file names that CP/M MBASIC 5.21 refuses |
+
+When on, OPEN, KILL, NAME, LOAD, SAVE, MERGE, CHAIN and RUN in a program give `Bad file name` for a name such as `ABCDEFGHI.DAT` (more than 8 characters before the dot), and `Too many files` for a name such as `A*.X` when the statement makes the file. A name with a slash or backslash passes as a host path. Turn the setting off to use host names such as `inputfile.txt`. See `docs/dev/STRING_SPACE_AND_FILE_ERRORS.md`.
+
 ### Variable Settings
 
 | Setting | Type | Default | Description |

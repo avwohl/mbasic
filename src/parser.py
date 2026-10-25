@@ -3713,26 +3713,30 @@ class Parser:
         )
 
     def parse_clear(self) -> ClearStatementNode:
-        """Parse CLEAR statement - Syntax: CLEAR [,][string_space][,stack_space]"""
+        """Parse CLEAR statement - Syntax: CLEAR [n] [,[memory_top] [,stack_space]]"""
         token = self.advance()
 
         string_space = None
+        memory_top = None
         stack_space = None
 
-        # CLEAR can have optional arguments
+        # CLEAR can have optional arguments: [n] [,[memory_top] [,stack_space]]
         if not self.at_end_of_line() and not self.match(TokenType.COLON):
-            # Parse first argument (string space or comma)
             if not self.match(TokenType.COMMA):
                 string_space = self.parse_expression()
 
-            # Check for second argument
             if self.match(TokenType.COMMA):
                 self.advance()
-                if not self.at_end_of_line() and not self.match(TokenType.COLON):
-                    stack_space = self.parse_expression()
+                if not (self.at_end_of_line() or self.match(TokenType.COLON, TokenType.COMMA)):
+                    memory_top = self.parse_expression()
+                if self.match(TokenType.COMMA):
+                    self.advance()
+                    if not self.at_end_of_line() and not self.match(TokenType.COLON):
+                        stack_space = self.parse_expression()
 
         return ClearStatementNode(
             string_space=string_space,
+            memory_top=memory_top,
             stack_space=stack_space,
             line_num=token.line,
             column=token.column
