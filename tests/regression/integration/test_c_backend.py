@@ -66,14 +66,15 @@ def compile_c(tmp_path, source, name="prog"):
 
 def run_compiled(tmp_path, stdin, name="prog"):
     result = subprocess.run([cpmemu_path(), str(tmp_path / f"{name}.com")],
-                            input=stdin.encode(), capture_output=True, timeout=120)
+                            input=stdin.encode(), capture_output=True, timeout=120,
+                            cwd=tmp_path)
     return result.stdout.decode("latin1").replace("\r\n", "\n")
 
 
 def run_interpreted(tmp_path, stdin, name="prog"):
     result = subprocess.run(
         [sys.executable, str(ROOT / "mbasic"), str(tmp_path / f"{name}.bas"), "--ui", "cli"],
-        cwd=ROOT, input=("RUN\n" + stdin + "SYSTEM\n").encode(),
+        cwd=tmp_path, input=("RUN\n" + stdin + "SYSTEM\n").encode(),
         capture_output=True, timeout=120)
     out = result.stdout.decode("latin1")
     out = out[out.index("Ready\n") + len("Ready\n"):]
@@ -555,3 +556,13 @@ def test_negative_subscript_is_illegal_function_call(tmp_path):
     source = '10 OPTION BASE 1\n20 DIM A$(2)\n30 A$(-1)="z"\n'
     assert compile_c(tmp_path, source).returncode == 0
     assert run_compiled(tmp_path, "") == "Illegal function call in 30\n"
+
+
+@NEEDS_TOOLCHAIN
+def test_append_to_shared_and_self_concat(tmp_path):
+    """Real MBASIC 5.21 prints ab|abx, xyxy, aaq, aq, aqaq."""
+    source = ('10 DIM S$(3)\n20 S$(1)="ab":S$(2)=S$(1):S$(1)=S$(1)+"x":PRINT S$(2);"|";S$(1)\n'
+              '30 S$(3)="xy":S$(3)=S$(3)+S$(3):PRINT S$(3)\n'
+              '40 A$="a":B$=A$:A$=A$+"q":PRINT B$;A$:C$=A$:PRINT C$:A$=A$+A$:PRINT A$\n')
+    assert compile_c(tmp_path, source).returncode == 0
+    assert run_compiled(tmp_path, "") == "ab|abx\nxyxy\naaq\naq\naqaq\n"

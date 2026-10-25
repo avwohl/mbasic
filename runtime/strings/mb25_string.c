@@ -300,6 +300,23 @@ mb25_error_t mb25_string_concat(uint16_t dest_id, uint16_t str1_id, uint16_t str
         mb25_fail("String too long");
     }
 
+    /* Build the result in a local buffer first: dest may be str1 or str2,
+       or may share its data with them, and the allocation clears dest. */
+    uint8_t buf[MB25_MAX_STRING_LEN];
+    uint8_t l1 = str1->len;
+    uint8_t l2 = str2->len;
+    if (l1 > 0 && str1->data != NULL) {
+        memcpy(buf, str1->data, l1);
+    } else {
+        l1 = 0;
+    }
+    if (l2 > 0 && str2->data != NULL) {
+        memcpy(buf + l1, str2->data, l2);
+    } else {
+        l2 = 0;
+    }
+    total_len = (uint16_t)(l1 + l2);
+
     /* Allocate space for result */
     mb25_error_t result = mb25_string_alloc(dest_id, total_len);
     if (result != MB25_SUCCESS) {
@@ -307,13 +324,8 @@ mb25_error_t mb25_string_concat(uint16_t dest_id, uint16_t str1_id, uint16_t str
     }
 
     mb25_string_pt dest = &mb25_strings[dest_id];
-
-    /* Copy both strings */
-    if (str1->len > 0 && str1->data != NULL) {
-        memcpy(dest->data, str1->data, str1->len);
-    }
-    if (str2->len > 0 && str2->data != NULL) {
-        memcpy(dest->data + str1->len, str2->data, str2->len);
+    if (total_len > 0) {
+        memcpy(dest->data, buf, total_len);
     }
 
     dest->len = (uint8_t)total_len;
