@@ -125,6 +125,16 @@ def test_statements_after_for_gosub_and_next(tmp_path, name, source, expected):
     assert run_js(tmp_path, source) == expected
 
 
+def test_for_in_then_then_for_in_else(tmp_path):
+    # Real MBASIC: " 1  2  3 a" and " 1  2 b". The ELSE clause runs to the end of the line, and a
+    # constant that the condition sets in the THEN clause is not known after the IF.
+    out = run_js(tmp_path, """10 X=1:IF X=1 THEN FOR I=1 TO 3:PRINT I;:NEXT I:PRINT "a"
+20 X=0:IF X=1 THEN PRINT "no" ELSE FOR J=1 TO 2:PRINT J;:NEXT:PRINT "b"
+30 SYSTEM
+""")
+    assert out == " 1  2  3 a\n 1  2 b\n"
+
+
 if __name__ == "__main__":
     if NODE is None:
         print("Node.js unavailable: JavaScript execution tests skipped")

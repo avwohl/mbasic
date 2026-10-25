@@ -2191,6 +2191,22 @@ class Parser:
     # These follow similar patterns to the above
 
     # Placeholder implementations for remaining statements
+    def _parse_else_statements(self) -> List[StatementNode]:
+        """Parse the statements of an ELSE clause: in MBASIC the clause runs to the end of the line,
+        so 'ELSE FOR I=1 TO 2:PRINT I:NEXT:PRINT "b"' holds all four statements."""
+        statements: List[StatementNode] = []
+        while True:
+            stmt = self.parse_statement()
+            if stmt:
+                statements.append(stmt)
+            if self.match(TokenType.COLON):
+                self.advance()
+                if self.at_end_of_line():
+                    break
+                continue
+            break
+        return statements
+
     def parse_if(self) -> IfStatementNode:
         """
         Parse IF statement
@@ -2243,10 +2259,7 @@ class Parser:
                             else_line_number = int(self.advance().value)
                         else:
                             # Parse else statement(s)
-                            else_statements = []
-                            stmt = self.parse_statement()
-                            if stmt:
-                                else_statements.append(stmt)
+                            else_statements = self._parse_else_statements()
                     else:
                         # Not :ELSE, restore position to before colon
                         self.position = saved_pos
@@ -2258,10 +2271,7 @@ class Parser:
                         else_line_number = int(self.advance().value)
                     else:
                         # Parse else statement(s)
-                        else_statements = []
-                        stmt = self.parse_statement()
-                        if stmt:
-                            else_statements.append(stmt)
+                        else_statements = self._parse_else_statements()
             else:
                 # Parse statements until end of line or ELSE
                 # Pattern: IF cond THEN stmt1 :stmt2 :stmt3 ELSE stmt4
@@ -2284,10 +2294,7 @@ class Parser:
                                 else_line_number = int(self.advance().value)
                             else:
                                 # Parse else statement(s)
-                                else_statements = []
-                                stmt = self.parse_statement()
-                                if stmt:
-                                    else_statements.append(stmt)
+                                else_statements = self._parse_else_statements()
                             break  # Done with THEN clause
                         else:
                             # Not :ELSE, just a statement separator - continue loop
@@ -2301,10 +2308,7 @@ class Parser:
                             else_line_number = int(self.advance().value)
                         else:
                             # Parse else statement(s)
-                            else_statements = []
-                            stmt = self.parse_statement()
-                            if stmt:
-                                else_statements.append(stmt)
+                            else_statements = self._parse_else_statements()
                         break  # Done with THEN clause
                     else:
                         # No more statements
@@ -2325,10 +2329,7 @@ class Parser:
                         else_line_number = int(self.advance().value)
                     else:
                         # Parse else statement(s)
-                        else_statements = []
-                        stmt = self.parse_statement()
-                        if stmt:
-                            else_statements.append(stmt)
+                        else_statements = self._parse_else_statements()
             else:
                 raise ParseError("Expected line number after GOTO", line_token)
 

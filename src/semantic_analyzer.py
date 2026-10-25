@@ -1761,24 +1761,19 @@ class SemanticAnalyzer:
 
             # Merge runtime constants: a variable is only constant after the IF if it has the same
             # constant value in both branches (or only one branch exists)
-            if then_constants is not None and else_constants is not None:
-                # Both branches exist - keep only constants that are the same in both
+            # A missing branch (no ELSE, or an empty THEN) leaves the constants as they were before the IF.
+            # Without this, a constant that the condition sets inside the THEN branch (IF X=1 THEN ...)
+            # would stay known after the IF although the other path never saw it.
+            if then_constants is not None or else_constants is not None:
+                if then_constants is None:
+                    then_constants = constants_before
+                if else_constants is None:
+                    else_constants = constants_before
                 merged = {}
                 for var_name in then_constants:
-                    if var_name in else_constants:
-                        if then_constants[var_name] == else_constants[var_name]:
-                            merged[var_name] = then_constants[var_name]
-                # Also keep constants that weren't modified in either branch
-                for var_name in constants_before:
-                    if var_name not in then_constants and var_name not in else_constants:
-                        merged[var_name] = constants_before[var_name]
+                    if var_name in else_constants and then_constants[var_name] == else_constants[var_name]:
+                        merged[var_name] = then_constants[var_name]
                 self.evaluator.runtime_constants = merged
-            elif then_constants is not None:
-                # Only THEN branch exists
-                self.evaluator.runtime_constants = then_constants
-            elif else_constants is not None:
-                # Only ELSE branch exists
-                self.evaluator.runtime_constants = else_constants
             else:
                 # No branches - restore original state
                 self.evaluator.runtime_constants = constants_before
