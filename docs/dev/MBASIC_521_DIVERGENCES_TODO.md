@@ -200,9 +200,11 @@ semantics are not:
 - `src/codegen_js_backend.py` - `\` now truncates rather than flooring, but
   neither `\` nor MOD rounds its operands to integers first, and neither
   range-checks them. `7.6 MOD 3` is 2 in the interpreter and 1.6 here.
-- `src/codegen_backend.py` - the C backend has no entry for `\` or MOD in its
-  operator map at all (`_generate_binary_op`, around line 3324), so it emits
-  `(a ? b)`. This predates the current work.
+- Done (GitHub issues 28 and 29, `docs/dev/C_BACKEND.md`): the C backend
+  has `\` and MOD (operands rounded to integers, as CINT does), `/` always gives
+  a floating-point result, comparisons give -1, and AND, OR, XOR, EQV, IMP
+  and NOT work bit by bit on 16-bit integers. It still does not check the
+  operands for 16-bit overflow.
 - `src/codegen_js_backend.py` `_start_ok` (in `_generate_for`) is
   `(_step > 0) ? (v <= end) : (v >= end)`, which gets STEP 0 wrong in the
   opposite direction from the bug fixed in the interpreter.
@@ -211,7 +213,8 @@ semantics are not:
   interpreter does not: it truncates a fractional operand (`NOT 2.7` is -3,
   real MBASIC -4) and it accepts operands outside -32768..32767
   (`40000 OR 1` is 40001, real MBASIC stops with Overflow). The C backend
-  has not been checked.
+  rounds a fractional operand and wraps an operand outside the range to 16
+  bits, so it matches real MBASIC except that it does not stop with Overflow.
 - `src/codegen_js_backend.py` writes WHILE and WEND as a JavaScript `while`
   block, so a WHILE and its WEND on different lines make invalid JavaScript
   (`Unexpected token 'case'`). The same fault is listed in

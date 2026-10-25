@@ -10,6 +10,8 @@
 #include "mb25_string.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 /* Global string management state */
 mb25_globals_t mb25_global = {0};
@@ -789,42 +791,686 @@ mb25_error_t mb25_string_dup(uint16_t dest_id, uint16_t src_id) {
     return MB25_SUCCESS;
 }
 
-void mb25_print_string(uint16_t str_id) {
-    /* Print string directly using putchar - no malloc needed */
-    if (!MB25_VALID_ID(str_id)) {
+/* ===== String functions that build a result in a descriptor =====
+ *
+ * Each returns the ID it was given, so the compiler can use the call as the
+ * value of a string expression. */
+
+uint16_t mb25_chr(uint16_t id, int code) {
+    char t[2];
+    uint8_t *d;
+    t[0] = (char)code;
+    t[1] = 0;
+    if (code == 0) {                 /* CHR$(0) has a length of 1 but no C text */
+        mb25_string_alloc(id, 1);
+        d = mb25_get_data(id);
+        if (d) {
+            d[0] = 0;
+            mb25_strings[id].len = 1;
+        }
+        return id;
+    }
+    mb25_string_alloc_init(id, t);
+    return id;
+}
+
+/* SPACE$(n) and STRING$(n, code) */
+uint16_t mb25_string_of(uint16_t id, int n, int ch) {
+    uint8_t *d;
+    if (n <= 0 || n > 255) {
+        mb25_string_clear(id);
+        return id;
+    }
+    mb25_string_alloc(id, n);
+    d = mb25_get_data(id);
+    if (d) {
+        memset(d, ch, n);
+        mb25_strings[id].len = (uint8_t)n;
+    }
+    return id;
+}
+
+/* STRING$(n, string$): the first character of the string, repeated */
+uint16_t mb25_string_of_first(uint16_t id, int n, uint16_t src) {
+    uint8_t *d = mb25_get_data(src);
+    return mb25_string_of(id, n, (d && mb25_get_length(src) > 0) ? d[0] : ' ');
+}
+
+/* HEX$ and OCT$: the value as an unsigned 16-bit word, so HEX$(-1) is FFFF */
+uint16_t mb25_radix(uint16_t id, int v, int base) {
+    char t[8];
+    uint8_t *d;
+    int n = 0, i;
+    unsigned int u = (unsigned int)v & 0xFFFF;
+    do {
+        i = u % base;
+        t[n++] = (char)(i < 10 ? '0' + i : 'A' + i - 10);
+        u /= base;
+    } while (u);
+    mb25_string_alloc(id, n);
+    d = mb25_get_data(id);
+    if (d) {
+        for (i = 0; i < n; i++) {
+            d[i] = (uint8_t)t[n - 1 - i];
+        }
+        mb25_strings[id].len = (uint8_t)n;
+    }
+    return id;
+}
+
+int mb25_asc(uint16_t id) {
+    uint8_t *d = mb25_get_data(id);
+    return (d && mb25_get_length(id) > 0) ? d[0] : 0;
+}
+
+/* The number at the start of a text, as BASIC reads it: leading blanks, a
+ * sign, digits with a point, and an optional E or D exponent.  Reading stops
+ * at the first character that does not belong.  The library atof is not
+ * used: it fails on uc80. */
+double mb25_atof(const char *s) {
+    double v = 0, scale;
+    int neg = 0, frac = 0, seen_point = 0, e = 0, eneg = 0, digits = 0, i;
+    while (*s == ' ' || *s == '\t') {
+        s++;
+    }
+    if (*s == '-' || *s == '+') {
+        neg = (*s == '-');
+        s++;
+    }
+    for (; (*s >= '0' && *s <= '9') || (*s == '.' && !seen_point); s++) {
+        if (*s == '.') {
+            seen_point = 1;
+        } else {
+            v = v * 10 + (*s - '0');
+            digits++;
+            if (seen_point) {
+                frac++;
+            }
+        }
+    }
+    if (digits && (*s == 'E' || *s == 'e' || *s == 'D' || *s == 'd')) {
+        s++;
+        if (*s == '-' || *s == '+') {
+            eneg = (*s == '-');
+            s++;
+        }
+        while (*s >= '0' && *s <= '9') {
+            if (e < 1000) {
+                e = e * 10 + (*s - '0');
+            }
+            s++;
+        }
+        if (eneg) {
+            e = -e;
+        }
+    }
+    e -= frac;
+    if (e < -38) {
+        e = -38;
+    }
+    if (e > 38) {
+        e = 38;
+    }
+    scale = 1;
+    for (i = (e < 0 ? -e : e); i > 0; i--) {
+        scale *= 10;
+    }
+    if (e < 0) {
+        v = v / scale;
+    } else {
+        v = v * scale;
+    }
+    return neg ? -v : v;
+}
+
+double mb25_val(uint16_t id) {
+    char t[256];
+    uint8_t *d = mb25_get_data(id);
+    int n = mb25_get_length(id);
+    if (!d) {
+        return 0;
+    }
+    memcpy(t, d, n);
+    t[n] = 0;
+    return mb25_atof(t);
+}
+
+/* INSTR([start,] a$, b$): 1-based position of b$ in a$, or 0 */
+int mb25_instr(int start, uint16_t a, uint16_t b) {
+    uint8_t *da = mb25_get_data(a), *db = mb25_get_data(b);
+    int la = mb25_get_length(a), lb = mb25_get_length(b), i, j;
+    if (start < 1) {
+        start = 1;
+    }
+    if (start - 1 > la) {
+        return 0;
+    }
+    if (lb == 0) {
+        return start;
+    }
+    if (!da || !db) {
+        return 0;
+    }
+    for (i = start - 1; i + lb <= la; i++) {
+        for (j = 0; j < lb && da[i + j] == db[j]; j++) {
+        }
+        if (j == lb) {
+            return i + 1;
+        }
+    }
+    return 0;
+}
+
+/* ===== Numbers and subscripts ===== */
+
+/* SQR.  The uc80 sqrt() can come out one unit low for a perfect square
+ * (sqrt(9) is 2.9999998), and then a test such as INT(SQR(N))*INT(SQR(N)) = N
+ * fails.  A whole-number root is returned exactly. */
+double mb25_sqr(double v) {
+    double r;
+    int n;
+    if (v <= 0) {
+        return 0;
+    }
+    r = sqrt(v);
+    if (r < 32000) {
+        n = (int)(r + 0.5);
+        if ((double)n * (double)n == v) {
+            return n;
+        }
+    }
+    return r;
+}
+
+/* x ^ y.  A whole-number exponent is worked out by repeated multiplication,
+ * which is exact where the library pow() on uc80 is not (3 ^ 8 comes out as
+ * 6560.98). */
+double mb25_pow(double x, double y) {
+    double r = 1;
+    int n, neg;
+    if (y == 0) {
+        return 1;
+    }
+    n = (int)y;
+    if ((double)n == y && n > -64 && n < 64) {
+        neg = (n < 0);
+        if (neg) {
+            n = -n;
+        }
+        while (n) {
+            if (n & 1) {
+                r *= x;
+            }
+            x *= x;
+            n >>= 1;
+        }
+        return neg ? 1 / r : r;
+    }
+    return pow(x, y);
+}
+
+/* CINT: round to the nearest integer, halves away from zero, as BASIC does
+ * when it stores a number in an INTEGER variable or uses one as a subscript. */
+int mb25_cint(double v) {
+    return (int)(v < 0 ? -(-v + 0.5) : v + 0.5);
+}
+
+/* Check an array subscript (already moved down by OPTION BASE) against the
+ * number of elements.  BASIC stops with an error; writing past a C array
+ * would corrupt the string pool instead. */
+int mb25_subscript(int i, int n) {
+    if (i < 0 || i >= n) {
+        fputs("?Subscript out of range\n", stderr);
+        exit(1);
+    }
+    return i;
+}
+
+/* SWAP two strings: exchange everything in the descriptors except the IDs. */
+void mb25_string_swap(uint16_t a, uint16_t b) {
+    mb25_string_t t;
+    if (!MB25_VALID_ID(a) || !MB25_VALID_ID(b)) {
         return;
     }
+    t = mb25_strings[a];
+    mb25_strings[a] = mb25_strings[b];
+    mb25_strings[b] = t;
+    mb25_strings[a].str_id = a;
+    mb25_strings[b].str_id = b;
+}
 
-    mb25_string_pt str = &mb25_strings[str_id];
-    if (str->data == NULL || str->len == 0) {
-        return;  /* Empty string - print nothing */
+/* EOF(n): -1 when the next read would find the end of the file, else 0.
+ * feof() alone says 0 until a read has already failed. */
+int mb25_eof(FILE *fp) {
+    int ch;
+    if (fp == NULL) {
+        return -1;
     }
+    ch = fgetc(fp);
+    if (ch == EOF || ch == 0x1A) {      /* the end, or CP/M's ^Z */
+        return -1;
+    }
+    ungetc(ch, fp);
+    return 0;
+}
 
-    /* Output each character using putchar */
-    uint8_t *data = str->data;
-    uint8_t len = str->len;
-    while (len--) {
-        putchar(*data++);
+/* The keyboard input has ended: BASIC stops the program. */
+int mb25_input_eof(void) {
+    exit(0);
+    return 0;
+}
+
+/* Remove the line end (LF, CR LF or CR) that fgets leaves on a line of input. */
+void mb25_chomp(char *s) {
+    size_t n = strlen(s);
+    while (n > 0 && (s[n - 1] == '\n' || s[n - 1] == '\r')) {
+        s[--n] = '\0';
     }
 }
 
-void mb25_fprint_string(FILE *fp, uint16_t str_id) {
-    /* Print string to file using fputc - no malloc needed */
-    if (fp == NULL || !MB25_VALID_ID(str_id)) {
+/* ===== PRINT output: column tracking, zones, MBASIC number format ===== */
+
+/* Console line width and comma-zone width, as in the interpreter
+ * (src/print_column.py).  A file has a width of 255 and never wraps. */
+#define MB25_SCREEN_WIDTH 80
+#define MB25_FILE_WIDTH   255
+#define MB25_ZONE_WIDTH   14
+
+static FILE *mb25_out_fp;      /* NULL = console, else the PRINT# file */
+static int mb25_con_col;       /* 0-based cursor column of the console */
+static int mb25_file_col;      /* the same for the current file */
+
+void mb25_set_out(FILE *fp) {
+    mb25_out_fp = fp;
+}
+
+void mb25_set_col(int col) {
+    mb25_con_col = col;
+}
+
+static int mb25_width(void) {
+    return mb25_out_fp ? MB25_FILE_WIDTH : MB25_SCREEN_WIDTH;
+}
+
+/* One raw character to the console or file.  A newline in a file is CR LF. */
+static void mb25_raw(int c) {
+    if (mb25_out_fp) {
+        if (c == '\n') {
+            fputc('\r', mb25_out_fp);
+        }
+        fputc(c, mb25_out_fp);
+    } else {
+        putchar(c);
+    }
+}
+
+/* One character, with the column bookkeeping of advance_column() and the
+ * lazy wrap of wrap_text(): a printable character at a full line starts a
+ * new line first. */
+void mb25_putc(int c) {
+    int col = mb25_out_fp ? mb25_file_col : mb25_con_col;
+    if (c == '\n' || c == '\r') {
+        col = 0;
+    } else if (c == '\t') {
+        col = (col / 8 + 1) * 8;
+    } else if (c == '\b') {
+        if (col > 0) {
+            col--;
+        }
+    } else if (c >= ' ') {
+        if (col >= mb25_width()) {
+            mb25_raw('\n');
+            col = 0;
+        }
+        col++;
+    }
+    mb25_raw(c);
+    if (mb25_out_fp) {
+        mb25_file_col = col;
+    } else {
+        mb25_con_col = col;
+    }
+}
+
+/* A PRINT item: it starts on a new line when it does not fit in the rest of
+ * the console line. */
+static void mb25_emit(const uint8_t *p, int len) {
+    int col = mb25_out_fp ? mb25_file_col : mb25_con_col;
+    if (col > 0 && col + len > mb25_width() && !mb25_out_fp) {
+        mb25_putc('\n');
+    }
+    while (len-- > 0) {
+        mb25_putc(*p++);
+    }
+}
+
+void mb25_print_cstr(const char *s) {
+    mb25_emit((const uint8_t *)s, (int)strlen(s));
+}
+
+void mb25_print_nl(void) {
+    mb25_putc('\n');
+}
+
+void mb25_print_zone(void) {
+    int col = mb25_out_fp ? mb25_file_col : mb25_con_col;
+    int zone = (col / MB25_ZONE_WIDTH + 1) * MB25_ZONE_WIDTH;
+    if (!mb25_out_fp && zone + MB25_ZONE_WIDTH > mb25_width()) {
+        mb25_putc('\n');
         return;
     }
+    while (col < zone) {
+        mb25_putc(' ');
+        col++;
+    }
+}
 
-    mb25_string_pt str = &mb25_strings[str_id];
+void mb25_print_tab(int n) {
+    int col = mb25_out_fp ? mb25_file_col : mb25_con_col;
+    int target = (n < 1) ? 0 : (n - 1) % mb25_width();
+    if (col > target) {
+        mb25_putc('\n');
+        col = 0;
+    }
+    while (col < target) {
+        mb25_putc(' ');
+        col++;
+    }
+}
+
+void mb25_print_spc(int n) {
+    if (n < 0) {
+        n = 0;
+    }
+    n %= mb25_width();
+    while (n-- > 0) {
+        mb25_putc(' ');
+    }
+}
+
+/* ---- Number to text ---- */
+
+/* Single values keep 6 significant figures, doubles 16.  uc80 has no 64-bit
+ * float (sizeof(double) is 4 there), so a double can only be trusted to 7. */
+#define MB25_SINGLE_DIGITS 6
+#define MB25_DOUBLE_DIGITS (sizeof(double) > 4 ? 16 : 7)
+
+/* The exact decimal expansion of a float is built in a digit array,
+ * least significant digit first.  120 digits holds any 32-bit float. */
+#define MB25_FMT_MAX 120
+static uint8_t mb25_fd[MB25_FMT_MAX];
+static int mb25_fn;
+
+static void mb25_fd_mul(unsigned int m) {
+    unsigned int carry = 0, v;
+    int i;
+    for (i = 0; i < mb25_fn; i++) {
+        v = mb25_fd[i] * m + carry;
+        mb25_fd[i] = (uint8_t)(v % 10);
+        carry = v / 10;
+    }
+    while (carry && mb25_fn < MB25_FMT_MAX) {
+        mb25_fd[mb25_fn++] = (uint8_t)(carry % 10);
+        carry /= 10;
+    }
+}
+
+static void mb25_fd_add(unsigned int b) {
+    int i = 0;
+    while (b && i < MB25_FMT_MAX) {
+        if (i == mb25_fn) {
+            mb25_fd[mb25_fn++] = 0;
+        }
+        b += mb25_fd[i];
+        mb25_fd[i++] = (uint8_t)(b % 10);
+        b /= 10;
+    }
+}
+
+/* Round the digit string d[0..n) (most significant first) to `keep` figures,
+ * halves up.  Returns the new count; *e10 grows by one on a carry out of the
+ * leading digit (9.99 -> 10.0). */
+static int mb25_round_digits(char *d, int n, int keep, int *e10) {
+    int i;
+    if (n <= keep) {
+        return n;
+    }
+    i = (d[keep] >= '5');
+    n = keep;
+    while (i && n > 0) {
+        if (d[n - 1] == '9') {
+            d[--n] = '0';
+        } else {
+            d[n - 1]++;
+            i = 0;
+        }
+    }
+    if (i) {                       /* every digit was 9: 999 -> 1000 */
+        d[0] = '1';
+        n = 1;
+        (*e10)++;
+    }
+    return n;
+}
+
+/* The characters MBASIC prints for a number, without the padding spaces
+ * (number_format.format_number).  kind 0 is single, 1 is double.  buf needs
+ * 40 bytes.  Returns the length. */
+int mb25_fmt_num(char *buf, double v, int kind) {
+    char d[MB25_FMT_MAX + 2];
+    int digits = kind ? (int)MB25_DOUBLE_DIGITS : MB25_SINGLE_DIGITS;
+    int n, i, e, p, x, s, neg = 0, len = 0, scaled;
+    double m;
+    unsigned int b;
+
+    if (v != v) {
+        v = 0;
+    }
+    if (v < 0) {
+        neg = 1;
+        v = -v;
+    }
+    if (v == 0) {
+        buf[0] = '0';
+        buf[1] = 0;
+        return 1;
+    }
+    if (v > 3.4e38) {              /* MBASIC's machine infinity */
+        strcpy(buf, neg ? "-1.70141E+38" : "1.70141E+38");
+        return neg ? 12 : 11;
+    }
+
+    /* v = m * 2^e with m in [0.5, 1).  Peel m into bytes: N * 2^(e-k). */
+    m = frexp(v, &e);
+    mb25_fn = 1;
+    mb25_fd[0] = 0;
+    p = e;
+    while (m != 0) {
+        m *= 256;
+        b = (unsigned int)m;
+        m -= b;
+        mb25_fd_mul(256);
+        mb25_fd_add(b);
+        p -= 8;
+    }
+    x = 0;                         /* the integer in mb25_fd times 10^x */
+    if (p > 0) {
+        while (p-- > 0) {
+            mb25_fd_mul(2);
+        }
+    } else {
+        x = p;
+        while (p++ < 0) {
+            mb25_fd_mul(5);
+        }
+    }
+    n = mb25_fn;
+    for (i = 0; i < n; i++) {
+        d[i] = (char)('0' + mb25_fd[n - 1 - i]);
+    }
+    x += n - 1;                    /* power of ten of the leading digit */
+
+    if (kind == 0) {
+        /* MBASIC makes seven decimal digits first, then prints six of them */
+        n = mb25_round_digits(d, n, MB25_SINGLE_DIGITS + 1, &x);
+    }
+    n = mb25_round_digits(d, n, digits, &x);
+    while (n > 1 && d[n - 1] == '0') {
+        n--;
+    }
+    s = n;
+
+    if (x >= 0) {
+        scaled = (x + 1) > digits;
+    } else {
+        scaled = (-x - 1) + s > digits + 1;
+    }
+
+    if (neg) {
+        buf[len++] = '-';
+    }
+    if (!scaled) {
+        if (x >= 0) {
+            for (i = 0; i <= x; i++) {
+                buf[len++] = (i < s) ? d[i] : '0';
+            }
+            if (s > x + 1) {
+                buf[len++] = '.';
+                for (i = x + 1; i < s; i++) {
+                    buf[len++] = d[i];
+                }
+            }
+        } else {
+            buf[len++] = '.';
+            for (i = 0; i < -x - 1; i++) {
+                buf[len++] = '0';
+            }
+            for (i = 0; i < s; i++) {
+                buf[len++] = d[i];
+            }
+        }
+    } else {
+        buf[len++] = d[0];
+        if (s > 1) {
+            buf[len++] = '.';
+            for (i = 1; i < s; i++) {
+                buf[len++] = d[i];
+            }
+        }
+        buf[len++] = kind ? 'D' : 'E';
+        if (x < 0) {
+            buf[len++] = '-';
+            x = -x;
+        } else {
+            buf[len++] = '+';
+        }
+        if (x >= 100) {
+            buf[len++] = (char)('0' + x / 100);
+            x %= 100;
+        }
+        buf[len++] = (char)('0' + x / 10);
+        buf[len++] = (char)('0' + x % 10);
+    }
+    buf[len] = 0;
+    return len;
+}
+
+/* The same for an INTEGER-typed value. */
+int mb25_fmt_int(char *buf, int v) {
+    char t[8];
+    int len = 0, n = 0;
+    unsigned int u = (v < 0) ? (unsigned int)(-v) : (unsigned int)v;
+    if (v < 0) {
+        buf[len++] = '-';
+    }
+    do {
+        t[n++] = (char)('0' + u % 10);
+        u /= 10;
+    } while (u);
+    while (n) {
+        buf[len++] = t[--n];
+    }
+    buf[len] = 0;
+    return len;
+}
+
+/* PRINT item: a space before a number that is not negative, one after. */
+static void mb25_print_padded(char *buf, int len) {
+    char out[44];
+    int o = 0;
+    if (buf[0] != '-') {
+        out[o++] = ' ';
+    }
+    memcpy(out + o, buf, len);
+    o += len;
+    out[o++] = ' ';
+    mb25_emit((const uint8_t *)out, o);
+}
+
+void mb25_print_num(double v, int kind) {
+    char buf[40];
+    mb25_print_padded(buf, mb25_fmt_num(buf, v, kind));
+}
+
+void mb25_print_int(int v) {
+    char buf[40];
+    mb25_print_padded(buf, mb25_fmt_int(buf, v));
+}
+
+/* WRITE: the number without padding spaces. */
+void mb25_write_num(double v, int kind) {
+    char buf[40];
+    mb25_emit((const uint8_t *)buf, mb25_fmt_num(buf, v, kind));
+}
+
+void mb25_write_int(int v) {
+    char buf[40];
+    mb25_emit((const uint8_t *)buf, mb25_fmt_int(buf, v));
+}
+
+/* STR$: a leading space unless negative, no trailing space. */
+static mb25_error_t mb25_str_buf(uint16_t dest_id, char *buf) {
+    char out[44];
+    int o = 0;
+    if (buf[0] != '-') {
+        out[o++] = ' ';
+    }
+    strcpy(out + o, buf);
+    return mb25_string_alloc_init(dest_id, out);
+}
+
+mb25_error_t mb25_str_num(uint16_t dest_id, double v, int kind) {
+    char buf[40];
+    mb25_fmt_num(buf, v, kind);
+    return mb25_str_buf(dest_id, buf);
+}
+
+mb25_error_t mb25_str_int(uint16_t dest_id, int v) {
+    char buf[40];
+    mb25_fmt_int(buf, v);
+    return mb25_str_buf(dest_id, buf);
+}
+
+void mb25_print_string(uint16_t str_id) {
+    mb25_string_pt str;
+    if (!MB25_VALID_ID(str_id)) {
+        return;
+    }
+    str = &mb25_strings[str_id];
     if (str->data == NULL || str->len == 0) {
         return;  /* Empty string - print nothing */
     }
+    mb25_emit(str->data, str->len);
+}
 
-    /* Output each character using fputc */
-    uint8_t *data = str->data;
-    uint8_t len = str->len;
-    while (len--) {
-        fputc(*data++, fp);
+void mb25_fprint_string(FILE *fp, uint16_t str_id) {
+    FILE *saved = mb25_out_fp;
+    if (fp == NULL) {
+        return;
     }
+    mb25_out_fp = fp;
+    mb25_print_string(str_id);
+    mb25_out_fp = saved;
 }
 
 char *mb25_get_c_string_temp(uint16_t src_id, uint16_t temp_id) {

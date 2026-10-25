@@ -406,6 +406,27 @@ def _run_tool(cmd, what, c_file, debug, install_hint=None):
     return result
 
 
+def uc80_stdio_flags(c_file):
+    """The --printf and --scanf converters the generated C actually uses.
+
+    Each converter family costs code: the float printf alone is about 2 KB of
+    the .com.  PRINT goes through the mb25 runtime's own number formatter, so a
+    typical program needs none of them.  The flags accumulate (they do not
+    replace), and a conversion that is left out prints nothing without any
+    diagnostic, so the test is on the whole text of the C file.
+    """
+    import re
+    with open(c_file) as f:
+        text = f.read()
+    flags = []
+    for name in ('printf', 'scanf'):
+        for kind, letters in (('int', 'diuxXoc'), ('float', 'fFeEgG')):
+            pattern = r'%[-+ 0#*]*[0-9*]*(?:\.[0-9*]+)?l?[' + letters + ']'
+            if name in text and re.search(pattern, text):
+                flags += [f'--{name}', kind]
+    return flags
+
+
 def build_with_uc80(c_file, com_file, runtime_dir, runtime_c, string_count, debug):
     """Build a CP/M .com with the preferred toolchain: uc80 -> um80 -> ul80.
 
@@ -442,9 +463,7 @@ def build_with_uc80(c_file, com_file, runtime_dir, runtime_c, string_count, debu
     uc80_cmd = ['uc80', f'-I{runtime_dir}']
     if string_count > 0:
         uc80_cmd.append(f'-DMB25_NUM_STRINGS={string_count}')
-    uc80_cmd += [c_file, runtime_c,
-                 '--printf', 'int', '--printf', 'float',
-                 '--scanf', 'int', '--scanf', 'float',
+    uc80_cmd += [c_file, runtime_c] + uc80_stdio_flags(c_file) + [
                  '--no-embed-runtime', '-o', mac_file]
     _run_tool(uc80_cmd, 'uc80 compilation', c_file, debug,
               'Install it with: pip install uc80 um80')
@@ -573,9 +592,24 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False,
             'source_file': os.path.basename(input_file),
             'cpu_target': cpu,
             'dialect': toolchain,
+            'array_base': analyzer.array_base,
         }
         backend = Z88dkCBackend(analyzer.symbols, config)
         c_code = backend.generate(ast)
+
+        # The backend refuses to guess: anything it cannot compile the way the
+        # interpreter runs it is an error, and no C file is written.  Its
+        # warnings are only advice, but they are shown too.
+        for warn in backend.warnings:
+            print(f"Warning: {warn}", file=sys.stderr)
+        if backend.errors:
+            print("Cannot compile to C:", file=sys.stderr)
+            for err in backend.errors:
+                print(f"  {err}", file=sys.stderr)
+            print("The C backend does not support the constructs above; nothing "
+                  "was written. Run the program with the interpreter instead, or "
+                  "use --compile-js.", file=sys.stderr)
+            sys.exit(1)
 
         # --compile-c takes a base name, but users reasonably pass "out.c" and
         # got "out.c.c". Treat a trailing .c as the base name they meant.

@@ -77,6 +77,7 @@ The compiler's symbol table uses the full name with suffix as the key:
 | `FOO%` | `FOO%` | `foo_int` | `foo_int` |
 | `FOO#` | `FOO#` | `foo_dbl` | `foo_dbl` |
 | `FOO$` | `FOO$` | (string pool) | `foo_str` |
+| `FOO(1)` (array) | `FOO!` | `foo_arr` (a string array: `STR_FOO__`) | (not covered here) |
 
 ## Type Coercion at Assignment
 
@@ -91,7 +92,7 @@ I% = 32768  ' Clamps to 32767 (max INTEGER)
 I% = -32769 ' Clamps to -32768 (min INTEGER)
 ```
 
-- **C backend**: Relies on C's implicit `int` conversion
+- **C backend**: `mb25_cint()` rounds to the nearest integer, halves away from zero, as the interpreter does (`3.7` gives 4). A value outside 16 bits wraps and does not clamp.
 - **JS backend**: Uses `_toInt()` function (truncate toward zero, clamp to -32768..32767)
 
 ### SINGLE Variables (`!`)
@@ -109,7 +110,7 @@ X! = 1/3    ' Single precision: 0.3333333
 D# = 1/3    ' Double precision: 0.333333333333333
 ```
 
-- **C backend**: Uses C `double` type (64-bit)
+- **C backend**: Uses C `double` type. With uc80 this is 32 bits, the same as `float`, so a double keeps about 7 digits ([C_BACKEND.md](C_BACKEND.md))
 - **JS backend**: Native JS Number (already 64-bit double)
 
 ## Semantic Equivalence

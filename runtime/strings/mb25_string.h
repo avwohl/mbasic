@@ -187,6 +187,55 @@ void mb25_print_string(uint16_t str_id);
 /* Print string to file using fputc (no malloc, efficient) */
 void mb25_fprint_string(FILE *fp, uint16_t str_id);
 
+/* String functions: build the result in descriptor id and return id */
+uint16_t mb25_chr(uint16_t id, int code);
+uint16_t mb25_string_of(uint16_t id, int n, int ch);          /* SPACE$, STRING$ */
+uint16_t mb25_string_of_first(uint16_t id, int n, uint16_t src);
+uint16_t mb25_radix(uint16_t id, int v, int base);            /* HEX$, OCT$ */
+int mb25_asc(uint16_t id);
+double mb25_val(uint16_t id);
+double mb25_atof(const char *s);      /* library atof fails on uc80 */
+int mb25_instr(int start, uint16_t a, uint16_t b);
+
+/* CINT rounding, the subscript check and SWAP for the compiled program */
+int mb25_cint(double v);
+double mb25_sqr(double v);               /* SQR */
+double mb25_pow(double x, double y);   /* x ^ y */
+int mb25_subscript(int i, int n);
+int mb25_eof(FILE *fp);                /* EOF(n) */
+int mb25_input_eof(void);              /* end of keyboard input: ends the program */
+void mb25_chomp(char *s);              /* strip the line end after fgets */
+void mb25_string_swap(uint16_t a, uint16_t b);
+
+/* ===== PRINT output =====
+ *
+ * Every PRINT item goes through these, so the runtime knows the cursor column
+ * (for comma zones, TAB and the 80-column wrap) and formats numbers the way
+ * MBASIC does (src/number_format.py).  mb25_set_out(fp) sends the output to a
+ * PRINT# file; mb25_set_out(NULL) goes back to the console.  kind is 0 for a
+ * single-precision value and 1 for a double. */
+void mb25_set_out(FILE *fp);
+void mb25_set_col(int col);          /* the console column, e.g. 0 after INPUT */
+void mb25_putc(int c);
+void mb25_print_cstr(const char *s);
+void mb25_print_nl(void);
+void mb25_print_zone(void);          /* PRINT ',' */
+void mb25_print_tab(int n);
+void mb25_print_spc(int n);
+void mb25_print_int(int v);          /* " 7 " */
+void mb25_print_num(double v, int kind);
+void mb25_write_int(int v);          /* WRITE: no padding spaces */
+void mb25_write_num(double v, int kind);
+
+/* Number to text, as PRINT shows it but without the padding spaces.  buf
+ * needs 40 bytes; the return value is the length. */
+int mb25_fmt_num(char *buf, double v, int kind);
+int mb25_fmt_int(char *buf, int v);
+
+/* STR$: the number as a string, with a leading space unless negative. */
+mb25_error_t mb25_str_num(uint16_t dest_id, double v, int kind);
+mb25_error_t mb25_str_int(uint16_t dest_id, int v);
+
 /* Get C string (null-terminated) using temp pool - NO MALLOC! */
 char *mb25_get_c_string_temp(uint16_t src_id, uint16_t temp_id);
 

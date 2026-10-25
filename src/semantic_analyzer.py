@@ -1279,11 +1279,11 @@ class SemanticAnalyzer:
                 f"Line {self.current_line}: COMMON is only meaningful with CHAIN (not supported in compiled code)"
             )
 
-        # ERASE - not supported in compiler (matches Microsoft BASIC Compiler)
+        # ERASE - compiled arrays have a fixed size, so ERASE cannot free them
         elif isinstance(stmt, EraseStatementNode):
             # Issue warning but allow compilation
             self.warnings.append(
-                f"Line {self.current_line}: ERASE not supported in compiled code - arrays cannot be deallocated (matches Microsoft BASIC Compiler)"
+                f"Line {self.current_line}: ERASE in compiled code does not free the array: the C backend only empties it, and a later DIM cannot resize it"
             )
 
         # INPUT - variables are no longer constants after being read
