@@ -208,55 +208,32 @@ class ProgramManager:
         """
         return sorted(self.lines.keys())
 
-    def renumber(self, new_start: int, old_start: int, increment: int) -> None:
+    def renumber(self, new_start: int, old_start: int, increment: int) -> List[str]:
         """Renumber lines (RENUM command).
+
+        Edits the text of each line, so only the line numbers and the digits
+        of line number references change, as in MBASIC 5.21 (see
+        src/renum.py).  The changed lines are parsed again.
 
         Args:
             new_start: New starting line number
             old_start: Old starting line number (lines before this are unchanged)
             increment: Increment between new line numbers
+
+        Returns:
+            Messages "Undefined line n in m" for references to missing lines
+            (those references are left as they are)
+
+        Raises:
+            RenumError: "Illegal function call" if the new numbers would
+                overlap a line that stays or go above 65529
         """
-        # Get all line numbers sorted
-        line_numbers = sorted(self.lines.keys())
+        from src.ui.ui_helpers import renum_program
 
-        # Split into unchanged and to-renumber
-        unchanged = [ln for ln in line_numbers if ln < old_start]
-        to_renumber = [ln for ln in line_numbers if ln >= old_start]
-
-        # Create renumbering map
-        renum_map = {}
-        new_ln = new_start
-        for old_ln in to_renumber:
-            renum_map[old_ln] = new_ln
-            new_ln += increment
-
-        # Create new dictionaries
-        new_lines = {}
-        new_line_asts = {}
-
-        # Copy unchanged lines
-        for ln in unchanged:
-            new_lines[ln] = self.lines[ln]
-            if ln in self.line_asts:
-                new_line_asts[ln] = self.line_asts[ln]
-
-        # Renumber lines
-        for old_ln, new_ln in renum_map.items():
-            # Update line text (replace line number at start)
-            old_text = self.lines[old_ln]
-            # Replace line number at beginning
-            new_text = re.sub(r'^\d+', str(new_ln), old_text)
-            new_lines[new_ln] = new_text
-
-            # Update AST line number
-            if old_ln in self.line_asts:
-                line_ast = self.line_asts[old_ln]
-                line_ast.line_number = new_ln
-                new_line_asts[new_ln] = line_ast
-
-        # Replace dictionaries
-        self.lines = new_lines
-        self.line_asts = new_line_asts
+        messages: List[str] = []
+        renum_program(self, f"{new_start},{old_start},{increment}",
+                      messages=messages)
+        return messages
 
     def save_to_file(self, filename: str) -> None:
         """Save program to file.

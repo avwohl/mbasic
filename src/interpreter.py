@@ -2762,8 +2762,8 @@ class Interpreter:
         The interactive mode implementation handles:
         1. Renumbering lines in line_asts
         2. Updating statement_table PC keys
-        3. Updating GOTO/GOSUB/ON GOTO target line numbers in AST nodes
-        4. Updating RESTORE line number references
+        3. Updating the line number references in the text of each line
+           (see src/renum.py) and parsing the changed lines again
 
         In non-interactive contexts, RENUM is not available.
         """
@@ -2783,14 +2783,13 @@ class Interpreter:
                 increment = int(self.evaluate_expression(stmt.increment))
 
             # Format: RENUM [new_start][,[old_start][,increment]]
-            if new_start is not None:
-                args = str(new_start)
-                if old_start is not None:
-                    args += f",{old_start}"
-                    if increment is not None:
-                        args += f",{increment}"
-                elif increment is not None:
-                    args += f",,{increment}"
+            # Leave out trailing parts; keep the commas of a part that is
+            # left out in the middle (RENUM ,50,20 and RENUM 100,,20).
+            parts = ['' if v is None else str(v)
+                     for v in (new_start, old_start, increment)]
+            while parts and parts[-1] == '':
+                parts.pop()
+            args = ','.join(parts)
 
             self.interactive_mode.cmd_renum(args)
             return

@@ -1056,21 +1056,12 @@ class InteractiveMode:
     def cmd_renum(self, args):
         """RENUM [new_start][,[old_start][,increment]] - Renumber program lines and update references
 
-        Delegates to renum_program() from ui_helpers.
-        The renum_program() implementation uses an AST-based approach (see ui_helpers.py):
-        1. Parse program to AST
-        2. Build line number mapping (old -> new)
-        3. Walk AST and update all line number references (via _renum_statement callback)
-        4. Serialize AST back to source
-
-        ERL handling: ERL expressions with ANY binary operators (ERL+100, ERL*2, ERL=100)
-        have all right-hand numbers renumbered, even for arithmetic operations.
-        This is intentionally broader than the MBASIC manual (which only specifies comparison
-        operators like ERL=100) to avoid missing valid line references. Rationale: We cannot
-        distinguish ERL=100 (comparison, renumber) from ERL+100 (arithmetic, don't renumber)
-        without semantic analysis, so we conservatively renumber both. Known limitation: arithmetic
-        like "IF ERL+100 THEN..." will incorrectly renumber 100 if it's an old line number.
-        This is rare in practice. See _renum_erl_comparison() for implementation details.
+        Delegates to renum_program() from ui_helpers, which edits the text of
+        each line (see src/renum.py): only the line number and the digits of
+        line number references change, as in MBASIC 5.21.  The changed lines
+        are parsed again.  A reference to a line that does not exist is left
+        as it is and "Undefined line n in m" is printed.  Like MBASIC, a
+        successful RENUM prints nothing.
 
         Args format: "new_start,old_start,increment"
         Examples:
@@ -1078,134 +1069,28 @@ class InteractiveMode:
             RENUM 100       -> 100,0,10 (renumber all from line 100)
             RENUM 100,50    -> 100,50,10 (renumber from line 50 onwards)
             RENUM 100,50,20 -> 100,50,20 (full control)
+            RENUM ,50,20    -> 10,50,20
+        "Illegal function call" is printed when the new numbers would overlap
+        a line that stays or go above 65529, "Syntax error" for a bad argument.
         """
         from src.ui.ui_helpers import renum_program
 
+        messages = []
         try:
-            # Use consolidated RENUM implementation
-            old_lines, line_map = renum_program(
-                self.program,
-                args,
-                self._renum_statement,
-                self.program_runtime
-            )
-            # Clear execution state since renumbering invalidates GOSUB/FOR stacks
-            # (line numbers in stacks are now incorrect)
-            self.clear_execution_state()
-            print("Renumbered")
-
+            renum_program(self.program, args, runtime=self.program_runtime,
+                          messages=messages)
         except ValueError as e:
             print(message_for(e))
+            return
         except Exception as e:
             print(message_for(e))
-
-
-    def _renum_statement(self, stmt, line_map):
-        """Recursively update line number references in a statement
-
-        Args:
-            stmt: Statement node to update
-            line_map: dict mapping old line numbers to new line numbers
-        """
-        import src.ast_nodes as ast_nodes
-
-        stmt_type = type(stmt).__name__
-
-        # GOTO statement
-        if stmt_type == 'GotoStatementNode':
-            if stmt.line_number in line_map:
-                stmt.line_number = line_map[stmt.line_number]
-
-        # GOSUB statement
-        elif stmt_type == 'GosubStatementNode':
-            if stmt.line_number in line_map:
-                stmt.line_number = line_map[stmt.line_number]
-
-        # ON...GOTO/GOSUB statement
-        elif stmt_type == 'OnGotoStatementNode' or stmt_type == 'OnGosubStatementNode':
-            stmt.target_lines = [
-                line_map.get(line, line) for line in stmt.target_lines
-            ]
-
-        # IF statement with line number jumps
-        elif stmt_type == 'IfStatementNode':
-            if stmt.then_line_number is not None and stmt.then_line_number in line_map:
-                stmt.then_line_number = line_map[stmt.then_line_number]
-            if stmt.else_line_number is not None and stmt.else_line_number in line_map:
-                stmt.else_line_number = line_map[stmt.else_line_number]
-
-            # Check for "IF ERL = line_number" pattern
-            # According to manual: if ERL is on left side of =, right side is a line number
-            if stmt.condition:
-                self._renum_erl_comparison(stmt.condition, line_map)
-
-            # Also update statements within THEN/ELSE blocks
-            if stmt.then_statements:
-                for then_stmt in stmt.then_statements:
-                    self._renum_statement(then_stmt, line_map)
-            if stmt.else_statements:
-                for else_stmt in stmt.else_statements:
-                    self._renum_statement(else_stmt, line_map)
-
-        # RESTORE statement
-        elif stmt_type == 'RestoreStatementNode':
-            if stmt.line_number_expr and hasattr(stmt.line_number_expr, 'value'):
-                # It's a literal number
-                if stmt.line_number_expr.value in line_map:
-                    stmt.line_number_expr.value = line_map[stmt.line_number_expr.value]
-
-        # RUN statement
-        elif stmt_type == 'RunStatementNode':
-            if hasattr(stmt, 'line_number') and stmt.line_number in line_map:
-                stmt.line_number = line_map[stmt.line_number]
-
-        # ON ERROR GOTO statement
-        elif stmt_type == 'OnErrorStatementNode':
-            if stmt.line_number is not None and stmt.line_number in line_map:
-                stmt.line_number = line_map[stmt.line_number]
-
-    def _renum_erl_comparison(self, expr, line_map):
-        """Handle binary operations with ERL on left side
-
-        MBASIC 5.21 Manual Specification:
-        When ERL appears on the left side of a comparison operator (=, <>, <, >, <=, >=),
-        the right-hand number is treated as a line number reference and should be renumbered.
-        Note: Only ERL on LEFT side is checked (ERL = 100, not 100 = ERL).
-
-        INTENTIONAL DEVIATION FROM MANUAL:
-        This implementation renumbers for ANY binary operator with ERL on left, including
-        arithmetic operators (ERL + 100, ERL * 2, etc.), not just comparison operators.
-        This is a deliberate design choice to avoid missing valid line number references.
-
-        Rationale: We cannot reliably distinguish comparison operators (ERL=100) from
-        arithmetic operators (ERL+100) without complex semantic analysis. To ensure we never
-        miss renumbering a valid line reference in a comparison, we conservatively renumber
-        ALL binary operations with ERL on the left side.
-
-        Known limitation: Arithmetic like "IF ERL+100 THEN..." will incorrectly renumber
-        the 100 if it happens to be an old line number. This is rare in practice.
-
-        Implementation: Checks if expression is BinaryOpNode with ERL (VariableNode) on left
-        and NumberNode on right. Operator type is intentionally NOT checked - all operators
-        are treated the same to implement the conservative renumbering strategy described above.
-
-        Args:
-            expr: Expression node to check
-            line_map: dict mapping old line numbers to new line numbers
-        """
-        # Check if this is a binary operation
-        if type(expr).__name__ != 'BinaryOpNode':
             return
-
-        # Check if left side is ERL (a VariableNode with name 'ERL')
-        left = expr.left
-        if type(left).__name__ == 'VariableNode' and left.name == 'ERL':
-            # Right side should be renumbered if it's a literal number
-            right = expr.right
-            if type(right).__name__ == 'NumberNode':
-                # Check if this number is a line number in our program
-                if right.value in line_map:
-                    right.value = line_map[right.value]
+        finally:
+            for message in messages:
+                print(message)
+        # Clear execution state since renumbering invalidates GOSUB/FOR stacks
+        # (line numbers in stacks are now incorrect)
+        self.clear_execution_state()
 
     def _serialize_line(self, line_node):
         """Serialize a LineNode back to source text, preserving indentation

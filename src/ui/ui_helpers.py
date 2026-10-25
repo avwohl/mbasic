@@ -17,6 +17,10 @@ Functions for:
 from typing import Dict, List, Tuple, Optional, Set
 import re
 
+from src.renum import (
+    RenumError, build_line_map, parse_renum_arguments, renumber_lines,
+)
+
 
 # Line Number Constants
 MIN_LINE_NUMBER = 0
@@ -162,79 +166,14 @@ def build_line_mapping(
     Returns:
         Dictionary mapping old_line_num -> new_line_num
 
+    Raises:
+        RenumError: "Illegal function call" as in MBASIC (see src/renum.py)
+
     Examples:
         >>> build_line_mapping([10, 20, 30, 40], 100, 20, 10)
         {10: 10, 20: 100, 30: 110, 40: 120}
     """
-    mapping = {}
-
-    # Lines before old_start stay the same
-    for line_num in old_lines:
-        if line_num < old_start:
-            mapping[line_num] = line_num
-
-    # Lines from old_start onward get renumbered
-    new_num = new_start
-    for line_num in old_lines:
-        if line_num >= old_start:
-            mapping[line_num] = new_num
-            new_num += increment
-
-    return mapping
-
-
-def update_line_references(code: str, line_mapping: Dict[int, int]) -> str:
-    """Update GOTO/GOSUB/THEN/ELSE line number references in code.
-
-    Uses regex-based approach (fast, good for most cases).
-
-    Args:
-        code: BASIC code line (without line number prefix)
-        line_mapping: Dictionary of old_line -> new_line
-
-    Returns:
-        Code with updated line number references
-
-    Examples:
-        >>> mapping = {10: 100, 20: 200}
-        >>> update_line_references("GOTO 10", mapping)
-        'GOTO 100'
-        >>> update_line_references("ON X GOTO 10,20", mapping)
-        'ON X GOTO 100,200'
-    """
-    # Two-pattern approach (applied sequentially in a single pass):
-    # Pattern 1: Match keyword + first line number (GOTO/GOSUB/THEN/ELSE/ON...GOTO/ON...GOSUB)
-    # Pattern 2: Match comma-separated line numbers (for ON...GOTO/GOSUB lists)
-
-    def replace_line_ref(match):
-        keyword = match.group(1)
-        old_target = int(match.group(2))
-        new_target = line_mapping.get(old_target, old_target)
-        return f'{keyword} {new_target}'
-
-    # Match: keyword + space + line number
-    # Keywords: GOTO, GOSUB, THEN, ELSE, or "ON <expr> GOTO/GOSUB"
-    # Note: Pattern uses .+? (non-greedy) to match expression in ON statements,
-    # which correctly handles edge cases like "ON FLAG GOTO" (variable starting with 'G'),
-    # "ON X+Y GOTO" (expressions), and "ON A$ GOTO" (string variables)
-    pattern = re.compile(
-        r'\b(GOTO|GOSUB|THEN|ELSE|ON\s+.+?\s+GOTO|ON\s+.+?\s+GOSUB)\s+(\d+)',
-        re.IGNORECASE
-    )
-
-    code = pattern.sub(replace_line_ref, code)
-
-    # Handle comma-separated line lists (ON...GOTO/GOSUB)
-    # Match: comma + optional spaces + line number
-    def replace_comma_line(match):
-        old_target = int(match.group(1))
-        new_target = line_mapping.get(old_target, old_target)
-        return f',{new_target}'
-
-    comma_pattern = re.compile(r',\s*(\d+)')
-    code = comma_pattern.sub(replace_comma_line, code)
-
-    return code
+    return build_line_map(old_lines, new_start, old_start, increment)
 
 
 def renumber_program_lines(
@@ -243,56 +182,32 @@ def renumber_program_lines(
     old_start: int = 0,
     increment: int = DEFAULT_INCREMENT
 ) -> Tuple[Dict[int, str], Dict[int, int]]:
-    """Renumber program lines and update all line number references.
+    """Renumber program text and update the line number references.
+
+    Only the digits of line numbers change.  All other text stays as it was.
+    See src/renum.py for the rules (they follow MBASIC 5.21).
 
     Args:
-        lines: Dictionary of line_number -> line_text
+        lines: Dictionary of line_number -> line_text (line number included)
         new_start: New starting line number (default 10)
         old_start: First line to renumber (lines before unchanged, default 0)
         increment: Increment between lines (default 10)
 
     Returns:
         Tuple of (new_lines_dict, line_mapping)
-        - new_lines_dict: Renumbered lines with updated references
-        - line_mapping: Old line -> new line mapping
+
+    Raises:
+        RenumError: "Illegal function call" when the new numbers overlap
+            lines that stay or go above 65529.
 
     Example:
         >>> lines = {10: "10 PRINT 'START'", 20: "20 GOTO 10"}
         >>> new_lines, mapping = renumber_program_lines(lines, 100, 0, 10)
-        >>> new_lines[100]
-        "100 PRINT 'START'"
         >>> new_lines[110]
-        "110 GOTO 100"
+        '110 GOTO 100'
     """
-    if not lines:
-        return {}, {}
-
-    # Build line number mapping
-    old_lines = sorted(lines.keys())
-    line_mapping = build_line_mapping(old_lines, new_start, old_start, increment)
-
-    # Renumber lines and update references
-    new_lines = {}
-
-    for old_num in old_lines:
-        new_num = line_mapping[old_num]
-        old_line_text = lines[old_num]
-
-        # Extract code after line number
-        match = re.match(r'^\s*\d+\s+(.*)$', old_line_text)
-        if match:
-            code = match.group(1)
-        else:
-            # Line has no code (just number?)
-            code = ""
-
-        # Update line number references in code
-        updated_code = update_line_references(code, line_mapping)
-
-        # Build new line with new number
-        new_line_text = f'{new_num} {updated_code}' if updated_code else str(new_num)
-        new_lines[new_num] = new_line_text
-
+    new_lines, line_mapping, _messages = renumber_lines(
+        lines, new_start, old_start, increment)
     return new_lines, line_mapping
 
 
@@ -370,14 +285,18 @@ def suggest_renumber_params(
 
 
 def parse_renum_args(args: str) -> Tuple[int, int, int]:
-    """Parse RENUM command arguments.
+    """Parse RENUM command arguments like MBASIC 5.21.
 
     Args:
         args: Argument string, format: "new_start,old_start,increment"
-              Can omit parameters (e.g., "100" or "100,,20")
+              Parts can be left out (e.g. "100", "100,,20" or ",50,5")
 
     Returns:
         Tuple of (new_start, old_start, increment)
+
+    Raises:
+        RenumError: "Syntax error" for text that is not a line number or has
+            extra parts, "Illegal function call" for an increment of 0
 
     Examples:
         >>> parse_renum_args("")
@@ -389,28 +308,7 @@ def parse_renum_args(args: str) -> Tuple[int, int, int]:
         >>> parse_renum_args("100,,20")
         (100, 0, 20)
     """
-    new_start = DEFAULT_START
-    old_start = 0
-    increment = DEFAULT_INCREMENT
-
-    if not args or not args.strip():
-        return new_start, old_start, increment
-
-    parts = args.split(',')
-
-    # Parse new_start
-    if len(parts) >= 1 and parts[0].strip():
-        new_start = int(parts[0].strip())
-
-    # Parse old_start
-    if len(parts) >= 2 and parts[1].strip():
-        old_start = int(parts[1].strip())
-
-    # Parse increment
-    if len(parts) >= 3 and parts[2].strip():
-        increment = int(parts[2].strip())
-
-    return new_start, old_start, increment
+    return parse_renum_arguments(args)
 
 
 def parse_delete_args(args: str, all_line_numbers: List[int]) -> Tuple[int, int]:
@@ -602,22 +500,25 @@ def list_files(filespec: str = ""):
     return result
 
 
-def renum_program(program_manager, args: str, renum_callback, runtime=None):
-    """Renumber program lines and update GOTO/GOSUB references.
+def renum_program(program_manager, args: str, renum_callback=None,
+                  runtime=None, messages=None):
+    """Renumber program lines and update the line number references.
 
-    This is the consolidated RENUM command implementation for all UIs.
+    This is the one RENUM implementation for all UIs.  It edits the text of
+    each line: only the line number and the digits of line number references
+    (GOTO, GOSUB, THEN, ELSE, ON ... GOTO/GOSUB, RESTORE, RESUME, RUN, ERL
+    comparisons, LIST/DELETE/EDIT/AUTO ranges) change, as in MBASIC 5.21.
+    Each changed line is parsed again to make its new AST.
 
     Args:
         program_manager: ProgramManager instance with .lines and .line_asts
         args: RENUM command arguments (e.g., "100", "100,0,10", "100,50")
-        renum_callback: Function(stmt: StatementNode, line_map: Dict[int, int]) -> None
-                        that updates statement line number references by directly modifying
-                        the statement node's attributes (e.g., stmt.line_number for GOTO).
-                        Called for ALL statements; callback is responsible for identifying and
-                        updating statements with line number references (GOTO, GOSUB, ON GOTO,
-                        ON GOSUB, IF THEN/ELSE line numbers). See update_statement_references()
-                        in curses_ui.py for an example implementation.
+        renum_callback: Not used.  Older callers passed a function that
+                        changed AST nodes; the text is edited now.
         runtime: Optional runtime object to update with new line numbers
+        messages: Optional list.  "Undefined line n in m" is appended for each
+                  reference to a line that does not exist (the reference is
+                  left as it is, like MBASIC does)
 
     Returns:
         Tuple of (old_lines, line_mapping) where:
@@ -625,57 +526,48 @@ def renum_program(program_manager, args: str, renum_callback, runtime=None):
             line_mapping: Dict mapping old line numbers to new line numbers
 
     Raises:
-        ValueError: If arguments are invalid or program is empty
+        RenumError (a ValueError): "Syntax error" or "Illegal function call".
+            The program is not changed.
 
     Examples:
-        >>> def update_refs(stmt, line_map):
-        ...     # Update statement line number references
-        ...     pass
-        >>> old, mapping = renum_program(pm, "100, 0, 10", update_refs)
+        >>> old, mapping = renum_program(pm, "100, 0, 10")
     """
-    if not hasattr(program_manager, 'line_asts') or not program_manager.line_asts:
-        raise ValueError("No program to renumber")
+    if not program_manager.lines:
+        # MBASIC accepts RENUM with no program and does nothing
+        return [], {}
 
-    # Parse arguments using existing helper
     new_start, old_start, increment = parse_renum_args(args)
+    old_lines = sorted(program_manager.lines.keys())
+    new_lines, line_map, found = renumber_lines(
+        program_manager.lines, new_start, old_start, increment)
+    if messages is not None:
+        messages.extend(found)
 
-    # Build line mapping using existing helper
-    old_lines = sorted(program_manager.line_asts.keys())
-    line_map = build_line_mapping(old_lines, new_start, old_start, increment)
-
-    # Walk each line AST and update line number references
-    for line_node in program_manager.line_asts.values():
-        # Update line number references in statements using callback
-        for stmt in line_node.statements:
-            renum_callback(stmt, line_map)
-        # Update the line's own number
-        line_node.line_number = line_map[line_node.line_number]
-
-    # Rebuild line_asts dict with new line numbers
+    # Build the new tables first, then assign: nothing changes on a failure.
+    old_asts = program_manager.line_asts
     new_line_asts = {}
-    new_lines = {}
     for old_num in old_lines:
         new_num = line_map[old_num]
-        line_node = program_manager.line_asts[old_num]
-        new_line_asts[new_num] = line_node
-        # Serialize using ui_helpers
-        new_lines[new_num] = serialize_line(line_node)
+        text = new_lines[new_num]
+        if text == program_manager.lines[old_num] and old_num in old_asts:
+            new_line_asts[new_num] = old_asts[old_num]
+            continue
+        line_node, _error = program_manager.parse_single_line(text, new_num)
+        if line_node is not None:
+            new_line_asts[new_num] = line_node
+        # A line that does not parse keeps its text and has no AST, as before.
 
-    # Update the program manager
     program_manager.line_asts = new_line_asts
     program_manager.lines = new_lines
 
     # Update runtime if provided
-    if runtime:
-        if hasattr(runtime, 'statement_table'):
-            # Rebuild statement table from new line_asts
-            runtime.statement_table.statements.clear()
-            runtime.statement_table._keys_cache = None
-            for line_node in new_line_asts.values():
-                for stmt_offset, stmt in enumerate(line_node.statements):
-                    from src.pc import PC
-                    pc = PC(line_node.line_number, stmt_offset)
-                    runtime.statement_table.add(pc, stmt)
+    if runtime and hasattr(runtime, 'statement_table'):
+        from src.pc import PC
+        runtime.statement_table.statements.clear()
+        runtime.statement_table._keys_cache = None
+        for line_node in new_line_asts.values():
+            for stmt_offset, stmt in enumerate(line_node.statements):
+                runtime.statement_table.add(PC(line_node.line_number, stmt_offset), stmt)
 
     return old_lines, line_map
 

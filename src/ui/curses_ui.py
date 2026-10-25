@@ -1497,39 +1497,6 @@ class CursesBackend(UIBackend):
 
         return not had_errors
 
-    def _renumber_lines(self):
-        """Renumber program lines with default increment (10, 10)."""
-        from src.ui.ui_helpers import renum_program
-
-        try:
-            # Save editor to program first
-            self._save_editor_to_program()
-
-            # Renumber with default args (start=10, step=10)
-            old_lines, line_map = renum_program(
-                self.program,
-                "",  # Empty args = use defaults
-                self._renum_statement,
-                runtime=None
-            )
-
-            # Refresh editor from renumbered program
-            self._refresh_editor()
-
-        except Exception as e:
-            # Silently handle errors - user already said yes to renumber
-            pass
-
-    def _renum_statement(self, stmt, line_map):
-        """Update line number references in a statement node.
-
-        Args:
-            stmt: Statement node to update
-            line_map: dict mapping old line numbers to new line numbers
-        """
-        from src.ui.ui_helpers import renum_statement_helper
-        renum_statement_helper(stmt, line_map)
-
     def _refresh_editor(self):
         """Refresh the editor display from program manager.
 
@@ -2648,49 +2615,53 @@ class CursesBackend(UIBackend):
         self._do_renumber(start, increment, valid_lines)
 
     def _do_renumber(self, start, increment, valid_lines):
-        """Actually perform the renumbering with the given parameters."""
+        """Actually perform the renumbering with the given parameters.
 
-        # Build new lines with renumbered line numbers
-        new_lines = []
-        new_line_num = start
-        old_to_new = {}  # Map old line numbers to new
+        The text of each line goes through renumber_lines() (src/renum.py),
+        the same code the RENUM command uses: only the line numbers and the
+        digits of line number references change.
+        """
+        from src.renum import renumber_lines, RenumError
 
-        for old_line_num, code, status in valid_lines:
-            old_to_new[old_line_num] = new_line_num
+        lines = {num: f"{num} {code}" for num, code, _status in valid_lines}
+        try:
+            new_lines, old_to_new, messages = renumber_lines(
+                lines, start, 0, increment)
+        except RenumError as e:
+            self.status_bar.set_text(str(e))
+            return
 
-            # Update editor.lines dict
-            self.editor.lines[new_line_num] = code
-            if old_line_num != new_line_num and old_line_num in self.editor.lines:
-                del self.editor.lines[old_line_num]
+        # Build the new tables first, then replace the old ones.
+        new_code = {}
+        for new_num, text in new_lines.items():
+            new_code[new_num] = text[len(str(new_num)) + 1:]
+        old_breakpoints = set(self.editor.breakpoints)
+        self.editor.breakpoints.clear()
+        for old_num in old_breakpoints:
+            self.editor.breakpoints.add(old_to_new.get(old_num, old_num))
+        for table in (self.editor.syntax_errors, self.editor.errors):
+            old_table = dict(table)
+            table.clear()
+            for old_num, error_msg in old_table.items():
+                table[old_to_new.get(old_num, old_num)] = error_msg
+        self.editor.lines.clear()
+        self.editor.lines.update(new_code)
 
-            # Update breakpoints
-            if old_line_num in self.editor.breakpoints:
-                self.editor.breakpoints.remove(old_line_num)
-                self.editor.breakpoints.add(new_line_num)
-
-            # Update syntax errors
-            if old_line_num in self.editor.syntax_errors:
-                error_msg = self.editor.syntax_errors[old_line_num]
-                del self.editor.syntax_errors[old_line_num]
-                self.editor.syntax_errors[new_line_num] = error_msg
-
-            # Recalculate status for new line number
-            has_syntax_error = new_line_num in self.editor.syntax_errors
-            new_status = self.editor._get_status_char(new_line_num, has_syntax_error)
-
-            # Format new line
-            formatted_line = f"{new_status}{new_line_num} {code}"
-            new_lines.append(formatted_line)
-
-            new_line_num += increment
+        new_text_lines = []
+        for new_num in sorted(new_code):
+            has_syntax_error = new_num in self.editor.syntax_errors
+            new_status = self.editor._get_status_char(new_num, has_syntax_error)
+            new_text_lines.append(f"{new_status}{new_num} {new_code[new_num]}")
 
         # Update display
-        new_text = '\n'.join(new_lines)
-        self.editor.edit_widget.set_edit_text(new_text)
+        self.editor.edit_widget.set_edit_text('\n'.join(new_text_lines))
         self.editor.edit_widget.set_edit_pos(0)
 
         # Update status bar
-        self.status_bar.set_text(f"Renumbered {len(valid_lines)} lines from {start} by {increment}")
+        status = f"Renumbered {len(valid_lines)} lines from {start} by {increment}"
+        if messages:
+            status += f" ({messages[0]}" + (f", and {len(messages) - 1} more)" if len(messages) > 1 else ")")
+        self.status_bar.set_text(status)
 
         # Force screen redraw
         if self.loop and self.loop_running:
@@ -4671,30 +4642,21 @@ class CursesBackend(UIBackend):
         """Execute RENUM command using ui_helpers.
 
         Note: Updates self.program immediately (source of truth), then syncs to runtime.
+        Only the line numbers and the digits of line number references change
+        (see src/renum.py).  Like MBASIC, success prints nothing; a reference
+        to a missing line is reported as "Undefined line n in m".
         """
         from src.ui.ui_helpers import renum_program
 
-        # Need access to InteractiveMode's _renum_statement
-        # Curses UI has self.interpreter which should have interactive_mode
-        if not hasattr(self, 'interpreter') or not hasattr(self.interpreter, 'interactive_mode'):
-            self._append_to_output(format_error_message(ILLEGAL_FUNCTION_CALL))
-            return
-
+        messages = []
         try:
-            old_lines, line_map = renum_program(
-                self.program,
-                args,
-                self.interpreter.interactive_mode._renum_statement,
-                runtime=None
-            )
+            renum_program(self.program, args, runtime=None, messages=messages)
             self._sync_program_to_runtime()  # Sync runtime after program changes
             self._refresh_editor()
-            self._append_to_output("Renumbered")
-
-        except ValueError as e:
-            self._append_to_output(message_for(e))
         except Exception as e:
             self._append_to_output(message_for(e))
+        for message in messages:
+            self._append_to_output(message)
 
     def cmd_merge(self, filename, quiet=False):
         """Execute MERGE command using ProgramManager.

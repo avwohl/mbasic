@@ -1,8 +1,41 @@
 # RENUM could not rewrite most programs, and corrupted the arithmetic in the rest
 
 **Created:** 2026-08-05
-**Status:** Fixed - `src/ui/ui_helpers.py`
+**Status:** Fixed - `src/ui/ui_helpers.py`. Superseded by the text-based RENUM
+(see "Superseded" below).
 **Regression test:** `tests/regression/serializer/test_position_serializer.py`
+
+## Superseded: RENUM no longer uses the serializer
+
+Issue 12 showed that the serializer fix did not make RENUM correct. RENUM
+still rewrote every line from the AST, so it lost text that the AST does not
+keep: `PRINT #n`, the `;` and `,` at the start and end of a PRINT, the `$` of
+INPUT and LINE INPUT variables, `MID$`, the case of names, the form of DATA
+items and of number literals. It also failed on `ON ... GOTO/GOSUB` (the
+callback read `target_lines`, the AST field is `line_numbers`) and it did not
+renumber `RESUME n`.
+
+MBASIC 5.21 does not generate text. It changes only the line number constants
+in the tokenised line. RENUM works the same way now:
+
+- `src/renum.py` finds the digits that MBASIC would tokenise as line numbers
+  (it follows the CRUNCH routine in `docs/history/original_mbasic_src/bintrp.mac`)
+  and replaces only those digits. All other bytes of the line stay.
+- `ui_helpers.renum_program()` calls it, then parses each changed line again
+  to make the new AST. It builds the new tables first, so nothing changes if
+  RENUM fails.
+- The CLI, Tk, curses (the `^E` dialog and `cmd_renum`), the web dialog and
+  `ProgramManager.renumber()` all use this one function.
+- `serialize_line()` and `serialize_statement()` stay for the position
+  serializer and the tests that use them. No RENUM code calls them.
+  `position_serializer.renumber_with_spacing_preservation()` has no caller
+  except `tests/regression/commands/test_renum_spacing.py`.
+
+The regression test is `tests/regression/commands/test_renum_text.py`. It
+compares LIST after RENUM with listings recorded from the real MBASIC 5.21.
+
+The text below is the history of the serializer fix. It still applies to the
+serializer, but the serializer is not part of RENUM any more.
 
 Found while clearing the seven long-standing failures in
 `tests/run_regression.py`. The serializer test was reporting

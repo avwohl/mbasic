@@ -1121,35 +1121,36 @@ class RenumberDialog(ui.dialog):
                     start = int(start_input.value)
                     increment = int(increment_input.value)
 
-                    # Get existing lines
-                    lines = self.backend.program.get_lines()
-                    if not lines:
+                    # Make the program match the editor, then use the one
+                    # RENUM implementation (src/renum.py): it changes the line
+                    # numbers and the line number references, nothing else.
+                    if not self.backend._save_editor_to_program():
+                        # A line that does not parse is not in the program;
+                        # renumbering from the program would delete it.
+                        self.backend._notify('Fix the syntax errors before renumbering', type='warning')
+                        self.close()
+                        return
+                    if not self.backend.program.lines:
                         self.backend._notify('No program to renumber', type='warning')
                         self.close()
                         return
 
-                    # Renumber lines
-                    renumbered = []
-                    new_line_num = start
-                    for old_line_num, old_line_text in lines:
-                        # Extract the statement part (after line number)
-                        match = re.match(r'^\d+\s*(.*)', old_line_text)
-                        if match:
-                            statement = match.group(1)
-                            renumbered.append(f'{new_line_num} {statement}')
-                            new_line_num += increment
+                    from src.ui.ui_helpers import renum_program
+                    messages = []
+                    renum_program(self.backend.program, f'{start},0,{increment}',
+                                  messages=messages)
 
-                    # Update editor
-                    self.backend.editor.value = '\n'.join(renumbered)
-
-                    # Reload into program
-                    self.backend._save_editor_to_program()
+                    # Show the renumbered program in the editor
+                    lines = self.backend.program.get_lines()
+                    self.backend.editor.value = '\n'.join(text for _num, text in lines)
 
                     self.close()
-                    self.backend._notify(f'Renumbered {len(renumbered)} lines', type='positive')
+                    self.backend._notify(f'Renumbered {len(lines)} lines', type='positive')
+                    for message in messages:
+                        self.backend._notify(message, type='warning')
                     self.backend._set_status('Program renumbered')
                 except Exception as ex:
-                    self.backend._notify(f'Error: {ex}', type='negative')
+                    self.backend._notify(f'Error: {message_for(ex)}', type='negative')
 
             with ui.row():
                 ui.button('Renumber', on_click=do_renumber).classes('bg-blue-500').props('no-caps')

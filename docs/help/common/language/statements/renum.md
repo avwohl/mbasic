@@ -51,7 +51,15 @@ RENUM automatically updates line number references in:
 - **ON...GOTO** and **ON...GOSUB** lists
 - **RESTORE** line_number
 - **RUN** line_number
-- **ON ERROR GOTO** line_number
+- **ON ERROR GOTO** line_number (`ON ERROR GOTO 0` stays 0)
+- **RESUME** line_number
+- **ERL** comparisons such as `IF ERL=100 THEN ...`: the number after `ERL` and its operator
+- **LIST**, **LLIST**, **DELETE**, **EDIT** and **AUTO** line numbers and ranges
+
+RENUM changes only the digits of the line numbers. All other text of the program stays as it is:
+spaces, case, `PRINT #1`, the `;` and `,` at the end of a PRINT, strings, DATA and REM text.
+A number inside a string, a REM, a DATA statement or an apostrophe comment does not change.
+A number must follow its keyword after a space (`GOTO 10`); MBASIC reads `GOTO10` as a variable name.
 
 ### Range Renumbering
 
@@ -68,7 +76,10 @@ This is useful when:
 - Cannot reorder lines (e.g., RENUM 15,30 when lines are 10,20,30)
 - If line number reference doesn't exist, prints: "Undefined line xxxxx in yyyyy"
   - xxxxx = the bad reference (not changed)
-  - yyyyy = the line containing it (may be renumbered)
+  - yyyyy = the line that has it (the number before RENUM)
+  - RENUM goes on with all other lines
+- A successful RENUM prints nothing
+- A bad argument gives "Syntax error" (for example `RENUM A` or four parts)
 
 ## Example
 
@@ -222,12 +233,14 @@ RENUM 100,0,100    ' 100, 200, 300... lots of room
 
 ### "Illegal function call"
 - Trying to create line number > 65529
-- Trying to reorder lines (e.g., RENUM 15,30 with lines 10,20,30)
+- A new number that is not above the last line that stays (for example, RENUM 15,30 with lines 10,20,30)
+- An increment of 0
+- The program is not changed
 
 ### "Undefined line xxxxx in yyyyy"
 - Line number reference doesn't exist
 - xxxxx = bad reference (unchanged)
-- yyyyy = line containing it (may be renumbered)
+- yyyyy = the line that has it (the number before RENUM)
 
 ## See Also
 - [AUTO](auto.md) - To generate a line number automatically after every carriage return
