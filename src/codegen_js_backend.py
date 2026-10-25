@@ -156,27 +156,72 @@ async function _inkey() {
 '''
 
 JS_PRINT_RUNTIME = r'''
-// ===== PRINT: columns, zones, TAB and SPC =====
+// ===== PRINT: columns, zones, TAB, SPC and the line wrap (port of src/print_column.py) =====
 let _col = 0;  // cursor column on the screen, 0-based
+let _width = 80;  // line width of the screen, set by WIDTH
 function _advance(col, s) {
-    const i = s.lastIndexOf("\n");
-    return i < 0 ? col + s.length : s.length - i - 1;
+    // The column after sending s: a newline or CR goes to 0, a tab to the next multiple of 8,
+    // a backspace one left; the other control characters do not move the cursor.
+    for (let i = 0; i < s.length; i++) {
+        const ch = s.charCodeAt(i);
+        if (ch === 10 || ch === 13) col = 0;
+        else if (ch === 9) col = (Math.floor(col / 8) + 1) * 8;
+        else if (ch === 8) col = col > 0 ? col - 1 : 0;
+        else if (ch >= 32) col++;
+    }
+    return col;
 }
+function _wrap_text(col, width, text, whole) {
+    // MBASIC wraps lazily: a full line stays until the next printable character comes. A PRINT
+    // item that does not fit in the rest of the line starts a new line first; one longer than
+    // the width is split at the width. SPC (whole false) wraps one character at a time.
+    let out = "";
+    if (whole && col > 0 && col + text.length > width) { out += "\n"; col = 0; }
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (ch >= " " && col >= width) { out += "\n"; col = 0; }
+        out += ch;
+        col = _advance(col, ch);
+    }
+    return out;
+}
+function _set_width(n) {
+    n = _round_half_away(n);
+    if (n < 1 || n > 255) _error("Illegal function call");
+    return n;
+}
+function _width_of(f) { return f === null || f === undefined ? _width : 255; }
 // items: [0, value, digits] | [1, tabColumn] | [2, count]; seps: ";" "," or "\n" after each item.
+// On the screen an item that does not fit goes whole to the next line and a comma in the last
+// zone starts a new line; a file splits at its width of 255 and pads. A value may be a function (an item that reads POS), called when its turn comes.
 function _print_list(f, items, seps) {
+    const w = _width_of(f), isScreen = f === null || f === undefined;
+    // A screen of width 255 is infinite: nothing wraps, TAB and SPC counts are bytes.
+    const inf = isScreen && w >= 255, ww = inf ? 1e9 : w, md = inf ? 256 : w;
     for (let i = 0; i < items.length; i++) {
         const it = items[i], sep = seps[i];
+        let out = "";
         if (it[0] === 1) {
-            const target = _round_half_away(it[1]), col = _cur_col(f) + 1;
-            if (col < target) _emit(f, " ".repeat(target - col));
+            // TAB(n): column n; a cursor already past it starts a new line first
+            const n = _round_half_away(it[1]), col = _cur_col(f);
+            const target = n < 1 ? 0 : (n - 1) % md;
+            if (col > target) out = "\n" + " ".repeat(target);
+            else out = " ".repeat(target - col);
         } else if (it[0] === 2) {
-            _emit(f, " ".repeat(Math.max(0, _round_half_away(it[1]))));
+            // SPC(n): n spaces, n wrapping at the width
+            out = _wrap_text(_cur_col(f), ww, " ".repeat(Math.max(0, _round_half_away(it[1])) % md), false);
         } else {
-            _emit(f, _pstr(it[1], it[2]));
+            const v = typeof it[1] === "function" ? it[1]() : it[1];
+            out = _wrap_text(_cur_col(f), ww, _pstr(v, it[2]), isScreen);
         }
+        if (out !== "") _emit(f, out);
         if (sep === ",") {
-            const c = _cur_col(f);
-            _emit(f, " ".repeat((Math.floor(c / 14) + 1) * 14 - c));
+            // next 14-column zone; the last zone starts a new line
+            const c = _cur_col(f), zone = (Math.floor(c / 14) + 1) * 14;
+            // under width 14 no zone fits and there is no last-zone limit: pad, and the spaces wrap;
+            // the column of an infinite screen stops at 255 and then pads too
+            if (isScreen && w >= 14 && zone + 14 > w && !(inf && c >= 255)) _emit(f, "\n");
+            else _emit(f, _wrap_text(c, ww, " ".repeat(zone - c), false));
         }
     }
     const last = seps.length ? seps[seps.length - 1] : "\n";
@@ -186,10 +231,10 @@ function _print_list(f, items, seps) {
 
 JS_PRINT_FILES = r'''
 function _cur_col(f) {
-    if (f === null || f === undefined) return _col;
+    if (f === null || f === undefined) return _width >= 255 ? Math.min(_col, 255) : _col;
     const file = _files[f];
     if (!file || typeof file.content !== "string") return 0;
-    return file.content.length - (file.content.lastIndexOf("\n") + 1);
+    return _advance(0, file.content.slice(file.content.lastIndexOf("\n") + 1));
 }
 function _emit(f, s) {
     if (f === null || f === undefined) _print(s, false); else _fprint(f, s, false);
@@ -197,7 +242,7 @@ function _emit(f, s) {
 '''
 
 JS_PRINT_SCREEN = r'''
-function _cur_col(f) { return _col; }
+function _cur_col(f) { return _width >= 255 ? Math.min(_col, 255) : _col; }
 function _emit(f, s) { _print(s, false); }
 '''
 
@@ -485,7 +530,8 @@ JS_INPUT_RUNTIME = r'''
 // fs.readSync (through _fill_keys, one buffer shared with INPUT$). The browser waits for keydown
 // events, echoes the typed characters into the page and ends the line at Enter.
 // At end of stdin Node stops with "?Input past end" (exit 1) instead of waiting or looping.
-async function _read_line(prompt) {
+async function _read_line(prompt, keep) {
+    // keep (INPUT; with no newline after the answer): the cursor stays after the typed text
     _print(prompt, false);
     if (typeof window !== "undefined") {
         let typed = "";
@@ -493,7 +539,7 @@ async function _read_line(prompt) {
             if (_inkey_buffer.length === 0) await _fill_keys(1);
             const ch = _inkey_buffer[0];
             _inkey_buffer = _inkey_buffer.slice(1);
-            if (ch === "\r" || ch === "\n") { _print(""); return typed; }
+            if (ch === "\r" || ch === "\n") { if (!keep) _print(""); return typed; }
             if (ch === "\x03") _error("Break");
             if (ch === "\b" || ch === "\x7f") {
                 if (typed.length > 0) { typed = typed.slice(0, -1); _unprint_char(); }
@@ -509,12 +555,14 @@ async function _read_line(prompt) {
             let line = _inkey_buffer.slice(0, nl);
             _inkey_buffer = _inkey_buffer.slice(nl + 1);
             if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (keep) _col += line.length; else _col = 0;  // the Enter that ended the line
             return line;
         }
         if (!(await _fill_keys(4096, true))) {
             if (_inkey_buffer.length === 0) _error("Input past end");
             const rest = _inkey_buffer;
             _inkey_buffer = "";
+            if (keep) _col += rest.length; else _col = 0;
             return rest;
         }
     }
@@ -617,10 +665,10 @@ function _input_parse(line, types) {
     return vals;
 }
 
-async function _input_vals(prompt, types) {
+async function _input_vals(prompt, types, keep) {
     // types has one letter per variable: S string, I integer, F single, N double.
     for (;;) {
-        const vals = _input_parse(await _read_line(prompt), types);
+        const vals = _input_parse(await _read_line(prompt, keep), types);
         if (vals !== null) return vals;
         _print("?Redo from start");
     }
@@ -1375,7 +1423,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.indent_level += 1
         code.append(self.indent() + '// POS(0) - current print position (1-based)')
         code.append(self.indent() + '// Note: Simplified - would need to track actual cursor position')
-        code.append(self.indent() + 'return _col + 1;')
+        code.append(self.indent() + 'return ((_width >= 255 ? Math.min(_col, 255) : _col) + 1) % 256;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
         code.append('')
@@ -2505,7 +2553,11 @@ class JavaScriptBackend(CodeGenBackend):
                 kind = 1 if name == 'tab' else 2
                 items.append(f'[{kind}, {self._generate_expression(expr.arguments[0])}]')
             else:
-                items.append(f'[0, {self._generate_expression(expr)}, {self._js_digits(expr)}]')
+                value = self._generate_expression(expr)
+                if '_pos(' in value:
+                    # POS has to see the items printed before it
+                    value = f'() => {value}'
+                items.append(f'[0, {value}, {self._js_digits(expr)}]')
         filenum = self._generate_expression(stmt.file_number) if stmt.file_number else 'null'
         sep_js = '[' + ', '.join(json.dumps(x) for x in seps) + ']'
         return [self.indent() + f'_print_list({filenum}, [{", ".join(items)}], {sep_js});']
@@ -3017,7 +3069,7 @@ class JavaScriptBackend(CodeGenBackend):
                 targets.append(self._input_lvalue(var))
             # One _input_vals call reads the whole line for all variables (Redo covers them together)
             assigns = ' '.join(f'{t} = _iv[{k}];' for k, t in enumerate(targets))
-            code.append(self.indent() + f'{{ const _iv = await _input_vals("{prompt_str}", "{"".join(letters)}"); {assigns} }}')
+            code.append(self.indent() + f'{{ const _iv = await _input_vals("{prompt_str}", "{"".join(letters)}"{", true" if stmt.suppress_question else ""}); {assigns} }}')
 
         return code
 
@@ -3468,20 +3520,16 @@ class JavaScriptBackend(CodeGenBackend):
         return code
 
     def _generate_width(self, stmt: WidthStatementNode) -> List[str]:
-        """Generate WIDTH statement - set line width (stub: warning only)
+        """Generate WIDTH statement - set the screen line width
 
-        In MBASIC, WIDTH sets the console/printer line width.
-        In JavaScript, console/browser output doesn't have fixed width.
+        PRINT wraps at _width and measures TAB and the comma zones against it.
+        A form with a device (WIDTH n, device) is accepted and ignored, as in
+        the interpreter.
         """
-        code = []
-        if stmt.file_number:
-            filenum = self._generate_expression(stmt.file_number)
-            width = self._generate_expression(stmt.width)
-            code.append(self.indent() + f'// WIDTH #{filenum}, {width} - ignored in JavaScript')
-        else:
-            width = self._generate_expression(stmt.width)
-            code.append(self.indent() + f'// WIDTH {width} - ignored in JavaScript')
-        return code
+        width = self._generate_expression(stmt.width)
+        if stmt.device is not None:
+            return [self.indent() + f'// WIDTH {width}, device - ignored']
+        return [self.indent() + f'_width = _set_width({width});']
 
     def _generate_clear(self, stmt: ClearStatementNode) -> List[str]:
         """Generate CLEAR statement - clear variables and set memory limits (stub)
