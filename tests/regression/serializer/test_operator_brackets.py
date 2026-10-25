@@ -59,6 +59,8 @@ def shape(node):
 
 
 EXPRESSIONS = [
+    # A plus after ^ is ignored; its power chain must keep the brackets.
+    'A ^ (+2 ^ 3)', 'A ^ (-2 ^ 3)', 'A ^ (+2 * 3)',
     # \ and MOD against * and / - the precedence that was wrong.
     '(12 \\ 2) * 3', '12 \\ (2 * 3)', '12 \\ 2 * 3',
     '(12 MOD 5) * 2', '12 MOD (5 * 2)', '12 MOD 5 * 2',

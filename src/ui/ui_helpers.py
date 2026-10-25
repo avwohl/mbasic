@@ -1410,6 +1410,12 @@ def _serialize_operand(operand, parent_operator, is_right):
             return f"({text})" if parent >= 3 else text
         if not is_right and _operator_name(parent_operator) == 'POWER':
             return f"({text})"
+        if (is_right and _operator_name(parent_operator) == 'POWER'
+                and _operator_name(operand.operator) == 'PLUS'
+                and type(operand.operand).__name__ == 'BinaryOpNode'):
+            # A plus after ^ is ignored and the chain goes on left to right:
+            # A^(+2^3) must keep its brackets or it re-reads as (A^2)^3.
+            return f"({text})"
         return text
     if type(operand).__name__ != 'BinaryOpNode':
         return text
