@@ -231,6 +231,7 @@ class Z88dkCBackend(CodeGenBackend):
 
         self._warn_about_double_precision(program)
         self._warn_about_integer_overflow(program)
+        self._warn_about_literal_range(program)
 
         # Count strings and allocate IDs
         self._count_strings_and_allocate_ids(program)
@@ -907,7 +908,7 @@ class Z88dkCBackend(CodeGenBackend):
             # Already flattened by the semantic analyzer, and already moved
             # down by OPTION BASE
             total = self._array_total(key)
-            return f'mb25_subscript({self._integer_value(var_node.subscripts[0])}, {total})'
+            return f'mb25_subscript({self._integer_value(var_node.subscripts[0])}, {total}, 0)'
         if len(sizes) != len(var_node.subscripts):
             self._unsupported(
                 f"array {key} has {len(sizes)} subscripts, used with {len(var_node.subscripts)}")
@@ -920,7 +921,7 @@ class Z88dkCBackend(CodeGenBackend):
             expr = self._integer_value(sub)
             if self.array_base:
                 expr = f'({expr} - {self.array_base})'
-            expr = f'mb25_subscript({expr}, {sizes[i]})'
+            expr = f'mb25_subscript({expr}, {sizes[i]}, {self.array_base or 0})'
             parts.append(f'{expr} * {stride}' if stride > 1 else expr)
         return ' + '.join(parts)
 
@@ -1468,6 +1469,25 @@ class Z88dkCBackend(CodeGenBackend):
             self.warnings.append(
                 "double precision is stored in 32 bits by uc80: values keep about 7 digits, "
                 "where the interpreter keeps 16")
+
+    def _warn_about_literal_range(self, program: ProgramNode):
+        """Say so when a number in the program is outside the uc80 float range.
+
+        A uc80 float holds about 1.2E-38 to 1.7E38.  A bigger literal wraps to
+        a small wrong value, and a smaller one becomes 0, with no error.
+        """
+        if self.dialect != 'uc80':
+            return
+        for line in program.lines:
+            for n in self._walk(line.statements):
+                if isinstance(n, NumberNode) and isinstance(n.value, (int, float)):
+                    size = abs(float(n.value))
+                    if size > 1.7e38 or 0 < size < 1.18e-38:
+                        self.warnings.append(
+                            f"line {line.line_number}: the number {n.value!r} is outside the "
+                            "range of a uc80 float (about 1.2E-38 to 1.7E38) and is wrong in "
+                            "the compiled program")
+                        return
 
     def _warn_about_integer_overflow(self, program: ProgramNode):
         """Say so when integer + - * can wrap at 16 bits.
@@ -2871,10 +2891,10 @@ class Z88dkCBackend(CodeGenBackend):
                 return f'(({arg}) > 0 ? 1 : ({arg}) < 0 ? -1 : 0)'
             elif func_name == 'INT':
                 # INT truncates towards negative infinity
-                return f'floor({arg})'
+                return f'mb25_int({arg})'
             elif func_name == 'FIX':
                 # FIX truncates towards zero
-                return f'trunc({arg})'
+                return f'mb25_fix({arg})'
             elif func_name == 'SIN':
                 return f'sin({arg})'
             elif func_name == 'COS':

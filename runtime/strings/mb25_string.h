@@ -199,9 +199,11 @@ int mb25_instr(int start, uint16_t a, uint16_t b);
 
 /* CINT rounding, the subscript check and SWAP for the compiled program */
 int mb25_cint(double v);
+double mb25_int(double v);               /* INT */
+double mb25_fix(double v);               /* FIX */
 double mb25_sqr(double v);               /* SQR */
 double mb25_pow(double x, double y);   /* x ^ y */
-int mb25_subscript(int i, int n);
+int mb25_subscript(int i, int n, int base);
 extern unsigned int mb25_line;                /* the BASIC line that is running */
 void mb25_fail(const char *msg);     /* print ?msg in LINE and stop */
 int mb25_eof(FILE *fp);                /* EOF(n) */

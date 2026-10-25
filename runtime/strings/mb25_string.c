@@ -1015,12 +1015,30 @@ int mb25_cint(double v) {
     return (int)(v < 0 ? -(-v + 0.5) : v + 0.5);
 }
 
+/* INT and FIX.  The library floor() and trunc() go through a 32-bit integer
+ * and stop at 2^31; a float above 2^23 has no fraction, so it is returned as
+ * it is. */
+double mb25_int(double v) {
+    /* Compare the size, not v: uc80 gets two negative floats wrong. */
+    double size = v < 0 ? -v : v;
+    if (size >= 8388608.0) {
+        return v;
+    }
+    return floor(v);
+}
+
+double mb25_fix(double v) {
+    return v < 0 ? -mb25_int(-v) : mb25_int(v);
+}
+
 /* Check an array subscript (already moved down by OPTION BASE) against the
  * number of elements.  BASIC stops with an error; writing past a C array
- * would corrupt the string pool instead. */
-int mb25_subscript(int i, int n) {
+ * would corrupt the string pool instead.  Only a subscript that is negative
+ * before the move gives "Illegal function call"; A$(0) under OPTION BASE 1
+ * is "Subscript out of range". */
+int mb25_subscript(int i, int n, int base) {
     if (i < 0 || i >= n) {
-        mb25_fail(i < 0 ? "Illegal function call" : "Subscript out of range");
+        mb25_fail(i + base < 0 ? "Illegal function call" : "Subscript out of range");
     }
     return i;
 }
@@ -1582,7 +1600,7 @@ void mb25_get_stats(uint32_t *total_allocs, uint32_t *total_gcs, uint16_t *max_u
 unsigned int mb25_line;
 
 /* Stop the program with a run-time error.  MBASIC starts a new line when the
- * cursor is not in column 1, then prints ?message in LINE. */
+ * cursor is not in column 1, then prints the message in LINE. */
 void mb25_fail(const char *msg) {
     char t[6];
     int n = 0;
@@ -1590,7 +1608,6 @@ void mb25_fail(const char *msg) {
     if (mb25_con_col != 0) {
         putchar('\n');
     }
-    putchar('?');
     fputs(msg, stdout);
     if (u > 0) {
         fputs(" in ", stdout);

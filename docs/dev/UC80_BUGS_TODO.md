@@ -438,3 +438,23 @@ stops the compile with `unexpected token 'RBRACE'`. The backend writes `label: ;
 The value prints as 1 because the formatter keeps 7 digits, so only a test for
 equality shows the fault. The backend does not work around this fault. Report
 to uc80.
+
+**10. The AST optimizer reads the wrong variable after a copy.** After `k = j`, uc80
+reads `j` where the program reads `k`, also after `k` changes in a loop.
+
+```c
+float i = 1, j = 0, k = 0;
+j = i;
+k = j;
+loop:
+    if (k == 4) goto done;      /* tests j (always 1) */
+    k += 1;
+    goto loop;
+done: ;
+```
+
+The loop never ends. `FOR K=J TO 3` compiled to this shape and ran for ever, and
+so did every FOR loop whose start is a variable (`FOR J=I TO N`). `k = (float)(j)` and
+`k = j + 0.0` avoid the fault, but any copy can hit it, so the backend passes
+`--no-ast-optimize` to uc80 (about 130 bytes more in the `.com`).
+Report to uc80.

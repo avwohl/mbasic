@@ -460,11 +460,15 @@ def build_with_uc80(c_file, com_file, runtime_dir, runtime_c, string_count, debu
     shim_mac = os.path.join(runtime_dir, 'mb25_uc80_shim.mac')
     shim_rel = base + '_shim.rel'
 
+    # --no-ast-optimize: uc80's AST optimizer treats "k = j" as "k is j" for
+    # the rest of the function and reads j where the program reads k, even
+    # after k changes in a loop (UC80_BUGS_TODO.md, fault 10).  It costs
+    # about 130 bytes of .com.
     uc80_cmd = ['uc80', f'-I{runtime_dir}']
     if string_count > 0:
         uc80_cmd.append(f'-DMB25_NUM_STRINGS={string_count}')
     uc80_cmd += [c_file, runtime_c] + uc80_stdio_flags(c_file) + [
-                 '--no-embed-runtime', '-o', mac_file]
+                 '--no-embed-runtime', '--no-ast-optimize', '-o', mac_file]
     _run_tool(uc80_cmd, 'uc80 compilation', c_file, debug,
               'Install it with: pip install uc80 um80')
 

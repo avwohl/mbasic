@@ -318,7 +318,7 @@ def test_subscript_out_of_range_stops_the_program(tmp_path):
     source = '10 DIM A$(2)\n20 PRINT "before"\n30 A$(3)="x"\n40 PRINT "after"\n'
     assert compile_c(tmp_path, source).returncode == 0
     # CP/M has one console, so the error message arrives on the same stream
-    assert run_compiled(tmp_path, "") == "before\n?Subscript out of range in 30\n"
+    assert run_compiled(tmp_path, "") == "before\nSubscript out of range in 30\n"
 
 
 @NEEDS_TOOLCHAIN
@@ -327,7 +327,7 @@ def test_runtime_errors_name_the_line_and_start_a_new_line(tmp_path):
     ?message in LINE.  A negative subscript is Illegal function call."""
     source = '10 DIM A$(5)\n20 PRINT "x";\n30 GOSUB 100: A$(-1)="z"\n40 END\n100 RETURN\n'
     assert compile_c(tmp_path, source).returncode == 0
-    assert run_compiled(tmp_path, "") == "x\n?Illegal function call in 30\n"
+    assert run_compiled(tmp_path, "") == "x\nIllegal function call in 30\n"
 
 
 @NEEDS_TOOLCHAIN
@@ -335,14 +335,14 @@ def test_string_too_long_stops_the_program(tmp_path):
     source = ('10 A$=STRING$(200,"a")\n20 PRINT "go"\n30 B$=A$+A$\n40 PRINT LEN(B$)\n'
               '50 A=LEN(A$+A$+"x")\n')
     assert compile_c(tmp_path, source).returncode == 0
-    assert run_compiled(tmp_path, "") == "go\n?String too long in 30\n"
+    assert run_compiled(tmp_path, "") == "go\nString too long in 30\n"
 
 
 @NEEDS_TOOLCHAIN
 def test_string_too_long_in_an_expression(tmp_path):
     source = '10 A$=STRING$(200,"a")\n20 PRINT LEN(A$+A$+"x")\n'
     assert compile_c(tmp_path, source).returncode == 0
-    assert run_compiled(tmp_path, "") == "?String too long in 20\n"
+    assert run_compiled(tmp_path, "") == "String too long in 20\n"
 
 
 @NEEDS_TOOLCHAIN
@@ -497,3 +497,61 @@ def test_integer_overflow_warning(tmp_path):
     # a sum of constants is worked out by the compiler: no warning
     result = compile_c(tmp_path, '10 PRINT 200*200\n20 X=1.5*2\n')
     assert "wraps at 16 bits" not in result.stderr
+
+
+# --- Review round 2 ----------------------------------------------------------
+
+@NEEDS_TOOLCHAIN
+def test_for_loop_with_a_variable_start_ends(tmp_path):
+    """uc80's AST optimizer read the wrong variable after K=J, so FOR K=J TO 3
+    never ended.  The backend passes --no-ast-optimize."""
+    check_same(tmp_path, """10 I=1: N=6
+20 J=I: PRINT J
+30 FOR K=J TO 3: PRINT K;: NEXT K: PRINT
+40 FOR I=0 TO 2: FOR J=I TO 2: PRINT I;J;: NEXT J: NEXT I: PRINT
+50 FOR K=N TO 8: PRINT K;: NEXT K: PRINT
+""")
+
+
+@NEEDS_TOOLCHAIN
+def test_sort_with_next_j_i(tmp_path):
+    check_same(tmp_path, """10 DIM A(5): FOR I=0 TO 5: A(I)=(I*7) MOD 6: NEXT I
+20 FOR I=0 TO 4: FOR J=I+1 TO 5
+30 IF A(J)<A(I) THEN T=A(I): A(I)=A(J): A(J)=T
+40 NEXT J,I
+50 FOR I=0 TO 5: PRINT A(I);: NEXT I: PRINT
+""")
+
+
+@NEEDS_TOOLCHAIN
+@pytest.mark.parametrize("source", [
+    '10 DIM A$(3)\n20 A$(4)="x"\n',
+    '10 OPTION BASE 1\n20 DIM A$(2)\n30 A$(1)="a": PRINT A$(1)\n40 A$(0)="z"\n',
+    '10 RETURN\n',
+    '10 READ A\n',
+])
+def test_runtime_error_text_matches_the_interpreter(tmp_path, source):
+    """No ? in front, and OPTION BASE 1 with subscript 0 is out of range."""
+    check_same(tmp_path, source)
+
+
+@NEEDS_TOOLCHAIN
+def test_int_and_fix_of_large_numbers(tmp_path):
+    check_same(tmp_path, '10 PRINT INT(2.7E9);FIX(-2.7E9);INT(-2.5);FIX(-2.5);INT(3E10)\n')
+
+
+def test_literal_outside_the_float_range_warns(tmp_path):
+    result = compile_c(tmp_path, '10 PRINT 3E38\n')
+    assert "range of a uc80 float" in result.stderr
+
+
+@NEEDS_TOOLCHAIN
+def test_negative_subscript_is_illegal_function_call(tmp_path):
+    """Real MBASIC 5.21 says Illegal function call (the interpreter says
+    Subscript out of range, so this does not compare with the interpreter)."""
+    source = '10 DIM A$(3)\n20 PRINT "abc";\n30 A$(-1)="x"\n'
+    assert compile_c(tmp_path, source).returncode == 0
+    assert run_compiled(tmp_path, "") == "abc\nIllegal function call in 30\n"
+    source = '10 OPTION BASE 1\n20 DIM A$(2)\n30 A$(-1)="z"\n'
+    assert compile_c(tmp_path, source).returncode == 0
+    assert run_compiled(tmp_path, "") == "Illegal function call in 30\n"

@@ -81,8 +81,8 @@ descriptors in the string pool, so element n has the ID of the array plus n.
   semantic analyzer checks this). The program start sets all storage to zero.
 - An array that has no `DIM` has 11 elements for each subscript.
 - `OPTION BASE 1` works. The program rounds every subscript to an integer and checks
-  it. A subscript above the array stops the program with `?Subscript out of range in 40`.
-  A negative subscript gives `?Illegal function call in 40`.
+  it. A subscript above the array stops the program with `Subscript out of range in 40`.
+  A negative subscript gives `Illegal function call in 40`.
 - A string array element works wherever a string variable works: assignment,
   expressions, `PRINT`, `INPUT`, `LINE INPUT`, `READ`, `SWAP`, `MID$` assignment,
   `LSET` and `RSET`.
@@ -125,7 +125,7 @@ These differences are known. They are not fixed.
 - **Run-time errors** (`Subscript out of range`, `Illegal function call`,
   `String too long`, `Out of DATA`, `RETURN without GOSUB`, `File not found`,
   `File not open`) print a new line when the cursor is not in column 1, then
-  `?message in LINE`, as MBASIC does. The C program keeps the line number in
+  `message in LINE`, as MBASIC 5.21 does (no `?` in front). The C program keeps the line number in
   `mb25_line` (one store at the start of each line). Not all checks of MBASIC
   exist: `SQR(-8)` gives 0, `LOG(0)` gives a large negative number, and
   `MID$(x,0)` and `LEFT$(x,-1)` give no error, where MBASIC gives
@@ -133,8 +133,15 @@ These differences are known. They are not fixed.
   with `String too long`.
 - **A floating-point result can differ in the last digit.** `basic/dev/bas_tests/asciiart.bas`
   differs in one character out of 2000.
-- **There are no run-time errors for arithmetic.** Division by zero gives machine
-  infinity and `ON ERROR` does not see it. Integer overflow is not detected.
+- **There are no run-time errors for arithmetic.** Division by zero gives the largest
+  number (`1.70141E+38`) without the `Division by zero` message that MBASIC prints
+  before it carries on. `ON ERROR` does not see it. Integer overflow wraps at 16 bits
+  and does not give `Overflow`. The compiler warns when it can happen. A float product
+  that is too large also gives `1.70141E+38` and not `Overflow`.
+- **The float range is that of uc80**: about 1.2E-38 to 1.7E38. A number in the program
+  outside this range is wrong in the compiled program (`3E38` prints as `2.59085E-39`,
+  `-1E-38` as `0`), and the compiler warns about such a number. `2^126` prints with one
+  digit less than MBASIC. `INT` and `FIX` work on the whole float range.
 - **INPUT** reads a whole line. It does not give `?Redo from start`, and with several
   variables it does not ask again for missing values. At the end of the input the
   program ends.
