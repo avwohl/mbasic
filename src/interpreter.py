@@ -8,7 +8,7 @@ import sys
 import signal
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Callable, Any, Union
-from src.runtime import Runtime
+from src.runtime import Runtime, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
 from src.pc import PC
@@ -29,6 +29,8 @@ from src.error_codes import (error_code_for, format_error_message,
 from src.input_fields import (split_keyboard_fields, keyboard_number, val_number,
                               read_file_field, MAX_FLOAT)
 import src.ast_nodes as ast_nodes
+from src.cpm_names import cpm_name_error, cpm_new_name_error
+from src.string_temps import string_temps, STRING_TEMPORARIES
 
 
 def _while_wend_walk(statement):
@@ -96,6 +98,9 @@ def _loop_is_done(current, end, step):
     at all.
     """
     return ((current > end) - (current < end)) == ((step > 0) - (step < 0))
+
+#: The record length OPEN gives a random file, and the most it allows: one CP/M sector.
+DEFAULT_RECORD_LENGTH = 128
 
 #: Marker for "this node has not been typed yet" - None is a real answer
 #: (INTEGER_DIGITS), so it cannot stand for the missing value.
@@ -2185,21 +2190,61 @@ class Interpreter:
             # suffix - the storage key does. See Runtime.erase_array.
             self.runtime.erase_array(array_name)
 
+    def _clear_memory_arguments(self, stmt):
+        """The memory top and stack space of CLEAR, checked as the binary does.
+
+        Measured: 0 is Illegal function call for both; a number that is not
+        16 bits is Overflow; -1 is 65535 for the memory top; and a string
+        space that comes out below nothing, or a stack under 82 bytes, is
+        Out of memory.
+        """
+        if stmt.string_space is not None:
+            # Read as an integer: Overflow beyond 16 bits, Illegal function
+            # call below 0 (measured), and then not used.
+            string_space = to_integer(self.evaluate_expression(stmt.string_space))
+            if not -32768 <= string_space <= 32767:
+                raise RuntimeError("Overflow")
+            if string_space < 0:
+                raise MBasicError(5)
+        memory_top = stack_space = None
+        if stmt.memory_top is not None:
+            memory_top = to_integer(self.evaluate_expression(stmt.memory_top))
+            if not -32768 <= memory_top <= 65535:
+                raise RuntimeError("Overflow")
+            if memory_top == 0:
+                raise MBasicError(5)
+            memory_top &= 0xFFFF
+        if stmt.stack_space is not None:
+            stack_space = to_integer(self.evaluate_expression(stmt.stack_space))
+            if not -32768 <= stack_space <= 65535:
+                raise RuntimeError("Overflow")
+            if stack_space == 0:
+                raise MBasicError(5)
+            stack_space &= 0xFFFF
+        top = self.runtime.memory_top if memory_top is None else memory_top
+        stack = self.runtime.stack_space if stack_space is None else stack_space
+        if (stack < MIN_STACK_SPACE
+                or FREE_MEMORY + (top - HIGHEST_MEMORY) - (stack - STACK_SPACE) < 0):
+            raise MBasicError(7)
+        return memory_top, stack_space
+
     def execute_clear(self, stmt):
         """Execute CLEAR statement
 
         CLEAR resets all variables and closes all open files.
-        Optional arguments for string space and stack space are parsed but ignored.
-
-        Syntax: CLEAR [,[string_space][,stack_space]]
+        Syntax: CLEAR [,[memory_top][,stack_space]]
 
         Effects:
         - All simple variables are deleted
         - All arrays are erased
         - All open files are closed
         - COMMON variables list is preserved (for CHAIN compatibility)
-        - String space and stack space parameters are ignored (Python manages memory automatically)
+        - memory_top and stack_space change the string space (Runtime.set_memory),
+          which is what Out of string space is measured against. The number before
+          the first comma is read and not used, as on the binary.
         """
+        memory_top, stack_space = self._clear_memory_arguments(stmt)
+
         # Clear resource limits tracking
         self.limits.clear_all()
 
@@ -2242,7 +2287,7 @@ class Interpreter:
         #   - All open files (closed and cleared)
         #   - Field buffers
         #
-        # Note: We ignore string_space and stack_space parameters (Python manages memory automatically)
+        self.runtime.set_memory(memory_top, stack_space)
 
     def execute_randomize(self, stmt):
         """Execute RANDOMIZE statement
@@ -2691,6 +2736,7 @@ class Interpreter:
         filename = self.evaluate_expression(stmt.filename)
         if not isinstance(filename, str):
             raise RuntimeError("LOAD requires string filename")
+        self._check_file_name(filename)
 
         # Delegate to interactive mode if available
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
@@ -2704,6 +2750,7 @@ class Interpreter:
         filename = self.evaluate_expression(stmt.filename)
         if not isinstance(filename, str):
             raise RuntimeError("SAVE requires string filename")
+        self._check_file_name(filename, creates=True)
 
         # Delegate to interactive mode if available
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
@@ -2724,6 +2771,7 @@ class Interpreter:
 
             if isinstance(target_value, str):
                 # RUN "filename" - load and run file
+                self._check_file_name(target_value)
                 if hasattr(self, 'interactive_mode') and self.interactive_mode:
                     self.interactive_mode.cmd_load(target_value)
                     self.interactive_mode.cmd_run()
@@ -2786,6 +2834,7 @@ class Interpreter:
         filename = self.evaluate_expression(stmt.filename)
         if not isinstance(filename, str):
             raise RuntimeError("CHAIN requires string filename")
+        self._check_file_name(filename)
 
         # Evaluate starting line if provided
         start_line = None
@@ -2886,6 +2935,7 @@ class Interpreter:
         filename = self.evaluate_expression(stmt.filename)
         if not isinstance(filename, str):
             raise RuntimeError("MERGE requires string filename")
+        self._check_file_name(filename)
 
         # Delegate to interactive mode if available
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
@@ -3061,6 +3111,21 @@ class Interpreter:
 
         self.io.output(f"\n{len(files)} File(s)")
 
+    def _check_file_name(self, filename, creates=False):
+        """Bad file name or Too many files for a name CP/M cannot hold.
+
+        See src/cpm_names.py. A name with a slash or a backslash is a host
+        path, which CP/M has no form for, so it passes. The setting
+        cpm_file_names turns the check off for host names that have neither,
+        such as inputfile.txt.
+        """
+        if '/' in filename or '\\' in filename:
+            return
+        if self.settings_manager.get('cpm_file_names', True):
+            code = cpm_name_error(filename, creates)
+            if code is not None:
+                raise MBasicError(code)
+
     def execute_kill(self, stmt):
         """Execute KILL statement - delete file
 
@@ -3073,6 +3138,7 @@ class Interpreter:
         filename = self.evaluate_expression(stmt.filename)
         if not isinstance(filename, str):
             raise RuntimeError("KILL requires string filename")
+        self._check_file_name(filename)
 
         # Delete the file
         try:
@@ -3099,6 +3165,15 @@ class Interpreter:
             raise RuntimeError("NAME requires string for old filename")
         if not isinstance(new_filename, str):
             raise RuntimeError("NAME requires string for new filename")
+        self._check_file_name(old_filename)
+        # The new name goes through namfil too: Bad file name for a malformed
+        # one, and Illegal function call for a drive letter (measured: the
+        # rename would cross drives). Refused characters are not checked.
+        code = cpm_new_name_error(new_filename, old_filename) \
+            if self.settings_manager.get('cpm_file_names', True) \
+            and '/' not in new_filename and '\\' not in new_filename else None
+        if code is not None:
+            raise MBasicError(code)
 
         # Rename the file
         try:
@@ -3116,7 +3191,6 @@ class Interpreter:
         Syntax:
             OPEN "I", #1, "filename"        - Open for input
             OPEN "O", #2, "filename"        - Open for output
-            OPEN "A", #3, "filename"        - Open for append
             OPEN "R", #4, "filename", 128   - Open for random access (FIELD, GET, PUT, LSET, RSET supported)
 
         Note: CP/M files used ^Z (ASCII 26) as EOF marker. We respect this on input.
@@ -3136,6 +3210,26 @@ class Interpreter:
         # Check if file number is already open
         if file_num in self.runtime.files:
             raise RuntimeError(f"File #{file_num} already open")
+
+        if mode == "A":
+            # MBASIC 5.21 has no append mode (measured: Bad file mode, before
+            # the name is looked at).
+            raise MBasicError(54)
+
+        self._check_file_name(filename, creates=mode in ("O", "R"))
+
+        # The record length, which FIELD checks its widths against. A CP/M
+        # sector holds 128 bytes, so 129 and up is an Illegal function call
+        # (measured), and 0 is accepted but leaves no room for any field.
+        record_length = DEFAULT_RECORD_LENGTH
+        if stmt.record_length is not None:
+            if mode in ("I", "O"):
+                raise MBasicError(2)    # measured: Syntax error
+            record_length = to_integer(self.evaluate_expression(stmt.record_length))
+            if not -32768 <= record_length <= 32767:
+                raise RuntimeError("Overflow")
+            if not 0 <= record_length <= DEFAULT_RECORD_LENGTH:
+                raise MBasicError(5)
 
         # Validate and open file with appropriate mode using filesystem provider
         # Valid modes: I (input), O (output), A (append), R (random access)
@@ -3165,6 +3259,7 @@ class Interpreter:
                 'handle': file_handle,
                 'mode': mode,
                 'filename': filename,
+                'record_length': record_length,
                 'eof': False
             }
 
@@ -3245,18 +3340,29 @@ class Interpreter:
 
         buffer_info = self.runtime.field_buffers[file_num]
         offset = 0
+        layout = {}
 
-        # Process each field
+        # Lay out the fields over the record. The widths together must fit in
+        # the record length of OPEN (128 if none was given), else FIELD
+        # overflow. The binary binds the variables before the overflowing one
+        # and then stops; here nothing changes.
         for width_expr, var_node in stmt.fields:
-            width = int(self.evaluate_expression(width_expr))
+            width = to_integer(self.evaluate_expression(width_expr))
+            if not 0 <= width <= 255:
+                raise MBasicError(5)
             var_name = var_node.name + (var_node.type_suffix or '')
 
-            # Store field mapping
-            buffer_info['fields'][var_name] = (offset, width)
+            layout[var_name] = (offset, width)
             offset += width
+            if offset > file_info['record_length']:
+                raise MBasicError(50)
 
-        # Initialize buffer to appropriate size
-        buffer_info['buffer'] = bytearray(offset)
+        buffer_info['fields'].update(layout)
+
+        # The buffer is the record: as long as the record length, whatever the
+        # fields add up to, so GET and PUT keep the part no field covers.
+        if len(buffer_info['buffer']) != file_info['record_length']:
+            buffer_info['buffer'] = bytearray(file_info['record_length'])
 
     def execute_get(self, stmt):
         """Execute GET statement - read record from random-access file
@@ -3734,7 +3840,9 @@ class Interpreter:
 
     def evaluate_string(self, expr):
         """Evaluate string literal"""
-        return expr.value
+        value = expr.value
+        self.runtime.note_program_string(value)
+        return value
 
     def evaluate_variable(self, expr):
         """Evaluate variable reference"""
@@ -3752,6 +3860,11 @@ class Interpreter:
                 settings_manager=self.settings_manager
             )
 
+    def _check_string_temps(self, expr):
+        """String formula too complex, raised before the expression runs."""
+        if string_temps(expr)[0] > STRING_TEMPORARIES:
+            raise MBasicError(16)
+
     def evaluate_binaryop(self, expr):
         """Evaluate a binary operation at the precision MBASIC would use.
 
@@ -3765,6 +3878,7 @@ class Interpreter:
         subscripts and string lengths into floats for no gain, and MBASIC's
         integers are 16-bit anyway, far inside what a single holds exactly.
         """
+        self._check_string_temps(expr)
         result = self._binaryop_value(expr)
         kind = type(result)
         if kind is float:
@@ -3897,6 +4011,7 @@ class Interpreter:
 
     def evaluate_functioncall(self, expr):
         """Evaluate function call (built-in or user-defined)"""
+        self._check_string_temps(expr)
         result = self._functioncall_value(expr)
         # SQR(2) is 1.414213538169861 on the real binary even when the result
         # is put straight into a double, and SQR(2#) is the same: MBASIC's

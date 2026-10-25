@@ -116,6 +116,16 @@ SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
         scope=SettingScope.GLOBAL,
     ),
 
+    # File name settings
+    "cpm_file_names": SettingDefinition(
+        key="cpm_file_names",
+        type=SettingType.BOOLEAN,
+        default=True,
+        description="Refuse file names that CP/M MBASIC 5.21 refuses",
+        help_text="When enabled, OPEN, KILL and the like give Bad file name or Too many files for a name such as ABCDEFGHI.DAT or A*.X. Names with a slash or backslash are host paths and always pass. Turn off to use host names such as inputfile.txt",
+        scope=SettingScope.GLOBAL,
+    ),
+
     # Keyword settings
     "case_style": SettingDefinition(
         key="case_style",

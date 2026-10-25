@@ -20,6 +20,8 @@ FRE(X$)
 
 Arguments to FRE are dummy arguments. FRE returns the number of bytes in memory not being used by BASIC-80. FRE("") forces a garbage collection before returning the number of free bytes. BE PATIENT: garbage collection may take 1 to 1-1/2 minutes. BASIC will not initiate garbage collection until all free memory has been used up. Therefore, using FRE("") periodically will result in shorter delays for each garbage collection.
 
+In this interpreter FRE(0) and FRE("") give the same number: the string space (39168 bytes at start-up, changed by CLEAR ,n and CLEAR ,,n) less the bytes of the live strings. There is no memory model, so the number is an estimate. The error Out of string space comes when the strings do not fit.
+
 ## Example
 
 ```basic
