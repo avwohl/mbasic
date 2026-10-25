@@ -305,21 +305,22 @@ semantics are not:
 - Done (GitHub issues 28 and 29, `docs/dev/C_BACKEND.md`): the C backend
   has `\` and MOD (operands rounded to integers, as CINT does), `/` always gives
   a floating-point result, comparisons give -1, and AND, OR, XOR, EQV, IMP
-  and NOT work bit by bit on 16-bit integers. It still does not check the
-  operands for 16-bit overflow (#54).
-- Done for the JavaScript backend (#55): FOR and NEXT end a loop with
-  `_for_done(v, end, step)`, which is true when the sign of (v - end) equals the
-  sign of the step. With STEP 0 the loop ends only when the variable equals the
-  limit. Test: `tests/regression/integration/test_js_for_step_zero.py`. The C
-  backend also gets STEP 0 wrong (#55, C part).
+  and NOT work bit by bit on 16-bit integers.
+- Done (#54): the C backend rounds a fractional operand of `\`, MOD, AND,
+  OR, XOR, EQV, IMP and NOT, and an operand outside -32768..32767 after
+  rounding is `Overflow`. `\` and MOD with a zero divisor are `Division by
+  zero`. One edge stays open: `-32768 \ -1` wraps to -32768 in the C backend,
+  where MBASIC gives 32768.
+- Done (#55): FOR and NEXT end a loop when the sign of (v - end) equals the
+  sign of the step, in the JavaScript backend (`_for_done(v, end, step)`) and
+  in the C backend. With STEP 0 the loop ends only when the variable equals
+  the limit. Test: `tests/regression/integration/test_js_for_step_zero.py`
+  and the C backend tests.
 - Done (#56): AND, OR, XOR, EQV, IMP and NOT. The JavaScript backend matches
   real MBASIC (GitHub issue 15, `docs/dev/JS_LOGICAL_OPERATORS.md`), and the
   interpreter now does too: it rounds a fractional operand (`NOT 2.7` is -4)
   and stops with `Overflow` for an operand outside -32768..32767
-  (`40000 OR 1`), which `ON ERROR` can trap. The C
-  backend rounds a fractional operand and wraps an operand outside the range
-  to 16 bits, so it matches real MBASIC except that it does not stop with
-  Overflow (#54).
+  (`40000 OR 1`), which `ON ERROR` can trap.
 - Done (#57): WHILE and WEND in the JavaScript backend are jumps, as FOR and
   NEXT are (`docs/dev/JS_CONTROL_FLOW.md`). A WHILE and its WEND on different
   lines work. Test: `tests/regression/integration/test_js_while_wend.py`.

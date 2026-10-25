@@ -993,12 +993,16 @@ class Z88dkCBackend(CodeGenBackend):
             return VarType.DOUBLE
         return VarType.SINGLE
 
-    def _integer_value(self, expr: Any) -> str:
-        """C int expression for a numeric expression, rounded like CINT."""
+    def _integer_value(self, expr: Any, checked: bool = False) -> str:
+        """C int expression for a numeric expression, rounded like CINT.
+
+        checked is True for the operands of \\, MOD, AND, OR, XOR, EQV, IMP and
+        NOT: a value outside -32768..32767 after rounding is Overflow.
+        """
         c_expr = self._generate_expression(expr)
         if self._get_expression_type(expr) == VarType.INTEGER:
             return c_expr
-        return f'mb25_cint({c_expr})'
+        return f'{"mb25_int16" if checked else "mb25_cint"}({c_expr})'
 
     def _generate_variable_declarations(self) -> List[str]:
         """Generate C variable declarations from symbol table"""
@@ -1615,9 +1619,15 @@ class Z88dkCBackend(CodeGenBackend):
         both_int = var_is_int and end_is_int
         past_up = self._compare(var_name, '>', end, both_int)
         past_down = self._compare(var_name, '<', end, both_int)
+        # STEP 0 is over only when the variable equals the end (the sign of
+        # var - end must equal the sign of the step, and that sign is 0).
+        at_end = self._compare(var_name, '==', end, both_int)
         if step_const is None:
-            test = f'(({step}) >= 0 ? ({past_up}) : ({past_down}))'
-        elif step_const >= 0:
+            test = (f'(({step}) == 0 ? ({at_end}) : '
+                    f'(({step}) > 0 ? ({past_up}) : ({past_down})))')
+        elif step_const == 0:
+            test = at_end
+        elif step_const > 0:
             test = past_up
         else:
             test = past_down
@@ -3319,16 +3329,16 @@ class Z88dkCBackend(CodeGenBackend):
 
         if op in (TokenType.AND, TokenType.OR, TokenType.XOR, TokenType.EQV, TokenType.IMP,
                   TokenType.MOD, TokenType.BACKSLASH):
-            a = self._integer_value(expr.left)
-            b = self._integer_value(expr.right)
+            a = self._integer_value(expr.left, checked=True)
+            b = self._integer_value(expr.right, checked=True)
             return {
                 TokenType.AND: f'({a} & {b})',
                 TokenType.OR: f'({a} | {b})',
                 TokenType.XOR: f'({a} ^ {b})',
                 TokenType.EQV: f'(~({a} ^ {b}))',
                 TokenType.IMP: f'((~{a}) | {b})',
-                TokenType.MOD: f'({a} % {b})',
-                TokenType.BACKSLASH: f'({a} / {b})',
+                TokenType.MOD: f'mb25_imod({a}, {b})',
+                TokenType.BACKSLASH: f'mb25_idiv({a}, {b})',
             }[op]
 
         left = self._generate_expression(expr.left)
@@ -3366,7 +3376,7 @@ class Z88dkCBackend(CodeGenBackend):
     def _generate_unary_op(self, expr: UnaryOpNode) -> str:
         """Generate C code for unary operation"""
         if expr.operator == TokenType.NOT:
-            return f'(~{self._integer_value(expr.operand)})'
+            return f'(~{self._integer_value(expr.operand, checked=True)})'
         operand = self._generate_expression(expr.operand)
         if expr.operator == TokenType.MINUS:
             return f'(-{operand})'

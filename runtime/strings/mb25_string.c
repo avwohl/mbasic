@@ -1027,6 +1027,35 @@ int mb25_cint(double v) {
     return (int)(v < 0 ? -(-v + 0.5) : v + 0.5);
 }
 
+/* The operand of \, MOD, AND, OR, XOR, EQV, IMP and NOT: round like CINT, then
+ * MBASIC stops with Overflow for a value outside -32768..32767 (32767.5 and
+ * -32768.5 included).  The test is on the double, so nothing wraps first. */
+int mb25_int16(double v) {
+    /* Work on the size: uc80 gets a comparison of two negative floats wrong. */
+    int negative = v < 0;
+    double size = floor((negative ? -v : v) + 0.5);
+    if (size > (negative ? 32768.0 : 32767.0)) {
+        mb25_fail("Overflow");
+    }
+    return negative ? -(int)size : (int)size;
+}
+
+/* \ and MOD.  The operands are checked for Overflow before the divisor is
+ * tested, as MBASIC does. */
+int mb25_idiv(int a, int b) {
+    if (b == 0) {
+        mb25_fail("Division by zero");
+    }
+    return a / b;
+}
+
+int mb25_imod(int a, int b) {
+    if (b == 0) {
+        mb25_fail("Division by zero");
+    }
+    return a % b;
+}
+
 /* INT and FIX.  The library floor() and trunc() go through a 32-bit integer
  * and stop at 2^31; a float above 2^23 has no fraction, so it is returned as
  * it is. */

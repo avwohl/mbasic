@@ -199,6 +199,9 @@ int mb25_instr(int start, uint16_t a, uint16_t b);
 
 /* CINT rounding, the subscript check and SWAP for the compiled program */
 int mb25_cint(double v);
+int mb25_int16(double v);             /* CINT that stops with Overflow out of range */
+int mb25_idiv(int a, int b);          /* \ with Division by zero */
+int mb25_imod(int a, int b);          /* MOD with Division by zero */
 double mb25_int(double v);               /* INT */
 double mb25_fix(double v);               /* FIX */
 double mb25_sqr(double v);               /* SQR */
