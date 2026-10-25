@@ -261,10 +261,13 @@ def test_parentheses_survive_serialization():
         ("10 X=(A-B)-C", "X = A - B - C"),
         ("10 Y=A/(B/C)", "Y = A / (B / C)"),
         ("10 Z=(A/B)/C", "Z = A / B / C"),
-        # '^' is right-associative here (2^3^2 is 512), so at equal precedence
-        # it is the LEFT operand that has to keep its brackets.
-        ("10 R=(S^T)^U", "R = (S ^ T) ^ U"),
-        ("10 V=S^(T^U)", "V = S ^ T ^ U"),
+        # '^' is left-associative, as in MBASIC 5.21 (2^3^2 is 64), so at equal
+        # precedence it is the RIGHT operand that has to keep its brackets.
+        ("10 R=(S^T)^U", "R = S ^ T ^ U"),
+        ("10 V=S^(T^U)", "V = S ^ (T ^ U)"),
+        # A minus after ^ takes the rest of the chain, so (S^-T)^U keeps its brackets.
+        ("10 W=(S^-T)^U", "W = (S ^ -T) ^ U"),
+        ("10 X=S^-T^U", "X = S ^ -T ^ U"),
         ("10 C=(A<B)*(C>D)", "C = (A < B) * (C > D)"),
         ("10 F=(A OR B) AND C", "F = (A OR B) AND C"),
     ]

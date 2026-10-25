@@ -97,12 +97,14 @@ that associativity would otherwise change:
 
 	A-(B-C)     keeps its brackets      (A-B)-C     does not need them
 	A/(B/C)     keeps its brackets      (A/B)/C     does not need them
-	(S^T)^U     keeps its brackets      S^(T^U)     does not need them
+	S^(T^U)     keeps its brackets      (S^T)^U     does not need them
 
-`^` is the odd one: `parse_power()` recurses on the right and `2^3^2` evaluates
-to 512, so it is right-associative, and at equal precedence it is the LEFT
-operand that has to keep its brackets - the opposite of every other operator
-here. Twelve cases are pinned in the test.
+`^` follows the same rule as `-` and `/`: it is left-associative, as in
+MBASIC 5.21 (`2^3^2` is 64), so at equal precedence the RIGHT operand keeps its
+brackets. One more case: a minus or `NOT` after `^` takes the rest of the
+chain, so `(S^-T)^U` keeps its brackets (`S^-T^U` is `S^-(T^U)`). Fourteen
+cases are pinned in the test. (Before issue 26 the parser read `^` as
+right-associative and the rule was the other way round.)
 
 ## What the test now measures
 
