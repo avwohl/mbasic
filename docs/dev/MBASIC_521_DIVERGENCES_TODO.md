@@ -19,14 +19,8 @@ issue is closed, change its entry here to "Done", or remove the entry.
 ## 1. Errors that are still not detected
 
 The reporting is right now - `<message> in <line>`, no `?`, program stops - and
-25 provocations match the binary exactly. What is left is conditions we simply
-do not notice. Each prints nothing at all where the binary raises:
-
-| provocation | binary says | issue |
-|---|---|---|
-| `LOAD` of a file with a line longer than the 255-byte buffer (a typed line gives no error) | `Line buffer overflow in 10` | #34 |
-| `LOAD` of a file with a line that has no number | `Direct statement in file` | #35 |
-| `LOAD` or `MERGE` of a file with a bare line number for a missing line | `Undefined line number` (the REPL gives the same error) | #36 |
+25 provocations match the binary exactly. The conditions that we did not
+notice before are now detected:
 
 Done (GitHub issues 30 to 33, `docs/dev/STRING_SPACE_AND_FILE_ERRORS.md`):
 
@@ -49,6 +43,19 @@ Done (GitHub issues 30 to 33, `docs/dev/STRING_SPACE_AND_FILE_ERRORS.md`):
   `cpm_file_names` turns the check off. A command typed at the prompt is not
   checked.
 - The JavaScript and C backends do not raise any of these four errors.
+
+Done (#34, #35, #36): `LOAD` and `MERGE` of a file stop reading at the first bad
+line, as the binary does. The bad line is a line over 255 bytes (`Line buffer
+overflow in <number>`, 0 if the line has no number), a line with no number
+(`Direct statement in file`) or a bare number of a missing line (`Undefined
+line number`). The message is bare. The lines read before it stay: `LOAD` of a
+file with a bad first line leaves an empty program, and `MERGE` keeps the old
+program. A bare number of a missing line typed at the prompt also prints
+`Undefined line number`. Inside a running program the binary prints the bare
+message, does not run any `ON ERROR` handler and stops the program; ours does
+the same. `RUN "file"` of a file with a bad line stops after the message and
+does not run. The Tk and curses UIs print the same
+message. The web UI loads files through the editor and does not use the loader.
 
 A floating-point overflow is now reported. The binary prints a bare `Overflow`
 (no line number, no `Ok`). It substitutes machine infinity with the sign of the

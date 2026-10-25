@@ -4187,13 +4187,19 @@ class CursesBackend(UIBackend):
         # Update editor display
         self.editor.set_edit_text(self._get_editor_text())
 
-    def _load_program_file(self, filename):
+    def _load_program_file(self, filename, from_program=False):
         """Load a program from a file."""
         try:
             self.program.load_from_file(filename)
 
             # Sync program to editor
             self._sync_program_to_editor()
+
+            if self.program.read_abort is not None:
+                # MBASIC stops reading at a bad line and keeps what it read
+                self.output_buffer.append(self.program.read_abort[1])
+                self._update_output()
+                return
 
             # Runtime will be reset when user actually runs the program
 
@@ -4596,9 +4602,9 @@ class CursesBackend(UIBackend):
         """Execute NEW command."""
         self._new_program()
 
-    def cmd_load(self, filename):
+    def cmd_load(self, filename, from_program=False):
         """Execute LOAD command."""
-        self._load_program_file(filename)
+        self._load_program_file(filename, from_program=from_program)
 
     def cmd_save(self, filename):
         """Execute SAVE command."""
@@ -4658,7 +4664,7 @@ class CursesBackend(UIBackend):
         for message in messages:
             self._append_to_output(message)
 
-    def cmd_merge(self, filename, quiet=False):
+    def cmd_merge(self, filename, quiet=False, from_program=False):
         """Execute MERGE command using ProgramManager.
 
         quiet suppresses the summary, which a MERGE inside a running program
@@ -4681,7 +4687,7 @@ class CursesBackend(UIBackend):
 
             if success:
                 self._refresh_editor()
-                if not quiet:
+                if not quiet and self.program.read_abort is None:
                     self._append_to_output(f"Merged from {filename}")
                     self._append_to_output(
                         f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")

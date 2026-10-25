@@ -48,6 +48,8 @@ from src.input_sanitizer import sanitize_and_clear_parity
 from src.lexer import Lexer, LexerOverflow, create_keyword_case_manager, tokenize
 from src.parser import Parser
 from src.debug_logger import debug_log
+from src.error_codes import (format_error_message, LINE_BUFFER_OVERFLOW,
+                             DIRECT_STATEMENT_IN_FILE, UNDEFINED_LINE_NUMBER)
 
 
 def _lines_until_eof_mark(f):
@@ -105,6 +107,9 @@ class ProgramManager:
         #: Bare messages MBASIC prints while a line is entered without
         #: rejecting it ("Overflow" for a literal such as 1E39).
         self.notices: List[str] = []
+        # Set by load_from_file/merge_from_file when MBASIC would stop reading
+        # the file with an error: (error number, message). None otherwise.
+        self.read_abort: Optional[Tuple[int, str]] = None
 
     def take_notices(self) -> List[str]:
         """The messages gathered since the last call, oldest first."""
@@ -258,6 +263,26 @@ class ProgramManager:
 
         self.current_file = filename
 
+    def _abort_read(self, errors, code, line_number=None):
+        """Stop reading a program file the way MBASIC does.
+
+        MBASIC prints the bare message (no file name), keeps the lines read so
+        far and drops the rest of the file. The caller breaks out of its loop.
+        """
+        message = format_error_message(code, line_number)
+        self.read_abort = (code, message)
+        errors.append((0, message))
+
+    def _line_buffer_overflows(self, errors, raw):
+        """True, after aborting the read, if a file line overflows MBASIC's
+        255 byte line buffer. The error names the line's number, 0 if none."""
+        if len(raw.rstrip('\r\n')) <= 255:
+            return False
+        match = re.match(r'\s*(\d+)', raw)
+        self._abort_read(errors, LINE_BUFFER_OVERFLOW,
+                         int(match.group(1)) if match else 0)
+        return True
+
     def load_from_file(self, filename: str) -> Tuple[bool, List[Tuple[int, str]]]:
         """Load program from file.
 
@@ -278,12 +303,15 @@ class ProgramManager:
         # Clear existing program
         self.clear()
         self.notices = []
+        self.read_abort = None
 
         errors = []
         success_count = 0
 
         with open(filename, 'r') as f:
             for file_line, line in enumerate(_lines_until_eof_mark(f), 1):
+                if self._line_buffer_overflows(errors, line):
+                    break
                 line = line.strip()
                 if not line:
                     continue
@@ -294,13 +322,16 @@ class ProgramManager:
                 # Extract line number
                 match = re.match(r'^(\d+)', line)
                 if not match:
-                    errors.append((0, f'{filename}: file line {file_line}: expected a BASIC line number'))
-                    continue
+                    # MBASIC stops reading at a line with no number
+                    self._abort_read(errors, DIRECT_STATEMENT_IN_FILE)
+                    break
 
                 line_num = int(match.group(1))
                 if not line[match.end():].strip():
                     # Bare line number: like typing it, this deletes the line
-                    self.delete_line(line_num)
+                    if not self.delete_line(line_num):
+                        self._abort_read(errors, UNDEFINED_LINE_NUMBER)
+                        break
                     success_count += 1
                     continue
                 success, error = self.add_line(line_num, line)
@@ -340,6 +371,7 @@ class ProgramManager:
             FileNotFoundError: If file doesn't exist
             IOError: If file cannot be read
         """
+        self.read_abort = None
         errors = []
         lines_added = 0
         lines_replaced = 0
@@ -347,6 +379,8 @@ class ProgramManager:
 
         with open(filename, 'r') as f:
             for file_line, line in enumerate(_lines_until_eof_mark(f), 1):
+                if self._line_buffer_overflows(errors, line):
+                    break
                 line = line.strip()
                 if not line:
                     continue
@@ -357,13 +391,16 @@ class ProgramManager:
                 # Extract line number
                 match = re.match(r'^(\d+)', line)
                 if not match:
-                    errors.append((0, f'{filename}: file line {file_line}: expected a BASIC line number'))
-                    continue
+                    # MBASIC stops reading at a line with no number
+                    self._abort_read(errors, DIRECT_STATEMENT_IN_FILE)
+                    break
 
                 line_num = int(match.group(1))
                 if not line[match.end():].strip():
                     # Bare line number: like typing it, this deletes the line
-                    self.delete_line(line_num)
+                    if not self.delete_line(line_num):
+                        self._abort_read(errors, UNDEFINED_LINE_NUMBER)
+                        break
                     lines_deleted += 1
                     continue
 

@@ -536,6 +536,8 @@ class InteractiveMode:
                     # Update runtime's statement_table if program is running
                     if self.program_runtime:
                         self.program_runtime.statement_table.delete_line(line_num)
+                else:
+                    print(format_error_message(UNDEFINED_LINE_NUMBER))
             else:
                 # Add/replace line - store both text and parsed AST
                 self.lines[line_num] = line
@@ -786,7 +788,21 @@ class InteractiveMode:
         except Exception as e:
             print(message_for(e))
 
-    def cmd_load(self, filename):
+    def _report_read_abort(self, from_program):
+        """Report a file read that MBASIC stops with an error.
+
+        LOAD and MERGE of a file with a line over 255 bytes, a line with no
+        number, or a bare number of a missing line print the bare message and
+        keep the lines read before it. Returns True when that happened. The
+        message is bare and no ON ERROR handler runs, even inside a running
+        program (measured on the binary); the caller stops the program.
+        """
+        if self.program.read_abort is None:
+            return False
+        print(self.program.read_abort[1])
+        return True
+
+    def cmd_load(self, filename, from_program=False):
         """LOAD "filename" - Load program from file"""
         filename = _usable_filename(filename)
         if filename is None:
@@ -796,6 +812,13 @@ class InteractiveMode:
             filename = _with_default_extension(filename)
 
             success, errors = self.program.load_from_file(filename)
+
+            if self.program.read_abort is not None:
+                # Lines read before the bad line stay, as in MBASIC
+                if success:
+                    self.current_file = filename
+                self._report_read_abort(from_program)
+                return True  # the read was aborted
 
             if errors:
                 # Print parse errors
@@ -814,7 +837,7 @@ class InteractiveMode:
         except Exception as e:
             print(message_for(e))
 
-    def cmd_merge(self, filename, quiet=False):
+    def cmd_merge(self, filename, quiet=False, from_program=False):
         """MERGE "filename" - Merge program from file into current program
 
         MERGE adds or replaces lines from a file without clearing existing lines.
@@ -836,6 +859,15 @@ class InteractiveMode:
         try:
             # Use ProgramManager's merge_from_file
             success, errors, lines_added, lines_replaced = self.program.merge_from_file(filename)
+
+            if self.program.read_abort is not None:
+                # The lines merged before the bad line stay, as in MBASIC
+                if self.program_runtime:
+                    for line_num in self.program.line_asts:
+                        line_ast = self.program.line_asts[line_num]
+                        self.program_runtime.statement_table.replace_line(line_num, line_ast)
+                self._report_read_abort(from_program)
+                return True  # the read was aborted
 
             # Show parse errors if any
             if errors:
