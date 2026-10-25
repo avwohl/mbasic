@@ -14,7 +14,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from src.input_fields import val_text
 from src.number_format import (SINGLE_DIGITS, DOUBLE_DIGITS, _round_to_digits, radix_word,
-                               to_integer, to_single)
+                               to_integer, to_single, format_number)
 
 # tty, termios, os, sys and win_console used to be imported here for INKEY$ and
 # INPUT$.
@@ -100,6 +100,11 @@ def _mbasic_decimal(value, digits):
         # binary value to 16 figures would invent one.
         magnitude = Decimal(repr(float(magnitude)))
     return _round_to_digits(magnitude, digits)
+
+
+#: A fixed-point USING field holds up to 16 digits; from 1E16 up the field
+#: overflows into the PRINT form of the number.
+_USING_FIXED_LIMIT = Decimal(10) ** 16
 
 
 class UsingFormatter:
@@ -408,6 +413,15 @@ class UsingFormatter:
             return str(value)                   # NaN/Infinity: nothing to imitate
 
         negative = _is_negative(value)
+
+        if not spec['exponential'] and magnitude >= _USING_FIXED_LIMIT:
+            # Sixteen digits or more: PUFOUT gives up on the fixed layout and
+            # prints '%' followed by the number as PRINT would convert it,
+            # always with the blank where a sign goes - the sign of a negative
+            # value, a leading + or $ and a trailing sign are all dropped.
+            # Measured on 5.21: "##.#" of 1E16 is "% 1E+16", of -1E16 also
+            # "% 1E+16", and of the clamped 10^40 "% 1.70141E+38".
+            return '% ' + format_number(abs(value), digits)
 
         if spec['exponential']:
             int_str, frac_str, suffix = self._exponential_parts(

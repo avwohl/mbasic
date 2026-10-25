@@ -464,6 +464,8 @@ function _using_number(v, spec, digits) {
     if (v !== v || v === Infinity || v === -Infinity) return String(v);
     const negative = v < 0;
     let [ds, exp] = _using_magnitude(v, digits);
+    // 16 digits or more overflow the fixed layout into '%' and the PRINT form of the number, sign dropped.
+    if (!spec.exponential && exp >= 16) return "% " + _fmt_num(Math.abs(v), digits);
     let int_str, frac_str, suffix = "";
     if (spec.exponential) {
         const trailing = spec.trailing_sign || spec.trailing_minus_only;

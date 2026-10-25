@@ -37,6 +37,9 @@ The JavaScript runtime has these parts:
   For a double, the port starts from the shortest decimal form of the value,
   as `UsingFormatter` does. The exact binary of 1D-11 is just below 1E-11, and
   the real binary has no carry there, so `##.##^^^^` shows 1.00D-11.
+  A fixed field with a value of 1E16 or more prints `%`, a space and the PRINT
+  form of the number (`% 1E+16`, `% 1.70141E+38` for the clamped 10^40). The
+  sign, `$` and trailing sign are dropped, as on the real binary.
 * `_toInt` rounds halves away from zero and raises Overflow outside
   -32768 to 32767, like the interpreter.
 * Arithmetic follows the interpreter (`docs/dev/MBASIC_521_DIVERGENCES_TODO.md`,
