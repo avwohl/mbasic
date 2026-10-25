@@ -74,18 +74,22 @@ a file, with CR LF at the end of each line. `LPRINT` writes to the console.
 
 ## Arrays
 
-A numeric array is a flat C array.
+A numeric array is a flat C array. A string array is a run of consecutive
+descriptors in the string pool, so element n has the ID of the array plus n.
 
 - `DIM` does nothing when the program runs. The sizes must be constants (the
   semantic analyzer checks this). The program start sets all storage to zero.
 - An array that has no `DIM` has 11 elements for each subscript.
 - `OPTION BASE 1` works. The program rounds every subscript to an integer and checks
   it. A subscript outside the array stops the program with `?Subscript out of range`.
-- A string array is an error: the compiler says so and writes no C file.
-- `ERASE` empties a numeric array. It does not free the memory, and a later `DIM`
-  cannot change the size.
+- A string array element works wherever a string variable works: assignment,
+  expressions, `PRINT`, `INPUT`, `LINE INPUT`, `READ`, `SWAP`, `MID$` assignment,
+  `LSET` and `RSET`.
+- `ERASE` empties the array. It does not free the memory, and a later `DIM` cannot
+  change the size.
 - A variable and an array can have the same name (`A` and `A(1)`). The C names are
-  different: arrays end in `_arr`.
+  different: arrays end in `_arr`, and a string array has its own `STR_` macro.
+- The limit is 16383 string descriptors in all (the IDs have 14 bits).
 
 ## Loops and control flow
 

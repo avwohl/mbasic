@@ -576,7 +576,8 @@ class Z88dkCBackend(CodeGenBackend):
 
         for key in sorted(self.array_ranks):
             if self._key_type(key) == VarType.STRING:
-                self._unsupported(f"string array {key}() (the C backend has no string arrays)")
+                self.string_ids[key + '()'] = current_id
+                current_id += self._array_total(key)
 
         # Reserve space for temporaries (for complex expressions)
         temp_count = self._estimate_temp_strings_needed(program)
@@ -946,11 +947,15 @@ class Z88dkCBackend(CodeGenBackend):
         return self._mangle_variable_name(self._canonical_basic_name(var_node))
 
     def _string_var_id(self, var_node: Any) -> str:
-        """C expression for the string-pool ID of a string variable."""
+        """C expression for the string-pool ID of a string variable or element.
+
+        A string array owns a run of consecutive descriptors starting at the ID
+        the STR_<name> macro gives, so an element is that ID plus the flat index.
+        """
         if getattr(var_node, 'subscripts', None):
-            self._unsupported(f"string array {self._array_key(var_node)}() "
-                              "(the C backend has no string arrays)")
-            return '0'
+            key = self._array_key(var_node)
+            base = self._get_string_id(key + '()')
+            return f'({base} + {self._array_element_index(var_node)})'
         return self._get_string_id(self._canonical_basic_name(var_node))
 
     # ------------------------------------------------------------------
@@ -3618,7 +3623,8 @@ class Z88dkCBackend(CodeGenBackend):
             key = keys[0]
             total = self._array_total(key)
             if self._key_type(key) == VarType.STRING:
-                self._unsupported(f"ERASE {name}: string arrays are not supported")
+                base = self._get_string_id(key + '()')
+                code.append(self.indent() + f'{{ int _e; for (_e = 0; _e < {total}; _e++) mb25_string_clear({base} + _e); }}')
             else:
                 c_name = self._mangle_variable_name(key) + '_arr'
                 code.append(self.indent() + f'memset({c_name}, 0, sizeof({c_name}));')

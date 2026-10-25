@@ -149,6 +149,74 @@ def test_control_flow_and_loops(tmp_path):
 """)
 
 
+# --- Issue 28: string arrays -------------------------------------------------
+
+@NEEDS_TOOLCHAIN
+def test_issue_28_example(tmp_path):
+    """INPUT and LINE INPUT into an element, and PRINT of elements."""
+    source = ('10 DIM A$(3),N(3)\n20 A$(1)="x":A$(2)="y"\n30 N(1)=5\n40 INPUT A$(3)\n'
+              '50 PRINT A$(1);A$(2);A$(3);N(1)\n60 LINE INPUT "P";A$(1)\n70 PRINT A$(1)\n')
+    check_same(tmp_path, source, "hello\nsecond line\n")
+
+
+@NEEDS_TOOLCHAIN
+def test_string_arrays(tmp_path):
+    check_same(tmp_path, """10 DIM A$(5), B$(2,3), N(4), M%(3)
+20 FOR I=0 TO 5: A$(I)=CHR$(65+I)+STR$(I): NEXT I
+30 FOR I=0 TO 5: PRINT A$(I);: NEXT I: PRINT
+40 FOR I=0 TO 2: FOR J=0 TO 3: B$(I,J)=A$(I)+"-"+A$(J): NEXT J,I
+50 PRINT B$(2,3), B$(0,1)
+60 PRINT B$(1,2);"|";B$(2,0)
+70 SWAP A$(1),A$(4)
+80 PRINT A$(1);A$(4)
+90 MID$(A$(2),2,1)="Z"
+100 PRINT A$(2)
+110 READ A$(0),A$(5),N(2),M%(1)
+120 DATA first,last,3.5,7
+130 PRINT A$(0);A$(5);N(2);M%(1)
+140 IF A$(0)="first" THEN PRINT "eq" ELSE PRINT "ne"
+150 IF A$(0)<A$(5) THEN PRINT "lt" ELSE PRINT "ge"
+160 PRINT LEN(A$(2)), LEFT$(A$(5),2), A$(5)+A$(0)
+170 I=2: PRINT A$(I+1);A$(I*2-1)
+180 A$(3)=LEFT$(A$(3),1)+MID$(A$(4),2)+RIGHT$("xyz",2)
+190 PRINT A$(3);INSTR(A$(3),"y");ASC(A$(0));VAL(A$(2))
+200 ERASE A$
+210 PRINT "[";A$(1);"]";LEN(A$(2))
+220 N(1)=1/3: N(3)=-N(1)*2: PRINT N(1);N(3);N(1)+N(3)
+230 M%(2)=7: M%(3)=M%(2)*3: PRINT M%(3)
+240 END
+""")
+
+
+@NEEDS_TOOLCHAIN
+def test_string_array_garbage_collection(tmp_path):
+    """6000 concatenations into 20 elements fill the pool many times over."""
+    check_same(tmp_path, """10 DIM W$(20)
+20 FOR I=1 TO 6000
+30 J=I MOD 20
+40 W$(J)=STR$(I)+"abc"+W$((J+7) MOD 20)
+50 IF LEN(W$(J))>60 THEN W$(J)=LEFT$(W$(J),30)
+60 A$=A$+"x": IF LEN(A$)>100 THEN A$=MID$(A$,50)
+70 NEXT I
+80 FOR J=0 TO 19: PRINT J;W$(J): NEXT J
+90 PRINT LEN(A$)
+""")
+
+
+@NEEDS_TOOLCHAIN
+def test_option_base_and_undimensioned_arrays(tmp_path):
+    check_same(tmp_path, """10 OPTION BASE 1
+20 DIM W$(3), T(2,2)
+30 W$(1)="one": W$(3)="three"
+40 T(1,1)=11: T(2,2)=22: T(1,2)=12
+50 PRINT W$(1);W$(3);T(1,1);T(1,2);T(2,2)
+60 C$(10)="ten": C$(1)="one"
+70 PRINT C$(10);C$(1);LEN(C$(5))
+80 A=5: A(2)=7: PRINT A;A(2)
+90 END
+""")
+
+
 @NEEDS_TOOLCHAIN
 def test_strings_in_expressions(tmp_path):
     check_same(tmp_path, """10 A$="hello": B$="world"
@@ -247,7 +315,7 @@ def test_on_gosub_and_if_else_line(tmp_path):
 
 @NEEDS_TOOLCHAIN
 def test_subscript_out_of_range_stops_the_program(tmp_path):
-    source = '10 DIM A(2)\n20 PRINT "before"\n30 A(3)=1\n40 PRINT "after"\n'
+    source = '10 DIM A$(2)\n20 PRINT "before"\n30 A$(3)="x"\n40 PRINT "after"\n'
     assert compile_c(tmp_path, source).returncode == 0
     # CP/M has one console, so the error message arrives on the same stream
     assert run_compiled(tmp_path, "") == "before\n?Subscript out of range\n"
@@ -261,14 +329,6 @@ def test_unsupported_construct_is_a_compile_error(tmp_path):
     assert result.returncode == 1
     assert "Cannot compile to C" in result.stderr
     assert "INKEY$" in result.stderr
-    assert not (tmp_path / "prog.c").exists()
-
-
-def test_string_array_is_a_compile_error(tmp_path):
-    """It used to compile to code that used the plain variable A$ instead."""
-    result = compile_c(tmp_path, '10 DIM A$(3)\n20 A$(1)="x"\n30 PRINT A$(1)\n')
-    assert result.returncode == 1
-    assert "string array" in result.stderr
     assert not (tmp_path / "prog.c").exists()
 
 
