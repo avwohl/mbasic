@@ -370,3 +370,50 @@ shows one digit, even when that digit overflows the field.
 The interpreter and the JavaScript output agree with the binary in all of
 them. The cases are pinned in `tests/regression/interpreter/test_number_format.py`
 and in `tests/regression/integration/fixtures/js_print_format/using.bas`.
+
+## Overflow, VAL, &H and &O constants, HEX$ and OCT$ (issues 16, 18 and 19)
+
+The programs in `tests/regression/integration/fixtures/number_semantics/` ran on
+the binary, and the output is in the `.real` files. The interpreter and the
+JavaScript output equal these files.
+
+Overflow and domain errors (issue 16):
+
+- A float overflow prints a bare `Overflow` and carries on with machine
+  infinity (`1.70141E+38` single, `1.701411834604693D+38` double) in the sign of
+  the true result. With `ON ERROR` it is ERR 6. `1/0` and `0^-1` are
+  `Division by zero` in the same way (ERR 11). `PRINT "A=";10^40` prints `A=`,
+  then `Overflow`, then the number on the next line.
+- `SQR(-1)`, `LOG(0)`, `LOG(-1)` and `(-8)^(1/3)` are `Illegal function call`
+  (ERR 5). `5\0` and `5 MOD 0` are fatal `Division by zero`. `CINT(40000)` is
+  fatal `Overflow`.
+- `A! = 1D39` and `CSNG(1D39)` give `Overflow` and machine infinity.
+- `PRINT 1E39` gives `Overflow` when the line is entered. The line is stored
+  as `1.70141E+38`.
+- Not copied, because the project keeps IEEE arithmetic: results that only MBF
+  cannot hold (`2^127`, `EXP(88)`), and the sign of a double divide by zero,
+  which depends on earlier arithmetic on the binary.
+
+VAL (issue 18), 128 strings tried:
+
+- Spaces and tabs are skipped inside a decimal number (`1 2` is 12, `- 5` is
+  -5). A carriage return ends the number.
+- `D` and `E` are exponent letters in either case. An exponent without digits
+  is 0 (`1E+` is 1).
+- The number ends at the second point and at any other character.
+- `&H` takes hex digits and no blanks. `&O` and `&` take octal digits and skip
+  blanks. `& H10` is 16 and `&H 10` is 0. `-&H10` is 0.
+- More than four hex digits (`&H00010`) or an octal number above 65535 is
+  `Overflow`. An 8 or 9 in an octal number is `Syntax error`.
+- `1.5%` is 2 and `40000%` is `Overflow`.
+- `VAL("1E400")` is `Overflow` and machine infinity.
+
+&H, &O, HEX$ and OCT$ (issue 19):
+
+- `&HFFFF` and `&O177777` are -1. `&H8000` is -32768.
+- The lexer refuses a constant of more than four hex digits (even `&H00010`) or
+  an octal value above 65535 with `Overflow`. The line is not stored.
+- `HEX$` and `OCT$` show the 16-bit pattern. A value from 32768 up first moves
+  down by 65536. Then it rounds half away from zero and must fit -32768 to
+  32767. So `HEX$(65535.5)` is `FFFF`, `HEX$(65535.6)` is `0`, `HEX$(32767.5)`
+  is `Overflow`, and `HEX$(65536)` is `Overflow`.

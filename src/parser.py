@@ -897,7 +897,8 @@ class Parser:
         # Right associative
         if self.match(TokenType.POWER):
             op = self.advance()
-            right = self.parse_power()
+            # The exponent may carry a sign: 2^-3 is .125 and 0^-1 is a division by zero.
+            right = self.parse_unary()
             return BinaryOpNode(
                 operator=op.type,
                 left=left,

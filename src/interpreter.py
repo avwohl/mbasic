@@ -16,6 +16,8 @@ from src.win_console import win_flush_pending
 from src.number_format import (format_for_print, format_number, int_divide, int_modulo,
                                numeric_digits,
                                MBF_INFINITY_SINGLE, to_int_operand,
+                               exceeds_range, machine_infinity,
+                               SINGLE_LIMIT, DOUBLE_MAX,
                                to_integer, to_single, coerce_to_type,
                                INTEGER_DIGITS, SINGLE_DIGITS, DOUBLE_DIGITS)
 from src.iohandler.base import KeyInputPending
@@ -1014,6 +1016,10 @@ class Interpreter:
                 raise TypeError("Type mismatch")
             if not isinstance(value, (int, float)):
                 value = float(value) if value else 0
+            if (stmt.variable.type_suffix != '#' and type(value) is float
+                    and abs(value) >= SINGLE_LIMIT):
+                # A double too big for a single variable: A! = 1D39
+                value = self._overflow(value < 0, SINGLE_DIGITS)
 
         if stmt.variable.subscripts:
             # Array assignment
@@ -1117,59 +1123,73 @@ class Interpreter:
         else:
             file_handle = None
 
-        output_parts = []
-
-        for i, expr in enumerate(stmt.expressions):
-            value = self.evaluate_expression(expr)
-
-            # Check for special TAB/SPC markers
-            if isinstance(value, TabMarker) or isinstance(value, SpcMarker):
-                # Keep marker object for later processing
-                output_parts.append(value)
-            # Convert to string
-            elif isinstance(value, (int, float)) and not isinstance(value, bool):
-                # MBASIC shows 6 significant figures for a single-precision
-                # value and 16 for a double, with a leading space unless the
-                # number is negative and a trailing space always. Which of the
-                # two applies is a property of the expression, not the value -
-                # see _numeric_digits(). src/number_format.py has the rules.
-                output_parts.append(
-                    format_for_print(value, self._numeric_digits(expr)))
-            else:
-                s = str(value)
-                output_parts.append(s)
-
-        # Handle separators and build output
+        # Items are printed as they are evaluated, as MBASIC does: "A=" is on
+        # the screen before 10^40 prints Overflow, and when an item fails the
+        # ones before it have already been shown. _notice() relies on this.
         output = ""
-        for i, part in enumerate(output_parts):
-            # Handle TAB and SPC markers
-            if isinstance(part, TabMarker):
-                # TAB(n) - move to column n (1-based)
-                target_col = part.column
-                current_col = len(output) + 1  # 1-based column
-                if current_col < target_col:
-                    # Add spaces to reach target column
-                    output += " " * (target_col - current_col)
-                # If already past target, don't move backwards
-            elif isinstance(part, SpcMarker):
-                # SPC(n) - print n spaces
-                output += " " * part.count
-            else:
-                # Regular string
-                output += part
-            if i < len(stmt.separators):
-                sep = stmt.separators[i]
-                if sep == ',':
-                    # Tab to next zone (14-character zones in MBASIC)
-                    current_len = len(output)
-                    next_zone = ((current_len // 14) + 1) * 14
-                    output += " " * (next_zone - current_len)
-                elif sep == ';':
-                    # No spacing (already handled in number formatting)
-                    pass
-                elif sep == '\n':
-                    # Newline
-                    output += '\n'
+
+        def flush_partial():
+            nonlocal output
+            if output:
+                self.io.output(output, end='')
+                output = ""
+
+        if file_handle is None:
+            self._partial_print = flush_partial
+        try:
+            for i, expr in enumerate(stmt.expressions):
+                value = self.evaluate_expression(expr)
+
+                # Check for special TAB/SPC markers
+                if isinstance(value, TabMarker) or isinstance(value, SpcMarker):
+                    # Keep marker object for later processing
+                    part = value
+                # Convert to string
+                elif isinstance(value, (int, float)) and not isinstance(value, bool):
+                    # MBASIC shows 6 significant figures for a single-precision
+                    # value and 16 for a double, with a leading space unless the
+                    # number is negative and a trailing space always. Which of the
+                    # two applies is a property of the expression, not the value -
+                    # see _numeric_digits(). src/number_format.py has the rules.
+                    part = format_for_print(value, self._numeric_digits(expr))
+                else:
+                    part = str(value)
+
+                # Handle TAB and SPC markers
+                if isinstance(part, TabMarker):
+                    # TAB(n) - move to column n (1-based)
+                    target_col = part.column
+                    current_col = len(output) + 1  # 1-based column
+                    if current_col < target_col:
+                        # Add spaces to reach target column
+                        output += " " * (target_col - current_col)
+                    # If already past target, don't move backwards
+                elif isinstance(part, SpcMarker):
+                    # SPC(n) - print n spaces
+                    output += " " * part.count
+                else:
+                    # Regular string
+                    output += part
+                if i < len(stmt.separators):
+                    sep = stmt.separators[i]
+                    if sep == ',':
+                        # Tab to next zone (14-character zones in MBASIC)
+                        current_len = len(output)
+                        next_zone = ((current_len // 14) + 1) * 14
+                        output += " " * (next_zone - current_len)
+                    elif sep == ';':
+                        # No spacing (already handled in number formatting)
+                        pass
+                    elif sep == '\n':
+                        # Newline
+                        output += '\n'
+        except KeyInputPending:
+            raise
+        except Exception:
+            flush_partial()
+            raise
+        finally:
+            self._partial_print = None
 
         # Output to file or screen
         if file_handle:
@@ -1323,7 +1343,7 @@ class Interpreter:
             pass                            # a node with __slots__: recompute
         return target
 
-    def _divide_by_zero(self, dividend):
+    def _divide_by_zero(self, dividend, digits=SINGLE_DIGITS):
         r"""What a floating-point divide by zero does on 5.21.
 
         Not an error at all, unless a handler is armed. The ANSI overflow
@@ -1343,15 +1363,72 @@ class Interpreter:
 
         With ON ERROR armed it IS trappable, with ERR 11, and the assignment
         never completes - so there the ordinary error path is the right one.
+        A double expression gets the double machine infinity.
         """
         if self.runtime.has_error_handler():
             raise RuntimeError("Division by zero")
-        self.io.output("Division by zero")
-        infinity = MBF_INFINITY_SINGLE
+        self._notice("Division by zero")
         try:
-            return -infinity if dividend < 0 else infinity
+            return machine_infinity(digits, dividend < 0)
         except TypeError:
-            return infinity
+            return machine_infinity(digits)
+
+    _partial_print = None
+
+    def _notice(self, text):
+        """Print a bare error message that does not stop the program.
+
+        A PRINT that is half done shows what it has so far first, so the
+        message lands after "A=" and the number follows on the next line.
+        """
+        if self._partial_print is not None:
+            self._partial_print()
+        self.io.output(text)
+
+    def _overflow(self, negative, digits):
+        """A result too big for its precision: the same routine, "Overflow".
+
+        Prints a bare "Overflow", substitutes machine infinity with the sign
+        of the true result and carries on - or, with ON ERROR armed, is ERR 6
+        and the statement never completes. "Too big" means infinite in the
+        IEEE format of the precision (the MBF range is not emulated; see
+        docs/dev/MBASIC_521_DIVERGENCES_TODO.md, section 10).
+        """
+        if self.runtime.has_error_handler():
+            raise OverflowError("Overflow")
+        self._notice("Overflow")
+        return machine_infinity(digits, negative)
+
+    def _range_checked(self, result, digits):
+        """A float result at its precision; Overflow if the precision cannot hold it."""
+        if digits == SINGLE_DIGITS:
+            if abs(result) >= SINGLE_LIMIT:
+                return self._overflow(result < 0, digits)
+            return to_single(result)
+        if digits == DOUBLE_DIGITS and abs(result) > DOUBLE_MAX:
+            return self._overflow(result < 0, digits)
+        return result
+
+    def _power(self, left, right, digits):
+        """MBASIC's ^ : a float result, with the real binary's error cases.
+
+        0 ^ negative is a (non-fatal) division by zero; a negative base with a
+        fraction in the exponent is Illegal function call, where Python would
+        hand back a complex number; a result too big is Overflow.
+        """
+        if isinstance(left, str) or isinstance(right, str):
+            raise TypeError("Type mismatch")
+        if left == 0 and right < 0:
+            return self._divide_by_zero(1, digits)
+        if left < 0 and right != int(right):
+            raise ValueError("Illegal function call")
+        try:
+            if isinstance(left, int) and isinstance(right, int) and 0 <= right <= 256:
+                return left ** right
+            return float(left) ** float(right)
+        except OverflowError:
+            odd = right == int(right) and int(right) % 2 == 1
+            return self._overflow(left < 0 and odd, digits)
 
     def _jump_to(self, line_number):
         """Set the next PC to a program line, checking that it is there.
@@ -3525,8 +3602,14 @@ class Interpreter:
         integers are 16-bit anyway, far inside what a single holds exactly.
         """
         result = self._binaryop_value(expr)
-        if type(result) is float and self._expression_digits(expr) == SINGLE_DIGITS:
-            return to_single(result)
+        kind = type(result)
+        if kind is float:
+            return self._range_checked(result, self._expression_digits(expr))
+        if kind is int and expr.operator == TokenType.POWER:
+            # 10^40 is an exact Python int; the single it really is cannot hold it.
+            digits = self._expression_digits(expr)
+            if exceeds_range(result, digits):
+                return self._overflow(result < 0, digits)
         return result
 
     def _expression_digits(self, expr):
@@ -3568,15 +3651,19 @@ class Interpreter:
             return left * right
         elif op == TokenType.DIVIDE:
             if right == 0:
-                return self._divide_by_zero(left)
-            return left / right
+                return self._divide_by_zero(left, self._expression_digits(expr))
+            try:
+                return left / right
+            except OverflowError:       # int / int, too big for a float
+                return self._overflow((left < 0) != (right < 0),
+                                      self._expression_digits(expr))
         elif op == TokenType.BACKSLASH:  # Integer division
             # Not Python's // : MBASIC truncates toward zero, rounds both
             # operands to integers first and requires them to fit 16 bits.
             # See src/number_format.py.
             return int_divide(left, right)
         elif op == TokenType.POWER:
-            return left ** right
+            return self._power(left, right, self._expression_digits(expr))
         elif op == TokenType.MOD:
             # Not Python's % : the remainder takes the sign of the dividend.
             return int_modulo(left, right)
@@ -3651,8 +3738,8 @@ class Interpreter:
         # is put straight into a double, and SQR(2#) is the same: MBASIC's
         # maths functions work in single precision. CDBL and VAL say otherwise
         # in _FUNCTION_PRECISION, and a DEF FN goes by its name.
-        if type(result) is float and self._expression_digits(expr) == SINGLE_DIGITS:
-            return to_single(result)
+        if type(result) is float:
+            return self._range_checked(result, self._expression_digits(expr))
         return result
 
     def _functioncall_value(self, expr):

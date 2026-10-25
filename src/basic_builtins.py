@@ -12,8 +12,9 @@ import math
 import random
 from decimal import Decimal, ROUND_HALF_UP
 
-from src.number_format import (SINGLE_DIGITS, _round_to_digits, to_integer,
-                               to_single)
+from src.input_fields import val_text
+from src.number_format import (SINGLE_DIGITS, _round_to_digits, radix_word,
+                               to_integer, to_single)
 
 # tty, termios, os, sys and win_console used to be imported here for INKEY$ and
 # INPUT$.
@@ -545,8 +546,12 @@ class BuiltinFunctions:
         return math.cos(x)
 
     def EXP(self, x):
-        """Exponential (e^x)"""
-        return math.exp(x)
+        """Exponential (e^x). A result too big for a float is infinity here;
+        the interpreter turns that into Overflow for the precision it works in."""
+        try:
+            return math.exp(x)
+        except OverflowError:
+            return float('inf')
 
     def FIX(self, x):
         """Truncate to integer (towards zero)"""
@@ -623,7 +628,10 @@ class BuiltinFunctions:
         Python's round() is banker's rounding, which sends 2.5 to 2. The real
         binary says CINT(2.5) is 3 and CINT(-2.5) is -3.
         """
-        return to_integer(float(x))
+        number = to_integer(float(x))
+        if not -32768 <= number <= 32767:
+            raise OverflowError("Overflow")
+        return number
 
     def CSNG(self, x):
         """Convert to single precision, losing what a single cannot hold."""
@@ -745,7 +753,7 @@ class BuiltinFunctions:
 
     def HEX(self, x):
         """Hexadecimal string representation"""
-        return hex(int(x))[2:].upper()  # Remove '0x' prefix
+        return format(radix_word(x), 'X')
 
     def INSTR(self, *args):
         """
@@ -810,7 +818,7 @@ class BuiltinFunctions:
 
     def OCT(self, x):
         """Octal string representation"""
-        return oct(int(x))[2:]  # Remove '0o' prefix
+        return format(radix_word(x), 'o')
 
     def RIGHT(self, s, n):
         """Right n characters of string. A fractional n rounds."""
@@ -857,30 +865,8 @@ class BuiltinFunctions:
         return c * n
 
     def VAL(self, s):
-        """
-        Convert string to number.
-
-        Stops at first non-numeric character
-        """
-        s = s.strip()
-        if not s:
-            return 0
-
-        # Parse number (stop at first invalid character)
-        result = ""
-        for char in s:
-            if char in "0123456789.-+eE":
-                result += char
-            else:
-                break
-
-        if not result or result in ['+', '-', '.']:
-            return 0
-
-        try:
-            return float(result)
-        except ValueError:
-            return 0
+        """Convert string to number: the rules are in input_fields.val_text."""
+        return val_text(s)
 
     # ========================================================================
     # System Functions

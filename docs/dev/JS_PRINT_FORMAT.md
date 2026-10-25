@@ -34,6 +34,19 @@ The JavaScript runtime has these parts:
 * `_print_using` is a port of `UsingFormatter`.
 * `_toInt` rounds halves away from zero and raises Overflow outside
   -32768 to 32767, like the interpreter.
+* Arithmetic follows the interpreter (`docs/dev/MBASIC_521_DIVERGENCES_TODO.md`,
+  section 1). `_sg` (single) and `_dg` (double) turn a result that is infinite
+  in its precision into `Overflow`. `_overflow` and `_divzero` print the
+  message, give machine infinity with the sign of the true result, and carry
+  on. When `ON ERROR` is armed they raise ERR 6 or ERR 11 instead. `_div`,
+  `_pow`, `_sqr`, `_log`, `_idiv` and `_mod` raise `Division by zero` or
+  `Illegal function call`. `\` and `MOD` round their operands and need 16
+  bits.
+* `_error` gives the error an ERR number. With `ON ERROR` in the program the
+  main loop catches it, sets `ERR` and `ERL`, and jumps to the handler.
+  `RESUME NEXT` goes to the line after the line that failed.
+* `_val` and `_radix_word` follow `val_text` and `radix_word`. `&HFFFF` is -1
+  and `HEX$(-1)` is `FFFF`.
 * A comparison gives -1 or 0. `NOT` is bitwise.
 
 ## Changes in the interpreter
@@ -44,6 +57,8 @@ The JavaScript runtime has these parts:
   `PRINT ,X` and `PRINT A,,B` get an empty string item. `PRINT "A" "B"`
   gets an implied `;`.
 * `/` and `^` of two integers are single, so `5%/2%` is 2.5.
+* The parser accepts a sign on the exponent: `2^-3` is .125 and `0^-1` is a
+  division by zero. It was a syntax error.
 
 ## Test method
 
@@ -51,6 +66,11 @@ The JavaScript runtime has these parts:
 two outputs must be equal byte for byte. The test compares the issue example with
 real MBASIC 5.21. A random test compares `_fmt_print` with `format_for_print`
 for 3000 values.
+
+`fixtures/number_semantics/*.bas` have a `.real` file with the output of real
+MBASIC 5.21. The interpreter test and the Node.js test both compare with it.
+They cover overflow, domain errors, `VAL`, `&H` and `&O` constants, and
+`HEX$` and `OCT$`.
 
 ## Differences that remain
 
@@ -72,25 +92,24 @@ output follows the interpreter.
   this.
 * Real MBASIC starts a new line when `TAB(n)` is used and the cursor is
   already at or past column n. Neither implementation does this.
-* Single-precision multiplication that overflows binary32 gives a large
-  number in the JavaScript. The interpreter gives `inf`.
-* Errors in arithmetic do not stop the JavaScript. `PRINT 1/0` prints
-  ` Infinity `. `PRINT SQR(-1)` prints ` NaN `. `PRINT LOG(0)` prints
-  `-Infinity`. `PRINT 10^40` prints ` 1E+40 `. Real MBASIC reports
-  `Division by zero`, `Illegal function call` or `Overflow`. For
-  `1/0` and for overflow it then prints ` 1.70141E+38 `. The interpreter
-  also differs from real MBASIC here (it can print `inf`).
+* The JavaScript evaluates all items of a PRINT before it prints any. When
+  an item gives a non-fatal `Overflow` or `Division by zero`, the message
+  comes before the text of the earlier items (`PRINT "A=";10^40` prints
+  `Overflow` and then `A= 1.70141E+38`). Real MBASIC and the interpreter
+  print `A=` first.
+* A fatal error stops the JavaScript with `?Overflow`, `?Illegal function
+  call` or `?Division by zero`. Real MBASIC prints `<message> in <line>`.
+* `1D300^2` and `EXP(1000#)` give a double machine infinity here. Real MBASIC
+  gives a single one. The MBF range is not emulated (see
+  MBASIC_521_DIVERGENCES_TODO.md, section 10).
 * A single value below about 2.9E-39 prints as a binary32 denormal
   (`1.4013E-45`). Real MBASIC reads such a value as 0. The interpreter
   prints the same text as the JavaScript.
-* `&HFFFF` is 65535 here and -1 in real MBASIC. `VAL("&H10")` is 0 here
-  and 16 in real MBASIC. The interpreter has the same two faults.
 * `^` with a double base and a fractional exponent keeps double precision
   (`X#^.5`). Real MBASIC gives a single.
 * The compiler writes `AND` and `OR` as `&&` and `||`, so `PRINT 3 AND 5`
   prints 5 (real MBASIC: 1). `XOR`, `EQV` and `IMP` make the JavaScript
   invalid. Only the JavaScript backend has this fault.
-* `PRINT 2^-1` gives a parse error in the compiler.
 * `LPRINT` shows the number format only. `PRINT #n, USING` works.
 * A single-precision whole number above 2^24 is not rounded, because the
   interpreter keeps Python integers exact.

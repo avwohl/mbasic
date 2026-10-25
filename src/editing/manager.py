@@ -45,7 +45,7 @@ import re
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
 from src.input_sanitizer import sanitize_and_clear_parity
-from src.lexer import tokenize
+from src.lexer import Lexer, LexerOverflow, create_keyword_case_manager, tokenize
 from src.parser import Parser
 from src.debug_logger import debug_log
 
@@ -102,6 +102,14 @@ class ProgramManager:
         self.line_asts: Dict[int, 'LineNode'] = {}  # line_number -> parsed AST
         self.def_type_map = def_type_map
         self.current_file: Optional[str] = None
+        #: Bare messages MBASIC prints while a line is entered without
+        #: rejecting it ("Overflow" for a literal such as 1E39).
+        self.notices: List[str] = []
+
+    def take_notices(self) -> List[str]:
+        """The messages gathered since the last call, oldest first."""
+        notices, self.notices = self.notices, []
+        return notices
 
     def add_line(self, line_number: int, line_text: str) -> Tuple[bool, Optional[str]]:
         """Add or replace a program line.
@@ -292,6 +300,7 @@ class ProgramManager:
         """
         # Clear existing program
         self.clear()
+        self.notices = []
 
         errors = []
         success_count = 0
@@ -430,10 +439,22 @@ class ProgramManager:
         """
         try:
             debug_log(f"parse_single_line: {repr(line_text)}", level=2)
-            tokens = list(tokenize(line_text))
+            lexer = Lexer(line_text, keyword_case_manager=create_keyword_case_manager())
+            tokens = list(lexer.tokenize())
             parser = Parser(tokens, self.def_type_map, source=line_text)
             line_node = parser.parse_line()
+            if lexer.overflow_literals:
+                # 1E39: MBASIC says Overflow as the line is entered and stores
+                # machine infinity in its place.
+                self.notices.append("Overflow")
             return (line_node, None)
+
+        except LexerOverflow:
+            # &H10000 and the like: MBASIC refuses the line with Overflow
+            # rather than Syntax error.
+            full_error = ("Overflow in %d" % basic_line_num
+                          if basic_line_num is not None else "Overflow")
+            return (None, full_error)
 
         except Exception as e:
             # Strip "Parse error at line X, " from parser error messages
