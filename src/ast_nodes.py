@@ -888,6 +888,23 @@ class RemarkStatementNode:
 
 
 @dataclass
+class SyntaxErrorStatementNode:
+    """A statement MBASIC would store but cannot run: Syntax error when it runs.
+
+    MBASIC 5.21 crunches a line without checking its grammar, so a bad line is
+    stored and listed as typed. Only when execution reaches the bad statement
+    does it stop with "Syntax error in <line>". The statements before it on the
+    line run first. `text` is the source from the first token of the bad
+    statement to the end of the line (the rest of the line is never run).
+    """
+    text: str = ""
+    line_num: int = 0
+    column: int = 0
+    #: 2 (Syntax error), or 8 for "RESTORE%" where the binary reads the stray text as an unknown line
+    error_code: int = 2
+
+
+@dataclass
 class SwapStatementNode:
     """SWAP statement - exchange values of two variables
 

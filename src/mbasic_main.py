@@ -257,7 +257,8 @@ def compile_to_javascript(input_file, output_file, generate_html=False, debug=Fa
             print(f"Compiling {input_file} to JavaScript...", file=sys.stderr)
 
         # Lex
-        lexer = Lexer(source)
+        # A statement that does not parse becomes a run-time Syntax error, as in MBASIC
+        lexer = Lexer(source, defer_errors=True)
         tokens = lexer.tokenize()
         if lexer.overflow_literals:
             print("Warning: Overflow - a number too big for its precision is replaced by "
@@ -267,7 +268,7 @@ def compile_to_javascript(input_file, output_file, generate_html=False, debug=Fa
             print(f"  Lexed {len(tokens)} tokens", file=sys.stderr)
 
         # Parse
-        parser = Parser(tokens)
+        parser = Parser(tokens, defer_syntax_errors=True)
         ast = parser.parse()
 
         if debug:
@@ -551,7 +552,8 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False,
             print(f"Compiling {input_file} to C ({cpu})...", file=sys.stderr)
 
         # Lex
-        lexer = Lexer(source)
+        # A statement that does not parse becomes a run-time Syntax error, as in MBASIC
+        lexer = Lexer(source, defer_errors=True)
         tokens = lexer.tokenize()
         if lexer.overflow_literals:
             print("Warning: Overflow - a number too big for its precision is replaced by "
@@ -561,7 +563,7 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False,
             print(f"  Lexed {len(tokens)} tokens", file=sys.stderr)
 
         # Parse
-        parser = Parser(tokens)
+        parser = Parser(tokens, defer_syntax_errors=True)
         ast = parser.parse()
 
         if debug:
@@ -799,6 +801,10 @@ def run_file(program_path, backend, debug_enabled=False):
     try:
         # Load the program using ProgramManager
         success, errors = backend.program.load_from_file(program_path)
+
+        # "Overflow" for each literal such as 1E39, as MBASIC prints while it reads the file
+        for notice in backend.program.take_notices():
+            print(notice)
 
         # Report any errors
         if errors:

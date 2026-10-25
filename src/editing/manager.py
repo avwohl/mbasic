@@ -46,7 +46,7 @@ import re
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
 from src.input_sanitizer import sanitize_and_clear_parity
-from src.lexer import Lexer, LexerOverflow, create_keyword_case_manager, tokenize
+from src.lexer import Lexer, LexerOverflow, LexerRefused, create_keyword_case_manager, tokenize
 from src.parser import Parser
 from src.debug_logger import debug_log
 from src.error_codes import (format_error_message, LINE_BUFFER_OVERFLOW,
@@ -111,18 +111,35 @@ class ProgramManager:
         # Set by load_from_file/merge_from_file when MBASIC would stop reading
         # the file with an error: (error number, message). None otherwise.
         self.read_abort: Optional[Tuple[int, str]] = None
+        self._refused = False   # the last parse_single_line was refused by the lexer
+
+    def _load_stops_at(self, error: str) -> bool:
+        """MBASIC stops reading a file at a line it refuses (&H overflow, &O9) and
+        prints a bare "Overflow" or "Syntax error"; note it and say whether to stop."""
+        if error.startswith("Overflow"):
+            self.notices.append("Overflow")
+        elif self._refused:
+            self.notices.append("Syntax error")
+        else:
+            return False
+        return True
 
     def take_notices(self) -> List[str]:
         """The messages gathered since the last call, oldest first."""
         notices, self.notices = self.notices, []
         return notices
 
-    def add_line(self, line_number: int, line_text: str) -> Tuple[bool, Optional[str]]:
+    def add_line(self, line_number: int, line_text: str,
+                 defer_syntax_errors: bool = False) -> Tuple[bool, Optional[str]]:
         """Add or replace a program line.
 
         Args:
             line_number: BASIC line number
             line_text: Complete line text including line number
+            defer_syntax_errors: Store a line that does not parse, as MBASIC
+                does, instead of refusing it.  The bad statement fails with
+                Syntax error when it runs.  A line with an &H or &O overflow
+                is refused either way.
 
         Returns:
             Tuple of (success, error_message)
@@ -130,7 +147,8 @@ class ProgramManager:
             error_message: Error message if parsing failed, None otherwise
         """
         # Parse the line
-        line_ast, error = self.parse_single_line(line_text, line_number)
+        line_ast, error = self.parse_single_line(line_text, line_number,
+                                                 defer_syntax_errors)
 
         if line_ast is None:
             # Parse error - don't add the line
@@ -344,18 +362,22 @@ class ProgramManager:
                     break
                 success_count += 1
                 continue
-            success, error = self.add_line(line_num, line)
+            success, error = self.add_line(line_num, line, defer_syntax_errors=True)
 
             if success:
                 success_count += 1
             else:
+                # MBASIC stops reading the file at an &H or &O overflow
+                # (measured: the lines after it are not loaded).
+                if self._load_stops_at(error):
+                    break
                 errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
 
         if success_count > 0:
             self.current_file = filename
             return (True, errors)
         else:
-            if not errors:
+            if not errors and not self.notices:
                 errors.append((0, f'{filename}: No numbered program lines found'))
             return (False, errors)
 
@@ -424,7 +446,7 @@ class ProgramManager:
             # Check if line already exists
             is_replacement = line_num in self.lines
 
-            success, error = self.add_line(line_num, line)
+            success, error = self.add_line(line_num, line, defer_syntax_errors=True)
 
             if success:
                 if is_replacement:
@@ -432,13 +454,15 @@ class ProgramManager:
                 else:
                     lines_added += 1
             else:
+                if self._load_stops_at(error):
+                    break   # as in load_from_file
                 errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
 
         total_success = lines_added + lines_replaced
         if total_success > 0 or lines_deleted > 0:
             return (True, errors, lines_added, lines_replaced)
         else:
-            if not errors:
+            if not errors and not self.notices:
                 errors.append((0, f'{filename}: No numbered program lines found'))
             return (False, errors, 0, 0)
 
@@ -456,12 +480,17 @@ class ProgramManager:
 
         return ProgramNode(lines=lines, def_type_statements=self.def_type_map)
 
-    def parse_single_line(self, line_text: str, basic_line_num: Optional[int] = None) -> Tuple[Optional['LineNode'], Optional[str]]:
+    def parse_single_line(self, line_text: str, basic_line_num: Optional[int] = None,
+                          defer_syntax_errors: bool = False) -> Tuple[Optional['LineNode'], Optional[str]]:
         """Parse a single line into a LineNode AST.
 
         Args:
             line_text: The text of the line to parse
             basic_line_num: Optional BASIC line number for error reporting
+            defer_syntax_errors: Like MBASIC, accept a line that does not
+                parse.  Each bad statement becomes a SyntaxErrorStatementNode
+                that raises Syntax error when it runs, so there is no error
+                message here.  An &H or &O overflow is still refused.
 
         Returns:
             Tuple of (LineNode, error_message)
@@ -470,15 +499,22 @@ class ProgramManager:
         """
         try:
             debug_log(f"parse_single_line: {repr(line_text)}", level=2)
-            lexer = Lexer(line_text, keyword_case_manager=create_keyword_case_manager())
+            self._refused = False
+            lexer = Lexer(line_text, keyword_case_manager=create_keyword_case_manager(),
+                          defer_errors=defer_syntax_errors)
             tokens = list(lexer.tokenize())
-            parser = Parser(tokens, self.def_type_map, source=line_text)
+            # 1E39: MBASIC says Overflow for each such literal as the line is
+            # entered or loaded, and stores machine infinity in its place.
+            self.notices.extend(["Overflow"] * lexer.overflow_literals)
+            parser = Parser(tokens, self.def_type_map, source=line_text,
+                            defer_syntax_errors=defer_syntax_errors)
             line_node = parser.parse_line()
-            if lexer.overflow_literals:
-                # 1E39: MBASIC says Overflow as the line is entered and stores
-                # machine infinity in its place.
-                self.notices.append("Overflow")
             return (line_node, None)
+
+        except LexerRefused:
+            self._refused = True
+            return (None, "Syntax error in %d" % basic_line_num
+                    if basic_line_num is not None else "Syntax error")
 
         except LexerOverflow:
             # &H10000 and the like: MBASIC refuses the line with Overflow

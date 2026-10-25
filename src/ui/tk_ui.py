@@ -3461,6 +3461,8 @@ class TkBackend(UIBackend):
         """Execute LOAD command - load from file."""
         try:
             success, errors = self.program.load_from_file(filename)
+            for notice in self.program.take_notices():
+                self._add_output(f"{notice}\n")    # "Overflow" for a literal such as 1E39
             if errors:
                 for line_num, error in errors:
                     # Already prefixed by ProgramManager - see _parse_editor_content.
@@ -3495,6 +3497,8 @@ class TkBackend(UIBackend):
         """
         try:
             success, errors, lines_added, lines_replaced = self.program.merge_from_file(filename)
+            for notice in self.program.take_notices():
+                self._add_output(f"{notice}\n")
             if errors:
                 for line_num, error in errors:
                     # Already prefixed by ProgramManager - see _parse_editor_content.
