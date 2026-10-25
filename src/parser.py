@@ -897,7 +897,9 @@ class Parser:
         # Right associative
         if self.match(TokenType.POWER):
             op = self.advance()
-            right = self.parse_power()
+            # A sign may follow ^ (2^-1); parse_unary reads the sign and then
+            # parse_power again, so ^ stays right associative: 2^-1^2 = 2^-(1^2).
+            right = self.parse_unary()
             return BinaryOpNode(
                 operator=op.type,
                 left=left,
@@ -3392,10 +3394,26 @@ class Parser:
         var_token = self.expect(TokenType.IDENTIFIER)
         # Extract type suffix and strip from name
         var_name, type_suffix = self.split_name_and_suffix(var_token.value)
+
+        # Optional array subscripts: LINE INPUT A$(I,J)
+        subscripts = None
+        if self.match(TokenType.LPAREN):
+            self.advance()
+            subscripts = []
+            while not self.match(TokenType.RPAREN):
+                subscripts.append(self.parse_expression())
+                if self.match(TokenType.COMMA):
+                    self.advance()
+                elif not self.match(TokenType.RPAREN):
+                    raise ParseError("Expected , or ) in array subscript", self.current())
+            self.expect(TokenType.RPAREN)
+
         variable = VariableNode(
             name=var_name,
             type_suffix=type_suffix,
-            subscripts=None,
+            subscripts=subscripts,
+            original_case=(getattr(var_token, 'original_case', None) or var_token.value)[:len(var_name)],
+            explicit_type_suffix=var_token.value[-1] in '$%!#',
             line_num=var_token.line,
             column=var_token.column
         )
@@ -3436,7 +3454,8 @@ class Parser:
                 expr = self.parse_expression()
                 expressions.append(expr)
 
-                if self.match(TokenType.COMMA):
+                # MBASIC 5.21 accepts ; between WRITE items like ,
+                if self.match(TokenType.COMMA, TokenType.SEMICOLON):
                     self.advance()
                 else:
                     break

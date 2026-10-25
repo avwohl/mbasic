@@ -2202,6 +2202,11 @@ class Z88dkCBackend(CodeGenBackend):
 
                 code.append(self.indent() + f'printf("{self._escape_string(prompt_str)}");')
 
+        # String arrays are not supported by this backend (same as INPUT)
+        if stmt.variable.subscripts:
+            self.warnings.append("LINE INPUT into an array element is not supported by the C backend")
+            return [self.indent() + '/* LINE INPUT into an array element is not supported */']
+
         # LINE INPUT always reads a string into a string variable
         var_type = self._get_expression_type(stmt.variable)
         if var_type != VarType.STRING:

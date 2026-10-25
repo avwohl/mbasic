@@ -1483,7 +1483,7 @@ _OPERATOR_PRECEDENCE = {
 #: multiplication are safe either way.
 _BRACKET_EQUAL_RIGHT = {'MINUS', 'DIVIDE', 'BACKSLASH', 'MOD'}
 
-#: '^' is right-associative in this parser - parse_power() recurses on the
+#: '^' is right-associative in this parser - parse_power() recurses (through parse_unary) on the
 #: right, and 2^3^2 evaluates to 512 - so at equal precedence it is the LEFT
 #: operand that has to keep its brackets: (S^T)^U is not S^T^U.
 _BRACKET_EQUAL_LEFT = {'POWER'}
@@ -1497,6 +1497,16 @@ def _operator_name(operator):
 def _serialize_operand(operand, parent_operator, is_right):
     """Serialize one side of a binary operation, bracketing it if needed."""
     text = serialize_expression(operand)
+    if type(operand).__name__ == 'UnaryOpNode':
+        # (-X)^2 is not -X^2, and (NOT A)=B is not NOT A=B: a sign binds looser
+        # than ^ and NOT binds looser than the relational operators. A sign
+        # on the right of ^ needs no brackets (2^-1 is legal MBASIC).
+        parent = _OPERATOR_PRECEDENCE.get(_operator_name(parent_operator), 0)
+        if _operator_name(operand.operator) == 'NOT':
+            return f"({text})" if parent >= 3 else text
+        if not is_right and _operator_name(parent_operator) == 'POWER':
+            return f"({text})"
+        return text
     if type(operand).__name__ != 'BinaryOpNode':
         return text
 
@@ -1632,6 +1642,14 @@ def serialize_expression(expr):
     elif expr_type == 'UnaryOpNode':
         operand = serialize_expression(expr.operand)
         op_str = token_to_operator(expr.operator) if hasattr(expr.operator, 'name') else str(expr.operator)
+        if type(expr.operand).__name__ == 'BinaryOpNode':
+            # -(A+B) is not -A+B. A sign binds looser than ^ only; NOT binds
+            # looser than the relational operators.
+            floor = 3 if op_str == 'NOT' else _OPERATOR_PRECEDENCE['POWER']
+            if _OPERATOR_PRECEDENCE.get(_operator_name(expr.operand.operator), 0) < floor:
+                operand = f"({operand})"
+        if op_str == 'NOT':
+            op_str = 'NOT '
         return f"{op_str}{operand}"
 
     elif expr_type == 'FunctionCallNode':

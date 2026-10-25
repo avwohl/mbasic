@@ -2726,7 +2726,7 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
 
         # LINE INPUT always reads into a string variable
-        var_name = self._mangle_var_name(stmt.variable.name + (stmt.variable.type_suffix or ''))
+        var_name = self._input_lvalue(stmt.variable)
 
         # Check for file I/O
         if stmt.file_number:
