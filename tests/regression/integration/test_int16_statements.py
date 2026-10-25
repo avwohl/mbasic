@@ -3,7 +3,7 @@
 ERROR n, the MID$ statement, FIELD widths, GET/PUT record numbers, OPEN ... LEN and
 the double-to-single step in FRCINT. Each program was run on real MBASIC 5.21
 (cpmemu, tests/HOW_TO_RUN_REAL_MBASIC.md); the expected text is what the binary printed.
-Error 5 is Illegal function call, 6 is Overflow, 63 is Bad record number.
+Error 5 is Illegal function call, 6 is Overflow, 13 is Type mismatch, 50 is FIELD\noverflow, 63 is Bad record number.
 """
 import subprocess
 import sys
@@ -49,6 +49,27 @@ CASES = [
     ('OPEN "R",#1,"zz2.dat",128:FIELD #1,10 AS B$:LSET B$="X":PUT #1,40000', 'E 6'),
     ('OPEN "R",#1,"zz2.dat",128:FIELD #1,10 AS B$:GET #1,0', 'E 63'),
     ('OPEN "R",#1,"zz2.dat",128:FIELD #1,10 AS B$:LSET B$="X":PUT #1,0', 'E 63'),
+    ('A$="ABCDEF":MID$(A$,7,1)="XY":PRINT A$', 'E 5  ABCDEF'),
+    ('A$="ABCDEF":MID$(A$,255,255)="XY":PRINT A$', 'E 5  ABCDEF'),
+    ('A$="ABCDEF":MID$(A$,7,0)="XY":PRINT A$', 'ABCDEF'),
+    ('A$="ABCDEF":MID$(A$,7,1)="":PRINT A$', 'E 5  ABCDEF'),
+    ('A$="ABCDEF":MID$(A$,6,1)="XY":PRINT A$', 'ABCDEX'),
+    ('A$="":MID$(A$,1,1)="X":PRINT A$', 'E 5'),
+    ('DIM A$(2):MID$(A$(1),1,1)="X"', 'E 5'),
+    ('A$="ABCDEF":MID$(A$,2,3)=1:PRINT A$', 'E 13  ABCDEF'),
+    ('OPEN "R",#1,"zz2.dat",128:FIELD #1,10 AS B$:GET #1,-1', 'E 5'),
+    ('OPEN "R",#1,"zz2.dat",128:FIELD #1,10 AS B$:GET #1,-32768', 'E 5'),
+    ('OPEN "R",#1,"zz2.dat",128:FIELD #1,10 AS B$:GET #1,-0.4', 'E 63'),
+    ('OPEN "R",#1,"zz2.dat",128:FIELD #1,10 AS B$:GET #1,-32769', 'E 6'),
+    ('OPEN "R",#1,"zz2.dat",128:FIELD #1,10 AS B$:PUT #1,-2', 'E 5'),
+    ('OPEN "R",#1,"zz2.dat",128:FIELD #1,129 AS B$', 'E 50'),
+    ('OPEN "R",#1,"zz2.dat",50:FIELD #1,30 AS B$,21 AS C$', 'E 50'),
+    ('OPEN "R",#1,"zz2.dat",50:FIELD #1,50 AS B$:PRINT "ok"', 'ok'),
+    ('OPEN "R",#1,"zz2.dat",0:FIELD #1,128 AS B$', 'E 50'),
+    ('WAIT 1,256', 'E 5'),
+    ('WAIT 1,40000', 'E 6'),
+    ('WAIT 1,1,-32769', 'E 6'),
+    ('WAIT 40000,1', 'E 6'),
     ('PRINT 2.49999999# AND 3', ' 3'),
     ('PRINT 32767.49999# OR 0', 'E 6'),
     ('PRINT CINT(2.4999999#)', ' 3'),

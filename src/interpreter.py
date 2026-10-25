@@ -2045,6 +2045,21 @@ class Interpreter:
         to_conint(self.evaluate_expression(stmt.port))
         to_conint(self.evaluate_expression(stmt.value))
 
+    def execute_wait(self, stmt):
+        """WAIT port, mask[, select] - the operands are checked as bytes.
+
+        There are no ports (INP gives 0), so a WAIT that would have to wait
+        for a port to change can never finish. It stops with Illegal function
+        call instead of hanging; a WAIT whose test is true at once, such as
+        a mask of 0, simply returns. The operand errors match the binary:
+        40000 is Overflow and 256 is Illegal function call.
+        """
+        port = to_conint(self.evaluate_expression(stmt.port))
+        mask = to_conint(self.evaluate_expression(stmt.mask))
+        select = to_conint(self.evaluate_expression(stmt.select)) if stmt.select else 0
+        if not ((0 ^ select) & mask):
+            raise ValueError("Illegal function call")
+
     def _poke_arguments(self, stmt):
         """Evaluate and check the operands of POKE the way the binary does.
 
@@ -3103,11 +3118,13 @@ class Interpreter:
         mode = stmt.mode.upper()  # "I", "O", "A", "R"
         file_num = to_conint(self.evaluate_expression(stmt.file_number))
         filename = self.evaluate_expression(stmt.filename)
+        record_length = 128    # the default /S: record size
         if stmt.record_length:
             # Measured on the binary: FRCINT (40000 is Overflow), then more
             # than 128 - the default /S: record size - or less than 0 is
             # Illegal function call.
-            if not 0 <= to_frcint(self.evaluate_expression(stmt.record_length)) <= 128:
+            record_length = to_frcint(self.evaluate_expression(stmt.record_length))
+            if not 0 <= record_length <= 128:
                 raise ValueError("Illegal function call")
 
         # Check file number range (MBASIC 5.21: #1 through #15)
@@ -3149,7 +3166,8 @@ class Interpreter:
                 'handle': file_handle,
                 'mode': mode,
                 'filename': filename,
-                'eof': False
+                'eof': False,
+                'record_length': record_length
             }
 
         except (OSError, IOError, PermissionError) as e:
@@ -3238,6 +3256,10 @@ class Interpreter:
             # Store field mapping
             buffer_info['fields'][var_name] = (offset, width)
             offset += width
+            # The widths of one FIELD statement may not add up to more than
+            # the record length of OPEN (128 when LEN is left out).
+            if offset > file_info.get('record_length', 128):
+                raise MBasicError(50)    # FIELD overflow
 
         # Initialize buffer to appropriate size
         buffer_info['buffer'] = bytearray(offset)
@@ -3267,7 +3289,9 @@ class Interpreter:
         # Determine record number
         if stmt.record_number:
             record_num = to_frcint(self.evaluate_expression(stmt.record_number))
-            if record_num < 1:
+            if record_num < 0:
+                raise ValueError("Illegal function call")
+            if record_num == 0:
                 raise MBasicError(63)    # Bad record number
         else:
             # Use next record
@@ -3324,7 +3348,9 @@ class Interpreter:
         # Determine record number
         if stmt.record_number:
             record_num = to_frcint(self.evaluate_expression(stmt.record_number))
-            if record_num < 1:
+            if record_num < 0:
+                raise ValueError("Illegal function call")
+            if record_num == 0:
                 raise MBasicError(63)    # Bad record number
         else:
             # Use next record
@@ -3447,9 +3473,18 @@ class Interpreter:
         start = to_conint(self.evaluate_expression(stmt.start))
         if start == 0:
             raise ValueError("Illegal function call")
-        new_value = str(self.evaluate_expression(stmt.value))
+        new_value = self.evaluate_expression(stmt.value)
+        if not isinstance(new_value, str):
+            raise MBasicError(13)    # Type mismatch
         # Length is optional - if not provided, use length of replacement string
         length = to_conint(self.evaluate_expression(stmt.length)) if stmt.length else len(new_value)
+        # A start beyond the end of the target is Illegal function call on
+        # the binary, unless the length given is 0 (so also for an empty
+        # target or an empty replacement with a length above 0).
+        if (stmt.length is None and not new_value) or length == 0:
+            return
+        if start > len(current_value):
+            raise ValueError("Illegal function call")
 
         # Convert to 0-based index
         start_idx = start - 1
