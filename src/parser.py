@@ -3399,13 +3399,10 @@ class Parser:
         subscripts = None
         if self.match(TokenType.LPAREN):
             self.advance()
-            subscripts = []
-            while not self.match(TokenType.RPAREN):
+            subscripts = [self.parse_expression()]
+            while self.match(TokenType.COMMA):
+                self.advance()
                 subscripts.append(self.parse_expression())
-                if self.match(TokenType.COMMA):
-                    self.advance()
-                elif not self.match(TokenType.RPAREN):
-                    raise ParseError("Expected , or ) in array subscript", self.current())
             self.expect(TokenType.RPAREN)
 
         variable = VariableNode(

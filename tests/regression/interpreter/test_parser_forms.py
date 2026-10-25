@@ -187,7 +187,7 @@ finally:
     os.chdir(old)
 
 # Forms that real MBASIC rejects stay rejected.
-for bad in ["10 WRITE #1;3", "10 WRITE ;1", "10 WRITE 1;;2"]:
+for bad in ["10 WRITE #1;3", "10 WRITE ;1", "10 WRITE 1;;2", "10 LINE INPUT A$()"]:
     try:
         parse(bad)
         rejected = False
