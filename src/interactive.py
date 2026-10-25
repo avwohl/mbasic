@@ -567,6 +567,13 @@ class InteractiveMode:
             self.cmd_edit(args)
         elif command == "HELP":
             self.cmd_help(args)
+        elif cmd_stripped.upper().startswith("RENUM") and not (
+                cmd_stripped[5:6].isalpha() or cmd_stripped[5:6] == '$'):
+            # RENUM reads its arguments from the raw text, as MBASIC does:
+            # only digits are allowed ("RENUM A" and "RENUM 1.5" are a
+            # Syntax error), ",," is an Illegal function call, and the text
+            # after a ':' is ignored.
+            self.cmd_renum(cmd_stripped[5:])
         elif command == "":
             pass  # Empty command
         else:

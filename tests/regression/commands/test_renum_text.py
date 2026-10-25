@@ -600,6 +600,20 @@ def test_illegal_function_call_cases():
     assert renum_error(five, '65525,,1') is None
 
 
+def test_cli_argument_text():
+    """The CLI reads the raw argument text, as MBASIC does."""
+    prog = '10 A=1\n20 GOTO 10\n30 GOTO 20\n40 END'
+    for args, expected in (('A', 'Syntax error'), ('1.5', 'Syntax error'),
+                           ('&H10', 'Syntax error'),
+                           (',,', 'Illegal function call')):
+        lines = run_cli(prog, 'RENUM %s\nLIST\n' % args)
+        assert expected in lines, (args, lines)
+        assert '10 A=1' in lines and '40 END' in lines, (args, lines)
+    lines = run_cli(prog, 'RENUM 100:PRINT 1\nLIST\n')
+    assert '100 A=1' in lines and '110 GOTO 100' in lines, lines
+    assert not [l for l in lines if l.strip() == '1'], lines
+
+
 def test_no_program():
     program = ProgramManager({})
     assert renum_program(program, '') == ([], {})
@@ -615,6 +629,7 @@ TESTS = [
     test_scanner_follows_the_tokeniser,
     test_argument_forms,
     test_illegal_function_call_cases,
+    test_cli_argument_text,
     test_no_program,
 ]
 
