@@ -16,7 +16,7 @@ Expression parsing notes:
   (this is specific to these two functions, not a general MBASIC feature)
 """
 
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Dict, Set, Tuple
 from src.tokens import Token, TokenType
 from src.ast_nodes import *
 from src.keyword_case_manager import KeywordCaseManager
@@ -1313,6 +1313,7 @@ class Parser:
 
         expressions: List[ExpressionNode] = []
         separators: List[str] = []
+        implied_separators: Set[int] = set()
         after_expression = False    # was the last thing parsed an expression?
 
         # separators[i] is the separator after expressions[i], so the two
@@ -1323,13 +1324,14 @@ class Parser:
             # Check for separator first
             if self.match(TokenType.SEMICOLON, TokenType.COMMA):
                 if not after_expression:
-                    expressions.append(StringNode(value="", line_num=token.line, column=token.column))
+                    expressions.append(StringNode(value="", line_num=token.line, column=token.column, implicit=True))
                 separators.append(';' if self.match(TokenType.SEMICOLON) else ',')
                 after_expression = False
                 self.advance()
                 continue
 
             if after_expression:
+                implied_separators.add(len(separators))
                 separators.append(';')
             expr = self.parse_expression()
             expressions.append(expr)
@@ -1349,7 +1351,8 @@ class Parser:
             separators=separators,
             file_number=file_number,
             line_num=token.line,
-            column=token.column
+            column=token.column,
+            implied_separators=implied_separators
         )
 
     def parse_print_using(self, print_token, file_number) -> PrintUsingStatementNode:

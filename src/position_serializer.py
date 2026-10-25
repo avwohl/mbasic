@@ -287,9 +287,11 @@ class PositionSerializer:
             result += self.emit_token(",", None, "Comma")
 
         # Expressions with separators
+        implied = getattr(stmt, 'implied_separators', set())
         for i, expr in enumerate(stmt.expressions):
-            result += self.serialize_expression(expr)
-            if i < len(stmt.separators) and stmt.separators[i]:
+            if not getattr(expr, 'implicit', False):
+                result += self.serialize_expression(expr)
+            if i < len(stmt.separators) and stmt.separators[i] and i not in implied:
                 result += self.emit_token(stmt.separators[i], None, "Separator")
 
         return result

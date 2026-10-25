@@ -150,6 +150,9 @@ class PrintStatementNode:
     file_number: Optional['ExpressionNode'] = None  # For PRINT #n, ...
     line_num: int = 0
     column: int = 0
+    # Indexes into separators of the ';' the parser implied between two
+    # adjacent items (PRINT "A" "B"); LIST does not show them
+    implied_separators: Set[int] = field(default_factory=set)
 
 
 @dataclass
@@ -1195,6 +1198,7 @@ class StringNode:
     value: str
     line_num: int = 0
     column: int = 0
+    implicit: bool = False  # parser-made "" before a leading separator (PRINT ,X); LIST does not show it
 
 
 @dataclass
