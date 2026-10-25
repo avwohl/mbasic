@@ -19,11 +19,10 @@ from src.tokens import TokenType
 JS_FILL_KEYS = r'''
 function _fill_keys(want, soft) {
     // Add keys to _inkey_buffer. Returns false only at end of input, and only when soft is set.
+    // The caller awaits the result. Browser: a Promise that the keydown handler resolves with the
+    // next key, so the page keeps running while the program waits. Node: a plain value (blocking read).
     if (typeof window !== "undefined") {
-        const r = window.prompt("INPUT$: enter " + want + " character(s)");
-        if (r === null || r === "") _error("Break");
-        _inkey_buffer += r;
-        return true;
+        return new Promise((resolve) => { _key_waiter = resolve; });
     }
     // Node: block on fd 0. A chunk may hold several lines; the rest stays in _inkey_buffer.
     const fs = require("fs");
@@ -52,15 +51,28 @@ function _fill_keys(want, soft) {
 '''
 
 JS_INPUT_RUNTIME = r'''
-// INPUT and LINE INPUT. The generated program is synchronous: Node reads stdin with a blocking
-// fs.readSync (through _fill_keys, one buffer shared with INPUT$), the browser uses window.prompt.
+// INPUT and LINE INPUT. The generated main() is async. Node reads stdin with a blocking
+// fs.readSync (through _fill_keys, one buffer shared with INPUT$). The browser waits for keydown
+// events, echoes the typed characters into the page and ends the line at Enter.
 // At end of stdin Node stops with "?Input past end" (exit 1) instead of waiting or looping.
-function _read_line(prompt) {
-    if (typeof window !== "undefined") {
-        const r = window.prompt(prompt);
-        return r === null ? "" : r;
-    }
+async function _read_line(prompt) {
     _print(prompt, false);
+    if (typeof window !== "undefined") {
+        let typed = "";
+        for (;;) {
+            if (_inkey_buffer.length === 0) await _fill_keys(1);
+            const ch = _inkey_buffer[0];
+            _inkey_buffer = _inkey_buffer.slice(1);
+            if (ch === "\r" || ch === "\n") { _print(""); return typed; }
+            if (ch === "\x03") _error("Break");
+            if (ch === "\b" || ch === "\x7f") {
+                if (typed.length > 0) { typed = typed.slice(0, -1); _unprint_char(); }
+                continue;
+            }
+            typed += ch;
+            _print(ch, false);
+        }
+    }
     for (;;) {
         const nl = _inkey_buffer.indexOf("\n");
         if (nl >= 0) {
@@ -69,7 +81,7 @@ function _read_line(prompt) {
             if (line.endsWith("\r")) line = line.slice(0, -1);
             return line;
         }
-        if (!_fill_keys(4096, true)) {
+        if (!(await _fill_keys(4096, true))) {
             if (_inkey_buffer.length === 0) _error("Input past end");
             const rest = _inkey_buffer;
             _inkey_buffer = "";
@@ -78,8 +90,8 @@ function _read_line(prompt) {
     }
 }
 
-function _line_input(prompt) {
-    return _read_line(prompt);
+async function _line_input(prompt) {
+    return await _read_line(prompt);
 }
 
 function _input_fields(line) {
@@ -160,10 +172,10 @@ function _input_parse(line, types) {
     return vals;
 }
 
-function _input_vals(prompt, types) {
+async function _input_vals(prompt, types) {
     // types has one letter per variable: S string, I integer, F single, N double.
     for (;;) {
-        const vals = _input_parse(_read_line(prompt), types);
+        const vals = _input_parse(await _read_line(prompt), types);
         if (vals !== null) return vals;
         _print("?Redo from start");
     }
@@ -194,6 +206,21 @@ else if (text[p] === "\n") p++;
 file.pos = p;
 return value;
 '''
+
+JS_KEYDOWN_BODY = r'''  let ch = "";
+  if (e.key === "Enter") ch = "\r";
+  else if (e.key === "Backspace") ch = "\b";
+  else if ((e.ctrlKey || e.metaKey) && !e.altKey) { if (e.key === "c" || e.key === "C") ch = "\x03"; }
+  else if (e.key && e.key.length === 1) ch = e.key;
+  if (ch === "") return;
+  _inkey_buffer += ch;
+  if (_key_waiter) {
+    if (e.preventDefault) e.preventDefault();  // no page scroll on Space, no history Back on Backspace
+    const w = _key_waiter;
+    _key_waiter = null;
+    w(true);
+  }'''
+
 
 class JavaScriptBackend(CodeGenBackend):
     """
@@ -250,6 +277,11 @@ class JavaScriptBackend(CodeGenBackend):
         For Node.js, can make executable with shebang and chmod.
         """
         return []  # No compilation step
+
+    @property
+    def async_main(self) -> bool:
+        """True when the program can wait for the keyboard: main() and every DEF FN are then async."""
+        return self.uses_input or self.uses_line_input or self.uses_input_func
 
     def indent(self) -> str:
         """Return current indentation"""
@@ -320,7 +352,7 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Main program
         code.append(self.indent() + '// ===== Program =====')
-        code.append(self.indent() + 'function main() {')
+        code.append(self.indent() + ('async function main() {' if self.async_main else 'function main() {'))
         self.indent_level += 1
 
         # Initialize PC to first line
@@ -358,12 +390,11 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '// ===== Execute =====')
         code.append(self.indent() + 'try {')
         self.indent_level += 1
-        code.append(self.indent() + 'main();')
+        code.append(self.indent() + ('main().catch(_fatal);' if self.async_main else 'main();'))
         self.indent_level -= 1
         code.append(self.indent() + '} catch (e) {')
         self.indent_level += 1
-        code.append(self.indent() + '_print(e.message);')
-        code.append(self.indent() + 'if (typeof process !== "undefined") process.exit(1);')
+        code.append(self.indent() + '_fatal(e);')
         self.indent_level -= 1
         code.append(self.indent() + '}')
 
@@ -529,6 +560,15 @@ class JavaScriptBackend(CodeGenBackend):
         self.indent_level += 1
         code.append(self.indent() + 'throw new Error("?" + msg);')
         self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _fatal(e) {')
+        code.append(self.indent() + '    _print(e.message);')
+        code.append(self.indent() + '    if (typeof process !== "undefined") process.exit(1);')
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _unprint_char() {')
+        code.append(self.indent() + '    // Backspace while typing INPUT text in the browser: drop the last echoed character')
+        code.append(self.indent() + '    const output = typeof document !== "undefined" ? document.getElementById("output") : null;')
+        code.append(self.indent() + '    if (output) output.textContent = output.textContent.slice(0, -1);')
         code.append(self.indent() + '}')
         code.append('')
 
@@ -1518,6 +1558,7 @@ class JavaScriptBackend(CodeGenBackend):
         # INKEY$ function
         code.append(self.indent() + '// INKEY$ - Get key without waiting')
         code.append(self.indent() + 'let _inkey_buffer = "";')
+        code.append(self.indent() + 'let _key_waiter = null;  // browser: resolver of the Promise an INPUT is waiting on')
         code.append(self.indent() + 'function _inkey() {')
         self.indent_level += 1
         code.append(self.indent() + '// Returns empty string if no key pressed, otherwise the key')
@@ -1534,10 +1575,11 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '// Setup keyboard handler for browser')
         code.append(self.indent() + 'if (typeof window !== "undefined") {')
         self.indent_level += 1
-        code.append(self.indent() + 'document.addEventListener("keypress", (e) => {')
-        self.indent_level += 1
-        code.append(self.indent() + '_inkey_buffer += e.key;')
-        self.indent_level -= 1
+        code.append(self.indent() + '// keydown, not keypress: Backspace and Enter do not fire keypress in every browser.')
+        code.append(self.indent() + '// Printable keys give their character, Enter gives CR, Backspace gives BS, Ctrl+C gives ETX.')
+        code.append(self.indent() + 'document.addEventListener("keydown", (e) => {')
+        for key_line in JS_KEYDOWN_BODY.split('\n'):
+            code.append(self.indent() + key_line)
         code.append(self.indent() + '});')
         self.indent_level -= 1
         code.append(self.indent() + '}')
@@ -1547,9 +1589,8 @@ class JavaScriptBackend(CodeGenBackend):
         if self.uses_input_func:
             code.append(self.indent() + '// INPUT$(n) / INPUT$(n, #f) - read n characters, no echo, no Enter')
             code.append(self.indent() + '// Keyboard: characters already in _inkey_buffer come first, then the host is asked.')
-            code.append(self.indent() + '// The generated program is synchronous, so Node reads stdin with fs.readSync (it blocks)')
-            code.append(self.indent() + '// and a browser, which cannot wait for keys, asks the missing ones with window.prompt.')
-            code.append(self.indent() + 'function _input_chars(n, filenum) {')
+            code.append(self.indent() + '// main() is async. Node reads stdin with fs.readSync (it blocks); a browser waits for keydown events.')
+            code.append(self.indent() + 'async function _input_chars(n, filenum) {')
             code.append(self.indent() + '    n = Math.trunc(n);')
             code.append(self.indent() + '    if (n < 1 || n > 255) _error("Illegal function call");')
             code.append(self.indent() + '    if (filenum !== undefined) {')
@@ -1566,7 +1607,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '    }')
             code.append(self.indent() + '    let out = "";')
             code.append(self.indent() + '    while (out.length < n) {')
-            code.append(self.indent() + '        if (_inkey_buffer.length === 0) _fill_keys(n - out.length);')
+            code.append(self.indent() + '        if (_inkey_buffer.length === 0) await _fill_keys(n - out.length);')
             code.append(self.indent() + '        const take = _inkey_buffer.slice(0, n - out.length);')
             code.append(self.indent() + '        _inkey_buffer = _inkey_buffer.slice(take.length);')
             code.append(self.indent() + '        if (take.indexOf("\\x03") >= 0) _error("Break");')
@@ -1683,7 +1724,8 @@ class JavaScriptBackend(CodeGenBackend):
 
         for def_fn in self.def_fn_functions:
             # Function name - DEF FNA becomes _fn_a
-            func_name = f'_fn_{def_fn.name.lower()}'
+            fn_base = def_fn.name.lower()
+            func_name = '_fn_' + (fn_base[2:] if fn_base.startswith('fn') else fn_base)  # calls use FNA -> _fn_a
 
             # Parameters
             params = [self._mangle_var_name(p.name + (p.type_suffix or '')) for p in def_fn.parameters]
@@ -1692,7 +1734,9 @@ class JavaScriptBackend(CodeGenBackend):
             # Function body
             expr_code = self._generate_expression(def_fn.expression)
 
-            code.append(self.indent() + f'function {func_name}({param_str}) {{')
+            # With an async main() every DEF FN is async too, because its body may reach INPUT$
+            prefix = 'async ' if self.async_main else ''
+            code.append(self.indent() + f'{prefix}function {func_name}({param_str}) {{')
             self.indent_level += 1
             code.append(self.indent() + f'return {expr_code};')
             self.indent_level -= 1
@@ -2068,7 +2112,8 @@ class JavaScriptBackend(CodeGenBackend):
         # User-defined functions from DEF FN
         if func_name.startswith('fn'):
             # FNA -> _fn_a, FNFOO -> _fn_foo
-            return f'_fn_{func_name[2:]}({", ".join(args)})'
+            call = f'_fn_{func_name[2:]}({", ".join(args)})'
+            return f'(await {call})' if self.async_main else call
 
         # Map BASIC function names to JavaScript
         js_func_map = {
@@ -2133,7 +2178,8 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Lexer token names can omit the BASIC string-function suffix.
         js_func = js_func_map.get(func_name, js_func_map.get(func_name + "$", func_name))
-        return f'{js_func}({", ".join(args)})'
+        call = f'{js_func}({", ".join(args)})'
+        return f'(await {call})' if js_func == '_input_chars' else call
 
     def _generate_goto(self, stmt: GotoStatementNode) -> List[str]:
         """Generate GOTO statement"""
@@ -2405,7 +2451,7 @@ class JavaScriptBackend(CodeGenBackend):
                 targets.append(self._input_lvalue(var))
             # One _input_vals call reads the whole line for all variables (Redo covers them together)
             assigns = ' '.join(f'{t} = _iv[{k}];' for k, t in enumerate(targets))
-            code.append(self.indent() + f'{{ const _iv = _input_vals("{prompt_str}", "{"".join(letters)}"); {assigns} }}')
+            code.append(self.indent() + f'{{ const _iv = await _input_vals("{prompt_str}", "{"".join(letters)}"); {assigns} }}')
 
         return code
 
@@ -2439,7 +2485,7 @@ class JavaScriptBackend(CodeGenBackend):
             else:
                 prompt_expr = '""'  # LINE INPUT shows no "? "
 
-            code.append(self.indent() + f'{var_name} = _line_input({prompt_expr});')
+            code.append(self.indent() + f'{var_name} = await _line_input({prompt_expr});')
 
         return code
 
