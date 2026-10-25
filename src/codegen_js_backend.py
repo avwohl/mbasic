@@ -241,19 +241,11 @@ function _using_number(v, spec, digits) {
     let int_str, frac_str, suffix = "";
     if (spec.exponential) {
         const trailing = spec.trailing_sign || spec.trailing_minus_only;
-        const int_digits = Math.max(0, trailing ? lead : lead - 1);
+        const int_digits = trailing ? lead : lead - 1;
         let exponent = 0;
         if (ds !== "0") {
             exponent = exp + 1 - int_digits;
             [int_str, frac_str] = _using_fixed(ds, exp - exponent, decimals);
-            if (int_str.length > int_digits) {
-                // Rounding 9.99 in a one-digit mantissa carries into 10.0.
-                const all = int_str + frac_str;
-                const nz = all.search(/[^0]/);
-                const ds2 = all.slice(nz).replace(/0+$/, "") || "0";
-                [int_str, frac_str] = _using_fixed(ds2, int_str.length - 1 - nz - 1, decimals);
-                exponent += 1;
-            }
         } else {
             [int_str, frac_str] = _using_fixed("0", 0, decimals);
         }
@@ -266,7 +258,7 @@ function _using_number(v, spec, digits) {
     const trailing_sign = spec.trailing_sign || spec.trailing_minus_only;
     const sign_slot = !trailing_sign && (negative || spec.leading_sign);
     let needed = int_str.length + (spec.dollar_sign ? 1 : 0) + (sign_slot ? 1 : 0);
-    if (!int_str && needed + 1 <= lead) { int_str = "0"; needed += 1; }
+    if (!int_str && (needed + 1 <= lead || !trail)) { int_str = "0"; needed += 1; }
     const body = int_str + (trail ? "." + frac_str : "") + suffix;
     const sign = sign_slot ? (negative ? "-" : "+") : "";
     let out;

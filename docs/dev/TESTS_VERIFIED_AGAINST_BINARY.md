@@ -347,3 +347,26 @@ Four could never have matched, whatever the interpreter did.
 Two interpreter fixes came out of that work: `CHAIN "CHNTGT.BAS"` was looking
 for `CHNTGT.BAS.bas`, and a MERGE inside a running program was printing a
 summary the binary does not print.
+
+## PRINT USING with ^^^^ after a rounding carry (issue 22)
+
+Real MBASIC fixes the exponent from the unrounded value and then rounds the
+mantissa. It does not divide by 10 again after a carry. The extra digit goes
+in front of the point, and the field overflows (a `%` prefix) when the
+mantissa is then wider than the field. A field with no digit before the point
+counts -1 digit, so the mantissa is 0.0xxx. A field with no decimals always
+shows one digit, even when that digit overflows the field.
+
+| | real 5.21 | was |
+|---|---|---|
+| `PRINT USING "#.#^^^^"; 9.99` | `1.0E+01` | `0.1E+02` |
+| `PRINT USING "##.#^^^^"; 9.99` | `10.0E+00` | ` 1.0E+01` |
+| `PRINT USING "+#.#^^^^"; 9.99` | `%+10.0E+00` | `+1.0E+01` |
+| `PRINT USING "#.#^^^^"; -9.99` | `%-1.0E+01` | `-.1E+02` |
+| `PRINT USING ".###^^^^"; 0.12345` | `.012E+01` | `.123E+00` |
+| `PRINT USING "#^^^^"; -1.5` | `%-0E+01` | `-E+01` |
+
+625 combinations of 25 formats and 25 values were compared with the binary.
+The interpreter and the JavaScript output agree with the binary in all of
+them. The cases are pinned in `tests/regression/interpreter/test_number_format.py`
+and in `tests/regression/integration/fixtures/js_print_format/using.bas`.

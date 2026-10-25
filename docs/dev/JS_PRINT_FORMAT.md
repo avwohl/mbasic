@@ -63,8 +63,6 @@ output follows the interpreter.
 * `SQR(2#)` and the other maths functions keep double precision here. Real
   MBASIC gives a single.
 * Doubles that come from MBF arithmetic can differ in the last digit.
-* `PRINT USING "#.#^^^^"; 9.99` prints `0.1E+02` here and `1.0E+01` in real
-  MBASIC.
 * The interpreter measures `TAB` and the comma zones from the start of the
   PRINT statement. The JavaScript keeps the real cursor column, as real
   MBASIC does. They differ when a `PRINT` ends with `;` and the next one

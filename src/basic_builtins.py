@@ -432,12 +432,11 @@ class UsingFormatter:
         field's business, not the value's: it is one per lead position, less
         the one the sign sits in. PRINT USING "#.#^^^^"; 1.5 is 0.2E+01 and
         "###.#^^^^"; 1.5 is  15.0E-01. A trailing sign leaves the lead
-        positions alone, so "#.#^^^^-"; -1.5 is 1.5E+00-.
+        positions alone, so "#.#^^^^-"; -1.5 is 1.5E+00-.  A field with no
+        digit before the point counts -1 (".###^^^^"; .12345 is .012E+01).
         """
         trailing = spec['trailing_sign'] or spec['trailing_minus_only']
         int_digits = lead if trailing else lead - 1
-        if int_digits < 0:
-            int_digits = 0
 
         exponent = 0
         if magnitude:
@@ -447,12 +446,9 @@ class UsingFormatter:
             magnitude = magnitude.scaleb(-exponent)
             quantum = Decimal(1).scaleb(-decimals)
             magnitude = magnitude.quantize(quantum, rounding=ROUND_HALF_UP)
-            # Rounding 9.99 in a one-digit mantissa carries into 10.0.
-            limit = Decimal(1).scaleb(int_digits)
-            if magnitude >= limit:
-                magnitude = magnitude.scaleb(-1).quantize(quantum,
-                                                          rounding=ROUND_HALF_UP)
-                exponent += 1
+            # The exponent was fixed from the unrounded value. A carry
+            # (9.99 in a one-digit mantissa gives 10.0) is not renormalized:
+            # the extra digit lands in the integer part, as in MBASIC.
         else:
             magnitude = magnitude.quantize(Decimal(1).scaleb(-decimals))
 
@@ -473,8 +469,10 @@ class UsingFormatter:
         sign_slot = not trailing_sign and (negative or spec['leading_sign'])
 
         needed = len(int_str) + (1 if spec['dollar_sign'] else 0) + (1 if sign_slot else 0)
-        if not int_str and needed + 1 <= lead:
-            int_str = '0'                       # room for it after all
+        if not int_str and (needed + 1 <= lead or not trail):
+            # Room for it after all - and a field with no decimals always
+            # shows a digit, even when that digit overflows the field.
+            int_str = '0'
             needed += 1
 
         body = int_str + ('.' + frac_str if trail else '') + suffix
