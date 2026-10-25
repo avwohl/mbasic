@@ -181,7 +181,7 @@ def test_end_of_stdin_stops_with_error_instead_of_hanging(tmp_path):
 40 PRINT "never"
 ''', "one\n")
     assert result.returncode == 1
-    assert result.stdout == "A? [one]\nB? ?Input past end\n"
+    assert result.stdout == "A? [one]\nB? \n?Input past end\n"  # a fatal error starts a new line
 
 
 @needs_node

@@ -16,6 +16,8 @@ from src.win_console import win_flush_pending
 from src.number_format import (format_for_print, format_number, int_divide, int_modulo,
                                numeric_digits,
                                MBF_INFINITY_SINGLE, to_int_operand,
+                               exceeds_range, machine_infinity,
+                               SINGLE_LIMIT, DOUBLE_MAX,
                                to_integer, to_single, coerce_to_type,
                                INTEGER_DIGITS, SINGLE_DIGITS, DOUBLE_DIGITS)
 from src.iohandler.base import KeyInputPending
@@ -622,6 +624,10 @@ class Interpreter:
                             self.runtime.on_error_goto if self.runtime.has_error_handler() else None
                         )
                         self._restore_break_handler()
+                        # The binary starts a new line before a fatal error
+                        # message when the cursor is not in column 0.
+                        if self._output_column(None) > 0:
+                            self.io.output('')
                         raise
 
                 # Check if we're waiting for input
@@ -1020,6 +1026,10 @@ class Interpreter:
                 raise TypeError("Type mismatch")
             if not isinstance(value, (int, float)):
                 value = float(value) if value else 0
+            if (stmt.variable.type_suffix != '#' and type(value) is float
+                    and abs(value) >= SINGLE_LIMIT):
+                # A double too big for a single variable: A! = 1D39
+                value = self._overflow(value < 0, SINGLE_DIGITS)
 
         if stmt.variable.subscripts:
             # Array assignment
@@ -1195,7 +1205,13 @@ class Interpreter:
             pieces.append(text)
             col = advance_column(col, text)
 
+        resync = False
+
         def flush():
+            # Called by _notice(): the message goes out after the text so far
+            # and moves the real cursor, so col is read again afterwards.
+            nonlocal resync
+            resync = True
             if pieces:
                 self._send_output(file_info, file_handle, ''.join(pieces))
                 del pieces[:]
@@ -1210,6 +1226,10 @@ class Interpreter:
                 if file_info is None:
                     self.builtins.print_column = col
                 value = self.evaluate_expression(expr)
+                if resync:
+                    # An Overflow or Division by zero message was printed
+                    resync = False
+                    col = min(self._output_column(file_info), top)
 
                 if isinstance(value, TabMarker):
                     # TAB(n): column n (1-based); a cursor already past it
@@ -1419,7 +1439,7 @@ class Interpreter:
             pass                            # a node with __slots__: recompute
         return target
 
-    def _divide_by_zero(self, dividend):
+    def _divide_by_zero(self, dividend, digits=SINGLE_DIGITS):
         r"""What a floating-point divide by zero does on 5.21.
 
         Not an error at all, unless a handler is armed. The ANSI overflow
@@ -1439,20 +1459,74 @@ class Interpreter:
 
         With ON ERROR armed it IS trappable, with ERR 11, and the assignment
         never completes - so there the ordinary error path is the right one.
+        A double expression gets the double machine infinity.
         """
         if self.runtime.has_error_handler():
             raise RuntimeError("Division by zero")
-        # The items of a PRINT in progress come out first: the message follows
-        # them on the same line, as on the real binary.
-        flush = getattr(self, '_print_flush', None)
-        if flush is not None:
-            flush()
-        self.io.output("Division by zero")
-        infinity = MBF_INFINITY_SINGLE
+        self._notice("Division by zero")
         try:
-            return -infinity if dividend < 0 else infinity
+            return machine_infinity(digits, dividend < 0)
         except TypeError:
-            return infinity
+            return machine_infinity(digits)
+
+    _print_flush = None
+
+    def _notice(self, text):
+        """Print a bare error message that does not stop the program.
+
+        A PRINT that is half done shows what it has so far first, so the
+        message lands after "A=" and the number follows on the next line.
+        The cursor column stays in one place, the I/O handler's column;
+        execute_print reads it again after the item that printed the message.
+        """
+        if self._print_flush is not None:
+            self._print_flush()
+        self.io.output(text)
+
+    def _overflow(self, negative, digits):
+        """A result too big for its precision: the same routine, "Overflow".
+
+        Prints a bare "Overflow", substitutes machine infinity with the sign
+        of the true result and carries on - or, with ON ERROR armed, is ERR 6
+        and the statement never completes. "Too big" means infinite in the
+        IEEE format of the precision (the MBF range is not emulated; see
+        docs/dev/MBASIC_521_DIVERGENCES_TODO.md, section 10).
+        """
+        if self.runtime.has_error_handler():
+            raise OverflowError("Overflow")
+        self._notice("Overflow")
+        return machine_infinity(digits, negative)
+
+    def _range_checked(self, result, digits):
+        """A float result at its precision; Overflow if the precision cannot hold it."""
+        if digits == SINGLE_DIGITS:
+            if abs(result) >= SINGLE_LIMIT:
+                return self._overflow(result < 0, digits)
+            return to_single(result)
+        if digits == DOUBLE_DIGITS and abs(result) > DOUBLE_MAX:
+            return self._overflow(result < 0, digits)
+        return result
+
+    def _power(self, left, right, digits):
+        """MBASIC's ^ : a float result, with the real binary's error cases.
+
+        0 ^ negative is a (non-fatal) division by zero; a negative base with a
+        fraction in the exponent is Illegal function call, where Python would
+        hand back a complex number; a result too big is Overflow.
+        """
+        if isinstance(left, str) or isinstance(right, str):
+            raise TypeError("Type mismatch")
+        if left == 0 and right < 0:
+            return self._divide_by_zero(1, digits)
+        if left < 0 and right != int(right):
+            raise ValueError("Illegal function call")
+        try:
+            if isinstance(left, int) and isinstance(right, int) and 0 <= right <= 256:
+                return left ** right
+            return float(left) ** float(right)
+        except OverflowError:
+            odd = right == int(right) and int(right) % 2 == 1
+            return self._overflow(left < 0 and odd, digits)
 
     def _jump_to(self, line_number):
         """Set the next PC to a program line, checking that it is there.
@@ -3635,8 +3709,14 @@ class Interpreter:
         integers are 16-bit anyway, far inside what a single holds exactly.
         """
         result = self._binaryop_value(expr)
-        if type(result) is float and self._expression_digits(expr) == SINGLE_DIGITS:
-            return to_single(result)
+        kind = type(result)
+        if kind is float:
+            return self._range_checked(result, self._expression_digits(expr))
+        if kind is int and expr.operator == TokenType.POWER:
+            # 10^40 is an exact Python int; the single it really is cannot hold it.
+            digits = self._expression_digits(expr)
+            if exceeds_range(result, digits):
+                return self._overflow(result < 0, digits)
         return result
 
     def _expression_digits(self, expr):
@@ -3678,15 +3758,19 @@ class Interpreter:
             return left * right
         elif op == TokenType.DIVIDE:
             if right == 0:
-                return self._divide_by_zero(left)
-            return left / right
+                return self._divide_by_zero(left, self._expression_digits(expr))
+            try:
+                return left / right
+            except OverflowError:       # int / int, too big for a float
+                return self._overflow((left < 0) != (right < 0),
+                                      self._expression_digits(expr))
         elif op == TokenType.BACKSLASH:  # Integer division
             # Not Python's // : MBASIC truncates toward zero, rounds both
             # operands to integers first and requires them to fit 16 bits.
             # See src/number_format.py.
             return int_divide(left, right)
         elif op == TokenType.POWER:
-            return left ** right
+            return self._power(left, right, self._expression_digits(expr))
         elif op == TokenType.MOD:
             # Not Python's % : the remainder takes the sign of the dividend.
             return int_modulo(left, right)
@@ -3761,8 +3845,8 @@ class Interpreter:
         # is put straight into a double, and SQR(2#) is the same: MBASIC's
         # maths functions work in single precision. CDBL and VAL say otherwise
         # in _FUNCTION_PRECISION, and a DEF FN goes by its name.
-        if type(result) is float and self._expression_digits(expr) == SINGLE_DIGITS:
-            return to_single(result)
+        if type(result) is float:
+            return self._range_checked(result, self._expression_digits(expr))
         return result
 
     def _functioncall_value(self, expr):

@@ -11,6 +11,7 @@ All documented MBASIC 5.21 tokens and keywords are supported.
 from typing import List, Optional
 from src.tokens import Token, TokenType, KEYWORDS
 from src.simple_keyword_case import SimpleKeywordCase
+from src.number_format import exceeds_range, literal_precision, machine_infinity
 
 
 def create_keyword_case_manager() -> SimpleKeywordCase:
@@ -45,6 +46,25 @@ class LexerError(Exception):
         self.column = column
 
 
+class LexerOverflow(LexerError):
+    """A &H, &O or & constant that does not fit 16 bits (MBASIC: Overflow)."""
+
+
+def radix_constant_value(digits: str, base: int, line: int, column: int) -> int:
+    """The value of an &H, &O or & constant: a signed 16-bit integer.
+
+    MBASIC reads &HFFFF and &O177777 as -1 and &H8000 as -32768. At line entry
+    it stops with Overflow for a hex constant of more than four digits (even
+    &H00010) and for an octal constant above 65535 (&O0177777 is fine).
+    """
+    if base == 16 and len(digits) > 4:
+        raise LexerOverflow("Overflow", line, column)
+    value = int(digits, base) if digits else 0
+    if value > 65535:
+        raise LexerOverflow("Overflow", line, column)
+    return value - 65536 if value >= 32768 else value
+
+
 class Lexer:
     """Tokenizes MBASIC 5.21 source code"""
 
@@ -54,6 +74,9 @@ class Lexer:
         self.line = 1
         self.column = 1
         self.tokens: List[Token] = []
+        #: Literals replaced by machine infinity because they were infinite in
+        #: their precision (1E39). MBASIC says "Overflow" at line entry.
+        self.overflow_literals = 0
 
         # Keyword case handler - uses SimpleKeywordCase (see create_keyword_case_manager())
         self.keyword_case_manager = keyword_case_manager or SimpleKeywordCase(policy="force_lower")
@@ -122,7 +145,7 @@ class Lexer:
                 while self.current_char() and self.current_char() in '0123456789ABCDEFabcdef':
                     num_str += self.advance()
                 try:
-                    value = int(num_str[2:], 16) if len(num_str) > 2 else 0
+                    value = radix_constant_value(num_str[2:], 16, start_line, start_column)
                 except ValueError:
                     raise LexerError(f"Invalid hex number: {num_str}", start_line, start_column)
                 return Token(TokenType.NUMBER, value, start_line, start_column,
@@ -134,7 +157,7 @@ class Lexer:
                 while self.current_char() and self.current_char() in '01234567':
                     num_str += self.advance()
                 try:
-                    value = int(num_str[2:], 8) if len(num_str) > 2 else 0
+                    value = radix_constant_value(num_str[2:], 8, start_line, start_column)
                 except ValueError:
                     raise LexerError(f"Invalid octal number: {num_str}", start_line, start_column)
                 return Token(TokenType.NUMBER, value, start_line, start_column,
@@ -145,7 +168,7 @@ class Lexer:
                 while self.current_char() and self.current_char() in '01234567':
                     num_str += self.advance()
                 try:
-                    value = int(num_str[1:], 8) if len(num_str) > 1 else 0
+                    value = radix_constant_value(num_str[1:], 8, start_line, start_column)
                 except ValueError:
                     raise LexerError(f"Invalid octal number: {num_str}", start_line, start_column)
                 return Token(TokenType.NUMBER, value, start_line, start_column,
@@ -210,11 +233,32 @@ class Lexer:
         except ValueError:
             raise LexerError(f"Invalid number: {num_str}", start_line, start_column)
 
+        literal_text = num_str + (type_suffix or '')
+        if type_suffix != '%':
+            value = self._literal_in_range(value, literal_text)
+
         # Keep the source text: the type suffix decides whether this literal
         # is single or double precision, and it cannot be recovered from the
         # value afterwards - 1# and 1 both arrive as 1.0.
         return Token(TokenType.NUMBER, value, start_line, start_column,
                      literal_text=num_str + (type_suffix or ''))
+
+    def _literal_in_range(self, value, literal_text):
+        """A decimal literal that its precision cannot hold becomes machine infinity.
+
+        1E39 is a single, and a single stops at 3.4E38 (binary32 here; the MBF
+        range is not emulated, see docs/dev/MBASIC_521_DIVERGENCES_TODO.md,
+        section 10). MBASIC prints Overflow when the line is entered and
+        keeps the largest number instead.
+        """
+        digits = literal_precision(literal_text, value)
+        try:
+            if not exceeds_range(value, digits):
+                return value
+        except OverflowError:       # an int too big even for a float
+            pass
+        self.overflow_literals += 1
+        return machine_infinity(digits)
 
     def _read_go_to_sub(self, ident: str, start_line: int, start_column: int) -> Optional[Token]:
         """Join "GO TO" / "GO SUB" into GOTO / GOSUB.

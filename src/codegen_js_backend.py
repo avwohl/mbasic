@@ -15,8 +15,9 @@ from src.ast_nodes import *
 from src.semantic_analyzer import SymbolTable, VarType
 from src.codegen_backend import CodeGenBackend
 from src.tokens import TokenType
+from src.error_codes import ERROR_CODES
 from src.number_format import (numeric_digits, to_single, INTEGER_DIGITS,
-                               SINGLE_DIGITS, DOUBLE_DIGITS)
+                               SINGLE_DIGITS, DOUBLE_DIGITS, machine_infinity)
 
 
 JS_NUMBER_RUNTIME = r'''
@@ -79,14 +80,122 @@ function _fmt_print(v, digits) {
 function _pstr(v, digits) {
     return typeof v === "string" ? v : _fmt_print(v, digits);
 }
+const _MAX_SINGLE = 1.7014117331926443e38, _MAX_DOUBLE = 1.7014118346046927e38, _SINGLE_LIMIT = 3.4028235677973366e38;
 function _sg(x) {
     // Result of single-precision arithmetic: rounded to binary32. Whole numbers are left alone, as the interpreter does.
-    return typeof x === "number" && !Number.isInteger(x) ? Math.fround(x) : x;
+    // A result that binary32 cannot hold is Overflow (the MBF range is not emulated).
+    if (typeof x !== "number") return x;
+    if (x >= _SINGLE_LIMIT || x <= -_SINGLE_LIMIT) return _overflow(x < 0, 6);
+    return Number.isInteger(x) ? x : Math.fround(x);
+}
+function _dg(x) {
+    // Result of double-precision arithmetic: infinite is Overflow.
+    return x === Infinity || x === -Infinity ? _overflow(x < 0, 16) : x;
 }
 function _round_half_away(n) {
     return n < 0 ? -Math.floor(-n + 0.5) : Math.floor(n + 0.5);
 }
 '''
+
+JS_ARITH_RUNTIME = r'''
+// ===== Arithmetic: overflow, division by zero, domain errors =====
+function _armed() {
+    // ON ERROR GOTO is set: the non-fatal messages become ordinary errors.
+    return typeof _error_handler !== "undefined" && !!_error_handler;
+}
+function _notice(text) {
+    _print(text);
+}
+function _overflow(negative, digits) {
+    // A result too big for its precision: MBASIC prints Overflow, substitutes machine infinity and carries on.
+    if (_armed()) _error("Overflow");
+    _notice("Overflow");
+    const m = digits > 6 ? _MAX_DOUBLE : _MAX_SINGLE;
+    return negative ? -m : m;
+}
+function _divzero(dividend, digits) {
+    if (_armed()) _error("Division by zero");
+    _notice("Division by zero");
+    const m = digits > 6 ? _MAX_DOUBLE : _MAX_SINGLE;
+    return dividend < 0 ? -m : m;
+}
+function _div(a, b, digits) {
+    return b === 0 ? _divzero(a, digits) : a / b;
+}
+function _pow(a, b, digits) {
+    if (a === 0 && b < 0) return _divzero(1, digits);
+    if (a < 0 && b !== Math.floor(b)) _error("Illegal function call");
+    return Math.pow(a, b);
+}
+function _sqr(x) {
+    if (x < 0) _error("Illegal function call");
+    return Math.sqrt(x);
+}
+function _log(x) {
+    if (!(x > 0)) _error("Illegal function call");
+    return Math.log(x);
+}
+function _val_radix(s) {
+    // VAL of text that starts with &: &H takes hex digits (no blanks), &O and & take octal digits (blanks skipped).
+    // More than four hex digits, or an octal number above 65535, is Overflow; an 8 or 9 in an octal number is a Syntax error.
+    let i = 1;
+    while (s[i] === " " || s[i] === "\t") i++;
+    const kind = (s[i] || "").toUpperCase();
+    let v;
+    if (kind === "H") {
+        const digits = /^[0-9A-Fa-f]*/.exec(s.slice(i + 1))[0];
+        if (digits.length > 4) _error("Overflow");
+        v = digits === "" ? 0 : parseInt(digits, 16);
+    } else if (kind === "O" || (kind >= "0" && kind <= "9")) {
+        let run = "";
+        for (const ch of s.slice(kind === "O" ? i + 1 : i)) {
+            if (ch === " " || ch === "\t") continue;
+            if (ch >= "0" && ch <= "9") run += ch; else break;
+        }
+        if (/[89]/.test(run)) _error("Syntax error");
+        v = run === "" ? 0 : parseInt(run, 8);
+        if (v > 65535) _error("Overflow");
+    } else {
+        return 0;
+    }
+    return v >= 32768 ? v - 65536 : v;
+}
+function _val(str) {
+    // MBASIC's VAL (same rules as input_fields.val_text): blanks and tabs are skipped inside the number, E and D
+    // are exponent letters, an exponent without digits is 0, and the number ends at the first other character.
+    let s = String(str).replace(/^[ \t\n]+/, "");
+    if (s[0] === "&") return _val_radix(s);
+    s = s.replace(/[ \t\n]/g, "");
+    const m = /^([+-]?)(\d*)(\.?)(\d*)/.exec(s);
+    if (m[2] === "" && m[4] === "") return 0;
+    let rest = s.slice(m[0].length), exp = "0", hasExp = false;
+    const e = /^[EeDd]([+-]?)(\d*)/.exec(rest);
+    if (e) { hasExp = true; if (e[2] !== "") exp = e[1] + e[2]; rest = rest.slice(e[0].length); }
+    let v = Number(m[1] + (m[2] || "0") + "." + (m[4] || "0") + "e" + exp);
+    if (!hasExp && rest[0] === "%") {
+        v = _round_half_away(v);
+        if (v > 32767 || v < -32768) _error("Overflow");
+    }
+    return v === Infinity || v === -Infinity ? _overflow(v < 0, 16) : v;
+}
+function _int16(n) {
+    // The operand of \\ and MOD: rounded to an integer, and it must fit 16 bits.
+    n = _round_half_away(n);
+    if (!(n >= -32768 && n <= 32767)) _error("Overflow");
+    return n;
+}
+function _idiv(a, b) {
+    a = _int16(a); b = _int16(b);
+    if (b === 0) _error("Division by zero");
+    return Math.trunc(a / b) + 0;
+}
+function _mod(a, b) {
+    a = _int16(a); b = _int16(b);
+    if (b === 0) _error("Division by zero");
+    return (a % b) + 0;
+}
+'''
+
 
 JS_LOGICAL_RUNTIME = r'''
 // AND, OR, XOR, EQV, IMP and NOT work on 16-bit integers. An operand is rounded to the nearest
@@ -316,6 +425,11 @@ function _using_magnitude(v, digits) {
         const m = /^(\d)(?:\.(\d+))?e([+-]\d+)$/.exec(a.toExponential());
         return [(m[1] + (m[2] || "")).replace(/0+$/, ""), parseInt(m[3], 10)];
     }
+    if (digits === 16) {
+        // Start from the shortest decimal form of the double, as the interpreter does (1D-11 must not carry).
+        const m = /^(\d)(?:\.(\d+))?e([+-]\d+)$/.exec(a.toExponential());
+        return _round_digits(m[1] + (m[2] || ""), parseInt(m[3], 10), 16);
+    }
     return _sig_digits(a, digits);
 }
 // Round [ds, exp] to `decimals` places: returns [int digits without leading zeros, fraction digits].
@@ -353,19 +467,11 @@ function _using_number(v, spec, digits) {
     let int_str, frac_str, suffix = "";
     if (spec.exponential) {
         const trailing = spec.trailing_sign || spec.trailing_minus_only;
-        const int_digits = Math.max(0, trailing ? lead : lead - 1);
+        const int_digits = trailing ? lead : lead - 1;
         let exponent = 0;
         if (ds !== "0") {
             exponent = exp + 1 - int_digits;
             [int_str, frac_str] = _using_fixed(ds, exp - exponent, decimals);
-            if (int_str.length > int_digits) {
-                // Rounding 9.99 in a one-digit mantissa carries into 10.0.
-                const all = int_str + frac_str;
-                const nz = all.search(/[^0]/);
-                const ds2 = all.slice(nz).replace(/0+$/, "") || "0";
-                [int_str, frac_str] = _using_fixed(ds2, int_str.length - 1 - nz - 1, decimals);
-                exponent += 1;
-            }
         } else {
             [int_str, frac_str] = _using_fixed("0", 0, decimals);
         }
@@ -378,7 +484,7 @@ function _using_number(v, spec, digits) {
     const trailing_sign = spec.trailing_sign || spec.trailing_minus_only;
     const sign_slot = !trailing_sign && (negative || spec.leading_sign);
     let needed = int_str.length + (spec.dollar_sign ? 1 : 0) + (sign_slot ? 1 : 0);
-    if (!int_str && needed + 1 <= lead) { int_str = "0"; needed += 1; }
+    if (!int_str && (needed + 1 <= lead || !trail)) { int_str = "0"; needed += 1; }
     const body = int_str + (trail ? "." + frac_str : "") + suffix;
     const sign = sign_slot ? (negative ? "-" : "+") : "";
     let out;
@@ -435,7 +541,8 @@ def _js_number(value) -> str:
         if value != value:
             return 'NaN'
         if value in (float('inf'), float('-inf')):
-            return 'Infinity' if value > 0 else '-Infinity'
+            # Never write an infinity: MBASIC has none, only machine infinity.
+            return repr(machine_infinity(DOUBLE_DIGITS, value < 0))
         return repr(value)
     return str(value)
 
@@ -922,6 +1029,11 @@ class JavaScriptBackend(CodeGenBackend):
         # Main execution loop with switch statement
         code.append(self.indent() + 'while (_pc !== null) {')
         self.indent_level += 1
+        if self.uses_error_handling:
+            # A run-time error (Overflow, Division by zero, ...) with ON ERROR armed
+            # jumps to the handler, with ERR and ERL set.
+            code.append(self.indent() + 'try {')
+            self.indent_level += 1
         code.append(self.indent() + 'switch (_pc) {')
         self.indent_level += 1
 
@@ -938,6 +1050,14 @@ class JavaScriptBackend(CodeGenBackend):
 
         self.indent_level -= 1
         code.append(self.indent() + '}')  # End switch
+        if self.uses_error_handling:
+            self.indent_level -= 1
+            code.append(self.indent() + '} catch (e) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'if (e && e.basicCode && _error_handler) { _pc = _trigger_error(e.basicCode, _pc); continue; }')
+            code.append(self.indent() + 'throw e;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
         self.indent_level -= 1
         code.append(self.indent() + '}')  # End while
 
@@ -1255,12 +1375,16 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
 
         # Error handling
+        code.append(self.indent() + 'const _ERR_CODES = ' + json.dumps({m: c for c, (_, m) in ERROR_CODES.items()}) + ';')
         code.append(self.indent() + 'function _error(msg) {')
         self.indent_level += 1
-        code.append(self.indent() + 'throw new Error("?" + msg);')
+        code.append(self.indent() + 'const e = new Error("?" + msg);')
+        code.append(self.indent() + 'e.basicCode = _ERR_CODES[msg];  // ON ERROR traps the error by this number')
+        code.append(self.indent() + 'throw e;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
         code.append(self.indent() + 'function _fatal(e) {')
+        code.append(self.indent() + '    if (_col > 0) _print("");  // the message starts on a new line')
         code.append(self.indent() + '    _print(e.message);')
         code.append(self.indent() + '    if (typeof process !== "undefined") process.exit(1);')
         code.append(self.indent() + '}')
@@ -1271,7 +1395,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '}')
         code.append('')
 
-        for line in (JS_NUMBER_RUNTIME + JS_PRINT_RUNTIME + (JS_PRINT_FILES if self.uses_file_io else JS_PRINT_SCREEN)).strip('\n').split('\n'):
+        for line in (JS_NUMBER_RUNTIME + JS_ARITH_RUNTIME + JS_PRINT_RUNTIME + (JS_PRINT_FILES if self.uses_file_io else JS_PRINT_SCREEN)).strip('\n').split('\n'):
             code.append(self.indent() + line if line else '')
         code.append('')
 
@@ -1318,16 +1442,14 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '// Math functions')
         code.append(self.indent() + 'const _abs = Math.abs;')
         code.append(self.indent() + 'const _int = Math.floor;')
-        code.append(self.indent() + 'const _sqr = Math.sqrt;')
         code.append(self.indent() + 'const _sin = Math.sin;')
         code.append(self.indent() + 'const _cos = Math.cos;')
         code.append(self.indent() + 'const _tan = Math.tan;')
         code.append(self.indent() + 'const _atn = Math.atan;')
-        code.append(self.indent() + 'const _log = Math.log;')
         code.append(self.indent() + 'const _exp = Math.exp;')
         code.append(self.indent() + 'function _sgn(n) { return n > 0 ? 1 : n < 0 ? -1 : 0; }')
         code.append(self.indent() + 'function _fix(n) { return n >= 0 ? Math.floor(n) : Math.ceil(n); }')
-        code.append(self.indent() + 'function _csng(n) { return Math.fround(n); }  // Single precision via ES6')
+        code.append(self.indent() + 'function _csng(n) { return _toSingle(n); }  // Single precision via ES6; too big is Overflow')
         code.append(self.indent() + 'function _cdbl(n) { return n; }  // Double precision (already JS number)')
         code.append('')
         code.append(self.indent() + '// Type coercion for DEFINT/DEFSNG/DEFDBL variable assignment')
@@ -1342,7 +1464,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'function _cint(n) { return _toInt(n); }')
         for line in JS_LOGICAL_RUNTIME.strip('\n').split('\n'):
             code.append(self.indent() + line if line else '')
-        code.append(self.indent() + 'function _toSingle(n) { return Math.fround(n); }  // ES6 single-precision')
+        code.append(self.indent() + 'function _toSingle(n) { return (n >= _SINGLE_LIMIT || n <= -_SINGLE_LIMIT) ? _overflow(n < 0, 6) : Math.fround(n); }  // ES6 single-precision')
         code.append(self.indent() + 'function _toDouble(n) { return n; }  // JS Number is already 64-bit double')
         code.append('')
 
@@ -1382,7 +1504,6 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'function _chr(n) { return String.fromCharCode(n); }')
         code.append(self.indent() + 'function _asc(str) { return String(str).charCodeAt(0) || 0; }')
         code.append(self.indent() + 'function _str(n, d = 6) { const t = _fmt_num(n, d); return n >= 0 ? " " + t : t; }')
-        code.append(self.indent() + 'function _val(str) { return parseFloat(String(str).trim()) || 0; }')
         code.append(self.indent() + 'function _instr(start, str1, str2) {')
         self.indent_level += 1
         code.append(self.indent() + '// INSTR with optional start position')
@@ -1406,18 +1527,20 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'return char.repeat(n);')
         self.indent_level -= 1
         code.append(self.indent() + '}')
-        code.append(self.indent() + 'function _hex(n) {')
+        code.append(self.indent() + 'function _radix_word(n) {')
         self.indent_level += 1
-        code.append(self.indent() + '// HEX$(n) - convert to hexadecimal string')
-        code.append(self.indent() + 'return Math.floor(n).toString(16).toUpperCase();')
+        code.append(self.indent() + '// HEX$ and OCT$ show the 16-bit pattern: 65536 and more is Overflow, 32768..65535 move down by 65536,')
+        code.append(self.indent() + '// then the value rounds like any integer and must fit -32768..32767')
+        code.append(self.indent() + 'if (typeof n === "string") _error("Type mismatch");')
+        code.append(self.indent() + 'if (n !== n || n >= 65536) _error("Overflow");')
+        code.append(self.indent() + 'if (n >= 32768) n -= 65536;')
+        code.append(self.indent() + 'n = _round_half_away(n);')
+        code.append(self.indent() + 'if (!(n >= -32768 && n <= 32767)) _error("Overflow");')
+        code.append(self.indent() + 'return n & 0xFFFF;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
-        code.append(self.indent() + 'function _oct(n) {')
-        self.indent_level += 1
-        code.append(self.indent() + '// OCT$(n) - convert to octal string')
-        code.append(self.indent() + 'return Math.floor(n).toString(8);')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _hex(n) { return _radix_word(n).toString(16).toUpperCase(); }')
+        code.append(self.indent() + 'function _oct(n) { return _radix_word(n).toString(8); }')
         code.append(self.indent() + 'let _print_pos = 0;  // Track print position for POS()')
         code.append(self.indent() + 'function _pos() {')
         self.indent_level += 1
@@ -2037,6 +2160,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'let _error_line = 0;  // Line where error occurred (ERL)')
             code.append(self.indent() + 'let _error_code = 0;  // Error code (ERR)')
             code.append(self.indent() + 'let _in_error_handler = false;  // Prevent recursive errors')
+            code.append(self.indent() + 'const _next_lines = ' + json.dumps({str(k): v for k, v in self.next_line_map.items()}) + ';  // for RESUME NEXT')
             code.append(self.indent() + 'function _trigger_error(code, line) {')
             self.indent_level += 1
             code.append(self.indent() + 'if (_in_error_handler) {')
@@ -2554,8 +2678,10 @@ class JavaScriptBackend(CodeGenBackend):
                 items.append(f'[{kind}, {self._generate_expression(expr.arguments[0])}]')
             else:
                 value = self._generate_expression(expr)
-                if '_pos(' in value:
-                    # POS has to see the items printed before it
+                if '(' in value:
+                    # Evaluated when its turn comes: POS sees the items printed
+                    # before it, and "A=" is on the screen before 10^40 prints
+                    # Overflow, as in MBASIC.
                     value = f'() => {value}'
                 items.append(f'[0, {value}, {self._js_digits(expr)}]')
         filenum = self._generate_expression(stmt.file_number) if stmt.file_number else 'null'
@@ -2659,6 +2785,9 @@ class JavaScriptBackend(CodeGenBackend):
                     idx = self._generate_expression(idx_expr)
                     access = f'{access}[{idx}]'
                 return access
+            elif expr.name.lower() in ('err', 'erl') and expr.type_suffix in (None, '', '%'):
+                # ERR and ERL are read-only values, not variables
+                return f'_{expr.name.lower()}()'
             else:
                 return self._mangle_var_name(expr.name + (expr.type_suffix or ''))
         elif isinstance(expr, BinaryOpNode):
@@ -2668,16 +2797,14 @@ class JavaScriptBackend(CodeGenBackend):
 
             # Map BASIC operators to JavaScript
             if op == '^':
-                if numeric_digits(expr) == SINGLE_DIGITS:
-                    return f'_sg(Math.pow({left}, {right}))'
-                return f'Math.pow({left}, {right})'
+                digits = numeric_digits(expr)
+                wrap = '_sg' if digits == SINGLE_DIGITS else '_dg'
+                return f'{wrap}(_pow({left}, {right}, {digits}))'
             elif op == '//':
                 # Integer division truncates toward zero in MBASIC, so -10 \ 3
-                # is -3. Math.floor gave -4. (JavaScript's % already takes the
-                # sign of the dividend, which is what MOD wants, so that one
-                # needs nothing. Neither yet rounds its operands to integers
-                # first - see docs/dev/MBASIC_521_DIVERGENCES_TODO.md.)
-                return f'Math.trunc({left} / {right})'
+                # is -3. Both operands are rounded to 16-bit integers first,
+                # and a zero divisor is Division by zero (_idiv).
+                return f'_idiv({left}, {right})'
             elif op in ['+', '-', '*', '/', '<', '>', '<=', '>=', '=', '<>']:
                 if op == '=':
                     js_op = '==='
@@ -2685,8 +2812,13 @@ class JavaScriptBackend(CodeGenBackend):
                     js_op = '!=='
                 else:
                     js_op = op
-                if op in ('+', '-', '*', '/') and numeric_digits(expr) == SINGLE_DIGITS:
-                    return f'_sg({left} {js_op} {right})'
+                if op in ('+', '-', '*', '/'):
+                    digits = numeric_digits(expr)
+                    if digits is not None:
+                        wrap = '_sg' if digits == SINGLE_DIGITS else '_dg'
+                        if op == '/':
+                            return f'{wrap}(_div({left}, {right}, {digits}))'
+                        return f'{wrap}({left} {js_op} {right})'
                 if op not in ('+', '-', '*', '/'):
                     # A comparison is -1 for true and 0 for false in BASIC
                     return f'(({left} {js_op} {right}) ? -1 : 0)'
@@ -2695,7 +2827,7 @@ class JavaScriptBackend(CodeGenBackend):
                 # AND, OR, XOR, EQV and IMP are 16-bit integer operators in MBASIC
                 return f'{LOGICAL_HELPERS[op]}({left}, {right})'
             elif op == '%':  # MOD
-                return f'(_round_half_away({left}) % _round_half_away({right}))'
+                return f'_mod({left}, {right})'
             else:
                 return f'({left} {op} {right})'
         elif isinstance(expr, UnaryOpNode):
@@ -2703,7 +2835,7 @@ class JavaScriptBackend(CodeGenBackend):
             op = self._token_to_operator(expr.operator)
             if op == 'NOT':
                 return f'_not({operand})'  # bitwise on a 16-bit integer: -1 for 0, 0 for -1
-            return f'({op}{operand})'
+            return f'({op}({operand}))'
         elif isinstance(expr, FunctionCallNode):
             return self._generate_function_call(expr)
         else:
@@ -2790,10 +2922,13 @@ class JavaScriptBackend(CodeGenBackend):
         call = f'{js_func}({", ".join(args)})'
         if js_func in ('_input_chars', '_inkey'):
             return f'(await {call})'
-        if func_name in ('sqr', 'sin', 'cos', 'tan', 'atn', 'log', 'exp', 'rnd') \
-                and numeric_digits(func) == SINGLE_DIGITS:
-            # MBASIC's maths functions return single precision
-            return f'_sg({call})'
+        if func_name in ('sqr', 'sin', 'cos', 'tan', 'atn', 'log', 'exp', 'rnd'):
+            digits = numeric_digits(func)
+            if digits == SINGLE_DIGITS:
+                # MBASIC's maths functions return single precision
+                return f'_sg({call})'
+            if digits is not None and func_name != 'rnd':
+                return f'_dg({call})'
         return call
 
     def _generate_goto(self, stmt: GotoStatementNode) -> List[str]:
@@ -3463,15 +3598,17 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
         code.append(self.indent() + '_in_error_handler = false;')
 
-        if stmt.line_number is None:
-            # RESUME - return to line that caused error
+        # ERR reads 0 after RESUME; ERL keeps the line number.
+        code.append(self.indent() + '_error_code = 0;')
+        if stmt.line_number is None or stmt.line_number == 0:
+            # RESUME (or RESUME 0) - return to line that caused error
             if self.yield_checks:
                 code.append(self.indent() + yield_check('_error_line'))
             code.append(self.indent() + '_pc = _error_line;')
             code.append(self.indent() + 'break;')
-        elif stmt.line_number == 0:
-            # RESUME NEXT - continue at next line after error
-            code.append(self.indent() + f'const _next_line = {self.next_line_map.get(current_line, "null")};')
+        elif stmt.line_number == -1:
+            # RESUME NEXT (the parser's -1) - continue at next line after error
+            code.append(self.indent() + 'const _next_line = _next_lines[_error_line] === undefined ? null : _next_lines[_error_line];')
             code.append(self.indent() + 'if (_next_line !== null) {')
             self.indent_level += 1
             code.append(self.indent() + '_pc = _next_line;')

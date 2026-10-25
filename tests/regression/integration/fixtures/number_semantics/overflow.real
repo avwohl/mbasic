@@ -1,0 +1,65 @@
+Overflow
+ 1.70141E+38 
+Overflow
+ 1.70141E+38 
+Overflow
+ 1.70141E+38 
+Overflow
+ 1.701411834604693D+38 
+Division by zero
+ 1.70141E+38 
+Division by zero
+ 1.70141E+38 
+Overflow
+ 1.70141E+38 
+Overflow
+ 1.70141E+38 
+Overflow
+-1.70141E+38 
+Overflow
+-1.70141E+38 
+Overflow
+-1.70141E+38 
+ 1.70141E+38 
+-1.70141E+38 
+Overflow
+ 1.701411834604693D+38 
+Overflow
+ 1.701411834604693D+38 
+Overflow
+ 1.70141E+38 
+Overflow
+ 1.701411834604693D+38 
+Overflow
+ 1.70141E+38 
+Overflow
+ 1.70141E+38 
+Division by zero
+-1.70141E+38 
+ .5 -8 -.125  1  0 
+ 1E+20 
+ 2.5 -3.5  .333333 
+ .125 -.125  .5  9 
+Division by zero
+ 1.70141E+38 
+ERR 6 in 260 
+ERR 6 in 270 
+ERR 6 in 280 
+ERR 6 in 290 
+ERR 11 in 300 
+ERR 11 in 310 
+ERR 6 in 320 
+ERR 5 in 330 
+ERR 5 in 340 
+ERR 5 in 350 
+ERR 11 in 360 
+ERR 11 in 370 
+ERR 5 in 380 
+ERR 6 in 390 
+ERR 6 in 400 
+ERR 6 in 410 
+ 32767 
+ERR 11 in 430 
+ERR 6 in 440 
+ 2  0  1 
+ 3 -3  1 -1  2  3 

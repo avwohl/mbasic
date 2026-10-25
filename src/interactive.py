@@ -275,6 +275,9 @@ class InteractiveMode:
         """
         line_node, error = self.program.parse_single_line(line_text, basic_line_num)
 
+        for notice in self.program.take_notices():
+            print(notice)               # "Overflow" for a literal such as 1E39
+
         if error:
             # Print error message
             print(error)

@@ -164,6 +164,9 @@ def to_single(value):
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return value
     try:
+        if abs(value) >= SINGLE_LIMIT:
+            # Newer Pythons pack this as infinity instead of raising.
+            return value
         return struct.unpack('f', struct.pack('f', value))[0]
     except (OverflowError, struct.error, ValueError):
         # Outside float32's range - MBF would say "Overflow"; leaving the value
@@ -196,11 +199,64 @@ def to_integer(value):
         return int(value)
 
 
+def radix_word(value):
+    """The unsigned 16-bit pattern HEX$ and OCT$ print for a number.
+
+    Measured against the real binary: a value from 32768 up is first moved
+    down by 65536 (65536 and more is Overflow), then rounded half away from
+    zero like any integer conversion, and the result must be -32768..32767.
+    So HEX$(-1) is FFFF, HEX$(65535.5) is FFFF, HEX$(65535.6) is 0,
+    HEX$(32767.5) is Overflow and HEX$(-32768.6) is Overflow.
+    """
+    if isinstance(value, str):
+        raise TypeError("Type mismatch")
+    if isinstance(value, bool):
+        value = int(value)
+    if value != value or value >= 65536:
+        raise OverflowError("Overflow")
+    if value >= 32768:
+        value -= 65536
+    number = to_integer(value)
+    if not -32768 <= number <= 32767:
+        raise OverflowError("Overflow")
+    return number & 0xFFFF
+
+
 #: MBASIC's "machine infinity" - the largest number MBF can hold, and what a
 #: float divide by zero leaves behind. It is finite, and overflows again if you
 #: keep multiplying it.
 MBF_INFINITY_SINGLE = 1.7014117331926443e+38
-MBF_INFINITY_DOUBLE = 1.7014118346046923e+38
+MBF_INFINITY_DOUBLE = 1.7014118346046927e+38
+
+
+#: Where a result is infinite in the IEEE format of its precision. Arithmetic is
+#: IEEE here (docs/dev/MBASIC_521_DIVERGENCES_TODO.md, section 10), so the MBF
+#: range is not emulated: only a result that binary32 (single) or binary64
+#: (double) cannot hold is an Overflow. A single is out of range as soon as it
+#: would round to infinity, which is half a unit in the last place above
+#: FLT_MAX.
+SINGLE_LIMIT = 3.4028235677973366e+38
+DOUBLE_MAX = 1.7976931348623157e+308
+
+
+def exceeds_range(value, digits):
+    """Whether a number is infinite in the IEEE format of its precision.
+
+    `digits` is SINGLE_DIGITS or DOUBLE_DIGITS; an INTEGER-typed value has its
+    own 16-bit check and is not looked at here.
+    """
+    if digits == SINGLE_DIGITS:
+        return abs(value) >= SINGLE_LIMIT
+    if digits == DOUBLE_DIGITS:
+        return abs(value) > DOUBLE_MAX
+    return False
+
+
+def machine_infinity(digits, negative=False):
+    """What MBASIC leaves behind after an overflow or a float divide by zero:
+    the largest MBF number of the precision, with the sign of the true result."""
+    value = MBF_INFINITY_DOUBLE if digits == DOUBLE_DIGITS else MBF_INFINITY_SINGLE
+    return -value if negative else value
 
 
 def to_int_operand(value):
@@ -390,7 +446,12 @@ def _literal_digits(expr):
     # see Token.literal_text. Older nodes built elsewhere in the parser
     # (line-number ranges, for instance) still carry the value, which
     # str() renders harmlessly.
-    literal = str(getattr(expr, 'literal', '') or '').upper()
+    return literal_precision(getattr(expr, 'literal', ''), getattr(expr, 'value', 0))
+
+
+def literal_precision(literal, value):
+    """SINGLE_DIGITS or DOUBLE_DIGITS for a numeric literal, from its text and value."""
+    literal = str(literal or '').upper()
     if literal.startswith('&'):
         # A hex or octal constant is an integer, and the D in &HD1 is a
         # digit rather than an exponent.
@@ -399,6 +460,8 @@ def _literal_digits(expr):
         return SINGLE_DIGITS            # explicitly single, however long
     if '#' in literal or 'D' in literal:
         return DOUBLE_DIGITS
+    if value == MBF_INFINITY_SINGLE:
+        return SINGLE_DIGITS            # what a single literal that overflowed became
 
     # Otherwise count the significant figures the value carries: seven or
     # fewer is single, more is double. That is MBASIC's rule applied to
@@ -406,8 +469,8 @@ def _literal_digits(expr):
     # literal padded with trailing zeros (1000000.0 is eight typed digits
     # but one significant one).
     try:
-        mantissa = repr(float(getattr(expr, 'value', 0))).split('e')[0]
-    except (TypeError, ValueError):
+        mantissa = repr(float(value)).split('e')[0]
+    except (TypeError, ValueError, OverflowError):
         return SINGLE_DIGITS
     significant = mantissa.replace('-', '').replace('.', '').strip('0')
     return DOUBLE_DIGITS if len(significant) > 7 else SINGLE_DIGITS

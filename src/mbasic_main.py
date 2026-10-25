@@ -259,6 +259,9 @@ def compile_to_javascript(input_file, output_file, generate_html=False, debug=Fa
         # Lex
         lexer = Lexer(source)
         tokens = lexer.tokenize()
+        if lexer.overflow_literals:
+            print("Warning: Overflow - a number too big for its precision is replaced by "
+                  "machine infinity", file=sys.stderr)
 
         if debug:
             print(f"  Lexed {len(tokens)} tokens", file=sys.stderr)
@@ -527,6 +530,9 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False,
         # Lex
         lexer = Lexer(source)
         tokens = lexer.tokenize()
+        if lexer.overflow_literals:
+            print("Warning: Overflow - a number too big for its precision is replaced by "
+                  "machine infinity", file=sys.stderr)
 
         if debug:
             print(f"  Lexed {len(tokens)} tokens", file=sys.stderr)

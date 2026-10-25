@@ -327,6 +327,27 @@ def test_print_using_matches_the_real_binary():
         ('10 PRINT USING "#.#^^^^-"; -1.5', '1.5E+00-'),
         ('10 PRINT USING "##.##^^^^"; 3.14159#', ' 3.14D+00'),
         ('10 PRINT USING "#.#^^^^"; 0', '0.0E+00'),
+        # A rounding carry is not renormalized (issue #22): the exponent stays
+        # and the extra digit goes in front of the point. All checked against
+        # real MBASIC 5.21.
+        ('10 PRINT USING "#.#^^^^"; 9.99', '1.0E+01'),
+        ('10 PRINT USING "##.#^^^^"; 9.99', '10.0E+00'),
+        ('10 PRINT USING "###.#^^^^"; 99.99', '100.0E+00'),
+        ('10 PRINT USING "+#.#^^^^"; 9.99', '%+10.0E+00'),
+        ('10 PRINT USING "#.#^^^^"; -9.99', '%-1.0E+01'),
+        ('10 PRINT USING "#.##^^^^"; 99999', '1.00E+05'),
+        ('10 PRINT USING "#.#^^^^"; 0.099', '1.0E-01'),
+        ('10 PRINT USING ".###^^^^"; 0.12345', '.012E+01'),
+        ('10 PRINT USING ".##^^^^"; 0.999', '.10E+01'),
+        ('10 PRINT USING "#.#^^^^"; 99.99', '1.0E+02'),
+        ('10 PRINT USING "#.#^^^^"; 0.95', '1.0E+00'),
+        ('10 PRINT USING "##.##^^^^"; 9.999', '10.00E+00'),
+        ('10 PRINT USING "##.##^^^^"; -9.999', '%-10.00E+00'),
+        ('10 PRINT USING "###.#^^^^"; 999.99', '100.0E+01'),
+        ('10 PRINT USING "#.#^^^^-"; -9.99', '%10.0E+00-'),
+        # A field with no decimals always shows a digit.
+        ('10 PRINT USING "#"; -0.3', '%-0'),
+        ('10 PRINT USING "#^^^^"; -1.5', '%-0E+01'),
     ]:
         got = run(source)
         check(got == expected,

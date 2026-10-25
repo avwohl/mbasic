@@ -29,14 +29,61 @@ do not notice. Each prints nothing at all where the binary raises:
 | `LOAD` or `MERGE` of a file with a bare line number for a missing line | `Undefined line number` (the REPL gives the same error) |
 | running off the end of the program inside a handler | `No RESUME in <last line>` |
 
-One more is wrong rather than missing:
+A floating-point overflow is now reported. The binary prints a bare `Overflow`
+(no line number, no `Ok`). It substitutes machine infinity with the sign of the
+true result, and the program goes on. With `ON ERROR` armed it is ERR 6.
 
-- `PRINT 1E38*1E38` gives `1E+76`. On the binary a *floating-point* overflow is
-  a warning like division by zero - it prints `Overflow`, substitutes machine
-  infinity and carries on. Ours has no MBF range to overflow out of, which is
-  the deliberate IEEE decision in section 10; the message is the part that is
-  missing. The integer overflows (`C% = 40000`, `40000 \ 2`, `CINT(40000)`)
-  are fatal and do now match.
+The interpreter and the JavaScript backend do the same for a result that is
+infinite in the IEEE format of its precision (binary32 for single, binary64 for
+double). Examples are `10^40`, `1.7E38*10`, `EXP(100)`, `1E38*1E38`,
+`CSNG(1D39)`, `A! = 1D39` and `VAL("1E400")`.
+
+A literal that is too big, such as `1E39`, gets `Overflow` when the line is
+entered. Machine infinity takes its place. `0^-1` is a non-fatal
+`Division by zero`. These are `Illegal function call`: a negative base with a
+fractional exponent, `SQR` of a negative number, and `LOG` of zero or a
+negative number. `CINT(40000)` is `Overflow`.
+
+What is still different:
+
+- The MBF range is not emulated (section 10). `PRINT 2^127`, `EXP(88)` and
+  `EXP(100#)` are legal here and `Overflow` on the binary. `1D300/1D-300`
+  is `Overflow` here and `Division by zero` on the binary, because MBF cannot
+  hold 1D-300. `1D300^2` and `EXP(1000#)` print a single-precision machine
+  infinity on the binary and a double one here.
+- MBF has no denormal numbers. A result below about 1.5E-39 is 0 on the
+  binary (`PRINT EXP(-100)` and `PRINT 1E-20*1E-20` print 0). IEEE gives a
+  denormal number here (`3.78351E-44`). This follows from the IEEE decision
+  in section 10.
+- `PRINT USING` with `^^^^` and a value that is close to a power of ten
+  (such as 9.99999E30): the binary scales the value by a product of powers
+  of ten in MBF. Two effects follow. (1) The scaled value can round to
+  exactly 1, and then the binary does renormalize. With a single-precision
+  value, `"##.#^^^^"` gives `1.0E+22` for 9.99999E21 and `1.0E-20` for
+  9.99999E-21, and `"#.##^^^^"` gives `0.10E-19` for 9.99999E-21. We give
+  `10.0E+21`, `10.0E-21` and `1.00E-20`. This shows for exponents of about
+  21 to 37 and about -21 to -39. (2) The binary truncates the scaled value
+  when the exponent is about 12 to 26 (`"##.#^^^^"` gives `9.9E+12` for
+  9.95E12 and `9.9E+26` for 9.95E26). We round and give `10.0E+12`. Double
+  values differ in the same way (`"#.##^^^^"` with 9.99999999999999D+99
+  gives `0.17D+39` on the binary, a value in the MBF range). Issue #22 is
+  only partly fixed: the case of a carry that is not caused by the MBF
+  scaling agrees. We do not emulate the MBF multiplication.
+- The sign of machine infinity after a double division by zero is erratic on
+  the binary (it depends on what was computed before). We use the sign of the
+  dividend.
+- The interpreter prints the `Overflow` message of a numeric literal when a
+  line is typed. It does not print the message when `LOAD` or the command line
+  reads the program from a file, and `LIST` shows the text as typed.
+- The binary refuses a line with an `&H` constant of more than four digits, or
+  an `&O` constant above 65535. It prints `Overflow` and does not store the
+  line. The interpreter refuses the line too. The JavaScript compiler stops
+  with a compilation error.
+- The JavaScript backend evaluates all items of a PRINT before it prints any.
+  `PRINT "A=";10^40` prints `Overflow` first and `A=` second. The binary (and
+  the interpreter) print `A=` first. The same holds for `Division by zero`.
+- The JavaScript backend reports a fatal error as `?Overflow`. It has no
+  `in <line>` text.
 
 `src/error_codes.py` still carries nine codes 5.21 has not got - 24, 25, 68-72,
 75 and 76, all `Unprintable error` on the binary. Harmless, since nothing
@@ -45,8 +92,8 @@ produces them, but they are not 5.21.
 FRCINT's 16-bit range check is applied to `\` and MOD operands and to `%`
 assignment, but not yet everywhere the binary applies it: `A(40000)`,
 `TAB(1E38)`, `STRING$(40000,65)`, `LEFT$("AB",1E38)`, `PEEK(70000)`,
-`MKI$(40000)`, `SPACE$(40000)`, `HEX$(1E38)`, `OCT$(1E38)` are all `Overflow`
-there.
+`MKI$(40000)`, `SPACE$(40000)` are all `Overflow`
+there. (`CINT`, `HEX$` and `OCT$` now check.)
 
 
 ## 2. ON ERROR, and what happens around a handler
@@ -218,6 +265,9 @@ decision, see `src/number_format.py` and the note in
     5 ^ 2 = 25                 real false (EXP/LOG gives 24.999998)
     VAL("99.99") = 99.99       real false, and by a different amount than ours
 
-The MBF *range* goes with it: 1E38*1E38 overflows there and does not here.
+The MBF *range* goes with it: an MBF result between 1.7E38 and the IEEE limit
+(3.4E38 for single) overflows there and does not here. Only a result that is
+infinite in the IEEE format of its precision is an `Overflow` here (section 1).
 Machine infinity, 1.70141E+38, is nonetheless reproduced where it is
-observable - a float divide by zero yields it, as it does on the binary.
+observable - a float divide by zero and an overflow yield it, as they do on the
+binary.

@@ -12,8 +12,9 @@ import math
 import random
 from decimal import Decimal, ROUND_HALF_UP
 
-from src.number_format import (SINGLE_DIGITS, _round_to_digits, to_integer,
-                               to_single)
+from src.input_fields import val_text
+from src.number_format import (SINGLE_DIGITS, DOUBLE_DIGITS, _round_to_digits, radix_word,
+                               to_integer, to_single)
 
 # tty, termios, os, sys and win_console used to be imported here for INKEY$ and
 # INPUT$.
@@ -92,6 +93,12 @@ def _mbasic_decimal(value, digits):
         return Decimal(int(magnitude))
     if magnitude == 0:
         return Decimal(0)
+    if digits == DOUBLE_DIGITS:
+        # Start from the shortest decimal that reads back as the same double.
+        # 1D-11 is stored as 9.99999999999999939E-12; the real binary holds
+        # extra mantissa bits and has no such carry, so rounding the exact
+        # binary value to 16 figures would invent one.
+        magnitude = Decimal(repr(float(magnitude)))
     return _round_to_digits(magnitude, digits)
 
 
@@ -432,12 +439,11 @@ class UsingFormatter:
         field's business, not the value's: it is one per lead position, less
         the one the sign sits in. PRINT USING "#.#^^^^"; 1.5 is 0.2E+01 and
         "###.#^^^^"; 1.5 is  15.0E-01. A trailing sign leaves the lead
-        positions alone, so "#.#^^^^-"; -1.5 is 1.5E+00-.
+        positions alone, so "#.#^^^^-"; -1.5 is 1.5E+00-.  A field with no
+        digit before the point counts -1 (".###^^^^"; .12345 is .012E+01).
         """
         trailing = spec['trailing_sign'] or spec['trailing_minus_only']
         int_digits = lead if trailing else lead - 1
-        if int_digits < 0:
-            int_digits = 0
 
         exponent = 0
         if magnitude:
@@ -447,12 +453,9 @@ class UsingFormatter:
             magnitude = magnitude.scaleb(-exponent)
             quantum = Decimal(1).scaleb(-decimals)
             magnitude = magnitude.quantize(quantum, rounding=ROUND_HALF_UP)
-            # Rounding 9.99 in a one-digit mantissa carries into 10.0.
-            limit = Decimal(1).scaleb(int_digits)
-            if magnitude >= limit:
-                magnitude = magnitude.scaleb(-1).quantize(quantum,
-                                                          rounding=ROUND_HALF_UP)
-                exponent += 1
+            # The exponent was fixed from the unrounded value. A carry
+            # (9.99 in a one-digit mantissa gives 10.0) is not renormalized:
+            # the extra digit lands in the integer part, as in MBASIC.
         else:
             magnitude = magnitude.quantize(Decimal(1).scaleb(-decimals))
 
@@ -473,8 +476,10 @@ class UsingFormatter:
         sign_slot = not trailing_sign and (negative or spec['leading_sign'])
 
         needed = len(int_str) + (1 if spec['dollar_sign'] else 0) + (1 if sign_slot else 0)
-        if not int_str and needed + 1 <= lead:
-            int_str = '0'                       # room for it after all
+        if not int_str and (needed + 1 <= lead or not trail):
+            # Room for it after all - and a field with no decimals always
+            # shows a digit, even when that digit overflows the field.
+            int_str = '0'
             needed += 1
 
         body = int_str + ('.' + frac_str if trail else '') + suffix
@@ -551,8 +556,12 @@ class BuiltinFunctions:
         return math.cos(x)
 
     def EXP(self, x):
-        """Exponential (e^x)"""
-        return math.exp(x)
+        """Exponential (e^x). A result too big for a float is infinity here;
+        the interpreter turns that into Overflow for the precision it works in."""
+        try:
+            return math.exp(x)
+        except OverflowError:
+            return float('inf')
 
     def FIX(self, x):
         """Truncate to integer (towards zero)"""
@@ -629,7 +638,10 @@ class BuiltinFunctions:
         Python's round() is banker's rounding, which sends 2.5 to 2. The real
         binary says CINT(2.5) is 3 and CINT(-2.5) is -3.
         """
-        return to_integer(float(x))
+        number = to_integer(float(x))
+        if not -32768 <= number <= 32767:
+            raise OverflowError("Overflow")
+        return number
 
     def CSNG(self, x):
         """Convert to single precision, losing what a single cannot hold."""
@@ -751,7 +763,7 @@ class BuiltinFunctions:
 
     def HEX(self, x):
         """Hexadecimal string representation"""
-        return hex(int(x))[2:].upper()  # Remove '0x' prefix
+        return format(radix_word(x), 'X')
 
     def INSTR(self, *args):
         """
@@ -816,7 +828,7 @@ class BuiltinFunctions:
 
     def OCT(self, x):
         """Octal string representation"""
-        return oct(int(x))[2:]  # Remove '0o' prefix
+        return format(radix_word(x), 'o')
 
     def RIGHT(self, s, n):
         """Right n characters of string. A fractional n rounds."""
@@ -863,30 +875,8 @@ class BuiltinFunctions:
         return c * n
 
     def VAL(self, s):
-        """
-        Convert string to number.
-
-        Stops at first non-numeric character
-        """
-        s = s.strip()
-        if not s:
-            return 0
-
-        # Parse number (stop at first invalid character)
-        result = ""
-        for char in s:
-            if char in "0123456789.-+eE":
-                result += char
-            else:
-                break
-
-        if not result or result in ['+', '-', '.']:
-            return 0
-
-        try:
-            return float(result)
-        except ValueError:
-            return 0
+        """Convert string to number: the rules are in input_fields.val_text."""
+        return val_text(s)
 
     # ========================================================================
     # System Functions

@@ -34,8 +34,24 @@ The JavaScript runtime has these parts:
 * `_str` takes the digits of its argument, so `STR$(1/3#)` has 16 digits.
 * `_write_format` leaves out the padding spaces around numbers.
 * `_print_using` is a port of `UsingFormatter`.
+  For a double, the port starts from the shortest decimal form of the value,
+  as `UsingFormatter` does. The exact binary of 1D-11 is just below 1E-11, and
+  the real binary has no carry there, so `##.##^^^^` shows 1.00D-11.
 * `_toInt` rounds halves away from zero and raises Overflow outside
   -32768 to 32767, like the interpreter.
+* Arithmetic follows the interpreter (`docs/dev/MBASIC_521_DIVERGENCES_TODO.md`,
+  section 1). `_sg` (single) and `_dg` (double) turn a result that is infinite
+  in its precision into `Overflow`. `_overflow` and `_divzero` print the
+  message, give machine infinity with the sign of the true result, and carry
+  on. When `ON ERROR` is armed they raise ERR 6 or ERR 11 instead. `_div`,
+  `_pow`, `_sqr`, `_log`, `_idiv` and `_mod` raise `Division by zero` or
+  `Illegal function call`. `\` and `MOD` round their operands and need 16
+  bits.
+* `_error` gives the error an ERR number. With `ON ERROR` in the program the
+  main loop catches it, sets `ERR` and `ERL`, and jumps to the handler.
+  `RESUME NEXT` goes to the line after the line that failed.
+* `_val` and `_radix_word` follow `val_text` and `radix_word`. `&HFFFF` is -1
+  and `HEX$(-1)` is `FFFF`.
 * A comparison gives -1 or 0. AND, OR, XOR, EQV, IMP and NOT are 16-bit
   integer operators (see `docs/dev/JS_LOGICAL_OPERATORS.md`).
 
@@ -47,6 +63,8 @@ The JavaScript runtime has these parts:
   `PRINT ,X` and `PRINT A,,B` get an empty string item. `PRINT "A" "B"`
   gets an implied `;`.
 * `/` and `^` of two integers are single, so `5%/2%` is 2.5.
+* The parser accepts a sign on the exponent: `2^-3` is .125 and `0^-1` is a
+  division by zero. It was a syntax error.
 
 ## Test method
 
@@ -54,6 +72,11 @@ The JavaScript runtime has these parts:
 two outputs must be equal byte for byte. The test compares the issue example with
 real MBASIC 5.21. A random test compares `_fmt_print` with `format_for_print`
 for 3000 values.
+
+`fixtures/number_semantics/*.bas` have a `.real` file with the output of real
+MBASIC 5.21. The interpreter test and the Node.js test both compare with it.
+They cover overflow, domain errors, `VAL`, `&H` and `&O` constants, and
+`HEX$` and `OCT$`.
 
 ## Differences that remain
 
@@ -66,26 +89,18 @@ output follows the interpreter.
 * `SQR(2#)` and the other maths functions keep double precision here. Real
   MBASIC gives a single.
 * Doubles that come from MBF arithmetic can differ in the last digit.
-* `PRINT USING "#.#^^^^"; 9.99` prints `0.1E+02` here and `1.0E+01` in real
-  MBASIC.
-* Single-precision multiplication that overflows binary32 gives a large
-  number in the JavaScript. The interpreter gives `inf`.
-* Errors in arithmetic do not stop the JavaScript. `PRINT 1/0` prints
-  ` Infinity `. `PRINT SQR(-1)` prints ` NaN `. `PRINT LOG(0)` prints
-  `-Infinity`. `PRINT 10^40` prints ` 1E+40 `. Real MBASIC reports
-  `Division by zero`, `Illegal function call` or `Overflow`. For
-  `1/0` and for overflow it then prints ` 1.70141E+38 `. The interpreter
-  also differs from real MBASIC here (it can print `inf`).
+* `1D300^2` and `EXP(1000#)` give a double machine infinity here. Real MBASIC
+  gives a single one. The MBF range is not emulated (see
+  MBASIC_521_DIVERGENCES_TODO.md, section 10).
 * A single value below about 2.9E-39 prints as a binary32 denormal
   (`1.4013E-45`). Real MBASIC reads such a value as 0. The interpreter
   prints the same text as the JavaScript.
-* The JavaScript generator writes a `&H` or `&O` literal from 32768 to 65535
-  as the value minus 65536, as real MBASIC does (`&HFFFF` is -1). The
-  interpreter still gives 65535. `VAL("&H10")` is 0 here and 16 in real
-  MBASIC. The interpreter has the same fault.
 * `^` with a double base and a fractional exponent keeps double precision
   (`X#^.5`). Real MBASIC gives a single.
-* `PRINT 2^-1` gives a parse error in the compiler.
+* A fatal error stops the JavaScript with `?Overflow`, `?Illegal function
+  call` or `?Division by zero`. Real MBASIC prints `<message> in <line>`.
+  The JavaScript starts a new line first when the cursor is not in column 0,
+  as real MBASIC does.
 * `LPRINT` shows the number format only. `PRINT #n, USING` works.
 * A single-precision whole number above 2^24 is not rounded, because the
   interpreter keeps Python integers exact.

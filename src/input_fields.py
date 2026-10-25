@@ -123,6 +123,79 @@ def keyboard_number(text):
     return value
 
 
+_VAL_MANTISSA = re.compile(r'([+-]?)(\d*)(\.?)(\d*)')
+_VAL_EXPONENT = re.compile(r'[EeDd]([+-]?)(\d*)')
+
+
+def _val_radix(s):
+    """VAL of text that starts with & (leading blanks already gone).
+
+    &H takes hex digits and no blanks after the H; &O, and & with an octal
+    digit, take octal digits with blanks between them. More than four hex
+    digits (leading zeros count), or an octal number above 65535, is Overflow;
+    an 8 or 9 in an octal number is a Syntax error. The value is a signed
+    16-bit word. Anything else after the & is 0.
+    """
+    i = 1
+    while i < len(s) and s[i] in ' \t':
+        i += 1
+    kind = s[i:i + 1].upper()
+    if kind == 'H':
+        digits = re.match(r'[0-9A-Fa-f]*', s[i + 1:]).group(0)
+        if len(digits) > 4:
+            raise OverflowError("Overflow")
+        return _word(int(digits, 16)) if digits else 0
+    if kind == 'O':
+        i += 1
+    elif not kind.isdigit():
+        return 0
+    run = ''
+    for ch in s[i:]:
+        if ch in ' \t':
+            continue
+        if not ch.isdigit():
+            break
+        run += ch
+    if '8' in run or '9' in run:
+        raise RuntimeError("Syntax error")
+    return _word(int(run, 8)) if run else 0
+
+
+def val_text(text):
+    """MBASIC's VAL: the number at the start of the text, 0 if there is none.
+
+    Spaces, tabs and line feeds are skipped everywhere in a decimal number ("1 2" is 12,
+    "- 5" is -5, "1 E 2" is 100). The exponent letter is E or D in either
+    case, and with no digits after it the exponent is 0. The number ends at
+    the second point, at a second E, and at any other character. A % right
+    after a number with no exponent rounds it to a 16-bit integer.
+    &H, &O and & constants are signed 16-bit words (_val_radix).
+    Everything above was checked against MBASIC 5.21 under cpmemu.
+    A number too big for a double comes back as infinity; the interpreter
+    turns that into Overflow.
+    """
+    s = text.lstrip(' \t\n')
+    if s[:1] == '&':
+        return _val_radix(s)
+    s = s.replace(' ', '').replace('\t', '').replace('\n', '')
+    m = _VAL_MANTISSA.match(s)
+    if not m.group(2) and not m.group(4):
+        return 0
+    rest = s[m.end():]
+    exponent = '0'
+    has_exponent = False
+    e = _VAL_EXPONENT.match(rest)
+    if e:
+        has_exponent = True
+        if e.group(2):
+            exponent = e.group(1) + e.group(2)
+        rest = rest[e.end():]
+    value = float(f"{m.group(1)}{m.group(2) or '0'}.{m.group(4) or '0'}e{exponent}")
+    if not has_exponent and rest[:1] == '%':
+        value = _round_percent(value)
+    return value
+
+
 def val_number(text):
     """MBASIC's VAL rule, used for numbers read from a file: leading blanks,
     then the longest number at the start; anything else gives 0.
