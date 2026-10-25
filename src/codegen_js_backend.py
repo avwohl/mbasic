@@ -113,22 +113,37 @@ function _input_fields(line) {
 
 function _input_number(text, type) {
     // type: "I" integer, "F" single, "N" double. Returns null for ?Redo from start.
-    const s = text.replace(/[ \t]/g, "");  // MBASIC ignores blanks inside a number: "1 2" is 12
+    const t = text.replace(/^[ \t]+|[ \t]+$/g, "");
+    let s = text.replace(/[ \t]/g, "");  // MBASIC ignores blanks inside a number: "1 2" is 12
     if (s === "") return 0;
     let v;
-    const radix = /^&([HhOo])([0-9A-Fa-f]*)$/.exec(s);
-    if (radix) {
-        const hex = radix[1] === "H" || radix[1] === "h";
-        if (!(hex ? /^[0-9A-Fa-f]*$/ : /^[0-7]*$/).test(radix[2])) return null;
-        v = radix[2] === "" ? 0 : parseInt(radix[2], hex ? 16 : 8);
+    if (t[0] === "&") {
+        // &H: hex digits, no blanks. & and &O: octal digits, blanks ignored; 8 or 9 is a Syntax error.
+        const hex = t[1] === "H" || t[1] === "h";
+        let digits;
+        if (hex) {
+            digits = t.slice(2);
+            if (!/^[0-9A-Fa-f]*$/.test(digits)) return null;
+        } else {
+            digits = s.slice(t[1] === "O" || t[1] === "o" ? 2 : 1);
+            const lead = /^[0-9]*/.exec(digits)[0];
+            if (/[89]/.test(lead)) _error("Syntax error");
+            if (lead !== digits) return null;
+        }
+        v = digits === "" ? 0 : parseInt(digits, hex ? 16 : 8);
         if (v > 65535) _error("Overflow");
         if (v >= 32768) v -= 65536;
     } else {
-        const m = /^([+-]?)(\d*\.?\d*)(?:[EeDd]([+-]?\d*))?[%!#]?$/.exec(s);
+        // A suffix is allowed only after a number without an exponent; % rounds to an integer.
+        const m = /^([+-]?)(\d*\.?\d*)(?:[EeDd]([+-]?\d*)|([%!#]))?$/.exec(s);
         if (!m) return null;
         let digits = m[2] === "." ? "" : m[2];
         let exp = m[3] === undefined || m[3] === "" || m[3] === "+" || m[3] === "-" ? "0" : m[3];
         v = Number(m[1] + (digits === "" ? "0" : digits) + "e" + exp);
+        if (m[4] === "%") {
+            v = v < 0 ? -Math.round(-v) : Math.round(v);
+            if (v > 32767 || v < -32768) _error("Overflow");
+        }
     }
     if (type === "I") {
         v = v < 0 ? -Math.round(-v) : Math.round(v);  // INPUT rounds, half away from zero

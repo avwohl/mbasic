@@ -270,6 +270,47 @@ def test_empty_prompt_with_comma_or_semicolon():
     check(run('10 INPUT;A\n20 PRINT "A=";A\n', ["5"]), "? 5\nA= 5 \n", "INPUT;A shows ?")
 
 
+def test_percent_suffix_rounds_and_exponent_suffix_is_redo():
+    prog = '10 INPUT A\n20 PRINT A\n'
+    check(run(prog, ["1.5%"]), "? 1.5%\n 2 \n", "1.5% is 2")
+    check(run(prog, ["-1.5%"]), "? -1.5%\n-2 \n", "-1.5% is -2")
+    check(run(prog, ["2.5%"]), "? 2.5%\n 3 \n", "2.5% is 3")
+    check(run(prog, ["5!"]), "? 5!\n 5 \n", "5! is 5")
+    check(run(prog, ["5 #"]), "? 5 #\n 5 \n", "5 # is 5")
+    for bad in ["1E5%", "1e5#", "1E5!", "1d1%", "1%%", "5%5", "&H1%"]:
+        check(run(prog, [bad, "3"]), f"? {bad}\n?Redo from start\n? 3\n 3 \n", f"{bad} is a Redo")
+    check(run(prog, ["40000%"]), "? 40000%\nERROR: Overflow\n", "40000% is Overflow even for a single")
+
+
+def test_bare_ampersand_and_octal_without_o():
+    prog = '10 INPUT A\n20 PRINT A\n'
+    check(run(prog, ["&"]), "? &\n 0 \n", "& alone is 0")
+    check(run(prog, ["&10"]), "? &10\n 8 \n", "&10 is octal 8")
+    check(run(prog, ["&1 0"]), "? &1 0\n 8 \n", "&1 0 is octal 8")
+    check(run(prog, ["&O"]), "? &O\n 0 \n", "&O alone is 0")
+    for bad in ["&8", "&O8", "&o7 8", "&O8x", "&9"]:
+        check(run(prog, [bad]), f"? {bad}\nERROR: Syntax error\n", f"{bad} is a Syntax error, not a Redo")
+    for bad in ["&H-1", "&O-1", "&Oa", "&Z", "&H1G", "&O7x", "&h ff", "&H 1", "&H1 0"]:
+        check(run(prog, [bad, "3"]), f"? {bad}\n?Redo from start\n? 3\n 3 \n", f"{bad} is a Redo")
+
+
+def test_blanks_in_octal_allowed_not_in_hex():
+    prog = '10 INPUT A\n20 PRINT A\n'
+    check(run(prog, ["&o 7"]), "? &o 7\n 7 \n", "&o 7 is 7")
+    check(run(prog, ["&O 17"]), "? &O 17\n 15 \n", "&O 17 is 15")
+    check(run(prog, ["&O1 7"]), "? &O1 7\n 15 \n", "&O1 7 is 15")
+
+
+def test_file_input_octal_and_percent():
+    with tempfile.TemporaryDirectory() as tmp:
+        src = file_program(tmp, ['"&O 17,&H 10,1e5%,&10,1.5%,-2.5%,&"'],
+                           ['FOR I=1 TO 9:INPUT #1,A:PRINT A;:NEXT','PRINT'])
+        check(run(src), " 0  17  0  10  100000  8  2 -3  0 \n", "file numbers: blank ends a number, & is octal, % rounds")
+    with tempfile.TemporaryDirectory() as tmp:
+        src = file_program(tmp, ['"40000%"'], ['INPUT #1,A'])
+        check(run(src), "ERROR: Overflow\n", "40000% from a file is Overflow")
+
+
 def test_line_input_unchanged():
     check(run('10 LINE INPUT "L";L$\n20 PRINT "[";L$;"]"\n', [' a, "b" ']), 'L a, "b" \n[ a, "b" ]\n',
           "LINE INPUT keeps the whole line")

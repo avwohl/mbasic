@@ -112,6 +112,20 @@ def test_input_number_forms(tmp_path):
 
 
 @needs_node
+def test_input_percent_and_ampersand_forms(tmp_path):
+    result = run_node(tmp_path, '''10 INPUT A
+20 PRINT A
+30 INPUT B
+40 PRINT B
+50 INPUT C
+60 PRINT C
+70 INPUT D
+80 PRINT D
+''', "1.5%\n1E5%\n3\n&10\n&O 17\n")
+    assert result.stdout == "? 2\n? ?Redo from start\n? 3\n? 8\n? 15\n"
+
+
+@needs_node
 def test_line_input_keeps_commas_quotes_and_spaces(tmp_path):
     result = run_node(tmp_path, '''10 LINE INPUT "L";L$
 20 PRINT "[";L$;"]"

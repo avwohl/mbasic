@@ -11,8 +11,20 @@ import re
 # MBASIC's largest number. Anything beyond it is "Overflow" for single and double alike.
 MAX_FLOAT = 1.7014118346046923e38
 
-_NUMBER = re.compile(r'^([+-]?)(\d*\.?\d*)(?:[EeDd]([+-]?\d*))?[%!#]?$')
+# A suffix (% ! #) is allowed only after a number without an exponent part.
+_NUMBER = re.compile(r'^([+-]?)(\d*\.?\d*)(?:[EeDd]([+-]?\d*)|([%!#]))?$')
 _PREFIX = re.compile(r'^([+-]?)(\d*\.?\d*)(?:[EeDd]([+-]?\d+))?')
+
+
+def _round_percent(value):
+    """A number typed with a % suffix becomes an integer, halves away from zero.
+
+    Real MBASIC raises Overflow when the result is outside 16 bits.
+    """
+    value = float(int(value + 0.5)) if value >= 0 else -float(int(-value + 0.5))
+    if value > 32767 or value < -32768:
+        raise OverflowError("Overflow")
+    return value
 
 
 def split_keyboard_fields(line):
@@ -54,37 +66,44 @@ def split_keyboard_fields(line):
         i += 1  # the comma
 
 
-def _radix_value(text):
-    """Value of &H.. or &O.. text as MBASIC's signed 16-bit word, or None if malformed.
-
-    More than 16 bits raises OverflowError (measured: "Overflow in 10", no Redo).
-    """
-    base = 16 if text[1] in 'Hh' else 8
-    digits = text[2:]
-    if digits == '':
-        return 0
-    try:
-        value = int(digits, base)
-    except ValueError:
-        return None
+def _word(value):
+    """The signed 16-bit word for an &H or &O value; more than 16 bits is an Overflow error."""
     if value > 65535:
         raise OverflowError("Overflow")  # real MBASIC stops with an error, it does not ask again
     return value - 65536 if value >= 32768 else value
+
+
+def _keyboard_radix(s):
+    """Value of an &... answer (no outer blanks), or None for Redo.
+
+    &H takes hex digits and no blanks. &O, and & alone, take octal digits and
+    blanks are ignored. A digit 8 or 9 in an octal number is a Syntax error,
+    not a Redo. Any other bad character is a Redo. Bare &, &H and &O are 0.
+    """
+    if s[1:2] in ('H', 'h'):
+        digits = s[2:]
+        if not re.match(r'^[0-9A-Fa-f]*$', digits):
+            return None
+        return _word(int(digits, 16)) if digits else 0
+    digits = re.sub(r'[ \t]', '', s[2:] if s[1:2] in ('O', 'o') else s[1:])
+    lead = re.match(r'[0-9]*', digits).group(0)
+    if '8' in lead or '9' in lead:
+        raise RuntimeError("Syntax error")
+    if lead != digits:
+        return None
+    return _word(int(digits, 8)) if digits else 0
 
 
 def keyboard_number(text):
     """Convert one INPUT field to a number, or None for "?Redo from start".
 
     Blanks inside the number are ignored ("1 2" is 12), an empty field is 0,
-    &H and &O numbers are accepted. The caller rounds and range-checks.
+    &H and &O numbers are accepted. A % suffix rounds to an integer.
+    The caller rounds for integer variables and range-checks floats.
     """
     stripped = text.strip(' \t')
-    if len(stripped) >= 2 and stripped[0] == '&' and stripped[1] in 'HhOo':
-        # measured: no blank is allowed after the &H or &O prefix or inside the digits
-        s = re.sub(r'[ \t]+$', '', stripped)
-        if re.search(r'[ \t]', s):
-            return None
-        return _radix_value(s)
+    if stripped[:1] == '&':
+        return _keyboard_radix(stripped)
     s = re.sub(r'[ \t]', '', text)
     if s == '':
         return 0
@@ -96,35 +115,44 @@ def keyboard_number(text):
     if exp in (None, '', '+', '-'):
         exp = '0'
     try:
-        return float(m.group(1) + (digits or '0') + 'e' + exp)
+        value = float(m.group(1) + (digits or '0') + 'e' + exp)
     except OverflowError:
         return None
+    if m.group(4) == '%':
+        value = _round_percent(value)
+    return value
 
 
 def val_number(text):
     """MBASIC's VAL rule, used for numbers read from a file: leading blanks,
     then the longest number at the start; anything else gives 0.
+    &H takes hex digits, & and &O take octal digits. A % right after a number
+    without an exponent rounds it to an integer (Overflow beyond 16 bits).
+    Measured on MBASIC 5.21: &O/&H/& forms, 1.5%, 40000%, 1e5%.
     """
     s = text.strip(' \t')
-    if len(s) >= 2 and s[0] == '&' and s[1] in 'HhOo':
-        base = 16 if s[1] in 'Hh' else 8
+    if s[:1] == '&':
+        base = 16 if s[1:2] in ('H', 'h') else 8
         allowed = '0123456789ABCDEFabcdef' if base == 16 else '01234567'
-        k = 2
+        start = 2 if s[1:2] in ('H', 'h', 'O', 'o') else 1
+        k = start
         while k < len(s) and s[k] in allowed:
             k += 1
-        if k == 2:
+        if k == start:
             return 0
-        value = int(s[2:k], base) & 0xFFFF
-        return value - 65536 if value >= 32768 else value
+        return _word(int(s[start:k], base) & 0xFFFF)
     m = _PREFIX.match(s)
     if not m or (m.group(2) in ('', '.')):
         return 0
     digits = m.group(2)
     exp = m.group(3) or '0'
     try:
-        return float(m.group(1) + digits + 'e' + exp)
+        value = float(m.group(1) + digits + 'e' + exp)
     except OverflowError:
         return MAX_FLOAT if m.group(1) != '-' else -MAX_FLOAT
+    if m.group(3) is None and s[m.end():m.end() + 1] == '%':
+        value = _round_percent(value)
+    return value
 
 
 def read_file_field(read_byte, unread_byte, numeric):
