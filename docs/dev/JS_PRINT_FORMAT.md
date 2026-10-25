@@ -34,7 +34,8 @@ The JavaScript runtime has these parts:
 * `_print_using` is a port of `UsingFormatter`.
 * `_toInt` rounds halves away from zero and raises Overflow outside
   -32768 to 32767, like the interpreter.
-* A comparison gives -1 or 0. `NOT` is bitwise.
+* A comparison gives -1 or 0. AND, OR, XOR, EQV, IMP and NOT are 16-bit
+  integer operators (see `docs/dev/JS_LOGICAL_OPERATORS.md`).
 
 ## Changes in the interpreter
 
@@ -85,20 +86,13 @@ output follows the interpreter.
 * A single value below about 2.9E-39 prints as a binary32 denormal
   (`1.4013E-45`). Real MBASIC reads such a value as 0. The interpreter
   prints the same text as the JavaScript.
-* `&HFFFF` is 65535 here and -1 in real MBASIC. `VAL("&H10")` is 0 here
-  and 16 in real MBASIC. The interpreter has the same two faults.
+* The JavaScript generator writes a `&H` or `&O` literal from 32768 to 65535
+  as the value minus 65536, as real MBASIC does (`&HFFFF` is -1). The
+  interpreter still gives 65535. `VAL("&H10")` is 0 here and 16 in real
+  MBASIC. The interpreter has the same fault.
 * `^` with a double base and a fractional exponent keeps double precision
   (`X#^.5`). Real MBASIC gives a single.
-* The compiler writes `AND` and `OR` as `&&` and `||`, so `PRINT 3 AND 5`
-  prints 5 (real MBASIC: 1). `XOR`, `EQV` and `IMP` make the JavaScript
-  invalid. Only the JavaScript backend has this fault.
 * `PRINT 2^-1` gives a parse error in the compiler.
 * `LPRINT` shows the number format only. `PRINT #n, USING` works.
 * A single-precision whole number above 2^24 is not rounded, because the
   interpreter keeps Python integers exact.
-
-## Faults found and not fixed
-
-* `FOR` and `NEXT` on one line loop for ever in the JavaScript.
-* `NEXT` after `FOR` with an INTEGER variable (`DEFINT`) does not find the
-  loop.

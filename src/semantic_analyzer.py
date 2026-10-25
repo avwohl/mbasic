@@ -1761,24 +1761,19 @@ class SemanticAnalyzer:
 
             # Merge runtime constants: a variable is only constant after the IF if it has the same
             # constant value in both branches (or only one branch exists)
-            if then_constants is not None and else_constants is not None:
-                # Both branches exist - keep only constants that are the same in both
+            # A missing branch (no ELSE, or an empty THEN) leaves the constants as they were before the IF.
+            # Without this, a constant that the condition sets inside the THEN branch (IF X=1 THEN ...)
+            # would stay known after the IF although the other path never saw it.
+            if then_constants is not None or else_constants is not None:
+                if then_constants is None:
+                    then_constants = constants_before
+                if else_constants is None:
+                    else_constants = constants_before
                 merged = {}
                 for var_name in then_constants:
-                    if var_name in else_constants:
-                        if then_constants[var_name] == else_constants[var_name]:
-                            merged[var_name] = then_constants[var_name]
-                # Also keep constants that weren't modified in either branch
-                for var_name in constants_before:
-                    if var_name not in then_constants and var_name not in else_constants:
-                        merged[var_name] = constants_before[var_name]
+                    if var_name in else_constants and then_constants[var_name] == else_constants[var_name]:
+                        merged[var_name] = then_constants[var_name]
                 self.evaluator.runtime_constants = merged
-            elif then_constants is not None:
-                # Only THEN branch exists
-                self.evaluator.runtime_constants = then_constants
-            elif else_constants is not None:
-                # Only ELSE branch exists
-                self.evaluator.runtime_constants = else_constants
             else:
                 # No branches - restore original state
                 self.evaluator.runtime_constants = constants_before
@@ -2207,19 +2202,22 @@ class SemanticAnalyzer:
                 self.current_line
             )
 
-        # Check for proper nesting
-        loop_info = self.loop_stack[-1]
-
-        if loop_info.loop_type != "FOR":
-            raise SemanticError(
-                f"NEXT found but current loop is {loop_info.loop_type} (started at line {loop_info.start_line})",
-                self.current_line
-            )
-
-        # If NEXT has a variable, it must match the FOR variable
+        # If NEXT has a variable, it must match the FOR variable.  NEXT J,I closes two
+        # loops, so the innermost loop is read again for each variable.
         # stmt.variables is List[VariableNode]
         if stmt.variables:
             for var_node in stmt.variables:
+                if not self.loop_stack:
+                    raise SemanticError(
+                        "NEXT without FOR",
+                        self.current_line
+                    )
+                loop_info = self.loop_stack[-1]
+                if loop_info.loop_type != "FOR":
+                    raise SemanticError(
+                        f"NEXT found but current loop is {loop_info.loop_type} (started at line {loop_info.start_line})",
+                        self.current_line
+                    )
                 var_key = self._get_var_key(var_node)
                 if var_key != loop_info.variable:
                     raise SemanticError(
@@ -2239,6 +2237,11 @@ class SemanticAnalyzer:
                         self.current_loop = self.loop_analysis_stack.pop()
         else:
             # NEXT without variable - matches innermost FOR
+            if self.loop_stack[-1].loop_type != "FOR":
+                raise SemanticError(
+                    f"NEXT found but current loop is {self.loop_stack[-1].loop_type} (started at line {self.loop_stack[-1].start_line})",
+                    self.current_line
+                )
             self.loop_stack.pop()
 
             # Close loop analysis

@@ -154,11 +154,25 @@ semantics are not:
 - `src/codegen_backend.py` - the C backend has no entry for `\` or MOD in its
   operator map at all (`_generate_binary_op`, around line 3324), so it emits
   `(a ? b)`. This predates the current work.
-- `src/codegen_js_backend.py` `_match_for_next` (line ~236) pairs NEXT with FOR
-  by *variable name* and jumps to a line rather than a statement, so it cannot
-  reproduce `NEXT J`, `NEXT J,I` or a mid-line skip. Its `_start_ok`
-  (line ~2091) is `(_step > 0) ? (v <= end) : (v >= end)`, which gets STEP 0
-  wrong in the opposite direction from the bug fixed in the interpreter.
+- `src/codegen_js_backend.py` `_start_ok` (in `_generate_for`) is
+  `(_step > 0) ? (v <= end) : (v >= end)`, which gets STEP 0 wrong in the
+  opposite direction from the bug fixed in the interpreter.
+- AND, OR, XOR, EQV, IMP and NOT: the JavaScript backend now matches real
+  MBASIC (GitHub issue 15, `docs/dev/JS_LOGICAL_OPERATORS.md`). The
+  interpreter does not: it truncates a fractional operand (`NOT 2.7` is -3,
+  real MBASIC -4) and it accepts operands outside -32768..32767
+  (`40000 OR 1` is 40001, real MBASIC stops with Overflow). The C backend
+  has not been checked.
+- `src/codegen_js_backend.py` writes WHILE and WEND as a JavaScript `while`
+  block, so a WHILE and its WEND on different lines make invalid JavaScript
+  (`Unexpected token 'case'`). The same fault is listed in
+  `docs/dev/JS_CONTROL_FLOW.md`.
+- Done (GitHub issue 25, `docs/dev/JS_BROWSER_YIELD.md`): the browser build
+  gives the page time to run in long loops and at INKEY$; Node reads INKEY$
+  from stdin.
+- Done (GitHub issue 13): NEXT pairs with FOR by position in the text, the
+  loop-back and GOSUB return points are statements in the middle of a line, and
+  `NEXT J,I` passes the semantic analyzer. See `docs/dev/JS_CONTROL_FLOW.md`.
 
 
 ## 8. `serialize_expression` does not bracket under a unary minus
