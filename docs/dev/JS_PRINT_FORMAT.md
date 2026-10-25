@@ -86,8 +86,10 @@ output follows the interpreter.
 * A single value below about 2.9E-39 prints as a binary32 denormal
   (`1.4013E-45`). Real MBASIC reads such a value as 0. The interpreter
   prints the same text as the JavaScript.
-* `&HFFFF` is 65535 here and -1 in real MBASIC. `VAL("&H10")` is 0 here
-  and 16 in real MBASIC. The interpreter has the same two faults.
+* The JavaScript generator writes a `&H` or `&O` literal from 32768 to 65535
+  as the value minus 65536, as real MBASIC does (`&HFFFF` is -1). The
+  interpreter still gives 65535. `VAL("&H10")` is 0 here and 16 in real
+  MBASIC. The interpreter has the same fault.
 * `^` with a double base and a fractional exponent keeps double precision
   (`X#^.5`). Real MBASIC gives a single.
 * `PRINT 2^-1` gives a parse error in the compiler.

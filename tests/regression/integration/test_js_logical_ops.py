@@ -105,6 +105,16 @@ def test_if_condition_is_bitwise(tmp_path):
     assert out == "F1\n 2  7 \n 44 \nboth\neither\nnot\n"
 
 
+def test_hex_and_octal_masks(tmp_path):
+    # Real MBASIC reads &HFFFF as -1 and &H8000 as -32768, so these masks are not an Overflow
+    out, code = run_js(tmp_path, """10 PRINT &HFFFF;&H8000;&HFFFF AND 1;&H8000 OR 1;&HFF AND 15
+20 PRINT &O177777 AND 1
+30 SYSTEM
+""")
+    assert code == 0
+    assert out == "-1 -32768  1 -32767  15 \n 1 \n"
+
+
 if __name__ == "__main__":
     if NODE is None:
         print("Node.js unavailable: JavaScript execution tests skipped")

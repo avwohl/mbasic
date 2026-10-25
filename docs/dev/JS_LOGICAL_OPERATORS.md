@@ -40,5 +40,12 @@ compares 27 values and 9 overflow cases with real MBASIC.
   range. `PRINT NOT 2.7` gives -3 and `PRINT 40000 OR 1` gives 40001. The
   JavaScript follows real MBASIC. See
   `docs/dev/MBASIC_521_DIVERGENCES_TODO.md` section 7.
-* `&HFFFF` is 65535 here and -1 in real MBASIC (see
-  `docs/dev/JS_PRINT_FORMAT.md`), so `&HFFFF AND 1` gives Overflow.
+* The JavaScript backend does not pass an Overflow from these operators to
+  `ON ERROR`. Real MBASIC gives ERR=6 and the line number in ERL. The
+  JavaScript prints `?Overflow` and stops. Other runtime errors (for example
+  `CHR$(300)`) have the same limit.
+
+## Hex and octal masks
+
+The generator writes `&HFFFF` as -1 and `&H8000` as -32768, as real MBASIC
+does, so `&HFFFF AND 1` is 1 and not an Overflow.

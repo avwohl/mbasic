@@ -2590,6 +2590,9 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate JavaScript expression"""
         if isinstance(expr, NumberNode):
             value = expr.value
+            lit = expr.literal if isinstance(expr.literal, str) else ''
+            if lit[:1] == '&' and isinstance(value, (int, float)) and 32768 <= value <= 65535:
+                value -= 65536    # MBASIC reads &HFFFF as -1 and &H8000 as -32768
             if isinstance(value, float) and numeric_digits(expr) == SINGLE_DIGITS:
                 value = to_single(value)    # a single-precision literal holds 24 bits
             return _js_number(value)
