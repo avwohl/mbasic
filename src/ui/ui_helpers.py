@@ -1174,12 +1174,15 @@ def serialize_statement(stmt):
 
     elif stmt_type == 'InputStatementNode':
         parts = ['INPUT']
+        if stmt.suppress_question and stmt.file_number is None:
+            parts.append(';')  # INPUT; keeps the cursor on the line after the answer
         if stmt.file_number is not None:
             parts.append(f" #{serialize_expression(stmt.file_number)},")
         if stmt.prompt is not None:
             # The separator is the syntax: ';' keeps the "? ", ',' suppresses
-            # it, and getting this backwards changes what the user sees.
-            separator = ',' if stmt.suppress_question else ';'
+            # it (prompt_comma), and getting this backwards changes what the
+            # user sees.
+            separator = ',' if stmt.prompt_comma else ';'
             parts.append(f" {serialize_expression(stmt.prompt)}{separator}")
         parts.append(' ' + ', '.join(serialize_variable(v) for v in stmt.variables))
         return ''.join(parts)

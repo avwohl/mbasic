@@ -632,7 +632,7 @@ class InteractiveMode:
                     state = interpreter.tick(mode='run', max_statements=10000)
 
                     # Handle input synchronously for CLI
-                    if state.input_prompt:
+                    if state.input_prompt is not None:
                         try:
                             value = input_without_history()
                             state = interpreter.provide_input(value)
@@ -684,7 +684,7 @@ class InteractiveMode:
                 state = self.program_interpreter.tick(mode='run', max_statements=10000)
 
                 # Handle input synchronously for CLI
-                if state.input_prompt:
+                if state.input_prompt is not None:
                     try:
                         value = input_without_history()
                         state = self.program_interpreter.provide_input(value)

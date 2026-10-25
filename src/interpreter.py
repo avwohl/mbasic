@@ -15,11 +15,13 @@ from src.pc import PC
 from src.win_console import win_flush_pending
 from src.number_format import (format_for_print, int_divide, int_modulo,
                                MBF_INFINITY_SINGLE, to_int_operand,
-                               to_integer, to_single,
+                               to_integer, to_single, coerce_to_type,
                                INTEGER_DIGITS, SINGLE_DIGITS, DOUBLE_DIGITS)
 from src.iohandler.base import KeyInputPending
 from src.error_codes import (error_code_for, format_error_message,
                              get_error_message)
+from src.input_fields import (split_keyboard_fields, keyboard_number, val_number,
+                              read_file_field, MAX_FLOAT)
 import src.ast_nodes as ast_nodes
 
 
@@ -791,7 +793,7 @@ class Interpreter:
                     state = self.tick(mode='run', max_statements=10000)
 
                     # Handle input synchronously for CLI
-                    if state.input_prompt:
+                    if state.input_prompt is not None:
                         # Synchronous input for CLI
                         try:
                             from src.iohandler.console import input_without_history
@@ -2249,85 +2251,91 @@ class Interpreter:
         2. Otherwise: Set state.input_prompt, input_variables, input_file_number and return (pauses execution)
         3. UI calls provide_input() with user's input line
         4. On next tick(), buffered input is used (step 1) and input_prompt/input_variables are cleared
+        5. If the line is bad, "?Redo from start" is printed and step 2 runs again with the
+           same prompt. Every UI already handles a new input_prompt, so none needs to know.
 
-        Note: input_file_number is designed to be set to None for keyboard input and file#
-        for file input. This would allow the UI to distinguish between keyboard prompts
-        (show in UI) and file input (internal, no prompt needed). However, currently always
-        set to None because file input (stmt.file_number is not None) takes a separate code
-        path that reads synchronously without setting the state machine.
+        The prompt is "? " unless a comma follows the prompt string (prompt_comma).
+        A semicolon right after INPUT only keeps the cursor on the line after the answer;
+        the "? " stays. suppress_question is not used here.
 
-        Design note: File input bypasses the state machine and reads synchronously because
-        file data is immediately available (blocking I/O), unlike keyboard input which
-        requires async handling in the UI event loop.
+        The answer is split and converted by src/input_fields.py with MBASIC 5.21's rules.
+        A file read (INPUT #) takes its fields straight from the file stream, has no Redo,
+        and reads a bad number as 0.
         """
-        # Check if reading from file
         if stmt.file_number is not None:
-            file_num = int(self.evaluate_expression(stmt.file_number))
-            if file_num not in self.runtime.files:
-                raise RuntimeError(f"File #{file_num} not open")
-            file_info = self.runtime.files[file_num]
-            if file_info['mode'] != 'I':
-                raise RuntimeError(f"File #{file_num} not open for input")
+            self._input_from_file(stmt)
+            return
 
-            # Read from file (synchronous - files don't need state machine)
-            line = self._read_line_from_file(file_num)
-            if line is None:
-                raise RuntimeError("Input past end of file")
+        if self.state.input_buffer:
+            line = self.state.input_buffer.pop(0)
         else:
-            # Reading from keyboard - check if we have buffered input
-            if self.state.input_buffer:
-                # Use buffered input from provide_input()
-                line = self.state.input_buffer.pop(0)
+            self._pause_for_input(stmt)
+            return
+
+        values = self._convert_input_line(line, stmt.variables)
+        if values is None:
+            self.io.output("?Redo from start")
+            self._pause_for_input(stmt)
+            return
+
+        self._assign_input_values(stmt.variables, values)
+
+        # Clear input state after successful completion
+        self.state.input_variables = []
+        self.state.input_prompt = None
+
+    def _pause_for_input(self, stmt):
+        """Print the INPUT prompt and pause execution until provide_input() is called."""
+        prompt_value = ""
+        if stmt.prompt:
+            prompt_value = self.evaluate_expression(stmt.prompt)
+        full_prompt = prompt_value if (stmt.prompt and stmt.prompt_comma) else prompt_value + "? "
+        self.io.output(full_prompt, end='')
+
+        # Sets: input_prompt (prompt text), input_variables (var list),
+        #       input_file_number (None for keyboard input, file # for file input)
+        self.state.input_prompt = full_prompt
+        self.state.input_variables = stmt.variables
+        self.state.input_file_number = None
+
+    def _convert_input_line(self, line, variables):
+        """Convert one keyboard answer for the variables, or None for ?Redo from start.
+
+        Nothing is assigned here, so a bad line changes no variable.
+        Overflow of an integer variable is an error, as on the real binary.
+        """
+        fields = split_keyboard_fields(line)
+        if fields is None or len(fields) != len(variables):
+            return None
+        values = []
+        for var_node, (text, quoted) in zip(variables, fields):
+            suffix = self._input_var_suffix(var_node)
+            if suffix == '$':
+                values.append(text)
+                continue
+            if quoted:
+                return None
+            number = keyboard_number(text)
+            if number is None:
+                return None
+            if suffix == '%':
+                number = coerce_to_type(number, '%')  # rounds; raises Overflow when over 16 bits
             else:
-                # No buffered input - need to wait for user input
-                # Show prompt (check suppress_question flag for INPUT; syntax)
-                if stmt.prompt:
-                    prompt_value = self.evaluate_expression(stmt.prompt)
-                    self.io.output(prompt_value, end='')
-                    if not stmt.suppress_question:
-                        self.io.output("? ", end='')
-                        full_prompt = prompt_value + "? "
-                    else:
-                        full_prompt = prompt_value
-                else:
-                    if not stmt.suppress_question:
-                        self.io.output("? ", end='')
-                        full_prompt = "? "
-                    else:
-                        full_prompt = ""
+                if abs(number) > MAX_FLOAT:
+                    self.io.output("Overflow")
+                    return None
+                number = coerce_to_type(number, suffix)
+            values.append(number)
+        return values
 
-                # Set input prompt - execution will pause
-                # Sets: input_prompt (prompt text), input_variables (var list),
-                #       input_file_number (None for keyboard input, file # for file input)
-                self.state.input_prompt = full_prompt
-                self.state.input_variables = stmt.variables  # Save variables for resumption
-                self.state.input_file_number = None  # None indicates keyboard input (not file)
+    def _input_var_suffix(self, var_node):
+        """Type suffix of an INPUT target after DEFINT/DEFSNG/DEFDBL/DEFSTR."""
+        _, suffix = self.runtime._resolve_variable_name(var_node.name, var_node.type_suffix, None)
+        return suffix
 
-                # Save statement for resumption
-                # We'll need to re-execute this statement when input is provided
-                # The tick() loop will detect input_prompt and return
-                return
-
-        # Parse comma-separated values
-        values = [v.strip() for v in line.split(',')]
-
-        # Assign to variables
-        for i, var_node in enumerate(stmt.variables):
-            if i >= len(values):
-                raise RuntimeError("Input past end of file")
-
-            value = values[i]
-
-            # Convert type
-            if var_node.type_suffix == '$':
-                value = str(value)
-            else:
-                try:
-                    value = float(value)
-                except ValueError:
-                    value = 0
-
-            # Store
+    def _assign_input_values(self, variables, values):
+        """Store already converted INPUT values in their variables."""
+        for var_node, value in zip(variables, values):
             if var_node.subscripts:
                 subscripts = [to_integer(self.evaluate_expression(sub)) for sub in var_node.subscripts]
                 self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value, token=self._make_token_info(var_node))
@@ -2342,9 +2350,47 @@ class Interpreter:
                     settings_manager=self.settings_manager
                 )
 
-        # Clear input state after successful completion
-        self.state.input_variables = []
-        self.state.input_prompt = None
+    def _input_from_file(self, stmt):
+        """INPUT #n: read one field per variable straight from the file."""
+        file_num = int(self.evaluate_expression(stmt.file_number))
+        if file_num not in self.runtime.files:
+            raise RuntimeError(f"File #{file_num} not open")
+        file_info = self.runtime.files[file_num]
+        if file_info['mode'] != 'I':
+            raise RuntimeError(f"File #{file_num} not open for input")
+        handle = file_info['handle']
+
+        def read_byte():
+            if file_info['eof']:
+                return None
+            byte = handle.read(1)
+            if not byte:
+                file_info['eof'] = True
+                return None
+            if byte[0] == 26:  # ^Z ends a CP/M file
+                file_info['eof'] = True
+                return None
+            return byte[0]
+
+        def unread_byte():
+            handle.seek(-1, 1)
+
+        for var_node in stmt.variables:
+            suffix = self._input_var_suffix(var_node)
+            field = read_file_field(read_byte, unread_byte, suffix != '$')
+            if field is None:
+                raise RuntimeError("Input past end of file")
+            text, _quoted = field
+            if suffix == '$':
+                value = text
+            else:
+                value = val_number(text)
+                if suffix != '%' and abs(value) > MAX_FLOAT:
+                    # Real MBASIC prints Overflow, keeps going, and stores its largest number
+                    self.io.output("Overflow")
+                    value = MAX_FLOAT if value > 0 else -MAX_FLOAT
+                value = coerce_to_type(value, suffix)
+            self._assign_input_values([var_node], [value])
 
     def _read_line_from_file(self, file_num):
         """Read a line from file, respecting ^Z as EOF (CP/M style)
