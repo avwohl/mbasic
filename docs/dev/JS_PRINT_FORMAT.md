@@ -69,8 +69,13 @@ output follows the interpreter.
   PRINT statement. The JavaScript keeps the real cursor column, as real
   MBASIC does. They differ when a `PRINT` ends with `;` and the next one
   starts with `,` or `TAB`.
-* Real MBASIC starts a new line after the 5th comma zone (line width). Neither
-  implementation does this.
+* Real MBASIC starts a new line when the output passes column 80. This
+  applies to comma zones, strings and numbers. Neither implementation does
+  this.
+* Real MBASIC starts a new line when `TAB(n)` is used and the cursor is
+  already at or past column n. Neither implementation does this.
+* Single-precision multiplication that overflows binary32 gives a large
+  number in the JavaScript. The interpreter gives `inf`.
 * `LPRINT` shows the number format only. `PRINT #n, USING` works.
 * A single-precision whole number above 2^24 is not rounded, because the
   interpreter keeps Python integers exact.

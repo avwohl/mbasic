@@ -889,7 +889,6 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'const _exp = Math.exp;')
         code.append(self.indent() + 'function _sgn(n) { return n > 0 ? 1 : n < 0 ? -1 : 0; }')
         code.append(self.indent() + 'function _fix(n) { return n >= 0 ? Math.floor(n) : Math.ceil(n); }')
-        code.append(self.indent() + 'function _cint(n) { return Math.round(n); }')
         code.append(self.indent() + 'function _csng(n) { return Math.fround(n); }  // Single precision via ES6')
         code.append(self.indent() + 'function _cdbl(n) { return n; }  // Double precision (already JS number)')
         code.append('')
@@ -902,6 +901,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'return n + 0;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _cint(n) { return _toInt(n); }')
         code.append(self.indent() + 'function _toSingle(n) { return Math.fround(n); }  // ES6 single-precision')
         code.append(self.indent() + 'function _toDouble(n) { return n; }  // JS Number is already 64-bit double')
         code.append('')
@@ -2265,7 +2265,7 @@ class JavaScriptBackend(CodeGenBackend):
             elif op == 'NOT':
                 return f'(-({right}) - 1)'  # NOT is bitwise: -1 for 0, 0 for -1
             elif op == '%':  # MOD
-                return f'({left} % {right})'
+                return f'(_round_half_away({left}) % _round_half_away({right}))'
             else:
                 return f'({left} {op} {right})'
         elif isinstance(expr, UnaryOpNode):
