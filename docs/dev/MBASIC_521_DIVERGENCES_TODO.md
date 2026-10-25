@@ -157,6 +157,13 @@ semantics are not:
   real MBASIC -4) and it accepts operands outside -32768..32767
   (`40000 OR 1` is 40001, real MBASIC stops with Overflow). The C backend
   has not been checked.
+- `src/codegen_js_backend.py` writes WHILE and WEND as a JavaScript `while`
+  block, so a WHILE and its WEND on different lines make invalid JavaScript
+  (`Unexpected token 'case'`). The same fault is listed in
+  `docs/dev/JS_CONTROL_FLOW.md`.
+- Done (GitHub issue 25, `docs/dev/JS_BROWSER_YIELD.md`): the browser build
+  gives the page time to run in long loops and at INKEY$; Node reads INKEY$
+  from stdin.
 - Done (GitHub issue 13): NEXT pairs with FOR by position in the text, the
   loop-back and GOSUB return points are statements in the middle of a line, and
   `NEXT J,I` passes the semantic analyzer. See `docs/dev/JS_CONTROL_FLOW.md`.

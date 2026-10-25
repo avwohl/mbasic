@@ -104,6 +104,57 @@ function _imp(a, b) { return ~_ci(a) | _ci(b); }
 function _not(a) { return ~_ci(a); }
 '''
 
+JS_INKEY_RUNTIME = r'''
+// INKEY$ - get a key without waiting. Browser: every INKEY$ call that finds no key gives the page time
+// to run (_yield), so the keydown handler can fill _inkey_buffer. Node: read what waits on stdin, never block.
+let _inkey_buffer = "";
+let _key_waiter = null;  // browser: resolver of the Promise an INPUT is waiting on
+const _browser = typeof window !== "undefined";
+let _slice_start = 0;  // clock reading when main() last gave the page time to run
+function _now() { return typeof performance !== "undefined" ? performance.now() : Date.now(); }
+function _yield() {
+    // A macrotask: the page repaints and handles key events before the program goes on
+    return new Promise((resolve) => setTimeout(resolve, 0));
+}
+let _poll_fd = -2;  // Node: -2 not opened yet, -1 nothing more to read
+let _poll_buf = null;
+let _poll_decoder = null;
+function _poll_stdin() {
+    const fs = require("fs");
+    if (_poll_fd === -2) {
+        _poll_fd = -1;
+        try {
+            // A file is read through fd 0. A pipe or a terminal is opened again with O_NONBLOCK, so a read
+            // that finds nothing fails with EAGAIN and does not wait.
+            if (fs.fstatSync(0).isFile()) _poll_fd = 0;
+            else _poll_fd = fs.openSync("/dev/stdin", fs.constants.O_RDONLY | fs.constants.O_NONBLOCK);
+        } catch (e) { _poll_fd = -1; }
+        _poll_buf = Buffer.alloc(256);
+        _poll_decoder = new (require("string_decoder").StringDecoder)("utf8");
+    }
+    if (_poll_fd < 0) return;
+    let got = 0;
+    try {
+        got = fs.readSync(_poll_fd, _poll_buf, 0, 256, null);
+    } catch (e) {
+        if (e.code !== "EAGAIN") _poll_fd = -1;
+        return;
+    }
+    if (got === 0) { _poll_fd = -1; return; }  // end of input
+    _inkey_buffer += _poll_decoder.write(_poll_buf.subarray(0, got));
+}
+async function _inkey() {
+    if (_inkey_buffer.length === 0) {
+        if (_browser) { await _yield(); _slice_start = _now(); }
+        else _poll_stdin();
+        if (_inkey_buffer.length === 0) return "";
+    }
+    const key = _inkey_buffer[0];
+    _inkey_buffer = _inkey_buffer.slice(1);
+    return key;
+}
+'''
+
 JS_PRINT_RUNTIME = r'''
 // ===== PRINT: columns, zones, TAB and SPC =====
 let _col = 0;  // cursor column on the screen, 0-based
@@ -346,6 +397,25 @@ def _js_number(value) -> str:
 
 # BASIC logical operator -> runtime function (JS_LOGICAL_RUNTIME)
 LOGICAL_HELPERS = {'AND': '_and', 'OR': '_or', 'XOR': '_xor', 'EQV': '_eqv', 'IMP': '_imp'}
+
+# The browser build gives the page time to run. A program that can loop is written as _run(pc), which
+# runs until the end or until it has to give the page time, and the driver main(), which calls _run again
+# at the pc it returned. The check counts jumps back and looks at the clock only when JS_YIELD_BUDGET
+# jumps have gone by; under Node _browser is false and _run never returns early. Why not an await in
+# the loop: an await point inside a hot loop makes V8 compile the loop slower, even when it never runs.
+JS_YIELD_BUDGET = 2000
+JS_YIELD_MS = 12
+
+
+def yield_check(target: str) -> str:
+    """Code before a jump back to target (a JavaScript expression): return to the driver now and then."""
+    return (f'if (--_budget < 0) {{ _budget = {JS_YIELD_BUDGET}; '
+            f'if (_browser && _now() - _slice_start >= {JS_YIELD_MS}) return {target}; }}')
+
+
+# A same-line WHILE loop is a JavaScript loop and cannot return to the driver: _run is async then
+JS_YIELD_CHECK_AWAIT = (f'if (--_budget < 0) {{ _budget = {JS_YIELD_BUDGET}; '
+                        f'if (_browser && _now() - _slice_start >= {JS_YIELD_MS}) {{ await _yield(); _slice_start = _now(); }} }}')
 
 # Case labels for the statements in the middle of a line. BASIC line numbers end at 65529.
 CONT_LABEL_BASE = 100000
@@ -627,6 +697,10 @@ class JavaScriptBackend(CodeGenBackend):
         self.uses_error_handling = False
         self.uses_file_io = False
         self.uses_input_func = False  # INPUT$(n) / INPUT$(n, #f) function
+        self.uses_inkey = False  # INKEY$ function
+        self.can_loop = False  # the program has a FOR, a WHILE or a jump to the same or an earlier line
+        self.has_while = False
+        self.async_fns: Set[str] = set()  # DEF FN names (without FN) whose body can wait for the keyboard
 
         # DATA/READ/RESTORE support
         self.data_values: List[Any] = []
@@ -649,6 +723,8 @@ class JavaScriptBackend(CodeGenBackend):
         self.line_plans: Dict[int, Any] = {}
         self.after_target: Dict[int, Optional[int]] = {}  # id(statement) -> line or label to continue at
         self._next_label = CONT_LABEL_BASE
+        self._cur_line = 0  # number of the line whose code is being written
+        self.yield_checks = False  # True while the browser copy of the program is written
 
     def get_file_extension(self) -> str:
         """JavaScript files use .js extension"""
@@ -662,9 +738,14 @@ class JavaScriptBackend(CodeGenBackend):
         return []  # No compilation step
 
     @property
-    def async_main(self) -> bool:
-        """True when the program can wait for the keyboard: main() and every DEF FN are then async."""
-        return self.uses_input or self.uses_line_input or self.uses_input_func
+    def node_async(self) -> bool:
+        """True when main() (the copy of the program that Node runs) has an await: INPUT, LINE INPUT, INPUT$ or INKEY$."""
+        return self.uses_input or self.uses_line_input or self.uses_input_func or self.uses_inkey
+
+    @property
+    def page_async(self) -> bool:
+        """True when _run() (the browser copy) has an await: the same, or a WHILE loop (it waits at WEND)."""
+        return self.node_async or self.has_while
 
     def indent(self) -> str:
         """Return current indentation"""
@@ -736,13 +817,59 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Main program
         code.append(self.indent() + '// ===== Program =====')
-        code.append(self.indent() + ('async function main() {' if self.async_main else 'function main() {'))
-        self.indent_level += 1
-
-        # Initialize PC to first line
         first_line = min(line.line_number for line in program.lines) if program.lines else 10
-        code.append(self.indent() + f'let _pc = {first_line};')
+        code.extend(self._generate_program(program, first_line, page=False))
+        if self.can_loop:
+            # The same program again, for the browser: its jumps back give the page time to run
+            # (yield_check). Node runs the copy above, which has no check at all and is as fast as before.
+            code.append('')
+            code.extend(self._generate_program(program, first_line, page=True))
         code.append('')
+
+        # Run the program
+        code.append(self.indent() + '// ===== Execute =====')
+        code.append(self.indent() + 'try {')
+        self.indent_level += 1
+        node_start = 'main().catch(_fatal);' if self.node_async else 'main();'
+        if self.can_loop:
+            code.append(self.indent() + f'if (_browser) {{ _main_page().catch(_fatal); }} else {{ {node_start} }}')
+        else:
+            code.append(self.indent() + node_start)
+        self.indent_level -= 1
+        code.append(self.indent() + '} catch (e) {')
+        self.indent_level += 1
+        code.append(self.indent() + '_fatal(e);')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+
+        self.indent_level = 0
+        code.append('})();')
+        code.append('')
+
+        return '\n'.join(code)
+
+    def _generate_program(self, program: ProgramNode, first_line: int, page: bool) -> List[str]:
+        """The switch loop of the program.
+
+        page=False: main(), which runs the program to its end. page=True (browser, programs that can
+        loop): _run(pc), which returns the pc of a jump back when the page needs time, and the driver
+        _main_page(), which waits for the page and calls _run again at that pc.
+        """
+        code = []
+        self.yield_checks = page
+        prefix = 'async ' if (self.page_async if page else self.node_async) else ''
+        if page:
+            code.append(self.indent() + '// _run(pc) runs the program from line pc until it ends or until a jump back at which')
+            code.append(self.indent() + '// the browser needs time. It then returns the pc of that jump (see yield_check).')
+            code.append(self.indent() + f'{prefix}function _run(_pc) {{')
+            self.indent_level += 1
+            code.append(self.indent() + f'let _budget = {JS_YIELD_BUDGET};  // jumps back left before the next look at the clock')
+        else:
+            code.append(self.indent() + f'{prefix}function main() {{')
+            self.indent_level += 1
+            # Initialize PC to first line
+            code.append(self.indent() + f'let _pc = {first_line};')
+            code.append('')
 
         # Main execution loop with switch statement
         code.append(self.indent() + 'while (_pc !== null) {')
@@ -767,26 +894,18 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '}')  # End while
 
         self.indent_level -= 1
-        code.append(self.indent() + '}')  # End main()
-        code.append('')
-
-        # Run the program
-        code.append(self.indent() + '// ===== Execute =====')
-        code.append(self.indent() + 'try {')
-        self.indent_level += 1
-        code.append(self.indent() + ('main().catch(_fatal);' if self.async_main else 'main();'))
-        self.indent_level -= 1
-        code.append(self.indent() + '} catch (e) {')
-        self.indent_level += 1
-        code.append(self.indent() + '_fatal(e);')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
-
-        self.indent_level = 0
-        code.append('})();')
-        code.append('')
-
-        return '\n'.join(code)
+        code.append(self.indent() + '}')  # End main() or _run()
+        if page:
+            code.append('')
+            code.append(self.indent() + 'async function _main_page() {')
+            code.append(self.indent() + f'    let _pc = {first_line};')
+            code.append(self.indent() + '    while (_pc != null) {')
+            code.append(self.indent() + f'        _pc = {"await " if self.page_async else ""}_run(_pc);')
+            code.append(self.indent() + '        if (_pc != null) { await _yield(); _slice_start = _now(); }  // _run asked for time')
+            code.append(self.indent() + '    }')
+            code.append(self.indent() + '}')
+        self.yield_checks = False
+        return code
 
     def _collect_line_labels(self, program: ProgramNode):
         """Collect all line numbers that are referenced"""
@@ -986,8 +1105,66 @@ class JavaScriptBackend(CodeGenBackend):
                     self.uses_data = True
                 elif isinstance(stmt, (OnErrorStatementNode, ErrorStatementNode, ResumeStatementNode)):
                     self.uses_error_handling = True
+                if self._can_loop(stmt, line.line_number):
+                    self.can_loop = True
+                if isinstance(stmt, WhileStatementNode):
+                    self.has_while = True
                 # Check for RND function in expressions
                 self._check_for_rnd(stmt, set())
+        self._find_async_fns()
+
+    @staticmethod
+    def _can_loop(stmt, line_number: int) -> bool:
+        """True for a statement that can start a loop: FOR, WHILE, an error handler, or a jump back."""
+        if isinstance(stmt, (ForStatementNode, NextStatementNode, WhileStatementNode, WendStatementNode,
+                             OnErrorStatementNode, ResumeStatementNode)):
+            return True
+        targets = []
+        if isinstance(stmt, (GotoStatementNode, GosubStatementNode)):
+            targets = [stmt.line_number]
+        elif isinstance(stmt, (OnGotoStatementNode, OnGosubStatementNode)):
+            targets = list(stmt.line_numbers)
+        elif isinstance(stmt, IfStatementNode):
+            targets = [t for t in (stmt.then_line_number, stmt.else_line_number) if t is not None]
+        return any(t <= line_number for t in targets)
+
+    @staticmethod
+    def _called_functions(node, found=None, visited=None):
+        """Names (lower case) of all functions called anywhere inside an expression."""
+        found = set() if found is None else found
+        visited = set() if visited is None else visited
+        if id(node) in visited:
+            return found
+        visited.add(id(node))
+        if isinstance(node, FunctionCallNode):
+            found.add(node.name.lower())
+        if hasattr(node, '__dict__'):
+            for attr_name, value in node.__dict__.items():
+                if attr_name in ('line_num', 'column', 'original_case', 'explicit_type_suffix'):
+                    continue
+                for item in (value if isinstance(value, list) else [value]):
+                    if hasattr(item, '__dict__'):
+                        JavaScriptBackend._called_functions(item, found, visited)
+        return found
+
+    @staticmethod
+    def _fn_key(name: str) -> str:
+        name = name.lower()
+        return name[2:] if name.startswith('fn') else name
+
+    def _find_async_fns(self):
+        """A DEF FN is async when its body calls INPUT$ or INKEY$, or calls an async DEF FN."""
+        calls = {self._fn_key(d.name): self._called_functions(d.expression) for d in self.def_fn_functions}
+        waits = ('input$', 'input', 'inkey$', 'inkey')
+        changed = True
+        while changed:
+            changed = False
+            for key, names in calls.items():
+                if key not in self.async_fns and (
+                        any(n in waits for n in names)
+                        or any(n.startswith('fn') and self._fn_key(n) in self.async_fns for n in names)):
+                    self.async_fns.add(key)
+                    changed = True
 
     def _check_for_rnd(self, node, visited):
         """Recursively check for RND function usage (with cycle detection)"""
@@ -1001,6 +1178,8 @@ class JavaScriptBackend(CodeGenBackend):
             fname = node.name.lower()
             if fname == 'rnd':
                 self.uses_random = True
+            elif fname in ('inkey$', 'inkey'):
+                self.uses_inkey = True
             elif fname in ('input$', 'input'):
                 self.uses_input_func = True
                 # INPUT$(n, #f) reads an open file, so it needs the file helpers
@@ -1956,22 +2135,8 @@ class JavaScriptBackend(CodeGenBackend):
         code.append('')
 
         # INKEY$ function
-        code.append(self.indent() + '// INKEY$ - Get key without waiting')
-        code.append(self.indent() + 'let _inkey_buffer = "";')
-        code.append(self.indent() + 'let _key_waiter = null;  // browser: resolver of the Promise an INPUT is waiting on')
-        code.append(self.indent() + 'function _inkey() {')
-        self.indent_level += 1
-        code.append(self.indent() + '// Returns empty string if no key pressed, otherwise the key')
-        code.append(self.indent() + 'if (_inkey_buffer.length > 0) {')
-        self.indent_level += 1
-        code.append(self.indent() + 'const key = _inkey_buffer[0];')
-        code.append(self.indent() + '_inkey_buffer = _inkey_buffer.slice(1);')
-        code.append(self.indent() + 'return key;')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
-        code.append(self.indent() + 'return "";')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
+        for line in JS_INKEY_RUNTIME.strip('\n').split('\n'):
+            code.append(self.indent() + line if line else '')
         code.append(self.indent() + '// Setup keyboard handler for browser')
         code.append(self.indent() + 'if (typeof window !== "undefined") {')
         self.indent_level += 1
@@ -2134,8 +2299,8 @@ class JavaScriptBackend(CodeGenBackend):
             # Function body
             expr_code = self._generate_expression(def_fn.expression)
 
-            # With an async main() every DEF FN is async too, because its body may reach INPUT$
-            prefix = 'async ' if self.async_main else ''
+            # A DEF FN whose body can reach INPUT$ or INKEY$ is async
+            prefix = 'async ' if self._fn_key(fn_base) in self.async_fns else ''
             code.append(self.indent() + f'{prefix}function {func_name}({param_str}) {{')
             self.indent_level += 1
             code.append(self.indent() + f'return {expr_code};')
@@ -2148,6 +2313,7 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate code for one line"""
         code = []
         plan = self.line_plans[line.line_number]
+        self._cur_line = line.line_number
 
         # Case label for this line
         code.append(self.indent() + f'case {line.line_number}:')
@@ -2186,10 +2352,16 @@ class JavaScriptBackend(CodeGenBackend):
 
         return code
 
-    @staticmethod
-    def _jump_code(target: Optional[int]) -> str:
-        """Set the program counter to a line or label (None: end of program) and leave the switch."""
-        return f'_pc = {"null" if target is None else target}; break;'
+    def _jump_code(self, target: Optional[int]) -> str:
+        """Set the program counter to a line or label (None: end of program) and leave the switch.
+
+        A jump to the same or an earlier line first lets the browser run now and then.
+        """
+        check = f'{yield_check(str(target))} ' if self.yield_checks and self._is_back_jump(target) else ''
+        return f'{check}_pc = {"null" if target is None else target}; break;'
+
+    def _is_back_jump(self, *targets) -> bool:
+        return any(t is not None and t <= self._cur_line for t in targets)
 
     def _generate_statement(self, stmt, line_number: int) -> List[str]:
         """Generate code for a statement"""
@@ -2492,7 +2664,7 @@ class JavaScriptBackend(CodeGenBackend):
         if func_name.startswith('fn'):
             # FNA -> _fn_a, FNFOO -> _fn_foo
             call = f'_fn_{func_name[2:]}({", ".join(args)})'
-            return f'(await {call})' if self.async_main else call
+            return f'(await {call})' if func_name[2:] in self.async_fns else call
 
         # Map BASIC function names to JavaScript
         js_func_map = {
@@ -2561,7 +2733,7 @@ class JavaScriptBackend(CodeGenBackend):
             # STR$ formats like PRINT, so it needs the argument's type
             args.append(str(self._js_digits(func.arguments[0])))
         call = f'{js_func}({", ".join(args)})'
-        if js_func == '_input_chars':
+        if js_func in ('_input_chars', '_inkey'):
             return f'(await {call})'
         if func_name in ('sqr', 'sin', 'cos', 'tan', 'atn', 'log', 'exp', 'rnd') \
                 and numeric_digits(func) == SINGLE_DIGITS:
@@ -2572,8 +2744,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_goto(self, stmt: GotoStatementNode) -> List[str]:
         """Generate GOTO statement"""
         code = []
-        code.append(self.indent() + f'_pc = {stmt.line_number};')
-        code.append(self.indent() + 'break;')
+        code.append(self.indent() + self._jump_code(stmt.line_number))
         return code
 
     def _generate_on_goto(self, stmt: OnGotoStatementNode) -> List[str]:
@@ -2586,6 +2757,8 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + f'const _targets = [{", ".join(str(t) for t in stmt.line_numbers)}];')
         code.append(self.indent() + f'if (_idx >= 1 && _idx <= _targets.length) {{')
         self.indent_level += 1
+        if self.yield_checks and self._is_back_jump(*stmt.line_numbers):
+            code.append(self.indent() + yield_check('_targets[_idx - 1]'))
         code.append(self.indent() + f'_pc = _targets[_idx - 1];')
         code.append(self.indent() + f'break;')
         self.indent_level -= 1
@@ -2609,6 +2782,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + f'_gosub({return_address});')
         else:
             code.append(self.indent() + f'_gosub(null);  // End of program')
+        if self.yield_checks and self._is_back_jump(*stmt.line_numbers):
+            code.append(self.indent() + yield_check('_targets[_idx - 1]'))
         code.append(self.indent() + f'_pc = _targets[_idx - 1];')
         code.append(self.indent() + f'break;')
         self.indent_level -= 1
@@ -2625,8 +2800,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + f'_gosub({return_address});')
         else:
             code.append(self.indent() + f'_gosub(null);  // End of program')
-        code.append(self.indent() + f'_pc = {stmt.line_number};')
-        code.append(self.indent() + 'break;')
+        code.append(self.indent() + self._jump_code(stmt.line_number))
         return code
 
     def _generate_return(self, stmt: ReturnStatementNode) -> List[str]:
@@ -2733,6 +2907,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + f'const _continue = (_loop.step > 0) ? ({var_name} <= _loop.end) : ({var_name} >= _loop.end);')
             code.append(self.indent() + f'if (_continue) {{')
             self.indent_level += 1
+            if self.yield_checks:
+                code.append(self.indent() + yield_check('_loop.line'))
             code.append(self.indent() + f'_pc = _loop.line;')
             code.append(self.indent() + f'break;')
             self.indent_level -= 1
@@ -2757,6 +2933,9 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_wend(self, stmt: WendStatementNode) -> List[str]:
         """Generate WEND statement"""
         code = []
+        if self.yield_checks:
+            # A same-line WHILE loop is a JavaScript loop: the check goes in the loop body
+            code.append(self.indent() + JS_YIELD_CHECK_AWAIT)
         self.indent_level -= 1
         code.append(self.indent() + '}')
         return code
@@ -3231,6 +3410,8 @@ class JavaScriptBackend(CodeGenBackend):
 
         if stmt.line_number is None:
             # RESUME - return to line that caused error
+            if self.yield_checks:
+                code.append(self.indent() + yield_check('_error_line'))
             code.append(self.indent() + '_pc = _error_line;')
             code.append(self.indent() + 'break;')
         elif stmt.line_number == 0:
@@ -3248,8 +3429,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'break;')
         else:
             # RESUME line_number - continue at specific line
-            code.append(self.indent() + f'_pc = {stmt.line_number};')
-            code.append(self.indent() + 'break;')
+            code.append(self.indent() + self._jump_code(stmt.line_number))
 
         return code
 
