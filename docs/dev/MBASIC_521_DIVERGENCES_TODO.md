@@ -41,8 +41,10 @@ overflow in <number>`, 0 if the line has no number), a line with no number
 line number`). The message is bare. The lines read before it stay: `LOAD` of a
 file with a bad first line leaves an empty program, and `MERGE` keeps the old
 program. A bare number of a missing line typed at the prompt also prints
-`Undefined line number`. Inside a running program the error is raised, so
-`ON ERROR` traps it (error 23, 66 or 8). The Tk and curses UIs print the same
+`Undefined line number`. Inside a running program the binary prints the bare
+message, does not run any `ON ERROR` handler and stops the program; ours does
+the same. `RUN "file"` of a file with a bad line stops after the message and
+does not run. The Tk and curses UIs print the same
 message. The web UI loads files through the editor and does not use the loader.
 
 A floating-point overflow is now reported. The binary prints a bare `Overflow`

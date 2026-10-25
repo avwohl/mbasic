@@ -94,11 +94,6 @@ BAD_FILE_NAME = 64
 DIRECT_STATEMENT_IN_FILE = 66
 
 
-class FileReadAbort(RuntimeError):
-    """LOAD or MERGE stopped reading a file with an MBASIC error. Raised only
-    for a running program; carries the error number as mbasic_code."""
-
-
 def get_error_message(error_code):
     """Get the full error message for an error code.
 

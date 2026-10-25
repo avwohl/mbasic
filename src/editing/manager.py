@@ -49,8 +49,7 @@ from src.lexer import Lexer, LexerOverflow, create_keyword_case_manager, tokeniz
 from src.parser import Parser
 from src.debug_logger import debug_log
 from src.error_codes import (format_error_message, LINE_BUFFER_OVERFLOW,
-                             DIRECT_STATEMENT_IN_FILE, UNDEFINED_LINE_NUMBER,
-                             FileReadAbort)
+                             DIRECT_STATEMENT_IN_FILE, UNDEFINED_LINE_NUMBER)
 
 
 def _lines_until_eof_mark(f):
@@ -273,16 +272,6 @@ class ProgramManager:
         message = format_error_message(code, line_number)
         self.read_abort = (code, message)
         errors.append((0, message))
-
-    def read_abort_error(self):
-        """The exception that raises the read_abort error inside a running
-        program, so that ON ERROR can trap it. None if the read did not abort."""
-        if self.read_abort is None:
-            return None
-        code, message = self.read_abort
-        error = FileReadAbort(message)
-        error.mbasic_code = code
-        return error
 
     def _line_buffer_overflows(self, errors, raw):
         """True, after aborting the read, if a file line overflows MBASIC's

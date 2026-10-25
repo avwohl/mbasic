@@ -103,18 +103,31 @@ def test_bare_number_of_missing_line_at_the_prompt(tmp_path):
     assert result.stdout.count("Undefined line number\n") == 2
 
 
-def test_merge_error_in_a_running_program_can_be_trapped(tmp_path):
-    # Measured: a program that MERGEs a file whose line 10 is over 255 bytes,
-    # under ON ERROR GOTO, prints "ERR 23 ERL 10" (ERL is the file line; ours
-    # reports the program line, so only ERR is compared).
-    write(tmp_path, "lg", ["10 REM " + X300])
+@pytest.mark.parametrize("name", ["long", "direct", "bare"])
+def test_bad_line_in_a_running_program_is_not_trapped(tmp_path, name):
+    # Measured: MERGE of a bad file inside a program under ON ERROR GOTO
+    # prints only the bare message and returns to Ok. No handler runs and the
+    # program stops.
+    write(tmp_path, "bad", {
+        "long": ["10 REM " + X300],
+        "direct": ["10 PRINT 1", "PRINT 5"],
+        "bare": ["10 PRINT 1", "30"]}[name])
     write(tmp_path, "main", [
         '10 ON ERROR GOTO 100',
-        '20 MERGE "lg.bas"',
+        '20 MERGE "bad.bas"',
         '30 PRINT "not reached"',
         '40 SYSTEM',
-        '100 PRINT "ERR";ERR',
+        '100 PRINT "TRAPPED";ERR',
         '110 SYSTEM'])
     result = run_cli(tmp_path, 'LOAD "main.bas"\nRUN\nSYSTEM\n')
-    assert "ERR 23" in result.stdout, result.stdout + result.stderr
+    assert "TRAPPED" not in result.stdout, result.stdout
     assert "not reached" not in result.stdout
+
+
+def test_run_file_with_a_bad_line_does_not_run(tmp_path):
+    # Measured: RUN "g" for g = 10 PRINT 1 / PRINT 5 prints
+    # "Direct statement in file" and Ok, and runs nothing.
+    write(tmp_path, "g", ["10 PRINT 1", "PRINT 5", "20 PRINT 2"])
+    result = run_cli(tmp_path, 'RUN "g.bas"\nSYSTEM\n')
+    assert "Direct statement in file" in result.stdout
+    assert "\n 1 \n" not in result.stdout and " 2 " not in result.stdout

@@ -35,7 +35,7 @@ from src.version import VERSION
 from src.error_codes import (message_for, format_error_message,
                              BAD_FILE_NAME, CANT_CONTINUE, FILE_NOT_FOUND,
                              ILLEGAL_FUNCTION_CALL, MISSING_OPERAND,
-                             SYNTAX_ERROR, UNDEFINED_LINE_NUMBER, FileReadAbort)
+                             SYNTAX_ERROR, UNDEFINED_LINE_NUMBER)
 
 
 def _with_default_extension(filename):
@@ -793,13 +793,12 @@ class InteractiveMode:
 
         LOAD and MERGE of a file with a line over 255 bytes, a line with no
         number, or a bare number of a missing line print the bare message and
-        keep the lines read before it. Returns True when that happened. Inside
-        a running program the error is raised, so ON ERROR can trap it.
+        keep the lines read before it. Returns True when that happened. The
+        message is bare and no ON ERROR handler runs, even inside a running
+        program (measured on the binary); the caller stops the program.
         """
         if self.program.read_abort is None:
             return False
-        if from_program:
-            raise self.program.read_abort_error()
         print(self.program.read_abort[1])
         return True
 
@@ -819,7 +818,7 @@ class InteractiveMode:
                 if success:
                     self.current_file = filename
                 self._report_read_abort(from_program)
-                return
+                return True  # the read was aborted
 
             if errors:
                 # Print parse errors
@@ -833,8 +832,6 @@ class InteractiveMode:
             else:
                 print(f"Failed to load program: {filename}")
 
-        except FileReadAbort:
-            raise
         except FileNotFoundError:
             print(format_error_message(FILE_NOT_FOUND))
         except Exception as e:
@@ -870,7 +867,7 @@ class InteractiveMode:
                         line_ast = self.program.line_asts[line_num]
                         self.program_runtime.statement_table.replace_line(line_num, line_ast)
                 self._report_read_abort(from_program)
-                return
+                return True  # the read was aborted
 
             # Show parse errors if any
             if errors:
@@ -901,8 +898,6 @@ class InteractiveMode:
             # the failure and then carried on to the next line. The real binary
             # stops. Raising also lets ON ERROR trap it, which it should.
             raise RuntimeError(f"File not found: {filename}") from None
-        except FileReadAbort:
-            raise
         except Exception as e:
             print(message_for(e))
 

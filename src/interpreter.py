@@ -2646,6 +2646,13 @@ class Interpreter:
         for a statement typed at the Ok prompt (run as line 0)."""
         return bool(self.runtime.pc and self.runtime.pc.line_num)
 
+    def _stop_after_read_abort(self):
+        """LOAD/MERGE hit a bad file line. MBASIC prints the bare message
+        (already printed) and returns to Ok: no ON ERROR handler runs and the
+        running program stops."""
+        if self._in_program_line():
+            self.runtime.pc = self.runtime.pc.stop("END")
+
     def execute_load(self, stmt):
         """Execute LOAD statement"""
         # Evaluate filename expression
@@ -2655,7 +2662,8 @@ class Interpreter:
 
         # Delegate to interactive mode if available
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            self.interactive_mode.cmd_load(filename, from_program=self._in_program_line())
+            if self.interactive_mode.cmd_load(filename, from_program=self._in_program_line()):
+                self._stop_after_read_abort()
         else:
             raise RuntimeError("LOAD not available in this context")
 
@@ -2686,7 +2694,10 @@ class Interpreter:
             if isinstance(target_value, str):
                 # RUN "filename" - load and run file
                 if hasattr(self, 'interactive_mode') and self.interactive_mode:
-                    self.interactive_mode.cmd_load(target_value, from_program=self._in_program_line())
+                    if self.interactive_mode.cmd_load(target_value, from_program=self._in_program_line()):
+                        # A bad file line ends RUN "file" before the run
+                        self._stop_after_read_abort()
+                        return
                     self.interactive_mode.cmd_run()
                 else:
                     raise RuntimeError("RUN filename not available in this context")
@@ -2852,7 +2863,8 @@ class Interpreter:
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
             # quiet: MBASIC prints nothing when a running program MERGEs -
             # the summary belongs to the interactive command only.
-            self.interactive_mode.cmd_merge(filename, quiet=True, from_program=self._in_program_line())
+            if self.interactive_mode.cmd_merge(filename, quiet=True, from_program=self._in_program_line()):
+                self._stop_after_read_abort()
         else:
             raise RuntimeError("MERGE not available in this context")
 
