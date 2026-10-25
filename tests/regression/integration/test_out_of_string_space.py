@@ -129,3 +129,26 @@ def test_clear_arguments_survive_list_and_renum(tmp_path):
     for text in ("10 CLEAR ,40000,1000", "20 CLEAR ,,1000", "30 CLEAR 500,32768", "40 CLEAR\n",
                  "100 CLEAR ,40000,1000", "110 CLEAR ,,1000"):
         assert text in result, (text, result)
+
+
+def test_program_strings_take_no_string_space(tmp_path):
+    # binary: 401 elements of 150 characters assigned from a literal fit (okA 37751);
+    # the same made by STRING$ run out at element 251 or 252
+    literal = "X" * 150
+    source = (f'5 ON ERROR GOTO 900\n10 DIM A$(400)\n20 FOR I=0 TO 400:A$(I)="{literal}":NEXT\n'
+              '30 PRINT "okA"\n40 SYSTEM\n900 PRINT "E";ERR:SYSTEM\n')
+    out = run_cli(tmp_path, source)
+    assert "okA" in out and "E 14" not in out, out
+    source = source.replace(f'"{literal}"', "STRING$(150,65)")
+    assert "E 14" in run_cli(tmp_path, source)
+
+
+@pytest.mark.parametrize("clear, expected", [
+    # binary: the number before the first comma is read as an integer
+    ("CLEAR 32767", "ok"), ("CLEAR 32768", "Overflow in 10"), ("CLEAR 70000", "Overflow in 10"),
+    ("CLEAR -1", "Illegal function call in 10"), ("CLEAR -32768", "Illegal function call in 10"),
+    ("CLEAR -32769", "Overflow in 10"), ("CLEAR -5,60000", "Illegal function call in 10"),
+])
+def test_clear_first_number(tmp_path, clear, expected):
+    out = run_cli(tmp_path, f'10 {clear}\n20 PRINT "ok"\n30 SYSTEM\n')
+    assert expected in out, out

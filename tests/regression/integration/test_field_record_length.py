@@ -134,3 +134,18 @@ def test_javascript_field_against_record_length(tmp_path, open_args, fields, exp
 def test_javascript_record_length_range(tmp_path, length):
     out = run_js(tmp_path, f'10 OPEN "R",1,"ZZ.DAT",{length}\n20 PRINT "ok"\n{CLOSE}')
     assert "Illegal function call" in out and "ok" not in out, out
+
+
+@pytest.mark.parametrize("statement, expected", [
+    # all measured on the binary
+    ('OPEN "R",1,"ZZ.DAT",100:FIELD 1,256 AS A$', "Illegal function call in 10"),
+    ('OPEN "R",1,"ZZ.DAT",100:FIELD 1,255 AS A$', "FIELD overflow in 10"),
+    ('OPEN "I",1,"ZZ.DAT",32', "Syntax error in 10"),
+    ('OPEN "O",1,"ZZ.DAT",32', "Syntax error in 10"),
+    # a width of 10.6 is 11: B$ holds the 11 bytes written by the LSET
+    ('OPEN "R",1,"ZZ.DAT",100:FIELD 1,10 AS A$,10.6 AS B$:LSET B$="THERE":PUT 1,1:GET 1,1'
+     ':PRINT LEN(A$);LEN(B$)', " 10  11"),
+])
+def test_field_width_and_sequential_record_length(tmp_path, statement, expected):
+    out = run_cli(tmp_path, f'10 {statement}\n{CLOSE}')
+    assert expected in out, out

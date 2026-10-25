@@ -105,3 +105,21 @@ def test_host_paths_pass(tmp_path):
     path = tmp_path / "sub" / "a_long_host_name.txt"
     out = run_cli(tmp_path, f'10 OPEN "O",1,"{path}"\n20 PRINT #1,"hi"\n30 CLOSE\n40 PRINT "ok"\n50 SYSTEM\n')
     assert "ok" in out and path.read_text() == "hi\n", out
+
+
+@pytest.mark.parametrize("new, error", [
+    # binary: NAME "ZZOLD.TXT" AS new, with ZZOLD.TXT present
+    ("", 64), ("1:", 64), ("A:", 64), (".ZZ", 64), ("ZZ.A.B", 64), ("[:ZZ", 64),
+    ("A:ZZ", 5), ("Q:ZZ", 5), ("@:ZZ", None), ("B*.TXT", None), ("ZZNEW.TXT", None),
+])
+def test_name_checks_the_new_name(tmp_path, new, error):
+    source = ('5 ON ERROR GOTO 100\n10 OPEN "O",1,"ZZOLD.TXT":CLOSE\n'
+              f'20 NAME "ZZOLD.TXT" AS "{new}"\n30 PRINT "ok"\n40 SYSTEM\n100 PRINT "err";ERR:SYSTEM\n')
+    out = run_cli(tmp_path, source)
+    assert (f"err {error}" if error else "ok") in out, out
+
+
+def test_a_blank_name_is_refused():
+    # binary: OPEN "O" with "  " is Too many files; OPEN "I" and KILL are File not found
+    assert cpm_name_error("  ", creates=True) == 67
+    assert cpm_name_error("  ", creates=False) == 53

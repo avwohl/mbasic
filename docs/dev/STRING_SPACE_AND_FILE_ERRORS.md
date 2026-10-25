@@ -49,13 +49,16 @@ budget for the string data, which is not a model of memory:
 
 The budget is an estimate. The binary also spends memory on the program text,
 and on the variables and arrays themselves. In the recipe of issue 31 it holds
-190 strings of 200 bytes. The interpreter holds 195. A string literal takes no
-string space on the binary (it points into the program text), but it counts
-here. A program that comes near the limit gets the error at a different place.
+190 strings of 200 bytes. The interpreter holds 195. A string literal or DATA item
+takes no string space on the binary (it points into the program text), and
+the interpreter does not count one either: a string that is the same object
+as a program string costs nothing. A program that comes near the limit gets the error at a different place.
 A program that is far over the limit gets the same error as on the binary.
 
 `CLEAR ,n` sets the highest memory address and `CLEAR ,,n` sets the stack
-space. The number before the first comma is read and not used. Measured:
+space. The number before the first comma is read as an integer and not used:
+more than 32767 or less than -32768 is `Overflow`, and a negative number is
+`Illegal function call`. Measured:
 
 - The free memory changes by the same amount as the address. The default
   address is 64766. `CLEAR ,40000` gives 14409 free bytes.
@@ -78,7 +81,9 @@ default is 128. Measured:
   call`. 65536 is `Overflow`. 0 is accepted, and then every FIELD with a
   width above 0 overflows.
 - `FIELD` adds the widths. It raises `FIELD overflow` (error 50) when the total is
-  more than the record length. A negative width is `Illegal function call`.
+  more than the record length. A width below 0 or above 255 is `Illegal function call`
+  (checked before the overflow). A fraction is rounded.
+- `OPEN` with mode I or O and a record length is a `Syntax error`.
 - Each FIELD statement starts at the first byte of the record.
 - The record buffer is as long as the record length. `GET` and `PUT` use this
   length, so a short FIELD list leaves the rest of the record as it was.
@@ -102,7 +107,11 @@ characters that remain. These are the control characters, the characters
 `% ( ) * , / : ; < = > [ \ ] ^ |` and a dot. The top bit of a character is
 ignored. A statement that makes a file (`OPEN "O"`, `OPEN "R"`, `SAVE`) gives
 `Too many files` (error 67). A statement that reads a file gives `File not found`.
-`?` and the space are allowed.
+`?` and the space are allowed. A name of only spaces is refused.
+
+The new name of `NAME ... AS` is checked too, but less: a name that is not well
+formed is `Bad file name`, and a drive letter from A to Z is `Illegal function
+call` (the rename would cross drives). The refused characters are not checked.
 
 The check runs in `OPEN`, `KILL`, `NAME`, `LOAD`, `SAVE`, `MERGE`, `CHAIN` and
 `RUN "file"`, in a program. `FILES` is not checked, because it takes

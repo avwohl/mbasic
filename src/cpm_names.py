@@ -83,8 +83,26 @@ def cpm_name_error(name: str, creates: bool = False) -> Optional[int]:
     field = _fcb_name(name)
     if field is None:
         return BAD_FILE_NAME
+    if not field.strip(' '):
+        # An all-blank name is refused by the file system like a bad character.
+        return TOO_MANY_FILES if creates else FILE_NOT_FOUND
     for ch in field:
         code = ord(ch) & 0x7F
         if code < 32 or code == 127 or chr(code) in _REFUSED:
             return TOO_MANY_FILES if creates else FILE_NOT_FOUND
+    return None
+
+
+def cpm_new_name_error(name: str) -> Optional[int]:
+    """The error for the new name of NAME ... AS, or None.
+
+    Measured: a malformed name is Bad file name, as for any other statement;
+    a name with a drive letter from A to Z is Illegal function call, because
+    the rename would cross drives; the current drive "@:" is fine. Refused
+    characters such as * are not an error.
+    """
+    if _fcb_name(name) is None:
+        return BAD_FILE_NAME
+    if len(name) >= 2 and name[1] == ':' and (ord(name[0]) & 0xDF) != 0x40:
+        return 5
     return None

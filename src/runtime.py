@@ -127,6 +127,7 @@ class Runtime:
         self.memory_top = HIGHEST_MEMORY
         self.stack_space = STACK_SPACE
         self._string_slack = 0
+        self._program_strings = {}      # id -> string, see note_program_string
 
         self.files = {}               # file_number -> file_handle
         self.field_buffers = {}       # file_number -> buffer_dict
@@ -489,7 +490,7 @@ class Runtime:
             raise RuntimeError("String too long")
 
         if resolved_suffix == '$' and isinstance(value, str) and not debugger_set:
-            self._reserve_string_space(len(value))
+            self._reserve_string_space(value)
 
         # Check string length limit if limits provided and it's a string
         if limits and resolved_suffix == '$' and isinstance(value, str):
@@ -633,18 +634,36 @@ class Runtime:
         total = 0
         for full_name, info in self._variables.items():
             if full_name.endswith('$') and isinstance(info['value'], str):
-                total += len(info['value'])
+                total += self._string_cost(info['value'])
         for full_name, info in self._arrays.items():
             if full_name.endswith('$'):
-                total += sum(len(item) for item in info['data'] if isinstance(item, str))
+                total += sum(self._string_cost(item) for item in info['data'] if isinstance(item, str))
         return total
 
     def free_string_space(self):
         """What FRE returns: string space not taken by live strings."""
         return max(0, self.string_space_size - self.live_string_bytes())
 
-    def _reserve_string_space(self, size):
+    def note_program_string(self, value):
+        """Remember a string that is written in the program (a literal or DATA item).
+
+        On the binary such a string points into the program text and takes no
+        string space (measured: 401 elements of 150 characters assigned from
+        a literal fit, the same made by STRING$ do not). Python gives the
+        value back as the same object, so the object is the mark.
+        """
+        self._program_strings[id(value)] = value
+
+    def _string_cost(self, value):
+        """Bytes of string space that a string takes."""
+        if self._program_strings.get(id(value)) is value:
+            return 0
+        return len(value)
+
+    def _reserve_string_space(self, value):
         """Out of string space, raised before a string of size bytes is stored.
+
+        value is the string about to be stored.
 
         MBASIC counts the live strings only when the space runs out (garbage
         collection). The same is done here: the live strings are added up
@@ -653,6 +672,7 @@ class Runtime:
         variable being set still counts, as it does on the binary until the
         collection runs.
         """
+        size = self._string_cost(value)
         if size <= self._string_slack:
             self._string_slack -= size
             return
@@ -860,7 +880,7 @@ class Runtime:
         value = coerce_to_type(value, resolved_suffix)
 
         if resolved_suffix == '$' and isinstance(value, str):
-            self._reserve_string_space(len(value))
+            self._reserve_string_space(value)
 
         # Auto-dimension array to (10) if not explicitly dimensioned (MBASIC behavior)
         if full_name not in self._arrays:

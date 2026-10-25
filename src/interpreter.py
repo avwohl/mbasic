@@ -29,7 +29,7 @@ from src.error_codes import (error_code_for, format_error_message,
 from src.input_fields import (split_keyboard_fields, keyboard_number, val_number,
                               read_file_field, MAX_FLOAT)
 import src.ast_nodes as ast_nodes
-from src.cpm_names import cpm_name_error
+from src.cpm_names import cpm_name_error, cpm_new_name_error
 from src.string_temps import string_temps, STRING_TEMPORARIES
 
 
@@ -2155,7 +2155,13 @@ class Interpreter:
         Out of memory.
         """
         if stmt.string_space is not None:
-            self.evaluate_expression(stmt.string_space)
+            # Read as an integer: Overflow beyond 16 bits, Illegal function
+            # call below 0 (measured), and then not used.
+            string_space = to_integer(self.evaluate_expression(stmt.string_space))
+            if not -32768 <= string_space <= 32767:
+                raise RuntimeError("Overflow")
+            if string_space < 0:
+                raise MBasicError(5)
         memory_top = stack_space = None
         if stmt.memory_top is not None:
             memory_top = to_integer(self.evaluate_expression(stmt.memory_top))
@@ -3116,6 +3122,14 @@ class Interpreter:
         if not isinstance(new_filename, str):
             raise RuntimeError("NAME requires string for new filename")
         self._check_file_name(old_filename)
+        # The new name goes through namfil too: Bad file name for a malformed
+        # one, and Illegal function call for a drive letter (measured: the
+        # rename would cross drives). Refused characters are not checked.
+        code = cpm_new_name_error(new_filename) \
+            if self.settings_manager.get('cpm_file_names', True) \
+            and '/' not in new_filename and '\\' not in new_filename else None
+        if code is not None:
+            raise MBasicError(code)
 
         # Rename the file
         try:
@@ -3161,6 +3175,8 @@ class Interpreter:
         # (measured), and 0 is accepted but leaves no room for any field.
         record_length = DEFAULT_RECORD_LENGTH
         if stmt.record_length is not None:
+            if mode in ("I", "O"):
+                raise MBasicError(2)    # measured: Syntax error
             record_length = to_integer(self.evaluate_expression(stmt.record_length))
             if not -32768 <= record_length <= 32767:
                 raise RuntimeError("Overflow")
@@ -3284,7 +3300,7 @@ class Interpreter:
         # and then stops; here nothing changes.
         for width_expr, var_node in stmt.fields:
             width = to_integer(self.evaluate_expression(width_expr))
-            if width < 0:
+            if not 0 <= width <= 255:
                 raise MBasicError(5)
             var_name = var_node.name + (var_node.type_suffix or '')
 
@@ -3776,7 +3792,9 @@ class Interpreter:
 
     def evaluate_string(self, expr):
         """Evaluate string literal"""
-        return expr.value
+        value = expr.value
+        self.runtime.note_program_string(value)
+        return value
 
     def evaluate_variable(self, expr):
         """Evaluate variable reference"""

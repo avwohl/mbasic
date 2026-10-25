@@ -122,7 +122,7 @@ SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
         type=SettingType.BOOLEAN,
         default=True,
         description="Refuse file names that CP/M MBASIC 5.21 refuses",
-        help_text="When enabled, OPEN, KILL and the like give Bad file name or Too many files for a name such as ABCDEFGHI.DAT or A*.X. Turn off to use host names such as data/input.txt",
+        help_text="When enabled, OPEN, KILL and the like give Bad file name or Too many files for a name such as ABCDEFGHI.DAT or A*.X. Names with a slash or backslash are host paths and always pass. Turn off to use host names such as inputfile.txt",
         scope=SettingScope.GLOBAL,
     ),
 
