@@ -240,19 +240,22 @@ semantics are not:
   has `\` and MOD (operands rounded to integers, as CINT does), `/` always gives
   a floating-point result, comparisons give -1, and AND, OR, XOR, EQV, IMP
   and NOT work bit by bit on 16-bit integers. It still does not check the
-  operands for 16-bit overflow (#54).
+  operands for 16-bit overflow
+  (see the next entry).
 - `src/codegen_js_backend.py` `_start_ok` (in `_generate_for`) is
   `(_step > 0) ? (v <= end) : (v >= end)`, which gets STEP 0 wrong in the
   opposite direction from the bug fixed in the interpreter. The C backend
-  also gets STEP 0 wrong (#55).
+  also gets STEP 0 wrong. The C part is Done (#55): the C backend ends a
+  STEP 0 loop only when the variable equals the end, at FOR and at NEXT. The
+  JavaScript part is still open (#55).
 - AND, OR, XOR, EQV, IMP and NOT: the JavaScript backend now matches real
   MBASIC (GitHub issue 15, `docs/dev/JS_LOGICAL_OPERATORS.md`). The
   interpreter does not: it truncates a fractional operand (`NOT 2.7` is -3,
   real MBASIC -4) and it accepts operands outside -32768..32767
   (`40000 OR 1` is 40001, real MBASIC stops with Overflow) (#56). The C
-  backend rounds a fractional operand and wraps an operand outside the range
-  to 16 bits, so it matches real MBASIC except that it does not stop with
-  Overflow (#54).
+  backend matches real MBASIC. Done (#54): it rounds a fractional operand, and
+  an operand outside -32768..32767 after rounding is Overflow. `\` and MOD with
+  a zero divisor are Division by zero.
 - `src/codegen_js_backend.py` writes WHILE and WEND as a JavaScript `while`
   block, so a WHILE and its WEND on different lines make invalid JavaScript
   (`Unexpected token 'case'`). The same fault is listed in
