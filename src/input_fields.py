@@ -78,11 +78,16 @@ def keyboard_number(text):
     Blanks inside the number are ignored ("1 2" is 12), an empty field is 0,
     &H and &O numbers are accepted. The caller rounds and range-checks.
     """
+    stripped = text.strip(' \t')
+    if len(stripped) >= 2 and stripped[0] == '&' and stripped[1] in 'HhOo':
+        # measured: no blank is allowed after the &H or &O prefix or inside the digits
+        s = re.sub(r'[ \t]+$', '', stripped)
+        if re.search(r'[ \t]', s):
+            return None
+        return _radix_value(s)
     s = re.sub(r'[ \t]', '', text)
     if s == '':
         return 0
-    if len(s) >= 2 and s[0] == '&' and s[1] in 'HhOo':
-        return _radix_value(s)
     m = _NUMBER.match(s)
     if not m:
         return None
@@ -136,6 +141,8 @@ def read_file_field(read_byte, unread_byte, numeric):
     - Any other string ends at a comma or line end; trailing blanks go.
     - A number ends at a blank, a comma or a line end, so "1 2" is two numbers.
     - A number is read with the VAL rule: a bad one is 0, not an error.
+      A quote is no quote for a number: "5" is 0 and the field ends at the
+      next blank, comma or line end.
     Returns (text, was_quoted) or None when no byte is left at all.
     """
     b = read_byte()
@@ -145,7 +152,7 @@ def read_file_field(read_byte, unread_byte, numeric):
         return None
     out = bytearray()
     quoted = False
-    if b == 34:
+    if b == 34 and not numeric:
         quoted = True
         b = read_byte()
         while b is not None and b != 34:

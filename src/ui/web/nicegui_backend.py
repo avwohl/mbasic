@@ -2409,7 +2409,7 @@ class NiceGUIBackend(UIBackend):
                 return
 
             # If waiting for input, don't tick - wait for input to be provided
-            if state.input_prompt:
+            if state.input_prompt is not None:
                 # Show prompt and focus the immediate mode input box
                 if not self.waiting_for_input:
                     self.waiting_for_input = True
@@ -2464,7 +2464,7 @@ class NiceGUIBackend(UIBackend):
                 if self.exec_timer:
                     self.exec_timer.cancel()
                     self.exec_timer = None
-            elif state.input_prompt:
+            elif state.input_prompt is not None:
                 # Pause execution until input is provided
                 # Show prompt and focus the immediate mode input box
                 if not self.waiting_for_input:
@@ -2750,7 +2750,7 @@ class NiceGUIBackend(UIBackend):
     def _handle_step_result(self, state, step_type):
         """Handle result of a step operation."""
         # Use microprocessor model: check error_info, input_prompt, and pc.is_running()
-        if state.input_prompt:
+        if state.input_prompt is not None:
             # Waiting for input - show input UI
             self.waiting_for_input = True
             self.input_prompt_text = state.input_prompt
@@ -3648,7 +3648,7 @@ class NiceGUIBackend(UIBackend):
         # Provide input to interpreter via TWO mechanisms (we check both in case either is active):
         # 1. interpreter.provide_input() - Used when interpreter is waiting synchronously
         #    (checked via interpreter.state.input_prompt). Stores input for retrieval.
-        if self.interpreter and self.interpreter.state.input_prompt:
+        if self.interpreter and self.interpreter.state.input_prompt is not None:
             self.interpreter.provide_input(user_input)
 
         # 2. input_future.set_result() - Used when async code is waiting via asyncio.Future
@@ -3720,7 +3720,7 @@ class NiceGUIBackend(UIBackend):
     def _on_immediate_enter(self, e):
         """Handle Enter key in immediate mode input."""
         # Check if we're waiting for LINE INPUT
-        if self.waiting_for_input and self.interpreter and self.interpreter.state.input_prompt:
+        if self.waiting_for_input and self.interpreter and self.interpreter.state.input_prompt is not None:
             # Submit the input to the running program
             user_input = self.immediate_entry.value
             self.immediate_entry.value = ''

@@ -248,6 +248,28 @@ def test_file_input_past_end():
         check(run(src).startswith("ERROR: Input past end"), True, "reading past the end is an error")
 
 
+def test_file_input_numeric_target_ignores_quotes():
+    # Measured on real MBASIC 5.21: a quote is no quote when the target is a number.
+    with tempfile.TemporaryDirectory() as tmp:
+        src = file_program(tmp, ['Q$;"5";Q$;",6"', 'Q$;"a,b";Q$;",7,8"', 'Q$;"x";Q$;"y,9"', '"w"', 'Q$;"un"', '"term"'], [
+            'INPUT #1,A,B', 'PRINT A;B', 'INPUT #1,A,B,C', 'PRINT A;B;C',
+            'INPUT #1,A,B', 'PRINT A;B', 'INPUT #1,A,B', 'PRINT A;B', 'INPUT #1,A,B', 'PRINT A;B'])
+        check(run(src), " 0  6 \n 0  0  7 \n 8  0 \n 9  0 \n 0  0 \n",
+              "a quote in a numeric field makes 0 and an unterminated quote does not run to the end of the file")
+
+
+def test_blank_after_radix_prefix_is_redo():
+    check(run('10 INPUT A\n20 PRINT A\n', [" &H 10", "&H10"]),
+          "?  &H 10\n?Redo from start\n? &H10\n 16 \n", "a blank after &H gives Redo")
+    check(run('10 INPUT A\n20 PRINT A\n', ["1 E 2"]), "? 1 E 2\n 100 \n", "blanks inside a decimal number are ignored")
+
+
+def test_empty_prompt_with_comma_or_semicolon():
+    check(run('10 INPUT "",A\n20 PRINT "A=";A\n', ["5"]), "5\nA= 5 \n", 'INPUT "",A shows no prompt and goes on')
+    check(run('10 INPUT "";A\n20 PRINT "A=";A\n', ["5"]), "? 5\nA= 5 \n", 'INPUT "";A shows ?')
+    check(run('10 INPUT;A\n20 PRINT "A=";A\n', ["5"]), "? 5\nA= 5 \n", "INPUT;A shows ?")
+
+
 def test_line_input_unchanged():
     check(run('10 LINE INPUT "L";L$\n20 PRINT "[";L$;"]"\n', [' a, "b" ']), 'L a, "b" \n[ a, "b" ]\n',
           "LINE INPUT keeps the whole line")

@@ -793,7 +793,7 @@ class Interpreter:
                     state = self.tick(mode='run', max_statements=10000)
 
                     # Handle input synchronously for CLI
-                    if state.input_prompt:
+                    if state.input_prompt is not None:
                         # Synchronous input for CLI
                         try:
                             from src.iohandler.console import input_without_history
