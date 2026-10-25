@@ -55,12 +55,20 @@ What is still different:
   binary (`PRINT EXP(-100)` and `PRINT 1E-20*1E-20` print 0). IEEE gives a
   denormal number here (`3.78351E-44`). This follows from the IEEE decision
   in section 10.
-- `PRINT USING` with `^^^^` and a value such as 9.99999E30 (six nines, an
-  exponent of 25 or more, or an exponent of -30 or less): the binary
-  scales the value by a product of powers of ten in MBF. The scaled value
-  can round to exactly 1, and then the binary does renormalize
-  (`"#.##^^^^"` gives `0.10E+32`). We give `1.00E+31`. Values such as
-  9.9999E35 and 9.99999E20 agree. We do not emulate the MBF multiplication.
+- `PRINT USING` with `^^^^` and a value that is close to a power of ten
+  (such as 9.99999E30): the binary scales the value by a product of powers
+  of ten in MBF. Two effects follow. (1) The scaled value can round to
+  exactly 1, and then the binary does renormalize. With a single-precision
+  value, `"##.#^^^^"` gives `1.0E+22` for 9.99999E21 and `1.0E-20` for
+  9.99999E-21, and `"#.##^^^^"` gives `0.10E-19` for 9.99999E-21. We give
+  `10.0E+21`, `10.0E-21` and `1.00E-20`. This shows for exponents of about
+  21 to 37 and about -21 to -39. (2) The binary truncates the scaled value
+  when the exponent is about 12 to 26 (`"##.#^^^^"` gives `9.9E+12` for
+  9.95E12 and `9.9E+26` for 9.95E26). We round and give `10.0E+12`. Double
+  values differ in the same way (`"#.##^^^^"` with 9.99999999999999D+99
+  gives `0.17D+39` on the binary, a value in the MBF range). Issue #22 is
+  only partly fixed: the case of a carry that is not caused by the MBF
+  scaling agrees. We do not emulate the MBF multiplication.
 - The sign of machine infinity after a double division by zero is erratic on
   the binary (it depends on what was computed before). We use the sign of the
   dividend.

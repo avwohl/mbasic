@@ -2180,6 +2180,7 @@ class Interpreter:
             seed = self.evaluate_expression(stmt.seed)
         elif self.state.input_buffer:
             answer = self.state.input_buffer.pop(0).strip()
+            self._print_column = 0
             try:
                 seed = float(answer) if answer else 0
             except ValueError:
@@ -2278,6 +2279,8 @@ class Interpreter:
 
         if self.state.input_buffer:
             line = self.state.input_buffer.pop(0)
+            # The Enter key that ended the answer moved the cursor to column 0.
+            self._print_column = 0
         else:
             self._pause_for_input(stmt)
             return
@@ -2498,6 +2501,7 @@ class Interpreter:
             if self.state.input_buffer:
                 # Use buffered input from provide_input()
                 line = self.state.input_buffer.pop(0)
+                self._print_column = 0
             else:
                 # No buffered input - need to wait for user input
                 # Show prompt
