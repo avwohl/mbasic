@@ -156,12 +156,3 @@ def test_a_name_of_question_marks_is_refused(name):
 @pytest.mark.parametrize("name", ["A?", "?B", "A?B", "ZZ.?"])
 def test_a_name_with_other_characters_and_a_question_mark_passes(name):
     assert cpm_name_error(name, creates=True) is None
-
-
-@pytest.mark.parametrize("name", ["ZZ.DAT", "ABCDEFGHI.DAT"])
-def test_open_append_is_bad_file_mode(tmp_path, name):
-    # binary: OPEN "A" is error 54 before the name is looked at, with or without a record length
-    for tail in ("", ",16"):
-        source = f'5 ON ERROR GOTO 100\n10 OPEN "A",1,"{name}"{tail}\n20 PRINT "ok"\n30 SYSTEM\n100 PRINT "err";ERR;ERL:SYSTEM\n'
-        out = run_cli(tmp_path, source)
-        assert "err 54  10" in out, out

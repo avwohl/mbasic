@@ -259,21 +259,64 @@ def machine_infinity(digits, negative=False):
     return -value if negative else value
 
 
-def to_int_operand(value):
-    """Convert an operand of \\ or MOD the way MBASIC's FRCINT does.
+def to_frcint(value):
+    """Convert a number the way MBASIC's FRCINT does: a signed 16-bit integer.
 
-    Both operators are integer-only. The operand is rounded to the nearest
-    integer with halves away from zero - so 7.6 MOD 3 is 2, because 7.6 becomes
-    8, and 2.5 \\ 1 is 3 - and must then fit a signed 16-bit word. It is the
-    range check that makes 40000 \\ 2 print "Overflow" on the real binary
-    rather than 20000, and it happens before the divisor is tested for zero.
+    The value is rounded to the nearest integer with halves away from zero and
+    must then fit -32768..32767, or the real binary stops with "Overflow".
+    32767.4 passes, 32767.5 does not, and -32768.5 does not. Every place that
+    wants a 16-bit integer starts here: \\ and MOD, the logical operators, array
+    subscripts, MKI$, TAB and SPC, and (through to_conint) the byte arguments.
     """
+    if isinstance(value, float) and value == value and abs(value) < 65536:
+        # The binary takes a double to single precision before it rounds:
+        # 2.49999999# AND 3 is 3 and 32767.4999# OR 0 is Overflow.
+        value = to_single(value)
     number = to_integer(value)
     if isinstance(number, bool) or not isinstance(number, int):
         raise TypeError("Type mismatch")
     if not -32768 <= number <= 32767:
         raise OverflowError("Overflow")
     return number
+
+
+def to_conint(value):
+    """Convert a number the way MBASIC's CONINT does: a byte, 0 to 255.
+
+    CONINT is FRCINT plus a second test, so the two errors come in order: 40000
+    is "Overflow", while 300 and -1 are "Illegal function call". LEFT$, RIGHT$,
+    MID$, SPACE$, STRING$, CHR$, INSTR, INP, POKE and ON...GOTO all use it.
+    """
+    number = to_frcint(value)
+    if not 0 <= number <= 255:
+        raise ValueError("Illegal function call")
+    return number
+
+
+def to_subscript(value):
+    """An array subscript or DIM bound: FRCINT, and then not negative.
+
+    A(40000) is "Overflow" and A(-1) is "Illegal function call" on the real
+    binary, both before the array is looked at - so the 100 in DIM A(100) never
+    gets to say "Subscript out of range" about them. A subscript that is
+    non-negative and fits 16 bits but is too big for the array still is one.
+    """
+    number = to_frcint(value)
+    if number < 0:
+        raise ValueError("Illegal function call")
+    return number
+
+
+def to_int_operand(value):
+    """Convert an operand of \\, MOD, AND, OR, XOR, EQV, IMP or NOT.
+
+    All of these are integer-only. The operand goes through FRCINT, so 7.6 MOD 3
+    is 2 (7.6 becomes 8), 2.5 \\ 1 is 3, and 2.5 AND 3 is 3 and not 2. The range
+    check is what makes 40000 \\ 2 and 40000 OR 1 print "Overflow" on the real
+    binary rather than a value, and it happens before a divisor is tested for
+    zero.
+    """
+    return to_frcint(value)
 
 
 def int_divide(left, right):

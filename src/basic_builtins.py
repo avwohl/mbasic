@@ -14,7 +14,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from src.input_fields import val_text
 from src.number_format import (SINGLE_DIGITS, DOUBLE_DIGITS, _round_to_digits, radix_word,
-                               to_integer, to_single, format_number)
+                               to_integer, to_single, format_number, to_frcint, to_conint)
 
 # tty, termios, os, sys and win_console used to be imported here for INKEY$ and
 # INPUT$.
@@ -46,7 +46,8 @@ def _mid_start(start):
     """MID$ counts from 1, and 0 is not a position.
 
     MID$("A", 0) is "Illegal function call" on the real binary; we returned
-    the whole string. Anything past 255 is out of range too.
+    the whole string. Anything past 255 is out of range too. The caller has
+    already passed the start through to_conint, so what is left is 0.
     """
     if start < 1 or start > 255:
         raise ValueError("Illegal function call")
@@ -652,10 +653,7 @@ class BuiltinFunctions:
         Python's round() is banker's rounding, which sends 2.5 to 2. The real
         binary says CINT(2.5) is 3 and CINT(-2.5) is -3.
         """
-        number = to_integer(float(x))
-        if not -32768 <= number <= 32767:
-            raise OverflowError("Overflow")
-        return number
+        return to_frcint(float(x))
 
     def CSNG(self, x):
         """Convert to single precision, losing what a single cannot hold."""
@@ -724,13 +722,8 @@ class BuiltinFunctions:
         Returns a 2-byte string representation.
         """
         import struct
-        # Convert to integer and pack as signed 16-bit (little-endian)
-        value = int(x)
-        # Clamp to 16-bit signed range
-        if value < -32768:
-            value = -32768
-        elif value > 32767:
-            value = 32767
+        # Round like FRCINT; outside signed 16 bits is "Overflow", not a clamp
+        value = to_frcint(x)
         byte_data = struct.pack('<h', value)
         return byte_data.decode('latin-1')
 
@@ -770,10 +763,7 @@ class BuiltinFunctions:
 
     def CHR(self, x):
         """CHR$ - Character from ASCII code. CHR$(65.7) is "B" - see to_integer."""
-        code = to_integer(x)
-        if code < 0 or code > 255:
-            raise ValueError("Illegal function call: CHR code out of range")
-        return chr(code)
+        return chr(to_conint(x))        # 40000 is Overflow, 300 is Illegal function call
 
     def HEX(self, x):
         """Hexadecimal string representation"""
@@ -793,14 +783,14 @@ class BuiltinFunctions:
             haystack, needle = args
         elif len(args) == 3:
             start, haystack, needle = args
-            start = to_integer(start)
+            start = to_conint(start)
+            if start == 0:
+                raise ValueError("Illegal function call")
         else:
             raise ValueError("INSTR requires 2 or 3 arguments")
 
         # Convert to 0-based index
         start_idx = start - 1
-        if start_idx < 0:
-            start_idx = 0
 
         # Find substring
         pos = haystack.find(needle, start_idx)
@@ -810,7 +800,7 @@ class BuiltinFunctions:
 
     def LEFT(self, s, n):
         """Left n characters of string. A fractional n rounds: 2.7 gives 3."""
-        n = to_integer(n)
+        n = to_conint(n)
         return s[:n]
 
     def LEN(self, s):
@@ -828,14 +818,12 @@ class BuiltinFunctions:
         """
         if len(args) == 2:
             s, start = args
-            start = _mid_start(to_integer(start))
+            start = _mid_start(to_conint(start))
             return s[start - 1:]
         elif len(args) == 3:
             s, start, length = args
-            start = _mid_start(to_integer(start))
-            length = to_integer(length)
-            if length < 0 or length > 255:
-                raise ValueError("Illegal function call")
+            start = _mid_start(to_conint(start))
+            length = to_conint(length)
             return s[start - 1:start - 1 + length]
         else:
             raise ValueError("MID$ requires 2 or 3 arguments")
@@ -846,12 +834,12 @@ class BuiltinFunctions:
 
     def RIGHT(self, s, n):
         """Right n characters of string. A fractional n rounds."""
-        n = to_integer(n)
+        n = to_conint(n)
         return s[-n:] if n > 0 else ""
 
     def SPACE(self, n):
         """String of n spaces. A fractional n rounds: SPACE$(2.7) is 3 spaces."""
-        n = to_integer(n)
+        n = to_conint(n)
         return " " * n
 
     def STR(self, x, digits=SINGLE_DIGITS):
@@ -879,13 +867,15 @@ class BuiltinFunctions:
 
         Both arguments round: STRING$(3, 65.7) is "BBB".
         """
-        n = to_integer(n)
+        n = to_conint(n)
         if isinstance(char, str):
-            # String argument - use first character
-            c = char[0] if char else " "
+            # String argument - use first character; the empty string has none
+            if not char:
+                raise ValueError("Illegal function call")
+            c = char[0]
         else:
             # Numeric argument - convert to character
-            c = chr(to_integer(char))
+            c = chr(to_conint(char))
         return c * n
 
     def VAL(self, s):
@@ -906,7 +896,7 @@ class BuiltinFunctions:
         """
         return self.runtime.free_string_space()
 
-    def PEEK(self, _addr):
+    def PEEK(self, addr):
         """
         A random byte, 0-255. This is a decision, not a stub.
 
@@ -922,7 +912,7 @@ class BuiltinFunctions:
         fidelity belongs in an 8080 emulator running the real com/mbasic.com,
         not here.
         """
-        import random
+        radix_word(addr)    # only the argument is checked: -32768 to 65535, else Overflow
         return random.randint(0, 255)
 
     def INP(self, port):
@@ -931,6 +921,7 @@ class BuiltinFunctions:
 
         Returns 0 as safe default.
         """
+        to_conint(port)     # the port is a byte: 256 is Illegal function call
         # Can't actually read from hardware ports
         return 0
 
@@ -957,7 +948,7 @@ class BuiltinFunctions:
         Returns a marker object that PRINT interprets as "move to column n".
         Column numbering is 1-based (column 1 is leftmost).
         """
-        return TabMarker(to_integer(n))     # TAB(4.7) is column 5
+        return TabMarker(to_frcint(n))     # TAB(4.7) is column 5
 
     def SPC(self, n):
         """
@@ -965,7 +956,7 @@ class BuiltinFunctions:
 
         Returns a marker object that PRINT interprets as "print n spaces".
         """
-        return SpcMarker(to_integer(n))     # SPC(3.7) is four spaces
+        return SpcMarker(to_frcint(n))     # SPC(3.7) is four spaces
 
     def EOF(self, file_num):
         """
@@ -983,7 +974,7 @@ class BuiltinFunctions:
         - Modes 'O' (output), 'A' (append): Use standard Python EOF detection without ^Z
         - See execute_open() in interpreter.py for file opening implementation (search for "execute_open")
         """
-        file_num = int(file_num)
+        file_num = to_conint(file_num)
         if file_num not in self.runtime.files:
             raise ValueError(f"File #{file_num} not open")
 
@@ -1028,7 +1019,7 @@ class BuiltinFunctions:
         Returns the record number of the last GET or PUT operation.
         For sequential files, returns approximate byte position / 128.
         """
-        file_num = int(file_num)
+        file_num = to_conint(file_num)
         if file_num not in self.runtime.files:
             raise ValueError(f"File #{file_num} not open")
 
@@ -1048,7 +1039,7 @@ class BuiltinFunctions:
 
         Returns the total size of the file.
         """
-        file_num = int(file_num)
+        file_num = to_conint(file_num)
         if file_num not in self.runtime.files:
             raise ValueError(f"File #{file_num} not open")
 
@@ -1116,14 +1107,16 @@ class BuiltinFunctions:
         A keyboard read is raw: nothing is echoed, Enter is not required, and
         Ctrl+C breaks rather than being returned. See _read_console.
         """
-        num = int(num)
+        num = to_conint(num)
+        if num == 0:
+            raise ValueError("Illegal function call")     # INPUT$(0), as measured
 
         if file_num is None:
             # Read from keyboard
             return self._read_console(num)
         else:
             # Read from file
-            file_num = int(file_num)
+            file_num = to_conint(file_num)
             if file_num not in self.runtime.files:
                 raise ValueError(f"File #{file_num} not open")
 
