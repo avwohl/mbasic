@@ -88,6 +88,22 @@ function _round_half_away(n) {
 }
 '''
 
+JS_LOGICAL_RUNTIME = r'''
+// AND, OR, XOR, EQV, IMP and NOT work on 16-bit integers. An operand is rounded to the nearest
+// integer (halves away from zero); outside -32768..32767 it is an Overflow, as in MBASIC 5.21.
+function _ci(n) {
+    if (n >= -32768 && n <= 32767 && n === Math.floor(n)) return n;  // the usual case: no work
+    if (typeof n !== "number" || n !== n) _error("Type mismatch");
+    return _toInt(n);
+}
+function _and(a, b) { return _ci(a) & _ci(b); }
+function _or(a, b) { return _ci(a) | _ci(b); }
+function _xor(a, b) { return _ci(a) ^ _ci(b); }
+function _eqv(a, b) { return ~(_ci(a) ^ _ci(b)); }
+function _imp(a, b) { return ~_ci(a) | _ci(b); }
+function _not(a) { return ~_ci(a); }
+'''
+
 JS_PRINT_RUNTIME = r'''
 // ===== PRINT: columns, zones, TAB and SPC =====
 let _col = 0;  // cursor column on the screen, 0-based
@@ -327,6 +343,9 @@ def _js_number(value) -> str:
         return repr(value)
     return str(value)
 
+
+# BASIC logical operator -> runtime function (JS_LOGICAL_RUNTIME)
+LOGICAL_HELPERS = {'AND': '_and', 'OR': '_or', 'XOR': '_xor', 'EQV': '_eqv', 'IMP': '_imp'}
 
 # Case labels for the statements in the middle of a line. BASIC line numbers end at 65529.
 CONT_LABEL_BASE = 100000
@@ -1094,6 +1113,8 @@ class JavaScriptBackend(CodeGenBackend):
         self.indent_level -= 1
         code.append(self.indent() + '}')
         code.append(self.indent() + 'function _cint(n) { return _toInt(n); }')
+        for line in JS_LOGICAL_RUNTIME.strip('\n').split('\n'):
+            code.append(self.indent() + line if line else '')
         code.append(self.indent() + 'function _toSingle(n) { return Math.fround(n); }  // ES6 single-precision')
         code.append(self.indent() + 'function _toDouble(n) { return n; }  // JS Number is already 64-bit double')
         code.append('')
@@ -2443,12 +2464,9 @@ class JavaScriptBackend(CodeGenBackend):
                     # A comparison is -1 for true and 0 for false in BASIC
                     return f'(({left} {js_op} {right}) ? -1 : 0)'
                 return f'({left} {js_op} {right})'
-            elif op == 'AND':
-                return f'({left} && {right})'
-            elif op == 'OR':
-                return f'({left} || {right})'
-            elif op == 'NOT':
-                return f'(-({right}) - 1)'  # NOT is bitwise: -1 for 0, 0 for -1
+            elif op in LOGICAL_HELPERS:
+                # AND, OR, XOR, EQV and IMP are 16-bit integer operators in MBASIC
+                return f'{LOGICAL_HELPERS[op]}({left}, {right})'
             elif op == '%':  # MOD
                 return f'(_round_half_away({left}) % _round_half_away({right}))'
             else:
@@ -2457,7 +2475,7 @@ class JavaScriptBackend(CodeGenBackend):
             operand = self._generate_expression(expr.operand)
             op = self._token_to_operator(expr.operator)
             if op == 'NOT':
-                return f'(-({operand}) - 1)'  # bitwise: -1 for 0, 0 for -1
+                return f'_not({operand})'  # bitwise on a 16-bit integer: -1 for 0, 0 for -1
             return f'({op}{operand})'
         elif isinstance(expr, FunctionCallNode):
             return self._generate_function_call(expr)

@@ -151,6 +151,12 @@ semantics are not:
 - `src/codegen_js_backend.py` `_start_ok` (in `_generate_for`) is
   `(_step > 0) ? (v <= end) : (v >= end)`, which gets STEP 0 wrong in the
   opposite direction from the bug fixed in the interpreter.
+- AND, OR, XOR, EQV, IMP and NOT: the JavaScript backend now matches real
+  MBASIC (GitHub issue 15, `docs/dev/JS_LOGICAL_OPERATORS.md`). The
+  interpreter does not: it truncates a fractional operand (`NOT 2.7` is -3,
+  real MBASIC -4) and it accepts operands outside -32768..32767
+  (`40000 OR 1` is 40001, real MBASIC stops with Overflow). The C backend
+  has not been checked.
 - Done (GitHub issue 13): NEXT pairs with FOR by position in the text, the
   loop-back and GOSUB return points are statements in the middle of a line, and
   `NEXT J,I` passes the semantic analyzer. See `docs/dev/JS_CONTROL_FLOW.md`.

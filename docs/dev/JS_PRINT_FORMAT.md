@@ -34,7 +34,8 @@ The JavaScript runtime has these parts:
 * `_print_using` is a port of `UsingFormatter`.
 * `_toInt` rounds halves away from zero and raises Overflow outside
   -32768 to 32767, like the interpreter.
-* A comparison gives -1 or 0. `NOT` is bitwise.
+* A comparison gives -1 or 0. AND, OR, XOR, EQV, IMP and NOT are 16-bit
+  integer operators (see `docs/dev/JS_LOGICAL_OPERATORS.md`).
 
 ## Changes in the interpreter
 
@@ -89,9 +90,6 @@ output follows the interpreter.
   and 16 in real MBASIC. The interpreter has the same two faults.
 * `^` with a double base and a fractional exponent keeps double precision
   (`X#^.5`). Real MBASIC gives a single.
-* The compiler writes `AND` and `OR` as `&&` and `||`, so `PRINT 3 AND 5`
-  prints 5 (real MBASIC: 1). `XOR`, `EQV` and `IMP` make the JavaScript
-  invalid. Only the JavaScript backend has this fault.
 * `PRINT 2^-1` gives a parse error in the compiler.
 * `LPRINT` shows the number format only. `PRINT #n, USING` works.
 * A single-precision whole number above 2^24 is not rounded, because the
