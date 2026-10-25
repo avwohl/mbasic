@@ -408,7 +408,8 @@ class Parser:
     # Statements that look at the end of the statement before they do anything:
     # with stray text behind the keyword ("END%", "WEND%=1") the binary gives the
     # Syntax error and does not run the statement.
-    _CHECK_END_FIRST = (TokenType.END, TokenType.WEND, TokenType.RETURN, TokenType.NEXT)
+    _CHECK_END_FIRST = (TokenType.END, TokenType.WEND, TokenType.RETURN, TokenType.NEXT,
+                        TokenType.STOP, TokenType.SYSTEM, TokenType.NEW)
 
     def _statement_with_stray_text(self, start: int, stmt: StatementNode) -> StatementNode:
         """A statement parsed but stray text follows it ("RESUME$", "PRINT 1;$").

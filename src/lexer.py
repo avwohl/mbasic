@@ -174,7 +174,7 @@ class Lexer:
                 while self.current_char() and self.current_char() in '0123456789ABCDEFabcdef':
                     num_str += self.advance()
                 try:
-                    value = radix_constant_value(num_str[2:], 16, start_line, start_column)
+                    value = self._radix(num_str[2:], 16, start_line, start_column)
                 except ValueError:
                     raise LexerError(f"Invalid hex number: {num_str}", start_line, start_column)
                 return Token(TokenType.NUMBER, value, start_line, start_column,
@@ -187,7 +187,7 @@ class Lexer:
                     num_str += self.advance()
                 self._refuse_octal_89(start_line, start_column)
                 try:
-                    value = radix_constant_value(num_str[2:], 8, start_line, start_column)
+                    value = self._radix(num_str[2:], 8, start_line, start_column)
                 except ValueError:
                     raise LexerError(f"Invalid octal number: {num_str}", start_line, start_column)
                 return Token(TokenType.NUMBER, value, start_line, start_column,
@@ -199,7 +199,7 @@ class Lexer:
                     num_str += self.advance()
                 self._refuse_octal_89(start_line, start_column)
                 try:
-                    value = radix_constant_value(num_str[1:], 8, start_line, start_column)
+                    value = self._radix(num_str[1:], 8, start_line, start_column)
                 except ValueError:
                     raise LexerError(f"Invalid octal number: {num_str}", start_line, start_column)
                 return Token(TokenType.NUMBER, value, start_line, start_column,
@@ -282,6 +282,8 @@ class Lexer:
         section 10). MBASIC prints Overflow when the line is entered and
         keeps the largest number instead.
         """
+        if self._in_data_statement():
+            return value        # DATA text is raw: no Overflow at entry
         digits = literal_precision(literal_text, value)
         try:
             if not exceeds_range(value, digits):
@@ -327,18 +329,25 @@ class Lexer:
         self.advance()  # Skip opening quote
         string_val = ''
 
-        while self.current_char() is not None and self.current_char() != '"':
-            char = self.current_char()
-            if char == '\n':
-                raise LexerError("Unterminated string", self.line, self.column)
+        # MBASIC 5.21 accepts a string that the end of the line closes.
+        while self.current_char() is not None and self.current_char() not in '"\r\n':
             string_val += self.advance()
 
-        if self.current_char() is None:
-            raise LexerError("Unterminated string", start_line, start_column)
+        if self.current_char() is None or self.current_char() in '\r\n':
+            return Token(TokenType.STRING, string_val, start_line, start_column)
 
         self.advance()  # Skip closing quote
 
         return Token(TokenType.STRING, string_val, start_line, start_column)
+
+    def _radix(self, digits: str, base: int, line: int, column: int) -> int:
+        """radix_constant_value, except that DATA text is raw: no Overflow there."""
+        try:
+            return radix_constant_value(digits, base, line, column)
+        except LexerOverflow:
+            if self._in_data_statement():
+                return 0
+            raise
 
     def _refuse_octal_89(self, line: int, column: int):
         """MBASIC reads an 8 or 9 inside an octal constant as an error that refuses the whole line."""
@@ -427,8 +436,9 @@ class Lexer:
         # is the keyword: CRUNCH ends a reserved word at any character that is
         # not a letter, a digit or ".".  The type character stays in the input
         # and nothing can use it, which is a Syntax error when the line runs.
-        if len(ident) > 1 and ident[-1] in '$%!#' and ident_lower[:-1] == 'lpos':
-            # LPOS is reserved in the binary but not a keyword here
+        if (len(ident) > 1 and ident[-1] in '$%!#' and ident_lower[:-1] in ('lpos', 'null')
+                and not self._in_data_statement()):
+            # LPOS and NULL are reserved in the binary but not keywords here
             raise LexerError("Syntax error", start_line, start_column)
         if (len(ident) > 1 and ident[-1] in '$%!#' and ident_lower[:-1] in RESERVED_STEMS
                 and not self._in_data_statement()):

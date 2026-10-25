@@ -264,8 +264,8 @@ def test_keyword_plus_stray_character_is_only_a_syntax_error(tmp_path, line):
 
 
 def test_resume_with_stray_text_gives_only_error_20(tmp_path):
-    assert "E 20  10" in trapped(tmp_path, '10 RESUME$=1') and \
-        "E 2  10" not in trapped(tmp_path, '10 RESUME$=1')
+    out = trapped(tmp_path, '10 RESUME$=1')
+    assert "E 20  10" in out and "E 2  10" not in out, out
 
 
 def test_restore_with_stray_text_gives_error_8(tmp_path):
@@ -302,6 +302,34 @@ def test_load_overflow_prints_no_file_diagnostic(tmp_path):
     (tmp_path / "h.bas").write_bytes(b"10 A=1\r\n20 A=&H12345\r\n30 PRINT 3\r\n")
     out = run_cli(tmp_path, 'LOAD "h.bas"\nSYSTEM\n')
     assert "Overflow\n" in out and "file line" not in out, out
+
+
+def test_data_text_gets_no_overflow_and_is_stored(tmp_path):
+    # Real MBASIC: DATA text is raw. "10 DATA 1E39,&HFFFFF" gives no Overflow and is listed;
+    # only the PRINT 1E39 on line 40 gives one.
+    out = run_cli(tmp_path, "LIST\nSYSTEM\n", source="10 DATA 1E39,&HFFFFF\n40 PRINT 1\n")
+    assert "Overflow" not in out and "10 DATA 1E39,&HFFFFF" in out, out
+    out = run_cli(tmp_path, "10 DATA 1E39,&HFFFFF\n40 PRINT 1E39\nLIST\nSYSTEM\n")
+    assert out.count("Overflow") == 1 and "10 DATA 1E39,&HFFFFF" in out, out
+
+
+@pytest.mark.parametrize("word", ["STOP", "SYSTEM", "NEW"])
+def test_stop_system_new_with_stray_text_do_not_run(tmp_path, word):
+    # Real MBASIC: "20 STOP@" gives "Syntax error in 20" (not Break), SYSTEM@ does not exit
+    # and NEW@ does not wipe the program.
+    out = run_cli(tmp_path, "RUN\nSYSTEM\n", source="10 PRINT 1\n20 %s@\n30 PRINT 2\n" % word)
+    assert "Syntax error in 20" in out and "Break" not in out, out
+
+
+def test_unterminated_string_at_end_of_line_is_valid(tmp_path):
+    # Real MBASIC 5.21: '10 PRINT "abc' and '20 PRINT "z' run and print abc and z.
+    out = run_cli(tmp_path, "RUN\nSYSTEM\n", source='10 PRINT "abc\n20 PRINT "z\n')
+    assert "abc\nz\n" in out and "Syntax error" not in out, out
+
+
+def test_null_with_type_character_is_a_syntax_error(tmp_path):
+    # Real MBASIC: NULL is reserved, so NULL%=1 is a Syntax error (E 2).
+    assert "E 2  10" in trapped(tmp_path, '10 NULL%=1')
 
 
 if __name__ == "__main__":
