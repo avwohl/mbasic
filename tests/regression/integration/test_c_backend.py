@@ -318,7 +318,46 @@ def test_subscript_out_of_range_stops_the_program(tmp_path):
     source = '10 DIM A$(2)\n20 PRINT "before"\n30 A$(3)="x"\n40 PRINT "after"\n'
     assert compile_c(tmp_path, source).returncode == 0
     # CP/M has one console, so the error message arrives on the same stream
-    assert run_compiled(tmp_path, "") == "before\n?Subscript out of range\n"
+    assert run_compiled(tmp_path, "") == "before\n?Subscript out of range in 30\n"
+
+
+@NEEDS_TOOLCHAIN
+def test_runtime_errors_name_the_line_and_start_a_new_line(tmp_path):
+    """MBASIC starts a new line when the cursor is not in column 1, then says
+    ?message in LINE.  A negative subscript is Illegal function call."""
+    source = '10 DIM A$(5)\n20 PRINT "x";\n30 GOSUB 100: A$(-1)="z"\n40 END\n100 RETURN\n'
+    assert compile_c(tmp_path, source).returncode == 0
+    assert run_compiled(tmp_path, "") == "x\n?Illegal function call in 30\n"
+
+
+@NEEDS_TOOLCHAIN
+def test_string_too_long_stops_the_program(tmp_path):
+    source = ('10 A$=STRING$(200,"a")\n20 PRINT "go"\n30 B$=A$+A$\n40 PRINT LEN(B$)\n'
+              '50 A=LEN(A$+A$+"x")\n')
+    assert compile_c(tmp_path, source).returncode == 0
+    assert run_compiled(tmp_path, "") == "go\n?String too long in 30\n"
+
+
+@NEEDS_TOOLCHAIN
+def test_string_too_long_in_an_expression(tmp_path):
+    source = '10 A$=STRING$(200,"a")\n20 PRINT LEN(A$+A$+"x")\n'
+    assert compile_c(tmp_path, source).returncode == 0
+    assert run_compiled(tmp_path, "") == "?String too long in 20\n"
+
+
+@NEEDS_TOOLCHAIN
+def test_bare_close_after_open(tmp_path):
+    """A bare CLOSE walked off the end of the file tables and hung."""
+    source = ('10 OPEN "O",#1,"T.DAT":PRINT #1,"A":CLOSE\n'
+              '20 OPEN "I",#1,"T.DAT":INPUT #1,Q$:CLOSE\n30 PRINT "after";Q$\n')
+    assert compile_c(tmp_path, source).returncode == 0
+    assert run_compiled(tmp_path, "") == "afterA\n"
+
+
+@NEEDS_TOOLCHAIN
+def test_bare_close_without_open_links(tmp_path):
+    assert compile_c(tmp_path, '10 CLOSE\n20 PRINT "ok"\n').returncode == 0
+    assert run_compiled(tmp_path, "") == "ok\n"
 
 
 # --- Nothing compiles to wrong code silently ---------------------------------
@@ -424,3 +463,37 @@ def test_generated_c_formats_numbers_in_the_runtime(tmp_path):
     assert "printf" not in code.replace("fprintf", "")
     assert "mb25_print_num" in code
     assert not backend.errors
+
+
+def test_error_handling_is_a_compile_error(tmp_path):
+    """ON ERROR GOTO, RESUME, ERROR, ERR and ERL compiled to code that did not work."""
+    for source in ('10 ON ERROR GOTO 100\n20 END\n100 RESUME NEXT\n',
+                   '10 PRINT ERR\n', '10 PRINT ERL\n', '10 ERROR 5\n',
+                   '10 ON ERROR GOTO 100\n20 A=1/0\n30 END\n100 PRINT ERR;ERL:RESUME NEXT\n'):
+        result = compile_c(tmp_path, source)
+        assert result.returncode == 1, source
+        assert "ON ERROR" in result.stderr, source
+        assert not (tmp_path / "prog.c").exists()
+
+
+def test_on_error_goto_0_still_compiles_to_c(tmp_path):
+    """ON ERROR GOTO 0 only switches handling off; the backend accepts it."""
+    from src.lexer import Lexer
+    from src.parser import Parser
+    from src.semantic_analyzer import SemanticAnalyzer
+    from src.codegen_backend import Z88dkCBackend
+    ast = Parser(Lexer('10 ON ERROR GOTO 0\n20 PRINT 1\n').tokenize()).parse()
+    analyzer = SemanticAnalyzer()
+    assert analyzer.analyze(ast)
+    backend = Z88dkCBackend(analyzer.symbols, {"dialect": "uc80"})
+    backend.generate(ast)
+    assert not backend.errors
+
+
+def test_integer_overflow_warning(tmp_path):
+    result = compile_c(tmp_path, '80 I%=1000:PRINT I%*I%\n')
+    assert "wraps at 16 bits" in result.stderr
+    assert "line 80" in result.stderr
+    # a sum of constants is worked out by the compiler: no warning
+    result = compile_c(tmp_path, '10 PRINT 200*200\n20 X=1.5*2\n')
+    assert "wraps at 16 bits" not in result.stderr

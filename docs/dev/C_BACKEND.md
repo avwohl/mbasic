@@ -81,7 +81,8 @@ descriptors in the string pool, so element n has the ID of the array plus n.
   semantic analyzer checks this). The program start sets all storage to zero.
 - An array that has no `DIM` has 11 elements for each subscript.
 - `OPTION BASE 1` works. The program rounds every subscript to an integer and checks
-  it. A subscript outside the array stops the program with `?Subscript out of range`.
+  it. A subscript above the array stops the program with `?Subscript out of range in 40`.
+  A negative subscript gives `?Illegal function call in 40`.
 - A string array element works wherever a string variable works: assignment,
   expressions, `PRINT`, `INPUT`, `LINE INPUT`, `READ`, `SWAP`, `MID$` assignment,
   `LSET` and `RSET`.
@@ -110,7 +111,26 @@ These differences are known. They are not fixed.
   program that uses double precision.
 - **Integer arithmetic wraps.** `I%*J%` wraps at 16 bits. The interpreter turns an
   integer result that does not fit into a single-precision number. The compiler
-  works out a constant such as `200*200` itself and writes 40000.
+  works out a constant such as `200*200` itself and writes 40000. The compiler
+  gives a warning when a program does `+`, `-` or `*` on integers.
+- **Some float results are not exact.** uc80 does not round a multiplication like
+  IEEE binary32. `PRINT 1/3*3=1` gives 0 (false), and the interpreter gives -1.
+  `2/3*3=2` and `1/10*10=1` have the same fault. The printed value is correct
+  because the formatter rounds to 7 digits, but a test for equality on a computed
+  float can go wrong. Compare with a small tolerance in a program that is to be
+  compiled. See `UC80_BUGS_TODO.md`.
+- **Error handling is not supported.** `ON ERROR GOTO line`, `RESUME`, `ERROR`, `ERR`
+  and `ERL` are compile errors, because the compiled program has no error handler.
+  `ON ERROR GOTO 0` is accepted. A run-time error ends the program.
+- **Run-time errors** (`Subscript out of range`, `Illegal function call`,
+  `String too long`, `Out of DATA`, `RETURN without GOSUB`, `File not found`,
+  `File not open`) print a new line when the cursor is not in column 1, then
+  `?message in LINE`, as MBASIC does. The C program keeps the line number in
+  `mb25_line` (one store at the start of each line). Not all checks of MBASIC
+  exist: `SQR(-8)` gives 0, `LOG(0)` gives a large negative number, and
+  `MID$(x,0)` and `LEFT$(x,-1)` give no error, where MBASIC gives
+  `Illegal function call`. A string longer than 255 characters stops the program
+  with `String too long`.
 - **A floating-point result can differ in the last digit.** `basic/dev/bas_tests/asciiart.bas`
   differs in one character out of 2000.
 - **There are no run-time errors for arithmetic.** Division by zero gives machine

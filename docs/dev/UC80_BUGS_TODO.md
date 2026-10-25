@@ -431,3 +431,10 @@ negative start (`FOR X=-30 TO -27 STEP 1.5`) ran for ever before this change.
 **8. A label before a closing brace needs a statement, even with a comment after it.**
 This is standard C before C23. `gosub_return_2:  /* Return point */` followed by `}`
 stops the compile with `unexpected token 'RBRACE'`. The backend writes `label: ;`.
+
+**9. Float multiplication does not round like IEEE binary32.** `1/3*3` is not exactly 1
+(the interpreter and real MBASIC give exactly 1, so `1/3*3=1` is -1 there and 0 here).
+`2/3*3`, `10/3*3`, `1/10*10` and `1/7*7` have the same fault. `0.1*3=0.3` agrees.
+The value prints as 1 because the formatter keeps 7 digits, so only a test for
+equality shows the fault. The backend does not work around this fault. Report
+to uc80.

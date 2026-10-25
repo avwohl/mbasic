@@ -230,6 +230,7 @@ class Z88dkCBackend(CodeGenBackend):
         self._pair_for_loops(program)
 
         self._warn_about_double_precision(program)
+        self._warn_about_integer_overflow(program)
 
         # Count strings and allocate IDs
         self._count_strings_and_allocate_ids(program)
@@ -720,6 +721,9 @@ class Z88dkCBackend(CodeGenBackend):
                     else:
                         # If not constant, default to supporting up to 10 files
                         self.max_file_number = max(self.max_file_number, 10)
+                # A bare CLOSE closes every file, so it needs the full table
+                elif isinstance(stmt, CloseStatementNode) and not stmt.file_numbers:
+                    self.max_file_number = max(self.max_file_number, 255)
                 # Check CLOSE, INPUT#, PRINT#, etc.
                 elif hasattr(stmt, 'file_number') and stmt.file_number:
                     if isinstance(stmt.file_number, NumberNode):
@@ -1160,6 +1164,11 @@ class Z88dkCBackend(CodeGenBackend):
         if line_node.line_number in self.line_labels:
             # Use goto label syntax: line_100:
             code.append(f'line_{line_node.line_number}:')
+        # Run-time errors say which line they happened in.  REM and DATA
+        # lines cannot fail, so they skip the store.
+        if any(not isinstance(st, (RemarkStatementNode, DataStatementNode))
+               for st in line_node.statements):
+            code.append(self.indent() + f'mb25_line = {line_node.line_number}u;')
 
         # Generate code for each statement on the line
         for stmt in line_node.statements:
@@ -1368,7 +1377,7 @@ class Z88dkCBackend(CodeGenBackend):
         file_ptr = f'file_handles[(int)({file_num_expr})]'
         code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
         self.indent_level += 1
-        code.append(self.indent() + 'fprintf(stderr, "?File not open\\n");')
+        code.append(self.indent() + 'mb25_fail("File not open");')
         code.append(self.indent() + 'return 1;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
@@ -1459,6 +1468,26 @@ class Z88dkCBackend(CodeGenBackend):
             self.warnings.append(
                 "double precision is stored in 32 bits by uc80: values keep about 7 digits, "
                 "where the interpreter keeps 16")
+
+    def _warn_about_integer_overflow(self, program: ProgramNode):
+        """Say so when integer + - * can wrap at 16 bits.
+
+        The interpreter turns an integer result that does not fit into a
+        single-precision number.  The C int wraps, and nothing tells the user.
+        A sum of constants is worked out by the compiler and does not count.
+        """
+        for line in program.lines:
+            for n in self._walk(line.statements):
+                if (isinstance(n, BinaryOpNode)
+                        and n.operator in (TokenType.PLUS, TokenType.MINUS, TokenType.MULTIPLY)
+                        and self._constant_value(n) is None
+                        and self._get_expression_type(n) == VarType.INTEGER
+                        and self._get_expression_type(n.left) == VarType.INTEGER
+                        and self._get_expression_type(n.right) == VarType.INTEGER):
+                    self.warnings.append(
+                        f"line {line.line_number}: integer + - * wraps at 16 bits in the "
+                        "compiled program; the interpreter gives a larger single-precision result")
+                    return
 
     def _statements_in_order(self, statements):
         """The statements of a list in program order, IF branches included."""
@@ -1631,7 +1660,7 @@ class Z88dkCBackend(CodeGenBackend):
             # Check if file is open
             code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
             self.indent_level += 1
-            code.append(self.indent() + f'fprintf(stderr, "?File not open\\n");')
+            code.append(self.indent() + f'mb25_fail("File not open");')
             code.append(self.indent() + 'return 1;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -1916,7 +1945,7 @@ class Z88dkCBackend(CodeGenBackend):
 
         if not self.data_values:
             # No DATA anywhere: the first READ is "Out of DATA"
-            code.append(self.indent() + 'fprintf(stderr, "?Out of DATA\\n");')
+            code.append(self.indent() + 'mb25_fail("Out of DATA");')
             code.append(self.indent() + 'return 1;')
             return code
 
@@ -1924,7 +1953,7 @@ class Z88dkCBackend(CodeGenBackend):
             # Check if we're out of data
             code.append(self.indent() + f'if (data_pointer >= {len(self.data_values)}) {{')
             self.indent_level += 1
-            code.append(self.indent() + 'fprintf(stderr, "?Out of DATA\\n");')
+            code.append(self.indent() + 'mb25_fail("Out of DATA");')
             code.append(self.indent() + 'return 1;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2006,6 +2035,7 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + f'GOSUB_PUSH({return_id});  /* Push return ID */')
         code.append(self.indent() + f'goto line_{stmt.line_number};  /* Jump to subroutine */')
         code.append(f'gosub_return_{return_id}:  /* Return point */')
+        code.append(self.indent() + f'mb25_line = {self.current_line}u;')
         return code
 
     def _generate_return(self, stmt: ReturnStatementNode) -> List[str]:
@@ -2021,7 +2051,7 @@ class Z88dkCBackend(CodeGenBackend):
         """The code that sends RETURN back to the GOSUB that called."""
         code = ['gosub_dispatch:']
         code.append('    if (gosub_sp <= 0) {')
-        code.append('        fprintf(stderr, "?RETURN without GOSUB\\n");')
+        code.append('        mb25_fail("RETURN without GOSUB");')
         code.append('        return 1;')
         code.append('    }')
         code.append('    switch (gosub_stack[--gosub_sp]) {')
@@ -2083,6 +2113,7 @@ class Z88dkCBackend(CodeGenBackend):
             code.append(self.indent() + f'GOSUB_PUSH({return_id});')
             code.append(self.indent() + f'goto line_{line_num};')
             code.append(f'gosub_return_{return_id}:')
+            code.append(self.indent() + f'mb25_line = {self.current_line}u;')
             code.append(self.indent() + 'break;')
 
             self.indent_level -= 1
@@ -2318,7 +2349,7 @@ class Z88dkCBackend(CodeGenBackend):
             code.append(self.indent() + f'file_modes[_file_num] = \'{stmt.mode}\';')
             code.append(self.indent() + 'if (!file_handles[_file_num]) {')
             self.indent_level += 1
-            code.append(self.indent() + 'fprintf(stderr, "?File not found\\n");')
+            code.append(self.indent() + 'mb25_fail("File not found");')
             # In a real implementation, should trigger ON ERROR GOTO if set
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2398,7 +2429,7 @@ class Z88dkCBackend(CodeGenBackend):
             # Check if file is open
             code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
             self.indent_level += 1
-            code.append(self.indent() + f'fprintf(stderr, "?File not open\\n");')
+            code.append(self.indent() + f'mb25_fail("File not open");')
             code.append(self.indent() + 'return 1;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2482,7 +2513,7 @@ class Z88dkCBackend(CodeGenBackend):
         self.indent_level += 1
         code.append(self.indent() + 'if (remove(_filename) != 0) {')
         self.indent_level += 1
-        code.append(self.indent() + 'fprintf(stderr, "?File not found\\n");')
+        code.append(self.indent() + 'mb25_fail("File not found");')
         self.indent_level -= 1
         code.append(self.indent() + '}')
         # No free needed - temp string will be GC'd
@@ -2655,9 +2686,13 @@ class Z88dkCBackend(CodeGenBackend):
                 # Check for special built-in variables
                 var_upper = expr.name.upper()
                 if var_upper == 'ERR':
+                    self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
                     self.needs_error_handling = True
                     return 'basic_err'
                 elif var_upper == 'ERL':
+                    self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
                     self.needs_error_handling = True
                     return 'basic_erl'
                 else:
@@ -2879,6 +2914,8 @@ class Z88dkCBackend(CodeGenBackend):
             if len(expr.arguments) != 0:
                 self._unsupported("ERR takes no arguments")
                 return '0'
+            self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
             self.needs_error_handling = True
             return 'basic_err'
 
@@ -2887,6 +2924,8 @@ class Z88dkCBackend(CodeGenBackend):
             if len(expr.arguments) != 0:
                 self._unsupported("ERL takes no arguments")
                 return '0'
+            self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
             self.needs_error_handling = True
             return 'basic_erl'
 
@@ -3300,6 +3339,8 @@ class Z88dkCBackend(CodeGenBackend):
             # ON ERROR GOTO 0 - disable error handling
             code.append(self.indent() + 'error_handler = 0;  /* Disable error handling */')
         else:
+            self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
             # ON ERROR GOTO line_number - set error handler
             code.append(self.indent() + f'error_handler = {stmt.line_number};  /* Set error handler */')
             # Ensure the target line has a label
@@ -3310,6 +3351,8 @@ class Z88dkCBackend(CodeGenBackend):
     def _generate_resume(self, stmt: ResumeStatementNode) -> List[str]:
         """Generate RESUME statement"""
         code = []
+        self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
 
         if stmt.line_number is None:
             # RESUME - retry the statement that caused the error
@@ -3352,6 +3395,8 @@ class Z88dkCBackend(CodeGenBackend):
     def _generate_error(self, stmt: ErrorStatementNode) -> List[str]:
         """Generate ERROR statement - trigger an error"""
         code = []
+        self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
+                "handler: run-time errors end the program and ignore ON ERROR)"))
 
         error_code = self._generate_expression(stmt.error_code)
         code.append(self.indent() + f'/* ERROR statement */')
@@ -3680,7 +3725,7 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + f'mb25_get_string_data({new_filename}, _new_name, sizeof(_new_name));')
         code.append(self.indent() + 'if (rename(_old_name, _new_name) != 0) {')
         self.indent_level += 1
-        code.append(self.indent() + 'fprintf(stderr, "?File not found\\n");')
+        code.append(self.indent() + 'mb25_fail("File not found");')
         self.indent_level -= 1
         code.append(self.indent() + '}')
 

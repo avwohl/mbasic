@@ -297,7 +297,7 @@ mb25_error_t mb25_string_concat(uint16_t dest_id, uint16_t str1_id, uint16_t str
 
     uint16_t total_len = str1->len + str2->len;
     if (total_len > MB25_MAX_STRING_LEN) {
-        return MB25_ERR_STRING_TOO_LONG;
+        mb25_fail("String too long");
     }
 
     /* Allocate space for result */
@@ -1020,8 +1020,7 @@ int mb25_cint(double v) {
  * would corrupt the string pool instead. */
 int mb25_subscript(int i, int n) {
     if (i < 0 || i >= n) {
-        fputs("?Subscript out of range\n", stderr);
-        exit(1);
+        mb25_fail(i < 0 ? "Illegal function call" : "Subscript out of range");
     }
     return i;
 }
@@ -1576,3 +1575,33 @@ void mb25_get_stats(uint32_t *total_allocs, uint32_t *total_gcs, uint16_t *max_u
 }
 
 #endif /* MB25_ENABLE_DEBUG */
+
+/* The BASIC line that is running.  The generated code sets it at the start
+ * of each line, so an error can say "in 40" like MBASIC does.  A line number
+ * goes up to 65529, so it is unsigned. */
+unsigned int mb25_line;
+
+/* Stop the program with a run-time error.  MBASIC starts a new line when the
+ * cursor is not in column 1, then prints ?message in LINE. */
+void mb25_fail(const char *msg) {
+    char t[6];
+    int n = 0;
+    unsigned int u = mb25_line;
+    if (mb25_con_col != 0) {
+        putchar('\n');
+    }
+    putchar('?');
+    fputs(msg, stdout);
+    if (u > 0) {
+        fputs(" in ", stdout);
+        while (u) {
+            t[n++] = (char)('0' + u % 10);
+            u /= 10;
+        }
+        while (n) {
+            putchar(t[--n]);
+        }
+    }
+    putchar('\n');
+    exit(1);
+}

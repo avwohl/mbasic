@@ -202,6 +202,8 @@ int mb25_cint(double v);
 double mb25_sqr(double v);               /* SQR */
 double mb25_pow(double x, double y);   /* x ^ y */
 int mb25_subscript(int i, int n);
+extern unsigned int mb25_line;                /* the BASIC line that is running */
+void mb25_fail(const char *msg);     /* print ?msg in LINE and stop */
 int mb25_eof(FILE *fp);                /* EOF(n) */
 int mb25_input_eof(void);              /* end of keyboard input: ends the program */
 void mb25_chomp(char *s);              /* strip the line end after fgets */
