@@ -53,7 +53,9 @@ def backend(monkeypatch):
 def run(backend, command):
     from src.immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
     io = OutputCapturingIOHandler()
-    backend._save_editor_to_program()
+    pc = backend.runtime.pc
+    stopped = pc.line is not None and pc.stop_reason in ("STOP", "BREAK")
+    backend._save_editor_to_program(reset_runtime=not stopped)
     backend._sync_program_to_runtime()
     return ImmediateExecutor(backend.runtime, backend.interpreter, io).execute(command)
 
@@ -128,15 +130,11 @@ def test_run_and_cont_set_the_interpreter_going(backend):
     assert backend.interpreter.has_work()
 
 
-def test_run_and_cont_set_the_interpreter_going(backend):
-    backend.editor.value = "10 PRINT 1\n20 STOP\n30 PRINT 3"
-    assert run(backend, "RUN") == (True, "")
-    assert backend.interpreter.has_work()
-    while backend.interpreter.has_work():
-        backend.interpreter.tick(max_statements=100)
-    assert not backend.runtime.pc.is_running()
-    assert run(backend, "CONT") == (True, "")
-    assert backend.interpreter.has_work()
+def test_cont_without_a_stopped_program_is_an_error(backend):
+    # Real MBASIC 5.21 prints "?Can't continue" for CONT before any RUN.
+    run(backend, "CONT")
+    assert any("Can't continue" in o for o in backend.output)
+    assert not backend.running
 
 
 if __name__ == "__main__":

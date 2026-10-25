@@ -2263,7 +2263,8 @@ class NiceGUIBackend(UIBackend):
         The immediate line starts the tick timer afterwards.
         """
         from src.error_codes import format_error_message, CANT_CONTINUE
-        if self.runtime.pc.is_running():
+        if (self.runtime.pc.is_running()
+                or not self.runtime.pc.is_valid(self.runtime.statement_table)):
             self._append_output(format_error_message(CANT_CONTINUE) + "\n")
             return
         self.runtime.pc = self.runtime.pc.resume()
@@ -3288,13 +3289,20 @@ class NiceGUIBackend(UIBackend):
             # Timer is active - execution is in progress, so preserve PC
             # (allows program to resume from current position after statement table rebuild)
             self.runtime.pc = old_pc
+        elif old_pc.line is not None and old_pc.stop_reason in ("STOP", "BREAK"):
+            # Stopped by STOP or Break: keep the position so that CONT works.
+            # A stopped PC does not run; CONT checks that the line still exists.
+            self.runtime.pc = old_pc
         else:
             # Timer is not active - no execution in progress, so reset to halted state
             # (ensures program doesn't start executing unexpectedly when LIST/edit commands run)
             self.runtime.pc = PC.halted()
 
-    def _save_editor_to_program(self):
+    def _save_editor_to_program(self, reset_runtime=True):
         """Save editor content to program.
+
+        reset_runtime=False keeps the variables and the PC of a program
+        stopped by STOP or Break, so that CONT can resume it.
 
         Parses all lines in the editor and updates the program.
         Returns True if successful, False if there were errors.
@@ -3357,7 +3365,7 @@ class NiceGUIBackend(UIBackend):
 
             # Update runtime statement table so breakpoints can show character positions
             # This allows setting breakpoints before running the program
-            if self.program.lines:
+            if self.program.lines and reset_runtime:
                 self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
             self._set_status(f'Program loaded: {len(self.program.lines)} lines')
@@ -3968,7 +3976,9 @@ class NiceGUIBackend(UIBackend):
 
             # Parse editor content into program (in case user typed lines directly)
             # This updates self.program but doesn't affect runtime yet
-            self._save_editor_to_program()
+            stopped = (self.runtime.pc.line is not None
+                       and self.runtime.pc.stop_reason in ("STOP", "BREAK"))
+            self._save_editor_to_program(reset_runtime=not stopped)
 
             # Sync program to runtime (but don't reset PC - keep current execution state)
             # This allows LIST to work, but doesn't start execution

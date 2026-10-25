@@ -299,6 +299,7 @@ docs/help/ui/
 **Curses UI needs:**
 1. Add Stop command (Ctrl+K or Ctrl+Esc)
 2. Add Step Line command
+
 ## Update 2026-10: prompts, ^C and immediate-line commands
 
 - CLI: prints Ok at start-up, after every direct command, error and program

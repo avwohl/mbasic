@@ -159,7 +159,7 @@ RENUM is already collapsed: all backends call `ui_helpers.renum_program()`.
 Curses, Tk and the web UI set `interactive_mode` and define `cmd_renum`, so
 RENUM in the immediate line works in all of them.
 
-- Done (#50): the web UI sets `interactive_mode` when it starts, and defines
+- Done (#50, CHAIN excluded): the web UI sets `interactive_mode` when it starts, and defines
   `cmd_renum`, `cmd_delete`, `cmd_load`, `cmd_save`, `cmd_merge`, `cmd_list`,
   `cmd_run`, `cmd_cont` and `cmd_system`. LOAD, SAVE and MERGE use the
   session's in-memory files, never the server disk. CHAIN in the immediate
