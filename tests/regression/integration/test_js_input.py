@@ -266,3 +266,13 @@ def test_multibyte_character_split_across_reads(tmp_path):
 ''', "é€z")
     assert result.returncode == 0, result.stderr
     assert result.stdout == "é|€|z\n"
+
+
+@needs_node
+def test_hex_over_16_bits_is_overflow_not_redo(tmp_path):
+    # Measured on real MBASIC 5.21: &H12345 stops the program with "Overflow", it does not ask again.
+    result = run_node(tmp_path, '10 INPUT A\n20 PRINT "after"\n', "&H12345\n")
+    assert result.returncode != 0
+    assert "Redo" not in result.stdout
+    assert "after" not in result.stdout
+    assert "Overflow" in result.stdout + result.stderr

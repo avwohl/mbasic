@@ -345,11 +345,11 @@ def test_input_answer_stays_out_of_history_end_to_end():
                               cwd=PROJECT_ROOT, env=env, timeout=20,
                               encoding='utf-8')
         child.expect('Ready')
-        for line in ['10 INPUT "AGE"; A', '20 PRINT A', 'RUN']:
+        for line in ['10 INPUT "AGE"; A$', '20 PRINT A$', 'RUN']:
             child.sendline(line)
             time.sleep(0.2)
         child.expect(r'AGE\?')
-        child.sendline('SECRET42')      # the program INPUT answer
+        child.sendline('SECRET42')      # the program INPUT answer (a string: a number field would Redo)
         time.sleep(0.5)
         child.sendline('SYSTEM')
         child.expect(pexpect.EOF)

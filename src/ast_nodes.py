@@ -192,26 +192,19 @@ class InputStatementNode:
 
     Syntax:
         INPUT var1, var2           - Read from keyboard (shows "? ")
-        INPUT "prompt", var1       - Read with prompt (shows "prompt? ")
+        INPUT "prompt", var1       - Read with prompt (shows "prompt", no "? ")
         INPUT "prompt"; var1       - Read with prompt (shows "prompt? ")
-        INPUT; var1                - Read without prompt (no "?")
+        INPUT; var1                - Same as INPUT var1; cursor stays after the answer
         INPUT #filenum, var1       - Read from file
 
-    The suppress_question field controls "?" display:
-    - suppress_question=False (default): Adds "?" after prompt
-      Examples: INPUT var → "? ", INPUT "Name", var → "Name? "
-    - suppress_question=True: No "?" added (for INPUT; syntax)
-      Examples: INPUT; var → "" (no prompt), INPUT "prompt"; var → "prompt" (no "?")
+    The "? " is shown unless a comma follows the prompt string (prompt_comma=True):
+    - INPUT "Name", X  shows "Name" (no "? ")
+    - INPUT "Name"; X  shows "Name? "
+    - INPUT X          shows "? "
 
-    Important: Semicolon placement changes meaning:
-    - INPUT; var → semicolon IMMEDIATELY after INPUT keyword (suppress_question=True)
-      This suppresses the "?" question mark entirely
-    - INPUT "prompt"; var → semicolon AFTER the prompt string (suppress_question=False)
-      This is parsed as: prompt="prompt", then semicolon separates the prompt from the variable
-      The "?" is still added after the prompt
-
-    Parser note: The parser determines suppress_question=True only when it sees INPUT
-    followed directly by semicolon with no prompt expression between them.
+    suppress_question=True is a semicolon right after the INPUT keyword
+    (INPUT; "S"; X). In MBASIC 5.21 this only keeps the cursor on the line after
+    the answer, so the "? " is still shown. The interpreter does not read the field.
     """
     prompt: Optional['ExpressionNode']
     variables: List['VariableNode']

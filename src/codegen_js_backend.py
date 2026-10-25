@@ -121,7 +121,7 @@ function _input_number(text, type) {
         const hex = radix[1] === "H" || radix[1] === "h";
         if (!(hex ? /^[0-9A-Fa-f]*$/ : /^[0-7]*$/).test(radix[2])) return null;
         v = radix[2] === "" ? 0 : parseInt(radix[2], hex ? 16 : 8);
-        if (v > 65535) return null;
+        if (v > 65535) _error("Overflow");
         if (v >= 32768) v -= 65536;
     } else {
         const m = /^([+-]?)(\d*\.?\d*)(?:[EeDd]([+-]?\d*))?[%!#]?$/.exec(s);
