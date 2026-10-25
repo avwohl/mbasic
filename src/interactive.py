@@ -20,7 +20,7 @@ import re
 import os
 import traceback
 from pathlib import Path
-from src.lexer import tokenize
+from src.lexer import tokenize, Lexer
 from src.parser import Parser
 from src.runtime import Runtime
 from src.interpreter import (Interpreter, ChainException, BreakException,
@@ -285,6 +285,8 @@ class InteractiveMode:
         if error:
             if error.startswith("Overflow"):
                 print("Overflow")       # bare, as MBASIC prints it
+            elif self.program._refused:
+                print("Syntax error")   # bare; the line is not stored (&O9)
             else:
                 print(error)
                 if basic_line_num is not None:
@@ -1631,8 +1633,10 @@ class InteractiveMode:
         runtime = None
 
         try:
-            tokens = list(tokenize(program_text))
-            parser = Parser(tokens, self.def_type_map)
+            # A bad statement fails with Syntax error when it runs, as in a numbered line
+            tokens = list(Lexer(program_text, defer_errors=True).tokenize())
+            parser = Parser(tokens, self.def_type_map, source=program_text,
+                            defer_syntax_errors=True)
             ast = parser.parse()
 
             # Choose which runtime to use:

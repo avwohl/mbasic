@@ -238,5 +238,71 @@ def test_c_backend_raises_syntax_error_at_run_time(tmp_path):
     assert "no" not in out.split("Program exit")[0].replace("Loaded", ""), out
 
 
+# --- review round: measured on MBASIC 5.21 with ON ERROR GOTO and RESUME NEXT ---
+
+TRAP = '5 ON ERROR GOTO 1000\n%s\n900 PRINT "end":SYSTEM\n1000 PRINT "E";ERR;ERL:RESUME NEXT\n'
+
+
+def trapped(tmp_path, line):
+    return run_cli(tmp_path, "RUN\nSYSTEM\n", source=TRAP % line)
+
+
+def test_data_text_is_kept_raw(tmp_path):
+    # Real MBASIC: DATA items such as NAME$ and LEN% are read back unchanged.
+    out = run_cli(tmp_path, "RUN\nSYSTEM\n",
+                  source='20 DATA NAME$,LEN%,XYZ$\n40 READ A$,B$,C$:PRINT A$;B$;C$\n')
+    assert "name$len%xyz$" in out, out
+
+
+@pytest.mark.parametrize("line", ['10 NEXT%=1', '10 USR%=1', '10 A=LPOS%', '10 LET%=1',
+                                  '10 WEND%=1', '10 RETURN%', '10 END%'])
+def test_keyword_plus_stray_character_is_only_a_syntax_error(tmp_path, line):
+    # Real MBASIC: "E 2  10" and nothing else (no NEXT without FOR, no END).
+    out = trapped(tmp_path, line)
+    assert "E 2  10" in out and "E 1 " not in out and "E 30" not in out and "E 3 " not in out, out
+    assert "\nend\n" in out, out
+
+
+def test_resume_with_stray_text_gives_only_error_20(tmp_path):
+    assert "E 20  10" in trapped(tmp_path, '10 RESUME$=1') and \
+        "E 2  10" not in trapped(tmp_path, '10 RESUME$=1')
+
+
+def test_restore_with_stray_text_gives_error_8(tmp_path):
+    assert "E 8  10" in trapped(tmp_path, '10 RESTORE%')
+
+
+def test_print_runs_before_the_stray_text(tmp_path):
+    # Real MBASIC: PRINT "a";$ prints a, then Syntax error.
+    out = trapped(tmp_path, '10 PRINT "a";$')
+    assert "aE 2  10" in out, out
+
+
+def test_immediate_mode_reports_syntax_error(tmp_path):
+    out = run_cli(tmp_path, 'LEN%=1\nNAME$="x"\nPRINT 1 @\nSYSTEM\n')
+    assert out.count("Syntax error") == 3 and "Illegal function call" not in out, out
+
+
+@pytest.mark.parametrize("text", ["&O9", "&O19", "&O78", "&19"])
+def test_typed_octal_with_8_or_9_is_refused(tmp_path, text):
+    # Real MBASIC: "10 X=&O9" gives Syntax error and the line is not stored.
+    out = run_cli(tmp_path, "10 X=%s\nLIST\nSYSTEM\n" % text)
+    assert "Syntax error" in out and "10 X=" not in out, out
+
+
+def test_load_stops_at_an_octal_with_9_and_prints_bare_messages(tmp_path):
+    # Real MBASIC: LOAD prints Syntax error and stops; lines after are not loaded.
+    (tmp_path / "o.bas").write_bytes(b"10 A=1\r\n20 X=&O9\r\n30 PRINT 3\r\n")
+    out = run_cli(tmp_path, 'LOAD "o.bas"\nLIST\nSYSTEM\n')
+    assert "Syntax error\n" in out and "file line" not in out, out
+    assert "10 A=1" in out and "30 PRINT 3" not in out, out
+
+
+def test_load_overflow_prints_no_file_diagnostic(tmp_path):
+    (tmp_path / "h.bas").write_bytes(b"10 A=1\r\n20 A=&H12345\r\n30 PRINT 3\r\n")
+    out = run_cli(tmp_path, 'LOAD "h.bas"\nSYSTEM\n')
+    assert "Overflow\n" in out and "file line" not in out, out
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))

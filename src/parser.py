@@ -366,11 +366,71 @@ class Parser:
             return self.parse_statement()
         start = self.position
         try:
-            return self.parse_statement()
+            stmt = self.parse_statement()
+            if self.match(TokenType.ILLEGAL):
+                stmt = self._statement_with_stray_text(start, stmt)
+            return stmt
         except Exception as e:
             debug_log(f"statement kept as a run-time Syntax error: {e}", level=1)
             self.position = start
+            kept = self._print_before_stray_text(start)
+            return kept if kept is not None else self._syntax_error_statement()
+
+    def _print_before_stray_text(self, start: int) -> Optional[StatementNode]:
+        """PRINT "a";$ prints a and then fails: keep the PRINT up to the stray text.
+
+        Returns the PRINT or LPRINT statement parsed up to the first ILLEGAL
+        token (the position is left at that token), or None.
+        """
+        if self.tokens[start].type not in (TokenType.PRINT, TokenType.LPRINT):
+            return None
+        stop = start
+        while stop < len(self.tokens) and self.tokens[stop].type not in (
+                TokenType.ILLEGAL, TokenType.COLON, TokenType.NEWLINE, TokenType.EOF):
+            stop += 1
+        if stop >= len(self.tokens) or self.tokens[stop].type != TokenType.ILLEGAL:
+            return None
+        illegal = self.tokens[stop]
+        self.tokens[stop] = Token(TokenType.COLON, ':', illegal.line, illegal.column)
+        try:
+            self.position = start
+            stmt = self.parse_statement()
+            ok = self.position == stop
+        except Exception:
+            ok = False
+        finally:
+            self.tokens[stop] = illegal
+        if not ok:
+            self.position = start
+            return None
+        return stmt
+
+    # Statements that look at the end of the statement before they do anything:
+    # with stray text behind the keyword ("END%", "WEND%=1") the binary gives the
+    # Syntax error and does not run the statement.
+    _CHECK_END_FIRST = (TokenType.END, TokenType.WEND, TokenType.RETURN, TokenType.NEXT)
+
+    def _statement_with_stray_text(self, start: int, stmt: StatementNode) -> StatementNode:
+        """A statement parsed but stray text follows it ("RESUME$", "PRINT 1;$").
+
+        The stray text belongs to the statement in the binary.  Most statements
+        run and meet the stray text last (PRINT prints first); the ones in
+        _CHECK_END_FIRST fail before they run; RESUME never looks at the rest;
+        RESTORE reads the stray text as a line number that does not exist (error 8).
+        """
+        kind = self.tokens[start].type
+        if kind in self._CHECK_END_FIRST:
+            self.position = start
             return self._syntax_error_statement()
+        if kind == TokenType.RESTORE:
+            self.position = start
+            bad = self._syntax_error_statement()
+            bad.error_code = 8
+            return bad
+        if kind == TokenType.RESUME:
+            while not self.at_end_of_line() and not self.match(TokenType.COLON, TokenType.ELSE):
+                self.position += 1
+        return stmt
 
     def parse_line(self) -> Optional[LineNode]:
         """
@@ -1060,6 +1120,8 @@ class Parser:
     def parse_variable_or_function(self) -> ExpressionNode:
         """Parse variable reference or function call"""
         token = self.advance()
+        if token.type == TokenType.ILLEGAL:
+            raise ParseError("Syntax error", token)
         name = token.value  # Normalized lowercase name
         original_case = getattr(token, 'original_case', name)  # Original case from lexer
 

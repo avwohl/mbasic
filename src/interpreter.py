@@ -2028,7 +2028,7 @@ class Interpreter:
         MBASIC stores such a line without a message and stops with Syntax
         error when execution reaches the bad statement.
         """
-        raise MBasicError(2)
+        raise MBasicError(getattr(stmt, 'error_code', 2))
 
     def execute_remark(self, stmt):
         """Execute REM statement (do nothing)"""

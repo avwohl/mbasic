@@ -46,6 +46,10 @@ class LexerError(Exception):
         self.column = column
 
 
+class LexerRefused(LexerError):
+    """A line MBASIC refuses at entry with Syntax error (&O9, &19): it is not stored."""
+
+
 class LexerOverflow(LexerError):
     """A &H, &O or & constant that does not fit 16 bits (MBASIC: Overflow)."""
 
@@ -79,7 +83,7 @@ RESERVED_STEMS = frozenset((
     "list log loc len lof merge mod name new not open out on or option print "
     "put poke pos peek return read run restore rem resume rset rnd renum "
     "reset randomize stop swap save step sgn sqr sin system then tron troff "
-    "to tan using val varptr width wait while wend write xor").split()) & frozenset(KEYWORDS)
+    "to tan using val varptr width wait while wend write xor next usr").split()) & frozenset(KEYWORDS)
 
 
 class Lexer:
@@ -181,6 +185,7 @@ class Lexer:
                 num_str += self.advance()
                 while self.current_char() and self.current_char() in '01234567':
                     num_str += self.advance()
+                self._refuse_octal_89(start_line, start_column)
                 try:
                     value = radix_constant_value(num_str[2:], 8, start_line, start_column)
                 except ValueError:
@@ -188,10 +193,11 @@ class Lexer:
                 return Token(TokenType.NUMBER, value, start_line, start_column,
                              literal_text=num_str)
 
-            elif next_char and next_char in '01234567':
+            elif next_char and next_char in '0123456789':
                 # Octal with just & prefix
                 while self.current_char() and self.current_char() in '01234567':
                     num_str += self.advance()
+                self._refuse_octal_89(start_line, start_column)
                 try:
                     value = radix_constant_value(num_str[1:], 8, start_line, start_column)
                 except ValueError:
@@ -334,6 +340,20 @@ class Lexer:
 
         return Token(TokenType.STRING, string_val, start_line, start_column)
 
+    def _refuse_octal_89(self, line: int, column: int):
+        """MBASIC reads an 8 or 9 inside an octal constant as an error that refuses the whole line."""
+        if self.current_char() is not None and self.current_char() in '89':
+            raise LexerRefused("Syntax error", line, column)
+
+    def _in_data_statement(self) -> bool:
+        """True when the tokens so far in this statement start with DATA (its text is kept raw)."""
+        for tok in reversed(self.tokens):
+            if tok.type in (TokenType.COLON, TokenType.NEWLINE, TokenType.LINE_NUMBER):
+                return False
+            if tok.type == TokenType.DATA:
+                return True
+        return False
+
     def read_identifier(self) -> Token:
         """
         Read an identifier or keyword.
@@ -407,7 +427,11 @@ class Lexer:
         # is the keyword: CRUNCH ends a reserved word at any character that is
         # not a letter, a digit or ".".  The type character stays in the input
         # and nothing can use it, which is a Syntax error when the line runs.
-        if len(ident) > 1 and ident[-1] in '$%!#' and ident_lower[:-1] in RESERVED_STEMS:
+        if len(ident) > 1 and ident[-1] in '$%!#' and ident_lower[:-1] == 'lpos':
+            # LPOS is reserved in the binary but not a keyword here
+            raise LexerError("Syntax error", start_line, start_column)
+        if (len(ident) > 1 and ident[-1] in '$%!#' and ident_lower[:-1] in RESERVED_STEMS
+                and not self._in_data_statement()):
             keyword_part = ident_lower[:-1]
             self.pos -= 1
             self.column -= 1
@@ -466,7 +490,7 @@ class Lexer:
         while True:
             try:
                 return self._tokenize_rest()
-            except LexerOverflow:
+            except (LexerOverflow, LexerRefused):
                 raise
             except LexerError:
                 if (not self.defer_errors or not self.tokens

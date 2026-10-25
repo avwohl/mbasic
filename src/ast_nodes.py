@@ -900,6 +900,8 @@ class SyntaxErrorStatementNode:
     text: str = ""
     line_num: int = 0
     column: int = 0
+    #: 2 (Syntax error), or 8 for "RESTORE%" where the binary reads the stray text as an unknown line
+    error_code: int = 2
 
 
 @dataclass

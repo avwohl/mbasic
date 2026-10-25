@@ -45,7 +45,7 @@ import re
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
 from src.input_sanitizer import sanitize_and_clear_parity
-from src.lexer import Lexer, LexerOverflow, create_keyword_case_manager, tokenize
+from src.lexer import Lexer, LexerOverflow, LexerRefused, create_keyword_case_manager, tokenize
 from src.parser import Parser
 from src.debug_logger import debug_log
 
@@ -105,6 +105,18 @@ class ProgramManager:
         #: Bare messages MBASIC prints while a line is entered without
         #: rejecting it ("Overflow" for a literal such as 1E39).
         self.notices: List[str] = []
+        self._refused = False   # the last parse_single_line was refused by the lexer
+
+    def _load_stops_at(self, error: str) -> bool:
+        """MBASIC stops reading a file at a line it refuses (&H overflow, &O9) and
+        prints a bare "Overflow" or "Syntax error"; note it and say whether to stop."""
+        if error.startswith("Overflow"):
+            self.notices.append("Overflow")
+        elif self._refused:
+            self.notices.append("Syntax error")
+        else:
+            return False
+        return True
 
     def take_notices(self) -> List[str]:
         """The messages gathered since the last call, oldest first."""
@@ -314,17 +326,17 @@ class ProgramManager:
                 if success:
                     success_count += 1
                 else:
-                    errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
-                    if error.startswith("Overflow"):
-                        # MBASIC stops reading the file at an &H or &O overflow
-                        # (measured: the lines after it are not loaded).
+                    # MBASIC stops reading the file at an &H or &O overflow
+                    # (measured: the lines after it are not loaded).
+                    if self._load_stops_at(error):
                         break
+                    errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
 
         if success_count > 0:
             self.current_file = filename
             return (True, errors)
         else:
-            if not errors:
+            if not errors and not self.notices:
                 errors.append((0, f'{filename}: No numbered program lines found'))
             return (False, errors)
 
@@ -388,15 +400,15 @@ class ProgramManager:
                     else:
                         lines_added += 1
                 else:
-                    errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
-                    if error.startswith("Overflow"):
+                    if self._load_stops_at(error):
                         break   # as in load_from_file
+                    errors.append((line_num, f'{filename}: file line {file_line}, BASIC line {line_num}: {error}'))
 
         total_success = lines_added + lines_replaced
         if total_success > 0 or lines_deleted > 0:
             return (True, errors, lines_added, lines_replaced)
         else:
-            if not errors:
+            if not errors and not self.notices:
                 errors.append((0, f'{filename}: No numbered program lines found'))
             return (False, errors, 0, 0)
 
@@ -433,6 +445,7 @@ class ProgramManager:
         """
         try:
             debug_log(f"parse_single_line: {repr(line_text)}", level=2)
+            self._refused = False
             lexer = Lexer(line_text, keyword_case_manager=create_keyword_case_manager(),
                           defer_errors=defer_syntax_errors)
             tokens = list(lexer.tokenize())
@@ -443,6 +456,11 @@ class ProgramManager:
                             defer_syntax_errors=defer_syntax_errors)
             line_node = parser.parse_line()
             return (line_node, None)
+
+        except LexerRefused:
+            self._refused = True
+            return (None, "Syntax error in %d" % basic_line_num
+                    if basic_line_num is not None else "Syntax error")
 
         except LexerOverflow:
             # &H10000 and the like: MBASIC refuses the line with Overflow
