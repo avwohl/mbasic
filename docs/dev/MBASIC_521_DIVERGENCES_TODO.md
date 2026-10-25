@@ -91,10 +91,16 @@ The *wording* is now consistent everywhere - see
 thing; in curses, Tk and the web UI it goes to a terminal nobody is looking at.
 
 The UI backends each carry their own copy of the command handlers - `cmd_load`,
-`cmd_merge`, `cmd_renum` and the rest exist four times over, once per backend,
+`cmd_merge` and the rest exist four times over, once per backend,
 which is why the same message had to be fixed in four places. Collapsing them
 onto one implementation that reports through the I/O handler would fix both
 problems at once, and is the larger piece of work behind this entry.
+
+RENUM is already collapsed: all backends call `ui_helpers.renum_program()`.
+What is left for RENUM is that curses, Tk and the web UI cannot reach `cmd_renum`
+from the immediate line (`Interpreter.execute_renum` needs `interactive_mode`,
+which only the CLI sets), and that they show their own "Renumbered" text where
+real MBASIC prints nothing.
 
 
 ## 5. Reserved words followed by a type suffix
@@ -158,7 +164,9 @@ semantics are not:
 ## 8. `serialize_expression` does not bracket under a unary minus
 
 Found while checking the precedence change did not break RENUM. Pre-existing,
-and unrelated to any of the above:
+and unrelated to any of the above. RENUM no longer calls the serializer (it
+edits the text of each line, see `src/renum.py`), so this defect does not
+change a user's program through RENUM any more:
 
     -(A + B)   comes back out as   -A + B
     -(A * B)   comes back out as   -A * B

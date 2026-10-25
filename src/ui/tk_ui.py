@@ -3583,34 +3583,33 @@ class TkBackend(UIBackend):
             self._write_output(message_for(e))
 
     def cmd_renum(self, args: str) -> None:
-        """Execute RENUM command - renumber lines using AST serialization.
+        """Execute RENUM command - renumber lines.
 
-        Uses AST-based approach:
-        1. Build line number mapping (old -> new)
-        2. Walk AST and update all line number references
-        3. Serialize AST back to source
-        4. Refresh editor display
-
-        This ensures AST is the single source of truth.
+        Uses renum_program() from ui_helpers, the one RENUM implementation for
+        all UIs (see src/renum.py).  It edits the text of each line, so only
+        the line numbers and the digits of line number references change.
+        A reference to a line that does not exist is left as it is and
+        "Undefined line n in m" is shown, as in MBASIC.
         """
         from src.ui.ui_helpers import renum_program
 
+        messages = []
         try:
-            # Use consolidated RENUM implementation
             old_lines, line_map = renum_program(
                 self.program,
                 args,
-                self._renum_statement,
-                runtime=None  # RENUM doesn't need runtime (operates on program structure)
+                runtime=None,  # RENUM doesn't need runtime (operates on program structure)
+                messages=messages
             )
 
             # Refresh the editor display
             self._refresh_editor()
 
             # Calculate range for message
-            final_num = max(self.program.lines.keys()) if self.program.lines else 10
-            new_start = min(self.program.lines.keys()) if self.program.lines else 10
-            self._add_output(f"Renumbered ({new_start} to {final_num})\n")
+            if self.program.lines:
+                final_num = max(self.program.lines.keys())
+                new_start = min(self.program.lines.keys())
+                self._add_output(f"Renumbered ({new_start} to {final_num})\n")
 
         except ValueError as e:
             self._add_output(message_for(e) + "\n")
@@ -3618,96 +3617,8 @@ class TkBackend(UIBackend):
             import traceback
             self._add_output(message_for(e) + "\n")
             self._add_output(traceback.format_exc())
-
-    def _renum_statement(self, stmt, line_map):
-        """Recursively update line number references in a statement
-
-        Args:
-            stmt: Statement node to update
-            line_map: dict mapping old line numbers to new line numbers
-        """
-        import src.ast_nodes as ast_nodes
-
-        stmt_type = type(stmt).__name__
-
-        # GOTO statement
-        if stmt_type == 'GotoStatementNode':
-            if stmt.line_number in line_map:
-                stmt.line_number = line_map[stmt.line_number]
-
-        # GOSUB statement
-        elif stmt_type == 'GosubStatementNode':
-            if stmt.line_number in line_map:
-                stmt.line_number = line_map[stmt.line_number]
-
-        # ON...GOTO/GOSUB statement
-        elif stmt_type == 'OnGotoStatementNode' or stmt_type == 'OnGosubStatementNode':
-            stmt.target_lines = [
-                line_map.get(line, line) for line in stmt.target_lines
-            ]
-
-        # IF statement with line number jumps
-        elif stmt_type == 'IfStatementNode':
-            if stmt.then_line_number is not None and stmt.then_line_number in line_map:
-                stmt.then_line_number = line_map[stmt.then_line_number]
-            if stmt.else_line_number is not None and stmt.else_line_number in line_map:
-                stmt.else_line_number = line_map[stmt.else_line_number]
-
-            # Check for "IF ERL = line_number" pattern
-            # According to manual: if ERL is on left side of =, right side is a line number
-            if stmt.condition:
-                self._renum_erl_comparison(stmt.condition, line_map)
-
-            # Also update statements within THEN/ELSE blocks
-            if stmt.then_statements:
-                for then_stmt in stmt.then_statements:
-                    self._renum_statement(then_stmt, line_map)
-            if stmt.else_statements:
-                for else_stmt in stmt.else_statements:
-                    self._renum_statement(else_stmt, line_map)
-
-        # RESTORE statement
-        elif stmt_type == 'RestoreStatementNode':
-            if stmt.line_number_expr and hasattr(stmt.line_number_expr, 'value'):
-                # It's a literal number
-                if stmt.line_number_expr.value in line_map:
-                    stmt.line_number_expr.value = line_map[stmt.line_number_expr.value]
-
-        # RUN statement
-        elif stmt_type == 'RunStatementNode':
-            if hasattr(stmt, 'line_number') and stmt.line_number in line_map:
-                stmt.line_number = line_map[stmt.line_number]
-
-        # ON ERROR GOTO statement
-        elif stmt_type == 'OnErrorStatementNode':
-            if stmt.line_number is not None and stmt.line_number in line_map:
-                stmt.line_number = line_map[stmt.line_number]
-
-    def _renum_erl_comparison(self, expr, line_map):
-        """Handle ERL = line_number patterns in expressions
-
-        According to MBASIC manual: if ERL appears on the left side of =,
-        the number on the right side is treated as a line number reference.
-
-        Also handles: ERL <> line, ERL < line, ERL > line, etc.
-
-        Args:
-            expr: Expression node to check
-            line_map: dict mapping old line numbers to new line numbers
-        """
-        # Check if this is a binary operation (comparison)
-        if type(expr).__name__ != 'BinaryOpNode':
-            return
-
-        # Check if left side is ERL (a VariableNode with name 'ERL')
-        left = expr.left
-        if type(left).__name__ == 'VariableNode' and left.name == 'ERL':
-            # Right side should be renumbered if it's a literal number
-            right = expr.right
-            if type(right).__name__ == 'NumberNode':
-                # Check if this number is a line number in our program
-                if right.value in line_map:
-                    right.value = line_map[right.value]
+        for message in messages:
+            self._add_output(message + "\n")
 
     def cmd_cont(self) -> None:
         """Execute CONT command - continue after STOP.
