@@ -181,7 +181,9 @@ def test_end_of_stdin_stops_with_error_instead_of_hanging(tmp_path):
 40 PRINT "never"
 ''', "one\n")
     assert result.returncode == 1
-    assert result.stdout == "A? [one]\nB? \n?Input past end\n"  # a fatal error starts a new line
+    # A fatal error starts a new line when the column is above 0. Real MBASIC cannot confirm
+    # this exact case: under cpmemu the console never reports end of input, so it just stops.
+    assert result.stdout == "A? [one]\nB? \n?Input past end\n"
 
 
 @needs_node

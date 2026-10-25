@@ -79,9 +79,11 @@ What is still different:
   an `&O` constant above 65535. It prints `Overflow` and does not store the
   line. The interpreter refuses the line too. The JavaScript compiler stops
   with a compilation error.
-- The JavaScript backend evaluates all items of a PRINT before it prints any.
-  `PRINT "A=";10^40` prints `Overflow` first and `A=` second. The binary (and
-  the interpreter) print `A=` first. The same holds for `Division by zero`.
+- The text of an `Overflow` or `Division by zero` message that does not stop the
+  program is not wrapped at the `WIDTH` limit. The binary sends the message
+  through the width logic, so with `WIDTH 40` and the cursor near the right edge
+  it splits the word (`Overf` / `low`). The interpreter and the JavaScript
+  backend print the word whole.
 - The JavaScript backend reports a fatal error as `?Overflow`. It has no
   `in <line>` text.
 
