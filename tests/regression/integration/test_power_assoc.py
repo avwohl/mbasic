@@ -101,9 +101,13 @@ def test_power_chains_in_c_source(tmp_path):
         cwd=ROOT, capture_output=True, text=True, timeout=120,
     )
     source = (tmp_path / "prog.c").read_text()
-    assert "pow(pow(a, b), c)" in source, result.stdout + result.stderr
-    assert "pow(a, (-pow(b, c)))" in source
-    assert "pow(pow(a, (+b)), c)" in source
+    # Compare the nesting only: drop casts, the runtime prefix, brackets and blanks,
+    # so pow(pow(a, b), c) reads "powpowa,b,c" and pow(a, pow(b, c)) "powa,powb,c".
+    flat = source.replace("(double)", "").replace("mb25_pow", "pow")
+    flat = "".join(ch for ch in flat if ch not in "() \t")
+    assert "x=powpowa,b,c;" in flat, result.stdout + result.stderr
+    assert "y=powa,-powb,c;" in flat
+    assert "z=powpowa,+b,c;" in flat
 
 
 if __name__ == "__main__":
