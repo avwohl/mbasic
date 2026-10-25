@@ -354,13 +354,66 @@ class Interpreter:
         def signal_handler(_sig, _frame):
             self.runtime.break_requested = True
 
+        # Arming twice must not save our own handler as the "old" one, or the
+        # REPL's handler could never be restored.
+        if getattr(self, '_break_handler_armed', False):
+            return
         # Save old handler to restore later
         self.old_signal_handler = signal.signal(signal.SIGINT, signal_handler)
+        self._break_handler_armed = True
 
     def _restore_break_handler(self):
         """Restore original Ctrl+C handler"""
-        if hasattr(self, 'old_signal_handler'):
+        if getattr(self, '_break_handler_armed', False):
             signal.signal(signal.SIGINT, self.old_signal_handler)
+            self._break_handler_armed = False
+
+    def arm_break_handler(self):
+        """Make Ctrl+C set the break flag while a resumed program runs (CONT).
+
+        start() does this for RUN. A caller that resumes the PC itself must
+        call this before its tick loop; the tick loop restores the handler at
+        every stop.
+        """
+        self._setup_break_handler()
+
+    def release_break_handler(self):
+        """Give Ctrl+C back to the REPL. Safe to call when the handler is not armed."""
+        self._restore_break_handler()
+
+    def read_input_line(self):
+        """Read the answer to a keyboard INPUT for the CLI.
+
+        The break handler only sets a flag, which a blocking read never looks
+        at, so the handler is released around the read and Ctrl+C raises
+        KeyboardInterrupt there. The caller then calls break_at_input().
+        A Ctrl+C that arrived before the read counts as one during it.
+        """
+        from src.iohandler.console import input_without_history
+        if self.runtime.break_requested:
+            self.runtime.break_requested = False
+            raise KeyboardInterrupt
+        self._restore_break_handler()
+        try:
+            # Program INPUT answers are data, not commands - they must not
+            # land in the readline history.
+            return input_without_history()
+        finally:
+            self._setup_break_handler()
+
+    def break_at_input(self):
+        """Stop the program at the INPUT that Ctrl+C interrupted.
+
+        MBASIC prints "Break in <line>" at once and CONT asks for the answer
+        again: the PC stays on the INPUT statement, so the next tick runs it
+        again and prints the prompt again.
+        """
+        pc = self.runtime.pc
+        self.state.input_prompt = None
+        self.runtime.pc = pc.stop("BREAK")
+        self._restore_break_handler()
+        self.io.output("")
+        self.io.output(f"Break in {pc.line_num}")
 
     # ========================================================================
     # New Tick-Based Execution API
@@ -831,14 +884,11 @@ class Interpreter:
                     if state.input_prompt is not None:
                         # Synchronous input for CLI
                         try:
-                            from src.iohandler.console import input_without_history
-                            # Program INPUT answers are data, not commands -
-                            # they must not land in the readline history.
-                            value = input_without_history()
+                            value = self.read_input_line()
                             state = self.provide_input(value)
                         except KeyboardInterrupt:
                             # User pressed Ctrl+C during input
-                            self.io.output(f"Break in {state.current_line or '?'}")
+                            self.break_at_input()
                             return
                         except EOFError:
                             self.io.output("")
@@ -3772,20 +3822,24 @@ class Interpreter:
 
         User can examine/modify variables, edit lines, then use CONT to resume.
         """
-        # Save the current execution position
-        # We need to resume from the NEXT statement after STOP
-
-        # Move NPC to PC so CONT can resume from the next statement
-        # runtime.npc (next program counter) is set by tick() to point to the next statement
-        # to execute after the current one completes
+        # CONT resumes at the statement AFTER the STOP, but "Break in" names
+        # the line of the STOP itself.
+        stop_line = self.runtime.pc.line_num if self.runtime.pc else None
         if self.runtime.npc:
-            self.runtime.pc = self.runtime.npc.stop("STOP")
+            # GOTO/GOSUB-style jump already pending
+            next_pc = self.runtime.npc
         else:
-            self.runtime.pc = self.runtime.pc.stop("STOP")
+            next_pc = self.runtime.statement_table.next_pc(self.runtime.pc)
+        if next_pc is not None and next_pc.line_num is not None:
+            self.runtime.pc = next_pc.stop("STOP")
+        else:
+            # STOP was the last statement: nothing is left to resume, and
+            # CONT then does nothing, as in MBASIC.
+            self.runtime.pc = PC.halted()
 
         # Print "Break in <line>" message
-        if self.runtime.pc and self.runtime.pc.line_num:
-            self.io.output(f"Break in {self.runtime.pc.line_num}")
+        if stop_line:
+            self.io.output(f"Break in {stop_line}")
         else:
             self.io.output("Break")
 

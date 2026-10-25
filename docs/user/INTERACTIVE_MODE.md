@@ -47,7 +47,7 @@ Then enter your program:
 
 ```basic
 MBASIC 5.21 Interpreter
-Ready
+Ok
 
 10 PRINT "Hello, World!"
 20 FOR I = 1 TO 10

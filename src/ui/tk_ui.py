@@ -3605,12 +3605,6 @@ class TkBackend(UIBackend):
             # Refresh the editor display
             self._refresh_editor()
 
-            # Calculate range for message
-            if self.program.lines:
-                final_num = max(self.program.lines.keys())
-                new_start = min(self.program.lines.keys())
-                self._add_output(f"Renumbered ({new_start} to {final_num})\n")
-
         except ValueError as e:
             self._add_output(message_for(e) + "\n")
         except Exception as e:

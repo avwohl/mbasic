@@ -20,15 +20,15 @@ The CLI backend provides basic debugging through direct mode commands and progra
 Test expressions and statements immediately without running the full program:
 
 ```
-Ready
+Ok
 PRINT 2 + 2
  4
-Ready
+Ok
 LET A = 10
-Ready
+Ok
 PRINT A * 3
  30
-Ready
+Ok
 ```
 
 ### 2. PRINT Statement Debugging
@@ -49,23 +49,23 @@ Add PRINT statements to your program to trace execution and inspect variables:
 Enable execution tracing to see which lines are executed:
 
 ```
-Ready
+Ok
 10 PRINT "START"
 20 FOR I = 1 TO 3
 30   PRINT I
 40 NEXT I
 50 END
-Ready
+Ok
 TRON
 Tracing ON
-Ready
+Ok
 RUN
 [10]START
 [20][30] 1
 [40][30] 2
 [40][30] 3
 [40][50]
-Ready
+Ok
 TROFF
 Tracing OFF
 ```
@@ -97,13 +97,13 @@ Test each section, then move the END statement down as you verify each part work
 When an error occurs, BASIC shows the line number:
 
 ```
-Ready
+Ok
 10 LET A = 10
 20 PRINT B * 2
-Ready
+Ok
 RUN
 ?Undefined variable B in 20
-Ready
+Ok
 LIST 20
 20 PRINT B * 2
 ```
@@ -115,13 +115,13 @@ Use `LIST line_number` to examine the problematic line.
 After a program runs (or errors), variables remain accessible in direct mode:
 
 ```
-Ready
+Ok
 10 FOR I = 1 TO 5
 20   A = A + I
 30 NEXT I
-Ready
+Ok
 RUN
-Ready
+Ok
 PRINT I, A
  6             15
 ```

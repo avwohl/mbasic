@@ -225,6 +225,7 @@ class InteractiveMode:
         self.runtime = None  # Persistent runtime for immediate mode
         self.interpreter = None  # Persistent interpreter
         self.program_runtime = None  # Runtime for RUN (preserved for CONT)
+        self.cont_invalid = False    # True once a program edit made CONT impossible
         self.program_interpreter = None  # Interpreter for RUN (preserved for CONT)
         self.ctrl_c_count = 0  # Track consecutive Ctrl+C presses
 
@@ -301,6 +302,9 @@ class InteractiveMode:
         if self.program_runtime:
             # The Runtime keeps GOSUB, FOR and WHILE entries in one stack.
             self.program_runtime.execution_stack.clear()
+            # MBASIC 5.21: any program edit after a STOP or Break makes CONT
+            # print "Can't continue", even when the old position still exists.
+            self.cont_invalid = True
 
     def _setup_readline(self):
         """Configure readline for better line editing.
@@ -449,7 +453,9 @@ class InteractiveMode:
         if interactive_tty and self.program.current_file:
             print(f"Loaded from {self.program.current_file}")
             print("Type RUN to execute it, or LIST to view the program.")
-        print("Ready")
+        # MBASIC prints Ok at start-up, after every direct command (also after
+        # an error or a Break) and not after a numbered line.
+        self.io.output("Ok")
 
         while True:
             try:
@@ -489,7 +495,16 @@ class InteractiveMode:
                 if not line.strip():
                     continue
 
-                self.process_line(line)
+                try:
+                    self.process_line(line)
+                except KeyboardInterrupt:
+                    raise
+                except Exception as e:
+                    print_error(e)
+                    self.ctrl_c_count = 0
+                # Ok follows a direct command, also one that raised.
+                if not re.match(r'\s*\d', line):
+                    self._print_ok()
 
             except EOFError:
                 # Ctrl+D to exit
@@ -515,6 +530,11 @@ class InteractiveMode:
                 print_error(e)
                 # Reset Ctrl+C counter on other exceptions
                 self.ctrl_c_count = 0
+
+    def _print_ok(self):
+        """Print the Ok prompt line, on a fresh line when the cursor is not at column 0."""
+        self._end_partial_line()
+        self.io.output("Ok")
 
     def process_line(self, line):
         """Process a line of input (numbered line or direct command)"""
@@ -617,6 +637,7 @@ class InteractiveMode:
 
             # Save runtime for CONT
             self.program_runtime = runtime
+            self.cont_invalid = False
             self.program_interpreter = interpreter
 
             # If start_line is specified, we need to handle it specially
@@ -646,11 +667,10 @@ class InteractiveMode:
                     # Handle input synchronously for CLI
                     if state.input_prompt is not None:
                         try:
-                            value = input_without_history()
+                            value = interpreter.read_input_line()
                             state = interpreter.provide_input(value)
                         except KeyboardInterrupt:
-                            self.io.output("")
-                            self.io.output(f"Break in {state.current_line or '?'}")
+                            interpreter.break_at_input()
                             return
                         except EOFError:
                             self.io.output("")
@@ -690,8 +710,14 @@ class InteractiveMode:
         the program. Shows "?Can't continue" after editing, matching MBASIC 5.21 behavior.
         """
         # Check if we have a stopped program
-        if not self.program_runtime or self.program_runtime.pc.is_running():
+        if (not self.program_runtime or self.cont_invalid
+                or self.program_runtime.pc.is_running()):
             print(format_error_message(CANT_CONTINUE))
+            return
+
+        # MBASIC 5.21 prints nothing for CONT after the program ended or
+        # stopped on an error: only STOP and Break can be continued.
+        if self.program_runtime.pc.stop_reason not in ('STOP', 'BREAK'):
             return
 
         # Check if PC position is still valid (program may have been edited)
@@ -702,6 +728,8 @@ class InteractiveMode:
         try:
             # Resume execution by creating new running PC at same position
             self.program_runtime.pc = self.program_runtime.pc.resume()
+            # ^C during the resumed run sets the break flag, as it does for RUN.
+            self.program_interpreter.arm_break_handler()
 
             # Resume execution using tick-based loop (same as run())
             state = self.program_interpreter.state
@@ -711,11 +739,10 @@ class InteractiveMode:
                 # Handle input synchronously for CLI
                 if state.input_prompt is not None:
                     try:
-                        value = input_without_history()
+                        value = self.program_interpreter.read_input_line()
                         state = self.program_interpreter.provide_input(value)
                     except KeyboardInterrupt:
-                        self.io.output("")
-                        self.io.output(f"Break in {state.current_line or '?'}")
+                        self.program_interpreter.break_at_input()
                         return
                     except EOFError:
                         self.io.output("")
@@ -728,6 +755,8 @@ class InteractiveMode:
         except Exception as e:
             self._end_partial_line()
             print_error(e, self.program_runtime)
+        finally:
+            self.program_interpreter.release_break_handler()
 
     def cmd_list(self, args):
         """LIST [start][-][end] - List program lines"""
@@ -770,7 +799,6 @@ class InteractiveMode:
         # Clear execution stacks (GOSUB/FOR/STOP state) when program is cleared
         # Note: program_runtime object persists, only its stacks are cleared
         self.clear_execution_state()
-        print("Ready")
 
     def cmd_save(self, filename):
         """SAVE "filename" - Save program to file"""
@@ -828,7 +856,6 @@ class InteractiveMode:
             if success:
                 self.current_file = filename
                 print(f"Loaded from {filename}")
-                print("Ready")
             else:
                 print(f"Failed to load program: {filename}")
 
@@ -888,7 +915,6 @@ class InteractiveMode:
                 if not quiet:
                     print(f"Merged from {filename}")
                     print(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
-                print("Ready")
             else:
                 print(f"Failed to merge program: {filename}")
 
@@ -1678,12 +1704,18 @@ class InteractiveMode:
                 old_pc = runtime.pc
 
                 # Execute each statement on line 0
+                resumed = False
                 for stmt in line_node.statements:
+                    if type(stmt).__name__ == 'ContStatementNode':
+                        resumed = True
                     interpreter.execute_statement(stmt)
 
                 # Restore previous PC to maintain stopped program position
-                # This reverts any GOTO/GOSUB PC changes from above execution
-                runtime.pc = old_pc
+                # This reverts any GOTO/GOSUB PC changes from above execution.
+                # After CONT the program has run on, so the PC it left (a new
+                # Break, STOP, END or error) is the one to keep.
+                if not resumed:
+                    runtime.pc = old_pc
 
         except BreakException:
             # Ctrl+C inside an immediate-mode INPUT$ ("PRINT INPUT$(1)" at the

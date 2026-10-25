@@ -230,8 +230,6 @@ You should see (with your installed version in place of `<version>`):
 
 ```
 MBASIC-2025 v<version> - Modern MBASIC 5.21 Interpreter
-Ready
-
 Ok
 ```
 

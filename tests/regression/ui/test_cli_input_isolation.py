@@ -344,7 +344,7 @@ def test_input_answer_stays_out_of_history_end_to_end():
         child = pexpect.spawn(sys.executable, ['mbasic', '--ui', 'cli'],
                               cwd=PROJECT_ROOT, env=env, timeout=20,
                               encoding='utf-8')
-        child.expect('Ready')
+        child.expect('Ok')
         for line in ['10 INPUT "AGE"; A$', '20 PRINT A$', 'RUN']:
             child.sendline(line)
             time.sleep(0.2)

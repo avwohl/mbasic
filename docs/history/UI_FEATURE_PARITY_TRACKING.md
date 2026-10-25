@@ -299,3 +299,18 @@ docs/help/ui/
 **Curses UI needs:**
 1. Add Stop command (Ctrl+K or Ctrl+Esc)
 2. Add Step Line command
+
+## Update 2026-10: prompts, ^C and immediate-line commands
+
+- CLI: prints Ok at start-up, after every direct command, error and program
+  stop (as MBASIC 5.21 does). It printed Ready at start-up before.
+- CLI: ^C after CONT prints Break in the line, and ^C at INPUT breaks at once.
+- CLI: CONT after STOP continues at the next statement. CONT after a program
+  edit gives "Can't continue". CONT after the end of the program or an error
+  prints nothing.
+- Web: the immediate line runs RENUM, DELETE, LOAD, SAVE, MERGE, LIST, RUN and
+  CONT and CHAIN through the backend's cmd_* methods. LOAD, SAVE, MERGE and
+  CHAIN use the session's in-memory files. CHAIN inside a running program
+  gives an error.
+- Tk: RENUM prints nothing when it works.
+- Curses: no change.

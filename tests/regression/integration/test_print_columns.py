@@ -33,8 +33,10 @@ def run_interpreter(directory, source, stdin="RUN\nSYSTEM\n"):
         [sys.executable, str(ROOT / "mbasic"), str(source), "--ui", "cli"],
         cwd=directory, input=stdin, capture_output=True, text=True, timeout=120)
     lines = run.stdout.split("\n")
-    start = lines.index("Ready") + 1       # skip the banner
+    start = lines.index("Ok") + 1       # skip the banner
     end = max(i for i, line in enumerate(lines) if line == "Goodbye")
+    if lines[end - 1] == "Ok":             # the Ok that follows RUN
+        end -= 1
     return "\n".join(lines[start:end]) + ("\n" if end > start else "")
 
 

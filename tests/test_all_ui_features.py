@@ -120,8 +120,8 @@ class CLIFeatureTests(UIFeatureTest):
             proc.stdin.write("SYSTEM\n")
             proc.stdin.flush()
             stdout, _ = proc.communicate(timeout=3)
-            # After NEW, should see "Ready" and program should exit cleanly
-            return "Ready" in stdout and proc.returncode == 0
+            # After NEW, should see "Ok" and program should exit cleanly
+            return "Ok" in stdout and proc.returncode == 0
         except:
             return False
 

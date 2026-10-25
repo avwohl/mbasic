@@ -77,8 +77,9 @@ def run_interpreted(tmp_path, stdin, name="prog"):
         cwd=tmp_path, input=("RUN\n" + stdin + "SYSTEM\n").encode(),
         capture_output=True, timeout=120)
     out = result.stdout.decode("latin1")
-    out = out[out.index("Ready\n") + len("Ready\n"):]
-    for tail in ("Goodbye\n", "Ready\n"):
+    out = out[out.index("Ok\n") + len("Ok\n"):]
+    # Ok follows RUN, then SYSTEM says Goodbye.
+    for tail in ("Goodbye\n", "Ok\n"):
         if out.endswith(tail):
             out = out[:-len(tail)]
     return out

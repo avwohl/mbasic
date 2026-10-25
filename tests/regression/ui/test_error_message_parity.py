@@ -122,7 +122,7 @@ def cli_commands(commands):
             input=''.join(c + '\n' for c in commands) + 'SYSTEM\n',
             capture_output=True, text=True, cwd=tmp, timeout=120)
     return [l for l in done.stdout.split('\n')
-            if not l.startswith(CHROME) and l not in ('Ready', 'Goodbye', '')]
+            if not l.startswith(CHROME) and l not in ('Ok', 'Goodbye', '')]
 
 
 def cli_output(program):
@@ -134,7 +134,7 @@ def cli_output(program):
             input='RUN\nSYSTEM\n', capture_output=True, text=True,
             cwd=tmp, timeout=60)
     return [l for l in done.stdout.split('\n')
-            if not l.startswith(CHROME) and l not in ('Ready', 'Goodbye', '')]
+            if not l.startswith(CHROME) and l not in ('Ok', 'Goodbye', '')]
 
 
 def curses_output(program):
