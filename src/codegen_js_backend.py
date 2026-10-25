@@ -105,7 +105,9 @@ function _armed() {
     return typeof _error_handler !== "undefined" && !!_error_handler;
 }
 function _notice(text) {
-    _print(text);
+    // The message goes through the width logic of PRINT, one character at a time: next to the right edge
+    // the word is split (measured on MBASIC 5.21: "Overflo" and "w"). A screen of width 255 never wraps.
+    _print(_wrap_text(_col, _width >= 255 ? 1e9 : _width, text, false));
 }
 function _overflow(negative, digits) {
     // A result too big for its precision: MBASIC prints Overflow, substitutes machine infinity and carries on.
@@ -579,7 +581,7 @@ CONT_LABEL_BASE = 100000
 _RESUME_STATEMENTS = (ForStatementNode, GosubStatementNode, OnGosubStatementNode)
 # Statements after which the rest of the line is not reached in order
 _JUMP_STATEMENTS = (GotoStatementNode, GosubStatementNode, ReturnStatementNode,
-                    EndStatementNode, SystemStatementNode, ResumeStatementNode)
+                    EndStatementNode, SystemStatementNode, ResumeStatementNode, WendStatementNode)
 
 
 class LinePlan:
@@ -857,7 +859,6 @@ class JavaScriptBackend(CodeGenBackend):
         self.uses_input_func = False  # INPUT$(n) / INPUT$(n, #f) function
         self.uses_inkey = False  # INKEY$ function
         self.can_loop = False  # the program has a FOR, a WHILE or a jump to the same or an earlier line
-        self.has_while = False
         self.async_fns: Set[str] = set()  # DEF FN names (without FN) whose body can wait for the keyboard
 
         # DATA/READ/RESTORE support
@@ -874,6 +875,11 @@ class JavaScriptBackend(CodeGenBackend):
         self.matched_next: Set[int] = set()
         # Bare NEXT -> JS name of the variable of the FOR it closes
         self.next_var_map: Dict[int, str] = {}
+        # WHILE/WEND matching, keyed by id(): while_to_wend: WHILE -> its WEND; wend_to_while: WEND -> its WHILE;
+        # while_target: WHILE -> line or label of the WHILE step itself (where WEND jumps back to)
+        self.while_to_wend: Dict[int, Any] = {}
+        self.wend_to_while: Dict[int, Any] = {}
+        self.while_target: Dict[int, int] = {}
 
         # Mid-line resume points. FOR, GOSUB, ON GOSUB and a NEXT that closes a FOR must be
         # able to continue with the statement after them, so that statement gets its own case
@@ -902,8 +908,8 @@ class JavaScriptBackend(CodeGenBackend):
 
     @property
     def page_async(self) -> bool:
-        """True when _run() (the browser copy) has an await: the same, or a WHILE loop (it waits at WEND)."""
-        return self.node_async or self.has_while
+        """True when _run() (the browser copy) has an await: the same as main()."""
+        return self.node_async
 
     def indent(self) -> str:
         """Return current indentation"""
@@ -942,6 +948,7 @@ class JavaScriptBackend(CodeGenBackend):
         self._collect_def_fn(program)
         self._analyze_features(program)
         self._match_for_next(program)
+        self._match_while_wend(program)
         self._plan_lines(program)
 
         code = []
@@ -1032,11 +1039,10 @@ class JavaScriptBackend(CodeGenBackend):
         # Main execution loop with switch statement
         code.append(self.indent() + 'while (_pc !== null) {')
         self.indent_level += 1
-        if self.uses_error_handling:
-            # A run-time error (Overflow, Division by zero, ...) with ON ERROR armed
-            # jumps to the handler, with ERR and ERL set.
-            code.append(self.indent() + 'try {')
-            self.indent_level += 1
+        # A run-time error (Overflow, Division by zero, ...) is caught here to note the BASIC line that
+        # was running (_fatal prints it). With ON ERROR armed it jumps to the handler, with ERR and ERL set.
+        code.append(self.indent() + 'try {')
+        self.indent_level += 1
         code.append(self.indent() + 'switch (_pc) {')
         self.indent_level += 1
 
@@ -1053,14 +1059,15 @@ class JavaScriptBackend(CodeGenBackend):
 
         self.indent_level -= 1
         code.append(self.indent() + '}')  # End switch
+        self.indent_level -= 1
+        code.append(self.indent() + '} catch (e) {')
+        self.indent_level += 1
+        code.append(self.indent() + 'if (e && e.basicLine === undefined) e.basicLine = _line_of(_pc);')
         if self.uses_error_handling:
-            self.indent_level -= 1
-            code.append(self.indent() + '} catch (e) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'if (e && e.basicCode && _error_handler && !_in_error_handler) { _pc = _trigger_error(e.basicCode, _pc); continue; }')
-            code.append(self.indent() + 'throw e;')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
+            code.append(self.indent() + 'if (e && e.basicCode && _error_handler && !_in_error_handler) { _pc = _trigger_error(e.basicCode, e.basicLine); continue; }')
+        code.append(self.indent() + 'throw e;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
         self.indent_level -= 1
         code.append(self.indent() + '}')  # End while
         if self.uses_error_handling:
@@ -1149,12 +1156,28 @@ class JavaScriptBackend(CodeGenBackend):
                         # The JS name of the FOR variable, not the BASIC name
                         self.next_var_map[id(stmt)] = js_name
 
+    def _match_while_wend(self, program: ProgramNode):
+        """Match WHILE statements with their WEND statements (by position in the text, like NEXT)"""
+        stack = []
+        for line in program.lines:
+            for stmt in walk_statements(line.statements):
+                if isinstance(stmt, WhileStatementNode):
+                    stack.append(stmt)
+                elif isinstance(stmt, WendStatementNode):
+                    self.next_line_of[id(stmt)] = line.line_number
+                    if not stack:
+                        continue
+                    while_stmt = stack.pop()
+                    self.while_to_wend[id(while_stmt)] = stmt
+                    self.wend_to_while[id(stmt)] = while_stmt
+
     def _pair_for_next(self, for_stmt, next_stmt):
         self.for_to_next[id(for_stmt)] = next_stmt
         self.matched_next.add(id(next_stmt))
 
     def _needs_resume_point(self, stmt) -> bool:
-        return isinstance(stmt, _RESUME_STATEMENTS) or id(stmt) in self.matched_next
+        return (isinstance(stmt, _RESUME_STATEMENTS) or id(stmt) in self.matched_next
+                or id(stmt) in self.wend_to_while)
 
     def _if_needs_flat(self, stmt: IfStatementNode, tail: bool) -> bool:
         """True when a statement inside the IF needs a resume point after itself.
@@ -1165,7 +1188,7 @@ class JavaScriptBackend(CodeGenBackend):
         def inner(statements, tail):
             for i, s in enumerate(statements):
                 last = tail and i == len(statements) - 1
-                if self._needs_resume_point(s) and not last:
+                if (self._needs_resume_point(s) and not last) or id(s) in self.while_to_wend:
                     return True
                 if isinstance(s, IfStatementNode):
                     if inner(s.then_statements or [], last) or inner(s.else_statements or [], last):
@@ -1193,6 +1216,10 @@ class JavaScriptBackend(CodeGenBackend):
             for j, step in enumerate(plan.steps):
                 if step[0] == 'stmt' and self._needs_resume_point(step[1]):
                     self.after_target[id(step[1])] = self._position_target(plan, j + 1)
+                if step[0] == 'stmt' and id(step[1]) in self.while_to_wend:
+                    # WEND jumps back to the WHILE step itself, to test the condition again
+                    self.while_target[id(step[1])] = (line.line_number if j == 0
+                                                      else self._position_target(plan, j))
                 elif step[0] in ('if', 'jump'):
                     plan.targets[j] = self._position_target(plan, step[2] if step[0] == 'if' else step[1])
 
@@ -1281,8 +1308,6 @@ class JavaScriptBackend(CodeGenBackend):
                     self.uses_error_handling = True
                 if self._can_loop(stmt, line.line_number):
                     self.can_loop = True
-                if isinstance(stmt, WhileStatementNode):
-                    self.has_while = True
                 # Check for RND function in expressions
                 self._check_for_rnd(stmt, set())
         self._find_async_fns()
@@ -1384,14 +1409,15 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'const _ERR_CODES = ' + json.dumps({m: c for c, (_, m) in ERROR_CODES.items()}) + ';')
         code.append(self.indent() + 'function _error(msg) {')
         self.indent_level += 1
-        code.append(self.indent() + 'const e = new Error("?" + msg);')
+        code.append(self.indent() + 'const e = new Error(msg);')
         code.append(self.indent() + 'e.basicCode = _ERR_CODES[msg];  // ON ERROR traps the error by this number')
         code.append(self.indent() + 'throw e;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
         code.append(self.indent() + 'function _fatal(e) {')
         code.append(self.indent() + '    if (_col > 0) _print("");  // the message starts on a new line')
-        code.append(self.indent() + '    _print(e.message);')
+        code.append(self.indent() + '    // MBASIC stops a program with "<message> in <line>"')
+        code.append(self.indent() + '    _print(e.basicLine === undefined ? e.message : e.message + " in " + e.basicLine);')
         code.append(self.indent() + '    if (typeof process !== "undefined") process.exit(1);')
         code.append(self.indent() + '}')
         code.append(self.indent() + 'function _unprint_char() {')
@@ -2165,6 +2191,12 @@ class JavaScriptBackend(CodeGenBackend):
         # FOR/NEXT loop state (variable-indexed approach)
         code.append(self.indent() + '// FOR/NEXT loop state')
         code.append(self.indent() + 'const _for_loops = {};  // Map var name -> {end, step, line}')
+        code.append(self.indent() + '// MBASIC ends a loop when sign(var - end) equals sign(step): with STEP 0 only when var equals end')
+        code.append(self.indent() + 'function _for_done(v, end, step) { return Math.sign(v - end) === Math.sign(step); }')
+        # Case labels inside a line (see _plan_lines) and the line they belong to, for the line of an error
+        labels = {label: plan.line_number for plan in self.line_plans.values() for label in plan.labels.values()}
+        code.append(self.indent() + 'const _LABEL_LINE = ' + json.dumps({str(k): v for k, v in labels.items()}) + ';')
+        code.append(self.indent() + f'function _line_of(pc) {{ return pc >= {CONT_LABEL_BASE} ? _LABEL_LINE[pc] : pc; }}')
         code.append('')
 
         # Error handling
@@ -2175,7 +2207,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'let _error_line = 0;  // Line where error occurred (ERL)')
             code.append(self.indent() + 'let _error_code = 0;  // Error code (ERR)')
             code.append(self.indent() + 'let _in_error_handler = false;  // Prevent recursive errors')
-            code.append(self.indent() + 'const _ERR_MSGS = {};  for (const m in _ERR_CODES) _ERR_MSGS[_ERR_CODES[m]] = m;')
+            code.append(self.indent() + 'const _ERR_MSGS = ' + json.dumps({str(c): m for c, (_, m) in ERROR_CODES.items()}) + ';')
             code.append(self.indent() + 'const _next_lines = ' + json.dumps({str(k): v for k, v in self.next_line_map.items()}) + ';  // for RESUME NEXT')
             code.append(self.indent() + 'function _trigger_error(code, line) {')
             self.indent_level += 1
@@ -2188,11 +2220,11 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '_error_line = line;')
             code.append(self.indent() + 'if (_error_handler === null) {')
             self.indent_level += 1
-            code.append(self.indent() + '_error(`Error ${code} at line ${line}`);')
+            code.append(self.indent() + '_error(_ERR_MSGS[code] || "Unprintable error");')
             self.indent_level -= 1
             code.append(self.indent() + '} else if (_error_handler === 0) {')
             self.indent_level += 1
-            code.append(self.indent() + '_error(`Error ${code} at line ${line}`);')
+            code.append(self.indent() + '_error(_ERR_MSGS[code] || "Unprintable error");')
             self.indent_level -= 1
             code.append(self.indent() + '} else {')
             self.indent_level += 1
@@ -2584,7 +2616,7 @@ class JavaScriptBackend(CodeGenBackend):
         elif isinstance(stmt, NextStatementNode):
             code.extend(self._generate_next(stmt))
         elif isinstance(stmt, WhileStatementNode):
-            code.extend(self._generate_while(stmt))
+            code.extend(self._generate_while(stmt, line_number))
         elif isinstance(stmt, WendStatementNode):
             code.extend(self._generate_wend(stmt))
         elif isinstance(stmt, IfStatementNode):
@@ -3063,8 +3095,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + f'{var_name} = {start_expr};')
 
         # Check initial condition before entering loop
-        code.append(self.indent() + f'const _start_ok = (_step > 0) ? ({var_name} <= _end) : ({var_name} >= _end);')
-        code.append(self.indent() + f'if (_start_ok) {{')
+        code.append(self.indent() + f'if (!_for_done({var_name}, _end, _step)) {{')
         self.indent_level += 1
 
         # Determine type coercion function name for NEXT increment
@@ -3132,7 +3163,7 @@ class JavaScriptBackend(CodeGenBackend):
             self.indent_level += 1
             code.append(self.indent() + f'const _loop = _for_loops["{var_name}"];')
             code.append(self.indent() + f'{var_name} = _loop.coerce ? _loop.coerce({var_name} + _loop.step) : ({var_name} + _loop.step);')
-            code.append(self.indent() + f'const _continue = (_loop.step > 0) ? ({var_name} <= _loop.end) : ({var_name} >= _loop.end);')
+            code.append(self.indent() + f'const _continue = !_for_done({var_name}, _loop.end, _loop.step);')
             code.append(self.indent() + f'if (_continue) {{')
             self.indent_level += 1
             if self.yield_checks:
@@ -3150,23 +3181,28 @@ class JavaScriptBackend(CodeGenBackend):
 
         return code
 
-    def _generate_while(self, stmt: WhileStatementNode) -> List[str]:
-        """Generate WHILE statement"""
+    def _generate_while(self, stmt: WhileStatementNode, line_number: int) -> List[str]:
+        """Generate WHILE: leave the loop to the statement after the WEND when the condition is false"""
         code = []
         condition = self._generate_expression(stmt.condition)
-        code.append(self.indent() + f'while ({condition}) {{')
-        self.indent_level += 1
+        wend = self.while_to_wend.get(id(stmt))
+        if wend is None:
+            # The real binary looks for the WEND when the WHILE runs, whatever the condition is
+            return [self.indent() + '_error("WHILE without WEND");']
+        else:
+            leave = self._jump_code(self._after(wend, self.next_line_of[id(wend)]))
+        code.append(self.indent() + f'if (!({condition})) {{ {leave} }}')
         return code
 
     def _generate_wend(self, stmt: WendStatementNode) -> List[str]:
-        """Generate WEND statement"""
-        code = []
-        if self.yield_checks:
-            # A same-line WHILE loop is a JavaScript loop: the check goes in the loop body
-            code.append(self.indent() + JS_YIELD_CHECK_AWAIT)
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
-        return code
+        """Generate WEND: jump back to the WHILE step"""
+        while_stmt = self.wend_to_while.get(id(stmt))
+        if while_stmt is None:
+            return [self.indent() + '_error("WEND without WHILE");']
+        target = self.while_target[id(while_stmt)]
+        # The label of a WHILE later on the same line is above CONT_LABEL_BASE: always look at the clock
+        check = f'{yield_check(str(target))} ' if self.yield_checks else ''
+        return [self.indent() + f'{check}_pc = {target}; break;']
 
     def _generate_if(self, stmt: IfStatementNode, current_line: int) -> List[str]:
         """Generate IF statement"""

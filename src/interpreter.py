@@ -1522,7 +1522,11 @@ class Interpreter:
         """
         if self._print_flush is not None:
             self._print_flush()
-        self.io.output(text)
+        # The message goes through the width logic of PRINT, one character at a
+        # time: next to the right edge the word is split (measured: "Overflo" and "w").
+        wrap_width = screen_wrap_width(self._output_width(None))
+        wrapped, _ = wrap_text(self._output_column(None), wrap_width, text, False)
+        self._send_output(None, None, wrapped + '\n')
 
     def _overflow(self, negative, digits):
         """A result too big for its precision: the same routine, "Overflow".

@@ -38,9 +38,7 @@ The check is not an `await` inside the loop. An `await` point inside the hot
 loop made the loop 10 to 20 percent slower under Node, also when the `await`
 never ran. The Node copy has no check.
 
-A same-line `WHILE ... WEND` loop is a JavaScript loop and cannot return to
-the driver. In the browser copy, WEND has the check with an `await`, and
-`_run` is async for such a program.
+WEND is a jump back, as NEXT is, and has the same check.
 
 A program that cannot loop has one `main()` as before. It runs from the
 first line to the last line and cannot freeze the page.
@@ -88,8 +86,6 @@ or less. The variation between runs is about 3 percent.
   without a break.
 * The unit of time is a jump back, not a statement. The budget and the 12 ms
   limit are in `JS_YIELD_BUDGET` and `JS_YIELD_MS`.
-* WHILE and WEND across two lines still make invalid JavaScript (see
-  `docs/dev/JS_CONTROL_FLOW.md`).
 * In the vm stub the same program runs about 15 times slower than under
   plain Node (V8 handles globals of a new context slowly). A real browser
   does not have this limit.

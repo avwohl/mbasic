@@ -100,10 +100,9 @@ output follows the interpreter.
   prints the same text as the JavaScript.
 * `^` with a double base and a fractional exponent keeps double precision
   (`X#^.5`). Real MBASIC gives a single.
-* A fatal error stops the JavaScript with `?Overflow`, `?Illegal function
-  call` or `?Division by zero`. Real MBASIC prints `<message> in <line>`.
-  The JavaScript starts a new line first when the cursor is not in column 0,
-  as real MBASIC does.
+* A fatal error stops the JavaScript with `<message> in <line>`, for example
+  `Overflow in 20`, as real MBASIC does. The JavaScript starts a new line
+  first when the cursor is not in column 0, as real MBASIC does.
 * `LPRINT` shows the number format only. `PRINT #n, USING` works.
 * A single-precision whole number above 2^24 is not rounded, because the
   interpreter keeps Python integers exact.

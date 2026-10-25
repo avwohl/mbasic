@@ -41,8 +41,8 @@ and `PRINT 40000 OR 1` gives `Overflow`.
 
 * The JavaScript backend does not pass an Overflow from these operators to
   `ON ERROR`. Real MBASIC gives ERR=6 and the line number in ERL. The
-  JavaScript prints `?Overflow` and stops. Other runtime errors (for example
-  `CHR$(300)`) have the same limit.
+  JavaScript prints `Overflow in <line>` and stops. Other runtime errors
+  (for example `CHR$(300)`) have the same limit.
 
 ## Hex and octal masks
 

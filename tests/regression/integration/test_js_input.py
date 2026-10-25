@@ -183,7 +183,7 @@ def test_end_of_stdin_stops_with_error_instead_of_hanging(tmp_path):
     assert result.returncode == 1
     # A fatal error starts a new line when the column is above 0. Real MBASIC cannot confirm
     # this exact case: under cpmemu the console never reports end of input, so it just stops.
-    assert result.stdout == "A? [one]\nB? \n?Input past end\n"
+    assert result.stdout == "A? [one]\nB? \nInput past end in 30\n"
 
 
 @needs_node
@@ -197,7 +197,7 @@ def test_last_line_without_newline(tmp_path):
 def test_integer_overflow_is_an_error(tmp_path):
     result = run_node(tmp_path, '10 INPUT I%\n20 PRINT "never"\n', "40000\n")
     assert result.returncode == 1
-    assert "?Overflow" in result.stdout and "never" not in result.stdout
+    assert "Overflow in 10" in result.stdout and "never" not in result.stdout
 
 
 @needs_node
