@@ -1056,12 +1056,15 @@ class JavaScriptBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + '} catch (e) {')
             self.indent_level += 1
-            code.append(self.indent() + 'if (e && e.basicCode && _error_handler) { _pc = _trigger_error(e.basicCode, _pc); continue; }')
+            code.append(self.indent() + 'if (e && e.basicCode && _error_handler && !_in_error_handler) { _pc = _trigger_error(e.basicCode, _pc); continue; }')
             code.append(self.indent() + 'throw e;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
         self.indent_level -= 1
         code.append(self.indent() + '}')  # End while
+        if self.uses_error_handling:
+            # Ran off the end of the program inside a handler (END returns above)
+            code.append(self.indent() + 'if (_in_error_handler) _error("No RESUME");')
 
         self.indent_level -= 1
         code.append(self.indent() + '}')  # End main() or _run()
@@ -2162,12 +2165,13 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'let _error_line = 0;  // Line where error occurred (ERL)')
             code.append(self.indent() + 'let _error_code = 0;  // Error code (ERR)')
             code.append(self.indent() + 'let _in_error_handler = false;  // Prevent recursive errors')
+            code.append(self.indent() + 'const _ERR_MSGS = {};  for (const m in _ERR_CODES) _ERR_MSGS[_ERR_CODES[m]] = m;')
             code.append(self.indent() + 'const _next_lines = ' + json.dumps({str(k): v for k, v in self.next_line_map.items()}) + ';  // for RESUME NEXT')
             code.append(self.indent() + 'function _trigger_error(code, line) {')
             self.indent_level += 1
             code.append(self.indent() + 'if (_in_error_handler) {')
             self.indent_level += 1
-            code.append(self.indent() + '_error("Error in error handler");')
+            code.append(self.indent() + '_error(_ERR_MSGS[code] || "Illegal function call");  // an error in a handler is not trapped')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append(self.indent() + '_error_code = code;')
@@ -2548,6 +2552,8 @@ class JavaScriptBackend(CodeGenBackend):
         elif isinstance(stmt, LetStatementNode):
             code.extend(self._generate_let(stmt))
         elif isinstance(stmt, (EndStatementNode, SystemStatementNode)):
+            if self.uses_error_handling:
+                code.append(self.indent() + '_in_error_handler = false;  // END in a handler just ends')
             code.append(self.indent() + '_pc = null;')
             code.append(self.indent() + 'return;')
         elif isinstance(stmt, GotoStatementNode):
@@ -3585,6 +3591,11 @@ class JavaScriptBackend(CodeGenBackend):
         if stmt.line_number == 0:
             # ON ERROR GOTO 0 - disable error handling
             code.append(self.indent() + '_error_handler = 0;')
+            # Inside a handler it also raises the pending error again
+            code.append(self.indent() + 'if (_in_error_handler) _error(_ERR_MSGS[_error_code] || "Illegal function call");')
+        elif stmt.line_number not in self.line_labels:
+            # The binary looks the line up when the statement runs
+            code.append(self.indent() + '_error("Undefined line number");')
         else:
             # ON ERROR GOTO line or ON ERROR GOSUB line
             code.append(self.indent() + f'_error_handler = {stmt.line_number};')

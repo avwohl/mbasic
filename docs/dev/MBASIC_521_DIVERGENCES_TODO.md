@@ -31,7 +31,6 @@ do not notice. Each prints nothing at all where the binary raises:
 | `LOAD` of a file with a line longer than the 255-byte buffer (a typed line gives no error) | `Line buffer overflow in 10` | #34 |
 | `LOAD` of a file with a line that has no number | `Direct statement in file` | #35 |
 | `LOAD` or `MERGE` of a file with a bare line number for a missing line | `Undefined line number` (the REPL gives the same error) | #36 |
-| running off the end of the program inside a handler | `No RESUME in <last line>` | #37 |
 
 The old recipe for `String formula too complex` (`STRING$(200,65)` and twelve
 concatenations) gives `String too long` on the binary and here. Use the recipe
@@ -113,16 +112,26 @@ there (#43). (`CINT`, `HEX$` and `OCT$` now check.)
 The common path works - a trapped error reaches the handler with the right ERR
 and ERL, and RESUME NEXT lands in the right place. The edges do not:
 
-- `ON ERROR GOTO 0` inside a live handler should disable the handler **and**
-  re-raise the pending error, reported at the line that originally failed. We
-  only disarm and carry on (#44).
-- `ON ERROR GOTO <line that does not exist>` is `Undefined line number` at the
-  `ON ERROR` statement on the binary - checked when it executes, not when it
-  fires (#45).
-- A handler that ends with `END` makes us re-raise the original error at the
-  END line. The binary just prints `Ok` (#46).
-- An error raised inside a handler crashes us with a Python `AttributeError`
-  about `on_error_goto` (#47, high severity).
+- Done (#44): `ON ERROR GOTO 0` inside a live handler disables the handler
+  and raises the pending error again, reported at the line that first failed.
+- Done (#45): `ON ERROR GOTO <line that does not exist>` is `Undefined line
+  number` at the `ON ERROR` statement, checked when the statement runs.
+- Done (#46): a handler that ends with `END` ends the program with no error
+  (the binary prints `Ok`).
+- Done (#47): an error inside a handler is reported with its own message at
+  its own line, and is not trapped. It was a Python `AttributeError`.
+- Done (#37): a handler that runs off the end of the program is `No RESUME in
+  <last line>`.
+- The interpreter keeps the error a handler works on in `state.pending_error`.
+  `state.error_info` is only a fatal error, so the UIs and the run loops no
+  longer see a handled error as a failure. Only RESUME ends a handler. A GOTO
+  out of a handler does not end it: the binary leaves the next error
+  untrapped, and so do we now.
+- The JavaScript compiler has the same edges, except that it prints no
+  ` in <line>` for any error and does not check `A$=A` at run time. The C
+  backend refuses programs with `ON ERROR`, so it has no handler edges.
+- `ON ERROR GOSUB` is a `Syntax error` on the binary. The interpreter and the
+  JavaScript compiler still accept the form.
 - The first ^C prints `Break in <line>` once, and CONT resumes. After CONT, a
   second ^C prints a bare `Break`, and CONT then gives `Can't continue`. The
   binary prints `Break in <line>` each time, and CONT works each time. A ^C
