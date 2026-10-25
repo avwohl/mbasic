@@ -76,9 +76,12 @@ class MBasicError(RuntimeError):
     and lets error_code_for() read it straight off.
     """
 
-    def __init__(self, code):
+    def __init__(self, code, error_pc=None):
         super().__init__(get_error_message(code)[1])
         self.mbasic_code = code
+        # Where to report the error, when that is not the statement that
+        # raised it (ON ERROR GOTO 0 in a handler reports the original line).
+        self.error_pc = error_pc
 
 
 def _loop_is_done(current, end, step):
@@ -180,7 +183,14 @@ class InterpreterState:
     pause_requested: bool = False  # Set by pause() method
 
     # Error handling
+    # error_info is a FATAL error: one no handler took. Every UI and the run
+    # loops read it as "the program failed", so it stays None while a handler
+    # runs. The error a handler is working on is pending_error; it holds what
+    # RESUME needs, and the binary's "in a handler" flag (ONEFLG) is whether
+    # it is set. Only RESUME clears it - not GOTO, and not END's effect on the
+    # report: END ends the program and clears it.
     error_info: Optional[ErrorInfo] = None
+    pending_error: Optional[ErrorInfo] = None
 
     # Performance tracking
     statements_executed: int = 0
@@ -598,18 +608,23 @@ class Interpreter:
                 except Exception as e:
                     self.runtime.statement_attempt = None
                     # Check if we're already in an error handler (prevent recursive errors)
-                    already_in_error_handler = (self.state.error_info is not None)
+                    already_in_error_handler = (self.state.pending_error is not None)
 
-                    # Set ErrorInfo for both handler and no-handler cases (needed by RESUME)
                     error_code = self._map_exception_to_error_code(e)
-                    self.state.error_info = ErrorInfo(
+                    # ON ERROR GOTO 0 in a handler raises the error the handler
+                    # is working on again, and it is reported where it began.
+                    error_pc = getattr(e, 'error_pc', None) or pc
+                    info = ErrorInfo(
                         error_code=error_code,
-                        pc=pc,
+                        pc=error_pc,
                         error_message=str(e)
                     )
 
                     # Check if we have an error handler and not already handling an error
                     if self.runtime.has_error_handler() and not already_in_error_handler:
+                        # The handler works on this error: RESUME needs it, but
+                        # it is not a failure of the program yet (error_info).
+                        self.state.pending_error = info
                         self._invoke_error_handler(error_code, pc)
                         # Error handler set npc - apply it and continue execution
                         # (don't use continue here - we need to let normal flow handle NPC)
@@ -617,17 +632,9 @@ class Interpreter:
                         self.state.statements_executed += 1
                         # Fall through to NPC handling below
                     else:
-                        # No error handler (or recursive error) - set PC to error state and raise
-                        self.runtime.pc = pc.with_error(
-                            error_code,
-                            str(e),
-                            self.runtime.on_error_goto if self.runtime.has_error_handler() else None
-                        )
-                        self._restore_break_handler()
-                        # The binary starts a new line before a fatal error
-                        # message when the cursor is not in column 0.
-                        if self._output_column(None) > 0:
-                            self.io.output('')
+                        # No error handler (or an error inside a handler, which
+                        # the binary does not trap) - fatal
+                        self._fatal_error(info)
                         raise
 
                 # Check if we're waiting for input
@@ -647,6 +654,16 @@ class Interpreter:
                     import sys
                     if mode in ('step_statement', 'step_line'):
                         print(f"DEBUG tick: next_pc from statement_table: {next_pc}", file=sys.stderr)
+
+                # Running off the end of the program inside a handler (before
+                # any RESUME) is "No RESUME", reported at the last line that ran.
+                if (self.state.pending_error is not None
+                        and not next_pc.is_running()
+                        and self.runtime.pc.is_running()):
+                    exc = MBasicError(19)
+                    self._fatal_error(ErrorInfo(
+                        error_code=19, pc=pc, error_message=str(exc)))
+                    raise exc
 
                 # Check for step mode before updating PC
                 if mode == 'step_statement':
@@ -853,6 +870,25 @@ class Interpreter:
         Both now go through src/error_codes.py.
         """
         return error_code_for(exception)
+
+    def _fatal_error(self, info):
+        """Make info the program's fatal error: stop the PC on it and report.
+
+        The caller re-raises the exception; print_error then reads the line
+        from the PC set here.
+        """
+        self.state.pending_error = None
+        self.state.error_info = info
+        self.runtime.pc = info.pc.with_error(
+            info.error_code,
+            info.error_message,
+            self.runtime.error_handler if self.runtime.has_error_handler() else None
+        )
+        self._restore_break_handler()
+        # The binary starts a new line before a fatal error
+        # message when the cursor is not in column 0.
+        if self._output_column(None) > 0:
+            self.io.output('')
 
     def _invoke_error_handler(self, error_code, error_pc):
         """Invoke the error handler"""
@@ -1542,10 +1578,9 @@ class Interpreter:
 
     def execute_goto(self, stmt):
         """Execute GOTO statement"""
-        # If we're in an error handler and GOTOing out, clear the error state
-        if self.state.error_info is not None:
-            self.state.error_info = None
-            self.runtime.set_variable_raw('err%', 0)
+        # A GOTO out of a handler does not end the handler: only RESUME does
+        # (b2/b4 in the issue 47 notes - the binary leaves later errors
+        # untrapped after "GOTO 30" out of a handler).
         # Set both old and new PC
         self._jump_to(stmt.line_number)
 
@@ -1582,10 +1617,6 @@ class Interpreter:
 
         # Check if index is valid (1-based indexing)
         if 1 <= index <= len(stmt.line_numbers):
-            # If we're in an error handler and GOTOing out, clear the error state
-            if self.state.error_info is not None:
-                self.state.error_info = None
-                self.runtime.set_variable_raw('err%', 0)
             self._jump_to(stmt.line_numbers[index - 1])
         # If index is out of range, just continue to next statement (no jump)
 
@@ -1629,9 +1660,10 @@ class Interpreter:
         continuation = self.runtime.peek_gosub_continuation()
         return_line, return_stmt = self.runtime.pop_gosub()
 
-        # If returning from error handler, clear error state
-        if self.state.error_info is not None:
-            self.state.error_info = None
+        # RETURN from an ON ERROR GOSUB handler ends the handler. (The binary
+        # has no such form; it is a syntax error there.)
+        if self.runtime.error_handler_is_gosub and self.state.pending_error is not None:
+            self.state.pending_error = None
             self.runtime.set_variable_raw('err%', 0)
 
         # Validate that the return address still exists
@@ -1980,23 +2012,33 @@ class Interpreter:
         if stmt.line_number == 0:
             self.runtime.error_handler = None
             self.runtime.error_handler_is_gosub = False
+            pending = self.state.pending_error
+            if pending is not None:
+                # Inside a handler this also raises the error again, at the
+                # line where it first happened. The handler is off now, so the
+                # error is fatal.
+                self.state.pending_error = None
+                raise MBasicError(pending.error_code, pending.pc)
         else:
+            # The binary looks the line up when the statement runs
+            if not self.runtime.statement_table.line_exists(stmt.line_number):
+                raise RuntimeError(f"Undefined line number {stmt.line_number}")
             self.runtime.error_handler = stmt.line_number
             self.runtime.error_handler_is_gosub = stmt.is_gosub
 
     def execute_resume(self, stmt):
         """Execute RESUME statement"""
-        if self.state.error_info is None:
+        if self.state.pending_error is None:
             raise RuntimeError("RESUME without error")
 
         # Get error PC from ErrorInfo
-        if not self.state.error_info.pc:
+        if not self.state.pending_error.pc:
             raise RuntimeError("No error position to resume from")
 
-        error_pc = self.state.error_info.pc
+        error_pc = self.state.pending_error.pc
 
         # Clear error state
-        self.state.error_info = None
+        self.state.pending_error = None
         self.runtime.set_variable_raw('err%', 0)
 
         # Determine where to resume
@@ -2020,6 +2062,8 @@ class Interpreter:
 
     def execute_end(self, stmt):
         """Execute END statement"""
+        # END in a handler just ends the program: no error is reported
+        self.state.pending_error = None
         self.runtime.pc = self.runtime.pc.stop("END")
 
     def execute_remark(self, stmt):
