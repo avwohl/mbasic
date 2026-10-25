@@ -96,7 +96,3 @@ output follows the interpreter.
 * `LPRINT` shows the number format only. `PRINT #n, USING` works.
 * A single-precision whole number above 2^24 is not rounded, because the
   interpreter keeps Python integers exact.
-
-## Faults found and not fixed
-
-* `FOR` and `NEXT` on one line loop for ever in the JavaScript.

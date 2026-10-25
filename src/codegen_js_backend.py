@@ -328,6 +328,35 @@ def _js_number(value) -> str:
     return str(value)
 
 
+# Case labels for the statements in the middle of a line. BASIC line numbers end at 65529.
+CONT_LABEL_BASE = 100000
+
+# Statements that must be able to continue with the statement after them
+_RESUME_STATEMENTS = (ForStatementNode, GosubStatementNode, OnGosubStatementNode)
+# Statements after which the rest of the line is not reached in order
+_JUMP_STATEMENTS = (GotoStatementNode, GosubStatementNode, ReturnStatementNode,
+                    EndStatementNode, SystemStatementNode, ResumeStatementNode)
+
+
+class LinePlan:
+    """The steps of one program line and the case labels inside the line."""
+
+    def __init__(self, line_number: int):
+        self.line_number = line_number
+        self.steps: List[tuple] = []
+        self.labels: Dict[int, int] = {}   # step index -> case label
+        self.targets: Dict[int, Optional[int]] = {}  # step index of an 'if' or 'jump' -> where to continue
+
+
+def walk_statements(statements):
+    """Every statement in text order, including the ones inside IF ... THEN ... ELSE."""
+    for stmt in statements:
+        yield stmt
+        if isinstance(stmt, IfStatementNode):
+            yield from walk_statements(stmt.then_statements or [])
+            yield from walk_statements(stmt.else_statements or [])
+
+
 JS_FILL_KEYS = r'''
 function _fill_keys(want, soft) {
     // Add keys to _inkey_buffer. Returns false only at end of input, and only when soft is set.
@@ -587,12 +616,20 @@ class JavaScriptBackend(CodeGenBackend):
         # DEF FN functions
         self.def_fn_functions: List[DefFnStatementNode] = []
 
-        # FOR/NEXT matching - map FOR line to line after NEXT
-        self.for_to_after_next: Dict[int, Optional[int]] = {}
+        # FOR/NEXT matching, keyed by id() of the statement node:
+        # for_to_next: FOR -> the NEXT that closes it; next_line_of: NEXT -> its line number
+        self.for_to_next: Dict[int, Any] = {}
+        self.next_line_of: Dict[int, int] = {}
+        self.matched_next: Set[int] = set()
+        # Bare NEXT -> JS name of the variable of the FOR it closes
+        self.next_var_map: Dict[int, str] = {}
 
-        # Track which variable a NEXT statement should use (for NEXT without variable)
-        # Maps (line_number, stmt_index) -> var_name
-        self.next_var_map: Dict[tuple, str] = {}
+        # Mid-line resume points. FOR, GOSUB, ON GOSUB and a NEXT that closes a FOR must be
+        # able to continue with the statement after them, so that statement gets its own case
+        # label (a number from CONT_LABEL_BASE up) when more statements follow on the line.
+        self.line_plans: Dict[int, Any] = {}
+        self.after_target: Dict[int, Optional[int]] = {}  # id(statement) -> line or label to continue at
+        self._next_label = CONT_LABEL_BASE
 
     def get_file_extension(self) -> str:
         """JavaScript files use .js extension"""
@@ -647,6 +684,7 @@ class JavaScriptBackend(CodeGenBackend):
         self._collect_def_fn(program)
         self._analyze_features(program)
         self._match_for_next(program)
+        self._plan_lines(program)
 
         code = []
 
@@ -772,44 +810,130 @@ class JavaScriptBackend(CodeGenBackend):
                     self.def_fn_functions.append(stmt)
 
     def _match_for_next(self, program: ProgramNode):
-        """Match FOR statements with their corresponding NEXT statements"""
-        for_stack = []  # Stack of (line_num, var_name) for nested FOR loops
+        """Match FOR statements with their corresponding NEXT statements (by position in the text)"""
+        for_stack = []  # Stack of (FOR statement, lower-case BASIC name, JS name) for nested loops
 
-        for i, line in enumerate(program.lines):
-            for stmt_idx, stmt in enumerate(line.statements):
+        for line in program.lines:
+            for stmt in walk_statements(line.statements):
                 if isinstance(stmt, ForStatementNode):
-                    # Push FOR onto stack
                     var_name = stmt.variable.name.lower()
                     # JS name of the loop variable (type suffix and DEFINT type included), as _generate_for writes it
                     js_name = self._mangle_var_name(stmt.variable.name + (stmt.variable.type_suffix or ''))
-                    for_stack.append((line.line_number, var_name, js_name))
+                    for_stack.append((stmt, var_name, js_name))
                 elif isinstance(stmt, NextStatementNode):
-                    # Match NEXT with FOR
+                    self.next_line_of[id(stmt)] = line.line_number
                     if stmt.variables:
-                        # NEXT with variable(s) - match specific FOR(s)
-                        for var in reversed(stmt.variables):
+                        # NEXT J,I closes the J loop, then the I loop
+                        for var in stmt.variables:
                             var_name = var.name.lower()
-                            # Find matching FOR
                             for j in range(len(for_stack) - 1, -1, -1):
                                 if for_stack[j][1] == var_name:
-                                    for_line = for_stack.pop(j)[0]
-                                    # Map FOR line to line after NEXT
-                                    next_line = self.next_line_map.get(line.line_number)
-                                    self.for_to_after_next[for_line] = next_line
+                                    self._pair_for_next(for_stack.pop(j)[0], stmt)
                                     break
-                    else:
-                        # NEXT without variable - match most recent FOR
-                        if for_stack:
-                            for_line, var_name, js_name = for_stack.pop()
-                            next_line = self.next_line_map.get(line.line_number)
-                            self.for_to_after_next[for_line] = next_line
-                            # Record which variable this NEXT should use (the JS name, not the BASIC name)
-                            self.next_var_map[(line.line_number, stmt_idx)] = js_name
+                    elif for_stack:
+                        # NEXT without variable - closes the most recent FOR
+                        for_stmt, var_name, js_name = for_stack.pop()
+                        self._pair_for_next(for_stmt, stmt)
+                        # The JS name of the FOR variable, not the BASIC name
+                        self.next_var_map[id(stmt)] = js_name
+
+    def _pair_for_next(self, for_stmt, next_stmt):
+        self.for_to_next[id(for_stmt)] = next_stmt
+        self.matched_next.add(id(next_stmt))
+
+    def _needs_resume_point(self, stmt) -> bool:
+        return isinstance(stmt, _RESUME_STATEMENTS) or id(stmt) in self.matched_next
+
+    def _if_needs_flat(self, stmt: IfStatementNode, tail: bool) -> bool:
+        """True when a statement inside the IF needs a resume point after itself.
+
+        The statements of such an IF cannot stay in a JavaScript if block, because a case label
+        cannot stand inside a block. The IF is written as jumps and labels instead.
+        """
+        def inner(statements, tail):
+            for i, s in enumerate(statements):
+                last = tail and i == len(statements) - 1
+                if self._needs_resume_point(s) and not last:
+                    return True
+                if isinstance(s, IfStatementNode):
+                    if inner(s.then_statements or [], last) or inner(s.else_statements or [], last):
+                        return True
+            return False
+        return inner(stmt.then_statements or [], tail) or inner(stmt.else_statements or [], tail)
+
+    def _plan_lines(self, program: ProgramNode):
+        """Cut each line into steps and find the places where execution must be able to resume.
+
+        A step is ('stmt', statement), ('if', IF statement, position to jump to when false),
+        ('goto', line) or ('jump', position). A position is a step index; the code generator puts
+        a case label there when it is not the end of the line.
+        """
+        for line in program.lines:
+            plan = LinePlan(line.line_number)
+            statements = line.statements
+            for i, stmt in enumerate(statements):
+                if isinstance(stmt, IfStatementNode) and self._if_needs_flat(stmt, i == len(statements) - 1):
+                    self._flatten_if(stmt, plan)
+                else:
+                    plan.steps.append(('stmt', stmt))
+            self.line_plans[line.line_number] = plan
+            # Ask for the resume points now, so that every label exists before code is written
+            for j, step in enumerate(plan.steps):
+                if step[0] == 'stmt' and self._needs_resume_point(step[1]):
+                    self.after_target[id(step[1])] = self._position_target(plan, j + 1)
+                elif step[0] in ('if', 'jump'):
+                    plan.targets[j] = self._position_target(plan, step[2] if step[0] == 'if' else step[1])
+
+    def _flatten_if(self, stmt: IfStatementNode, plan: 'LinePlan'):
+        """Write IF cond THEN a ELSE b as steps: test, a, jump to end, b."""
+        steps = plan.steps
+        test = len(steps)
+        steps.append(('if', stmt, None))  # the jump position is set below
+        if stmt.then_line_number is not None:
+            steps.append(('goto', stmt.then_line_number))
+        else:
+            self._flatten_statements(stmt.then_statements or [], plan)
+        has_else = bool(stmt.else_statements) or stmt.else_line_number is not None
+        jump = None
+        if has_else:
+            jump = len(steps)
+            steps.append(('jump', None))
+            else_pos = len(steps)
+            if stmt.else_line_number is not None:
+                steps.append(('goto', stmt.else_line_number))
+            else:
+                self._flatten_statements(stmt.else_statements, plan)
+        end_pos = len(steps)
+        steps[test] = ('if', stmt, else_pos if has_else else end_pos)
+        if has_else:
+            steps[jump] = ('jump', end_pos)
+
+    def _flatten_statements(self, statements, plan: 'LinePlan'):
+        for stmt in statements:
+            if isinstance(stmt, IfStatementNode):
+                self._flatten_if(stmt, plan)
+            else:
+                plan.steps.append(('stmt', stmt))
+
+    def _position_target(self, plan: 'LinePlan', pos: int) -> Optional[int]:
+        """Where to continue to run the step at index pos: a label, or the next line at the end of the line."""
+        if pos >= len(plan.steps):
+            return self.next_line_map.get(plan.line_number)
+        if pos not in plan.labels:
+            plan.labels[pos] = self._next_label
+            self._next_label += 1
+        return plan.labels[pos]
+
+    def _after(self, stmt, line_number: int) -> Optional[int]:
+        """Line or label that follows a statement (the next line when the statement ends its line)."""
+        if id(stmt) in self.after_target:
+            return self.after_target[id(stmt)]
+        return self.next_line_map.get(line_number)
 
     def _analyze_features(self, program: ProgramNode):
         """Analyze which features the program uses"""
         for line in program.lines:
-            for stmt in line.statements:
+            for stmt in walk_statements(line.statements):
                 if isinstance(stmt, InputStatementNode):
                     if stmt.file_number:
                         self.uses_file_io = True
@@ -835,7 +959,7 @@ class JavaScriptBackend(CodeGenBackend):
                         self.uses_lprint = True
                 elif isinstance(stmt, (OpenStatementNode, CloseStatementNode, ResetStatementNode)):
                     self.uses_file_io = True
-                elif isinstance(stmt, GosubStatementNode):
+                elif isinstance(stmt, (GosubStatementNode, OnGosubStatementNode)):
                     self.uses_gosub = True
                 elif isinstance(stmt, ReadStatementNode):
                     self.uses_data = True
@@ -2002,47 +2126,51 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_line(self, line: LineNode) -> List[str]:
         """Generate code for one line"""
         code = []
+        plan = self.line_plans[line.line_number]
 
         # Case label for this line
         code.append(self.indent() + f'case {line.line_number}:')
         self.indent_level += 1
 
-        # Generate statements
-        for i, stmt in enumerate(line.statements):
-            stmt_code = self._generate_statement(stmt, line.line_number, i, len(line.statements))
-            code.extend(stmt_code)
-
-            # Check if statement changed control flow (GOTO, RETURN, END, etc.)
-            if self._is_control_flow_statement(stmt):
-                # Control flow statement handles PC itself
+        reachable = True
+        for j, step in enumerate(plan.steps):
+            if j in plan.labels:
+                # Resume point inside the line (see _plan_lines)
                 self.indent_level -= 1
-                return code
+                code.append(self.indent() + f'case {plan.labels[j]}:  // line {line.line_number}, step {j + 1}')
+                self.indent_level += 1
+                reachable = True
+            if not reachable:
+                continue  # No jump or label can reach this step
+            kind = step[0]
+            if kind == 'stmt':
+                code.extend(self._generate_statement(step[1], line.line_number))
+                if isinstance(step[1], _JUMP_STATEMENTS):
+                    reachable = False
+            elif kind == 'if':
+                # Flat IF: jump over the THEN part when the condition is false
+                code.append(self.indent() + f'if (!({self._generate_expression(step[1].condition)})) {{ {self._jump_code(plan.targets[j])} }}')
+            elif kind == 'goto':
+                code.append(self.indent() + self._jump_code(step[1]))
+                reachable = False
+            elif kind == 'jump':
+                code.append(self.indent() + self._jump_code(plan.targets[j]))
+                reachable = False
 
         # Default: continue to next line
-        next_line = self.next_line_map.get(line.line_number)
-        if next_line is not None:
-            code.append(self.indent() + f'_pc = {next_line};')
-        else:
-            code.append(self.indent() + '_pc = null;')
-        code.append(self.indent() + 'break;')
+        if reachable:
+            code.append(self.indent() + self._jump_code(self.next_line_map.get(line.line_number)))
 
         self.indent_level -= 1
 
         return code
 
-    def _is_control_flow_statement(self, stmt) -> bool:
-        """Check if statement changes control flow"""
-        return isinstance(stmt, (
-            GotoStatementNode,
-            OnGotoStatementNode,
-            OnGosubStatementNode,
-            GosubStatementNode,
-            ReturnStatementNode,
-            EndStatementNode,
-            ResumeStatementNode,
-        ))
+    @staticmethod
+    def _jump_code(target: Optional[int]) -> str:
+        """Set the program counter to a line or label (None: end of program) and leave the switch."""
+        return f'_pc = {"null" if target is None else target}; break;'
 
-    def _generate_statement(self, stmt, line_number: int, stmt_index: int, total_stmts: int) -> List[str]:
+    def _generate_statement(self, stmt, line_number: int) -> List[str]:
         """Generate code for a statement"""
         code = []
 
@@ -2052,7 +2180,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.extend(self._generate_print_using(stmt))
         elif isinstance(stmt, LetStatementNode):
             code.extend(self._generate_let(stmt))
-        elif isinstance(stmt, EndStatementNode):
+        elif isinstance(stmt, (EndStatementNode, SystemStatementNode)):
             code.append(self.indent() + '_pc = null;')
             code.append(self.indent() + 'return;')
         elif isinstance(stmt, GotoStatementNode):
@@ -2060,33 +2188,18 @@ class JavaScriptBackend(CodeGenBackend):
         elif isinstance(stmt, OnGotoStatementNode):
             code.extend(self._generate_on_goto(stmt))
         elif isinstance(stmt, OnGosubStatementNode):
-            # Calculate return address for ON GOSUB
-            is_last_stmt = (stmt_index == total_stmts - 1)
-            if is_last_stmt:
-                return_address = self.next_line_map.get(line_number, None)
-            else:
-                return_address = line_number  # Next statement on same line
-            code.extend(self._generate_on_gosub(stmt, return_address))
+            # RETURN continues with the statement after the ON GOSUB
+            code.extend(self._generate_on_gosub(stmt, self._after(stmt, line_number)))
         elif isinstance(stmt, GosubStatementNode):
-            # Calculate return address - same logic as FOR loop
-            is_last_stmt = (stmt_index == total_stmts - 1)
-            if is_last_stmt:
-                return_address = self.next_line_map.get(line_number, None)
-            else:
-                return_address = line_number  # Next statement on same line
-            code.extend(self._generate_gosub(stmt, return_address))
+            # RETURN continues with the statement after the GOSUB
+            code.extend(self._generate_gosub(stmt, self._after(stmt, line_number)))
         elif isinstance(stmt, ReturnStatementNode):
             code.extend(self._generate_return(stmt))
         elif isinstance(stmt, ForStatementNode):
-            # Calculate return line for FOR loop
-            is_last_stmt = (stmt_index == total_stmts - 1)
-            if is_last_stmt:
-                return_line = self.next_line_map.get(line_number, None)
-            else:
-                return_line = line_number  # Next statement on same line
-            code.extend(self._generate_for(stmt, line_number, return_line))
+            # NEXT loops back to the statement after the FOR
+            code.extend(self._generate_for(stmt, line_number, self._after(stmt, line_number)))
         elif isinstance(stmt, NextStatementNode):
-            code.extend(self._generate_next(stmt, line_number, stmt_index))
+            code.extend(self._generate_next(stmt))
         elif isinstance(stmt, WhileStatementNode):
             code.extend(self._generate_while(stmt))
         elif isinstance(stmt, WendStatementNode):
@@ -2557,11 +2670,10 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + f'}} else {{')
         self.indent_level += 1
         code.append(self.indent() + f'// Skip loop - condition not met')
-        # Jump to line after NEXT if we know where it is
-        skip_to_line = self.for_to_after_next.get(for_line)
-        if skip_to_line is not None:
-            code.append(self.indent() + f'_pc = {skip_to_line};')
-            code.append(self.indent() + f'break;')
+        # Jump to the statement after the matching NEXT if we know where it is
+        next_stmt = self.for_to_next.get(id(stmt))
+        if next_stmt is not None:
+            code.append(self.indent() + self._jump_code(self._after(next_stmt, self.next_line_of[id(next_stmt)])))
         else:
             code.append(self.indent() + f'// Continue to next statement (NEXT not found)')
         self.indent_level -= 1
@@ -2571,7 +2683,7 @@ class JavaScriptBackend(CodeGenBackend):
 
         return code
 
-    def _generate_next(self, stmt: NextStatementNode, line_number: int, stmt_index: int) -> List[str]:
+    def _generate_next(self, stmt: NextStatementNode) -> List[str]:
         """Generate NEXT statement - check condition and loop back"""
         code = []
 
@@ -2579,7 +2691,7 @@ class JavaScriptBackend(CodeGenBackend):
         variables = stmt.variables
         if not variables:
             # NEXT without variable - look up which variable to use
-            var_name_base = self.next_var_map.get((line_number, stmt_index))
+            var_name_base = self.next_var_map.get(id(stmt))
             if var_name_base:
                 # next_var_map holds the JS name of the FOR variable, used as it is
                 variables = [var_name_base]
@@ -2636,29 +2748,27 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
         condition = self._generate_expression(stmt.condition)
 
-        if stmt.then_statements:
-            # Multi-line IF...THEN...END IF
+        if stmt.then_statements or stmt.then_line_number:
             code.append(self.indent() + f'if ({condition}) {{')
             self.indent_level += 1
-            for s in stmt.then_statements:
-                code.extend(self._generate_statement(s, current_line, 0, 1))
+            if stmt.then_statements:
+                for s in stmt.then_statements:
+                    code.extend(self._generate_statement(s, current_line))
+            else:
+                # IF...THEN line_number (GOTO)
+                code.append(self.indent() + self._jump_code(stmt.then_line_number))
             self.indent_level -= 1
 
-            if stmt.else_statements:
+            if stmt.else_statements or stmt.else_line_number is not None:
                 code.append(self.indent() + '} else {')
                 self.indent_level += 1
-                for s in stmt.else_statements:
-                    code.extend(self._generate_statement(s, current_line, 0, 1))
+                if stmt.else_statements:
+                    for s in stmt.else_statements:
+                        code.extend(self._generate_statement(s, current_line))
+                else:
+                    code.append(self.indent() + self._jump_code(stmt.else_line_number))
                 self.indent_level -= 1
 
-            code.append(self.indent() + '}')
-        elif stmt.then_line_number:
-            # IF...THEN line_number (GOTO)
-            code.append(self.indent() + f'if ({condition}) {{')
-            self.indent_level += 1
-            code.append(self.indent() + f'_pc = {stmt.then_line_number};')
-            code.append(self.indent() + 'break;')
-            self.indent_level -= 1
             code.append(self.indent() + '}')
 
         return code

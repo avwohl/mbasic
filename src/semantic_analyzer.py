@@ -2207,19 +2207,22 @@ class SemanticAnalyzer:
                 self.current_line
             )
 
-        # Check for proper nesting
-        loop_info = self.loop_stack[-1]
-
-        if loop_info.loop_type != "FOR":
-            raise SemanticError(
-                f"NEXT found but current loop is {loop_info.loop_type} (started at line {loop_info.start_line})",
-                self.current_line
-            )
-
-        # If NEXT has a variable, it must match the FOR variable
+        # If NEXT has a variable, it must match the FOR variable.  NEXT J,I closes two
+        # loops, so the innermost loop is read again for each variable.
         # stmt.variables is List[VariableNode]
         if stmt.variables:
             for var_node in stmt.variables:
+                if not self.loop_stack:
+                    raise SemanticError(
+                        "NEXT without FOR",
+                        self.current_line
+                    )
+                loop_info = self.loop_stack[-1]
+                if loop_info.loop_type != "FOR":
+                    raise SemanticError(
+                        f"NEXT found but current loop is {loop_info.loop_type} (started at line {loop_info.start_line})",
+                        self.current_line
+                    )
                 var_key = self._get_var_key(var_node)
                 if var_key != loop_info.variable:
                     raise SemanticError(
@@ -2239,6 +2242,11 @@ class SemanticAnalyzer:
                         self.current_loop = self.loop_analysis_stack.pop()
         else:
             # NEXT without variable - matches innermost FOR
+            if self.loop_stack[-1].loop_type != "FOR":
+                raise SemanticError(
+                    f"NEXT found but current loop is {self.loop_stack[-1].loop_type} (started at line {self.loop_stack[-1].start_line})",
+                    self.current_line
+                )
             self.loop_stack.pop()
 
             # Close loop analysis
