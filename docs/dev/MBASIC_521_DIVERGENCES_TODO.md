@@ -39,7 +39,7 @@ Done (GitHub issues 30 to 33, `docs/dev/STRING_SPACE_AND_FILE_ERRORS.md`):
 - Done (#31): `Out of string space` (error 14) when the live strings do not fit
   in the string space. The space is a byte budget (39168 at start-up, as FRE
   reports), not a memory model, so the error comes a little later than on the
-  binary. `CLEAR ,n` and `CLEAR ,,n` change the budget, and `FRE` is new.
+  binary. `CLEAR ,n` and `CLEAR ,,n` change the budget, and `FRE` reports the string space less the live strings.
 - Done (#32): `OPEN "R"` keeps the record length (0 to 128, default 128), `FIELD`
   gives `FIELD overflow` when the widths are more than the record length, and
   `GET` and `PUT` use the record length. The binary binds the variables

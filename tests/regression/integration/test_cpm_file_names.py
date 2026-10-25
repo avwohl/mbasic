@@ -123,3 +123,45 @@ def test_a_blank_name_is_refused():
     # binary: OPEN "O" with "  " is Too many files; OPEN "I" and KILL are File not found
     assert cpm_name_error("  ", creates=True) == 67
     assert cpm_name_error("  ", creates=False) == 53
+
+
+@pytest.mark.parametrize("old, new, error", [
+    # binary: NAME old AS new; the drives of the two names must be the same,
+    # and no drive counts as "@:"
+    ("A:ZZOLD.TXT", "A:ZZNEW.TXT", None), ("B:ZZOLD.TXT", "B:ZZNEW.TXT", None),
+    ("@:ZZOLD.TXT", "@:ZZNEW.TXT", None), ("ZZOLD.TXT", "@:ZZNEW.TXT", None),
+    ("@:ZZOLD.TXT", "ZZNEW.TXT", None),
+    ("A:ZZOLD.TXT", "ZZNEW.TXT", 5), ("A:ZZOLD.TXT", "@:ZZNEW.TXT", 5),
+    ("B:ZZOLD.TXT", "A:ZZNEW.TXT", 5), ("ZZOLD.TXT", "B:ZZNEW.TXT", 5),
+])
+def test_name_compares_the_drives(tmp_path, old, new, error):
+    source = (f'5 ON ERROR GOTO 100\n10 OPEN "O",1,"ZZOLD.TXT":CLOSE\n'
+              f'20 NAME "{old}" AS "{new}"\n30 PRINT "ok"\n40 SYSTEM\n100 PRINT "err";ERR;".":SYSTEM\n')
+    out = run_cli(tmp_path, source)
+    if error:
+        assert f"err {error} ." in out, out
+    else:
+        # the host has no file of that drive name, so the rename itself may fail;
+        # only the drive check (Illegal function call) must not fire
+        assert "err 5 ." not in out and "err 64 ." not in out, out
+
+
+@pytest.mark.parametrize("name", ["?", "??", "????????", "?.A", "?.?", "A:?", "?."])
+def test_a_name_of_question_marks_is_refused(name):
+    # binary: OPEN "O" and OPEN "R" give Too many files; A?, ?B, ZZ.? work
+    assert cpm_name_error(name, creates=True) == 67
+    assert cpm_name_error(name, creates=False) == 53
+
+
+@pytest.mark.parametrize("name", ["A?", "?B", "A?B", "ZZ.?"])
+def test_a_name_with_other_characters_and_a_question_mark_passes(name):
+    assert cpm_name_error(name, creates=True) is None
+
+
+@pytest.mark.parametrize("name", ["ZZ.DAT", "ABCDEFGHI.DAT"])
+def test_open_append_is_bad_file_mode(tmp_path, name):
+    # binary: OPEN "A" is error 54 before the name is looked at, with or without a record length
+    for tail in ("", ",16"):
+        source = f'5 ON ERROR GOTO 100\n10 OPEN "A",1,"{name}"{tail}\n20 PRINT "ok"\n30 SYSTEM\n100 PRINT "err";ERR;ERL:SYSTEM\n'
+        out = run_cli(tmp_path, source)
+        assert "err 54  10" in out, out

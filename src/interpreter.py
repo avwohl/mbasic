@@ -3125,7 +3125,7 @@ class Interpreter:
         # The new name goes through namfil too: Bad file name for a malformed
         # one, and Illegal function call for a drive letter (measured: the
         # rename would cross drives). Refused characters are not checked.
-        code = cpm_new_name_error(new_filename) \
+        code = cpm_new_name_error(new_filename, old_filename) \
             if self.settings_manager.get('cpm_file_names', True) \
             and '/' not in new_filename and '\\' not in new_filename else None
         if code is not None:
@@ -3147,7 +3147,6 @@ class Interpreter:
         Syntax:
             OPEN "I", #1, "filename"        - Open for input
             OPEN "O", #2, "filename"        - Open for output
-            OPEN "A", #3, "filename"        - Open for append
             OPEN "R", #4, "filename", 128   - Open for random access (FIELD, GET, PUT, LSET, RSET supported)
 
         Note: CP/M files used ^Z (ASCII 26) as EOF marker. We respect this on input.
@@ -3167,6 +3166,11 @@ class Interpreter:
         # Check if file number is already open
         if file_num in self.runtime.files:
             raise RuntimeError(f"File #{file_num} already open")
+
+        if mode == "A":
+            # MBASIC 5.21 has no append mode (measured: Bad file mode, before
+            # the name is looked at).
+            raise MBasicError(54)
 
         self._check_file_name(filename, creates=mode in ("O", "R"))
 
