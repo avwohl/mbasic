@@ -89,13 +89,14 @@ What is still different:
   shows the line, and `RUN` skips the statement with no error (#39). The
   JavaScript compiler stops with a compilation error, and the compilation
   error stays.
-- The text of an `Overflow` or `Division by zero` message that does not stop the
-  program is not wrapped at the `WIDTH` limit. The binary sends the message
-  through the width logic, so with `WIDTH 40` and the cursor near the right edge
-  it splits the word (`Overf` / `low`). The interpreter and the JavaScript
-  backend print the word whole (#40).
-- The JavaScript backend reports a fatal error as `?Overflow`. It has no
-  `in <line>` text (#41).
+- Done (#40): the text of an `Overflow` or `Division by zero` message that
+  does not stop the program goes through the width logic of PRINT, one
+  character at a time, in the interpreter and in the JavaScript backend. With
+  `WIDTH 40` and the cursor near the right edge the word is split (`Overflo` /
+  `w`), as the binary does. Test: `tests/regression/integration/test_notice_width_wrap.py`.
+- Done (#41): the JavaScript backend stops with `<message> in <line>` with no
+  `?`, as the interpreter does. `ERROR n` uses the message of code n.
+  Test: `tests/regression/integration/test_js_fatal_error_line.py`.
 
 `src/error_codes.py` still carries nine codes 5.21 has not got - 24, 25, 68-72,
 75 and 76, all `Unprintable error` on the binary. `ERROR 24` prints the name of
@@ -241,10 +242,11 @@ semantics are not:
   a floating-point result, comparisons give -1, and AND, OR, XOR, EQV, IMP
   and NOT work bit by bit on 16-bit integers. It still does not check the
   operands for 16-bit overflow (#54).
-- `src/codegen_js_backend.py` `_start_ok` (in `_generate_for`) is
-  `(_step > 0) ? (v <= end) : (v >= end)`, which gets STEP 0 wrong in the
-  opposite direction from the bug fixed in the interpreter. The C backend
-  also gets STEP 0 wrong (#55).
+- Done for the JavaScript backend (#55): FOR and NEXT end a loop with
+  `_for_done(v, end, step)`, which is true when the sign of (v - end) equals the
+  sign of the step. With STEP 0 the loop ends only when the variable equals the
+  limit. Test: `tests/regression/integration/test_js_for_step_zero.py`. The C
+  backend also gets STEP 0 wrong (#55, C part).
 - AND, OR, XOR, EQV, IMP and NOT: the JavaScript backend now matches real
   MBASIC (GitHub issue 15, `docs/dev/JS_LOGICAL_OPERATORS.md`). The
   interpreter does not: it truncates a fractional operand (`NOT 2.7` is -3,
@@ -253,10 +255,9 @@ semantics are not:
   backend rounds a fractional operand and wraps an operand outside the range
   to 16 bits, so it matches real MBASIC except that it does not stop with
   Overflow (#54).
-- `src/codegen_js_backend.py` writes WHILE and WEND as a JavaScript `while`
-  block, so a WHILE and its WEND on different lines make invalid JavaScript
-  (`Unexpected token 'case'`). The same fault is listed in
-  `docs/dev/JS_CONTROL_FLOW.md` (#57, high severity).
+- Done (#57): WHILE and WEND in the JavaScript backend are jumps, as FOR and
+  NEXT are (`docs/dev/JS_CONTROL_FLOW.md`). A WHILE and its WEND on different
+  lines work. Test: `tests/regression/integration/test_js_while_wend.py`.
 - Done (GitHub issue 25, `docs/dev/JS_BROWSER_YIELD.md`): the browser build
   gives the page time to run in long loops and at INKEY$; Node reads INKEY$
   from stdin.

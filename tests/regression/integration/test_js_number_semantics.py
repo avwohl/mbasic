@@ -49,15 +49,15 @@ def test_js_output_matches_real_mbasic(tmp_path, program):
 
 
 @pytest.mark.parametrize("statement, message", [
-    ("PRINT SQR(-1)", "?Illegal function call"),
-    ("PRINT LOG(0)", "?Illegal function call"),
-    ("PRINT LOG(-1)", "?Illegal function call"),
-    ("PRINT (-8)^(1/3)", "?Illegal function call"),
-    ("PRINT 5\\X", "?Division by zero"),
-    ("PRINT 5 MOD X", "?Division by zero"),
-    ("PRINT CINT(40000)", "?Overflow"),
-    ("PRINT HEX$(65536)", "?Overflow"),
-    ("PRINT VAL(\"&HFFFFF\")", "?Overflow"),
+    ("PRINT SQR(-1)", "Illegal function call in 20"),
+    ("PRINT LOG(0)", "Illegal function call in 20"),
+    ("PRINT LOG(-1)", "Illegal function call in 20"),
+    ("PRINT (-8)^(1/3)", "Illegal function call in 20"),
+    ("PRINT 5\\X", "Division by zero in 20"),
+    ("PRINT 5 MOD X", "Division by zero in 20"),
+    ("PRINT CINT(40000)", "Overflow in 20"),
+    ("PRINT HEX$(65536)", "Overflow in 20"),
+    ("PRINT VAL(\"&HFFFFF\")", "Overflow in 20"),
 ])
 def test_js_fatal_errors_stop_the_program(tmp_path, statement, message):
     """Without ON ERROR these stop the program; nothing prints NaN or Infinity."""

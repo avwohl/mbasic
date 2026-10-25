@@ -82,7 +82,7 @@ OVERFLOWS = ["40000 AND 1", "32768 AND 1", "65535 AND 255", "-32769 AND 1", "400
 def test_logical_overflow(tmp_path, expr):
     out, code = run_js(tmp_path, f"10 PRINT {expr}\n20 SYSTEM\n")
     assert code == 1
-    assert out.strip() == "?Overflow"
+    assert out.strip() == "Overflow in 10"
 
 
 def test_xor_eqv_imp_compile_and_run(tmp_path):

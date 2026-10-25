@@ -1,6 +1,6 @@
 # Control flow in the generated JavaScript
 
-**Status:** Done (GitHub issues 13, 14)
+**Status:** Done (GitHub issues 13, 14, 57)
 **Test:** `tests/regression/integration/test_js_for_next.py`
 
 ## Problem
@@ -43,13 +43,29 @@ label was only available for a whole line. These faults followed:
 * `SemanticAnalyzer._analyze_next` reads the innermost loop again for each
   variable, so `NEXT J,I` passes.
 
+## WHILE and WEND
+
+`_match_while_wend` pairs WEND with WHILE by position in the text, as
+`_match_for_next` does for NEXT. WHILE tests the condition and jumps to the
+statement after the WEND when the condition is false. WEND jumps back to the
+WHILE step. A WHILE that is not the first statement on its line gets a case
+label (`while_target`). A WHILE inside an IF makes the IF a flat IF. In the
+browser copy the jump back of WEND has the yield check. A WHILE with no WEND
+stops with `WHILE without WEND` when the condition is false. The semantic
+analyzer refuses a WEND with no WHILE when the program is compiled.
+Test: `tests/regression/integration/test_js_while_wend.py`.
+
+## Line of an error
+
+A fatal error prints `<message> in <line>`. The `catch` block in the program
+loop notes the line that ran (`_line_of` maps a case label inside a line back
+to its line). ERL uses the same line.
+
 ## Differences that remain
 
 * The interpreter stops with `FOR Without NEXT` for
   `IF X=1 THEN FOR I=1 TO 3:PRINT I;:NEXT I:PRINT "a"`. Real MBASIC and the
   JavaScript run the loop.
-* WHILE and WEND in the JavaScript are a `while` block. They work only when
-  both are in the same case, that is on one line.
 * NEXT pairs with FOR by position in the text. A program that jumps into a
   loop with GOTO and a FOR that has no NEXT in the text can behave
   differently from real MBASIC.

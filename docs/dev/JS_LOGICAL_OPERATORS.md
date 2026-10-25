@@ -42,7 +42,7 @@ compares 27 values and 9 overflow cases with real MBASIC.
   `docs/dev/MBASIC_521_DIVERGENCES_TODO.md` section 7.
 * The JavaScript backend does not pass an Overflow from these operators to
   `ON ERROR`. Real MBASIC gives ERR=6 and the line number in ERL. The
-  JavaScript prints `?Overflow` and stops. Other runtime errors (for example
+  JavaScript prints `Overflow in <line>` and stops. Other runtime errors (for example
   `CHR$(300)`) have the same limit.
 
 ## Hex and octal masks
