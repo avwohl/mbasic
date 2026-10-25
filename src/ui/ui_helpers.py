@@ -1373,12 +1373,24 @@ _OPERATOR_PRECEDENCE = {
 #: Left-associative operators where a RIGHT operand of equal precedence still
 #: needs brackets: a-(b-c) is not a-b-c, and a/(b/c) is not a/b/c. Addition and
 #: multiplication are safe either way.
-_BRACKET_EQUAL_RIGHT = {'MINUS', 'DIVIDE', 'BACKSLASH', 'MOD'}
+_BRACKET_EQUAL_RIGHT = {'MINUS', 'DIVIDE', 'BACKSLASH', 'MOD', 'POWER'}
 
-#: '^' is right-associative in this parser - parse_power() recurses (through parse_unary) on the
-#: right, and 2^3^2 evaluates to 512 - so at equal precedence it is the LEFT
-#: operand that has to keep its brackets: (S^T)^U is not S^T^U.
-_BRACKET_EQUAL_LEFT = {'POWER'}
+#: '^' is left-associative, as in MBASIC 5.21: 2^3^2 is (2^3)^2 = 64. At equal
+#: precedence it is the RIGHT operand that keeps its brackets: S^(T^U) is not
+#: S^T^U (hence 'POWER' in the set above). One more case: a minus or NOT after
+#: ^ takes the rest of the chain, so (2^-3)^2 must not be written 2^-3^2.
+
+
+def _ends_in_sign(node):
+    """True when the text of node ends in a minus or NOT that a following ^ would join."""
+    kind = type(node).__name__
+    if kind == 'UnaryOpNode':
+        if _operator_name(node.operator) == 'PLUS':
+            return _ends_in_sign(node.operand)
+        return True
+    if kind == 'BinaryOpNode':
+        return _ends_in_sign(node.right)
+    return False
 
 
 def _operator_name(operator):
@@ -1398,6 +1410,12 @@ def _serialize_operand(operand, parent_operator, is_right):
             return f"({text})" if parent >= 3 else text
         if not is_right and _operator_name(parent_operator) == 'POWER':
             return f"({text})"
+        if (is_right and _operator_name(parent_operator) == 'POWER'
+                and _operator_name(operand.operator) == 'PLUS'
+                and type(operand.operand).__name__ == 'BinaryOpNode'):
+            # A plus after ^ is ignored and the chain goes on left to right:
+            # A^(+2^3) must keep its brackets or it re-reads as (A^2)^3.
+            return f"({text})"
         return text
     if type(operand).__name__ != 'BinaryOpNode':
         return text
@@ -1410,7 +1428,7 @@ def _serialize_operand(operand, parent_operator, is_right):
         name = _operator_name(parent_operator)
         if is_right and name in _BRACKET_EQUAL_RIGHT:
             return f"({text})"
-        if not is_right and name in _BRACKET_EQUAL_LEFT:
+        if not is_right and name == 'POWER' and _ends_in_sign(operand):
             return f"({text})"
     return text
 

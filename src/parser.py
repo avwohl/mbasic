@@ -891,16 +891,13 @@ class Parser:
         return self.parse_power()
 
     def parse_power(self) -> ExpressionNode:
-        """Parse exponentiation: ^"""
+        """Parse exponentiation: ^ (left associative, as in MBASIC 5.21: 2^3^2 = 64)"""
         left = self.parse_primary()
 
-        # Right associative
-        if self.match(TokenType.POWER):
+        while self.match(TokenType.POWER):
             op = self.advance()
-            # The exponent may carry a sign: 2^-3 is .125 and 0^-1 is a division by zero.
-            # parse_unary reads the sign and then parse_power again: 2^-1^2 = 2^-(1^2).
-            right = self.parse_unary()
-            return BinaryOpNode(
+            right = self.parse_exponent()
+            left = BinaryOpNode(
                 operator=op.type,
                 left=left,
                 right=right,
@@ -909,6 +906,40 @@ class Parser:
             )
 
         return left
+
+    def parse_exponent(self) -> ExpressionNode:
+        """
+        Parse the operand to the right of ^.
+
+        Measured on MBASIC 5.21:
+        - a plain operand ends there, so 2^3^2 = (2^3)^2;
+        - a minus takes the rest of the ^ chain: 2^-3^2 = 2^-(3^2);
+        - a plus is ignored and the chain goes on: 2^+3^2 = (2^3)^2;
+        - NOT reads its operand as it does anywhere else: 2^NOT 0=0 is 2^(NOT (0=0)).
+        """
+        if self.match(TokenType.MINUS):
+            op = self.advance()
+            if self.match(TokenType.NOT):
+                operand = self.parse_not()
+            else:
+                operand = self.parse_unary()
+            return UnaryOpNode(
+                operator=op.type,
+                operand=operand,
+                line_num=op.line,
+                column=op.column
+            )
+        if self.match(TokenType.PLUS):
+            op = self.advance()
+            return UnaryOpNode(
+                operator=op.type,
+                operand=self.parse_exponent(),
+                line_num=op.line,
+                column=op.column
+            )
+        if self.match(TokenType.NOT):
+            return self.parse_not()
+        return self.parse_primary()
 
     def parse_primary(self) -> ExpressionNode:
         """
