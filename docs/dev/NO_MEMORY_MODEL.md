@@ -13,6 +13,10 @@ All three look like stubs and get reported as such. They are one decision, and
 this file exists so the next review finds the reasoning instead of an apparent
 oversight.
 
+PEEK and POKE still check their arguments as the real binary does: an address
+of -32768 to 65535 and, for POKE, a value of 0 to 255. Anything else is
+`Overflow` or `Illegal function call`. Only the memory is missing.
+
 ## The decision
 
 **This interpreter has no memory model, and is not going to get one.**

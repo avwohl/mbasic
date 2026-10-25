@@ -15,8 +15,8 @@ from src.pc import PC
 from src.win_console import win_flush_pending
 from src.number_format import (format_for_print, format_number, int_divide, int_modulo,
                                numeric_digits,
-                               MBF_INFINITY_SINGLE, to_int_operand,
-                               exceeds_range, machine_infinity,
+                               MBF_INFINITY_SINGLE, to_int_operand, to_subscript, to_conint, to_frcint,
+                               exceeds_range, machine_infinity, radix_word,
                                SINGLE_LIMIT, DOUBLE_MAX,
                                to_integer, to_single, coerce_to_type,
                                INTEGER_DIGITS, SINGLE_DIGITS, DOUBLE_DIGITS)
@@ -1033,7 +1033,7 @@ class Interpreter:
 
         if stmt.variable.subscripts:
             # Array assignment
-            subscripts = [to_integer(self.evaluate_expression(sub)) for sub in stmt.variable.subscripts]
+            subscripts = [to_subscript(self.evaluate_expression(sub)) for sub in stmt.variable.subscripts]
             self.runtime.set_array_element(
                 stmt.variable.name,
                 stmt.variable.type_suffix,
@@ -1058,7 +1058,7 @@ class Interpreter:
         # Get values of both variables
         if stmt.var1.subscripts:
             # Array element
-            subscripts1 = [to_integer(self.evaluate_expression(sub)) for sub in stmt.var1.subscripts]
+            subscripts1 = [to_subscript(self.evaluate_expression(sub)) for sub in stmt.var1.subscripts]
             value1 = self.runtime.get_array_element(stmt.var1.name, stmt.var1.type_suffix, subscripts1, token=self._make_token_info(stmt.var1))
         else:
             # Simple variable
@@ -1066,7 +1066,7 @@ class Interpreter:
 
         if stmt.var2.subscripts:
             # Array element
-            subscripts2 = [to_integer(self.evaluate_expression(sub)) for sub in stmt.var2.subscripts]
+            subscripts2 = [to_subscript(self.evaluate_expression(sub)) for sub in stmt.var2.subscripts]
             value2 = self.runtime.get_array_element(stmt.var2.name, stmt.var2.type_suffix, subscripts2, token=self._make_token_info(stmt.var2))
         else:
             # Simple variable
@@ -1181,7 +1181,7 @@ class Interpreter:
         """
         # Check if printing to file
         if stmt.file_number is not None:
-            file_num = int(self.evaluate_expression(stmt.file_number))
+            file_num = to_conint(self.evaluate_expression(stmt.file_number))
             if file_num not in self.runtime.files:
                 raise RuntimeError(f"File #{file_num} not open")
             file_info = self.runtime.files[file_num]
@@ -1303,7 +1303,7 @@ class Interpreter:
         """Execute PRINT USING statement - formatted print to screen or file"""
         # Check if printing to file
         if stmt.file_number is not None:
-            file_num = int(self.evaluate_expression(stmt.file_number))
+            file_num = to_conint(self.evaluate_expression(stmt.file_number))
             if file_num not in self.runtime.files:
                 raise RuntimeError(f"File #{file_num} not open")
             file_info = self.runtime.files[file_num]
@@ -1577,8 +1577,9 @@ class Interpreter:
         # Evaluate the expression
         value = self.evaluate_expression(stmt.expression)
 
-        # Convert to integer (round towards zero like MBASIC)
-        index = to_integer(value)      # ON 1.7 GOTO takes the second target
+        # CONINT: ON 1.7 GOTO takes the second target, 40000 is Overflow and
+        # 256 or -1 is Illegal function call, even with fewer targets than that
+        index = to_conint(value)
 
         # Check if index is valid (1-based indexing)
         if 1 <= index <= len(stmt.line_numbers):
@@ -1601,8 +1602,7 @@ class Interpreter:
         # Evaluate the expression
         value = self.evaluate_expression(stmt.expression)
 
-        # Convert to integer (round towards zero like MBASIC)
-        index = to_integer(value)      # ON 1.7 GOTO takes the second target
+        index = to_conint(value)       # as for ON...GOTO
 
         # Check if index is valid (1-based indexing)
         if 1 <= index <= len(stmt.line_numbers):
@@ -2034,7 +2034,27 @@ class Interpreter:
         same address does not get its byte back. A program that needs that
         should run the real com/mbasic.com under an 8080 emulator.
         """
-        pass
+        self._poke_arguments(stmt)
+
+    def execute_out(self, stmt):
+        """OUT port, byte - accepted and discarded, like POKE (and INP gives 0).
+
+        The operands are still checked: both are bytes, so OUT 70000,1 is
+        Overflow and OUT 1,256 is Illegal function call.
+        """
+        to_conint(self.evaluate_expression(stmt.port))
+        to_conint(self.evaluate_expression(stmt.value))
+
+    def _poke_arguments(self, stmt):
+        """Evaluate and check the operands of POKE the way the binary does.
+
+        The address is -32768 to 65535 (a negative one is the same word as the
+        unsigned one) and the value is a byte. 40000 is Overflow for the value,
+        and so is 65536 for the address; 256 for the value is Illegal function
+        call. Nothing is stored.
+        """
+        radix_word(self.evaluate_expression(stmt.address))
+        to_conint(self.evaluate_expression(stmt.value))
 
     def execute_deftype(self, stmt):
         """Execute DEFINT/DEFSNG/DEFDBL/DEFSTR statement (do nothing at runtime)"""
@@ -2084,7 +2104,7 @@ class Interpreter:
 
             # Store in variable
             if var_node.subscripts:
-                subscripts = [to_integer(self.evaluate_expression(sub)) for sub in var_node.subscripts]
+                subscripts = [to_subscript(self.evaluate_expression(sub)) for sub in var_node.subscripts]
                 self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value, token=self._make_token_info(var_node))
             else:
                 self.runtime.set_variable(
@@ -2107,7 +2127,7 @@ class Interpreter:
 
         for array_def in stmt.arrays:
             # array_def is an ArrayDeclNode with name and dimensions
-            dimensions = [to_integer(self.evaluate_expression(dim))
+            dimensions = [to_subscript(self.evaluate_expression(dim))
                           for dim in array_def.dimensions]   # DIM B(2.7) is B(3)
             # Extract type suffix from name if present
             name = array_def.name
@@ -2238,7 +2258,7 @@ class Interpreter:
             self.state.input_file_number = None
             return
 
-        self.runtime.rnd.randomize(to_integer(seed))
+        self.runtime.rnd.randomize(to_frcint(seed))     # 40000 is Overflow
 
     def execute_optionbase(self, stmt):
         """Execute OPTION BASE statement
@@ -2393,7 +2413,7 @@ class Interpreter:
         """Store already converted INPUT values in their variables."""
         for var_node, value in zip(variables, values):
             if var_node.subscripts:
-                subscripts = [to_integer(self.evaluate_expression(sub)) for sub in var_node.subscripts]
+                subscripts = [to_subscript(self.evaluate_expression(sub)) for sub in var_node.subscripts]
                 self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value, token=self._make_token_info(var_node))
             else:
                 self.runtime.set_variable(
@@ -2408,7 +2428,7 @@ class Interpreter:
 
     def _input_from_file(self, stmt):
         """INPUT #n: read one field per variable straight from the file."""
-        file_num = int(self.evaluate_expression(stmt.file_number))
+        file_num = to_conint(self.evaluate_expression(stmt.file_number))
         if file_num not in self.runtime.files:
             raise RuntimeError(f"File #{file_num} not open")
         file_info = self.runtime.files[file_num]
@@ -2528,7 +2548,7 @@ class Interpreter:
         """
         # Check if reading from file
         if stmt.file_number is not None:
-            file_num = int(self.evaluate_expression(stmt.file_number))
+            file_num = to_conint(self.evaluate_expression(stmt.file_number))
             if file_num not in self.runtime.files:
                 raise RuntimeError(f"File #{file_num} not open")
             file_info = self.runtime.files[file_num]
@@ -2566,7 +2586,7 @@ class Interpreter:
         # Assign entire line to variable (no parsing)
         var_node = stmt.variable
         if var_node.subscripts:
-            subscripts = [to_integer(self.evaluate_expression(sub)) for sub in var_node.subscripts]
+            subscripts = [to_subscript(self.evaluate_expression(sub)) for sub in var_node.subscripts]
             self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, line, token=self._make_token_info(var_node))
         else:
             self.runtime.set_variable(
@@ -2593,7 +2613,7 @@ class Interpreter:
         """
         # Check if writing to file
         if stmt.file_number is not None:
-            file_num = int(self.evaluate_expression(stmt.file_number))
+            file_num = to_conint(self.evaluate_expression(stmt.file_number))
             if file_num not in self.runtime.files:
                 raise RuntimeError(f"File #{file_num} not open")
             file_info = self.runtime.files[file_num]
@@ -3079,7 +3099,7 @@ class Interpreter:
         """
         # Evaluate mode, file number, and filename
         mode = stmt.mode.upper()  # "I", "O", "A", "R"
-        file_num = int(self.evaluate_expression(stmt.file_number))
+        file_num = to_conint(self.evaluate_expression(stmt.file_number))
         filename = self.evaluate_expression(stmt.filename)
 
         # Check file number range (MBASIC 5.21: #1 through #15)
@@ -3147,7 +3167,7 @@ class Interpreter:
         else:
             # Close specific file numbers
             for file_num_expr in stmt.file_numbers:
-                file_num = int(self.evaluate_expression(file_num_expr))
+                file_num = to_conint(self.evaluate_expression(file_num_expr))
                 if file_num in self.runtime.files:
                     self.runtime.files[file_num]['handle'].close()
                     del self.runtime.files[file_num]
@@ -3182,7 +3202,7 @@ class Interpreter:
         After FIELD, use GET/PUT to read/write records, and LSET/RSET to
         modify field variable values before PUT.
         """
-        file_num = int(self.evaluate_expression(stmt.file_number))
+        file_num = to_conint(self.evaluate_expression(stmt.file_number))
 
         if file_num not in self.runtime.files:
             raise RuntimeError(f"File #{file_num} not open")
@@ -3221,7 +3241,7 @@ class Interpreter:
             GET #n          - Read next record
             GET #n, record  - Read specific record number
         """
-        file_num = int(self.evaluate_expression(stmt.file_number))
+        file_num = to_conint(self.evaluate_expression(stmt.file_number))
 
         if file_num not in self.runtime.files:
             raise RuntimeError(f"File #{file_num} not open")
@@ -3276,7 +3296,7 @@ class Interpreter:
             PUT #n          - Write to next record
             PUT #n, record  - Write to specific record number
         """
-        file_num = int(self.evaluate_expression(stmt.file_number))
+        file_num = to_conint(self.evaluate_expression(stmt.file_number))
 
         if file_num not in self.runtime.files:
             raise RuntimeError(f"File #{file_num} not open")
@@ -3446,7 +3466,7 @@ class Interpreter:
             var_node = stmt.string_var
             if var_node.subscripts:
                 # Array element
-                subscripts = [to_integer(self.evaluate_expression(sub)) for sub in var_node.subscripts]
+                subscripts = [to_subscript(self.evaluate_expression(sub)) for sub in var_node.subscripts]
                 self.runtime.set_array_element(
                     var_node.name,
                     var_node.type_suffix,
@@ -3598,7 +3618,7 @@ class Interpreter:
         width = self.evaluate_expression(stmt.width)
         if isinstance(width, str):
             raise RuntimeError("Type mismatch")
-        width = to_integer(width)
+        width = to_frcint(width)        # 40000 is Overflow; 256 is Illegal function call
         if width < 1 or width > 255:
             raise RuntimeError("Illegal function call")
         if stmt.device is None:
@@ -3696,7 +3716,7 @@ class Interpreter:
         """Evaluate variable reference"""
         if expr.subscripts:
             # Array access - track access
-            subscripts = [to_integer(self.evaluate_expression(sub)) for sub in expr.subscripts]
+            subscripts = [to_subscript(self.evaluate_expression(sub)) for sub in expr.subscripts]
             return self.runtime.get_array_element(expr.name, expr.type_suffix, subscripts, token=self._make_token_info(expr))
         else:
             # Simple variable
@@ -3804,21 +3824,21 @@ class Interpreter:
 
         # Logical (bitwise in BASIC)
         elif op == TokenType.AND:
-            return int(left) & int(right)
+            return to_int_operand(left) & to_int_operand(right)
         elif op == TokenType.OR:
-            return int(left) | int(right)
+            return to_int_operand(left) | to_int_operand(right)
         elif op == TokenType.XOR:
-            return int(left) ^ int(right)
+            return to_int_operand(left) ^ to_int_operand(right)
         elif op == TokenType.EQV:
             # Logical equivalence: A EQV B = NOT (A XOR B)
             # In BASIC: -1 = TRUE, 0 = FALSE
             # Bitwise: invert XOR result
-            return ~(int(left) ^ int(right))
+            return ~(to_int_operand(left) ^ to_int_operand(right))
         elif op == TokenType.IMP:
             # Logical implication: A IMP B = (NOT A) OR B
             # In BASIC: -1 = TRUE, 0 = FALSE
             # Bitwise: (~A) | B
-            return (~int(left)) | int(right)
+            return (~to_int_operand(left)) | to_int_operand(right)
 
         else:
             raise NotImplementedError(f"Binary operator not implemented: {op}")
@@ -3830,7 +3850,7 @@ class Interpreter:
         if expr.operator == TokenType.MINUS:
             return -operand
         elif expr.operator == TokenType.NOT:
-            return ~int(operand)
+            return ~to_int_operand(operand)     # rounds, and 16 bits: NOT 2.7 is -4
         elif expr.operator == TokenType.PLUS:
             return operand
         else:

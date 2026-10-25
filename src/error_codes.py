@@ -4,19 +4,10 @@ MBASIC Error Codes and Messages
 Based on Appendix F of the MBASIC-80 Reference Manual.
 Each error has a numeric code, a two-letter code, and a message.
 
-Note: Some two-letter codes are duplicated across different numeric error codes.
-This matches the original MBASIC 5.21 specification where the two-letter codes
-alone are ambiguous - the numeric code is authoritative.
-
-Specific duplicates (from MBASIC 5.21 specification):
-- DD: code 10 ("Duplicate definition") and code 68 ("Device unavailable")
-- DF: code 25 ("Device fault") and code 61 ("Disk full")
-- CN: code 17 ("Can't continue") and code 69 ("Communication buffer overflow")
-
-These duplicates exist in the original MBASIC 5.21 specification likely due to error codes
-being added at different times during development (communication and device errors came later).
-All error handling in this implementation uses numeric codes for lookups, so the duplicate
-two-letter codes do not cause ambiguity in practice.
+Only the codes MBASIC 5.21 has are listed. The manual names more (24, 25,
+68 to 72, 75 and 76: device and disk errors), but the real binary prints
+"Unprintable error" for each of them, and so does get_error_message for any
+code that is not in the table. ERR still returns the number given to ERROR.
 """
 
 # Error code mapping: number -> (two_letter_code, message)
@@ -44,8 +35,7 @@ ERROR_CODES = {
     21: ("UE", "Unprintable error"),
     22: ("MO", "Missing operand"),
     23: ("LB", "Line buffer overflow"),
-    24: ("DT", "Device timeout"),
-    25: ("DF", "Device fault"),
+    # 24-25 are not errors on the real binary
     26: ("FO", "FOR Without NEXT"),
     # 27-28 reserved
     29: ("WH", "WHILE without WEND"),
@@ -68,14 +58,7 @@ ERROR_CODES = {
     # 65 reserved
     66: ("DW", "Direct statement in file"),
     67: ("TF", "Too many files"),
-    68: ("DD", "Device unavailable"),
-    69: ("CN", "Communication buffer overflow"),
-    70: ("DP", "Disk write protect"),
-    71: ("DN", "Disk not ready"),
-    72: ("DR", "Disk media error"),
-    # 73-74 reserved
-    75: ("PN", "Path/File access error"),
-    76: ("PF", "Path not found"),
+    # 68 and up: Unprintable error
 }
 
 

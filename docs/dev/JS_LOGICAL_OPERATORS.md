@@ -36,10 +36,8 @@ compares 27 values and 9 overflow cases with real MBASIC.
 
 ## Differences that remain
 
-* The interpreter truncates a fractional operand and does not check the
-  range. `PRINT NOT 2.7` gives -3 and `PRINT 40000 OR 1` gives 40001. The
-  JavaScript follows real MBASIC. See
-  `docs/dev/MBASIC_521_DIVERGENCES_TODO.md` section 7.
+* The interpreter now follows real MBASIC too (issue 56): `PRINT NOT 2.7`
+  gives -4 and `PRINT 40000 OR 1` gives `Overflow`.
 * The JavaScript backend does not pass an Overflow from these operators to
   `ON ERROR`. Real MBASIC gives ERR=6 and the line number in ERL. The
   JavaScript prints `?Overflow` and stops. Other runtime errors (for example

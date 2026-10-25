@@ -97,15 +97,26 @@ What is still different:
 - The JavaScript backend reports a fatal error as `?Overflow`. It has no
   `in <line>` text (#41).
 
-`src/error_codes.py` still carries nine codes 5.21 has not got - 24, 25, 68-72,
-75 and 76, all `Unprintable error` on the binary. `ERROR 24` prints the name of
-the code here (#42).
+Done (#42): `src/error_codes.py` no longer carries the nine codes 5.21 has not
+got - 24, 25, 68-72, 75 and 76. `ERROR 24` prints `Unprintable error`, as the
+binary does, and ERR stays 24. (The JavaScript backend prints `Error 24 at line
+10` for every ERROR code; that is the separate difference about `in <line>`
+text.)
 
-FRCINT's 16-bit range check is applied to `\` and MOD operands and to `%`
-assignment, but not yet everywhere the binary applies it: `A(40000)`,
-`TAB(1E38)`, `STRING$(40000,65)`, `LEFT$("AB",1E38)`, `PEEK(70000)`,
-`MKI$(40000)`, `SPACE$(40000)` and `CHR$(40000)` are all `Overflow`
-there (#43). (`CINT`, `HEX$` and `OCT$` now check.)
+Done for the interpreter (#43, open for the JavaScript backend): the interpreter applies FRCINT's 16-bit range check, and CONINT's
+second test, wherever the binary does. An integer argument is rounded and must
+fit -32768..32767, or the result is `Overflow`. A byte argument (`LEFT$`,
+`RIGHT$`, `MID$`, `SPACE$`, `STRING$`, `CHR$`, the start of `INSTR`, `INP`,
+`OUT`, the value of `POKE`, `ON...GOTO`, file numbers and `INPUT$`) must then
+be 0 to 255, or the result is `Illegal function call` (so `LEFT$("AB",300)` and
+`SPACE$(256)` stop with an error, as on the binary). A negative array subscript
+or `DIM` bound is `Illegal function call`. `TAB`, `SPC`, `MKI$`, `RANDOMIZE`
+and `WIDTH` check 16 bits. `PEEK` and the address of `POKE` accept -32768 to
+65535; `PEEK` still returns a random byte. The JavaScript backend still has
+the gaps for `STRING$`, `SPACE$`, `LEFT$`, `RIGHT$`, `TAB`, `CHR$`, `PEEK` and
+array subscripts (the issue lists them), and these arguments are still not
+checked in `CLEAR`, `OPEN ... LEN`, `USR`, `LPOS` and `WIDTH 0`. `DIM A(32767)`
+is `Subscript out of range` on the binary (memory) and works here.
 
 
 ## 2. ON ERROR, and what happens around a handler
@@ -245,11 +256,11 @@ semantics are not:
   `(_step > 0) ? (v <= end) : (v >= end)`, which gets STEP 0 wrong in the
   opposite direction from the bug fixed in the interpreter. The C backend
   also gets STEP 0 wrong (#55).
-- AND, OR, XOR, EQV, IMP and NOT: the JavaScript backend now matches real
-  MBASIC (GitHub issue 15, `docs/dev/JS_LOGICAL_OPERATORS.md`). The
-  interpreter does not: it truncates a fractional operand (`NOT 2.7` is -3,
-  real MBASIC -4) and it accepts operands outside -32768..32767
-  (`40000 OR 1` is 40001, real MBASIC stops with Overflow) (#56). The C
+- Done (#56): AND, OR, XOR, EQV, IMP and NOT. The JavaScript backend matches
+  real MBASIC (GitHub issue 15, `docs/dev/JS_LOGICAL_OPERATORS.md`), and the
+  interpreter now does too: it rounds a fractional operand (`NOT 2.7` is -4)
+  and stops with `Overflow` for an operand outside -32768..32767
+  (`40000 OR 1`), which `ON ERROR` can trap. The C
   backend rounds a fractional operand and wraps an operand outside the range
   to 16 bits, so it matches real MBASIC except that it does not stop with
   Overflow (#54).
