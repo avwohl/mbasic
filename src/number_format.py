@@ -268,6 +268,10 @@ def to_frcint(value):
     wants a 16-bit integer starts here: \\ and MOD, the logical operators, array
     subscripts, MKI$, TAB and SPC, and (through to_conint) the byte arguments.
     """
+    if isinstance(value, float) and value == value and abs(value) < 65536:
+        # The binary takes a double to single precision before it rounds:
+        # 2.49999999# AND 3 is 3 and 32767.4999# OR 0 is Overflow.
+        value = to_single(value)
     number = to_integer(value)
     if isinstance(number, bool) or not isinstance(number, int):
         raise TypeError("Type mismatch")

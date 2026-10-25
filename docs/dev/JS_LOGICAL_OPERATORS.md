@@ -34,10 +34,11 @@ The range of an operand is -32768 to 32767. Real MBASIC 5.21 gives
 `Overflow` for `32768 AND 1`, `65535 AND 255` and `40000 OR 1`. The test
 compares 27 values and 9 overflow cases with real MBASIC.
 
+The interpreter follows real MBASIC too (issue 56): `PRINT NOT 2.7` gives -4
+and `PRINT 40000 OR 1` gives `Overflow`.
+
 ## Differences that remain
 
-* The interpreter now follows real MBASIC too (issue 56): `PRINT NOT 2.7`
-  gives -4 and `PRINT 40000 OR 1` gives `Overflow`.
 * The JavaScript backend does not pass an Overflow from these operators to
   `ON ERROR`. Real MBASIC gives ERR=6 and the line number in ERL. The
   JavaScript prints `?Overflow` and stops. Other runtime errors (for example

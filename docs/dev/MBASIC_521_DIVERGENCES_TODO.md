@@ -103,8 +103,8 @@ binary does, and ERR stays 24. (The JavaScript backend prints `Error 24 at line
 10` for every ERROR code; that is the separate difference about `in <line>`
 text.)
 
-Done for the interpreter (#43, open for the JavaScript backend): the interpreter applies FRCINT's 16-bit range check, and CONINT's
-second test, wherever the binary does. An integer argument is rounded and must
+Done for the interpreter (#43, open for the JavaScript backend): the
+interpreter applies FRCINT's 16-bit range check, and CONINT's second test, wherever the binary does. An integer argument is rounded and must
 fit -32768..32767, or the result is `Overflow`. A byte argument (`LEFT$`,
 `RIGHT$`, `MID$`, `SPACE$`, `STRING$`, `CHR$`, the start of `INSTR`, `INP`,
 `OUT`, the value of `POKE`, `ON...GOTO`, file numbers and `INPUT$`) must then
@@ -117,6 +117,14 @@ the gaps for `STRING$`, `SPACE$`, `LEFT$`, `RIGHT$`, `TAB`, `CHR$`, `PEEK` and
 array subscripts (the issue lists them), and these arguments are still not
 checked in `CLEAR`, `OPEN ... LEN`, `USR`, `LPOS` and `WIDTH 0`. `DIM A(32767)`
 is `Subscript out of range` on the binary (memory) and works here.
+The same checks now cover `ERROR n` (0 and above 255 are `Illegal function
+call`, 5.6 rounds to 6), the `MID$` statement (start and length), `FIELD`
+widths, `GET` and `PUT` record numbers (0 is `Bad record number`) and the
+length of `OPEN ... LEN` (above 128, the default `/S:` size, is `Illegal
+function call`). A double is taken to single precision before FRCINT rounds
+it, so `2.49999999# AND 3` is 3. Still open: the maximum number of files
+(`CLOSE #4` is `Bad file number` on the binary with the default 3 files) and
+the two-argument form `MID$(A$,2)=X$`, which the parser rejects.
 
 
 ## 2. ON ERROR, and what happens around a handler

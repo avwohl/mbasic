@@ -653,10 +653,7 @@ class BuiltinFunctions:
         Python's round() is banker's rounding, which sends 2.5 to 2. The real
         binary says CINT(2.5) is 3 and CINT(-2.5) is -3.
         """
-        number = to_integer(float(x))
-        if not -32768 <= number <= 32767:
-            raise OverflowError("Overflow")
-        return number
+        return to_frcint(float(x))
 
     def CSNG(self, x):
         """Convert to single precision, losing what a single cannot hold."""

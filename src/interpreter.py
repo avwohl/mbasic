@@ -2300,7 +2300,9 @@ class Interpreter:
 
         Syntax: ERROR error_code
         """
-        error_code = int(self.evaluate_expression(stmt.error_code))
+        error_code = to_conint(self.evaluate_expression(stmt.error_code))
+        if error_code == 0:
+            raise ValueError("Illegal function call")
 
         # Set error information in variable table (integer variables, lowercase)
         self.runtime.set_variable_raw('err%', error_code)
@@ -3101,6 +3103,12 @@ class Interpreter:
         mode = stmt.mode.upper()  # "I", "O", "A", "R"
         file_num = to_conint(self.evaluate_expression(stmt.file_number))
         filename = self.evaluate_expression(stmt.filename)
+        if stmt.record_length:
+            # Measured on the binary: FRCINT (40000 is Overflow), then more
+            # than 128 - the default /S: record size - or less than 0 is
+            # Illegal function call.
+            if not 0 <= to_frcint(self.evaluate_expression(stmt.record_length)) <= 128:
+                raise ValueError("Illegal function call")
 
         # Check file number range (MBASIC 5.21: #1 through #15)
         if file_num < 1 or file_num > 15:
@@ -3224,7 +3232,7 @@ class Interpreter:
 
         # Process each field
         for width_expr, var_node in stmt.fields:
-            width = int(self.evaluate_expression(width_expr))
+            width = to_conint(self.evaluate_expression(width_expr))
             var_name = var_node.name + (var_node.type_suffix or '')
 
             # Store field mapping
@@ -3258,7 +3266,9 @@ class Interpreter:
 
         # Determine record number
         if stmt.record_number:
-            record_num = int(self.evaluate_expression(stmt.record_number))
+            record_num = to_frcint(self.evaluate_expression(stmt.record_number))
+            if record_num < 1:
+                raise MBasicError(63)    # Bad record number
         else:
             # Use next record
             record_num = buffer_info['current_record'] + 1
@@ -3313,7 +3323,9 @@ class Interpreter:
 
         # Determine record number
         if stmt.record_number:
-            record_num = int(self.evaluate_expression(stmt.record_number))
+            record_num = to_frcint(self.evaluate_expression(stmt.record_number))
+            if record_num < 1:
+                raise MBasicError(63)    # Bad record number
         else:
             # Use next record
             record_num = buffer_info['current_record'] + 1
@@ -3430,10 +3442,14 @@ class Interpreter:
             current_value = str(current_value)
 
         # Evaluate the parameters
-        start = int(self.evaluate_expression(stmt.start))
+        # Start and length are CONINT arguments as in the MID$ function:
+        # 0 or above 255 is Illegal function call, above 32767 is Overflow.
+        start = to_conint(self.evaluate_expression(stmt.start))
+        if start == 0:
+            raise ValueError("Illegal function call")
         new_value = str(self.evaluate_expression(stmt.value))
         # Length is optional - if not provided, use length of replacement string
-        length = int(self.evaluate_expression(stmt.length)) if stmt.length else len(new_value)
+        length = to_conint(self.evaluate_expression(stmt.length)) if stmt.length else len(new_value)
 
         # Convert to 0-based index
         start_idx = start - 1
