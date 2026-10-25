@@ -243,8 +243,57 @@ class InterpreterState:
                             return stmt_char_end
         return 0
 
+class _ColumnIO:
+    """Wrap an I/O handler and remember the output column.
+
+    MBASIC starts a fatal error message on a new line when the cursor is not
+    in column 0, whatever statement left it there (PRINT, PRINT USING, the
+    INPUT prompt).  Everything else is passed to the wrapped handler.
+    """
+
+    def __init__(self, inner):
+        object.__setattr__(self, '_inner', inner)
+        object.__setattr__(self, 'column', 0)
+
+    def output(self, text, end='\n'):
+        self._inner.output(text, end=end)
+        full = text + end
+        if '\n' in full:
+            object.__setattr__(self, 'column', len(full) - full.rfind('\n') - 1)
+        else:
+            object.__setattr__(self, 'column', self.column + len(full))
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+    def __setattr__(self, name, value):
+        if name == 'column':
+            object.__setattr__(self, name, value)
+        else:
+            setattr(self._inner, name, value)
+
+
 class Interpreter:
     """Execute MBASIC AST with tick-based execution for UI integration"""
+
+    @property
+    def io(self):
+        return self._io
+
+    @io.setter
+    def io(self, handler):
+        if handler is not None and not isinstance(handler, _ColumnIO):
+            handler = _ColumnIO(handler)
+        self._io = handler
+
+    @property
+    def _print_column(self):
+        return getattr(self._io, 'column', 0)
+
+    @_print_column.setter
+    def _print_column(self, value):
+        if isinstance(self._io, _ColumnIO):
+            self._io.column = value
 
     def __init__(self, runtime, io_handler=None, breakpoint_callback=None, filesystem_provider=None, limits=None, settings_manager=None, file_io=None):
         self.runtime = runtime
@@ -619,6 +668,10 @@ class Interpreter:
                             self.runtime.on_error_goto if self.runtime.has_error_handler() else None
                         )
                         self._restore_break_handler()
+                        # The binary starts a new line before a fatal error
+                        # message when the cursor is not in column 0.
+                        if self._print_column > 0:
+                            self.io.output('')
                         raise
 
                 # Check if we're waiting for input
@@ -1133,7 +1186,6 @@ class Interpreter:
             nonlocal output
             if output:
                 self.io.output(output, end='')
-                self._track_column(output)
                 output = ""
 
         if file_handle is None:
@@ -1189,13 +1241,6 @@ class Interpreter:
             raise
         except Exception:
             flush_partial()
-            # The binary starts a new line before a fatal error message when
-            # the cursor is not in column 0 ("AB" then a line break, then
-            # "Overflow in 10"). With ON ERROR armed nothing is printed.
-            if (file_handle is None and self._print_column > 0
-                    and not self.runtime.has_error_handler()):
-                self.io.output('')
-                self._print_column = 0
             raise
         finally:
             self._partial_print = None
@@ -1212,7 +1257,6 @@ class Interpreter:
             # Print to screen (don't add newline if last separator was ; or , or \n)
             if stmt.separators and stmt.separators[-1] in [';', ',', '\n']:
                 self.io.output(output, end='')
-                self._track_column(output)
             else:
                 self.io.output(output)
                 self._print_column = 0
@@ -1385,14 +1429,6 @@ class Interpreter:
             return machine_infinity(digits)
 
     _partial_print = None
-    _print_column = 0
-
-    def _track_column(self, text):
-        """Remember the output column after `text` (0 after a line break)."""
-        if '\n' in text:
-            self._print_column = len(text) - text.rfind('\n') - 1
-        else:
-            self._print_column += len(text)
 
     def _notice(self, text):
         """Print a bare error message that does not stop the program.

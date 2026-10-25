@@ -102,6 +102,8 @@ output follows the interpreter.
   print `A=` first.
 * A fatal error stops the JavaScript with `?Overflow`, `?Illegal function
   call` or `?Division by zero`. Real MBASIC prints `<message> in <line>`.
+  Real MBASIC and the interpreter also start a new line first when the
+  cursor is not in column 0. The JavaScript does not.
 * `1D300^2` and `EXP(1000#)` give a double machine infinity here. Real MBASIC
   gives a single one. The MBF range is not emulated (see
   MBASIC_521_DIVERGENCES_TODO.md, section 10).

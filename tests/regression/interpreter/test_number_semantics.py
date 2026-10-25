@@ -73,6 +73,13 @@ def test_error_after_partial_print_line(tmp_path=None):
         bas.write_text('10 PRINT "AB";HEX$(-32769)\n')
         got = run_program(bas)
     check(got.startswith("AB\nOverflow in 10"), f"AB, line break, Overflow in 10 (got {got!r})")
+    # PRINT USING, an empty PRINT and a later non-PRINT statement: output of
+    # real MBASIC in fixtures/number_semantics_errcol (not run for the JS
+    # backend, which words fatal errors differently).
+    errcol = FIXTURES.parent / "number_semantics_errcol"
+    for bas in sorted(errcol.glob("*.bas")):
+        want = (errcol / (bas.stem + ".real")).read_text().rstrip("\n")
+        check(run_program(bas).rstrip("\n") == want, f"{bas.name} matches real MBASIC")
 
 
 def test_val():

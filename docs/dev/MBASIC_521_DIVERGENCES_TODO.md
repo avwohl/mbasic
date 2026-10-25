@@ -51,6 +51,16 @@ What is still different:
   is `Overflow` here and `Division by zero` on the binary, because MBF cannot
   hold 1D-300. `1D300^2` and `EXP(1000#)` print a single-precision machine
   infinity on the binary and a double one here.
+- MBF has no denormal numbers. A result below about 1.5E-39 is 0 on the
+  binary (`PRINT EXP(-100)` and `PRINT 1E-20*1E-20` print 0). IEEE gives a
+  denormal number here (`3.78351E-44`). This follows from the IEEE decision
+  in section 10.
+- `PRINT USING` with `^^^^` and a value such as 9.99999E30 (six nines, an
+  exponent of 25 or more, or an exponent of -30 or less): the binary
+  scales the value by a product of powers of ten in MBF. The scaled value
+  can round to exactly 1, and then the binary does renormalize
+  (`"#.##^^^^"` gives `0.10E+32`). We give `1.00E+31`. Values such as
+  9.9999E35 and 9.99999E20 agree. We do not emulate the MBF multiplication.
 - The sign of machine infinity after a double division by zero is erratic on
   the binary (it depends on what was computed before). We use the sign of the
   dividend.

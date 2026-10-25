@@ -1,0 +1,3 @@
+10 PRINT "AB";
+20 X=SQR(-1)
+30 SYSTEM

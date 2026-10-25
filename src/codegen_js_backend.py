@@ -2472,7 +2472,7 @@ class JavaScriptBackend(CodeGenBackend):
             op = self._token_to_operator(expr.operator)
             if op == 'NOT':
                 return f'(-({operand}) - 1)'  # bitwise: -1 for 0, 0 for -1
-            return f'({op}{operand})'
+            return f'({op}({operand}))'
         elif isinstance(expr, FunctionCallNode):
             return self._generate_function_call(expr)
         else:
