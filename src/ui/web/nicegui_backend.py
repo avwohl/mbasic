@@ -2271,9 +2271,46 @@ class NiceGUIBackend(UIBackend):
         self.running = True
         self.paused = False
 
-    def cmd_chain(self, *_args, **_kwargs) -> None:
-        """CHAIN is not available in the web UI (no program file to run on)."""
-        raise IOError("CHAIN is not available in the web UI")
+    def cmd_chain(self, filename, start_line=None, merge=False, all_flag=False,
+                  delete_range=None) -> None:
+        """CHAIN typed in the immediate line: load a file, then run it.
+
+        Variables pass on as in the CLI: all of them with ALL or MERGE, the
+        COMMON ones otherwise. CHAIN inside a running program is an error: the
+        tick timer has no way to restart the program that is running.
+        """
+        if self.running:
+            raise IOError("CHAIN inside a running program is not available in the web UI")
+        name = self._program_file_name(filename)
+        if name is None:
+            return
+        text = self._read_program_file(name)
+        if text is None:
+            return
+
+        runtime = self.runtime
+        saved = runtime.get_all_variables()
+        if not (all_flag or merge):
+            common = {name.lower() for name in runtime.common_vars}
+            saved = [v for v in saved if v['name'].lower() in common]
+
+        if merge:
+            success, errors, _added, _replaced = self.program.merge_from_text(text, name)
+        else:
+            success, errors = self.program.load_from_text(text, name)
+        for _line_num, error in errors:
+            self._append_output(error + "\n")
+        if not success:
+            return
+        if delete_range and merge:
+            first, last = (int(getattr(e, 'value', e)) for e in delete_range)
+            self.program.delete_range(first, last)
+        self.current_file = name
+        self._refresh_editor()
+
+        self.cmd_run(start_line)
+        if saved:
+            runtime.update_variables(saved)
 
     def cmd_system(self) -> None:
         """SYSTEM cannot end a shared server session."""

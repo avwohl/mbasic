@@ -3599,20 +3599,24 @@ class Interpreter:
 
         User can examine/modify variables, edit lines, then use CONT to resume.
         """
-        # Save the current execution position
-        # We need to resume from the NEXT statement after STOP
-
-        # Move NPC to PC so CONT can resume from the next statement
-        # runtime.npc (next program counter) is set by tick() to point to the next statement
-        # to execute after the current one completes
+        # CONT resumes at the statement AFTER the STOP, but "Break in" names
+        # the line of the STOP itself.
+        stop_line = self.runtime.pc.line_num if self.runtime.pc else None
         if self.runtime.npc:
-            self.runtime.pc = self.runtime.npc.stop("STOP")
+            # GOTO/GOSUB-style jump already pending
+            next_pc = self.runtime.npc
         else:
-            self.runtime.pc = self.runtime.pc.stop("STOP")
+            next_pc = self.runtime.statement_table.next_pc(self.runtime.pc)
+        if next_pc is not None and next_pc.line_num is not None:
+            self.runtime.pc = next_pc.stop("STOP")
+        else:
+            # STOP was the last statement: nothing is left to resume, and
+            # CONT then does nothing, as in MBASIC.
+            self.runtime.pc = PC.halted()
 
         # Print "Break in <line>" message
-        if self.runtime.pc and self.runtime.pc.line_num:
-            self.io.output(f"Break in {self.runtime.pc.line_num}")
+        if stop_line:
+            self.io.output(f"Break in {stop_line}")
         else:
             self.io.output("Break")
 

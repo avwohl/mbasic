@@ -159,12 +159,13 @@ RENUM is already collapsed: all backends call `ui_helpers.renum_program()`.
 Curses, Tk and the web UI set `interactive_mode` and define `cmd_renum`, so
 RENUM in the immediate line works in all of them.
 
-- Done (#50, CHAIN excluded): the web UI sets `interactive_mode` when it starts, and defines
+- Done (#50): the web UI sets `interactive_mode` when it starts, and defines
   `cmd_renum`, `cmd_delete`, `cmd_load`, `cmd_save`, `cmd_merge`, `cmd_list`,
-  `cmd_run`, `cmd_cont` and `cmd_system`. LOAD, SAVE and MERGE use the
+  `cmd_run`, `cmd_cont`, `cmd_chain` and `cmd_system`. LOAD, SAVE and MERGE use the
   session's in-memory files, never the server disk. CHAIN in the immediate
-  line gives an error: the web UI has no way to restart a running program
-  with a new program. Tests: `tests/regression/ui/test_web_immediate_commands.py`.
+  line loads the file and runs it. CHAIN inside a running program gives an
+  error: the web UI has no way to restart a running program with a new
+  program (this limit is not part of #50). Tests: `tests/regression/ui/test_web_immediate_commands.py`.
 - Done (#51): Tk prints nothing after RENUM. A reference to a missing line is
   still reported. Tests: `tests/regression/ui/test_tk_renum_silent.py`.
 

@@ -225,6 +225,7 @@ class InteractiveMode:
         self.runtime = None  # Persistent runtime for immediate mode
         self.interpreter = None  # Persistent interpreter
         self.program_runtime = None  # Runtime for RUN (preserved for CONT)
+        self.cont_invalid = False    # True once a program edit made CONT impossible
         self.program_interpreter = None  # Interpreter for RUN (preserved for CONT)
         self.ctrl_c_count = 0  # Track consecutive Ctrl+C presses
 
@@ -301,6 +302,9 @@ class InteractiveMode:
         if self.program_runtime:
             # The Runtime keeps GOSUB, FOR and WHILE entries in one stack.
             self.program_runtime.execution_stack.clear()
+            # MBASIC 5.21: any program edit after a STOP or Break makes CONT
+            # print "Can't continue", even when the old position still exists.
+            self.cont_invalid = True
 
     def _setup_readline(self):
         """Configure readline for better line editing.
@@ -631,6 +635,7 @@ class InteractiveMode:
 
             # Save runtime for CONT
             self.program_runtime = runtime
+            self.cont_invalid = False
             self.program_interpreter = interpreter
 
             # If start_line is specified, we need to handle it specially
@@ -703,8 +708,14 @@ class InteractiveMode:
         the program. Shows "?Can't continue" after editing, matching MBASIC 5.21 behavior.
         """
         # Check if we have a stopped program
-        if not self.program_runtime or self.program_runtime.pc.is_running():
+        if (not self.program_runtime or self.cont_invalid
+                or self.program_runtime.pc.is_running()):
             print(format_error_message(CANT_CONTINUE))
+            return
+
+        # MBASIC 5.21 prints nothing for CONT after the program ended or
+        # stopped on an error: only STOP and Break can be continued.
+        if self.program_runtime.pc.stop_reason not in ('STOP', 'BREAK'):
             return
 
         # Check if PC position is still valid (program may have been edited)
@@ -1661,12 +1672,18 @@ class InteractiveMode:
                 old_pc = runtime.pc
 
                 # Execute each statement on line 0
+                resumed = False
                 for stmt in line_node.statements:
+                    if type(stmt).__name__ == 'ContStatementNode':
+                        resumed = True
                     interpreter.execute_statement(stmt)
 
                 # Restore previous PC to maintain stopped program position
-                # This reverts any GOTO/GOSUB PC changes from above execution
-                runtime.pc = old_pc
+                # This reverts any GOTO/GOSUB PC changes from above execution.
+                # After CONT the program has run on, so the PC it left (a new
+                # Break, STOP, END or error) is the one to keep.
+                if not resumed:
+                    runtime.pc = old_pc
 
         except BreakException:
             # Ctrl+C inside an immediate-mode INPUT$ ("PRINT INPUT$(1)" at the

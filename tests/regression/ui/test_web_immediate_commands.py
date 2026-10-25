@@ -104,9 +104,32 @@ def test_load_missing_file(backend):
     assert backend.editor.value == PROGRAM
 
 
-def test_chain_gives_an_error_not_a_crash(backend):
-    ok, text = run(backend, 'CHAIN "T"')
-    assert not ok and text
+def test_chain_loads_the_file_and_runs_it(backend):
+    # Real MBASIC 5.21: CHAIN "T" from the Ok prompt loads T.BAS and runs it.
+    assert run(backend, 'SAVE "T"') == (True, "")
+    backend.editor.value = "10 PRINT 99"
+    assert run(backend, 'CHAIN "T"') == (True, "")
+    assert backend.editor.value == PROGRAM.strip()
+    assert backend.interpreter.has_work()
+
+
+def test_chain_all_passes_variables(backend):
+    # Real MBASIC 5.21: CHAIN "T",,ALL keeps every variable.
+    run(backend, 'SAVE "T"')
+    backend.runtime.set_variable_raw("a%", 7)
+    backend.cmd_chain("T", all_flag=True)
+    assert backend.runtime.get_variable_raw("a%") == 7
+
+
+def test_chain_missing_file(backend):
+    run(backend, 'CHAIN "NOPE"')
+    assert backend.output == ["File not found\n"]
+
+
+def test_chain_inside_a_running_program_is_an_error(backend):
+    backend.running = True
+    with pytest.raises(IOError):
+        backend.cmd_chain("T")
 
 
 def test_list_range(backend):
