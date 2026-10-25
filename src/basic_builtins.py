@@ -824,7 +824,7 @@ class BuiltinFunctions:
         n = to_integer(n)
         return " " * n
 
-    def STR(self, x):
+    def STR(self, x, digits=SINGLE_DIGITS):
         """
         Convert number to string.
 
@@ -833,11 +833,11 @@ class BuiltinFunctions:
         STR$(1/3) is " .333333". A leading space for positives, and - unlike
         PRINT - no trailing one. See src/number_format.py.
 
-        The caller's precision is not known here, so single is assumed: STR$
-        has no expression to inspect, and single is the default type.
+        digits is the precision of the argument's type (the interpreter works
+        it out from the expression); single is assumed when it is not given.
         """
         from src.number_format import format_number
-        text = format_number(x, SINGLE_DIGITS)
+        text = format_number(x, digits)
         return " " + text if x >= 0 else text
 
     def STRING(self, n, char):

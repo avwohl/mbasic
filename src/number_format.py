@@ -279,3 +279,141 @@ def coerce_to_type(value, suffix):
     if suffix in ('!', None):
         return to_single(value)
     return value
+
+
+# ---------------------------------------------------------------------------
+# The type of an expression, which decides how many digits PRINT shows
+# ---------------------------------------------------------------------------
+
+#: Functions whose result is not single precision. Everything else in
+#: MBASIC's library returns single *by signature*, the way C's sqrtf does,
+#: including SQR, SIN and the rest - PRINT SQR(2) gives 1.41421, not
+#: 1.4142135623730951, and SQR(2#) is a single too.
+#:
+#: That is a typing rule, not emulated arithmetic: the value is computed by
+#: libm in double and then rounded to binary32, so it is the correctly
+#: rounded single rather than MBASIC's answer. It does mean a double
+#: argument comes back with binary32 accuracy. See the "maths functions are
+#: single" section of docs/dev/SINGLE_PRECISION.md, which says what to
+#: change if that is ever not wanted.
+_FUNCTION_PRECISION = {
+    'CDBL': DOUBLE_DIGITS, 'CVD': DOUBLE_DIGITS, 'VAL': DOUBLE_DIGITS,
+    'CINT': INTEGER_DIGITS, 'ASC': INTEGER_DIGITS, 'LEN': INTEGER_DIGITS,
+    'INSTR': INTEGER_DIGITS, 'CVI': INTEGER_DIGITS, 'POS': INTEGER_DIGITS,
+    'LPOS': INTEGER_DIGITS, 'PEEK': INTEGER_DIGITS, 'INP': INTEGER_DIGITS,
+    'LOC': INTEGER_DIGITS, 'LOF': INTEGER_DIGITS, 'EOF': INTEGER_DIGITS,
+    'VARPTR': INTEGER_DIGITS, 'FRE': INTEGER_DIGITS,
+}
+
+#: The maths library. On the real machine these are single by signature and
+#: SQR(2#) comes back with 24 bits; here they follow their argument, so a
+#: double argument is computed and returned in double. A deliberate
+#: divergence - see docs/dev/SINGLE_PRECISION.md. The result is never
+#: narrower than single: SQR of an integer is not an integer.
+_ARGUMENT_TYPED = frozenset(
+    ('SQR', 'SIN', 'COS', 'TAN', 'ATN', 'LOG', 'EXP'))
+
+def numeric_digits(expr):
+    """Significant figures PRINT should show for this expression.
+
+    MBASIC decides by *type*, not by value: a single-precision 1/3 prints
+    as .333333 and a double-precision one as .3333333333333333. The type is
+    a static property of the expression, so it is read off the tree rather
+    than tracked through the arithmetic - which keeps the evaluator, and
+    every result it computes, exactly as it was.
+
+    Returns SINGLE_DIGITS, DOUBLE_DIGITS, or INTEGER_DIGITS (None).
+    """
+    node = type(expr).__name__
+
+    if node == 'NumberNode':
+        return _literal_digits(expr)
+
+    if node == 'VariableNode':
+        return _suffix_digits(getattr(expr, 'type_suffix', None))
+
+    if node == 'BinaryOpNode':
+        # BASIC promotes to the wider of the two operands.
+        digits = _wider(numeric_digits(expr.left), numeric_digits(expr.right))
+        if str(getattr(expr.operator, 'name', expr.operator)) in ('DIVIDE', 'POWER'):
+            # / and ^ never give an integer, whatever they are handed:
+            # 5%/2% is 2.5.
+            digits = _wider(SINGLE_DIGITS, digits)
+        return digits
+
+    if node == 'UnaryOpNode':
+        return numeric_digits(expr.operand)
+
+    if node == 'FunctionCallNode':
+        name = getattr(expr, 'name', '').upper().rstrip('$')
+        if name.startswith('FN'):
+            # A user-defined function is typed by its name, exactly like a
+            # variable: FNA is single and FNA# is double. The suffix is
+            # stripped from the name for lookup, so it is read from the
+            # node - see FunctionCallNode.
+            return _suffix_digits(getattr(expr, 'type_suffix', None))
+        if name in _FUNCTION_PRECISION:
+            return _FUNCTION_PRECISION[name]
+        if name in ('INT', 'FIX', 'ABS', 'SGN') and expr.arguments:
+            # These keep the type they were given, integers included.
+            return numeric_digits(expr.arguments[0])
+        if name in _ARGUMENT_TYPED and expr.arguments:
+            # Single unless the argument is double - never an integer.
+            return _wider(SINGLE_DIGITS,
+                               numeric_digits(expr.arguments[0]))
+        return SINGLE_DIGITS
+
+    if node == 'ArrayAccessNode':
+        return _suffix_digits(getattr(expr, 'type_suffix', None))
+
+    return SINGLE_DIGITS
+
+def _suffix_digits(suffix):
+    """Digits implied by a type suffix. No suffix means single (or
+    whatever DEFINT/DEFDBL made the default, which the parser has already
+    resolved into the suffix)."""
+    if suffix == '%':
+        return INTEGER_DIGITS
+    if suffix == '#':
+        return DOUBLE_DIGITS
+    return SINGLE_DIGITS
+
+def _literal_digits(expr):
+    """Digits implied by how a numeric literal was written.
+
+    A literal is double if it says so - a '#' suffix or a 'D' exponent -
+    or if it carries more than 7 significant figures. That is why
+    PRINT 1234567 gives 1.23457E+06 but PRINT 12345678 gives 12345678:
+    the first is single, the second is double.
+    """
+    # NumberNode.literal holds the source text where the lexer kept it -
+    # see Token.literal_text. Older nodes built elsewhere in the parser
+    # (line-number ranges, for instance) still carry the value, which
+    # str() renders harmlessly.
+    literal = str(getattr(expr, 'literal', '') or '').upper()
+    if literal.startswith('&'):
+        # A hex or octal constant is an integer, and the D in &HD1 is a
+        # digit rather than an exponent.
+        return SINGLE_DIGITS
+    if literal.endswith('!'):
+        return SINGLE_DIGITS            # explicitly single, however long
+    if '#' in literal or 'D' in literal:
+        return DOUBLE_DIGITS
+
+    # Otherwise count the significant figures the value carries: seven or
+    # fewer is single, more is double. That is MBASIC's rule applied to
+    # the value rather than to the typed text, which agrees except for a
+    # literal padded with trailing zeros (1000000.0 is eight typed digits
+    # but one significant one).
+    try:
+        mantissa = repr(float(getattr(expr, 'value', 0))).split('e')[0]
+    except (TypeError, ValueError):
+        return SINGLE_DIGITS
+    significant = mantissa.replace('-', '').replace('.', '').strip('0')
+    return DOUBLE_DIGITS if len(significant) > 7 else SINGLE_DIGITS
+
+def _wider(left, right):
+    """The wider of two precisions, INTEGER < SINGLE < DOUBLE."""
+    order = {INTEGER_DIGITS: 0, SINGLE_DIGITS: 1, DOUBLE_DIGITS: 2}
+    return left if order.get(left, 1) >= order.get(right, 1) else right
+
