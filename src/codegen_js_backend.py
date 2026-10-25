@@ -3152,7 +3152,8 @@ class JavaScriptBackend(CodeGenBackend):
         condition = self._generate_expression(stmt.condition)
         wend = self.while_to_wend.get(id(stmt))
         if wend is None:
-            leave = '_error("WHILE without WEND");'
+            # The real binary looks for the WEND when the WHILE runs, whatever the condition is
+            return [self.indent() + '_error("WHILE without WEND");']
         else:
             leave = self._jump_code(self._after(wend, self.next_line_of[id(wend)]))
         code.append(self.indent() + f'if (!({condition})) {{ {leave} }}')

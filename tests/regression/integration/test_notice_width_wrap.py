@@ -43,7 +43,8 @@ def test_interpreter(tmp_path, name, source, expected):
     result = subprocess.run(
         [sys.executable, str(ROOT / "mbasic"), str(tmp_path / "p.bas"), "--ui", "cli"],
         input="RUN\nSYSTEM\n", cwd=tmp_path, capture_output=True, text=True, timeout=60)
-    assert expected in result.stdout, result.stdout + result.stderr
+    # The program output sits between the "Ready" line and the "Goodbye" line, with nothing else
+    assert "Ready\n" + expected + "Goodbye" in result.stdout, result.stdout + result.stderr
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is needed to execute generated JavaScript")

@@ -75,6 +75,18 @@ def test_while_without_wend_is_a_run_time_error(tmp_path):
     assert run.stdout == "A\nWHILE without WEND in 20\n"
 
 
+@pytest.mark.parametrize("source,expected", [
+    # Measured: the error comes when the WHILE runs, before any body output, true condition or not
+    ('10 WHILE I<2\n20 I=I+1\n30 PRINT I\n', "WHILE without WEND in 10\n"),
+    ('10 PRINT "a"\n20 WHILE 1\n30 PRINT "in"\n40 SYSTEM\n', "a\nWHILE without WEND in 20\n"),
+], ids=["true cond", "true cond, SYSTEM"])
+def test_while_without_wend_true_condition(tmp_path, source, expected):
+    result, output = compile_js(tmp_path, source)
+    assert result.returncode == 0, result.stderr
+    run = subprocess.run([NODE, str(output)], capture_output=True, text=True, timeout=10)
+    assert run.stdout == expected
+
+
 def test_wend_without_while_does_not_compile(tmp_path):
     # Real MBASIC stops at run time with "WEND without WHILE in 20"; the compiler refuses the program
     result, _ = compile_js(tmp_path, '10 PRINT "A"\n20 WEND\n30 SYSTEM\n')
