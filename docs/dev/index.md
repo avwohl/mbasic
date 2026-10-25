@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2026-10-25
-**Total Documents:** 64
+**Total Documents:** 65
 
 ## What's Here
 
@@ -99,6 +99,7 @@ port I/O — but they are not required. Read
 
 ### Other
 
+- [C Backend](C_BACKEND.md)
 - [Checkpoint Validation](CHECKPOINT_VALIDATION.md)
 - [Compact Source](COMPACT_SOURCE.md)
 - [Compiler Cpu Targets](COMPILER_CPU_TARGETS.md)
