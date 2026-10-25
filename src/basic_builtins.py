@@ -932,7 +932,9 @@ class BuiltinFunctions:
             column = getattr(self._io(), 'column', 0)
             if not isinstance(column, int):
                 column = 0
-        return column + 1
+        if getattr(self._io(), 'width', 80) == 255:
+            column = min(column, 255)  # the column of an infinite screen stops at 255
+        return (column + 1) % 256     # a byte, as in MBASIC
 
     def TAB(self, n):
         """

@@ -60,21 +60,42 @@ def wrap_text(col: int, width: int, text: str, whole_item: bool = True):
     return ''.join(out), col
 
 
-def tab_target(n: int, width: int) -> int:
-    """The 0-based column TAB(n) goes to: n is 1-based and wraps at the width."""
+INFINITE = 255           # a screen width of 255 never wraps; its column stops at 255
+
+
+def screen_wrap_width(width: int) -> int:
+    """The width the screen wraps at: a width of 255 is infinite (no wrap)."""
+    return 1 << 30 if width >= INFINITE else width
+
+
+def tab_target(n: int, width: int, infinite: bool = False) -> int:
+    """The 0-based column TAB(n) goes to: n is 1-based and wraps at the width.
+
+    On a screen of width 255 (infinite) the count is a byte: n modulo 256.
+    """
     if n < 1:
         return 0
-    return (n - 1) % width
+    return (n - 1) % (256 if infinite else width)
 
 
-def comma_step(col: int, width: int):
+def spc_count(n: int, width: int, infinite: bool = False) -> int:
+    """How many spaces SPC(n) prints: n modulo the width (modulo 256 when infinite)."""
+    n = max(n, 0)
+    return n % (256 if infinite else width)
+
+
+def comma_step(col: int, width: int, infinite: bool = False):
     """What a comma does at column col: ('pad', spaces) or ('newline', 0).
 
     The next zone starts at the next multiple of 14. A zone that would not
     fit completely in the line is not used, so a comma in the last zone
-    starts a new line.
+    starts a new line. When the width is under 14 no zone fits and real MBASIC
+    has no last-zone limit (the limit is a byte that wraps to 242): the comma
+    pads to the next multiple of 14 and the spaces wrap.
     """
     zone = (col // ZONE_WIDTH + 1) * ZONE_WIDTH
-    if zone + ZONE_WIDTH > width:
+    if infinite and col >= INFINITE:
+        return ('pad', zone - col)    # the column stops at 255: no last-zone limit
+    if width >= ZONE_WIDTH and zone + ZONE_WIDTH > width:
         return ('newline', 0)
     return ('pad', zone - col)

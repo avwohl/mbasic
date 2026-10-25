@@ -81,3 +81,20 @@ def test_width_out_of_range_is_an_error(tmp_path, statement):
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+def test_column_stays_after_input_semicolon(tmp_path):
+    """INPUT ;B$ leaves the cursor after the typed answer (real MBASIC: POS is 8 after "? world")."""
+    source = tmp_path / "input_keep.bas"
+    source.write_text('10 INPUT ;B$\n20 PRINT POS(0)\n')
+    out = run_interpreter(tmp_path, source, stdin="RUN\nworld\nSYSTEM\n")
+    assert out == "?  8 \n"
+
+
+def test_error_message_starts_a_new_line(tmp_path):
+    """Text printed before an error stays, and the message goes on the next line (real MBASIC)."""
+    source = tmp_path / "error_line.bas"
+    source.write_text('10 PRINT "AAA";1/0\n20 PRINT "BBB";\n30 X=1/0\n40 PRINT "CCC";\n50 ERROR 5\n')
+    out = run_interpreter(tmp_path, source)
+    assert out == ("AAADivision by zero\n 1.70141E+38 \nBBBDivision by zero\n"
+                   "CCC\nIllegal function call in 50\n")

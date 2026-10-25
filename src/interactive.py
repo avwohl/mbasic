@@ -648,7 +648,20 @@ class InteractiveMode:
                 interpreter.run()
 
         except Exception as e:
+            self._end_partial_line()
             print_error(e, runtime)
+
+    def _end_partial_line(self):
+        """Start a new line before an error message when the cursor is not at column 0.
+
+        Real MBASIC does this: PRINT "AAA"; then an error shows "AAA" and the
+        message on the next line.
+        """
+        try:
+            if self.io.column > 0:
+                self.io.output("")
+        except AttributeError:
+            pass
 
     def cmd_cont(self):
         """CONT - Continue execution after STOP or Break
@@ -701,6 +714,7 @@ class InteractiveMode:
                 raise MBasicError(state.error_info.error_code)
 
         except Exception as e:
+            self._end_partial_line()
             print_error(e, self.program_runtime)
 
     def cmd_list(self, args):

@@ -20,7 +20,8 @@ from src.number_format import (format_for_print, format_number, int_divide, int_
                                INTEGER_DIGITS, SINGLE_DIGITS, DOUBLE_DIGITS)
 from src.iohandler.base import KeyInputPending
 from src.print_column import (SCREEN_WIDTH, FILE_WIDTH, advance_column, wrap_text,
-                              tab_target, comma_step)
+                              tab_target, comma_step, spc_count,
+                              screen_wrap_width, INFINITE)
 from src.error_codes import (error_code_for, format_error_message,
                              get_error_message)
 from src.input_fields import (split_keyboard_fields, keyboard_number, val_number,
@@ -1113,9 +1114,10 @@ class Interpreter:
         if file_info is not None:
             return file_info.get('col', 0)
         column = getattr(self.io, 'column', None)
-        if isinstance(column, int):
-            return column
-        return getattr(self, '_fallback_column', 0)
+        if not isinstance(column, int):
+            column = getattr(self, '_fallback_column', 0)
+        # The column of an infinite screen (WIDTH 255) stops at 255
+        return min(column, INFINITE) if self._output_width(None) >= INFINITE else column
 
     def _output_width(self, file_info):
         """The line width of the screen (set by WIDTH) or of a file."""
@@ -1124,9 +1126,18 @@ class Interpreter:
         width = getattr(self.io, 'width', SCREEN_WIDTH)
         return width if isinstance(width, int) and width > 0 else SCREEN_WIDTH
 
-    def _screen_line_ended(self):
-        """A line typed at the keyboard ends with Enter: the cursor is at column 0."""
+    def _screen_line_ended(self, kept_text=None):
+        """A line typed at the keyboard ends with Enter: the cursor is at column 0.
+
+        INPUT; keeps the cursor after the typed answer instead: kept_text is
+        the answer, and the column grows by its length.
+        """
         try:
+            if kept_text is not None:
+                col = self._output_column(None) + len(kept_text)
+                self.io.column = col
+                self._fallback_column = col
+                return
             self.io.column = 0
         except AttributeError:
             pass
@@ -1172,17 +1183,28 @@ class Interpreter:
             file_handle = None
 
         width = self._output_width(file_info)
+        # A screen of width 255 is infinite: nothing wraps (files do wrap)
+        infinite = file_info is None and width >= INFINITE
+        wrap_width = screen_wrap_width(width) if file_info is None else width
         col = self._output_column(file_info)
         pieces = []
+        top = (1 << 30) if not infinite else INFINITE     # an infinite screen's column stops here
 
         def put(text):
             nonlocal col
             pieces.append(text)
             col = advance_column(col, text)
 
+        def flush():
+            if pieces:
+                self._send_output(file_info, file_handle, ''.join(pieces))
+                del pieces[:]
+
         retry = False
+        self._print_flush = flush if file_info is None else None
         try:
             for i, expr in enumerate(stmt.expressions):
+                col = min(col, top)
                 # Each item is evaluated when its turn comes, so POS(0) sees
                 # the text of the items before it.
                 if file_info is None:
@@ -1192,14 +1214,15 @@ class Interpreter:
                 if isinstance(value, TabMarker):
                     # TAB(n): column n (1-based); a cursor already past it
                     # starts a new line first.
-                    target = tab_target(value.column, width)
+                    target = tab_target(value.column, width, infinite)
                     if col > target:
                         put('\n')
                     put(' ' * (target - col))
                 elif isinstance(value, SpcMarker):
-                    # SPC(n): n spaces; the count is a byte and wraps at the width
+                    # SPC(n): n spaces; the count wraps at the width
                     text, new_col = wrap_text(
-                        col, width, ' ' * (max(value.count, 0) % 256 % width), False)
+                        col, wrap_width,
+                        ' ' * spc_count(value.count, width, infinite), False)
                     pieces.append(text)
                     col = new_col
                 else:
@@ -1219,16 +1242,17 @@ class Interpreter:
                     # On the screen an item that does not fit goes whole to
                     # the next line; a file splits it at the width.
                     text, new_col = wrap_text(
-                        col, width, text, file_info is None)
+                        col, wrap_width, text, file_info is None)
                     pieces.append(text)
                     col = new_col
 
+                col = min(col, top)
                 if i < len(stmt.separators):
                     sep = stmt.separators[i]
                     if sep == ',':
                         # Next 14-column zone; the last zone starts a new line
                         if file_info is None:
-                            action, count = comma_step(col, width)
+                            action, count = comma_step(col, width, infinite)
                         else:
                             # a file has no last-zone rule: it pads, wrapping
                             action, count = 'pad', (col // 14 + 1) * 14 - col
@@ -1236,7 +1260,7 @@ class Interpreter:
                             put('\n')
                         else:
                             text, new_col = wrap_text(
-                                col, width, ' ' * count, False)
+                                col, wrap_width, ' ' * count, False)
                             pieces.append(text)
                             col = new_col
                     elif sep == '\n':
@@ -1251,6 +1275,7 @@ class Interpreter:
             raise
         finally:
             self.builtins.print_column = None
+            self._print_flush = None
             if pieces and not retry:
                 self._send_output(file_info, file_handle, ''.join(pieces))
 
@@ -1417,6 +1442,11 @@ class Interpreter:
         """
         if self.runtime.has_error_handler():
             raise RuntimeError("Division by zero")
+        # The items of a PRINT in progress come out first: the message follows
+        # them on the same line, as on the real binary.
+        flush = getattr(self, '_print_flush', None)
+        if flush is not None:
+            flush()
         self.io.output("Division by zero")
         infinity = MBF_INFINITY_SINGLE
         try:
@@ -2218,7 +2248,8 @@ class Interpreter:
 
         if self.state.input_buffer:
             line = self.state.input_buffer.pop(0)
-            self._screen_line_ended()
+            # INPUT; keeps the cursor after the answer
+            self._screen_line_ended(line if stmt.suppress_question else None)
         else:
             self._pause_for_input(stmt)
             return

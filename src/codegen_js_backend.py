@@ -129,28 +129,32 @@ function _width_of(f) { return f === null || f === undefined ? _width : 255; }
 // zone starts a new line; a file splits at its width of 255 and pads. A value may be a function (an item that reads POS), called when its turn comes.
 function _print_list(f, items, seps) {
     const w = _width_of(f), isScreen = f === null || f === undefined;
+    // A screen of width 255 is infinite: nothing wraps, TAB and SPC counts are bytes.
+    const inf = isScreen && w >= 255, ww = inf ? 1e9 : w, md = inf ? 256 : w;
     for (let i = 0; i < items.length; i++) {
         const it = items[i], sep = seps[i];
         let out = "";
         if (it[0] === 1) {
             // TAB(n): column n; a cursor already past it starts a new line first
             const n = _round_half_away(it[1]), col = _cur_col(f);
-            const target = n < 1 ? 0 : (n - 1) % w;
+            const target = n < 1 ? 0 : (n - 1) % md;
             if (col > target) out = "\n" + " ".repeat(target);
             else out = " ".repeat(target - col);
         } else if (it[0] === 2) {
             // SPC(n): n spaces, n wrapping at the width
-            out = _wrap_text(_cur_col(f), w, " ".repeat(Math.max(0, _round_half_away(it[1])) % 256 % w), false);
+            out = _wrap_text(_cur_col(f), ww, " ".repeat(Math.max(0, _round_half_away(it[1])) % md), false);
         } else {
             const v = typeof it[1] === "function" ? it[1]() : it[1];
-            out = _wrap_text(_cur_col(f), w, _pstr(v, it[2]), isScreen);
+            out = _wrap_text(_cur_col(f), ww, _pstr(v, it[2]), isScreen);
         }
         if (out !== "") _emit(f, out);
         if (sep === ",") {
             // next 14-column zone; the last zone starts a new line
             const c = _cur_col(f), zone = (Math.floor(c / 14) + 1) * 14;
-            if (isScreen) _emit(f, zone + 14 > w ? "\n" : " ".repeat(zone - c));
-            else _emit(f, _wrap_text(c, w, " ".repeat(zone - c), false));  // a file pads and wraps
+            // under width 14 no zone fits and there is no last-zone limit: pad, and the spaces wrap;
+            // the column of an infinite screen stops at 255 and then pads too
+            if (isScreen && w >= 14 && zone + 14 > w && !(inf && c >= 255)) _emit(f, "\n");
+            else _emit(f, _wrap_text(c, ww, " ".repeat(zone - c), false));
         }
     }
     const last = seps.length ? seps[seps.length - 1] : "\n";
@@ -160,7 +164,7 @@ function _print_list(f, items, seps) {
 
 JS_PRINT_FILES = r'''
 function _cur_col(f) {
-    if (f === null || f === undefined) return _col;
+    if (f === null || f === undefined) return _width >= 255 ? Math.min(_col, 255) : _col;
     const file = _files[f];
     if (!file || typeof file.content !== "string") return 0;
     return _advance(0, file.content.slice(file.content.lastIndexOf("\n") + 1));
@@ -171,7 +175,7 @@ function _emit(f, s) {
 '''
 
 JS_PRINT_SCREEN = r'''
-function _cur_col(f) { return _col; }
+function _cur_col(f) { return _width >= 255 ? Math.min(_col, 255) : _col; }
 function _emit(f, s) { _print(s, false); }
 '''
 
@@ -408,7 +412,8 @@ JS_INPUT_RUNTIME = r'''
 // fs.readSync (through _fill_keys, one buffer shared with INPUT$). The browser waits for keydown
 // events, echoes the typed characters into the page and ends the line at Enter.
 // At end of stdin Node stops with "?Input past end" (exit 1) instead of waiting or looping.
-async function _read_line(prompt) {
+async function _read_line(prompt, keep) {
+    // keep (INPUT; with no newline after the answer): the cursor stays after the typed text
     _print(prompt, false);
     if (typeof window !== "undefined") {
         let typed = "";
@@ -416,7 +421,7 @@ async function _read_line(prompt) {
             if (_inkey_buffer.length === 0) await _fill_keys(1);
             const ch = _inkey_buffer[0];
             _inkey_buffer = _inkey_buffer.slice(1);
-            if (ch === "\r" || ch === "\n") { _print(""); return typed; }
+            if (ch === "\r" || ch === "\n") { if (!keep) _print(""); return typed; }
             if (ch === "\x03") _error("Break");
             if (ch === "\b" || ch === "\x7f") {
                 if (typed.length > 0) { typed = typed.slice(0, -1); _unprint_char(); }
@@ -432,14 +437,14 @@ async function _read_line(prompt) {
             let line = _inkey_buffer.slice(0, nl);
             _inkey_buffer = _inkey_buffer.slice(nl + 1);
             if (line.endsWith("\r")) line = line.slice(0, -1);
-            _col = 0;  // the Enter that ended the line
+            if (keep) _col += line.length; else _col = 0;  // the Enter that ended the line
             return line;
         }
         if (!(await _fill_keys(4096, true))) {
             if (_inkey_buffer.length === 0) _error("Input past end");
             const rest = _inkey_buffer;
             _inkey_buffer = "";
-            _col = 0;
+            if (keep) _col += rest.length; else _col = 0;
             return rest;
         }
     }
@@ -542,10 +547,10 @@ function _input_parse(line, types) {
     return vals;
 }
 
-async function _input_vals(prompt, types) {
+async function _input_vals(prompt, types, keep) {
     // types has one letter per variable: S string, I integer, F single, N double.
     for (;;) {
-        const vals = _input_parse(await _read_line(prompt), types);
+        const vals = _input_parse(await _read_line(prompt, keep), types);
         if (vals !== null) return vals;
         _print("?Redo from start");
     }
@@ -1092,7 +1097,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.indent_level += 1
         code.append(self.indent() + '// POS(0) - current print position (1-based)')
         code.append(self.indent() + '// Note: Simplified - would need to track actual cursor position')
-        code.append(self.indent() + 'return _col + 1;')
+        code.append(self.indent() + 'return ((_width >= 255 ? Math.min(_col, 255) : _col) + 1) % 256;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
         code.append('')
@@ -2753,7 +2758,7 @@ class JavaScriptBackend(CodeGenBackend):
                 targets.append(self._input_lvalue(var))
             # One _input_vals call reads the whole line for all variables (Redo covers them together)
             assigns = ' '.join(f'{t} = _iv[{k}];' for k, t in enumerate(targets))
-            code.append(self.indent() + f'{{ const _iv = await _input_vals("{prompt_str}", "{"".join(letters)}"); {assigns} }}')
+            code.append(self.indent() + f'{{ const _iv = await _input_vals("{prompt_str}", "{"".join(letters)}"{", true" if stmt.suppress_question else ""}); {assigns} }}')
 
         return code
 

@@ -26,13 +26,24 @@ The column is 0-based inside the code. POS(0) shows the column plus 1.
   until n fits (`TAB(90)` at width 80 is `TAB(10)`). If the
   cursor is already past the target column, a new line starts first. If the
   cursor is at the target column, nothing moves. `TAB(0)` is `TAB(1)`.
-* `SPC(n)` prints n spaces. The count is a byte (n modulo 256) and then n
-  modulo the width. The spaces wrap one at a time.
+* `SPC(n)` prints n spaces. The count is n modulo the width, for example
+  `SPC(256)` at width 40 prints 16 spaces. A negative count is 0. The spaces
+  wrap one at a time.
 * A comma goes to the next multiple of 14. A zone that does not fit
   completely in the line is not used. A comma in the last zone starts a new
   line. At width 80 the last zone starts at column 56, so a comma at column
-  56 or more starts a new line.
+  56 or more starts a new line. When the width is less than 14, no zone
+  fits and there is no last-zone rule: the comma pads to the next multiple
+  of 14 and the spaces wrap, so `PRINT 1,2` at width 3 prints blank lines.
 * After INPUT and LINE INPUT the column is 0, because the user typed Enter.
+  With `INPUT ;` (a semicolon after INPUT) the cursor stays after the answer,
+  and the column grows by the length of the answer.
+* `WIDTH 255` is an infinite width on the screen. Nothing wraps, and an item
+  is never moved to the next line. The column stops at 255 and does not go
+  higher: `POS(0)` is then 0 (256 as a byte). `TAB(n)` and `SPC(n)` use n
+  modulo 256, so `TAB(300)` goes to column 44. A comma at column 255 or more
+  pads to the next multiple of 14. A comma at a lower column in the last
+  zone still starts a new line. A file with width 255 does wrap.
 * A tab character moves to the next multiple of 8. A carriage return sets
   the column to 0. A backspace moves left. The other control characters do
   not move the cursor.
@@ -66,6 +77,11 @@ A file has a width of 255 and these rules are different:
 
 ## Differences that remain
 
+* The curses, Tk and web UIs do not check the column before they show an
+  error message. The message can follow the text of a PRINT that ended with
+  a semicolon on the same line. The CLI starts a new line first, as real
+  MBASIC does. The "Division by zero" message that does not stop the
+  program follows the text on the same line, as in real MBASIC.
 * The interpreter writes a newline as one `\n`. Real MBASIC writes CR LF and
   an LF alone does not reset the column. `PRINT "ab";CHR$(10);"c"` gives
   POS 4 in real MBASIC and 2 here.
@@ -80,6 +96,12 @@ A file has a width of 255 and these rules are different:
 * The CLS statement does not clear the screen, so it does not touch the
   column.
 * PRINT USING does not wrap. It updates the column of the screen or file.
+  Real MBASIC wraps the output of PRINT USING at the width, and the
+  whole-item rule applies to each field. At width 30,
+  `PRINT USING "#####.##";1.5;2.5;3.5;4.5;5.5;6.5` breaks the line inside the
+  fifth field in real MBASIC. Here the output is one line of 48 characters.
+  A string field wider than the rest of the line also keeps its trailing
+  spaces on the wrapped line in real MBASIC.
 * When an error stops a PRINT in the middle, the items before the error
   appear, as in real MBASIC. Real MBASIC then starts a new line before it
   prints the error message. The error messages of this implementation do
