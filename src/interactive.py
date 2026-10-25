@@ -32,7 +32,7 @@ from src.terminal_errors import TERMINAL_ERRORS
 from src.debug_logger import debug_log, debug_log_error, is_debug_mode
 from src.ui.keybinding_loader import KeybindingLoader
 from src.version import VERSION
-from src.error_codes import (message_for, format_error_message,
+from src.error_codes import (message_for, format_error_message, error_code_for,
                              BAD_FILE_NAME, CANT_CONTINUE, FILE_NOT_FOUND,
                              ILLEGAL_FUNCTION_CALL, MISSING_OPERAND,
                              SYNTAX_ERROR, UNDEFINED_LINE_NUMBER)
@@ -273,16 +273,22 @@ class InteractiveMode:
 
         Returns: LineNode or None if parse fails
         """
-        line_node, error = self.program.parse_single_line(line_text, basic_line_num)
+        # A line that does not parse is kept, as MBASIC keeps it: the Syntax
+        # error comes when the bad statement runs.  Only an &H or &O overflow
+        # refuses the line (None comes back).
+        line_node, error = self.program.parse_single_line(
+            line_text, basic_line_num, defer_syntax_errors=True)
 
         for notice in self.program.take_notices():
             print(notice)               # "Overflow" for a literal such as 1E39
 
         if error:
-            # Print error message
-            print(error)
-            if basic_line_num is not None:
-                print(f"  {line_text}")
+            if error.startswith("Overflow"):
+                print("Overflow")       # bare, as MBASIC prints it
+            else:
+                print(error)
+                if basic_line_num is not None:
+                    print(f"  {line_text}")
 
         return line_node
 
@@ -537,10 +543,11 @@ class InteractiveMode:
                     if self.program_runtime:
                         self.program_runtime.statement_table.delete_line(line_num)
             else:
-                # Add/replace line - store both text and parsed AST
-                self.lines[line_num] = line
+                # Add/replace line - store both text and parsed AST.  A refused
+                # line (&H overflow) leaves the old line, text and AST, alone.
                 line_ast = self.parse_single_line(line)
                 if line_ast:
+                    self.lines[line_num] = line
                     self.line_asts[line_num] = line_ast
                     # Clear execution state since line edits invalidate GOSUB/FOR stacks
                     self.clear_execution_state()
@@ -660,6 +667,18 @@ class InteractiveMode:
         except Exception as e:
             self._end_partial_line()
             print_error(e, runtime)
+            self._edit_after_syntax_error(e, runtime)
+
+    def _edit_after_syntax_error(self, error, runtime):
+        """Open the line editor on the line of an untrapped Syntax error.
+
+        MBASIC does this after "Syntax error in N": it prints Ok and starts
+        the editor of EDIT N, so the person can fix the line. The same editor
+        runs here, with input from the same stream as the other commands.
+        """
+        line_num = runtime.pc.line_num if runtime and runtime.pc else None
+        if line_num and error_code_for(error) == 2 and line_num in self.lines:
+            self.cmd_edit(str(line_num))
 
     def _end_partial_line(self):
         """Start a new line before an error message when the cursor is not at column 0.
@@ -797,6 +816,11 @@ class InteractiveMode:
 
             success, errors = self.program.load_from_file(filename)
 
+            # "Overflow" for each literal such as 1E39, printed while the
+            # file is read, so before the "Loaded" line
+            for notice in self.program.take_notices():
+                print(notice)
+
             if errors:
                 # Print parse errors
                 for line_num, error in errors:
@@ -836,6 +860,9 @@ class InteractiveMode:
         try:
             # Use ProgramManager's merge_from_file
             success, errors, lines_added, lines_replaced = self.program.merge_from_file(filename)
+
+            for notice in self.program.take_notices():
+                print(notice)           # "Overflow", as for LOAD
 
             # Show parse errors if any
             if errors:
@@ -936,9 +963,9 @@ class InteractiveMode:
                     match = re.match(r'^(\d+)(?=.)', line)
                     if match:
                         line_num = int(match.group(1))
-                        self.lines[line_num] = line
                         line_ast = self.parse_single_line(line)
                         if line_ast:
+                            self.lines[line_num] = line
                             self.line_asts[line_num] = line_ast
             else:
                 # Normal mode - clear and load
@@ -956,9 +983,9 @@ class InteractiveMode:
                     match = re.match(r'^(\d+)(?=.)', line)
                     if match:
                         line_num = int(match.group(1))
-                        self.lines[line_num] = line
                         line_ast = self.parse_single_line(line)
                         if line_ast:
+                            self.lines[line_num] = line
                             self.line_asts[line_num] = line_ast
 
             # Handle DELETE range if specified
@@ -1213,7 +1240,7 @@ class InteractiveMode:
         new_text = ""
 
         # Display line number prompt
-        print(f"{line_num}", end='', flush=True)
+        print(f"{line_num} ", end="", flush=True)
 
         try:
             while True:
@@ -1281,7 +1308,7 @@ class InteractiveMode:
                     print(text[cursor:])
                     cursor = 0
                     new_text = ""
-                    print(f"{line_num}", end='', flush=True)
+                    print(f"{line_num} ", end="", flush=True)
 
                 elif ch.upper() == 'A':
                     # A: Abort and restart
@@ -1289,7 +1316,7 @@ class InteractiveMode:
                     text = original_text
                     cursor = 0
                     new_text = ""
-                    print(f"{line_num}", end='', flush=True)
+                    print(f"{line_num} ", end="", flush=True)
 
                 elif ch.upper() == 'C':
                     # C: Change next character
@@ -1302,11 +1329,11 @@ class InteractiveMode:
 
             # Update the line with new text
             full_line = str(line_num) + " " + new_text
-            self.lines[line_num] = full_line
 
             # Parse and update AST
             line_ast = self.parse_single_line(full_line)
             if line_ast:
+                self.lines[line_num] = full_line
                 self.line_asts[line_num] = line_ast
                 # Update runtime's statement_table if program is running
                 if self.program_runtime:
@@ -1496,11 +1523,11 @@ class InteractiveMode:
 
                 # Add the line with its number
                 full_line = str(current_line) + " " + line_text.strip()
-                self.lines[current_line] = full_line
 
                 # Parse and store AST
                 line_ast = self.parse_single_line(full_line)
                 if line_ast:
+                    self.lines[current_line] = full_line
                     self.line_asts[current_line] = line_ast
                     # Update runtime's statement_table if program is running
                     if self.program_runtime:

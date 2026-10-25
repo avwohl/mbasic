@@ -797,6 +797,18 @@ class Z88dkCBackend(CodeGenBackend):
                     self.needs_error_handling = True
                 elif isinstance(stmt, WriteStatementNode) and self._write_error_code(stmt):
                     self.needs_error_handling = True
+                elif self._has_syntax_error_statement(stmt):
+                    self.needs_error_handling = True
+
+    @classmethod
+    def _has_syntax_error_statement(cls, stmt) -> bool:
+        """Whether stmt is, or an IF branch of it holds, a SyntaxErrorStatementNode."""
+        if isinstance(stmt, SyntaxErrorStatementNode):
+            return True
+        if isinstance(stmt, IfStatementNode):
+            branches = list(stmt.then_statements) + list(stmt.else_statements or [])
+            return any(cls._has_syntax_error_statement(s) for s in branches)
+        return False
 
     @staticmethod
     def _write_error_code(stmt) -> int:
@@ -999,6 +1011,10 @@ class Z88dkCBackend(CodeGenBackend):
         if self._get_expression_type(expr) == VarType.INTEGER:
             return c_expr
         return f'mb25_cint({c_expr})'
+
+    def _generate_syntax_error(self, stmt: SyntaxErrorStatementNode) -> List[str]:
+        """A statement MBASIC could not parse: Syntax error (2) when the program reaches it."""
+        return [self.indent() + 'mb25_fail("Syntax error");']
 
     def _generate_variable_declarations(self) -> List[str]:
         """Generate C variable declarations from symbol table"""
@@ -1210,6 +1226,8 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_end(stmt)
         elif isinstance(stmt, RemarkStatementNode):
             return self._generate_remark(stmt)
+        elif isinstance(stmt, SyntaxErrorStatementNode):
+            return self._generate_syntax_error(stmt)
         elif isinstance(stmt, WhileStatementNode):
             return self._generate_while(stmt)
         elif isinstance(stmt, WendStatementNode):

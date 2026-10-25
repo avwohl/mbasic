@@ -20,6 +20,7 @@ from typing import Any, List, Optional, Dict, Set, Tuple
 from src.tokens import Token, TokenType
 from src.ast_nodes import *
 from src.keyword_case_manager import KeywordCaseManager
+from src.debug_logger import debug_log
 
 
 class ParseError(Exception):
@@ -42,8 +43,13 @@ class Parser:
     2. parse_program() - Parse program with global type information
     """
 
-    def __init__(self, tokens: List[Token], def_type_map: Dict[str, str] = None, source: str = "", keyword_case_manager: Optional[KeywordCaseManager] = None):
+    def __init__(self, tokens: List[Token], def_type_map: Dict[str, str] = None, source: str = "", keyword_case_manager: Optional[KeywordCaseManager] = None,
+                 defer_syntax_errors: bool = False):
         self.tokens = tokens
+        # MBASIC stores a line it cannot parse and fails only when the bad
+        # statement runs.  With this flag a bad statement becomes a
+        # SyntaxErrorStatementNode that holds the rest of the line.
+        self.defer_syntax_errors = defer_syntax_errors
         self.position = 0
         self.source = source  # Original source code for statement highlighting
         self.source_lines = source.split('\n') if source else []  # Split into lines for easy access
@@ -331,6 +337,41 @@ class Parser:
 
             pos += 1
 
+    def _syntax_error_statement(self) -> StatementNode:
+        """Take the tokens of one bad statement as a statement that fails when it runs.
+
+        The statement ends at the next ':' (or ELSE), as MBASIC finds the end
+        of a statement when it skips one: RESUME NEXT after the error goes on
+        with the statement behind the ':'.
+        """
+        token = self.current()
+        self.position += 1
+        while not self.at_end_of_line() and not self.match(TokenType.COLON, TokenType.ELSE):
+            self.position += 1
+        text = ""
+        if token is not None and token.line >= 1 and token.line <= len(self.source_lines):
+            end = self.current()
+            line_text = self.source_lines[token.line - 1]
+            stop = end.column - 1 if end is not None and end.line == token.line and \
+                end.type in (TokenType.COLON, TokenType.ELSE) else len(line_text)
+            text = line_text[max(token.column - 1, 0):stop].rstrip('\r\n ')
+        return SyntaxErrorStatementNode(
+            text=text,
+            line_num=token.line if token else 0,
+            column=token.column if token else 0)
+
+    def _parse_statement_or_defer(self) -> Optional[StatementNode]:
+        """parse_statement, but with defer_syntax_errors a bad statement is kept as a run-time error."""
+        if not self.defer_syntax_errors:
+            return self.parse_statement()
+        start = self.position
+        try:
+            return self.parse_statement()
+        except Exception as e:
+            debug_log(f"statement kept as a run-time Syntax error: {e}", level=1)
+            self.position = start
+            return self._syntax_error_statement()
+
     def parse_line(self) -> Optional[LineNode]:
         """
         Parse a single line
@@ -361,7 +402,7 @@ class Parser:
             stmt_start_token = self.current()
             stmt_start_col = stmt_start_token.column if stmt_start_token else 0
 
-            stmt = self.parse_statement()
+            stmt = self._parse_statement_or_defer()
 
             if stmt:
                 # Track statement end position (column after last token consumed)
@@ -397,6 +438,9 @@ class Parser:
                 # If there's more content after the semicolon (not end-of-line, not colon), it's an error.
                 if not self.at_end_of_line() and not self.match(TokenType.COLON):
                     token = self.current()
+                    if self.defer_syntax_errors:
+                        statements.append(self._syntax_error_statement())
+                        continue
                     raise ParseError(f"Expected : or newline after ;, got {token.type.name}", token)
             elif self.match(TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE):
                 # Allow REM/REMARK/' without colon after statement (standard MBASIC)
@@ -408,6 +452,9 @@ class Parser:
             elif not self.at_end_of_line():
                 # Expected COLON or NEWLINE
                 token = self.current()
+                if self.defer_syntax_errors:
+                    statements.append(self._syntax_error_statement())
+                    continue
                 raise ParseError(f"Expected : or newline, got {token.type.name}", token)
 
         # Consume NEWLINE
@@ -2229,7 +2276,7 @@ class Parser:
         so 'ELSE FOR I=1 TO 2:PRINT I:NEXT:PRINT "b"' holds all four statements."""
         statements: List[StatementNode] = []
         while True:
-            stmt = self.parse_statement()
+            stmt = self._parse_statement_or_defer()
             if stmt:
                 statements.append(stmt)
             if self.match(TokenType.COLON):
@@ -2310,7 +2357,7 @@ class Parser:
                 # Pattern: IF cond THEN stmt1 :stmt2 :stmt3 ELSE stmt4
                 # or: IF cond THEN stmt1 :stmt2 :ELSE stmt3
                 while not self.at_end_of_line() and not self.match(TokenType.ELSE):
-                    stmt = self.parse_statement()
+                    stmt = self._parse_statement_or_defer()
                     if stmt:
                         then_statements.append(stmt)
 

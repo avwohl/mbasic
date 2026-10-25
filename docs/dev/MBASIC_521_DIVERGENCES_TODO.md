@@ -80,14 +80,14 @@ What is still different:
 - The sign of machine infinity after a double division by zero is erratic on
   the binary (it depends on what was computed before). We use the sign of the
   dividend.
-- The interpreter prints the `Overflow` message of a numeric literal when a
-  line is typed. It does not print the message when `LOAD` or the command line
-  reads the program from a file, and `LIST` shows the text as typed (#38).
-- The binary refuses a line with an `&H` constant of more than four digits, or
-  an `&O` constant above 65535. It prints `Overflow` and does not store the
-  line. The interpreter prints `Overflow` too, but it keeps the line: `LIST`
-  shows the line, and `RUN` skips the statement with no error (#39). The
-  JavaScript compiler stops with a compilation error, and the compilation
+- Done (#38): `LOAD`, `MERGE` and the command-line load print `Overflow` for
+  each numeric literal that is too big (such as `1E39`), while they read the
+  file, as a typed line does. `LIST` shows the text as typed.
+- Done (#39): a line with an `&H` constant of more than four digits, or an
+  `&O` constant above 65535, is refused with `Overflow` and not stored. A
+  refused replacement leaves the old line. `LOAD` and `MERGE` stop reading the
+  file at such a line, as the binary does (the lines after it are not loaded).
+  The JavaScript compiler stops with a compilation error, and the compilation
   error stays.
 - The text of an `Overflow` or `Division by zero` message that does not stop the
   program is not wrapped at the `WIDTH` limit. The binary sends the message
@@ -174,12 +174,12 @@ immediate line works there. Two differences are left:
   the CLI and curses print nothing (#51).
 
 
-## 5. Reserved words followed by a type suffix
+## 5. Reserved words followed by a type suffix - done (#52)
 
 `NAME$`, `LEN%`, `FOR$`, `TO%`, `ERR`, `ERL` are all syntax errors on the real
-binary, and we accept them (#52). Two of the tests here were written using
-`NAME$` and died at that line on the binary; they have been renamed to `NM$`,
-but the lexer rule is untouched.
+binary. Done (#52): the lexer now gives the same result. Two of the tests here
+were written using `NAME$` and died at that line on the binary; they have been
+renamed to `NM$`.
 
 MBASIC's CRUNCH (`bintrp.mac`, the `tstanm` call around line 2504) treats a
 reserved word as a keyword **only when the character after it is not a letter,
@@ -192,11 +192,17 @@ not a digit and not `.`**. That single rule gives:
 So the folklore that a variable name may not *contain* a reserved word is
 false for 5.21; what matters is only what follows the word.
 
-Our lexer (`src/lexer.py:250-267`) does maximal munch, pulls the trailing
-suffix into the identifier, and then looks the whole string up in `KEYWORDS`.
-`MID$` and `STR$` only work because those entries are stored *with* the dollar.
+Our lexer (`read_identifier` in `src/lexer.py`) reads the identifier with
+maximal munch, and looks the whole string up in `KEYWORDS` first. `MID$` and
+`STR$` work because those entries are stored *with* the dollar. When the
+whole string is not a keyword, but the string without its type character is a
+reserved word, the lexer returns the keyword and leaves the type character in
+the input. The `RESERVED_STEMS` set in `src/lexer.py` holds the reserved words
+of the CRUNCH table. The words this implementation adds (`HELP`, `SHOW`,
+`SETTINGS` and so on) are not in the set, so `SHOW%` is a plain variable. The
+stray type character is a Syntax error when the statement runs (section 6).
 
-Two traps for anyone implementing the real rule:
+Two traps for the rule, both handled:
 
 - `INPUT$(n)` is legal on 5.21 and must keep working. `INPUT$` is not in the
   reserved list at all - `INPUT` crunches and the `$` stays an ordinary
@@ -205,14 +211,34 @@ Two traps for anyone implementing the real rule:
   dollar are ordinary variables.
 
 
-## 6. Syntax errors are found at the wrong time
+## 6. Syntax errors are found at the wrong time - done (#53)
 
-We reject a bad line when it is *entered*, print the complaint there, store the
-line anyway, and then silently skip it when the program runs. The binary
-crunches the line at entry without complaint and reports `Syntax error in 10`
-at RUN - after which it opens the line editor on the offending line, which is
-its own piece of behaviour we do not have (#53).
+The binary crunches a line at entry without a message, stores it, and reports
+`Syntax error in 10` at RUN, when execution reaches the bad statement. The
+statements before the bad one on the line run first, and `RESUME NEXT` goes on
+with the statement behind the next `:`. After an untrapped error the binary
+opens the line editor on the line.
 
+Done (#53): the interpreter does the same. A statement that does not parse
+becomes a `SyntaxErrorStatementNode` (see `ProgramManager.parse_single_line`
+with `defer_syntax_errors`, and the parser and lexer flags of the same idea).
+It holds the text of the bad statement, up to the next `:` or ELSE. Typed
+lines, `LOAD`, `MERGE`, `EDIT`, `AUTO`, `CHAIN` and `RENUM` store the line
+and print nothing. `LIST`, `SAVE` and `RENUM` use the text of the line, so
+they keep it as typed. When the statement runs it raises error 2, which
+`ON ERROR` can trap. After an untrapped error the CLI starts the `EDIT`
+command on the line. The `EDIT` prompt now has the space after the line number
+that the binary prints (`20 PRINT`, not `20PRINT`). The full-screen and window
+UIs still refuse a bad line when it is typed in their editors, because they
+show the error at once. They keep a bad line that `LOAD` or `MERGE` reads.
+
+The JavaScript and C backends turn the same statement into a run-time Syntax
+error (`--compile-js`, `--compile-c`). The JavaScript runtime prints
+`?Syntax error` without the line number (#41). A line number that is too large
+or missing, and an `&H` or `&O` overflow, still stop the compilation.
+
+An unterminated string is still a Syntax error here, where the binary accepts
+`PRINT "abc` and prints `abc`. This difference is older than #53.
 
 One case is fixed. `WRITE` with a `,` or `;` after the last item (`WRITE 1;`,
 `WRITE #1,2,`) is accepted at entry and on LOAD, and LIST and RENUM keep its

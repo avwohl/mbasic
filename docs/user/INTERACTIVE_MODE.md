@@ -74,7 +74,9 @@ For an installed package, use `mbasic myprogram.bas --ui cli`. On Linux and macO
 
 LOAD and MERGE accept both `10 PRINT "hello"` and `10PRINT "hello"`. A file line that holds only a line number deletes that program line, as when you type the number at the prompt. No error occurs if the line does not exist.
 
-Each load message names the file, the file line, and the BASIC line number (when the line has one). The message then gives the reason for the error. A file with no numbered lines gives the message "No numbered program lines found". The loader reports each line without a line number and continues with the next line. The loader loads the valid lines and reports the rejected lines.
+Each load message names the file, the file line, and the BASIC line number (when the line has one). The message then gives the reason for the error. A file with no numbered lines gives the message "No numbered program lines found". The loader reports each line without a line number and continues with the next line.
+
+As in MBASIC, the loader keeps a line that has a syntax error and prints no message. The error occurs when the program reaches the bad statement: the message is `Syntax error in 20`, and the CLI then opens the `EDIT` command on line 20. `LIST` shows the line as you typed it. A numeric constant that is too big (such as `1E39`) gives the message `Overflow`, and the line stays in the program. A line with an `&H` or `&O` constant that does not fit in 16 bits gives the message `Overflow`, and the loader stops at this line. The same rules apply to a line that you type.
 
 Real MBASIC stops the load at the first line without a line number. The loader ignores a CP/M end-of-file mark (^Z) and all text after the mark.
 

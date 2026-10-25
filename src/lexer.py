@@ -65,10 +65,35 @@ def radix_constant_value(digits: str, base: int, line: int, column: int) -> int:
     return value - 65536 if value >= 32768 else value
 
 
-class Lexer:
-    """Tokenizes MBASIC 5.21 source code"""
+# Reserved words of MBASIC 5.21 (the CRUNCH table in bintrp.mac) that are plain
+# words, without "$" or "(" inside.  CRUNCH takes one of these as a keyword
+# when the next character is not a letter, a digit or ".", so "NAME$", "LEN%"
+# and "FOR$" are the keyword followed by a stray type character.  Words of
+# this implementation that the binary does not reserve (HELP, SHOW, SET and so
+# on) are not here: "SHOW%" is an ordinary variable.
+RESERVED_STEMS = frozenset((
+    "auto and abs atn asc close cont clear cint csng cdbl cvi cvs cvd cos call "
+    "common chain delete data dim defstr defint defsng defdbl def else end "
+    "erase edit error erl err exp eof eqv for field files fix fre goto gosub "
+    "get input if instr int inp imp kill lprint llist lpos let line load lset "
+    "list log loc len lof merge mod name new not open out on or option print "
+    "put poke pos peek return read run restore rem resume rset rnd renum "
+    "reset randomize stop swap save step sgn sqr sin system then tron troff "
+    "to tan using val varptr width wait while wend write xor").split()) & frozenset(KEYWORDS)
 
-    def __init__(self, source: str, keyword_case_manager: Optional[SimpleKeywordCase] = None):
+
+class Lexer:
+    """Tokenizes MBASIC 5.21 source code
+
+    With defer_errors, text the lexer cannot read (a stray "$" after a
+    reserved word, say) becomes an ILLEGAL token that holds the rest of the
+    line, so the parser can store the line and fail when it runs, as MBASIC
+    does.  Overflow still raises LexerOverflow: MBASIC refuses such a line.
+    """
+
+    def __init__(self, source: str, keyword_case_manager: Optional[SimpleKeywordCase] = None,
+                 defer_errors: bool = False):
+        self.defer_errors = defer_errors
         self.source = source
         self.pos = 0
         self.line = 1
@@ -378,6 +403,19 @@ class Lexer:
                 token.original_case_keyword = display_case
                 return token
 
+        # A reserved word followed by a type character ("NAME$", "LEN%", "FOR$")
+        # is the keyword: CRUNCH ends a reserved word at any character that is
+        # not a letter, a digit or ".".  The type character stays in the input
+        # and nothing can use it, which is a Syntax error when the line runs.
+        if len(ident) > 1 and ident[-1] in '$%!#' and ident_lower[:-1] in RESERVED_STEMS:
+            keyword_part = ident_lower[:-1]
+            self.pos -= 1
+            self.column -= 1
+            token = Token(KEYWORDS[keyword_part], keyword_part, start_line, start_column)
+            token.original_case_keyword = self.keyword_case_manager.register_keyword(
+                keyword_part, ident[:-1], start_line, start_column)
+            return token
+
         # NOTE: We do NOT handle old BASIC where keywords run together (NEXTI, FORI).
         # MBASIC 5.21 is properly-formed and requires spaces between keywords.
         # Special case handled above: PRINT# and similar file I/O keywords in MBASIC 5.21
@@ -424,7 +462,32 @@ class Lexer:
     def tokenize(self) -> List[Token]:
         """Tokenize the entire source code"""
         self.tokens = []
-        at_line_start = True
+        self._at_line_start = True
+        while True:
+            try:
+                return self._tokenize_rest()
+            except LexerOverflow:
+                raise
+            except LexerError:
+                if (not self.defer_errors or not self.tokens
+                        or self.tokens[-1].type == TokenType.NEWLINE):
+                    raise       # a bad line number cannot be kept
+                self._skip_bad_text()
+
+    def _skip_bad_text(self):
+        """Turn the text from the token that failed to the end of the line into one ILLEGAL token."""
+        start = self._token_start
+        end = start
+        while end < len(self.source) and self.source[end] not in '\r\n':
+            end += 1
+        self.tokens.append(Token(TokenType.ILLEGAL, self.source[start:end],
+                                 self._token_line, self._token_column))
+        self.column += end - self.pos
+        self.pos = end
+        self._at_line_start = False
+
+    def _tokenize_rest(self) -> List[Token]:
+        at_line_start = self._at_line_start
 
         while self.pos < len(self.source):
             self.skip_whitespace(skip_newlines=False)
@@ -435,6 +498,9 @@ class Lexer:
 
             start_line = self.line
             start_column = self.column
+            self._token_start = self.pos
+            self._token_line = start_line
+            self._token_column = start_column
 
             # Check for line number at start of line
             if at_line_start and char.isdigit():
@@ -572,6 +638,13 @@ class Lexer:
                 if ord(char) < 32 and char not in ['\t', '\n', '\r']:
                     # Control character - skip it
                     self.advance()
+                    continue
+                if self.defer_errors and self.tokens and self.tokens[-1].type != TokenType.NEWLINE:
+                    # Only this character is bad (a "$" behind a reserved word,
+                    # say); the statements around it still run.
+                    self.tokens.append(Token(TokenType.ILLEGAL, char, start_line, start_column))
+                    self.advance()
+                    at_line_start = False
                     continue
                 raise LexerError(f"Unexpected character: '{char}' (0x{ord(char):02x})", start_line, start_column)
 

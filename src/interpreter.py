@@ -2022,6 +2022,14 @@ class Interpreter:
         """Execute END statement"""
         self.runtime.pc = self.runtime.pc.stop("END")
 
+    def execute_syntaxerror(self, stmt):
+        """A statement that did not parse when its line was entered or loaded.
+
+        MBASIC stores such a line without a message and stops with Syntax
+        error when execution reaches the bad statement.
+        """
+        raise MBasicError(2)
+
     def execute_remark(self, stmt):
         """Execute REM statement (do nothing)"""
         pass

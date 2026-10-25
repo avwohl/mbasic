@@ -205,6 +205,7 @@ class TokenType(Enum):
     NEWLINE = auto()
     LINE_NUMBER = auto()     # Line numbers at start of statement
     EOF = auto()
+    ILLEGAL = auto()         # Text the lexer cannot read (only with defer_errors): value is the rest of the line
     QUESTION = auto()        # ? (shorthand for PRINT)
     APOSTROPHE = auto()      # ' (comment, like REM)
 

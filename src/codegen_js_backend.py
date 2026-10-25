@@ -2634,6 +2634,9 @@ class JavaScriptBackend(CodeGenBackend):
         elif isinstance(stmt, RemarkStatementNode):
             # Comments are skipped
             pass
+        elif isinstance(stmt, SyntaxErrorStatementNode):
+            # MBASIC stores a line it cannot parse and fails when it runs
+            code.append(self.indent() + '_error("Syntax error");')
         elif isinstance(stmt, PokeStatementNode):
             code.extend(self._generate_poke(stmt))
         elif isinstance(stmt, OutStatementNode):

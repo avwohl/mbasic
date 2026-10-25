@@ -98,7 +98,7 @@ def test_tty_edit_key_still_enters_edit_mode_with_prompt(tmp_path):
         child.close()
 
 
-@pytest.mark.parametrize("text", ["\n", "PRINT 1\n", "10 PRINT (\n"])
+@pytest.mark.parametrize("text", ["\n", "PRINT 1\n"])
 def test_failed_startup_explains_reason(tmp_path, text):
     source = tmp_path / "bad.bas"
     source.write_text(text)
@@ -111,12 +111,23 @@ def test_failed_startup_explains_reason(tmp_path, text):
         assert "No numbered program lines" in result.stderr
 
 
+def test_line_with_a_syntax_error_loads_and_fails_when_it_runs(tmp_path):
+    # MBASIC 5.21 stores a line it cannot parse without a message (issue 53).
+    source = tmp_path / "bad.bas"
+    source.write_text("10 PRINT (\n")
+    result = cli(source, commands="LIST\nRUN\nSYSTEM\n")
+    assert result.returncode == 0
+    assert not result.stderr
+    assert "10 PRINT (" in result.stdout
+    assert "Syntax error in 10" in result.stdout
+
+
 def test_load_command_does_not_call_parse_failure_file_not_found(tmp_path):
     source = tmp_path / "bad.bas"
     source.write_text("10 PRINT (\n")
-    result = cli(commands=f'LOAD "{source}"\nSYSTEM\n')
-    assert "file line 1" in result.stdout
-    assert "BASIC line 10" in result.stdout
+    result = cli(commands=f'LOAD "{source}"\nLIST\nSYSTEM\n')
+    assert "file line" not in result.stdout
+    assert "10 PRINT (" in result.stdout
     assert "File not found" not in result.stdout
 
 
@@ -142,11 +153,11 @@ def test_partial_load_reports_each_rejected_physical_line(tmp_path, operation):
     program = ProgramManager({})
     result = getattr(program, operation)(str(source))
     assert result[0] is True
-    assert sorted(program.lines) == [10, 30]
-    assert len(result[1]) == 2
+    # Line 20 does not parse; MBASIC keeps it and fails when it runs (issue 53).
+    assert sorted(program.lines) == [10, 20, 30]
+    assert len(result[1]) == 1
     assert "file line 3" in result[1][0][1]
     assert "expected a BASIC line number" in result[1][0][1]
-    assert "file line 4, BASIC line 20" in result[1][1][1]
 
 
 @pytest.mark.parametrize("operation", ["load_from_file", "merge_from_file"])

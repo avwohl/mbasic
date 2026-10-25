@@ -149,6 +149,8 @@ class VisualBackend(UIBackend):
         """Execute LOAD command - load from file."""
         try:
             success, errors = self.program.load_from_file(filename)
+            for notice in self.program.take_notices():
+                self.io.output(notice)      # "Overflow" for a literal such as 1E39
             if errors:
                 for line_num, error in errors:
                     self.io.error(error)

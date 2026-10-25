@@ -4191,6 +4191,8 @@ class CursesBackend(UIBackend):
         """Load a program from a file."""
         try:
             self.program.load_from_file(filename)
+            for notice in self.program.take_notices():
+                self.output_buffer.append(notice)   # "Overflow" for a literal such as 1E39
 
             # Sync program to editor
             self._sync_program_to_editor()
@@ -4671,6 +4673,8 @@ class CursesBackend(UIBackend):
 
             # Use ProgramManager's merge_from_file
             success, errors, lines_added, lines_replaced = self.program.merge_from_file(filename)
+            for notice in self.program.take_notices():
+                self._append_to_output(notice)      # "Overflow" for a literal such as 1E39
 
             # Show parse errors if any. Each is already worded "Syntax error in
             # <line>: <detail>" by ProgramManager, so adding that prefix here
