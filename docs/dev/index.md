@@ -2,8 +2,8 @@
 
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
-**Last Updated:** 2026-09-30
-**Total Documents:** 57
+**Last Updated:** 2026-10-25
+**Total Documents:** 60
 
 ## What's Here
 
@@ -56,6 +56,8 @@ port I/O — but they are not required. Read
 ### Language Features
 
 - [Input Dollar Raw Read](INPUT_DOLLAR_RAW_READ.md)
+- [Input Statement Rules](INPUT_STATEMENT_RULES.md)
+- [Js Print Format](JS_PRINT_FORMAT.md)
 - [Key Input Routing](KEY_INPUT_ROUTING.md)
 - [Keybinding Systems](KEYBINDING_SYSTEMS.md)
 - [Startrek And Gosub In Then](STARTREK_AND_GOSUB_IN_THEN.md)
@@ -97,6 +99,7 @@ port I/O — but they are not required. Read
 ### Other
 
 - [Checkpoint Validation](CHECKPOINT_VALIDATION.md)
+- [Compact Source](COMPACT_SOURCE.md)
 - [Compiler Cpu Targets](COMPILER_CPU_TARGETS.md)
 - [Compiler Setup](COMPILER_SETUP.md)
 - [Compiler Variable Types](COMPILER_VARIABLE_TYPES.md)
@@ -107,7 +110,6 @@ port I/O — but they are not required. Read
 - [Kubernetes Deployment Setup](KUBERNETES_DEPLOYMENT_SETUP.md)
 - [Kubernetes Deployment Summary](KUBERNETES_DEPLOYMENT_SUMMARY.md)
 - [Linux Mint Developer Setup](LINUX_MINT_DEVELOPER_SETUP.md)
-- [Js Print Format](JS_PRINT_FORMAT.md)
 - [Macos Libedit Readline](MACOS_LIBEDIT_READLINE.md)
 - [Mbasic 521 Sources](MBASIC_521_SOURCES.md)
 - [No Memory Model](NO_MEMORY_MODEL.md)
