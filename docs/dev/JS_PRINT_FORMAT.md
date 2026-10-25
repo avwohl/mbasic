@@ -24,7 +24,9 @@ The JavaScript runtime has these parts:
   double once from its exact binary value.
 * `_print_list` handles one PRINT statement. It keeps the cursor column, so
   the comma zones (14 characters), `TAB` and `SPC` work across statements.
-  It also works for `PRINT #n`.
+  It also works for `PRINT #n`. It wraps lines at `_width` (set by `WIDTH`,
+  80 at the start) and follows the TAB and comma rules of real MBASIC. The
+  rules are in [PRINT_COLUMNS.md](PRINT_COLUMNS.md).
 * `_sg` rounds the result of single-precision arithmetic to binary32
   (`Math.fround`). It leaves whole numbers alone, as the interpreter does.
   The code rounds single literals and the results of `SQR`, `SIN`, `COS`,
@@ -65,15 +67,6 @@ output follows the interpreter.
 * Doubles that come from MBF arithmetic can differ in the last digit.
 * `PRINT USING "#.#^^^^"; 9.99` prints `0.1E+02` here and `1.0E+01` in real
   MBASIC.
-* The interpreter measures `TAB` and the comma zones from the start of the
-  PRINT statement. The JavaScript keeps the real cursor column, as real
-  MBASIC does. They differ when a `PRINT` ends with `;` and the next one
-  starts with `,` or `TAB`.
-* Real MBASIC starts a new line when the output passes column 80. This
-  applies to comma zones, strings and numbers. Neither implementation does
-  this.
-* Real MBASIC starts a new line when `TAB(n)` is used and the cursor is
-  already at or past column n. Neither implementation does this.
 * Single-precision multiplication that overflows binary32 gives a large
   number in the JavaScript. The interpreter gives `inf`.
 * Errors in arithmetic do not stop the JavaScript. `PRINT 1/0` prints

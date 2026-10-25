@@ -11,6 +11,7 @@ from src.error_codes import message_for
 from src.parser import Parser
 from src.runtime import Runtime
 from src.interpreter import Interpreter, BreakException
+from src.iohandler.base import ColumnTracker
 from src.iohandler.console import ConsoleKeyboardMixin
 import traceback
 import os
@@ -393,7 +394,7 @@ Press Ctrl+H (UI help) for keyboard shortcuts and UI features.
         return (True, help_text)
 
 
-class OutputCapturingIOHandler(ConsoleKeyboardMixin):
+class OutputCapturingIOHandler(ConsoleKeyboardMixin, ColumnTracker):
     """
     Simple IOHandler that captures output to a string buffer.
 

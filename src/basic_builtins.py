@@ -516,6 +516,10 @@ class UsingFormatter:
 class BuiltinFunctions:
     """MBASIC 5.21 built-in functions"""
 
+    #: Set by PRINT while it runs: the screen column after the items before
+    #: the one being evaluated. None when no PRINT is running.
+    print_column = None
+
     def __init__(self, runtime, io_provider=None):
         """
         Args:
@@ -918,13 +922,17 @@ class BuiltinFunctions:
 
     def POS(self, _dummy):
         """
-        Current print position.
+        POS(0) - the cursor column, 1 for the leftmost.
 
-        Returns approximate column (not fully implemented)
+        While a PRINT is running, print_column holds the column the items
+        before this one left; otherwise the output handler knows it.
         """
-        # Would need to track actual print position
-        # For now, return 1
-        return 1
+        column = getattr(self, 'print_column', None)
+        if column is None:
+            column = getattr(self._io(), 'column', 0)
+            if not isinstance(column, int):
+                column = 0
+        return column + 1
 
     def TAB(self, n):
         """

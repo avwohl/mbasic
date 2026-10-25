@@ -5,8 +5,11 @@ must implement. This allows the interpreter to work with different
 I/O systems (console, GUI, web, embedded) without changing core logic.
 """
 
+import functools
 from abc import ABC, abstractmethod
 from typing import Optional
+
+from src.print_column import SCREEN_WIDTH, advance_column
 
 
 class KeyInputPending(Exception):
@@ -66,7 +69,82 @@ class KeyReadTransaction:
         """Put back everything read since begin_key_transaction()."""
 
 
-class IOHandler(ABC, KeyReadTransaction):
+def _update_after_output(handler, args, kwargs):
+    text = args[0] if args else kwargs.get('text', '')
+    end = args[1] if len(args) > 1 else kwargs.get('end', '\n')
+    handler.column = advance_column(handler.column, str(text) + str(end))
+
+
+def _update_to_line_start(handler, args, kwargs):
+    # INPUT and LINE INPUT end with the Enter the user typed.
+    handler.column = 0
+
+
+def _update_after_locate(handler, args, kwargs):
+    col = args[1] if len(args) > 1 else kwargs.get('col', 1)
+    try:
+        handler.column = max(int(col) - 1, 0)
+    except (TypeError, ValueError):
+        pass
+
+
+_COLUMN_UPDATES = {
+    'output': _update_after_output,
+    'input': _update_to_line_start,
+    'input_line': _update_to_line_start,
+    'clear_screen': _update_to_line_start,
+    'locate': _update_after_locate,
+}
+
+
+def _track_column(method, update):
+    """Wrap a handler method so the handler's column follows what it does.
+
+    Only the outermost call counts: a subclass that calls super().output()
+    would otherwise be counted twice.
+    """
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        depth = self.__dict__.get('_column_depth', 0)
+        self._column_depth = depth + 1
+        try:
+            result = method(self, *args, **kwargs)
+        finally:
+            self._column_depth = depth
+        if depth == 0:
+            update(self, args, kwargs)
+        return result
+    wrapper._tracks_column = True
+    return wrapper
+
+
+class ColumnTracker:
+    """Mixin that makes an output handler keep the cursor column.
+
+    IOHandler has it, and so do the handlers that do not derive from
+    IOHandler (the capturing handlers of the curses UI).
+    """
+
+    #: The width WIDTH set for the screen. PRINT wraps and sets its TAB and
+    #: comma zones from it.
+    width = SCREEN_WIDTH
+
+    #: The cursor column, 0-based. Every subclass gets output(), input(),
+    #: input_line(), clear_screen() and locate() wrapped (see
+    #: __init_subclass__), so the column follows whatever a backend draws,
+    #: and PRINT, TAB, the comma zones and POS see the real cursor column
+    #: across statements and after an INPUT.
+    column = 0
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        for name, update in _COLUMN_UPDATES.items():
+            method = cls.__dict__.get(name)
+            if method is not None and not getattr(method, '_tracks_column', False):
+                setattr(cls, name, _track_column(method, update))
+
+
+class IOHandler(ABC, KeyReadTransaction, ColumnTracker):
     """Abstract interface for I/O operations.
 
     All I/O backends (console, GUI, etc.) must implement this interface.
@@ -78,6 +156,7 @@ class IOHandler(ABC, KeyReadTransaction):
     methods are not part of the core interface and should only be used by
     backend-specific code.
     """
+
 
     @abstractmethod
     def output(self, text: str, end: str = '\n') -> None:

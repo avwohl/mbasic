@@ -4,10 +4,11 @@ This module provides a simple IO handler that captures output to a buffer,
 used by various UI backends for executing commands and capturing their output.
 """
 
+from src.iohandler.base import ColumnTracker
 from src.iohandler.console import ConsoleKeyboardMixin
 
 
-class CapturingIOHandler(ConsoleKeyboardMixin):
+class CapturingIOHandler(ConsoleKeyboardMixin, ColumnTracker):
     """IO handler that captures output to a buffer.
 
     Keyboard reads come from ConsoleKeyboardMixin, which reads the process's

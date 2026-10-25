@@ -19,6 +19,8 @@ from src.number_format import (format_for_print, format_number, int_divide, int_
                                to_integer, to_single, coerce_to_type,
                                INTEGER_DIGITS, SINGLE_DIGITS, DOUBLE_DIGITS)
 from src.iohandler.base import KeyInputPending
+from src.print_column import (SCREEN_WIDTH, FILE_WIDTH, advance_column, wrap_text,
+                              tab_target, comma_step)
 from src.error_codes import (error_code_for, format_error_message,
                              get_error_message)
 from src.input_fields import (split_keyboard_fields, keyboard_number, val_number,
@@ -257,6 +259,9 @@ class Interpreter:
             from src.iohandler.console import ConsoleIOHandler
             io_handler = ConsoleIOHandler(debug_enabled=False)
         self.io = io_handler
+        # A run starts at the left margin: MBASIC puts "Ok" on a new line
+        # after a program that stopped in the middle of one.
+        self._screen_line_ended()
 
         # INKEY$ and INPUT$ read the keyboard through the handler, so they are
         # given a way to reach it. A lambda rather than the handler itself
@@ -1103,8 +1108,56 @@ class Interpreter:
         """
         return numeric_digits(expr)
 
+    def _output_column(self, file_info):
+        """The 0-based cursor column of the screen or of an open file."""
+        if file_info is not None:
+            return file_info.get('col', 0)
+        column = getattr(self.io, 'column', None)
+        if isinstance(column, int):
+            return column
+        return getattr(self, '_fallback_column', 0)
+
+    def _output_width(self, file_info):
+        """The line width of the screen (set by WIDTH) or of a file."""
+        if file_info is not None:
+            return file_info.get('width', FILE_WIDTH)
+        width = getattr(self.io, 'width', SCREEN_WIDTH)
+        return width if isinstance(width, int) and width > 0 else SCREEN_WIDTH
+
+    def _screen_line_ended(self):
+        """A line typed at the keyboard ends with Enter: the cursor is at column 0."""
+        try:
+            self.io.column = 0
+        except AttributeError:
+            pass
+        self._fallback_column = 0
+
+    def _send_output(self, file_info, file_handle, text):
+        """Send text to the file or the screen and keep the column.
+
+        A trailing newline goes out as the end of the output() call, as a
+        PRINT without a final ';' always did.
+        """
+        if file_handle:
+            file_handle.write(text)
+            file_handle.flush()
+            file_info['col'] = advance_column(file_info.get('col', 0), text)
+            return
+        if text.endswith('\n'):
+            self.io.output(text[:-1])
+        elif text:
+            self.io.output(text, end='')
+        if not isinstance(getattr(self.io, 'column', None), int):
+            self._fallback_column = advance_column(
+                getattr(self, '_fallback_column', 0), text)
+
     def execute_print(self, stmt):
-        """Execute PRINT statement - print to screen or file"""
+        """Execute PRINT statement - print to screen or file
+
+        The line is laid out from the real cursor column, which earlier
+        statements and INPUT leave behind, and wrapped at the line width the
+        way MBASIC 5.21 does (src/print_column.py has the rules).
+        """
         # Check if printing to file
         if stmt.file_number is not None:
             file_num = int(self.evaluate_expression(stmt.file_number))
@@ -1115,76 +1168,91 @@ class Interpreter:
                 raise RuntimeError(f"File #{file_num} not open for output")
             file_handle = file_info['handle']
         else:
+            file_info = None
             file_handle = None
 
-        output_parts = []
+        width = self._output_width(file_info)
+        col = self._output_column(file_info)
+        pieces = []
 
-        for i, expr in enumerate(stmt.expressions):
-            value = self.evaluate_expression(expr)
+        def put(text):
+            nonlocal col
+            pieces.append(text)
+            col = advance_column(col, text)
 
-            # Check for special TAB/SPC markers
-            if isinstance(value, TabMarker) or isinstance(value, SpcMarker):
-                # Keep marker object for later processing
-                output_parts.append(value)
-            # Convert to string
-            elif isinstance(value, (int, float)) and not isinstance(value, bool):
-                # MBASIC shows 6 significant figures for a single-precision
-                # value and 16 for a double, with a leading space unless the
-                # number is negative and a trailing space always. Which of the
-                # two applies is a property of the expression, not the value -
-                # see _numeric_digits(). src/number_format.py has the rules.
-                output_parts.append(
-                    format_for_print(value, self._numeric_digits(expr)))
-            else:
-                s = str(value)
-                output_parts.append(s)
+        retry = False
+        try:
+            for i, expr in enumerate(stmt.expressions):
+                # Each item is evaluated when its turn comes, so POS(0) sees
+                # the text of the items before it.
+                if file_info is None:
+                    self.builtins.print_column = col
+                value = self.evaluate_expression(expr)
 
-        # Handle separators and build output
-        output = ""
-        for i, part in enumerate(output_parts):
-            # Handle TAB and SPC markers
-            if isinstance(part, TabMarker):
-                # TAB(n) - move to column n (1-based)
-                target_col = part.column
-                current_col = len(output) + 1  # 1-based column
-                if current_col < target_col:
-                    # Add spaces to reach target column
-                    output += " " * (target_col - current_col)
-                # If already past target, don't move backwards
-            elif isinstance(part, SpcMarker):
-                # SPC(n) - print n spaces
-                output += " " * part.count
-            else:
-                # Regular string
-                output += part
-            if i < len(stmt.separators):
-                sep = stmt.separators[i]
-                if sep == ',':
-                    # Tab to next zone (14-character zones in MBASIC)
-                    current_len = len(output)
-                    next_zone = ((current_len // 14) + 1) * 14
-                    output += " " * (next_zone - current_len)
-                elif sep == ';':
-                    # No spacing (already handled in number formatting)
-                    pass
-                elif sep == '\n':
-                    # Newline
-                    output += '\n'
+                if isinstance(value, TabMarker):
+                    # TAB(n): column n (1-based); a cursor already past it
+                    # starts a new line first.
+                    target = tab_target(value.column, width)
+                    if col > target:
+                        put('\n')
+                    put(' ' * (target - col))
+                elif isinstance(value, SpcMarker):
+                    # SPC(n): n spaces; the count is a byte and wraps at the width
+                    text, new_col = wrap_text(
+                        col, width, ' ' * (max(value.count, 0) % 256 % width), False)
+                    pieces.append(text)
+                    col = new_col
+                else:
+                    if (isinstance(value, (int, float))
+                            and not isinstance(value, bool)):
+                        # MBASIC shows 6 significant figures for a
+                        # single-precision value and 16 for a double, with a
+                        # leading space unless the number is negative and a
+                        # trailing space always. Which of the two applies is
+                        # a property of the expression, not the value - see
+                        # _numeric_digits(). src/number_format.py has the
+                        # rules.
+                        text = format_for_print(
+                            value, self._numeric_digits(expr))
+                    else:
+                        text = str(value)
+                    # On the screen an item that does not fit goes whole to
+                    # the next line; a file splits it at the width.
+                    text, new_col = wrap_text(
+                        col, width, text, file_info is None)
+                    pieces.append(text)
+                    col = new_col
 
-        # Output to file or screen
-        if file_handle:
-            # Print to file (don't add newline if last separator was ; or ,)
-            if stmt.separators and stmt.separators[-1] in [';', ',', '\n']:
-                file_handle.write(output)
-            else:
-                file_handle.write(output + '\n')
-            file_handle.flush()  # Ensure data is written
-        else:
-            # Print to screen (don't add newline if last separator was ; or , or \n)
-            if stmt.separators and stmt.separators[-1] in [';', ',', '\n']:
-                self.io.output(output, end='')
-            else:
-                self.io.output(output)
+                if i < len(stmt.separators):
+                    sep = stmt.separators[i]
+                    if sep == ',':
+                        # Next 14-column zone; the last zone starts a new line
+                        if file_info is None:
+                            action, count = comma_step(col, width)
+                        else:
+                            # a file has no last-zone rule: it pads, wrapping
+                            action, count = 'pad', (col // 14 + 1) * 14 - col
+                        if action == 'newline':
+                            put('\n')
+                        else:
+                            text, new_col = wrap_text(
+                                col, width, ' ' * count, False)
+                            pieces.append(text)
+                            col = new_col
+                    elif sep == '\n':
+                        put('\n')
+                    # ';' adds nothing (number formatting has the spaces)
+
+            if not stmt.separators:
+                put('\n')                  # a bare PRINT
+        except KeyInputPending:
+            # The statement runs again from its start: print nothing now
+            retry = True
+            raise
+        finally:
+            self.builtins.print_column = None
+            if pieces and not retry:
+                self._send_output(file_info, file_handle, ''.join(pieces))
 
     def execute_printusing(self, stmt):
         """Execute PRINT USING statement - formatted print to screen or file"""
@@ -1198,6 +1266,7 @@ class Interpreter:
                 raise RuntimeError(f"File #{file_num} not open for output")
             file_handle = file_info['handle']
         else:
+            file_info = None
             file_handle = None
 
         # Evaluate format string
@@ -1225,10 +1294,12 @@ class Interpreter:
         # suppresses the newline, as it does on a plain PRINT.
         newline = '' if getattr(stmt, 'trailing_separator', False) else '\n'
         if file_handle:
-            file_handle.write(output + newline)
-            file_handle.flush()
+            self._send_output(file_info, file_handle, output + newline)
         else:
             self.io.output(output, end=newline)
+            if not isinstance(getattr(self.io, 'column', None), int):
+                self._fallback_column = advance_column(
+                    getattr(self, '_fallback_column', 0), output + newline)
 
         if values and not formatter.has_field():
             # MBASIC scans the whole USING string, prints the literal text it
@@ -2048,6 +2119,7 @@ class Interpreter:
             seed = self.evaluate_expression(stmt.seed)
         elif self.state.input_buffer:
             answer = self.state.input_buffer.pop(0).strip()
+            self._screen_line_ended()
             try:
                 seed = float(answer) if answer else 0
             except ValueError:
@@ -2146,6 +2218,7 @@ class Interpreter:
 
         if self.state.input_buffer:
             line = self.state.input_buffer.pop(0)
+            self._screen_line_ended()
         else:
             self._pause_for_input(stmt)
             return
@@ -2366,6 +2439,7 @@ class Interpreter:
             if self.state.input_buffer:
                 # Use buffered input from provide_input()
                 line = self.state.input_buffer.pop(0)
+                self._screen_line_ended()
             else:
                 # No buffered input - need to wait for user input
                 # Show prompt
@@ -2445,6 +2519,7 @@ class Interpreter:
         if file_handle:
             file_handle.write(output + '\n')
             file_handle.flush()
+            self.runtime.files[file_num]['col'] = 0
         else:
             self.io.output(output)
 
@@ -3397,15 +3472,20 @@ class Interpreter:
         pass
 
     def execute_width(self, stmt):
-        """Execute WIDTH statement - set output width (no-op)
+        """Execute WIDTH statement - set the screen line width
 
-        WIDTH is accepted for compatibility with programs that use it,
-        but does not perform any action. Modern terminals handle line
-        width automatically and WIDTH settings are not meaningful in
-        a modern terminal context.
+        PRINT wraps at this width and measures TAB and the comma zones against
+        it. The range is 1 to 255; anything else is an Illegal function call.
+        A form with a device (WIDTH n, device) is accepted and ignored.
         """
-        # No-op - do nothing
-        pass
+        width = self.evaluate_expression(stmt.width)
+        if isinstance(width, str):
+            raise RuntimeError("Type mismatch")
+        width = to_integer(width)
+        if width < 1 or width > 255:
+            raise RuntimeError("Illegal function call")
+        if stmt.device is None:
+            self.io.width = width
 
     def execute_cont(self, stmt):
         """Execute CONT statement

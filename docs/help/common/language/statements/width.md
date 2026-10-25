@@ -11,17 +11,13 @@ type: statement
 
 ## Implementation Note
 
-⚠️ **Not Implemented**: This statement is parsed for compatibility but performs no operation.
+**Implemented for the screen.** `WIDTH n` sets the line width of the screen. PRINT wraps at that width and measures `TAB`, `SPC` and the comma zones against it. `POS(0)` returns the cursor column. The default width is 80.
 
-**Behavior**: The simple "WIDTH <number>" statement parses and executes successfully without errors, but does not affect output width (settings are silently ignored).
+**Range**: 1 to 255. Another value gives "Illegal function call". Real MBASIC 5.21 also accepts 0.
 
-**Why**: Terminal and UI width is controlled by the operating system or UI framework, not the BASIC program. The WIDTH statement cannot actually change these settings.
+**Limitations**: The "WIDTH LPRINT" syntax is NOT supported and will cause a parse error. The form `WIDTH n, device` is accepted and ignored. A disk file always has a width of 255.
 
-**Limitations**: The "WIDTH LPRINT" syntax is NOT supported and will cause a parse error. Only the simple "WIDTH <number>" form is accepted as a no-op.
-
-**Alternative**: Terminal width is automatically handled by the UI. For custom formatting, use PRINT statements with TAB() and SPC() functions to control output positioning.
-
-**Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference. The WIDTH statement syntax and behavior is documented for reference even though it is not implemented.
+**Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference. The default width of real MBASIC 5.21 is 80 on the console.
 
 ---
 
@@ -50,7 +46,7 @@ If `<integer expression>` is 255, the line width is "infinite," that is, BASIC n
 
 ## Example
 
-**Note:** The example below shows historical MBASIC 5.21 behavior. In this implementation, WIDTH is a no-op, so the output would be the same before and after WIDTH is called.
+**Note:** The example below shows MBASIC 5.21 behavior. This implementation does the same for the screen.
 
 **Original MBASIC 5.21 behavior:**
 ```basic

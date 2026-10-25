@@ -89,27 +89,68 @@ function _round_half_away(n) {
 '''
 
 JS_PRINT_RUNTIME = r'''
-// ===== PRINT: columns, zones, TAB and SPC =====
+// ===== PRINT: columns, zones, TAB, SPC and the line wrap (port of src/print_column.py) =====
 let _col = 0;  // cursor column on the screen, 0-based
+let _width = 80;  // line width of the screen, set by WIDTH
 function _advance(col, s) {
-    const i = s.lastIndexOf("\n");
-    return i < 0 ? col + s.length : s.length - i - 1;
+    // The column after sending s: a newline or CR goes to 0, a tab to the next multiple of 8,
+    // a backspace one left; the other control characters do not move the cursor.
+    for (let i = 0; i < s.length; i++) {
+        const ch = s.charCodeAt(i);
+        if (ch === 10 || ch === 13) col = 0;
+        else if (ch === 9) col = (Math.floor(col / 8) + 1) * 8;
+        else if (ch === 8) col = col > 0 ? col - 1 : 0;
+        else if (ch >= 32) col++;
+    }
+    return col;
 }
+function _wrap_text(col, width, text, whole) {
+    // MBASIC wraps lazily: a full line stays until the next printable character comes. A PRINT
+    // item that does not fit in the rest of the line starts a new line first; one longer than
+    // the width is split at the width. SPC (whole false) wraps one character at a time.
+    let out = "";
+    if (whole && col > 0 && col + text.length > width) { out += "\n"; col = 0; }
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (ch >= " " && col >= width) { out += "\n"; col = 0; }
+        out += ch;
+        col = _advance(col, ch);
+    }
+    return out;
+}
+function _set_width(n) {
+    n = _round_half_away(n);
+    if (n < 1 || n > 255) _error("Illegal function call");
+    return n;
+}
+function _width_of(f) { return f === null || f === undefined ? _width : 255; }
 // items: [0, value, digits] | [1, tabColumn] | [2, count]; seps: ";" "," or "\n" after each item.
+// On the screen an item that does not fit goes whole to the next line and a comma in the last
+// zone starts a new line; a file splits at its width of 255 and pads. A value may be a function (an item that reads POS), called when its turn comes.
 function _print_list(f, items, seps) {
+    const w = _width_of(f), isScreen = f === null || f === undefined;
     for (let i = 0; i < items.length; i++) {
         const it = items[i], sep = seps[i];
+        let out = "";
         if (it[0] === 1) {
-            const target = _round_half_away(it[1]), col = _cur_col(f) + 1;
-            if (col < target) _emit(f, " ".repeat(target - col));
+            // TAB(n): column n; a cursor already past it starts a new line first
+            const n = _round_half_away(it[1]), col = _cur_col(f);
+            const target = n < 1 ? 0 : (n - 1) % w;
+            if (col > target) out = "\n" + " ".repeat(target);
+            else out = " ".repeat(target - col);
         } else if (it[0] === 2) {
-            _emit(f, " ".repeat(Math.max(0, _round_half_away(it[1]))));
+            // SPC(n): n spaces, n wrapping at the width
+            out = _wrap_text(_cur_col(f), w, " ".repeat(Math.max(0, _round_half_away(it[1])) % 256 % w), false);
         } else {
-            _emit(f, _pstr(it[1], it[2]));
+            const v = typeof it[1] === "function" ? it[1]() : it[1];
+            out = _wrap_text(_cur_col(f), w, _pstr(v, it[2]), isScreen);
         }
+        if (out !== "") _emit(f, out);
         if (sep === ",") {
-            const c = _cur_col(f);
-            _emit(f, " ".repeat((Math.floor(c / 14) + 1) * 14 - c));
+            // next 14-column zone; the last zone starts a new line
+            const c = _cur_col(f), zone = (Math.floor(c / 14) + 1) * 14;
+            if (isScreen) _emit(f, zone + 14 > w ? "\n" : " ".repeat(zone - c));
+            else _emit(f, _wrap_text(c, w, " ".repeat(zone - c), false));  // a file pads and wraps
         }
     }
     const last = seps.length ? seps[seps.length - 1] : "\n";
@@ -122,7 +163,7 @@ function _cur_col(f) {
     if (f === null || f === undefined) return _col;
     const file = _files[f];
     if (!file || typeof file.content !== "string") return 0;
-    return file.content.length - (file.content.lastIndexOf("\n") + 1);
+    return _advance(0, file.content.slice(file.content.lastIndexOf("\n") + 1));
 }
 function _emit(f, s) {
     if (f === null || f === undefined) _print(s, false); else _fprint(f, s, false);
@@ -391,12 +432,14 @@ async function _read_line(prompt) {
             let line = _inkey_buffer.slice(0, nl);
             _inkey_buffer = _inkey_buffer.slice(nl + 1);
             if (line.endsWith("\r")) line = line.slice(0, -1);
+            _col = 0;  // the Enter that ended the line
             return line;
         }
         if (!(await _fill_keys(4096, true))) {
             if (_inkey_buffer.length === 0) _error("Input past end");
             const rest = _inkey_buffer;
             _inkey_buffer = "";
+            _col = 0;
             return rest;
         }
     }
@@ -2197,7 +2240,11 @@ class JavaScriptBackend(CodeGenBackend):
                 kind = 1 if name == 'tab' else 2
                 items.append(f'[{kind}, {self._generate_expression(expr.arguments[0])}]')
             else:
-                items.append(f'[0, {self._generate_expression(expr)}, {self._js_digits(expr)}]')
+                value = self._generate_expression(expr)
+                if '_pos(' in value:
+                    # POS has to see the items printed before it
+                    value = f'() => {value}'
+                items.append(f'[0, {value}, {self._js_digits(expr)}]')
         filenum = self._generate_expression(stmt.file_number) if stmt.file_number else 'null'
         sep_js = '[' + ', '.join(json.dumps(x) for x in seps) + ']'
         return [self.indent() + f'_print_list({filenum}, [{", ".join(items)}], {sep_js});']
@@ -3156,20 +3203,16 @@ class JavaScriptBackend(CodeGenBackend):
         return code
 
     def _generate_width(self, stmt: WidthStatementNode) -> List[str]:
-        """Generate WIDTH statement - set line width (stub: warning only)
+        """Generate WIDTH statement - set the screen line width
 
-        In MBASIC, WIDTH sets the console/printer line width.
-        In JavaScript, console/browser output doesn't have fixed width.
+        PRINT wraps at _width and measures TAB and the comma zones against it.
+        A form with a device (WIDTH n, device) is accepted and ignored, as in
+        the interpreter.
         """
-        code = []
-        if stmt.file_number:
-            filenum = self._generate_expression(stmt.file_number)
-            width = self._generate_expression(stmt.width)
-            code.append(self.indent() + f'// WIDTH #{filenum}, {width} - ignored in JavaScript')
-        else:
-            width = self._generate_expression(stmt.width)
-            code.append(self.indent() + f'// WIDTH {width} - ignored in JavaScript')
-        return code
+        width = self._generate_expression(stmt.width)
+        if stmt.device is not None:
+            return [self.indent() + f'// WIDTH {width}, device - ignored']
+        return [self.indent() + f'_width = _set_width({width});']
 
     def _generate_clear(self, stmt: ClearStatementNode) -> List[str]:
         """Generate CLEAR statement - clear variables and set memory limits (stub)
