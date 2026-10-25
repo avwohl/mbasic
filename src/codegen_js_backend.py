@@ -317,6 +317,17 @@ function _print_using_stmt(f, fmt, values, digits, trailing) {
 }
 '''
 
+def _js_number(value) -> str:
+    """JavaScript source for a numeric literal; Python writes inf and nan, JavaScript does not."""
+    if isinstance(value, float):
+        if value != value:
+            return 'NaN'
+        if value in (float('inf'), float('-inf')):
+            return 'Infinity' if value > 0 else '-Infinity'
+        return repr(value)
+    return str(value)
+
+
 JS_FILL_KEYS = r'''
 function _fill_keys(want, soft) {
     // Add keys to _inkey_buffer. Returns false only at end of input, and only when soft is set.
@@ -1877,7 +1888,7 @@ class JavaScriptBackend(CodeGenBackend):
             if vtype == 'string':
                 items.append(f'"{self._escape_string(value)}"')
             else:
-                items.append(str(value))
+                items.append(_js_number(value))
 
         return '[' + ', '.join(items) + ']'
 
@@ -2273,7 +2284,7 @@ class JavaScriptBackend(CodeGenBackend):
             value = expr.value
             if isinstance(value, float) and numeric_digits(expr) == SINGLE_DIGITS:
                 value = to_single(value)    # a single-precision literal holds 24 bits
-            return repr(value) if isinstance(value, float) else str(value)
+            return _js_number(value)
         elif isinstance(expr, StringNode):
             return f'"{self._escape_string(expr.value)}"'
         elif isinstance(expr, VariableNode):
