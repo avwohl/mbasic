@@ -363,7 +363,7 @@ and ERL, and RESUME NEXT lands in the right place. The edges do not:
   again, as on the binary. CONT arms the break handler, as RUN does. A ^C at
   an `INPUT` prompt breaks at once, and CONT asks the question again. Tests:
   `tests/regression/ui/test_cli_break.py`.
-- Done (#48): CONT after a run-time error runs the failing statement again
+- Done (#48): CONT after a run-time error runs the same statement again
   (also in the middle of a line and in a FOR loop). It prints the same error
   until the cause is fixed at the prompt. CONT after END resumes at the
   statement after the END. After the program ran off its end, CONT prints

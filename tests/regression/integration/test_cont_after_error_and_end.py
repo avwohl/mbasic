@@ -121,3 +121,15 @@ def test_command_line_load_keeps_lines_before_the_long_line(tmp_path):
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+def test_string_mixed_with_number_is_type_mismatch():
+    # Measured on 5.21: every string/number mix, and every operator but + and
+    # the comparisons on two strings, is Type mismatch (not Illegal function call).
+    r = run_cli('10 PRINT "a"\n20 PRINT A$+1\n30 PRINT "c"\nRUN\n'
+                'PRINT "a"<1\nPRINT "a"-"b"\nPRINT 1+"a"\nPRINT -"a"\n'
+                'PRINT "a"<"b"\n')
+    assert lines_after_banner(r.stdout) == [
+        "Ok", "a", "Type mismatch in 20", "Ok", "Type mismatch", "Ok",
+        "Type mismatch", "Ok", "Type mismatch", "Ok", "Type mismatch", "Ok",
+        "-1 ", "Ok"]
