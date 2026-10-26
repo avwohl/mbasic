@@ -16,7 +16,7 @@ cpmemu, tests/HOW_TO_RUN_REAL_MBASIC.md). The binary:
 The JavaScript compiler (issue 41) now prints "<message> in <line>" like the
 binary. After ON ERROR GOTO 0 in a handler (#44) it names the line that first
 failed, and a handler that runs off the end (#37) says "No RESUME in <line>",
-as the binary does. It does not check A$=A at run time.
+as the binary does. A$=A is Type mismatch at run time in JavaScript too (#59).
 """
 import shutil
 import subprocess
@@ -50,7 +50,7 @@ CASES = {
     "mismatch_in_handler": (
         '10 ON ERROR GOTO 100\n20 ERROR 5\n40 END\n100 PRINT "H"\n110 A=1:A$=A\n130 END\n',
         "H\nType mismatch in 110\n", "Illegal function call",
-        None),  # the JavaScript compiler does not check A$=A at run time
+        "H\nType mismatch in 110\n"),
     # #47: a second ON ERROR inside the handler does not trap the next error
     "rearmed_in_handler": (
         '10 ON ERROR GOTO 100\n20 ERROR 5\n30 END\n100 ON ERROR GOTO 200\n'

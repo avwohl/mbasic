@@ -1683,6 +1683,8 @@ class Z88dkCBackend(CodeGenBackend):
         if var_type == VarType.STRING:
             dest = self._string_var_id(stmt.variable)
             expr = stmt.expression
+            while isinstance(expr, UnaryOpNode) and expr.operator == TokenType.PLUS:
+                expr = expr.operand  # unary plus on a string passes the string through
 
             if isinstance(expr, StringNode):
                 return [self.indent() + f'mb25_string_alloc_const({dest}, "{self._escape_string(expr.value)}");']
@@ -2325,7 +2327,11 @@ class Z88dkCBackend(CodeGenBackend):
         var1_type = self._get_expression_type(stmt.var1)
         var2_type = self._get_expression_type(stmt.var2)
 
-        if (var1_type == VarType.STRING) != (var2_type == VarType.STRING):
+        # SWAP does not register its operands, so an unregistered A$ is typed as a number here;
+        # the $ suffix still says it is a string
+        is_str1 = var1_type == VarType.STRING or getattr(stmt.var1, 'type_suffix', None) == '$'
+        is_str2 = var2_type == VarType.STRING or getattr(stmt.var2, 'type_suffix', None) == '$'
+        if is_str1 != is_str2:
             self._unsupported("SWAP of a string and a number (Type mismatch)")
             return code
         if var1_type != var2_type:
@@ -2782,6 +2788,8 @@ class Z88dkCBackend(CodeGenBackend):
 
     def _generate_string_expression(self, expr: Any) -> str:
         """Generate C code for a string expression"""
+        while isinstance(expr, UnaryOpNode) and expr.operator == TokenType.PLUS:
+            expr = expr.operand      # unary plus on a string passes the string through, as on 5.21
         if isinstance(expr, StringNode):
             # String literal - allocate as constant and return the ID
             temp_id = self._get_temp_string_id()

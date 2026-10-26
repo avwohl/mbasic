@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from src.ast_nodes import *
 from src.number_format import int_divide, int_modulo
+from src.js_type_check import binary_mismatch, unary_mismatch
 # Explicit re-import of VarType, not left to the wildcard above.
 #
 # There used to be a SECOND enum also called VarType defined here, with the same
@@ -551,6 +552,12 @@ class ConstantEvaluator:
             }
             op_str = op_map.get(expr.operator, str(expr.operator))
             op = op_str.upper() if isinstance(op_str, str) else str(op_str)
+            # A string mixed with a number, or two strings under anything but
+            # + and a comparison, is a Type mismatch when the statement runs.
+            # Python would fold "a"*2 to "aa", so the fold has to give up here.
+            if isinstance(left, str) != isinstance(right, str) or (
+                    isinstance(left, str) and op not in ('+', '=', '<>', '<', '>', '<=', '>=')):
+                return None
             try:
                 # Arithmetic operators
                 if op == '+':
@@ -616,6 +623,8 @@ class ConstantEvaluator:
             op_str = op_map.get(expr.operator, str(expr.operator))
             op = op_str.upper() if isinstance(op_str, str) else str(op_str)
 
+            if isinstance(operand, str) and op != '+':
+                return None     # -"a" and NOT "a" are a Type mismatch at run time
             if op == '-':
                 return -operand
             elif op == '+':
@@ -735,6 +744,8 @@ class ConstantEvaluator:
             # Single-argument functions
             if len(args) == 1:
                 x = args[0]
+                if isinstance(x, str):
+                    return None     # ABS("a") and the rest are a Type mismatch at run time
 
                 if func_name == 'ABS':
                     return abs(x)
@@ -2145,8 +2156,10 @@ class SemanticAnalyzer:
         if step_val is not None:
             loop_analysis.step_value = step_val
 
-        # Calculate iteration count if all bounds are constant
-        if start_val is not None and end_val is not None and step_val is not None and step_val != 0:
+        # Calculate iteration count if all bounds are constant (a string bound is
+        # a Type mismatch at run time, not something to count)
+        if (start_val is not None and end_val is not None and step_val is not None and step_val != 0
+                and not any(isinstance(v, str) for v in (start_val, end_val, step_val))):
             try:
                 iterations = int((end_val - start_val) / step_val) + 1
                 if iterations > 0:
@@ -2571,8 +2584,12 @@ class SemanticAnalyzer:
             self._analyze_expression(expr.left, "binary operation", track_folding=False, track_cse=True)
             self._analyze_expression(expr.right, "binary operation", track_folding=False, track_cse=True)
 
+            # A string mixed with a number is a Type mismatch when the statement runs.
+            # The rewrites below would hide it ("a"*2 -> "a"+"a", "a"*1 -> "a").
+            ill_typed = binary_mismatch(expr)
+
             # Apply expression reassociation first (groups constants together)
-            reassociated = self._apply_expression_reassociation(expr)
+            reassociated = None if ill_typed else self._apply_expression_reassociation(expr)
             if reassociated is not None:
                 # Replace the expression node's internals with the reassociated version
                 if isinstance(reassociated, BinaryOpNode):
@@ -2584,7 +2601,7 @@ class SemanticAnalyzer:
                     pass
 
             # Apply strength reduction if possible
-            reduced = self._apply_strength_reduction(expr)
+            reduced = None if ill_typed else self._apply_strength_reduction(expr)
             if reduced is not None:
                 # Replace the expression node's internals with the reduced version
                 # This allows the transformation to propagate up the tree
@@ -2604,7 +2621,7 @@ class SemanticAnalyzer:
             self._analyze_expression(expr.operand, "unary operation", track_folding=False, track_cse=True)
 
             # Apply algebraic simplification if possible
-            reduced = self._apply_algebraic_simplification(expr)
+            reduced = None if unary_mismatch(expr) else self._apply_algebraic_simplification(expr)
             if reduced is not None:
                 # Replace the expression node's internals with the reduced version
                 if isinstance(reduced, UnaryOpNode):
@@ -4446,7 +4463,7 @@ class SemanticAnalyzer:
         for subscript in var_node.subscripts:
             # Try to get a meaningful pattern
             val = self.evaluator.evaluate(subscript)
-            if val is not None:
+            if val is not None and not isinstance(val, str):
                 subscript_strs.append(str(int(val)))
             elif isinstance(subscript, VariableNode):
                 subscript_strs.append(subscript.name.upper())
@@ -5341,8 +5358,9 @@ class SemanticAnalyzer:
         end_val = self.evaluator.evaluate(stmt.end_expr)
         step_val = self.evaluator.evaluate(stmt.step_expr) if stmt.step_expr else 1
 
-        if start_val is not None and end_val is not None and step_val is not None:
-            # Determine actual range
+        if (start_val is not None and end_val is not None and step_val is not None
+                and not any(isinstance(v, str) for v in (start_val, end_val, step_val))):
+            # Determine actual range (a string bound is a Type mismatch at run time)
             if step_val > 0:
                 min_val = start_val
                 max_val = end_val

@@ -18,6 +18,8 @@ a message. There are two kinds of message:
 
 The backend gives an error for a statement or function that it does not have. It
 also gives an error for a string where a number is needed (`Type mismatch`).
+The error is at compile time on purpose; the JavaScript backend raises it at
+run time (`docs/dev/JS_TYPE_MISMATCH.md`).
 Before this change the backend filled `self.warnings` and nobody showed it. It wrote
 an unsupported construct to the C file as a comment.
 

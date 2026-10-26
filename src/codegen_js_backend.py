@@ -17,6 +17,8 @@ from src.codegen_backend import CodeGenBackend
 from src.tokens import TokenType
 from src.error_codes import ERROR_CODES
 from src.string_temps import string_temps, STRING_TEMPORARIES
+from src.js_type_check import (expr_kind, binary_mismatch, unary_mismatch,
+                               builtin_arg_kinds, function_base_name)
 from src.number_format import (numeric_digits, to_single, INTEGER_DIGITS,
                                SINGLE_DIGITS, DOUBLE_DIGITS, machine_infinity)
 
@@ -533,6 +535,7 @@ function _using_string(v, f) {
     if (f.type === "full") return v;
     return v.length >= f.width ? v.slice(0, f.width) : v.padEnd(f.width, " ");
 }
+let _using_partial = "";
 function _print_using(fmt, values, digits) {
     if (!fmt) _error("Illegal function call");
     const fields = _using_parse(fmt);
@@ -543,11 +546,14 @@ function _print_using(fmt, values, digits) {
         for (const f of fields) {
             if (f.kind === "literal") { result += f.text; continue; }
             if (idx >= values.length) break outer;
+            // A string goes with a string field and a number with a numeric field; any other pair is
+            // Type mismatch, as on 5.21
             if (f.kind === "string") {
+                if (typeof values[idx] !== "string") { _using_partial = result; _error("Type mismatch"); }
                 result += _using_string(values[idx], f);
             } else {
                 let v = values[idx];
-                if (typeof v === "string") { v = parseFloat(v); if (v !== v) v = 0; }
+                if (typeof v === "string") { _using_partial = result; _error("Type mismatch"); }
                 else if (v === true) v = -1; else if (v === false) v = 0;
                 result += _using_number(v, f, digits[idx] === undefined ? 6 : digits[idx]);
             }
@@ -558,7 +564,10 @@ function _print_using(fmt, values, digits) {
     return [result, values.length > 0 && !has_field];
 }
 function _print_using_stmt(f, fmt, values, digits, trailing) {
-    const [text, bad] = _print_using(fmt, values, digits);
+    _using_partial = "";
+    let text, bad;
+    try { [text, bad] = _print_using(fmt, values, digits); }
+    catch (e) { if (_using_partial) _emit(f, _using_partial); _using_partial = ""; throw e; }
     _emit(f, text + (trailing ? "" : "\n"));
     if (bad) _error("Illegal function call");
 }
@@ -2693,7 +2702,8 @@ class JavaScriptBackend(CodeGenBackend):
             param_str = ', '.join(params)
 
             # Function body
-            expr_code = self._generate_expression(def_fn.expression)
+            expr_code = self._generate_expression_as(
+                def_fn.expression, 's' if def_fn.type_suffix == '$' else 'n')
 
             # A DEF FN whose body can reach INPUT$ or INKEY$ is async
             prefix = 'async ' if self._fn_key(fn_base) in self.async_fns else ''
@@ -2734,7 +2744,7 @@ class JavaScriptBackend(CodeGenBackend):
                     reachable = False
             elif kind == 'if':
                 # Flat IF: jump over the THEN part when the condition is false
-                code.append(self.indent() + f'if (!({self._generate_expression(step[1].condition)})) {{ {self._jump_code(plan.targets[j])} }}')
+                code.append(self.indent() + f'if (!({self._generate_expression_as(step[1].condition, 'n')})) {{ {self._jump_code(plan.targets[j])} }}')
             elif kind == 'goto':
                 code.append(self.indent() + self._jump_code(step[1]))
                 reachable = False
@@ -2921,14 +2931,14 @@ class JavaScriptBackend(CodeGenBackend):
                     # Overflow, as in MBASIC.
                     value = f'() => {value}'
                 items.append(f'[0, {value}, {self._js_digits(expr)}]')
-        filenum = self._generate_expression(stmt.file_number) if stmt.file_number else 'null'
+        filenum = self._generate_expression_as(stmt.file_number, 'n') if stmt.file_number else 'null'
         sep_js = '[' + ', '.join(json.dumps(x) for x in seps) + ']'
         return [self.indent() + f'_print_list({filenum}, [{", ".join(items)}], {sep_js});']
 
     def _generate_print_using(self, stmt: PrintUsingStatementNode) -> List[str]:
         """Generate PRINT USING statement"""
-        filenum = self._generate_expression(stmt.file_number) if stmt.file_number else 'null'
-        format_expr = self._generate_expression(stmt.format_string)
+        filenum = self._generate_expression_as(stmt.file_number, 'n') if stmt.file_number else 'null'
+        format_expr = self._generate_expression_as(stmt.format_string, 's')
         values = ', '.join(self._generate_expression(expr) for expr in stmt.expressions)
         digits = ', '.join(str(self._js_digits(expr)) for expr in stmt.expressions)
         trailing = 'true' if getattr(stmt, 'trailing_separator', False) else 'false'
@@ -2945,16 +2955,21 @@ class JavaScriptBackend(CodeGenBackend):
         # Check if assigning to array element
         if stmt.variable.subscripts:
             access = self._element_access(var_key, stmt.variable.subscripts)
-            expr_code = self._generate_expression(stmt.expression)
+            expr_code = self._generate_expression_as(stmt.expression, self._target_kind(stmt.variable))
             expr_code = self._apply_type_coercion(expr_code, var_type)
             code.append(self.indent() + f'{access} = {expr_code};')
         else:
             var_name = self._mangle_var_name(var_key)
-            expr_code = self._generate_expression(stmt.expression)
+            expr_code = self._generate_expression_as(stmt.expression, self._target_kind(stmt.variable))
             expr_code = self._apply_type_coercion(expr_code, var_type)
             code.append(self.indent() + f'{var_name} = {expr_code};')
 
         return code
+
+    @staticmethod
+    def _target_kind(variable) -> str:
+        """'s' for a string variable, else 'n': what an assignment to it must be."""
+        return 's' if variable.type_suffix == '$' else 'n'
 
     def _get_var_type(self, var_key: str) -> Optional[VarType]:
         """Look up variable type from symbol table.
@@ -3017,6 +3032,22 @@ class JavaScriptBackend(CodeGenBackend):
             return f'(_error("String formula too complex"), {code})'
         return self._generate_expression_plain(expr)
 
+    @staticmethod
+    def _type_mismatch(*parts: str) -> str:
+        """An expression that is Type mismatch (error 13) when it is reached.
+
+        The operands are still worked out first, so an error in one of them
+        comes first, as on the real binary.
+        """
+        return '(' + ''.join(f'{part}, ' for part in parts) + '_error("Type mismatch"))'
+
+    def _generate_expression_as(self, expr, want: str) -> str:
+        """JavaScript for an expression that must be a string ('s') or a number ('n')."""
+        code = self._generate_expression(expr)
+        if want in ('s', 'n') and expr_kind(expr) != want:
+            return self._type_mismatch(code)
+        return code
+
     def _generate_expression_plain(self, expr) -> str:
         """Generate JavaScript expression"""
         if isinstance(expr, NumberNode):
@@ -3042,6 +3073,8 @@ class JavaScriptBackend(CodeGenBackend):
             left = self._generate_expression(expr.left)
             right = self._generate_expression(expr.right)
             op = self._token_to_operator(expr.operator)
+            if binary_mismatch(expr):
+                return self._type_mismatch(left, right)
 
             # Map BASIC operators to JavaScript
             if op == '^':
@@ -3081,6 +3114,10 @@ class JavaScriptBackend(CodeGenBackend):
         elif isinstance(expr, UnaryOpNode):
             operand = self._generate_expression(expr.operand)
             op = self._token_to_operator(expr.operator)
+            if unary_mismatch(expr):
+                return self._type_mismatch(operand)
+            if op == '+' and expr_kind(expr.operand) == 's':
+                return operand  # unary plus passes a string through
             if op == 'NOT':
                 return f'_not({operand})'  # bitwise on a 16-bit integer: -1 for 0, 0 for -1
             return f'({op}({operand}))'
@@ -3089,10 +3126,49 @@ class JavaScriptBackend(CodeGenBackend):
         else:
             return f'/* Unknown expr: {type(expr).__name__} */'
 
+    def _fn_param_kinds(self, key: str) -> List[str]:
+        """The kind ('s' or 'n') of each parameter of the DEF FN with this key (FNA is 'a')."""
+        for d in self.def_fn_functions:
+            if self._fn_key(d.name) != key:
+                continue
+            kinds = []
+            for p in d.parameters:
+                suffix = p.type_suffix
+                if suffix is None:
+                    # A DEFSTR letter does not reach the parameter; the body's use of it does
+                    stack = [d.expression]
+                    seen = set()
+                    while stack and suffix is None:
+                        node = stack.pop()
+                        if id(node) in seen:
+                            continue
+                        seen.add(id(node))
+                        if isinstance(node, VariableNode) and node.name == p.name and node.type_suffix:
+                            suffix = node.type_suffix
+                        elif isinstance(node, list):
+                            stack.extend(node)
+                        elif type(node).__module__ == 'src.ast_nodes':
+                            stack.extend(node.__dict__.values())
+                kinds.append('s' if suffix == '$' else 'n')
+            return kinds
+        return []
+
+    def _check_argument_kinds(self, func: FunctionCallNode, args: List[str]) -> List[str]:
+        """Make an argument of the wrong kind (a string for a number, or the other way) Type mismatch."""
+        name = function_base_name(func)
+        if name.startswith('FN'):
+            wanted = self._fn_param_kinds(self._fn_key(name))
+        else:
+            wanted = builtin_arg_kinds(name, len(args))
+        wanted = wanted + ['*'] * (len(args) - len(wanted))
+        return [code if want == '*' or expr_kind(arg) == want else self._type_mismatch(code)
+                for arg, code, want in zip(func.arguments, args, wanted)]
+
     def _generate_function_call(self, func: FunctionCallNode) -> str:
         """Generate function call"""
         func_name = func.name.lower()
         args = [self._generate_expression(arg) for arg in func.arguments]
+        args = self._check_argument_kinds(func, args)
 
         # Check if it's a DEF FN function (starts with 'fn')
         # User-defined functions from DEF FN
@@ -3255,11 +3331,13 @@ class JavaScriptBackend(CodeGenBackend):
         var_key = stmt.variable.name + (stmt.variable.type_suffix or '')
         var_name = self._mangle_var_name(var_key)
         var_type = self._get_var_type(var_key)
-        start_expr = self._generate_expression(stmt.start_expr)
-        end_expr = self._generate_expression(stmt.end_expr)
+        start_expr = self._generate_expression_as(stmt.start_expr, 'n')
+        end_expr = self._generate_expression_as(stmt.end_expr, 'n')
+        if stmt.variable.type_suffix == '$':
+            start_expr = self._type_mismatch(start_expr)    # FOR A$ = 1 TO 2
 
         if stmt.step_expr:
-            step_expr = self._generate_expression(stmt.step_expr)
+            step_expr = self._generate_expression_as(stmt.step_expr, 'n')
         else:
             step_expr = '1'
 
@@ -3363,7 +3441,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_while(self, stmt: WhileStatementNode, line_number: int) -> List[str]:
         """Generate WHILE: leave the loop to the statement after the WEND when the condition is false"""
         code = []
-        condition = self._generate_expression(stmt.condition)
+        condition = self._generate_expression_as(stmt.condition, 'n')
         wend = self.while_to_wend.get(id(stmt))
         if wend is None:
             # The real binary looks for the WEND when the WHILE runs, whatever the condition is
@@ -3386,7 +3464,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_if(self, stmt: IfStatementNode, current_line: int) -> List[str]:
         """Generate IF statement"""
         code = []
-        condition = self._generate_expression(stmt.condition)
+        condition = self._generate_expression_as(stmt.condition, 'n')
 
         if stmt.then_statements or stmt.then_line_number:
             code.append(self.indent() + f'if ({condition}) {{')
@@ -3419,7 +3497,7 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Check for file I/O
         if stmt.file_number:
-            filenum_expr = self._generate_expression(stmt.file_number)
+            filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
             # Generate input for each variable from file
             for var in stmt.variables:
                 var_key = var.name + (var.type_suffix or '')
@@ -3498,7 +3576,7 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Check for file I/O
         if stmt.file_number:
-            filenum_expr = self._generate_expression(stmt.file_number)
+            filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
             code.append(self.indent() + f'{var_name} = _fline_input({filenum_expr});')
         else:
             # Interactive input
@@ -3518,7 +3596,7 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Determine output function
         if stmt.file_number:
-            filenum_expr = self._generate_expression(stmt.file_number)
+            filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
             print_func = f'_fprint({filenum_expr}, '
         else:
             print_func = '_print('
@@ -3631,6 +3709,8 @@ class JavaScriptBackend(CodeGenBackend):
         var1_name = self._input_lvalue(stmt.var1)
         var2_name = self._input_lvalue(stmt.var2)
 
+        if self._target_kind(stmt.var1) != self._target_kind(stmt.var2):
+            return [self.indent() + self._type_mismatch() + ';']  # SWAP A,A$
         # Use destructuring assignment for clean swap
         code.append(self.indent() + f'[{var1_name}, {var2_name}] = [{var2_name}, {var1_name}];')
         return code
@@ -3645,9 +3725,9 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Generate the variable reference (can be simple variable or array element)
         var_expr = self._generate_expression(stmt.string_var)
-        start_expr = self._generate_expression(stmt.start)
-        length_expr = self._generate_expression(stmt.length) if stmt.length else 'undefined'
-        value_expr = self._generate_expression(stmt.value)
+        start_expr = self._generate_expression_as(stmt.start, 'n')
+        length_expr = self._generate_expression_as(stmt.length, 'n') if stmt.length else 'undefined'
+        value_expr = self._generate_expression_as(stmt.value, 's')
         same = 'true' if (isinstance(stmt.value, VariableNode) and not stmt.value.subscripts
                           and not stmt.string_var.subscripts and value_expr == var_expr) else 'false'
 
@@ -3687,13 +3767,13 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_open(self, stmt: OpenStatementNode) -> List[str]:
         """Generate OPEN statement - open file for I/O"""
         code = []
-        filenum_expr = self._generate_expression(stmt.file_number)
-        filename_expr = self._generate_expression(stmt.filename)
+        filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
+        filename_expr = self._generate_expression_as(stmt.filename, 's')
         mode = stmt.mode  # "I", "O", "A", or "R"
 
         # For random files, include record length (default 128 if not specified)
         if stmt.record_length:
-            reclen_expr = self._generate_expression(stmt.record_length)
+            reclen_expr = self._generate_expression_as(stmt.record_length, 'n')
             code.append(self.indent() + f'_fopen({filenum_expr}, {filename_expr}, "{mode}", {reclen_expr});')
         else:
             code.append(self.indent() + f'_fopen({filenum_expr}, {filename_expr}, "{mode}");')
@@ -3708,7 +3788,7 @@ class JavaScriptBackend(CodeGenBackend):
         else:
             # CLOSE #1, #2, ...
             for file_number in stmt.file_numbers:
-                filenum_expr = self._generate_expression(file_number)
+                filenum_expr = self._generate_expression_as(file_number, 'n')
                 code.append(self.indent() + f'_fclose({filenum_expr});')
         return code
 
@@ -3721,15 +3801,15 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_kill(self, stmt: KillStatementNode) -> List[str]:
         """Generate KILL statement - delete file"""
         code = []
-        filename_expr = self._generate_expression(stmt.filename)
+        filename_expr = self._generate_expression_as(stmt.filename, 's')
         code.append(self.indent() + f'_fkill({filename_expr});')
         return code
 
     def _generate_name(self, stmt: NameStatementNode) -> List[str]:
         """Generate NAME statement - rename file"""
         code = []
-        old_filename_expr = self._generate_expression(stmt.old_filename)
-        new_filename_expr = self._generate_expression(stmt.new_filename)
+        old_filename_expr = self._generate_expression_as(stmt.old_filename, 's')
+        new_filename_expr = self._generate_expression_as(stmt.new_filename, 's')
         code.append(self.indent() + f'_fname({old_filename_expr}, {new_filename_expr});')
         return code
 
@@ -3746,7 +3826,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_field(self, stmt: FieldStatementNode) -> List[str]:
         """Generate FIELD statement - define random-access file buffer layout"""
         code = []
-        filenum_expr = self._generate_expression(stmt.file_number)
+        filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
 
         # Build array of field definitions: [[width1, var1], [width2, var2], ...]
         fields_array = []
@@ -3763,7 +3843,7 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate LSET statement - left-justify string in field variable"""
         code = []
         var_name = stmt.variable.name
-        value_expr = self._generate_expression(stmt.expression)
+        value_expr = self._generate_expression_as(stmt.expression, 's')
         code.append(self.indent() + f'_flset("{var_name}", {value_expr});')
         return code
 
@@ -3771,14 +3851,14 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate RSET statement - right-justify string in field variable"""
         code = []
         var_name = stmt.variable.name
-        value_expr = self._generate_expression(stmt.expression)
+        value_expr = self._generate_expression_as(stmt.expression, 's')
         code.append(self.indent() + f'_frset("{var_name}", {value_expr});')
         return code
 
     def _generate_get(self, stmt: GetStatementNode) -> List[str]:
         """Generate GET statement - read record from random-access file"""
         code = []
-        filenum_expr = self._generate_expression(stmt.file_number)
+        filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
         if stmt.record_number:
             rec_expr = self._generate_expression(stmt.record_number)
             code.append(self.indent() + f'_fget({filenum_expr}, {rec_expr});')
@@ -3789,7 +3869,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_put(self, stmt: PutStatementNode) -> List[str]:
         """Generate PUT statement - write record to random-access file"""
         code = []
-        filenum_expr = self._generate_expression(stmt.file_number)
+        filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
         if stmt.record_number:
             rec_expr = self._generate_expression(stmt.record_number)
             code.append(self.indent() + f'_fput({filenum_expr}, {rec_expr});')
@@ -3818,7 +3898,7 @@ class JavaScriptBackend(CodeGenBackend):
         if stmt.delete_range:
             code.append(self.indent() + '// DELETE option not supported in compiled code')
 
-        filename_expr = self._generate_expression(stmt.filename)
+        filename_expr = self._generate_expression_as(stmt.filename, 's')
 
         code.append(self.indent() + '// CHAIN to another program')
         code.append(self.indent() + 'if (typeof window !== "undefined") {')
@@ -3973,6 +4053,10 @@ class JavaScriptBackend(CodeGenBackend):
         since JS handles memory automatically).
         """
         code = []
+        for arg in (stmt.string_space, stmt.memory_top, stmt.stack_space):
+            if arg is not None:
+                # A string where a number is wanted is Type mismatch, as on the binary
+                code.append(self.indent() + self._generate_expression_as(arg, 'n') + ';')
         code.append(self.indent() + '// CLEAR - JavaScript manages memory automatically')
         return code
 

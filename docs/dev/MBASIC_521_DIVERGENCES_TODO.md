@@ -540,18 +540,23 @@ semantics are not:
 - Done (GitHub issue 13): NEXT pairs with FOR by position in the text, the
   loop-back and GOSUB return points are statements in the middle of a line, and
   `NEXT J,I` passes the semantic analyzer. See `docs/dev/JS_CONTROL_FLOW.md`.
-
-Still open, found in the final check of the fixes for #30 to #57:
-
+- Done (#59): the JavaScript backend gives `Type mismatch` at run time for a
+  string mixed with a number, for `-"a"` and `NOT "a"`, for a wrong kind in an
+  assignment, a condition, a FOR, a built-in function, DEF FN and PRINT USING.
+  Unary `+` on a string is allowed. The semantic analyzer no longer folds or
+  rewrites such an expression. See `docs/dev/JS_TYPE_MISMATCH.md`. Open:
+  `DIM B("a")` stops the compile, and `USR("a")` is not checked. The C backend
+  refuses the mixed forms at compile time, on purpose. Test:
+  `tests/regression/integration/test_js_type_mismatch.py`.
 - Done (#58): in the JavaScript backend, `RESUME NEXT` goes on at the next
   statement, and `RESUME` runs the failing statement again, not the line. See
   `docs/dev/JS_CONTROL_FLOW.md`. The interpreter still differs from the binary
   for an error inside a THEN or ELSE part with more than one statement:
   `RESUME NEXT` there skips the rest of the IF, and the binary goes on with the
   next statement of the part (`IF 1 THEN PRINT "a":ERROR 5:PRINT "b"`).
-- #59: the JavaScript backend gives no `Type mismatch` for a string mixed with
-  a number (`"a"<1`, `1+"a"`, `"a"*2`, `A$=A`), and `-"a"` stops the compiler
-  with a Python error.
+
+Still open, found in the final check of the fixes for #30 to #57:
+
 - #60: in the C backend, `ERASE` keeps the old bounds of the array. On the
   binary the next use makes the array again with the bounds 0 to 10.
 

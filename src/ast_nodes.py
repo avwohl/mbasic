@@ -1058,6 +1058,7 @@ class DefFnStatementNode:
     expression: 'ExpressionNode'
     line_num: int = 0
     column: int = 0
+    type_suffix: Optional[str] = None  # type of the result: the suffix of the name ($ % ! #) or the DEF type
 
 
 @dataclass
