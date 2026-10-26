@@ -26,7 +26,10 @@ What the measurements show:
   largest float is the largest float, with no message.
 - + - * of two integers is a single when it does not fit 16 bits (PRINT, a
   store into a single variable, / and comparisons see 60000); it is Overflow
-  in a store into a % variable and as an operand of \\.
+  in a store into a % variable and as an operand of \\.  Comparisons see the
+  single whatever the other operand is (constant, variable, + or *).
+- A FOR loop with an INTEGER counter stops with Overflow when NEXT steps it
+  past 32767 or -32768.
 """
 import sys
 from pathlib import Path
@@ -127,6 +130,19 @@ CASES = [
     ('A%=-32768:B%=-1:PRINT STR$(A%\\B%)', ' 32768\n'),
     ('A=2:PRINT A^126', 'Overflow\n 1.70141E+38 \n'),
     ('A=3:PRINT A^80', 'Overflow\n 1.70141E+38 \n'),
+    # comparison with an integer + - * result, FOR past 32767, nested integer store (measured)
+    ('A%=30000:B%=30000:PRINT A%+B%>40000', '-1 \n'),
+    ('A%=30000:B%=30000:PRINT A%+B%=60000;A%+B%<>60000;A%+B%>=60000;60000=A%+B%', '-1  0 -1 -1 \n'),
+    ('A%=30000:B%=30000:C=60000:PRINT A%+B%=C', '-1 \n'),
+    ('A%=300:B%=200:IF A%*B%=60000 THEN PRINT "y" ELSE PRINT "n"', 'y\n'),
+    ('A%=300:B%=200:C=60000:PRINT 60000=A%*B%;A%*B%>59999;A%*B%=C', '-1 -1 -1 \n'),
+    ('FOR I%=32766 TO 32767:PRINT I%:NEXT', ' 32766 \n 32767 \nOverflow in 10\n'),
+    ('FOR I%=32766 TO 32767 STEP 2:PRINT I%:NEXT', ' 32766 \nOverflow in 10\n'),
+    ('FOR I%=-32767 TO -32768 STEP -1:PRINT I%:NEXT', '-32767 \n-32768 \nOverflow in 10\n'),
+    ('S%=2:FOR I%=32766 TO 32767 STEP S%:PRINT I%:NEXT', ' 32766 \nOverflow in 10\n'),
+    ('A%=300:B%=200:C%=A%*B%-50000:PRINT C%', ' 10000 \n'),
+    ('A%=32767:B%=32767:C%=A%*B%*A%', 'Overflow in 10\n'),
+    ('A%=-30000:B%=-30000:C%=A%+B%+A%+B%', 'Overflow in 10\n'),
 ]
 
 

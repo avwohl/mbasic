@@ -1102,6 +1102,15 @@ int mb25_int16(double v) {
     return negative ? -(int)size : (int)size;
 }
 
+/* The value of integer + - * that was worked out in 32 bits: a result outside
+ * -32768..32767 is Overflow. */
+int mb25_chk32(long v) {
+    if (v < -32768L || v > 32767L) {
+        mb25_fail("Overflow");
+    }
+    return (int)v;
+}
+
 int mb25_cint(double v) {
     return mb25_int16(v);
 }

@@ -137,7 +137,9 @@ These differences are known. They are not fixed.
   at 32767). In other places (a subscript, an argument of a function, a `FOR` limit)
   the integer result wraps at 16 bits. The compiler works out a constant such as
   `200*200` itself and writes 40000. The compiler gives a warning when a program does
-  `+`, `-` or `*` on integers.
+  `+`, `-` or `*` on integers. A store into an INTEGER variable works in 32 bits when
+  the expression is small enough (fast), and in double otherwise. The `NEXT` of a loop
+  with an INTEGER counter gives `Overflow` when it steps past 32767 or -32768.
 - **Some float results are not exact.** uc80 does not round a multiplication like
   IEEE binary32. `PRINT 1/3*3=1` gives 0 (false), and the interpreter gives -1.
   `2/3*3=2` and `1/10*10=1` have the same fault. The printed value is correct

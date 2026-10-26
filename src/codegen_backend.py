@@ -1125,6 +1125,23 @@ class Z88dkCBackend(CodeGenBackend):
             return f'(-{self._wide_value(expr.operand)})'
         return self._generate_expression(expr)
 
+    def _int_arith_bound(self, expr: Any) -> int:
+        """Largest size that integer + - * can reach, taking every integer as 32768."""
+        if not self._is_int_arith(expr):
+            return 32768
+        left = self._int_arith_bound(expr.left)
+        right = self._int_arith_bound(expr.right)
+        return left * right if expr.operator == TokenType.MULTIPLY else left + right
+
+    def _long_value(self, expr: Any) -> str:
+        """C long expression for integer + - * whose size fits 31 bits (cheaper than double)."""
+        if self._is_int_arith(expr):
+            c_op = {TokenType.PLUS: '+', TokenType.MINUS: '-',
+                    TokenType.MULTIPLY: '*'}[expr.operator]
+            return (f'({self._long_value(expr.left)} {c_op} '
+                    f'{self._long_value(expr.right)})')
+        return f'(long)({self._generate_expression(expr)})'
+
     def _integer_value(self, expr: Any, checked: bool = False, wide: bool = False) -> str:
         """C int expression for a numeric expression, rounded like CINT.
 
@@ -1137,6 +1154,8 @@ class Z88dkCBackend(CodeGenBackend):
                 call = 'mb25_iadd' if expr.operator == TokenType.PLUS else 'mb25_isub'
                 return (f'{call}({self._generate_expression(expr.left)}, '
                         f'{self._generate_expression(expr.right)})')
+            if self._int_arith_bound(expr) < 2 ** 31:
+                return f'mb25_chk32({self._long_value(expr)})'
             return f'mb25_int16({self._wide_value(expr)})'
         c_expr = self._generate_expression(expr)
         if self._get_expression_type(expr) == VarType.INTEGER:
@@ -1799,12 +1818,20 @@ class Z88dkCBackend(CodeGenBackend):
         for number in self.next_ids.get(id(stmt), []):
             loop = self.for_vars[number]
             var_name = self._mangle_variable_name(self._canonical_basic_name(loop.variable))
+            value = None
             if loop.step_expr is None:
                 step = '1'
             else:
                 value = self._constant_value(loop.step_expr)
                 step = self._number_literal(value) if value is not None else f'_fs{number}'
-            code.append(self.indent() + f'{var_name} += {step};')
+            if self._get_expression_type(loop.variable) == VarType.INTEGER and (
+                    loop.step_expr is None
+                    or (value is not None and float(value).is_integer())
+                    or (value is None and self._get_expression_type(loop.step_expr) == VarType.INTEGER)):
+                # An integer counter that steps past 32767 or -32768 is Overflow.
+                code.append(self.indent() + f'{var_name} = mb25_iadd({var_name}, {step});')
+            else:
+                code.append(self.indent() + f'{var_name} += {step};')
             code.append(self.indent() + f'goto for_{number}_top;')
             code.append(f'for_{number}_end: ;')
         return code
@@ -3515,7 +3542,7 @@ class Z88dkCBackend(CodeGenBackend):
 
         if op in c_compare:
             both_int = left_type == VarType.INTEGER and right_type == VarType.INTEGER
-            if both_int and (self._is_int_arith(expr.left) or self._is_int_arith(expr.right)):
+            if self._is_int_arith(expr.left) or self._is_int_arith(expr.right):
                 both_int = False       # a sum of 40000 is a single, compared as one
                 left = self._wide_value(expr.left)
                 right = self._wide_value(expr.right)
