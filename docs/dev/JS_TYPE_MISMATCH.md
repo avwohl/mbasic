@@ -47,6 +47,16 @@ A statement that is never reached gives no error.
   both rules to the definition and to each call.
 - OPEN, CLOSE, PRINT #, CLEAR and KILL/NAME: file numbers and sizes must be
   numbers, file names must be strings.
+- A built-in function with the wrong number of arguments gives `Syntax error`
+  (2), but a wrong kind in an argument before the end of the list is
+  `Type mismatch` first (`LEFT$(1,2,3)`). `ABS("x",1)` is `Syntax error`.
+  `INSTR` reads the kinds of its arguments to find its form, so
+  `INSTR(1,"A")` and `INSTR("A",1,1)` are `Syntax error` and `INSTR("A",1)` is
+  `Type mismatch`. The compiler writes no kind check for a call with the wrong
+  count or for `INSTR`: the run-time functions `_arg_type` and `_instr` give the
+  errors in the order of `arity_type_checks` and `instr_shape_error`
+  (`src/ast_nodes.py`), as the interpreter does. Test:
+  `tests/regression/integration/test_interpreter_misc_edges.py`.
 - PRINT USING: the format must be a string. A string goes with a string field
   (`!`, `\ \`, `&`) and a number goes with a numeric field.
 

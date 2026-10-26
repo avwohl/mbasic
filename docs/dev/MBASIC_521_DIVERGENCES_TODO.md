@@ -354,22 +354,46 @@ Found while measuring (#61):
   and `RESUME NEXT` goes on at the next line: the rest of the line is skipped,
   `:` parts and the `ELSE` branch too. Other missing operands (`A=:PRINT 1`)
   go on behind the `:`. The JavaScript backend gives `Missing operand` (22)
-  for these now, not `Syntax error`. Not done in JavaScript: after `A=:` or
-  `A=1*:` `RESUME NEXT` skips the rest of the line instead of going on behind
-  the `:` (the JavaScript `RESUME NEXT` works per line). Not done: `ELSE` met
-  after `PRINT` or `ON x GOTO` ends the statement without an error on the
-  binary and is a `Syntax error` here (older difference).
+  for these now, not `Syntax error`. In JavaScript too, `RESUME NEXT` after
+  `A=:` or `A=1*:` goes on behind the `:` (measured again after the merge
+  of #58 and #61).
+- Done (#61): an `ELSE` that no `IF` waits for (a second `ELSE`, `PRINT "a"
+  ELSE ...`, `ON x GOTO 50 ELSE ...`, `A=1:ELSE ...`) skips the rest of the
+  line on the binary. It is not an error. Before, the interpreter and the
+  JavaScript backend gave `Syntax error`. The parser keeps such an `ELSE` as
+  a `SyntaxErrorStatementNode` with `stray_else` set, and the statement does
+  nothing. The C backend still refuses the form.
 - Done (#61): `WIDTH n,x` outside an `IF` takes the rest of the line, `ELSE`
   part included, so `RESUME NEXT` goes on at the next line. In a `THEN`
   clause the `ELSE` still belongs to the `IF`; in an `ELSE` clause a second
   `ELSE` is taken too.
-- Done (#61): an error in a statement of a `THEN` or `ELSE` clause ends only
-  that statement. `RESUME NEXT` goes on with the `:` statements behind it in
-  the clause (`IF 1 THEN X=1/0:PRINT "same"` prints `same`). Exception, as
-  on the binary: when the error is in the first statement of an `ELSE`
-  clause, `RESUME NEXT` goes on at the next line (`execute_clause_statements`,
-  `pending_error_tail`). The JavaScript `RESUME NEXT` works per line and
-  does not do this.
+- Done (#61): `RESUME NEXT` and `RESUME` after an error in an `IF` line.
+  The binary keeps the text pointer of the last statement that its main loop
+  started (the statement behind a `:`, or the start of the line). It does
+  not start the first statement of a `THEN` or `ELSE` part: the `IF` starts
+  it. `RESUME NEXT` scans from the start of that statement to the next `:`
+  and goes on there. The binary puts a `:` before each `ELSE`. Result:
+  - An error in the condition, or in the first statement of a `THEN` or
+    `ELSE` part, goes on behind the first statement of the `THEN` part. This
+    holds when the error was in the `ELSE` part: `IF 0 THEN PRINT "t":PRINT
+    "u" ELSE X=1/0` prints `u`. With one statement in the `THEN` part,
+    `RESUME NEXT` goes on at the next line, because an `ELSE` skips the rest
+    of the line.
+  - An error in a later statement of a part (behind a `:`) goes on with the
+    next statement of the part (`IF 1 THEN PRINT "a":X=1/0:PRINT "b"`
+    prints `b`).
+  - `WIDTH n,x` is the exception. It fails after it ran, and the text
+    pointer is inside it, so `RESUME NEXT` goes on behind the next `:`
+    also in the first statement of an `ELSE` part.
+  - `RESUME` runs the statement again from the same place: the whole `IF`,
+    condition included, for the condition or the first statement of a part,
+    and the later statement alone otherwise.
+  The interpreter does this in `clause_tail_after` (`src/ast_nodes.py`),
+  `_note_clause_error` and `execute_resume`. The JavaScript backend does it
+  in `_plan_statement_labels`. A GOSUB or a jump in the statements that
+  `RESUME NEXT` runs works. Test:
+  `tests/regression/integration/test_resume_next_clauses.py` (82 shapes
+  measured on the binary, `RESUME` and `RESUME NEXT`).
 - Not done (#61): `CLEAR` does not reset `DEFINT`, `DEFSTR` and the other
   DEF types, as the binary does. The variable types are fixed when the
   program is parsed, so a run-time reset needs a different design.
@@ -602,10 +626,9 @@ semantics are not:
   `tests/regression/integration/test_js_type_mismatch.py`.
 - Done (#58): in the JavaScript backend, `RESUME NEXT` goes on at the next
   statement, and `RESUME` runs the failing statement again, not the line. See
-  `docs/dev/JS_CONTROL_FLOW.md`. The interpreter still differs from the binary
-  for an error inside a THEN or ELSE part with more than one statement:
-  `RESUME NEXT` there skips the rest of the IF, and the binary goes on with the
-  next statement of the part (`IF 1 THEN PRINT "a":ERROR 5:PRINT "b"`).
+  `docs/dev/JS_CONTROL_FLOW.md`. The interpreter and the JavaScript backend
+  now follow the binary also for an error inside a `THEN` or `ELSE` part (see
+  the #61 entry about `RESUME NEXT` in an `IF` line).
 - Done (#60): in the C backend, `ERASE` deletes the array. The next use
   makes the array again with the bounds 0 to 10 (1 to 10 with `OPTION BASE
   1`), and a `DIM` can give the array a new size and a new number of
@@ -631,7 +654,15 @@ semantics are not:
     bound before it checks for `Duplicate Definition`. (The C backend
     refuses such a program at compile time.)
   - Not done: the JavaScript backend does not give `Illegal function call`
-    for `ERASE` of an array that does not exist.
+    for `ERASE` of an array that does not exist, and does not give
+    `Duplicate Definition` for a `DIM` of an array that exists.
+  - Done: the JavaScript backend keeps the number of subscripts of an erased
+    array at run time. `10 DIM A(3):30 ERASE A:40 DIM A(3,3):60 A(2,2)=5`
+    works, and a use with another number of subscripts is `Subscript out of
+    range`. Before, the program stopped at line 20 with `Subscript out of
+    range`. A `DIM` of an erased array makes the array with the sizes of that
+    `DIM`. Test: `tests/regression/integration/test_erase_dim_rank.py`. The
+    C backend gives the same output (checked with uc80 and cpmemu).
 
 
 ## 8. `serialize_expression` and a unary minus - done

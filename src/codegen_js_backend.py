@@ -9,6 +9,7 @@ Generates JavaScript code from BASIC programs that runs in:
 Generated code uses a switch-based control flow system for GOTO/GOSUB.
 """
 
+import dataclasses
 import json
 from typing import List, Dict, Set, Optional, Any
 from src.ast_nodes import *
@@ -657,6 +658,7 @@ class LinePlan:
         self.steps: List[tuple] = []
         self.labels: Dict[int, int] = {}   # step index -> case label
         self.targets: Dict[int, Optional[int]] = {}  # step index of an 'if' or 'jump' -> where to continue
+        self.pc_override: Dict[int, int] = {}  # step index -> the program counter an error in the step reports
 
 
 def walk_statements(statements):
@@ -920,6 +922,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.option_base = 0  # OPTION BASE 0 or 1
         self.uses_data = False
         self.uses_random = False
+        self.varying_rank: set = set()  # erased arrays used with more than one number of subscripts
         self.erased_arrays: set = set()  # arrays named in ERASE: their bounds change at run time
         self.array_ranks: Dict[str, int] = {}  # arrays used without DIM: the most subscripts seen
         self.uses_error_handling = False
@@ -1023,6 +1026,7 @@ class JavaScriptBackend(CodeGenBackend):
         self._collect_data_values(program)
         self._collect_def_fn(program)
         self._analyze_features(program)
+        self._find_varying_rank(program)
         self._match_for_next(program)
         self._match_while_wend(program)
         self._plan_lines(program)
@@ -1324,7 +1328,7 @@ class JavaScriptBackend(CodeGenBackend):
         """Give each step that can fail a label, and note where RESUME NEXT continues after it.
 
         The error handler gets the label (the program counter) of the failing step. RESUME runs that
-        step again. RESUME NEXT goes to the next step, except in a THEN or ELSE part: the binary
+        statement again (the IF again, for the first statement of a part). RESUME NEXT goes to the next step, except in a THEN or ELSE part: the binary
         scans from the start of the statement that holds the IF to the next colon, so after an error
         in the condition or in the first statement of a part it goes on behind the first statement
         of the THEN part (see clause_tail_after).
@@ -1334,7 +1338,6 @@ class JavaScriptBackend(CodeGenBackend):
         for j, step in enumerate(steps):
             if step[0] not in ('stmt', 'if'):
                 continue
-            pc = plan.line_number if j == 0 else self._position_target(plan, j)
             nxt = j + 1
             stmt = step[1]
             owner, siblings, index = self.stmt_context.get(id(stmt), (None, None, 0))
@@ -1344,6 +1347,13 @@ class JavaScriptBackend(CodeGenBackend):
             while owner is not None and index == 0 and not late:
                 anchor = owner
                 owner, siblings, index = self.stmt_context[id(anchor)]
+            if anchor is not stmt:
+                # The first statement of a part is started by the IF: RESUME runs the IF again
+                a = step_of[id(anchor)]
+                pc = plan.line_number if a == 0 else self._position_target(plan, a)
+                plan.pc_override[j] = pc
+            else:
+                pc = plan.line_number if j == 0 else self._position_target(plan, j)
             if anchor is not stmt or step[0] == 'if' or owner is not None:
                 tail = clause_tail_after(anchor, siblings if owner is not None else None, index)
                 nxt = step_of.get(id(tail[0]), len(steps)) if tail else len(steps)
@@ -1395,6 +1405,49 @@ class JavaScriptBackend(CodeGenBackend):
         if id(stmt) in self.after_target:
             return self.after_target[id(stmt)]
         return self.next_line_map.get(line_number)
+
+    def _find_varying_rank(self, program: ProgramNode):
+        """Find the erased arrays that a DIM or a use gives more than one number of subscripts.
+
+        ERASE deletes an array, and DIM or the next use makes it again, with any
+        number of subscripts. The number is known only when the program runs, so the
+        access to such an array checks it then (see _array_helper).
+        """
+        ranks: Dict[str, Set[int]] = {}
+        stack: List[Any] = [program]
+        while stack:
+            node = stack.pop()
+            if isinstance(node, (list, tuple)):
+                stack.extend(node)
+            elif dataclasses.is_dataclass(node) and not isinstance(node, type):
+                if isinstance(node, VariableNode) and node.subscripts:
+                    key = (node.name + (node.type_suffix or '')).upper()
+                    ranks.setdefault(key, set()).add(len(node.subscripts))
+                elif isinstance(node, DimStatementNode):
+                    for decl in node.arrays:
+                        key = decl.name.upper()
+                        key = key if key[-1] in '$%!#' else key + '!'
+                        ranks.setdefault(key, set()).add(len(decl.dimensions))
+                for f in dataclasses.fields(node):
+                    stack.append(getattr(node, f.name))
+        self.varying_rank = {k for k, r in ranks.items() if len(r) > 1 and k in self.erased_arrays}
+
+    def _array_helper(self, js_name: str, init_value: str) -> List[str]:
+        """The function that gives the array of a varying rank, made again when ERASE deleted it.
+
+        The bounds _bd_ are null after ERASE. The next use makes the array with the bounds 0 to 10
+        for each of its subscripts; a use with another number than the array has is Subscript
+        out of range.
+        """
+        return [
+            f'function _ar_{js_name}(n) {{',
+            f'    if (_bd_{js_name} === null) {{',
+            f'        _bd_{js_name} = new Array(n).fill(10);',
+            f'        {js_name} = _mkarr(_bd_{js_name}, {init_value});',
+            f'    }} else if (_bd_{js_name}.length !== n) _error("Subscript out of range");',
+            f'    return {js_name};',
+            '}',
+        ]
 
     def _analyze_features(self, program: ProgramNode):
         """Analyze which features the program uses"""
@@ -2656,9 +2709,17 @@ class JavaScriptBackend(CodeGenBackend):
                     init_value = '""'
                 else:
                     init_value = '0'
-                code.append(self.indent() + f'let {js_name} = {self._create_array_init(dimensions, init_value)};')
-                if var_name.upper() in self.erased_arrays:
+                if var_name.upper() in self.varying_rank:
+                    # the array does not exist until a DIM runs or a use makes it (see _array_helper)
+                    code.append(self.indent() + f'let {js_name} = null;')
+                    code.append(self.indent() + f'let _bd_{js_name} = null;  // bounds; null while the array does not exist')
+                else:
+                    code.append(self.indent() + f'let {js_name} = {self._create_array_init(dimensions, init_value)};')
+                if var_name.upper() in self.erased_arrays and var_name.upper() not in self.varying_rank:
                     code.append(self.indent() + f'let _bd_{js_name} = {json.dumps(list(dimensions))};  // bounds; ERASE resets them')
+                if var_name.upper() in self.varying_rank:
+                    code.append(self.indent() + 'function _mkarr(b, v, k = 0) { return k === b.length - 1 ? new Array(b[k] + 1).fill(v) : Array.from({length: b[k] + 1}, () => _mkarr(b, v, k + 1)); }')
+                    code.extend(self.indent() + line for line in self._array_helper(js_name, init_value))
             else:
                 # Regular variable
                 if var_info.var_type == VarType.STRING:
@@ -2759,7 +2820,7 @@ class JavaScriptBackend(CodeGenBackend):
                 code.append(self.indent() + f'case {plan.labels[j]}:  // line {line.line_number}, step {j + 1}')
                 self.indent_level += 1
                 if self.track_statements:
-                    code.append(self.indent() + f'_pc = {plan.labels[j]};  // the error handler needs the statement that runs')
+                    code.append(self.indent() + f'_pc = {plan.pc_override.get(j, plan.labels[j])};  // the error handler needs the statement that runs')
                 reachable = True
             if not reachable:
                 continue  # No jump or label can reach this step
@@ -2894,10 +2955,18 @@ class JavaScriptBackend(CodeGenBackend):
             # The arrays are made during variable generation; a bound that FRCINT cannot hold is Overflow
             for decl in stmt.arrays:
                 key = decl.name.upper()
-                info = self.symbols.variables.get(key if key[-1] in '$%!#' else key + '!')
+                key = key if key[-1] in '$%!#' else key + '!'
+                info = self.symbols.variables.get(key)
                 if info is not None and info.dimensions and any(d > 32767 for d in info.dimensions):
                     code.append(self.indent() + '_error("Overflow");')
                     break
+                own = getattr(decl, 'const_dimensions', None)
+                if key in self.erased_arrays and own and info is not None and info.is_array:
+                    # an array that ERASE deletes is made again with the sizes of this DIM
+                    js_name = self._mangle_var_name(key)
+                    init_value = '""' if info.var_type == VarType.STRING else '0'
+                    code.append(self.indent() + f'_bd_{js_name} = {json.dumps(own)};')
+                    code.append(self.indent() + f'{js_name} = {self._create_array_init(own, init_value)};')
         elif isinstance(stmt, RemarkStatementNode):
             # Comments are skipped
             pass
@@ -3600,6 +3669,12 @@ class JavaScriptBackend(CodeGenBackend):
         dims = (info.dimensions if info is not None and info.dimensions else None) or []
         access = self._mangle_var_name(var_key)
         lo = f', {self.option_base}' if self.option_base else ''
+        if var_key.upper() in self.varying_rank:
+            # the number of subscripts is checked when the program runs
+            access = f'_ar_{access}({len(subscripts)})'
+            for k, idx_expr in enumerate(subscripts):
+                access += f'[_ix({self._generate_expression(idx_expr)}, _bd_{self._mangle_var_name(var_key)}[{k}]{lo})]'
+            return access
         if len(subscripts) != len(dims or [10] * self.array_ranks.get(var_key.upper(), 1)):
             # The wrong number of subscripts is Subscript out of range
             return f'{access}[_ix(0, -1)]'
@@ -3802,6 +3877,9 @@ class JavaScriptBackend(CodeGenBackend):
                     init_value = '0'
 
                 # ERASE deletes the array; the next use creates it again with the bounds 0..10
+                if key in self.varying_rank:
+                    code.append(self.indent() + f'_bd_{js_name} = null;  // the next use or DIM makes the array again')
+                    continue
                 dimensions = [10] * len(dimensions)
                 code.append(self.indent() + f'_bd_{js_name} = {json.dumps(dimensions)};')
                 code.append(self.indent() + f'{js_name} = {self._create_array_init(dimensions, init_value)};')

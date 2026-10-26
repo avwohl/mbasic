@@ -454,3 +454,57 @@ def test_javascript(tmp_path):
     result = subprocess.run([NODE, str(tmp_path / "r.js")], cwd=tmp_path,
                             capture_output=True, text=True, timeout=120)
     assert EXPECTED in result.stdout.replace("\r", ""), result.stdout + result.stderr
+
+
+# RESUME (without NEXT) runs the statement that failed again, where the main loop
+# started it: the IF again for an error in the condition or in the first
+# statement of a part, the later statement of a part alone. The handler counts
+# three errors and then does RESUME NEXT (measured on 5.21).
+HANDLER = '100 PRINT "H";:Y=Y+1:IF Y>2 THEN RESUME NEXT ELSE RESUME\n'
+RESUME_CASES = {
+    # the first statement: the IF runs again, E is 1 now and the ELSE part runs
+    "first_statement_reruns_if": (
+        '10 ON ERROR GOTO 100\n20 IF E=0 THEN X=1/0:PRINT "u" ELSE PRINT "else"\n30 PRINT "next"\n'
+        '40 SYSTEM\n100 E=1:RESUME\n',
+        "else\nnext\n"),
+    "later_statement_alone": (
+        '10 ON ERROR GOTO 100\n20 IF 1 THEN PRINT "a":X=1/0:PRINT "b"\n30 PRINT "next"\n40 SYSTEM\n' + HANDLER,
+        "a\nHHHb\nnext\n"),
+    "later_statement_in_else": (
+        '10 ON ERROR GOTO 100\n20 IF 0 THEN PRINT "t" ELSE PRINT "a":X=1/0:PRINT "b"\n30 PRINT "next"\n40 SYSTEM\n' + HANDLER,
+        "a\nHHHb\nnext\n"),
+    "first_in_then": (
+        '10 ON ERROR GOTO 100\n20 IF 1 THEN X=1/0:PRINT "b"\n30 PRINT "next"\n40 SYSTEM\n' + HANDLER,
+        "HHHb\nnext\n"),
+    "first_in_else_skips_rest": (
+        '10 ON ERROR GOTO 100\n20 IF 0 THEN PRINT "t" ELSE X=1/0:PRINT "b"\n30 PRINT "next"\n40 SYSTEM\n' + HANDLER,
+        "HHHnext\n"),
+    "condition": (
+        '10 ON ERROR GOTO 100\n20 IF 1/0 THEN PRINT "t":PRINT "b"\n30 PRINT "next"\n40 SYSTEM\n' + HANDLER,
+        "HHHb\nnext\n"),
+}
+
+
+@pytest.mark.parametrize("name", sorted(RESUME_CASES))
+def test_resume_interpreter(tmp_path, name):
+    source, expected = RESUME_CASES[name]
+    (tmp_path / "r.bas").write_text(source)
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "mbasic"), str(tmp_path / "r.bas"), "--ui", "cli"],
+        input="RUN\nSYSTEM\n", cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert expected in result.stdout.replace("\r", ""), result.stdout
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is needed to execute generated JavaScript")
+@pytest.mark.parametrize("name", sorted(RESUME_CASES))
+def test_resume_javascript(tmp_path, name):
+    source, expected = RESUME_CASES[name]
+    (tmp_path / "r.bas").write_text(source)
+    compiled = subprocess.run(
+        [sys.executable, str(ROOT / "mbasic"), "--compile-js", str(tmp_path / "r.js"),
+         str(tmp_path / "r.bas")],
+        cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert compiled.returncode == 0, compiled.stdout + compiled.stderr
+    result = subprocess.run([NODE, str(tmp_path / "r.js")], cwd=tmp_path,
+                            capture_output=True, text=True, timeout=30)
+    assert expected in result.stdout.replace("\r", ""), result.stdout + result.stderr

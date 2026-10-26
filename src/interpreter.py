@@ -255,6 +255,7 @@ class InterpreterState:
     error_info: Optional[ErrorInfo] = None
     pending_error: Optional[ErrorInfo] = None
     pending_error_tail: Optional[list] = None   # clause statements behind the error
+    pending_error_rerun: Optional[list] = None  # clause statements RESUME runs again
 
     # Performance tracking
     statements_executed: int = 0
@@ -758,6 +759,7 @@ class Interpreter:
                             # an error in the condition, or in the first
                             # statement of a clause (see clause_tail_after)
                             e.clause_tail = clause_tail_after(stmt, None, 0)
+                        self.state.pending_error_rerun = getattr(e, 'clause_rerun', None)
                         self.state.pending_error_tail = getattr(e, 'clause_tail', None)
                         self._invoke_error_handler(error_code, pc, error_pc)
                         # Error handler set npc - apply it and continue execution
@@ -1580,6 +1582,7 @@ class Interpreter:
             return
         try:
             error.clause_tail = clause_tail_after(clause_stmt, statements, index)
+            error.clause_rerun = list(statements[index:])    # RESUME starts here again
         except AttributeError:
             pass
 
@@ -2194,6 +2197,8 @@ class Interpreter:
         error_pc = self.state.pending_error.pc
         clause_tail = self.state.pending_error_tail
         self.state.pending_error_tail = None
+        clause_rerun = self.state.pending_error_rerun
+        self.state.pending_error_rerun = None
 
         # Clear error state
         self.state.pending_error = None
@@ -2206,6 +2211,17 @@ class Interpreter:
             # Parser preserves the distinction (None vs 0) for source text regeneration,
             # but runtime execution treats both identically.
             self.runtime.npc = error_pc
+            if clause_rerun:
+                # The error was in a later statement of a THEN or ELSE clause: the
+                # binary runs again from that statement, not from the IF.
+                self.runtime.npc = None
+                following = self.runtime.statement_table.next_pc(error_pc)
+                if not following.is_running():
+                    self.runtime.pc = PC.halted()
+                    following = None
+                else:
+                    self.runtime.npc = following
+                self._run_clause_again(clause_rerun, following, error_pc)
         elif stmt.line_number == -1:
             # RESUME NEXT - continue at statement after the error
             next_pc = self.runtime.statement_table.next_pc(error_pc)
@@ -2219,21 +2235,27 @@ class Interpreter:
                 # behind it in the clause still run.  An error in one of them
                 # is reported at the IF, not at the RESUME.  A jump in them
                 # replaces the next statement.
-                following = self.runtime.npc
-                self.runtime.npc = None
-                try:
-                    self.execute_clause_statements(clause_tail, resume_pc=following, restart=True)
-                except Exception as e:
-                    try:
-                        e.stmt_pc = error_pc
-                    except AttributeError:
-                        pass
-                    raise
-                if self.runtime.npc is None:
-                    self.runtime.npc = following
+                self._run_clause_again(clause_tail, self.runtime.npc, error_pc)
         else:
             # RESUME line_number - jump to specific line
             self._jump_to(stmt.line_number)
+
+    def _run_clause_again(self, statements, following, error_pc):
+        """Run the statements of a clause that RESUME or RESUME NEXT goes on with.
+
+        following is where the program goes on when they end (None: the program ends).
+        """
+        self.runtime.npc = None
+        try:
+            self.execute_clause_statements(statements, resume_pc=following, restart=True)
+        except Exception as e:
+            try:
+                e.stmt_pc = error_pc
+            except AttributeError:
+                pass
+            raise
+        if self.runtime.npc is None:
+            self.runtime.npc = following
 
     def execute_end(self, stmt):
         """Execute END statement"""

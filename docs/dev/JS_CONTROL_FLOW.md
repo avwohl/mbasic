@@ -59,9 +59,26 @@ Test: `tests/regression/integration/test_js_while_wend.py`.
 
 The binary does both at the level of a statement. `RESUME` runs
 the statement that failed again, not the line. `RESUME NEXT` goes on with
-the next statement, which can be on the same line. After an error in the
-condition of an IF, `RESUME NEXT` goes on after the first statement of the THEN part (the binary
-scans to the next colon).
+the next statement, which can be on the same line.
+
+In an IF line, the binary starts the first statement of a THEN or ELSE part
+from the IF. It keeps the text pointer of the last statement that it started
+(the one behind a colon, or the line start). `RESUME` runs from there, and
+`RESUME NEXT` scans from there to the next colon. There is a colon before
+each ELSE. So:
+
+* After an error in the condition, or in the first statement of a THEN or
+  ELSE part, `RESUME` runs the IF again, condition included. `RESUME NEXT`
+  goes on behind the first statement of the THEN part. If that part has one
+  statement, the next thing is an ELSE, which skips the rest of the line.
+* After an error in a later statement of a part, `RESUME` runs that
+  statement, and `RESUME NEXT` goes on with the next statement of the part.
+* `WIDTH n,x` fails after it ran, so it counts as a later statement.
+
+`_plan_statement_labels` does this with `clause_tail_after` (in
+`src/ast_nodes.py`, the interpreter uses it too). A step in the first place of
+a part reports the label of the IF as its program counter
+(`LinePlan.pc_override`).
 
 When the program has `RESUME` or `RESUME NEXT` (or `ON ERROR GOSUB`),
 `track_statements` is on:
@@ -76,7 +93,7 @@ When the program has `RESUME` or `RESUME NEXT` (or `ON ERROR GOSUB`),
 * A program with no `RESUME` gets no extra labels and no extra code.
 * A THEN or ELSE part with one statement stays a JavaScript `if`. `RESUME`
   after an error in that statement runs the whole IF again, condition
-  included. The binary runs only the statement.
+  included. The binary does the same, because the IF starts that statement.
 
 Test: `tests/regression/integration/test_js_resume_next.py`.
 
