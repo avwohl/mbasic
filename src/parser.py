@@ -3719,7 +3719,11 @@ class Parser:
             current_token = self.current()
 
             # If it's a string literal, number, or signed number, parse as expression
-            if current_token.type in (TokenType.STRING, TokenType.NUMBER):
+            if current_token.type == TokenType.STRING and current_token.raw_data:
+                self.advance()
+                values.append(StringNode(value=current_token.value, line_num=current_token.line,
+                                         column=current_token.column, raw=True))
+            elif current_token.type in (TokenType.STRING, TokenType.NUMBER):
                 value = self.parse_expression()
                 values.append(value)
             elif current_token.type in (TokenType.MINUS, TokenType.PLUS):

@@ -4,6 +4,7 @@ MBASIC 5.21 Interpreter
 Executes BASIC programs from AST.
 """
 
+import re
 import sys
 import signal
 from dataclasses import dataclass, field
@@ -69,6 +70,57 @@ def _for_next_walk(statement):
             for inner in clause or ():
                 for node, _ in _for_next_walk(inner):
                     yield node, True
+
+_DATA_DECIMAL = re.compile(r'(\d*\.?\d*)(?:[EeDd]([+-]?\d*))?[%!#]?\Z')
+
+
+def data_text_to_number(text):
+    """Read the text of an unquoted DATA item the way READ into a number variable does.
+
+    Measured on the binary: leading spaces, a sign with spaces behind it, spaces
+    inside the digits ("1 2" is 12), a lone "1E" or "&H" or "-" (value 0 or 1),
+    a type suffix at the end, and &H / &O / & digits.  Returns the number.
+    Raises ValueError("data") for text that is a Syntax error reported at the
+    DATA line, and ValueError("read") for &O8 and &9, which the binary reports
+    at the READ line.  A hex or octal value over 65535 raises OverflowError.
+    """
+    s = text.strip(' \t')
+    negative = False
+    if s[:1] in ('+', '-'):
+        negative = s[0] == '-'
+        s = s[1:].lstrip(' ')
+        if s[:1] in ('+', '-', '&'):
+            raise ValueError("data")
+    if s[:1] == '&':
+        body = s[1:]
+        radix = 16 if body[:1] in ('H', 'h') else 8
+        if body[:1] in ('H', 'h'):
+            body = body[1:]
+        else:
+            if body[:1] in ('O', 'o'):
+                body = body[1:]
+            body = body.lstrip(' ')
+        digits = '0123456789ABCDEFabcdef' if radix == 16 else '01234567'
+        end = 0
+        while end < len(body) and body[end] in digits:
+            end += 1
+        if end < len(body):
+            if radix == 8 and body[end] in '89':
+                raise ValueError("read")
+            raise ValueError("data")
+        value = int(body[:end], radix) if end else 0
+        if value > 65535:
+            raise OverflowError
+        return value - 65536 if value > 32767 else value
+    s = s.replace(' ', '')
+    m = _DATA_DECIMAL.match(s)
+    if not m:
+        raise ValueError("data")
+    mantissa = m.group(1)
+    exponent = m.group(2)
+    value = float((mantissa if mantissa not in ('', '.') else '0') +
+                  ('e' + (exponent if exponent not in ('', '+', '-') else '0') if exponent is not None else ''))
+    return -value if negative else value
 
 
 class MBasicError(RuntimeError):
@@ -682,8 +734,11 @@ class Interpreter:
                     if self.runtime.has_error_handler() and not already_in_error_handler:
                         # The handler works on this error: RESUME needs it, but
                         # it is not a failure of the program yet (error_info).
-                        self.state.pending_error = info
-                        self._invoke_error_handler(error_code, pc)
+                        # RESUME goes back to the statement that ran; ERL is the line
+                        # the error is reported at (READ of a bad DATA item: the DATA line).
+                        self.state.pending_error = ErrorInfo(
+                            error_code=error_code, pc=pc, error_message=str(e))
+                        self._invoke_error_handler(error_code, pc, error_pc)
                         # Error handler set npc - apply it and continue execution
                         # (don't use continue here - we need to let normal flow handle NPC)
                         statements_in_tick += 1
@@ -945,7 +1000,7 @@ class Interpreter:
         if self._output_column(None) > 0:
             self.io.output('')
 
-    def _invoke_error_handler(self, error_code, error_pc):
+    def _invoke_error_handler(self, error_code, error_pc, report_pc=None):
         """Invoke the error handler"""
         # Note: error_info is always set in the exception handler in tick_pc() when an error
         # occurs (line 385), regardless of whether an error handler exists. This method is
@@ -953,7 +1008,7 @@ class Interpreter:
 
         # Set ERR%, ERL%, and ERS% system variables
         self.runtime.set_variable_raw('err%', error_code)
-        self.runtime.set_variable_raw('erl%', error_pc.line_num)
+        self.runtime.set_variable_raw('erl%', (report_pc or error_pc).line_num)
         self.runtime.set_variable_raw('ers%', error_pc.stmt_offset)
 
         # Jump to error handler
@@ -2210,9 +2265,23 @@ class Interpreter:
         for var_node in stmt.variables:
             # Read next data value (returns AST node)
             data_node = self.runtime.read_data()
+            data_index = self.runtime.data_pointer - 1
 
             # Evaluate the data node to get actual value
-            value = self.evaluate_expression(data_node)
+            if isinstance(data_node, ast_nodes.StringNode) and var_node.type_suffix != '$':
+                # The text of a DATA item is read as a number only now
+                data_line = self.runtime.data_line_map.get(data_index)
+                try:
+                    if not data_node.raw:
+                        raise ValueError("data")        # a quoted item
+                    value = data_text_to_number(data_node.value)
+                except ValueError as e:
+                    where = PC.from_line(data_line) if str(e) == "data" and data_line is not None else None
+                    raise MBasicError(2, where)
+                except OverflowError:
+                    raise MBasicError(6)
+            else:
+                value = self.evaluate_expression(data_node)
 
             # Convert to appropriate type based on variable suffix
             if var_node.type_suffix == '$':

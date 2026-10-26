@@ -119,6 +119,16 @@ What is still different:
   An empty item is an empty string. A signed item such as `+3` reads as `+3`
   into `A$`. The JavaScript compiler does the same. Not done: the binary gives
   a Syntax error for text after a closing quote (`"q"x`); we drop that text.
+  READ into a number variable parses the text of an unquoted item at READ
+  time, as the binary does (`data_text_to_number` in `src/interpreter.py`, and
+  the same code in the JavaScript compiler). Spaces inside the digits are
+  ignored (`1 2` is 12), `1E` is 1, a type suffix at the end is accepted, and
+  `&H`, `&O` and `&` take digits only. A bad item is a Syntax error reported
+  at the DATA line (`abc`, `12abc`, `1.5.5`, `&HG`, a quoted item, a sign
+  before `&`); `&O8`, `&O19` and `&9` are reported at the READ line; a value
+  over 65535 is an Overflow at the READ line. `ERL` is the DATA line, and
+  `RESUME NEXT` goes on after the READ. Not done: `ON ERROR GOTO 0` inside
+  the handler reports the READ line, not the DATA line.
   Test: `tests/regression/integration/test_entry_time_forms.py`.
 - Done: a line number stops at 6553. MBASIC takes no more digits once the value
   is 6553 or more, so `70000 PRINT 1` is line 7000 with the text `0 PRINT 1`,

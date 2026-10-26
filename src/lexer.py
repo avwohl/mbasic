@@ -375,7 +375,7 @@ class Lexer:
         return Token(TokenType.NUMBER, 0, line, column, literal_text=num_str)
 
     _DATA_NUMBER = re.compile(
-        r'[+-]?(?:(?:\d+\.?\d*|\.\d+)(?:[EeDd][+-]?\d+)?[%!#]?|&[Hh][0-9A-Fa-f]+|&[Oo]?[0-7]+)\Z')
+        r'(?:[+-]?(?:\d+\.?\d*|\.\d+)(?:[EeDd][+-]?\d+)?[%!#]?|&[Hh][0-9A-Fa-f]{1,4}|&[Oo]?[0-7]{1,6})\Z')
 
     def _read_data_items(self):
         """DATA text is not crunched: split the rest of the statement into raw items.
@@ -411,7 +411,9 @@ class Lexer:
                 while end < len(src) and src[end] not in ',:\r\n':
                     end += 1
                 item = src[start:end].rstrip(' \t')
-                if item and self._DATA_NUMBER.match(item):
+                if (item and self._DATA_NUMBER.match(item)
+                        and not (item[0] == '&' and int(item[2:] if item[1] in 'HhOo' else item[1:],
+                                                        16 if item[1] in 'Hh' else 8) > 65535)):
                     if item[0] in '+-':
                         self.tokens.append(Token(TokenType.PLUS if item[0] == '+' else TokenType.MINUS,
                                                  item[0], line, col))
@@ -424,7 +426,7 @@ class Lexer:
                 else:
                     while self.pos < end:
                         self.advance()
-                    self.tokens.append(Token(TokenType.STRING, item, line, col))
+                    self.tokens.append(Token(TokenType.STRING, item, line, col, raw_data=True))
             if self.current_char() == ',':
                 self.tokens.append(Token(TokenType.COMMA, ',', self.line, self.column))
                 self.advance()

@@ -149,3 +149,84 @@ def test_js_on_error_gosub_is_a_syntax_error(tmp_path):
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+# READ into a number variable parses the text of an unquoted DATA item.
+# Each row was measured on the binary: 10 DATA <item> / 20 READ A or A% /
+# 30 PRINT "A=";A.  The value is what PRINT shows, or the error text.
+READ_NUMBER_CASES = [
+    ("A", "abc", "Syntax error in 10"),
+    ("A", "12abc", "Syntax error in 10"),
+    ("A", "1 2", "A= 12"),
+    ("A", "3 4 5", "A= 345"),
+    ("A", "1 .5", "A= 1.5"),
+    ("A", "1.5.5", "Syntax error in 10"),
+    ("A", "&HG", "Syntax error in 10"),
+    ("A", "&O8", "Syntax error in 20"),
+    ("A", "&O19", "Syntax error in 20"),
+    ("A", "&9", "Syntax error in 20"),
+    ("A", "&O1A", "Syntax error in 10"),
+    ("A", "&O 7", "A= 7"),
+    ("A", "& 7", "A= 7"),
+    ("A", "&H 1F", "Syntax error in 10"),
+    ("A", "&H1F%", "Syntax error in 10"),
+    ("A", "-&O7", "Syntax error in 10"),
+    ("A", "&H12345", "Overflow in 20"),
+    ("A", "&O1777777", "Overflow in 20"),
+    ("A", "1E", "A= 1"),
+    ("A", "1E+", "A= 1"),
+    ("A", "5E 3", "A= 5000"),
+    ("A", "5 %", "A= 5"),
+    ("A", "5%%", "Syntax error in 10"),
+    ("A", "- 5", "A=-5"),
+    ("A", "+-5", "Syntax error in 10"),
+    ("A", '"7"', "Syntax error in 10"),
+    ("A", ",1", "A= 0"),
+    ("A%", "12.7", "A= 13"),
+    ("A%", "70000", "Overflow in 20"),
+    ("A%", "5 5", "A= 55"),
+    ("A%", "abc", "Syntax error in 10"),
+]
+
+
+def first_result(text):
+    for line in text.splitlines():
+        if line.startswith(("A=", "Syntax error", "Overflow")):
+            return line.rstrip()
+    return None
+
+
+@pytest.mark.parametrize("var,item,expected", READ_NUMBER_CASES)
+def test_read_number_from_data_text(tmp_path, var, item, expected):
+    prog = f'10 DATA {item}\n20 READ {var}\n30 PRINT "A=";{var}\n'
+    assert first_result(run_cli(tmp_path, "RUN\nSYSTEM\n", prog)) == expected
+
+
+@pytest.mark.skipif(NODE is None, reason="node not installed")
+@pytest.mark.parametrize("var,item,expected", READ_NUMBER_CASES)
+def test_js_read_number_from_data_text(tmp_path, var, item, expected):
+    (tmp_path / "p.bas").write_text(f'10 DATA {item}\n20 READ {var}\n30 PRINT "A=";{var}\n')
+    subprocess.run([sys.executable, str(ROOT / "mbasic"), str(tmp_path / "p.bas"),
+                    "--compile-js", str(tmp_path / "p.js")], check=True, capture_output=True)
+    run = subprocess.run([NODE, str(tmp_path / "p.js")], capture_output=True, text=True, timeout=60)
+    assert first_result(run.stdout + run.stderr) == expected
+
+
+TRAPPED_READ = ('10 DATA abc,5\n20 ON ERROR GOTO 100\n30 READ A\n35 PRINT A\n40 END\n'
+                '100 PRINT ERR;ERL:RESUME NEXT\n')
+
+
+def test_read_number_error_is_trapped_with_the_data_line(tmp_path):
+    # Measured: ERR is 2 and ERL is the DATA line (10); RESUME NEXT goes on
+    # after the READ, so PRINT A shows 0.
+    out = run_cli(tmp_path, "RUN\nSYSTEM\n", TRAPPED_READ)
+    assert " 2  10 \n 0 \n" in out, out
+
+
+@pytest.mark.skipif(NODE is None, reason="node not installed")
+def test_js_read_number_error_is_trapped_with_the_data_line(tmp_path):
+    (tmp_path / "p.bas").write_text(TRAPPED_READ)
+    subprocess.run([sys.executable, str(ROOT / "mbasic"), str(tmp_path / "p.bas"),
+                    "--compile-js", str(tmp_path / "p.js")], check=True, capture_output=True)
+    run = subprocess.run([NODE, str(tmp_path / "p.js")], capture_output=True, text=True, timeout=60)
+    assert run.stdout.splitlines()[:2] == [" 2  10 ", " 0 "], run.stdout + run.stderr

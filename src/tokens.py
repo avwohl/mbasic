@@ -246,6 +246,8 @@ class Token:
                                # including any type suffix. "1#" and "1" have
                                # the same value and different precision, and
                                # the suffix is not recoverable from the value.
+    raw_data: bool = False     # STRING tokens: an unquoted DATA item (READ into a
+                               # number variable parses its text; a quoted item is refused)
 
     def __repr__(self):
         # Show both original cases if available

@@ -584,6 +584,42 @@ _JUMP_STATEMENTS = (GotoStatementNode, GosubStatementNode, ReturnStatementNode,
                     EndStatementNode, SystemStatementNode, ResumeStatementNode, WendStatementNode)
 
 
+_DATA_TEXT_TO_NUMBER_JS = r"""
+function _data_text_to_number(text, raw, line) {
+    // Mirrors data_text_to_number in src/interpreter.py (measured on the binary).
+    const fail = (at_data) => { try { _error("Syntax error"); } catch (e) { if (at_data) e.basicLine = line; throw e; } };
+    if (!raw) fail(true);
+    let s = text.replace(/^[ \t]+|[ \t]+$/g, "");
+    let neg = false;
+    if (s[0] === "+" || s[0] === "-") {
+        neg = s[0] === "-";
+        s = s.slice(1).replace(/^ +/, "");
+        if (s[0] === "+" || s[0] === "-" || s[0] === "&") fail(true);
+    }
+    if (s[0] === "&") {
+        let body = s.slice(1);
+        const hex = body[0] === "H" || body[0] === "h";
+        if (hex) body = body.slice(1);
+        else { if (body[0] === "O" || body[0] === "o") body = body.slice(1); body = body.replace(/^ +/, ""); }
+        const m = (hex ? /^[0-9A-Fa-f]*/ : /^[0-7]*/).exec(body)[0];
+        if (m.length < body.length) {
+            if (!hex && "89".indexOf(body[m.length]) >= 0) fail(false);
+            fail(true);
+        }
+        const v = m.length ? parseInt(m, hex ? 16 : 8) : 0;
+        if (v > 65535) _error("Overflow");
+        return v > 32767 ? v - 65536 : v;
+    }
+    s = s.replace(/ /g, "");
+    const m = /^(\d*\.?\d*)(?:[EeDd]([+-]?\d*))?[%!#]?$/.exec(s);
+    if (!m) fail(true);
+    const mant = (m[1] === "" || m[1] === ".") ? "0" : m[1];
+    const ex = (m[2] === undefined) ? "" : "e" + ((m[2] === "" || m[2] === "+" || m[2] === "-") ? "0" : m[2]);
+    const v = parseFloat(mant + ex);
+    return neg ? -v : v;
+}"""
+
+
 class LinePlan:
     """The steps of one program line and the case labels inside the line."""
 
@@ -864,6 +900,8 @@ class JavaScriptBackend(CodeGenBackend):
         # DATA/READ/RESTORE support
         self.data_values: List[Any] = []
         self.data_types: List[str] = []  # 'number' or 'string'
+        self.data_kinds: List[int] = []  # 0 number, 1 quoted string, 2 unquoted string
+        self.data_lines: List[int] = []  # the line of each item
         self.data_texts: List[Optional[str]] = []  # number items: the text as typed (READ A$ gives it)
 
         # DEF FN functions
@@ -1065,7 +1103,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.indent_level += 1
         code.append(self.indent() + 'if (e && e.basicLine === undefined) e.basicLine = _line_of(_pc);')
         if self.uses_error_handling:
-            code.append(self.indent() + 'if (e && e.basicCode && _error_handler && !_in_error_handler) { _pc = _trigger_error(e.basicCode, e.basicLine); continue; }')
+            code.append(self.indent() + 'if (e && e.basicCode && _error_handler && !_in_error_handler) { _pc = _trigger_error(e.basicCode, e.basicLine, _line_of(_pc)); continue; }')
         code.append(self.indent() + 'throw e;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
@@ -1107,6 +1145,8 @@ class JavaScriptBackend(CodeGenBackend):
             for stmt in line.statements:
                 if isinstance(stmt, DataStatementNode):
                     for value in stmt.values:
+                        self.data_lines.append(line.line_number)
+                        self.data_kinds.append((2 if value.raw else 1) if isinstance(value, StringNode) else 0)
                         # Extract actual values from AST nodes
                         if isinstance(value, StringNode):
                             self.data_values.append(value.value)
@@ -2218,11 +2258,12 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'let _error_handler = null;  // Line number of error handler (0 = disabled)')
             code.append(self.indent() + 'let _error_handler_is_gosub = false;  // True if ON ERROR GOSUB')
             code.append(self.indent() + 'let _error_line = 0;  // Line where error occurred (ERL)')
+            code.append(self.indent() + 'let _resume_line = 0;  // Line RESUME goes back to (ERL, except for READ of a bad DATA item)')
             code.append(self.indent() + 'let _error_code = 0;  // Error code (ERR)')
             code.append(self.indent() + 'let _in_error_handler = false;  // Prevent recursive errors')
             code.append(self.indent() + 'const _ERR_MSGS = ' + json.dumps({str(c): m for c, (_, m) in ERROR_CODES.items()}) + ';')
             code.append(self.indent() + 'const _next_lines = ' + json.dumps({str(k): v for k, v in self.next_line_map.items()}) + ';  // for RESUME NEXT')
-            code.append(self.indent() + 'function _trigger_error(code, line) {')
+            code.append(self.indent() + 'function _trigger_error(code, line, at) {')
             self.indent_level += 1
             code.append(self.indent() + 'if (_in_error_handler) {')
             self.indent_level += 1
@@ -2231,6 +2272,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '}')
             code.append(self.indent() + '_error_code = code;')
             code.append(self.indent() + '_error_line = line;')
+            code.append(self.indent() + '_resume_line = (at === undefined) ? line : at;  // RESUME goes back to the statement that ran')
             code.append(self.indent() + 'if (_error_handler === null) {')
             self.indent_level += 1
             code.append(self.indent() + '_error(_ERR_MSGS[code] || "Unprintable error");')
@@ -2244,7 +2286,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '_in_error_handler = true;')
             code.append(self.indent() + 'if (_error_handler_is_gosub) {')
             self.indent_level += 1
-            code.append(self.indent() + '_gosub(line);  // Return to line that caused error')
+            code.append(self.indent() + '_gosub(_resume_line);  // Return to line that caused error')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append(self.indent() + 'return _error_handler;')
@@ -2261,11 +2303,19 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '// DATA/READ/RESTORE')
             code.append(self.indent() + f'const _data = {self._format_data_array()};')
             code.append(self.indent() + f'const _data_txt = {self._format_data_texts()};')
+            code.append(self.indent() + f'const _data_kind = {json.dumps(self.data_kinds)};  // 0 number, 1 quoted, 2 unquoted')
+            code.append(self.indent() + f'const _data_ln = {json.dumps(self.data_lines)};')
             code.append(self.indent() + 'let _data_ptr = 0;')
+            code.append(self.indent() + _DATA_TEXT_TO_NUMBER_JS)
             code.append(self.indent() + 'function _read(to_string) {')
             self.indent_level += 1
             code.append(self.indent() + 'if (_data_ptr >= _data.length) _error("Out of DATA");')
             code.append(self.indent() + 'if (to_string && _data_txt[_data_ptr] !== null) return _data_txt[_data_ptr++];  // DATA text is not crunched')
+            code.append(self.indent() + 'if (!to_string && _data_kind[_data_ptr] !== 0) {')
+            code.append(self.indent() + '    // READ into a number variable parses the text of the item')
+            code.append(self.indent() + '    const i = _data_ptr++;')
+            code.append(self.indent() + '    return _data_text_to_number(_data[i], _data_kind[i] === 2, _data_ln[i]);')
+            code.append(self.indent() + '}')
             code.append(self.indent() + 'return _data[_data_ptr++];')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -3420,7 +3470,10 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
         for var in stmt.variables:
             var_name = self._mangle_var_name(var.name + (var.type_suffix or ''))
-            code.append(self.indent() + f'{var_name} = _read({"true" if var.type_suffix == "$" else ""});')
+            read = f'_read({"true" if var.type_suffix == "$" else ""})'
+            if var.type_suffix == '%':
+                read = f'_toInt({read})'    # READ A% of 12.7 is 13, of 70000 is Overflow
+            code.append(self.indent() + f'{var_name} = {read};')
         return code
 
     def _generate_restore(self, stmt: RestoreStatementNode) -> List[str]:
@@ -3718,12 +3771,12 @@ class JavaScriptBackend(CodeGenBackend):
         if stmt.line_number is None or stmt.line_number == 0:
             # RESUME (or RESUME 0) - return to line that caused error
             if self.yield_checks:
-                code.append(self.indent() + yield_check('_error_line'))
-            code.append(self.indent() + '_pc = _error_line;')
+                code.append(self.indent() + yield_check('_resume_line'))
+            code.append(self.indent() + '_pc = _resume_line;')
             code.append(self.indent() + 'break;')
         elif stmt.line_number == -1:
             # RESUME NEXT (the parser's -1) - continue at next line after error
-            code.append(self.indent() + 'const _next_line = _next_lines[_error_line] === undefined ? null : _next_lines[_error_line];')
+            code.append(self.indent() + 'const _next_line = _next_lines[_resume_line] === undefined ? null : _next_lines[_resume_line];')
             code.append(self.indent() + 'if (_next_line !== null) {')
             self.indent_level += 1
             code.append(self.indent() + '_pc = _next_line;')
