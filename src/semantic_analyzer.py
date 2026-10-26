@@ -827,6 +827,7 @@ class SemanticAnalyzer:
         # subscript is not flattened with constant strides and a second DIM is not an error
         # here (the compiled program reports Duplicate Definition when it runs).
         self.erased_arrays: Set[str] = set()
+        self.has_clear = False
         self.symbols = SymbolTable()
         self.flags = CompilerFlags()
         self.evaluator = ConstantEvaluator(self.symbols)
@@ -1951,12 +1952,15 @@ class SemanticAnalyzer:
     def _find_erased_arrays(self, program: ProgramNode) -> Set[str]:
         """Keys (NAME plus suffix, '!' when none) of every array that an ERASE names."""
         keys: Set[str] = set()
+        self.has_clear = False
         stack: List[Any] = [program]
         while stack:
             n = stack.pop()
             if isinstance(n, (list, tuple)):
                 stack.extend(n)
             elif dataclasses.is_dataclass(n) and not isinstance(n, type):
+                if isinstance(n, ClearStatementNode):
+                    self.has_clear = True  # CLEAR erases every array: a later DIM is allowed
                 if isinstance(n, EraseStatementNode):
                     for name in n.array_names:
                         name = name.upper()
@@ -1978,7 +1982,7 @@ class SemanticAnalyzer:
                 var_key = name_upper + '!'
 
             # Check if already dimensioned
-            if var_key in self.symbols.variables and var_key not in self.erased_arrays:
+            if var_key in self.symbols.variables and var_key not in self.erased_arrays and not self.has_clear:
                 var_info = self.symbols.variables[var_key]
                 if var_info.is_array:
                     raise SemanticError(

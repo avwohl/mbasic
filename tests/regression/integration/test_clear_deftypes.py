@@ -118,6 +118,28 @@ CASES = {
         '50 ON ERROR GOTO 100\n60 PRINT FNA(1)\n70 DEF FNA(X)=X+2\n80 PRINT FNA(1)\n'
         '90 SYSTEM\n100 PRINT ERR;ERL:RESUME NEXT\n',
         ' 2 \n 18  60 \n 3 \n'),
+    # CLEAR deletes the array: DIM again gives a new one (measured: 9 and 0)
+    "dim_again_after_clear": (
+        '10 DIM Z(3):Z(1)=4:CLEAR:DIM Z(2):Z(2)=9:PRINT Z(2);Z(1)\n20 SYSTEM\n',
+        ' 9  0 \n'),
+    # CLEAR inside a FOR loop ends the loop: the NEXT has no FOR (measured)
+    "for_ended_by_clear": (
+        '10 FOR I=1 TO 3\n20 PRINT I\n30 CLEAR\n40 NEXT\n50 PRINT "end";I\n',
+        ' 1 \nNEXT without FOR in 40'),
+    # the second variable of SWAP must exist already (measured on the binary)
+    "swap_unused_variable": (
+        '5 ON ERROR GOTO 200\n10 SWAP Y,Y2:PRINT Y;Y2\n20 Y3=1:SWAP Y3,Y4:PRINT Y3;Y4\n'
+        '30 SWAP Y5,Y3:PRINT Y5;Y3\n60 SWAP S$,T$:PRINT "x";S$;T$\n'
+        '70 SWAP Y9,Y9:PRINT "same"\n100 SWAP A(1),B(1):PRINT "arr"\n'
+        '110 SWAP Q%,R%\n120 SYSTEM\n200 PRINT ERR;ERL:RESUME NEXT\n',
+        ' 5  10 \n 0  0 \n 5  20 \n 1  0 \n 1  0 \n 5  60 \nx\nsame\narr\n 5  110 \n'),
+    # an integer loop variable rounds the limit (measured)
+    "for_integer_limit_rounded": (
+        '10 FOR F%=1 TO 2.6:PRINT F%;:NEXT:PRINT\n20 FOR F%=1 TO 2.4:PRINT F%;:NEXT:PRINT\n'
+        '30 FOR F%=1 TO 2.5:PRINT F%;:NEXT:PRINT\n40 FOR F%=1 TO -0.6 STEP -1:PRINT F%;:NEXT:PRINT\n'
+        '50 DEFINT G:FOR G=1 TO 2.6:PRINT G;:NEXT:PRINT\n60 FOR F=1 TO 2.6:PRINT F;:NEXT:PRINT\n'
+        '70 SYSTEM\n',
+        ' 1  2  3 \n 1  2 \n 1  2  3 \n 1  0 -1 \n 1  2  3 \n 1  2 \n'),
 }
 
 
@@ -156,6 +178,8 @@ def test_deftype_of_the_program_reaches_the_ok_prompt(tmp_path):
 JS_CASES = {
     "clear_everything": CASES["clear_everything"],
     "def_fn_before_def_and_clear": CASES["def_fn_before_def_and_clear"],
+    "dim_again_after_clear": CASES["dim_again_after_clear"],
+    "for_ended_by_clear": CASES["for_ended_by_clear"],
 }
 
 
@@ -181,6 +205,16 @@ C_PROGRAM = (
     '80 PRINT A;B$;C%;M(1,1);N$(2)\n90 READ Q:PRINT "Q";Q\n100 ERASE M\n'
     '110 DIM M(5):M(4)=3:PRINT M(4)\n120 SYSTEM\n200 PRINT "sub":RETURN\n500 DATA 11,22\n')
 C_EXPECTED = 'Q 11 \nsub\nback\n 0  0  0 \nQ 11 \n 3 \n'
+
+
+def test_c_dim_again_after_clear(tmp_path):
+    from test_c_backend import toolchain_missing, compile_c, run_compiled
+    why = toolchain_missing()
+    if why:
+        pytest.skip(why)
+    compiled = compile_c(tmp_path, CASES["dim_again_after_clear"][0])
+    assert compiled.returncode == 0, compiled.stdout + compiled.stderr
+    assert run_compiled(tmp_path, "") == CASES["dim_again_after_clear"][1]
 
 
 def test_c_clear(tmp_path):

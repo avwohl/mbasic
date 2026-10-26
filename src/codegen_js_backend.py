@@ -3560,7 +3560,11 @@ class JavaScriptBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + f'}}')
             self.indent_level -= 1
-            code.append(self.indent() + f'}}')
+            if self.has_clear:
+                # A CLEAR in the loop ended it: the NEXT after it has no FOR
+                code.append(self.indent() + f'}} else {{ _error("NEXT without FOR"); }}')
+            else:
+                code.append(self.indent() + f'}}')
 
         return code
 

@@ -1259,6 +1259,13 @@ class Interpreter:
             # Simple variable
             value1 = self.runtime.get_variable(stmt.var1.name, stmt.var1.type_suffix, token=self._make_token_info(stmt.var1))
 
+        if not stmt.var2.subscripts:
+            # The second variable of a SWAP must exist already (measured): a name
+            # never used before is Illegal function call. The first variable is
+            # made by its lookup, so SWAP A,A is fine.
+            full2, _ = self.runtime._resolve_variable_name(stmt.var2.name, stmt.var2.type_suffix)
+            if full2 not in self.runtime._variables:
+                raise RuntimeError("Illegal function call")
         if stmt.var2.subscripts:
             # Array element
             subscripts2 = [to_subscript(self.evaluate_expression(sub)) for sub in stmt.var2.subscripts]
@@ -1927,6 +1934,11 @@ class Interpreter:
 
         # Set loop variable to start
         var_name = stmt.variable.name + (stmt.variable.type_suffix or "")
+        if (stmt.variable.type_suffix == '%' and isinstance(end, (int, float))
+                and not isinstance(end, bool)):
+            # An integer loop variable rounds the limit (measured: FOR F%=1 TO 2.6
+            # runs 1 2 3, and 40000 is Overflow)
+            end = to_frcint(end)
         self.runtime.set_variable(
             stmt.variable.name,
             stmt.variable.type_suffix,

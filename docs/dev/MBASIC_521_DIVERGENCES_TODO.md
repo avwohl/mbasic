@@ -446,8 +446,17 @@ Found while measuring (#61):
   `ON ERROR GOTO`. The FOR loops are jumps in the C code, not a stack, so
   `CLEAR` does not end them (`NEXT` after it does not give `NEXT without
   FOR`). It does not reset `OPTION BASE`, the DEF types or `DEF FN`.
-- Not fixed, found while measuring: `SWAP Y,Y2` where `Y2` was never used
-  is `Illegal function call` (5) on the binary and swaps here.
+- Done (interpreter): the second variable of `SWAP` must exist already. `SWAP
+  Y,Y2` with `Y2` never used is `Illegal function call` (5). The first
+  variable is made by its lookup, so `SWAP Y9,Y9` and `SWAP Y5,Y3` (first
+  unused) are fine, and so are array elements. `SWAP` in the compilers is not
+  changed.
+- Done (interpreter): `FOR F%=1 TO 2.6` rounds the limit as an integer
+  (`1 2 3`; 40000 is `Overflow`). `DEFINT F` does the same.
+- Done (JavaScript, C): a `DIM` after a `CLEAR` is not a compile error, as
+  `DIM` after `ERASE` was not. The JavaScript backend gives `NEXT without FOR`
+  for a `NEXT` that follows a `CLEAR` inside its loop (a program with a
+  `CLEAR` checks each `NEXT`). The C backend does not (see above).
 - `PRINT #1,"x"` with file 1 not open is `Bad file mode` (54) on the binary
   and `Bad file number` (52) here. Not fixed; found while measuring CLEAR.
 - A `MID$` statement whose value is the target string, as in
