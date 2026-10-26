@@ -252,3 +252,23 @@ def test_js_bad_data_item_is_read_again(tmp_path, item):
                     "--compile-js", str(tmp_path / "p.js")], check=True, capture_output=True)
     run = subprocess.run([NODE, str(tmp_path / "p.js")], capture_output=True, text=True, timeout=60)
     assert f"B={item}\n" in run.stdout, run.stdout + run.stderr
+
+
+# A failing item rewinds the whole READ statement, not only the failing item
+# (measured on the binary).
+MULTI_READ = ('10 DATA 1,2,x,4\n20 ON ERROR GOTO 100\n30 READ A,B,C\n40 READ D\n'
+              '45 PRINT A;B;C;D\n50 SYSTEM\n100 PRINT ERR;ERL:RESUME NEXT\n')
+
+
+def test_failed_read_rewinds_the_whole_statement(tmp_path):
+    out = run_cli(tmp_path, "RUN\nSYSTEM\n", MULTI_READ)
+    assert " 2  10 \n 1  2  0  1 \n" in out, out
+
+
+@pytest.mark.skipif(NODE is None, reason="node not installed")
+def test_js_failed_read_rewinds_the_whole_statement(tmp_path):
+    (tmp_path / "p.bas").write_text(MULTI_READ)
+    subprocess.run([sys.executable, str(ROOT / "mbasic"), str(tmp_path / "p.bas"),
+                    "--compile-js", str(tmp_path / "p.js")], check=True, capture_output=True)
+    run = subprocess.run([NODE, str(tmp_path / "p.js")], capture_output=True, text=True, timeout=60)
+    assert " 2  10 \n 1  2  0  1 \n" in run.stdout, run.stdout + run.stderr
