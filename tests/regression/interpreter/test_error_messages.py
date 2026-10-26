@@ -98,7 +98,8 @@ CASES = [
     ('FOR with no NEXT', '10 FOR I=1 TO 3', ['FOR Without NEXT in 10']),
     ('WHILE with no WEND', '10 WHILE 1', ['WHILE without WEND in 10']),
     ('WEND with no WHILE', '10 WEND', ['WEND without WHILE in 10']),
-    ('Bad file number', '10 PRINT #9,"X"', ['Bad file number in 10']),
+    # 99: above the highest file (15); #9 with no OPEN is Bad file mode (measured with /F:15)
+    ('Bad file number', '10 PRINT #99,"X"', ['Bad file number in 10']),
     ('File not found', '10 OPEN "I",1,"NOSUCH.XYZ"', ['File not found in 10']),
     # These two used to print and carry on.
     ('CHAIN of a missing file', '10 CHAIN "NOSUCH.BAS"', ['File not found in 10']),

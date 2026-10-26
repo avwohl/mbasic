@@ -2648,16 +2648,17 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'async function _input_chars(n, filenum) {')
             code.append(self.indent() + '    n = _conint(n);')
             code.append(self.indent() + '    if (n < 1) _error("Illegal function call");')
-            code.append(self.indent() + '    if (filenum !== undefined) {')
-            code.append(self.indent() + '        const file = _file_of(filenum, "I", "input");')
-            code.append(self.indent() + '        if (file.pos + n > file.content.length) {')
-            code.append(self.indent() + '            file.pos = file.content.length;')
-            code.append(self.indent() + '            _error("Input past end");')
-            code.append(self.indent() + '        }')
-            code.append(self.indent() + '        const text = file.content.substr(file.pos, n);')
-            code.append(self.indent() + '        file.pos += n;')
-            code.append(self.indent() + '        return text;')
-            code.append(self.indent() + '    }')
+            if self.uses_file_io:   # INPUT$(n, #f) needs the file helpers (_file_of)
+                code.append(self.indent() + '    if (filenum !== undefined) {')
+                code.append(self.indent() + '        const file = _file_of(filenum, "I", "input");')
+                code.append(self.indent() + '        if (file.pos + n > file.content.length) {')
+                code.append(self.indent() + '            file.pos = file.content.length;')
+                code.append(self.indent() + '            _error("Input past end");')
+                code.append(self.indent() + '        }')
+                code.append(self.indent() + '        const text = file.content.substr(file.pos, n);')
+                code.append(self.indent() + '        file.pos += n;')
+                code.append(self.indent() + '        return text;')
+                code.append(self.indent() + '    }')
             code.append(self.indent() + '    let out = "";')
             code.append(self.indent() + '    while (out.length < n) {')
             code.append(self.indent() + '        if (_inkey_buffer.length === 0) await _fill_keys(n - out.length);')
@@ -2767,8 +2768,8 @@ class JavaScriptBackend(CodeGenBackend):
         # Remove type suffix to get base name
         base_name = name.rstrip('$%!#')
 
-        # Make lowercase for consistency
-        js_name = base_name.lower()
+        # Make lowercase for consistency. A dot is legal in a BASIC name (A.B), not in JavaScript.
+        js_name = base_name.lower().replace('.', '_d_')
 
         # Add type suffix to distinguish different typed variables
         if name.endswith('$'):
@@ -2780,10 +2781,17 @@ class JavaScriptBackend(CodeGenBackend):
         # SINGLE (! or no suffix) gets no suffix - it's the default
 
         # Prefix to avoid JS keyword conflicts
+        # (and the names that the generated program uses itself: main, process, window ...)
         if js_name in ('if', 'for', 'while', 'return', 'function', 'var', 'let', 'const',
                        'class', 'new', 'delete', 'typeof', 'void', 'this', 'with',
                        'switch', 'case', 'default', 'break', 'continue', 'throw', 'try',
-                       'catch', 'finally', 'do', 'in', 'of', 'import', 'export', 'null'):
+                       'catch', 'finally', 'do', 'in', 'of', 'import', 'export', 'null',
+                       'else', 'true', 'false', 'arguments', 'eval', 'enum', 'debugger',
+                       'static', 'yield', 'await', 'implements', 'interface', 'package',
+                       'private', 'protected', 'public', 'super', 'extends', 'instanceof',
+                       'undefined', 'main', 'process', 'window', 'global', 'globalthis',
+                       'document', 'require', 'module', 'exports', 'console', 'navigator',
+                       'self'):
             js_name = 'v_' + js_name
 
         return js_name
@@ -2795,7 +2803,7 @@ class JavaScriptBackend(CodeGenBackend):
         for def_fn in self.def_fn_functions:
             # Function name - DEF FNA becomes _fn_a
             fn_base = def_fn.name.lower()
-            func_name = '_fn_' + (fn_base[2:] if fn_base.startswith('fn') else fn_base)  # calls use FNA -> _fn_a
+            func_name = '_fn_' + (fn_base[2:] if fn_base.startswith('fn') else fn_base).replace('.', '_d_')  # calls use FNA -> _fn_a
 
             # Parameters
             params = [self._mangle_var_name(p.name + (p.type_suffix or '')) for p in def_fn.parameters]
@@ -3307,7 +3315,7 @@ class JavaScriptBackend(CodeGenBackend):
         # User-defined functions from DEF FN
         if func_name.startswith('fn'):
             # FNA -> _fn_a, FNFOO -> _fn_foo
-            call = f'_fn_{func_name[2:]}({", ".join(args)})'
+            call = f'_fn_{func_name[2:].replace(".", "_d_")}({", ".join(args)})'
             return f'(await {call})' if func_name[2:] in self.async_fns else call
 
         # Map BASIC function names to JavaScript

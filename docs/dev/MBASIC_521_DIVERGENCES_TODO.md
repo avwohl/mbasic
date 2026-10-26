@@ -440,6 +440,13 @@ Found while measuring (#61):
   open`). A file statement with `FIELD`, `GET` or `PUT` and no `OPEN` no
   longer stops with `_ffield is not defined`. Test:
   `tests/regression/integration/test_file_number_errors.py`.
+- Done: the JavaScript compiler makes a valid name from a BASIC name with a
+  dot (`A.B`, `FNA.B`) and from a name that JavaScript or the generated
+  program uses (`MAIN`, `PROCESS`, `TRUE`, `ENUM`, `WINDOW`, `REQUIRE` ...;
+  `_mangle_var_name`). Before, such a program did not run. Test:
+  `tests/regression/integration/test_js_variable_names.py`.
+- Not done: `NULL=2` is a Syntax error on the binary (NULL is a statement);
+  the parser here takes it as a variable.
 - Not done: a random file (`OPEN "R"`) used with `PRINT #`, `WRITE #`, `INPUT #`
   or `LINE INPUT #`. The binary writes into and reads from the FIELD buffer
   with a cursor (`PRINT #3,"HELLO"` puts `HELLO` and CR LF in the buffer, and

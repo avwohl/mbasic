@@ -341,7 +341,7 @@ class Interpreter:
         self._clause_stack = []         # [statements, index] of running clauses
         self._clause_jump = None        # (statements, index) a NEXT goes back to
         self._clause_for = {}           # loop variable -> (statements, FOR index)
-        self._for_next_node = {}        # loop variable -> the one NEXT statement that FOR found (NXTSCN)
+        self._for_next_node = {}        # loop variable -> (the one NEXT statement that FOR found (NXTSCN), table id, version)
         self._found_next_node = None
 
         # I/O handler (defaults to console if not provided)
@@ -1974,7 +1974,8 @@ class Interpreter:
             self._clause_for.pop(var_name, None)
         target = self._matching_next(
             stmt, in_clause[0][in_clause[1] + 1:] if in_clause else None)
-        self._for_next_node[var_name] = self._found_next_node
+        table = self.runtime.statement_table
+        self._for_next_node[var_name] = (self._found_next_node, id(table), table.version)
         if _loop_is_done(start, end, step):
             next_line, next_stmt, var_index, nested = target
             if next_line is None:
@@ -2056,7 +2057,10 @@ class Interpreter:
             # reached by a jump) is "NEXT without FOR", as on the binary, which
             # compares the text pointer of the NEXT with the one in the FOR entry.
             expected = self._for_next_node.get(var_name)
-            if expected is not None and expected is not stmt and self.runtime.get_for_loop(var_name):
+            table = self.runtime.statement_table
+            if (expected is not None and expected[0] is not stmt
+                    and expected[1:] == (id(table), table.version)    # not after a MERGE
+                    and self.runtime.get_for_loop(var_name)):
                 raise RuntimeError("NEXT without FOR")
             # Process this NEXT
             should_continue = self._execute_next_single(

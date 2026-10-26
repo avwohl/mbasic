@@ -2239,10 +2239,12 @@ class SemanticAnalyzer:
             return self._analyze_next_strict(stmt)
         # The JavaScript backend reports a NEXT that closes no loop when the NEXT runs,
         # as the binary does (IF c THEN NEXT ELSE NEXT has two NEXTs for one FOR)
+        # (A NEXT inside a WHILE loop, FOR ... WHILE ... NEXT ... WEND, is still refused.)
         try:
             self._analyze_next_strict(stmt)
         except SemanticError:
-            pass
+            if self.loop_stack and self.loop_stack[-1].loop_type != "FOR":
+                raise
 
     def _analyze_next_strict(self, stmt: NextStatementNode):
         if not self.loop_stack:
