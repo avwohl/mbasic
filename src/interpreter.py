@@ -10,7 +10,7 @@ import signal
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Callable, Any, Union
 from src.runtime import Runtime, ProgramString, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
-from src.ast_nodes import StringNode, FunctionCallNode
+from src.ast_nodes import StringNode, FunctionCallNode, arity_type_checks
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
 from src.pc import PC
@@ -4359,8 +4359,14 @@ class Interpreter:
         if expr.arity_error is not None:
             # Wrong number of arguments: the binary evaluates the ones it
             # can use, then stops with Syntax error (ABS(1,2), LEFT$(A$)).
-            for arg in expr.arguments[:expr.arity_error]:
-                self.evaluate_expression(arg)
+            # An argument of the wrong type is Type mismatch first (see
+            # BUILTIN_ARG_TYPES).
+            wanted = arity_type_checks(expr.name, len(expr.arguments))
+            for i, arg in enumerate(expr.arguments[:expr.arity_error]):
+                value = self.evaluate_expression(arg)
+                if i < len(wanted) and wanted[i] != 'A' and \
+                        isinstance(value, str) != (wanted[i] == 'S'):
+                    raise MBasicError(13)
             raise MBasicError(2)
         func = getattr(self.builtins, func_name, None)
         if func:

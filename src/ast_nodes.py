@@ -1485,3 +1485,26 @@ class TypeInfo:
             return VarType.STRING
         else:
             raise ValueError(f"Unknown DEF statement token type: {token_type}")
+
+
+# The argument types of the built-ins that take more than one argument: S is a
+# string, N a number, A either. The binary checks the type of an argument at the
+# ',' behind it, so a call with too many arguments is Type mismatch (not Syntax
+# error) when one of the first arguments has the wrong type: LEFT$(1,2,3),
+# LEFT$("A","B",1), INSTR(1,2,3,4). Single-argument built-ins check after the
+# ')', so ABS("x",1) is Syntax error. Measured on MBASIC 5.21.
+BUILTIN_ARG_TYPES = {
+    'LEFT': 'SN', 'RIGHT': 'SN', 'MID': 'SNN', 'INSTR': 'NSS',
+    'STRING': 'NA', 'INPUT': 'NN',
+}
+
+
+def arity_type_checks(name: str, count: int) -> str:
+    """The types to check, argument by argument, in a call with the wrong argument count."""
+    base = name.upper().rstrip('$')
+    spec = BUILTIN_ARG_TYPES.get(base, '')
+    if count > len(spec):
+        return spec
+    if base == 'STRING' and count == 1:
+        return 'N'      # STRING$("A") is Type mismatch; LEFT$(1) is Syntax error
+    return ''

@@ -1593,6 +1593,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.indent_level -= 1
         code.append(self.indent() + '}')
         code.append(self.indent() + 'function _cint(n) { return _toInt(n); }')
+        code.append(self.indent() + 'function _arg_type(v, t) { if ((typeof v === "string") !== (t === "S")) _error("Type mismatch"); return v; }')
         for line in JS_LOGICAL_RUNTIME.strip('\n').split('\n'):
             code.append(self.indent() + line if line else '')
         code.append(self.indent() + 'function _toSingle(n) { return (n >= _SINGLE_LIMIT || n <= -_SINGLE_LIMIT) ? _overflow(n < 0, 6) : Math.fround(n); }  // ES6 single-precision')
@@ -3068,7 +3069,10 @@ class JavaScriptBackend(CodeGenBackend):
         # A built-in with the wrong number of arguments: Syntax error when the
         # call runs, after the arguments the binary can use (ABS(1,2)).
         if func.arity_error is not None:
-            return f'({", ".join(args[:func.arity_error] + ["_error(\"Syntax error\")"])})'
+            wanted = arity_type_checks(func.name, len(args))
+            checked = [f'_arg_type({a}, "{wanted[i]}")' if i < len(wanted) and wanted[i] != 'A' else a
+                       for i, a in enumerate(args[:func.arity_error])]
+            return f'({", ".join(checked + ["_error(\"Syntax error\")"])})'
 
         # Check if it's a DEF FN function (starts with 'fn')
         # User-defined functions from DEF FN
@@ -3947,6 +3951,28 @@ class JavaScriptBackend(CodeGenBackend):
         """
         code = []
         code.append(self.indent() + '// CLEAR - JavaScript manages memory automatically')
+        if stmt.string_space is not None or stmt.memory_top is not None or stmt.stack_space is not None:
+            # The arguments are checked as the interpreter does; a CLEAR that
+            # fails leaves the ON ERROR handler in place.  The memory top and
+            # the stack space are not kept, so each CLEAR starts from the
+            # start-up values.
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + 'let _ct = 64766, _cs = 512;')
+            if stmt.string_space is not None:
+                v = self._generate_expression(stmt.string_space)
+                code.append(self.indent() + f'if (_toInt({v}) < 0) _error("Illegal function call");')
+            for var, expr, hi in (('_ct', stmt.memory_top, 65535), ('_cs', stmt.stack_space, 65535)):
+                if expr is None:
+                    continue
+                v = self._generate_expression(expr)
+                code.append(self.indent() + f'{var} = _round_half_away({v});')
+                code.append(self.indent() + f'if ({var} < -32768 || {var} > {hi}) _error("Overflow");')
+                code.append(self.indent() + f'if ({var} === 0) _error("Illegal function call");')
+                code.append(self.indent() + f'{var} = {var} & 0xFFFF;')
+            code.append(self.indent() + 'if (_cs < 82 || 39168 + (_ct - 64766) - (_cs - 512) < 0) _error("Out of memory");')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
         if self.uses_error_handling:
             # A CLEAR forgets ON ERROR GOTO (the next error is fatal) and ends
             # a running handler; ERR and ERL keep their values.

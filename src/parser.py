@@ -52,7 +52,6 @@ BUILTIN_ARITY = {
     'INKEY': (1, 0),
 }
 
-
 class Parser:
     """
     Recursive descent parser for MBASIC 5.21
@@ -608,7 +607,11 @@ class Parser:
 
         # Control flow
         elif token.type == TokenType.IF:
-            return self.parse_if()
+            self._if_depth = getattr(self, '_if_depth', 0) + 1
+            try:
+                return self.parse_if()
+            finally:
+                self._if_depth -= 1
         elif token.type == TokenType.FOR:
             return self.parse_for()
         elif token.type == TokenType.NEXT:
@@ -3926,17 +3929,17 @@ class Parser:
         stack_space = None
 
         # CLEAR can have optional arguments: [n] [,[memory_top] [,stack_space]]
-        if not self.at_end_of_line() and not self.match(TokenType.COLON):
+        if not self.at_end_of_line() and not self.match(TokenType.COLON, TokenType.ELSE):
             if not self.match(TokenType.COMMA):
                 string_space = self.parse_expression()
 
             if self.match(TokenType.COMMA):
                 self.advance()
-                if not (self.at_end_of_line() or self.match(TokenType.COLON, TokenType.COMMA)):
+                if not (self.at_end_of_line() or self.match(TokenType.COLON, TokenType.ELSE, TokenType.COMMA)):
                     memory_top = self.parse_expression()
                 if self.match(TokenType.COMMA):
                     self.advance()
-                    if not self.at_end_of_line() and not self.match(TokenType.COLON):
+                    if not self.at_end_of_line() and not self.match(TokenType.COLON, TokenType.ELSE):
                         stack_space = self.parse_expression()
                 if self.match(TokenType.COMMA):
                     # A fourth argument is a Syntax error found before any
@@ -4020,7 +4023,13 @@ class Parser:
                     device = self.parse_expression()
                 except ParseError:
                     pass
-            while not self.at_end_of_line() and not self.match(TokenType.COLON, TokenType.ELSE):
+            # Outside an IF the failing WIDTH takes the rest of the line, ELSE
+            # part included (RESUME NEXT goes on at the next line).  Inside an
+            # IF the ELSE belongs to the IF.
+            in_if = getattr(self, '_if_depth', 0) > 0
+            while not self.at_end_of_line() and not self.match(TokenType.COLON):
+                if in_if and self.match(TokenType.ELSE):
+                    break
                 self.position += 1
 
         return WidthStatementNode(

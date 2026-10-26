@@ -321,7 +321,14 @@ Found while measuring (#61):
   (`FunctionCallNode.arity_error`, table `BUILTIN_ARITY` in `src/parser.py`);
   the interpreter and the JavaScript backend raise the error. The C backend
   stops at compile time (`ABS requires 1 argument`), as it does for every
-  run-time error.
+  run-time error. For the multi-argument built-ins the binary checks the type
+  of an argument at the `,` behind it, so a wrong type is `Type mismatch` (13)
+  before the count is a `Syntax error`: `LEFT$(1,2,3)`, `INSTR(1,2,3,4)`,
+  `STRING$("A")`. `ABS("x",1)` and `LEFT$(1)` stay `Syntax error`
+  (`arity_type_checks` in `src/ast_nodes.py`). Not done: `MID$("A",0,2,3)` is
+  `Illegal function call` on the binary (the start is checked first), and
+  `INSTR(1,"A")`, `INSTR("A","B","C")`, `ABS("x")` and `LEN(1)` give other
+  errors here than on the binary (2, 2, 13, 13). They are not count errors.
 - Done (#61): `WIDTH 40,1` and `WIDTH 30,` set the width and then give
   `Syntax error` (`WidthStatementNode.bad_device`). `WIDTH LPRINT 40,1` and
   `WIDTH #1,40` were already `Syntax error`. The C backend refuses the form.
@@ -332,14 +339,24 @@ Found while measuring (#61):
   DATA pointer back to the first item, forgets the DEF FN functions defined so
   far (`Undefined user function`) and allows `OPTION BASE` again (the base is 0).
   A `CLEAR` that fails (`CLEAR ,1` is `Out of memory`) changes nothing, and
-  WIDTH is not changed. The JavaScript backend forgets the handler at `CLEAR`
-  only: its `CLEAR` still does not clear the variables.
+  WIDTH is not changed. The JavaScript backend checks the `CLEAR` arguments
+  as the interpreter does (`Overflow`, `Illegal function call`, `Out of
+  memory`; each `CLEAR` starts from the start-up memory top and stack) and
+  forgets the handler only when the `CLEAR` succeeds. Its `CLEAR` still does
+  not clear the variables. `CLEAR` ends at `ELSE` in a one-line `IF`.
 - Done (#61): when the operand that ran out is `ELSE` (`A=ELSE`, `A=1+ELSE`,
   `PRINT 1+ELSE`, also after `THEN`/`ELSE`), the error is `Missing operand`
   and `RESUME NEXT` goes on at the next line: the rest of the line is skipped,
   `:` parts and the `ELSE` branch too. Other missing operands (`A=:PRINT 1`)
   go on behind the `:`. The JavaScript backend gives `Missing operand` (22)
-  for these now, not `Syntax error`.
+  for these now, not `Syntax error`. Not done in JavaScript: after `A=:` or
+  `A=1*:` `RESUME NEXT` skips the rest of the line instead of going on behind
+  the `:` (the JavaScript `RESUME NEXT` works per line). Not done: `ELSE` met
+  after `PRINT` or `ON x GOTO` ends the statement without an error on the
+  binary and is a `Syntax error` here (older difference).
+- Done (#61): `WIDTH n,x` outside an `IF` takes the rest of the line, `ELSE`
+  part included, so `RESUME NEXT` goes on at the next line. Inside an `IF`
+  the `ELSE` still belongs to the `IF`.
 - Not done (#61): `CLEAR` does not reset `DEFINT`, `DEFSTR` and the other
   DEF types, as the binary does. The variable types are fixed when the
   program is parsed, so a run-time reset needs a different design.
