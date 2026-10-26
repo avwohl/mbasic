@@ -2048,19 +2048,35 @@ class JavaScriptBackend(CodeGenBackend):
             code.append('')
 
             # Helper functions
-            code.append(self.indent() + 'function _fopen(filenum, filename, mode, reclen) {')
+            code.append(self.indent() + '// OPEN checks its operands in this order: the mode (a number is Type mismatch, a first letter')
+            code.append(self.indent() + '// that is not I, O, R or A is Bad file mode), the file number, the name. The calls are the arguments of _fopen.')
+            code.append(self.indent() + 'function _open_mode(m) {')
+            code.append(self.indent() + '    m = String(m).charAt(0).toUpperCase();')
+            code.append(self.indent() + '    if (m === "" || "IORA".indexOf(m) < 0) _error("Bad file mode");')
+            code.append(self.indent() + '    return m;')
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'function _open_num(n) {')
+            code.append(self.indent() + '    n = _conint(n);')
+            code.append(self.indent() + '    if (n < 1 || n > 15) _error("Bad file number");')
+            code.append(self.indent() + '    return n;')
+            code.append(self.indent() + '}')
+            code.append(self.indent() + '// reclen is a function: the record length is read for a random file only. For another mode')
+            code.append(self.indent() + '// the file is opened first and the extra operand is then a Syntax error, as on the binary.')
+            code.append(self.indent() + 'function _fopen(mode, filenum, filename, reclen) {')
             self.indent_level += 1
-            code.append(self.indent() + 'filenum = _conint(filenum);')
-            code.append(self.indent() + 'if (filenum < 1 || filenum > 15) _error("Bad file number");')
+            code.append(self.indent() + 'if (filename === "") _error("Bad file name");')
+            code.append(self.indent() + 'if (_files[filenum]) _error("File already open");')
+            code.append(self.indent() + 'const length = (reclen && mode === "R") ? _frcint(reclen()) : undefined;')
             code.append(self.indent() + 'if (typeof process !== "undefined") {')
             self.indent_level += 1
-            code.append(self.indent() + '_fileOps.nodejs.open(filenum, filename, mode, reclen);')
+            code.append(self.indent() + '_fileOps.nodejs.open(filenum, filename, mode, length);')
             self.indent_level -= 1
             code.append(self.indent() + '} else {')
             self.indent_level += 1
-            code.append(self.indent() + '_fileOps.browser.open(filenum, filename, mode, reclen);')
+            code.append(self.indent() + '_fileOps.browser.open(filenum, filename, mode, length);')
             self.indent_level -= 1
             code.append(self.indent() + '}')
+            code.append(self.indent() + 'if (reclen && mode !== "R") _error("Syntax error");')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append('')
@@ -3930,16 +3946,20 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_open(self, stmt: OpenStatementNode) -> List[str]:
         """Generate OPEN statement - open file for I/O"""
         code = []
+        # The operands are checked in the order of the arguments (see _open_mode)
+        if stmt.mode_expr is not None:
+            mode_expr = self._generate_expression_as(stmt.mode_expr, 's')
+        else:
+            mode_expr = json.dumps(stmt.mode)      # "I", "O", "A", "R" (or "" / another letter: Bad file mode)
         filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
         filename_expr = self._generate_expression_as(stmt.filename, 's')
-        mode = stmt.mode  # "I", "O", "A", or "R"
+        args = f'_open_mode({mode_expr}), _open_num({filenum_expr}), {filename_expr}'
 
         # For random files, include record length (default 128 if not specified)
         if stmt.record_length:
             reclen_expr = self._generate_expression_as(stmt.record_length, 'n')
-            code.append(self.indent() + f'_fopen({filenum_expr}, {filename_expr}, "{mode}", {reclen_expr});')
-        else:
-            code.append(self.indent() + f'_fopen({filenum_expr}, {filename_expr}, "{mode}");')
+            args += f', () => {reclen_expr}'
+        code.append(self.indent() + f'_fopen({args});')
         return code
 
     def _generate_close(self, stmt: CloseStatementNode) -> List[str]:

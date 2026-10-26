@@ -1151,6 +1151,14 @@ class BuiltinFunctions:
                 attempt.note_file_position(file_num, file_handle)
 
             data = file_handle.read(num)
+            if file_info['mode'] == 'I':
+                # A ^Z (end of a CP/M file) or the end of the file before n characters
+                # is Input past end, and nothing is returned
+                if isinstance(data, bytes) and 26 in data:
+                    data = data[:data.index(26)]
+                if len(data) < num:
+                    file_info['eof'] = True
+                    raise ValueError("Input past end")
             if isinstance(data, bytes):
                 # Mode 'I' files are opened 'rb' so EOF can spot a ^Z, so the
                 # read comes back as bytes and the string it produced was a

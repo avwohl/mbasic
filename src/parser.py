@@ -3300,11 +3300,13 @@ class Parser:
                 )
             else:
                 # Classic syntax: OPEN "mode", #n, filename$
-                # First arg is mode string - extract mode letter
+                # First arg is mode string - extract mode letter. A mode that is
+                # not a literal ("O"+"", CHR$(79)) is worked out when OPEN runs.
+                mode_expr = None
                 if isinstance(first_arg, StringNode):
-                    mode = first_arg.value[0].upper()
+                    mode = first_arg.value[:1].upper()     # "" is Bad file mode when OPEN runs
                 else:
-                    mode = "I"  # Default
+                    mode, mode_expr = "", first_arg
 
                 # Expect comma
                 self.expect(TokenType.COMMA)
@@ -3333,17 +3335,19 @@ class Parser:
                     filename=filename,
                     record_length=record_length,
                     line_num=token.line,
-                    column=token.column
+                    column=token.column,
+                    mode_expr=mode_expr
                 )
         else:
             # Parse mode expression
             mode_expr = self.parse_expression()
 
-            # Extract mode character
+            # Extract mode character (a mode that is not a literal is worked out when OPEN runs)
             if isinstance(mode_expr, StringNode):
-                mode = mode_expr.value[0].upper()
+                mode = mode_expr.value[:1].upper()     # "" is Bad file mode when OPEN runs
+                mode_expr = None
             else:
-                mode = "I"  # Default
+                mode = ""
 
             # Expect comma
             self.expect(TokenType.COMMA)
@@ -3372,7 +3376,8 @@ class Parser:
                 filename=filename,
                 record_length=record_length,
                 line_num=token.line,
-                column=token.column
+                column=token.column,
+                mode_expr=mode_expr
             )
 
     def parse_close(self) -> CloseStatementNode:

@@ -1153,7 +1153,8 @@ def serialize_statement(stmt):
         return f"DEF FN{stmt.name} = {body}"
 
     elif stmt_type == 'OpenStatementNode':
-        parts = [f'OPEN "{stmt.mode}", #{serialize_expression(stmt.file_number)}',
+        mode = serialize_expression(stmt.mode_expr) if getattr(stmt, 'mode_expr', None) is not None else f'"{stmt.mode}"'
+        parts = [f'OPEN {mode}, #{serialize_expression(stmt.file_number)}',
                  f", {serialize_expression(stmt.filename)}"]
         if stmt.record_length is not None:
             parts.append(f", {serialize_expression(stmt.record_length)}")

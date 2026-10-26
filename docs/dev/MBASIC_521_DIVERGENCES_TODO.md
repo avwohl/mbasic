@@ -440,6 +440,19 @@ Found while measuring (#61):
   open`). A file statement with `FIELD`, `GET` or `PUT` and no `OPEN` no
   longer stops with `_ffield is not defined`. Test:
   `tests/regression/integration/test_file_number_errors.py`.
+- Done: the mode of `OPEN` can be any string expression (`OPEN M$,#1,F$`,
+  `OPEN CHR$(79),...`). Before, a mode that was not a literal was always
+  input. Only the first letter counts. The operands are checked in the order
+  of the binary: mode (a number is `Type mismatch`, an unknown letter or `""`
+  is `Bad file mode`), file number, name (`Type mismatch`), `File already
+  open`, the file (`File not found`). A record length is read for a random
+  file only; for another mode the file is opened first and the length is a
+  `Syntax error`, with the file left open. `INPUT$(n,#f)` past the end of the
+  file is `Input past end`. The AST node has `mode_expr`; the C backend stops
+  with `Unknown file mode` for a mode that is not a literal. The JavaScript
+  compiler gives the same errors and also `File already open`, `Bad file
+  name` and `File not found` (it showed a Node message before). Test:
+  `tests/regression/integration/test_open_operands.py`.
 - Done: the JavaScript compiler makes a valid name from a BASIC name with a
   dot (`A.B`, `FNA.B`) and from a name that JavaScript or the generated
   program uses (`MAIN`, `PROCESS`, `TRUE`, `ENUM`, `WINDOW`, `REQUIRE` ...;

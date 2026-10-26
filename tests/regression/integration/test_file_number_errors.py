@@ -112,6 +112,9 @@ WRONG_MODE = {
 }
 for name, line in WRONG_MODE.items():
     CASES[name] = (f'10 {line}\n20 PRINT "no"\n', f"{MODE} in 10\n")
+CASES["input_function_past_end"] = (
+    '10 OPEN "O",#1,"ZZ5.DAT":PRINT #1,"a":CLOSE:OPEN "I",#1,"ZZ5.DAT":A$=INPUT$(5,#1)\n'
+    '20 PRINT "no"\n', "Input past end in 10\n")
 CASES["open_missing_input_file"] = ('10 OPEN "I",#3,"ZZ5.DAT"\n20 PRINT "no"\n',
                                     "File not found in 10\n")
 

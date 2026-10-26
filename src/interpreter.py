@@ -3654,8 +3654,19 @@ class Interpreter:
 
         Note: CP/M files used ^Z (ASCII 26) as EOF marker. We respect this on input.
         """
-        # Evaluate mode, file number, and filename
-        mode = stmt.mode.upper()  # "I", "O", "A", "R"
+        # The mode comes first, as on the binary: a number is Type mismatch and
+        # a first letter that is not I, O, R (or A, a kept extension) is Bad
+        # file mode, whatever the other operands are. Only the first letter
+        # counts ("Output" is "O").
+        if stmt.mode_expr is not None:
+            mode = self.evaluate_expression(stmt.mode_expr)
+            if not isinstance(mode, str):
+                raise MBasicError(13)
+            mode = mode[:1].upper()
+        else:
+            mode = stmt.mode.upper()  # "I", "O", "A", "R"
+        if mode not in ("I", "O", "A", "R"):
+            raise MBasicError(54)
         file_num = to_conint(self.evaluate_expression(stmt.file_number))
         filename = self.evaluate_expression(stmt.filename)
         # Check file number range (MBASIC 5.21: #1 through #15)
@@ -3663,7 +3674,7 @@ class Interpreter:
             raise RuntimeError("Bad file number")
 
         if not isinstance(filename, str):
-            raise RuntimeError("OPEN requires string filename")
+            raise MBasicError(13)       # OPEN "O",#1,1
 
         # Check if file number is already open
         if file_num in self.runtime.files:
@@ -3675,9 +3686,7 @@ class Interpreter:
         # so 129 and up is an Illegal function call, and 0 is accepted but
         # leaves no room for any field.
         record_length = DEFAULT_RECORD_LENGTH
-        if stmt.record_length is not None:
-            if mode in ("I", "O"):
-                raise MBasicError(2)    # measured: Syntax error
+        if stmt.record_length is not None and mode not in ("I", "O"):
             record_length = to_frcint(self.evaluate_expression(stmt.record_length))
             if not 0 <= record_length <= DEFAULT_RECORD_LENGTH:
                 raise MBasicError(5)
@@ -3705,7 +3714,7 @@ class Interpreter:
                     # File doesn't exist, create it
                     file_handle = self.fs.open(filename, "w+", binary=True)
             else:
-                raise RuntimeError(f"Invalid OPEN mode: {mode} (valid modes: I, O, A, R)")
+                raise MBasicError(54)
 
             # Store file handle and mode
             self.runtime.files[file_num] = {
@@ -3715,6 +3724,10 @@ class Interpreter:
                 'record_length': record_length,
                 'eof': False
             }
+            if stmt.record_length is not None and mode in ("I", "O"):
+                # Only a random file has a record length. The binary opens the file
+                # first (so File not found comes before this) and leaves it open.
+                raise MBasicError(2)
 
         except (OSError, IOError, PermissionError) as e:
             raise RuntimeError(f"Cannot open {filename}: {str(e)}")
