@@ -310,7 +310,8 @@ Left out on purpose, with the reason:
 - The maximum number of files: with the default `/F:3` the binary says `Bad
   file number` for `CLOSE #4`. This interpreter allows 15 files on purpose.
 
-Found while measuring, not done:
+Found while measuring, not done (#61 has the first three items and the
+last item):
 
 - A wrong number of arguments to a built-in function (`ABS()`, `POS(1,2)`,
   `USR()`, `LPOS(1,2)`) is `Illegal function call` here and `Syntax error`
@@ -539,6 +540,16 @@ semantics are not:
 - Done (GitHub issue 13): NEXT pairs with FOR by position in the text, the
   loop-back and GOSUB return points are statements in the middle of a line, and
   `NEXT J,I` passes the semantic analyzer. See `docs/dev/JS_CONTROL_FLOW.md`.
+
+Still open, found in the final check of the fixes for #30 to #57:
+
+- #58: in the JavaScript backend, `RESUME NEXT` goes on at the next line, not
+  at the next statement. In `20 PRINT "a":ERROR 5:PRINT "b"` the `b` is lost.
+- #59: the JavaScript backend gives no `Type mismatch` for a string mixed with
+  a number (`"a"<1`, `1+"a"`, `"a"*2`, `A$=A`), and `-"a"` stops the compiler
+  with a Python error.
+- #60: in the C backend, `ERASE` keeps the old bounds of the array. On the
+  binary the next use makes the array again with the bounds 0 to 10.
 
 
 ## 8. `serialize_expression` and a unary minus - done
