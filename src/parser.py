@@ -2649,7 +2649,7 @@ class Parser:
         Syntax:
         - ON expression GOTO line1, line2, ...
         - ON expression GOSUB line1, line2, ...
-        - ON ERROR GOTO line_number
+        - ON ERROR GOTO line_number   (ON ERROR GOSUB is a Syntax error)
         """
         token = self.advance()
 
@@ -2657,16 +2657,13 @@ class Parser:
         if self.match(TokenType.ERROR):
             self.advance()
 
-            # Check for GOTO or GOSUB
-            is_gosub = False
+            # Only GOTO: MBASIC 5.21 has no ON ERROR GOSUB.  It is a Syntax
+            # error, at run time for a stored line like any bad statement.
             if self.match(TokenType.GOTO):
                 self.advance()
-                is_gosub = False
-            elif self.match(TokenType.GOSUB):
-                self.advance()
-                is_gosub = True
             else:
-                raise ParseError("Expected GOTO or GOSUB after ON ERROR", self.current())
+                raise ParseError("Expected GOTO after ON ERROR", self.current())
+            is_gosub = False
 
             # Parse line number (0 means disable error handling)
             line_num_token = self.current()
@@ -2679,7 +2676,7 @@ class Parser:
                     column=token.column
                 )
             else:
-                raise ParseError("Expected line number after ON ERROR GOTO/GOSUB", line_num_token)
+                raise ParseError("Expected line number after ON ERROR GOTO", line_num_token)
 
         # Parse expression
         expr = self.parse_expression()
@@ -3722,7 +3719,11 @@ class Parser:
             current_token = self.current()
 
             # If it's a string literal, number, or signed number, parse as expression
-            if current_token.type in (TokenType.STRING, TokenType.NUMBER):
+            if current_token.type == TokenType.STRING and current_token.raw_data:
+                self.advance()
+                values.append(StringNode(value=current_token.value, line_num=current_token.line,
+                                         column=current_token.column, raw=True))
+            elif current_token.type in (TokenType.STRING, TokenType.NUMBER):
                 value = self.parse_expression()
                 values.append(value)
             elif current_token.type in (TokenType.MINUS, TokenType.PLUS):

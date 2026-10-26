@@ -113,6 +113,31 @@ What is still different:
   file at such a line, as the binary does (the lines after it are not loaded).
   The JavaScript compiler stops with a compilation error, and the compilation
   error stays.
+- Done (#39, DATA): DATA text is not crunched, so a DATA line with `&O9`,
+  `&O8` or `&O19` is stored, listed and loaded. `READ A$` gives a numeric DATA
+  item as it was typed (`&H12345`, `&O999`, `1E39`, `1.50`). Outside DATA the
+  refusal stays. The lexer splits the rest of a DATA statement into raw items
+  (up to a comma or a colon). A clean number goes through the number reader;
+  every other item (`1 2`, `12abc`, `&OA`, `&H12G`, `X+1`, `(1)`, `PRINT`) is a
+  string with the case kept and the trailing spaces dropped, as on the binary.
+  An empty item is an empty string. A signed item such as `+3` reads as `+3`
+  into `A$`. The JavaScript compiler does the same. Not done: the binary gives
+  a Syntax error for text after a closing quote (`"q"x`); we drop that text.
+  READ into a number variable parses the text of an unquoted item at READ
+  time, as the binary does (`data_text_to_number` in `src/interpreter.py`, and
+  the same code in the JavaScript compiler). Spaces inside the digits are
+  ignored (`1 2` is 12), `1E` is 1, a type suffix at the end is accepted, and
+  `&H`, `&O` and `&` take digits only. A bad item is a Syntax error reported
+  at the DATA line (`abc`, `12abc`, `1.5.5`, `&HG`, a quoted item, a sign
+  before `&`); `&O8`, `&O19` and `&9` are reported at the READ line; a value
+  over 65535 is an Overflow at the READ line. `ERL` is the DATA line, and
+  `RESUME NEXT` goes on after the READ. Not done: `ON ERROR GOTO 0` inside
+  the handler reports the READ line, not the DATA line.
+  Test: `tests/regression/integration/test_entry_time_forms.py`.
+- Done: a line number stops at 6553. MBASIC takes no more digits once the value
+  is 6553 or more, so `70000 PRINT 1` is line 7000 with the text `0 PRINT 1`,
+  and a bare `70000` is line 7000 with the text `0`. `65529` is a line number.
+  The prompt, `LOAD` and `MERGE` do this (`src/line_number_split.py`).
 - Done (#40): the text of an `Overflow` or `Division by zero` message that
   does not stop the program goes through the width logic of PRINT, one
   character at a time, in the interpreter and in the JavaScript backend. With
@@ -193,8 +218,9 @@ and ERL, and RESUME NEXT lands in the right place. The edges do not:
   `ON ERROR GOTO 0` in a handler it names the line inside the handler, where
   the binary names the line that first failed. It prints `No RESUME` with no
   ` in <line>`. The C backend refuses programs with `ON ERROR`, so it has no handler edges.
-- `ON ERROR GOSUB` is a `Syntax error` on the binary. The interpreter and the
-  JavaScript compiler still accept the form.
+- Done: `ON ERROR GOSUB` is a `Syntax error` on the binary, at the prompt and
+  (for a stored line) when the line runs, as for any bad statement. The
+  interpreter and the JavaScript compiler do the same.
 - Done (#48): after CONT, a second ^C prints `Break in <line>` and CONT works
   again, as on the binary. CONT arms the break handler, as RUN does. A ^C at
   an `INPUT` prompt breaks at once, and CONT asks the question again. Tests:
@@ -304,7 +330,8 @@ Done (#53): the interpreter does the same. A statement that does not parse
 becomes a `SyntaxErrorStatementNode` (see `ProgramManager.parse_single_line`
 with `defer_syntax_errors`, and the parser and lexer flags of the same idea).
 It holds the text of the bad statement, up to the next `:` or ELSE. Typed
-lines, `LOAD`, `MERGE`, `EDIT`, `AUTO`, `CHAIN` and `RENUM` store the line
+lines, `LOAD`, `MERGE`, `EDIT`, `AUTO`, `CHAIN` and `RENUM` (also a bad line that
+RENUM numbers again) store the line
 and print nothing. `LIST`, `SAVE` and `RENUM` use the text of the line, so
 they keep it as typed. When the statement runs it raises error 2, which
 `ON ERROR` can trap. After an untrapped error the CLI starts the `EDIT`

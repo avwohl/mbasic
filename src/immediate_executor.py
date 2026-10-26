@@ -7,6 +7,7 @@ of the current runtime state.
 """
 
 from src.lexer import tokenize
+from src.line_number_split import normalize_line_number
 from src.error_codes import message_for
 from src.parser import Parser
 from src.runtime import Runtime
@@ -184,7 +185,7 @@ class ImmediateExecutor:
         # If interactive_mode doesn't exist or is falsy, returns (False, error_message) tuple.
         # If interactive_mode exists but required program methods are missing, returns (False, error_message) tuple.
         import re
-        line_match = re.match(r'^(\d+)\s*(.*)$', statement)
+        line_match = re.match(r'^(\d+)\s*(.*)$', normalize_line_number(statement))
         if line_match:
             line_num = int(line_match.group(1))
             line_content = line_match.group(2).strip()

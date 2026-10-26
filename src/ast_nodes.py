@@ -1233,6 +1233,7 @@ class StringNode:
     line_num: int = 0
     column: int = 0
     implicit: bool = False  # parser-made "" before a leading separator (PRINT ,X); LIST does not show it
+    raw: bool = False       # an unquoted DATA item: READ into a number variable parses its text
 
 
 @dataclass

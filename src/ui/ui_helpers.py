@@ -552,7 +552,8 @@ def renum_program(program_manager, args: str, renum_callback=None,
         if text == program_manager.lines[old_num] and old_num in old_asts:
             new_line_asts[new_num] = old_asts[old_num]
             continue
-        line_node, _error = program_manager.parse_single_line(text, new_num)
+        line_node, _error = program_manager.parse_single_line(
+            text, new_num, defer_syntax_errors=True)
         if line_node is not None:
             new_line_asts[new_num] = line_node
         # A line that does not parse keeps its text and has no AST, as before.

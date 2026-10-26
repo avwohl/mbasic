@@ -122,7 +122,6 @@ For the complete list of all functions, see [Functions Index](../common/language
 ### Error Handling
 
 - **ON ERROR GOTO** - Error trap setup
-- **ON ERROR GOSUB** - Error subroutine
 - **RESUME** - Continue after error (RESUME, RESUME NEXT, RESUME line)
 - **ERR** - Error code variable
 - **ERL** - Error line number
