@@ -122,6 +122,22 @@ CASES = {
     "dim_again_after_clear": (
         '10 DIM Z(3):Z(1)=4:CLEAR:DIM Z(2):Z(2)=9:PRINT Z(2);Z(1)\n20 SYSTEM\n',
         ' 9  0 \n'),
+    # the idiom CLEAR before DIM: CLEAR never fails (measured: ' 5 x')
+    "clear_before_dim": (
+        '10 CLEAR 500\n20 DIM A(10),B$(3)\n30 A(1)=5:B$(1)="x"\n40 PRINT A(1);B$(1)\n50 SYSTEM\n',
+        ' 5 x'),
+    "clear_then_dim_late": (
+        '10 CLEAR\n20 DIM Q(3)\n30 PRINT 1\n40 CLEAR\n50 CLEAR\n60 SYSTEM\n', ' 1 \n'),
+    # a DIM after CLEAR, or after a use, is Duplicate Definition (measured)
+    "duplicate_dim_after_clear": (
+        '10 DIM X(3)\n20 CLEAR\n30 DIM X(4)\n40 DIM X(5)\n50 PRINT "no"\n60 SYSTEM\n',
+        'Duplicate Definition in 40'),
+    "duplicate_dim_after_use": (
+        '80 DIM Q(3):Q(2)=1\n90 CLEAR\n100 PRINT Q(2)\n110 DIM Q(5)\n120 SYSTEM\n',
+        ' 0 \nDuplicate Definition in 110'),
+    "duplicate_dim_after_erase": (
+        '10 DIM X(3)\n20 ERASE X\n30 DIM X(4)\n40 DIM X(5)\n50 PRINT "no"\n60 SYSTEM\n',
+        'Duplicate Definition in 40'),
     # CLEAR inside a FOR loop ends the loop: the NEXT has no FOR (measured)
     "for_ended_by_clear": (
         '10 FOR I=1 TO 3\n20 PRINT I\n30 CLEAR\n40 NEXT\n50 PRINT "end";I\n',
@@ -180,6 +196,10 @@ JS_CASES = {
     "def_fn_before_def_and_clear": CASES["def_fn_before_def_and_clear"],
     "dim_again_after_clear": CASES["dim_again_after_clear"],
     "for_ended_by_clear": CASES["for_ended_by_clear"],
+    "duplicate_dim_after_clear": CASES["duplicate_dim_after_clear"],
+    "duplicate_dim_after_use": CASES["duplicate_dim_after_use"],
+    "duplicate_dim_after_erase": CASES["duplicate_dim_after_erase"],
+    "clear_before_dim": CASES["clear_before_dim"],
 }
 
 
@@ -215,6 +235,18 @@ def test_c_dim_again_after_clear(tmp_path):
     compiled = compile_c(tmp_path, CASES["dim_again_after_clear"][0])
     assert compiled.returncode == 0, compiled.stdout + compiled.stderr
     assert run_compiled(tmp_path, "") == CASES["dim_again_after_clear"][1]
+
+
+@pytest.mark.parametrize("name", ["clear_before_dim", "clear_then_dim_late",
+                                  "duplicate_dim_after_clear", "duplicate_dim_after_use"])
+def test_c_clear_edges(tmp_path, name):
+    from test_c_backend import toolchain_missing, compile_c, run_compiled
+    why = toolchain_missing()
+    if why:
+        pytest.skip(why)
+    compiled = compile_c(tmp_path, CASES[name][0])
+    assert compiled.returncode == 0, compiled.stdout + compiled.stderr
+    assert CASES[name][1] in run_compiled(tmp_path, "")
 
 
 def test_c_clear(tmp_path):

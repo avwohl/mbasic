@@ -1447,6 +1447,7 @@ class JavaScriptBackend(CodeGenBackend):
         """
         return [
             f'function _ar_{js_name}(n) {{',
+            f'    _ex_{js_name} = true;',
             f'    if (_bd_{js_name} === null) {{',
             f'        _bd_{js_name} = new Array(n).fill(10);',
             f'        {js_name} = _mkarr(_bd_{js_name}, {init_value});',
@@ -2723,6 +2724,8 @@ class JavaScriptBackend(CodeGenBackend):
                     code.append(self.indent() + f'let _bd_{js_name} = null;  // bounds; null while the array does not exist')
                 else:
                     code.append(self.indent() + f'let {js_name} = {self._create_array_init(dimensions, init_value)};')
+                if var_name.upper() in self.erased_arrays:
+                    code.append(self.indent() + f'let _ex_{js_name} = false;  // does the array exist (DIM or a use made it)')
                 if var_name.upper() in self.erased_arrays and var_name.upper() not in self.varying_rank:
                     code.append(self.indent() + f'let _bd_{js_name} = {json.dumps(list(dimensions))};  // bounds; ERASE resets them')
                 if var_name.upper() in self.varying_rank:
@@ -2969,6 +2972,10 @@ class JavaScriptBackend(CodeGenBackend):
                     code.append(self.indent() + '_error("Overflow");')
                     break
                 own = getattr(decl, 'const_dimensions', None)
+                if key in self.erased_arrays and info is not None and info.is_array:
+                    dim_js = self._mangle_var_name(key)
+                    code.append(self.indent() + f'if (_ex_{dim_js}) _error("Duplicate Definition");')
+                    code.append(self.indent() + f'_ex_{dim_js} = true;')
                 if key in self.erased_arrays and own and info is not None and info.is_array:
                     # an array that ERASE deletes is made again with the sizes of this DIM
                     js_name = self._mangle_var_name(key)
@@ -3700,6 +3707,9 @@ class JavaScriptBackend(CodeGenBackend):
             bound = dims[k] if k < len(dims) else 10
             if var_key.upper() in self.erased_arrays:
                 bound = f'_bd_{self._mangle_var_name(var_key)}[{k}]'
+                if k == 0:
+                    # a use makes the array: a later DIM is Duplicate Definition
+                    access = f'(_ex_{access} = true, {access})'
             access = f'{access}[_ix({self._generate_expression(idx_expr)}, {bound}{lo})]'
         return access
 
@@ -3902,9 +3912,11 @@ class JavaScriptBackend(CodeGenBackend):
 
         # ERASE deletes the array; the next use creates it again with the bounds 0..10
         if key in self.varying_rank:
-            return [self.indent() + f'_bd_{js_name} = null;  // the next use or DIM makes the array again']
+            return [self.indent() + f'_ex_{js_name} = false;',
+                    self.indent() + f'_bd_{js_name} = null;  // the next use or DIM makes the array again']
         dimensions = [10] * len(dimensions)
-        return [self.indent() + f'_bd_{js_name} = {json.dumps(dimensions)};',
+        return [self.indent() + f'_ex_{js_name} = false;',
+                self.indent() + f'_bd_{js_name} = {json.dumps(dimensions)};',
                 self.indent() + f'{js_name} = {self._create_array_init(dimensions, init_value)};']
 
     def _generate_open(self, stmt: OpenStatementNode) -> List[str]:

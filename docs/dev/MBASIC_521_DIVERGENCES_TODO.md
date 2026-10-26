@@ -713,9 +713,14 @@ semantics are not:
     with `OPTION BASE 1`, also when the array exists. The binary checks the
     bound before it checks for `Duplicate Definition`. (The C backend
     refuses such a program at compile time.)
+  - Done: the JavaScript backend gives `Duplicate Definition` for a `DIM`
+    of an array that exists, when the program has an `ERASE` or a `CLEAR`
+    (a use of the array makes it exist). In other programs the compiler
+    refuses the second `DIM`.
   - Not done: the JavaScript backend does not give `Illegal function call`
-    for `ERASE` of an array that does not exist, and does not give
-    `Duplicate Definition` for a `DIM` of an array that exists.
+    for `ERASE` of an array that does not exist.
+  - Done: `CLEAR` in the C backend never fails, also when an array is not
+    yet dimensioned (`10 CLEAR 500:20 DIM A(10)` is correct).
   - Done: the JavaScript backend keeps the number of subscripts of an erased
     array at run time. `10 DIM A(3):30 ERASE A:40 DIM A(3,3):60 A(2,2)=5`
     works, and a use with another number of subscripts is `Subscript out of

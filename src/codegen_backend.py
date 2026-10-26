@@ -3850,10 +3850,10 @@ class Z88dkCBackend(CodeGenBackend):
             code.append(self._erase_array_code(key))
         return code
 
-    def _erase_array_code(self, key: str) -> str:
+    def _erase_array_code(self, key: str, fn: str = 'mb25_ea_erase') -> str:
         """The C statement that deletes the array of the key (ERASE, CLEAR)."""
         n, rk, st = (self._ea_name(key, p) for p in ('n', 'rk', 'st'))
-        erase = f'int _t = mb25_ea_erase(&{st}, &{rk}, {n});'
+        erase = f'int _t = {fn}(&{st}, &{rk}, {n});'
         if self._key_type(key) == VarType.STRING:
             base = self._get_string_id(key + '()')
             return self.indent() + f'{{ {erase} int _e; for (_e = 0; _e < _t; _e++) mb25_string_clear({base} + _e); }}'
@@ -3990,7 +3990,7 @@ class Z88dkCBackend(CodeGenBackend):
             else:
                 code.append(self.indent() + f'{self._mangle_variable_name(name)} = 0;')
         for key in sorted(self.array_ranks):
-            code.append(self._erase_array_code(key))
+            code.append(self._erase_array_code(key, 'mb25_ea_clear'))
         code.append(self.indent() + 'gosub_sp = 0;')
         if self.data_values:
             code.append(self.indent() + 'data_pointer = 0;')
