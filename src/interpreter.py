@@ -2123,6 +2123,11 @@ class Interpreter:
         """Execute END statement"""
         # END in a handler just ends the program: no error is reported
         self.state.pending_error = None
+        # CONT after END resumes at the statement after the END, as it does
+        # after STOP (measured on MBASIC 5.21). Nothing is left after the last
+        # statement, and CONT then does nothing.
+        next_pc = self.runtime.statement_table.next_pc(self.runtime.pc)
+        self.runtime.cont_pc = next_pc if next_pc is not None and next_pc.line_num is not None else None
         self.runtime.pc = self.runtime.pc.stop("END")
 
     def execute_syntaxerror(self, stmt):

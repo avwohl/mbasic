@@ -736,19 +736,31 @@ class InteractiveMode:
             print(format_error_message(CANT_CONTINUE))
             return
 
-        # MBASIC 5.21 prints nothing for CONT after the program ended or
-        # stopped on an error: only STOP and Break can be continued.
-        if self.program_runtime.pc.stop_reason not in ('STOP', 'BREAK'):
-            return
-
-        # Check if PC position is still valid (program may have been edited)
-        if not self.program_runtime.pc.is_valid(self.program_runtime.statement_table):
-            print(format_error_message(CANT_CONTINUE))
+        runtime = self.program_runtime
+        reason = runtime.pc.stop_reason
+        if reason == 'END':
+            # CONT after END resumes at the statement after the END. After
+            # the program ran off its end, or after the last statement,
+            # MBASIC prints nothing.
+            resume_pc = getattr(runtime, 'cont_pc', None)
+            runtime.cont_pc = None
+            if resume_pc is None:
+                return
+            runtime.pc = resume_pc.stop('END')
+        elif reason == 'ERROR':
+            # CONT after a run-time error runs the failing statement again
+            # (measured on MBASIC 5.21): it fails the same way until the
+            # cause is fixed from the prompt.
+            if runtime.pc.line_num is None:
+                return
+        elif reason not in ('STOP', 'BREAK'):
             return
 
         try:
             # Resume execution by creating new running PC at same position
             self.program_runtime.pc = self.program_runtime.pc.resume()
+            self.program_interpreter.state.error_info = None
+            self.program_interpreter.state.pending_error = None
             # ^C during the resumed run sets the break flag, as it does for RUN.
             self.program_interpreter.arm_break_handler()
 
