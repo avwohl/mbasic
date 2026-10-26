@@ -30,6 +30,11 @@ A disk file must be OPENed before any disk I/O operation can be performed on tha
 - **"I"** - specifies sequential input mode
 - **"R"** - specifies random input/output mode
 
+**Extension:** This interpreter also accepts **"A"**, sequential output mode
+that adds to the end of the file. If the file is not there, OPEN makes it.
+MBASIC 5.21 has no append mode and gives `Bad file mode` for "A". Do not use
+"A" in a program that must also run on MBASIC 5.21.
+
 `<file number>` is an integer expression whose value is between one and fifteen. The number is then associated with the file for as long as it is OPEN and is used to refer other disk I/O statements to the file.
 
 `<filename>` is a string expression containing a name that conforms to your operating system's rules for disk filenames.
@@ -44,6 +49,7 @@ A disk file must be OPENed before any disk I/O operation can be performed on tha
 10 OPEN "I", 1, "DATA.TXT"        ' Open for input
 20 OPEN "O", 2, "OUTPUT.TXT"      ' Open for output
 30 OPEN "R", 3, "RANDOM.DAT", 128 ' Open random file with 128-byte records
+35 OPEN "A", 4, "LOG.TXT"         ' Append (extension, not in 5.21)
 40 ' Process files...
 50 CLOSE
 ```

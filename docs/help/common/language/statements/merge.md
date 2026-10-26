@@ -31,6 +31,11 @@ If any lines in the disk file have the same line numbers as lines in the program
 
 BASIC-80 always returns to command level after executing a MERGE command.
 
+**Extension:** In this interpreter, a MERGE statement in a running program
+does not stop the program. The lines from the file go into the program, and
+the program continues at the statement after MERGE. MERGE in direct mode
+returns to command level, as in BASIC-80.
+
 ## Example
 
 ```basic
