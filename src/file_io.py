@@ -113,10 +113,7 @@ class FileIO(ABC):
 
         Different implementations handle this differently:
         - Local UIs (CLI/Curses/TK): Exit the Python process (sys.exit(0))
-        - Web UI: Raise an error (cannot exit server for one user)
-
-        Raises:
-            IOError: In sandboxed environments where exit is not allowed
+        - Web UI: End the program of the session; the server keeps running
         """
         pass
 
@@ -291,8 +288,13 @@ class SandboxedFileIO(FileIO):
         raise IOError("File existence check not yet implemented in web UI - requires async refactor")
 
     def system_exit(self) -> None:
-        """Cannot exit in multi-user web environment.
+        """End the program of this web session; the server keeps running.
 
-        Raises IOError since exiting would terminate the server for all users.
+        SYSTEM leaves MBASIC.  In the multi-user web UI it must not leave the
+        server, so the program of this session stops as it does at END and
+        nothing can CONTinue it.  Other sessions are not touched.
         """
-        raise IOError("SYSTEM command not available in web UI - would terminate server for all users")
+        from src.pc import PC
+        runtime = self.backend.runtime
+        runtime.pc = PC.halted()
+        runtime.cont_pc = None

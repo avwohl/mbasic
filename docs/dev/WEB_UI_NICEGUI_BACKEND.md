@@ -1,178 +1,137 @@
 # Web UI (NiceGUI Backend) Details
 
-This page holds the detail for the NiceGUI web UI in `src/ui/web/`. Installation and
-launch steps are in [src/ui/web/README.md](https://github.com/avwohl/mbasic/blob/main/src/ui/web/README.md).
+This page gives the detail for the NiceGUI web UI in `src/ui/web/`. The steps to
+install and start the web UI are in
+[src/ui/web/README.md](https://github.com/avwohl/mbasic/blob/main/src/ui/web/README.md).
+The text of this page was checked against `src/ui/web/nicegui_backend.py` when the
+page was last changed. If the code and this page disagree, the code is right.
 
 ## Features
 
-### Implemented
-- ✅ **Full-screen web editor** - Split pane with editor and output console
-- ✅ **Menu bar** - File operations (New, Open, Save, Exit)
-- ✅ **Toolbar** - Quick access buttons (Run, Stop, Clear Output, List Program)
-- ✅ **Status bar** - Shows current operation status
-- ✅ **Program execution** - Tick-based non-blocking execution
-- ✅ **Output console** - View program output in real-time
-- ✅ **Line-by-line editing** - Add/modify BASIC program lines
-- ✅ **Syntax validation** - Parse errors shown immediately
+- **Program editor.** One CodeMirror 5 editor holds the whole program. Auto-numbering
+  is a setting. The editor shows syntax errors, and `Check Syntax` in the toolbar runs
+  the check on request.
+- **Output pane.** A text area that scrolls on. Output is sent in batches, and
+  no menu or button clears the pane unless you choose `Run > Clear Output`.
+- **INPUT works.** The prompt is added to the output pane and the pane accepts
+  typing at the end of the text. `Enter` sends the line to the program. The code is
+  `_enable_inline_input`, `_get_input` and `_get_input_async`. There is no modal dialog.
+- **Immediate mode.** A line under the toolbar runs a statement at once. The commands
+  `LIST`, `DELETE`, `RENUM`, `FILES`, `SAVE`, `LOAD`, `MERGE`, `CHAIN` and `SYSTEM` work there.
+- **Debugger.** Step Line, Step Statement, Continue, breakpoints, a Variables window
+  and a Stack window.
+- **Settings.** A settings dialog. Each browser session has its own settings.
+- **Help.** Help Topics and the Web Games Library open in a new tab. `Browse Example
+  Programs` loads an example from the server.
+- **Sessions.** Each browser session has its own interpreter, program and virtual
+  file system. With `NICEGUI_REDIS_URL` set, the session state is kept in Redis.
+  See [WEB_MULTIUSER_DEPLOYMENT.md](WEB_MULTIUSER_DEPLOYMENT.md).
 
 ### Limitations
-- ⚠️ **INPUT statement** - Currently placeholder, needs inline input implementation
-- ⚠️ **File operations** - Open/Save not yet connected to file system
-- ⚠️ **Recent files** - Menu item exists but not functional
+
+- **File menu.** `Open` uploads a file from the computer of the user. `Save` and
+  `Save As` send a download to the browser. The server has no program file store. The
+  BASIC statements `OPEN`, `PRINT#` and `FILES` use an in-memory virtual file system
+  that is private to the session and is lost when the server stops.
+- **Recent Files.** The menu shows the files opened in this page. The list is written to
+  the `localStorage` of the browser, but the code never reads the list back
+  (`_load_recent_files` is not called), so the list is empty after a reload.
+- **SYSTEM.** `SYSTEM` ends the program of the session and prints `Goodbye`. It does
+  not stop the server, and the other sessions are not affected. A statement after
+  `SYSTEM` does not run, and `CONT` does nothing. The CLI, curses and Tk UIs
+  leave the process at `SYSTEM`.
+- **File > Exit.** `File > Exit` calls `app.shutdown()`. That call stops the whole
+  server and so all sessions. Use `File > Exit` only on a server that has one user.
 
 ## User Interface
 
-### Layout
-```
-┌─────────────────────────────────────────────┐
-│ [File] [Edit] [Run] [Help]                  │ Menu Bar
-├─────────────────────────────────────────────┤
-│ [Run] [Stop] [Clear] [List] [Load] [Save]   │ Toolbar
-├──────────────────────┬──────────────────────┤
-│                      │                      │
-│  Editor Pane         │  Output Console      │
-│  (Enter BASIC lines) │  (Program output)    │
-│                      │                      │
-│                      │                      │
-├──────────────────────┴──────────────────────┤
-│ Status: Ready                               │ Status Bar
-└─────────────────────────────────────────────┘
-```
+The window has, from top to bottom:
 
-### Keyboard Shortcuts
-- **Enter** - Add/modify BASIC line from editor
+1. A menu bar: File, Edit, Run, Debug, Help.
+2. A toolbar: Run, Stop, Step, Stmt, Cont, and Check Syntax.
+3. The editor and the output pane, side by side (one above the other on a phone).
+4. The immediate-mode line, with an Execute button.
+5. A status bar with the status text, the auto-number state, the resource use and the
+   version.
 
-### Operations
+### Menus
 
-**File Menu:**
-- **New** - Clear program and start fresh
-- **Open** - Load BASIC program from file (TODO)
-- **Save** - Save current program to file (TODO)
-- **Exit** - Close web interface
+- **File:** New, Open, Save, Save As, Merge, Recent Files, Exit.
+- **Edit:** Find/Replace, Delete Lines, Renumber, Sort Lines, Smart Insert, Settings.
+- **Run:** Run Program, Stop, List Program, Clear Output.
+- **Debug:** Step Line, Step Statement, Continue, Toggle Breakpoint, Clear All
+  Breakpoints, Show Variables, Show Stack.
+- **Help:** Help Topics, Web Games Library, Browse Example Programs, About.
 
-**Run Menu:**
-- **Run Program** - Execute current program
-- **Stop Program** - Halt execution
-
-**Toolbar Buttons:**
-- **Run** - Execute program
-- **Stop** - Halt execution
-- **Clear Output** - Clear output console
-- **List Program** - Show program listing in output
-- **Load Program** - Load file (TODO)
-- **Save Program** - Save file (TODO)
+The keys of the web UI are in `src/ui/web_keybindings.json` and are handled in
+`src/ui/web/web_keyboard.py`. Use control keys and not function keys.
 
 ## Architecture
 
-### Components
+**NiceGUIBackend** (`src/ui/web/nicegui_backend.py`) builds the page, owns the
+`Runtime`, the `Interpreter` and the program of one session, and carries out the
+immediate commands (`cmd_list`, `cmd_renum`, `cmd_delete`, `cmd_load`, `cmd_save`,
+`cmd_merge`, `cmd_files`, `cmd_chain`, `cmd_system`). The interpreter calls these
+through `interpreter.interactive_mode`.
 
-**NiceGUIBackend** (`src/ui/web/nicegui_backend.py`)
-- Main UI class extending `UIBackend`
-- Builds web interface with NiceGUI components
-- Manages program execution state
-- Routes I/O between interpreter and web UI
+**SimpleWebIOHandler** sends `PRINT` output to the output pane and starts the inline
+INPUT.
 
-**SimpleWebIOHandler** (`src/ui/web/nicegui_backend.py`)
-- Custom IOHandler for web output
-- Routes `print()` calls to output textarea
-- INPUT placeholder (needs inline input implementation)
+**SandboxedFileIO** (`src/file_io.py`) is the file interface of the interpreter in
+the web UI. Program files are handled by the upload and download of the browser. Its
+`system_exit()` halts the program of the session.
 
-### Execution Model
+**CodeMirror5Editor** (`src/ui/web/codemirror5_editor.py` and the `.js` and `.css`
+files beside it) is the editor component.
 
-Programs run using **tick-based execution**:
+**SessionState** (`src/ui/web/session_state.py`) is the form in which a session is saved
+to Redis.
 
-1. User clicks "Run"
-2. Backend creates Runtime and Interpreter instances
-3. Timer starts calling `_execute_tick()` every 10ms
-4. Each tick executes up to 1000 BASIC statements
-5. Output is routed to web console in real-time
-6. Execution continues until program ends or user clicks "Stop"
+### Execution model
 
-This keeps the web UI responsive during program execution.
+A program runs in ticks, so the page stays responsive:
 
-## Testing
+1. The user chooses `Run`. The backend makes the program and starts the interpreter.
+2. A NiceGUI timer calls `_execute_tick()` every 10 ms.
+3. Each tick runs a number of statements and sends the output to the output pane.
+4. At an `INPUT`, the tick loop waits until the user presses `Enter`.
+5. The timer stops when the program ends, stops at a breakpoint or at `STOP`, or when
+   the user chooses `Stop`.
 
-### Run Test Suite
+## Tests
+
+`nicegui` is needed to run the tests of the page itself:
+
 ```bash
-pytest tests/nicegui/test_mbasic_web_ui.py -v
+pytest tests/nicegui/ -v
 ```
 
-### Test Coverage
-- ✅ UI initialization
-- ✅ Adding program lines
-- ✅ New program command
-- ✅ Clear output command
-- ✅ List program command
-- ✅ Program execution with output
+These tests use the NiceGUI `user` fixture and need no browser. They cover the page
+load, adding lines, `NEW`, clear output, list, run and `INPUT`.
 
-All tests use NiceGUI's `user` fixture for fast automated testing without browser.
+The tests in `tests/regression/ui/test_web_immediate_commands.py` replace `nicegui` with a
+mock, so they run without it. They cover the immediate commands and `SYSTEM`.
 
-## TODO
+## Known issues
 
-### High Priority
-1. **Inline INPUT implementation** - Replace placeholder with input field below output
-   - Should NOT use modal dialog (blocks viewing game text)
-   - Use inline input field below output console
-   - See `docs/dev/WEB_UI_INPUT_UX_TODO.md` for details
-
-### Medium Priority
-2. **File operations** - Connect Open/Save to actual file system
-3. **Recent files menu** - Track and show recently opened files
-4. **Error highlighting** - Visual feedback for parse errors in editor
-5. **Syntax highlighting** - Color-code BASIC keywords
-
-### Low Priority
-6. **Multi-line editor** - Full program view instead of line-by-line
-7. **Variable inspector** - View current variable values during execution
-8. **Breakpoints** - Pause execution at specific lines
-
-## Known Issues
-
-- **INPUT statement** - Programs using INPUT will hang (placeholder not functional)
-- **File dialog** - Open/Save buttons don't show file picker yet
-- **Line editing** - Must re-enter entire line to modify (no direct editing)
+- Recent Files is not restored after a reload (see Limitations).
+- `File > Exit` stops the whole server (see Limitations).
+- The methods `load_file`, `save_file`, `delete_file` and `file_exists` of
+  `SandboxedFileIO` raise `IOError`. The browser upload and download take their place.
 
 ## Development
 
-### Project Structure
-```
-src/ui/web/
-├── __init__.py          # Package init, exports NiceGUIBackend
-├── nicegui_backend.py   # Main implementation (440+ lines)
-└── README.md            # Short overview; detail in docs/dev/WEB_UI_NICEGUI_BACKEND.md
+1. Add a method to `NiceGUIBackend`.
+2. Connect the method to a button or a menu item.
+3. Add a test in `tests/nicegui/`, or in `tests/regression/ui/` when the test can use a
+   mock of `nicegui`.
+4. Start the page with `python3 mbasic --ui web` and try the change.
 
-tests/nicegui/
-├── __init__.py
-├── conftest.py          # pytest fixtures
-├── main.py              # Required by NiceGUI testing
-└── test_mbasic_web_ui.py  # 6 comprehensive tests
-```
+Use `.mark('name')` on an element that a test must find. Keep the logic of the
+language in the interpreter and not in the page.
 
-### Adding Features
+## Related documents
 
-1. Add method to `NiceGUIBackend` class
-2. Wire up to UI element (button, menu item, etc.)
-3. Add test to `test_mbasic_web_ui.py`
-4. Run tests: `pytest tests/nicegui/test_mbasic_web_ui.py -v`
-5. Manual test: `python3 mbasic --ui web`
-
-### Code Style
-- Follow existing NiceGUI patterns
-- Use markers for testable elements: `ui.button(...).props('marker=btn_run')`
-- Keep UI code separate from business logic
-- Use SimpleWebIOHandler for all I/O routing
-
-## History
-
-- **v1.0.161** - Initial NiceGUI backend created from scratch
-- **v1.0.162** - Fixed ProgramManager imports, all tests passing
-- **v1.0.164** - Added program execution with tick-based interpreter
-- **v1.0.165** - Identified INPUT UX issue, created TODO
-- **v1.0.169** - Added web backend to main mbasic entry point
-
-## Related Documentation
-
-- `docs/dev/WORK_IN_PROGRESS.md` - Current development status
-- `docs/dev/WEB_UI_INPUT_UX_TODO.md` - INPUT implementation plan
-- `docs/dev/CURSES_VS_TK_GAP_ANALYSIS.md` - Feature parity reference
-- `tests/nicegui/test_mbasic_web_ui.py` - Test examples
+- [WEB_MULTIUSER_DEPLOYMENT.md](WEB_MULTIUSER_DEPLOYMENT.md): servers with many users.
+- [WEB_PROGRAM_KEYBOARD.md](WEB_PROGRAM_KEYBOARD.md): keys for a running program.
+- [WEB_ERROR_LOGGING.md](WEB_ERROR_LOGGING.md): how the web UI logs errors.

@@ -14,7 +14,12 @@ Collection of miscellaneous fixes and improvements identified during documentati
 
 **Goal:** Continuous scrolling output like ASR33 teletype (no auto-clearing)
 
-**Status:** Partially done - web UI cleared, need to verify others
+**Status:** Done. No UI clears the output on its own now. Checked by reading the
+code: the CLI has no clear call; curses clears only on the menu item `Clear Output`
+(and replaces the output with the syntax errors while the program has some, which
+is a feature of the syntax check); the web UI clears only on `Run > Clear Output`;
+Tk cleared the output at RUN, LIST and NEW, and the three calls are removed. Only
+the menu item `Run > Clear Output` is left in Tk.
 
 ---
 
@@ -22,20 +27,27 @@ Collection of miscellaneous fixes and improvements identified during documentati
 
 **Issue:** Multiple users connected to web UI - one user running SYSTEM shouldn't exit the entire server
 
-**Current behavior:** `execute_system()` in `src/interpreter.py` line 2007 calls `sys.exit(0)` which would kill the entire server
+**Old behavior:** `execute_system()` ended with `sys.exit(0)`. The web UI later got
+`SandboxedFileIO.system_exit()`, which raised `IOError`, so `SYSTEM` was an error in a
+web session.
 
 **Files:**
-- `src/interpreter.py` (line 2007-2014)
-- `src/ui/web/nicegui_backend.py`
+- `src/interpreter.py` (`execute_system`)
+- `src/file_io.py` (`SandboxedFileIO.system_exit`)
+- `src/ui/web/nicegui_backend.py` (`cmd_system`)
 
-**Fix needed:**
-- Web UI should disconnect/reset session, not exit server
-- Only CLI/Curses/Tk should actually exit the process
-- Need session-level isolation for SYSTEM command
+**Status:** Done. In the web UI `SYSTEM` prints `Goodbye` and halts the program of
+that session only (the pc is halted and `CONT` does nothing). The server and the
+other sessions are not touched. The CLI, curses and Tk UIs still exit the process.
+Tests: `tests/regression/ui/test_web_immediate_commands.py` (a mock replaces `nicegui`).
+Not fixed, found on the way: `File > Exit` in the web UI calls `app.shutdown()`, which
+stops the whole server (see `docs/dev/WEB_UI_NICEGUI_BACKEND.md`).
 
 ---
 
 ## Consolidate cmd_ Functions Across UIs
+
+**Status:** Open. This is a refactor and not a bug, so it was left alone.
 
 **Issue:** All UIs have their own `cmd_` function implementations for things like LIST that could be done in a program. Implementation should be common, with UI-specific hooks if needed for updates.
 
@@ -78,6 +90,9 @@ Collection of miscellaneous fixes and improvements identified during documentati
 
 **Current:** Silent failure or no implementation
 
+**Status:** Not a bug. `LIST` in `python3 mbasic --ui cli` prints the program (tested
+by typing two lines and `LIST`). No change.
+
 **Related:** Part of cmd_ consolidation issue above
 
 ---
@@ -100,4 +115,8 @@ Priority: Medium - not blocking, but affects UX and maintainability
 
 **Goal:** Check each status claim in the guide against the code and update the guide, or mark the guide as historical and move the guide to `docs/history/`.
 
-**Status:** Not started
+**Status:** Done. The guide was rewritten from the current code: INPUT works inline,
+the editor holds the whole program, and File, Edit, Run, Debug and Help menus,
+the debugger and the immediate line exist. The guide also lists what is still
+true: Recent Files is not restored after a reload, and `File > Exit` stops the
+server.

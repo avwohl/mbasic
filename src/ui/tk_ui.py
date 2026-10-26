@@ -3322,8 +3322,7 @@ class TkBackend(UIBackend):
             start_line: Optional line number to start execution at (for RUN line_number)
         """
         try:
-            # Clear output
-            self._menu_clear_output()
+            # The output scrolls on like a teletype: RUN does not clear it.
             self._set_status("Running...")
 
             # Keys typed at the previous program - or half an escape sequence
@@ -3406,7 +3405,6 @@ class TkBackend(UIBackend):
 
     def cmd_list(self, args: str = "") -> None:
         """Execute LIST command - list program lines."""
-        self._menu_clear_output()
         lines = self.program.get_lines()
         for line_num, line_text in lines:
             self._add_output(line_text + "\n")
@@ -3427,7 +3425,6 @@ class TkBackend(UIBackend):
 
         self.program.clear()
         self.editor_text.text.delete(1.0, tk.END)
-        self._menu_clear_output()
         self._set_status("New program")
 
         # Start autosave for new file
