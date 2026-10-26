@@ -1924,12 +1924,10 @@ class Interpreter:
         After FOR, the variable is set to start value and the loop is registered.
         NEXT will increment/decrement and check the end condition.
         """
-        # Evaluate start, end, step
+        # The binary sets the variable to the start value first, then reads
+        # the limit and the step; a string for either is Type mismatch and no
+        # loop is registered (a later NEXT is NEXT without FOR).
         start = self.evaluate_expression(stmt.start_expr)
-        end = self.evaluate_expression(stmt.end_expr)
-        step = self.evaluate_expression(stmt.step_expr) if stmt.step_expr else 1
-
-        # Set loop variable to start
         var_name = stmt.variable.name + (stmt.variable.type_suffix or "")
         self.runtime.set_variable(
             stmt.variable.name,
@@ -1940,6 +1938,12 @@ class Interpreter:
             original_case=getattr(stmt.variable, 'original_case', stmt.variable.name),
             settings_manager=self.settings_manager
         )
+        end = self.evaluate_expression(stmt.end_expr)
+        if isinstance(end, str):
+            raise TypeError("Type mismatch")
+        step = self.evaluate_expression(stmt.step_expr) if stmt.step_expr else 1
+        if isinstance(step, str):
+            raise TypeError("Type mismatch")
 
         # Register loop - use PC for position
         # Note: No nesting tracking needed - FOR loops are variable-indexed, not stack-based.
@@ -2257,7 +2261,8 @@ class Interpreter:
             # Push loop info so WEND knows where to return (use PC)
             self.runtime.push_while_loop(
                 self.runtime.pc.line_num,
-                self.runtime.pc.stmt_offset
+                self.runtime.pc.stmt_offset,
+                (wend_pos[0], wend_pos[1])
             )
 
     def execute_wend(self, stmt):
@@ -2265,7 +2270,11 @@ class Interpreter:
         # Pop the matching WHILE loop info
         loop_info = self.runtime.peek_while_loop()
 
-        if loop_info is None:
+        # The binary matches a WEND to the entry that holds this WEND's own
+        # place, not to the newest WHILE: a WHILE that failed (Type mismatch)
+        # leaves no entry, and its WEND finds none even inside an outer loop.
+        if (loop_info is None or loop_info.get('wend_key') !=
+                (self.runtime.pc.line_num, self.runtime.pc.stmt_offset)):
             raise RuntimeError(f"WEND without matching WHILE at line {self.runtime.pc.line_num}")
 
         # Jump back to the WHILE statement to re-evaluate the condition
@@ -2391,6 +2400,9 @@ class Interpreter:
         """
         if getattr(stmt, 'stray_else', False):
             return      # the parser took the rest of the line into this statement
+        for name, args in getattr(stmt, 'partial_calls', ()):
+            for i, arg in enumerate(args):
+                self._early_range_check(name.rstrip('$'), i, self.evaluate_expression(arg))
         raise MBasicError(getattr(stmt, 'error_code', 2))
 
     def execute_remark(self, stmt):

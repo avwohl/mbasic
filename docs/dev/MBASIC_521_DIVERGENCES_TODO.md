@@ -476,9 +476,20 @@ Found while measuring (#61):
 - Done: a string as a condition is `Type mismatch`: `IF "a" THEN`, `IF A$
   THEN`, `IF "" THEN ... ELSE`, and `WHILE "a"` (the error comes before the
   loop is entered, so after `RESUME NEXT` the WEND is `WEND without WHILE`,
-  ERR 30). A comparison of strings is a number and is fine. The JavaScript
-  compiler counts the open WHILE loops (`_wdepth`) for the same reason. Test:
+  ERR 30). A comparison of strings is a number and is fine. A WEND takes the
+  stack entry that holds its own place (the WHILE stores the place of its
+  WEND), so this is also true inside an outer WHILE. The JavaScript
+  compiler keeps the open WHILE loops (`_wopen`) for the same reason. Test:
   `tests/regression/integration/test_string_condition.py`.
+- Done: `FOR I=1 TO "a"` and `STEP "a"` are `Type mismatch` (13), no loop is
+  made, and the NEXT is `NEXT without FOR`. In JavaScript each loop entry
+  keeps its own NEXT (`nx`), so the ELSE NEXT in `IF c THEN NEXT ELSE NEXT`
+  of an inner loop is `NEXT without FOR`, as in the interpreter.
+- Done: a call cut short by the end of the line, or a `MID$` statement with
+  a fourth argument, still range-checks the number arguments that it read:
+  `PRINT MID$("A",0,` and `MID$(A$,0,2,3)="x"` are `Illegal function call`.
+  The bad statement keeps the calls (`partial_calls`). Test:
+  `tests/regression/integration/test_loop_and_call_error_edges.py`.
 - A `MID$` statement whose value is the target string, as in
   `MID$(A$,3)=A$`, copies one byte at a time inside the one string on the
   binary (`HEHEH`). The interpreter and the JavaScript backend do the same.

@@ -54,8 +54,14 @@ browser copy the jump back of WEND has the yield check. A WHILE with no WEND
 stops with `WHILE without WEND` when the WHILE runs, whatever the condition is. The semantic
 analyzer refuses a WEND with no WHILE when the program is compiled.
 A string as the condition is `Type mismatch`. The error comes before the loop
-is entered, so the program counts the loops that were entered (`_wdepth`):
-after `RESUME NEXT` the WEND of that WHILE is `WEND without WHILE`, as on the binary.
+is entered. The program keeps the loops that were entered (`_wopen`, one
+number per WEND): a WEND takes the entry of its own place, as the binary
+does. After `RESUME NEXT` the WEND of that WHILE is `WEND without WHILE`,
+also inside an outer WHILE that is still active.
+Each FOR entry keeps the number of the NEXT that the compiler paired with
+the FOR (`nx`). Any other NEXT, and a NEXT with no entry, is
+`NEXT without FOR`. A FOR with a string limit or step is `Type mismatch`
+and makes no entry.
 Test: `tests/regression/integration/test_js_while_wend.py`.
 
 ## RESUME and RESUME NEXT

@@ -947,6 +947,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.for_to_next: Dict[int, Any] = {}
         self.next_line_of: Dict[int, int] = {}
         self.matched_next: Set[int] = set()
+        self.text_ids: Dict[int, int] = {}
         # Bare NEXT -> JS name of the variable of the FOR it closes
         self.next_var_map: Dict[int, str] = {}
         # WHILE/WEND matching, keyed by id(): while_to_wend: WHILE -> its WEND; wend_to_while: WEND -> its WHILE;
@@ -1266,6 +1267,10 @@ class JavaScriptBackend(CodeGenBackend):
                     while_stmt = stack.pop()
                     self.while_to_wend[id(while_stmt)] = stmt
                     self.wend_to_while[id(stmt)] = while_stmt
+
+    def _text_id(self, stmt) -> int:
+        """A small number that names a NEXT or WEND statement in the generated code"""
+        return self.text_ids.setdefault(id(stmt), len(self.text_ids) + 1)
 
     def _pair_for_next(self, for_stmt, next_stmt):
         self.for_to_next[id(for_stmt)] = next_stmt
@@ -2725,7 +2730,7 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate variable declarations"""
         code = []
         if self.while_to_wend:
-            code.append(self.indent() + 'let _wdepth = 0;  // WHILE loops entered and not yet at their WEND')
+            code.append(self.indent() + 'let _wopen = [];  // WHILE loops entered and not yet at their WEND (ids of their WENDs)')
 
         for var_name, var_info in sorted(self.symbols.variables.items()):
             # Use simple lowercase name - type coercion happens at assignment time
@@ -3012,6 +3017,11 @@ class JavaScriptBackend(CodeGenBackend):
             if stmt.stray_else:
                 pass        # an ELSE no IF waits for skips the rest of the line
             else:
+                # The number arguments of a call cut short are range-checked first
+                for name, call_args in stmt.partial_calls:
+                    for i, kind in BUILTIN_ARG_RANGES.get(name.rstrip('$'), {}).items():
+                        if i < len(call_args):
+                            code.append(self.indent() + f'_arg_range({self._generate_expression_as(call_args[i], "n")}, "{kind}");')
                 code.append(self.indent() + ('_error("Missing operand");' if stmt.error_code == 22
                                              else '_error("Syntax error");'))
         elif isinstance(stmt, PokeStatementNode):
@@ -3519,8 +3529,12 @@ class JavaScriptBackend(CodeGenBackend):
         elif var_type == VarType.SINGLE:
             type_coerce_fn = '_toSingle'
 
+        code.append(self.indent() + f'delete _for_loops["{var_name}"];  // a new entry goes on top')
         code.append(self.indent() + f'_for_loops["{var_name}"] = {{')
         self.indent_level += 1
+        # Only the NEXT that the scan at the FOR found can end this loop (any other is NEXT without FOR)
+        found = self.for_to_next.get(id(stmt))
+        code.append(self.indent() + f'nx: {self._text_id(found) if found is not None else -1},')
         code.append(self.indent() + f'end: _end,')
         code.append(self.indent() + f'step: _step,')
         code.append(self.indent() + f'coerce: {type_coerce_fn},')
@@ -3578,7 +3592,10 @@ class JavaScriptBackend(CodeGenBackend):
                 var_name = self._mangle_var_name(var.name + (getattr(var, 'type_suffix', '') or ''))
 
             # Increment variable and check condition
-            code.append(self.indent() + f'if (_for_loops["{var_name}"]) {{')
+            # A NEXT without a variable takes the newest entry; the NEXT must also be the one the FOR found
+            top = '' if stmt.variables else f' || Object.keys(_for_loops).pop() !== "{var_name}"'
+            code.append(self.indent() + f'if (!_for_loops["{var_name}"] || _for_loops["{var_name}"].nx !== {self._text_id(stmt)}{top}) _error("NEXT without FOR");')
+            code.append(self.indent() + f'{{')
             self.indent_level += 1
             code.append(self.indent() + f'const _loop = _for_loops["{var_name}"];')
             code.append(self.indent() + f'{var_name} = _loop.coerce ? _loop.coerce({var_name} + _loop.step) : ({var_name} + _loop.step);')
@@ -3613,7 +3630,10 @@ class JavaScriptBackend(CodeGenBackend):
         # A WHILE whose condition fails (Type mismatch ...) and is resumed enters no loop,
         # so the WEND at its end finds no WHILE, as on the binary
         code.append(self.indent() + f'if (!({condition})) {{ {leave} }}')
-        code.append(self.indent() + '_wdepth++;')
+        # An entry is found by the place of its WEND; entering again (a jump into the loop)
+        # drops the entries above the old one, as the binary does
+        wid = self._text_id(wend)
+        code.append(self.indent() + f'{{ const _wi = _wopen.indexOf({wid}); if (_wi >= 0) _wopen.length = _wi; _wopen.push({wid}); }}')
         return code
 
     def _generate_wend(self, stmt: WendStatementNode) -> List[str]:
@@ -3622,8 +3642,9 @@ class JavaScriptBackend(CodeGenBackend):
         if while_stmt is None:
             return [self.indent() + '_error("WEND without WHILE");']
         target = self.while_target[id(while_stmt)]
-        code = [self.indent() + 'if (_wdepth <= 0) _error("WEND without WHILE");',
-                self.indent() + '_wdepth--;']
+        # The binary matches a WEND to the entry that holds its own place, not to the newest WHILE
+        wid = self._text_id(stmt)
+        code = [self.indent() + f'{{ const _wi = _wopen.indexOf({wid}); if (_wi < 0) _error("WEND without WHILE"); _wopen.length = _wi; }}']
         # The label of a WHILE later on the same line is above CONT_LABEL_BASE: always look at the clock
         check = f'{yield_check(str(target))} ' if self.yield_checks else ''
         code.append(self.indent() + f'{check}_pc = {target}; break;')

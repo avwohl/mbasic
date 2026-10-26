@@ -1262,12 +1262,17 @@ class Runtime:
             'return_stmt': loop_state['pc'].statement
         }
 
-    def push_while_loop(self, while_line, while_stmt_index):
-        """Register a WHILE loop on the unified execution stack"""
+    def push_while_loop(self, while_line, while_stmt_index, wend_key=None):
+        """Register a WHILE loop on the unified execution stack
+
+        wend_key is (line, statement) of the WEND that closes the loop; a WEND
+        only accepts the entry whose key is its own place (as on the binary).
+        """
         loop_entry = {
             'type': 'WHILE',
             'while_line': while_line,
-            'while_stmt': while_stmt_index
+            'while_stmt': while_stmt_index,
+            'wend_key': wend_key
         }
         self.execution_stack.append(loop_entry)
 

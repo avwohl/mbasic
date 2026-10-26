@@ -906,6 +906,10 @@ class SyntaxErrorStatementNode:
     #: an ELSE that no IF is waiting for: MBASIC runs it as "skip the rest of the line", not as an error
     stray_else: bool = False
 
+    #: built-in calls cut short by the error, as (name, arguments read), the outer call first;
+    #: the binary has range-checked their number arguments before it fails
+    partial_calls: list = field(default_factory=list)
+
 
 @dataclass
 class SwapStatementNode:
