@@ -159,6 +159,11 @@ DEFAULT_RECORD_LENGTH = 128
 #: (INTEGER_DIGITS), so it cannot stand for the missing value.
 _UNCACHED = object()
 
+# The operators a pair of strings may use: concatenation and comparison.
+_STRING_BINARY_OPS = frozenset((
+    TokenType.PLUS, TokenType.EQUAL, TokenType.NOT_EQUAL, TokenType.LESS_THAN,
+    TokenType.GREATER_THAN, TokenType.LESS_EQUAL, TokenType.GREATER_EQUAL))
+
 
 class BreakException(Exception):
     """Raised when user presses Ctrl+C to break execution"""
@@ -4200,6 +4205,14 @@ class Interpreter:
 
         op = expr.operator
 
+        # A string with a number, or two strings under anything but + and the
+        # comparisons, is Type mismatch on the binary. Python would raise its
+        # own TypeError (reported as Illegal function call), so test first.
+        left_is_str = isinstance(left, str)
+        if left_is_str != isinstance(right, str) or (
+                left_is_str and op not in _STRING_BINARY_OPS):
+            raise TypeError("Type mismatch")
+
         # Arithmetic
         if op == TokenType.PLUS:
             result = left + right
@@ -4271,6 +4284,8 @@ class Interpreter:
         """Evaluate unary operation"""
         operand = self.evaluate_expression(expr.operand)
 
+        if isinstance(operand, str) and expr.operator == TokenType.MINUS:
+            raise TypeError("Type mismatch")
         if expr.operator == TokenType.MINUS:
             return -operand
         elif expr.operator == TokenType.NOT:
