@@ -133,3 +133,9 @@ def test_string_mixed_with_number_is_type_mismatch():
         "Ok", "a", "Type mismatch in 20", "Ok", "Type mismatch", "Ok",
         "Type mismatch", "Ok", "Type mismatch", "Ok", "Type mismatch", "Ok",
         "-1 ", "Ok"]
+
+
+def test_unary_plus_on_a_string_is_accepted():
+    # Measured on 5.21: unary + on a string returns the string; unary - is Type mismatch.
+    r = run_cli('PRINT +"a"\nPRINT -"a"\n')
+    assert lines_after_banner(r.stdout) == ["Ok", "a", "Ok", "Type mismatch", "Ok"]

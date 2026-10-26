@@ -4284,7 +4284,7 @@ class Interpreter:
         """Evaluate unary operation"""
         operand = self.evaluate_expression(expr.operand)
 
-        if isinstance(operand, str) and expr.operator in (TokenType.MINUS, TokenType.PLUS):
+        if isinstance(operand, str) and expr.operator == TokenType.MINUS:
             raise TypeError("Type mismatch")
         if expr.operator == TokenType.MINUS:
             return -operand
