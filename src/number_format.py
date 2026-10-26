@@ -215,11 +215,8 @@ def radix_word(value):
     if value != value or value >= 65536:
         raise OverflowError("Overflow")
     if value >= 32768:
-        value -= 65536
-    number = to_integer(value)
-    if not -32768 <= number <= 32767:
-        raise OverflowError("Overflow")
-    return number & 0xFFFF
+        value = to_single(value) - 65536    # FRQINT: single precision, then 65536 off
+    return to_frcint(value) & 0xFFFF
 
 
 #: MBASIC's "machine infinity" - the largest number MBF can hold, and what a
@@ -259,19 +256,42 @@ def machine_infinity(digits, negative=False):
     return -value if negative else value
 
 
+def _single_ties_up(value):
+    """Round a double to single precision as MBASIC's ROUND does: to the nearest
+    single, and a tie goes to the larger magnitude (IEEE float32 sends it to the
+    even neighbour). Ties happen for sums such as 0.49999997 + 0.5."""
+    nearest = to_single(value)
+    if nearest == value or abs(nearest) >= abs(value):
+        return nearest
+    bits = struct.unpack('<I', struct.pack('<f', nearest))[0]
+    above = struct.unpack('<f', struct.pack('<I', bits + 1))[0]
+    if abs(value) - abs(nearest) == abs(above) - abs(value):
+        return above
+    return nearest
+
+
 def to_frcint(value):
     """Convert a number the way MBASIC's FRCINT does: a signed 16-bit integer.
 
-    The value is rounded to the nearest integer with halves away from zero and
-    must then fit -32768..32767, or the real binary stops with "Overflow".
-    32767.4 passes, 32767.5 does not, and -32768.5 does not. Every place that
-    wants a 16-bit integer starts here: \\ and MOD, the logical operators, array
-    subscripts, MKI$, TAB and SPC, and (through to_conint) the byte arguments.
+    FRCINT adds 0.5 in the precision of the number (a double is then taken to
+    single precision), drops the fraction of the magnitude, and for a negative
+    sum complements the result. So -2.5 gives -3, -0.5 gives -1 (a sum of 0 is
+    complemented too), and 32767.5 and -32768.5 are "Overflow" (measured).
+    The sum is rounded to a single, so a double just below a half can round up:
+    0.49999998# gives 1, while -0.49999998# gives 0, and 2.49999999# AND 3 is 3.
+    Every place that wants a 16-bit integer starts here: \\ and MOD, the logical
+    operators, array subscripts, MKI$, TAB and SPC, and (through to_conint) the
+    byte arguments.
     """
     if isinstance(value, float) and value == value and abs(value) < 65536:
-        # The binary takes a double to single precision before it rounds:
-        # 2.49999999# AND 3 is 3 and 32767.4999# OR 0 is Overflow.
-        value = to_single(value)
+        total = _single_ties_up(value + 0.5)
+        if total == 0:
+            return -1                     # the zero sum takes the complement path
+        magnitude = abs(total)
+        if magnitude >= 32768:
+            raise OverflowError("Overflow")
+        number = int(magnitude)
+        return number if total > 0 else -number - 1
     number = to_integer(value)
     if isinstance(number, bool) or not isinstance(number, int):
         raise TypeError("Type mismatch")

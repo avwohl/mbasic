@@ -112,3 +112,10 @@ to its line). ERL uses the same line.
 * NEXT pairs with FOR by position in the text. A program that jumps into a
   loop with GOTO and a FOR that has no NEXT in the text can behave
   differently from real MBASIC.
+
+* A NEXT with no loop for its variable is `NEXT without FOR` (error 1) at run
+  time, as on the binary. A FOR whose start, end or step is a string, or a
+  string loop variable with a number start, is `Type mismatch` (error 13) and
+  leaves no loop, so the NEXT after a trapped error gives error 1. The FOR
+  runs start, end and step in the order of the text. See section 11 of
+  `MBASIC_521_DIVERGENCES_TODO.md`.

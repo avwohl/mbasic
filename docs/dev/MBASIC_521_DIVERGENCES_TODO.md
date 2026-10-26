@@ -243,9 +243,9 @@ uses have subscripts. `DIM A(2.5)` rounds (also for the C backend), and a
 `DIM` bound above 32767 is `Overflow` when the `DIM` runs. Test:
 `tests/regression/integration/test_js_range_checks.py`. Not done in the
 JavaScript backend: `DIM A(-1)` stays a compilation error, and the bounds of a
-`DIM` must be constants. The file statements `FIELD`, `GET`, `PUT`, `OPEN ...
-LEN` and file numbers do not have the checks. A double is not taken to
-single precision before FRCINT rounds it, except in the logical operators.
+`DIM` must be constants. Done: the file statements `FIELD`, `GET`, `PUT`,
+`OPEN ... LEN` and the file numbers have the range checks, and FRCINT is
+exact in both backends (see section 11 below).
 
 Round 2 of the JavaScript backend: `READ` and `SWAP` with array elements use
 the subscripts and the bounds check (before, they assigned the whole array).
@@ -260,8 +260,10 @@ it again with the bounds 0 to 10, as on the binary. A fatal `ERROR n` in a
 handler, where n has no message, prints `Unprintable error`. `INSTR` gives 0 for
 an empty string and for a start beyond the end, also with an empty search
 string (interpreter and JavaScript). `MID$(A$,2,3)=A$` copies byte by byte over
-itself, so `hello` gives `hhhho`. Not done: the target shared
-through `B$=A$` does not give the byte-by-byte copy.
+itself, so `hello` gives `hhhho`. Done: a target shared through `B$=A$`
+does not copy over itself on the binary (`MID$(A$,2,3)=B$` gives `hhelo` and
+leaves `B$`), also with `A$="hel"+"lo"`. The interpreter and the JavaScript
+compiler already do this; test: `test_js_misc_edges.py`.
 
 Done for the interpreter (#43, second part). Each item was measured on the
 binary:
@@ -631,7 +633,8 @@ semantics are not:
   assignment, a condition, a FOR, a built-in function, DEF FN and PRINT USING.
   Unary `+` on a string is allowed. The semantic analyzer no longer folds or
   rewrites such an expression. See `docs/dev/JS_TYPE_MISMATCH.md`. Open:
-  `DIM B("a")` stops the compile, and `USR("a")` is not checked. The C backend
+  `DIM B("a")` stops the compile. Done: `USR(x)` is Illegal function call
+  for any argument, as on the binary. The C backend
   refuses the mixed forms at compile time, on purpose. Test:
   `tests/regression/integration/test_js_type_mismatch.py`.
 - Done (#58): in the JavaScript backend, `RESUME NEXT` goes on at the next
@@ -720,3 +723,64 @@ keep them as extensions:
   continues at the next statement. On 5.21, MERGE always returns to command
   level. The summary line that MERGE prints at command level does not show
   when a running program merges, as on the binary.
+
+
+## 11. JavaScript backend, assorted edges - done
+
+Each item was measured on the binary. Test:
+`tests/regression/integration/test_js_misc_edges.py`.
+
+- `USR(x)` is `Illegal function call` for every argument (also a string
+  and 70000); `USR()` and `USR(1,2)` are Syntax errors.
+- A `DEF FN` parameter takes the type of its letter in the JavaScript
+  backend: `DEFINT I: DEF FNQ(I)=I*2: PRINT FNQ(2.6)` is 6, and 40000 is
+  Overflow. A single parameter drops digits. The interpreter did this.
+- `FOR` checks its start, end and step in that order, each at once: a string
+  is `Type mismatch` before the next expression runs, and a string loop
+  variable with a number start is `Type mismatch`. The failed `FOR` leaves no
+  loop, so the `NEXT` after a trapped error is `NEXT without FOR` (error 1).
+  The JavaScript `NEXT` with no loop is now that error (it went on
+  silently), the JavaScript `FOR` runs start, end, step in text order, and the
+  interpreter no longer registers a loop when a value is a string.
+- FRCINT (`CINT`, an integer variable, `\`, `MOD`, subscripts, `HEX$`,
+  `OCT$`, byte arguments, the logical operators): the binary adds 0.5 in the
+  precision of the number, takes the sum to single (a tie goes to the larger
+  magnitude), drops the fraction of the magnitude, and complements the result
+  of a negative or zero sum. So `CINT(-2.5)` is -3, `CINT(-.5)` is -1,
+  `CINT(.49999998#)` is 1, `CINT(-.49999998#)` is 0, `CINT(32767.49999999#)`
+  is Overflow and `HEX$(2.49999999#)` is 3. `to_frcint` in
+  `src/number_format.py` and `_frc_int` in the JavaScript runtime do this.
+  Before, they took the double to single and then rounded half away from
+  zero, which differs near a half.
+- File statements in the JavaScript backend: the file number is a byte
+  (Overflow, then `Illegal function call` for 256 or -1), then above 15 is
+  `Bad file number`. A statement on a number with no open file is `Bad file
+  mode` for PRINT, WRITE, INPUT, LINE INPUT, GET and PUT, and `Bad file
+  number` for EOF, LOC, LOF and FIELD. `INPUT$` on a number with no open file
+  is `Input past end`. An output file used for input, GET, PUT or FIELD is
+  `Bad file mode`; INPUT from a random file is `FIELD overflow`. `CLOSE 0`
+  does nothing, `CLOSE` of a closed number is fine, `CLOSE 1,99` closes 1 and
+  then gives `Bad file number`. `OPEN`: the number first (0 is `Bad file
+  number`), then `LEN` (FRCINT, above 128 is `Illegal function call`), then
+  `File already open`. `OPEN "I"` of a missing file is `File not found`. `GET`
+  and `PUT` take the record by FRCINT: 0 is `Bad record number`, below 0 is
+  `Illegal function call`, above 32767 is Overflow. `FIELD` widths are bytes
+  and the sum must fit the record (`FIELD overflow`).
+- `FIELD` binds its variables to the record at once, `GET` fills them, `LSET`
+  and `RSET` change the variable and the record (before, the compiled
+  variables were never set, so `GET` then `PRINT A$` printed nothing). `LSET`
+  of a plain string variable keeps its length. The semantic analyzer now
+  declares variables that only `FIELD`, `LSET` or `RSET` use.
+- `ASC("")` is `Illegal function call` in the JavaScript backend.
+- The JavaScript compiler sorts the lines of the source by number (and a
+  later line with the same number replaces the earlier one), as MBASIC does
+  when the lines are typed. Before, a source with lines out of order ran in
+  file order.
+- Not done: the backends allow 15 files, the binary 3 by default (`/F:n`
+  raises it; `cpmemu` did not pass the switch on, so the number above 3 was
+  not measured with a bigger limit). `PRINT #n` and `WRITE #n` on a random file
+  work on the binary (they write into the record) and are `Bad file mode`
+  here. The interpreter still differs in some file cases (a number with no
+  open file is `Bad file number` there, the binary says `Bad file mode` for
+  PRINT, INPUT, GET, PUT; `FIELD` binds at `GET`; `GET` before `FIELD`).
+  `OPEN "A"` is an extension and stays.

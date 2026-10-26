@@ -67,7 +67,7 @@ JS_GLOBALS = {
     # Language and standard library
     "Math", "String", "Number", "Array", "Object", "Date", "Error", "Buffer",
     "Promise", "Boolean", "Symbol", "JSON", "RegExp", "Map", "Set", "Uint8Array",
-    "Float32Array", "Float64Array", "DataView", "ArrayBuffer",
+    "Float32Array", "Uint32Array", "Float64Array", "DataView", "ArrayBuffer",
     "parseFloat", "parseInt", "isNaN", "isFinite", "setTimeout",
     "clearTimeout", "setInterval", "clearInterval", "BigInt", "Int32Array",
     # Host (Node.js, browser)

@@ -1913,9 +1913,19 @@ class Interpreter:
         NEXT will increment/decrement and check the end condition.
         """
         # Evaluate start, end, step
+        # Each value is checked as it is read: a string anywhere, or a number for a
+        # string variable, is Type mismatch before the next expression runs, and
+        # before a loop is registered (the NEXT after the trapped error is then
+        # NEXT without FOR).
         start = self.evaluate_expression(stmt.start_expr)
+        if isinstance(start, str) or stmt.variable.type_suffix == '$':
+            raise MBasicError(13)
         end = self.evaluate_expression(stmt.end_expr)
+        if isinstance(end, str):
+            raise MBasicError(13)
         step = self.evaluate_expression(stmt.step_expr) if stmt.step_expr else 1
+        if isinstance(step, str):
+            raise MBasicError(13)
 
         # Set loop variable to start
         var_name = stmt.variable.name + (stmt.variable.type_suffix or "")

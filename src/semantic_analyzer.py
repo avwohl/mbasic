@@ -1319,6 +1319,21 @@ class SemanticAnalyzer:
                 # READ initializes the variable
                 self.initialized_variables.add(var.name.upper())
 
+        # LSET, RSET and FIELD name string variables: they are in the symbol table even
+        # when no other statement uses them. FIELD and LSET change the variable.
+        elif isinstance(stmt, (LsetStatementNode, RsetStatementNode)):
+            self._analyze_expression(stmt.variable, "LSET")
+            self._analyze_expression(stmt.expression, "LSET")
+            self._invalidate_expressions(stmt.variable.name)
+            self.evaluator.clear_constant(stmt.variable.name)
+            self.initialized_variables.add(stmt.variable.name.upper())
+        elif isinstance(stmt, FieldStatementNode):
+            for _width, var in stmt.fields:
+                self._analyze_expression(var, "FIELD")
+                self._invalidate_expressions(var.name)
+                self.evaluator.clear_constant(var.name)
+                self.initialized_variables.add(var.name.upper())
+
         # LINE INPUT - variables are no longer constants
         elif isinstance(stmt, LineInputStatementNode):
             if hasattr(stmt, 'variable'):
