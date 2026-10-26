@@ -129,7 +129,9 @@ def test_line_with_a_syntax_error_loads_and_fails_when_it_runs(tmp_path):
     assert result.returncode == 0
     assert not result.stderr
     assert "10 PRINT (" in result.stdout
-    assert "Syntax error in 10" in result.stdout
+    # Measured on 5.21: a missing operand at the end of the statement is
+    # "Missing operand in 10", not a Syntax error (PRINT 1+) is a Syntax error).
+    assert "Missing operand in 10" in result.stdout
 
 
 def test_load_command_does_not_call_parse_failure_file_not_found(tmp_path):

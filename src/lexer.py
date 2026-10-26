@@ -450,6 +450,20 @@ class Lexer:
                 keyword_part, ident[:-1], start_line, start_column)
             return token
 
+        # USR0 to USR9 and DEF USR are the reserved word USR and a digit; a
+        # name that starts with USR (USRX, USR1X, USR10) is the word USR and
+        # the rest, which the parser refuses as the binary does.  The other
+        # reserved words are not split off the front of a name here.
+        if (len(ident) > 3 and ident_lower.startswith('usr')
+                and not self._in_data_statement()):
+            back = len(ident) - 3
+            self.pos -= back
+            self.column -= back
+            token = Token(KEYWORDS['usr'], 'usr', start_line, start_column)
+            token.original_case_keyword = self.keyword_case_manager.register_keyword(
+                'usr', ident[:3], start_line, start_column)
+            return token
+
         # NOTE: We do NOT handle old BASIC where keywords run together (NEXTI, FORI).
         # MBASIC 5.21 is properly-formed and requires spaces between keywords.
         # Special case handled above: PRINT# and similar file I/O keywords in MBASIC 5.21

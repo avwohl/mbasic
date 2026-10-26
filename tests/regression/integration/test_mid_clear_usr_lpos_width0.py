@@ -32,6 +32,17 @@ STATEMENTS = '1 ON ERROR GOTO 900\n10 A$="HELLO":MID$(A$,2)="XY":PRINT A$\n11 ON
 # Output of the real binary for STATEMENTS.
 STATEMENTS_EXPECTED = 'HXYLO\n 10 ok\nHXYZA\n 20 ok\n 30 ok\n 40 E 5 \n 50 E 5 \n 60 E 13 \n 70 E 6 \n 80 E 6 \n 90 E 5 \n 100 E 6 \n 110 E 6 \n 120 ok\n 130 E 5 \n 140 E 13 \n 150 ok\n 160 E 5 \n 170 E 5 \n 180 E 5 \n 190 ok\n 200 ok\n 210 E 6 \n 220 E 13 \n 230 E 2 \n 1  1  1 \n 240 ok\n 250 ok\n 260 ok\n 270 E 5 \n 280 E 6 \n 290 ok\n 300 E 5 \n 310 E 13 \n 320 ok\nend\n'
 
+# Measured on the binary: a name that starts with the reserved word USR is a
+# Syntax error (USRX, USR1X, USR10), DEF USR 4=100 with a space is fine, a
+# missing right-hand side is Missing operand (22) at the end of a statement
+# and before ':' or ELSE but a Syntax error before ',' or ')', MID$ of a
+# number is Type mismatch, and MID$(A$,n)=A$ copies byte by byte inside the
+# one string (HEHEH) where a copy of A$ (LEFT$, another variable) does not.
+FORMS = '1 ON ERROR GOTO 900\n10 USR0=5\n11 ON ERROR GOTO 900:IF F=0 THEN PRINT 10;"ok" ELSE F=0\n20 USRX=5:PRINT USRX\n21 ON ERROR GOTO 900:IF F=0 THEN PRINT 20;"ok" ELSE F=0\n30 USR1X=5\n31 ON ERROR GOTO 900:IF F=0 THEN PRINT 30;"ok" ELSE F=0\n40 USR10=3\n41 ON ERROR GOTO 900:IF F=0 THEN PRINT 40;"ok" ELSE F=0\n50 DEF USR 4=100\n51 ON ERROR GOTO 900:IF F=0 THEN PRINT 50;"ok" ELSE F=0\n60 DEF USR9=5\n61 ON ERROR GOTO 900:IF F=0 THEN PRINT 60;"ok" ELSE F=0\n70 DEF USR=\n71 ON ERROR GOTO 900:IF F=0 THEN PRINT 70;"ok" ELSE F=0\n80 WIDTH LPRINT\n81 ON ERROR GOTO 900:IF F=0 THEN PRINT 80;"ok" ELSE F=0\n90 A$="HELLO":MID$(A$,2)=\n91 ON ERROR GOTO 900:IF F=0 THEN PRINT 90;"ok" ELSE F=0\n100 A=\n101 ON ERROR GOTO 900:IF F=0 THEN PRINT 100;"ok" ELSE F=0\n110 PRINT 1+:PRINT 2\n111 ON ERROR GOTO 900:IF F=0 THEN PRINT 110;"ok" ELSE F=0\n120 PRINT 1+)\n121 ON ERROR GOTO 900:IF F=0 THEN PRINT 120;"ok" ELSE F=0\n130 A=,\n131 ON ERROR GOTO 900:IF F=0 THEN PRINT 130;"ok" ELSE F=0\n140 A$="HELLO":MID$(A,2)="X"\n141 ON ERROR GOTO 900:IF F=0 THEN PRINT 140;"ok" ELSE F=0\n150 A$="HELLO":MID$(A$,3)=A$:PRINT A$\n151 ON ERROR GOTO 900:IF F=0 THEN PRINT 150;"ok" ELSE F=0\n160 A$="HELLO":MID$(A$,2,3)=A$:PRINT A$\n161 ON ERROR GOTO 900:IF F=0 THEN PRINT 160;"ok" ELSE F=0\n170 A$="HELLO":MID$(A$,3)=(A$):PRINT A$\n171 ON ERROR GOTO 900:IF F=0 THEN PRINT 170;"ok" ELSE F=0\n180 A$="HELLO":MID$(A$,3)=LEFT$(A$,5):PRINT A$\n181 ON ERROR GOTO 900:IF F=0 THEN PRINT 180;"ok" ELSE F=0\n190 DIM B$(2):B$(1)="HELLO":MID$(B$(1),3)=B$(1):PRINT B$(1)\n191 ON ERROR GOTO 900:IF F=0 THEN PRINT 190;"ok" ELSE F=0\n200 B$(1)="HELLO":B$(2)=B$(1):MID$(B$(1),3)=B$(2):PRINT B$(1);B$(2)\n201 ON ERROR GOTO 900:IF F=0 THEN PRINT 200;"ok" ELSE F=0\n210 PRINT "end"\n220 SYSTEM\n900 PRINT ERL;"E";ERR:F=1:RESUME NEXT\n'
+
+FORMS_EXPECTED = ' 10 E 2 \n 20 E 2 \n 20 E 2 \n 30 E 2 \n 40 E 2 \n 50 ok\n 60 ok\n 70 E 22 \n 80 E 22 \n 90 E 22 \n 100 E 22 \n 110 E 22 \n 2 \n 120 E 2 \n 130 E 2 \n 140 E 13 \nHEHEH\n 150 ok\nHHHHO\n 160 ok\nHEHEH\n 170 ok\nHEHEL\n 180 ok\nHEHEH\n 190 ok\nHEHELHELLO\n 200 ok\nend\n'
+
+
 # Measured: WIDTH 0 prints a line break before the first character of a line
 # and never wraps again; TAB and SPC are Division by zero (error 11).
 WIDTH0 = '5 ON ERROR GOTO 100\n10 WIDTH 0\n20 PRINT "ab";TAB(5);"c";\n30 PRINT "d";SPC(3);"e";POS(0)\n40 PRINT "k";TAB(1);"z"\n50 PRINT\n60 PRINT "q";:PRINT\n70 PRINT "wxyz"\n75 PRINT 1,2;POS(0)\n80 WIDTH 0.4:PRINT "A";POS(0)\n85 WIDTH 255:PRINT "B"\n90 WIDTH 80\n95 PRINT "end"\n99 SYSTEM\n100 PRINT "ERR";ERR;ERL:RESUME NEXT\n'
@@ -69,16 +80,26 @@ def test_mid_statement_without_length(tmp_path):
     assert MID_EXPECTED in result.stdout, result.stdout + result.stderr
 
 
-def test_load_list_keep_the_forms(tmp_path):
+def test_forms_after_syntax_edge_cases(tmp_path):
+    result = run_cli(tmp_path, FORMS)
+    assert FORMS_EXPECTED in result.stdout, result.stdout + result.stderr
+
+
+def test_load_list_renum_keep_the_forms(tmp_path):
+    # The forms must survive LIST and RENUM and still run afterwards. (The
+    # loader keeps a line it cannot parse as text, so LIST alone would not
+    # show a parser that rejects the forms; running the lines does.)
     result = run_cli(
         tmp_path,
-        '10 MID$(A$,2)="X"\n20 DEF USR3=100\n30 DEF USR=1\n40 X=USR2(1)+LPOS(0)\n'
-        '50 WIDTH LPRINT 40\n', "LIST\nRENUM 100\nLIST\nSYSTEM\n")
+        '10 A$="HELLO":MID$(A$,2)="X":PRINT A$\n20 DEF USR3=100\n30 DEF USR 4=5\n'
+        '40 PRINT LPOS(0)\n50 WIDTH LPRINT 40\n60 SYSTEM\n',
+        "LIST\nRENUM 100\nLIST\nRUN\nSYSTEM\n")
     assert "Syntax error" not in result.stdout, result.stdout
-    for text in ('10 MID$(A$,2)="X"', "20 DEF USR3=100", "30 DEF USR=1",
-                 "40 X=USR2(1)+LPOS(0)", "50 WIDTH LPRINT 40",
-                 '100 MID$(A$,2)="X"', "130 X=USR2(1)+LPOS(0)", "140 WIDTH LPRINT 40"):
+    for text in ('10 A$="HELLO":MID$(A$,2)="X":PRINT A$', "20 DEF USR3=100",
+                 "30 DEF USR 4=5", "40 PRINT LPOS(0)", "50 WIDTH LPRINT 40",
+                 '100 A$="HELLO":MID$(A$,2)="X":PRINT A$', "130 PRINT LPOS(0)"):
         assert text in result.stdout, (text, result.stdout)
+    assert "HXLLO\n 1 \n" in result.stdout, result.stdout
 
 
 @pytest.mark.skipif(NODE is None, reason="node not installed")

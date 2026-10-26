@@ -16,10 +16,10 @@ Expression parsing notes:
   (this is specific to these two functions, not a general MBASIC feature)
 """
 
-import re
 from typing import Any, List, Optional, Dict, Set, Tuple
 from src.tokens import Token, TokenType
 from src.ast_nodes import *
+from src.error_codes import error_code_for, MISSING_OPERAND
 from src.keyword_case_manager import KeywordCaseManager
 from src.debug_logger import debug_log
 
@@ -375,7 +375,12 @@ class Parser:
             debug_log(f"statement kept as a run-time Syntax error: {e}", level=1)
             self.position = start
             kept = self._print_before_stray_text(start)
-            return kept if kept is not None else self._syntax_error_statement()
+            if kept is not None:
+                return kept
+            bad = self._syntax_error_statement()
+            if error_code_for(e) == MISSING_OPERAND:
+                bad.error_code = MISSING_OPERAND    # A=  PRINT 1+  DEF USR=
+            return bad
 
     def _print_before_stray_text(self, start: int) -> Optional[StatementNode]:
         """PRINT "a";$ prints a and then fails: keep the PRINT up to the stray text.
@@ -723,6 +728,7 @@ class Parser:
             # Note: The lexer tokenizes 'MID$' (including the $) as a single token with type TokenType.MID
             # Lookahead strategy: scan past balanced parentheses, check for = sign
             saved_pos = self.position
+            is_statement = False
             try:
                 self.advance()  # Skip MID token
                 if self.match(TokenType.LPAREN):
@@ -736,10 +742,7 @@ class Parser:
                             paren_depth -= 1
                         self.advance()
                     # Check if next token is EQUAL (indicates MID$ assignment statement)
-                    if self.match(TokenType.EQUAL):
-                        # This is MID$ statement, not function
-                        self.position = saved_pos  # Restore position to parse properly
-                        return self.parse_mid_assignment()
+                    is_statement = self.match(TokenType.EQUAL)
             except (IndexError, ParseError):
                 # Catch lookahead failures during MID$ statement detection
                 # IndexError: if we run past end of tokens
@@ -748,6 +751,10 @@ class Parser:
                 pass
             # Restore position - either not a statement or error in lookahead
             self.position = saved_pos
+            if is_statement:
+                # This is MID$ statement, not function.  Parse it outside the
+                # try, so its own errors (Missing operand) are not swallowed.
+                return self.parse_mid_assignment()
             # MID$ at statement level without assignment pattern is an error
             # (MID$ function calls only valid in expression context)
             raise ParseError(f"MID$ must be used as function (in expression) or assignment statement", token)
@@ -1095,12 +1102,7 @@ class Parser:
 
         # Variables and functions
         elif token.type == TokenType.IDENTIFIER:
-            if re.fullmatch(r'usr[0-9]', str(token.value)):
-                # USR0..USR9 are the reserved word USR and a digit
-                token.type = TokenType.USR
-            else:
-                return self.parse_variable_or_function()
-            return self.parse_builtin_function()
+            return self.parse_variable_or_function()
 
         # Built-in functions (keywords that are also functions)
         elif self.is_builtin_function(token.type):
@@ -1241,9 +1243,25 @@ class Parser:
         # Note: ERR and ERL are not functions, they are system variables
         return token_type in builtin_functions
 
+    def _parse_usr_digit(self) -> int:
+        """Read the digit after the reserved word USR: USR0 to USR9, "USR 4" too.
+
+        The lexer ends the word USR before the digit.  No digit means USR0.
+        A number that is not one digit (USR10) is left in place, so the
+        caller fails with a Syntax error, as MBASIC does.
+        """
+        tok = self.current()
+        if (tok and tok.type == TokenType.NUMBER and isinstance(tok.value, int)
+                and not isinstance(tok.value, bool) and 0 <= tok.value <= 9):
+            self.advance()
+            return tok.value
+        return 0
+
     def parse_builtin_function(self) -> FunctionCallNode:
         """Parse built-in function call"""
         func_token = self.advance()
+        if func_token.type == TokenType.USR:
+            self._parse_usr_digit()
         func_name = func_token.type.name
 
         # Map token names to actual function names
@@ -2996,15 +3014,13 @@ class Parser:
 
         # DEF USR[n] = address
         usr_token = self.current()
-        if usr_token and (usr_token.type == TokenType.USR
-                          or (usr_token.type == TokenType.IDENTIFIER
-                              and re.fullmatch(r'usr[0-9]', str(usr_token.value)))):
+        if usr_token and usr_token.type == TokenType.USR:
             self.advance()
+            index = self._parse_usr_digit()
             self.expect(TokenType.EQUAL)
             address = self.parse_expression()
-            digits = str(usr_token.value)[3:]
             return DefUsrStatementNode(
-                index=int(digits) if digits else 0,
+                index=index,
                 address=address,
                 line_num=token.line,
                 column=token.column

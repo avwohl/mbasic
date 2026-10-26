@@ -173,6 +173,14 @@ binary:
 - `DEF USR[n]=address` is a statement now (it was a Syntax error). The
   address is -32768 to 65535 and is not kept: 65536 is `Overflow`, a string is
   `Type mismatch`. `DEF USR10=1` is a Syntax error, as on the binary.
+  The lexer ends the reserved word `USR` before a digit, so `DEF USR 4=100`
+  works and a name that starts with `USR` (`USRX`, `USR1X`, `USR10`,
+  `USR10(1)`) is a Syntax error, as on the binary. Other reserved words are
+  not split off the front of a name.
+- A missing right-hand side is `Missing operand` (22) when the statement
+  ends there (end of line, `:` or `ELSE`) and a Syntax error before `,` or
+  `)`, as on the binary: `A=`, `DEF USR=`, `WIDTH LPRINT`, `MID$(A$,2)=`.
+  `MID$(A,2)="X"` with a number `A` is `Type mismatch`.
 - `LPOS(x)` is a function now (it was an array). The argument is any type and
   is not used. The value is 1, the leftmost column of a printer: `LPRINT` is
   not implemented, so there is no printer column. `LPOS` with no argument is a
@@ -202,7 +210,14 @@ Found while measuring, not done:
   width); here the device form is accepted and ignored.
 - A `CLEAR` that succeeds also forgets `ON ERROR GOTO`, so the next error is
   fatal on the binary. Here the handler stays.
-- `USR10(1)` is a Syntax error on the binary; here it is an array.
+- A `MID$` statement whose value is the target string, as in
+  `MID$(A$,3)=A$`, copies one byte at a time inside the one string on the
+  binary (`HEHEH`). The interpreter does the same. The JavaScript backend
+  copies from the old value (`HEHEL`), which is what the binary gives when
+  the value is a separate string (`LEFT$(A$,5)`, `A$+""`, another variable).
+- `A=ELSE` is `Missing operand` (22) as on the binary, but `RESUME NEXT` then
+  runs the `ELSE` and gives a Syntax error; the binary goes on with the next
+  line.
 
 The JavaScript backend gaps for `STRING$`, `SPACE$`, `LEFT$`, `RIGHT$`, `TAB`,
 `CHR$`, `PEEK` and array subscripts (the issue lists them) are the open part

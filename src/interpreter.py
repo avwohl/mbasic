@@ -3669,6 +3669,20 @@ class Interpreter:
             # behavior, not a bug.
             self.runtime.set_variable_raw(var_name, value)
 
+    def _mid_value_is_destination(self, stmt):
+        """Whether the value of a MID$ statement is the very variable it changes."""
+        dest, value = stmt.string_var, stmt.value
+        if not (isinstance(dest, ast_nodes.VariableNode) and isinstance(value, ast_nodes.VariableNode)):
+            return False
+        if (dest.name, dest.type_suffix) != (value.name, value.type_suffix):
+            return False
+        if bool(dest.subscripts) != bool(value.subscripts):
+            return False
+        if not dest.subscripts:
+            return True
+        return ([to_subscript(self.evaluate_expression(sub)) for sub in dest.subscripts]
+                == [to_subscript(self.evaluate_expression(sub)) for sub in value.subscripts])
+
     def execute_midassignment(self, stmt):
         """Execute MID$ assignment statement - replace substring in-place
 
@@ -3684,7 +3698,7 @@ class Interpreter:
         # Evaluate the current value of the string variable
         current_value = self.evaluate_expression(stmt.string_var)
         if not isinstance(current_value, str):
-            current_value = str(current_value)
+            raise MBasicError(13)    # Type mismatch: MID$(A,2)="X" with a number A
 
         # Evaluate the parameters
         # Start and length are CONINT arguments as in the MID$ function:
@@ -3729,6 +3743,18 @@ class Interpreter:
         suffix = current_value[start_idx + chars_to_replace:]
 
         modified_value = prefix + replacement + suffix
+
+        if self._mid_value_is_destination(stmt):
+            # The value is the destination string itself (also in
+            # parentheses): the binary copies a byte at a time inside the
+            # one string, so a byte it has just written is copied again.
+            # Measured: A$="HELLO":MID$(A$,3)=A$ gives HEHEH, and
+            # MID$(A$,2,3)=A$ gives HHHHO.  A$+"", LEFT$(A$,5) and a copy of
+            # A$ in another variable are separate strings: HEHEL.
+            chars = list(current_value)
+            for i in range(chars_to_replace):
+                chars[start_idx + i] = chars[i]
+            modified_value = ''.join(chars)
 
         # Assign the modified string back to the variable
         # Handle both simple variables and array elements
