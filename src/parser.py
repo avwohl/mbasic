@@ -3408,8 +3408,7 @@ class Parser:
                     filename=filename,
                     record_length=record_length,
                     line_num=token.line,
-                    column=token.column,
-                    mode_expr=mode_expr
+                    column=token.column
                 )
         else:
             # Parse mode expression
@@ -3447,8 +3446,7 @@ class Parser:
                 filename=filename,
                 record_length=record_length,
                 line_num=token.line,
-                column=token.column,
-                mode_expr=mode_expr
+                column=token.column
             )
 
     def parse_close(self) -> CloseStatementNode:
