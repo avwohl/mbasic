@@ -60,3 +60,24 @@ def test_result_kept_in_a_variable_counts(tmp_path):
 def test_the_literal_itself_is_free(tmp_path):
     out = run_cli(tmp_path, loop("@"))
     assert "done 601" in out and "err" not in out.replace("error", ""), out
+
+
+def test_def_fn_passing_a_string_through_counts(tmp_path):
+    # Measured on the binary: DEF FNA$(X)=L$ with A$(I)=FNA$(0), and
+    # DEF FNA$(X$)=X$ with A$(I)=FNA$(L$): both err 14 at I= 371.
+    for define, call in (("DEF FNA$(X)=L$", "FNA$(0)"), ("DEF FNA$(X$)=X$", "FNA$(L$)")):
+        out = run_cli(tmp_path, loop(call, "5 L$=%s\n6 %s\n" % (LITERAL, define)))
+        assert "err 14 at I=" in out and "done" not in out, out
+
+
+def test_def_fn_with_a_literal_body_is_free(tmp_path):
+    # Measured on the binary: DEF FNA$(X)="xxx..." gives done 601.
+    out = run_cli(tmp_path, loop("FNA$(0)", "6 DEF FNA$(X)=%s\n" % LITERAL))
+    assert "done 601" in out, out
+
+
+def test_data_strings_are_free(tmp_path):
+    # Measured on the binary: READ D$ from DATA text, then A$(I)=D$: done 601.
+    for data in ("X" * 100, LITERAL):
+        out = run_cli(tmp_path, loop("D$", "6 READ D$:DATA %s\n" % data))
+        assert "done 601" in out, out

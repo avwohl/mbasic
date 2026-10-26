@@ -34,7 +34,9 @@ Done (GitHub issues 30 to 33, `docs/dev/STRING_SPACE_AND_FILE_ERRORS.md`):
   reports), not a memory model, so the error comes a little later than on the
   binary. `CLEAR ,n` and `CLEAR ,,n` change the budget, and `FRE` reports the string space less the live strings.
   Only a literal (class `ProgramString`) is free. A result of `LEFT$`, `RIGHT$`,
-  `MID$` or `+` counts, also when it equals the whole literal.
+  `MID$` or `+` counts, also when it equals the whole literal. A `DEF FN` that
+  returns a variable or a parameter counts (a copy on the binary); a `DEF FN` with a
+  literal body, and a string read from `DATA`, are free.
 - Done (#32): `OPEN "R"` keeps the record length (0 to 128, default 128), `FIELD`
   gives `FIELD overflow` when the widths are more than the record length, and
   `GET` and `PUT` use the record length. The binary binds the variables
