@@ -872,7 +872,10 @@ uint16_t mb25_radix(uint16_t id, int v, int base) {
 
 int mb25_asc(uint16_t id) {
     uint8_t *d = mb25_get_data(id);
-    return (d && mb25_get_length(id) > 0) ? d[0] : 0;
+    if (!d || mb25_get_length(id) == 0) {
+        mb25_fail("Illegal function call");
+    }
+    return d[0];
 }
 
 /* The number at the start of a text, as BASIC reads it: leading blanks, a
@@ -935,6 +938,46 @@ double mb25_atof(const char *s) {
     return neg ? -v : v;
 }
 
+/* VAL of a text: &H and &O numbers are read as 16-bit words (&HFFFF is -1);
+ * anything else is a decimal number. */
+static double mb25_val_text(const char *s) {
+    int base = 0, digit;
+    double v = 0;
+    while (*s == ' ' || *s == '\t') {
+        s++;
+    }
+    if (*s == '&') {
+        if (s[1] == 'H' || s[1] == 'h') {
+            base = 16;
+        } else if (s[1] == 'O' || s[1] == 'o' || (s[1] >= '0' && s[1] <= '7')) {
+            base = 8;
+        }
+    }
+    if (!base) {
+        return mb25_atof(s);
+    }
+    s += (s[1] == 'H' || s[1] == 'h' || s[1] == 'O' || s[1] == 'o') ? 2 : 1;
+    for (;; s++) {
+        if (*s >= '0' && *s <= '9') {
+            digit = *s - '0';
+        } else if (*s >= 'A' && *s <= 'F') {
+            digit = *s - 'A' + 10;
+        } else if (*s >= 'a' && *s <= 'f') {
+            digit = *s - 'a' + 10;
+        } else {
+            break;
+        }
+        if (digit >= base) {
+            break;
+        }
+        v = v * base + digit;
+        if (v > 65535.0) {
+            mb25_fail("Overflow");
+        }
+    }
+    return v > 32767.0 ? (v - 65536.0) : v;
+}
+
 double mb25_val(uint16_t id) {
     char t[256];
     uint8_t *d = mb25_get_data(id);
@@ -944,7 +987,7 @@ double mb25_val(uint16_t id) {
     }
     memcpy(t, d, n);
     t[n] = 0;
-    return mb25_atof(t);
+    return mb25_val_text(t);
 }
 
 /* INSTR([start,] a$, b$): 1-based position of b$ in a$, or 0 */
@@ -954,7 +997,7 @@ int mb25_instr(int start, uint16_t a, uint16_t b) {
     if (start < 1) {
         start = 1;
     }
-    if (start - 1 > la) {
+    if (start > la) {
         return 0;
     }
     if (lb == 0) {
@@ -981,7 +1024,10 @@ int mb25_instr(int start, uint16_t a, uint16_t b) {
 double mb25_sqr(double v) {
     double r;
     int n;
-    if (v <= 0) {
+    if (v < 0) {
+        mb25_fail("Illegal function call");
+    }
+    if (v == 0) {
         return 0;
     }
     r = sqrt(v);
@@ -997,7 +1043,10 @@ double mb25_sqr(double v) {
 /* x ^ y.  A whole-number exponent is worked out by repeated multiplication,
  * which is exact where the library pow() on uc80 is not (3 ^ 8 comes out as
  * 6560.98). */
-double mb25_pow(double x, double y) {
+static double mb25_big(int negative);
+static double mb25_checked(double r);
+
+static double mb25_pow_raw(double x, double y) {
     double r = 1;
     int n, neg;
     if (y == 0) {
@@ -1021,15 +1070,28 @@ double mb25_pow(double x, double y) {
     return pow(x, y);
 }
 
-/* CINT: round to the nearest integer, halves away from zero, as BASIC does
- * when it stores a number in an INTEGER variable or uses one as a subscript. */
-int mb25_cint(double v) {
-    return (int)(v < 0 ? -(-v + 0.5) : v + 0.5);
+/* x^y: MBASIC works it out with LOG and EXP, so it gives Overflow from 2^126
+ * up (87.3365 = log of 2^126), earlier than the largest float. */
+double mb25_pow(double x, double y) {
+    if (x == 0 && y < 0) {
+        mb25_warn("Division by zero");
+        return mb25_big(0);
+    }
+    if (x < 0 && floor(y) != y) {
+        mb25_fail("Illegal function call");
+    }
+    if (x != 0 && y > 0 && y * log(x < 0 ? -x : x) >= 87.3365) {
+        mb25_warn("Overflow");
+        return mb25_big(x < 0 && ((int)y & 1));
+    }
+    return mb25_checked(mb25_pow_raw(x, y));
 }
 
-/* The operand of \, MOD, AND, OR, XOR, EQV, IMP and NOT: round like CINT, then
- * MBASIC stops with Overflow for a value outside -32768..32767 (32767.5 and
- * -32768.5 included).  The test is on the double, so nothing wraps first. */
+/* The operand of \, MOD, AND, OR, XOR, EQV, IMP and NOT, and the value of
+ * CINT, of a subscript and of a store into an INTEGER variable: round half
+ * away from zero, then MBASIC stops with Overflow for a value outside
+ * -32768..32767 (32767.5 and -32768.5 included).  The test is on the double,
+ * so nothing wraps first. */
 int mb25_int16(double v) {
     /* Work on the size: uc80 gets a comparison of two negative floats wrong. */
     int negative = v < 0;
@@ -1040,11 +1102,164 @@ int mb25_int16(double v) {
     return negative ? -(int)size : (int)size;
 }
 
+/* The value of integer + - * that was worked out in 32 bits: a result outside
+ * -32768..32767 is Overflow. */
+int mb25_chk32(long v) {
+    if (v < -32768L || v > 32767L) {
+        mb25_fail("Overflow");
+    }
+    return (int)v;
+}
+
+int mb25_cint(double v) {
+    return mb25_int16(v);
+}
+
+/* A message that MBASIC prints and then carries on: Division by zero and
+ * Overflow in a floating-point expression.  The value that goes on is the
+ * largest float, with the sign of the true result.  MBASIC prints no new line
+ * before the message, whatever the column. */
+void mb25_warn(const char *msg) {
+    fputs(msg, stdout);
+    putchar('\n');
+    mb25_set_col(0);
+}
+
+static double mb25_big(int negative) {
+    double big = 1.7014117E+38;
+    return negative ? -big : big;
+}
+
+/* A floating-point result at or beyond the largest float is Overflow. */
+static double mb25_checked(double r) {
+    double size = r < 0 ? -r : r;
+    if (size >= 1.70141E+38) {
+        mb25_warn("Overflow");
+        return mb25_big(r < 0);
+    }
+    return r;
+}
+
+double mb25_fdiv(double a, double b) {
+    if (b == 0) {
+        mb25_warn("Division by zero");
+        return mb25_big(a < 0);
+    }
+    return a / b;
+}
+
+/* The product is tested before it is made: a float product that is too large
+ * wraps round on uc80 and is never seen as large. */
+double mb25_fmul(double a, double b) {
+    double sa = a < 0 ? -a : a, sb = b < 0 ? -b : b;
+    if (sa != 0 && sb != 0 && sb > mb25_big(0) / sa) {
+        mb25_warn("Overflow");
+        return mb25_big((a < 0) != (b < 0));
+    }
+    return a * b;
+}
+
+/* EXP: MBASIC gives Overflow from 87.3365 (log of 2^126) up, and 0 below
+ * -88.7228 (log of 2^-128). */
+double mb25_exp(double v) {
+    if (v >= 87.3365) {
+        mb25_warn("Overflow");
+        return mb25_big(0);
+    }
+    /* The size is compared, not v: uc80 gets two negative floats wrong. */
+    if (v < 0 && -v > 88.7228) {
+        return 0;
+    }
+    return exp(v);
+}
+
+/* + and - on floats.  A sum beyond the largest float wraps round on uc80, so
+ * the sizes are compared before the sum is made. */
+double mb25_fadd(double a, double b) {
+    double sa = a < 0 ? -a : a, sb = b < 0 ? -b : b;
+    if (((a < 0) == (b < 0)) && sa > mb25_big(0) - sb) {
+        mb25_warn("Overflow");
+        return mb25_big(a < 0);
+    }
+    return a + b;
+}
+
+double mb25_fsub(double a, double b) {
+    return mb25_fadd(a, -b);
+}
+
+/* + and - on two integers whose result goes into an INTEGER: a result outside
+ * -32768..32767 is Overflow. */
+int mb25_iadd(int a, int b) {
+    int r = a + b;
+    if (((a ^ r) & (b ^ r)) < 0) {
+        mb25_fail("Overflow");
+    }
+    return r;
+}
+
+int mb25_isub(int a, int b) {
+    int r = a - b;
+    if (((a ^ b) & (a ^ r)) < 0) {
+        mb25_fail("Overflow");
+    }
+    return r;
+}
+
+double mb25_log(double v) {
+    if (v <= 0) {
+        mb25_fail("Illegal function call");
+    }
+    return log(v);
+}
+
+/* A value for a string length, a character code or a count: 0..255, or
+ * Illegal function call. */
+int mb25_byte(int v) {
+    if (v < 0 || v > 255) {
+        mb25_fail("Illegal function call");
+    }
+    return v;
+}
+
+/* The start of MID$ or INSTR: 1..255. */
+int mb25_start(int v) {
+    if (v < 1 || v > 255) {
+        mb25_fail("Illegal function call");
+    }
+    return v;
+}
+
+/* The argument of HEX$ and OCT$: -32768..65535 (Overflow outside), read as a
+ * 16-bit word. */
+int mb25_word(double v) {
+    int negative = v < 0;
+    double size = floor((negative ? -v : v) + 0.5);
+    if (size > (negative ? 32768.0 : 65535.0)) {
+        mb25_fail("Overflow");
+    }
+    if (negative) {
+        return -(int)size;
+    }
+    return size > 32767.0 ? (int)(size - 65536.0) : (int)size;
+}
+
 /* \ and MOD.  The operands are checked for Overflow before the divisor is
  * tested, as MBASIC does. */
 int mb25_idiv(int a, int b) {
     if (b == 0) {
         mb25_fail("Division by zero");
+    }
+    return a / b;
+}
+
+/* \ where the quotient may not fit an integer: -32768 \ -1 is 32768. */
+double mb25_idivd(int a, int b) {
+    if (b == 0) {
+        mb25_fail("Division by zero");
+    }
+    if (b == -1) {
+        return -(double)a;
     }
     return a / b;
 }

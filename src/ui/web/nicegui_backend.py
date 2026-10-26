@@ -2356,7 +2356,8 @@ class NiceGUIBackend(UIBackend):
             runtime.update_variables(saved)
 
     def cmd_system(self) -> None:
-        """SYSTEM cannot end a shared server session."""
+        """SYSTEM ends the program of this session, not the shared server."""
+        self._append_output("Goodbye\n")
         self.interpreter.file_io.system_exit()
 
     async def _menu_open(self):

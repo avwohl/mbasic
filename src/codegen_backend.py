@@ -1034,10 +1034,12 @@ class Z88dkCBackend(CodeGenBackend):
 
     def _str_number(self, arg: Any, result_id: str) -> str:
         """C call that stores STR$(arg) in the string result_id."""
-        if self._numeric_kind(arg) == VarType.INTEGER:
+        if self._numeric_kind(arg) == VarType.INTEGER \
+                and self._get_expression_type(arg) == VarType.INTEGER \
+                and not self._is_int_arith(arg):
             return f'mb25_str_int({result_id}, {self._integer_value(arg)})'
         kind = 1 if self._numeric_kind(arg) == VarType.DOUBLE else 0
-        return f'mb25_str_num({result_id}, (double)({self._generate_expression(arg)}), {kind})'
+        return f'mb25_str_num({result_id}, (double)({self._wide_value(arg)}), {kind})'
 
     def _read_line(self, input_stream: str) -> str:
         """C condition that reads one line into input_buffer; true when it got one.
@@ -1087,12 +1089,78 @@ class Z88dkCBackend(CodeGenBackend):
             return VarType.DOUBLE
         return VarType.SINGLE
 
-    def _integer_value(self, expr: Any, checked: bool = False) -> str:
+    def _idiv_may_not_fit(self, expr: Any) -> bool:
+        """True when a backslash division can give 32768 (-32768 \\ -1).
+
+        No integer holds 32768, so such a quotient is a floating-point number,
+        as in MBASIC.  A divisor or a dividend that is a constant other than
+        -1 or -32768 rules the case out.
+        """
+        divisor = self._constant_value(expr.right)
+        dividend = self._constant_value(expr.left)
+        if divisor is not None and round(divisor) != -1:
+            return False
+        if dividend is not None and round(dividend) != -32768:
+            return False
+        return True
+
+    def _is_int_arith(self, expr: Any) -> bool:
+        """True for + - * of two integers that is not a constant.
+
+        MBASIC gives such a result as a single when it does not fit 16 bits
+        (PRINT 300%*200% is 60000); it is Overflow only where an integer is
+        needed (a store into a % variable, an operand of \\).  A C int would
+        wrap, so the code for these cases works in double.
+        """
+        return (isinstance(expr, BinaryOpNode)
+                and expr.operator in (TokenType.PLUS, TokenType.MINUS, TokenType.MULTIPLY)
+                and self._get_expression_type(expr) == VarType.INTEGER
+                and self._constant_value(expr) is None)
+
+    def _wide_value(self, expr: Any) -> str:
+        """C double expression for a numeric expression; integer + - * do not wrap."""
+        if self._is_int_arith(expr):
+            c_op = {TokenType.PLUS: '+', TokenType.MINUS: '-',
+                    TokenType.MULTIPLY: '*'}[expr.operator]
+            return (f'((double)({self._wide_value(expr.left)}) {c_op} '
+                    f'(double)({self._wide_value(expr.right)}))')
+        if isinstance(expr, UnaryOpNode) and expr.operator == TokenType.MINUS \
+                and self._is_int_arith(expr.operand):
+            return f'(-{self._wide_value(expr.operand)})'
+        return self._generate_expression(expr)
+
+    def _int_arith_bound(self, expr: Any) -> int:
+        """Largest size that integer + - * can reach, taking every integer as 32768."""
+        if not self._is_int_arith(expr):
+            return 32768
+        left = self._int_arith_bound(expr.left)
+        right = self._int_arith_bound(expr.right)
+        return left * right if expr.operator == TokenType.MULTIPLY else left + right
+
+    def _long_value(self, expr: Any) -> str:
+        """C long expression for integer + - * whose size fits 31 bits (cheaper than double)."""
+        if self._is_int_arith(expr):
+            c_op = {TokenType.PLUS: '+', TokenType.MINUS: '-',
+                    TokenType.MULTIPLY: '*'}[expr.operator]
+            return (f'({self._long_value(expr.left)} {c_op} '
+                    f'{self._long_value(expr.right)})')
+        return f'(long)({self._generate_expression(expr)})'
+
+    def _integer_value(self, expr: Any, checked: bool = False, wide: bool = False) -> str:
         """C int expression for a numeric expression, rounded like CINT.
 
         checked is True for the operands of \\, MOD, AND, OR, XOR, EQV, IMP and
         NOT: a value outside -32768..32767 after rounding is Overflow.
         """
+        if (checked or wide) and self._is_int_arith(expr):
+            if expr.operator != TokenType.MULTIPLY \
+                    and not self._is_int_arith(expr.left) and not self._is_int_arith(expr.right):
+                call = 'mb25_iadd' if expr.operator == TokenType.PLUS else 'mb25_isub'
+                return (f'{call}({self._generate_expression(expr.left)}, '
+                        f'{self._generate_expression(expr.right)})')
+            if self._int_arith_bound(expr) < 2 ** 31:
+                return f'mb25_chk32({self._long_value(expr)})'
+            return f'mb25_int16({self._wide_value(expr)})'
         c_expr = self._generate_expression(expr)
         if self._get_expression_type(expr) == VarType.INTEGER:
             return c_expr
@@ -1467,9 +1535,14 @@ class Z88dkCBackend(CodeGenBackend):
         elif isinstance(expr, UnaryOpNode):
             if expr.operator == TokenType.NOT:
                 return VarType.INTEGER
-            return self._get_expression_type(expr.operand)
+            operand_type = self._get_expression_type(expr.operand)
+            if expr.operator == TokenType.MINUS and operand_type == VarType.INTEGER:
+                return VarType.SINGLE        # -(-32768) is 32768, no integer
+            return operand_type
         elif isinstance(expr, BinaryOpNode):
             left = self._get_expression_type(expr.left)
+            if expr.operator == TokenType.BACKSLASH and self._idiv_may_not_fit(expr):
+                return VarType.SINGLE
             if expr.operator in self._COMPARISONS or expr.operator in self._LOGICAL \
                     or expr.operator in (TokenType.MOD, TokenType.BACKSLASH):
                 return VarType.INTEGER
@@ -1516,10 +1589,13 @@ class Z88dkCBackend(CodeGenBackend):
         its value - see number_format.numeric_digits().
         """
         kind = self._numeric_kind(expr)
+        if kind == VarType.INTEGER and (self._get_expression_type(expr) != VarType.INTEGER
+                                        or self._is_int_arith(expr)):
+            kind = VarType.SINGLE        # a quotient of 32768 or a sum of 40000 is no integer
         prefix = 'mb25_write_' if write else 'mb25_print_'
         if kind == VarType.INTEGER:
             return f'{prefix}int({self._integer_value(expr)});'
-        c_expr = self._generate_expression(expr)
+        c_expr = self._wide_value(expr)
         return f'{prefix}num((double)({c_expr}), {1 if kind == VarType.DOUBLE else 0});'
 
     def _print_string(self, expr: Any) -> str:
@@ -1746,12 +1822,20 @@ class Z88dkCBackend(CodeGenBackend):
         for number in self.next_ids.get(id(stmt), []):
             loop = self.for_vars[number]
             var_name = self._mangle_variable_name(self._canonical_basic_name(loop.variable))
+            value = None
             if loop.step_expr is None:
                 step = '1'
             else:
                 value = self._constant_value(loop.step_expr)
                 step = self._number_literal(value) if value is not None else f'_fs{number}'
-            code.append(self.indent() + f'{var_name} += {step};')
+            if self._get_expression_type(loop.variable) == VarType.INTEGER and (
+                    loop.step_expr is None
+                    or (value is not None and float(value).is_integer())
+                    or (value is None and self._get_expression_type(loop.step_expr) == VarType.INTEGER)):
+                # An integer counter that steps past 32767 or -32768 is Overflow.
+                code.append(self.indent() + f'{var_name} = mb25_iadd({var_name}, {step});')
+            else:
+                code.append(self.indent() + f'{var_name} += {step};')
             code.append(self.indent() + f'goto for_{number}_top;')
             code.append(f'for_{number}_end: ;')
         return code
@@ -1791,9 +1875,9 @@ class Z88dkCBackend(CodeGenBackend):
         else:
             target = self._mangle_variable_name(self._canonical_basic_name(stmt.variable))
         if var_type == VarType.INTEGER:
-            value = self._integer_value(stmt.expression)
+            value = self._integer_value(stmt.expression, wide=True)
         else:
-            value = self._generate_expression(stmt.expression)
+            value = self._wide_value(stmt.expression)
         return [self.indent() + f'{target} = {value};']
 
     def _generate_input(self, stmt: InputStatementNode) -> List[str]:
@@ -2833,10 +2917,14 @@ class Z88dkCBackend(CodeGenBackend):
             if a is None or b is None:
                 return None
             if expr.operator == TokenType.PLUS:
-                return a + b
-            if expr.operator == TokenType.MINUS:
-                return a - b
-            return a * b
+                r = a + b
+            elif expr.operator == TokenType.MINUS:
+                r = a - b
+            else:
+                r = a * b
+            if abs(r) >= 1.70141E+38:
+                return None      # Overflow at run time, with its message
+            return r
         return None
 
     def _number_literal(self, value: Any) -> str:
@@ -2844,6 +2932,11 @@ class Z88dkCBackend(CodeGenBackend):
         if isinstance(value, (int, float)) and value == int(value) \
                 and -32768 <= value <= 32767:
             return str(int(value))
+        big = 1.7014117E+38      # the largest float; MBASIC reads a larger constant as it
+        if value > big:
+            value = big
+        elif value < -big:
+            value = -big
         return repr(float(value))
 
     def _generate_expression(self, expr: Any) -> str:
@@ -2939,21 +3032,21 @@ class Z88dkCBackend(CodeGenBackend):
             if not need(2, 2, func_name + '$'):
                 return '0'
             str_arg = self._generate_string_expression(args[0])
-            len_arg = self._integer_value(args[1])
+            len_arg = f'mb25_byte({self._integer_value(args[1])})'
             return f'(mb25_string_{func_name.lower()}({result_id}, {str_arg}, {len_arg}), {result_id})'
 
         elif func_name == 'MID':
             if not need(2, 3, 'MID$'):
                 return '0'
             str_arg = self._generate_string_expression(args[0])
-            start_arg = self._integer_value(args[1])
-            len_arg = self._integer_value(args[2]) if len(args) == 3 else '255'
+            start_arg = f'mb25_start({self._integer_value(args[1])})'
+            len_arg = f'mb25_byte({self._integer_value(args[2])})' if len(args) == 3 else '255'
             return f'(mb25_string_mid({result_id}, {str_arg}, {start_arg}, {len_arg}), {result_id})'
 
         elif func_name == 'CHR':
             if not need(1, 1, 'CHR$'):
                 return '0'
-            return f'mb25_chr({result_id}, {self._integer_value(args[0])})'
+            return f'mb25_chr({result_id}, mb25_byte({self._integer_value(args[0])}))'
 
         elif func_name == 'STR':
             if not need(1, 1, 'STR$'):
@@ -2963,22 +3056,22 @@ class Z88dkCBackend(CodeGenBackend):
         elif func_name == 'SPACE':
             if not need(1, 1, 'SPACE$'):
                 return '0'
-            return f'mb25_string_of({result_id}, {self._integer_value(args[0])}, 32)'
+            return f'mb25_string_of({result_id}, mb25_byte({self._integer_value(args[0])}), 32)'
 
         elif func_name in ('STRING$', 'STRING'):
             if not need(2, 2, 'STRING$'):
                 return '0'
-            count_arg = self._integer_value(args[0])
+            count_arg = f'mb25_byte({self._integer_value(args[0])})'
             if self._get_expression_type(args[1]) == VarType.STRING:
                 return (f'mb25_string_of_first({result_id}, {count_arg}, '
                         f'{self._generate_string_expression(args[1])})')
-            return f'mb25_string_of({result_id}, {count_arg}, {self._integer_value(args[1])})'
+            return f'mb25_string_of({result_id}, {count_arg}, mb25_byte({self._integer_value(args[1])}))'
 
         elif func_name in ('HEX', 'OCT'):
             if not need(1, 1, func_name + '$'):
                 return '0'
             base = 16 if func_name == 'HEX' else 8
-            return f'mb25_radix({result_id}, {self._integer_value(args[0])}, {base})'
+            return f'mb25_radix({result_id}, mb25_word({self._generate_expression(args[0])}), {base})'
 
         elif func_name in ('INKEY', 'INKEY$'):
             self._unsupported("INKEY$ (the compiled program cannot poll the keyboard)")
@@ -3034,7 +3127,8 @@ class Z88dkCBackend(CodeGenBackend):
             if len(expr.arguments) not in (2, 3):
                 self._unsupported("INSTR requires 2 or 3 arguments")
                 return '0'
-            start = self._integer_value(expr.arguments[0]) if len(expr.arguments) == 3 else '1'
+            start = (f'mb25_start({self._integer_value(expr.arguments[0])})'
+                     if len(expr.arguments) == 3 else '1')
             str1 = self._generate_string_expression(expr.arguments[-2])
             str2 = self._generate_string_expression(expr.arguments[-1])
             return f'mb25_instr({start}, {str1}, {str2})'
@@ -3048,7 +3142,7 @@ class Z88dkCBackend(CodeGenBackend):
 
             # Map BASIC functions to C functions
             if func_name == 'ABS':
-                return f'fabs({arg})'
+                return f'fabs((double)({arg}))'
             elif func_name == 'SGN':
                 # SGN returns -1, 0, or 1
                 return f'(({arg}) > 0 ? 1 : ({arg}) < 0 ? -1 : 0)'
@@ -3067,9 +3161,9 @@ class Z88dkCBackend(CodeGenBackend):
             elif func_name == 'ATN':
                 return f'atan({arg})'
             elif func_name == 'EXP':
-                return f'exp({arg})'
+                return f'mb25_exp((double)({arg}))'
             elif func_name == 'LOG':
-                return f'log({arg})'  # Natural log in C
+                return f'mb25_log((double)({arg}))'  # Natural log in C
             elif func_name == 'SQR':
                 return f'mb25_sqr((double)({arg}))'
             else:
@@ -3451,15 +3545,22 @@ class Z88dkCBackend(CodeGenBackend):
             return f'(-(mb25_string_compare({left}, {right}) {c_compare[op]} 0))'
 
         if op in c_compare:
-            left = self._generate_expression(expr.left)
-            right = self._generate_expression(expr.right)
             both_int = left_type == VarType.INTEGER and right_type == VarType.INTEGER
+            if self._is_int_arith(expr.left) or self._is_int_arith(expr.right):
+                both_int = False       # a sum of 40000 is a single, compared as one
+                left = self._wide_value(expr.left)
+                right = self._wide_value(expr.right)
+            else:
+                left = self._generate_expression(expr.left)
+                right = self._generate_expression(expr.right)
             return f'(-({self._compare(left, c_compare[op], right, both_int)}))'
 
         if op in (TokenType.AND, TokenType.OR, TokenType.XOR, TokenType.EQV, TokenType.IMP,
                   TokenType.MOD, TokenType.BACKSLASH):
             a = self._integer_value(expr.left, checked=True)
             b = self._integer_value(expr.right, checked=True)
+            if op == TokenType.BACKSLASH and self._idiv_may_not_fit(expr):
+                return f'mb25_idivd({a}, {b})'
             return {
                 TokenType.AND: f'({a} & {b})',
                 TokenType.OR: f'({a} | {b})',
@@ -3470,10 +3571,18 @@ class Z88dkCBackend(CodeGenBackend):
                 TokenType.BACKSLASH: f'mb25_idiv({a}, {b})',
             }[op]
 
-        left = self._generate_expression(expr.left)
-        right = self._generate_expression(expr.right)
+        if left_type == VarType.INTEGER and right_type == VarType.INTEGER \
+                and op in (TokenType.PLUS, TokenType.MINUS, TokenType.MULTIPLY):
+            left = self._generate_expression(expr.left)
+            right = self._generate_expression(expr.right)
+        else:
+            left = self._wide_value(expr.left)
+            right = self._wide_value(expr.right)
         if op == TokenType.DIVIDE:
-            return f'((double)({left}) / ({right}))'
+            divisor = self._constant_value(expr.right)
+            if divisor is not None and divisor != 0:
+                return f'((double)({left}) / ({right}))'
+            return f'mb25_fdiv((double)({left}), (double)({right}))'
         if op == TokenType.POWER:
             return f'mb25_pow((double)({left}), (double)({right}))'
         c_op = {TokenType.PLUS: '+', TokenType.MINUS: '-', TokenType.MULTIPLY: '*'}.get(op)
@@ -3489,6 +3598,11 @@ class Z88dkCBackend(CodeGenBackend):
         elif right_type == VarType.INTEGER and left_type != VarType.INTEGER \
                 and self._constant_value(expr.right) is not None:
             right = repr(float(self._constant_value(expr.right)))
+        if c_op == '*' and (left_type != VarType.INTEGER or right_type != VarType.INTEGER):
+            return f'mb25_fmul((double)({left}), (double)({right}))'
+        if c_op in ('+', '-') and (left_type != VarType.INTEGER or right_type != VarType.INTEGER):
+            call = 'mb25_fadd' if c_op == '+' else 'mb25_fsub'
+            return f'{call}((double)({left}), (double)({right}))'
         return f'({left} {c_op} {right})'
 
     def _compare(self, left: str, c_op: str, right: str, both_int: bool) -> str:
@@ -3508,6 +3622,8 @@ class Z88dkCBackend(CodeGenBackend):
             return f'(~{self._integer_value(expr.operand, checked=True)})'
         operand = self._generate_expression(expr.operand)
         if expr.operator == TokenType.MINUS:
+            if self._get_expression_type(expr.operand) == VarType.INTEGER:
+                return f'(-(double)({operand}))'
             return f'(-{operand})'
         elif expr.operator == TokenType.PLUS:
             return f'(+{operand})'
