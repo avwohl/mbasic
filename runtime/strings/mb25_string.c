@@ -1070,6 +1070,8 @@ static double mb25_pow_raw(double x, double y) {
     return pow(x, y);
 }
 
+/* x^y: MBASIC works it out with LOG and EXP, so it gives Overflow from 2^126
+ * up (87.3365 = log of 2^126), earlier than the largest float. */
 double mb25_pow(double x, double y) {
     if (x == 0 && y < 0) {
         mb25_warn("Division by zero");
@@ -1078,7 +1080,7 @@ double mb25_pow(double x, double y) {
     if (x < 0 && floor(y) != y) {
         mb25_fail("Illegal function call");
     }
-    if (x != 0 && y > 0 && y * log(x < 0 ? -x : x) > 88.7228) {
+    if (x != 0 && y > 0 && y * log(x < 0 ? -x : x) >= 87.3365) {
         mb25_warn("Overflow");
         return mb25_big(x < 0 && ((int)y & 1));
     }
@@ -1148,12 +1150,51 @@ double mb25_fmul(double a, double b) {
     return a * b;
 }
 
+/* EXP: MBASIC gives Overflow from 87.3365 (log of 2^126) up, and 0 below
+ * -88.7228 (log of 2^-128). */
 double mb25_exp(double v) {
-    if (v > 88.7228) {
+    if (v >= 87.3365) {
         mb25_warn("Overflow");
         return mb25_big(0);
     }
+    /* The size is compared, not v: uc80 gets two negative floats wrong. */
+    if (v < 0 && -v > 88.7228) {
+        return 0;
+    }
     return exp(v);
+}
+
+/* + and - on floats.  A sum beyond the largest float wraps round on uc80, so
+ * the sizes are compared before the sum is made. */
+double mb25_fadd(double a, double b) {
+    double sa = a < 0 ? -a : a, sb = b < 0 ? -b : b;
+    if (((a < 0) == (b < 0)) && sa > mb25_big(0) - sb) {
+        mb25_warn("Overflow");
+        return mb25_big(a < 0);
+    }
+    return a + b;
+}
+
+double mb25_fsub(double a, double b) {
+    return mb25_fadd(a, -b);
+}
+
+/* + and - on two integers whose result goes into an INTEGER: a result outside
+ * -32768..32767 is Overflow. */
+int mb25_iadd(int a, int b) {
+    int r = a + b;
+    if (((a ^ r) & (b ^ r)) < 0) {
+        mb25_fail("Overflow");
+    }
+    return r;
+}
+
+int mb25_isub(int a, int b) {
+    int r = a - b;
+    if (((a ^ b) & (a ^ r)) < 0) {
+        mb25_fail("Overflow");
+    }
+    return r;
 }
 
 double mb25_log(double v) {

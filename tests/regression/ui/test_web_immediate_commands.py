@@ -187,10 +187,6 @@ def test_merge_of_a_missing_file_in_a_program_raises(backend):
         backend.cmd_merge("NOPE", quiet=True, from_program=True)
 
 
-if __name__ == "__main__":
-    sys.exit(pytest.main([__file__, "-q"]))
-
-
 # SYSTEM in the multi-user web UI: it must not stop the server (SystemExit) and
 # it must not fail with an error.  The program of the session ends, as at END.
 # Real MBASIC 5.21 leaves to the OS at SYSTEM, so no statement after SYSTEM runs.
@@ -218,3 +214,7 @@ def test_system_in_a_running_program_stops_it(backend):
     assert backend.output == ["Goodbye\n"]    # the backend prints it, not the program
     assert "B" not in printed
     assert not backend.interpreter.has_work()
+
+
+if __name__ == "__main__":
+    sys.exit(pytest.main([__file__, "-q"]))

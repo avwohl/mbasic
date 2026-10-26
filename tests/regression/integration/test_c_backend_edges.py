@@ -19,8 +19,14 @@ What the measurements show:
   -32768..65535 are Overflow.
 - SQR of a negative number, LOG of zero or less, and a negative base with a
   fractional exponent give Illegal function call.
-- A float division by zero, a float overflow and EXP(100) print Division by zero
-  or Overflow on a line of their own and go on with the largest float.
+- A float division by zero, a float overflow (+, -, *, ^, EXP, a constant above
+  the range) and EXP(100) print Division by zero or Overflow on a line of
+  their own and go on with the largest float.  EXP gives Overflow from 87.34
+  and 0 below -88.72; A^B gives Overflow from 2^126.  A constant above the
+  largest float is the largest float, with no message.
+- + - * of two integers is a single when it does not fit 16 bits (PRINT, a
+  store into a single variable, / and comparisons see 60000); it is Overflow
+  in a store into a % variable and as an operand of \\.
 """
 import sys
 from pathlib import Path
@@ -96,6 +102,31 @@ CASES = [
     ("PRINT -3.5E37*10", "Overflow\n-1.70141E+38 \n"),
     ("A=1E20:PRINT A*A", "Overflow\n 1.70141E+38 \n"),
     ("PRINT EXP(100)", "Overflow\n 1.70141E+38 \n"),
+    # float and integer overflow (measured)
+    ('A=1.5E38:B=1.5E38:PRINT A+B', 'Overflow\n 1.70141E+38 \n'),
+    ('A=1.5E38:PRINT A*2', 'Overflow\n 1.70141E+38 \n'),
+    ('A=1.5E38:B=-1.5E38:PRINT B-A', 'Overflow\n-1.70141E+38 \n'),
+    ('PRINT 1.7E38+1.7E38', 'Overflow\n 1.70141E+38 \n'),
+    ('A=3E38:PRINT A', ' 1.70141E+38 \n'),
+    ('A=1.5E38:PRINT A+A:PRINT -A-A:PRINT A-(-A):B=A+1:PRINT B', 'Overflow\n 1.70141E+38 \nOverflow\n-1.70141E+38 \nOverflow\n 1.70141E+38 \n 1.5E+38 \n'),
+    ('A=-100:PRINT EXP(A)', ' 0 \n'),
+    ('PRINT EXP(88)', 'Overflow\n 1.70141E+38 \n'),
+    ('PRINT EXP(-89)', ' 0 \n'),
+    ('PRINT EXP(87.4)', 'Overflow\n 1.70141E+38 \n'),
+    ('A%=32767:A%=A%+1', 'Overflow in 10\n'),
+    ('A%=200:A%=A%*200', 'Overflow in 10\n'),
+    ('A%=300:B%=200:C%=A%*B%', 'Overflow in 10\n'),
+    ('A%=-32768:A%=A%-1', 'Overflow in 10\n'),
+    ('A%=300:B%=200:PRINT A%*B%;A%+B%', ' 60000  500 \n'),
+    ('A%=300:B%=200:C=A%*B%:PRINT C:PRINT A%*B%/3', ' 60000 \n 20000 \n'),
+    ('A%=300:B%=200:C%=A%*B%-50000:PRINT C%', ' 10000 \n'),
+    ('A%=300:B%=200:PRINT A%*B%\\7', 'Overflow in 10\n'),
+    ('A%=300:B%=200:C%=(A%*B%-50000)*2:PRINT C%', ' 20000 \n'),
+    ('A%=32767:B%=1:PRINT (A%+B%)*2:IF A%+B%>A% THEN PRINT "gt"', ' 65536 \ngt\n'),
+    ('A%=5:B%=7:C%=A%+B%:D%=A%-B%:E%=A%*B%:PRINT C%;D%;E%', ' 12 -2  35 \n'),
+    ('A%=-32768:B%=-1:PRINT STR$(A%\\B%)', ' 32768\n'),
+    ('A=2:PRINT A^126', 'Overflow\n 1.70141E+38 \n'),
+    ('A=3:PRINT A^80', 'Overflow\n 1.70141E+38 \n'),
 ]
 
 

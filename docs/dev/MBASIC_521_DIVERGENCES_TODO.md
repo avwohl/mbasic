@@ -607,6 +607,13 @@ semantics are not:
   rounding is `Overflow`. `\` and MOD with a zero divisor are `Division by
   zero`. `-32768 \ -1` is 32768 in the C backend too: a `\`
   that can give it is typed single precision (see `docs/dev/C_BACKEND.md`).
+- Done: in the C backend a float sum, difference, product or power that is too
+  large, `EXP` of 87.34 or more and `A^B` from `2^126` print `Overflow` and go on
+  with the largest float. `EXP` below -88.72 is 0. A constant above the range is the
+  largest float. `+`, `-` and `*` of integers do not wrap in `PRINT`, `STR$`, a
+  store into a float variable, and a comparison; a store into a % variable and an
+  operand of `\` give `Overflow`. Not done: `PRINT USING`, a negative `DIM` size
+  and a second `DIM` are compile errors (`docs/dev/C_BACKEND.md`).
 - Done (#55): FOR and NEXT end a loop when the sign of (v - end) equals the
   sign of the step, in the JavaScript backend (`_for_done(v, end, step)`) and
   in the C backend. With STEP 0 the loop ends only when the variable equals

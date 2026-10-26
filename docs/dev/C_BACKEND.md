@@ -129,10 +129,15 @@ These differences are known. They are not fixed.
 - **Double precision is 32 bits on uc80.** A `#` variable keeps about 7 digits, and
   the output uses `D` notation with 7 digits. The compiler gives a warning for a
   program that uses double precision.
-- **Integer arithmetic wraps.** `I%*J%` wraps at 16 bits. The interpreter turns an
-  integer result that does not fit into a single-precision number. The compiler
-  works out a constant such as `200*200` itself and writes 40000. The compiler
-  gives a warning when a program does `+`, `-` or `*` on integers.
+- **Integer arithmetic wraps in some places.** `+`, `-` and `*` of two integers give
+  a single-precision number when the result does not fit 16 bits, as in MBASIC, in
+  these places: `PRINT`, `STR$`, a store into a single or double variable, an operand
+  of `/` and `^`, a comparison, and an operand of `\`, `MOD`, `AND` and the like (where
+  `Overflow` follows). A store into an INTEGER variable gives `Overflow` (`A%=A%+1`
+  at 32767). In other places (a subscript, an argument of a function, a `FOR` limit)
+  the integer result wraps at 16 bits. The compiler works out a constant such as
+  `200*200` itself and writes 40000. The compiler gives a warning when a program does
+  `+`, `-` or `*` on integers.
 - **Some float results are not exact.** uc80 does not round a multiplication like
   IEEE binary32. `PRINT 1/3*3=1` gives 0 (false), and the interpreter gives -1.
   `2/3*3=2` and `1/10*10=1` have the same fault. The printed value is correct
@@ -156,22 +161,28 @@ These differences are known. They are not fixed.
 - **A floating-point result can differ in the last digit.** `basic/dev/bas_tests/asciiart.bas`
   differs in one character out of 2000.
 - **Float errors that MBASIC reports and goes on from.** A float division by zero,
-  `0^-1`, a float product or power that is too large, and `EXP(100)` print
-  `Division by zero` or `Overflow` on a line of their own and go on with the largest
-  float (`1.70141E+38`), as MBASIC does. `ON ERROR` does not see them. The
-  operators `\`, `MOD`, `AND`, `OR`, `XOR`, `EQV`, `IMP` and `NOT` stop with `Overflow` or
-  `Division by zero` (the program ends, as for any run-time error). `+`, `-` and `*`
-  on integers still wrap at 16 bits and do not give `Overflow`: MBASIC turns the result
-  into a single-precision number and gives `Overflow` only when the program stores it in an
-  INTEGER variable. The compiler warns when it can happen.
+  `0^-1`, a float sum, difference, product or power that is too large, `EXP` of
+  87.34 or more, and a constant above the largest float print `Division by zero` or
+  `Overflow` on a line of their own and go on with the largest float (`1.70141E+38`),
+  as MBASIC does. (A constant above the range gives no message, as in MBASIC.)
+  `EXP` of a number below -88.72 is 0, and `A^B` gives `Overflow` from `2^126`.
+  `ON ERROR` does not see these errors. The operators `\`, `MOD`, `AND`, `OR`, `XOR`,
+  `EQV`, `IMP` and `NOT` stop with `Overflow` or `Division by zero` (the program ends,
+  as for any run-time error).
+- **Not done: `PRINT USING`, and `DIM` with a negative size or a second `DIM`.**
+  The compiler refuses `PRINT USING`. It also refuses a `DIM` with a constant negative
+  size or a second `DIM` of the same array, with a message at compile time (MBASIC
+  gives `Illegal function call` or `Duplicate Definition` at run time).
+- **Not done: `A^127`.** MBASIC prints only `Overflow`. The C backend prints the
+  largest float after `Overflow`.
 - **`\` and the minus sign on an integer give a float when they can give 32768.**
-  `-32768 \ -1` and `-A%` with `A% = -32768` are 32768, as in MBASIC, because the
+  `-32768 \ -1` and `-A%` with `A% = -32768` are 32768 (also in `STR$`), as in MBASIC, because the
   compiler types such an expression as single precision. A `\` with a constant divisor
   other than -1 stays an integer. A store of 32768 into an INTEGER variable is `Overflow`.
   `-32768 MOD -1` is 0 in both.
 - **The float range is that of uc80**: about 1.2E-38 to 1.7E38. A number in the program
-  outside this range is wrong in the compiled program (`3E38` prints as `2.59085E-39`,
-  `-1E-38` as `0`), and the compiler warns about such a number. `2^126` prints with one
+  below this range is wrong in the compiled program (`1E-38` prints as `0`; a number
+  above the range is the largest float, as in MBASIC), and the compiler warns about such a number. `2^126` prints with one
   digit less than MBASIC. `INT` and `FIX` work on the whole float range.
 - **INPUT** reads a whole line. It does not give `?Redo from start`, and with several
   variables it does not ask again for missing values. At the end of the input the

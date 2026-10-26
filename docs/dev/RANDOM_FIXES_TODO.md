@@ -47,7 +47,7 @@ stops the whole server (see `docs/dev/WEB_UI_NICEGUI_BACKEND.md`).
 
 ## Consolidate cmd_ Functions Across UIs
 
-**Status:** Open. This is a refactor and not a bug, so it was left alone.
+**Status:** Open. The work is a refactor and not a bug, so it was left alone.
 
 **Issue:** All UIs have their own `cmd_` function implementations for things like LIST that could be done in a program. Implementation should be common, with UI-specific hooks if needed for updates.
 

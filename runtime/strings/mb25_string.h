@@ -206,6 +206,10 @@ double mb25_idivd(int a, int b);      /* \ whose quotient may be 32768 */
 void mb25_warn(const char *msg);      /* Division by zero / Overflow, then go on */
 double mb25_fdiv(double a, double b); /* / */
 double mb25_fmul(double a, double b); /* * on floats */
+double mb25_fadd(double a, double b); /* + on floats */
+double mb25_fsub(double a, double b); /* - on floats */
+int mb25_iadd(int a, int b);          /* + of two integers, Overflow if it does not fit */
+int mb25_isub(int a, int b);          /* - of two integers, Overflow if it does not fit */
 double mb25_exp(double v);            /* EXP */
 double mb25_log(double v);            /* LOG */
 int mb25_byte(int v);                 /* 0..255 or Illegal function call */
