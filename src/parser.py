@@ -1150,6 +1150,9 @@ class Parser:
         else:
             # No explicit suffix - check DEF type map
             first_letter = name[0].lower()
+            if name.startswith('fn') and len(name) > 2:
+                # A user function is typed by the letter after FN
+                first_letter = name[2].lower()
             if first_letter in self.def_type_map:
                 var_type = self.def_type_map[first_letter]
                 # Determine suffix based on DEF type
@@ -3083,6 +3086,9 @@ class Parser:
                     param_type_suffix = self.get_type_suffix(param_name)
                     if param_type_suffix:
                         param_name = param_name[:-1]  # Remove suffix from name
+                    else:
+                        # A DEFtype letter types the parameter, as it does the body's uses
+                        param_type_suffix = self.split_name_and_suffix(param_name)[1]
                     # Create VariableNode for each parameter
                     param_var = VariableNode(
                         name=param_name,
@@ -3107,9 +3113,8 @@ class Parser:
         expression = self.parse_expression()
 
         if not fn_suffix:
-            # A call takes the DEF type of the letter F when its name has no suffix
-            # (parse_variable); the definition has to agree with it
-            fn_suffix = self.split_name_and_suffix(function_name)[1]
+            # The binary types an unsuffixed function by the letter after FN
+            fn_suffix = self.split_name_and_suffix(function_name[2:])[1]
 
         return DefFnStatementNode(
             name=function_name,

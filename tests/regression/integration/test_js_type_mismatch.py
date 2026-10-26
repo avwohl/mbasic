@@ -124,6 +124,27 @@ def test_def_fn_with_untyped_parameters_and_nested_calls(tmp_path):
     assert run_js(tmp_path, source) == " 11  3x\n"
 
 
+# An unsuffixed DEF FN is typed by the letter after FN, a parameter by its own letter
+# (measured on the binary, programs end with SYSTEM)
+DEF_FN_TYPES = [
+    ('10 DEFSTR A\n15 DEF FNA(X)="a"\n20 PRINT FNA(3)\n', "a\n"),
+    ('10 DEFSTR S\n15 DEF FNS(X)="a"+STR$(X)\n20 PRINT FNS(3)\n', "a 3\n"),
+    ('10 DEFSTR F\n15 DEF FNA(X)=1\n20 PRINT FNA(3)\n', " 1 \n"),
+    ('10 DEFSTR A-Z\n15 DEF FNA(X)="a"\n20 PRINT FNA(3)\n', "Type mismatch in 20\n"),
+    ('10 DEFSTR A\n15 DEF FNA(X)=1\n20 PRINT FNA(3)\n', "Type mismatch in 20\n"),
+    ('10 DEFINT F\n20 DEF FNQ(X)=X/3\n30 PRINT FNQ(1)\n40 DEFSTR F\n'
+     '50 DEF FNR(X)=X+1\n60 PRINT FNR(1)\n', " .333333 \n 2 \n"),
+    ('10 DEFSTR Q\n20 DEF FNQ(X)="a"\n30 PRINT FNQ(1)+"b"\n', "ab\n"),
+    ('10 DEFSTR A-C\n20 DEF FNA(X)=X+"z"\n30 PRINT FNA("q")\n', "Type mismatch in 30\n"),
+]
+
+
+@needs_node
+@pytest.mark.parametrize("source,expected", DEF_FN_TYPES, ids=[str(i) for i in range(len(DEF_FN_TYPES))])
+def test_def_fn_type_follows_the_letter_after_fn(tmp_path, source, expected):
+    assert run_js(tmp_path, source + "99 SYSTEM\n") == expected
+
+
 # PRINT USING prints what it formatted before the field that does not fit (measured on the binary)
 USING_PARTIAL = [
     ('PRINT USING "&";"a";1', "a\nType mismatch in 10\n"),

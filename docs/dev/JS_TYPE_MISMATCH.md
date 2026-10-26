@@ -41,6 +41,10 @@ A statement that is never reached gives no error.
 - DEF FN: the arguments must match the parameters, and the value of the body
   must match the type of the function name. `DEF FNA$(X$)=1` gives the error
   when `FNA$` is called, not at DEF.
+  A function name without a suffix takes its type from the DEFtype of the
+  letter after FN (FNA uses the rule for A), not the letter F. A parameter
+  without a suffix takes the DEFtype of its own letter. The parser applies
+  both rules to the definition and to each call.
 - OPEN, CLOSE, PRINT #, CLEAR and KILL/NAME: file numbers and sizes must be
   numbers, file names must be strings.
 - PRINT USING: the format must be a string. A string goes with a string field
