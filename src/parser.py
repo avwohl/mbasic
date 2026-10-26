@@ -3051,6 +3051,7 @@ class Parser:
             if type_suffix:
                 raw_name = raw_name[:-1]
             function_name = "fn" + raw_name  # Add 'fn' prefix to match function calls
+            fn_suffix = type_suffix
         elif fn_name_token and fn_name_token.type == TokenType.IDENTIFIER:
             # Handle "DEF FNR" without space (FN and name are single identifier token)
             # Lexer tokenizes "DEF FNR" as: DEF token, IDENTIFIER "fnr"
@@ -3064,6 +3065,7 @@ class Parser:
             if type_suffix:
                 raw_name = raw_name[:-1]
             function_name = raw_name  # Already has 'fn' prefix from lexer
+            fn_suffix = type_suffix
         else:
             raise ParseError("Expected function name after DEF", fn_name_token)
 
@@ -3104,12 +3106,18 @@ class Parser:
         # Parse function body expression
         expression = self.parse_expression()
 
+        if not fn_suffix:
+            # A call takes the DEF type of the letter F when its name has no suffix
+            # (parse_variable); the definition has to agree with it
+            fn_suffix = self.split_name_and_suffix(function_name)[1]
+
         return DefFnStatementNode(
             name=function_name,
             parameters=parameters,
             expression=expression,
             line_num=token.line,
-            column=token.column
+            column=token.column,
+            type_suffix=fn_suffix
         )
 
     def parse_common(self) -> CommonStatementNode:

@@ -17,6 +17,8 @@ from src.codegen_backend import CodeGenBackend
 from src.tokens import TokenType
 from src.error_codes import ERROR_CODES
 from src.string_temps import string_temps, STRING_TEMPORARIES
+from src.js_type_check import (expr_kind, binary_mismatch, unary_mismatch,
+                               builtin_arg_kinds, function_base_name)
 from src.number_format import (numeric_digits, to_single, INTEGER_DIGITS,
                                SINGLE_DIGITS, DOUBLE_DIGITS, machine_infinity)
 
@@ -543,11 +545,14 @@ function _print_using(fmt, values, digits) {
         for (const f of fields) {
             if (f.kind === "literal") { result += f.text; continue; }
             if (idx >= values.length) break outer;
+            // A string goes with a string field and a number with a numeric field; any other pair is
+            // Type mismatch, as on 5.21
             if (f.kind === "string") {
+                if (typeof values[idx] !== "string") _error("Type mismatch");
                 result += _using_string(values[idx], f);
             } else {
                 let v = values[idx];
-                if (typeof v === "string") { v = parseFloat(v); if (v !== v) v = 0; }
+                if (typeof v === "string") _error("Type mismatch");
                 else if (v === true) v = -1; else if (v === false) v = 0;
                 result += _using_number(v, f, digits[idx] === undefined ? 6 : digits[idx]);
             }
@@ -2665,7 +2670,8 @@ class JavaScriptBackend(CodeGenBackend):
             param_str = ', '.join(params)
 
             # Function body
-            expr_code = self._generate_expression(def_fn.expression)
+            expr_code = self._generate_expression_as(
+                def_fn.expression, 's' if def_fn.type_suffix == '$' else 'n')
 
             # A DEF FN whose body can reach INPUT$ or INKEY$ is async
             prefix = 'async ' if self._fn_key(fn_base) in self.async_fns else ''
@@ -2704,7 +2710,7 @@ class JavaScriptBackend(CodeGenBackend):
                     reachable = False
             elif kind == 'if':
                 # Flat IF: jump over the THEN part when the condition is false
-                code.append(self.indent() + f'if (!({self._generate_expression(step[1].condition)})) {{ {self._jump_code(plan.targets[j])} }}')
+                code.append(self.indent() + f'if (!({self._generate_expression_as(step[1].condition, 'n')})) {{ {self._jump_code(plan.targets[j])} }}')
             elif kind == 'goto':
                 code.append(self.indent() + self._jump_code(step[1]))
                 reachable = False
@@ -2898,7 +2904,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_print_using(self, stmt: PrintUsingStatementNode) -> List[str]:
         """Generate PRINT USING statement"""
         filenum = self._generate_expression(stmt.file_number) if stmt.file_number else 'null'
-        format_expr = self._generate_expression(stmt.format_string)
+        format_expr = self._generate_expression_as(stmt.format_string, 's')
         values = ', '.join(self._generate_expression(expr) for expr in stmt.expressions)
         digits = ', '.join(str(self._js_digits(expr)) for expr in stmt.expressions)
         trailing = 'true' if getattr(stmt, 'trailing_separator', False) else 'false'
@@ -2915,16 +2921,21 @@ class JavaScriptBackend(CodeGenBackend):
         # Check if assigning to array element
         if stmt.variable.subscripts:
             access = self._element_access(var_key, stmt.variable.subscripts)
-            expr_code = self._generate_expression(stmt.expression)
+            expr_code = self._generate_expression_as(stmt.expression, self._target_kind(stmt.variable))
             expr_code = self._apply_type_coercion(expr_code, var_type)
             code.append(self.indent() + f'{access} = {expr_code};')
         else:
             var_name = self._mangle_var_name(var_key)
-            expr_code = self._generate_expression(stmt.expression)
+            expr_code = self._generate_expression_as(stmt.expression, self._target_kind(stmt.variable))
             expr_code = self._apply_type_coercion(expr_code, var_type)
             code.append(self.indent() + f'{var_name} = {expr_code};')
 
         return code
+
+    @staticmethod
+    def _target_kind(variable) -> str:
+        """'s' for a string variable, else 'n': what an assignment to it must be."""
+        return 's' if variable.type_suffix == '$' else 'n'
 
     def _get_var_type(self, var_key: str) -> Optional[VarType]:
         """Look up variable type from symbol table.
@@ -2987,6 +2998,22 @@ class JavaScriptBackend(CodeGenBackend):
             return f'(_error("String formula too complex"), {code})'
         return self._generate_expression_plain(expr)
 
+    @staticmethod
+    def _type_mismatch(*parts: str) -> str:
+        """An expression that is Type mismatch (error 13) when it is reached.
+
+        The operands are still worked out first, so an error in one of them
+        comes first, as on the real binary.
+        """
+        return '(' + ''.join(f'{part}, ' for part in parts) + '_error("Type mismatch"))'
+
+    def _generate_expression_as(self, expr, want: str) -> str:
+        """JavaScript for an expression that must be a string ('s') or a number ('n')."""
+        code = self._generate_expression(expr)
+        if want in ('s', 'n') and expr_kind(expr) != want:
+            return self._type_mismatch(code)
+        return code
+
     def _generate_expression_plain(self, expr) -> str:
         """Generate JavaScript expression"""
         if isinstance(expr, NumberNode):
@@ -3012,6 +3039,8 @@ class JavaScriptBackend(CodeGenBackend):
             left = self._generate_expression(expr.left)
             right = self._generate_expression(expr.right)
             op = self._token_to_operator(expr.operator)
+            if binary_mismatch(expr):
+                return self._type_mismatch(left, right)
 
             # Map BASIC operators to JavaScript
             if op == '^':
@@ -3051,6 +3080,10 @@ class JavaScriptBackend(CodeGenBackend):
         elif isinstance(expr, UnaryOpNode):
             operand = self._generate_expression(expr.operand)
             op = self._token_to_operator(expr.operator)
+            if unary_mismatch(expr):
+                return self._type_mismatch(operand)
+            if op == '+' and expr_kind(expr.operand) == 's':
+                return operand  # unary plus passes a string through
             if op == 'NOT':
                 return f'_not({operand})'  # bitwise on a 16-bit integer: -1 for 0, 0 for -1
             return f'({op}({operand}))'
@@ -3059,10 +3092,45 @@ class JavaScriptBackend(CodeGenBackend):
         else:
             return f'/* Unknown expr: {type(expr).__name__} */'
 
+    def _fn_param_kinds(self, key: str) -> List[str]:
+        """The kind ('s' or 'n') of each parameter of the DEF FN with this key (FNA is 'a')."""
+        for d in self.def_fn_functions:
+            if self._fn_key(d.name) != key:
+                continue
+            kinds = []
+            for p in d.parameters:
+                suffix = p.type_suffix
+                if suffix is None:
+                    # A DEFSTR letter does not reach the parameter; the body's use of it does
+                    stack = [d.expression]
+                    while stack and suffix is None:
+                        node = stack.pop()
+                        if isinstance(node, VariableNode) and node.name == p.name and node.type_suffix:
+                            suffix = node.type_suffix
+                        elif isinstance(node, list):
+                            stack.extend(node)
+                        elif hasattr(node, '__dict__'):
+                            stack.extend(node.__dict__.values())
+                kinds.append('s' if suffix == '$' else 'n')
+            return kinds
+        return []
+
+    def _check_argument_kinds(self, func: FunctionCallNode, args: List[str]) -> List[str]:
+        """Make an argument of the wrong kind (a string for a number, or the other way) Type mismatch."""
+        name = function_base_name(func)
+        if name.startswith('FN'):
+            wanted = self._fn_param_kinds(self._fn_key(name))
+        else:
+            wanted = builtin_arg_kinds(name, len(args))
+        wanted = wanted + ['*'] * (len(args) - len(wanted))
+        return [code if want == '*' or expr_kind(arg) == want else self._type_mismatch(code)
+                for arg, code, want in zip(func.arguments, args, wanted)]
+
     def _generate_function_call(self, func: FunctionCallNode) -> str:
         """Generate function call"""
         func_name = func.name.lower()
         args = [self._generate_expression(arg) for arg in func.arguments]
+        args = self._check_argument_kinds(func, args)
 
         # Check if it's a DEF FN function (starts with 'fn')
         # User-defined functions from DEF FN
@@ -3225,11 +3293,13 @@ class JavaScriptBackend(CodeGenBackend):
         var_key = stmt.variable.name + (stmt.variable.type_suffix or '')
         var_name = self._mangle_var_name(var_key)
         var_type = self._get_var_type(var_key)
-        start_expr = self._generate_expression(stmt.start_expr)
-        end_expr = self._generate_expression(stmt.end_expr)
+        start_expr = self._generate_expression_as(stmt.start_expr, 'n')
+        end_expr = self._generate_expression_as(stmt.end_expr, 'n')
+        if stmt.variable.type_suffix == '$':
+            start_expr = self._type_mismatch(start_expr)    # FOR A$ = 1 TO 2
 
         if stmt.step_expr:
-            step_expr = self._generate_expression(stmt.step_expr)
+            step_expr = self._generate_expression_as(stmt.step_expr, 'n')
         else:
             step_expr = '1'
 
@@ -3333,7 +3403,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_while(self, stmt: WhileStatementNode, line_number: int) -> List[str]:
         """Generate WHILE: leave the loop to the statement after the WEND when the condition is false"""
         code = []
-        condition = self._generate_expression(stmt.condition)
+        condition = self._generate_expression_as(stmt.condition, 'n')
         wend = self.while_to_wend.get(id(stmt))
         if wend is None:
             # The real binary looks for the WEND when the WHILE runs, whatever the condition is
@@ -3356,7 +3426,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_if(self, stmt: IfStatementNode, current_line: int) -> List[str]:
         """Generate IF statement"""
         code = []
-        condition = self._generate_expression(stmt.condition)
+        condition = self._generate_expression_as(stmt.condition, 'n')
 
         if stmt.then_statements or stmt.then_line_number:
             code.append(self.indent() + f'if ({condition}) {{')
@@ -3601,6 +3671,8 @@ class JavaScriptBackend(CodeGenBackend):
         var1_name = self._input_lvalue(stmt.var1)
         var2_name = self._input_lvalue(stmt.var2)
 
+        if self._target_kind(stmt.var1) != self._target_kind(stmt.var2):
+            return [self.indent() + self._type_mismatch() + ';']  # SWAP A,A$
         # Use destructuring assignment for clean swap
         code.append(self.indent() + f'[{var1_name}, {var2_name}] = [{var2_name}, {var1_name}];')
         return code
@@ -3615,9 +3687,9 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Generate the variable reference (can be simple variable or array element)
         var_expr = self._generate_expression(stmt.string_var)
-        start_expr = self._generate_expression(stmt.start)
-        length_expr = self._generate_expression(stmt.length) if stmt.length else 'undefined'
-        value_expr = self._generate_expression(stmt.value)
+        start_expr = self._generate_expression_as(stmt.start, 'n')
+        length_expr = self._generate_expression_as(stmt.length, 'n') if stmt.length else 'undefined'
+        value_expr = self._generate_expression_as(stmt.value, 's')
         same = 'true' if (isinstance(stmt.value, VariableNode) and not stmt.value.subscripts
                           and not stmt.string_var.subscripts and value_expr == var_expr) else 'false'
 
@@ -3733,7 +3805,7 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate LSET statement - left-justify string in field variable"""
         code = []
         var_name = stmt.variable.name
-        value_expr = self._generate_expression(stmt.expression)
+        value_expr = self._generate_expression_as(stmt.expression, 's')
         code.append(self.indent() + f'_flset("{var_name}", {value_expr});')
         return code
 
@@ -3741,7 +3813,7 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate RSET statement - right-justify string in field variable"""
         code = []
         var_name = stmt.variable.name
-        value_expr = self._generate_expression(stmt.expression)
+        value_expr = self._generate_expression_as(stmt.expression, 's')
         code.append(self.indent() + f'_frset("{var_name}", {value_expr});')
         return code
 
