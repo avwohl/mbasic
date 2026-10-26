@@ -206,7 +206,31 @@ JS_LOGICAL_RUNTIME = r'''
 function _ci(n) {
     if (n >= -32768 && n <= 32767 && n === Math.floor(n)) return n;  // the usual case: no work
     if (typeof n !== "number" || n !== n) _error("Type mismatch");
+    // MBASIC takes a double to single precision before it rounds: 2.49999999# AND 3 is 3
+    if (Math.abs(n) < 65536) n = Math.fround(n);
     return _toInt(n);
+}
+// FRCINT: a 16-bit integer, or Overflow. CONINT adds a second test: a byte, or Illegal function call.
+function _frcint(n) { return _ci(n); }
+function _conint(n) {
+    n = _ci(n);
+    if (n < 0 || n > 255) _error("Illegal function call");
+    return n;
+}
+// An array subscript: FRCINT, then not negative (Illegal function call), then not above the bound.
+function _ix(i, bound, lo) {
+    lo = lo || 0;  // 1 under OPTION BASE 1
+    if (i >= lo && i <= bound && i === Math.floor(i)) return i;  // the usual case
+    i = _ci(i);
+    if (i < 0) _error("Illegal function call");
+    if (i > bound || i < lo) _error("Subscript out of range");
+    return i;
+}
+// ERROR n: n is a byte, and 0 is not an error number.
+function _errnum(n) {
+    n = _conint(n);
+    if (n === 0) _error("Illegal function call");
+    return n;
 }
 function _and(a, b) { return _ci(a) & _ci(b); }
 function _or(a, b) { return _ci(a) | _ci(b); }
@@ -298,7 +322,7 @@ function _wrap_text(col, width, text, whole) {
     return out;
 }
 function _set_width(n) {
-    n = _round_half_away(n);
+    n = _frcint(n);  // 40000 is Overflow; 256 is Illegal function call
     if (n < 1 || n > 255) _error("Illegal function call");
     return n;
 }
@@ -315,13 +339,13 @@ function _print_list(f, items, seps) {
         let out = "";
         if (it[0] === 1) {
             // TAB(n): column n; a cursor already past it starts a new line first
-            const n = _round_half_away(it[1]), col = _cur_col(f);
+            const n = _frcint(typeof it[1] === "function" ? it[1]() : it[1]), col = _cur_col(f);
             const target = n < 1 ? 0 : (n - 1) % md;
             if (col > target) out = "\n" + " ".repeat(target);
             else out = " ".repeat(target - col);
         } else if (it[0] === 2) {
             // SPC(n): n spaces, n wrapping at the width
-            out = _wrap_text(_cur_col(f), ww, " ".repeat(Math.max(0, _round_half_away(it[1])) % md), false);
+            out = _wrap_text(_cur_col(f), ww, " ".repeat(Math.max(0, _frcint(typeof it[1] === "function" ? it[1]() : it[1])) % md), false);
         } else {
             const v = typeof it[1] === "function" ? it[1]() : it[1];
             out = _wrap_text(_cur_col(f), ww, _pstr(v, it[2]), isScreen);
@@ -569,10 +593,6 @@ def yield_check(target: str) -> str:
     return (f'if (--_budget < 0) {{ _budget = {JS_YIELD_BUDGET}; '
             f'if (_browser && _now() - _slice_start >= {JS_YIELD_MS}) return {target}; }}')
 
-
-# A same-line WHILE loop is a JavaScript loop and cannot return to the driver: _run is async then
-JS_YIELD_CHECK_AWAIT = (f'if (--_budget < 0) {{ _budget = {JS_YIELD_BUDGET}; '
-                        f'if (_browser && _now() - _slice_start >= {JS_YIELD_MS}) {{ await _yield(); _slice_start = _now(); }} }}')
 
 # Case labels for the statements in the middle of a line. BASIC line numbers end at 65529.
 CONT_LABEL_BASE = 100000
@@ -888,8 +908,11 @@ class JavaScriptBackend(CodeGenBackend):
         self.uses_write = False
         self.uses_lprint = False
         self.uses_gosub = False
+        self.option_base = 0  # OPTION BASE 0 or 1
         self.uses_data = False
         self.uses_random = False
+        self.erased_arrays: set = set()  # arrays named in ERASE: their bounds change at run time
+        self.array_ranks: Dict[str, int] = {}  # arrays used without DIM: the most subscripts seen
         self.uses_error_handling = False
         self.uses_file_io = False
         self.uses_input_func = False  # INPUT$(n) / INPUT$(n, #f) function
@@ -1111,7 +1134,9 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '}')  # End while
         if self.uses_error_handling:
             # Ran off the end of the program inside a handler (END returns above)
-            code.append(self.indent() + 'if (_in_error_handler) _error("No RESUME");')
+            # reported at the last line, the last one that ran
+            last_line = max(line.line_number for line in program.lines) if program.lines else 0
+            code.append(self.indent() + f'if (_in_error_handler) {{ try {{ _error("No RESUME"); }} catch (e) {{ e.basicLine = {last_line}; throw e; }} }}')
 
         self.indent_level -= 1
         code.append(self.indent() + '}')  # End main() or _run()
@@ -1351,14 +1376,27 @@ class JavaScriptBackend(CodeGenBackend):
                         self.uses_lprint = True
                 elif isinstance(stmt, (OpenStatementNode, CloseStatementNode, ResetStatementNode)):
                     self.uses_file_io = True
-                elif isinstance(stmt, (GosubStatementNode, OnGosubStatementNode)):
+                elif isinstance(stmt, (GosubStatementNode, OnGosubStatementNode, ReturnStatementNode)):
+                    # A RETURN with no GOSUB in the program still needs the stack to say "RETURN without GOSUB"
                     self.uses_gosub = True
+                elif isinstance(stmt, OptionBaseStatementNode):
+                    self.option_base = stmt.base
+                elif isinstance(stmt, EraseStatementNode):
+                    for array_name in stmt.array_names:
+                        key = array_name.upper()
+                        if key[-1] not in '$%!#':
+                            key += '!'
+                        self.erased_arrays.add(key)  # its bounds are kept at run time
+                elif isinstance(stmt, RandomizeStatementNode):
+                    self.uses_random = True  # RANDOMIZE calls _rnd
                 elif isinstance(stmt, ReadStatementNode):
                     self.uses_data = True
                 elif isinstance(stmt, RestoreStatementNode):
                     self.uses_data = True
                 elif isinstance(stmt, (OnErrorStatementNode, ErrorStatementNode, ResumeStatementNode)):
                     self.uses_error_handling = True
+                    if getattr(stmt, 'is_gosub', False):
+                        self.uses_gosub = True  # the handler is entered like a subroutine
                 if self._can_loop(stmt, line.line_number):
                     self.can_loop = True
                 # Check for RND function in expressions
@@ -1426,6 +1464,10 @@ class JavaScriptBackend(CodeGenBackend):
             return
         visited.add(node_id)
 
+        if isinstance(node, VariableNode) and node.subscripts:
+            key = (node.name + (node.type_suffix or '')).upper()
+            self.array_ranks[key] = max(self.array_ranks.get(key, 0), len(node.subscripts))
+
         if isinstance(node, FunctionCallNode):
             fname = node.name.lower()
             if fname == 'rnd':
@@ -1472,6 +1514,10 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '    // MBASIC stops a program with "<message> in <line>"')
         code.append(self.indent() + '    _print(e.basicLine === undefined ? e.message : e.message + " in " + e.basicLine);')
         code.append(self.indent() + '    if (typeof process !== "undefined") process.exit(1);')
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _stop(line) {')
+        code.append(self.indent() + '    if (_col > 0) _print("");  // the message starts on a new line')
+        code.append(self.indent() + '    _print("Break in " + line);')
         code.append(self.indent() + '}')
         code.append(self.indent() + 'function _unprint_char() {')
         code.append(self.indent() + '    // Backspace while typing INPUT text in the browser: drop the last echoed character')
@@ -1576,17 +1622,34 @@ class JavaScriptBackend(CodeGenBackend):
 
         # String functions
         code.append(self.indent() + '// String functions')
-        code.append(self.indent() + 'function _left(str, n) { return String(str).substring(0, n); }')
-        code.append(self.indent() + 'function _right(str, n) { const s = String(str); return s.substring(s.length - n); }')
+        code.append(self.indent() + 'function _left(str, n) { return String(str).substring(0, _conint(n)); }')
+        code.append(self.indent() + 'function _right(str, n) { const s = String(str); n = _conint(n); return n > 0 ? s.substring(s.length - n) : ""; }')
         code.append(self.indent() + 'function _mid(str, start, len) {')
         self.indent_level += 1
         code.append(self.indent() + 'const s = String(str);')
+        code.append(self.indent() + 'start = _conint(start);')
+        code.append(self.indent() + 'if (start === 0) _error("Illegal function call");  // MID$ counts from 1')
         code.append(self.indent() + 'if (len === undefined) return s.substring(start - 1);')
-        code.append(self.indent() + 'return s.substring(start - 1, start - 1 + len);')
+        code.append(self.indent() + 'return s.substring(start - 1, start - 1 + _conint(len));')
         self.indent_level -= 1
         code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _mid_assign(cur, start, val, len, same) {')
+        code.append(self.indent() + '    // MID$(cur, start, len) = val')
+        code.append(self.indent() + '    cur = String(cur);')
+        code.append(self.indent() + '    start = _conint(start);')
+        code.append(self.indent() + '    if (start === 0) _error("Illegal function call");')
+        code.append(self.indent() + '    if (typeof val !== "string") _error("Type mismatch");')
+        code.append(self.indent() + '    const given = len !== undefined;')
+        code.append(self.indent() + '    len = given ? _conint(len) : val.length;')
+        code.append(self.indent() + '    // A start beyond the end of the target is Illegal function call, unless the length is 0')
+        code.append(self.indent() + '    if (len === 0 || (!given && val === "")) return cur;')
+        code.append(self.indent() + '    if (start > cur.length) _error("Illegal function call");')
+        code.append(self.indent() + '    const n = Math.min(len, val.length, cur.length - (start - 1));')
+        code.append(self.indent() + '    if (same) { const b = cur.split(""); for (let i = 0; i < n; i++) b[start - 1 + i] = b[i]; return b.join(""); }  // MID$(A$,..)=A$ copies forward over itself')
+        code.append(self.indent() + '    return cur.substring(0, start - 1) + val.substring(0, n) + cur.substring(start - 1 + n);')
+        code.append(self.indent() + '}')
         code.append(self.indent() + 'function _len(str) { return String(str).length; }')
-        code.append(self.indent() + 'function _chr(n) { return String.fromCharCode(n); }')
+        code.append(self.indent() + 'function _chr(n) { return String.fromCharCode(_conint(n)); }')
         code.append(self.indent() + 'function _asc(str) { return String(str).charCodeAt(0) || 0; }')
         code.append(self.indent() + 'function _str(n, d = 6) { const t = _fmt_num(n, d); return n >= 0 ? " " + t : t; }')
         code.append(self.indent() + 'function _instr(start, str1, str2) {')
@@ -1600,15 +1663,20 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'start = 1;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
+        code.append(self.indent() + 'start = _conint(start);')
+        code.append(self.indent() + 'if (start === 0) _error("Illegal function call");')
+        code.append(self.indent() + 'if (start > String(str1).length) return 0;  // also for an empty search string')
         code.append(self.indent() + 'const pos = String(str1).indexOf(String(str2), start - 1);')
         code.append(self.indent() + 'return pos === -1 ? 0 : pos + 1;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
-        code.append(self.indent() + 'function _space(n) { return " ".repeat(n); }')
+        code.append(self.indent() + 'function _space(n) { return " ".repeat(_conint(n)); }')
         code.append(self.indent() + 'function _string(n, ch) {')
         self.indent_level += 1
         code.append(self.indent() + '// STRING$(n, code) or STRING$(n, string)')
-        code.append(self.indent() + 'const char = typeof ch === "number" ? String.fromCharCode(ch) : String(ch).charAt(0);')
+        code.append(self.indent() + 'n = _conint(n);')
+        code.append(self.indent() + 'if (typeof ch !== "number" && String(ch) === "") _error("Illegal function call");')
+        code.append(self.indent() + 'const char = typeof ch === "number" ? String.fromCharCode(_conint(ch)) : String(ch).charAt(0);')
         code.append(self.indent() + 'return char.repeat(n);')
         self.indent_level -= 1
         code.append(self.indent() + '}')
@@ -2267,7 +2335,7 @@ class JavaScriptBackend(CodeGenBackend):
             self.indent_level += 1
             code.append(self.indent() + 'if (_in_error_handler) {')
             self.indent_level += 1
-            code.append(self.indent() + '_error(_ERR_MSGS[code] || "Illegal function call");  // an error in a handler is not trapped')
+            code.append(self.indent() + '_error(_ERR_MSGS[code] || "Unprintable error");  // an error in a handler is not trapped')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append(self.indent() + '_error_code = code;')
@@ -2393,12 +2461,14 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'function _peek(addr) {')
         self.indent_level += 1
         code.append(self.indent() + '// PEEK - Read memory location (returns random byte like interpreter)')
+        code.append(self.indent() + '_radix_word(addr);  // only the address is checked: -32768 to 65535, else Overflow')
         code.append(self.indent() + 'return (Math.random() * 256) | 0;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
         code.append(self.indent() + 'function _inp(port) {')
         self.indent_level += 1
         code.append(self.indent() + '// INP - Read I/O port (stub: returns 0)')
+        code.append(self.indent() + '_conint(port);  // the port is a byte: 256 is Illegal function call')
         code.append(self.indent() + 'console.warn("INP not supported in JavaScript - returning 0");')
         code.append(self.indent() + 'return 0;')
         self.indent_level -= 1
@@ -2512,12 +2582,14 @@ class JavaScriptBackend(CodeGenBackend):
             # Skip arrays - they're handled separately
             if var_info.is_array:
                 # Generate array initialization
-                dimensions = var_info.dimensions or [10]  # Default size
+                dimensions = var_info.dimensions or [10] * self.array_ranks.get(var_name.upper(), 1)  # Default size
                 if var_info.var_type == VarType.STRING:
                     init_value = '""'
                 else:
                     init_value = '0'
                 code.append(self.indent() + f'let {js_name} = {self._create_array_init(dimensions, init_value)};')
+                if var_name.upper() in self.erased_arrays:
+                    code.append(self.indent() + f'let _bd_{js_name} = {json.dumps(list(dimensions))};  // bounds; ERASE resets them')
             else:
                 # Regular variable
                 if var_info.var_type == VarType.STRING:
@@ -2747,8 +2819,13 @@ class JavaScriptBackend(CodeGenBackend):
             # DATA statements are processed during initialization
             pass
         elif isinstance(stmt, DimStatementNode):
-            # DIM statements are processed during variable generation
-            pass
+            # The arrays are made during variable generation; a bound that FRCINT cannot hold is Overflow
+            for decl in stmt.arrays:
+                key = decl.name.upper()
+                info = self.symbols.variables.get(key if key[-1] in '$%!#' else key + '!')
+                if info is not None and info.dimensions and any(d > 32767 for d in info.dimensions):
+                    code.append(self.indent() + '_error("Overflow");')
+                    break
         elif isinstance(stmt, RemarkStatementNode):
             # Comments are skipped
             pass
@@ -2798,7 +2875,8 @@ class JavaScriptBackend(CodeGenBackend):
             name = getattr(expr, 'name', '').lower() if isinstance(expr, FunctionCallNode) else ''
             if name in ('tab', 'spc') and len(expr.arguments) == 1:
                 kind = 1 if name == 'tab' else 2
-                items.append(f'[{kind}, {self._generate_expression(expr.arguments[0])}]')
+                # The argument is evaluated when its turn comes: "A";TAB(40000) prints the A first
+                items.append(f'[{kind}, () => {self._generate_expression(expr.arguments[0])}]')
             else:
                 value = self._generate_expression(expr)
                 if '(' in value:
@@ -2830,11 +2908,7 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Check if assigning to array element
         if stmt.variable.subscripts:
-            var_name = self._mangle_var_name(var_key)
-            access = var_name
-            for idx_expr in stmt.variable.subscripts:
-                idx = self._generate_expression(idx_expr)
-                access = f'{access}[{idx}]'
+            access = self._element_access(var_key, stmt.variable.subscripts)
             expr_code = self._generate_expression(stmt.expression)
             expr_code = self._apply_type_coercion(expr_code, var_type)
             code.append(self.indent() + f'{access} = {expr_code};')
@@ -2922,12 +2996,7 @@ class JavaScriptBackend(CodeGenBackend):
         elif isinstance(expr, VariableNode):
             # Check if it's an array access
             if expr.subscripts:
-                var_name = self._mangle_var_name(expr.name + (expr.type_suffix or ''))
-                access = var_name
-                for idx_expr in expr.subscripts:
-                    idx = self._generate_expression(idx_expr)
-                    access = f'{access}[{idx}]'
-                return access
+                return self._element_access(expr.name + (expr.type_suffix or ''), expr.subscripts)
             elif expr.name.lower() in ('err', 'erl') and expr.type_suffix in (None, '', '%'):
                 # ERR and ERL are read-only values, not variables
                 return f'_{expr.name.lower()}()'
@@ -3086,7 +3155,7 @@ class JavaScriptBackend(CodeGenBackend):
         expr = self._generate_expression(stmt.expression)
         code.append(self.indent() + f'{{')
         self.indent_level += 1
-        code.append(self.indent() + f'const _idx = Math.floor({expr});')
+        code.append(self.indent() + f'const _idx = _conint({expr});')
         code.append(self.indent() + f'const _targets = [{", ".join(str(t) for t in stmt.line_numbers)}];')
         code.append(self.indent() + f'if (_idx >= 1 && _idx <= _targets.length) {{')
         self.indent_level += 1
@@ -3107,7 +3176,7 @@ class JavaScriptBackend(CodeGenBackend):
         expr = self._generate_expression(stmt.expression)
         code.append(self.indent() + f'{{')
         self.indent_level += 1
-        code.append(self.indent() + f'const _idx = Math.floor({expr});')
+        code.append(self.indent() + f'const _idx = _conint({expr});')
         code.append(self.indent() + f'const _targets = [{", ".join(str(t) for t in stmt.line_numbers)}];')
         code.append(self.indent() + f'if (_idx >= 1 && _idx <= _targets.length) {{')
         self.indent_level += 1
@@ -3361,9 +3430,26 @@ class JavaScriptBackend(CodeGenBackend):
 
     def _input_lvalue(self, var) -> str:
         """JavaScript assignment target for an INPUT variable (plain variable or array element)."""
-        access = self._mangle_var_name(var.name + (var.type_suffix or ''))
-        for idx_expr in (var.subscripts or []):
-            access = f'{access}[{self._generate_expression(idx_expr)}]'
+        if var.subscripts:
+            return self._element_access(var.name + (var.type_suffix or ''), var.subscripts)
+        return self._mangle_var_name(var.name + (var.type_suffix or ''))
+
+    def _element_access(self, var_key: str, subscripts) -> str:
+        """JavaScript for an array element. Each subscript goes through _ix: rounded to 16 bits, then
+        checked against the bound of its dimension, as MBASIC does (a negative one is Illegal function
+        call, one above the bound is Subscript out of range)."""
+        info = self.symbols.variables.get(var_key.upper())
+        dims = (info.dimensions if info is not None and info.dimensions else None) or []
+        access = self._mangle_var_name(var_key)
+        lo = f', {self.option_base}' if self.option_base else ''
+        if len(subscripts) != len(dims or [10] * self.array_ranks.get(var_key.upper(), 1)):
+            # The wrong number of subscripts is Subscript out of range
+            return f'{access}[_ix(0, -1)]'
+        for k, idx_expr in enumerate(subscripts):
+            bound = dims[k] if k < len(dims) else 10
+            if var_key.upper() in self.erased_arrays:
+                bound = f'_bd_{self._mangle_var_name(var_key)}[{k}]'
+            access = f'{access}[_ix({self._generate_expression(idx_expr)}, {bound}{lo})]'
         return access
 
     def _generate_line_input(self, stmt: LineInputStatementNode) -> List[str]:
@@ -3469,11 +3555,10 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate READ statement"""
         code = []
         for var in stmt.variables:
-            var_name = self._mangle_var_name(var.name + (var.type_suffix or ''))
             read = f'_read({"true" if var.type_suffix == "$" else ""})'
             if var.type_suffix == '%':
                 read = f'_toInt({read})'    # READ A% of 12.7 is 13, of 70000 is Overflow
-            code.append(self.indent() + f'{var_name} = {read};')
+            code.append(self.indent() + f'{self._input_lvalue(var)} = {read};')
         return code
 
     def _generate_restore(self, stmt: RestoreStatementNode) -> List[str]:
@@ -3488,7 +3573,7 @@ class JavaScriptBackend(CodeGenBackend):
         if stmt.seed:
             # RANDOMIZE with seed
             seed_expr = self._generate_expression(stmt.seed)
-            code.append(self.indent() + f'_rnd(-{seed_expr});  // Seed random generator')
+            code.append(self.indent() + f'_rnd(-_frcint({seed_expr}));  // Seed random generator; 40000 is Overflow')
         else:
             # RANDOMIZE without seed - use current time
             code.append(self.indent() + '_rnd(-(new Date().getTime()));  // Seed with current time')
@@ -3497,6 +3582,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_stop(self, stmt: StopStatementNode) -> List[str]:
         """Generate STOP statement - halts execution"""
         code = []
+        code.append(self.indent() + '_stop(_line_of(_pc));')
         code.append(self.indent() + '_pc = null;')
         code.append(self.indent() + 'return;')
         return code
@@ -3504,8 +3590,8 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_swap(self, stmt: SwapStatementNode) -> List[str]:
         """Generate SWAP statement - swaps two variables"""
         code = []
-        var1_name = self._mangle_var_name(stmt.var1.name + (stmt.var1.type_suffix or ''))
-        var2_name = self._mangle_var_name(stmt.var2.name + (stmt.var2.type_suffix or ''))
+        var1_name = self._input_lvalue(stmt.var1)
+        var2_name = self._input_lvalue(stmt.var2)
 
         # Use destructuring assignment for clean swap
         code.append(self.indent() + f'[{var1_name}, {var2_name}] = [{var2_name}, {var1_name}];')
@@ -3522,29 +3608,15 @@ class JavaScriptBackend(CodeGenBackend):
         # Generate the variable reference (can be simple variable or array element)
         var_expr = self._generate_expression(stmt.string_var)
         start_expr = self._generate_expression(stmt.start)
-        length_expr = self._generate_expression(stmt.length)
+        length_expr = self._generate_expression(stmt.length) if stmt.length else 'undefined'
         value_expr = self._generate_expression(stmt.value)
+        same = 'true' if (isinstance(stmt.value, VariableNode) and not stmt.value.subscripts
+                          and not stmt.string_var.subscripts and value_expr == var_expr) else 'false'
 
-        # MID$ assignment in JavaScript:
-        # var = var.substring(0, start-1) + value.substring(0, length) + var.substring(start-1+length)
-        # Need to handle the case where value is shorter/longer than length
-
-        code.append(self.indent() + '{')
-        self.indent_level += 1
-
-        # Save the expressions to temporary variables to avoid re-evaluation
-        code.append(self.indent() + f'const _mid_start = {start_expr};')
-        code.append(self.indent() + f'const _mid_len = {length_expr};')
-        code.append(self.indent() + f'const _mid_val = String({value_expr}).substring(0, _mid_len);')
-        code.append(self.indent() + f'const _mid_str = String({var_expr});')
-
-        # Build the new string
-        code.append(self.indent() +
-                   f'{var_expr} = _mid_str.substring(0, _mid_start - 1) + ' +
-                   f'_mid_val + _mid_str.substring(_mid_start - 1 + _mid_len);')
-
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
+        # The runtime function checks start and length like the MID$ function and replaces
+        # min(length, len(value), what is left of the string) characters. The order of the
+        # arguments is the order the interpreter evaluates them.
+        code.append(self.indent() + f'{var_expr} = _mid_assign({var_expr}, {start_expr}, {value_expr}, {length_expr}, {same});')
 
         return code
 
@@ -3553,10 +3625,14 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
         for array_name in stmt.array_names:
             # Look up the array in the symbol table to get its type and dimensions
-            var_info = self.symbols.variables.get(array_name)
+            # The symbol table keys are upper case with a type suffix
+            key = array_name.upper()
+            if key[-1] not in '$%!#':
+                key += '!'
+            var_info = self.symbols.variables.get(key)
             if var_info and var_info.is_array:
-                js_name = self._mangle_var_name(array_name)
-                dimensions = var_info.dimensions or [10]
+                js_name = self._mangle_var_name(key)
+                dimensions = var_info.dimensions or [10] * self.array_ranks.get(key, 1)
 
                 # Determine default value based on type
                 if var_info.var_type == VarType.STRING:
@@ -3564,7 +3640,9 @@ class JavaScriptBackend(CodeGenBackend):
                 else:
                     init_value = '0'
 
-                # Recreate the array with default values
+                # ERASE deletes the array; the next use creates it again with the bounds 0..10
+                dimensions = [10] * len(dimensions)
+                code.append(self.indent() + f'_bd_{js_name} = {json.dumps(dimensions)};')
                 code.append(self.indent() + f'{js_name} = {self._create_array_init(dimensions, init_value)};')
         return code
 
@@ -3734,7 +3812,7 @@ class JavaScriptBackend(CodeGenBackend):
             # ON ERROR GOTO 0 - disable error handling
             code.append(self.indent() + '_error_handler = 0;')
             # Inside a handler it also raises the pending error again
-            code.append(self.indent() + 'if (_in_error_handler) _error(_ERR_MSGS[_error_code] || "Illegal function call");')
+            code.append(self.indent() + 'if (_in_error_handler) { try { _error(_ERR_MSGS[_error_code] || "Unprintable error"); } catch (e) { e.basicLine = _error_line; throw e; } }')
         elif stmt.line_number not in self.line_labels:
             # The binary looks the line up when the statement runs
             code.append(self.indent() + '_error("Undefined line number");')
@@ -3750,7 +3828,7 @@ class JavaScriptBackend(CodeGenBackend):
         error_code = self._generate_expression(stmt.error_code)
         code.append(self.indent() + f'{{')
         self.indent_level += 1
-        code.append(self.indent() + f'const _next = _trigger_error({error_code}, {current_line});')
+        code.append(self.indent() + f'const _next = _trigger_error(_errnum({error_code}), {current_line});')
         code.append(self.indent() + f'if (_next !== undefined) {{')
         self.indent_level += 1
         code.append(self.indent() + f'_pc = _next;')
@@ -3764,6 +3842,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_resume(self, stmt: ResumeStatementNode, current_line: int) -> List[str]:
         """Generate RESUME statement"""
         code = []
+        code.append(self.indent() + 'if (!_in_error_handler) _error("RESUME without error");')
         code.append(self.indent() + '_in_error_handler = false;')
 
         # ERR reads 0 after RESUME; ERL keeps the line number.
@@ -3787,6 +3866,9 @@ class JavaScriptBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append(self.indent() + 'break;')
+        elif stmt.line_number not in self.line_labels:
+            # The binary raises error 8 at the RESUME; a handler still armed catches it, so it can loop
+            code.append(self.indent() + '_error("Undefined line number");')
         else:
             # RESUME line_number - continue at specific line
             code.append(self.indent() + self._jump_code(stmt.line_number))
@@ -3798,6 +3880,8 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
         addr = self._generate_expression(stmt.address)
         val = self._generate_expression(stmt.value)
+        # Only the arguments are checked: the address is -32768 to 65535, the value is a byte
+        code.append(self.indent() + f'_radix_word({addr}); _conint({val});')
         code.append(self.indent() + f'console.warn("POKE " + ({addr}) + "," + ({val}) + " - not supported in JavaScript");')
         return code
 
@@ -3806,6 +3890,7 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
         port = self._generate_expression(stmt.port)
         val = self._generate_expression(stmt.value)
+        code.append(self.indent() + f'_conint({port}); _conint({val});  // both are bytes')
         code.append(self.indent() + f'console.warn("OUT " + ({port}) + "," + ({val}) + " - not supported in JavaScript");')
         return code
 

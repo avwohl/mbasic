@@ -51,7 +51,7 @@ statement after the WEND when the condition is false. WEND jumps back to the
 WHILE step. A WHILE that is not the first statement on its line gets a case
 label (`while_target`). A WHILE inside an IF makes the IF a flat IF. In the
 browser copy the jump back of WEND has the yield check. A WHILE with no WEND
-stops with `WHILE without WEND` when the condition is false. The semantic
+stops with `WHILE without WEND` when the WHILE runs, whatever the condition is. The semantic
 analyzer refuses a WEND with no WHILE when the program is compiled.
 Test: `tests/regression/integration/test_js_while_wend.py`.
 

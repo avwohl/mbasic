@@ -792,6 +792,11 @@ class BuiltinFunctions:
         # Convert to 0-based index
         start_idx = start - 1
 
+        # The binary gives 0 for an empty string and for a start beyond the end,
+        # also when the search string is empty
+        if start_idx >= len(haystack):
+            return 0
+
         # Find substring
         pos = haystack.find(needle, start_idx)
 
