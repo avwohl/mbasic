@@ -1260,6 +1260,7 @@ class StringNode:
     column: int = 0
     implicit: bool = False  # parser-made "" before a leading separator (PRINT ,X); LIST does not show it
     raw: bool = False       # an unquoted DATA item: READ into a number variable parses its text
+    bad_tail: bool = False  # a quoted DATA item with text after the closing quote: READ gives the string, then Syntax error
 
 
 @dataclass
@@ -1499,6 +1500,17 @@ class TypeInfo:
 BUILTIN_ARG_TYPES = {
     'LEFT': 'SN', 'RIGHT': 'SN', 'MID': 'SNN',
     'STRING': 'NA', 'INPUT': 'NN',
+}
+
+
+# A number argument that the binary range-checks (CONINT) as soon as it has read
+# it, before it looks at the separator behind it. So MID$("A",0,2,3) is Illegal
+# function call, where the extra argument alone is a Syntax error. 'c' is a
+# byte, 's' is a byte that is not 0 (a start position). SPACE$ and CHR$ read
+# their one argument as a plain expression and have no early check.
+BUILTIN_ARG_RANGES = {
+    'LEFT': {1: 'c'}, 'RIGHT': {1: 'c'}, 'MID': {1: 's', 2: 'c'},
+    'STRING': {0: 'c'}, 'INSTR': {0: 's'}, 'INPUT': {0: 'c', 1: 'c'},
 }
 
 

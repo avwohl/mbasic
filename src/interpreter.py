@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import Literal, Optional, Callable, Any, Union
 from src.runtime import Runtime, ProgramString, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
 from src.js_type_check import builtin_arg_kinds
-from src.ast_nodes import StringNode, FunctionCallNode, arity_type_checks, instr_shape_error, clause_tail_after, clause_slice
+from src.ast_nodes import StringNode, FunctionCallNode, arity_type_checks, BUILTIN_ARG_RANGES, instr_shape_error, clause_tail_after, clause_slice
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
 from src.pc import PC
@@ -140,6 +140,9 @@ class MBasicError(RuntimeError):
         self.error_pc = error_pc
 
 
+MAX_FILE_NUMBER = 15      # the binary started with /F:15; with the default /F:3 only 1 to 3 are files
+
+
 def _loop_is_done(current, end, step):
     """Whether a FOR loop has passed its limit.
 
@@ -186,6 +189,7 @@ class ErrorInfo:
     error_code: int
     pc: PC
     error_message: str
+    report_pc: Optional[PC] = None   # where the error is reported, when not at pc (READ: the DATA line)
 
     def message(self, with_line=True):
         """The line MBASIC prints for this error.
@@ -337,6 +341,8 @@ class Interpreter:
         self._clause_stack = []         # [statements, index] of running clauses
         self._clause_jump = None        # (statements, index) a NEXT goes back to
         self._clause_for = {}           # loop variable -> (statements, FOR index)
+        self._for_next_node = {}        # loop variable -> the one NEXT statement that FOR found (NXTSCN)
+        self._found_next_node = None
 
         # I/O handler (defaults to console if not provided)
         if io_handler is None:
@@ -759,7 +765,8 @@ class Interpreter:
                         # RESUME goes back to the statement that ran; ERL is the line
                         # the error is reported at (READ of a bad DATA item: the DATA line).
                         self.state.pending_error = ErrorInfo(
-                            error_code=error_code, pc=pc, error_message=str(e))
+                            error_code=error_code, pc=pc, error_message=str(e),
+                            report_pc=error_pc)
                         if (not hasattr(e, 'clause_tail')
                                 and type(stmt).__name__ == 'IfStatementNode'):
                             # an error in the condition, or in the first
@@ -1079,6 +1086,7 @@ class Interpreter:
                     continue
                 names = max(1, len(stmt.variables or []))
                 if depth <= names:
+                    self._found_next_node = stmt
                     return (None, tail_idx, depth - 1, nested)
                 depth -= names
 
@@ -1106,6 +1114,7 @@ class Interpreter:
                     # part way along its own list.
                     names = max(1, len(stmt.variables or []))
                     if depth <= names:
+                        self._found_next_node = stmt
                         return (line_num, stmt_idx, depth - 1, nested)
                     depth -= names
 
@@ -1370,7 +1379,7 @@ class Interpreter:
         if stmt.file_number is not None:
             file_num = to_conint(self.evaluate_expression(stmt.file_number))
             if file_num not in self.runtime.files:
-                raise RuntimeError(f"File #{file_num} not open")
+                raise self._file_not_open(file_num)
             file_info = self.runtime.files[file_num]
             if file_info['mode'] not in ['O', 'A']:
                 raise RuntimeError(f"File #{file_num} not open for output")
@@ -1492,7 +1501,7 @@ class Interpreter:
         if stmt.file_number is not None:
             file_num = to_conint(self.evaluate_expression(stmt.file_number))
             if file_num not in self.runtime.files:
-                raise RuntimeError(f"File #{file_num} not open")
+                raise self._file_not_open(file_num)
             file_info = self.runtime.files[file_num]
             if file_info['mode'] not in ['O', 'A']:
                 raise RuntimeError(f"File #{file_num} not open for output")
@@ -1634,6 +1643,8 @@ class Interpreter:
     def execute_if(self, stmt):
         """Execute IF statement"""
         condition = self.evaluate_expression(stmt.condition)
+        if isinstance(condition, str):
+            raise TypeError("Type mismatch")     # IF "a" THEN: a string is no condition
 
         # In BASIC, any non-zero value is true
         if condition:
@@ -1664,13 +1675,14 @@ class Interpreter:
         key = (id(table), table.version)
         cached = getattr(stmt, '_mb_next', None)
         if cached is not None and cached[0] == key:
+            self._found_next_node = cached[2]
             return cached[1]
         target = self.find_matching_next(
             self.runtime.pc.line_num, self.runtime.pc.stmt_offset, tail)
         if target is None:
             raise RuntimeError("FOR without NEXT")
         try:
-            stmt._mb_next = (key, target)
+            stmt._mb_next = (key, target, self._found_next_node)
         except AttributeError:
             pass                            # a node with __slots__: recompute
         return target
@@ -1962,6 +1974,7 @@ class Interpreter:
             self._clause_for.pop(var_name, None)
         target = self._matching_next(
             stmt, in_clause[0][in_clause[1] + 1:] if in_clause else None)
+        self._for_next_node[var_name] = self._found_next_node
         if _loop_is_done(start, end, step):
             next_line, next_stmt, var_index, nested = target
             if next_line is None:
@@ -2038,6 +2051,13 @@ class Interpreter:
 
         for index, var_node in enumerate(var_list):
             var_name = var_node.name + (var_node.type_suffix or "")
+            # Only the NEXT that FOR found by its scan can close the loop. A NEXT
+            # anywhere else (the second NEXT of IF c THEN NEXT ELSE NEXT, a NEXT
+            # reached by a jump) is "NEXT without FOR", as on the binary, which
+            # compares the text pointer of the NEXT with the one in the FOR entry.
+            expected = self._for_next_node.get(var_name)
+            if expected is not None and expected is not stmt and self.runtime.get_for_loop(var_name):
+                raise RuntimeError("NEXT without FOR")
             # Process this NEXT
             should_continue = self._execute_next_single(
                 var_name, var_node=var_node,
@@ -2206,6 +2226,10 @@ class Interpreter:
 
         # Evaluate the condition
         condition = self.evaluate_expression(stmt.condition)
+        if isinstance(condition, str):
+            # Raised before the loop is entered, so a RESUME NEXT runs the body
+            # and its WEND finds no WHILE ("WEND without WHILE", as on the binary)
+            raise TypeError("Type mismatch")
 
         if not condition:
             # Condition is false - skip to after matching WEND. When the WEND
@@ -2264,7 +2288,7 @@ class Interpreter:
                 # line where it first happened. The handler is off now, so the
                 # error is fatal.
                 self.state.pending_error = None
-                raise MBasicError(pending.error_code, pending.pc)
+                raise MBasicError(pending.error_code, pending.report_pc or pending.pc)
         else:
             # The binary looks the line up when the statement runs
             if not self.runtime.statement_table.line_exists(stmt.line_number):
@@ -2512,6 +2536,13 @@ class Interpreter:
                     original_case=getattr(var_node, 'original_case', var_node.name),
                     settings_manager=self.settings_manager
                 )
+            if getattr(data_node, 'bad_tail', False):
+                # "q"x: the string was read and stored; the text behind the
+                # closing quote is a Syntax error at the DATA line, and the
+                # statement is read again from its first item
+                data_line = self.runtime.data_line_map.get(data_index)
+                self.runtime.data_pointer = start_pointer
+                raise MBasicError(2, PC.from_line(data_line) if data_line is not None else None)
 
     def execute_restore(self, stmt):
         """Execute RESTORE statement"""
@@ -2895,7 +2926,7 @@ class Interpreter:
         """INPUT #n: read one field per variable straight from the file."""
         file_num = to_conint(self.evaluate_expression(stmt.file_number))
         if file_num not in self.runtime.files:
-            raise RuntimeError(f"File #{file_num} not open")
+            raise self._file_not_open(file_num)
         file_info = self.runtime.files[file_num]
         if file_info['mode'] != 'I':
             raise RuntimeError(f"File #{file_num} not open for input")
@@ -3015,7 +3046,7 @@ class Interpreter:
         if stmt.file_number is not None:
             file_num = to_conint(self.evaluate_expression(stmt.file_number))
             if file_num not in self.runtime.files:
-                raise RuntimeError(f"File #{file_num} not open")
+                raise self._file_not_open(file_num)
             file_info = self.runtime.files[file_num]
             if file_info['mode'] != 'I':
                 raise RuntimeError(f"File #{file_num} not open for input")
@@ -3080,7 +3111,7 @@ class Interpreter:
         if stmt.file_number is not None:
             file_num = to_conint(self.evaluate_expression(stmt.file_number))
             if file_num not in self.runtime.files:
-                raise RuntimeError(f"File #{file_num} not open")
+                raise self._file_not_open(file_num)
             file_info = self.runtime.files[file_num]
             if file_info['mode'] not in ['O', 'A']:
                 raise RuntimeError(f"File #{file_num} not open for output")
@@ -3599,6 +3630,16 @@ class Interpreter:
         except OSError as e:
             raise RuntimeError(f"Cannot rename {old_filename} to {new_filename}: {e.strerror}")
 
+    @staticmethod
+    def _file_not_open(file_num):
+        """The error for a file number that no OPEN made, in a statement that uses a file.
+
+        Measured on the binary (PRINT#, WRITE#, INPUT#, LINE INPUT#, GET and PUT):
+        a number up to the highest file (15 here) is Bad file mode, a bigger byte
+        is Bad file number. The number was range-checked before this (to_conint).
+        """
+        return MBasicError(54 if file_num <= MAX_FILE_NUMBER else 52)
+
     def execute_open(self, stmt):
         """Execute OPEN statement - open file for I/O
 
@@ -3614,7 +3655,7 @@ class Interpreter:
         file_num = to_conint(self.evaluate_expression(stmt.file_number))
         filename = self.evaluate_expression(stmt.filename)
         # Check file number range (MBASIC 5.21: #1 through #15)
-        if file_num < 1 or file_num > 15:
+        if file_num < 1 or file_num > MAX_FILE_NUMBER:
             raise RuntimeError("Bad file number")
 
         if not isinstance(filename, str):
@@ -3695,6 +3736,8 @@ class Interpreter:
             # Close specific file numbers
             for file_num_expr in stmt.file_numbers:
                 file_num = to_conint(self.evaluate_expression(file_num_expr))
+                if file_num > MAX_FILE_NUMBER:
+                    raise RuntimeError("Bad file number")      # CLOSE #16
                 if file_num in self.runtime.files:
                     self.runtime.files[file_num]['handle'].close()
                     del self.runtime.files[file_num]
@@ -3782,7 +3825,7 @@ class Interpreter:
         file_num = to_conint(self.evaluate_expression(stmt.file_number))
 
         if file_num not in self.runtime.files:
-            raise RuntimeError(f"File #{file_num} not open")
+            raise self._file_not_open(file_num)
 
         file_info = self.runtime.files[file_num]
         if file_info['mode'] != 'R':
@@ -3841,7 +3884,7 @@ class Interpreter:
         file_num = to_conint(self.evaluate_expression(stmt.file_number))
 
         if file_num not in self.runtime.files:
-            raise RuntimeError(f"File #{file_num} not open")
+            raise self._file_not_open(file_num)
 
         file_info = self.runtime.files[file_num]
         if file_info['mode'] != 'R':
@@ -4516,6 +4559,17 @@ class Interpreter:
             return self._range_checked(result, self._expression_digits(expr))
         return result
 
+    def _early_range_check(self, func_name, index, value):
+        """The range test of a number argument that the binary makes as it reads the argument.
+
+        See BUILTIN_ARG_RANGES: this is why MID$("A",0,2,3) is Illegal function
+        call and not Syntax error.
+        """
+        kind = BUILTIN_ARG_RANGES.get(func_name, {}).get(index)
+        if kind and not isinstance(value, str):
+            if to_conint(value) == 0 and kind == 's':
+                raise MBasicError(5)
+
     def _functioncall_value(self, expr):
         """The call itself, before precision is applied."""
         # First, check if it's a built-in function
@@ -4523,7 +4577,11 @@ class Interpreter:
         func_name = expr.name.rstrip('$')
         if func_name == 'INSTR' and len(expr.arguments) >= 2:
             # Which error depends on the types, not only the count.
-            args = [self.evaluate_expression(arg) for arg in expr.arguments]
+            args = []
+            for i, arg in enumerate(expr.arguments):
+                args.append(self.evaluate_expression(arg))
+                if i == 0:
+                    self._early_range_check('INSTR', 0, args[0])
             error = instr_shape_error([isinstance(a, str) for a in args])
             if error is not None:
                 raise MBasicError(error)
@@ -4539,6 +4597,7 @@ class Interpreter:
                 if i < len(wanted) and wanted[i] != 'A' and \
                         isinstance(value, str) != (wanted[i] == 'S'):
                     raise MBasicError(13)
+                self._early_range_check(func_name, i, value)
             raise MBasicError(2)
         func = getattr(self.builtins, func_name, None)
         if func:

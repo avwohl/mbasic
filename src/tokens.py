@@ -249,6 +249,8 @@ class Token:
                                # the suffix is not recoverable from the value.
     raw_data: bool = False     # STRING tokens: an unquoted DATA item (READ into a
                                # number variable parses its text; a quoted item is refused)
+    bad_tail: bool = False     # STRING tokens: a quoted DATA item with text after the closing
+                               # quote ("q"x); READ gives the string, then a Syntax error
 
     def __repr__(self):
         # Show both original cases if available

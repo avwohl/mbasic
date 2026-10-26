@@ -2235,6 +2235,16 @@ class SemanticAnalyzer:
 
     def _analyze_next(self, stmt: NextStatementNode):
         """Analyze NEXT statement - validate loop nesting and close loop"""
+        if not getattr(self, 'runtime_next_errors', False):
+            return self._analyze_next_strict(stmt)
+        # The JavaScript backend reports a NEXT that closes no loop when the NEXT runs,
+        # as the binary does (IF c THEN NEXT ELSE NEXT has two NEXTs for one FOR)
+        try:
+            self._analyze_next_strict(stmt)
+        except SemanticError:
+            pass
+
+    def _analyze_next_strict(self, stmt: NextStatementNode):
         if not self.loop_stack:
             raise SemanticError(
                 "NEXT without FOR",

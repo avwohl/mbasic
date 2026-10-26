@@ -3850,6 +3850,10 @@ class Parser:
                 self.advance()
                 values.append(StringNode(value=current_token.value, line_num=current_token.line,
                                          column=current_token.column, raw=True))
+            elif current_token.type == TokenType.STRING and current_token.bad_tail:
+                self.advance()
+                values.append(StringNode(value=current_token.value, line_num=current_token.line,
+                                         column=current_token.column, bad_tail=True))
             elif current_token.type in (TokenType.STRING, TokenType.NUMBER):
                 value = self.parse_expression()
                 values.append(value)

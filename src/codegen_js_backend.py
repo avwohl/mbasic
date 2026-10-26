@@ -1189,7 +1189,7 @@ class JavaScriptBackend(CodeGenBackend):
                 if isinstance(stmt, DataStatementNode):
                     for value in stmt.values:
                         self.data_lines.append(line.line_number)
-                        self.data_kinds.append((2 if value.raw else 1) if isinstance(value, StringNode) else 0)
+                        self.data_kinds.append((2 if value.raw else 3 if value.bad_tail else 1) if isinstance(value, StringNode) else 0)
                         # Extract actual values from AST nodes
                         if isinstance(value, StringNode):
                             self.data_values.append(value.value)
@@ -1476,7 +1476,8 @@ class JavaScriptBackend(CodeGenBackend):
                         self.uses_file_io = True
                     else:
                         self.uses_lprint = True
-                elif isinstance(stmt, (OpenStatementNode, CloseStatementNode, ResetStatementNode)):
+                elif isinstance(stmt, (OpenStatementNode, CloseStatementNode, ResetStatementNode,
+                                       FieldStatementNode, GetStatementNode, PutStatementNode)):
                     self.uses_file_io = True
                 elif isinstance(stmt, (GosubStatementNode, OnGosubStatementNode, ReturnStatementNode)):
                     # A RETURN with no GOSUB in the program still needs the stack to say "RETURN without GOSUB"
@@ -1698,6 +1699,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.indent_level -= 1
         code.append(self.indent() + '}')
         code.append(self.indent() + 'function _cint(n) { return _toInt(n); }')
+        code.append(self.indent() + 'function _arg_range(v, k) { if (typeof v !== "string") { const n = _conint(v); if (n === 0 && k === "s") _error("Illegal function call"); } return v; }  // see BUILTIN_ARG_RANGES')
         code.append(self.indent() + 'function _arg_type(v, t) { if ((typeof v === "string") !== (t === "S")) _error("Type mismatch"); return v; }')
         for line in JS_LOGICAL_RUNTIME.strip('\n').split('\n'):
             code.append(self.indent() + line if line else '')
@@ -1888,6 +1890,19 @@ class JavaScriptBackend(CodeGenBackend):
         if self.uses_file_io:
             code.append(self.indent() + '// File I/O support')
             code.append(self.indent() + 'const _files = {};  // Map file number -> file object')
+            code.append(self.indent() + '// The file object of a file number. CONINT comes first (256 and -1 are Illegal function call).')
+            code.append(self.indent() + '// A number that is not open: Bad file number above 15; up to 15 Bad file mode, or Bad file number')
+            code.append(self.indent() + '// (unopened === true: FIELD, EOF, LOC, LOF), or Input past end ("input": INPUT$). kind is the mode needed.')
+            code.append(self.indent() + 'function _file_of(filenum, kind, unopened) {')
+            code.append(self.indent() + '    const n = _conint(filenum);')
+            code.append(self.indent() + '    const file = _files[n];')
+            code.append(self.indent() + '    if (!file) {')
+            code.append(self.indent() + '        if (n > 15 || unopened === true) _error("Bad file number");')
+            code.append(self.indent() + '        _error(unopened === "input" ? "Input past end" : "Bad file mode");')
+            code.append(self.indent() + '    }')
+            code.append(self.indent() + '    if (kind === "O" ? (file.mode !== "O" && file.mode !== "A") : (kind !== "" && file.mode !== kind)) _error("Bad file mode");')
+            code.append(self.indent() + '    return file;')
+            code.append(self.indent() + '}')
             code.append('')
 
             # File operations wrapper
@@ -1904,7 +1919,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'if (mode === "I") {')
             self.indent_level += 1
             code.append(self.indent() + '// Input mode - read entire file')
-            code.append(self.indent() + 'const content = fs.readFileSync(filename, "utf8");')
+            code.append(self.indent() + 'let content;')
+            code.append(self.indent() + 'try { content = fs.readFileSync(filename, "utf8"); } catch (e) { _error("File not found"); }')
             code.append(self.indent() + '_files[filenum] = { mode: "I", content, pos: 0, filename };')
             self.indent_level -= 1
             code.append(self.indent() + '} else if (mode === "O") {')
@@ -2034,6 +2050,8 @@ class JavaScriptBackend(CodeGenBackend):
             # Helper functions
             code.append(self.indent() + 'function _fopen(filenum, filename, mode, reclen) {')
             self.indent_level += 1
+            code.append(self.indent() + 'filenum = _conint(filenum);')
+            code.append(self.indent() + 'if (filenum < 1 || filenum > 15) _error("Bad file number");')
             code.append(self.indent() + 'if (typeof process !== "undefined") {')
             self.indent_level += 1
             code.append(self.indent() + '_fileOps.nodejs.open(filenum, filename, mode, reclen);')
@@ -2060,6 +2078,8 @@ class JavaScriptBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + '} else {')
             self.indent_level += 1
+            code.append(self.indent() + 'filenum = _conint(filenum);')
+            code.append(self.indent() + 'if (filenum > 15) _error("Bad file number");')
             code.append(self.indent() + 'if (typeof process !== "undefined") {')
             self.indent_level += 1
             code.append(self.indent() + '_fileOps.nodejs.close(filenum);')
@@ -2077,9 +2097,7 @@ class JavaScriptBackend(CodeGenBackend):
 
             code.append(self.indent() + 'function _fprint(filenum, str, newline = true) {')
             self.indent_level += 1
-            code.append(self.indent() + 'const file = _files[filenum];')
-            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
-            code.append(self.indent() + 'if (file.mode !== "O" && file.mode !== "A") _error("File #" + filenum + " not open for output");')
+            code.append(self.indent() + 'const file = _file_of(filenum, "O");')
             code.append(self.indent() + 'file.content += String(str);')
             code.append(self.indent() + 'if (newline) file.content += "\\n";')
             self.indent_level -= 1
@@ -2088,9 +2106,7 @@ class JavaScriptBackend(CodeGenBackend):
 
             code.append(self.indent() + 'function _finput(filenum) {')
             self.indent_level += 1
-            code.append(self.indent() + 'const file = _files[filenum];')
-            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
-            code.append(self.indent() + 'if (file.mode !== "I") _error("File #" + filenum + " not open for input");')
+            code.append(self.indent() + 'const file = _file_of(filenum, "I");')
             for line in JS_FINPUT_BODY.strip('\n').split('\n'):
                 code.append(self.indent() + line)
             self.indent_level -= 1
@@ -2099,9 +2115,7 @@ class JavaScriptBackend(CodeGenBackend):
 
             code.append(self.indent() + 'function _fline_input(filenum) {')
             self.indent_level += 1
-            code.append(self.indent() + 'const file = _files[filenum];')
-            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
-            code.append(self.indent() + 'if (file.mode !== "I") _error("File #" + filenum + " not open for input");')
+            code.append(self.indent() + 'const file = _file_of(filenum, "I");')
             code.append(self.indent() + '// Read one line (CR LF ends it too)')
             code.append(self.indent() + 'if (file.pos >= file.content.length) _error("Input past end");')
             code.append(self.indent() + 'let line = "";')
@@ -2121,9 +2135,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'function _eof(filenum) {')
             self.indent_level += 1
             code.append(self.indent() + '// EOF() - Test for end of file')
-            code.append(self.indent() + 'const file = _files[filenum];')
-            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
-            code.append(self.indent() + 'if (file.mode !== "I") _error("File #" + filenum + " not open for input");')
+            code.append(self.indent() + 'const file = _file_of(filenum, "I", true);')
             code.append(self.indent() + 'return file.pos >= file.content.length ? -1 : 0;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2132,8 +2144,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'function _lof(filenum) {')
             self.indent_level += 1
             code.append(self.indent() + '// LOF() - Length of file in bytes')
-            code.append(self.indent() + 'const file = _files[filenum];')
-            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
+            code.append(self.indent() + 'const file = _file_of(filenum, "", true);')
             code.append(self.indent() + 'return file.content.length;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2142,8 +2153,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'function _loc(filenum) {')
             self.indent_level += 1
             code.append(self.indent() + '// LOC() - Current position in file')
-            code.append(self.indent() + 'const file = _files[filenum];')
-            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
+            code.append(self.indent() + 'const file = _file_of(filenum, "", true);')
             code.append(self.indent() + 'return file.pos || 0;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2288,9 +2298,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'function _ffield(filenum, fields) {')
             self.indent_level += 1
             code.append(self.indent() + '// FIELD - Define buffer layout for random file')
-            code.append(self.indent() + 'const file = _files[filenum];')
-            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
-            code.append(self.indent() + 'if (file.mode !== "R") _error("File #" + filenum + " not open for random access");')
+            code.append(self.indent() + 'const file = _file_of(filenum, "R", true);')
             code.append(self.indent() + '// The widths must fit in the record length of OPEN; nothing changes when they do not')
             code.append(self.indent() + 'let total = 0;')
             code.append(self.indent() + 'for (const [width] of fields) {')
@@ -2355,9 +2363,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'function _fget(filenum, recnum) {')
             self.indent_level += 1
             code.append(self.indent() + '// GET - Read record from random file into buffer')
-            code.append(self.indent() + 'const file = _files[filenum];')
-            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
-            code.append(self.indent() + 'if (file.mode !== "R") _error("File #" + filenum + " not open for random access");')
+            code.append(self.indent() + 'const file = _file_of(filenum, "R");')
             code.append(self.indent() + 'const recordNum = recnum !== undefined ? recnum : file.currentRecord;')
             code.append(self.indent() + 'const pos = (recordNum - 1) * file.recordLength;')
             code.append(self.indent() + 'if (pos < 0) _error("Invalid record number");')
@@ -2389,9 +2395,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'function _fput(filenum, recnum) {')
             self.indent_level += 1
             code.append(self.indent() + '// PUT - Write buffer to record in random file')
-            code.append(self.indent() + 'const file = _files[filenum];')
-            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
-            code.append(self.indent() + 'if (file.mode !== "R") _error("File #" + filenum + " not open for random access");')
+            code.append(self.indent() + 'const file = _file_of(filenum, "R");')
             code.append(self.indent() + 'const recordNum = recnum !== undefined ? recnum : file.currentRecord;')
             code.append(self.indent() + 'const pos = (recordNum - 1) * file.recordLength;')
             code.append(self.indent() + 'if (pos < 0) _error("Invalid record number");')
@@ -2487,7 +2491,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '// DATA/READ/RESTORE')
             code.append(self.indent() + f'const _data = {self._format_data_array()};')
             code.append(self.indent() + f'const _data_txt = {self._format_data_texts()};')
-            code.append(self.indent() + f'const _data_kind = {json.dumps(self.data_kinds)};  // 0 number, 1 quoted, 2 unquoted')
+            code.append(self.indent() + f'const _data_kind = {json.dumps(self.data_kinds)};  // 0 number, 1 quoted, 2 unquoted, 3 quoted with text after the quote')
             code.append(self.indent() + f'const _data_ln = {json.dumps(self.data_lines)};')
             code.append(self.indent() + 'let _data_ptr = 0, _read_start = 0;  // _read_start: where the running READ began')
             code.append(self.indent() + _DATA_TEXT_TO_NUMBER_JS)
@@ -2505,8 +2509,17 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '    _data_ptr++;')
             code.append(self.indent() + '    return v;')
             code.append(self.indent() + '}')
+            code.append(self.indent() + 'if (_data_kind[_data_ptr] === 3) _bad_tail = _data_ln[_data_ptr];')
             code.append(self.indent() + 'return _data[_data_ptr++];')
             self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'let _bad_tail = null;')
+            code.append(self.indent() + 'function _read_check() {')
+            code.append(self.indent() + '    // "q"x: the string is stored, then the text after the quote is a Syntax error at the DATA line')
+            code.append(self.indent() + '    if (_bad_tail === null) return;')
+            code.append(self.indent() + '    const line = _bad_tail;')
+            code.append(self.indent() + '    _bad_tail = null; _data_ptr = _read_start;')
+            code.append(self.indent() + '    try { _error("Syntax error"); } catch (e) { e.basicLine = line; throw e; }')
             code.append(self.indent() + '}')
             code.append(self.indent() + 'function _restore() {')
             self.indent_level += 1
@@ -2633,12 +2646,10 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '// Keyboard: characters already in _inkey_buffer come first, then the host is asked.')
             code.append(self.indent() + '// main() is async. Node reads stdin with fs.readSync (it blocks); a browser waits for keydown events.')
             code.append(self.indent() + 'async function _input_chars(n, filenum) {')
-            code.append(self.indent() + '    n = Math.trunc(n);')
-            code.append(self.indent() + '    if (n < 1 || n > 255) _error("Illegal function call");')
+            code.append(self.indent() + '    n = _conint(n);')
+            code.append(self.indent() + '    if (n < 1) _error("Illegal function call");')
             code.append(self.indent() + '    if (filenum !== undefined) {')
-            code.append(self.indent() + '        const file = _files[filenum];')
-            code.append(self.indent() + '        if (!file) _error("File #" + filenum + " not open");')
-            code.append(self.indent() + '        if (file.mode !== "I") _error("Bad file mode");')
+            code.append(self.indent() + '        const file = _file_of(filenum, "I", "input");')
             code.append(self.indent() + '        if (file.pos + n > file.content.length) {')
             code.append(self.indent() + '            file.pos = file.content.length;')
             code.append(self.indent() + '            _error("Input past end");')
@@ -2696,6 +2707,8 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_variables(self) -> List[str]:
         """Generate variable declarations"""
         code = []
+        if self.while_to_wend:
+            code.append(self.indent() + 'let _wdepth = 0;  // WHILE loops entered and not yet at their WEND')
 
         for var_name, var_info in sorted(self.symbols.variables.items()):
             # Use simple lowercase name - type coercion happens at assignment time
@@ -3024,7 +3037,9 @@ class JavaScriptBackend(CodeGenBackend):
                 items.append(f'[{kind}, () => {self._generate_expression(expr.arguments[0])}]')
             else:
                 value = self._generate_expression(expr)
-                if '(' in value:
+                if '(' in value and 'await ' not in value:
+                    # (An item that waits - INPUT$, an async DEF FN - cannot be in an arrow
+                    # function; it is evaluated before the items print.)
                     # Evaluated when its turn comes: POS sees the items printed
                     # before it, and "A=" is on the screen before 10^40 prints
                     # Overflow, as in MBASIC.
@@ -3276,10 +3291,16 @@ class JavaScriptBackend(CodeGenBackend):
 
         # A built-in with the wrong number of arguments: Syntax error when the
         # call runs, after the arguments the binary can use (ABS(1,2)).
+        base = func.name.upper().rstrip('$')
+        if func_name == 'instr' and len(args) >= 2:
+            args[0] = f'_arg_range({args[0]}, "s")'   # the start is range-checked before the rest is read
         if func.arity_error is not None and not (func_name == 'instr' and len(args) >= 2):
             wanted = arity_type_checks(func.name, len(args))
             checked = [f'_arg_type({a}, "{wanted[i]}")' if i < len(wanted) and wanted[i] != 'A' else a
                        for i, a in enumerate(args[:func.arity_error])]
+            for i, kind in BUILTIN_ARG_RANGES.get(base, {}).items():
+                if i < len(checked):
+                    checked[i] = f'_arg_range({checked[i]}, "{kind}")'
             return f'({", ".join(checked + ["_error(\"Syntax error\")"])})'
 
         # Check if it's a DEF FN function (starts with 'fn')
@@ -3507,6 +3528,11 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate NEXT statement - check condition and loop back"""
         code = []
 
+        if id(stmt) not in self.matched_next:
+            # Only the NEXT that closes a FOR (the first one in the text) can end the loop;
+            # any other NEXT is "NEXT without FOR" when it runs, as on the binary
+            return [self.indent() + '_error("NEXT without FOR");']
+
         # Get variable names
         variables = stmt.variables
         if not variables:
@@ -3560,7 +3586,10 @@ class JavaScriptBackend(CodeGenBackend):
             return [self.indent() + '_error("WHILE without WEND");']
         else:
             leave = self._jump_code(self._after(wend, self.next_line_of[id(wend)]))
+        # A WHILE whose condition fails (Type mismatch ...) and is resumed enters no loop,
+        # so the WEND at its end finds no WHILE, as on the binary
         code.append(self.indent() + f'if (!({condition})) {{ {leave} }}')
+        code.append(self.indent() + '_wdepth++;')
         return code
 
     def _generate_wend(self, stmt: WendStatementNode) -> List[str]:
@@ -3569,9 +3598,12 @@ class JavaScriptBackend(CodeGenBackend):
         if while_stmt is None:
             return [self.indent() + '_error("WEND without WHILE");']
         target = self.while_target[id(while_stmt)]
+        code = [self.indent() + 'if (_wdepth <= 0) _error("WEND without WHILE");',
+                self.indent() + '_wdepth--;']
         # The label of a WHILE later on the same line is above CONT_LABEL_BASE: always look at the clock
         check = f'{yield_check(str(target))} ' if self.yield_checks else ''
-        return [self.indent() + f'{check}_pc = {target}; break;']
+        code.append(self.indent() + f'{check}_pc = {target}; break;')
+        return code
 
     def _generate_if(self, stmt: IfStatementNode, current_line: int) -> List[str]:
         """Generate IF statement"""
@@ -3793,6 +3825,8 @@ class JavaScriptBackend(CodeGenBackend):
             if var.type_suffix == '%':
                 read = f'_toInt({read})'    # READ A% of 12.7 is 13, of 70000 is Overflow
             code.append(self.indent() + f'{self._input_lvalue(var)} = {read};')
+            if 3 in self.data_kinds:
+                code.append(self.indent() + '_read_check();')
         return code
 
     def _generate_restore(self, stmt: RestoreStatementNode) -> List[str]:

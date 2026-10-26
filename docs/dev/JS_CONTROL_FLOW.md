@@ -53,6 +53,9 @@ label (`while_target`). A WHILE inside an IF makes the IF a flat IF. In the
 browser copy the jump back of WEND has the yield check. A WHILE with no WEND
 stops with `WHILE without WEND` when the WHILE runs, whatever the condition is. The semantic
 analyzer refuses a WEND with no WHILE when the program is compiled.
+A string as the condition is `Type mismatch`. The error comes before the loop
+is entered, so the program counts the loops that were entered (`_wdepth`):
+after `RESUME NEXT` the WEND of that WHILE is `WEND without WHILE`, as on the binary.
 Test: `tests/regression/integration/test_js_while_wend.py`.
 
 ## RESUME and RESUME NEXT
@@ -107,8 +110,12 @@ to its line). ERL uses the same line.
 
 * A FOR in a THEN or ELSE part runs its body to the end of the line in the
   interpreter and in the JavaScript, as in real MBASIC. This includes a NEXT
-  on a later line. `IF c THEN NEXT ELSE NEXT` inside such a loop can differ
-  from real MBASIC (the binary gives NEXT without FOR).
+  on a later line.
+* Only the first NEXT that FOR finds in the text can end the loop. Any other
+  NEXT (the second NEXT of `IF c THEN NEXT ELSE NEXT`, a NEXT that a jump
+  reaches) is `NEXT without FOR` when it runs, as on the binary. The semantic
+  analyzer does not refuse such a program for JavaScript
+  (`runtime_next_errors`). Test: `tests/regression/integration/test_next_matches_first.py`.
 * NEXT pairs with FOR by position in the text. A program that jumps into a
   loop with GOTO and a FOR that has no NEXT in the text can behave
   differently from real MBASIC.

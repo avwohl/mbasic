@@ -276,6 +276,7 @@ def compile_to_javascript(input_file, output_file, generate_html=False, debug=Fa
 
         # Semantic analysis
         analyzer = SemanticAnalyzer(flatten_arrays=False)  # the JavaScript arrays are nested
+        analyzer.runtime_next_errors = True  # a NEXT with no FOR is an error when it runs
         success = analyzer.analyze(ast)
 
         if not success:

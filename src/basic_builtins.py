@@ -984,6 +984,8 @@ class BuiltinFunctions:
             raise ValueError(f"File #{file_num} not open")
 
         file_info = self.runtime.files[file_num]
+        if file_info['mode'] in ('O', 'A'):
+            raise ValueError(f"File #{file_num} not open for input")    # Bad file mode
 
         # Check EOF flag (set by input operations or ^Z detection)
         if file_info['eof']:
@@ -1134,9 +1136,13 @@ class BuiltinFunctions:
             # Read from file
             file_num = to_conint(file_num)
             if file_num not in self.runtime.files:
+                if file_num <= 15:
+                    raise ValueError("Input past end")     # measured: a file number that is not open reads nothing
                 raise ValueError(f"File #{file_num} not open")
 
             file_info = self.runtime.files[file_num]
+            if file_info['mode'] in ('O', 'A'):
+                raise ValueError(f"File #{file_num} not open for input")    # Bad file mode
             file_handle = file_info['handle']
             # Same reason as _note_random: a retried statement would read the
             # NEXT bytes rather than the ones the abandoned attempt saw.

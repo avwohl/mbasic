@@ -150,8 +150,15 @@ What is still different:
   every other item (`1 2`, `12abc`, `&OA`, `&H12G`, `X+1`, `(1)`, `PRINT`) is a
   string with the case kept and the trailing spaces dropped, as on the binary.
   An empty item is an empty string. A signed item such as `+3` reads as `+3`
-  into `A$`. The JavaScript compiler does the same. Not done: the binary gives
-  a Syntax error for text after a closing quote (`"q"x`); we drop that text.
+  into `A$`. The JavaScript compiler does the same. Text after a closing quote
+  (`"q"x`, `"q" x`, `"q"1`, `"q"'c`) is a Syntax error at the DATA line on the
+  binary, when READ reaches the item. `READ A$` stores the string first, then
+  the error is raised and the DATA pointer goes back to where the READ began,
+  so the next READ gives the same item and the same error. Spaces before a
+  comma, a colon or the end of the line are fine. The lexer marks the item
+  (`bad_tail` on the token and on `StringNode`); the interpreter and the
+  JavaScript compiler (`_read_check`) raise the error after the store. Test:
+  `tests/regression/integration/test_data_quote_tail.py`.
   READ into a number variable parses the text of an unquoted item at READ
   time, as the binary does (`data_text_to_number` in `src/interpreter.py`, and
   the same code in the JavaScript compiler). Spaces inside the digits are
@@ -163,8 +170,8 @@ What is still different:
   `RESUME NEXT` goes on after the READ, and the DATA pointer goes back to
   where the READ statement began, so the items that the same READ already
   read are read again, and the bad item is the next item to read (`READ B$`
-  after the trapped error gets it). Not done: `ON ERROR GOTO 0` inside
-  the handler reports the READ line, not the DATA line.
+  after the trapped error gets it). `ON ERROR GOTO 0` inside the handler
+  reports the DATA line, as ERL does (`ErrorInfo.report_pc`).
   Test: `tests/regression/integration/test_entry_time_forms.py`.
 - Done: a line number stops at 6553. MBASIC takes no more digits once the value
   is 6553 or more, so `70000 PRINT 1` is line 7000 with the text `0 PRINT 1`,
@@ -323,8 +330,14 @@ Found while measuring (#61):
   run-time error. For the multi-argument built-ins the binary checks the type
   of an argument at the `,` behind it, so a wrong type is `Type mismatch` (13)
   before the count is a `Syntax error`: `LEFT$(1,2,3)`, `STRING$("A")`. `ABS("x",1)` and `LEFT$(1)` stay `Syntax error`
-  (`arity_type_checks` in `src/ast_nodes.py`). Not done: `MID$("A",0,2,3)` is
-  `Illegal function call` on the binary (the start is checked first). A
+  (`arity_type_checks` in `src/ast_nodes.py`). A number argument is
+  range-checked when it is read, before the count error: `MID$("A",0,2,3)`,
+  `LEFT$("A",-1,2)`, `STRING$(-1,2,3)`, `INSTR(0,"A","B",4)` and
+  `INPUT$(1,300,2)` are `Illegal function call` (`Overflow` above 32767), and
+  `MID$("A",0,"x",3)` is `Illegal function call` before the type of `"x"`.
+  `SPACE$(-1,2)` and `CHR$(300,1)` stay `Syntax error`
+  (`BUILTIN_ARG_RANGES` in `src/ast_nodes.py`; interpreter and JavaScript).
+  Test: `tests/regression/integration/test_early_arg_range.py`. A
   string given to a number argument (`ABS("a")`, `LEN(1)`) or the other way
   round (`LEFT$(1,2)`) is `Type mismatch` in the interpreter, as on the
   binary (`builtin_arg_kinds` in `src/js_type_check.py`).
@@ -335,8 +348,15 @@ Found while measuring (#61):
   works after a GOSUB in the body and after RESUME NEXT. A NEXT on a later
   line (`10 IF 1 THEN FOR I=1 TO 3:PRINT I` / `20 NEXT`) loops as on the
   binary: the NEXT runs the rest of the part again (`_execute_next_single`).
-  Not done: `IF c THEN NEXT ELSE NEXT` in the body (the binary gives `NEXT
-  without FOR` there).
+  Done: FOR keeps the text pointer of the NEXT that its scan found (NXTSCN),
+  and only that NEXT can end the loop. Any other NEXT is `NEXT without FOR`:
+  the second NEXT of `IF c THEN NEXT ELSE NEXT` (also at the end of the loop
+  of a FOR that is not in a clause), a NEXT that a jump reaches, and a second
+  NEXT on a later line. The interpreter keeps that NEXT per loop variable
+  (`_for_next_node`); the JavaScript compiler gives the error for every NEXT
+  that no FOR was paired with, and the semantic analyzer no longer refuses
+  such a program for JavaScript (`runtime_next_errors`). Test:
+  `tests/regression/integration/test_next_matches_first.py`.
 - Done (#61): `INSTR` gives its error from the types, not only the count
   (`instr_shape_error` in `src/ast_nodes.py`, interpreter and JavaScript
   backend). A string first argument is the two-argument form: `INSTR("A",1)`
@@ -407,8 +427,38 @@ Found while measuring (#61):
 - Not done (#61): `CLEAR` does not reset `DEFINT`, `DEFSTR` and the other
   DEF types, as the binary does. The variable types are fixed when the
   program is parsed, so a run-time reset needs a different design.
-- `PRINT #1,"x"` with file 1 not open is `Bad file mode` (54) on the binary
-  and `Bad file number` (52) here. Not fixed; found while measuring CLEAR.
+- Done: a file number that no OPEN made. `PRINT #1,"x"`, `PRINT #`
+  `USING`, `WRITE #`, `INPUT #`, `LINE INPUT #`, `GET` and `PUT` are `Bad file
+  mode` (54) for 0 to 15, `Bad file number` (52) for 16 to 255 and `Illegal
+  function call` above 255 or below 0. `FIELD`, `EOF`, `LOC` and `LOF` are
+  `Bad file number` for 0 to 255. `CLOSE #16` is `Bad file number` (`CLOSE #1`
+  of a file that is not open is no error). `INPUT$(1,#1)` is `Input past
+  end` for 0 to 15. `EOF` and `INPUT$` on a file open for output are `Bad file
+  mode`. Measured with `/F:15`, because this interpreter has 15 files. The
+  JavaScript compiler gives the same errors (`_file_of`) and numbers its files
+  1 to 15 in `OPEN`; before, it stopped with its own text (`File #1 not
+  open`). A file statement with `FIELD`, `GET` or `PUT` and no `OPEN` no
+  longer stops with `_ffield is not defined`. Test:
+  `tests/regression/integration/test_file_number_errors.py`.
+- Not done: a random file (`OPEN "R"`) used with `PRINT #`, `WRITE #`, `INPUT #`
+  or `LINE INPUT #`. The binary writes into and reads from the FIELD buffer
+  with a cursor (`PRINT #3,"HELLO"` puts `HELLO` and CR LF in the buffer, and
+  `FIELD overflow` when the record is full; `INPUT #` on an empty record is
+  `FIELD overflow`). Here those statements are `Bad file mode`. It needs a
+  cursor in the record buffer and its reset rules; no program in `basic/` uses it.
+- Not done: `LOF` and `LOC` of a sequential file count 128-byte sectors on the
+  binary (an input file of 3 bytes: `LOF` 1, `LOC` 1 after the OPEN; a file of
+  671 bytes: `LOF` 6, and `LOC` goes 1, 2, 3 ... as the lines are read). Here
+  `LOF` is the size in bytes and `LOC` is the byte position divided by 128.
+  `LOF` of a random file is 0 on the binary until the file is closed. The rule
+  for `LOC` was not found: after 5, 10, 15 and 20 lines of 16 or 17 bytes it
+  is 1, 2, 3 and 3.
+- Done: a string as a condition is `Type mismatch`: `IF "a" THEN`, `IF A$
+  THEN`, `IF "" THEN ... ELSE`, and `WHILE "a"` (the error comes before the
+  loop is entered, so after `RESUME NEXT` the WEND is `WEND without WHILE`,
+  ERR 30). A comparison of strings is a number and is fine. The JavaScript
+  compiler counts the open WHILE loops (`_wdepth`) for the same reason. Test:
+  `tests/regression/integration/test_string_condition.py`.
 - A `MID$` statement whose value is the target string, as in
   `MID$(A$,3)=A$`, copies one byte at a time inside the one string on the
   binary (`HEHEH`). The interpreter and the JavaScript backend do the same.

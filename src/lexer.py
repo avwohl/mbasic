@@ -401,11 +401,17 @@ class Lexer:
                 text = ''
                 while self.current_char() is not None and self.current_char() not in '"\r\n':
                     text += self.advance()
-                if self.current_char() == '"':
+                closed = self.current_char() == '"'
+                if closed:
                     self.advance()
+                bad_tail = False
                 while self.current_char() is not None and self.current_char() not in ',:\r\n':
-                    self.advance()      # text after the closing quote is dropped
-                self.tokens.append(Token(TokenType.STRING, text, line, col))
+                    # The binary reads the string and then finds this text where it wants
+                    # a comma or the end: Syntax error at the DATA line, when READ gets there
+                    if closed and self.current_char() not in ' \t':
+                        bad_tail = True
+                    self.advance()
+                self.tokens.append(Token(TokenType.STRING, text, line, col, bad_tail=bad_tail))
             else:
                 end = start
                 while end < len(src) and src[end] not in ',:\r\n':
