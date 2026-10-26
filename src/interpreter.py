@@ -4823,10 +4823,13 @@ class Interpreter:
             # is evaluated.
             kinds = builtin_arg_kinds(func_name, len(expr.arguments))
             args = []
-            for kind, arg in zip(kinds, expr.arguments):
+            for index, (kind, arg) in enumerate(zip(kinds, expr.arguments)):
                 value = self.evaluate_expression(arg)
                 if kind != '*' and isinstance(value, str) != (kind == 's'):
                     raise MBasicError(13)
+                # a range error in this argument comes before a type error in a later one
+                # (measured: MID$("a",-1,"x") is Illegal function call)
+                self._early_range_check(func_name, index, value)
                 args.append(value)
             if func_name == 'STR' and len(args) == 1:
                 # STR$ converts like PRINT, so the argument's type matters

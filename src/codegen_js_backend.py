@@ -2802,6 +2802,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'function _cvi(s) {')
         self.indent_level += 1
         code.append(self.indent() + '// CVI - Convert 2-byte string to integer')
+        code.append(self.indent() + 'if (s.length < 2) _error("Illegal function call");  // a longer string: its first 2 bytes')
         code.append(self.indent() + 'let n = s.charCodeAt(0) | (s.charCodeAt(1) << 8);')
         code.append(self.indent() + 'if (n >= 32768) n = n - 65536;  // Two\'s complement')
         code.append(self.indent() + 'return n;')
@@ -2810,6 +2811,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'function _cvs(s) {')
         self.indent_level += 1
         code.append(self.indent() + '// CVS - Convert 4-byte string to single')
+        code.append(self.indent() + 'if (s.length < 4) _error("Illegal function call");  // a longer string: its first 4 bytes')
         code.append(self.indent() + 'const buf = new ArrayBuffer(4);')
         code.append(self.indent() + 'const arr = new Uint8Array(buf);')
         code.append(self.indent() + 'for (let i = 0; i < 4; i++) arr[i] = s.charCodeAt(i) || 0;')
@@ -2819,6 +2821,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'function _cvd(s) {')
         self.indent_level += 1
         code.append(self.indent() + '// CVD - Convert 8-byte string to double')
+        code.append(self.indent() + 'if (s.length < 8) _error("Illegal function call");  // a longer string: its first 8 bytes')
         code.append(self.indent() + 'const buf = new ArrayBuffer(8);')
         code.append(self.indent() + 'const arr = new Uint8Array(buf);')
         code.append(self.indent() + 'for (let i = 0; i < 8; i++) arr[i] = s.charCodeAt(i) || 0;')
@@ -3555,8 +3558,15 @@ class JavaScriptBackend(CodeGenBackend):
         else:
             wanted = builtin_arg_kinds(name, len(args))
         wanted = wanted + ['*'] * (len(args) - len(wanted))
-        return [code if want == '*' or expr_kind(arg) == want else self._type_mismatch(code)
-                for arg, code, want in zip(func.arguments, args, wanted)]
+        checked = [code if want == '*' or expr_kind(arg) == want else self._type_mismatch(code)
+                   for arg, code, want in zip(func.arguments, args, wanted)]
+        if not name.startswith('FN'):
+            # These arguments are range-checked as they are read, before the next one, so
+            # MID$("a",-1,"x") and STRING$(300,"a"+1) are Illegal function call (measured)
+            for i, kind in BUILTIN_ARG_RANGES.get(name.rstrip('$'), {}).items():
+                if i < len(checked) - 1:
+                    checked[i] = f'_arg_range({checked[i]}, "{kind}")'
+        return checked
 
     def _generate_function_call(self, func: FunctionCallNode) -> str:
         """Generate function call"""

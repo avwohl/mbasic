@@ -1062,6 +1062,12 @@ Each item was measured on the binary. Test:
   the `Syntax error`; a program line keeps its trailing spaces (an unclosed
   string ends with them); `PRINT USING` with no field stops before the end of
   the line. Test: `tests/regression/integration/test_data_restore_using.py`.
+  A third random test, of the built-in functions, found two more, done:
+  `CVI`, `CVS` and `CVD` read the first 2, 4 or 8 bytes of a longer string
+  (a shorter one is `Illegal function call`), and an argument that the
+  binary range-checks as it reads it gives its error before a later
+  argument can give `Type mismatch` (`MID$("a",-1,"x")` is error 5). Test:
+  `tests/regression/integration/test_function_argument_edges.py`.
   Still different, by design (MBF arithmetic is not emulated): `100^16`
   prints 9.99999E+31 on the binary, a single product between 1.70141E+38
   and 3.4E+38 is Overflow there, and `32768*-32769` prints -1.07377E+09.

@@ -206,7 +206,8 @@ def test_each_builtin_alone_calls_only_defined_helpers(tmp_path, call):
 def test_input_dollar_emits_helper_and_file_support(tmp_path):
     js = compile_js(tmp_path, '10 OPEN "I", #1, "x"\n20 S$ = INPUT$(1, #1)\n30 END\n', "f")
     assert "function _input_chars(" in js
-    assert "_input_chars(1.0, 1.0)" in js or re.search(r"_input_chars\(1(\.0)?, 1(\.0)?\)", js)
+    # the count is range-checked before the file number is read (_arg_range)
+    assert re.search(r'_input_chars\((_arg_range\()?1(\.0)?(, "c"\))?, 1(\.0)?\)', js)
     assert "const _files" in js
     # The file form needs the file helpers even without any OPEN statement.
     js = compile_js(tmp_path, "10 S$ = INPUT$(1, #1)\n20 END\n", "g")

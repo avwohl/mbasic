@@ -671,12 +671,14 @@ class BuiltinFunctions:
         """Convert 2-byte string to integer (little-endian)
 
         Used for reading binary integer data from random files.
-        The string must be exactly 2 bytes long.
+        The string must be at least 2 bytes long; the first 2 are read.
         """
         if not isinstance(s, str):
             s = str(s)
-        if len(s) != 2:
+        if len(s) < 2:
+            # A longer string is read from its first 2 bytes (measured: CVI("abc") is 25185)
             raise ValueError(f"Illegal function call: CVI requires 2-byte string, got {len(s)} bytes")
+        s = s[:2]
 
         # Convert string to bytes and unpack as signed 16-bit integer (little-endian)
         import struct
@@ -687,12 +689,14 @@ class BuiltinFunctions:
         """Convert 4-byte string to single-precision float (little-endian)
 
         Used for reading binary single-precision data from random files.
-        The string must be exactly 4 bytes long.
+        The string must be at least 4 bytes long; the first 4 are read.
         """
         if not isinstance(s, str):
             s = str(s)
-        if len(s) != 4:
+        if len(s) < 4:
+            # A longer string is read from its first 4 bytes (measured: CVI("abc") is 25185)
             raise ValueError(f"Illegal function call: CVS requires 4-byte string, got {len(s)} bytes")
+        s = s[:4]
 
         # Convert string to bytes and unpack as single-precision float (little-endian)
         import struct
@@ -703,12 +707,14 @@ class BuiltinFunctions:
         """Convert 8-byte string to double-precision float (little-endian)
 
         Used for reading binary double-precision data from random files.
-        The string must be exactly 8 bytes long.
+        The string must be at least 8 bytes long; the first 8 are read.
         """
         if not isinstance(s, str):
             s = str(s)
-        if len(s) != 8:
+        if len(s) < 8:
+            # A longer string is read from its first 8 bytes (measured: CVI("abc") is 25185)
             raise ValueError(f"Illegal function call: CVD requires 8-byte string, got {len(s)} bytes")
+        s = s[:8]
 
         # Convert string to bytes and unpack as double-precision float (little-endian)
         import struct
