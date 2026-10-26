@@ -202,6 +202,15 @@ int mb25_cint(double v);
 int mb25_int16(double v);             /* CINT that stops with Overflow out of range */
 int mb25_idiv(int a, int b);          /* \ with Division by zero */
 int mb25_imod(int a, int b);          /* MOD with Division by zero */
+double mb25_idivd(int a, int b);      /* \ whose quotient may be 32768 */
+void mb25_warn(const char *msg);      /* Division by zero / Overflow, then go on */
+double mb25_fdiv(double a, double b); /* / */
+double mb25_fmul(double a, double b); /* * on floats */
+double mb25_exp(double v);            /* EXP */
+double mb25_log(double v);            /* LOG */
+int mb25_byte(int v);                 /* 0..255 or Illegal function call */
+int mb25_start(int v);                /* 1..255 or Illegal function call */
+int mb25_word(double v);              /* HEX$ and OCT$ argument */
 double mb25_int(double v);               /* INT */
 double mb25_fix(double v);               /* FIX */
 double mb25_sqr(double v);               /* SQR */

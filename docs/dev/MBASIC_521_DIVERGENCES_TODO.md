@@ -605,8 +605,8 @@ semantics are not:
 - Done (#54): the C backend rounds a fractional operand of `\`, MOD, AND,
   OR, XOR, EQV, IMP and NOT, and an operand outside -32768..32767 after
   rounding is `Overflow`. `\` and MOD with a zero divisor are `Division by
-  zero`. One edge stays open: `-32768 \ -1` wraps to -32768 in the C backend,
-  where MBASIC gives 32768.
+  zero`. `-32768 \ -1` is 32768 in the C backend too: a `\`
+  that can give it is typed single precision (see `docs/dev/C_BACKEND.md`).
 - Done (#55): FOR and NEXT end a loop when the sign of (v - end) equals the
   sign of the step, in the JavaScript backend (`_for_done(v, end, step)`) and
   in the C backend. With STEP 0 the loop ends only when the variable equals

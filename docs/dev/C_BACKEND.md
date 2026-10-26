@@ -146,23 +146,29 @@ These differences are known. They are not fixed.
   `String too long`, `Out of DATA`, `RETURN without GOSUB`, `File not found`,
   `File not open`) print a new line when the cursor is not in column 1, then
   `message in LINE`, as MBASIC 5.21 does (no `?` in front). The C program keeps the line number in
-  `mb25_line` (one store at the start of each line). Not all checks of MBASIC
-  exist: `SQR(-8)` gives 0, `LOG(0)` gives a large negative number, and
-  `MID$(x,0)` and `LEFT$(x,-1)` give no error, where MBASIC gives
-  `Illegal function call`. A string longer than 255 characters stops the program
+  `mb25_line` (one store at the start of each line). `SQR` of a negative number, `LOG` of
+  zero or less, a negative base with a fraction as exponent, `ASC("")`, a count or code outside
+  0..255 in `LEFT$`, `RIGHT$`, `MID$`, `CHR$`, `SPACE$` and `STRING$`, and a `MID$` or
+  `INSTR` start outside 1..255 give `Illegal function call`. `CINT`, a store into an
+  INTEGER variable, a subscript, and the argument of `HEX$` and `OCT$` give `Overflow`
+  outside the range. A string longer than 255 characters stops the program
   with `String too long`.
 - **A floating-point result can differ in the last digit.** `basic/dev/bas_tests/asciiart.bas`
   differs in one character out of 2000.
-- **Most arithmetic has no run-time errors.** Division by zero gives the largest
-  number (`1.70141E+38`) without the `Division by zero` message that MBASIC prints
-  before it carries on. `ON ERROR` does not see it. The operators `\`, `MOD`, `AND`,
-  `OR`, `XOR`, `EQV`, `IMP` and `NOT` are an exception: they stop with `Overflow` or
+- **Float errors that MBASIC reports and goes on from.** A float division by zero,
+  `0^-1`, a float product or power that is too large, and `EXP(100)` print
+  `Division by zero` or `Overflow` on a line of their own and go on with the largest
+  float (`1.70141E+38`), as MBASIC does. `ON ERROR` does not see them. The
+  operators `\`, `MOD`, `AND`, `OR`, `XOR`, `EQV`, `IMP` and `NOT` stop with `Overflow` or
   `Division by zero` (the program ends, as for any run-time error). `+`, `-` and `*`
-  on integers wrap at 16 bits and do not give `Overflow`. The compiler warns when
-  it can happen. A float product that is too large also gives `1.70141E+38` and not `Overflow`.
-- **`-32768 \ -1` gives -32768.** MBASIC gives 32768, because the quotient does
-  not fit in an integer. The result of `\` is an integer in the compiled program, so
-  the quotient wraps. `-32768 MOD -1` is 0 in both.
+  on integers still wrap at 16 bits and do not give `Overflow`: MBASIC turns the result
+  into a single-precision number and gives `Overflow` only when the program stores it in an
+  INTEGER variable. The compiler warns when it can happen.
+- **`\` and the minus sign on an integer give a float when they can give 32768.**
+  `-32768 \ -1` and `-A%` with `A% = -32768` are 32768, as in MBASIC, because the
+  compiler types such an expression as single precision. A `\` with a constant divisor
+  other than -1 stays an integer. A store of 32768 into an INTEGER variable is `Overflow`.
+  `-32768 MOD -1` is 0 in both.
 - **The float range is that of uc80**: about 1.2E-38 to 1.7E38. A number in the program
   outside this range is wrong in the compiled program (`3E38` prints as `2.59085E-39`,
   `-1E-38` as `0`), and the compiler warns about such a number. `2^126` prints with one
