@@ -80,6 +80,9 @@ before (`CHR$`, `HEX$`, `INSTR` and others), so these programs grow more.
 So the runtime does the comma zones of 14 columns, `TAB`, `SPC` and the 80-column
 wrap. After `INPUT` the column is 0. `PRINT #n` and `WRITE #n` send the same text to
 a file, with CR LF at the end of each line. `LPRINT` writes to the console.
+The mode of `OPEN` must be a string literal. The compiler stops with `Unknown
+file mode` for `OPEN M$,#1,F$`, which the interpreter and the JavaScript
+compiler accept.
 
 ## Arrays
 
