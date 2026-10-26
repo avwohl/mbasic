@@ -53,6 +53,18 @@ def split_variable_name_and_suffix(full_name):
     return (full_name, None)
 
 
+class ProgramString(str):
+    """A string written in the program text (a literal).
+
+    On the binary such a string points into the program and takes no string
+    space. The class is the mark, so it travels with the value and is lost
+    when a function or operator makes a new string: slicing, + and the like
+    give back a plain str (a copy, even when the result equals the whole
+    literal), which is what the binary does in string space.
+    """
+    __slots__ = ()
+
+
 class Runtime:
     """Runtime state for BASIC program execution"""
 
@@ -127,7 +139,6 @@ class Runtime:
         self.memory_top = HIGHEST_MEMORY
         self.stack_space = STACK_SPACE
         self._string_slack = 0
-        self._program_strings = {}      # id -> string, see note_program_string
 
         self.files = {}               # file_number -> file_handle
         self.field_buffers = {}       # file_number -> buffer_dict
@@ -644,19 +655,13 @@ class Runtime:
         """What FRE returns: string space not taken by live strings."""
         return max(0, self.string_space_size - self.live_string_bytes())
 
-    def note_program_string(self, value):
-        """Remember a string that is written in the program (a literal or DATA item).
-
-        On the binary such a string points into the program text and takes no
-        string space (measured: 401 elements of 150 characters assigned from
-        a literal fit, the same made by STRING$ do not). Python gives the
-        value back as the same object, so the object is the mark.
-        """
-        self._program_strings[id(value)] = value
-
     def _string_cost(self, value):
-        """Bytes of string space that a string takes."""
-        if self._program_strings.get(id(value)) is value:
+        """Bytes of string space that a string takes.
+
+        A ProgramString (a literal) points into the program text on the
+        binary and takes none. Every other string takes its length.
+        """
+        if type(value) is ProgramString:
             return 0
         return len(value)
 

@@ -8,7 +8,7 @@ import sys
 import signal
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Callable, Any, Union
-from src.runtime import Runtime, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
+from src.runtime import Runtime, ProgramString, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
 from src.pc import PC
@@ -3975,8 +3975,13 @@ class Interpreter:
 
     def evaluate_string(self, expr):
         """Evaluate string literal"""
-        value = expr.value
-        self.runtime.note_program_string(value)
+        value = getattr(expr, '_mb_program_string', None)
+        if value is None or value != expr.value:
+            value = ProgramString(expr.value)
+            try:
+                expr._mb_program_string = value
+            except AttributeError:
+                return value
         return value
 
     def evaluate_variable(self, expr):
