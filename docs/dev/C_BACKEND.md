@@ -91,8 +91,19 @@ descriptors in the string pool, so element n has the ID of the array plus n.
 - A string array element works wherever a string variable works: assignment,
   expressions, `PRINT`, `INPUT`, `LINE INPUT`, `READ`, `SWAP`, `MID$` assignment,
   `LSET` and `RSET`.
-- `ERASE` empties the array. It does not free the memory, and a later `DIM` cannot
-  change the size.
+- `ERASE` deletes the array, as on MBASIC 5.21. The next use makes the array again
+  with the bounds 0 to 10 (1 to 10 with `OPTION BASE 1`), and all elements are 0
+  or the empty string. A `DIM` after `ERASE` can give the array any size and any
+  number of subscripts. An array that an `ERASE` names has its shape as run-time
+  state (`ea_<name>_n`, `_rk` and `_st` in the C code, handled by `mb25_ea_*` in
+  `runtime/strings/mb25_string.c`). The storage has the size of the largest shape
+  that a `DIM` or a use can give, so a loop of `DIM` and `ERASE` does not use
+  more memory. `ERASE` of an array that does not exist is `Illegal function
+  call`, `DIM` of an array that exists is `Duplicate Definition`, and a use with
+  the wrong number of subscripts is `Subscript out of range`. A second `DIM` of
+  an array that no `ERASE` names is a compile error. A `DIM` after `ERASE` must have
+  constant sizes (a size that depends on a variable is a compile error, as for
+  all `DIM` in this backend).
 - A variable and an array can have the same name (`A` and `A(1)`). The C names are
   different: arrays end in `_arr`, and a string array has its own `STR_` macro.
 - The limit is 16383 string descriptors in all (the IDs have 14 bits).

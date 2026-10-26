@@ -17,6 +17,7 @@ Key responsibilities:
 """
 
 from typing import Dict, List, Set, Optional, Tuple, Any, Union
+import dataclasses
 from dataclasses import dataclass, field
 from enum import Enum
 from src.ast_nodes import *
@@ -822,6 +823,10 @@ class SemanticAnalyzer:
         # The JavaScript backend keeps one subscript per dimension, to check each against its own
         # bound as MBASIC does; the C backend wants the flat index.
         self.flatten_arrays = flatten_arrays
+        # Keys of the arrays an ERASE names.  Their bounds can change at run time, so a
+        # subscript is not flattened with constant strides and a second DIM is not an error
+        # here (the compiled program reports Duplicate Definition when it runs).
+        self.erased_arrays: Set[str] = set()
         self.symbols = SymbolTable()
         self.flags = CompilerFlags()
         self.evaluator = ConstantEvaluator(self.symbols)
@@ -961,6 +966,7 @@ class SemanticAnalyzer:
         self.warnings.clear()
         self.optimization_iterations = 0
         self.optimization_converged = False
+        self.erased_arrays = self._find_erased_arrays(program)
 
         try:
             # ============================================================
@@ -1291,13 +1297,6 @@ class SemanticAnalyzer:
             # Issue warning but allow compilation
             self.warnings.append(
                 f"Line {self.current_line}: COMMON is only meaningful with CHAIN (not supported in compiled code)"
-            )
-
-        # ERASE - compiled arrays have a fixed size, so ERASE cannot free them
-        elif isinstance(stmt, EraseStatementNode):
-            # Issue warning but allow compilation
-            self.warnings.append(
-                f"Line {self.current_line}: ERASE in compiled code does not free the array: the C backend only empties it, and a later DIM cannot resize it"
             )
 
         # INPUT - variables are no longer constants after being read
@@ -1949,6 +1948,23 @@ class SemanticAnalyzer:
         # Nothing to do - already handled in first pass
         pass
 
+    def _find_erased_arrays(self, program: ProgramNode) -> Set[str]:
+        """Keys (NAME plus suffix, '!' when none) of every array that an ERASE names."""
+        keys: Set[str] = set()
+        stack: List[Any] = [program]
+        while stack:
+            n = stack.pop()
+            if isinstance(n, (list, tuple)):
+                stack.extend(n)
+            elif dataclasses.is_dataclass(n) and not isinstance(n, type):
+                if isinstance(n, EraseStatementNode):
+                    for name in n.array_names:
+                        name = name.upper()
+                        keys.add(name if name[-1] in '$%!#' else name + '!')
+                for f in dataclasses.fields(n):
+                    stack.append(getattr(n, f.name))
+        return keys
+
     def _analyze_dim(self, stmt: DimStatementNode):
         """Analyze DIM statement - evaluate subscripts as constants"""
         for array_decl in stmt.arrays:
@@ -1962,7 +1978,7 @@ class SemanticAnalyzer:
                 var_key = name_upper + '!'
 
             # Check if already dimensioned
-            if var_key in self.symbols.variables:
+            if var_key in self.symbols.variables and var_key not in self.erased_arrays:
                 var_info = self.symbols.variables[var_key]
                 if var_info.is_array:
                     raise SemanticError(
@@ -2008,6 +2024,8 @@ class SemanticAnalyzer:
                     )
 
                 dimensions.append(const_val)
+            # This DIM's own sizes: an erased array can be dimensioned again with others
+            array_decl.const_dimensions = list(dimensions)
 
             # Calculate flattened size for multi-dimensional arrays
             # Each dimension is stored as the maximum index, so actual size is (dim + 1 - base)
@@ -2569,7 +2587,7 @@ class SemanticAnalyzer:
                     self._analyze_expression(subscript, "array subscript", track_folding=False, track_cse=True)
 
                 # If multi-dimensional, flatten the subscripts
-                if len(expr.subscripts) > 1 and self.flatten_arrays:
+                if len(expr.subscripts) > 1 and self.flatten_arrays and var_key not in self.erased_arrays:
                     # var_key, not the bare name: symbols.variables is keyed by
                     # the type-suffixed name (A!, A%), so a bare lookup misses.
                     var_info = self.symbols.variables.get(var_key)

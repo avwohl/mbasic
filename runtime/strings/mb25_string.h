@@ -207,6 +207,11 @@ double mb25_fix(double v);               /* FIX */
 double mb25_sqr(double v);               /* SQR */
 double mb25_pow(double x, double y);   /* x ^ y */
 int mb25_subscript(int i, int n, int base);
+/* arrays that ERASE can delete: see mb25_string.c */
+int mb25_ea_first(char *st, int *rk, int *n, int k, int dflt, int i, int base);
+int mb25_ea_next(int acc, int *n, int j, int i, int base);
+void mb25_ea_dim(char *st, int *rk, int k);
+int mb25_ea_erase(char *st, int *rk, int *n);
 extern unsigned int mb25_line;                /* the BASIC line that is running */
 void mb25_fail(const char *msg);     /* print ?msg in LINE and stop */
 int mb25_eof(FILE *fp);                /* EOF(n) */

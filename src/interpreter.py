@@ -2384,17 +2384,19 @@ class Interpreter:
         """Execute ERASE statement
 
         ERASE removes arrays from memory to reclaim space.
-        After ERASE, the array must be re-dimensioned with DIM before use.
+        After ERASE the array does not exist: a DIM can size it again, and a
+        use without a DIM makes it 0..10.  ERASE of an array that does not exist
+        (never dimensioned or used, or erased already) is Illegal function call.
 
         Syntax: ERASE array1, array2, ...
         """
         for array_name in stmt.array_names:
             # Free from resource limits tracking
-            self.limits.free_variable(array_name.lower())
-
             # The parser gives the name as written, which for a single has no
             # suffix - the storage key does. See Runtime.erase_array.
-            self.runtime.erase_array(array_name)
+            if not self.runtime.erase_array(array_name):
+                raise MBasicError(5)
+            self.limits.free_variable(array_name.lower())
 
     def _clear_memory_arguments(self, stmt):
         """The memory top and stack space of CLEAR, checked as the binary does.

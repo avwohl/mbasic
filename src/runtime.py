@@ -1002,6 +1002,11 @@ class Runtime:
         # Resolve full array name
         full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
 
+        # With OPTION BASE 1 a bound of 0 is Subscript out of range on the real
+        # binary, and that check comes before the Duplicate Definition check.
+        if self.array_base == 1 and any(d < 1 for d in dimensions):
+            raise RuntimeError("Subscript out of range")
+
         # Calculate total size based on array_base
         # If base is 0: DIM A(10) creates indices 0-10 (11 elements)
         # If base is 1: DIM A(10) creates indices 1-10 (10 elements)
@@ -1084,12 +1089,15 @@ class Runtime:
         the raw "a" found nothing and quietly did nothing at all. The array
         stayed dimensioned, which only became visible once re-dimensioning
         started reporting Duplicate Definition, as it does on the real binary.
+
+        Returns False when there was no such array (never dimensioned, never
+        used, or already erased); the binary gives Illegal function call then.
         """
         type_suffix = None
         if name and name[-1] in '$%!#':
             name, type_suffix = name[:-1], name[-1]
         full_name, _ = self._resolve_variable_name(name, type_suffix, def_type_map)
-        self._arrays.pop(full_name, None)
+        return self._arrays.pop(full_name, None) is not None
 
     def read_data(self):
         """
