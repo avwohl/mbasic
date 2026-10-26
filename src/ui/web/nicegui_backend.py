@@ -4418,6 +4418,9 @@ class NiceGUIBackend(UIBackend):
         # Backwards compatibility: old saves have for_loop_vars, new saves have for_loop_states
         if 'for_loop_states' in state:
             self.runtime.for_loop_states = pickle.loads(bytes.fromhex(state['for_loop_states']))
+            # The numbers that tell the NEXT statements apart belong to the run that saved them
+            for loop_state in self.runtime.for_loop_states.values():
+                loop_state['site'] = None
         else:
             # Old save format - for_loop_vars existed but was part of old stack-based system
             # Can't migrate old saves, so just start with empty for_loop_states

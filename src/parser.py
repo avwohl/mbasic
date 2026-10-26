@@ -1234,7 +1234,8 @@ class Parser:
                     arguments=args,
                     type_suffix=type_suffix,
                     line_num=token.line,
-                    column=token.column
+                    column=token.column,
+                    def_types=dict(self.def_type_map)
                 )
             else:
                 # It's an array with subscripts
@@ -1257,7 +1258,8 @@ class Parser:
                     arguments=[],
                     type_suffix=type_suffix,
                     line_num=token.line,
-                    column=token.column
+                    column=token.column,
+                    def_types=dict(self.def_type_map)
                 )
             else:
                 # Simple variable
@@ -1402,6 +1404,9 @@ class Parser:
         type_suffix = self.get_type_suffix(raw_name)
         if type_suffix:
             raw_name = raw_name[:-1]
+        else:
+            # The call is typed by the letter after FN, as the DEF is
+            type_suffix = self.split_name_and_suffix(raw_name)[1]
         func_name = "fn" + raw_name  # Use lowercase 'fn' to match function definitions
 
         # Parse arguments if present
@@ -1423,7 +1428,9 @@ class Parser:
             name=func_name,
             arguments=args,
             line_num=name_token.line,
-            column=name_token.column
+            column=name_token.column,
+            type_suffix=type_suffix,
+            def_types=dict(self.def_type_map)
         )
 
     def get_type_suffix(self, name: str) -> Optional[str]:
@@ -3147,6 +3154,7 @@ class Parser:
                     # Split parameter name and type suffix (e.g., "z$" -> name="z", suffix="$")
                     param_name = param_token.value
                     param_type_suffix = self.get_type_suffix(param_name)
+                    param_explicit = bool(param_type_suffix)
                     if param_type_suffix:
                         param_name = param_name[:-1]  # Remove suffix from name
                     else:
@@ -3157,6 +3165,7 @@ class Parser:
                         name=param_name,
                         type_suffix=param_type_suffix,
                         subscripts=None,
+                        explicit_type_suffix=param_explicit,
                         line_num=param_token.line,
                         column=param_token.column
                     )
@@ -3560,6 +3569,10 @@ class Parser:
                 self.advance()
             else:
                 break
+
+        # A token left over (NAME$: the reserved word NAME, then '$') makes the whole FIELD a Syntax error
+        if not self.at_end_of_line() and not self.match(TokenType.COLON, TokenType.ELSE):
+            raise ParseError("Unexpected token in FIELD statement", self.current())
 
         return FieldStatementNode(
             file_number=file_number,

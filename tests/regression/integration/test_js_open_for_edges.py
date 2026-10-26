@@ -59,7 +59,7 @@ PROGRAMS = [
     ('field_views',
      '10 ON ERROR GOTO 900\n20 OPEN "R",1,"ZF.DAT",16\n30 FIELD 1, 4 AS A$, 4 AS B$\n40 FIELD 1, 8 AS C$, 8 AS D$\n50 LSET A$="ab":RSET B$="cd"\n60 PRINT "[";A$;"][";B$;"][";C$;"]"\n70 PUT 1,1\n80 LSET A$="zzzzzzzzzz":PRINT "[";A$;"]"\n90 GET 1,1:PRINT "[";A$;"][";B$;"][";C$;"]"\n100 A$="plain":PRINT LEN(A$):LSET A$="x":PRINT "[";A$;"]":GET 1,1:PRINT "[";A$;"]"\n110 LSET E$="abc":PRINT "[";E$;"]"\n120 E$="abcdef":LSET E$="xy":PRINT "[";E$;"]":RSET E$="xy":PRINT "[";E$;"]"\n130 MID$(C$,1,2)="QQ":PRINT "[";C$;"]"\n140 PUT 1,2:GET 1,2:PRINT "[";A$;"]"\n150 CLOSE:OPEN "R",1,"ZF.DAT",16:FIELD 1,4 AS A$:GET 1,1:PRINT "[";A$;"]":GET 1,2:PRINT "[";A$;"]"\n160 PRINT LOF(1);LOC(1);EOF(1)\n170 CLOSE:KILL "ZF.DAT"\n180 PRINT "end"\n190 SYSTEM\n900 PRINT "E";ERR;ERL:RESUME NEXT\n',
      '[ab  ][  cd][ab    cd]\n[zzzz]\n[ab  ][  cd][ab    cd]\n 5 \n[x    ]\n[x    ]\n[]\n[xy    ]\n[    xy]\n[QQ    cd]\n[x    ]\n[ab  ]\n[QQ  ]\n 1  2  0 \nend\n',
-     False),
+     True),
 ]
 
 

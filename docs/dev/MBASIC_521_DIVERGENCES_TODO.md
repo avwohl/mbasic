@@ -823,7 +823,57 @@ Each item was measured on the binary. Test:
   work on the binary (they write into the record) and are `Bad file mode`
   here. The interpreter still differs in some file cases (a number with no
   open file is `Bad file number` there, the binary says `Bad file mode` for
-  PRINT, INPUT, GET, PUT; `FIELD` binds at `GET`; `GET` before `FIELD`; a
-  second `FIELD` over the same bytes and `LSET` of a plain variable do not
-  follow the binary).
+  PRINT, INPUT, GET, PUT; `GET` before `FIELD`; `FIELD` views are done, see
+  "round 2" below).
   `OPEN "A"` is an extension and stays.
+- Done (round 2): the interpreter follows the binary for FIELD views: `FIELD`
+  gives the variables their part of the record at once, a second overlapping
+  `FIELD` shows what `LSET` wrote, `MID$(F$,..)=` changes the record, a variable
+  that was given another string is out of the record for good (`GET` does not
+  fill it, `LSET` keeps its length), `LSET` and `RSET` of a plain string
+  variable keep its length, and the variables keep their text after `CLOSE`.
+  `FIELD` with a number variable is `Type mismatch`, after the variables
+  before it. A new record is spaces here (garbage on the binary).
+- Done (round 2): the loop stack. The interpreter and the JavaScript backend
+  keep the `FOR` loops in the order they were entered, with the NEXT the scan
+  of the `FOR` ended at (section "FOR and NEXT sites" in
+  `JS_CONTROL_FLOW.md`). A `NEXT` at another place is `NEXT without FOR` and
+  spoils the loop and the loops below it. So after `FOR I=1 TO 3:FOR J=1 TO
+  1/0:NEXT:...:NEXT I` with `RESUME NEXT`, the bare `NEXT` is error 1 and
+  the next `NEXT I` too (the outer loop is gone). An Overflow in the `NEXT` of
+  an integer variable spoils the loop the same way. A `NEXT` that finds its
+  loop drops the loops entered after it. A subroutine does not see the loops
+  of its caller (`NEXT` in a subroutine for a loop of the caller is
+  `NEXT without FOR`), and `RETURN` drops the loops of the subroutine. A
+  `FOR` with no `NEXT` is `FOR Without NEXT` before the variable is set. The
+  `FOR` that runs again drops its old loop and the inner loops as soon as the
+  start value is in. Test:
+  `tests/regression/integration/test_for_next_sites.py`.
+- Done (round 2): a `DEF FN` is its name and its type. `DEF FNA$` is not `FNA`
+  (Undefined user function, error 18). The type of an unsuffixed name is the
+  DEF type of the letter after `FN` at the `DEF` and at the call
+  (`DEF FNE(X)=X*2: DEFINT E: PRINT FNE(1.6)` is error 18). A parameter
+  without a suffix has the DEF type of its letter when the call runs, not when
+  the `DEF FN` was read: `DEF FNA(X)=X*2: DEFINT X: PRINT FNA(1.6)` is 4, and
+  `DEFINT X: DEF FND(X)=X*2: DEFSNG X: PRINT FND(1.6)` is 3.2. The parser keeps
+  the DEF types of the call in `FunctionCallNode.def_types`.
+- `FIELD NAME$` (a reserved word, so `NAME` then `$`) is a Syntax error of the
+  whole statement in the JavaScript backend too. It reported `Type mismatch` before.
+- Not done: a variable in the body of a `DEF FN` that gets its type from a
+  `DEFxxx` after the `DEF FN` (`DEF FNE(X)=X+Y: DEFSTR Y: Y="5": PRINT FNE(1)`
+  is `Type mismatch` on the binary, which reads the type when the call runs).
+  The interpreter types the body variables when the line is read. The
+  JavaScript compiler takes the DEF types of the whole program (`DEFINT X`
+  after `X=1.5` also makes the earlier `X` an integer). Both come from the
+  design of the typed variables, not from one statement.
+- Not done: a `FOR` enters its `NEXT` on the binary, also when the loop runs.
+  With another name (`FOR I=1 TO 2: PRINT "a": NEXT J`) the error `NEXT without
+  FOR` comes at the `FOR`, with the line of the `NEXT`, before the body runs, and
+  `I` keeps its value. After `RESUME NEXT` the line number of the next error is
+  the line of the `NEXT` until a new line starts. A `FOR` whose scan ends at a
+  `NEXT` of an outer loop does the same. The interpreter and the JavaScript
+  backend run the body and give the error at the `NEXT`. The zero-trip `FOR`
+  does enter the `NEXT` in the interpreter.
+- Not done: a spoilt `FOR` entry also hides the `GOSUB` frames below it on the
+  binary (the next `RETURN` is `RETURN without GOSUB`). The loops and the
+  `GOSUB` frames are separate here, so only the loops are dropped.

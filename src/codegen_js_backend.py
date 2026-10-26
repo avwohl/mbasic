@@ -966,6 +966,13 @@ class JavaScriptBackend(CodeGenBackend):
         self.matched_next: Set[int] = set()
         # Bare NEXT -> JS name of the variable of the FOR it closes
         self.next_var_map: Dict[int, str] = {}
+        # The scan of FOR for its NEXT (NXTSCN) counts FORs and names on NEXTs and never looks at a
+        # name. A place is a name on a NEXT: (id of the NEXT, position in its list) -> number.
+        # for_site: FOR -> the number of the place its scan ends at; site_fors: number -> JS names of those FORs
+        self.next_site: Dict[Any, int] = {}
+        self.for_site: Dict[int, int] = {}
+        self.site_fors: Dict[int, List[str]] = {}
+        self.for_id: Dict[int, int] = {}
         # WHILE/WEND matching, keyed by id(): while_to_wend: WHILE -> its WEND; wend_to_while: WEND -> its WHILE;
         # while_target: WHILE -> line or label of the WHILE step itself (where WEND jumps back to)
         self.while_to_wend: Dict[int, Any] = {}
@@ -1045,6 +1052,7 @@ class JavaScriptBackend(CodeGenBackend):
         self._analyze_features(program)
         self._find_varying_rank(program)
         self._match_for_next(program)
+        self._scan_for_sites(program)
         self._match_while_wend(program)
         self._plan_lines(program)
 
@@ -1268,6 +1276,26 @@ class JavaScriptBackend(CodeGenBackend):
                         self._pair_for_next(for_stmt, stmt)
                         # The JS name of the FOR variable, not the BASIC name
                         self.next_var_map[id(stmt)] = js_name
+
+    def _scan_for_sites(self, program: ProgramNode):
+        """Find for every FOR the NEXT the binary's scan stops at, as a count of FORs and names.
+
+        A loop is only valid at that NEXT (NEXT without FOR anywhere else, see _generate_next).
+        """
+        open_fors = []
+        for line in program.lines:
+            for stmt in walk_statements(line.statements):
+                if isinstance(stmt, ForStatementNode):
+                    open_fors.append(stmt)
+                elif isinstance(stmt, NextStatementNode):
+                    for k in range(max(1, len(stmt.variables or []))):
+                        site = len(self.next_site) + 1
+                        self.next_site[(id(stmt), k)] = site
+                        if open_fors:
+                            for_stmt = open_fors.pop()
+                            self.for_site[id(for_stmt)] = site
+                            self.site_fors.setdefault(site, []).append(self._mangle_var_name(
+                                for_stmt.variable.name + (for_stmt.variable.type_suffix or '')))
 
     def _match_while_wend(self, program: ProgramNode):
         """Match WHILE statements with their WEND statements (by position in the text, like NEXT)"""
@@ -1558,6 +1586,14 @@ class JavaScriptBackend(CodeGenBackend):
                     if hasattr(item, '__dict__'):
                         JavaScriptBackend._called_functions(item, found, visited)
         return found
+
+    def _fn_js_name(self, key: str, suffix: Optional[str]) -> str:
+        """The JavaScript name of a DEF FN. The type is part of its identity (FNA and FNA$ differ),
+        and shows in the name only when the program has more than one function with this name."""
+        types = {d.type_suffix or '!' for d in self.def_fn_functions if self._fn_key(d.name) == key}
+        if len(types) < 2:
+            return '_fn_' + key
+        return '_fn_' + key + {'%': '_i', '$': '_s', '#': '_d'}.get(suffix or '!', '')
 
     @staticmethod
     def _fn_key(name: str) -> str:
@@ -2477,7 +2513,37 @@ class JavaScriptBackend(CodeGenBackend):
 
         # FOR/NEXT loop state (variable-indexed approach)
         code.append(self.indent() + '// FOR/NEXT loop state')
-        code.append(self.indent() + 'const _for_loops = {};  // Map var name -> {end, step, line}')
+        code.append(self.indent() + 'const _for_loops = {};  // Map var name -> {end, step, line, site, forid, depth}')
+        code.append(self.indent() + 'const _for_stack = [];  // The names of the loops in the order they were entered')
+        depth_expr = '_gosub_stack.length' if self.uses_gosub else '0'
+        code.append(self.indent() + f'function _for_depth() {{ return {depth_expr}; }}')
+        if self.uses_gosub:
+            code.append(self.indent() + '// A loop opened in a subroutine that has returned is gone (RETURN drops it)')
+            code.append(self.indent() + 'function _for_purge() {')
+            code.append(self.indent() + '    const d = _for_depth();')
+            code.append(self.indent() + '    while (_for_stack.length && _for_loops[_for_stack[_for_stack.length - 1]].depth > d) delete _for_loops[_for_stack.pop()];')
+            code.append(self.indent() + '}')
+        else:
+            code.append(self.indent() + 'function _for_purge() {}')
+        code.append(self.indent() + '// NEXT sees the loops of the subroutine it runs in, and not the ones of the callers')
+        code.append(self.indent() + 'function _for_find(name) { _for_purge(); const l = _for_loops[name]; return l && l.depth === _for_depth() ? l : undefined; }')
+        code.append(self.indent() + 'function _for_top() { _for_purge(); const n = _for_stack[_for_stack.length - 1]; return n !== undefined && _for_loops[n].depth === _for_depth() ? n : undefined; }')
+        code.append(self.indent() + '// Without older: drop the loops entered after name. With older: drop name and the loops below it.')
+        code.append(self.indent() + 'function _for_drop(name, older) {')
+        code.append(self.indent() + '    const i = _for_stack.lastIndexOf(name);')
+        code.append(self.indent() + '    if (i < 0) return;')
+        code.append(self.indent() + '    for (const n of (older ? _for_stack.splice(0, i + 1) : _for_stack.splice(i + 1))) delete _for_loops[n];')
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _for_end(name) { _for_drop(name, false); _for_stack.pop(); delete _for_loops[name]; }')
+        code.append(self.indent() + 'function _for_push(name, loop) {')
+        code.append(self.indent() + '    const i = _for_stack.indexOf(name);')
+        code.append(self.indent() + '    if (i >= 0) _for_stack.splice(i, 1);')
+        code.append(self.indent() + '    loop.depth = _for_depth();')
+        code.append(self.indent() + '    _for_loops[name] = loop;')
+        code.append(self.indent() + '    _for_stack.push(name);')
+        code.append(self.indent() + '}')
+        code.append(self.indent() + '// The start value is in: the loop this FOR started before, and the loops inside it, are dropped')
+        code.append(self.indent() + 'function _for_elim(name, forid) { const l = _for_loops[name]; if (l && l.forid === forid) _for_end(name); }')
         code.append(self.indent() + '// MBASIC ends a loop when sign(var - end) equals sign(step): with STEP 0 only when var equals end')
         code.append(self.indent() + 'function _for_done(v, end, step) { return Math.sign(v - end) === Math.sign(step); }')
         # Case labels inside a line (see _plan_lines) and the line they belong to, for the line of an error
@@ -2835,7 +2901,8 @@ class JavaScriptBackend(CodeGenBackend):
         for def_fn in self.def_fn_functions:
             # Function name - DEF FNA becomes _fn_a
             fn_base = def_fn.name.lower()
-            func_name = '_fn_' + (fn_base[2:] if fn_base.startswith('fn') else fn_base)  # calls use FNA -> _fn_a
+            # calls use FNA -> _fn_a; a function is its name and its type: FNA$ is _fn_a_s
+            func_name = self._fn_js_name(self._fn_key(fn_base), def_fn.type_suffix)
 
             # Parameters
             params = [self._mangle_var_name(p.name + (p.type_suffix or '')) for p in def_fn.parameters]
@@ -2849,13 +2916,7 @@ class JavaScriptBackend(CodeGenBackend):
             prefix = 'async ' if self._fn_key(fn_base) in self.async_fns else ''
             code.append(self.indent() + f'{prefix}function {func_name}({param_str}) {{')
             self.indent_level += 1
-            # The argument is stored in the parameter, so it takes the parameter's type: a DEFINT
-            # letter rounds it (FNQ(2.6) with DEF FNQ(I)=I*2 is 6), a single parameter drops digits.
-            for p, mangled in zip(def_fn.parameters, params):
-                if p.type_suffix == '%':
-                    code.append(self.indent() + f'{mangled} = _toInt({mangled});')
-                elif p.type_suffix == '!':
-                    code.append(self.indent() + f'{mangled} = _toSingle({mangled});')
+            # The call takes the argument to the type of the parameter (see _generate_function_call)
             # The result takes the type of the function: FNA% rounds (FRCINT, Overflow over 32767)
             if def_fn.type_suffix == '%':
                 expr_code = f'_toInt({expr_code})'
@@ -3360,9 +3421,24 @@ class JavaScriptBackend(CodeGenBackend):
         # Check if it's a DEF FN function (starts with 'fn')
         # User-defined functions from DEF FN
         if func_name.startswith('fn'):
-            # FNA -> _fn_a, FNFOO -> _fn_foo
-            call = f'_fn_{func_name[2:]}({", ".join(args)})'
-            return f'(await {call})' if func_name[2:] in self.async_fns else call
+            # FNA -> _fn_a, FNFOO -> _fn_foo, FNA$ -> _fn_a_s
+            key = func_name[2:]
+            suffix = func.type_suffix if func.def_types is not None else None
+            definition = None
+            for d in self.def_fn_functions:
+                if self._fn_key(d.name) == key and (suffix is None or (d.type_suffix or '!') == suffix):
+                    definition = d
+            if definition is None:
+                # A function is its name and its type (measured): DEF FNA$ is not FNA
+                return '_error("Undefined user function")'
+            # The parameter has the type the DEF types give when the call runs: a DEFINT
+            # letter rounds the argument (FNQ(2.6) with DEF FNQ(I)=I*2 is 6), a single drops digits.
+            typed = []
+            for i, arg in enumerate(args):
+                kind = parameter_suffix(func, definition.parameters[i]) if i < len(definition.parameters) else None
+                typed.append(f'_toInt({arg})' if kind == '%' else f'_toSingle({arg})' if kind == '!' else arg)
+            call = f'{self._fn_js_name(key, definition.type_suffix)}({", ".join(typed)})'
+            return f'(await {call})' if key in self.async_fns else call
 
         # Map BASIC function names to JavaScript
         js_func_map = {
@@ -3541,8 +3617,12 @@ class JavaScriptBackend(CodeGenBackend):
         self.indent_level += 1
         # Start, end and step run in the order of the text, each with its type check (measured)
         code.append(self.indent() + f'const _start = {start_expr};')
+        code.append(self.indent() + f'_for_elim("{var_name}", {self.for_id.setdefault(id(stmt), len(self.for_id) + 1)});')
         code.append(self.indent() + f'const _end = {end_expr};')
         code.append(self.indent() + f'const _step = {step_expr};')
+        if id(stmt) not in self.for_site:
+            # The scan finds no NEXT: the error comes before the variable is set
+            code.append(self.indent() + '_error("FOR Without NEXT");')
         code.append(self.indent() + f'{var_name} = _start;')
 
         # Check initial condition before entering loop
@@ -3556,17 +3636,19 @@ class JavaScriptBackend(CodeGenBackend):
         elif var_type == VarType.SINGLE:
             type_coerce_fn = '_toSingle'
 
-        code.append(self.indent() + f'_for_loops["{var_name}"] = {{')
+        code.append(self.indent() + f'_for_push("{var_name}", {{')
         self.indent_level += 1
         code.append(self.indent() + f'end: _end,')
         code.append(self.indent() + f'step: _step,')
+        code.append(self.indent() + f'site: {self.for_site.get(id(stmt), 0)},')
+        code.append(self.indent() + f'forid: {self.for_id.setdefault(id(stmt), len(self.for_id) + 1)},')
         code.append(self.indent() + f'coerce: {type_coerce_fn},')
         if return_line is not None:
             code.append(self.indent() + f'line: {return_line}')
         else:
             code.append(self.indent() + f'line: null  // End of program')
         self.indent_level -= 1
-        code.append(self.indent() + f'}};')
+        code.append(self.indent() + f'}});')
 
         self.indent_level -= 1
         code.append(self.indent() + f'}} else {{')
@@ -3586,51 +3668,66 @@ class JavaScriptBackend(CodeGenBackend):
         return code
 
     def _generate_next(self, stmt: NextStatementNode) -> List[str]:
-        """Generate NEXT statement - check condition and loop back"""
-        code = []
+        """Generate NEXT statement - check condition and loop back
 
-        # Get variable names
-        variables = stmt.variables
-        if not variables:
-            # NEXT without variable - look up which variable to use
-            var_name_base = self.next_var_map.get(id(stmt))
-            if var_name_base:
-                # next_var_map holds the JS name of the FOR variable, used as it is
-                variables = [var_name_base]
-            else:
-                # No matching FOR found
-                code.append(self.indent() + '_error("NEXT without FOR");')
-                return code
+        A name on a NEXT is looked up in the loops in sight; the loop must be the one whose
+        scan for its NEXT ended at this name (see _scan_for_sites), or the NEXT is NEXT without
+        FOR and the loop is spoilt, with the loops below it.  A NEXT with no name takes the
+        newest loop.  An error in the step (Overflow of an integer variable) spoils the loop too.
+        """
+        code = []
+        variables = stmt.variables or [None]
 
         # Handle each variable (NEXT can have multiple variables: NEXT I, J, K)
-        for var in variables:
-            if isinstance(var, str):
-                var_name = var
-            else:
-                var_name = self._mangle_var_name(var.name + (getattr(var, 'type_suffix', '') or ''))
+        for position, var in enumerate(variables):
+            site = self.next_site.get((id(stmt), position), 0)
+            if var is None:
+                # No name: the newest loop; the FORs whose scan ends here say which variables can be meant
+                code.append(self.indent() + '{')
+                self.indent_level += 1
+                code.append(self.indent() + 'const _name = _for_top();')
+                code.append(self.indent() + 'if (_name === undefined) _error("NEXT without FOR");')
+                code.append(self.indent() + f'if (_for_loops[_name].site !== {site}) {{ _for_drop(_name, true); _error("NEXT without FOR"); }}')
+                for js_name in self.site_fors.get(site, []):
+                    code.append(self.indent() + f'if (_name === "{js_name}") {{')
+                    self.indent_level += 1
+                    code.extend(self._next_step(js_name))
+                    self.indent_level -= 1
+                    code.append(self.indent() + '}')
+                self.indent_level -= 1
+                code.append(self.indent() + '}')
+                continue
+            js_name = self._mangle_var_name(var.name + (getattr(var, 'type_suffix', '') or ''))
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + f'const _lp = _for_find("{js_name}");')
+            code.append(self.indent() + 'if (!_lp) _error("NEXT without FOR");')
+            code.append(self.indent() + f'if (_lp.site !== {site}) {{ _for_drop("{js_name}", true); _error("NEXT without FOR"); }}')
+            code.extend(self._next_step(js_name))
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
 
-            # Increment variable and check condition
-            code.append(self.indent() + f'if (_for_loops["{var_name}"]) {{')
-            self.indent_level += 1
-            code.append(self.indent() + f'const _loop = _for_loops["{var_name}"];')
-            code.append(self.indent() + f'{var_name} = _loop.coerce ? _loop.coerce({var_name} + _loop.step) : ({var_name} + _loop.step);')
-            code.append(self.indent() + f'const _continue = !_for_done({var_name}, _loop.end, _loop.step);')
-            code.append(self.indent() + f'if (_continue) {{')
-            self.indent_level += 1
-            if self.yield_checks:
-                code.append(self.indent() + yield_check('_loop.line'))
-            code.append(self.indent() + f'_pc = _loop.line;')
-            code.append(self.indent() + f'break;')
-            self.indent_level -= 1
-            code.append(self.indent() + f'}} else {{')
-            self.indent_level += 1
-            code.append(self.indent() + f'delete _for_loops["{var_name}"];')
-            self.indent_level -= 1
-            code.append(self.indent() + f'}}')
-            self.indent_level -= 1
-            # No loop for the variable (the FOR failed, or the loop ended): measured, NEXT without FOR
-            code.append(self.indent() + f'}} else {{ _error("NEXT without FOR"); }}')
+        return code
 
+    def _next_step(self, var_name: str) -> List[str]:
+        """The loops entered after this one are gone; step the variable and loop back or end the loop."""
+        code = []
+        code.append(self.indent() + f'_for_drop("{var_name}", false);')
+        code.append(self.indent() + f'const _loop = _for_loops["{var_name}"];')
+        code.append(self.indent() + f'try {{ {var_name} = _loop.coerce ? _loop.coerce({var_name} + _loop.step) : ({var_name} + _loop.step); }}')
+        code.append(self.indent() + f'catch (e) {{ _for_drop("{var_name}", true); throw e; }}')
+        code.append(self.indent() + f'if (!_for_done({var_name}, _loop.end, _loop.step)) {{')
+        self.indent_level += 1
+        if self.yield_checks:
+            code.append(self.indent() + yield_check('_loop.line'))
+        code.append(self.indent() + '_pc = _loop.line;')
+        code.append(self.indent() + 'break;')
+        self.indent_level -= 1
+        code.append(self.indent() + '} else {')
+        self.indent_level += 1
+        code.append(self.indent() + f'_for_end("{var_name}");')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
         return code
 
     def _generate_while(self, stmt: WhileStatementNode, line_number: int) -> List[str]:

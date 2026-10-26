@@ -1356,6 +1356,10 @@ class FunctionCallNode:
     column: int = 0
     type_suffix: str = None
     arity_error: Optional[int] = None
+    # For a DEF FN call: the DEF type of every letter where the call stands in the text. The
+    # binary looks at the DEF types when the call runs, so a DEFINT behind the DEF FN still
+    # types the parameter (see parameter_suffix).
+    def_types: Optional[dict] = None
 
 
 # ============================================================================
@@ -1416,6 +1420,24 @@ class HelpSettingStatementNode:
 
 
 # ============================================================================
+
+def def_type_suffix(def_types, letter):
+    """The type suffix a DEF type map gives a name that starts with this letter ('!' if none)."""
+    var_type = (def_types or {}).get(letter.lower())
+    return {VarType.STRING: '$', VarType.INTEGER: '%', VarType.DOUBLE: '#'}.get(var_type, '!')
+
+
+def parameter_suffix(call, parameter):
+    """The type of a DEF FN parameter when the call runs.
+
+    A suffix written on the parameter stays. Without one, the DEF types in
+    force at the call give the type (measured: DEF FNA(X)=X*2 : DEFINT X :
+    PRINT FNA(1.6) is 4).
+    """
+    if getattr(parameter, 'explicit_type_suffix', False) or call.def_types is None:
+        return parameter.type_suffix
+    return def_type_suffix(call.def_types, parameter.name[0])
+
 
 class TypeInfo:
     """Type information utilities for variables
