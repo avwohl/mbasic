@@ -115,16 +115,23 @@ What is still different:
   `WIDTH 40` and the cursor near the right edge the word is split (`Overflo` /
   `w`), as the binary does. Test: `tests/regression/integration/test_notice_width_wrap.py`.
 - Done (#41): the JavaScript backend stops with `<message> in <line>` with no
-  `?`, as the interpreter does. `ERROR n` uses the message of code n.
+  `?`, as the interpreter does. `ERROR n` uses the message of code n. A
+  fatal `RETURN` in a program with no `GOSUB` is `RETURN without GOSUB in
+  <line>` (it was a JavaScript ReferenceError). `STOP` prints `Break in
+  <line>`, also inside a handler, and starts a new line first when the
+  cursor is not in column 0. The interpreter does the same now. `RESUME` to
+  a line that does not exist is error 8 at the `RESUME`, so a handler that
+  is still armed catches it again, as the binary does (it was fatal). An
+  `ERROR 9` inside a handler prints `Subscript out of range in <line>`, in
+  the interpreter and in the JavaScript backend.
   Test: `tests/regression/integration/test_js_fatal_error_line.py`.
 
 Done (#42): `src/error_codes.py` no longer carries the nine codes 5.21 has not
 got - 24, 25, 68-72, 75 and 76. `ERROR 24` prints `Unprintable error`, as the
-binary does, and ERR stays 24. (The JavaScript backend prints `Error 24 at line
-10` for every ERROR code; that is the separate difference about `in <line>`
-text.)
+binary does, and ERR stays 24. The JavaScript backend prints `Unprintable
+error in 10` too.
 
-Done for the interpreter (#43, open for the JavaScript backend): the
+Done for the interpreter (#43): the
 interpreter applies FRCINT's 16-bit range check, and CONINT's second test,
 wherever the binary does. An integer argument is rounded and must fit
 -32768..32767, or the result is `Overflow`. A byte argument (`LEFT$`,
@@ -155,9 +162,31 @@ The same checks cover these statements:
 A double is taken to single precision before FRCINT rounds it, so
 `2.49999999# AND 3` is 3.
 
-Still open: the JavaScript backend gaps for `STRING$`, `SPACE$`, `LEFT$`,
-`RIGHT$`, `TAB`, `CHR$`, `PEEK` and array subscripts (the issue lists them);
-the arguments of `CLEAR`, `USR`, `LPOS` and `WIDTH 0`; the maximum number of
+Done for the JavaScript backend (#43): the runtime has `_frcint` and
+`_conint`, which copy `to_frcint` and `to_conint`. `STRING$`, `SPACE$`,
+`LEFT$`, `RIGHT$`, `MID$`, `CHR$`, the start of `INSTR`, `ON...GOTO` and
+`ON...GOSUB`, `INP`, `OUT` and the value of `POKE` use the byte check. `TAB` and
+`SPC` in PRINT check 16 bits, and the argument is evaluated when its turn
+comes, so `PRINT "A";TAB(40000)` prints the A first. `PEEK` and the address of
+`POKE` accept -32768 to 65535. `RANDOMIZE`, `WIDTH` and `ERROR n` check as the
+interpreter does. The `MID$` statement is a runtime function with the same
+checks as the interpreter, and it no longer deletes characters when the
+replacement is shorter than the length. Every array subscript goes through
+`_ix`: Overflow above 16 bits, `Illegal function call` when negative,
+`Subscript out of range` above the bound of its dimension. Before, an
+out-of-range write grew the array. The JavaScript compile path keeps one
+subscript per dimension (`SemanticAnalyzer(flatten_arrays=False)`), because
+the nested arrays of the generated code did not work with the flat index of
+the C backend. An array that is not in a `DIM` gets as many dimensions as its
+uses have subscripts. `DIM A(2.5)` rounds (also for the C backend), and a
+`DIM` bound above 32767 is `Overflow` when the `DIM` runs. Test:
+`tests/regression/integration/test_js_range_checks.py`. Not done in the
+JavaScript backend: `DIM A(-1)` stays a compilation error, and the bounds of a
+`DIM` must be constants. The file statements `FIELD`, `GET`, `PUT`, `OPEN ...
+LEN` and file numbers do not have the checks. A double is not taken to
+single precision before FRCINT rounds it, except in the logical operators.
+
+Still open: the arguments of `CLEAR`, `USR`, `LPOS` and `WIDTH 0`; the maximum number of
 files (`CLOSE #4` is `Bad file number` on the binary with the default 3
 files); the two-argument form `MID$(A$,2)=X$`, which the parser rejects; and
 `DIM A(32767)`, which is `Subscript out of range` on the binary (memory) and

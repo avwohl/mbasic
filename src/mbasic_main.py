@@ -275,7 +275,7 @@ def compile_to_javascript(input_file, output_file, generate_html=False, debug=Fa
             print(f"  Parsed {len(ast.lines)} lines", file=sys.stderr)
 
         # Semantic analysis
-        analyzer = SemanticAnalyzer()
+        analyzer = SemanticAnalyzer(flatten_arrays=False)  # the JavaScript arrays are nested
         success = analyzer.analyze(ast)
 
         if not success:

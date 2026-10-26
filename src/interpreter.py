@@ -3845,7 +3845,10 @@ class Interpreter:
             # CONT then does nothing, as in MBASIC.
             self.runtime.pc = PC.halted()
 
-        # Print "Break in <line>" message
+        # Print "Break in <line>" message; the binary starts a new line first
+        # when the cursor is not in column 0
+        if self._output_column(None) > 0:
+            self.io.output('')
         if stop_line:
             self.io.output(f"Break in {stop_line}")
         else:

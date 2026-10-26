@@ -807,7 +807,10 @@ class SemanticAnalyzer:
     - Constant folding optimization
     """
 
-    def __init__(self):
+    def __init__(self, flatten_arrays=True):
+        # The JavaScript backend keeps one subscript per dimension, to check each against its own
+        # bound as MBASIC does; the C backend wants the flat index.
+        self.flatten_arrays = flatten_arrays
         self.symbols = SymbolTable()
         self.flags = CompilerFlags()
         self.evaluator = ConstantEvaluator(self.symbols)
@@ -1960,6 +1963,11 @@ class SemanticAnalyzer:
             dimensions = []
             for subscript in array_decl.dimensions:
                 const_val = self.evaluator.evaluate_to_int(subscript)
+                if const_val is not None:
+                    # DIM A(2.5) is DIM A(3): FRCINT rounds, with halves away from zero
+                    exact = self.evaluator.evaluate(subscript)
+                    if isinstance(exact, float) and exact == exact and abs(exact) < 65536:
+                        const_val = int(abs(exact) + 0.5) * (-1 if exact < 0 else 1)
 
                 if const_val is None:
                     # Try to provide a helpful error message
@@ -2548,7 +2556,7 @@ class SemanticAnalyzer:
                     self._analyze_expression(subscript, "array subscript", track_folding=False, track_cse=True)
 
                 # If multi-dimensional, flatten the subscripts
-                if len(expr.subscripts) > 1:
+                if len(expr.subscripts) > 1 and self.flatten_arrays:
                     # var_key, not the bare name: symbols.variables is keyed by
                     # the type-suffixed name (A!, A%), so a bare lookup misses.
                     var_info = self.symbols.variables.get(var_key)
