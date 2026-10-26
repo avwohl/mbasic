@@ -3241,6 +3241,15 @@ class Parser:
             column=token.column
         )
 
+    @staticmethod
+    def _open_mode(expr):
+        """The mode of a classic OPEN: (letter, None) for a string literal,
+        ("", expr) for any other expression. The letter of an empty literal is
+        "" (Bad file mode when the statement runs)."""
+        if isinstance(expr, StringNode):
+            return (expr.value[:1].upper(), None)
+        return ("", expr)
+
     def parse_open(self) -> OpenStatementNode:
         """
         Parse OPEN statement
@@ -3300,11 +3309,9 @@ class Parser:
                 )
             else:
                 # Classic syntax: OPEN "mode", #n, filename$
-                # First arg is mode string - extract mode letter
-                if isinstance(first_arg, StringNode):
-                    mode = first_arg.value[0].upper()
-                else:
-                    mode = "I"  # Default
+                # First arg is the mode string: a literal gives the letter here,
+                # any other expression is evaluated when the statement runs
+                mode, mode_expr = self._open_mode(first_arg)
 
                 # Expect comma
                 self.expect(TokenType.COMMA)
@@ -3329,6 +3336,7 @@ class Parser:
 
                 return OpenStatementNode(
                     mode=mode,
+                    mode_expr=mode_expr,
                     file_number=file_number,
                     filename=filename,
                     record_length=record_length,
@@ -3339,11 +3347,9 @@ class Parser:
             # Parse mode expression
             mode_expr = self.parse_expression()
 
-            # Extract mode character
-            if isinstance(mode_expr, StringNode):
-                mode = mode_expr.value[0].upper()
-            else:
-                mode = "I"  # Default
+            # A literal gives the mode letter here, any other expression
+            # (a number, M$) is evaluated when the statement runs
+            mode, mode_expr = self._open_mode(mode_expr)
 
             # Expect comma
             self.expect(TokenType.COMMA)
@@ -3368,6 +3374,7 @@ class Parser:
 
             return OpenStatementNode(
                 mode=mode,
+                mode_expr=mode_expr,
                 file_number=file_number,
                 filename=filename,
                 record_length=record_length,

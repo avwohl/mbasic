@@ -776,11 +776,54 @@ Each item was measured on the binary. Test:
   later line with the same number replaces the earlier one), as MBASIC does
   when the lines are typed. Before, a source with lines out of order ran in
   file order.
+- `PRINT INPUT$(n[,#f])` compiled to invalid JavaScript (an `await` in the
+  arrow function that delays a PRINT item). The items before the `INPUT$`
+  item now print first, and the item is read in the statement.
+- `OPEN` reads its arguments in the order of the binary: the mode (a number
+  is `Type mismatch`; an empty or unknown mode is `Bad file mode`), the
+  number, `LEN`, then the name (a number is `Type mismatch`; an empty name is
+  `Bad file name`, also in the JavaScript backend, which crashed with the
+  host error). The mode may be a string expression (`OPEN M$,1,"F"`); only its
+  first letter counts (`"Input"` opens for input). The parser keeps a literal
+  mode as before and stores any other expression in `mode_expr`. An `I` or
+  `O` file with a fourth operand is opened (File not found comes first, and
+  the file stays open) and then the statement is `Syntax error`; the length is
+  not read. The interpreter and the JavaScript backend do this.
+- `FOR` with an integer loop variable takes the start, the limit and the step
+  through FRCINT, in that order: `FOR I%=1 TO 2.5` runs to 3, `STEP .5` is
+  `STEP 1`, and a value over 32767 is Overflow at the `FOR` (the variable
+  keeps its old value). The interpreter and the JavaScript backend did not.
+- A `DEF FN` result takes the type of the function: `FNA%` rounds through
+  FRCINT (Overflow over 32767), `DEFINT K: DEF FNK(X)=X*1.5` gives 5, and a
+  string body for a number function (or the reverse) is `Type mismatch`.
+- `LOF` is the size the file had when it was opened, in sectors of 128 bytes
+  (a new file is 0, and writing does not change the number); the backends
+  gave the length in bytes.
+- `FIELD` variables are views of the record in the JavaScript backend: a
+  second overlapping `FIELD` shows what `LSET` wrote through the first, and
+  `MID$(F$,..)=` changes the record. A variable that was given another
+  string (`A$="plain"`) is out of the record for good: `LSET` keeps its length
+  and `GET` does not fill it. The JavaScript runtime finds this by comparing
+  the variable with the string it was shown last, so `A$=A$` after a `GET`
+  does not detach it, and an assignment of the same text is not seen. A
+  variable that no `FIELD`, `LSET` or `GET` has set holds memory garbage on the
+  binary (`D$` of a `FIELD` that was never read); that is not copied.
+- The JavaScript compiler no longer stops with "Semantic analysis failed"
+  for a `NEXT` that matches no `FOR` (`NEXT` with no loop, `NEXT J` for another
+  variable, `NEXT I,I`); these are run time errors (`NEXT without FOR`) that
+  `ON ERROR` can trap. `SemanticAnalyzer(lenient_next=True)`; the C compiler
+  still rejects them. After such an error `RESUME NEXT` goes on at the next
+  statement in the interpreter and in the JavaScript backend; the binary
+  sometimes runs the `NEXT` a second time when the variable did not match
+  (`FOR I=1 TO 2:NEXT J:PRINT I` gives `E 1`, `E 1` and 0 there). This is
+  not copied.
 - Not done: the backends allow 15 files, the binary 3 by default (`/F:n`
   raises it; `cpmemu` did not pass the switch on, so the number above 3 was
   not measured with a bigger limit). `PRINT #n` and `WRITE #n` on a random file
   work on the binary (they write into the record) and are `Bad file mode`
   here. The interpreter still differs in some file cases (a number with no
   open file is `Bad file number` there, the binary says `Bad file mode` for
-  PRINT, INPUT, GET, PUT; `FIELD` binds at `GET`; `GET` before `FIELD`).
+  PRINT, INPUT, GET, PUT; `FIELD` binds at `GET`; `GET` before `FIELD`; a
+  second `FIELD` over the same bytes and `LSET` of a plain variable do not
+  follow the binary).
   `OPEN "A"` is an extension and stays.

@@ -819,7 +819,11 @@ class SemanticAnalyzer:
     - Constant folding optimization
     """
 
-    def __init__(self, flatten_arrays=True):
+    def __init__(self, flatten_arrays=True, lenient_next=False):
+        # The JavaScript backend leaves a NEXT that matches no FOR (NEXT with no FOR, NEXT J
+        # for another loop, NEXT I,J) to the compiled program, where it is a run time error
+        # that ON ERROR can trap, as it is in MBASIC.
+        self.lenient_next = lenient_next
         # The JavaScript backend keeps one subscript per dimension, to check each against its own
         # bound as MBASIC does; the C backend wants the flat index.
         self.flatten_arrays = flatten_arrays
@@ -2250,6 +2254,9 @@ class SemanticAnalyzer:
 
     def _analyze_next(self, stmt: NextStatementNode):
         """Analyze NEXT statement - validate loop nesting and close loop"""
+        if self.lenient_next:
+            self._analyze_next_lenient(stmt)
+            return
         if not self.loop_stack:
             raise SemanticError(
                 "NEXT without FOR",
@@ -2306,6 +2313,33 @@ class SemanticAnalyzer:
                 # Restore previous loop context
                 if self.loop_analysis_stack:
                     self.current_loop = self.loop_analysis_stack.pop()
+
+    def _analyze_next_lenient(self, stmt: NextStatementNode):
+        """NEXT where a mismatch is not an error here: close the loop it names, if any.
+
+        A NEXT with a variable closes the innermost FOR of that variable and the
+        loops inside it (MBASIC drops them); a NEXT without one closes the
+        innermost loop if that is a FOR. Anything else is left for run time.
+        """
+        keys = [self._get_var_key(v) for v in stmt.variables] if stmt.variables else [None]
+        for key in keys:
+            found = None
+            for i in range(len(self.loop_stack) - 1, -1, -1):
+                info = self.loop_stack[i]
+                if info.loop_type == "FOR" and (key is None or info.variable == key):
+                    found = i
+                    break
+                if key is None:
+                    break
+            if found is None:
+                continue
+            while len(self.loop_stack) > found:
+                self.loop_stack.pop()
+                if self.current_loop:
+                    self.current_loop.end_line = self.current_line
+                    self._clear_loop_ivs(self.current_loop.start_line)
+                    if self.loop_analysis_stack:
+                        self.current_loop = self.loop_analysis_stack.pop()
 
     def _analyze_while(self, stmt: WhileStatementNode):
         """Analyze WHILE statement"""

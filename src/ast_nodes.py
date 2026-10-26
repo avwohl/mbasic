@@ -486,12 +486,13 @@ class OpenStatementNode:
     Syntax:
         OPEN mode, #filenum, filename$ [, reclen]
     """
-    mode: str  # "I", "O", "R", "A"
+    mode: str  # "I", "O", "R", "A"; "" when mode_expr is set or the literal is empty
     file_number: 'ExpressionNode'
     filename: 'ExpressionNode'
     record_length: Optional['ExpressionNode']
     line_num: int = 0
     column: int = 0
+    mode_expr: Optional['ExpressionNode'] = None  # a mode that is not a literal: evaluated at run time
 
 
 @dataclass

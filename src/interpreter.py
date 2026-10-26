@@ -1920,12 +1920,22 @@ class Interpreter:
         start = self.evaluate_expression(stmt.start_expr)
         if isinstance(start, str) or stmt.variable.type_suffix == '$':
             raise MBasicError(13)
+        # An integer loop variable takes its start, limit and step through
+        # FRCINT, in this order (measured): FOR I%=1 TO 2.5 runs to 3,
+        # STEP .5 is STEP 1, and a value over 32767 is Overflow at the FOR.
+        integer_loop = stmt.variable.type_suffix == '%'
+        if integer_loop:
+            start = to_frcint(start)
         end = self.evaluate_expression(stmt.end_expr)
         if isinstance(end, str):
             raise MBasicError(13)
+        if integer_loop:
+            end = to_frcint(end)
         step = self.evaluate_expression(stmt.step_expr) if stmt.step_expr else 1
         if isinstance(step, str):
             raise MBasicError(13)
+        if integer_loop:
+            step = to_frcint(step)
 
         # Set loop variable to start
         var_name = stmt.variable.name + (stmt.variable.type_suffix or "")
@@ -3620,7 +3630,17 @@ class Interpreter:
         Note: CP/M files used ^Z (ASCII 26) as EOF marker. We respect this on input.
         """
         # Evaluate mode, file number, and filename
+        # The mode comes first (measured): a number is Type mismatch, and an
+        # empty or unknown mode is Bad file mode, before the file number
+        # is looked at. Only the first letter counts ("Input" opens for input).
         mode = stmt.mode.upper()  # "I", "O", "A", "R"
+        if stmt.mode_expr is not None:
+            mode_value = self.evaluate_expression(stmt.mode_expr)
+            if not isinstance(mode_value, str):
+                raise MBasicError(13)
+            mode = mode_value[:1].upper()
+        if mode not in ("I", "O", "A", "R"):
+            raise MBasicError(54)
         file_num = to_conint(self.evaluate_expression(stmt.file_number))
         filename = self.evaluate_expression(stmt.filename)
         # Check file number range (MBASIC 5.21: #1 through #15)
@@ -3628,7 +3648,7 @@ class Interpreter:
             raise RuntimeError("Bad file number")
 
         if not isinstance(filename, str):
-            raise RuntimeError("OPEN requires string filename")
+            raise MBasicError(13)
 
         # Check if file number is already open
         if file_num in self.runtime.files:
@@ -3640,12 +3660,17 @@ class Interpreter:
         # so 129 and up is an Illegal function call, and 0 is accepted but
         # leaves no room for any field.
         record_length = DEFAULT_RECORD_LENGTH
+        syntax_error_after_open = False
         if stmt.record_length is not None:
             if mode in ("I", "O"):
-                raise MBasicError(2)    # measured: Syntax error
-            record_length = to_frcint(self.evaluate_expression(stmt.record_length))
-            if not 0 <= record_length <= DEFAULT_RECORD_LENGTH:
-                raise MBasicError(5)
+                # Measured: the length is not read at all. The file is opened
+                # (File not found comes first, and the file stays open) and
+                # then the statement ends with Syntax error.
+                syntax_error_after_open = True
+            else:
+                record_length = to_frcint(self.evaluate_expression(stmt.record_length))
+                if not 0 <= record_length <= DEFAULT_RECORD_LENGTH:
+                    raise MBasicError(5)
 
         self._check_file_name(filename, creates=mode in ("O", "R"))
 
@@ -3672,8 +3697,17 @@ class Interpreter:
             else:
                 raise RuntimeError(f"Invalid OPEN mode: {mode} (valid modes: I, O, A, R)")
 
+            # LOF is the size the file had when it was opened, in sectors of
+            # 128 bytes (measured); writing does not change it.
+            sector_count = 0
+            if mode != "O":
+                file_handle.seek(0, 2)
+                sector_count = (file_handle.tell() + 127) // 128
+                file_handle.seek(0, 2 if mode == "A" else 0)
+
             # Store file handle and mode
             self.runtime.files[file_num] = {
+                'lof': sector_count,
                 'handle': file_handle,
                 'mode': mode,
                 'filename': filename,
@@ -3683,6 +3717,8 @@ class Interpreter:
 
         except (OSError, IOError, PermissionError) as e:
             raise RuntimeError(f"Cannot open {filename}: {str(e)}")
+        if syntax_error_after_open:
+            raise MBasicError(2)
 
     def execute_close(self, stmt):
         """Execute CLOSE statement - close file(s)
@@ -4604,6 +4640,12 @@ class Interpreter:
             base_name = param_name.rstrip('$%!#')
             type_suffix = param_name[-1] if param_name[-1] in '$%!#' else None
             self.runtime.set_variable(base_name, type_suffix, saved_value, debugger_set=True)
+
+        # The result becomes the type of the function (measured): FNA% rounds
+        # through FRCINT (Overflow over 32767), and a string body for a number
+        # function, or the reverse, is Type mismatch.
+        if func_def.type_suffix:
+            result = coerce_to_type(result, func_def.type_suffix)
 
         # A DEF FN that hands back a string it was given (a variable or a
         # parameter) returns a copy in string space on the binary. Only a body

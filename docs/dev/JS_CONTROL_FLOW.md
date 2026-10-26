@@ -119,3 +119,8 @@ to its line). ERL uses the same line.
   leaves no loop, so the NEXT after a trapped error gives error 1. The FOR
   runs start, end and step in the order of the text. See section 11 of
   `MBASIC_521_DIVERGENCES_TODO.md`.
+* The JavaScript compiler runs the semantic analyzer with `lenient_next`.
+  A NEXT that matches no FOR (no loop, another variable, `NEXT I,I`) is not
+  a compile error: it is the run time error above. The C compiler still
+  rejects these programs. An integer loop variable takes the limit and the
+  step through FRCINT (`_toInt`) when the FOR runs.
