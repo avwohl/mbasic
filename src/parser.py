@@ -394,6 +394,12 @@ class Parser:
         except Exception as e:
             debug_log(f"statement kept as a run-time Syntax error: {e}", level=1)
             self.position = start
+            if self.tokens[start].type == TokenType.ELSE:
+                # A second ELSE, or one behind a ':' outside an IF: MBASIC runs
+                # the ELSE token as "skip the rest of the line", no error.
+                bad = self._syntax_error_statement(to_end_of_line=True)
+                bad.stray_else = True
+                return bad
             kept = self._print_before_stray_text(start)
             if kept is not None:
                 return kept
@@ -546,7 +552,10 @@ class Parser:
                 # Expected COLON or NEWLINE
                 token = self.current()
                 if self.defer_syntax_errors:
-                    statements.append(self._syntax_error_statement())
+                    stray_else = token.type == TokenType.ELSE
+                    bad = self._syntax_error_statement(to_end_of_line=stray_else)
+                    bad.stray_else = stray_else     # see _parse_statement_or_defer
+                    statements.append(bad)
                     continue
                 raise ParseError(f"Expected : or newline, got {token.type.name}", token)
 

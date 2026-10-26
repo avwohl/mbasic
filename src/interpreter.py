@@ -10,7 +10,7 @@ import signal
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Callable, Any, Union
 from src.runtime import Runtime, ProgramString, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
-from src.ast_nodes import StringNode, FunctionCallNode, arity_type_checks, instr_shape_error
+from src.ast_nodes import StringNode, FunctionCallNode, arity_type_checks, instr_shape_error, clause_tail_after
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
 from src.pc import PC
@@ -753,6 +753,11 @@ class Interpreter:
                         # the error is reported at (READ of a bad DATA item: the DATA line).
                         self.state.pending_error = ErrorInfo(
                             error_code=error_code, pc=pc, error_message=str(e))
+                        if (not hasattr(e, 'clause_tail')
+                                and type(stmt).__name__ == 'IfStatementNode'):
+                            # an error in the condition, or in the first
+                            # statement of a clause (see clause_tail_after)
+                            e.clause_tail = clause_tail_after(stmt, None, 0)
                         self.state.pending_error_tail = getattr(e, 'clause_tail', None)
                         self._invoke_error_handler(error_code, pc, error_pc)
                         # Error handler set npc - apply it and continue execution
@@ -1515,7 +1520,7 @@ class Interpreter:
             # Illegal function call.
             raise RuntimeError("Illegal function call")
 
-    def execute_clause_statements(self, statements, resume_pc=None, is_else=False):
+    def execute_clause_statements(self, statements, resume_pc=None, restart=False):
         """Run the statements of a THEN or ELSE clause.
 
         A clause is not addressable by PC - the statement table holds one entry
@@ -1539,15 +1544,7 @@ class Interpreter:
             try:
                 self.execute_statement(clause_stmt)
             except Exception as e:
-                # An error ends the statement only: RESUME NEXT goes on with
-                # the statements behind it in the clause (measured on 5.21).
-                # Not when it is the first statement of an ELSE clause: then
-                # RESUME NEXT goes on at the next line.
-                if not hasattr(e, 'clause_tail') and not (is_else and index == 0):
-                    try:
-                        e.clause_tail = statements[index + 1:]
-                    except AttributeError:
-                        pass
+                self._note_clause_error(e, statements, index, clause_stmt, restart)
                 raise
             if self.runtime.npc is None:
                 continue
@@ -1569,6 +1566,23 @@ class Interpreter:
                 self.runtime.set_gosub_continuation(remaining)
             break
 
+    def _note_clause_error(self, error, statements, index, clause_stmt, restart):
+        """Work out what RESUME NEXT runs after an error inside a THEN or ELSE clause."""
+        if hasattr(error, 'clause_tail'):
+            return
+        # An error that MBASIC reports after the statement ran (WIDTH n,x) has
+        # the text pointer inside that statement; any other error in the first
+        # statement of a clause leaves it at the start of the enclosing statement.
+        # A list that starts again behind a ':' (the tail RESUME NEXT runs, the
+        # rest of a clause after RETURN) has the main loop start each statement.
+        if index == 0 and not restart and not getattr(error, 'late_error', False):
+            error.clause_climb = True
+            return
+        try:
+            error.clause_tail = clause_tail_after(clause_stmt, statements, index)
+        except AttributeError:
+            pass
+
     def execute_if(self, stmt):
         """Execute IF statement"""
         condition = self.evaluate_expression(stmt.condition)
@@ -1587,7 +1601,7 @@ class Interpreter:
                 # ELSE line_number
                 self._jump_to(stmt.else_line_number)
             elif stmt.else_statements:
-                self.execute_clause_statements(stmt.else_statements, is_else=True)
+                self.execute_clause_statements(stmt.else_statements)
 
     def _matching_next(self, stmt):
         """The NEXT that closes this FOR, found once and remembered.
@@ -1833,7 +1847,7 @@ class Interpreter:
             # itself, which is how "THEN GOSUB x: ... : GOTO y" loops work.
             resume_pc = self.runtime.npc
             self.runtime.npc = None
-            self.execute_clause_statements(continuation, resume_pc=resume_pc)
+            self.execute_clause_statements(continuation, resume_pc=resume_pc, restart=True)
             if self.runtime.npc is None:
                 self.runtime.npc = resume_pc
 
@@ -2203,15 +2217,20 @@ class Interpreter:
             if clause_tail:
                 # The error was in a THEN or ELSE clause: the statements
                 # behind it in the clause still run.  An error in one of them
-                # is reported at the IF, not at the RESUME.
+                # is reported at the IF, not at the RESUME.  A jump in them
+                # replaces the next statement.
+                following = self.runtime.npc
+                self.runtime.npc = None
                 try:
-                    self.execute_clause_statements(clause_tail)
+                    self.execute_clause_statements(clause_tail, resume_pc=following, restart=True)
                 except Exception as e:
                     try:
                         e.stmt_pc = error_pc
                     except AttributeError:
                         pass
                     raise
+                if self.runtime.npc is None:
+                    self.runtime.npc = following
         else:
             # RESUME line_number - jump to specific line
             self._jump_to(stmt.line_number)
@@ -2233,6 +2252,8 @@ class Interpreter:
         MBASIC stores such a line without a message and stops with Syntax
         error when execution reaches the bad statement.
         """
+        if getattr(stmt, 'stray_else', False):
+            return      # the parser took the rest of the line into this statement
         raise MBasicError(getattr(stmt, 'error_code', 2))
 
     def execute_remark(self, stmt):
@@ -4100,7 +4121,9 @@ class Interpreter:
             return
         self.io.width = width
         if stmt.bad_device:
-            raise MBasicError(2)
+            error = MBasicError(2)
+            error.late_error = True     # reported after the WIDTH ran: see clause_tail_after
+            raise error
 
     def execute_cont(self, stmt):
         """Execute CONT statement

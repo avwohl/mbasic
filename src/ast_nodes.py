@@ -902,6 +902,8 @@ class SyntaxErrorStatementNode:
     column: int = 0
     #: 2 (Syntax error), or 8 for "RESTORE%" where the binary reads the stray text as an unknown line
     error_code: int = 2
+    #: an ELSE that no IF is waiting for: MBASIC runs it as "skip the rest of the line", not as an error
+    stray_else: bool = False
 
 
 @dataclass
@@ -1509,6 +1511,30 @@ def arity_type_checks(name: str, count: int) -> str:
     if base == 'STRING' and count == 1:
         return 'N'      # STRING$("A") is Type mismatch; LEFT$(1) is Syntax error
     return ''
+
+
+def clause_tail_after(stmt, siblings, index):
+    """The statements RESUME NEXT runs after an error that MBASIC places in stmt.
+
+    MBASIC keeps the text pointer of the last statement that the main loop
+    started, and RESUME NEXT scans from the start of that statement to the
+    next ':' (a ':' is also put in front of every ELSE) and goes on there.
+    A THEN or ELSE clause is started by its IF, so an error in the first
+    statement of a clause, or in the condition, belongs to the statement
+    that holds the IF, and the scan ends at the ':' behind the first
+    statement of the THEN part. What follows that ':' is the next
+    statement of the THEN part (it runs, also when the error was in the
+    ELSE part) or an ELSE (the rest of the line is skipped).
+    stmt is the statement the scan starts at, found in the list siblings
+    at index (siblings is None for a statement of the program).
+    """
+    node, clause = stmt, None
+    while type(node).__name__ == 'IfStatementNode' and node.then_statements:
+        clause = node.then_statements
+        node = clause[0]
+    if clause is not None:
+        return list(clause[1:])
+    return list(siblings[index + 1:]) if siblings is not None else []
 
 
 def instr_shape_error(is_string):

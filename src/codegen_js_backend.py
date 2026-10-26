@@ -963,6 +963,7 @@ class JavaScriptBackend(CodeGenBackend):
         # RESUME and RESUME NEXT continue at a statement, not at a line. When the program has one,
         # every statement of a multi-statement line gets a case label that the error handler can name.
         self.track_statements = False
+        self.stmt_context: Dict[int, tuple] = {}  # id(statement) -> (owner IF, list it stands in, index); see _plan_statement_labels
         self.resume_next_map: Dict[int, Optional[int]] = {}  # pc (line or label) -> where RESUME NEXT continues
 
     def get_file_extension(self) -> str:
@@ -1300,6 +1301,7 @@ class JavaScriptBackend(CodeGenBackend):
             plan = LinePlan(line.line_number)
             statements = line.statements
             for i, stmt in enumerate(statements):
+                self.stmt_context[id(stmt)] = (None, None, i)
                 if isinstance(stmt, IfStatementNode) and self._if_needs_flat(stmt, i == len(statements) - 1):
                     self._flatten_if(stmt, plan)
                 else:
@@ -1322,17 +1324,29 @@ class JavaScriptBackend(CodeGenBackend):
         """Give each step that can fail a label, and note where RESUME NEXT continues after it.
 
         The error handler gets the label (the program counter) of the failing step. RESUME runs that
-        step again; RESUME NEXT goes to the next step. For an error in the condition of an IF the
-        binary continues after the first statement of the THEN part (it scans to the next colon).
+        step again. RESUME NEXT goes to the next step, except in a THEN or ELSE part: the binary
+        scans from the start of the statement that holds the IF to the next colon, so after an error
+        in the condition or in the first statement of a part it goes on behind the first statement
+        of the THEN part (see clause_tail_after).
         """
         steps = plan.steps
+        step_of = {id(step[1]): j for j, step in enumerate(steps) if step[0] in ('stmt', 'if')}
         for j, step in enumerate(steps):
             if step[0] not in ('stmt', 'if'):
                 continue
             pc = plan.line_number if j == 0 else self._position_target(plan, j)
             nxt = j + 1
-            if step[0] == 'if':
-                nxt = j + 2 if j + 1 < len(steps) and steps[j + 1][0] == 'stmt' else len(steps)
+            stmt = step[1]
+            owner, siblings, index = self.stmt_context.get(id(stmt), (None, None, 0))
+            # WIDTH n,x fails after it ran: its own statement holds the text pointer
+            late = getattr(stmt, 'bad_device', False)
+            anchor = stmt
+            while owner is not None and index == 0 and not late:
+                anchor = owner
+                owner, siblings, index = self.stmt_context[id(anchor)]
+            if anchor is not stmt or step[0] == 'if' or owner is not None:
+                tail = clause_tail_after(anchor, siblings if owner is not None else None, index)
+                nxt = step_of.get(id(tail[0]), len(steps)) if tail else len(steps)
             self.resume_next_map[pc] = self._position_target(plan, nxt)
 
     def _flatten_if(self, stmt: IfStatementNode, plan: 'LinePlan'):
@@ -1343,7 +1357,7 @@ class JavaScriptBackend(CodeGenBackend):
         if stmt.then_line_number is not None:
             steps.append(('goto', stmt.then_line_number))
         else:
-            self._flatten_statements(stmt.then_statements or [], plan)
+            self._flatten_statements(stmt.then_statements or [], plan, stmt)
         has_else = bool(stmt.else_statements) or stmt.else_line_number is not None
         jump = None
         if has_else:
@@ -1353,14 +1367,15 @@ class JavaScriptBackend(CodeGenBackend):
             if stmt.else_line_number is not None:
                 steps.append(('goto', stmt.else_line_number))
             else:
-                self._flatten_statements(stmt.else_statements, plan)
+                self._flatten_statements(stmt.else_statements, plan, stmt)
         end_pos = len(steps)
         steps[test] = ('if', stmt, else_pos if has_else else end_pos)
         if has_else:
             steps[jump] = ('jump', end_pos)
 
-    def _flatten_statements(self, statements, plan: 'LinePlan'):
-        for stmt in statements:
+    def _flatten_statements(self, statements, plan: 'LinePlan', owner=None):
+        for i, stmt in enumerate(statements):
+            self.stmt_context[id(stmt)] = (owner, statements, i)
             if isinstance(stmt, IfStatementNode):
                 self._flatten_if(stmt, plan)
             else:
@@ -2888,8 +2903,11 @@ class JavaScriptBackend(CodeGenBackend):
             pass
         elif isinstance(stmt, SyntaxErrorStatementNode):
             # MBASIC stores a line it cannot parse and fails when it runs
-            code.append(self.indent() + ('_error("Missing operand");' if stmt.error_code == 22
-                                         else '_error("Syntax error");'))
+            if stmt.stray_else:
+                pass        # an ELSE no IF waits for skips the rest of the line
+            else:
+                code.append(self.indent() + ('_error("Missing operand");' if stmt.error_code == 22
+                                             else '_error("Syntax error");'))
         elif isinstance(stmt, PokeStatementNode):
             code.extend(self._generate_poke(stmt))
         elif isinstance(stmt, OutStatementNode):
