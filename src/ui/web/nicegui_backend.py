@@ -2304,8 +2304,8 @@ class NiceGUIBackend(UIBackend):
                   delete_range=None) -> None:
         """CHAIN typed in the immediate line: load a file, then run it.
 
-        Variables pass on as in the CLI: all of them with ALL or MERGE, the
-        COMMON ones otherwise. CHAIN inside a running program is an error: the
+        Variables pass on as in the CLI: all of them with ALL, the COMMON ones
+        otherwise (also for MERGE). CHAIN inside a running program is an error: the
         tick timer has no way to restart the program that is running.
         """
         if self.running:
@@ -2319,9 +2319,20 @@ class NiceGUIBackend(UIBackend):
 
         runtime = self.runtime
         saved = runtime.get_all_variables()
-        if not (all_flag or merge):
+        if not all_flag:
             common = {name.lower() for name in runtime.common_vars}
             saved = [v for v in saved if v['name'].lower() in common]
+
+        # DELETE range: MBASIC deletes these lines of the old program before it
+        # merges the file, after it opened the file. A missing first or last
+        # line of the range is an Illegal function call and nothing is deleted.
+        if delete_range and merge:
+            from src.error_codes import format_error_message, ILLEGAL_FUNCTION_CALL
+            first, last = (int(getattr(e, 'value', e)) for e in delete_range)
+            if first not in self.program.lines or last not in self.program.lines:
+                self._append_output(format_error_message(ILLEGAL_FUNCTION_CALL) + "\n")
+                return
+            self.program.delete_range(first, last)
 
         if merge:
             success, errors, _added, _replaced = self.program.merge_from_text(text, name)
@@ -2337,9 +2348,6 @@ class NiceGUIBackend(UIBackend):
             self._append_output(error + "\n")
         if not success:
             return
-        if delete_range and merge:
-            first, last = (int(getattr(e, 'value', e)) for e in delete_range)
-            self.program.delete_range(first, last)
         self.current_file = name
         self._refresh_editor()
 

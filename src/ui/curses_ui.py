@@ -4711,6 +4711,17 @@ class CursesBackend(UIBackend):
         except Exception as e:
             self._append_to_output(message_for(e))
 
+    def cmd_chain(self, filename, start_line=None, merge=False, all_flag=False,
+                  delete_range=None):
+        """CHAIN [MERGE] file$ [,[line] [,ALL] [,DELETE range]]: load the file, then
+        run it.  Returns True when a bad file line aborted the read, so that the
+        running program stops (see chain_into_program)."""
+        from src.ui.ui_helpers import chain_into_program
+        return chain_into_program(
+            self, self.program, filename, start_line, merge, all_flag,
+            delete_range, self._append_to_output,
+            self._refresh_editor)
+
     def cmd_files(self, filespec=""):
         """Execute FILES command using ui_helpers."""
         from src.ui.ui_helpers import list_files

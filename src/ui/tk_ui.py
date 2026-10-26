@@ -3541,6 +3541,17 @@ class TkBackend(UIBackend):
             self._add_output(message_for(e) + "\n")
             self._set_status("Merge error")
 
+    def cmd_chain(self, filename, start_line=None, merge=False, all_flag=False,
+                  delete_range=None):
+        """CHAIN [MERGE] file$ [,[line] [,ALL] [,DELETE range]]: load the file, then
+        run it.  Returns True when a bad file line aborted the read, so that the
+        running program stops (see chain_into_program)."""
+        from src.ui.ui_helpers import chain_into_program
+        return chain_into_program(
+            self, self.program, filename, start_line, merge, all_flag,
+            delete_range, lambda text: self._add_output(text + "\n"),
+            lambda: (self._refresh_editor(), self._validate_editor_syntax()))
+
     def cmd_files(self, filespec: str = "") -> None:
         """Execute FILES command - display directory listing.
 

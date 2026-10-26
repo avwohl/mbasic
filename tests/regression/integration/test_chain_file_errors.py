@@ -177,3 +177,79 @@ def test_chain_merge_with_delete_range(tmp_path):
         {"h.bas": ['200 PRINT "G200"', "210 END"]}, "LIST\n")
     assert out.count("\ns\n") == 1 and "G200\n" in out
     assert listed(out[out.index("G200"):]) == [10, 20, 200, 210]
+
+
+def test_chain_merge_of_a_missing_file_deletes_nothing(tmp_path):
+    """Measured: 10 PRINT "s" / 20 ON ERROR GOTO 100 / 30 CHAIN MERGE
+    "noexist.bas",,DELETE 10-20 / 40 END / 100 PRINT "err";ERR:RESUME 40 prints
+    s, "err 53 "; LIST still shows 10, 20, 30, 40, 100 (MBASIC opens the file
+    before it deletes)."""
+    out = _run_cli(
+        tmp_path,
+        ['10 PRINT "s"', "20 ON ERROR GOTO 100",
+         '30 CHAIN MERGE "noexist.bas",,DELETE 10-20', "40 END",
+         '100 PRINT "err";ERR:RESUME 40'], {}, "LIST\n")
+    assert "err 53 \n" in out
+    assert listed(out[out.index("err 53"):]) == [10, 20, 30, 40, 100]
+
+
+def test_chain_merge_delete_with_a_missing_end_line(tmp_path):
+    """Measured: lines 5, 10, 20, 40 CHAIN MERGE "zb3.bas",60,ALL,DELETE 10-15,
+    50 prints s, t, "Illegal function call in 40"; LIST keeps 5, 10, 20, 40, 50.
+    DELETE 10-20 with line 20 absent gives the same."""
+    out = _run_cli(
+        tmp_path,
+        ["5 A=7", '10 PRINT "s"', '20 PRINT "t"',
+         '40 CHAIN MERGE "zb3.bas",60,ALL,DELETE 10-15', "50 END"],
+        {"zb3.bas": ['60 PRINT "N";A', "70 END"]}, "LIST\n")
+    assert "Illegal function call in 40\n" in out
+    assert "N 7" not in out
+    assert listed(out[out.index("Illegal function"):]) == [5, 10, 20, 40, 50]
+
+
+def test_chain_merge_clears_variables_without_all(tmp_path):
+    """Measured: 5 A=7 / 40 CHAIN MERGE "zb3.bas",60 (zb3 = 60 PRINT "N";A /
+    70 END) prints "N 0 " and then PRINT A gives " 0 ". With ALL it prints
+    "N 7 "."""
+    files = {"zb3.bas": ['60 PRINT "N";A', "70 END"]}
+    out = _run_cli(tmp_path, ["5 A=7", '40 CHAIN MERGE "zb3.bas",60', "50 END"],
+                   files, "PRINT A\n")
+    assert "N 0 \n" in out and "N 7" not in out
+    out = _run_cli(tmp_path, ["5 A=7", '40 CHAIN MERGE "zb3.bas",60,ALL', "50 END"],
+                   files, "")
+    assert "N 7 \n" in out
+
+
+def _chain_backend(lines):
+    from src.editing.manager import ProgramManager
+    from src.runtime import Runtime
+    program = ProgramManager({})
+    for number, text in lines:
+        program.add_line(number, text)
+    backend = SimpleNamespace(program=program, runtime=Runtime({}, {}), runs=[])
+    backend.cmd_run = lambda start=None: backend.runs.append(start)
+    return backend
+
+
+def test_chain_helper_for_tk_and_curses_follows_the_binary(tmp_path, monkeypatch):
+    """The Tk and curses CHAIN (chain_into_program) obeys the measurements above:
+    a missing end line of DELETE is an Illegal function call that deletes
+    nothing, a missing file changes nothing, a bad file line returns True."""
+    from src.ui.ui_helpers import chain_into_program
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "zb3.bas").write_bytes(b'60 PRINT "N"\r\n70 END\r\n')
+    (tmp_path / "za.bas").write_bytes(b'10 PRINT "A"\r\nPRINT "X"\r\n')
+    backend = _chain_backend([(5, '5 A=7'), (10, '10 PRINT "s"'), (40, '40 END')])
+    out = []
+    args = (backend, backend.program)
+    with pytest.raises(ValueError, match="Illegal function call"):
+        chain_into_program(*args, "zb3.bas", 60, True, True, (10, 15), out.append, lambda: None)
+    assert sorted(backend.program.lines) == [5, 10, 40]
+    with pytest.raises(RuntimeError, match="File not found"):
+        chain_into_program(*args, "none.bas", None, True, True, (5, 10), out.append, lambda: None)
+    assert sorted(backend.program.lines) == [5, 10, 40]
+    assert chain_into_program(*args, "za", None, False, False, None, out.append, lambda: None) is True
+    assert out == ["Direct statement in file"] and backend.runs == []
+    assert chain_into_program(*args, "zb3", None, True, False, (10, 10), out.append,
+                              lambda: None) is None
+    assert backend.runs == [None]

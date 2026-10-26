@@ -202,6 +202,10 @@ def _ctrl_key_to_char(key_string):
     return chr(ord(letter) - ord('A') + 1)
 
 
+class _ChainIllegalCall(ValueError):
+    """CHAIN MERGE ... DELETE range with a missing end line."""
+
+
 class InteractiveMode:
     """MBASIC 5.21 interactive command mode"""
 
@@ -986,20 +990,14 @@ class InteractiveMode:
         try:
             filename = _with_default_extension(filename)
 
-            # Save variables based on CHAIN options:
+            # Save variables based on CHAIN options (measured on the binary):
             # - ALL: passes all variables to the chained program
-            # - MERGE: merges program lines (overlays code) - NOTE: Currently also passes all vars
-            # - Neither: passes only COMMON variables (resolves type suffixes if needed)
-            #
-            # KNOWN LIMITATION: In MBASIC 5.21, MERGE and ALL are orthogonal options:
-            # - MERGE (without ALL) should only merge lines, keeping existing variables
-            # - ALL should pass all variables, replacing the program entirely
-            # Current implementation: Both MERGE and ALL result in passing all variables.
-            # TODO (Future): Separate line merging (MERGE) from variable passing (ALL).
-            # For now, MERGE provides program overlay but also passes all variables.
+            # - Neither: passes only COMMON variables (resolves type suffixes
+            #   if needed). This holds for CHAIN MERGE too: without ALL the
+            #   merged program starts with cleared variables.
             saved_variables = None
             if self.program_runtime:
-                if all_flag or merge:
+                if all_flag:
                     # Save all variables
                     saved_variables = self.program_runtime.get_all_variables()
                 elif self.program_runtime.common_vars:
@@ -1016,12 +1014,20 @@ class InteractiveMode:
                                 break
                         # Skip uninitialized variables
 
+            # MBASIC opens the file first: a missing file leaves the old
+            # program untouched (the error is trappable by ON ERROR).
+            open(filename, 'r').close()
+
             # DELETE range: MBASIC deletes these lines of the old program
-            # before it merges the file (even the CHAIN line itself).
+            # before it merges the file (even the CHAIN line itself). It is an
+            # Illegal function call, with nothing deleted, when the first or the
+            # last line of the range does not exist.
             if delete_range and merge:
                 start_expr, end_expr = delete_range
                 start_line_del = int(getattr(start_expr, 'value', start_expr))
                 end_line_del = int(getattr(end_expr, 'value', end_expr))
+                if start_line_del not in self.lines or end_line_del not in self.lines:
+                    raise _ChainIllegalCall("Illegal function call")
                 for ln in [ln for ln in self.lines.keys()
                            if start_line_del <= ln <= end_line_del]:
                     del self.lines[ln]
@@ -1109,7 +1115,7 @@ class InteractiveMode:
         except FileNotFoundError:
             # See cmd_merge: printing let the program run on past a failed CHAIN.
             raise RuntimeError(f"File not found: {filename}") from None
-        except ChainException:
+        except (ChainException, _ChainIllegalCall):
             # Re-raise ChainException so it can be caught by interpreter.run() loop
             raise
         except Exception as e:

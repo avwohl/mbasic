@@ -67,7 +67,8 @@ keeps the old program and the lines merged before the bad line. Before this,
 and Tk `cmd_load` and `cmd_merge` now return True after a read abort, so a
 running program stops there too. Tests:
 `tests/regression/integration/test_chain_file_errors.py`. The curses and Tk UIs
-still have no `cmd_chain` (CHAIN in a program there is not supported).
+now have a `cmd_chain` (`chain_into_program` in `src/ui/ui_helpers.py`); it
+loads the file and starts the program with `cmd_run`, as `RUN "file"` does.
 
 After a read abort in the CLI (`LOAD`, `MERGE`, `CHAIN`, `CHAIN MERGE`) the
 variables, arrays and FOR/GOSUB state are cleared and `CONT` gives
@@ -76,6 +77,10 @@ a start line that the new program lacks prints a bare `Undefined line number`.
 `CHAIN MERGE` with `DELETE a-b` now parses the range (before, `100-110` was read
 as the number -10 and the range was lost, so the merge looped for ever) and
 deletes those lines from the old program before the merge, even the CHAIN line.
+The file is opened first: a missing file deletes nothing. A missing first or
+last line of the range is `Illegal function call` at the CHAIN line, with
+nothing deleted. `CHAIN MERGE` without `ALL` clears the variables (only COMMON
+variables pass on), as `CHAIN` does. The web UI uses the same order and rules.
 `DELETE a-` (open range) is `Illegal function call` on the binary; ours is a
 syntax error. The curses, Tk and web read-abort paths do not clear the
 variables yet.
