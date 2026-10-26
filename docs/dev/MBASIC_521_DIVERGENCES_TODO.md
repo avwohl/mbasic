@@ -546,15 +546,9 @@ cases. RENUM does not call the serializer (it edits the text of each line, see
 
 ## 9. Statements where we are ahead of 5.21
 
-Not bugs so much as decisions to record - each one is a place where a program
-that works here would not work on the real thing.
-
-- `OPEN "A"` (append) is not a 5.21 file mode; the binary answers
-  `Bad file mode`. `test_file_io.bas` uses it, which is why that test is not
-  binary-verified.
-- `MERGE` returns to command level on 5.21 - the rest of the program does not
-  run. We carry on. (The summary line MERGE used to print is now suppressed
-  when a running program merges, which is what the binary does.)
+Each item here is a place where a program that works here does not work on
+the real thing. The two items that were here (`OPEN "A"` and `MERGE` in a
+running program) are now decisions. See section 10.
 
 
 ## 10. Deliberate, and staying that way
@@ -573,3 +567,15 @@ infinite in the IEEE format of its precision is an `Overflow` here (section 1).
 Machine infinity, 1.70141E+38, is nonetheless reproduced where it is
 observable - a float divide by zero and an overflow yield it, as they do on the
 binary.
+
+Two statements accept more than 5.21 does. The user decided on 2026-10-26 to
+keep them as extensions:
+
+- `OPEN "A"` opens a sequential file for append. The file is made if it is
+  not there. 5.21 has no append mode and answers `Bad file mode`. The
+  interpreter, the JavaScript backend and the C backend all accept `"A"`.
+  `test_file_io.bas` uses `OPEN "A"`, so that test is not binary-verified.
+- `MERGE` in a running program merges the file and then the program
+  continues at the next statement. On 5.21, MERGE always returns to command
+  level. The summary line that MERGE prints at command level does not show
+  when a running program merges, as on the binary.
