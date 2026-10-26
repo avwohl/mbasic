@@ -112,13 +112,15 @@ def test_failed_startup_explains_reason(tmp_path, text):
 
 
 def test_unnumbered_startup_file_reports_direct_statement(tmp_path):
-    # Measured on MBASIC 5.21: LOAD stops at a line with no number.
+    # Measured on MBASIC 5.21 (cpmemu ../com/mbasic FILE, then LIST): LOAD
+    # stops at a line with no number, prints "Direct statement in file", and
+    # the binary stays at the Ok prompt with an empty program.
     source = tmp_path / "bad.bas"
     source.write_text("PRINT 1\n")
-    result = cli(source)
-    assert result.returncode != 0
+    result = cli(source, commands="LIST\nSYSTEM\n")
+    assert result.returncode == 0
     assert "Direct statement in file" in result.stderr
-    assert str(source) in result.stderr
+    assert result.stdout.split("\n").count("Ok") == 2
 
 
 def test_line_with_a_syntax_error_loads_and_fails_when_it_runs(tmp_path):

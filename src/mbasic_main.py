@@ -811,7 +811,11 @@ def run_file(program_path, backend, debug_enabled=False):
             for line_num, error_msg in errors:
                 print(error_msg, file=sys.stderr)
 
-        if not success:
+        # A read abort (line over 255 bytes, no line number, bare number of a
+        # missing line) is not a failure: MBASIC prints the bare message and
+        # stays at the Ok prompt with the lines read before the bad line, even
+        # when that leaves the program empty (measured on MBASIC 5.21).
+        if not success and backend.program.read_abort is None:
             print(f"Failed to load program: {program_path}", file=sys.stderr)
             sys.exit(1)
 

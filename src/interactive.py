@@ -94,7 +94,7 @@ except ImportError:
     READLINE_AVAILABLE = False
 
 
-def print_error(e, runtime=None):
+def print_error(e, runtime=None, direct=False):
     """Print error with optional traceback in MBASIC_DEBUG mode"""
     from src.parser import ParseError
 
@@ -134,7 +134,9 @@ def print_error(e, runtime=None):
     # - a Python class name, a Python message, and an echo of the source line,
     # none of which MBASIC has. The Python detail is not lost: it still goes to
     # stderr through debug_log_error above, which is where it belongs.
-    line_num = runtime.pc.line_num if runtime and runtime.pc else None
+    # A direct-mode statement names no line, even when the program stopped
+    # earlier on a line (real MBASIC prints the bare message).
+    line_num = None if direct else (runtime.pc.line_num if runtime and runtime.pc else None)
     print(message_for(e, line_num or None))
 
     # In debug mode, print a hint about stderr
@@ -736,19 +738,31 @@ class InteractiveMode:
             print(format_error_message(CANT_CONTINUE))
             return
 
-        # MBASIC 5.21 prints nothing for CONT after the program ended or
-        # stopped on an error: only STOP and Break can be continued.
-        if self.program_runtime.pc.stop_reason not in ('STOP', 'BREAK'):
-            return
-
-        # Check if PC position is still valid (program may have been edited)
-        if not self.program_runtime.pc.is_valid(self.program_runtime.statement_table):
-            print(format_error_message(CANT_CONTINUE))
+        runtime = self.program_runtime
+        reason = runtime.pc.stop_reason
+        if reason == 'END':
+            # CONT after END resumes at the statement after the END. After
+            # the program ran off its end, or after the last statement,
+            # MBASIC prints nothing.
+            resume_pc = getattr(runtime, 'cont_pc', None)
+            runtime.cont_pc = None
+            if resume_pc is None:
+                return
+            runtime.pc = resume_pc.stop('END')
+        elif reason == 'ERROR':
+            # CONT after a run-time error runs the failing statement again
+            # (measured on MBASIC 5.21): it fails the same way until the
+            # cause is fixed from the prompt.
+            if runtime.pc.line_num is None:
+                return
+        elif reason not in ('STOP', 'BREAK'):
             return
 
         try:
             # Resume execution by creating new running PC at same position
             self.program_runtime.pc = self.program_runtime.pc.resume()
+            self.program_interpreter.state.error_info = None
+            self.program_interpreter.state.pending_error = None
             # ^C during the resumed run sets the break flag, as it does for RUN.
             self.program_interpreter.arm_break_handler()
 
@@ -1689,6 +1703,7 @@ class InteractiveMode:
 
         # Initialize runtime to None in case parsing fails
         runtime = None
+        resumed = False
 
         try:
             # A bad statement fails with Syntax error when it runs, as in a numbered line
@@ -1735,7 +1750,6 @@ class InteractiveMode:
                 old_pc = runtime.pc
 
                 # Execute each statement on line 0
-                resumed = False
                 for stmt in line_node.statements:
                     if type(stmt).__name__ == 'ContStatementNode':
                         resumed = True
@@ -1759,7 +1773,7 @@ class InteractiveMode:
 
         except Exception as e:
             # Use helper function for consistent error reporting
-            print_error(e, runtime)
+            print_error(e, runtime, direct=not resumed)
 
     def get_program_text(self):
         """Get program as text"""
