@@ -488,8 +488,14 @@ Found while measuring (#61):
 - Done: a call cut short by the end of the line, or a `MID$` statement with
   a fourth argument, still range-checks the number arguments that it read:
   `PRINT MID$("A",0,` and `MID$(A$,0,2,3)="x"` are `Illegal function call`.
-  The bad statement keeps the calls (`partial_calls`). Test:
+  The bad statement keeps the calls (`partial_calls`). A `MID$` statement
+  cut off by the end of the line (`MID$(A$,0,`, `MID$(A$,1,300`) does the
+  same. Test:
   `tests/regression/integration/test_loop_and_call_error_edges.py`.
+- Done (interpreter): a NEXT finds its FOR below a WHILE that is still open
+  and discards the WHILE entry, so in `FOR K=1 TO 2:WHILE K:NEXT:WEND` the
+  WEND is `WEND without WHILE` (30). The FOR entry records the stack depth.
+  The JavaScript semantic analyzer still refuses this crossed nesting.
 - A `MID$` statement whose value is the target string, as in
   `MID$(A$,3)=A$`, copies one byte at a time inside the one string on the
   binary (`HEHEH`). The interpreter and the JavaScript backend do the same.

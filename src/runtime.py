@@ -708,8 +708,26 @@ class Runtime:
         self.for_loop_states[var_name] = {
             'pc': pc,
             'end': end_value,
-            'step': step_value
+            'step': step_value,
+            'depth': len(self.execution_stack)    # entries below this FOR
         }
+
+    def unwind_loops_above_for(self, var_name):
+        """Drop the WHILE entries pushed since the FOR of var_name; returns how many.
+
+        The binary's NEXT finds its FOR on the stack and discards what lies
+        above it, so a WHILE left open inside a FOR body is gone after the
+        NEXT, and its WEND is then "WEND without WHILE".
+        """
+        state = self.for_loop_states.get(var_name)
+        if state is None:
+            return 0
+        depth = state.get('depth', 0)
+        stack = self.execution_stack
+        before = len(stack)
+        if before > depth:
+            stack[depth:] = [e for e in stack[depth:] if e['type'] != 'WHILE']
+        return before - len(stack)
 
     def get_for_loop_state(self, var_name):
         """

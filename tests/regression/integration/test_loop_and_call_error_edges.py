@@ -16,7 +16,11 @@ ERR and ERL and does RESUME NEXT.
 - The number arguments of LEFT$ RIGHT$ MID$ STRING$ INSTR INPUT$ are range
   checked as they are read: MID$("A",0, with the line cut off is Illegal
   function call (5), not Missing operand (22). The same holds for the MID$
-  statement with a fourth argument.
+  statement with a fourth argument, and for the MID$ statement cut off by the
+  end of the line (MID$(A$,0,  and MID$(A$,1,300).
+- A NEXT finds its FOR below a WHILE that is still open and discards the
+  WHILE entry, so the WEND after the NEXT is WEND without WHILE (30).
+  (Interpreter only: the JS semantic analyzer refuses this crossed nesting.)
 """
 import sys
 from pathlib import Path
@@ -58,7 +62,26 @@ CASES = {
         '10 ON ERROR GOTO 100\n15 A$="abc"\n30 MID$(A$,0,2,3)="x"\n40 PRINT "z":SYSTEM\n'
         + HANDLER,
         " 5  30 \nz\n"),
+    "mid_statement_cut_off_zero_start": (
+        '10 ON ERROR GOTO 100\n15 A$="abc"\n30 MID$(A$,0,\n40 PRINT "z":SYSTEM\n' + HANDLER,
+        " 5  30 \nz\n"),
+    "mid_statement_cut_off_long_count": (
+        '10 ON ERROR GOTO 100\n15 A$="abc"\n30 MID$(A$,1,300\n40 PRINT "z":SYSTEM\n' + HANDLER,
+        " 5  30 \nz\n"),
 }
+
+INTERPRETER_ONLY = {
+    "next_discards_open_while": (
+        '10 ON ERROR GOTO 100\n95 FOR K=1 TO 2:WHILE K:NEXT:WEND\n96 PRINT "e3":SYSTEM\n'
+        + HANDLER,
+        " 30  95 \ne3\n"),
+}
+
+
+@pytest.mark.parametrize("name", sorted(INTERPRETER_ONLY))
+def test_interpreter_only(tmp_path, name):
+    source, expected = INTERPRETER_ONLY[name]
+    assert run_interpreter(tmp_path, source) == expected
 
 
 @pytest.mark.parametrize("name", sorted(CASES))

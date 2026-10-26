@@ -2123,6 +2123,9 @@ class Interpreter:
         if not loop_info:
             raise RuntimeError(f"NEXT without FOR: {var_name}")
 
+        for _ in range(self.runtime.unwind_loops_above_for(var_name)):
+            self.limits.pop_while_loop()
+
         # Create token info for tracking
         token = self._make_token_info(var_node) if var_node else None
 

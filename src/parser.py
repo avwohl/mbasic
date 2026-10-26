@@ -804,7 +804,19 @@ class Parser:
                 return self.parse_mid_assignment()
             # MID$ at statement level without assignment pattern is an error
             # (MID$ function calls only valid in expression context)
-            raise ParseError(f"MID$ must be used as function (in expression) or assignment statement", token)
+            # A line cut short, MID$(A$,0,  still has its number arguments
+            # range-checked by the binary, so read the statement form to
+            # collect them (the error raised stays the generic one).
+            partial = None
+            try:
+                self.parse_mid_assignment()
+            except ParseError as e:
+                partial = getattr(e, 'partial_calls', None)
+            self.position = saved_pos
+            error = ParseError(f"MID$ must be used as function (in expression) or assignment statement", token)
+            if partial:
+                error.partial_calls = partial
+            raise error
 
         # Assignment (implicit LET)
         elif token.type == TokenType.IDENTIFIER:
@@ -3021,13 +3033,13 @@ class Parser:
 
             # Expect closing parenthesis
             self.expect(TokenType.RPAREN)
+
+            # Expect equals sign
+            self.expect(TokenType.EQUAL)
         except ParseError as e:
             # MID$(A$,0,2,3)="x" is Illegal function call, like the function
             self._note_partial_call(e, 'MID$', read)
             raise
-
-        # Expect equals sign
-        self.expect(TokenType.EQUAL)
 
         # Parse value expression
         value = self.parse_expression()
