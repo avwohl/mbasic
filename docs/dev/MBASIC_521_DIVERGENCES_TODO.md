@@ -160,7 +160,8 @@ What is still different:
   at the DATA line (`abc`, `12abc`, `1.5.5`, `&HG`, a quoted item, a sign
   before `&`); `&O8`, `&O19` and `&9` are reported at the READ line; a value
   over 65535 is an Overflow at the READ line. `ERL` is the DATA line, and
-  `RESUME NEXT` goes on after the READ. Not done: `ON ERROR GOTO 0` inside
+  `RESUME NEXT` goes on after the READ, and the bad item stays the next item
+  to read (`READ B$` after the trapped error gets it). Not done: `ON ERROR GOTO 0` inside
   the handler reports the READ line, not the DATA line.
   Test: `tests/regression/integration/test_entry_time_forms.py`.
 - Done: a line number stops at 6553. MBASIC takes no more digits once the value

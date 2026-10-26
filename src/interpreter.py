@@ -2296,9 +2296,11 @@ class Interpreter:
                         raise ValueError("data")        # a quoted item
                     value = data_text_to_number(data_node.value)
                 except ValueError as e:
+                    self.runtime.data_pointer = data_index   # the bad item is read again
                     where = PC.from_line(data_line) if str(e) == "data" and data_line is not None else None
                     raise MBasicError(2, where)
                 except OverflowError:
+                    self.runtime.data_pointer = data_index
                     raise MBasicError(6)
             else:
                 value = self.evaluate_expression(data_node)

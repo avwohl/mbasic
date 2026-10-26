@@ -2381,8 +2381,11 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'if (to_string && _data_txt[_data_ptr] !== null) return _data_txt[_data_ptr++];  // DATA text is not crunched')
             code.append(self.indent() + 'if (!to_string && _data_kind[_data_ptr] !== 0) {')
             code.append(self.indent() + '    // READ into a number variable parses the text of the item')
-            code.append(self.indent() + '    const i = _data_ptr++;')
-            code.append(self.indent() + '    return _data_text_to_number(_data[i], _data_kind[i] === 2, _data_ln[i]);')
+            code.append(self.indent() + '    // a bad item stays the next one to read, like the binary')
+            code.append(self.indent() + '    const i = _data_ptr;')
+            code.append(self.indent() + '    const v = _data_text_to_number(_data[i], _data_kind[i] === 2, _data_ln[i]);')
+            code.append(self.indent() + '    _data_ptr++;')
+            code.append(self.indent() + '    return v;')
             code.append(self.indent() + '}')
             code.append(self.indent() + 'return _data[_data_ptr++];')
             self.indent_level -= 1
