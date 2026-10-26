@@ -6,6 +6,9 @@ Measured on MBASIC 5.21 (cpmemu ../com/mbasic in a pty):
   the cause is fixed at the prompt; then the program carries on.
 - CONT after END resumes at the statement after the END.
 - CONT after the program ran off its end prints only Ok.
+- A failing direct statement typed after the program stopped on an error
+  prints the bare message ("Illegal function call", "Type mismatch"), with
+  no " in <line>".
 - A program edit after the error makes CONT print "Can't continue".
 - "mbasic FILE" with a line over 255 bytes as the first line prints
   "Line buffer overflow in 10", then Ok, and stays at the prompt with an empty
@@ -66,6 +69,14 @@ def test_cont_after_fixing_the_cause_mid_line():
     r = run_cli('5 Z=-1\n10 PRINT "a":PRINT LEFT$("abc",Z):PRINT "b"\n'
                 '30 PRINT "c"\nRUN\nZ=2\nCONT\nCONT\n')
     assert "ab\nb\nc\nOk\nOk" in r.stdout
+
+
+def test_direct_statement_error_after_program_error_has_no_line():
+    r = run_cli('10 PRINT 1\n20 PRINT LEFT$("a",-1)\nRUN\n'
+                'PRINT LEFT$("a",-1)\nA$=1\nCONT\n')
+    assert lines_after_banner(r.stdout)[-8:] == [
+        "Illegal function call in 20", "Ok", "Illegal function call", "Ok",
+        "Type mismatch", "Ok", "Illegal function call in 20", "Ok"]
 
 
 def test_cont_after_error_then_program_edit_cannot_continue():

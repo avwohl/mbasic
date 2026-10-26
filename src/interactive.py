@@ -94,7 +94,7 @@ except ImportError:
     READLINE_AVAILABLE = False
 
 
-def print_error(e, runtime=None):
+def print_error(e, runtime=None, direct=False):
     """Print error with optional traceback in MBASIC_DEBUG mode"""
     from src.parser import ParseError
 
@@ -134,7 +134,9 @@ def print_error(e, runtime=None):
     # - a Python class name, a Python message, and an echo of the source line,
     # none of which MBASIC has. The Python detail is not lost: it still goes to
     # stderr through debug_log_error above, which is where it belongs.
-    line_num = runtime.pc.line_num if runtime and runtime.pc else None
+    # A direct-mode statement names no line, even when the program stopped
+    # earlier on a line (real MBASIC prints the bare message).
+    line_num = None if direct else (runtime.pc.line_num if runtime and runtime.pc else None)
     print(message_for(e, line_num or None))
 
     # In debug mode, print a hint about stderr
@@ -1701,6 +1703,7 @@ class InteractiveMode:
 
         # Initialize runtime to None in case parsing fails
         runtime = None
+        resumed = False
 
         try:
             # A bad statement fails with Syntax error when it runs, as in a numbered line
@@ -1747,7 +1750,6 @@ class InteractiveMode:
                 old_pc = runtime.pc
 
                 # Execute each statement on line 0
-                resumed = False
                 for stmt in line_node.statements:
                     if type(stmt).__name__ == 'ContStatementNode':
                         resumed = True
@@ -1771,7 +1773,7 @@ class InteractiveMode:
 
         except Exception as e:
             # Use helper function for consistent error reporting
-            print_error(e, runtime)
+            print_error(e, runtime, direct=not resumed)
 
     def get_program_text(self):
         """Get program as text"""

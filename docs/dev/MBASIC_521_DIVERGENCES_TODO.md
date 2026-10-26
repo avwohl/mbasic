@@ -200,7 +200,9 @@ and ERL, and RESUME NEXT lands in the right place. The edges do not:
   until the cause is fixed at the prompt. CONT after END resumes at the
   statement after the END. After the program ran off its end, CONT prints
   only `Ok`. An edit after the error gives `Can't continue`. All measured on
-  the binary in a pty. Only the CLI does this. Tests:
+  the binary in a pty. Only the CLI does this. A direct statement that fails
+  after the program stopped on an error prints the bare message, with no
+  ` in <line>` (as the binary does). Tests:
   `tests/regression/integration/test_cont_after_error_and_end.py`.
 - Done (#49): `python3 mbasic FILE` with a line over 255 bytes now prints the
   bare message and stays at the prompt, also when the first line is the long
