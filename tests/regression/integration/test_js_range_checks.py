@@ -245,6 +245,16 @@ BOTH_CASES = [
      "10 ON ERROR GOTO 100\n20 X=1/0\n30 END\n100 PRINT ERR;ERL\n110 ON ERROR GOTO 0\n120 X=1/0\n",
      " 11  20 \nDivision by zero in 20\n"),
     ("erase empties the array", "10 DIM A(3)\n20 A(1)=1\n30 ERASE A\n40 PRINT A(1)\n", " 0 \n"),
+    # Measured on the 5.21 binary: ERASE deletes the array; the next use makes it again with the bounds 0..10
+    ("erase then default bounds", "10 DIM A(3)\n20 A(1)=1\n30 ERASE A\n40 PRINT A(4);A(10)\n50 PRINT A(11)\n",
+     " 0  0 \nSubscript out of range in 50\n"),
+    ("erase then store", "10 DIM A(3)\n20 ERASE A\n30 A(5)=2\n40 PRINT A(5)\n", " 2 \n"),
+    ("erase two dimensions", "10 DIM A(3,3)\n20 ERASE A\n30 A(5,5)=2\n40 PRINT A(5,5)\n", " 2 \n"),
+    # Measured on the binary: a code with no message is Unprintable error, also in a handler
+    ("unprintable error in a handler", "10 ON ERROR GOTO 100\n20 ERROR 11\n40 END\n100 ERROR 200\n",
+     "Unprintable error in 100\n"),
+    ("unprintable error 255 in a handler", "10 ON ERROR GOTO 100\n20 ERROR 11\n40 END\n100 ERROR 255\n",
+     "Unprintable error in 100\n"),
     ("instr start beyond the string",
      '10 PRINT INSTR(3,"abc","");INSTR(4,"abc","");INSTR(1,"","");INSTR(2,"","");INSTR("","");'
      'INSTR(4,"abc","c");INSTR("abc","")\n',
@@ -311,6 +321,17 @@ def test_compiled_arrays_keep_each_subscript(tmp_path):
     source = ('10 DIM A(3,3)\n20 A(1,2)=5:A(2,1)=7:PRINT A(1,2);A(2,1);A(0,0)\n'
               '30 DIM B$(2,2):B$(1,1)="x":PRINT B$(1,1);B$(2,2)\n40 C(1,2)=4:PRINT C(1,2)\n')
     assert run_js(tmp_path, source) == " 5  7  0 \nx\n 4 \n"
+
+
+def test_c_backend_rounds_a_fractional_dim(tmp_path):
+    # Measured on the binary: DIM A(2.5) makes A(3) valid (FRCINT, halves away from zero). Only the C text is checked.
+    basic = tmp_path / "prog.bas"
+    basic.write_text("10 DIM A(2.5)\n20 A(3)=4:PRINT A(3)\n")
+    out = tmp_path / "prog"
+    result = subprocess.run([sys.executable, str(ROOT / "mbasic"), str(basic), "--compile-c", str(out)],
+                            cwd=ROOT, capture_output=True, text=True, timeout=60)
+    c_text = (tmp_path / "prog.c").read_text()
+    assert "a_arr[4]" in c_text, result.stdout + result.stderr
 
 
 if __name__ == "__main__":

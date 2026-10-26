@@ -194,7 +194,7 @@ interpreter. The interpreter now checks the second and later dimensions
 against their own bound (`A(2,6)` on `DIM A(5,5)`). `RESUME` with no error
 is `RESUME without error`, and a handler that falls off the end reports `No
 RESUME in <last line>`. `ON ERROR GOTO 0` in a handler reports the line of
-the first error. `ERASE` empties the array in JavaScript. `INSTR` gives 0 for
+the first error. `ERASE` deletes the array in JavaScript: the next use makes it again with the bounds 0 to 10, as on the binary. A fatal `ERROR n` in a handler, where n has no message, prints `Unprintable error`. `INSTR` gives 0 for
 an empty string and for a start beyond the end, also with an empty search
 string (interpreter and JavaScript). `MID$(A$,2,3)=A$` copies byte by byte over
 itself, so `hello` gives `hhhho`. Not done: `ERASE A` followed by `DIM A` is

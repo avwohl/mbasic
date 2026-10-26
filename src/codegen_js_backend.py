@@ -875,6 +875,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.option_base = 0  # OPTION BASE 0 or 1
         self.uses_data = False
         self.uses_random = False
+        self.erased_arrays: set = set()  # arrays named in ERASE: their bounds change at run time
         self.array_ranks: Dict[str, int] = {}  # arrays used without DIM: the most subscripts seen
         self.uses_error_handling = False
         self.uses_file_io = False
@@ -1327,6 +1328,12 @@ class JavaScriptBackend(CodeGenBackend):
                     self.uses_gosub = True
                 elif isinstance(stmt, OptionBaseStatementNode):
                     self.option_base = stmt.base
+                elif isinstance(stmt, EraseStatementNode):
+                    for array_name in stmt.array_names:
+                        key = array_name.upper()
+                        if key[-1] not in '$%!#':
+                            key += '!'
+                        self.erased_arrays.add(key)  # its bounds are kept at run time
                 elif isinstance(stmt, RandomizeStatementNode):
                     self.uses_random = True  # RANDOMIZE calls _rnd
                 elif isinstance(stmt, ReadStatementNode):
@@ -2274,7 +2281,7 @@ class JavaScriptBackend(CodeGenBackend):
             self.indent_level += 1
             code.append(self.indent() + 'if (_in_error_handler) {')
             self.indent_level += 1
-            code.append(self.indent() + '_error(_ERR_MSGS[code] || "Illegal function call");  // an error in a handler is not trapped')
+            code.append(self.indent() + '_error(_ERR_MSGS[code] || "Unprintable error");  // an error in a handler is not trapped')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append(self.indent() + '_error_code = code;')
@@ -2511,6 +2518,8 @@ class JavaScriptBackend(CodeGenBackend):
                 else:
                     init_value = '0'
                 code.append(self.indent() + f'let {js_name} = {self._create_array_init(dimensions, init_value)};')
+                if var_name.upper() in self.erased_arrays:
+                    code.append(self.indent() + f'let _bd_{js_name} = {json.dumps(list(dimensions))};  // bounds; ERASE resets them')
             else:
                 # Regular variable
                 if var_info.var_type == VarType.STRING:
@@ -3368,6 +3377,8 @@ class JavaScriptBackend(CodeGenBackend):
             return f'{access}[_ix(0, -1)]'
         for k, idx_expr in enumerate(subscripts):
             bound = dims[k] if k < len(dims) else 10
+            if var_key.upper() in self.erased_arrays:
+                bound = f'_bd_{self._mangle_var_name(var_key)}[{k}]'
             access = f'{access}[_ix({self._generate_expression(idx_expr)}, {bound}{lo})]'
         return access
 
@@ -3556,7 +3567,9 @@ class JavaScriptBackend(CodeGenBackend):
                 else:
                     init_value = '0'
 
-                # Recreate the array with default values
+                # ERASE deletes the array; the next use creates it again with the bounds 0..10
+                dimensions = [10] * len(dimensions)
+                code.append(self.indent() + f'_bd_{js_name} = {json.dumps(dimensions)};')
                 code.append(self.indent() + f'{js_name} = {self._create_array_init(dimensions, init_value)};')
         return code
 
@@ -3726,7 +3739,7 @@ class JavaScriptBackend(CodeGenBackend):
             # ON ERROR GOTO 0 - disable error handling
             code.append(self.indent() + '_error_handler = 0;')
             # Inside a handler it also raises the pending error again
-            code.append(self.indent() + 'if (_in_error_handler) { try { _error(_ERR_MSGS[_error_code] || "Illegal function call"); } catch (e) { e.basicLine = _error_line; throw e; } }')
+            code.append(self.indent() + 'if (_in_error_handler) { try { _error(_ERR_MSGS[_error_code] || "Unprintable error"); } catch (e) { e.basicLine = _error_line; throw e; } }')
         elif stmt.line_number not in self.line_labels:
             # The binary looks the line up when the statement runs
             code.append(self.indent() + '_error("Undefined line number");')

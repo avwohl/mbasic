@@ -898,7 +898,8 @@ class Z88dkCBackend(CodeGenBackend):
                             self._unsupported(
                                 f"DIM {name}: the size is not a constant the compiler can work out")
                             maxima = [10] * len(decl.dimensions)
-                        self.array_dims[name] = [int(m) for m in maxima]
+                        # a size that is not whole is rounded like FRCINT, halves away from zero
+                        self.array_dims[name] = [int(m + 0.5) if m >= 0 else -int(-m + 0.5) for m in maxima]
         for key, rank in used.items():
             if key not in dimmed:
                 self.array_ranks[key] = rank
