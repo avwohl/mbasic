@@ -10,7 +10,8 @@ import signal
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Callable, Any, Union
 from src.runtime import Runtime, ProgramString, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
-from src.ast_nodes import StringNode, FunctionCallNode, arity_type_checks, instr_shape_error, clause_tail_after
+from src.js_type_check import builtin_arg_kinds
+from src.ast_nodes import StringNode, FunctionCallNode, arity_type_checks, instr_shape_error, clause_tail_after, clause_slice
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
 from src.pc import PC
@@ -331,6 +332,11 @@ class Interpreter:
         # which name in that NEXT to enter at, and a signal to skip the
         # increment. See execute_for.
         self._for_entry_index = None
+        # A FOR inside a THEN or ELSE clause has no PC for its body, so the
+        # clause executor loops it (see execute_clause_statements).
+        self._clause_stack = []         # [statements, index] of running clauses
+        self._clause_jump = None        # (statements, index) a NEXT goes back to
+        self._clause_for = {}           # loop variable -> (statements, FOR index)
 
         # I/O handler (defaults to console if not provided)
         if io_handler is None:
@@ -1044,7 +1050,7 @@ class Interpreter:
         # Jump to error handler line
         self.runtime.npc = PC.from_line(self.runtime.error_handler)
 
-    def find_matching_next(self, start_line, start_stmt):
+    def find_matching_next(self, start_line, start_stmt, tail=None):
         """Find the NEXT that closes a FOR, the way MBASIC's NXTSCN does.
 
         The scan is a pure nesting count and never looks at variable names:
@@ -1063,6 +1069,18 @@ class Interpreter:
             and stmt_index addresses the IF that contains it.
         """
         depth = 1
+
+        # A FOR inside a clause: the rest of that clause comes first. A match
+        # there has no line (None) and its index is counted in tail.
+        for tail_idx, tail_stmt in enumerate(tail or ()):
+            for stmt, nested in _for_next_walk(tail_stmt):
+                if isinstance(stmt, ast_nodes.ForStatementNode):
+                    depth += 1
+                    continue
+                names = max(1, len(stmt.variables or []))
+                if depth <= names:
+                    return (None, tail_idx, depth - 1, nested)
+                depth -= names
 
         line_numbers = sorted(set(pc.line_num
                                   for pc in self.runtime.statement_table.statements.keys()))
@@ -1542,15 +1560,42 @@ class Interpreter:
 
         The tail is handed to the GOSUB frame instead, and RETURN finishes it.
         """
-        for index, clause_stmt in enumerate(statements):
+        entry = [statements, 0]
+        self._clause_stack.append(entry)
+        try:
+            self._run_clause_list(statements, entry, resume_pc, restart)
+        finally:
+            self._clause_stack.pop()
+
+    def _run_clause_list(self, statements, entry, resume_pc, restart):
+        index = 0
+        while index < len(statements):
+            entry[1] = index
+            clause_stmt = statements[index]
             try:
                 self.execute_statement(clause_stmt)
             except Exception as e:
                 self._note_clause_error(e, statements, index, clause_stmt, restart)
                 raise
+            jump = self._clause_jump
+            if jump is not None:
+                # A NEXT (or a FOR that is not entered) goes to a statement of
+                # a clause: this one, or one that holds this one.
+                base = getattr(statements, 'base', None) or statements
+                if jump[0] is not base:
+                    return
+                self._clause_jump = None
+                if jump[1] < getattr(statements, 'offset', 0):
+                    # back to a FOR before the part that runs again
+                    statements = entry[0] = base
+                    index = jump[1]
+                else:
+                    index = jump[1] - getattr(statements, 'offset', 0)
+                continue
+            index += 1
             if self.runtime.npc is None:
                 continue
-            remaining = statements[index + 1:]
+            remaining = clause_slice(statements, index)
             if type(clause_stmt).__name__ == 'GosubStatementNode':
                 if resume_pc is not None:
                     # This GOSUB is itself running from a clause tail, so it
@@ -1582,7 +1627,7 @@ class Interpreter:
             return
         try:
             error.clause_tail = clause_tail_after(clause_stmt, statements, index)
-            error.clause_rerun = list(statements[index:])    # RESUME starts here again
+            error.clause_rerun = clause_slice(statements, index)    # RESUME starts here again
         except AttributeError:
             pass
 
@@ -1606,7 +1651,7 @@ class Interpreter:
             elif stmt.else_statements:
                 self.execute_clause_statements(stmt.else_statements)
 
-    def _matching_next(self, stmt):
+    def _matching_next(self, stmt, tail=None):
         """The NEXT that closes this FOR, found once and remembered.
 
         MBASIC scans for it every time a FOR is set up, and says
@@ -1621,7 +1666,7 @@ class Interpreter:
         if cached is not None and cached[0] == key:
             return cached[1]
         target = self.find_matching_next(
-            self.runtime.pc.line_num, self.runtime.pc.stmt_offset)
+            self.runtime.pc.line_num, self.runtime.pc.stmt_offset, tail)
         if target is None:
             raise RuntimeError("FOR without NEXT")
         try:
@@ -1905,10 +1950,31 @@ class Interpreter:
         #   10 FOR I=10 TO 1 / 20 PRINT "BODY" / 30 NEXT J
         # report "NEXT without FOR in 30": the NEXT still runs, and still
         # checks the name it was given.
-        target = self._matching_next(stmt)
+        in_clause = None
+        if self._clause_stack:
+            clause, position = self._clause_stack[-1]
+            if clause[position] is stmt:
+                in_clause = (getattr(clause, 'base', None) or clause,
+                             getattr(clause, 'offset', 0) + position)
+        if in_clause is not None:
+            self._clause_for[var_name] = in_clause
+        else:
+            self._clause_for.pop(var_name, None)
+        target = self._matching_next(
+            stmt, in_clause[0][in_clause[1] + 1:] if in_clause else None)
         if _loop_is_done(start, end, step):
             next_line, next_stmt, var_index, nested = target
-            if nested:
+            if next_line is None:
+                # The NEXT is in the same clause as the FOR: go on there. One
+                # inside a clause within it ends the clause instead.
+                clause, position = in_clause
+                if nested:
+                    self.runtime.pop_for_loop(var_name)
+                    self._clause_jump = (clause, len(clause))
+                else:
+                    self._for_entry_index = var_index
+                    self._clause_jump = (clause, position + 1 + next_stmt)
+            elif nested:
                 # The NEXT is inside a THEN or ELSE clause, which has no PC to
                 # jump to. Finish the loop here instead and carry on after the
                 # statement that contains it - where the clause would have left
@@ -2077,6 +2143,15 @@ class Interpreter:
             # Validation: Check for strictly greater than (== len is OK as sentinel)
             if return_stmt > len(line_statements):
                 raise RuntimeError(f"NEXT error: FOR statement in line {return_line} no longer exists")
+
+            clause = self._clause_for.get(var_name)
+            if clause is not None and any(
+                    (getattr(entry[0], 'base', None) or entry[0]) is clause[0]
+                    for entry in self._clause_stack):
+                # The FOR is in a clause that is still running: its body is
+                # the rest of that clause.
+                self._clause_jump = (clause[0], clause[1] + 1)
+                return True
 
             # Jump back to statement AFTER the FOR
             for_pc = PC.running_at(return_line, return_stmt)
@@ -4456,7 +4531,16 @@ class Interpreter:
         func = getattr(self.builtins, func_name, None)
         if func:
             # It's a builtin function
-            args = [self.evaluate_expression(arg) for arg in expr.arguments]
+            # A string where a number is wanted (ABS("a")) or the other way
+            # round (LEFT$(1,2)) is Type mismatch, checked as each argument
+            # is evaluated.
+            kinds = builtin_arg_kinds(func_name, len(expr.arguments))
+            args = []
+            for kind, arg in zip(kinds, expr.arguments):
+                value = self.evaluate_expression(arg)
+                if kind != '*' and isinstance(value, str) != (kind == 's'):
+                    raise MBasicError(13)
+                args.append(value)
             if func_name == 'STR' and len(args) == 1:
                 # STR$ converts like PRINT, so the argument's type matters
                 return func(args[0], self._numeric_digits(expr.arguments[0]))

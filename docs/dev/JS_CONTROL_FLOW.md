@@ -105,9 +105,10 @@ to its line). ERL uses the same line.
 
 ## Differences that remain
 
-* The interpreter stops with `FOR Without NEXT` for
-  `IF X=1 THEN FOR I=1 TO 3:PRINT I;:NEXT I:PRINT "a"`. Real MBASIC and the
-  JavaScript run the loop.
+* A FOR in a THEN or ELSE part runs its body to the end of the line in the
+  interpreter and in the JavaScript, as in real MBASIC. A NEXT on a later
+  line for a FOR in a part, and `IF c THEN NEXT ELSE NEXT` inside such a
+  loop, can differ from real MBASIC.
 * NEXT pairs with FOR by position in the text. A program that jumps into a
   loop with GOTO and a FOR that has no NEXT in the text can behave
   differently from real MBASIC.

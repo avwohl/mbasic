@@ -324,9 +324,17 @@ Found while measuring (#61):
   of an argument at the `,` behind it, so a wrong type is `Type mismatch` (13)
   before the count is a `Syntax error`: `LEFT$(1,2,3)`, `STRING$("A")`. `ABS("x",1)` and `LEFT$(1)` stay `Syntax error`
   (`arity_type_checks` in `src/ast_nodes.py`). Not done: `MID$("A",0,2,3)` is
-  `Illegal function call` on the binary (the start is checked first), and
-  `ABS("x")` and `LEN(1)` give other errors here than on the binary. They are
-  not count errors.
+  `Illegal function call` on the binary (the start is checked first). A
+  string given to a number argument (`ABS("a")`, `LEN(1)`) or the other way
+  round (`LEFT$(1,2)`) is `Type mismatch` in the interpreter, as on the
+  binary (`builtin_arg_kinds` in `src/js_type_check.py`).
+- Done (#61): a FOR inside a THEN or ELSE part (`IF 1 THEN FOR I=1 TO 2:PRINT
+  I:NEXT:PRINT "a"`) runs in the interpreter. The body of such a loop is the
+  rest of the part, which has no PC, so the clause executor goes back to the
+  statement behind the FOR (`_clause_jump` in `src/interpreter.py`). This also
+  works after a GOSUB in the body and after RESUME NEXT. Not done: a NEXT on a
+  later line for a FOR in a part, and `IF c THEN NEXT ELSE NEXT` in the body
+  (the binary gives `NEXT without FOR` there).
 - Done (#61): `INSTR` gives its error from the types, not only the count
   (`instr_shape_error` in `src/ast_nodes.py`, interpreter and JavaScript
   backend). A string first argument is the two-argument form: `INSTR("A",1)`

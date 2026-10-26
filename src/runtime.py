@@ -1158,7 +1158,7 @@ class Runtime:
         """
         for entry in reversed(self.execution_stack):
             if entry.get('type') == 'GOSUB':
-                entry['continuation'] = list(statements)
+                entry['continuation'] = statements
                 return
 
     def set_gosub_return(self, return_line, return_stmt_index):

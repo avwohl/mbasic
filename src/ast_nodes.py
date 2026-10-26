@@ -1513,6 +1513,24 @@ def arity_type_checks(name: str, count: int) -> str:
     return ''
 
 
+class ClauseSlice(list):
+    """The end of a THEN or ELSE clause that runs again (RESUME, RESUME NEXT).
+
+    base is the whole clause and offset where this list starts in it, so a
+    NEXT can find the FOR of a loop that began before the slice.
+    """
+    base = None
+    offset = 0
+
+
+def clause_slice(statements, start):
+    """statements[start:] as a ClauseSlice of the same clause."""
+    part = ClauseSlice(statements[start:])
+    part.base = getattr(statements, 'base', None) or statements
+    part.offset = getattr(statements, 'offset', 0) + start
+    return part
+
+
 def clause_tail_after(stmt, siblings, index):
     """The statements RESUME NEXT runs after an error that MBASIC places in stmt.
 
@@ -1533,8 +1551,8 @@ def clause_tail_after(stmt, siblings, index):
         clause = node.then_statements
         node = clause[0]
     if clause is not None:
-        return list(clause[1:])
-    return list(siblings[index + 1:]) if siblings is not None else []
+        return clause_slice(clause, 1)
+    return clause_slice(siblings, index + 1) if siblings is not None else []
 
 
 def instr_shape_error(is_string):
