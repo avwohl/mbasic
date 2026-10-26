@@ -3167,6 +3167,11 @@ class JavaScriptBackend(CodeGenBackend):
 
     def _check_argument_kinds(self, func: FunctionCallNode, args: List[str]) -> List[str]:
         """Make an argument of the wrong kind (a string for a number, or the other way) Type mismatch."""
+        if func.arity_error is not None or func.name.upper() == 'INSTR':
+            # The count error comes first; _arg_type and _instr give the
+            # argument type errors in the order the interpreter does (INSTR
+            # reads the types of its arguments to find its form).
+            return args
         name = function_base_name(func)
         if name.startswith('FN'):
             wanted = self._fn_param_kinds(self._fn_key(name))

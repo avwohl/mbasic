@@ -80,7 +80,7 @@ ERROR_BODIES = [
 # a comparison is a number whatever it compares.
 OK_CASES = [
     ('PRINT +"a"', "a\n"),
-    ('CLEAR 100,200:PRINT "ok"', "ok\n"),
+    ('CLEAR 200,40000:PRINT "ok"', "ok\n"),
     ('PRINT +"a"+"b"', "ab\n"),
     ('PRINT "a"+"b"', "ab\n"),
     ('PRINT "a"<"b"', "-1 \n"),
