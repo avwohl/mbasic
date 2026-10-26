@@ -819,10 +819,13 @@ class SemanticAnalyzer:
     - Constant folding optimization
     """
 
-    def __init__(self, flatten_arrays=True):
+    def __init__(self, flatten_arrays=True, runtime_dims=False):
         # The JavaScript backend keeps one subscript per dimension, to check each against its own
         # bound as MBASIC does; the C backend wants the flat index.
         self.flatten_arrays = flatten_arrays
+        # The JavaScript backend checks a DIM when it runs: a bound that is not a constant, a
+        # negative or a string bound, and a second DIM of an array are not errors here.
+        self.runtime_dims = runtime_dims
         # Keys of the arrays an ERASE names.  Their bounds can change at run time, so a
         # subscript is not flattened with constant strides and a second DIM is not an error
         # here (the compiled program reports Duplicate Definition when it runs).
@@ -1978,7 +1981,8 @@ class SemanticAnalyzer:
                 var_key = name_upper + '!'
 
             # Check if already dimensioned
-            if var_key in self.symbols.variables and var_key not in self.erased_arrays:
+            if (var_key in self.symbols.variables and var_key not in self.erased_arrays
+                    and not self.runtime_dims):
                 var_info = self.symbols.variables[var_key]
                 if var_info.is_array:
                     raise SemanticError(
@@ -1988,6 +1992,7 @@ class SemanticAnalyzer:
 
             # Evaluate all subscripts as constant expressions (or runtime-evaluable constants)
             dimensions = []
+            runtime_only = False  # a bound the compiled program checks when the DIM runs
             for subscript in array_decl.dimensions:
                 const_val = self.evaluator.evaluate_to_int(subscript)
                 if const_val is not None:
@@ -1996,6 +2001,10 @@ class SemanticAnalyzer:
                     if isinstance(exact, float) and exact == exact and abs(exact) < 65536:
                         const_val = int(abs(exact) + 0.5) * (-1 if exact < 0 else 1)
 
+                if const_val is None and self.runtime_dims:
+                    runtime_only = True
+                    dimensions.append(10)
+                    continue
                 if const_val is None:
                     # Try to provide a helpful error message
                     if isinstance(subscript, VariableNode) and subscript.subscripts is None:
@@ -2017,6 +2026,10 @@ class SemanticAnalyzer:
                             self.current_line
                         )
 
+                if const_val < 0 and self.runtime_dims:
+                    runtime_only = True
+                    dimensions.append(10)
+                    continue
                 if const_val < 0:
                     raise SemanticError(
                         f"Array subscript cannot be negative in {var_key} (evaluated to {const_val})",
@@ -2025,7 +2038,7 @@ class SemanticAnalyzer:
 
                 dimensions.append(const_val)
             # This DIM's own sizes: an erased array can be dimensioned again with others
-            array_decl.const_dimensions = list(dimensions)
+            array_decl.const_dimensions = None if runtime_only else list(dimensions)
 
             # Calculate flattened size for multi-dimensional arrays
             # Each dimension is stored as the maximum index, so actual size is (dim + 1 - base)

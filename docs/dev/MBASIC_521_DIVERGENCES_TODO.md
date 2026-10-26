@@ -241,9 +241,10 @@ the nested arrays of the generated code did not work with the flat index of
 the C backend. An array that is not in a `DIM` gets as many dimensions as its
 uses have subscripts. `DIM A(2.5)` rounds (also for the C backend), and a
 `DIM` bound above 32767 is `Overflow` when the `DIM` runs. Test:
-`tests/regression/integration/test_js_range_checks.py`. Not done in the
-JavaScript backend: `DIM A(-1)` stays a compilation error, and the bounds of a
-`DIM` must be constants. The file statements `FIELD`, `GET`, `PUT`, `OPEN ...
+`tests/regression/integration/test_js_range_checks.py`. Done later: the
+JavaScript `DIM` bounds are checked when the program runs (see the #60 entry
+and `docs/dev/JS_ARRAYS.md`). Not done in the JavaScript backend: the file
+statements `FIELD`, `GET`, `PUT`, `OPEN ...
 LEN` and file numbers do not have the checks. A double is not taken to
 single precision before FRCINT rounds it, except in the logical operators.
 
@@ -630,8 +631,9 @@ semantics are not:
   string mixed with a number, for `-"a"` and `NOT "a"`, for a wrong kind in an
   assignment, a condition, a FOR, a built-in function, DEF FN and PRINT USING.
   Unary `+` on a string is allowed. The semantic analyzer no longer folds or
-  rewrites such an expression. See `docs/dev/JS_TYPE_MISMATCH.md`. Open:
-  `DIM B("a")` stops the compile, and `USR("a")` is not checked. The C backend
+  rewrites such an expression. See `docs/dev/JS_TYPE_MISMATCH.md`. Done
+  later: `DIM B("a")` is `Type mismatch` at run time (see `docs/dev/JS_ARRAYS.md`).
+  Open: `USR("a")` is not checked. The C backend
   refuses the mixed forms at compile time, on purpose. Test:
   `tests/regression/integration/test_js_type_mismatch.py`.
 - Done (#58): in the JavaScript backend, `RESUME NEXT` goes on at the next
@@ -651,21 +653,30 @@ semantics are not:
     `Subscript out of range`.
   - The storage is static, so a loop of `DIM` and `ERASE` does not use more
     memory. See `docs/dev/C_BACKEND.md`.
-  - Not done: a second `DIM` of the same array with no `ERASE` between is
-    still a compile error in the C backend. The binary stops at run time with
-    `Duplicate Definition`. This is a deliberate refusal.
-  - Not done: a `DIM` after `ERASE` with a size that is not a constant
-    (for example `DIM A(R*2)` in a loop) is a compile error in the C backend.
-    The binary and the interpreter accept it. The C storage is static, so
-    the C compiler must know the largest size. This is a limit of the
-    design, as for every `DIM` with a variable size.
+  - Not done in the C backend: a second `DIM` of the same array with no
+    `ERASE` between is still a compile error. The binary stops at run time
+    with `Duplicate Definition`. This is a deliberate refusal.
+  - Not done in the C backend: a `DIM` after `ERASE` with a size that is not
+    a constant (for example `DIM A(R*2)` in a loop) is a compile error. The
+    binary and the interpreter accept it. The C storage is static, so the C
+    compiler must know the largest size. This is a limit of the design, as
+    for every `DIM` with a variable size.
   - Done: the interpreter gives `Subscript out of range` for `DIM A(0)`
     with `OPTION BASE 1`, also when the array exists. The binary checks the
     bound before it checks for `Duplicate Definition`. (The C backend
     refuses such a program at compile time.)
-  - Not done: the JavaScript backend does not give `Illegal function call`
-    for `ERASE` of an array that does not exist, and does not give
-    `Duplicate Definition` for a `DIM` of an array that exists.
+  - Done: the JavaScript backend gives `Illegal function call` for `ERASE`
+    of an array that does not exist, `Duplicate Definition` for a `DIM` of
+    an array that exists (also after a use, after a jump back, and
+    after `CLEAR`, which deletes every array), `Illegal function call` for `DIM A(-1)`, `Type mismatch`
+    for `DIM B("a")` and `Overflow` above 32767. A bound can be any
+    expression, so `DIM A(N*2)` in a loop with `ERASE` works. All were
+    measured on the binary, with `ERR`, `ERL` and `RESUME NEXT`, and also
+    with `OPTION BASE 1` and string arrays. A `DIM` that fails leaves the
+    later arrays of its statement unmade. A plain `DIM` with constant bounds
+    at the start of the program stays a fixed array; the other arrays check
+    their bounds at run time. See `docs/dev/JS_ARRAYS.md`. Test:
+    `tests/regression/integration/test_js_dim_erase_runtime.py`.
   - Done: the JavaScript backend keeps the number of subscripts of an erased
     array at run time. `10 DIM A(3):30 ERASE A:40 DIM A(3,3):60 A(2,2)=5`
     works, and a use with another number of subscripts is `Subscript out of

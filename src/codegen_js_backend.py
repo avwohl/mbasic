@@ -229,6 +229,12 @@ function _ix(i, bound, lo) {
     if (i > bound || i < lo) _error("Subscript out of range");
     return i;
 }
+// A DIM bound: FRCINT (Type mismatch, Overflow), then not negative (Illegal function call).
+function _db(n) {
+    n = _ci(n);
+    if (n < 0) _error("Illegal function call");
+    return n;
+}
 // ERROR n: n is a byte, and 0 is not an error number.
 function _errnum(n) {
     n = _conint(n);
@@ -922,7 +928,8 @@ class JavaScriptBackend(CodeGenBackend):
         self.option_base = 0  # OPTION BASE 0 or 1
         self.uses_data = False
         self.uses_random = False
-        self.varying_rank: set = set()  # erased arrays used with more than one number of subscripts
+        self.varying_rank: set = set()  # arrays whose bounds are kept and checked at run time (see _find_varying_rank)
+        self.fixed_dims: set = set()  # arrays with one DIM that runs first; the DIM only checks that it runs once
         self.erased_arrays: set = set()  # arrays named in ERASE: their bounds change at run time
         self.array_ranks: Dict[str, int] = {}  # arrays used without DIM: the most subscripts seen
         self.uses_error_handling = False
@@ -1407,30 +1414,89 @@ class JavaScriptBackend(CodeGenBackend):
         return self.next_line_map.get(line_number)
 
     def _find_varying_rank(self, program: ProgramNode):
-        """Find the erased arrays that a DIM or a use gives more than one number of subscripts.
+        """Find the arrays whose bounds are kept and checked at run time.
 
-        ERASE deletes an array, and DIM or the next use makes it again, with any
-        number of subscripts. The number is known only when the program runs, so the
-        access to such an array checks it then (see _array_helper).
+        Such an array does not exist until a DIM runs or a use makes it (see _array_helper).
+        These are the arrays that ERASE names, and the arrays with a DIM that can fail or can
+        run twice: a second DIM, a DIM after a use, a bound that is not a constant, is
+        negative or is above 32767, and a DIM that is not in the first lines of the program
+        (a jump can skip it or run it again).  The plain case stays a fixed array: one DIM
+        with constant bounds before any other statement that can jump, and before any use.
         """
-        ranks: Dict[str, Set[int]] = {}
+        dims: Dict[str, int] = {}          # number of DIM declarations of each array
+        runtime: Set[str] = set()          # arrays with a bound that the DIM must check
+        clears = 0                         # CLEAR deletes every array, so a DIM can follow it
         stack: List[Any] = [program]
         while stack:
             node = stack.pop()
             if isinstance(node, (list, tuple)):
                 stack.extend(node)
             elif dataclasses.is_dataclass(node) and not isinstance(node, type):
-                if isinstance(node, VariableNode) and node.subscripts:
-                    key = (node.name + (node.type_suffix or '')).upper()
-                    ranks.setdefault(key, set()).add(len(node.subscripts))
-                elif isinstance(node, DimStatementNode):
+                if isinstance(node, ClearStatementNode):
+                    clears += 1
+                if isinstance(node, DimStatementNode):
                     for decl in node.arrays:
-                        key = decl.name.upper()
-                        key = key if key[-1] in '$%!#' else key + '!'
-                        ranks.setdefault(key, set()).add(len(decl.dimensions))
+                        key = self._dim_key(decl)
+                        dims[key] = dims.get(key, 0) + 1
+                        own = getattr(decl, 'const_dimensions', None)
+                        if not own or any(d > 32767 for d in own):
+                            runtime.add(key)
                 for f in dataclasses.fields(node):
                     stack.append(getattr(node, f.name))
-        self.varying_rank = {k for k, r in ranks.items() if len(r) > 1 and k in self.erased_arrays}
+        # DIM statements that run once, first: the lines before them cannot jump
+        fixed: Set[str] = set()
+        used: Set[str] = set()             # arrays used by the statements so far
+        seen_dim = False
+        early_clears = 0                   # CLEAR at the start, before any DIM, deletes nothing
+        for line in program.lines:
+            done = False
+            for stmt in line.statements:
+                if isinstance(stmt, ClearStatementNode) and not seen_dim:
+                    early_clears += 1
+                    used |= self._array_uses(stmt)
+                elif isinstance(stmt, DimStatementNode):
+                    seen_dim = True
+                    for decl in stmt.arrays:
+                        key = self._dim_key(decl)
+                        if dims[key] == 1 and key not in runtime and key not in used:
+                            fixed.add(key)
+                        for sub in decl.dimensions:
+                            used |= self._array_uses(sub)
+                elif isinstance(stmt, (LetStatementNode, RemarkStatementNode, PrintStatementNode,
+                                       DefTypeStatementNode, OptionBaseStatementNode,
+                                       DataStatementNode, DefFnStatementNode)):
+                    used |= self._array_uses(stmt)
+                else:
+                    done = True
+                    break
+            if done:
+                break
+        if clears != early_clears:
+            fixed = set()
+        self.fixed_dims = fixed - self.erased_arrays
+        self.varying_rank = (set(dims) - self.fixed_dims) | self.erased_arrays
+
+    @staticmethod
+    def _dim_key(decl) -> str:
+        key = decl.name.upper()
+        return key if key[-1] in '$%!#' else key + '!'
+
+    @staticmethod
+    def _array_uses(node) -> Set[str]:
+        """Keys of the arrays that a statement or expression uses with subscripts."""
+        found: Set[str] = set()
+        stack: List[Any] = [node]
+        while stack:
+            n = stack.pop()
+            if isinstance(n, (list, tuple)):
+                stack.extend(n)
+            elif dataclasses.is_dataclass(n) and not isinstance(n, type):
+                if isinstance(n, VariableNode) and n.subscripts:
+                    key = (n.name + (n.type_suffix or '')).upper()
+                    found.add(key if key[-1] in '$%!#' else key + '!')
+                for f in dataclasses.fields(n):
+                    stack.append(getattr(n, f.name))
+        return found
 
     def _array_helper(self, js_name: str, init_value: str) -> List[str]:
         """The function that gives the array of a varying rank, made again when ERASE deleted it.
@@ -1439,7 +1505,15 @@ class JavaScriptBackend(CodeGenBackend):
         for each of its subscripts; a use with another number than the array has is Subscript
         out of range.
         """
+        lo = 'b.some(d => d < 1)' if self.option_base else 'false'
         return [
+            f'function _dm_{js_name}(b) {{  // DIM: the bounds are checked, then the array is made',
+            f'    if ({lo}) _error("Subscript out of range");',
+            f'    if (_bd_{js_name} !== null) _error("Duplicate Definition");',
+            f'    if (b.reduce((p, d) => p * (d + 1), 1) > 16000000) _error("Out of memory");',
+            f'    _bd_{js_name} = b;',
+            f'    {js_name} = _mkarr(b, {init_value});',
+            '}',
             f'function _ar_{js_name}(n) {{',
             f'    if (_bd_{js_name} === null) {{',
             f'        _bd_{js_name} = new Array(n).fill(10);',
@@ -2715,8 +2789,8 @@ class JavaScriptBackend(CodeGenBackend):
                     code.append(self.indent() + f'let _bd_{js_name} = null;  // bounds; null while the array does not exist')
                 else:
                     code.append(self.indent() + f'let {js_name} = {self._create_array_init(dimensions, init_value)};')
-                if var_name.upper() in self.erased_arrays and var_name.upper() not in self.varying_rank:
-                    code.append(self.indent() + f'let _bd_{js_name} = {json.dumps(list(dimensions))};  // bounds; ERASE resets them')
+                if var_name.upper() in self.fixed_dims:
+                    code.append(self.indent() + f'let _dm_{js_name} = false;  // set by the DIM: a second run is Duplicate Definition')
                 if var_name.upper() in self.varying_rank:
                     code.append(self.indent() + 'function _mkarr(b, v, k = 0) { return k === b.length - 1 ? new Array(b[k] + 1).fill(v) : Array.from({length: b[k] + 1}, () => _mkarr(b, v, k + 1)); }')
                     code.extend(self.indent() + line for line in self._array_helper(js_name, init_value))
@@ -2952,21 +3026,7 @@ class JavaScriptBackend(CodeGenBackend):
             # DATA statements are processed during initialization
             pass
         elif isinstance(stmt, DimStatementNode):
-            # The arrays are made during variable generation; a bound that FRCINT cannot hold is Overflow
-            for decl in stmt.arrays:
-                key = decl.name.upper()
-                key = key if key[-1] in '$%!#' else key + '!'
-                info = self.symbols.variables.get(key)
-                if info is not None and info.dimensions and any(d > 32767 for d in info.dimensions):
-                    code.append(self.indent() + '_error("Overflow");')
-                    break
-                own = getattr(decl, 'const_dimensions', None)
-                if key in self.erased_arrays and own and info is not None and info.is_array:
-                    # an array that ERASE deletes is made again with the sizes of this DIM
-                    js_name = self._mangle_var_name(key)
-                    init_value = '""' if info.var_type == VarType.STRING else '0'
-                    code.append(self.indent() + f'_bd_{js_name} = {json.dumps(own)};')
-                    code.append(self.indent() + f'{js_name} = {self._create_array_init(own, init_value)};')
+            code.extend(self._generate_dim(stmt))
         elif isinstance(stmt, RemarkStatementNode):
             # Comments are skipped
             pass
@@ -3680,8 +3740,6 @@ class JavaScriptBackend(CodeGenBackend):
             return f'{access}[_ix(0, -1)]'
         for k, idx_expr in enumerate(subscripts):
             bound = dims[k] if k < len(dims) else 10
-            if var_key.upper() in self.erased_arrays:
-                bound = f'_bd_{self._mangle_var_name(var_key)}[{k}]'
             access = f'{access}[_ix({self._generate_expression(idx_expr)}, {bound}{lo})]'
         return access
 
@@ -3856,11 +3914,28 @@ class JavaScriptBackend(CodeGenBackend):
 
         return code
 
+    def _generate_dim(self, stmt: DimStatementNode) -> List[str]:
+        """Generate DIM.  A fixed array is made when the program starts; its DIM only reports a
+        second run.  The other arrays are made here, with bounds that are checked as they are
+        on the binary: a string is Type mismatch, above 32767 is Overflow, a negative bound is
+        Illegal function call, and an array that exists is Duplicate Definition.  A DIM that
+        fails leaves the arrays of its later declarations unmade."""
+        code = []
+        for decl in stmt.arrays:
+            key = self._dim_key(decl)
+            js_name = self._mangle_var_name(key)
+            if key in self.fixed_dims:
+                code.append(self.indent() + f'if (_dm_{js_name}) _error("Duplicate Definition"); _dm_{js_name} = true;')
+            elif key in self.varying_rank:
+                bounds = ', '.join(f'_db({self._generate_expression_as(d, "n")})' for d in decl.dimensions)
+                code.append(self.indent() + f'_dm_{js_name}([{bounds}]);')
+        return code
+
     def _generate_erase(self, stmt: EraseStatementNode) -> List[str]:
-        """Generate ERASE statement - resets arrays to default values"""
+        """Generate ERASE statement: the array does not exist afterwards (see _array_helper).
+        ERASE of an array that does not exist is Illegal function call."""
         code = []
         for array_name in stmt.array_names:
-            # Look up the array in the symbol table to get its type and dimensions
             # The symbol table keys are upper case with a type suffix
             key = array_name.upper()
             if key[-1] not in '$%!#':
@@ -3868,21 +3943,9 @@ class JavaScriptBackend(CodeGenBackend):
             var_info = self.symbols.variables.get(key)
             if var_info and var_info.is_array:
                 js_name = self._mangle_var_name(key)
-                dimensions = var_info.dimensions or [10] * self.array_ranks.get(key, 1)
-
-                # Determine default value based on type
-                if var_info.var_type == VarType.STRING:
-                    init_value = '""'
-                else:
-                    init_value = '0'
-
-                # ERASE deletes the array; the next use creates it again with the bounds 0..10
-                if key in self.varying_rank:
-                    code.append(self.indent() + f'_bd_{js_name} = null;  // the next use or DIM makes the array again')
-                    continue
-                dimensions = [10] * len(dimensions)
-                code.append(self.indent() + f'_bd_{js_name} = {json.dumps(dimensions)};')
-                code.append(self.indent() + f'{js_name} = {self._create_array_init(dimensions, init_value)};')
+                code.append(self.indent() + f'if (_bd_{js_name} === null) _error("Illegal function call"); _bd_{js_name} = null;  // the next use or DIM makes the array again')
+            else:
+                code.append(self.indent() + '_error("Illegal function call");  // no such array')
         return code
 
     def _generate_open(self, stmt: OpenStatementNode) -> List[str]:
@@ -4202,6 +4265,11 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'if (_cs < 82 || 39168 + (_ct - 64766) - (_cs - 512) < 0) _error("Out of memory");')
             self.indent_level -= 1
             code.append(self.indent() + '}')
+        for key in sorted(self.varying_rank):
+            info = self.symbols.variables.get(key)
+            if info is not None and info.is_array:
+                # CLEAR deletes the array: the next use or DIM makes it again
+                code.append(self.indent() + f'_bd_{self._mangle_var_name(key)} = null;')
         if self.uses_error_handling:
             # A CLEAR forgets ON ERROR GOTO (the next error is fatal) and ends
             # a running handler; ERR and ERL keep their values.

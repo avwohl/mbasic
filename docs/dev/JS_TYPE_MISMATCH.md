@@ -71,9 +71,8 @@ A statement that is never reached gives no error.
 
 ## Differences that remain
 
-- `DIM B("a")` stops the compile with "Semantic analysis failed". The
-  JavaScript backend needs a constant DIM size at compile time (this is true
-  for `DIM B(N)` too). The binary gives `Type mismatch` at run time.
+- `DIM B("a")` is `Type mismatch` at run time, as on the binary (see
+  `docs/dev/JS_ARRAYS.md`).
 - A mismatch that the compiler finds inside an operand of PRINT USING (for
   example `"a"*2`) is raised before the statement prints anything. A value of
   the wrong kind for its field prints the text before it, as the binary does.
