@@ -1054,6 +1054,14 @@ Each item was measured on the binary. Test:
   operators and gives up on one out of range; `VAL` gives `Overflow` above
   1.70141E+38 and 0 below 2^-129. Test:
   `tests/regression/integration/test_literal_precision_and_rewrites.py`.
+  A second random test of READ and PRINT USING found more, all done:
+  `DATA` with nothing after it is one empty item; `RESTORE n` goes to the
+  first item at or after line n in the JavaScript backend too, and a line
+  that is not there is `Undefined line number` (then `Out of DATA`); a bad
+  item read into a number variable stores the number it starts with before
+  the `Syntax error`; a program line keeps its trailing spaces (an unclosed
+  string ends with them); `PRINT USING` with no field stops before the end of
+  the line. Test: `tests/regression/integration/test_data_restore_using.py`.
   Still different, by design (MBF arithmetic is not emulated): `100^16`
   prints 9.99999E+31 on the binary, a single product between 1.70141E+38
   and 3.4E+38 is Overflow there, and `32768*-32769` prints -1.07377E+09.

@@ -341,8 +341,10 @@ class ProgramManager:
         for file_line, line in enumerate(_lines_until_eof_mark(f), 1):
             if self._line_buffer_overflows(errors, line):
                 break
-            line = line.strip()
-            if not line:
+            # Trailing spaces stay: they are part of the line (an unclosed string in
+            # DATA or after = keeps them, measured)
+            line = line.rstrip('\r\n').lstrip()
+            if not line.strip():
                 continue
 
             # Sanitize input: clear parity bits and filter control characters
@@ -422,8 +424,10 @@ class ProgramManager:
         for file_line, line in enumerate(_lines_until_eof_mark(f), 1):
             if self._line_buffer_overflows(errors, line):
                 break
-            line = line.strip()
-            if not line:
+            # Trailing spaces stay: they are part of the line (an unclosed string in
+            # DATA or after = keeps them, measured)
+            line = line.rstrip('\r\n').lstrip()
+            if not line.strip():
                 continue
 
             # Sanitize input: clear parity bits and filter control characters

@@ -554,7 +554,8 @@ class InteractiveMode:
 
     def process_line(self, line):
         """Process a line of input (numbered line or direct command)"""
-        line = normalize_line_number(line.strip())   # 70000 is line 7000, text 0
+        # Trailing spaces stay part of a program line (an unclosed string keeps them)
+        line = normalize_line_number(line.rstrip('\r\n').lstrip())   # 70000 is line 7000, text 0
 
         # Check if it's a numbered line
         match = re.match(r'^(\d+)\s*(.*)', line)

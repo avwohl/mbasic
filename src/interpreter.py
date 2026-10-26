@@ -33,7 +33,7 @@ from src.print_column import (SCREEN_WIDTH, FILE_WIDTH, advance_column, wrap_tex
 from src.error_codes import (error_code_for, format_error_message,
                              get_error_message)
 from src.input_fields import (split_keyboard_fields, keyboard_number, val_number,
-                              read_file_field, MAX_FLOAT)
+                              read_file_field, val_text, MAX_FLOAT)
 import src.ast_nodes as ast_nodes
 from src.cpm_names import cpm_name_error, cpm_new_name_error
 from src.string_temps import string_temps, STRING_TEMPORARIES
@@ -1557,6 +1557,9 @@ class Interpreter:
         # Output to file or screen. A ';' or ',' at the end of the value list
         # suppresses the newline, as it does on a plain PRINT.
         newline = '' if getattr(stmt, 'trailing_separator', False) else '\n'
+        no_field = values and not formatter.has_field()
+        if no_field:
+            newline = ''    # the error comes before the end of the line (measured)
         if file_handle:
             self._send_output(file_info, file_handle, output + newline)
         else:
@@ -1565,7 +1568,7 @@ class Interpreter:
                 self._fallback_column = advance_column(
                     getattr(self, '_fallback_column', 0), output + newline)
 
-        if values and not formatter.has_field():
+        if no_field:
             # MBASIC scans the whole USING string, prints the literal text it
             # found, and only then complains that there was never a field to
             # put the value in: PRINT USING "A.B"; 5 prints A.B and stops with
@@ -2604,6 +2607,7 @@ class Interpreter:
             data_index = self.runtime.data_pointer - 1
 
             # Evaluate the data node to get actual value
+            bad_item = None
             if isinstance(data_node, ast_nodes.StringNode) and var_node.type_suffix != '$':
                 # The text of a DATA item is read as a number only now
                 data_line = self.runtime.data_line_map.get(data_index)
@@ -2614,7 +2618,13 @@ class Interpreter:
                 except ValueError as e:
                     self.runtime.data_pointer = start_pointer   # the statement is read again
                     where = PC.from_line(data_line) if str(e) == "data" and data_line is not None else None
-                    raise MBasicError(2, where)
+                    bad_item = MBasicError(2, where)
+                    # The variable still gets the number the item starts with (measured:
+                    # 12x gives 12, 7.6x gives 8 to an integer, "q" and x y give 0), and
+                    # then the item is a Syntax error
+                    value = val_text(data_node.value) if data_node.raw else 0
+                    if value in (float('inf'), float('-inf')):
+                        raise MBasicError(6)
                 except OverflowError:
                     self.runtime.data_pointer = start_pointer
                     raise MBasicError(6)
@@ -2661,6 +2671,8 @@ class Interpreter:
                     original_case=getattr(var_node, 'original_case', var_node.name),
                     settings_manager=self.settings_manager
                 )
+            if bad_item is not None:
+                raise bad_item
             if getattr(data_node, 'bad_tail', False):
                 # "q"x: the string was read and stored; the text behind the
                 # closing quote is a Syntax error at the DATA line, and the
@@ -2670,8 +2682,17 @@ class Interpreter:
                 raise MBasicError(2, PC.from_line(data_line) if data_line is not None else None)
 
     def execute_restore(self, stmt):
-        """Execute RESTORE statement"""
-        self.runtime.restore_data(stmt.line_number if hasattr(stmt, 'line_number') else None)
+        """Execute RESTORE statement
+
+        RESTORE n of a line that is not in the program is Undefined line number,
+        and the DATA pointer is then past the last item: the next READ is Out of
+        DATA (measured).
+        """
+        line_number = getattr(stmt, 'line_number', None)
+        if line_number is not None and not self.runtime.statement_table.line_exists(line_number):
+            self.runtime.data_pointer = len(self.runtime.data_items)
+            raise RuntimeError(f"Undefined line number {line_number}")
+        self.runtime.restore_data(line_number)
 
     def execute_dim(self, stmt):
         """Execute DIM statement"""

@@ -601,7 +601,7 @@ function _print_using_stmt(f, fmt, values, digits, trailing) {
     let text, bad;
     try { [text, bad] = _print_using(fmt, values, digits); }
     catch (e) { if (_using_partial) _emit(f, _using_partial); _using_partial = ""; throw e; }
-    _emit(f, text + (trailing ? "" : "\n"));
+    _emit(f, text + (trailing || bad ? "" : "\n"));  // with no field the error comes before the line ends
     if (bad) _error("Illegal function call");
 }
 '''
@@ -2727,6 +2727,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + _DATA_TEXT_TO_NUMBER_JS)
             code.append(self.indent() + 'function _read(to_string) {')
             self.indent_level += 1
+            code.append(self.indent() + '_read_err = null;')
             code.append(self.indent() + 'if (_data_ptr >= _data.length) _error("Out of DATA");')
             code.append(self.indent() + 'if (to_string && _data_txt[_data_ptr] !== null) return _data_txt[_data_ptr++];  // DATA text is not crunched')
             code.append(self.indent() + 'if (!to_string && _data_kind[_data_ptr] !== 0) {')
@@ -2735,7 +2736,14 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '    const i = _data_ptr;')
             code.append(self.indent() + '    let v;')
             code.append(self.indent() + '    try { v = _data_text_to_number(_data[i], _data_kind[i] === 2, _data_ln[i]); }')
-            code.append(self.indent() + '    catch (e) { _data_ptr = _read_start; throw e; }')
+            code.append(self.indent() + '    catch (e) {')
+            code.append(self.indent() + '        _data_ptr = _read_start;')
+            code.append(self.indent() + '        if (e.message !== "Syntax error") throw e;')
+            code.append(self.indent() + '        // The variable still gets the number the item starts with (12x: 12, "q": 0),')
+            code.append(self.indent() + '        // then the Syntax error comes (_read_check), as on the binary')
+            code.append(self.indent() + '        _read_err = e;')
+            code.append(self.indent() + '        return _data_kind[i] === 2 ? _val(_data[i]) : 0;')
+            code.append(self.indent() + '    }')
             code.append(self.indent() + '    _data_ptr++;')
             code.append(self.indent() + '    return v;')
             code.append(self.indent() + '}')
@@ -2744,16 +2752,21 @@ class JavaScriptBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append(self.indent() + 'let _bad_tail = null;')
+            code.append(self.indent() + 'let _read_err = null;  // a bad item for a number variable, raised after the store')
             code.append(self.indent() + 'function _read_check() {')
+            code.append(self.indent() + '    if (_read_err !== null) { const e = _read_err; _read_err = null; throw e; }')
             code.append(self.indent() + '    // "q"x: the string is stored, then the text after the quote is a Syntax error at the DATA line')
             code.append(self.indent() + '    if (_bad_tail === null) return;')
             code.append(self.indent() + '    const line = _bad_tail;')
             code.append(self.indent() + '    _bad_tail = null; _data_ptr = _read_start;')
             code.append(self.indent() + '    try { _error("Syntax error"); } catch (e) { e.basicLine = line; throw e; }')
             code.append(self.indent() + '}')
-            code.append(self.indent() + 'function _restore() {')
+            code.append(self.indent() + '// RESTORE n: the first DATA item at or after line n')
+            code.append(self.indent() + 'function _restore(line) {')
             self.indent_level += 1
-            code.append(self.indent() + '_data_ptr = 0;')
+            code.append(self.indent() + 'if (line === undefined) { _data_ptr = 0; return; }')
+            code.append(self.indent() + 'const i = _data_ln.findIndex(l => l >= line);')
+            code.append(self.indent() + '_data_ptr = i < 0 ? _data_ln.length : i;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append('')
@@ -4137,15 +4150,22 @@ class JavaScriptBackend(CodeGenBackend):
             if var.type_suffix == '%':
                 read = f'_toInt({read})'    # READ A% of 12.7 is 13, of 70000 is Overflow
             code.append(self.indent() + f'{self._input_lvalue(var)} = {read};')
-            if 3 in self.data_kinds:
+            if 3 in self.data_kinds or (var.type_suffix != '$' and any(self.data_kinds)):
                 code.append(self.indent() + '_read_check();')
         return code
 
     def _generate_restore(self, stmt: RestoreStatementNode) -> List[str]:
-        """Generate RESTORE statement"""
-        code = []
-        code.append(self.indent() + '_restore();')
-        return code
+        """Generate RESTORE statement
+
+        RESTORE n of a line that is not in the program is Undefined line number,
+        with the DATA pointer past the last item (measured).
+        """
+        line = getattr(stmt, 'line_number', None)
+        if line is None:
+            return [self.indent() + '_restore();']
+        if line not in self.line_labels:
+            return [self.indent() + '_data_ptr = _data_ln.length; _error("Undefined line number");']
+        return [self.indent() + f'_restore({line});']
 
     def _generate_randomize(self, stmt: RandomizeStatementNode) -> List[str]:
         """Generate RANDOMIZE statement"""

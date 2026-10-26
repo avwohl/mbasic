@@ -3989,6 +3989,11 @@ class Parser:
                 # No comma but more tokens - this shouldn't happen if parsing is correct
                 break
 
+        if not values:
+            # DATA with nothing after it is one empty item (measured: READ A$ gives "",
+            # READ A gives 0), not a statement READ passes over
+            values.append(StringNode(value="", line_num=token.line, column=token.column, raw=True))
+
         return DataStatementNode(
             values=values,
             line_num=token.line,
