@@ -1068,6 +1068,11 @@ Each item was measured on the binary. Test:
   binary range-checks as it reads it gives its error before a later
   argument can give `Type mismatch` (`MID$("a",-1,"x")` is error 5). Test:
   `tests/regression/integration/test_function_argument_edges.py`.
+  A fourth random test, of control flow, found one more, done: a `FOR` with
+  a double-precision variable (`I#`, or a `DEFDBL` letter) is `Type
+  mismatch` after the start is worked out and before the limit is read, in
+  the interpreter and the JavaScript backend. Test:
+  `tests/regression/integration/test_loop_and_call_error_edges.py`.
   Still different, by design (MBF arithmetic is not emulated): `100^16`
   prints 9.99999E+31 on the binary, a single product between 1.70141E+38
   and 3.4E+38 is Overflow there, and `32768*-32769` prints -1.07377E+09.

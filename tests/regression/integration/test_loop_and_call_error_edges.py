@@ -19,6 +19,9 @@ ERR and ERL and does RESUME NEXT.
   function call (5), not Missing operand (22). The same holds for the MID$
   statement with a fourth argument, and for the MID$ statement cut off by the
   end of the line (MID$(A$,0,  and MID$(A$,1,300).
+- A FOR with a double-precision variable (I#, or a DEFDBL letter) is Type
+  mismatch (13) after the start is worked out and before the limit is read;
+  the variable keeps its value.
 - A FOR enters the NEXT its scan ends at. When that NEXT names another
   variable (FOR I ... NEXT J, or a FOR L whose scan ends at NEXT K), the FOR
   is NEXT without FOR (1), reported at the line of the NEXT, before the body
@@ -106,6 +109,23 @@ CASES = {
         '40 END\n'
         '100 PRINT "E";ERR;ERL:RESUME NEXT\n',
         'E 2  30 \nE 11  30 \na\nE 11  25 \n'),
+    'for_double_variable': (
+        '10 ON ERROR GOTO 100\n'
+        '20 FOR I#=1/0 TO 2:PRINT "b":NEXT\n'
+        '30 DEFDBL D:FOR D=1 TO 2:PRINT "c":NEXT\n'
+        '40 FOR J!=1 TO 1:PRINT "d":NEXT\n'
+        '50 FOR K#=1 TO "a":NEXT\n'
+        '60 END\n'
+        '100 PRINT "E";ERR;ERL:RESUME NEXT\n',
+        'E 11  20 \nb\nE 1  20 \nE 13  30 \nc\nE 1  30 \nd\nE 13  50 \nE 1  50 \n'),
+    'for_double_variable_order': (
+        '10 ON ERROR GOTO 100\n'
+        '20 K#=7:FOR K#=1 TO 1/0:PRINT "b";K#:NEXT\n'
+        '30 K#=7:FOR K#=5 TO 9:PRINT "c";K#\n'
+        '40 PRINT K#\n'
+        '60 END\n'
+        '100 PRINT "E";ERR;ERL:RESUME NEXT\n',
+        'E 13  20 \nb 7 \nE 1  20 \nE 13  30 \nc 7 \n 7 \n'),
 }
 
 INTERPRETER_ONLY = {

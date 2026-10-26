@@ -45,7 +45,8 @@ def numbers(*items):
 BARE_NEXT = [
     ("DEFINT", "10 DEFINT I\n20 FOR I=1 TO 3\n30 PRINT I\n40 NEXT\n50 SYSTEM\n", numbers(1, 2, 3)),
     ("percent", "10 FOR I%=1 TO 3\n30 PRINT I%\n40 NEXT\n50 SYSTEM\n", numbers(1, 2, 3)),
-    ("double", "10 FOR D#=1 TO 3\n30 PRINT D#\n40 NEXT\n50 SYSTEM\n", numbers(1, 2, 3)),
+    # (FOR D#= is Type mismatch on the binary: test_loop_and_call_error_edges.py)
+    ("single", "10 FOR D!=1 TO 3\n30 PRINT D!\n40 NEXT\n50 SYSTEM\n", numbers(1, 2, 3)),
     ("plain", "10 FOR I=1 TO 3\n30 PRINT I\n40 NEXT\n50 SYSTEM\n", numbers(1, 2, 3)),
     ("nested", "10 DEFINT I-J\n20 FOR I=1 TO 2\n25 FOR J=1 TO 2\n30 PRINT I;J\n40 NEXT\n45 NEXT\n50 SYSTEM\n",
      " 1  1 \n 1  2 \n 2  1 \n 2  2 \n"),

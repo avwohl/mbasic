@@ -1955,7 +1955,9 @@ class Interpreter:
         # before a loop is registered (the NEXT after the trapped error is then
         # NEXT without FOR).
         start = self.evaluate_expression(stmt.start_expr)
-        if isinstance(start, str) or stmt.variable.type_suffix == '$':
+        if isinstance(start, str) or stmt.variable.type_suffix in ('$', '#'):
+            # A double loop variable is Type mismatch too: FOR takes an integer or a
+            # single (measured: after the start, before the limit is read)
             raise MBasicError(13)
         # An integer loop variable takes its start, limit and step through
         # FRCINT, in this order (measured): FOR I%=1 TO 2.5 runs to 3,

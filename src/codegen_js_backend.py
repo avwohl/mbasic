@@ -3791,6 +3791,10 @@ class JavaScriptBackend(CodeGenBackend):
         self.indent_level += 1
         # Start, end and step run in the order of the text, each with its type check (measured)
         code.append(self.indent() + f'const _start = {start_expr};')
+        if var_type == VarType.DOUBLE:
+            # FOR takes an integer or a single variable: a double is Type mismatch after
+            # the start is worked out, before the limit (measured)
+            code.append(self.indent() + '_error("Type mismatch");')
         code.append(self.indent() + f'_for_elim("{var_name}", {self.for_id.setdefault(id(stmt), len(self.for_id) + 1)});')
         code.append(self.indent() + f'const _end = {end_expr};')
         code.append(self.indent() + f'const _step = {step_expr};')
