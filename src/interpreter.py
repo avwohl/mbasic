@@ -9,7 +9,7 @@ import signal
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Callable, Any, Union
 from src.runtime import Runtime, ProgramString, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
-from src.ast_nodes import StringNode
+from src.ast_nodes import StringNode, FunctionCallNode
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
 from src.pc import PC
@@ -4218,8 +4218,10 @@ class Interpreter:
 
         # A DEF FN that hands back a string it was given (a variable or a
         # parameter) returns a copy in string space on the binary. Only a body
-        # that is itself a literal stays free.
-        if type(result) is ProgramString and not isinstance(func_def.expression, StringNode):
+        # that is itself a literal stays free. A body that calls another DEF FN
+        # stays free too: that inner call already made the copy when it needed one.
+        if type(result) is ProgramString and not isinstance(
+                func_def.expression, (StringNode, FunctionCallNode)):
             result = str(result)
         return result
 

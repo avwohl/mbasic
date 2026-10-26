@@ -81,3 +81,12 @@ def test_data_strings_are_free(tmp_path):
     for data in ("X" * 100, LITERAL):
         out = run_cli(tmp_path, loop("D$", "6 READ D$:DATA %s\n" % data))
         assert "done 601" in out, out
+
+
+def test_def_fn_calling_a_literal_def_fn_is_free(tmp_path):
+    # Measured on the binary: DEF FNB$(X)=<literal>, DEF FND$(X)=FNB$(X) and
+    # DEF FNH$(X$)=FNB$(X), then A$(I)=FND$(1) or FNH$(L$): done 601.
+    for define, call in (("DEF FND$(X)=FNB$(X)", "FND$(1)"), ("DEF FNH$(X$)=FNB$(X)", "FNH$(L$)")):
+        before = "5 L$=%s\n6 DEF FNB$(X)=%s\n9 %s\n" % (LITERAL, LITERAL, define)
+        out = run_cli(tmp_path, loop(call, before))
+        assert "done 601" in out, out

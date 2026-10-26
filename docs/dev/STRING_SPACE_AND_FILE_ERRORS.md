@@ -56,7 +56,8 @@ the interpreter does not count one either. The evaluator gives a literal as a
 `ProgramString` (a `str` subclass in `src/runtime.py`), and only that class costs
 nothing. A string that a function or operator makes is a plain `str` and counts,
 even when it equals the whole literal (`LEFT$(L$,LEN(L$))`, `MID$(L$,1)`, `L$+""`).
-A `DEF FN` that returns a variable or a parameter gives a plain `str` too. A string
+A `DEF FN` that returns a variable or a parameter gives a plain `str` too. A `DEF FN` with a literal body,
+or a body that calls such a `DEF FN`, is free (measured: done 601). A string
 from `DATA` is a literal and keeps the mark. On the binary these results are copies in string space (measured: error 14 at
 I=371 in a loop of 100-character strings, as for `STRING$`). A program that comes near the limit gets the error at a different place.
 A program that is far over the limit gets the same error as on the binary.
