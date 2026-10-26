@@ -924,6 +924,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.uses_random = False
         self.varying_rank: set = set()  # erased arrays used with more than one number of subscripts
         self.erased_arrays: set = set()  # arrays named in ERASE: their bounds change at run time
+        self.has_clear = False  # the program has a CLEAR: it erases every array
         self.array_ranks: Dict[str, int] = {}  # arrays used without DIM: the most subscripts seen
         self.uses_error_handling = False
         self.uses_file_io = False
@@ -1027,6 +1028,9 @@ class JavaScriptBackend(CodeGenBackend):
         self._collect_data_values(program)
         self._collect_def_fn(program)
         self._analyze_features(program)
+        if self.has_clear:
+            # CLEAR deletes every array, as ERASE does one: the bounds are kept at run time
+            self.erased_arrays.update(k.upper() for k, v in self.symbols.variables.items() if v.is_array)
         self._find_varying_rank(program)
         self._match_for_next(program)
         self._match_while_wend(program)
@@ -1059,6 +1063,8 @@ class JavaScriptBackend(CodeGenBackend):
         if self.def_fn_functions:
             code.append(self.indent() + '// ===== DEF FN Functions =====')
             code.extend(self._generate_def_fn_functions())
+            if self.has_clear:
+                code.append(self.indent() + 'const _fn_def = {};  // the DEF FN statements that ran since the last CLEAR')
             code.append('')
 
         # Main program
@@ -1446,6 +1452,7 @@ class JavaScriptBackend(CodeGenBackend):
         """
         return [
             f'function _ar_{js_name}(n) {{',
+            f'    _ex_{js_name} = true;',
             f'    if (_bd_{js_name} === null) {{',
             f'        _bd_{js_name} = new Array(n).fill(10);',
             f'        {js_name} = _mkarr(_bd_{js_name}, {init_value});',
@@ -1489,6 +1496,8 @@ class JavaScriptBackend(CodeGenBackend):
                     self.uses_gosub = True
                 elif isinstance(stmt, OptionBaseStatementNode):
                     self.option_base = stmt.base
+                elif isinstance(stmt, ClearStatementNode):
+                    self.has_clear = True
                 elif isinstance(stmt, EraseStatementNode):
                     for array_name in stmt.array_names:
                         key = array_name.upper()
@@ -2750,6 +2759,8 @@ class JavaScriptBackend(CodeGenBackend):
                     code.append(self.indent() + f'let _bd_{js_name} = null;  // bounds; null while the array does not exist')
                 else:
                     code.append(self.indent() + f'let {js_name} = {self._create_array_init(dimensions, init_value)};')
+                if var_name.upper() in self.erased_arrays:
+                    code.append(self.indent() + f'let _ex_{js_name} = false;  // does the array exist (DIM or a use made it)')
                 if var_name.upper() in self.erased_arrays and var_name.upper() not in self.varying_rank:
                     code.append(self.indent() + f'let _bd_{js_name} = {json.dumps(list(dimensions))};  // bounds; ERASE resets them')
                 if var_name.upper() in self.varying_rank:
@@ -3003,6 +3014,10 @@ class JavaScriptBackend(CodeGenBackend):
                     code.append(self.indent() + '_error("Overflow");')
                     break
                 own = getattr(decl, 'const_dimensions', None)
+                if key in self.erased_arrays and info is not None and info.is_array:
+                    dim_js = self._mangle_var_name(key)
+                    code.append(self.indent() + f'if (_ex_{dim_js}) _error("Duplicate Definition");')
+                    code.append(self.indent() + f'_ex_{dim_js} = true;')
                 if key in self.erased_arrays and own and info is not None and info.is_array:
                     # an array that ERASE deletes is made again with the sizes of this DIM
                     js_name = self._mangle_var_name(key)
@@ -3041,6 +3056,9 @@ class JavaScriptBackend(CodeGenBackend):
         elif isinstance(stmt, DefTypeStatementNode):
             # DEF type statements are processed during variable analysis
             pass
+        elif isinstance(stmt, DefFnStatementNode) and self.has_clear and self.def_fn_functions:
+            # The function exists from the DEF FN that runs; CLEAR forgets it
+            code.append(self.indent() + f'_fn_def["{stmt.name.lower()[2:]}"] = true;')
         else:
             code.append(self.indent() + f'// Unsupported: {type(stmt).__name__}')
 
@@ -3342,7 +3360,10 @@ class JavaScriptBackend(CodeGenBackend):
         if func_name.startswith('fn'):
             # FNA -> _fn_a, FNFOO -> _fn_foo
             call = f'_fn_{func_name[2:].replace(".", "_d_")}({", ".join(args)})'
-            return f'(await {call})' if func_name[2:] in self.async_fns else call
+            call = f'(await {call})' if func_name[2:] in self.async_fns else call
+            if self.has_clear:
+                return f'(_fn_def["{func_name[2:]}"] || _error("Undefined user function"), {call})'
+            return call
 
         # Map BASIC function names to JavaScript
         js_func_map = {
@@ -3613,6 +3634,7 @@ class JavaScriptBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + f'}}')
             self.indent_level -= 1
+            # (a CLEAR in the loop emptied _for_loops: the check above gives NEXT without FOR)
             code.append(self.indent() + f'}}')
 
         return code
@@ -3759,6 +3781,9 @@ class JavaScriptBackend(CodeGenBackend):
             bound = dims[k] if k < len(dims) else 10
             if var_key.upper() in self.erased_arrays:
                 bound = f'_bd_{self._mangle_var_name(var_key)}[{k}]'
+                if k == 0:
+                    # a use makes the array: a later DIM is Duplicate Definition
+                    access = f'(_ex_{access} = true, {access})'
             access = f'{access}[_ix({self._generate_expression(idx_expr)}, {bound}{lo})]'
         return access
 
@@ -3944,25 +3969,31 @@ class JavaScriptBackend(CodeGenBackend):
             key = array_name.upper()
             if key[-1] not in '$%!#':
                 key += '!'
-            var_info = self.symbols.variables.get(key)
-            if var_info and var_info.is_array:
-                js_name = self._mangle_var_name(key)
-                dimensions = var_info.dimensions or [10] * self.array_ranks.get(key, 1)
-
-                # Determine default value based on type
-                if var_info.var_type == VarType.STRING:
-                    init_value = '""'
-                else:
-                    init_value = '0'
-
-                # ERASE deletes the array; the next use creates it again with the bounds 0..10
-                if key in self.varying_rank:
-                    code.append(self.indent() + f'_bd_{js_name} = null;  // the next use or DIM makes the array again')
-                    continue
-                dimensions = [10] * len(dimensions)
-                code.append(self.indent() + f'_bd_{js_name} = {json.dumps(dimensions)};')
-                code.append(self.indent() + f'{js_name} = {self._create_array_init(dimensions, init_value)};')
+            code.extend(self._erase_array_code(key))
         return code
+
+    def _erase_array_code(self, key: str) -> List[str]:
+        """The code that deletes the array of the symbol-table key (ERASE, CLEAR)."""
+        var_info = self.symbols.variables.get(key)
+        if not (var_info and var_info.is_array):
+            return []
+        js_name = self._mangle_var_name(key)
+        dimensions = var_info.dimensions or [10] * self.array_ranks.get(key, 1)
+
+        # Determine default value based on type
+        if var_info.var_type == VarType.STRING:
+            init_value = '""'
+        else:
+            init_value = '0'
+
+        # ERASE deletes the array; the next use creates it again with the bounds 0..10
+        if key in self.varying_rank:
+            return [self.indent() + f'_ex_{js_name} = false;',
+                    self.indent() + f'_bd_{js_name} = null;  // the next use or DIM makes the array again']
+        dimensions = [10] * len(dimensions)
+        return [self.indent() + f'_ex_{js_name} = false;',
+                self.indent() + f'_bd_{js_name} = {json.dumps(dimensions)};',
+                self.indent() + f'{js_name} = {self._create_array_init(dimensions, init_value)};']
 
     def _generate_open(self, stmt: OpenStatementNode) -> List[str]:
         """Generate OPEN statement - open file for I/O"""
@@ -4285,6 +4316,25 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'if (_cs < 82 || 39168 + (_ct - 64766) - (_cs - 512) < 0) _error("Out of memory");')
             self.indent_level -= 1
             code.append(self.indent() + '}')
+        # CLEAR deletes the variables and the arrays, empties the FOR and GOSUB
+        # stacks, sends the DATA pointer back and closes the files. Not done
+        # here: DEF FN (the functions stay), OPTION BASE (fixed when the program
+        # is compiled), the DEFtype statements (see docs/dev/JS_CONTROL_FLOW.md).
+        for var_name, var_info in sorted(self.symbols.variables.items()):
+            if var_info.is_array:
+                code.extend(self._erase_array_code(var_name.upper()))
+            else:
+                init = '""' if var_info.var_type == VarType.STRING else '0'
+                code.append(self.indent() + f'{self._mangle_var_name(var_name)} = {init};')
+        code.append(self.indent() + 'for (const _k in _for_loops) delete _for_loops[_k];')
+        if self.def_fn_functions:
+            code.append(self.indent() + 'for (const _k in _fn_def) delete _fn_def[_k];')
+        if self.uses_gosub:
+            code.append(self.indent() + '_gosub_stack.length = 0;')
+        if self.uses_data or self.data_values:
+            code.append(self.indent() + '_data_ptr = 0;')
+        if self.uses_file_io:
+            code.append(self.indent() + '_fclose();')
         if self.uses_error_handling:
             # A CLEAR forgets ON ERROR GOTO (the next error is fatal) and ends
             # a running handler; ERR and ERL keep their values.

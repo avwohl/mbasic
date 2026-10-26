@@ -1136,6 +1136,20 @@ int mb25_ea_erase(char *st, int *rk, int *n) {
     return total;
 }
 
+/* CLEAR: like ERASE, but an array that does not exist is no error. */
+int mb25_ea_clear(char *st, int *rk, int *n) {
+    int j;
+    int total = 1;
+    if (!*st) {
+        return 0;
+    }
+    for (j = 0; j < *rk; j++) {
+        total *= n[j];
+    }
+    *st = 0;
+    return total;
+}
+
 /* SWAP two strings: exchange everything in the descriptors except the IDs. */
 void mb25_string_swap(uint16_t a, uint16_t b) {
     mb25_string_t t;

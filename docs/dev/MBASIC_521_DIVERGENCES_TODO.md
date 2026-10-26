@@ -377,8 +377,9 @@ Found while measuring (#61):
   WIDTH is not changed. The JavaScript backend checks the `CLEAR` arguments
   as the interpreter does (`Overflow`, `Illegal function call`, `Out of
   memory`; each `CLEAR` starts from the start-up memory top and stack) and
-  forgets the handler only when the `CLEAR` succeeds. Its `CLEAR` still does
-  not clear the variables. `CLEAR` ends at `ELSE` in a one-line `IF`.
+  forgets the handler only when the `CLEAR` succeeds. `CLEAR` ends at `ELSE`
+  in a one-line `IF`. The JavaScript and C compilers clear the variables
+  too (see the entry on `CLEAR` and the DEF types below).
 - Done (#61): when the operand that ran out is `ELSE` (`A=ELSE`, `A=1+ELSE`,
   `PRINT 1+ELSE`, also after `THEN`/`ELSE`), the error is `Missing operand`
   and `RESUME NEXT` goes on at the next line: the rest of the line is skipped,
@@ -424,9 +425,6 @@ Found while measuring (#61):
   `RESUME NEXT` runs works. Test:
   `tests/regression/integration/test_resume_next_clauses.py` (82 shapes
   measured on the binary, `RESUME` and `RESUME NEXT`).
-- Not done (#61): `CLEAR` does not reset `DEFINT`, `DEFSTR` and the other
-  DEF types, as the binary does. The variable types are fixed when the
-  program is parsed, so a run-time reset needs a different design.
 - Done: a file number that no OPEN made. `PRINT #1,"x"`, `PRINT #`
   `USING`, `WRITE #`, `INPUT #`, `LINE INPUT #`, `GET` and `PUT` are `Bad file
   mode` (54) for 0 to 15, `Bad file number` (52) for 16 to 255 and `Illegal
@@ -496,6 +494,58 @@ Found while measuring (#61):
   and discards the WHILE entry, so in `FOR K=1 TO 2:WHILE K:NEXT:WEND` the
   WEND is `WEND without WHILE` (30). The FOR entry records the stack depth.
   The JavaScript semantic analyzer still refuses this crossed nesting.
+- Done: `DEFINT`, `DEFSNG`, `DEFDBL` and `DEFSTR` are run-time statements, as
+  on the binary (`src/deftypes.py`). They change a table when they run. A name
+  without a suffix is typed from the table each time the program uses it.
+  So a `DEFINT` that a `GOTO` jumps over, or that is in an `IF` that is not
+  taken, does nothing. A `DEFINT` in a loop types the lines above it on the
+  next pass. After `DEFINT A` the name `A` means `A%`, and `A!` is the single
+  variable (`A`, `A%` and `A!` are three names). `CLEAR` and `RUN` put all
+  letters back to single precision. `DIM A(3)` and `ERASE A` take the type
+  when they run. The type of `FNA` is the type of the letter `A` when the
+  `DEF FN` runs; a later `DEFINT A` makes `FNA` another function (`Undefined
+  user function`). The parser still gives each node the suffix that the DEF
+  statements above it in the text imply. `Runtime.setup` makes the nodes
+  dynamic (a node class with a `type_suffix` property that reads the table)
+  only when the program has a DEFtype statement, so other programs pay
+  nothing. `DEFINT` typed at the `Ok` prompt does not reach `RUN`; the table
+  that the program leaves is the table at the prompt (`make_dynamic` on the
+  statement typed there). Test: `tests/regression/integration/test_clear_deftypes.py`
+  (measured on the binary). The UIs that keep a `ProgramManager` map
+  (Tk, curses) type a program with no DEFtype statement from that map.
+  The JavaScript and C compilers keep the static view: the types follow the
+  DEFtype statements in the text, so a program that runs `CLEAR` or a DEFtype
+  out of text order can differ there.
+- Done: `DEF FN` is known when its statement runs, not at the start of the
+  run: `FNA` before its `DEF FN`, or after a `CLEAR`, is `Undefined user
+  function` (18). The result has the type of the function: `FNA%` rounds to
+  an integer (`FNA%(3)` with `X*1.5` is 5), a `$` function that gives a
+  number and a number function that gives a string are `Type mismatch`.
+  The JavaScript backend does the same in a program that has a `CLEAR`.
+  A compiled program cannot define one `FN` name twice (semantic error).
+- Done: `SWAP` of two variables of different types (`X%` and `Y`, a string and
+  a number) is `Type mismatch` and swaps nothing.
+- Done (JavaScript): `CLEAR` sets every variable to 0 or "", deletes every
+  array (a later use makes it 0..10, a later `DIM` sizes it), empties the FOR
+  and GOSUB stacks, sends the DATA pointer back, closes the files and forgets
+  the `DEF FN` functions. It does not reset `OPTION BASE` or the DEF types
+  (fixed when the program is compiled), and it does not restart `RND`.
+- Done (C): `CLEAR` sets every variable to 0 or "", deletes every array,
+  empties the GOSUB stack, sends the DATA pointer back and forgets
+  `ON ERROR GOTO`. The FOR loops are jumps in the C code, not a stack, so
+  `CLEAR` does not end them (`NEXT` after it does not give `NEXT without
+  FOR`). It does not reset `OPTION BASE`, the DEF types or `DEF FN`.
+- Done (interpreter): the second variable of `SWAP` must exist already. `SWAP
+  Y,Y2` with `Y2` never used is `Illegal function call` (5). The first
+  variable is made by its lookup, so `SWAP Y9,Y9` and `SWAP Y5,Y3` (first
+  unused) are fine, and so are array elements. `SWAP` in the compilers is not
+  changed.
+- Done (interpreter): `FOR F%=1 TO 2.6` rounds the limit as an integer
+  (`1 2 3`; 40000 is `Overflow`). `DEFINT F` does the same.
+- Done (JavaScript, C): a `DIM` after a `CLEAR` is not a compile error, as
+  `DIM` after `ERASE` was not. The JavaScript backend gives `NEXT without FOR`
+  for a `NEXT` that follows a `CLEAR` inside its loop (a program with a
+  `CLEAR` checks each `NEXT`). The C backend does not (see above).
 - A `MID$` statement whose value is the target string, as in
   `MID$(A$,3)=A$`, copies one byte at a time inside the one string on the
   binary (`HEHEH`). The interpreter and the JavaScript backend do the same.
@@ -750,9 +800,14 @@ semantics are not:
     with `OPTION BASE 1`, also when the array exists. The binary checks the
     bound before it checks for `Duplicate Definition`. (The C backend
     refuses such a program at compile time.)
+  - Done: the JavaScript backend gives `Duplicate Definition` for a `DIM`
+    of an array that exists, when the program has an `ERASE` or a `CLEAR`
+    (a use of the array makes it exist). In other programs the compiler
+    refuses the second `DIM`.
   - Not done: the JavaScript backend does not give `Illegal function call`
-    for `ERASE` of an array that does not exist, and does not give
-    `Duplicate Definition` for a `DIM` of an array that exists.
+    for `ERASE` of an array that does not exist.
+  - Done: `CLEAR` in the C backend never fails, also when an array is not
+    yet dimensioned (`10 CLEAR 500:20 DIM A(10)` is correct).
   - Done: the JavaScript backend keeps the number of subscripts of an erased
     array at run time. `10 DIM A(3):30 ERASE A:40 DIM A(3,3):60 A(2,2)=5`
     works, and a use with another number of subscripts is `Subscript out of

@@ -125,3 +125,10 @@ to its line). ERL uses the same line.
 * NEXT pairs with FOR by position in the text. A program that jumps into a
   loop with GOTO and a FOR that has no NEXT in the text can behave
   differently from real MBASIC.
+* `CLEAR` sets the variables to 0 or "", deletes the arrays, empties the FOR
+  and GOSUB stacks, sends the DATA pointer back, closes the files and forgets
+  the DEF FN functions (a program with a `CLEAR` checks each FN call and each
+  NEXT: a NEXT after a CLEAR in its loop is `NEXT without FOR`). It
+  does not reset OPTION BASE or the DEF types. The types follow the DEFINT,
+  DEFSNG, DEFDBL and DEFSTR statements in the text, not the order in which
+  they run; the interpreter follows the order in which they run.

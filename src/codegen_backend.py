@@ -920,6 +920,10 @@ class Z88dkCBackend(CodeGenBackend):
         for key, rank in used.items():
             if key not in dimmed:
                 self.array_ranks[key] = rank
+        if any(isinstance(n, ClearStatementNode) for line in program.lines
+               for n in self._walk(line.statements)):
+            # CLEAR deletes every array, as ERASE does one
+            self.erased_keys.update(self.array_ranks)
         for key in self.erased_keys:
             # Its number of subscripts changes with each DIM and use
             counts = {len(shape) for shape in self.array_shapes.get(key, [])}
@@ -3843,15 +3847,18 @@ class Z88dkCBackend(CodeGenBackend):
                 # Nothing in the program ever dimensions it
                 code.append(self.indent() + 'mb25_fail("Illegal function call");')
                 continue
-            n, rk, st = (self._ea_name(key, p) for p in ('n', 'rk', 'st'))
-            erase = f'int _t = mb25_ea_erase(&{st}, &{rk}, {n});'
-            if self._key_type(key) == VarType.STRING:
-                base = self._get_string_id(key + '()')
-                code.append(self.indent() + f'{{ {erase} int _e; for (_e = 0; _e < _t; _e++) mb25_string_clear({base} + _e); }}')
-            else:
-                c_name = self._mangle_variable_name(key) + '_arr'
-                code.append(self.indent() + f'{{ {erase} memset({c_name}, 0, _t * sizeof({c_name}[0])); }}')
+            code.append(self._erase_array_code(key))
         return code
+
+    def _erase_array_code(self, key: str, fn: str = 'mb25_ea_erase') -> str:
+        """The C statement that deletes the array of the key (ERASE, CLEAR)."""
+        n, rk, st = (self._ea_name(key, p) for p in ('n', 'rk', 'st'))
+        erase = f'int _t = {fn}(&{st}, &{rk}, {n});'
+        if self._key_type(key) == VarType.STRING:
+            base = self._get_string_id(key + '()')
+            return self.indent() + f'{{ {erase} int _e; for (_e = 0; _e < _t; _e++) mb25_string_clear({base} + _e); }}'
+        c_name = self._mangle_variable_name(key) + '_arr'
+        return self.indent() + f'{{ {erase} memset({c_name}, 0, _t * sizeof({c_name}[0])); }}'
 
     def _generate_reset(self, stmt: ResetStatementNode) -> List[str]:
         """Generate RESET statement - close all open files
@@ -3964,11 +3971,31 @@ class Z88dkCBackend(CodeGenBackend):
         - Resets the stack
         - Optionally sets string space and stack space
 
-        In compiled code, we cannot dynamically clear variables or adjust memory.
-        We can only close files.
+        The compiled code closes the files, sets every variable to 0 or "",
+        deletes every array (as ERASE does), empties the GOSUB stack, sends the
+        DATA pointer back and forgets ON ERROR GOTO. It cannot adjust memory
+        (the arguments are ignored with a warning), forget the FOR loops (they
+        are jumps, not a stack), or reset DEFINT and the other DEF types (the
+        types are fixed when the program is compiled).
         """
         code = []
-        code.append(self.indent() + '/* CLEAR - close all files (variable clearing not supported in compiled code) */')
+        code.append(self.indent() + '/* CLEAR - variables, arrays, GOSUB stack, DATA pointer, files */')
+        scalars = {name: info.var_type for name, info in self.symbols.variables.items()
+                   if not info.is_array}
+        for key in self.scalar_keys:
+            scalars.setdefault(key, self._key_type(key))
+        for name in sorted(scalars):
+            if scalars[name] == VarType.STRING:
+                code.append(self.indent() + f'mb25_string_clear({self._get_string_id(name)});')
+            else:
+                code.append(self.indent() + f'{self._mangle_variable_name(name)} = 0;')
+        for key in sorted(self.array_ranks):
+            code.append(self._erase_array_code(key, 'mb25_ea_clear'))
+        code.append(self.indent() + 'gosub_sp = 0;')
+        if self.data_values:
+            code.append(self.indent() + 'data_pointer = 0;')
+        if self.needs_error_handling:
+            code.append(self.indent() + 'error_handler = 0;')
 
         # Close all files (same as RESET) - only if files are actually used
         if self.max_file_number > 0:

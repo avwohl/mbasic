@@ -388,6 +388,7 @@ class EraseStatementNode:
     array_names: List[str]  # Just the array names, not full variable nodes
     line_num: int = 0
     column: int = 0
+    bare: List[bool] = None  # per name: no suffix in the source (the DEFtype of the run time types it)
 
 
 @dataclass
@@ -421,6 +422,7 @@ class ArrayDeclNode:
     dimensions: List['ExpressionNode']  # Must be constant expressions in compiled BASIC
     line_num: int = 0
     column: int = 0
+    bare: bool = False  # the source had no suffix: the DEFtype of the run time types the array
 
 
 @dataclass
@@ -1066,6 +1068,7 @@ class DefFnStatementNode:
     line_num: int = 0
     column: int = 0
     type_suffix: Optional[str] = None  # type of the result: the suffix of the name ($ % ! #) or the DEF type
+    explicit_type_suffix: bool = False  # the name was written with a suffix
 
 
 @dataclass
@@ -1361,6 +1364,7 @@ class FunctionCallNode:
     column: int = 0
     type_suffix: str = None
     arity_error: Optional[int] = None
+    explicit_type_suffix: bool = False  # a user function written with a suffix (FNA%)
 
 
 # ============================================================================

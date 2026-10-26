@@ -1178,6 +1178,7 @@ class Parser:
                 name=token.type.name,  # 'ERR' or 'ERL'
                 type_suffix='%',       # Integer type
                 subscripts=[],
+                explicit_type_suffix=True,   # no DEFtype changes it
                 line_num=token.line,
                 column=token.column
             )
@@ -1246,6 +1247,7 @@ class Parser:
                     name=name,
                     arguments=args,
                     type_suffix=type_suffix,
+                    explicit_type_suffix=explicit_type_suffix,
                     line_num=token.line,
                     column=token.column
                 )
@@ -1269,6 +1271,7 @@ class Parser:
                     name=name,
                     arguments=[],
                     type_suffix=type_suffix,
+                    explicit_type_suffix=explicit_type_suffix,
                     line_num=token.line,
                     column=token.column
                 )
@@ -1434,8 +1437,12 @@ class Parser:
         raw_name = name_token.value
         # Strip type suffix from the name (e.g., "ucase$" -> "ucase")
         type_suffix = self.get_type_suffix(raw_name)
+        explicit_type_suffix = bool(type_suffix)
         if type_suffix:
             raw_name = raw_name[:-1]
+        else:
+            # An unsuffixed function is typed by its first letter, as FNA is
+            type_suffix = self.split_name_and_suffix(raw_name)[1]
         func_name = "fn" + raw_name  # Use lowercase 'fn' to match function definitions
 
         # Parse arguments if present
@@ -1457,7 +1464,9 @@ class Parser:
             name=func_name,
             arguments=args,
             line_num=name_token.line,
-            column=name_token.column
+            column=name_token.column,
+            type_suffix=type_suffix,
+            explicit_type_suffix=explicit_type_suffix
         )
 
     def get_type_suffix(self, name: str) -> Optional[str]:
@@ -1832,6 +1841,7 @@ class Parser:
                 name=var_name,
                 type_suffix=type_suffix,
                 subscripts=subscripts,
+                explicit_type_suffix=var_token.value[-1] in '$%!#',
                 line_num=var_token.line,
                 column=var_token.column
             ))
@@ -2662,6 +2672,7 @@ class Parser:
                 name=var_name,
                 type_suffix=type_suffix,
                 subscripts=None,
+                explicit_type_suffix=var_token.value[-1] in '$%!#',
                 line_num=var_token.line,
                 column=var_token.column
             )
@@ -2731,6 +2742,7 @@ class Parser:
                     name=var_name,
                     type_suffix=type_suffix,
                     subscripts=None,
+                    explicit_type_suffix=var_token.value[-1] in '$%!#',
                     line_num=var_token.line,
                     column=var_token.column
                 ))
@@ -2891,6 +2903,7 @@ class Parser:
             # Parse array name
             name_token = self.expect(TokenType.IDENTIFIER)
             name = name_token.value
+            bare = name[-1] not in '$%!#'
 
             # Determine type suffix based on explicit suffix or DEF type
             # If no explicit suffix, check DEF type map and add appropriate suffix
@@ -2928,7 +2941,8 @@ class Parser:
                 name=name,
                 dimensions=dimensions,
                 line_num=name_token.line,
-                column=name_token.column
+                column=name_token.column,
+                bare=bare
             ))
 
             # Check for comma (more arrays)
@@ -2969,6 +2983,7 @@ class Parser:
         token = self.advance()
 
         array_names: List[str] = []
+        bare: List[bool] = []
 
         while not self.at_end_of_line() and not self.match(TokenType.COLON):
             # Parse array name (just identifier, no subscripts). DIM resolves a
@@ -2978,6 +2993,7 @@ class Parser:
             # so the ERASE/DIM idiom on one line silently erased nothing.
             name_token = self.expect(TokenType.IDENTIFIER)
             array_names.append(self._apply_def_type(name_token.value))
+            bare.append(name_token.value[-1] not in '$%!#')
 
             # Check for comma (more arrays)
             if self.match(TokenType.COMMA):
@@ -2988,7 +3004,8 @@ class Parser:
         return EraseStatementNode(
             array_names=array_names,
             line_num=token.line,
-            column=token.column
+            column=token.column,
+            bare=bare
         )
 
     def parse_mid_assignment(self) -> MidAssignmentStatementNode:
@@ -3200,6 +3217,7 @@ class Parser:
                         name=param_name,
                         type_suffix=param_type_suffix,
                         subscripts=None,
+                        explicit_type_suffix=param_token.value[-1] in '$%!#',
                         line_num=param_token.line,
                         column=param_token.column
                     )
@@ -3218,6 +3236,7 @@ class Parser:
         # Parse function body expression
         expression = self.parse_expression()
 
+        explicit_fn_suffix = bool(fn_suffix)
         if not fn_suffix:
             # The binary types an unsuffixed function by the letter after FN
             fn_suffix = self.split_name_and_suffix(function_name[2:])[1]
@@ -3228,7 +3247,8 @@ class Parser:
             expression=expression,
             line_num=token.line,
             column=token.column,
-            type_suffix=fn_suffix
+            type_suffix=fn_suffix,
+            explicit_type_suffix=explicit_fn_suffix
         )
 
     def parse_common(self) -> CommonStatementNode:
@@ -3855,6 +3875,7 @@ class Parser:
                 name=var_name,
                 type_suffix=type_suffix,
                 subscripts=subscripts,
+                explicit_type_suffix=var_token.value[-1] in '$%!#',
                 line_num=var_token.line,
                 column=var_token.column
             ))
@@ -4214,6 +4235,7 @@ class Parser:
                 name=target.name,
                 type_suffix=target.type_suffix,
                 subscripts=None,
+                explicit_type_suffix=target.explicit_type_suffix,
                 line_num=target.line_num,
                 column=target.column
             )
@@ -4225,6 +4247,7 @@ class Parser:
                 name=target.name,
                 type_suffix=None,
                 subscripts=None,
+                explicit_type_suffix=True,      # a routine name: no DEFtype
                 line_num=token.line,
                 column=token.column
             )
