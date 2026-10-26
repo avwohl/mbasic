@@ -35,7 +35,7 @@ SAMPLES = {
     "ASC": 'ASC("A")', "VAL": 'VAL("12")', "LEN": 'LEN("AB")',
     "PEEK": "PEEK(1)", "INP": "INP(1)", "USR": "USR(1)",
     "VARPTR": "VARPTR(Q)", "EOF_FUNC": "EOF(1)", "FRE": "FRE(0)",
-    "LOC": "LOC(1)", "LOF": "LOF(1)", "POS": "POS(0)",
+    "LOC": "LOC(1)", "LOF": "LOF(1)", "POS": "POS(0)", "LPOS": "LPOS(0)",
     "LEFT": 'LEFT$("ABC",2)', "RIGHT": 'RIGHT$("ABC",2)',
     "MID": 'MID$("ABC",2,1)', "CHR": "CHR$(65)", "STR": "STR$(5)",
     "INKEY": "INKEY$", "INPUT_FUNC": "INPUT$(1)", "SPACE": "SPACE$(2)",

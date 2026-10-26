@@ -1200,6 +1200,8 @@ def serialize_statement(stmt):
         return ''.join(parts)
 
     elif stmt_type == 'WidthStatementNode':
+        if getattr(stmt, 'lprint', False):
+            return f"WIDTH LPRINT {serialize_expression(stmt.width)}"
         if stmt.device is not None:
             return (f"WIDTH {serialize_expression(stmt.device)},"
                     f" {serialize_expression(stmt.width)}")
@@ -1307,6 +1309,10 @@ def serialize_statement(stmt):
         if getattr(stmt, 'run_flag', False):
             return f"LOAD {serialize_expression(stmt.filename)}, R"
         return f"LOAD {serialize_expression(stmt.filename)}"
+
+    elif stmt_type == 'DefUsrStatementNode':
+        index = stmt.index if stmt.index else ''
+        return f"DEF USR{index} = {serialize_expression(stmt.address)}"
 
     elif stmt_type == 'WaitStatementNode':
         parts = [f"WAIT {serialize_expression(stmt.port)},"

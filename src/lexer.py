@@ -515,9 +515,9 @@ class Lexer:
         # is the keyword: CRUNCH ends a reserved word at any character that is
         # not a letter, a digit or ".".  The type character stays in the input
         # and nothing can use it, which is a Syntax error when the line runs.
-        if (len(ident) > 1 and ident[-1] in '$%!#' and ident_lower[:-1] in ('lpos', 'null')
+        if (len(ident) > 1 and ident[-1] in '$%!#' and ident_lower[:-1] == 'null'
                 and not self._in_data_statement()):
-            # LPOS and NULL are reserved in the binary but not keywords here
+            # NULL is reserved in the binary but not a keyword here
             raise LexerError("Syntax error", start_line, start_column)
         if (len(ident) > 1 and ident[-1] in '$%!#' and ident_lower[:-1] in RESERVED_STEMS
                 and not self._in_data_statement()):
@@ -527,6 +527,20 @@ class Lexer:
             token = Token(KEYWORDS[keyword_part], keyword_part, start_line, start_column)
             token.original_case_keyword = self.keyword_case_manager.register_keyword(
                 keyword_part, ident[:-1], start_line, start_column)
+            return token
+
+        # USR0 to USR9 and DEF USR are the reserved word USR and a digit; a
+        # name that starts with USR (USRX, USR1X, USR10) is the word USR and
+        # the rest, which the parser refuses as the binary does.  The other
+        # reserved words are not split off the front of a name here.
+        if (len(ident) > 3 and ident_lower.startswith('usr')
+                and not self._in_data_statement()):
+            back = len(ident) - 3
+            self.pos -= back
+            self.column -= back
+            token = Token(KEYWORDS['usr'], 'usr', start_line, start_column)
+            token.original_case_keyword = self.keyword_case_manager.register_keyword(
+                'usr', ident[:3], start_line, start_column)
             return token
 
         # NOTE: We do NOT handle old BASIC where keywords run together (NEXTI, FORI).

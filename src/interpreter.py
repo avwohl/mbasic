@@ -1286,7 +1286,7 @@ class Interpreter:
         if file_info is not None:
             return file_info.get('width', FILE_WIDTH)
         width = getattr(self.io, 'width', SCREEN_WIDTH)
-        return width if isinstance(width, int) and width > 0 else SCREEN_WIDTH
+        return width if isinstance(width, int) and width >= 0 else SCREEN_WIDTH
 
     def _screen_line_ended(self, kept_text=None):
         """A line typed at the keyboard ends with Enter: the cursor is at column 0.
@@ -2247,6 +2247,15 @@ class Interpreter:
         """
         radix_word(self.evaluate_expression(stmt.address))
         to_conint(self.evaluate_expression(stmt.value))
+
+    def execute_defusr(self, stmt):
+        """DEF USR[n] = address - the address is checked and then dropped.
+
+        Like the address of POKE it is -32768 to 65535: 65536 is Overflow and
+        a string is Type mismatch. A call of USR is Illegal function call
+        whatever the address, as there is no machine code to run.
+        """
+        radix_word(self.evaluate_expression(stmt.address))
 
     def execute_deftype(self, stmt):
         """Execute DEFINT/DEFSNG/DEFDBL/DEFSTR statement (do nothing at runtime)"""
@@ -3753,6 +3762,20 @@ class Interpreter:
             # behavior, not a bug.
             self.runtime.set_variable_raw(var_name, value)
 
+    def _mid_value_is_destination(self, stmt):
+        """Whether the value of a MID$ statement is the very variable it changes."""
+        dest, value = stmt.string_var, stmt.value
+        if not (isinstance(dest, ast_nodes.VariableNode) and isinstance(value, ast_nodes.VariableNode)):
+            return False
+        if (dest.name, dest.type_suffix) != (value.name, value.type_suffix):
+            return False
+        if bool(dest.subscripts) != bool(value.subscripts):
+            return False
+        if not dest.subscripts:
+            return True
+        return ([to_subscript(self.evaluate_expression(sub)) for sub in dest.subscripts]
+                == [to_subscript(self.evaluate_expression(sub)) for sub in value.subscripts])
+
     def execute_midassignment(self, stmt):
         """Execute MID$ assignment statement - replace substring in-place
 
@@ -3768,7 +3791,7 @@ class Interpreter:
         # Evaluate the current value of the string variable
         current_value = self.evaluate_expression(stmt.string_var)
         if not isinstance(current_value, str):
-            current_value = str(current_value)
+            raise MBasicError(13)    # Type mismatch: MID$(A,2)="X" with a number A
 
         # Evaluate the parameters
         # Start and length are CONINT arguments as in the MID$ function:
@@ -3824,6 +3847,18 @@ class Interpreter:
             for i in range(chars_to_replace):
                 buf[start_idx + i] = buf[i]
             modified_value = ''.join(buf)
+
+        if self._mid_value_is_destination(stmt):
+            # The value is the destination string itself (also in
+            # parentheses): the binary copies a byte at a time inside the
+            # one string, so a byte it has just written is copied again.
+            # Measured: A$="HELLO":MID$(A$,3)=A$ gives HEHEH, and
+            # MID$(A$,2,3)=A$ gives HHHHO.  A$+"", LEFT$(A$,5) and a copy of
+            # A$ in another variable are separate strings: HEHEL.
+            chars = list(current_value)
+            for i in range(chars_to_replace):
+                chars[start_idx + i] = chars[i]
+            modified_value = ''.join(chars)
 
         # Assign the modified string back to the variable
         # Handle both simple variables and array elements
@@ -3984,15 +4019,19 @@ class Interpreter:
         """Execute WIDTH statement - set the screen line width
 
         PRINT wraps at this width and measures TAB and the comma zones against
-        it. The range is 1 to 255; anything else is an Illegal function call.
-        A form with a device (WIDTH n, device) is accepted and ignored.
+        it. The width is a byte, 0 to 255: 40000 is Overflow, and 256 and -1
+        are Illegal function call. A width of 0 is accepted (the binary does
+        so); see wrap_text for what it does to PRINT, and tab_target for TAB.
+        WIDTH LPRINT n checks the byte and does nothing else: there is no
+        line printer. A form with a device (WIDTH n, device) is accepted and
+        ignored.
         """
         width = self.evaluate_expression(stmt.width)
         if isinstance(width, str):
             raise RuntimeError("Type mismatch")
-        width = to_frcint(width)        # 40000 is Overflow; 256 is Illegal function call
-        if width < 1 or width > 255:
-            raise RuntimeError("Illegal function call")
+        width = to_conint(width)
+        if stmt.lprint:
+            return
         if stmt.device is None:
             self.io.width = width
 

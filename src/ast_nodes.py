@@ -987,6 +987,22 @@ class OutStatementNode:
 
 
 @dataclass
+class DefUsrStatementNode:
+    """DEF USR statement - set the address of a machine language routine
+
+    Syntax:
+        DEF USR[n] = address
+
+    n is 0 to 9 (0 when left out). The address is checked and then kept
+    for nothing: there is no machine code to call.
+    """
+    index: int
+    address: 'ExpressionNode'
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
 class WaitStatementNode:
     """WAIT statement - wait for I/O port condition
 
@@ -1051,11 +1067,13 @@ class WidthStatementNode:
     Syntax:
         WIDTH width
         WIDTH width, device
+        WIDTH LPRINT width
     """
     width: 'ExpressionNode'
     device: Optional['ExpressionNode']
     line_num: int = 0
     column: int = 0
+    lprint: bool = False
 
 
 @dataclass

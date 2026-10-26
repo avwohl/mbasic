@@ -2480,6 +2480,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'return 0;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _lpos(n) { return 1; }  // LPOS: no printer, column 1')
         code.append(self.indent() + 'function _usr(n) {')
         self.indent_level += 1
         code.append(self.indent() + '// USR - Call machine code routine (stub: returns argument)')
@@ -3121,6 +3122,7 @@ class JavaScriptBackend(CodeGenBackend):
             'inp': '_inp',
             'varptr': '_varptr',
             'usr': '_usr',
+            'lpos': '_lpos',
             # Input
             'inkey$': '_inkey',
             'input$': '_input_chars',
@@ -3917,6 +3919,8 @@ class JavaScriptBackend(CodeGenBackend):
         the interpreter.
         """
         width = self._generate_expression(stmt.width)
+        if getattr(stmt, 'lprint', False):
+            return [self.indent() + f'// WIDTH LPRINT {width} - ignored']
         if stmt.device is not None:
             return [self.indent() + f'// WIDTH {width}, device - ignored']
         return [self.indent() + f'_width = _set_width({width});']

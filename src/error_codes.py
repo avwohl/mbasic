@@ -10,6 +10,8 @@ Only the codes MBASIC 5.21 has are listed. The manual names more (24, 25,
 code that is not in the table. ERR still returns the number given to ERROR.
 """
 
+import re
+
 # Error code mapping: number -> (two_letter_code, message)
 ERROR_CODES = {
     1: ("NF", "NEXT without FOR"),
@@ -239,8 +241,14 @@ def error_code_for(exception):
         # Testing for "eof" anywhere in the text got the last four wrong: there
         # EOF is the token some *bracket* was wanted before, or the name of the
         # EOF function, not an operand that never arrived.
+        #
+        # The operand can also run out at the end of a statement that has more
+        # statements or a program line after it.  Measured: A=  A=:PRINT 1
+        # PRINT 1+:PRINT 2  A=ELSE  IF 1 THEN A=  are all Missing operand,
+        # while A=,  A=1+*2  PRINT 1+) are Syntax error.
         return (MISSING_OPERAND
-                if 'unexpected token in expression: eof' in text
+                if re.search(r'unexpected token in expression: (eof|newline|colon|else)\b',
+                             text)
                 else SYNTAX_ERROR)
     for fragment, code in _MESSAGE_CODES:
         if fragment in text:

@@ -19,6 +19,7 @@ Expression parsing notes:
 from typing import Any, List, Optional, Dict, Set, Tuple
 from src.tokens import Token, TokenType
 from src.ast_nodes import *
+from src.error_codes import error_code_for, MISSING_OPERAND
 from src.keyword_case_manager import KeywordCaseManager
 from src.debug_logger import debug_log
 
@@ -374,7 +375,12 @@ class Parser:
             debug_log(f"statement kept as a run-time Syntax error: {e}", level=1)
             self.position = start
             kept = self._print_before_stray_text(start)
-            return kept if kept is not None else self._syntax_error_statement()
+            if kept is not None:
+                return kept
+            bad = self._syntax_error_statement()
+            if error_code_for(e) == MISSING_OPERAND:
+                bad.error_code = MISSING_OPERAND    # A=  PRINT 1+  DEF USR=
+            return bad
 
     def _print_before_stray_text(self, start: int) -> Optional[StatementNode]:
         """PRINT "a";$ prints a and then fails: keep the PRINT up to the stray text.
@@ -722,9 +728,14 @@ class Parser:
             # Note: The lexer tokenizes 'MID$' (including the $) as a single token with type TokenType.MID
             # Lookahead strategy: scan past balanced parentheses, check for = sign
             saved_pos = self.position
+            is_statement = False
             try:
                 self.advance()  # Skip MID token
-                if self.match(TokenType.LPAREN):
+                lparen = self.current()
+                # The statement needs "MID$(" with no space: MID$ (A$,2)=X$ is a
+                # Syntax error in MBASIC 5.21 (the function form allows the space).
+                if (self.match(TokenType.LPAREN) and lparen.line == token.line
+                        and lparen.column == token.column + len('MID$')):
                     # Scan to find matching RPAREN, tracking nested parentheses
                     paren_depth = 1
                     self.advance()  # Skip opening (
@@ -735,10 +746,7 @@ class Parser:
                             paren_depth -= 1
                         self.advance()
                     # Check if next token is EQUAL (indicates MID$ assignment statement)
-                    if self.match(TokenType.EQUAL):
-                        # This is MID$ statement, not function
-                        self.position = saved_pos  # Restore position to parse properly
-                        return self.parse_mid_assignment()
+                    is_statement = self.match(TokenType.EQUAL)
             except (IndexError, ParseError):
                 # Catch lookahead failures during MID$ statement detection
                 # IndexError: if we run past end of tokens
@@ -747,6 +755,10 @@ class Parser:
                 pass
             # Restore position - either not a statement or error in lookahead
             self.position = saved_pos
+            if is_statement:
+                # This is MID$ statement, not function.  Parse it outside the
+                # try, so its own errors (Missing operand) are not swallowed.
+                return self.parse_mid_assignment()
             # MID$ at statement level without assignment pattern is an error
             # (MID$ function calls only valid in expression context)
             raise ParseError(f"MID$ must be used as function (in expression) or assignment statement", token)
@@ -1219,7 +1231,7 @@ class Parser:
         builtin_functions = {
             TokenType.ABS, TokenType.ATN, TokenType.COS, TokenType.SIN, TokenType.TAN,
             TokenType.EXP, TokenType.LOG, TokenType.SQR, TokenType.INT, TokenType.FIX,
-            TokenType.RND, TokenType.SGN, TokenType.ASC, TokenType.VAL, TokenType.LEN,
+            TokenType.RND, TokenType.LPOS, TokenType.SGN, TokenType.ASC, TokenType.VAL, TokenType.LEN,
             TokenType.PEEK, TokenType.INP, TokenType.USR, TokenType.VARPTR, TokenType.EOF_FUNC, TokenType.FRE,
             TokenType.LOC, TokenType.LOF, TokenType.POS, TokenType.TAB, TokenType.SPC,
             # String functions
@@ -1235,9 +1247,25 @@ class Parser:
         # Note: ERR and ERL are not functions, they are system variables
         return token_type in builtin_functions
 
+    def _parse_usr_digit(self) -> int:
+        """Read the digit after the reserved word USR: USR0 to USR9, "USR 4" too.
+
+        The lexer ends the word USR before the digit.  No digit means USR0.
+        A number that is not one digit (USR10) is left in place, so the
+        caller fails with a Syntax error, as MBASIC does.
+        """
+        tok = self.current()
+        if (tok and tok.type == TokenType.NUMBER and isinstance(tok.value, int)
+                and not isinstance(tok.value, bool) and 0 <= tok.value <= 9):
+            self.advance()
+            return tok.value
+        return 0
+
     def parse_builtin_function(self) -> FunctionCallNode:
         """Parse built-in function call"""
         func_token = self.advance()
+        if func_token.type == TokenType.USR:
+            self._parse_usr_digit()
         func_name = func_token.type.name
 
         # Map token names to actual function names
@@ -2892,11 +2920,11 @@ class Parser:
         # Parse start position
         start = self.parse_expression()
 
-        # Expect comma
-        self.expect(TokenType.COMMA)
-
-        # Parse length
-        length = self.parse_expression()
+        # The length is optional: MID$(A$, 2) = X$ replaces up to the end
+        length = None
+        if self.match(TokenType.COMMA):
+            self.advance()
+            length = self.parse_expression()
 
         # Expect closing parenthesis
         self.expect(TokenType.RPAREN)
@@ -2993,6 +3021,20 @@ class Parser:
             DEF FNB = 42  (no parameters)          -> function name "fnb"
         """
         token = self.advance()  # Consume DEF
+
+        # DEF USR[n] = address
+        usr_token = self.current()
+        if usr_token and usr_token.type == TokenType.USR:
+            self.advance()
+            index = self._parse_usr_digit()
+            self.expect(TokenType.EQUAL)
+            address = self.parse_expression()
+            return DefUsrStatementNode(
+                index=index,
+                address=address,
+                line_num=token.line,
+                column=token.column
+            )
 
         # Next token should be identifier starting with "FN"
         # In MBASIC, "DEF FNR(X)" means function name is "FNR"
@@ -3853,6 +3895,10 @@ class Parser:
                     self.advance()
                     if not self.at_end_of_line() and not self.match(TokenType.COLON):
                         stack_space = self.parse_expression()
+                if self.match(TokenType.COMMA):
+                    # A fourth argument is a Syntax error found before any
+                    # argument runs (CLEAR 1,2,3,4 gives only error 2).
+                    raise ParseError("CLEAR takes at most three arguments", self.current())
 
         return ClearStatementNode(
             string_space=string_space,
@@ -3909,6 +3955,16 @@ class Parser:
           The parser accepts any expression; validation occurs at runtime.
         """
         token = self.advance()
+
+        if self.match(TokenType.LPRINT):
+            self.advance()
+            return WidthStatementNode(
+                width=self.parse_expression(),
+                device=None,
+                line_num=token.line,
+                column=token.column,
+                lprint=True
+            )
 
         width = self.parse_expression()
 
