@@ -20,6 +20,7 @@ import re
 import os
 import traceback
 from pathlib import Path
+from src.line_number_split import normalize_line_number
 from src.lexer import tokenize, Lexer
 from src.parser import Parser
 from src.runtime import Runtime
@@ -546,7 +547,7 @@ class InteractiveMode:
 
     def process_line(self, line):
         """Process a line of input (numbered line or direct command)"""
-        line = line.strip()
+        line = normalize_line_number(line.strip())   # 70000 is line 7000, text 0
 
         # Check if it's a numbered line
         match = re.match(r'^(\d+)\s*(.*)', line)
@@ -1019,6 +1020,7 @@ class InteractiveMode:
 
                     # Sanitize input: clear parity bits and filter control characters
                     line, _ = sanitize_and_clear_parity(line)
+                    line = normalize_line_number(line)
 
                     match = re.match(r'^(\d+)(?=.)', line)
                     if match:
@@ -1039,6 +1041,7 @@ class InteractiveMode:
 
                     # Sanitize input: clear parity bits and filter control characters
                     line, _ = sanitize_and_clear_parity(line)
+                    line = normalize_line_number(line)
 
                     match = re.match(r'^(\d+)(?=.)', line)
                     if match:

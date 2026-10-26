@@ -2216,7 +2216,11 @@ class Interpreter:
 
             # Convert to appropriate type based on variable suffix
             if var_node.type_suffix == '$':
-                value = str(value)
+                # DATA text is not crunched: A$ gets the item as it was typed
+                if isinstance(data_node, ast_nodes.NumberNode) and isinstance(data_node.literal, str):
+                    value = data_node.literal
+                else:
+                    value = str(value)
             elif var_node.type_suffix == '%':
                 value = to_integer(value)      # rounds, like every other
                                                # assignment to an integer

@@ -185,6 +185,10 @@ class Lexer:
                 num_str += self.advance()
                 while self.current_char() and self.current_char() in '01234567':
                     num_str += self.advance()
+                if self.current_char() is not None and self.current_char() in '89':
+                    raw = self._octal_in_data(num_str, 2, start_line, start_column)
+                    if raw is not None:
+                        return raw
                 self._refuse_octal_89(start_line, start_column)
                 try:
                     value = self._radix(num_str[2:], 8, start_line, start_column)
@@ -197,6 +201,10 @@ class Lexer:
                 # Octal with just & prefix
                 while self.current_char() and self.current_char() in '01234567':
                     num_str += self.advance()
+                if self.current_char() is not None and self.current_char() in '89':
+                    raw = self._octal_in_data(num_str, 1, start_line, start_column)
+                    if raw is not None:
+                        return raw
                 self._refuse_octal_89(start_line, start_column)
                 try:
                     value = self._radix(num_str[1:], 8, start_line, start_column)
@@ -351,8 +359,19 @@ class Lexer:
 
     def _refuse_octal_89(self, line: int, column: int):
         """MBASIC reads an 8 or 9 inside an octal constant as an error that refuses the whole line."""
-        if self.current_char() is not None and self.current_char() in '89':
+        if (self.current_char() is not None and self.current_char() in '89'
+                and not self._in_data_statement()):     # DATA text is not crunched
             raise LexerRefused("Syntax error", line, column)
+
+    def _octal_in_data(self, num_str: str, prefix_len: int, line: int, column: int):
+        """&O19 and the like in DATA: raw text, kept as written.  Returns the token, or None outside DATA."""
+        if not self._in_data_statement():
+            return None
+        digits = ''
+        while self.current_char() is not None and self.current_char() in '0123456789':
+            digits += self.advance()
+        num_str += digits
+        return Token(TokenType.NUMBER, 0, line, column, literal_text=num_str)
 
     def _in_data_statement(self) -> bool:
         """True when the tokens so far in this statement start with DATA (its text is kept raw)."""

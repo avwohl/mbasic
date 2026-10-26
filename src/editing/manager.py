@@ -44,6 +44,7 @@ the FileIO abstraction and call ProgramManager directly.
 import io
 import re
 from typing import Dict, List, Tuple, Optional
+from src.line_number_split import normalize_line_number
 from pathlib import Path
 from src.input_sanitizer import sanitize_and_clear_parity
 from src.lexer import Lexer, LexerOverflow, LexerRefused, create_keyword_case_manager, tokenize
@@ -346,6 +347,7 @@ class ProgramManager:
 
             # Sanitize input: clear parity bits and filter control characters
             line, was_modified = sanitize_and_clear_parity(line)
+            line = normalize_line_number(line)      # 70000 is line 7000, text 0
 
             # Extract line number
             match = re.match(r'^(\d+)', line)
@@ -426,6 +428,7 @@ class ProgramManager:
 
             # Sanitize input: clear parity bits and filter control characters
             line, was_modified = sanitize_and_clear_parity(line)
+            line = normalize_line_number(line)      # 70000 is line 7000, text 0
 
             # Extract line number
             match = re.match(r'^(\d+)', line)
