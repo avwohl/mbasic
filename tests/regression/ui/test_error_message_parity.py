@@ -253,10 +253,12 @@ def test_a_parse_error_is_worded_once():
         backend._create_ui()
         backend.cmd_merge(str(source))
         shown = [l for l in backend.output_buffer if 'error' in l.lower()]
+        kept = dict(manager.get_lines()).get(20)
 
-    check(len(shown) == 1 and shown[0].count('Syntax error') == 1
-          and shown[0].startswith('Syntax error in 20:'),
-          f"curses MERGE of a bad line -> {shown}")
+    # The binary keeps a line it cannot run and says Syntax error only when the
+    # line runs (measured: MERGE prints nothing, LIST shows 20 ZZZ 1)
+    check(shown == [] and kept == '20 ZZZ 1',
+          f"curses MERGE of a bad line -> {shown}, line 20 {kept!r}")
 
     # And a missing file is MBASIC's message, not the OSError.
     backend.output_buffer.clear()

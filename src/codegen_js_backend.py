@@ -2309,10 +2309,14 @@ class JavaScriptBackend(CodeGenBackend):
 
             code.append(self.indent() + 'function _loc(filenum) {')
             self.indent_level += 1
-            code.append(self.indent() + '// LOC() - Current position in file')
+            code.append(self.indent() + '// LOC() - the position in sectors of 128 bytes (measured): an input file gives the')
+            code.append(self.indent() + '// sectors read, at least 1; an output file the full sectors written. A line end')
+            code.append(self.indent() + '// counts as CR LF, two bytes, as in a CP/M file.')
             code.append(self.indent() + 'const file = _fopenfile(filenum, "Bad file number");')
             code.append(self.indent() + 'if (file.mode === "R") return file.currentRecord - 1;  // the record of the last GET or PUT')
-            code.append(self.indent() + 'return file.pos || 0;')
+            code.append(self.indent() + 'const text = file.mode === "I" ? file.content.substring(0, file.pos || 0) : file.content;')
+            code.append(self.indent() + 'const bytes = text.length + (text.match(/(^|[^\\r])\\n/g) || []).length;')
+            code.append(self.indent() + 'return file.mode === "I" ? Math.max(1, Math.ceil(bytes / 128)) : Math.floor(bytes / 128);')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append('')
@@ -3212,6 +3216,9 @@ class JavaScriptBackend(CodeGenBackend):
             code.extend(self._generate_call(stmt))
         elif isinstance(stmt, WidthStatementNode):
             code.extend(self._generate_width(stmt))
+        elif isinstance(stmt, NullStatementNode):
+            # Only the range check of the count remains (a byte); nothing prints the nulls
+            code.append(self.indent() + f'_conint({self._generate_expression(stmt.count)});')
         elif isinstance(stmt, ClearStatementNode):
             code.extend(self._generate_clear(stmt))
         elif isinstance(stmt, CommonStatementNode):

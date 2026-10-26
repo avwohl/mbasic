@@ -118,6 +118,14 @@ CASES["input_function_past_end"] = (
 CASES["open_missing_input_file"] = ('10 OPEN "I",#3,"ZZ5.DAT"\n20 PRINT "no"\n',
                                     "File not found in 10\n")
 
+# GET and PUT of a random file need no FIELD: the record buffer is there from
+# OPEN on (measured; a PUT before anything is in it writes what was in that
+# memory on the binary, spaces here, so only LOC and the record read back count)
+CASES["get_put_before_field"] = (
+    '10 OPEN "R",#1,"ZZ5.DAT",4:PUT #1,1:PUT #1:PRINT LOC(1):CLOSE #1\n'
+    '20 OPEN "R",#1,"ZZ5.DAT",4:GET #1,2:FIELD #1,4 AS A$:PRINT LEN(A$):CLOSE\n',
+    " 2 \n 4 \n")
+
 # trapped: ERR 54 at the line of the statement, and RESUME NEXT goes on
 CASES["print_after_close_trapped"] = (
     '10 OPEN "O",#3,"ZZ5.DAT":PRINT #3,"x":CLOSE #3:PRINT "ok":ON ERROR GOTO 100:PRINT #3,"y"\n'

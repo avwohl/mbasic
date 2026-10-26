@@ -458,21 +458,25 @@ Found while measuring (#61):
   program uses (`MAIN`, `PROCESS`, `TRUE`, `ENUM`, `WINDOW`, `REQUIRE` ...;
   `_mangle_var_name`). Before, such a program did not run. Test:
   `tests/regression/integration/test_js_variable_names.py`.
-- Not done: `NULL=2` is a Syntax error on the binary (NULL is a statement);
-  the parser here takes it as a variable.
+- Done: `NULL` is a statement and a reserved word. `NULL n` checks that `n`
+  is a byte (Illegal function call, Overflow, Type mismatch, Missing operand,
+  as on the binary) and prints no nulls. `NULL=2` and `X=NULL` are Syntax
+  errors. Test: `tests/regression/integration/test_null_statement.py`.
 - Not done: a random file (`OPEN "R"`) used with `PRINT #`, `WRITE #`, `INPUT #`
   or `LINE INPUT #`. The binary writes into and reads from the FIELD buffer
   with a cursor (`PRINT #3,"HELLO"` puts `HELLO` and CR LF in the buffer, and
   `FIELD overflow` when the record is full; `INPUT #` on an empty record is
   `FIELD overflow`). Here those statements are `Bad file mode`. It needs a
   cursor in the record buffer and its reset rules; no program in `basic/` uses it.
-- Not done: `LOF` and `LOC` of a sequential file count 128-byte sectors on the
-  binary (an input file of 3 bytes: `LOF` 1, `LOC` 1 after the OPEN; a file of
-  671 bytes: `LOF` 6, and `LOC` goes 1, 2, 3 ... as the lines are read). Here
-  `LOF` is the size in bytes and `LOC` is the byte position divided by 128.
-  `LOF` of a random file is 0 on the binary until the file is closed. The rule
-  for `LOC` was not found: after 5, 10, 15 and 20 lines of 16 or 17 bytes it
-  is 1, 2, 3 and 3.
+- Done: `LOF` and `LOC` count sectors of 128 bytes, as on the binary, in
+  the interpreter and the JavaScript backend. `LOF` is the size of the file at
+  the `OPEN`, rounded up. `LOC` of an input file is the sectors read so far:
+  1 after the `OPEN`, then the position rounded up (128 bytes read is 1, 144
+  is 2). `LOC` of an output file is the sectors written out, the position
+  rounded down. A line end counts as CR LF, two bytes, as in a CP/M file.
+  Still different: a new file that the program closes empty has `LOF` 1 on the binary
+  (CP/M keeps one sector) and 0 here. Test:
+  `tests/regression/integration/test_loc_sectors.py`.
 - Done: a string as a condition is `Type mismatch`: `IF "a" THEN`, `IF A$
   THEN`, `IF "" THEN ... ELSE`, and `WHILE "a"` (the error comes before the
   loop is entered, so after `RESUME NEXT` the WEND is `WEND without WHILE`,
@@ -977,10 +981,10 @@ Each item was measured on the binary. Test:
   raises it; `cpmemu` did not pass the switch on, so the number above 3 was
   not measured with a bigger limit). `PRINT #n` and `WRITE #n` on a random file
   work on the binary (they write into the record) and are `Bad file mode`
-  here. The interpreter still differs in some file cases (a number with no
-  open file is `Bad file number` there, the binary says `Bad file mode` for
-  PRINT, INPUT, GET, PUT; `GET` before `FIELD`; `FIELD` views are done, see
-  "round 2" below).
+  here. Done since: a number with no open file gives the errors of the
+  binary in the interpreter too (`test_file_number_errors.py`), and `GET` and
+  `PUT` work before `FIELD` (the record buffer is there from `OPEN` on);
+  `FIELD` views are done, see "round 2" below.
   `OPEN "A"` is an extension and stays.
 - Done (round 2): the interpreter follows the binary for FIELD views: `FIELD`
   gives the variables their part of the record at once, a second overlapping

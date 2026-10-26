@@ -399,7 +399,11 @@ mb25_print_cstr("x\\\\y");     /* prints "x\y" */
 mb25_print_cstr("A\134B");     /* prints "AB" */
 ```
 
-The backend writes four backslashes for each backslash in the BASIC text.
+Fixed in uc80 commit 723dba7 (after the 0.7.0 release). The compiler asks the
+installed uc80 with one test literal (`uc80_halves_backslashes()` in
+`src/mbasic_main.py`). When uc80 halves the backslashes, the backend writes
+four backslashes for each backslash in the BASIC text. Otherwise the backend
+writes two.
 
 **4. `atof` and `strtod` give wrong results or end the program.**
 

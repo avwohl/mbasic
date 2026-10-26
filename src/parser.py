@@ -731,6 +731,8 @@ class Parser:
             return self.parse_option()
         elif token.type == TokenType.WIDTH:
             return self.parse_width()
+        elif token.type == TokenType.NULL:
+            return self.parse_null()
         elif token.type == TokenType.POKE:
             return self.parse_poke()
         elif token.type == TokenType.OUT:
@@ -4098,6 +4100,12 @@ class Parser:
             line_num=token.line,
             column=token.column
         )
+
+    def parse_null(self) -> NullStatementNode:
+        """Parse NULL statement: NULL count (a ',' after the count is a Syntax error)"""
+        token = self.advance()
+        return NullStatementNode(count=self.parse_expression(),
+                                 line_num=token.line, column=token.column)
 
     def parse_width(self) -> WidthStatementNode:
         """Parse WIDTH statement.

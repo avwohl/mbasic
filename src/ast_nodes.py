@@ -1093,6 +1093,20 @@ class WidthStatementNode:
 
 
 @dataclass
+class NullStatementNode:
+    """NULL statement - the number of nulls printed after each line
+
+    Syntax:
+        NULL count
+
+    The count is a byte, 0 to 255. Nothing prints the nulls here.
+    """
+    count: 'ExpressionNode'
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
 class ClearStatementNode:
     """CLEAR statement - clear variables and set memory
 

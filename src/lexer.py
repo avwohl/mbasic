@@ -84,7 +84,7 @@ RESERVED_STEMS = frozenset((
     "list log loc len lof merge mod name new not open out on or option print "
     "put poke pos peek return read run restore rem resume rset rnd renum "
     "reset randomize stop swap save step sgn sqr sin system then tron troff "
-    "to tan using val varptr width wait while wend write xor next usr").split()) & frozenset(KEYWORDS)
+    "to tan using val varptr width wait while wend write xor next usr null").split()) & frozenset(KEYWORDS)
 
 
 class Lexer:
@@ -521,10 +521,6 @@ class Lexer:
         # is the keyword: CRUNCH ends a reserved word at any character that is
         # not a letter, a digit or ".".  The type character stays in the input
         # and nothing can use it, which is a Syntax error when the line runs.
-        if (len(ident) > 1 and ident[-1] in '$%!#' and ident_lower[:-1] == 'null'
-                and not self._in_data_statement()):
-            # NULL is reserved in the binary but not a keyword here
-            raise LexerError("Syntax error", start_line, start_column)
         if (len(ident) > 1 and ident[-1] in '$%!#' and ident_lower[:-1] in RESERVED_STEMS
                 and not self._in_data_statement()):
             keyword_part = ident_lower[:-1]

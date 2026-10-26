@@ -1021,24 +1021,34 @@ class BuiltinFunctions:
 
     def LOC(self, file_num):
         """
-        Return current record position for random access file.
+        Return the position in a file, in records or in sectors of 128 bytes.
 
-        Returns the record number of the last GET or PUT operation.
-        For sequential files, returns approximate byte position / 128.
+        Measured on the binary: a random file gives the record of the last GET
+        or PUT. An input file gives the sectors read so far: 1 after the OPEN,
+        then the position rounded up (128 bytes read is 1, 130 is 2). An output
+        file gives the sectors written out: the position rounded down.
         """
         file_num = to_conint(file_num)
         if file_num not in self.runtime.files:
             raise ValueError(f"File #{file_num} not open")
 
-        # For random access files, return current record number
-        if file_num in self.runtime.field_buffers:
-            return self.runtime.field_buffers[file_num]['current_record']
-
-        # For sequential files, return approximate block number (byte position / 128)
         file_info = self.runtime.files[file_num]
-        file_handle = file_info['handle']
-        pos = file_handle.tell()
-        return pos // 128
+        if file_info['mode'] == 'R':
+            buffer_info = self.runtime.field_buffers.get(file_num)
+            return buffer_info['current_record'] if buffer_info else 0
+
+        if file_info['mode'] != 'I':
+            return file_info.get('cpm_bytes', 0) // 128
+        # A line end that is a lone LF counts as CR LF, two bytes, as in a CP/M file
+        handle = file_info['handle']
+        pos = handle.tell()
+        handle.seek(0)
+        read = handle.read(pos)
+        handle.seek(pos)
+        if isinstance(read, str):
+            read = read.encode('latin-1', 'replace')
+        lone_lf = read.count(b'\n') - read.count(b'\r\n')
+        return max(1, -(-(pos + lone_lf) // 128))
 
     def LOF(self, file_num):
         """

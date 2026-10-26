@@ -114,6 +114,7 @@ class TokenType(Enum):
     USING = auto()
     WAIT = auto()
     WIDTH = auto()
+    NULL = auto()
 
     # Operators - Arithmetic
     PLUS = auto()            # +
@@ -367,6 +368,7 @@ KEYWORDS = {
     'using': TokenType.USING,
     'wait': TokenType.WAIT,
     'width': TokenType.WIDTH,
+    'null': TokenType.NULL,
 
     # Operators
     'mod': TokenType.MOD,

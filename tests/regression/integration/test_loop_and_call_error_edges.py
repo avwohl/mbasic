@@ -8,9 +8,10 @@ ERR and ERL and does RESUME NEXT.
   text pointer of its WEND). A WHILE with a string condition (Type mismatch)
   leaves no entry, so its WEND is "WEND without WHILE" (30) even inside an
   outer WHILE that is still active.
-- FOR sets the variable, then reads the limit and the step. A string for
-  either is Type mismatch (13), no loop is registered, and the NEXT is
-  NEXT without FOR (1).
+- FOR reads the limit and the step before it sets the variable. A string for
+  either is Type mismatch (13), the variable keeps its old value, no loop is
+  registered, and the NEXT is NEXT without FOR (1). A FOR with no NEXT is
+  FOR Without NEXT (26), and the variable keeps its old value too.
 - A NEXT in an ELSE part of a nested loop is not the NEXT that the inner FOR
   found, so it is NEXT without FOR.
 - The number arguments of LEFT$ RIGHT$ MID$ STRING$ INSTR INPUT$ are range
@@ -46,6 +47,10 @@ CASES = {
     "for_string_limit": (
         '10 ON ERROR GOTO 100\n20 FOR I=1 TO "a":PRINT "w":NEXT\n40 PRINT "z":SYSTEM\n' + HANDLER,
         " 13  20 \nw\n 1  20 \nz\n"),
+    "for_error_keeps_variable": (
+        '10 ON ERROR GOTO 100\n20 I=7:FOR I=5 TO "a":PRINT "w":NEXT\n30 PRINT "I=";I\n'
+        '40 J=7:FOR J=5 TO 6:PRINT "b"\n50 PRINT "J=";J:SYSTEM\n' + HANDLER,
+        " 13  20 \nw\n 1  20 \nI= 7 \n 26  40 \nb\nJ= 7 \n"),
     "for_string_step": (
         '10 ON ERROR GOTO 100\n20 FOR I=1 TO 2 STEP "a":PRINT "w":NEXT\n40 PRINT "z":SYSTEM\n'
         + HANDLER,

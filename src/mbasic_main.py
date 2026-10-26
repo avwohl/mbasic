@@ -433,6 +433,36 @@ def uc80_stdio_flags(c_file):
     return flags
 
 
+def uc80_halves_backslashes():
+    """True when the installed uc80 drops one backslash of each escaped pair.
+
+    uc80 0.7.0 and older read the backslash that "\\\\" decodes to as a second
+    escape, so "a\\\\b" reaches the assembly as "ab" (fixed in uc80 723dba7,
+    after 0.7.0). The backend then doubles every backslash again. The answer
+    comes from compiling one literal, because a release number does not say
+    whether a checkout has the fix. With no uc80 the answer is False.
+    """
+    import shutil
+    import subprocess
+    import tempfile
+    if shutil.which('uc80') is None:
+        return False
+    with tempfile.TemporaryDirectory() as tmp:
+        c_file = os.path.join(tmp, 'probe.c')
+        mac_file = os.path.join(tmp, 'probe.mac')
+        with open(c_file, 'w') as f:
+            # main uses the literal: uc80 leaves out data that nothing uses
+            f.write('int puts(const char *s);\n'
+                    'int main(void) { puts("a\\\\b"); return 0; }\n')
+        try:
+            subprocess.run(['uc80', c_file, '-o', mac_file], capture_output=True,
+                           timeout=60, check=True)
+            with open(mac_file) as f:
+                return "'a\\b'" not in f.read()
+        except (OSError, subprocess.SubprocessError):
+            return False
+
+
 def build_with_uc80(c_file, com_file, runtime_dir, runtime_c, string_count, debug):
     """Build a CP/M .com with the preferred toolchain: uc80 -> um80 -> ul80.
 
@@ -604,6 +634,7 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False,
             'cpu_target': cpu,
             'dialect': toolchain,
             'array_base': analyzer.array_base,
+            'uc80_halves_backslashes': toolchain == 'uc80' and uc80_halves_backslashes(),
         }
         backend = Z88dkCBackend(analyzer.symbols, config)
         c_code = backend.generate(ast)

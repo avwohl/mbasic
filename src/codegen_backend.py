@@ -1461,6 +1461,8 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_erase(stmt)
         elif isinstance(stmt, WidthStatementNode):
             return self._generate_width(stmt)
+        elif isinstance(stmt, NullStatementNode):
+            return self._generate_null(stmt)
         elif isinstance(stmt, LprintStatementNode):
             return self._generate_lprint(stmt)
         elif isinstance(stmt, ClearStatementNode):
@@ -3430,7 +3432,8 @@ class Z88dkCBackend(CodeGenBackend):
         """Escape text for a C string literal.
 
         uc80 has two faults in string literals, and this works around both:
-        - It halves every run of backslashes, so one backslash needs four.
+        - uc80 0.7.0 and older halve every run of backslashes, so one backslash
+          needs four (config uc80_halves_backslashes, see mbasic_main).
         - It deletes the word "near" (a leftover keyword): "a near b" comes out
           as "a  b".  Writing the word as two adjacent literals avoids that.
         Control characters and characters above 126 are written as octal
@@ -3438,10 +3441,11 @@ class Z88dkCBackend(CodeGenBackend):
         character the way hexadecimal escapes can.
         """
         uc80 = self.dialect == 'uc80'
+        halves = uc80 and self.config.get('uc80_halves_backslashes', False)
         out = []
         for ch in s:
             if ch == '\\':
-                out.append('\\\\\\\\' if uc80 else '\\\\')
+                out.append('\\\\\\\\' if halves else '\\\\')
             elif ch == '"':
                 out.append('\\"')
             elif ch == '\n':
@@ -4050,6 +4054,10 @@ class Z88dkCBackend(CodeGenBackend):
             code.append(self.indent() + '/* Would list all files */')
         self._unsupported("FILES statement not implemented - requires CP/M BDOS calls")
         return code
+
+    def _generate_null(self, stmt: NullStatementNode) -> List[str]:
+        """Generate NULL statement - nothing prints the nulls in compiled code"""
+        return [self.indent() + f'/* NULL {self._generate_expression(stmt.count)} - no nulls are printed */']
 
     def _generate_width(self, stmt: WidthStatementNode) -> List[str]:
         """Generate WIDTH statement - set output width

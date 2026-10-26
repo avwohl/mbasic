@@ -1371,6 +1371,8 @@ class Interpreter:
             file_handle.write(text)
             file_handle.flush()
             file_info['col'] = advance_column(file_info.get('col', 0), text)
+            # the size the text has in a CP/M file, where a line ends in CR LF (for LOC)
+            file_info['cpm_bytes'] = file_info.get('cpm_bytes', 0) + len(text) + text.count('\n')
             return
         if text.endswith('\n'):
             self.io.output(text[:-1])
@@ -4038,10 +4040,7 @@ class Interpreter:
         if file_info['mode'] != 'R':
             raise RuntimeError(f"File #{file_num} not open for random access")
 
-        if file_num not in self.runtime.field_buffers:
-            raise RuntimeError(f"File #{file_num} has no FIELD defined")
-
-        buffer_info = self.runtime.field_buffers[file_num]
+        buffer_info = self._record_buffer(file_num, file_info)
         file_handle = file_info['handle']
 
         # Determine record number
@@ -4072,6 +4071,21 @@ class Interpreter:
         # that was given another string since is not bound again (measured)
         self._field_show(buffer_info)
 
+    def _record_buffer(self, file_num, file_info):
+        """The record buffer of a random file; GET and PUT work before any FIELD.
+
+        The binary has the buffer from OPEN on. A PUT before anything is in it
+        writes what was in that memory; here the buffer starts as spaces.
+        """
+        if file_num not in self.runtime.field_buffers:
+            self.runtime.field_buffers[file_num] = {
+                'buffer': bytearray(b' ' * file_info['record_length']),
+                'fields': {},
+                'shown': {},
+                'current_record': 0
+            }
+        return self.runtime.field_buffers[file_num]
+
     def execute_put(self, stmt):
         """Execute PUT statement - write record to random-access file
 
@@ -4088,10 +4102,7 @@ class Interpreter:
         if file_info['mode'] != 'R':
             raise RuntimeError(f"File #{file_num} not open for random access")
 
-        if file_num not in self.runtime.field_buffers:
-            raise RuntimeError(f"File #{file_num} has no FIELD defined")
-
-        buffer_info = self.runtime.field_buffers[file_num]
+        buffer_info = self._record_buffer(file_num, file_info)
         file_handle = file_info['handle']
 
         # Determine record number
@@ -4398,6 +4409,18 @@ class Interpreter:
         """
         # No-op - do nothing
         pass
+
+    def execute_null(self, stmt):
+        """Execute NULL statement - check the count, a byte (0 to 255)
+
+        On the binary NULL sets the number of nulls sent after each line, for
+        slow terminals. Nothing prints them here; only the errors remain: a
+        string is Type mismatch, -1 and 256 are Illegal function call.
+        """
+        count = self.evaluate_expression(stmt.count)
+        if isinstance(count, str):
+            raise MBasicError(13)
+        to_conint(count)
 
     def execute_width(self, stmt):
         """Execute WIDTH statement - set the screen line width

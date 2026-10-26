@@ -1200,6 +1200,9 @@ def serialize_statement(stmt):
             parts.append(';')
         return ''.join(parts)
 
+    elif stmt_type == 'NullStatementNode':
+        return f"NULL {serialize_expression(stmt.count)}"
+
     elif stmt_type == 'WidthStatementNode':
         if getattr(stmt, 'lprint', False):
             return f"WIDTH LPRINT {serialize_expression(stmt.width)}"

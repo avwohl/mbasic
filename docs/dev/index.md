@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2026-10-26
-**Total Documents:** 66
+**Total Documents:** 68
 
 ## What's Here
 
@@ -108,9 +108,11 @@ port I/O — but they are not required. Read
 - [Compiler Variable Types](COMPILER_VARIABLE_TYPES.md)
 - [Compiler Z88Dk Path Change](COMPILER_Z88DK_PATH_CHANGE.md)
 - [Edit Mode Typeahead](EDIT_MODE_TYPEAHEAD.md)
+- [Js Arrays](JS_ARRAYS.md)
 - [Js Browser Yield](JS_BROWSER_YIELD.md)
 - [Js Control Flow](JS_CONTROL_FLOW.md)
 - [Js Logical Operators](JS_LOGICAL_OPERATORS.md)
+- [Js Type Mismatch](JS_TYPE_MISMATCH.md)
 - [Kubernetes Deployment Guide](KUBERNETES_DEPLOYMENT_GUIDE.md)
 - [Kubernetes Deployment Plan](KUBERNETES_DEPLOYMENT_PLAN.md)
 - [Kubernetes Deployment Setup](KUBERNETES_DEPLOYMENT_SETUP.md)
