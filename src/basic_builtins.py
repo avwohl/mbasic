@@ -1042,28 +1042,16 @@ class BuiltinFunctions:
 
     def LOF(self, file_num):
         """
-        Return length of file in bytes.
+        Return the size of the file in sectors of 128 bytes.
 
-        Returns the total size of the file.
+        Measured on the binary: the size the file had when it was opened (a
+        new file is 0), rounded up. Writing does not change it.
         """
         file_num = to_conint(file_num)
         if file_num not in self.runtime.files:
             raise ValueError(f"File #{file_num} not open")
 
-        file_info = self.runtime.files[file_num]
-        file_handle = file_info['handle']
-
-        # Save current position
-        current_pos = file_handle.tell()
-
-        # Seek to end to get size
-        file_handle.seek(0, 2)
-        size = file_handle.tell()
-
-        # Restore position
-        file_handle.seek(current_pos)
-
-        return size
+        return self.runtime.files[file_num].get('lof', 0)
 
     def USR(self, x, *rest):
         """

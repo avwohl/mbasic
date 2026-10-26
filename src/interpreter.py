@@ -5,6 +5,7 @@ Executes BASIC programs from AST.
 """
 
 import copy
+import itertools
 import re
 import sys
 import signal
@@ -13,7 +14,7 @@ from typing import Literal, Optional, Callable, Any, Union
 from src.runtime import Runtime, ProgramString, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
 from src.js_type_check import builtin_arg_kinds
 from src.deftypes import name_with_suffix
-from src.ast_nodes import StringNode, FunctionCallNode, arity_type_checks, BUILTIN_ARG_RANGES, instr_shape_error, clause_tail_after, clause_slice
+from src.ast_nodes import StringNode, FunctionCallNode, arity_type_checks, BUILTIN_ARG_RANGES, instr_shape_error, clause_tail_after, clause_slice, parameter_suffix
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
 from src.pc import PC
@@ -343,8 +344,6 @@ class Interpreter:
         self._clause_stack = []         # [statements, index] of running clauses
         self._clause_jump = None        # (statements, index) a NEXT goes back to
         self._clause_for = {}           # loop variable -> (statements, FOR index)
-        self._for_next_node = {}        # loop variable -> (the one NEXT statement that FOR found (NXTSCN), table id, version)
-        self._found_next_node = None
 
         # I/O handler (defaults to console if not provided)
         if io_handler is None:
@@ -1070,8 +1069,8 @@ class Interpreter:
         wrong one and be rejected there.
 
         Returns:
-            (line_number, stmt_index, variable_index, nested) of the matching
-            NEXT, or None. variable_index is which name in a "NEXT J,I" it was
+            (line_number, stmt_index, variable_index, nested, node) of the
+            matching NEXT (node is its statement), or None. variable_index is which name in a "NEXT J,I" it was
             that brought the count to zero - the scan stops on that one, and it
             is the one the loop is entered through. `nested` is True when the
             NEXT is inside a THEN or ELSE clause, where it has no PC of its own
@@ -1088,8 +1087,7 @@ class Interpreter:
                     continue
                 names = max(1, len(stmt.variables or []))
                 if depth <= names:
-                    self._found_next_node = stmt
-                    return (None, tail_idx, depth - 1, nested)
+                    return (None, tail_idx, depth - 1, nested, stmt)
                 depth -= names
 
         line_numbers = sorted(set(pc.line_num
@@ -1116,8 +1114,7 @@ class Interpreter:
                     # part way along its own list.
                     names = max(1, len(stmt.variables or []))
                     if depth <= names:
-                        self._found_next_node = stmt
-                        return (line_num, stmt_idx, depth - 1, nested)
+                        return (line_num, stmt_idx, depth - 1, nested, stmt)
                     depth -= names
 
                 stmt_idx += 1
@@ -1690,14 +1687,13 @@ class Interpreter:
         key = (id(table), table.version)
         cached = getattr(stmt, '_mb_next', None)
         if cached is not None and cached[0] == key:
-            self._found_next_node = cached[2]
             return cached[1]
         target = self.find_matching_next(
             self.runtime.pc.line_num, self.runtime.pc.stmt_offset, tail)
         if target is None:
             raise RuntimeError("FOR without NEXT")
         try:
-            stmt._mb_next = (key, target, self._found_next_node)
+            stmt._mb_next = (key, target)
         except AttributeError:
             pass                            # a node with __slots__: recompute
         return target
@@ -1939,11 +1935,54 @@ class Interpreter:
         After FOR, the variable is set to start value and the loop is registered.
         NEXT will increment/decrement and check the end condition.
         """
-        # The binary sets the variable to the start value first, then reads
-        # the limit and the step; a string for either is Type mismatch and no
-        # loop is registered (a later NEXT is NEXT without FOR).
+        # Evaluate start, end, step
+        # Each value is checked as it is read: a string anywhere, or a number for a
+        # string variable, is Type mismatch before the next expression runs, and
+        # before a loop is registered (the NEXT after the trapped error is then
+        # NEXT without FOR).
         start = self.evaluate_expression(stmt.start_expr)
+        if isinstance(start, str) or stmt.variable.type_suffix == '$':
+            raise MBasicError(13)
+        # An integer loop variable takes its start, limit and step through
+        # FRCINT, in this order (measured): FOR I%=1 TO 2.5 runs to 3,
+        # STEP .5 is STEP 1, and a value over 32767 is Overflow at the FOR.
+        integer_loop = stmt.variable.type_suffix == '%'
+        if integer_loop:
+            start = to_frcint(start)
+        # The loop this FOR started earlier, and every loop opened inside it, are
+        # dropped as soon as the start value is in: an error in the limit or the
+        # step does not bring them back (measured).
         var_name = stmt.variable.name + (stmt.variable.type_suffix or "")
+        old_state = self.runtime.for_loop_states.get(var_name)
+        if old_state is not None and old_state['pc'].line == self.runtime.pc.line \
+                and old_state['pc'].statement == self.runtime.pc.statement:
+            self.runtime.drop_for_loops(var_name, newer=True, itself=True)
+        end = self.evaluate_expression(stmt.end_expr)
+        if isinstance(end, str):
+            raise MBasicError(13)
+        if integer_loop:
+            end = to_frcint(end)
+        step = self.evaluate_expression(stmt.step_expr) if stmt.step_expr else 1
+        if isinstance(step, str):
+            raise MBasicError(13)
+        if integer_loop:
+            step = to_frcint(step)
+
+        # FOR scans for its NEXT before it does anything to the variable or the
+        # loop stack (NXTSCN); without one the FOR is the error and the variable
+        # keeps its value.
+        in_clause = None
+        if self._clause_stack:
+            clause, position = self._clause_stack[-1]
+            if clause[position] is stmt:
+                in_clause = (getattr(clause, 'base', None) or clause,
+                             getattr(clause, 'offset', 0) + position)
+        target = self._matching_next(
+            stmt, in_clause[0][in_clause[1] + 1:] if in_clause else None)
+        next_line, next_stmt, var_index, nested, next_node = target
+        site = (self._next_uid(next_node), var_index)
+
+        # Set loop variable to start
         self.runtime.set_variable(
             stmt.variable.name,
             stmt.variable.type_suffix,
@@ -1953,28 +1992,22 @@ class Interpreter:
             original_case=getattr(stmt.variable, 'original_case', stmt.variable.name),
             settings_manager=self.settings_manager
         )
-        end = self.evaluate_expression(stmt.end_expr)
-        if isinstance(end, str):
-            raise TypeError("Type mismatch")
-        if (stmt.variable.type_suffix == '%' and isinstance(end, (int, float))
-                and not isinstance(end, bool)):
-            # An integer loop variable rounds the limit (measured: FOR F%=1 TO 2.6
-            # runs 1 2 3, and 40000 is Overflow)
-            end = to_frcint(end)
-        step = self.evaluate_expression(stmt.step_expr) if stmt.step_expr else 1
-        if isinstance(step, str):
-            raise TypeError("Type mismatch")
 
-        # Register loop - use PC for position
-        # Note: No nesting tracking needed - FOR loops are variable-indexed, not stack-based.
-        # Re-entering "FOR I=1 TO 10" just replaces the loop info in variable I.
+        # Register loop - use PC for position. The loops are kept in the order
+        # they were entered, as MBASIC keeps them on its stack; entering a loop
+        # again drops the older entry of the same variable.
         self.runtime.push_for_loop(
             var_name,
             end,
             step,
             self.runtime.pc.line,
-            self.runtime.pc.statement
+            self.runtime.pc.statement,
+            site
         )
+        # The site holds only while the program is the one FOR scanned: a MERGE
+        # makes new statements, and the NEXT check is then skipped for this loop
+        table = self.runtime.statement_table
+        self.runtime.for_loop_states[var_name]['table'] = (id(table), table.version)
 
         # MBASIC tests the loop before running it, so FOR I = 10 TO 1 runs the
         # body no times at all and leaves I at 10. It does that by never
@@ -1986,22 +2019,11 @@ class Interpreter:
         #   10 FOR I=10 TO 1 / 20 PRINT "BODY" / 30 NEXT J
         # report "NEXT without FOR in 30": the NEXT still runs, and still
         # checks the name it was given.
-        in_clause = None
-        if self._clause_stack:
-            clause, position = self._clause_stack[-1]
-            if clause[position] is stmt:
-                in_clause = (getattr(clause, 'base', None) or clause,
-                             getattr(clause, 'offset', 0) + position)
         if in_clause is not None:
             self._clause_for[var_name] = in_clause
         else:
             self._clause_for.pop(var_name, None)
-        target = self._matching_next(
-            stmt, in_clause[0][in_clause[1] + 1:] if in_clause else None)
-        table = self.runtime.statement_table
-        self._for_next_node[var_name] = (self._found_next_node, id(table), table.version)
         if _loop_is_done(start, end, step):
-            next_line, next_stmt, var_index, nested = target
             if next_line is None:
                 # The NEXT is in the same clause as the FOR: go on there. One
                 # inside a clause within it ends the clause instead.
@@ -2023,6 +2045,25 @@ class Interpreter:
             else:
                 self._for_entry_index = var_index
                 self.runtime.npc = PC.running_at(next_line, next_stmt)
+
+    _next_uid_counter = itertools.count(1)
+
+    def _next_uid(self, node):
+        """A number that tells one NEXT statement from the others.
+
+        FOR remembers the NEXT its scan ended at, and the loop is valid only
+        there.  The number is kept on the statement; a NEXT is looked up
+        by what it is and not by the line it runs in, because the tail of a
+        THEN clause runs after a RETURN, in the line of the RETURN.
+        """
+        uid = getattr(node, '_mb_uid', None)
+        if uid is None:
+            uid = next(Interpreter._next_uid_counter)
+            try:
+                node._mb_uid = uid
+            except AttributeError:
+                pass
+        return uid
 
     def execute_next(self, stmt):
         """Execute NEXT statement
@@ -2047,6 +2088,7 @@ class Interpreter:
         # entered at - see execute_for.
         entry_index = self._for_entry_index
         self._for_entry_index = None
+        uid = self._next_uid(stmt)
 
         # Determine which variables to process
         if stmt.variables:
@@ -2071,25 +2113,16 @@ class Interpreter:
         # Process each variable in order. Coming from a zero-trip FOR, the
         # names before the one the scan stopped on belong to loops that were
         # never entered, so they are not touched at all.
-        if entry_index and entry_index < len(var_list):
-            var_list = var_list[entry_index:]
+        first = entry_index if entry_index and entry_index < len(var_list) else 0
+        var_list = var_list[first:]
 
         for index, var_node in enumerate(var_list):
             var_name = var_node.name + (var_node.type_suffix or "")
-            # Only the NEXT that FOR found by its scan can close the loop. A NEXT
-            # anywhere else (the second NEXT of IF c THEN NEXT ELSE NEXT, a NEXT
-            # reached by a jump) is "NEXT without FOR", as on the binary, which
-            # compares the text pointer of the NEXT with the one in the FOR entry.
-            expected = self._for_next_node.get(var_name)
-            table = self.runtime.statement_table
-            if (expected is not None and expected[0] is not stmt
-                    and expected[1:] == (id(table), table.version)    # not after a MERGE
-                    and self.runtime.get_for_loop(var_name)):
-                raise RuntimeError("NEXT without FOR")
-            # Process this NEXT
+            # Process this NEXT; the loop must be the one whose scan ended here
             should_continue = self._execute_next_single(
                 var_name, var_node=var_node,
-                suppress_increment=(entry_index is not None and index == 0))
+                suppress_increment=(entry_index is not None and index == 0),
+                site=(uid, first + index))
             # If this loop continues (jumps back), don't process remaining variables
             if should_continue:
                 return
@@ -2119,12 +2152,10 @@ class Interpreter:
         Returns:
             Variable name with suffix (e.g. 'i!'), or None if no loop is running
         """
-        states = getattr(self.runtime, 'for_loop_states', None)
-        if not states:
-            return None
-        return next(reversed(states))
+        visible = self.runtime.visible_for_loops()
+        return visible[-1] if visible else None
 
-    def _execute_next_single(self, var_name, var_node=None, suppress_increment=False):
+    def _execute_next_single(self, var_name, var_node=None, suppress_increment=False, site=None):
         """Execute NEXT for a single variable.
 
         Args:
@@ -2140,8 +2171,18 @@ class Interpreter:
         """
         # Get loop info
         loop_info = self.runtime.get_for_loop(var_name)
-        if not loop_info:
+        if not loop_info or var_name not in self.runtime.visible_for_loops():
             raise RuntimeError(f"NEXT without FOR: {var_name}")
+        table = self.runtime.statement_table
+        if (site is not None and loop_info.get('site') not in (None, site)
+                and loop_info.get('table') in (None, (id(table), table.version))):
+            # A NEXT other than the one the FOR found: NEXT without FOR, and the
+            # entry on the stack is spoilt by then, with every loop below it
+            # (measured: the loops opened later stay).
+            self.runtime.drop_for_loops(var_name, newer=False, older=True, itself=True)
+            raise RuntimeError(f"NEXT without FOR: {var_name}")
+        # The loops opened inside this one and left by a jump are gone
+        self.runtime.drop_for_loops(var_name)
 
         for _ in range(self.runtime.unwind_loops_above_for(var_name)):
             self.limits.pop_while_loop()
@@ -2171,7 +2212,13 @@ class Interpreter:
         # ended the loop, so FOR I=1 TO 3: NEXT: PRINT I prints 4, not 3.
         # Storing it only on the continuing branch left the last value that
         # still fit, which is what a program reads after the loop.
-        self.runtime.set_variable(base_name, type_suffix, new_value, token=token, limits=self.limits)
+        try:
+            self.runtime.set_variable(base_name, type_suffix, new_value, token=token, limits=self.limits)
+        except Exception:
+            # An error (Overflow of an integer variable) spoils the entry as a
+            # NEXT of another place does; the next NEXT is NEXT without FOR
+            self.runtime.drop_for_loops(var_name, newer=False, older=True, itself=True)
+            raise
 
         # Check if loop should continue - see _loop_is_done for why this is a
         # sign comparison and not two inequalities.
@@ -3709,17 +3756,16 @@ class Interpreter:
 
         Note: CP/M files used ^Z (ASCII 26) as EOF marker. We respect this on input.
         """
-        # The mode comes first, as on the binary: a number is Type mismatch and
-        # a first letter that is not I, O, R (or A, a kept extension) is Bad
-        # file mode, whatever the other operands are. Only the first letter
-        # counts ("Output" is "O").
+        # Evaluate mode, file number, and filename
+        # The mode comes first (measured): a number is Type mismatch, and an
+        # empty or unknown mode is Bad file mode, before the file number
+        # is looked at. Only the first letter counts ("Input" opens for input).
+        mode = stmt.mode.upper()  # "I", "O", "A", "R"
         if stmt.mode_expr is not None:
-            mode = self.evaluate_expression(stmt.mode_expr)
-            if not isinstance(mode, str):
+            mode_value = self.evaluate_expression(stmt.mode_expr)
+            if not isinstance(mode_value, str):
                 raise MBasicError(13)
-            mode = mode[:1].upper()
-        else:
-            mode = stmt.mode.upper()  # "I", "O", "A", "R"
+            mode = mode_value[:1].upper()
         if mode not in ("I", "O", "A", "R"):
             raise MBasicError(54)
         file_num = to_conint(self.evaluate_expression(stmt.file_number))
@@ -3741,10 +3787,17 @@ class Interpreter:
         # so 129 and up is an Illegal function call, and 0 is accepted but
         # leaves no room for any field.
         record_length = DEFAULT_RECORD_LENGTH
-        if stmt.record_length is not None and mode not in ("I", "O"):
-            record_length = to_frcint(self.evaluate_expression(stmt.record_length))
-            if not 0 <= record_length <= DEFAULT_RECORD_LENGTH:
-                raise MBasicError(5)
+        syntax_error_after_open = False
+        if stmt.record_length is not None:
+            if mode in ("I", "O"):
+                # Measured: the length is not read at all. The file is opened
+                # (File not found comes first, and the file stays open) and
+                # then the statement ends with Syntax error.
+                syntax_error_after_open = True
+            else:
+                record_length = to_frcint(self.evaluate_expression(stmt.record_length))
+                if not 0 <= record_length <= DEFAULT_RECORD_LENGTH:
+                    raise MBasicError(5)
 
         self._check_file_name(filename, creates=mode in ("O", "R"))
 
@@ -3771,8 +3824,17 @@ class Interpreter:
             else:
                 raise MBasicError(54)
 
+            # LOF is the size the file had when it was opened, in sectors of
+            # 128 bytes (measured); writing does not change it.
+            sector_count = 0
+            if mode != "O":
+                file_handle.seek(0, 2)
+                sector_count = (file_handle.tell() + 127) // 128
+                file_handle.seek(0, 2 if mode == "A" else 0)
+
             # Store file handle and mode
             self.runtime.files[file_num] = {
+                'lof': sector_count,
                 'handle': file_handle,
                 'mode': mode,
                 'filename': filename,
@@ -3786,6 +3848,8 @@ class Interpreter:
 
         except (OSError, IOError, PermissionError) as e:
             raise RuntimeError(f"Cannot open {filename}: {str(e)}")
+        if syntax_error_after_open:
+            raise MBasicError(2)
 
     def execute_close(self, stmt):
         """Execute CLOSE statement - close file(s)
@@ -3804,6 +3868,7 @@ class Interpreter:
             for file_num in list(self.runtime.files.keys()):
                 self.runtime.files[file_num]['handle'].close()
                 del self.runtime.files[file_num]
+            self.runtime.field_buffers.clear()
         else:
             # Close specific file numbers
             for file_num_expr in stmt.file_numbers:
@@ -3813,6 +3878,8 @@ class Interpreter:
                 if file_num in self.runtime.files:
                     self.runtime.files[file_num]['handle'].close()
                     del self.runtime.files[file_num]
+                # The field variables keep the text they show, but are not in a record any more
+                self.runtime.field_buffers.pop(file_num, None)
                 # Silently ignore closing unopened files (like MBASIC)
 
     def execute_reset(self, stmt):
@@ -3828,6 +3895,7 @@ class Interpreter:
         for file_num in list(self.runtime.files.keys()):
             self.runtime.files[file_num]['handle'].close()
             del self.runtime.files[file_num]
+        self.runtime.field_buffers.clear()
 
         # Reset filesystem provider
         self.fs.reset()
@@ -3858,6 +3926,7 @@ class Interpreter:
             self.runtime.field_buffers[file_num] = {
                 'buffer': bytearray(),
                 'fields': {},  # var_name -> (offset, width)
+                'shown': {},   # var_name -> the text the variable was given from the record
                 'current_record': 0
             }
 
@@ -3880,12 +3949,78 @@ class Interpreter:
             if offset > file_info['record_length']:
                 raise MBasicError(50)
 
-        buffer_info['fields'].update(layout)
-
         # The buffer is the record: as long as the record length, whatever the
         # fields add up to, so GET and PUT keep the part no field covers.
+        # (The contents of a new record are memory garbage on the binary; spaces here.)
         if len(buffer_info['buffer']) != file_info['record_length']:
-            buffer_info['buffer'] = bytearray(file_info['record_length'])
+            buffer_info['buffer'] = bytearray(b' ' * file_info['record_length'])
+
+        # The variables are views of the record: each takes its part of it now, and
+        # shows what GET, LSET, RSET and MID$ put there, as long as it is given no
+        # other string (see _field_show). A variable is in one record only. A
+        # number variable is Type mismatch, after the variables before it.
+        for var_name, (offset, width) in layout.items():
+            for other in self.runtime.field_buffers.values():
+                other['fields'].pop(var_name, None)
+                other['shown'].pop(var_name, None)
+            if not var_name.endswith('$'):
+                raise MBasicError(13)
+            buffer_info['fields'][var_name] = (offset, width)
+            self._field_put_text(buffer_info, var_name)
+
+    def _field_value(self, var_name):
+        """The value of a field variable, read without marking an access."""
+        return self.runtime.get_variable_for_debugger(var_name[:-1], var_name[-1])
+
+    def _field_put_text(self, buffer_info, var_name):
+        """Give the variable its part of the record."""
+        offset, width = buffer_info['fields'][var_name]
+        text = buffer_info['buffer'][offset:offset + width].decode('latin-1')
+        self.runtime.set_variable(var_name[:-1], var_name[-1], text, debugger_set=True)
+        buffer_info['shown'][var_name] = text
+
+    def _field_show(self, buffer_info):
+        """The record changed: the variables that are still in it show their parts.
+
+        A variable that was given another string (A$ = "x") is out of the record
+        for good: its value is not the text it was shown last.
+        """
+        for var_name in list(buffer_info['fields']):
+            if self._field_value(var_name) != buffer_info['shown'].get(var_name):
+                del buffer_info['fields'][var_name]
+                buffer_info['shown'].pop(var_name, None)
+                continue
+            self._field_put_text(buffer_info, var_name)
+
+    def _field_record(self, var_name):
+        """The record buffer a variable is a view of, or None."""
+        for buffer_info in self.runtime.field_buffers.values():
+            if var_name in buffer_info['fields']:
+                if self._field_value(var_name) != buffer_info['shown'].get(var_name):
+                    del buffer_info['fields'][var_name]
+                    buffer_info['shown'].pop(var_name, None)
+                    continue
+                return buffer_info
+        return None
+
+    def _field_justify(self, stmt, right):
+        """LSET and RSET: a field variable changes its part of the record; any other
+        string variable keeps its length (measured: LSET A$="x" on "hello" gives "x    ")."""
+        var_name = stmt.variable.name + (stmt.variable.type_suffix or '')
+        value = str(self.evaluate_expression(stmt.expression))
+        buffer_info = self._field_record(var_name)
+        if buffer_info is not None:
+            offset, width = buffer_info['fields'][var_name]
+        else:
+            width = len(self.runtime.get_variable_for_debugger(
+                stmt.variable.name, stmt.variable.type_suffix))
+        text = value[:width]
+        text = text.rjust(width) if right else text.ljust(width)
+        if buffer_info is None:
+            self.runtime.set_variable_raw(var_name, text)
+            return
+        buffer_info['buffer'][offset:offset + width] = text.encode('latin-1', 'replace')
+        self._field_show(buffer_info)
 
     def execute_get(self, stmt):
         """Execute GET statement - read record from random-access file
@@ -3933,18 +4068,9 @@ class Interpreter:
         buffer_info['buffer'] = bytearray(data)
         buffer_info['current_record'] = record_num
 
-        # Update field variables from buffer
-        for var_name, (offset, width) in buffer_info['fields'].items():
-            value = buffer_info['buffer'][offset:offset+width].decode('latin-1')
-            # Strip variable name to get base name and suffix
-            if var_name.endswith('$'):
-                self.runtime.set_variable_raw(var_name, value)
-            else:
-                # For non-string fields (unusual but possible), convert to number
-                try:
-                    self.runtime.set_variable_raw(var_name, float(value.strip()))
-                except ValueError:
-                    self.runtime.set_variable_raw(var_name, 0.0)
+        # The field variables that are still in the record show it; a variable
+        # that was given another string since is not bound again (measured)
+        self._field_show(buffer_info)
 
     def execute_put(self, stmt):
         """Execute PUT statement - write record to random-access file
@@ -3994,84 +4120,19 @@ class Interpreter:
 
         Syntax: LSET var$ = expr$
 
-        Assigns value to a field variable, left-justified and padded with spaces.
-        Used with random access files.
+        A field variable changes its part of the record, left-justified and padded
+        with spaces.  Any other string variable keeps its length.
         """
-        var_name = stmt.variable.name + (stmt.variable.type_suffix or '')
-        value = str(self.evaluate_expression(stmt.expression))
-
-        # Find which file buffer this variable belongs to
-        found = False
-        for file_num, buffer_info in self.runtime.field_buffers.items():
-            if var_name in buffer_info['fields']:
-                offset, width = buffer_info['fields'][var_name]
-
-                # Left-justify and pad/truncate to width
-                if len(value) < width:
-                    value = value + ' ' * (width - len(value))
-                else:
-                    value = value[:width]
-
-                # Update buffer
-                buffer_info['buffer'][offset:offset+width] = value.encode('latin-1')
-
-                # Also update variable
-                self.runtime.set_variable_raw(var_name, value)
-                found = True
-                break
-
-        if not found:
-            # If not a field variable, fall back to normal assignment (no formatting applied).
-            # Compatibility note: In strict MBASIC 5.21, LSET/RSET are only for field
-            # variables (used with FIELD statement for random file access). This fallback
-            # is a deliberate extension that performs simple assignment without left-justification.
-            # The formatting only applies when used with FIELD variables.
-            # Note: This extension behavior allows LSET/RSET to work as simple assignment
-            # operators when not used with FIELD, which is intentional flexibility in this
-            # implementation, not a bug or incomplete feature.
-            self.runtime.set_variable_raw(var_name, value)
+        self._field_justify(stmt, right=False)
 
     def execute_rset(self, stmt):
         """Execute RSET statement - right-justify string in field variable
 
         Syntax: RSET var$ = expr$
 
-        Assigns value to a field variable, right-justified and padded with spaces.
-        Used with random access files.
+        The same as LSET, right-justified.
         """
-        var_name = stmt.variable.name + (stmt.variable.type_suffix or '')
-        value = str(self.evaluate_expression(stmt.expression))
-
-        # Find which file buffer this variable belongs to
-        found = False
-        for file_num, buffer_info in self.runtime.field_buffers.items():
-            if var_name in buffer_info['fields']:
-                offset, width = buffer_info['fields'][var_name]
-
-                # Right-justify: pad on left if too short, truncate from left if too long
-                if len(value) < width:
-                    # Pad on left with spaces (right-justify)
-                    value = ' ' * (width - len(value)) + value
-                else:
-                    # Truncate from left (keep rightmost characters)
-                    value = value[-width:]
-
-                # Update buffer
-                buffer_info['buffer'][offset:offset+width] = value.encode('latin-1')
-
-                # Also update variable
-                self.runtime.set_variable_raw(var_name, value)
-                found = True
-                break
-
-        if not found:
-            # If not a field variable, fall back to normal assignment (no formatting applied).
-            # Compatibility note: In strict MBASIC 5.21, LSET/RSET are only for field
-            # variables (used with FIELD statement for random file access). This fallback
-            # is a deliberate extension that performs simple assignment without right-justification.
-            # The formatting only applies when used with FIELD variables. This is documented
-            # behavior, not a bug.
-            self.runtime.set_variable_raw(var_name, value)
+        self._field_justify(stmt, right=True)
 
     def _mid_value_is_destination(self, stmt):
         """Whether the value of a MID$ statement is the very variable it changes."""
@@ -4171,6 +4232,13 @@ class Interpreter:
                 chars[start_idx + i] = chars[i]
             modified_value = ''.join(chars)
 
+        # A field variable is a view of the record: the change reaches the record
+        field_record = None
+        if isinstance(stmt.string_var, ast_nodes.VariableNode) and not stmt.string_var.subscripts \
+                and stmt.string_var.type_suffix == '$':
+            field_name = stmt.string_var.name + '$'
+            field_record = self._field_record(field_name)
+
         # Assign the modified string back to the variable
         # Handle both simple variables and array elements
         if isinstance(stmt.string_var, ast_nodes.VariableNode):
@@ -4194,6 +4262,11 @@ class Interpreter:
                     token=self._make_token_info(var_node),
                     limits=self.limits
                 )
+                if field_record is not None:
+                    offset, width = field_record['fields'][field_name]
+                    field_record['buffer'][offset:offset + width] = modified_value.encode('latin-1', 'replace')
+                    field_record['shown'][field_name] = modified_value
+                    self._field_show(field_record)
         else:
             # If it's a more complex expression, we can't modify it in-place
             raise RuntimeError("MID$ assignment requires a variable, not an expression")
@@ -4695,6 +4768,11 @@ class Interpreter:
             # FNA and FNA% are two names: the function is the one of that type
             raise RuntimeError(f"Undefined function: {expr.name}")
 
+        # A function is its name and its type: DEF FNA$ is not FNA (measured: Undefined
+        # user function). Both types are the ones the DEF types give at the DEF and at the call.
+        if expr.def_types is not None and (expr.type_suffix or '!') != (func_def.type_suffix or '!'):
+            raise MBasicError(18)
+
         # Evaluate arguments
         args = [self.evaluate_expression(arg) for arg in expr.arguments]
 
@@ -4714,9 +4792,18 @@ class Interpreter:
             param_name = param.name + (param.type_suffix or "")
             saved_vars[param_name] = self.runtime.get_variable_for_debugger(param.name, param.type_suffix)
             if i < len(args):
+                value = args[i]
+                # The parameter has the type the DEF types give when the call runs (a
+                # DEFINT behind the DEF FN rounds the argument); it is kept under the
+                # name the body reads.
+                call_suffix = parameter_suffix(expr, param)
+                keep = False
+                if (call_suffix or '!') != (param.type_suffix or '!'):
+                    value = coerce_to_type(value, call_suffix)
+                    keep = '$' not in (call_suffix, param.type_suffix)
                 # Set parameter to argument value - this is part of function call
                 # Use debugger_set=True to avoid tracking this internal variable operation
-                self.runtime.set_variable(param.name, param.type_suffix, args[i], token=call_token, limits=self.limits, debugger_set=True)
+                self.runtime.set_variable(param.name, param.type_suffix, value, token=call_token, limits=self.limits, debugger_set=True, keep_value=keep)
 
         # Evaluate function expression
         result = self.evaluate_expression(func_def.expression)
@@ -4738,6 +4825,12 @@ class Interpreter:
             base_name = param_name.rstrip('$%!#')
             type_suffix = param_name[-1] if param_name[-1] in '$%!#' else None
             self.runtime.set_variable(base_name, type_suffix, saved_value, debugger_set=True)
+
+        # The result becomes the type of the function (measured): FNA% rounds
+        # through FRCINT (Overflow over 32767), and a string body for a number
+        # function, or the reverse, is Type mismatch.
+        if func_def.type_suffix:
+            result = coerce_to_type(result, func_def.type_suffix)
 
         # A DEF FN that hands back a string it was given (a variable or a
         # parameter) returns a copy in string space on the binary. Only a body

@@ -99,6 +99,27 @@ function _dg(x) {
 function _round_half_away(n) {
     return n < 0 ? -Math.floor(-n + 0.5) : Math.floor(n + 0.5);
 }
+// FRCINT (CINT, an integer variable, \\, MOD, a subscript, a byte argument): adds 0.5 in the precision of
+// the number and takes the result to single precision (a tie goes to the larger magnitude, where
+// Math.fround takes the even neighbour), drops the fraction of the magnitude, and complements the
+// result of a negative sum. So -2.5 is -3, -0.5 is -1, 0.49999998# is 1 but -0.49999998# is 0, and
+// 32767.49999999# is Overflow (measured; the same code as to_frcint in src/number_format.py).
+const _f32 = new Float32Array(1), _u32 = new Uint32Array(_f32.buffer);
+function _single_ties_up(v) {
+    const g = Math.fround(v);
+    if (g === v || Math.abs(g) >= Math.abs(v)) return g;
+    _f32[0] = g; _u32[0] = _u32[0] + 1;
+    return Math.abs(v) - Math.abs(g) === Math.abs(_f32[0]) - Math.abs(v) ? _f32[0] : g;
+}
+function _frc_int(n) {
+    if (!(n < 65536 && n > -65536)) _error("Overflow");
+    const t = _single_ties_up(n + 0.5);
+    if (t === 0) return -1;  // the zero sum takes the complement path
+    const m = Math.abs(t);
+    if (m >= 32768) _error("Overflow");
+    const k = Math.trunc(m);
+    return t > 0 ? k : -k - 1;
+}
 '''
 
 JS_ARITH_RUNTIME = r'''
@@ -186,9 +207,7 @@ function _val(str) {
 }
 function _int16(n) {
     // The operand of \\ and MOD: rounded to an integer, and it must fit 16 bits.
-    n = _round_half_away(n);
-    if (!(n >= -32768 && n <= 32767)) _error("Overflow");
-    return n;
+    return _frc_int(n);
 }
 function _idiv(a, b) {
     a = _int16(a); b = _int16(b);
@@ -209,9 +228,7 @@ JS_LOGICAL_RUNTIME = r'''
 function _ci(n) {
     if (n >= -32768 && n <= 32767 && n === Math.floor(n)) return n;  // the usual case: no work
     if (typeof n !== "number" || n !== n) _error("Type mismatch");
-    // MBASIC takes a double to single precision before it rounds: 2.49999999# AND 3 is 3
-    if (Math.abs(n) < 65536) n = Math.fround(n);
-    return _toInt(n);
+    return _toInt(n);  // FRCINT: 2.49999999# AND 3 is 3
 }
 // FRCINT: a 16-bit integer, or Overflow. CONINT adds a second test: a byte, or Illegal function call.
 function _frcint(n) { return _ci(n); }
@@ -958,6 +975,13 @@ class JavaScriptBackend(CodeGenBackend):
         self.text_ids: Dict[int, int] = {}
         # Bare NEXT -> JS name of the variable of the FOR it closes
         self.next_var_map: Dict[int, str] = {}
+        # The scan of FOR for its NEXT (NXTSCN) counts FORs and names on NEXTs and never looks at a
+        # name. A place is a name on a NEXT: (id of the NEXT, position in its list) -> number.
+        # for_site: FOR -> the number of the place its scan ends at; site_fors: number -> JS names of those FORs
+        self.next_site: Dict[Any, int] = {}
+        self.for_site: Dict[int, int] = {}
+        self.site_fors: Dict[int, List[str]] = {}
+        self.for_id: Dict[int, int] = {}
         # WHILE/WEND matching, keyed by id(): while_to_wend: WHILE -> its WEND; wend_to_while: WEND -> its WHILE;
         # while_target: WHILE -> line or label of the WHILE step itself (where WEND jumps back to)
         self.while_to_wend: Dict[int, Any] = {}
@@ -1040,6 +1064,7 @@ class JavaScriptBackend(CodeGenBackend):
             self.erased_arrays.update(k.upper() for k, v in self.symbols.variables.items() if v.is_array)
         self._find_varying_rank(program)
         self._match_for_next(program)
+        self._scan_for_sites(program)
         self._match_while_wend(program)
         self._plan_lines(program)
 
@@ -1265,6 +1290,26 @@ class JavaScriptBackend(CodeGenBackend):
                         self._pair_for_next(for_stmt, stmt)
                         # The JS name of the FOR variable, not the BASIC name
                         self.next_var_map[id(stmt)] = js_name
+
+    def _scan_for_sites(self, program: ProgramNode):
+        """Find for every FOR the NEXT the binary's scan stops at, as a count of FORs and names.
+
+        A loop is only valid at that NEXT (NEXT without FOR anywhere else, see _generate_next).
+        """
+        open_fors = []
+        for line in program.lines:
+            for stmt in walk_statements(line.statements):
+                if isinstance(stmt, ForStatementNode):
+                    open_fors.append(stmt)
+                elif isinstance(stmt, NextStatementNode):
+                    for k in range(max(1, len(stmt.variables or []))):
+                        site = len(self.next_site) + 1
+                        self.next_site[(id(stmt), k)] = site
+                        if open_fors:
+                            for_stmt = open_fors.pop()
+                            self.for_site[id(for_stmt)] = site
+                            self.site_fors.setdefault(site, []).append(self._mangle_var_name(
+                                for_stmt.variable.name + (for_stmt.variable.type_suffix or '')))
 
     def _match_while_wend(self, program: ProgramNode):
         """Match WHILE statements with their WEND statements (by position in the text, like NEXT)"""
@@ -1630,6 +1675,15 @@ class JavaScriptBackend(CodeGenBackend):
                         JavaScriptBackend._called_functions(item, found, visited)
         return found
 
+    def _fn_js_name(self, key: str, suffix: Optional[str]) -> str:
+        """The JavaScript name of a DEF FN. The type is part of its identity (FNA and FNA$ differ),
+        and shows in the name only when the program has more than one function with this name."""
+        types = {d.type_suffix or '!' for d in self.def_fn_functions if self._fn_key(d.name) == key}
+        name = '_fn_' + key.replace('.', '_d_')  # FNA.B -> _fn_a_d_b
+        if len(types) < 2:
+            return name
+        return name + {'%': '_i', '$': '_s', '#': '_d'}.get(suffix or '!', '')
+
     @staticmethod
     def _fn_key(name: str) -> str:
         name = name.lower()
@@ -1779,10 +1833,8 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '// Type coercion for DEFINT/DEFSNG/DEFDBL variable assignment')
         code.append(self.indent() + 'function _toInt(n) {')
         self.indent_level += 1
-        code.append(self.indent() + '// BASIC INTEGER: round to nearest (halves away from zero); outside -32768..32767 is Overflow')
-        code.append(self.indent() + 'n = _round_half_away(n);')
-        code.append(self.indent() + 'if (n > 32767 || n < -32768) _error("Overflow");')
-        code.append(self.indent() + 'return n + 0;')
+        code.append(self.indent() + '// BASIC INTEGER: FRCINT; outside -32768..32767 is Overflow')
+        code.append(self.indent() + 'return _frc_int(n);')
         self.indent_level -= 1
         code.append(self.indent() + '}')
         code.append(self.indent() + 'function _cint(n) { return _toInt(n); }')
@@ -1845,7 +1897,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '}')
         code.append(self.indent() + 'function _len(str) { return String(str).length; }')
         code.append(self.indent() + 'function _chr(n) { return String.fromCharCode(_conint(n)); }')
-        code.append(self.indent() + 'function _asc(str) { return String(str).charCodeAt(0) || 0; }')
+        code.append(self.indent() + 'function _asc(str) { str = String(str); if (str === "") _error("Illegal function call"); return str.charCodeAt(0); }')
         code.append(self.indent() + 'function _str(n, d = 6) { const t = _fmt_num(n, d); return n >= 0 ? " " + t : t; }')
         code.append(self.indent() + 'function _instr(...a) {')
         self.indent_level += 1
@@ -1891,10 +1943,8 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '// then the value rounds like any integer and must fit -32768..32767')
         code.append(self.indent() + 'if (typeof n === "string") _error("Type mismatch");')
         code.append(self.indent() + 'if (n !== n || n >= 65536) _error("Overflow");')
-        code.append(self.indent() + 'if (n >= 32768) n -= 65536;')
-        code.append(self.indent() + 'n = _round_half_away(n);')
-        code.append(self.indent() + 'if (!(n >= -32768 && n <= 32767)) _error("Overflow");')
-        code.append(self.indent() + 'return n & 0xFFFF;')
+        code.append(self.indent() + 'if (n >= 32768) n = Math.fround(n) - 65536;  // FRQINT')
+        code.append(self.indent() + 'return _frc_int(n) & 0xFFFF;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
         code.append(self.indent() + 'function _hex(n) { return _radix_word(n).toString(16).toUpperCase(); }')
@@ -1977,17 +2027,15 @@ class JavaScriptBackend(CodeGenBackend):
         if self.uses_file_io:
             code.append(self.indent() + '// File I/O support')
             code.append(self.indent() + 'const _files = {};  // Map file number -> file object')
-            code.append(self.indent() + '// The file object of a file number. CONINT comes first (256 and -1 are Illegal function call).')
-            code.append(self.indent() + '// A number that is not open: Bad file number above 15; up to 15 Bad file mode, or Bad file number')
-            code.append(self.indent() + '// (unopened === true: FIELD, EOF, LOC, LOF), or Input past end ("input": INPUT$). kind is the mode needed.')
-            code.append(self.indent() + 'function _file_of(filenum, kind, unopened) {')
-            code.append(self.indent() + '    const n = _conint(filenum);')
-            code.append(self.indent() + '    const file = _files[n];')
-            code.append(self.indent() + '    if (!file) {')
-            code.append(self.indent() + '        if (n > 15 || unopened === true) _error("Bad file number");')
-            code.append(self.indent() + '        _error(unopened === "input" ? "Input past end" : "Bad file mode");')
-            code.append(self.indent() + '    }')
-            code.append(self.indent() + '    if (kind === "O" ? (file.mode !== "O" && file.mode !== "A") : (kind !== "" && file.mode !== kind)) _error("Bad file mode");')
+            code.append(self.indent() + '// A file number is a byte (CONINT: Overflow, then Illegal function call) up to 15 (Bad file number)')
+            code.append(self.indent() + 'function _fnum(n) { n = _conint(n); if (n > 15) _error("Bad file number"); return n; }')
+            code.append(self.indent() + '// The open file of a statement. With no open file under that number PRINT, INPUT, GET and PUT')
+            code.append(self.indent() + '// give Bad file mode, while EOF, LOC, LOF and FIELD give Bad file number (measured). A file of')
+            code.append(self.indent() + '// another kind than the statement uses is Bad file mode.')
+            code.append(self.indent() + 'function _fopenfile(n, notOpen, modes) {')
+            code.append(self.indent() + '    const file = _files[_fnum(n)];')
+            code.append(self.indent() + '    if (!file) _error(notOpen);')
+            code.append(self.indent() + '    if (modes && modes.indexOf(file.mode) < 0) _error("Bad file mode");')
             code.append(self.indent() + '    return file;')
             code.append(self.indent() + '}')
             code.append('')
@@ -2025,8 +2073,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '} else if (mode === "R") {')
             self.indent_level += 1
             code.append(self.indent() + '// Random access mode')
-            code.append(self.indent() + 'if (reclen !== undefined && (reclen < 0 || reclen > 128)) _error("Illegal function call");')
-            code.append(self.indent() + 'const recordLength = reclen === undefined ? 128 : reclen;')
+            code.append(self.indent() + 'const recordLength = reclen === undefined ? 128 : reclen;  // checked by _fopen')
             code.append(self.indent() + 'let content = "";')
             code.append(self.indent() + 'try { content = fs.readFileSync(filename, "binary"); } catch(e) {}')
             code.append(self.indent() + '_files[filenum] = {')
@@ -2043,7 +2090,7 @@ class JavaScriptBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + '} else {')
             self.indent_level += 1
-            code.append(self.indent() + '_error("Unsupported file mode: " + mode);')
+            code.append(self.indent() + '_error("Bad file mode");')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             self.indent_level -= 1
@@ -2078,7 +2125,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'const key = "mbasic_file_" + filename;')
             code.append(self.indent() + 'if (mode === "I") {')
             self.indent_level += 1
-            code.append(self.indent() + 'const content = localStorage.getItem(key) || "";')
+            code.append(self.indent() + 'const content = localStorage.getItem(key);')
+            code.append(self.indent() + 'if (content === null) _error("File not found");')
             code.append(self.indent() + '_files[filenum] = { mode: "I", content, pos: 0, filename };')
             self.indent_level -= 1
             code.append(self.indent() + '} else if (mode === "O") {')
@@ -2093,8 +2141,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '} else if (mode === "R") {')
             self.indent_level += 1
             code.append(self.indent() + '// Random access mode')
-            code.append(self.indent() + 'if (reclen !== undefined && (reclen < 0 || reclen > 128)) _error("Illegal function call");')
-            code.append(self.indent() + 'const recordLength = reclen === undefined ? 128 : reclen;')
+            code.append(self.indent() + 'const recordLength = reclen === undefined ? 128 : reclen;  // checked by _fopen')
             code.append(self.indent() + 'const content = localStorage.getItem(key) || "";')
             code.append(self.indent() + '_files[filenum] = {')
             self.indent_level += 1
@@ -2110,7 +2157,7 @@ class JavaScriptBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + '} else {')
             self.indent_level += 1
-            code.append(self.indent() + '_error("Unsupported file mode: " + mode);')
+            code.append(self.indent() + '_error("Bad file mode");')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             self.indent_level -= 1
@@ -2135,25 +2182,29 @@ class JavaScriptBackend(CodeGenBackend):
             code.append('')
 
             # Helper functions
-            code.append(self.indent() + '// OPEN checks its operands in this order: the mode (a number is Type mismatch, a first letter')
-            code.append(self.indent() + '// that is not I, O, R or A is Bad file mode), the file number, the name. The calls are the arguments of _fopen.')
-            code.append(self.indent() + 'function _open_mode(m) {')
-            code.append(self.indent() + '    m = String(m).charAt(0).toUpperCase();')
-            code.append(self.indent() + '    if (m === "" || "IORA".indexOf(m) < 0) _error("Bad file mode");')
-            code.append(self.indent() + '    return m;')
-            code.append(self.indent() + '}')
-            code.append(self.indent() + 'function _open_num(n) {')
-            code.append(self.indent() + '    n = _conint(n);')
-            code.append(self.indent() + '    if (n < 1 || n > 15) _error("Bad file number");')
-            code.append(self.indent() + '    return n;')
-            code.append(self.indent() + '}')
-            code.append(self.indent() + '// reclen is a function: the record length is read for a random file only. For another mode')
-            code.append(self.indent() + '// the file is opened first and the extra operand is then a Syntax error, as on the binary.')
-            code.append(self.indent() + 'function _fopen(mode, filenum, filename, reclen) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'if (filename === "") _error("Bad file name");')
-            code.append(self.indent() + 'if (_files[filenum]) _error("File already open");')
-            code.append(self.indent() + 'const length = (reclen && mode === "R") ? _frcint(reclen()) : undefined;')
+            code.append(self.indent() + '// The arguments are functions, so that they are read in the order of MBASIC (measured): the mode')
+            code.append(self.indent() + '// (a number is Type mismatch, an empty or unknown mode is Bad file mode), the number, the length,')
+            code.append(self.indent() + '// then the name (a number is Type mismatch, an empty name is Bad file name). I and O take no length:')
+            code.append(self.indent() + '// the length is not read, and the file is opened before the statement ends with Syntax error.')
+            code.append(self.indent() + 'function _fopen(mode, fnum, fname, reclen) {')
+            code.append(self.indent() + '    let m = typeof mode === "function" ? mode() : mode;')
+            code.append(self.indent() + '    if (typeof m !== "string") _error("Type mismatch");')
+            code.append(self.indent() + '    m = m.slice(0, 1).toUpperCase();')
+            code.append(self.indent() + '    if (m === "" || "IOAR".indexOf(m) < 0) _error("Bad file mode");')
+            code.append(self.indent() + '    mode = m;')
+            code.append(self.indent() + '    const filenum = _fnum(fnum());')
+            code.append(self.indent() + '    if (filenum < 1) _error("Bad file number");')
+            code.append(self.indent() + '    if (_files[filenum]) _error("File already open");')
+            code.append(self.indent() + '    const skipLen = reclen !== undefined && (mode === "I" || mode === "O");')
+            code.append(self.indent() + '    if (reclen !== undefined) {')
+            code.append(self.indent() + '        if (skipLen) reclen = undefined;')
+            code.append(self.indent() + '        else {')
+            code.append(self.indent() + '            reclen = _frcint(reclen());')
+            code.append(self.indent() + '            if (reclen < 0 || reclen > 128) _error("Illegal function call");')
+            code.append(self.indent() + '        }')
+            code.append(self.indent() + '    }')
+            code.append(self.indent() + '    const filename = fname();')
+            code.append(self.indent() + '    if (filename === "") _error("Bad file name");')
             code.append(self.indent() + 'if (typeof process !== "undefined") {')
             self.indent_level += 1
             code.append(self.indent() + '_fileOps.nodejs.open(filenum, filename, mode, length);')
@@ -2163,7 +2214,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '_fileOps.browser.open(filenum, filename, mode, length);')
             self.indent_level -= 1
             code.append(self.indent() + '}')
-            code.append(self.indent() + 'if (reclen && mode !== "R") _error("Syntax error");')
+            code.append(self.indent() + '_files[filenum].lof0 = Math.ceil(_files[filenum].content.length / 128);')
+            code.append(self.indent() + 'if (skipLen) _error("Syntax error");')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append('')
@@ -2175,14 +2227,13 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '// CLOSE with no arguments - close all files')
             code.append(self.indent() + 'for (const fn in _files) {')
             self.indent_level += 1
-            code.append(self.indent() + '_fclose(parseInt(fn));')
+            code.append(self.indent() + '_fclose(parseInt(fn, 10));')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             self.indent_level -= 1
             code.append(self.indent() + '} else {')
             self.indent_level += 1
-            code.append(self.indent() + 'filenum = _conint(filenum);')
-            code.append(self.indent() + 'if (filenum > 15) _error("Bad file number");')
+            code.append(self.indent() + 'filenum = _fnum(filenum);  // CLOSE 0 does nothing; a number with no file is not an error')
             code.append(self.indent() + 'if (typeof process !== "undefined") {')
             self.indent_level += 1
             code.append(self.indent() + '_fileOps.nodejs.close(filenum);')
@@ -2200,7 +2251,7 @@ class JavaScriptBackend(CodeGenBackend):
 
             code.append(self.indent() + 'function _fprint(filenum, str, newline = true) {')
             self.indent_level += 1
-            code.append(self.indent() + 'const file = _file_of(filenum, "O");')
+            code.append(self.indent() + 'const file = _fopenfile(filenum, "Bad file mode", ["O", "A"]);')
             code.append(self.indent() + 'file.content += String(str);')
             code.append(self.indent() + 'if (newline) file.content += "\\n";')
             self.indent_level -= 1
@@ -2209,7 +2260,8 @@ class JavaScriptBackend(CodeGenBackend):
 
             code.append(self.indent() + 'function _finput(filenum) {')
             self.indent_level += 1
-            code.append(self.indent() + 'const file = _file_of(filenum, "I");')
+            code.append(self.indent() + 'const file = _fopenfile(filenum, "Bad file mode", ["I", "R"]);')
+            code.append(self.indent() + 'if (file.mode === "R") _error("FIELD overflow");  // INPUT from a random file (measured)')
             for line in JS_FINPUT_BODY.strip('\n').split('\n'):
                 code.append(self.indent() + line)
             self.indent_level -= 1
@@ -2218,7 +2270,8 @@ class JavaScriptBackend(CodeGenBackend):
 
             code.append(self.indent() + 'function _fline_input(filenum) {')
             self.indent_level += 1
-            code.append(self.indent() + 'const file = _file_of(filenum, "I");')
+            code.append(self.indent() + 'const file = _fopenfile(filenum, "Bad file mode", ["I", "R"]);')
+            code.append(self.indent() + 'if (file.mode === "R") _error("FIELD overflow");')
             code.append(self.indent() + '// Read one line (CR LF ends it too)')
             code.append(self.indent() + 'if (file.pos >= file.content.length) _error("Input past end");')
             code.append(self.indent() + 'let line = "";')
@@ -2238,7 +2291,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'function _eof(filenum) {')
             self.indent_level += 1
             code.append(self.indent() + '// EOF() - Test for end of file')
-            code.append(self.indent() + 'const file = _file_of(filenum, "I", true);')
+            code.append(self.indent() + 'const file = _fopenfile(filenum, "Bad file number", ["I", "R"]);')
             code.append(self.indent() + 'return file.pos >= file.content.length ? -1 : 0;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2246,9 +2299,10 @@ class JavaScriptBackend(CodeGenBackend):
 
             code.append(self.indent() + 'function _lof(filenum) {')
             self.indent_level += 1
-            code.append(self.indent() + '// LOF() - Length of file in bytes')
-            code.append(self.indent() + 'const file = _file_of(filenum, "", true);')
-            code.append(self.indent() + 'return file.content.length;')
+            code.append(self.indent() + '// LOF() - the size of the file when it was opened, in sectors of 128 bytes (measured:')
+            code.append(self.indent() + '// a new file is 0, and writing does not change the number until the file is opened again)')
+            code.append(self.indent() + 'const file = _fopenfile(filenum, "Bad file number");')
+            code.append(self.indent() + 'return file.lof0;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append('')
@@ -2256,7 +2310,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'function _loc(filenum) {')
             self.indent_level += 1
             code.append(self.indent() + '// LOC() - Current position in file')
-            code.append(self.indent() + 'const file = _file_of(filenum, "", true);')
+            code.append(self.indent() + 'const file = _fopenfile(filenum, "Bad file number");')
+            code.append(self.indent() + 'if (file.mode === "R") return file.currentRecord - 1;  // the record of the last GET or PUT')
             code.append(self.indent() + 'return file.pos || 0;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2401,18 +2456,23 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'function _ffield(filenum, fields) {')
             self.indent_level += 1
             code.append(self.indent() + '// FIELD - Define buffer layout for random file')
-            code.append(self.indent() + 'const file = _file_of(filenum, "R", true);')
-            code.append(self.indent() + '// The widths must fit in the record length of OPEN; nothing changes when they do not')
+            code.append(self.indent() + 'const file = _fopenfile(filenum, "Bad file number", ["R"]);')
+            code.append(self.indent() + '// Each width is a byte (CONINT), and the widths must fit in the record length of OPEN;')
+            code.append(self.indent() + '// nothing changes when they do not.')
             code.append(self.indent() + 'let total = 0;')
-            code.append(self.indent() + 'for (const [width] of fields) {')
-            code.append(self.indent() + '    if (width < 0) _error("Illegal function call");')
+            code.append(self.indent() + 'fields = fields.map(([width, varname, set, get]) => {')
+            code.append(self.indent() + '    width = _conint(width);')
             code.append(self.indent() + '    total += width;')
             code.append(self.indent() + '    if (total > file.recordLength) _error("FIELD overflow");')
-            code.append(self.indent() + '}')
+            code.append(self.indent() + '    return [width, varname, set, get];')
+            code.append(self.indent() + '});')
             code.append(self.indent() + 'let pos = 0;')
-            code.append(self.indent() + 'for (const [width, varname] of fields) {')
+            code.append(self.indent() + 'for (const [width, varname, set, get] of fields) {')
             self.indent_level += 1
-            code.append(self.indent() + 'file.fields[varname] = { start: pos, width: width };')
+            code.append(self.indent() + 'for (const n in _files) if (_files[n].fields) delete _files[n].fields[varname];  // a variable is in one record')
+            code.append(self.indent() + 'const value = file.buffer.substr(pos, width);')
+            code.append(self.indent() + 'set(value);  // the variable shows its part of the record')
+            code.append(self.indent() + 'file.fields[varname] = { start: pos, width: width, set: set, get: get, last: value };')
             code.append(self.indent() + 'pos += width;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2420,56 +2480,67 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '}')
             code.append('')
 
-            code.append(self.indent() + 'function _flset(varname, value) {')
-            self.indent_level += 1
-            code.append(self.indent() + '// LSET - Left-justify string in field variable')
-            code.append(self.indent() + '// Find which file has this field variable')
-            code.append(self.indent() + 'for (const filenum in _files) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'const file = _files[filenum];')
-            code.append(self.indent() + 'if (file.mode === "R" && file.fields[varname]) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'const field = file.fields[varname];')
-            code.append(self.indent() + 'const str = String(value).substring(0, field.width).padEnd(field.width, " ");')
-            code.append(self.indent() + 'file.buffer = file.buffer.substring(0, field.start) + str + file.buffer.substring(field.start + field.width);')
-            code.append(self.indent() + 'return;')
-            self.indent_level -= 1
+            code.append(self.indent() + '// The field variables are views of the record. A variable that was given another string (A$ = "x")')
+            code.append(self.indent() + '// is not in the record any more, for good: it differs from the string it was shown last.')
+            code.append(self.indent() + 'function _frefresh(file) {')
+            code.append(self.indent() + '    for (const name in file.fields) {')
+            code.append(self.indent() + '        const f = file.fields[name];')
+            code.append(self.indent() + '        if (f.get() !== f.last) { delete file.fields[name]; continue; }')
+            code.append(self.indent() + '        f.last = file.buffer.substr(f.start, f.width);')
+            code.append(self.indent() + '        f.set(f.last);')
+            code.append(self.indent() + '    }')
             code.append(self.indent() + '}')
-            self.indent_level -= 1
+            code.append(self.indent() + '// MID$(F$, ...) = X on a field variable changes the record (the string keeps its length)')
+            code.append(self.indent() + 'function _fattached(varname, current) {')
+            code.append(self.indent() + '    for (const n in _files) {')
+            code.append(self.indent() + '        const file = _files[n], f = file.fields && file.fields[varname];')
+            code.append(self.indent() + '        if (f && f.get() === f.last) return file;')
+            code.append(self.indent() + '    }')
+            code.append(self.indent() + '    return null;')
             code.append(self.indent() + '}')
-            code.append(self.indent() + '_error("Field variable not found: " + varname);')
-            self.indent_level -= 1
+            code.append(self.indent() + 'function _fpush(varname, current, file) {')
+            code.append(self.indent() + '    if (!file) return;')
+            code.append(self.indent() + '    const f = file.fields[varname];')
+            code.append(self.indent() + '    file.buffer = file.buffer.substring(0, f.start) + current + file.buffer.substring(f.start + f.width);')
+            code.append(self.indent() + '    f.last = current;')
+            code.append(self.indent() + '    _frefresh(file);')
             code.append(self.indent() + '}')
             code.append('')
-
-            code.append(self.indent() + 'function _frset(varname, value) {')
-            self.indent_level += 1
-            code.append(self.indent() + '// RSET - Right-justify string in field variable')
-            code.append(self.indent() + 'for (const filenum in _files) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'const file = _files[filenum];')
-            code.append(self.indent() + 'if (file.mode === "R" && file.fields[varname]) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'const field = file.fields[varname];')
-            code.append(self.indent() + 'const str = String(value).substring(0, field.width).padStart(field.width, " ");')
-            code.append(self.indent() + 'file.buffer = file.buffer.substring(0, field.start) + str + file.buffer.substring(field.start + field.width);')
-            code.append(self.indent() + 'return;')
-            self.indent_level -= 1
+            code.append(self.indent() + '// LSET and RSET: a field variable changes its part of the record (and the variable); any other')
+            code.append(self.indent() + '// string variable keeps its length (measured: LSET A$="x" on "hello" gives "x    ")')
+            code.append(self.indent() + 'function _fjustify(varname, value, get, set, right) {')
+            code.append(self.indent() + '    for (const filenum in _files) {')
+            code.append(self.indent() + '        const file = _files[filenum];')
+            code.append(self.indent() + '        if (file.mode === "R" && file.fields[varname]) {')
+            code.append(self.indent() + '            const field = file.fields[varname];')
+            code.append(self.indent() + '            if (get() !== field.last) { delete file.fields[varname]; continue; }  // no longer in the record')
+            code.append(self.indent() + '            const text = String(value).substring(0, field.width);')
+            code.append(self.indent() + '            const str = right ? text.padStart(field.width, " ") : text.padEnd(field.width, " ");')
+            code.append(self.indent() + '            file.buffer = file.buffer.substring(0, field.start) + str + file.buffer.substring(field.start + field.width);')
+            code.append(self.indent() + '            _frefresh(file);')
+            code.append(self.indent() + '            return;')
+            code.append(self.indent() + '        }')
+            code.append(self.indent() + '    }')
+            code.append(self.indent() + '    const width = get().length;')
+            code.append(self.indent() + '    const text = String(value).substring(0, width);')
+            code.append(self.indent() + '    set(right ? text.padStart(width, " ") : text.padEnd(width, " "));')
             code.append(self.indent() + '}')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
-            code.append(self.indent() + '_error("Field variable not found: " + varname);')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
+            code.append(self.indent() + 'function _flset(varname, value, get, set) { _fjustify(varname, value, get, set, false); }')
+            code.append(self.indent() + 'function _frset(varname, value, get, set) { _fjustify(varname, value, get, set, true); }')
             code.append('')
 
             code.append(self.indent() + 'function _fget(filenum, recnum) {')
             self.indent_level += 1
             code.append(self.indent() + '// GET - Read record from random file into buffer')
-            code.append(self.indent() + 'const file = _file_of(filenum, "R");')
-            code.append(self.indent() + 'const recordNum = recnum !== undefined ? recnum : file.currentRecord;')
+            code.append(self.indent() + 'const file = _fopenfile(filenum, "Bad file mode", ["R"]);')
+            code.append(self.indent() + '// FRCINT: above 32767 is Overflow; below 0 is Illegal function call; 0 is Bad record number')
+            code.append(self.indent() + 'let recordNum = file.currentRecord;')
+            code.append(self.indent() + 'if (recnum !== undefined) {')
+            code.append(self.indent() + '    recordNum = _frcint(recnum);')
+            code.append(self.indent() + '    if (recordNum < 0) _error("Illegal function call");')
+            code.append(self.indent() + '    if (recordNum === 0) _error("Bad record number");')
+            code.append(self.indent() + '}')
             code.append(self.indent() + 'const pos = (recordNum - 1) * file.recordLength;')
-            code.append(self.indent() + 'if (pos < 0) _error("Invalid record number");')
             code.append(self.indent() + '// Read record from file content')
             code.append(self.indent() + 'if (pos >= file.content.length) {')
             self.indent_level += 1
@@ -2482,14 +2553,7 @@ class JavaScriptBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append(self.indent() + '// Update field variables from buffer')
-            code.append(self.indent() + 'for (const varname in file.fields) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'const field = file.fields[varname];')
-            code.append(self.indent() + 'const value = file.buffer.substring(field.start, field.start + field.width);')
-            code.append(self.indent() + 'if (typeof window !== "undefined") window[varname] = value;')
-            code.append(self.indent() + 'else global[varname] = value;')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
+            code.append(self.indent() + '_frefresh(file);')
             code.append(self.indent() + 'file.currentRecord = recordNum + 1;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2498,10 +2562,15 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'function _fput(filenum, recnum) {')
             self.indent_level += 1
             code.append(self.indent() + '// PUT - Write buffer to record in random file')
-            code.append(self.indent() + 'const file = _file_of(filenum, "R");')
-            code.append(self.indent() + 'const recordNum = recnum !== undefined ? recnum : file.currentRecord;')
+            code.append(self.indent() + 'const file = _fopenfile(filenum, "Bad file mode", ["R"]);')
+            code.append(self.indent() + '// FRCINT: above 32767 is Overflow; below 0 is Illegal function call; 0 is Bad record number')
+            code.append(self.indent() + 'let recordNum = file.currentRecord;')
+            code.append(self.indent() + 'if (recnum !== undefined) {')
+            code.append(self.indent() + '    recordNum = _frcint(recnum);')
+            code.append(self.indent() + '    if (recordNum < 0) _error("Illegal function call");')
+            code.append(self.indent() + '    if (recordNum === 0) _error("Bad record number");')
+            code.append(self.indent() + '}')
             code.append(self.indent() + 'const pos = (recordNum - 1) * file.recordLength;')
-            code.append(self.indent() + 'if (pos < 0) _error("Invalid record number");')
             code.append(self.indent() + '// Extend file content if necessary')
             code.append(self.indent() + 'if (pos + file.recordLength > file.content.length) {')
             self.indent_level += 1
@@ -2534,7 +2603,37 @@ class JavaScriptBackend(CodeGenBackend):
 
         # FOR/NEXT loop state (variable-indexed approach)
         code.append(self.indent() + '// FOR/NEXT loop state')
-        code.append(self.indent() + 'const _for_loops = {};  // Map var name -> {end, step, line}')
+        code.append(self.indent() + 'const _for_loops = {};  // Map var name -> {end, step, line, site, forid, depth}')
+        code.append(self.indent() + 'const _for_stack = [];  // The names of the loops in the order they were entered')
+        depth_expr = '_gosub_stack.length' if self.uses_gosub else '0'
+        code.append(self.indent() + f'function _for_depth() {{ return {depth_expr}; }}')
+        if self.uses_gosub:
+            code.append(self.indent() + '// A loop opened in a subroutine that has returned is gone (RETURN drops it)')
+            code.append(self.indent() + 'function _for_purge() {')
+            code.append(self.indent() + '    const d = _for_depth();')
+            code.append(self.indent() + '    while (_for_stack.length && _for_loops[_for_stack[_for_stack.length - 1]].depth > d) delete _for_loops[_for_stack.pop()];')
+            code.append(self.indent() + '}')
+        else:
+            code.append(self.indent() + 'function _for_purge() {}')
+        code.append(self.indent() + '// NEXT sees the loops of the subroutine it runs in, and not the ones of the callers')
+        code.append(self.indent() + 'function _for_find(name) { _for_purge(); const l = _for_loops[name]; return l && l.depth === _for_depth() ? l : undefined; }')
+        code.append(self.indent() + 'function _for_top() { _for_purge(); const n = _for_stack[_for_stack.length - 1]; return n !== undefined && _for_loops[n].depth === _for_depth() ? n : undefined; }')
+        code.append(self.indent() + '// Without older: drop the loops entered after name. With older: drop name and the loops below it.')
+        code.append(self.indent() + 'function _for_drop(name, older) {')
+        code.append(self.indent() + '    const i = _for_stack.lastIndexOf(name);')
+        code.append(self.indent() + '    if (i < 0) return;')
+        code.append(self.indent() + '    for (const n of (older ? _for_stack.splice(0, i + 1) : _for_stack.splice(i + 1))) delete _for_loops[n];')
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _for_end(name) { _for_drop(name, false); _for_stack.pop(); delete _for_loops[name]; }')
+        code.append(self.indent() + 'function _for_push(name, loop) {')
+        code.append(self.indent() + '    const i = _for_stack.indexOf(name);')
+        code.append(self.indent() + '    if (i >= 0) _for_stack.splice(i, 1);')
+        code.append(self.indent() + '    loop.depth = _for_depth();')
+        code.append(self.indent() + '    _for_loops[name] = loop;')
+        code.append(self.indent() + '    _for_stack.push(name);')
+        code.append(self.indent() + '}')
+        code.append(self.indent() + '// The start value is in: the loop this FOR started before, and the loops inside it, are dropped')
+        code.append(self.indent() + 'function _for_elim(name, forid) { const l = _for_loops[name]; if (l && l.forid === forid) _for_end(name); }')
         code.append(self.indent() + '// MBASIC ends a loop when sign(var - end) equals sign(step): with STEP 0 only when var equals end')
         code.append(self.indent() + 'function _for_done(v, end, step) { return Math.sign(v - end) === Math.sign(step); }')
         # Case labels inside a line (see _plan_lines) and the line they belong to, for the line of an error
@@ -2720,9 +2819,8 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'function _lpos(n) { return 1; }  // LPOS: no printer, column 1')
         code.append(self.indent() + 'function _usr(n) {')
         self.indent_level += 1
-        code.append(self.indent() + '// USR - Call machine code routine (stub: returns argument)')
-        code.append(self.indent() + 'console.warn("USR not supported in JavaScript - returning argument");')
-        code.append(self.indent() + 'return n;')
+        code.append(self.indent() + '// USR - there is no machine code to run: Illegal function call, whatever the argument (measured)')
+        code.append(self.indent() + '_error("Illegal function call");')
         self.indent_level -= 1
         code.append(self.indent() + '}')
         code.append('')
@@ -2751,9 +2849,15 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'async function _input_chars(n, filenum) {')
             code.append(self.indent() + '    n = _conint(n);')
             code.append(self.indent() + '    if (n < 1) _error("Illegal function call");')
-            if self.uses_file_io:   # INPUT$(n, #f) needs the file helpers (_file_of)
+            if self.uses_file_io:   # INPUT$(n, #f) needs the file table
                 code.append(self.indent() + '    if (filenum !== undefined) {')
-                code.append(self.indent() + '        const file = _file_of(filenum, "I", "input");')
+                code.append(self.indent() + '        // Measured: a number with no open file is Input past end (1 to 15), an output file is Bad file mode')
+                code.append(self.indent() + '        filenum = _conint(filenum);')
+                code.append(self.indent() + '        if (filenum > 15) _error("Bad file number");')
+                code.append(self.indent() + '        const file = _files[filenum];')
+                code.append(self.indent() + '        if (!file) _error("Input past end");')
+                code.append(self.indent() + '        if (file.mode !== "I" && file.mode !== "R") _error("Bad file mode");')
+                code.append(self.indent() + '        if (file.mode === "R") return file.buffer.substr(0, n).padEnd(n, " ");  // the record buffer (measured)')
                 code.append(self.indent() + '        if (file.pos + n > file.content.length) {')
                 code.append(self.indent() + '            file.pos = file.content.length;')
                 code.append(self.indent() + '            _error("Input past end");')
@@ -2907,7 +3011,8 @@ class JavaScriptBackend(CodeGenBackend):
         for def_fn in self.def_fn_functions:
             # Function name - DEF FNA becomes _fn_a
             fn_base = def_fn.name.lower()
-            func_name = '_fn_' + (fn_base[2:] if fn_base.startswith('fn') else fn_base).replace('.', '_d_')  # calls use FNA -> _fn_a
+            # calls use FNA -> _fn_a; a function is its name and its type: FNA$ is _fn_a_s
+            func_name = self._fn_js_name(self._fn_key(fn_base), def_fn.type_suffix)
 
             # Parameters
             params = [self._mangle_var_name(p.name + (p.type_suffix or '')) for p in def_fn.parameters]
@@ -2921,6 +3026,10 @@ class JavaScriptBackend(CodeGenBackend):
             prefix = 'async ' if self._fn_key(fn_base) in self.async_fns else ''
             code.append(self.indent() + f'{prefix}function {func_name}({param_str}) {{')
             self.indent_level += 1
+            # The call takes the argument to the type of the parameter (see _generate_function_call)
+            # The result takes the type of the function: FNA% rounds (FRCINT, Overflow over 32767)
+            if def_fn.type_suffix == '%':
+                expr_code = f'_toInt({expr_code})'
             code.append(self.indent() + f'return {expr_code};')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -3112,7 +3221,7 @@ class JavaScriptBackend(CodeGenBackend):
             pass
         elif isinstance(stmt, DefFnStatementNode) and self.has_clear and self.def_fn_functions:
             # The function exists from the DEF FN that runs; CLEAR forgets it
-            code.append(self.indent() + f'_fn_def["{stmt.name.lower()[2:]}"] = true;')
+            code.append(self.indent() + f'_fn_def["{self._fn_js_name(self._fn_key(stmt.name), stmt.type_suffix)}"] = true;')
         else:
             code.append(self.indent() + f'// Unsupported: {type(stmt).__name__}')
 
@@ -3131,16 +3240,20 @@ class JavaScriptBackend(CodeGenBackend):
         formats numbers the MBASIC way and tracks the cursor column for the
         comma zones, TAB and SPC.
         """
+        filenum = self._generate_expression_as(stmt.file_number, 'n') if stmt.file_number else 'null'
+        # An item with an await (INPUT$, INKEY$) cannot sit in the arrow function that delays an
+        # item, so the items before it print first and the item is evaluated in the statement.
+        chunks = []
         items = []
         seps = []
         for i, expr in enumerate(stmt.expressions):
             sep = stmt.separators[i] if i < len(stmt.separators) else '\n'
-            seps.append(sep or '\n')
             name = getattr(expr, 'name', '').lower() if isinstance(expr, FunctionCallNode) else ''
             if name in ('tab', 'spc') and len(expr.arguments) == 1:
                 kind = 1 if name == 'tab' else 2
                 # The argument is evaluated when its turn comes: "A";TAB(40000) prints the A first
-                items.append(f'[{kind}, () => {self._generate_expression(expr.arguments[0])}]')
+                arg = self._generate_expression(expr.arguments[0])
+                item = f'[{kind}, {arg if "await" in arg else "() => " + arg}]'
             else:
                 value = self._generate_expression(expr)
                 if '(' in value and 'await ' not in value:
@@ -3150,10 +3263,18 @@ class JavaScriptBackend(CodeGenBackend):
                     # before it, and "A=" is on the screen before 10^40 prints
                     # Overflow, as in MBASIC.
                     value = f'() => {value}'
-                items.append(f'[0, {value}, {self._js_digits(expr)}]')
-        filenum = self._generate_expression_as(stmt.file_number, 'n') if stmt.file_number else 'null'
-        sep_js = '[' + ', '.join(json.dumps(x) for x in seps) + ']'
-        return [self.indent() + f'_print_list({filenum}, [{", ".join(items)}], {sep_js});']
+                item = f'[0, {value}, {self._js_digits(expr)}]'
+            if 'await' in item and items:
+                chunks.append((items, seps))
+                items, seps = [], []
+            items.append(item)
+            seps.append(sep or '\n')
+        chunks.append((items, seps))
+        lines = []
+        for items, seps in chunks:
+            sep_js = '[' + ', '.join(json.dumps(x) for x in seps) + ']'
+            lines.append(self.indent() + f'_print_list({filenum}, [{", ".join(items)}], {sep_js});')
+        return lines
 
     def _generate_print_using(self, stmt: PrintUsingStatementNode) -> List[str]:
         """Generate PRINT USING statement"""
@@ -3412,11 +3533,27 @@ class JavaScriptBackend(CodeGenBackend):
         # Check if it's a DEF FN function (starts with 'fn')
         # User-defined functions from DEF FN
         if func_name.startswith('fn'):
-            # FNA -> _fn_a, FNFOO -> _fn_foo
-            call = f'_fn_{func_name[2:].replace(".", "_d_")}({", ".join(args)})'
-            call = f'(await {call})' if func_name[2:] in self.async_fns else call
+            # FNA -> _fn_a, FNFOO -> _fn_foo, FNA$ -> _fn_a_s
+            key = func_name[2:]
+            suffix = func.type_suffix if func.def_types is not None else None
+            definition = None
+            for d in self.def_fn_functions:
+                if self._fn_key(d.name) == key and (suffix is None or (d.type_suffix or '!') == suffix):
+                    definition = d
+            if definition is None:
+                # A function is its name and its type (measured): DEF FNA$ is not FNA
+                return '_error("Undefined user function")'
+            # The parameter has the type the DEF types give when the call runs: a DEFINT
+            # letter rounds the argument (FNQ(2.6) with DEF FNQ(I)=I*2 is 6), a single drops digits.
+            typed = []
+            for i, arg in enumerate(args):
+                kind = parameter_suffix(func, definition.parameters[i]) if i < len(definition.parameters) else None
+                typed.append(f'_toInt({arg})' if kind == '%' else f'_toSingle({arg})' if kind == '!' else arg)
+            js_name = self._fn_js_name(key, definition.type_suffix)
+            call = f'{js_name}({", ".join(typed)})'
+            call = f'(await {call})' if key in self.async_fns else call
             if self.has_clear:
-                return f'(_fn_def["{func_name[2:]}"] || _error("Undefined user function"), {call})'
+                return f'(_fn_def["{js_name}"] || _error("Undefined user function"), {call})'
             return call
 
         # Map BASIC function names to JavaScript
@@ -3585,13 +3722,24 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Apply type coercion to initial value
         start_expr = self._apply_type_coercion(start_expr, var_type)
+        if var_type == VarType.INTEGER:
+            # The limit and the step of an integer loop go through FRCINT too (measured):
+            # TO 2.5 is TO 3, STEP .5 is STEP 1, and 40000 is Overflow at the FOR
+            end_expr = f'_toInt({end_expr})'
+            step_expr = f'_toInt({step_expr})'
 
         # Initialize loop variable and store state
         code.append(self.indent() + f'{{')
         self.indent_level += 1
+        # Start, end and step run in the order of the text, each with its type check (measured)
+        code.append(self.indent() + f'const _start = {start_expr};')
+        code.append(self.indent() + f'_for_elim("{var_name}", {self.for_id.setdefault(id(stmt), len(self.for_id) + 1)});')
         code.append(self.indent() + f'const _end = {end_expr};')
         code.append(self.indent() + f'const _step = {step_expr};')
-        code.append(self.indent() + f'{var_name} = {start_expr};')
+        if id(stmt) not in self.for_site:
+            # The scan finds no NEXT: the error comes before the variable is set
+            code.append(self.indent() + '_error("FOR Without NEXT");')
+        code.append(self.indent() + f'{var_name} = _start;')
 
         # Check initial condition before entering loop
         code.append(self.indent() + f'if (!_for_done({var_name}, _end, _step)) {{')
@@ -3604,21 +3752,19 @@ class JavaScriptBackend(CodeGenBackend):
         elif var_type == VarType.SINGLE:
             type_coerce_fn = '_toSingle'
 
-        code.append(self.indent() + f'delete _for_loops["{var_name}"];  // a new entry goes on top')
-        code.append(self.indent() + f'_for_loops["{var_name}"] = {{')
+        code.append(self.indent() + f'_for_push("{var_name}", {{')
         self.indent_level += 1
-        # Only the NEXT that the scan at the FOR found can end this loop (any other is NEXT without FOR)
-        found = self.for_to_next.get(id(stmt))
-        code.append(self.indent() + f'nx: {self._text_id(found) if found is not None else -1},')
         code.append(self.indent() + f'end: _end,')
         code.append(self.indent() + f'step: _step,')
+        code.append(self.indent() + f'site: {self.for_site.get(id(stmt), 0)},')
+        code.append(self.indent() + f'forid: {self.for_id.setdefault(id(stmt), len(self.for_id) + 1)},')
         code.append(self.indent() + f'coerce: {type_coerce_fn},')
         if return_line is not None:
             code.append(self.indent() + f'line: {return_line}')
         else:
             code.append(self.indent() + f'line: null  // End of program')
         self.indent_level -= 1
-        code.append(self.indent() + f'}};')
+        code.append(self.indent() + f'}});')
 
         self.indent_level -= 1
         code.append(self.indent() + f'}} else {{')
@@ -3638,59 +3784,66 @@ class JavaScriptBackend(CodeGenBackend):
         return code
 
     def _generate_next(self, stmt: NextStatementNode) -> List[str]:
-        """Generate NEXT statement - check condition and loop back"""
+        """Generate NEXT statement - check condition and loop back
+
+        A name on a NEXT is looked up in the loops in sight; the loop must be the one whose
+        scan for its NEXT ended at this name (see _scan_for_sites), or the NEXT is NEXT without
+        FOR and the loop is spoilt, with the loops below it.  A NEXT with no name takes the
+        newest loop.  An error in the step (Overflow of an integer variable) spoils the loop too.
+        """
         code = []
-
-        if id(stmt) not in self.matched_next:
-            # Only the NEXT that closes a FOR (the first one in the text) can end the loop;
-            # any other NEXT is "NEXT without FOR" when it runs, as on the binary
-            return [self.indent() + '_error("NEXT without FOR");']
-
-        # Get variable names
-        variables = stmt.variables
-        if not variables:
-            # NEXT without variable - look up which variable to use
-            var_name_base = self.next_var_map.get(id(stmt))
-            if var_name_base:
-                # next_var_map holds the JS name of the FOR variable, used as it is
-                variables = [var_name_base]
-            else:
-                # No matching FOR found
-                code.append(self.indent() + '_error("NEXT without FOR");')
-                return code
+        variables = stmt.variables or [None]
 
         # Handle each variable (NEXT can have multiple variables: NEXT I, J, K)
-        for var in variables:
-            if isinstance(var, str):
-                var_name = var
-            else:
-                var_name = self._mangle_var_name(var.name + (getattr(var, 'type_suffix', '') or ''))
+        for position, var in enumerate(variables):
+            site = self.next_site.get((id(stmt), position), 0)
+            if var is None:
+                # No name: the newest loop; the FORs whose scan ends here say which variables can be meant
+                code.append(self.indent() + '{')
+                self.indent_level += 1
+                code.append(self.indent() + 'const _name = _for_top();')
+                code.append(self.indent() + 'if (_name === undefined) _error("NEXT without FOR");')
+                code.append(self.indent() + f'if (_for_loops[_name].site !== {site}) {{ _for_drop(_name, true); _error("NEXT without FOR"); }}')
+                for js_name in self.site_fors.get(site, []):
+                    code.append(self.indent() + f'if (_name === "{js_name}") {{')
+                    self.indent_level += 1
+                    code.extend(self._next_step(js_name))
+                    self.indent_level -= 1
+                    code.append(self.indent() + '}')
+                self.indent_level -= 1
+                code.append(self.indent() + '}')
+                continue
+            js_name = self._mangle_var_name(var.name + (getattr(var, 'type_suffix', '') or ''))
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + f'const _lp = _for_find("{js_name}");')
+            code.append(self.indent() + 'if (!_lp) _error("NEXT without FOR");')
+            code.append(self.indent() + f'if (_lp.site !== {site}) {{ _for_drop("{js_name}", true); _error("NEXT without FOR"); }}')
+            code.extend(self._next_step(js_name))
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
 
-            # Increment variable and check condition
-            # A NEXT without a variable takes the newest entry; the NEXT must also be the one the FOR found
-            top = '' if stmt.variables else f' || Object.keys(_for_loops).pop() !== "{var_name}"'
-            code.append(self.indent() + f'if (!_for_loops["{var_name}"] || _for_loops["{var_name}"].nx !== {self._text_id(stmt)}{top}) _error("NEXT without FOR");')
-            code.append(self.indent() + f'{{')
-            self.indent_level += 1
-            code.append(self.indent() + f'const _loop = _for_loops["{var_name}"];')
-            code.append(self.indent() + f'{var_name} = _loop.coerce ? _loop.coerce({var_name} + _loop.step) : ({var_name} + _loop.step);')
-            code.append(self.indent() + f'const _continue = !_for_done({var_name}, _loop.end, _loop.step);')
-            code.append(self.indent() + f'if (_continue) {{')
-            self.indent_level += 1
-            if self.yield_checks:
-                code.append(self.indent() + yield_check('_loop.line'))
-            code.append(self.indent() + f'_pc = _loop.line;')
-            code.append(self.indent() + f'break;')
-            self.indent_level -= 1
-            code.append(self.indent() + f'}} else {{')
-            self.indent_level += 1
-            code.append(self.indent() + f'delete _for_loops["{var_name}"];')
-            self.indent_level -= 1
-            code.append(self.indent() + f'}}')
-            self.indent_level -= 1
-            # (a CLEAR in the loop emptied _for_loops: the check above gives NEXT without FOR)
-            code.append(self.indent() + f'}}')
+        return code
 
+    def _next_step(self, var_name: str) -> List[str]:
+        """The loops entered after this one are gone; step the variable and loop back or end the loop."""
+        code = []
+        code.append(self.indent() + f'_for_drop("{var_name}", false);')
+        code.append(self.indent() + f'const _loop = _for_loops["{var_name}"];')
+        code.append(self.indent() + f'try {{ {var_name} = _loop.coerce ? _loop.coerce({var_name} + _loop.step) : ({var_name} + _loop.step); }}')
+        code.append(self.indent() + f'catch (e) {{ _for_drop("{var_name}", true); throw e; }}')
+        code.append(self.indent() + f'if (!_for_done({var_name}, _loop.end, _loop.step)) {{')
+        self.indent_level += 1
+        if self.yield_checks:
+            code.append(self.indent() + yield_check('_loop.line'))
+        code.append(self.indent() + '_pc = _loop.line;')
+        code.append(self.indent() + 'break;')
+        self.indent_level -= 1
+        code.append(self.indent() + '} else {')
+        self.indent_level += 1
+        code.append(self.indent() + f'_for_end("{var_name}");')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
         return code
 
     def _generate_while(self, stmt: WhileStatementNode, line_number: int) -> List[str]:
@@ -4005,7 +4158,13 @@ class JavaScriptBackend(CodeGenBackend):
         # The runtime function checks start and length like the MID$ function and replaces
         # min(length, len(value), what is left of the string) characters. The order of the
         # arguments is the order the interpreter evaluates them.
-        code.append(self.indent() + f'{var_expr} = _mid_assign({var_expr}, {start_expr}, {value_expr}, {length_expr}, {same});')
+        assign = f'{var_expr} = _mid_assign({var_expr}, {start_expr}, {value_expr}, {length_expr}, {same});'
+        if self.uses_file_io and not stmt.string_var.subscripts:
+            # a FIELD variable shows part of the record, which the change reaches
+            name = json.dumps(stmt.string_var.name)
+            code.append(self.indent() + f'{{ const _fa = _fattached({name}, {var_expr}); {assign} _fpush({name}, {var_expr}, _fa); }}')
+        else:
+            code.append(self.indent() + assign)
 
         return code
 
@@ -4045,22 +4204,17 @@ class JavaScriptBackend(CodeGenBackend):
 
     def _generate_open(self, stmt: OpenStatementNode) -> List[str]:
         """Generate OPEN statement - open file for I/O"""
-        code = []
-        # The operands are checked in the order of the arguments (see _open_mode)
-        if stmt.mode_expr is not None:
-            mode_expr = self._generate_expression_as(stmt.mode_expr, 's')
-        else:
-            mode_expr = json.dumps(stmt.mode)      # "I", "O", "A", "R" (or "" / another letter: Bad file mode)
+        # Every argument goes to _fopen as a function, which reads them in the order of MBASIC
         filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
         filename_expr = self._generate_expression_as(stmt.filename, 's')
-        args = f'_open_mode({mode_expr}), _open_num({filenum_expr}), {filename_expr}'
-
-        # For random files, include record length (default 128 if not specified)
+        if stmt.mode_expr is not None:
+            mode = f'() => {self._generate_expression(stmt.mode_expr)}'
+        else:
+            mode = json.dumps(stmt.mode)  # "I", "O", "A", "R", or "" (empty literal)
+        args = f'{mode}, () => {filenum_expr}, () => {filename_expr}'
         if stmt.record_length:
-            reclen_expr = self._generate_expression_as(stmt.record_length, 'n')
-            args += f', () => {reclen_expr}'
-        code.append(self.indent() + f'_fopen({args});')
-        return code
+            args += f', () => {self._generate_expression_as(stmt.record_length, "n")}'
+        return [self.indent() + f'_fopen({args});']
 
     def _generate_close(self, stmt: CloseStatementNode) -> List[str]:
         """Generate CLOSE statement - close file(s)"""
@@ -4114,9 +4268,14 @@ class JavaScriptBackend(CodeGenBackend):
         # Build array of field definitions: [[width1, var1], [width2, var2], ...]
         fields_array = []
         for width, var in stmt.fields:
-            width_expr = self._generate_expression(width)
+            width_expr = self._generate_expression_as(width, 'n')
             var_name = var.name  # Variable name (string variable)
-            fields_array.append(f'[{width_expr}, "{var_name}"]')
+            if var.type_suffix == '$':
+                js_var = self._mangle_var_name(var.name + '$')
+                # The variable takes the field's part of the record at FIELD, at GET and at LSET/RSET
+                fields_array.append(f'[{width_expr}, "{var_name}", (v) => {{ {js_var} = v; }}, () => {js_var}]')
+            else:
+                fields_array.append(f'[{width_expr}, "{var_name}", (v) => {{ _error("Type mismatch"); }}, () => ""]')
 
         fields_str = '[' + ', '.join(fields_array) + ']'
         code.append(self.indent() + f'_ffield({filenum_expr}, {fields_str});')
@@ -4127,7 +4286,8 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
         var_name = stmt.variable.name
         value_expr = self._generate_expression_as(stmt.expression, 's')
-        code.append(self.indent() + f'_flset("{var_name}", {value_expr});')
+        js_var = self._mangle_var_name(stmt.variable.name + '$')
+        code.append(self.indent() + f'_flset("{var_name}", {value_expr}, () => {js_var}, (v) => {{ {js_var} = v; }});')
         return code
 
     def _generate_rset(self, stmt: RsetStatementNode) -> List[str]:
@@ -4135,7 +4295,8 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
         var_name = stmt.variable.name
         value_expr = self._generate_expression_as(stmt.expression, 's')
-        code.append(self.indent() + f'_frset("{var_name}", {value_expr});')
+        js_var = self._mangle_var_name(stmt.variable.name + '$')
+        code.append(self.indent() + f'_frset("{var_name}", {value_expr}, () => {js_var}, (v) => {{ {js_var} = v; }});')
         return code
 
     def _generate_get(self, stmt: GetStatementNode) -> List[str]:
@@ -4143,7 +4304,7 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
         filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
         if stmt.record_number:
-            rec_expr = self._generate_expression(stmt.record_number)
+            rec_expr = self._generate_expression_as(stmt.record_number, 'n')
             code.append(self.indent() + f'_fget({filenum_expr}, {rec_expr});')
         else:
             code.append(self.indent() + f'_fget({filenum_expr});')
@@ -4154,7 +4315,7 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
         filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
         if stmt.record_number:
-            rec_expr = self._generate_expression(stmt.record_number)
+            rec_expr = self._generate_expression_as(stmt.record_number, 'n')
             code.append(self.indent() + f'_fput({filenum_expr}, {rec_expr});')
         else:
             code.append(self.indent() + f'_fput({filenum_expr});')
@@ -4365,8 +4526,8 @@ class JavaScriptBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + '}')
         # CLEAR deletes the variables and the arrays, empties the FOR and GOSUB
-        # stacks, sends the DATA pointer back and closes the files. Not done
-        # here: DEF FN (the functions stay), OPTION BASE (fixed when the program
+        # stacks, sends the DATA pointer back, closes the files and forgets the
+        # DEF FN functions. Not done here: OPTION BASE (fixed when the program
         # is compiled), the DEFtype statements (see docs/dev/JS_CONTROL_FLOW.md).
         for var_name, var_info in sorted(self.symbols.variables.items()):
             if var_info.is_array:
@@ -4377,6 +4538,7 @@ class JavaScriptBackend(CodeGenBackend):
                 init = '""' if var_info.var_type == VarType.STRING else '0'
                 code.append(self.indent() + f'{self._mangle_var_name(var_name)} = {init};')
         code.append(self.indent() + 'for (const _k in _for_loops) delete _for_loops[_k];')
+        code.append(self.indent() + '_for_stack.length = 0;')
         if self.def_fn_functions:
             code.append(self.indent() + 'for (const _k in _fn_def) delete _fn_def[_k];')
         if self.uses_gosub:

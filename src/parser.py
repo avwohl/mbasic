@@ -1249,7 +1249,8 @@ class Parser:
                     type_suffix=type_suffix,
                     explicit_type_suffix=explicit_type_suffix,
                     line_num=token.line,
-                    column=token.column
+                    column=token.column,
+                    def_types=dict(self.def_type_map)
                 )
             else:
                 # It's an array with subscripts
@@ -1273,7 +1274,8 @@ class Parser:
                     type_suffix=type_suffix,
                     explicit_type_suffix=explicit_type_suffix,
                     line_num=token.line,
-                    column=token.column
+                    column=token.column,
+                    def_types=dict(self.def_type_map)
                 )
             else:
                 # Simple variable
@@ -1466,7 +1468,8 @@ class Parser:
             line_num=name_token.line,
             column=name_token.column,
             type_suffix=type_suffix,
-            explicit_type_suffix=explicit_type_suffix
+            explicit_type_suffix=explicit_type_suffix,
+            def_types=dict(self.def_type_map)
         )
 
     def get_type_suffix(self, name: str) -> Optional[str]:
@@ -3207,6 +3210,7 @@ class Parser:
                     # Split parameter name and type suffix (e.g., "z$" -> name="z", suffix="$")
                     param_name = param_token.value
                     param_type_suffix = self.get_type_suffix(param_name)
+                    param_explicit = bool(param_type_suffix)
                     if param_type_suffix:
                         param_name = param_name[:-1]  # Remove suffix from name
                     else:
@@ -3217,7 +3221,7 @@ class Parser:
                         name=param_name,
                         type_suffix=param_type_suffix,
                         subscripts=None,
-                        explicit_type_suffix=param_token.value[-1] in '$%!#',
+                        explicit_type_suffix=param_explicit,
                         line_num=param_token.line,
                         column=param_token.column
                     )
@@ -3304,6 +3308,15 @@ class Parser:
             column=token.column
         )
 
+    @staticmethod
+    def _open_mode(expr):
+        """The mode of a classic OPEN: (letter, None) for a string literal,
+        ("", expr) for any other expression. The letter of an empty literal is
+        "" (Bad file mode when the statement runs)."""
+        if isinstance(expr, StringNode):
+            return (expr.value[:1].upper(), None)
+        return ("", expr)
+
     def parse_open(self) -> OpenStatementNode:
         """
         Parse OPEN statement
@@ -3363,13 +3376,9 @@ class Parser:
                 )
             else:
                 # Classic syntax: OPEN "mode", #n, filename$
-                # First arg is mode string - extract mode letter. A mode that is
-                # not a literal ("O"+"", CHR$(79)) is worked out when OPEN runs.
-                mode_expr = None
-                if isinstance(first_arg, StringNode):
-                    mode = first_arg.value[:1].upper()     # "" is Bad file mode when OPEN runs
-                else:
-                    mode, mode_expr = "", first_arg
+                # First arg is the mode string: a literal gives the letter here,
+                # any other expression is evaluated when the statement runs
+                mode, mode_expr = self._open_mode(first_arg)
 
                 # Expect comma
                 self.expect(TokenType.COMMA)
@@ -3394,6 +3403,7 @@ class Parser:
 
                 return OpenStatementNode(
                     mode=mode,
+                    mode_expr=mode_expr,
                     file_number=file_number,
                     filename=filename,
                     record_length=record_length,
@@ -3405,12 +3415,9 @@ class Parser:
             # Parse mode expression
             mode_expr = self.parse_expression()
 
-            # Extract mode character (a mode that is not a literal is worked out when OPEN runs)
-            if isinstance(mode_expr, StringNode):
-                mode = mode_expr.value[:1].upper()     # "" is Bad file mode when OPEN runs
-                mode_expr = None
-            else:
-                mode = ""
+            # A literal gives the mode letter here, any other expression
+            # (a number, M$) is evaluated when the statement runs
+            mode, mode_expr = self._open_mode(mode_expr)
 
             # Expect comma
             self.expect(TokenType.COMMA)
@@ -3435,6 +3442,7 @@ class Parser:
 
             return OpenStatementNode(
                 mode=mode,
+                mode_expr=mode_expr,
                 file_number=file_number,
                 filename=filename,
                 record_length=record_length,
@@ -3621,6 +3629,10 @@ class Parser:
                 self.advance()
             else:
                 break
+
+        # A token left over (NAME$: the reserved word NAME, then '$') makes the whole FIELD a Syntax error
+        if not self.at_end_of_line() and not self.match(TokenType.COLON, TokenType.ELSE):
+            raise ParseError("Unexpected token in FIELD statement", self.current())
 
         return FieldStatementNode(
             file_number=file_number,

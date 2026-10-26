@@ -460,7 +460,7 @@ class Runtime:
         # Return value
         return self._variables[full_name]['value']
 
-    def set_variable(self, name, type_suffix, value, def_type_map=None, token=None, debugger_set=False, limits=None, original_case=None, settings_manager=None):
+    def set_variable(self, name, type_suffix, value, def_type_map=None, token=None, debugger_set=False, limits=None, original_case=None, settings_manager=None, keep_value=False):
         """
         Set variable value for program execution, tracking write access.
 
@@ -477,6 +477,8 @@ class Runtime:
             limits: Optional ResourceLimits object for tracking
             original_case: Original case from source (for case preservation)
             settings_manager: Optional SettingsManager for case conflict handling
+            keep_value: store the value as it is, without taking it to the type of the
+                variable (a DEF FN parameter typed by the DEF types of the call)
 
         Raises:
             ValueError: If token is None and debugger_set is False
@@ -504,7 +506,8 @@ class Runtime:
         # so F# = 1/3 printed .3333333333333333 where MBASIC says
         # .3333333432674408 - the error the real machine keeps.
         # See src/number_format.py.
-        value = coerce_to_type(value, resolved_suffix)
+        if not keep_value:
+            value = coerce_to_type(value, resolved_suffix)
 
         # Enforce 255 byte string limit (MBASIC 5.21 compatibility)
         if resolved_suffix == '$' and isinstance(value, str) and len(value) > 255:
@@ -704,7 +707,7 @@ class Runtime:
         """Clear all arrays."""
         self._arrays.clear()
 
-    def bind_for_loop(self, var_name, pc, end_value, step_value):
+    def bind_for_loop(self, var_name, pc, end_value, step_value, site=None):
         """
         Bind a variable to a FOR loop.
 
@@ -713,12 +716,19 @@ class Runtime:
             pc: PC object pointing to the FOR statement
             end_value: Loop end value (evaluated once at FOR time)
             step_value: Loop step value (evaluated once at FOR time)
+            site: the NEXT that closes the loop, as the scan at the FOR found it
+                (number of the NEXT statement, place of the name in its list);
+                the loop is only valid at that NEXT
         """
+        # The dict keeps the order the loops were entered; a loop entered again is the newest
+        self.for_loop_states.pop(var_name, None)
         self.for_loop_states[var_name] = {
             'pc': pc,
             'end': end_value,
             'step': step_value,
-            'depth': len(self.execution_stack)    # entries below this FOR
+            'site': site,
+            'depth': self.gosub_depth(),
+            'stack_len': len(self.execution_stack)    # entries below this FOR
         }
 
     def unwind_loops_above_for(self, var_name):
@@ -731,12 +741,38 @@ class Runtime:
         state = self.for_loop_states.get(var_name)
         if state is None:
             return 0
-        depth = state.get('depth', 0)
+        depth = state.get('stack_len', 0)
         stack = self.execution_stack
         before = len(stack)
         if before > depth:
             stack[depth:] = [e for e in stack[depth:] if e['type'] != 'WHILE']
         return before - len(stack)
+
+    def gosub_depth(self):
+        """The number of GOSUB frames: a FOR loop is in sight only at the depth it was entered at."""
+        return sum(1 for entry in self.execution_stack if entry.get('type') == 'GOSUB')
+
+    def visible_for_loops(self):
+        """The names of the FOR loops NEXT can see, oldest first.
+
+        Loops opened in a subroutine that has returned are gone (RETURN drops
+        them on the real binary); loops of the callers are out of sight.
+        """
+        depth = self.gosub_depth()
+        for name in [n for n, state in self.for_loop_states.items() if state.get('depth', 0) > depth]:
+            del self.for_loop_states[name]
+        return [n for n, state in self.for_loop_states.items() if state.get('depth', 0) == depth]
+
+    def drop_for_loops(self, var_name, newer=True, older=False, itself=False):
+        """Remove the loops above (newer), below (older) or at var_name on the FOR stack."""
+        names = list(self.for_loop_states)
+        if var_name not in names:
+            return
+        index = names.index(var_name)
+        doomed = (names[index + 1:] if newer else []) + (names[:index] if older else []) \
+            + ([var_name] if itself else [])
+        for name in doomed:
+            del self.for_loop_states[name]
 
     def get_for_loop_state(self, var_name):
         """
@@ -1237,7 +1273,7 @@ class Runtime:
         entry = self.execution_stack.pop()
         return (entry['return_line'], entry['return_stmt'])
 
-    def push_for_loop(self, var_name, end_value, step_value, return_line, return_stmt_index):
+    def push_for_loop(self, var_name, end_value, step_value, return_line, return_stmt_index, site=None):
         """Register a FOR loop by binding the variable to loop state.
 
         Variable-indexed approach: Each variable is bound to one FOR loop at a time.
@@ -1259,7 +1295,7 @@ class Runtime:
 
         # Bind variable to this FOR loop
         # If variable already bound (jumped out of previous loop), this just overwrites it
-        self.bind_for_loop(var_name, for_pc, end_value, step_value)
+        self.bind_for_loop(var_name, for_pc, end_value, step_value, site)
 
         debug_log(
             f"push_for_loop({var_name}) complete - bound to PC({return_line},{return_stmt_index})",
@@ -1286,7 +1322,8 @@ class Runtime:
             'end': loop_state['end'],
             'step': loop_state['step'],
             'return_line': loop_state['pc'].line,
-            'return_stmt': loop_state['pc'].statement
+            'return_stmt': loop_state['pc'].statement,
+            'site': loop_state.get('site')
         }
 
     def push_while_loop(self, while_line, while_stmt_index, wend_key=None):

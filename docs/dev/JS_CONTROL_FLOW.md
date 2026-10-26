@@ -30,8 +30,9 @@ label was only available for a whole line. These faults followed:
 * A statement at the end of the line has no label. The target is the next
   line, as before.
 * `_match_for_next` pairs NEXT with FOR by position in the text. It looks
-  inside `IF ... THEN ... ELSE` too. A bare NEXT takes the JavaScript name
-  of the FOR variable, with the type suffix and the DEFINT type.
+  inside `IF ... THEN ... ELSE` too. It finds the place of a zero-trip FOR
+  and the resume points. The loop checks use `_scan_for_sites` (see
+  "FOR and NEXT sites").
 * Some IF statements have one of these statements inside, and not at the
   end. The code generator writes jumps and labels for such an IF, not a
   JavaScript `if` block. A case label cannot stand inside a block.
@@ -42,6 +43,35 @@ label was only available for a whole line. These faults followed:
 * `SYSTEM` stops the program as `END` does.
 * `SemanticAnalyzer._analyze_next` reads the innermost loop again for each
   variable, so `NEXT J,I` passes.
+
+## FOR and NEXT sites
+
+The binary does not pair a NEXT with a FOR by name. The scan of a FOR
+(NXTSCN) counts FORs and names on NEXTs, and stops at the NEXT where the
+count is zero. The loop is valid at that NEXT only (a site is a NEXT and the
+place of a name in its list). `_scan_for_sites` does the same count at compile
+time. Each FOR stores its site in the loop object, and each name on a NEXT
+has a site number.
+
+* The loops are in `_for_loops` (by variable) and `_for_stack` (in the order
+  they were entered). `_for_push` makes a loop the newest. When a FOR runs
+  again, `_for_elim` drops the old loop of that FOR and the loops inside it as
+  soon as the start value is in. An error in the limit does not bring them
+  back.
+* A NEXT with a name looks for the loop of that name (`_for_find`). A NEXT
+  with no name takes the newest loop (`_for_top`). With no loop the NEXT is
+  `NEXT without FOR` and nothing changes. A loop whose site is not this NEXT
+  is `NEXT without FOR` and `_for_drop` removes the loop and all older loops.
+  The binary does this because the failed NEXT overwrites the entry on its
+  stack. An error in the step (Overflow of an integer variable) does the same.
+  A NEXT that finds its loop drops the loops entered after it.
+* A subroutine sees its own loops. Each loop has the number of GOSUB frames
+  from when it was entered (`depth`). A NEXT does not see the loops of the
+  caller. The loops of a subroutine that returned are dropped.
+* A FOR with no NEXT in the text is `FOR Without NEXT` (error 26) when the
+  FOR runs, after start, limit and step, and the variable keeps its value.
+
+Test: `tests/regression/integration/test_for_next_sites.py`.
 
 ## WHILE and WEND
 
@@ -117,14 +147,15 @@ to its line). ERL uses the same line.
 * A FOR in a THEN or ELSE part runs its body to the end of the line in the
   interpreter and in the JavaScript, as in real MBASIC. This includes a NEXT
   on a later line.
-* Only the first NEXT that FOR finds in the text can end the loop. Any other
+* Only the NEXT that the scan of the FOR ended at can end the loop. Any other
   NEXT (the second NEXT of `IF c THEN NEXT ELSE NEXT`, a NEXT that a jump
-  reaches) is `NEXT without FOR` when it runs, as on the binary. The semantic
-  analyzer does not refuse such a program for JavaScript
-  (`runtime_next_errors`). Test: `tests/regression/integration/test_next_matches_first.py`.
-* NEXT pairs with FOR by position in the text. A program that jumps into a
-  loop with GOTO and a FOR that has no NEXT in the text can behave
-  differently from real MBASIC.
+  reaches) is `NEXT without FOR` when it runs, as on the binary (see the
+  section "FOR and NEXT sites"). Test:
+  `tests/regression/integration/test_next_matches_first.py`.
+* A FOR enters its NEXT on the binary, also when the loop runs. If the name
+  on that NEXT is not the name of the FOR, the error comes at the FOR (line
+  of the NEXT, variable unchanged, no loop). The interpreter and the
+  JavaScript run the body first and give the error at the NEXT.
 * `CLEAR` sets the variables to 0 or "", deletes the arrays, empties the FOR
   and GOSUB stacks, sends the DATA pointer back, closes the files and forgets
   the DEF FN functions (a program with a `CLEAR` checks each FN call and each
@@ -132,3 +163,16 @@ to its line). ERL uses the same line.
   does not reset OPTION BASE or the DEF types. The types follow the DEFINT,
   DEFSNG, DEFDBL and DEFSTR statements in the text, not the order in which
   they run; the interpreter follows the order in which they run.
+
+* A NEXT with no loop for its variable is `NEXT without FOR` (error 1) at run
+  time, as on the binary. A FOR whose start, end or step is a string, or a
+  string loop variable with a number start, is `Type mismatch` (error 13) and
+  leaves no loop, so the NEXT after a trapped error gives error 1. The FOR
+  runs start, end and step in the order of the text. See section 11 of
+  `MBASIC_521_DIVERGENCES_TODO.md`.
+* The JavaScript compiler runs the semantic analyzer with `lenient_next`.
+  A NEXT that matches no FOR (no loop, another variable, `NEXT I,I`) is not
+  a compile error: it is the run time error above. A NEXT inside an open
+  WHILE (`FOR ... WHILE ... NEXT ... WEND`) is still refused. The C compiler
+  still rejects these programs. An integer loop variable takes the limit and
+  the step through FRCINT (`_toInt`) when the FOR runs.

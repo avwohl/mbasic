@@ -250,10 +250,9 @@ uses have subscripts. `DIM A(2.5)` rounds (also for the C backend), and a
 `DIM` bound above 32767 is `Overflow` when the `DIM` runs. Test:
 `tests/regression/integration/test_js_range_checks.py`. Done later: the
 JavaScript `DIM` bounds are checked when the program runs (see the #60 entry
-and `docs/dev/JS_ARRAYS.md`). Not done in the JavaScript backend: the file
-statements `FIELD`, `GET`, `PUT`, `OPEN ...
-LEN` and file numbers do not have the checks. A double is not taken to
-single precision before FRCINT rounds it, except in the logical operators.
+and `docs/dev/JS_ARRAYS.md`). Done: the file statements `FIELD`, `GET`, `PUT`,
+`OPEN ... LEN` and the file numbers have the range checks, and FRCINT is
+exact in both backends (see section 11 below).
 
 Round 2 of the JavaScript backend: `READ` and `SWAP` with array elements use
 the subscripts and the bounds check (before, they assigned the whole array).
@@ -268,8 +267,10 @@ it again with the bounds 0 to 10, as on the binary. A fatal `ERROR n` in a
 handler, where n has no message, prints `Unprintable error`. `INSTR` gives 0 for
 an empty string and for a start beyond the end, also with an empty search
 string (interpreter and JavaScript). `MID$(A$,2,3)=A$` copies byte by byte over
-itself, so `hello` gives `hhhho`. Not done: the target shared
-through `B$=A$` does not give the byte-by-byte copy.
+itself, so `hello` gives `hhhho`. Done: a target shared through `B$=A$`
+does not copy over itself on the binary (`MID$(A$,2,3)=B$` gives `hhelo` and
+leaves `B$`), also with `A$="hel"+"lo"`. The interpreter and the JavaScript
+compiler already do this; test: `test_js_misc_edges.py`.
 
 Done for the interpreter (#43, second part). Each item was measured on the
 binary:
@@ -770,7 +771,8 @@ semantics are not:
   Unary `+` on a string is allowed. The semantic analyzer no longer folds or
   rewrites such an expression. See `docs/dev/JS_TYPE_MISMATCH.md`. Done
   later: `DIM B("a")` is `Type mismatch` at run time (see `docs/dev/JS_ARRAYS.md`).
-  Open: `USR("a")` is not checked. The C backend
+  Done: `USR(x)` is Illegal function call for any argument, as on the
+  binary. The C backend
   refuses the mixed forms at compile time, on purpose. Test:
   `tests/regression/integration/test_js_type_mismatch.py`.
 - Done (#58): in the JavaScript backend, `RESUME NEXT` goes on at the next
@@ -870,3 +872,157 @@ keep them as extensions:
   continues at the next statement. On 5.21, MERGE always returns to command
   level. The summary line that MERGE prints at command level does not show
   when a running program merges, as on the binary.
+
+
+## 11. JavaScript backend, assorted edges - done
+
+Each item was measured on the binary. Test:
+`tests/regression/integration/test_js_misc_edges.py`.
+
+- `USR(x)` is `Illegal function call` for every argument (also a string
+  and 70000); `USR()` and `USR(1,2)` are Syntax errors.
+- A `DEF FN` parameter takes the type of its letter in the JavaScript
+  backend: `DEFINT I: DEF FNQ(I)=I*2: PRINT FNQ(2.6)` is 6, and 40000 is
+  Overflow. A single parameter drops digits. The interpreter did this.
+- `FOR` checks its start, end and step in that order, each at once: a string
+  is `Type mismatch` before the next expression runs, and a string loop
+  variable with a number start is `Type mismatch`. The failed `FOR` leaves no
+  loop, so the `NEXT` after a trapped error is `NEXT without FOR` (error 1).
+  The JavaScript `NEXT` with no loop is now that error (it went on
+  silently), the JavaScript `FOR` runs start, end, step in text order, and the
+  interpreter no longer registers a loop when a value is a string.
+- FRCINT (`CINT`, an integer variable, `\`, `MOD`, subscripts, `HEX$`,
+  `OCT$`, byte arguments, the logical operators): the binary adds 0.5 in the
+  precision of the number, takes the sum to single (a tie goes to the larger
+  magnitude), drops the fraction of the magnitude, and complements the result
+  of a negative or zero sum. So `CINT(-2.5)` is -3, `CINT(-.5)` is -1,
+  `CINT(.49999998#)` is 1, `CINT(-.49999998#)` is 0, `CINT(32767.49999999#)`
+  is Overflow and `HEX$(2.49999999#)` is 3. `to_frcint` in
+  `src/number_format.py` and `_frc_int` in the JavaScript runtime do this.
+  Before, they took the double to single and then rounded half away from
+  zero, which differs near a half.
+- File statements in the JavaScript backend: the file number is a byte
+  (Overflow, then `Illegal function call` for 256 or -1), then above 15 is
+  `Bad file number`. A statement on a number with no open file is `Bad file
+  mode` for PRINT, WRITE, INPUT, LINE INPUT, GET and PUT, and `Bad file
+  number` for EOF, LOC, LOF and FIELD. `INPUT$` on a number with no open file
+  is `Input past end`. An output file used for input, GET, PUT or FIELD is
+  `Bad file mode`; INPUT from a random file is `FIELD overflow`. `CLOSE 0`
+  does nothing, `CLOSE` of a closed number is fine, `CLOSE 1,99` closes 1 and
+  then gives `Bad file number`. `OPEN`: the number first (0 is `Bad file
+  number`), then `LEN` (FRCINT, above 128 is `Illegal function call`), then
+  `File already open`. `OPEN "I"` of a missing file is `File not found`. `GET`
+  and `PUT` take the record by FRCINT: 0 is `Bad record number`, below 0 is
+  `Illegal function call`, above 32767 is Overflow. `FIELD` widths are bytes
+  and the sum must fit the record (`FIELD overflow`).
+- `FIELD` binds its variables to the record at once, `GET` fills them, `LSET`
+  and `RSET` change the variable and the record (before, the compiled
+  variables were never set, so `GET` then `PRINT A$` printed nothing). `LSET`
+  of a plain string variable keeps its length. The semantic analyzer now
+  declares variables that only `FIELD`, `LSET` or `RSET` use.
+- `ASC("")` is `Illegal function call` in the JavaScript backend.
+- The JavaScript compiler sorts the lines of the source by number (and a
+  later line with the same number replaces the earlier one), as MBASIC does
+  when the lines are typed. Before, a source with lines out of order ran in
+  file order.
+- `PRINT INPUT$(n[,#f])` compiled to invalid JavaScript (an `await` in the
+  arrow function that delays a PRINT item). The items before the `INPUT$`
+  item now print first, and the item is read in the statement.
+- `OPEN` reads its arguments in the order of the binary: the mode (a number
+  is `Type mismatch`; an empty or unknown mode is `Bad file mode`), the
+  number, `LEN`, then the name (a number is `Type mismatch`; an empty name is
+  `Bad file name`, also in the JavaScript backend, which crashed with the
+  host error). The mode may be a string expression (`OPEN M$,1,"F"`); only its
+  first letter counts (`"Input"` opens for input). The parser keeps a literal
+  mode as before and stores any other expression in `mode_expr`. An `I` or
+  `O` file with a fourth operand is opened (File not found comes first, and
+  the file stays open) and then the statement is `Syntax error`; the length is
+  not read. The interpreter and the JavaScript backend do this.
+- `FOR` with an integer loop variable takes the start, the limit and the step
+  through FRCINT, in that order: `FOR I%=1 TO 2.5` runs to 3, `STEP .5` is
+  `STEP 1`, and a value over 32767 is Overflow at the `FOR` (the variable
+  keeps its old value). The interpreter and the JavaScript backend did not.
+- A `DEF FN` result takes the type of the function: `FNA%` rounds through
+  FRCINT (Overflow over 32767), `DEFINT K: DEF FNK(X)=X*1.5` gives 5, and a
+  string body for a number function (or the reverse) is `Type mismatch`.
+- `LOF` is the size the file had when it was opened, in sectors of 128 bytes
+  (a new file is 0, and writing does not change the number); the backends
+  gave the length in bytes.
+- `FIELD` variables are views of the record in the JavaScript backend: a
+  second overlapping `FIELD` shows what `LSET` wrote through the first, and
+  `MID$(F$,..)=` changes the record. A variable that was given another
+  string (`A$="plain"`) is out of the record for good: `LSET` keeps its length
+  and `GET` does not fill it. The JavaScript runtime finds this by comparing
+  the variable with the string it was shown last, so `A$=A$` after a `GET`
+  does not detach it, and an assignment of the same text is not seen. A
+  variable that no `FIELD`, `LSET` or `GET` has set holds memory garbage on the
+  binary (`D$` of a `FIELD` that was never read); that is not copied.
+- The JavaScript compiler no longer stops with "Semantic analysis failed"
+  for a `NEXT` that matches no `FOR` (`NEXT` with no loop, `NEXT J` for another
+  variable, `NEXT I,I`); these are run time errors (`NEXT without FOR`) that
+  `ON ERROR` can trap. `SemanticAnalyzer(lenient_next=True)`; the C compiler
+  still rejects them. After such an error `RESUME NEXT` goes on at the next
+  statement in the interpreter and in the JavaScript backend; the binary
+  sometimes runs the `NEXT` a second time when the variable did not match
+  (`FOR I=1 TO 2:NEXT J:PRINT I` gives `E 1`, `E 1` and 0 there). This is
+  not copied.
+- Not done: the backends allow 15 files, the binary 3 by default (`/F:n`
+  raises it; `cpmemu` did not pass the switch on, so the number above 3 was
+  not measured with a bigger limit). `PRINT #n` and `WRITE #n` on a random file
+  work on the binary (they write into the record) and are `Bad file mode`
+  here. The interpreter still differs in some file cases (a number with no
+  open file is `Bad file number` there, the binary says `Bad file mode` for
+  PRINT, INPUT, GET, PUT; `GET` before `FIELD`; `FIELD` views are done, see
+  "round 2" below).
+  `OPEN "A"` is an extension and stays.
+- Done (round 2): the interpreter follows the binary for FIELD views: `FIELD`
+  gives the variables their part of the record at once, a second overlapping
+  `FIELD` shows what `LSET` wrote, `MID$(F$,..)=` changes the record, a variable
+  that was given another string is out of the record for good (`GET` does not
+  fill it, `LSET` keeps its length), `LSET` and `RSET` of a plain string
+  variable keep its length, and the variables keep their text after `CLOSE`.
+  `FIELD` with a number variable is `Type mismatch`, after the variables
+  before it. A new record is spaces here (garbage on the binary).
+- Done (round 2): the loop stack. The interpreter and the JavaScript backend
+  keep the `FOR` loops in the order they were entered, with the NEXT the scan
+  of the `FOR` ended at (section "FOR and NEXT sites" in
+  `JS_CONTROL_FLOW.md`). A `NEXT` at another place is `NEXT without FOR` and
+  spoils the loop and the loops below it. So after `FOR I=1 TO 3:FOR J=1 TO
+  1/0:NEXT:...:NEXT I` with `RESUME NEXT`, the bare `NEXT` is error 1 and
+  the next `NEXT I` too (the outer loop is gone). An Overflow in the `NEXT` of
+  an integer variable spoils the loop the same way. A `NEXT` that finds its
+  loop drops the loops entered after it. A subroutine does not see the loops
+  of its caller (`NEXT` in a subroutine for a loop of the caller is
+  `NEXT without FOR`), and `RETURN` drops the loops of the subroutine. A
+  `FOR` with no `NEXT` is `FOR Without NEXT` before the variable is set. The
+  `FOR` that runs again drops its old loop and the inner loops as soon as the
+  start value is in. Test:
+  `tests/regression/integration/test_for_next_sites.py`.
+- Done (round 2): a `DEF FN` is its name and its type. `DEF FNA$` is not `FNA`
+  (Undefined user function, error 18). The type of an unsuffixed name is the
+  DEF type of the letter after `FN` at the `DEF` and at the call
+  (`DEF FNE(X)=X*2: DEFINT E: PRINT FNE(1.6)` is error 18). A parameter
+  without a suffix has the DEF type of its letter when the call runs, not when
+  the `DEF FN` was read: `DEF FNA(X)=X*2: DEFINT X: PRINT FNA(1.6)` is 4, and
+  `DEFINT X: DEF FND(X)=X*2: DEFSNG X: PRINT FND(1.6)` is 3.2. The parser keeps
+  the DEF types of the call in `FunctionCallNode.def_types`.
+- `FIELD NAME$` (a reserved word, so `NAME` then `$`) is a Syntax error of the
+  whole statement in the JavaScript backend too. It reported `Type mismatch` before.
+- Not done: a variable in the body of a `DEF FN` that gets its type from a
+  `DEFxxx` after the `DEF FN` (`DEF FNE(X)=X+Y: DEFSTR Y: Y="5": PRINT FNE(1)`
+  is `Type mismatch` on the binary, which reads the type when the call runs).
+  The interpreter types the body variables when the line is read. The
+  JavaScript compiler takes the DEF types of the whole program (`DEFINT X`
+  after `X=1.5` also makes the earlier `X` an integer). Both come from the
+  design of the typed variables, not from one statement.
+- Not done: a `FOR` enters its `NEXT` on the binary, also when the loop runs.
+  With another name (`FOR I=1 TO 2: PRINT "a": NEXT J`) the error `NEXT without
+  FOR` comes at the `FOR`, with the line of the `NEXT`, before the body runs, and
+  `I` keeps its value. After `RESUME NEXT` the line number of the next error is
+  the line of the `NEXT` until a new line starts. A `FOR` whose scan ends at a
+  `NEXT` of an outer loop does the same. The interpreter and the JavaScript
+  backend run the body and give the error at the `NEXT`. The zero-trip `FOR`
+  does enter the `NEXT` in the interpreter.
+- Not done: a spoilt `FOR` entry also hides the `GOSUB` frames below it on the
+  binary (the next `RETURN` is `RETURN without GOSUB`). The loops and the
+  `GOSUB` frames are separate here, so only the loops are dropped.

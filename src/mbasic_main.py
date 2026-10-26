@@ -271,12 +271,16 @@ def compile_to_javascript(input_file, output_file, generate_html=False, debug=Fa
         parser = Parser(tokens, defer_syntax_errors=True)
         ast = parser.parse()
 
+        # MBASIC keeps the lines in order of their numbers, and a line typed again
+        # replaces the earlier one: the source file may list them in any order.
+        by_number = {line.line_number: line for line in ast.lines}
+        ast.lines = [by_number[number] for number in sorted(by_number)]
+
         if debug:
             print(f"  Parsed {len(ast.lines)} lines", file=sys.stderr)
 
         # Semantic analysis
-        analyzer = SemanticAnalyzer(flatten_arrays=False, runtime_dims=True)  # the JavaScript arrays are nested; DIM is checked at run time
-        analyzer.runtime_next_errors = True  # a NEXT with no FOR is an error when it runs
+        analyzer = SemanticAnalyzer(flatten_arrays=False, runtime_dims=True, lenient_next=True)  # the JavaScript arrays are nested; DIM and NEXT are checked at run time
         success = analyzer.analyze(ast)
 
         if not success:
