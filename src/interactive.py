@@ -205,6 +205,10 @@ def _ctrl_key_to_char(key_string):
     return chr(ord(letter) - ord('A') + 1)
 
 
+class _ChainIllegalCall(ValueError):
+    """CHAIN MERGE ... DELETE range with a missing end line."""
+
+
 class InteractiveMode:
     """MBASIC 5.21 interactive command mode"""
 
@@ -864,6 +868,13 @@ class InteractiveMode:
         if self.program.read_abort is None:
             return False
         print(self.program.read_abort[1])
+        # MBASIC clears the variables and cannot CONT after the aborted read
+        if self.program_runtime:
+            self.program_runtime.clear_variables()
+            self.program_runtime.clear_arrays()
+            self.program_runtime.for_loop_states.clear()
+            self.program_runtime.execution_stack.clear()
+        self.cont_invalid = True
         return True
 
     def cmd_load(self, filename, from_program=False):
@@ -980,6 +991,9 @@ class InteractiveMode:
         - all_flag: Pass all variables to chained program (ALL option)
         - delete_range: Delete line range after merge (DELETE option)
 
+        Returns True when a bad file line aborted the read (see cmd_load); the
+        statement then stops the running program.
+
         Raises ChainException when called during program execution to signal the interpreter's
         run() loop to restart with the new program. This avoids recursive run() calls.
         When called from command line (not during execution), runs the program directly.
@@ -991,23 +1005,14 @@ class InteractiveMode:
         try:
             filename = _with_default_extension(filename)
 
-            with open(filename, 'r') as f:
-                program_text = f.read()
-
-            # Save variables based on CHAIN options:
+            # Save variables based on CHAIN options (measured on the binary):
             # - ALL: passes all variables to the chained program
-            # - MERGE: merges program lines (overlays code) - NOTE: Currently also passes all vars
-            # - Neither: passes only COMMON variables (resolves type suffixes if needed)
-            #
-            # KNOWN LIMITATION: In MBASIC 5.21, MERGE and ALL are orthogonal options:
-            # - MERGE (without ALL) should only merge lines, keeping existing variables
-            # - ALL should pass all variables, replacing the program entirely
-            # Current implementation: Both MERGE and ALL result in passing all variables.
-            # TODO (Future): Separate line merging (MERGE) from variable passing (ALL).
-            # For now, MERGE provides program overlay but also passes all variables.
+            # - Neither: passes only COMMON variables (resolves type suffixes
+            #   if needed). This holds for CHAIN MERGE too: without ALL the
+            #   merged program starts with cleared variables.
             saved_variables = None
             if self.program_runtime:
-                if all_flag or merge:
+                if all_flag:
                     # Save all variables
                     saved_variables = self.program_runtime.get_all_variables()
                 elif self.program_runtime.common_vars:
@@ -1024,70 +1029,51 @@ class InteractiveMode:
                                 break
                         # Skip uninitialized variables
 
-            # Load or merge program
-            if merge:
-                # MERGE mode - keep existing lines
-                for line in program_text.split('\n'):
-                    line = line.strip()
-                    if not line:
-                        continue
+            # MBASIC opens the file first: a missing file leaves the old
+            # program untouched (the error is trappable by ON ERROR).
+            open(filename, 'r').close()
 
-                    # Sanitize input: clear parity bits and filter control characters
-                    line, _ = sanitize_and_clear_parity(line)
-                    line = normalize_line_number(line)
-
-                    match = re.match(r'^(\d+)(?=.)', line)
-                    if match:
-                        line_num = int(match.group(1))
-                        line_ast = self.parse_single_line(line)
-                        if line_ast:
-                            self.lines[line_num] = line
-                            self.line_asts[line_num] = line_ast
-            else:
-                # Normal mode - clear and load
-                self.lines.clear()
-                self.line_asts.clear()
-
-                for line in program_text.split('\n'):
-                    line = line.strip()
-                    if not line:
-                        continue
-
-                    # Sanitize input: clear parity bits and filter control characters
-                    line, _ = sanitize_and_clear_parity(line)
-                    line = normalize_line_number(line)
-
-                    match = re.match(r'^(\d+)(?=.)', line)
-                    if match:
-                        line_num = int(match.group(1))
-                        line_ast = self.parse_single_line(line)
-                        if line_ast:
-                            self.lines[line_num] = line
-                            self.line_asts[line_num] = line_ast
-
-            # Handle DELETE range if specified
+            # DELETE range: MBASIC deletes these lines of the old program
+            # before it merges the file (even the CHAIN line itself). It is an
+            # Illegal function call, with nothing deleted, when the first or the
+            # last line of the range does not exist.
             if delete_range and merge:
-                # delete_range is a tuple of (start_expr, end_expr)
-                # We need to evaluate them if they're expressions
                 start_expr, end_expr = delete_range
-                # For now, assume they're NumberNodes - full implementation would evaluate
-                if hasattr(start_expr, 'value'):
-                    start_line_del = int(start_expr.value)
-                else:
-                    start_line_del = int(start_expr)
-
-                if hasattr(end_expr, 'value'):
-                    end_line_del = int(end_expr.value)
-                else:
-                    end_line_del = int(end_expr)
-
-                # Delete lines in range
-                lines_to_delete = [ln for ln in self.lines.keys()
-                                   if start_line_del <= ln <= end_line_del]
-                for ln in lines_to_delete:
+                start_line_del = int(getattr(start_expr, 'value', start_expr))
+                end_line_del = int(getattr(end_expr, 'value', end_expr))
+                if start_line_del not in self.lines or end_line_del not in self.lines:
+                    raise _ChainIllegalCall("Illegal function call")
+                for ln in [ln for ln in self.lines.keys()
+                           if start_line_del <= ln <= end_line_del]:
                     del self.lines[ln]
                     if ln in self.line_asts:
                         del self.line_asts[ln]
+
+            # Load or merge program with the loader LOAD and MERGE use, so that
+            # a bad file line stops the read as in MBASIC: a line over 255
+            # bytes, a line with no number, or a bare number of a missing line
+            # prints the bare message and the lines read so far stay.
+            if merge:
+                success, errors, _added, _replaced = self.program.merge_from_file(filename)
+            else:
+                success, errors = self.program.load_from_file(filename)
+            for notice in self.program.take_notices():
+                print(notice)           # "Overflow", as for LOAD
+            if self.program.read_abort is not None:
+                if self.program_runtime:
+                    for line_num, line_ast in self.program.line_asts.items():
+                        self.program_runtime.statement_table.replace_line(line_num, line_ast)
+                self._report_read_abort(True)
+                return True  # the read was aborted: the program stops
+            for _line_num, error in errors:
+                print(error)
+
+            # A starting line that the new program does not have is an
+            # error that MBASIC prints bare, after it loaded the program.
+            if start_line is not None and start_line not in self.line_asts:
+                print(format_error_message(UNDEFINED_LINE_NUMBER))
+                self.cont_invalid = True
+                return True
 
             # CHAIN: Reuse existing runtime/interpreter to preserve UI references
             # Clear execution state (GOSUB stack, FOR loops, etc.) but keep variables based on options
@@ -1108,9 +1094,9 @@ class InteractiveMode:
                     # Keep the existing common_vars list
                     pass
 
-                # Set starting line if specified
-                if start_line:
-                    runtime.next_line = start_line
+                # Set starting line if specified (applied by Interpreter.start)
+                if start_line is not None:
+                    runtime.chain_start_line = start_line
 
                 # Raise ChainException to signal run() loop to restart with new program
                 # This avoids recursive run() calls
@@ -1134,9 +1120,9 @@ class InteractiveMode:
                 self.program_runtime = runtime
                 self.program_interpreter = interpreter
 
-                # Set starting line if specified
-                if start_line:
-                    runtime.next_line = start_line
+                # Set starting line if specified (applied by Interpreter.start)
+                if start_line is not None:
+                    runtime.chain_start_line = start_line
 
                 # Run the program (only for first-time from command line)
                 interpreter.run()
@@ -1144,7 +1130,7 @@ class InteractiveMode:
         except FileNotFoundError:
             # See cmd_merge: printing let the program run on past a failed CHAIN.
             raise RuntimeError(f"File not found: {filename}") from None
-        except ChainException:
+        except (ChainException, _ChainIllegalCall):
             # Re-raise ChainException so it can be caught by interpreter.run() loop
             raise
         except Exception as e:

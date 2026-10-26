@@ -106,6 +106,7 @@ class Runtime:
 
         # Execution control - NEW PC-based design
         self.pc = PC.halted()      # Current program counter (line, stmt_offset)
+        self.chain_start_line = None   # CHAIN ...,line: Interpreter.start begins there
         self.npc = None               # Next program counter (set by GOTO/GOSUB/etc., None = sequential)
         self.statement_table = StatementTable()  # Ordered collection of statements indexed by PC
 

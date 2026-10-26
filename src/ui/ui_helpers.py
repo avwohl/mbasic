@@ -1607,3 +1607,73 @@ def serialize_program(line_asts: Dict[int, 'LineNode']) -> Dict[int, str]:
         line_node = line_asts[line_num]
         result[line_num] = serialize_line(line_node)
     return result
+
+
+def chain_into_program(backend, program, filename, start_line, merge, all_flag,
+                       delete_range, output, refresh):
+    """CHAIN [MERGE] for the Tk and curses backends, which run a program by ticks.
+
+    Loads (or merges) the file with the loader LOAD and MERGE use, then starts
+    the new program with backend.cmd_run, as RUN "file" does.  Measured on
+    MBASIC 5.21:
+    - the file is opened first, so a missing file changes nothing (File not
+      found, trappable by ON ERROR);
+    - DELETE first-last removes the old lines before the merge, and is an
+      Illegal function call, with nothing deleted, when the first or the last
+      line is missing;
+    - variables pass on with ALL; otherwise only the COMMON ones, also for MERGE;
+    - a bad file line prints its bare message and stops the program (returns True);
+    - a start line that the new program lacks prints Undefined line number.
+
+    output(text) shows a line; refresh() redraws the editor.  Returns True when
+    the running program must stop.
+    """
+    from src.error_codes import format_error_message, UNDEFINED_LINE_NUMBER
+
+    import os
+    filename = filename.strip().strip('"').strip("'")
+    if '.' not in os.path.basename(filename):
+        filename += '.bas'              # MBASIC supplies .BAS
+    try:
+        with open(filename, 'r'):
+            pass
+    except FileNotFoundError:
+        # Raised rather than printed so that ON ERROR traps it and a running
+        # program stops, as for LOAD and MERGE.
+        raise RuntimeError(f"File not found: {filename}") from None
+
+    first = last = None
+    if delete_range and merge:
+        first, last = (int(getattr(e, 'value', e)) for e in delete_range)
+        if first not in program.lines or last not in program.lines:
+            raise ValueError("Illegal function call")
+
+    runtime = backend.runtime
+    saved = runtime.get_all_variables()
+    if not all_flag:
+        common = {name.lower() for name in runtime.common_vars}
+        saved = [v for v in saved if v['name'].lower() in common]
+    if first is not None:
+        program.delete_range(first, last)
+
+    if merge:
+        _success, errors, _added, _replaced = program.merge_from_file(filename)
+    else:
+        _success, errors = program.load_from_file(filename)
+    for notice in program.take_notices():
+        output(notice)
+    if program.read_abort is not None:
+        refresh()
+        output(program.read_abort[1])
+        return True
+    for _line_num, error in errors:
+        output(error)
+    refresh()
+    if start_line is not None and start_line not in program.line_asts:
+        output(format_error_message(UNDEFINED_LINE_NUMBER))
+        return True
+
+    backend.cmd_run(start_line)
+    if saved:
+        runtime.update_variables(saved)
+    return None

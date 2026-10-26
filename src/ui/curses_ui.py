@@ -4201,7 +4201,7 @@ class CursesBackend(UIBackend):
                 # MBASIC stops reading at a bad line and keeps what it read
                 self.output_buffer.append(self.program.read_abort[1])
                 self._update_output()
-                return
+                return True  # the read was aborted: a running program stops
 
             # Runtime will be reset when user actually runs the program
 
@@ -4605,8 +4605,9 @@ class CursesBackend(UIBackend):
         self._new_program()
 
     def cmd_load(self, filename, from_program=False):
-        """Execute LOAD command."""
-        self._load_program_file(filename, from_program=from_program)
+        """Execute LOAD command. Returns True when the read was aborted, so
+        that a running program stops (as in the CLI)."""
+        return self._load_program_file(filename, from_program=from_program)
 
     def cmd_save(self, filename):
         """Execute SAVE command."""
@@ -4670,7 +4671,8 @@ class CursesBackend(UIBackend):
         """Execute MERGE command using ProgramManager.
 
         quiet suppresses the summary, which a MERGE inside a running program
-        asks for - the real binary prints nothing there.
+        asks for - the real binary prints nothing there.  Returns True when the
+        read was aborted, so that a running program stops (as in the CLI).
         """
         try:
             if not filename:
@@ -4682,6 +4684,12 @@ class CursesBackend(UIBackend):
             for notice in self.program.take_notices():
                 self._append_to_output(notice)      # "Overflow" for a literal such as 1E39
 
+            if self.program.read_abort is not None:
+                # MBASIC stops reading at a bad line and keeps what it merged
+                self._refresh_editor()
+                self._append_to_output(self.program.read_abort[1])
+                return True
+
             # Show parse errors if any. Each is already worded "Syntax error in
             # <line>: <detail>" by ProgramManager, so adding that prefix here
             # said it twice.
@@ -4691,7 +4699,7 @@ class CursesBackend(UIBackend):
 
             if success:
                 self._refresh_editor()
-                if not quiet and self.program.read_abort is None:
+                if not quiet:
                     self._append_to_output(f"Merged from {filename}")
                     self._append_to_output(
                         f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
@@ -4702,6 +4710,17 @@ class CursesBackend(UIBackend):
             self._append_to_output(format_error_message(FILE_NOT_FOUND))
         except Exception as e:
             self._append_to_output(message_for(e))
+
+    def cmd_chain(self, filename, start_line=None, merge=False, all_flag=False,
+                  delete_range=None):
+        """CHAIN [MERGE] file$ [,[line] [,ALL] [,DELETE range]]: load the file, then
+        run it.  Returns True when a bad file line aborted the read, so that the
+        running program stops (see chain_into_program)."""
+        from src.ui.ui_helpers import chain_into_program
+        return chain_into_program(
+            self, self.program, filename, start_line, merge, all_flag,
+            delete_range, self._append_to_output,
+            self._refresh_editor)
 
     def cmd_files(self, filespec=""):
         """Execute FILES command using ui_helpers."""

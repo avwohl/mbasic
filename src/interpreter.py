@@ -492,6 +492,11 @@ class Interpreter:
 
             # Initialize state
             self.state = InterpreterState(_interpreter=self)
+            # CHAIN with a starting line: begin there instead of at the first line
+            chain_start = getattr(self.runtime, 'chain_start_line', None)
+            if chain_start is not None:
+                self.runtime.chain_start_line = None
+                self.runtime.pc = PC.from_line(chain_start)
             # PC is already set to running state by setup(), no need to set halted flag
             self.state.is_first_line = True
 
@@ -3045,13 +3050,14 @@ class Interpreter:
 
         # Delegate to interactive mode if available
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            self.interactive_mode.cmd_chain(
+            if self.interactive_mode.cmd_chain(
                 filename,
                 start_line=start_line,
                 merge=stmt.merge,
                 all_flag=stmt.all_flag,
                 delete_range=stmt.delete_range
-            )
+            ):
+                self._stop_after_read_abort()
         else:
             raise RuntimeError("CHAIN not available in this context")
 

@@ -61,6 +61,34 @@ the same. `RUN "file"` of a file with a bad line stops after the message and
 does not run. The Tk and curses UIs print the same
 message. The web UI loads files through the editor and does not use the loader.
 
+`CHAIN` and `CHAIN MERGE` use the same loader (`cmd_chain` in
+`src/interactive.py`), so they follow the same rules. Measured: after the bad
+line the program stops with the bare message. `CHAIN` leaves the lines read
+before the bad line (an empty program for a bad first line). `CHAIN MERGE`
+keeps the old program and the lines merged before the bad line. Before this,
+`cmd_chain` read the file with its own loop and ignored the bad lines, and
+`CHAIN MERGE` of a bare number of a missing line looped for ever. The curses
+and Tk `cmd_load` and `cmd_merge` now return True after a read abort, so a
+running program stops there too. Tests:
+`tests/regression/integration/test_chain_file_errors.py`. The curses and Tk UIs
+now have a `cmd_chain` (`chain_into_program` in `src/ui/ui_helpers.py`); it
+loads the file and starts the program with `cmd_run`, as `RUN "file"` does.
+
+After a read abort in the CLI (`LOAD`, `MERGE`, `CHAIN`, `CHAIN MERGE`) the
+variables, arrays and FOR/GOSUB state are cleared and `CONT` gives
+`Can't continue` (measured). `CHAIN` with a start line now begins at that line;
+a start line that the new program lacks prints a bare `Undefined line number`.
+`CHAIN MERGE` with `DELETE a-b` now parses the range (before, `100-110` was read
+as the number -10 and the range was lost, so the merge looped for ever) and
+deletes those lines from the old program before the merge, even the CHAIN line.
+The file is opened first: a missing file deletes nothing. A missing first or
+last line of the range is `Illegal function call` at the CHAIN line, with
+nothing deleted. `CHAIN MERGE` without `ALL` clears the variables (only COMMON
+variables pass on), as `CHAIN` does. The web UI uses the same order and rules.
+`DELETE a-` (open range) is `Illegal function call` on the binary; ours is a
+syntax error. The curses, Tk and web read-abort paths do not clear the
+variables yet.
+
 A floating-point overflow is now reported. The binary prints a bare `Overflow`
 (no line number, no `Ok`). It substitutes machine infinity with the sign of the
 true result, and the program goes on. With `ON ERROR` armed it is ERR 6.
