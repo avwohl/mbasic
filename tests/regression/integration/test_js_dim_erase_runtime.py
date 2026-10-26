@@ -64,6 +64,13 @@ CASES = {
         '50 DIM A(2,2):A(1,1)=4:PRINT A(1,1)\n60 CLEAR:DIM A(5):PRINT A(5)\n70 SYSTEM\n'
         '100 PRINT ERR;ERL:RESUME NEXT\n',
         " 0  0 \n 10  50 \n 9  50 \n 9  50 \n 0 \n"),
+    # arrays named B and N: the JS parameters of the run-time DIM must not hide the array (measured on the binary)
+    "arrays_named_b_and_n": (
+        '10 N=3:DIM B(N)\n20 B(1)=4:PRINT B(1)\n30 DIM B$(N):B$(2)="x":PRINT B$(2)\n'
+        '40 ERASE B:DIM B(2):PRINT B(1)\n50 M=3:DIM N(M):N(2)=7:PRINT N(2)\n'
+        '60 ERASE N:DIM N(M):N(1)=2:PRINT N(1);N(2)\n70 IF 1 THEN DIM Z(2)\n'
+        '80 Z(1)=1:PRINT Z(1):SYSTEM\n',
+        " 4 \nx\n 0 \n 7 \n 2  0 \n 1 \n"),
 }
 
 

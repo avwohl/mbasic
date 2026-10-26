@@ -1505,20 +1505,20 @@ class JavaScriptBackend(CodeGenBackend):
         for each of its subscripts; a use with another number than the array has is Subscript
         out of range.
         """
-        lo = 'b.some(d => d < 1)' if self.option_base else 'false'
+        lo = '_b.some(d => d < 1)' if self.option_base else 'false'
         return [
-            f'function _dm_{js_name}(b) {{  // DIM: the bounds are checked, then the array is made',
+            f'function _dm_{js_name}(_b) {{  // DIM: the bounds are checked, then the array is made',
             f'    if ({lo}) _error("Subscript out of range");',
             f'    if (_bd_{js_name} !== null) _error("Duplicate Definition");',
-            f'    if (b.reduce((p, d) => p * (d + 1), 1) > 16000000) _error("Out of memory");',
-            f'    _bd_{js_name} = b;',
-            f'    {js_name} = _mkarr(b, {init_value});',
+            f'    if (_b.reduce((p, d) => p * (d + 1), 1) > 16000000) _error("Out of memory");',
+            f'    _bd_{js_name} = _b;',
+            f'    {js_name} = _mkarr(_b, {init_value});',
             '}',
-            f'function _ar_{js_name}(n) {{',
+            f'function _ar_{js_name}(_n) {{',
             f'    if (_bd_{js_name} === null) {{',
-            f'        _bd_{js_name} = new Array(n).fill(10);',
+            f'        _bd_{js_name} = new Array(_n).fill(10);',
             f'        {js_name} = _mkarr(_bd_{js_name}, {init_value});',
-            f'    }} else if (_bd_{js_name}.length !== n) _error("Subscript out of range");',
+            f'    }} else if (_bd_{js_name}.length !== _n) _error("Subscript out of range");',
             f'    return {js_name};',
             '}',
         ]
@@ -2792,7 +2792,8 @@ class JavaScriptBackend(CodeGenBackend):
                 if var_name.upper() in self.fixed_dims:
                     code.append(self.indent() + f'let _dm_{js_name} = false;  // set by the DIM: a second run is Duplicate Definition')
                 if var_name.upper() in self.varying_rank:
-                    code.append(self.indent() + 'function _mkarr(b, v, k = 0) { return k === b.length - 1 ? new Array(b[k] + 1).fill(v) : Array.from({length: b[k] + 1}, () => _mkarr(b, v, k + 1)); }')
+                    if not any('function _mkarr' in c for c in code):
+                        code.append(self.indent() + 'function _mkarr(b, v, k = 0) { return k === b.length - 1 ? new Array(b[k] + 1).fill(v) : Array.from({length: b[k] + 1}, () => _mkarr(b, v, k + 1)); }')
                     code.extend(self.indent() + line for line in self._array_helper(js_name, init_value))
             else:
                 # Regular variable
