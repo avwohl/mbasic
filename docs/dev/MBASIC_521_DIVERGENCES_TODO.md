@@ -186,6 +186,21 @@ JavaScript backend: `DIM A(-1)` stays a compilation error, and the bounds of a
 LEN` and file numbers do not have the checks. A double is not taken to
 single precision before FRCINT rounds it, except in the logical operators.
 
+Round 2 of the JavaScript backend: `READ` and `SWAP` with array elements use
+the subscripts and the bounds check (before, they assigned the whole array).
+`OPTION BASE 1` is used by the bounds check. An array used with the wrong
+number of subscripts is `Subscript out of range`, in JavaScript and in the
+interpreter. The interpreter now checks the second and later dimensions
+against their own bound (`A(2,6)` on `DIM A(5,5)`). `RESUME` with no error
+is `RESUME without error`, and a handler that falls off the end reports `No
+RESUME in <last line>`. `ON ERROR GOTO 0` in a handler reports the line of
+the first error. `ERASE` empties the array in JavaScript. `INSTR` gives 0 for
+an empty string and for a start beyond the end, also with an empty search
+string (interpreter and JavaScript). `MID$(A$,2,3)=A$` copies byte by byte over
+itself, so `hello` gives `hhhho`. Not done: `ERASE A` followed by `DIM A` is
+still a compile error (the array cannot be resized), and the target shared
+through `B$=A$` does not give the byte-by-byte copy.
+
 Still open: the arguments of `CLEAR`, `USR`, `LPOS` and `WIDTH 0`; the maximum number of
 files (`CLOSE #4` is `Bad file number` on the binary with the default 3
 files); the two-argument form `MID$(A$,2)=X$`, which the parser rejects; and

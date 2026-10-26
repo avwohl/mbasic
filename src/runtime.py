@@ -957,7 +957,8 @@ class Runtime:
             base: Array base (0 or 1)
         """
         if len(subscripts) != len(dims):
-            raise RuntimeError(f"Wrong number of subscripts: got {len(subscripts)}, expected {len(dims)}")
+            # The binary reports a wrong number of subscripts as Subscript out of range
+            raise RuntimeError(f"Array subscript out of range: wrong number of subscripts, got {len(subscripts)}, expected {len(dims)}")
 
         index = 0
         multiplier = 1
@@ -965,6 +966,9 @@ class Runtime:
         # Calculate index (row-major order)
         for i in range(len(dims) - 1, -1, -1):
             # Adjust subscript by base
+            # Each subscript is checked against its own bound, not only the flat index
+            if subscripts[i] > dims[i] or subscripts[i] < base:
+                raise RuntimeError(f"Array subscript out of range: {subscripts}")
             adjusted_subscript = subscripts[i] - base
             index += adjusted_subscript * multiplier
 

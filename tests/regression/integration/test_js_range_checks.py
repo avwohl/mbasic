@@ -214,6 +214,45 @@ HANDLER_CASES = [
      " 11  20  1 \n 8  110  2 \n 8  110  3 \n 8  110  4 \n 8  110  5 \n"),
 ]
 
+# Round 2, all measured on the binary and run on the interpreter and in JavaScript: READ and SWAP
+# with array elements, OPTION BASE 1, the wrong number of subscripts, a second dimension above its
+# own bound, RESUME with no error, ON ERROR GOTO 0 in a handler (the original line is reported),
+# ERASE, INSTR with a start beyond the string, MID$ with the target as the value.
+BOTH_CASES = [
+    ("swap elements",
+     "10 DIM A(2,3)\n80 A(1,1)=4:A(2,2)=8:SWAP A(1,1),A(2,2):PRINT A(1,1);A(2,2)\n110 ON ERROR GOTO 200\n"
+     "120 SWAP A(1,1),A(5,5)\n130 SYSTEM\n200 PRINT ERR;ERL:SYSTEM\n",
+     " 8  4 \n 9  120 \n"),
+    ("read elements",
+     "10 DIM A(2,3)\n30 DATA 1,2,3,4,5,6\n40 FOR I=1 TO 2:FOR J=1 TO 3:READ A(I,J):NEXT:NEXT\n"
+     "50 PRINT A(2,3);A(1,1)\n60 DATA 9\n70 DIM B(3)\n80 READ B(4)\n",
+     " 6  1 \nSubscript out of range in 80\n"),
+    ("option base 1",
+     "10 OPTION BASE 1\n20 DIM A(2,3)\n30 A(2,3)=5\n40 PRINT A(2,3)\n50 ON ERROR GOTO 100\n"
+     "60 PRINT A(0,1)\n70 SYSTEM\n100 PRINT ERR;ERL:RESUME NEXT\n",
+     " 5 \n 9  60 \n"),
+    ("too many subscripts", "10 DIM A(3)\n20 PRINT A(1,1)\n", "Subscript out of range in 20\n"),
+    ("too few subscripts", "10 DIM A(3,3)\n20 PRINT A(1)\n", "Subscript out of range in 20\n"),
+    ("second dimension above its bound",
+     "10 DIM A(5,5)\n20 A(2,3)=7\n30 PRINT A(2,3);A(3,2)\n40 A(2,6)=1\n",
+     " 7  0 \nSubscript out of range in 40\n"),
+    ("second dimension smaller than the first", "10 DIM A(3,2)\n20 PRINT A(2,3)\n",
+     "Subscript out of range in 20\n"),
+    ("resume without error", "10 RESUME\n", "RESUME without error in 10\n"),
+    ("resume in a handler that falls off the end", '10 ON ERROR GOTO 100\n20 RESUME\n100 PRINT "q"\n',
+     "q\nNo RESUME in 100\n"),
+    ("on error goto 0 in a handler",
+     "10 ON ERROR GOTO 100\n20 X=1/0\n30 END\n100 PRINT ERR;ERL\n110 ON ERROR GOTO 0\n120 X=1/0\n",
+     " 11  20 \nDivision by zero in 20\n"),
+    ("erase empties the array", "10 DIM A(3)\n20 A(1)=1\n30 ERASE A\n40 PRINT A(1)\n", " 0 \n"),
+    ("instr start beyond the string",
+     '10 PRINT INSTR(3,"abc","");INSTR(4,"abc","");INSTR(1,"","");INSTR(2,"","");INSTR("","");'
+     'INSTR(4,"abc","c");INSTR("abc","")\n',
+     " 3  0  0  0  0  0  1 \n"),
+    ("mid assignment from itself", '10 A$="hello"\n20 MID$(A$,2,3)=A$\n30 PRINT A$\n40 B$="abcdef"\n'
+     '50 MID$(B$,2,3)=B$\n60 PRINT B$\n', "hhhho\naaaaef\n"),
+]
+
 
 def compile_js(tmp_path, source):
     basic = tmp_path / "prog.bas"
@@ -254,6 +293,16 @@ def test_handler_cases_js(tmp_path, name, source, expected):
 
 @pytest.mark.parametrize("name,source,expected", HANDLER_CASES, ids=[c[0] for c in HANDLER_CASES])
 def test_handler_cases_interpreter(tmp_path, name, source, expected):
+    assert run_interpreter(tmp_path, source) == expected
+
+
+@pytest.mark.parametrize("name,source,expected", BOTH_CASES, ids=[c[0] for c in BOTH_CASES])
+def test_round2_cases_js(tmp_path, name, source, expected):
+    assert run_js(tmp_path, source) == expected
+
+
+@pytest.mark.parametrize("name,source,expected", BOTH_CASES, ids=[c[0] for c in BOTH_CASES])
+def test_round2_cases_interpreter(tmp_path, name, source, expected):
     assert run_interpreter(tmp_path, source) == expected
 
 

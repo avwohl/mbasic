@@ -3720,6 +3720,17 @@ class Interpreter:
         suffix = current_value[start_idx + chars_to_replace:]
 
         modified_value = prefix + replacement + suffix
+        value_node = stmt.value
+        if (isinstance(stmt.string_var, ast_nodes.VariableNode) and isinstance(value_node, ast_nodes.VariableNode)
+                and not stmt.string_var.subscripts and not value_node.subscripts
+                and (stmt.string_var.name.lower(), stmt.string_var.type_suffix)
+                == (value_node.name.lower(), value_node.type_suffix)):
+            # The value is the target itself: the binary copies byte by byte, forward,
+            # over the same buffer, so the first characters repeat (hello gives hhhho)
+            buf = list(current_value)
+            for i in range(chars_to_replace):
+                buf[start_idx + i] = buf[i]
+            modified_value = ''.join(buf)
 
         # Assign the modified string back to the variable
         # Handle both simple variables and array elements

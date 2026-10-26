@@ -62,10 +62,10 @@ CASES = {
         '10 ON ERROR GOTO 100\n20 PRINT "A"\n30 ERROR 5\n40 PRINT "not here"\n50 END\n'
         '100 PRINT "H";ERR;ERL\n110 ON ERROR GOTO 0\n120 PRINT "after"\n130 END\n',
         "A\nH 5  30 \nIllegal function call in 30\n", "after",
-        "A\nH 5  30 \nIllegal function call in 110\n"),
+        "A\nH 5  30 \nIllegal function call in 30\n"),
     "goto0_in_handler_division": (
         '10 ON ERROR GOTO 100\n20 X=1/0\n30 END\n100 ON ERROR GOTO 0\n110 PRINT "after"\n',
-        "Division by zero in 20\n", "after", "Division by zero in 100\n"),
+        "Division by zero in 20\n", "after", "Division by zero in 20\n"),
     # #45: the line is looked up when ON ERROR runs
     "missing_handler_line": (
         '10 PRINT "start"\n20 ON ERROR GOTO 999\n30 PRINT "after on error"\n40 END\n',
@@ -79,10 +79,10 @@ CASES = {
     "off_the_end": (
         '10 ON ERROR GOTO 100\n20 PRINT "A"\n30 ERROR 5\n40 END\n100 PRINT "H"\n110 PRINT ERR;ERL\n',
         "A\nH\n 5  30 \nNo RESUME in 110\n", "Illegal function call",
-        "A\nH\n 5  30 \nNo RESUME\n"),
+        "A\nH\n 5  30 \nNo RESUME in 110\n"),
     "off_the_end_division": (
         '10 ON ERROR GOTO 100\n20 X=1/0\n30 END\n100 PRINT "H"\n',
-        "H\nNo RESUME in 100\n", "Division by zero", "H\nNo RESUME\n"),
+        "H\nNo RESUME in 100\n", "Division by zero", "H\nNo RESUME in 100\n"),
     # a GOTO out of a handler does not end the handler: the next error is fatal
     "goto_out_then_error": (
         '10 ON ERROR GOTO 100\n20 ERROR 5\n30 ERROR 9\n40 END\n100 PRINT "H";ERR\n110 GOTO 30\n',

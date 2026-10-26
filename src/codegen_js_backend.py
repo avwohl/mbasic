@@ -218,11 +218,12 @@ function _conint(n) {
     return n;
 }
 // An array subscript: FRCINT, then not negative (Illegal function call), then not above the bound.
-function _ix(i, bound) {
-    if (i >= 0 && i <= bound && i === Math.floor(i)) return i;  // the usual case
+function _ix(i, bound, lo) {
+    lo = lo || 0;  // 1 under OPTION BASE 1
+    if (i >= lo && i <= bound && i === Math.floor(i)) return i;  // the usual case
     i = _ci(i);
     if (i < 0) _error("Illegal function call");
-    if (i > bound) _error("Subscript out of range");
+    if (i > bound || i < lo) _error("Subscript out of range");
     return i;
 }
 // ERROR n: n is a byte, and 0 is not an error number.
@@ -871,6 +872,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.uses_write = False
         self.uses_lprint = False
         self.uses_gosub = False
+        self.option_base = 0  # OPTION BASE 0 or 1
         self.uses_data = False
         self.uses_random = False
         self.array_ranks: Dict[str, int] = {}  # arrays used without DIM: the most subscripts seen
@@ -1092,7 +1094,9 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '}')  # End while
         if self.uses_error_handling:
             # Ran off the end of the program inside a handler (END returns above)
-            code.append(self.indent() + 'if (_in_error_handler) _error("No RESUME");')
+            # reported at the last line, the last one that ran
+            last_line = max(line.line_number for line in program.lines) if program.lines else 0
+            code.append(self.indent() + f'if (_in_error_handler) {{ try {{ _error("No RESUME"); }} catch (e) {{ e.basicLine = {last_line}; throw e; }} }}')
 
         self.indent_level -= 1
         code.append(self.indent() + '}')  # End main() or _run()
@@ -1321,6 +1325,8 @@ class JavaScriptBackend(CodeGenBackend):
                 elif isinstance(stmt, (GosubStatementNode, OnGosubStatementNode, ReturnStatementNode)):
                     # A RETURN with no GOSUB in the program still needs the stack to say "RETURN without GOSUB"
                     self.uses_gosub = True
+                elif isinstance(stmt, OptionBaseStatementNode):
+                    self.option_base = stmt.base
                 elif isinstance(stmt, RandomizeStatementNode):
                     self.uses_random = True  # RANDOMIZE calls _rnd
                 elif isinstance(stmt, ReadStatementNode):
@@ -1567,7 +1573,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'return s.substring(start - 1, start - 1 + _conint(len));')
         self.indent_level -= 1
         code.append(self.indent() + '}')
-        code.append(self.indent() + 'function _mid_assign(cur, start, val, len) {')
+        code.append(self.indent() + 'function _mid_assign(cur, start, val, len, same) {')
         code.append(self.indent() + '    // MID$(cur, start, len) = val')
         code.append(self.indent() + '    cur = String(cur);')
         code.append(self.indent() + '    start = _conint(start);')
@@ -1579,6 +1585,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '    if (len === 0 || (!given && val === "")) return cur;')
         code.append(self.indent() + '    if (start > cur.length) _error("Illegal function call");')
         code.append(self.indent() + '    const n = Math.min(len, val.length, cur.length - (start - 1));')
+        code.append(self.indent() + '    if (same) { const b = cur.split(""); for (let i = 0; i < n; i++) b[start - 1 + i] = b[i]; return b.join(""); }  // MID$(A$,..)=A$ copies forward over itself')
         code.append(self.indent() + '    return cur.substring(0, start - 1) + val.substring(0, n) + cur.substring(start - 1 + n);')
         code.append(self.indent() + '}')
         code.append(self.indent() + 'function _len(str) { return String(str).length; }')
@@ -1598,6 +1605,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '}')
         code.append(self.indent() + 'start = _conint(start);')
         code.append(self.indent() + 'if (start === 0) _error("Illegal function call");')
+        code.append(self.indent() + 'if (start > String(str1).length) return 0;  // also for an empty search string')
         code.append(self.indent() + 'const pos = String(str1).indexOf(String(str2), start - 1);')
         code.append(self.indent() + 'return pos === -1 ? 0 : pos + 1;')
         self.indent_level -= 1
@@ -3354,9 +3362,13 @@ class JavaScriptBackend(CodeGenBackend):
         info = self.symbols.variables.get(var_key.upper())
         dims = (info.dimensions if info is not None and info.dimensions else None) or []
         access = self._mangle_var_name(var_key)
+        lo = f', {self.option_base}' if self.option_base else ''
+        if len(subscripts) != len(dims or [10] * self.array_ranks.get(var_key.upper(), 1)):
+            # The wrong number of subscripts is Subscript out of range
+            return f'{access}[_ix(0, -1)]'
         for k, idx_expr in enumerate(subscripts):
             bound = dims[k] if k < len(dims) else 10
-            access = f'{access}[_ix({self._generate_expression(idx_expr)}, {bound})]'
+            access = f'{access}[_ix({self._generate_expression(idx_expr)}, {bound}{lo})]'
         return access
 
     def _generate_line_input(self, stmt: LineInputStatementNode) -> List[str]:
@@ -3462,8 +3474,7 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate READ statement"""
         code = []
         for var in stmt.variables:
-            var_name = self._mangle_var_name(var.name + (var.type_suffix or ''))
-            code.append(self.indent() + f'{var_name} = _read();')
+            code.append(self.indent() + f'{self._input_lvalue(var)} = _read();')
         return code
 
     def _generate_restore(self, stmt: RestoreStatementNode) -> List[str]:
@@ -3495,8 +3506,8 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_swap(self, stmt: SwapStatementNode) -> List[str]:
         """Generate SWAP statement - swaps two variables"""
         code = []
-        var1_name = self._mangle_var_name(stmt.var1.name + (stmt.var1.type_suffix or ''))
-        var2_name = self._mangle_var_name(stmt.var2.name + (stmt.var2.type_suffix or ''))
+        var1_name = self._input_lvalue(stmt.var1)
+        var2_name = self._input_lvalue(stmt.var2)
 
         # Use destructuring assignment for clean swap
         code.append(self.indent() + f'[{var1_name}, {var2_name}] = [{var2_name}, {var1_name}];')
@@ -3515,11 +3526,13 @@ class JavaScriptBackend(CodeGenBackend):
         start_expr = self._generate_expression(stmt.start)
         length_expr = self._generate_expression(stmt.length) if stmt.length else 'undefined'
         value_expr = self._generate_expression(stmt.value)
+        same = 'true' if (isinstance(stmt.value, VariableNode) and not stmt.value.subscripts
+                          and not stmt.string_var.subscripts and value_expr == var_expr) else 'false'
 
         # The runtime function checks start and length like the MID$ function and replaces
         # min(length, len(value), what is left of the string) characters. The order of the
         # arguments is the order the interpreter evaluates them.
-        code.append(self.indent() + f'{var_expr} = _mid_assign({var_expr}, {start_expr}, {value_expr}, {length_expr});')
+        code.append(self.indent() + f'{var_expr} = _mid_assign({var_expr}, {start_expr}, {value_expr}, {length_expr}, {same});')
 
         return code
 
@@ -3528,10 +3541,14 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
         for array_name in stmt.array_names:
             # Look up the array in the symbol table to get its type and dimensions
-            var_info = self.symbols.variables.get(array_name)
+            # The symbol table keys are upper case with a type suffix
+            key = array_name.upper()
+            if key[-1] not in '$%!#':
+                key += '!'
+            var_info = self.symbols.variables.get(key)
             if var_info and var_info.is_array:
-                js_name = self._mangle_var_name(array_name)
-                dimensions = var_info.dimensions or [10] * self.array_ranks.get(array_name.upper(), 1)
+                js_name = self._mangle_var_name(key)
+                dimensions = var_info.dimensions or [10] * self.array_ranks.get(key, 1)
 
                 # Determine default value based on type
                 if var_info.var_type == VarType.STRING:
@@ -3709,7 +3726,7 @@ class JavaScriptBackend(CodeGenBackend):
             # ON ERROR GOTO 0 - disable error handling
             code.append(self.indent() + '_error_handler = 0;')
             # Inside a handler it also raises the pending error again
-            code.append(self.indent() + 'if (_in_error_handler) _error(_ERR_MSGS[_error_code] || "Illegal function call");')
+            code.append(self.indent() + 'if (_in_error_handler) { try { _error(_ERR_MSGS[_error_code] || "Illegal function call"); } catch (e) { e.basicLine = _error_line; throw e; } }')
         elif stmt.line_number not in self.line_labels:
             # The binary looks the line up when the statement runs
             code.append(self.indent() + '_error("Undefined line number");')
@@ -3739,6 +3756,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_resume(self, stmt: ResumeStatementNode, current_line: int) -> List[str]:
         """Generate RESUME statement"""
         code = []
+        code.append(self.indent() + 'if (!_in_error_handler) _error("RESUME without error");')
         code.append(self.indent() + '_in_error_handler = false;')
 
         # ERR reads 0 after RESUME; ERL keeps the line number.
