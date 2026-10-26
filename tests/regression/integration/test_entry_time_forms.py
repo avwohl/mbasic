@@ -56,6 +56,44 @@ def test_data_keeps_bad_octal_text(tmp_path):
         assert text in out, (text, out)
 
 
+RAW_ITEMS = ["1 2", "1.5.5", "12abc", "1;2", "&H12G", "&O1E5", "(1)", "X+1",
+             "PRINT", "a b", "&OA", "&O1.5", "&HG", "AbC"]
+
+
+def test_data_items_are_raw_text(tmp_path):
+    # Measured on the binary: READ A$ gives each of these as typed (case kept,
+    # trailing spaces dropped), and DATA 1 2 etc. are stored without error.
+    out = run_cli(tmp_path, "RUN\nSYSTEM\n",
+                  program="10 DATA 1 2,1.5.5,12abc,1;2,&H12G,&O1E5,(1),X+1,PRINT,a b ,&OA,&O1.5,&HG,AbC\n"
+                          "20 FOR I=1 TO 14:READ A$:PRINT \"[\"A$\"]\":NEXT\n")
+    assert out.count("Syntax error") == 0, out
+    for item in RAW_ITEMS:
+        assert "[" + item + "]\n" in out, (item, out)
+
+
+def test_data_numbers_read_into_strings_as_typed(tmp_path):
+    # Measured: &O9|&O8|1|1.50|.5|&HFF|1E5|007|-3|abc
+    out = run_cli(tmp_path, "RUN\nSYSTEM\n",
+                  program="10 DATA &O9,&O8,1,1.50,.5,&HFF,1E5,007,-3,abc\n"
+                          "20 READ A$,B$,C$,D$,E$,F$,G$,H$,I$,J$\n"
+                          "30 PRINT A$;\"|\";B$;\"|\";C$;\"|\";D$;\"|\";E$;\"|\";F$;\"|\";G$;\"|\";H$;\"|\";I$;\"|\";J$\n")
+    assert "&O9|&O8|1|1.50|.5|&HFF|1E5|007|-3|abc\n" in out, out
+
+
+@pytest.mark.skipif(NODE is None, reason="node not installed")
+def test_js_data_numbers_read_into_strings_as_typed(tmp_path):
+    (tmp_path / "g.bas").write_text(
+        "10 DATA &O9,&O8,1,1.50,.5,&HFF,1E5,007,-3,abc\n"
+        "20 READ A$,B$,C$,D$,E$,F$,G$,H$,I$,J$\n"
+        "30 PRINT A$;\"|\";B$;\"|\";C$;\"|\";D$;\"|\";E$;\"|\";F$;\"|\";G$;\"|\";H$;\"|\";I$;\"|\";J$\n")
+    subprocess.run([sys.executable, str(ROOT / "mbasic"), str(tmp_path / "g.bas"),
+                    "--compile-js", str(tmp_path / "g.js")],
+                   check=True, capture_output=True, text=True, timeout=60)
+    result = subprocess.run([NODE, str(tmp_path / "g.js")], capture_output=True,
+                            text=True, timeout=60)
+    assert "&O9|&O8|1|1.50|.5|&HFF|1E5|007|-3|abc" in result.stdout, result.stdout + result.stderr
+
+
 def test_data_in_a_loaded_file(tmp_path):
     out = run_cli(tmp_path, "LIST\nSYSTEM\n", program="10 DATA &O9\n20 DATA A,&O19\n")
     assert "10 DATA &O9" in out and "20 DATA A,&O19" in out, out

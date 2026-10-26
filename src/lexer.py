@@ -8,6 +8,7 @@ with support for Extended BASIC features such as periods in identifiers (e.g., "
 Note: 'Based on' means implementation follows the MBASIC 5.21 specification for lexical analysis.
 All documented MBASIC 5.21 tokens and keywords are supported.
 """
+import re
 from typing import List, Optional
 from src.tokens import Token, TokenType, KEYWORDS
 from src.simple_keyword_case import SimpleKeywordCase
@@ -373,6 +374,63 @@ class Lexer:
         num_str += digits
         return Token(TokenType.NUMBER, 0, line, column, literal_text=num_str)
 
+    _DATA_NUMBER = re.compile(
+        r'[+-]?(?:(?:\d+\.?\d*|\.\d+)(?:[EeDd][+-]?\d+)?[%!#]?|&[Hh][0-9A-Fa-f]+|&[Oo]?[0-7]+)\Z')
+
+    def _read_data_items(self):
+        """DATA text is not crunched: split the rest of the statement into raw items.
+
+        An item that is a clean number goes through the number reader, so READ
+        into a number variable works.  Every other item is a string token with
+        the text as typed (case kept, trailing spaces dropped): READ A$ on the
+        binary gives 1 2, 12abc, &H12G, &O1E5, (1), X+1, PRINT and &OA as typed.
+        """
+        src = self.source
+        first = True
+        while True:
+            while self.current_char() in (' ', '\t'):
+                self.advance()
+            start = self.pos
+            line, col = self.line, self.column
+            ch = self.current_char()
+            if first and (ch is None or ch in ':\r\n'):
+                return                  # DATA with nothing after it
+            first = False
+            if ch == '"':
+                self.advance()
+                text = ''
+                while self.current_char() is not None and self.current_char() not in '"\r\n':
+                    text += self.advance()
+                if self.current_char() == '"':
+                    self.advance()
+                while self.current_char() is not None and self.current_char() not in ',:\r\n':
+                    self.advance()      # text after the closing quote is dropped
+                self.tokens.append(Token(TokenType.STRING, text, line, col))
+            else:
+                end = start
+                while end < len(src) and src[end] not in ',:\r\n':
+                    end += 1
+                item = src[start:end].rstrip(' \t')
+                if item and self._DATA_NUMBER.match(item):
+                    if item[0] in '+-':
+                        self.tokens.append(Token(TokenType.PLUS if item[0] == '+' else TokenType.MINUS,
+                                                 item[0], line, col))
+                        self.advance()
+                    self._token_start = self.pos
+                    self._token_line, self._token_column = self.line, self.column
+                    self.tokens.append(self.read_number())
+                    while self.pos < end:
+                        self.advance()
+                else:
+                    while self.pos < end:
+                        self.advance()
+                    self.tokens.append(Token(TokenType.STRING, item, line, col))
+            if self.current_char() == ',':
+                self.tokens.append(Token(TokenType.COMMA, ',', self.line, self.column))
+                self.advance()
+                continue
+            return
+
     def _in_data_statement(self) -> bool:
         """True when the tokens so far in this statement start with DATA (its text is kept raw)."""
         for tok in reversed(self.tokens):
@@ -613,6 +671,8 @@ class Lexer:
                     self.tokens.append(token)
                 else:
                     self.tokens.append(token)
+                    if token.type == TokenType.DATA:
+                        self._read_data_items()
                 at_line_start = False
                 continue
 

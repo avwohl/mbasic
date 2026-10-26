@@ -112,7 +112,13 @@ What is still different:
 - Done (#39, DATA): DATA text is not crunched, so a DATA line with `&O9`,
   `&O8` or `&O19` is stored, listed and loaded. `READ A$` gives a numeric DATA
   item as it was typed (`&H12345`, `&O999`, `1E39`, `1.50`). Outside DATA the
-  refusal stays. A signed item such as `+3` still reads as `3.0` into `A$`.
+  refusal stays. The lexer splits the rest of a DATA statement into raw items
+  (up to a comma or a colon). A clean number goes through the number reader;
+  every other item (`1 2`, `12abc`, `&OA`, `&H12G`, `X+1`, `(1)`, `PRINT`) is a
+  string with the case kept and the trailing spaces dropped, as on the binary.
+  An empty item is an empty string. A signed item such as `+3` reads as `+3`
+  into `A$`. The JavaScript compiler does the same. Not done: the binary gives
+  a Syntax error for text after a closing quote (`"q"x`); we drop that text.
   Test: `tests/regression/integration/test_entry_time_forms.py`.
 - Done: a line number stops at 6553. MBASIC takes no more digits once the value
   is 6553 or more, so `70000 PRINT 1` is line 7000 with the text `0 PRINT 1`,

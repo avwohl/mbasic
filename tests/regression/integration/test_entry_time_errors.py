@@ -248,10 +248,10 @@ def trapped(tmp_path, line):
 
 
 def test_data_text_is_kept_raw(tmp_path):
-    # Real MBASIC: DATA items such as NAME$ and LEN% are read back unchanged.
+    # Real MBASIC (re-measured): DATA text is raw, so NAME$ and LEN% keep their case.
     out = run_cli(tmp_path, "RUN\nSYSTEM\n",
                   source='20 DATA NAME$,LEN%,XYZ$\n40 READ A$,B$,C$:PRINT A$;B$;C$\n')
-    assert "name$len%xyz$" in out, out
+    assert "NAME$LEN%XYZ$" in out, out
 
 
 @pytest.mark.parametrize("line", ['10 NEXT%=1', '10 USR%=1', '10 A=LPOS%', '10 LET%=1',

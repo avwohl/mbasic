@@ -864,6 +864,7 @@ class JavaScriptBackend(CodeGenBackend):
         # DATA/READ/RESTORE support
         self.data_values: List[Any] = []
         self.data_types: List[str] = []  # 'number' or 'string'
+        self.data_texts: List[Optional[str]] = []  # number items: the text as typed (READ A$ gives it)
 
         # DEF FN functions
         self.def_fn_functions: List[DefFnStatementNode] = []
@@ -1113,6 +1114,17 @@ class JavaScriptBackend(CodeGenBackend):
                         elif isinstance(value, NumberNode):
                             self.data_values.append(value.value)
                             self.data_types.append('number')
+                            self.data_texts.append(value.literal if isinstance(value.literal, str) else None)
+                            continue
+                        elif (isinstance(value, UnaryOpNode) and isinstance(value.operand, NumberNode)
+                              and value.operator in (TokenType.MINUS, TokenType.PLUS)):
+                            sign = '-' if value.operator == TokenType.MINUS else '+'
+                            number = value.operand.value
+                            self.data_values.append(-number if sign == '-' else number)
+                            self.data_types.append('number')
+                            lit = value.operand.literal
+                            self.data_texts.append(sign + lit if isinstance(lit, str) else None)
+                            continue
                         elif isinstance(value, str):
                             self.data_values.append(value)
                             self.data_types.append('string')
@@ -1120,6 +1132,7 @@ class JavaScriptBackend(CodeGenBackend):
                             # For other types, try to get the value
                             self.data_values.append(value)
                             self.data_types.append('number')
+                        self.data_texts.append(None)
 
     def _collect_def_fn(self, program: ProgramNode):
         """Collect all DEF FN statements"""
@@ -2247,10 +2260,12 @@ class JavaScriptBackend(CodeGenBackend):
         if self.uses_data or self.data_values:
             code.append(self.indent() + '// DATA/READ/RESTORE')
             code.append(self.indent() + f'const _data = {self._format_data_array()};')
+            code.append(self.indent() + f'const _data_txt = {self._format_data_texts()};')
             code.append(self.indent() + 'let _data_ptr = 0;')
-            code.append(self.indent() + 'function _read() {')
+            code.append(self.indent() + 'function _read(to_string) {')
             self.indent_level += 1
             code.append(self.indent() + 'if (_data_ptr >= _data.length) _error("Out of DATA");')
+            code.append(self.indent() + 'if (to_string && _data_txt[_data_ptr] !== null) return _data_txt[_data_ptr++];  // DATA text is not crunched')
             code.append(self.indent() + 'return _data[_data_ptr++];')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2423,6 +2438,11 @@ class JavaScriptBackend(CodeGenBackend):
                 items.append(_js_number(value))
 
         return '[' + ', '.join(items) + ']'
+
+    def _format_data_texts(self) -> str:
+        """The text of each DATA number as typed, null for a string item"""
+        return '[' + ', '.join('null' if t is None else f'"{self._escape_string(t)}"'
+                               for t in self.data_texts) + ']'
 
     def _escape_string(self, s: str) -> str:
         """Escape string for JavaScript"""
@@ -3400,7 +3420,7 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
         for var in stmt.variables:
             var_name = self._mangle_var_name(var.name + (var.type_suffix or ''))
-            code.append(self.indent() + f'{var_name} = _read();')
+            code.append(self.indent() + f'{var_name} = _read({"true" if var.type_suffix == "$" else ""});')
         return code
 
     def _generate_restore(self, stmt: RestoreStatementNode) -> List[str]:

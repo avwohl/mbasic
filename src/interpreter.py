@@ -2219,6 +2219,11 @@ class Interpreter:
                 # DATA text is not crunched: A$ gets the item as it was typed
                 if isinstance(data_node, ast_nodes.NumberNode) and isinstance(data_node.literal, str):
                     value = data_node.literal
+                elif (isinstance(data_node, ast_nodes.UnaryOpNode)
+                      and isinstance(data_node.operand, ast_nodes.NumberNode)
+                      and isinstance(data_node.operand.literal, str)
+                      and data_node.operator in (TokenType.MINUS, TokenType.PLUS)):
+                    value = ('-' if data_node.operator == TokenType.MINUS else '+') + data_node.operand.literal
                 else:
                     value = str(value)
             elif var_node.type_suffix == '%':
