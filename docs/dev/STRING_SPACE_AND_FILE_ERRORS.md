@@ -3,6 +3,7 @@
 **Status:** Done (GitHub issues 30, 31, 32 and 33).
 **Code:** `src/interpreter.py`, `src/runtime.py`, `src/cpm_names.py`.
 **Tests:** `tests/regression/integration/test_string_temporaries.py`,
+`test_string_space_function_results.py`,
 `test_out_of_string_space.py`, `test_field_record_length.py`,
 `test_cpm_file_names.py`.
 
@@ -51,8 +52,14 @@ The budget is an estimate. The binary also spends memory on the program text,
 and on the variables and arrays themselves. In the recipe of issue 31 it holds
 190 strings of 200 bytes. The interpreter holds 195. A string literal or DATA item
 takes no string space on the binary (it points into the program text), and
-the interpreter does not count one either: a string that is the same object
-as a program string costs nothing. A program that comes near the limit gets the error at a different place.
+the interpreter does not count one either. The evaluator gives a literal as a
+`ProgramString` (a `str` subclass in `src/runtime.py`), and only that class costs
+nothing. A string that a function or operator makes is a plain `str` and counts,
+even when it equals the whole literal (`LEFT$(L$,LEN(L$))`, `MID$(L$,1)`, `L$+""`).
+A `DEF FN` that returns a variable or a parameter gives a plain `str` too. A `DEF FN` with a literal body,
+or a body that calls such a `DEF FN`, is free (measured: done 601). A string
+from `DATA` is a literal and keeps the mark. On the binary these results are copies in string space (measured: error 14 at
+I=371 in a loop of 100-character strings, as for `STRING$`). A program that comes near the limit gets the error at a different place.
 A program that is far over the limit gets the same error as on the binary.
 
 `CLEAR ,n` sets the highest memory address and `CLEAR ,,n` sets the stack

@@ -8,7 +8,8 @@ import sys
 import signal
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Callable, Any, Union
-from src.runtime import Runtime, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
+from src.runtime import Runtime, ProgramString, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
+from src.ast_nodes import StringNode, FunctionCallNode
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
 from src.pc import PC
@@ -2216,7 +2217,10 @@ class Interpreter:
 
             # Convert to appropriate type based on variable suffix
             if var_node.type_suffix == '$':
-                value = str(value)
+                # DATA text points into the program on the binary and takes
+                # no string space, so a literal keeps its ProgramString mark.
+                if type(value) is not ProgramString:
+                    value = str(value)
             elif var_node.type_suffix == '%':
                 value = to_integer(value)      # rounds, like every other
                                                # assignment to an integer
@@ -3975,8 +3979,13 @@ class Interpreter:
 
     def evaluate_string(self, expr):
         """Evaluate string literal"""
-        value = expr.value
-        self.runtime.note_program_string(value)
+        value = getattr(expr, '_mb_program_string', None)
+        if value is None or value != expr.value:
+            value = ProgramString(expr.value)
+            try:
+                expr._mb_program_string = value
+            except AttributeError:
+                return value
         return value
 
     def evaluate_variable(self, expr):
@@ -4207,6 +4216,13 @@ class Interpreter:
             type_suffix = param_name[-1] if param_name[-1] in '$%!#' else None
             self.runtime.set_variable(base_name, type_suffix, saved_value, debugger_set=True)
 
+        # A DEF FN that hands back a string it was given (a variable or a
+        # parameter) returns a copy in string space on the binary. Only a body
+        # that is itself a literal stays free. A body that calls another DEF FN
+        # stays free too: that inner call already made the copy when it needed one.
+        if type(result) is ProgramString and not isinstance(
+                func_def.expression, (StringNode, FunctionCallNode)):
+            result = str(result)
         return result
 
     # ========================================================================
