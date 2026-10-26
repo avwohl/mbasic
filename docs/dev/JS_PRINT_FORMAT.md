@@ -52,7 +52,8 @@ The JavaScript runtime has these parts:
   bits.
 * `_error` gives the error an ERR number. With `ON ERROR` in the program the
   main loop catches it, sets `ERR` and `ERL`, and jumps to the handler.
-  `RESUME NEXT` goes to the line after the line that failed.
+  `RESUME NEXT` goes to the statement after the one that failed
+  (`docs/dev/JS_CONTROL_FLOW.md`).
 * `_val` and `_radix_word` follow `val_text` and `radix_word`. `&HFFFF` is -1
   and `HEX$(-1)` is `FFFF`.
 * A comparison gives -1 or 0. AND, OR, XOR, EQV, IMP and NOT are 16-bit

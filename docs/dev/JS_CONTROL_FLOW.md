@@ -55,6 +55,31 @@ stops with `WHILE without WEND` when the WHILE runs, whatever the condition is. 
 analyzer refuses a WEND with no WHILE when the program is compiled.
 Test: `tests/regression/integration/test_js_while_wend.py`.
 
+## RESUME and RESUME NEXT
+
+The binary does both at the level of a statement. `RESUME` runs
+the statement that failed again, not the line. `RESUME NEXT` goes on with
+the next statement, which can be on the same line. After an error in the
+condition of an IF, `RESUME NEXT` goes on after the first statement of the THEN part (the binary
+scans to the next colon).
+
+When the program has `RESUME` or `RESUME NEXT` (or `ON ERROR GOSUB`),
+`track_statements` is on:
+
+* Each step of a multi-statement line gets a case label (`_plan_statement_labels`)
+  and the code sets `_pc` to that label when the step starts.
+* The error handler gets `_pc` as the place of the error. `RESUME` jumps
+  there. `RESUME NEXT` reads the table `_next_lines`, which maps a line or a
+  label to the place to go on.
+* An IF with more than one statement in its THEN or ELSE part is a flat IF,
+  so that each statement has its own label.
+* A program with no `RESUME` gets no extra labels and no extra code.
+* A THEN or ELSE part with one statement stays a JavaScript `if`. `RESUME`
+  after an error in that statement runs the whole IF again, condition
+  included. The binary runs only the statement.
+
+Test: `tests/regression/integration/test_js_resume_next.py`.
+
 ## Line of an error
 
 A fatal error prints `<message> in <line>`. The `catch` block in the program

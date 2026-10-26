@@ -543,8 +543,12 @@ semantics are not:
 
 Still open, found in the final check of the fixes for #30 to #57:
 
-- #58: in the JavaScript backend, `RESUME NEXT` goes on at the next line, not
-  at the next statement. In `20 PRINT "a":ERROR 5:PRINT "b"` the `b` is lost.
+- Done (#58): in the JavaScript backend, `RESUME NEXT` goes on at the next
+  statement, and `RESUME` runs the failing statement again, not the line. See
+  `docs/dev/JS_CONTROL_FLOW.md`. The interpreter still differs from the binary
+  for an error inside a THEN or ELSE part with more than one statement:
+  `RESUME NEXT` there skips the rest of the IF, and the binary goes on with the
+  next statement of the part (`IF 1 THEN PRINT "a":ERROR 5:PRINT "b"`).
 - #59: the JavaScript backend gives no `Type mismatch` for a string mixed with
   a number (`"a"<1`, `1+"a"`, `"a"*2`, `A$=A`), and `-"a"` stops the compiler
   with a Python error.

@@ -951,6 +951,10 @@ class JavaScriptBackend(CodeGenBackend):
         self._next_label = CONT_LABEL_BASE
         self._cur_line = 0  # number of the line whose code is being written
         self.yield_checks = False  # True while the browser copy of the program is written
+        # RESUME and RESUME NEXT continue at a statement, not at a line. When the program has one,
+        # every statement of a multi-statement line gets a case label that the error handler can name.
+        self.track_statements = False
+        self.resume_next_map: Dict[int, Optional[int]] = {}  # pc (line or label) -> where RESUME NEXT continues
 
     def get_file_extension(self) -> str:
         """JavaScript files use .js extension"""
@@ -1126,7 +1130,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.indent_level += 1
         code.append(self.indent() + 'if (e && e.basicLine === undefined) e.basicLine = _line_of(_pc);')
         if self.uses_error_handling:
-            code.append(self.indent() + 'if (e && e.basicCode && _error_handler && !_in_error_handler) { _pc = _trigger_error(e.basicCode, e.basicLine, _line_of(_pc)); continue; }')
+            code.append(self.indent() + 'if (e && e.basicCode && _error_handler && !_in_error_handler) { _pc = _trigger_error(e.basicCode, e.basicLine, _pc); continue; }')
         code.append(self.indent() + 'throw e;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
@@ -1264,6 +1268,8 @@ class JavaScriptBackend(CodeGenBackend):
         cannot stand inside a block. The IF is written as jumps and labels instead.
         """
         def inner(statements, tail):
+            if self.track_statements and len(statements) > 1:
+                return True  # RESUME and RESUME NEXT work on one statement of the body
             for i, s in enumerate(statements):
                 last = tail and i == len(statements) - 1
                 if (self._needs_resume_point(s) and not last) or id(s) in self.while_to_wend:
@@ -1300,6 +1306,25 @@ class JavaScriptBackend(CodeGenBackend):
                                                       else self._position_target(plan, j))
                 elif step[0] in ('if', 'jump'):
                     plan.targets[j] = self._position_target(plan, step[2] if step[0] == 'if' else step[1])
+            if self.track_statements:
+                self._plan_statement_labels(plan)
+
+    def _plan_statement_labels(self, plan: 'LinePlan'):
+        """Give each step that can fail a label, and note where RESUME NEXT continues after it.
+
+        The error handler gets the label (the program counter) of the failing step. RESUME runs that
+        step again; RESUME NEXT goes to the next step. For an error in the condition of an IF the
+        binary continues after the first statement of the THEN part (it scans to the next colon).
+        """
+        steps = plan.steps
+        for j, step in enumerate(steps):
+            if step[0] not in ('stmt', 'if'):
+                continue
+            pc = plan.line_number if j == 0 else self._position_target(plan, j)
+            nxt = j + 1
+            if step[0] == 'if':
+                nxt = j + 2 if j + 1 < len(steps) and steps[j + 1][0] == 'stmt' else len(steps)
+            self.resume_next_map[pc] = self._position_target(plan, nxt)
 
     def _flatten_if(self, stmt: IfStatementNode, plan: 'LinePlan'):
         """Write IF cond THEN a ELSE b as steps: test, a, jump to end, b."""
@@ -1397,6 +1422,9 @@ class JavaScriptBackend(CodeGenBackend):
                     self.uses_error_handling = True
                     if getattr(stmt, 'is_gosub', False):
                         self.uses_gosub = True  # the handler is entered like a subroutine
+                        self.track_statements = True
+                    if isinstance(stmt, ResumeStatementNode) and stmt.line_number in (None, 0, -1):
+                        self.track_statements = True
                 if self._can_loop(stmt, line.line_number):
                     self.can_loop = True
                 # Check for RND function in expressions
@@ -2330,7 +2358,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'let _error_code = 0;  // Error code (ERR)')
             code.append(self.indent() + 'let _in_error_handler = false;  // Prevent recursive errors')
             code.append(self.indent() + 'const _ERR_MSGS = ' + json.dumps({str(c): m for c, (_, m) in ERROR_CODES.items()}) + ';')
-            code.append(self.indent() + 'const _next_lines = ' + json.dumps({str(k): v for k, v in self.next_line_map.items()}) + ';  // for RESUME NEXT')
+            code.append(self.indent() + 'const _next_lines = ' + json.dumps({str(k): v for k, v in {**self.next_line_map, **self.resume_next_map}.items()}) + ';  // for RESUME NEXT: line or label -> where to go')
             code.append(self.indent() + 'function _trigger_error(code, line, at) {')
             self.indent_level += 1
             code.append(self.indent() + 'if (_in_error_handler) {')
@@ -2694,6 +2722,8 @@ class JavaScriptBackend(CodeGenBackend):
                 self.indent_level -= 1
                 code.append(self.indent() + f'case {plan.labels[j]}:  // line {line.line_number}, step {j + 1}')
                 self.indent_level += 1
+                if self.track_statements:
+                    code.append(self.indent() + f'_pc = {plan.labels[j]};  // the error handler needs the statement that runs')
                 reachable = True
             if not reachable:
                 continue  # No jump or label can reach this step
@@ -3836,7 +3866,7 @@ class JavaScriptBackend(CodeGenBackend):
         error_code = self._generate_expression(stmt.error_code)
         code.append(self.indent() + f'{{')
         self.indent_level += 1
-        code.append(self.indent() + f'const _next = _trigger_error(_errnum({error_code}), {current_line});')
+        code.append(self.indent() + f'const _next = _trigger_error(_errnum({error_code}), {current_line}, _pc);')
         code.append(self.indent() + f'if (_next !== undefined) {{')
         self.indent_level += 1
         code.append(self.indent() + f'_pc = _next;')
