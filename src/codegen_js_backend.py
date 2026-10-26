@@ -2207,11 +2207,11 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '    if (filename === "") _error("Bad file name");')
             code.append(self.indent() + 'if (typeof process !== "undefined") {')
             self.indent_level += 1
-            code.append(self.indent() + '_fileOps.nodejs.open(filenum, filename, mode, length);')
+            code.append(self.indent() + '_fileOps.nodejs.open(filenum, filename, mode, reclen);')
             self.indent_level -= 1
             code.append(self.indent() + '} else {')
             self.indent_level += 1
-            code.append(self.indent() + '_fileOps.browser.open(filenum, filename, mode, length);')
+            code.append(self.indent() + '_fileOps.browser.open(filenum, filename, mode, reclen);')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append(self.indent() + '_files[filenum].lof0 = Math.ceil(_files[filenum].content.length / 128);')
