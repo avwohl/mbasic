@@ -357,8 +357,9 @@ Found while measuring (#61):
   WIDTH is not changed. The JavaScript backend checks the `CLEAR` arguments
   as the interpreter does (`Overflow`, `Illegal function call`, `Out of
   memory`; each `CLEAR` starts from the start-up memory top and stack) and
-  forgets the handler only when the `CLEAR` succeeds. Its `CLEAR` still does
-  not clear the variables. `CLEAR` ends at `ELSE` in a one-line `IF`.
+  forgets the handler only when the `CLEAR` succeeds. `CLEAR` ends at `ELSE`
+  in a one-line `IF`. The JavaScript and C compilers clear the variables
+  too (see the entry on `CLEAR` and the DEF types below).
 - Done (#61): when the operand that ran out is `ELSE` (`A=ELSE`, `A=1+ELSE`,
   `PRINT 1+ELSE`, also after `THEN`/`ELSE`), the error is `Missing operand`
   and `RESUME NEXT` goes on at the next line: the rest of the line is skipped,
@@ -404,9 +405,49 @@ Found while measuring (#61):
   `RESUME NEXT` runs works. Test:
   `tests/regression/integration/test_resume_next_clauses.py` (82 shapes
   measured on the binary, `RESUME` and `RESUME NEXT`).
-- Not done (#61): `CLEAR` does not reset `DEFINT`, `DEFSTR` and the other
-  DEF types, as the binary does. The variable types are fixed when the
-  program is parsed, so a run-time reset needs a different design.
+- Done: `DEFINT`, `DEFSNG`, `DEFDBL` and `DEFSTR` are run-time statements, as
+  on the binary (`src/deftypes.py`). They change a table when they run. A name
+  without a suffix is typed from the table each time the program uses it.
+  So a `DEFINT` that a `GOTO` jumps over, or that is in an `IF` that is not
+  taken, does nothing. A `DEFINT` in a loop types the lines above it on the
+  next pass. After `DEFINT A` the name `A` means `A%`, and `A!` is the single
+  variable (`A`, `A%` and `A!` are three names). `CLEAR` and `RUN` put all
+  letters back to single precision. `DIM A(3)` and `ERASE A` take the type
+  when they run. The type of `FNA` is the type of the letter `A` when the
+  `DEF FN` runs; a later `DEFINT A` makes `FNA` another function (`Undefined
+  user function`). The parser still gives each node the suffix that the DEF
+  statements above it in the text imply. `Runtime.setup` makes the nodes
+  dynamic (a node class with a `type_suffix` property that reads the table)
+  only when the program has a DEFtype statement, so other programs pay
+  nothing. `DEFINT` typed at the `Ok` prompt does not reach `RUN`; the table
+  that the program leaves is the table at the prompt (`make_dynamic` on the
+  statement typed there). Test: `tests/regression/integration/test_clear_deftypes.py`
+  (measured on the binary). The UIs that keep a `ProgramManager` map
+  (Tk, curses) type a program with no DEFtype statement from that map.
+  The JavaScript and C compilers keep the static view: the types follow the
+  DEFtype statements in the text, so a program that runs `CLEAR` or a DEFtype
+  out of text order can differ there.
+- Done: `DEF FN` is known when its statement runs, not at the start of the
+  run: `FNA` before its `DEF FN`, or after a `CLEAR`, is `Undefined user
+  function` (18). The result has the type of the function: `FNA%` rounds to
+  an integer (`FNA%(3)` with `X*1.5` is 5), a `$` function that gives a
+  number and a number function that gives a string are `Type mismatch`.
+  The JavaScript backend does the same in a program that has a `CLEAR`.
+  A compiled program cannot define one `FN` name twice (semantic error).
+- Done: `SWAP` of two variables of different types (`X%` and `Y`, a string and
+  a number) is `Type mismatch` and swaps nothing.
+- Done (JavaScript): `CLEAR` sets every variable to 0 or "", deletes every
+  array (a later use makes it 0..10, a later `DIM` sizes it), empties the FOR
+  and GOSUB stacks, sends the DATA pointer back, closes the files and forgets
+  the `DEF FN` functions. It does not reset `OPTION BASE` or the DEF types
+  (fixed when the program is compiled), and it does not restart `RND`.
+- Done (C): `CLEAR` sets every variable to 0 or "", deletes every array,
+  empties the GOSUB stack, sends the DATA pointer back and forgets
+  `ON ERROR GOTO`. The FOR loops are jumps in the C code, not a stack, so
+  `CLEAR` does not end them (`NEXT` after it does not give `NEXT without
+  FOR`). It does not reset `OPTION BASE`, the DEF types or `DEF FN`.
+- Not fixed, found while measuring: `SWAP Y,Y2` where `Y2` was never used
+  is `Illegal function call` (5) on the binary and swaps here.
 - `PRINT #1,"x"` with file 1 not open is `Bad file mode` (54) on the binary
   and `Bad file number` (52) here. Not fixed; found while measuring CLEAR.
 - A `MID$` statement whose value is the target string, as in

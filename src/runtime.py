@@ -14,6 +14,7 @@ This module manages:
 
 import time
 from src.ast_nodes import DataStatementNode, DefFnStatementNode
+from src.deftypes import DefTable, make_dynamic
 from src.mbasic_rnd import MbasicRandom
 from src.number_format import coerce_to_type
 from src.pc import PC, StatementTable
@@ -133,6 +134,12 @@ class Runtime:
         # at parse time (Parser class), but runtime also uses def_type_map via
         # _resolve_variable_name() to determine variable types when no explicit suffix is present
 
+        # The DEFtype table of the run (src/deftypes.py): DEFINT and friends
+        # change it when they run, CLEAR resets it. A program that has a DEFtype
+        # statement types its unsuffixed names from this table.
+        self.def_table = DefTable()
+        self.dynamic_types = False      # True: type the names from the table even with no DEFtype statement
+
         # File I/O
         # Highest memory address and stack space (CLEAR ,n and CLEAR ,,n),
         # which set the string space. _string_slack is how many bytes of
@@ -200,7 +207,7 @@ class Runtime:
                 pc = PC(line.line_number, stmt_offset)
                 self.statement_table.add(pc, stmt)
 
-                # Extract DATA and DEF FN
+                # Extract DATA (a DEF FN is known when the DEF FN statement runs, as on the binary)
                 if isinstance(stmt, DataStatementNode):
                     # Store data values and track which line they came from
                     for value in stmt.values:
@@ -213,8 +220,10 @@ class Runtime:
                         else:
                             self.data_line_map[data_index] = line.line_number
                             self.data_items.append(value)
-                elif isinstance(stmt, DefFnStatementNode):
-                    self.user_functions[stmt.name] = stmt
+
+        # A program with a DEFtype statement reads its types from the run-time table
+        self.def_table.reset()
+        make_dynamic(lines_to_process, self.def_table, force=self.dynamic_types)
 
         # Initialize PC to first statement
         self.pc = self.statement_table.first_pc()
@@ -1770,7 +1779,7 @@ class Runtime:
                 pc = PC(line.line_number, stmt_offset)
                 self.statement_table.add(pc, stmt)
 
-                # Extract DATA and DEF FN
+                # Extract DATA (a DEF FN is known when the DEF FN statement runs, as on the binary)
                 if isinstance(stmt, DataStatementNode):
                     for value in stmt.values:
                         data_index = len(self.data_items)
@@ -1781,8 +1790,10 @@ class Runtime:
                         else:
                             self.data_line_map[data_index] = line.line_number
                             self.data_items.append(value)
-                elif isinstance(stmt, DefFnStatementNode):
-                    self.user_functions[stmt.name] = stmt
+
+        # A program with a DEFtype statement reads its types from the run-time table
+        self.def_table.reset()
+        make_dynamic(lines_to_process, self.def_table, force=self.dynamic_types)
 
         # Initialize PC to first statement
         self.pc = self.statement_table.first_pc()

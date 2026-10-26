@@ -24,6 +24,7 @@ from src.line_number_split import normalize_line_number
 from src.lexer import tokenize, Lexer
 from src.parser import Parser
 from src.runtime import Runtime
+from src.deftypes import make_dynamic
 from src.interpreter import (Interpreter, ChainException, BreakException,
                             MBasicError)
 import src.ast_nodes as ast_nodes
@@ -627,6 +628,13 @@ class InteractiveMode:
                 runtime = self.program_runtime if self.program_runtime else self.runtime
                 print_error(e, runtime)
 
+    def _def_types_typed(self):
+        """True when a DEFtype changed the shared map: the program is then typed
+        from the table of the run, which RUN resets (a DEFINT typed at the Ok
+        prompt does not reach a RUN)."""
+        from src.parser import TypeInfo
+        return any(t != TypeInfo.SINGLE for t in self.def_type_map.values())
+
     def cmd_run(self, start_line=None):
         """RUN - Execute the program
 
@@ -647,6 +655,7 @@ class InteractiveMode:
             # Pass line text map for better error messages
             from resource_limits import create_unlimited_limits
             runtime = Runtime(self.line_asts, self.lines)
+            runtime.dynamic_types = self._def_types_typed()
             interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits(), file_io=self.file_io)
             # Pass reference to interactive mode so statements like LIST can access the line editor
             interpreter.interactive_mode = self
@@ -1105,6 +1114,7 @@ class InteractiveMode:
                 # First time running (from command line, not during execution) - create new objects
                 from resource_limits import create_unlimited_limits
                 runtime = Runtime(self.line_asts, self.lines)
+                runtime.dynamic_types = self._def_types_typed()
                 interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits(), file_io=self.file_io)
                 interpreter.interactive_mode = self
 
@@ -1708,6 +1718,9 @@ class InteractiveMode:
                 # Use program runtime so we can access program variables
                 runtime = self.program_runtime
                 interpreter = self.program_interpreter
+                # The names of the statement take their type from the DEFtype
+                # table of the run, which the program may have changed
+                make_dynamic(ast, runtime.def_table, force=True)
             else:
                 # Initialize immediate mode runtime if needed
                 if self.runtime is None:

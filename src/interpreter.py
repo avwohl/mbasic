@@ -4,6 +4,7 @@ MBASIC 5.21 Interpreter
 Executes BASIC programs from AST.
 """
 
+import copy
 import re
 import sys
 import signal
@@ -11,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import Literal, Optional, Callable, Any, Union
 from src.runtime import Runtime, ProgramString, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
 from src.js_type_check import builtin_arg_kinds
+from src.deftypes import name_with_suffix
 from src.ast_nodes import StringNode, FunctionCallNode, arity_type_checks, instr_shape_error, clause_tail_after, clause_slice
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
@@ -1242,6 +1244,12 @@ class Interpreter:
 
     def execute_swap(self, stmt):
         """Execute SWAP statement - exchange values of two variables"""
+        # The two variables must have the same type: an integer and a single,
+        # or a string and a number, are "Type mismatch" (measured), and
+        # nothing is swapped. With a DEFtype in the program the types are read
+        # from the table of the run.
+        if (stmt.var1.type_suffix or '!') != (stmt.var2.type_suffix or '!'):
+            raise TypeError("Type mismatch")
         # Get values of both variables
         if stmt.var1.subscripts:
             # Array element
@@ -2424,10 +2432,13 @@ class Interpreter:
         radix_word(self.evaluate_expression(stmt.address))
 
     def execute_deftype(self, stmt):
-        """Execute DEFINT/DEFSNG/DEFDBL/DEFSTR statement (do nothing at runtime)"""
-        # These are compile-time directives handled by the parser
-        # At runtime, they do nothing
-        pass
+        """Execute DEFINT/DEFSNG/DEFDBL/DEFSTR statement.
+
+        The statement changes the DEFtype table of the run. A program that
+        has a DEFtype statement types its unsuffixed names from that table
+        (src/deftypes.py), as the binary does.
+        """
+        self.runtime.def_table.apply(stmt)
 
     def execute_deffn(self, stmt):
         """Execute DEF FN statement - define user function
@@ -2440,6 +2451,13 @@ class Interpreter:
         """
         # Store function definition in runtime
         # The function name is already normalized to lowercase
+        if type(stmt) is not ast_nodes.DefFnStatementNode:
+            # The type of FNA is the DEFtype of A when DEF FN runs; a DEFINT that
+            # runs later makes FNA another function (Undefined user function)
+            fixed = copy.copy(stmt)
+            fixed.__class__ = ast_nodes.DefFnStatementNode
+            fixed.type_suffix = stmt.type_suffix
+            stmt = fixed
         self.runtime.user_functions[stmt.name] = stmt
 
     def execute_data(self, stmt):
@@ -2526,7 +2544,8 @@ class Interpreter:
             dimensions = [to_subscript(self.evaluate_expression(dim))
                           for dim in array_def.dimensions]   # DIM B(2.7) is B(3)
             # Extract type suffix from name if present
-            name = array_def.name
+            name = name_with_suffix(array_def.name.rstrip('$%!#'), array_def.bare,
+                                    self.runtime.def_table) if array_def.bare else array_def.name
             type_suffix = None
             if name and name[-1] in '$%!#':
                 type_suffix = name[-1]
@@ -2551,7 +2570,10 @@ class Interpreter:
 
         Syntax: ERASE array1, array2, ...
         """
-        for array_name in stmt.array_names:
+        for index, array_name in enumerate(stmt.array_names):
+            if stmt.bare and stmt.bare[index]:
+                array_name = name_with_suffix(array_name.rstrip('$%!#'), True,
+                                              self.runtime.def_table)
             # Free from resource limits tracking
             # The parser gives the name as written, which for a single has no
             # suffix - the storage key does. See Runtime.erase_array.
@@ -2610,6 +2632,9 @@ class Interpreter:
         - ON ERROR GOTO is forgotten, so the next error is fatal, and a handler
           that is running is over (its RESUME is "RESUME without error"). ERR
           and ERL keep their values.
+        - DEFINT, DEFSNG, DEFDBL and DEFSTR are forgotten: every letter is
+          single precision again (the names typed by the old table are other
+          variables from now on).
         - The FOR and GOSUB/WHILE stacks are emptied, OPTION BASE may be given
           again (the base is 0), the DATA pointer goes back to the first item,
           and the DEF FN functions defined so far are forgotten.
@@ -2649,6 +2674,7 @@ class Interpreter:
         runtime.option_base_executed = False
         runtime.data_pointer = 0
         runtime.user_functions.clear()
+        runtime.def_table.reset()
 
         # Clear all arrays
         self.runtime.clear_arrays()
@@ -3199,6 +3225,7 @@ class Interpreter:
                 else:
                     # In non-interactive context (running program), do inline
                     self.runtime.clear_variables()
+                    self.runtime.def_table.reset()
                     # Set NPC to target line (like GOTO)
                     # On next tick(), NPC will be moved to PC
                     self._jump_to(line_num)
@@ -3215,6 +3242,7 @@ class Interpreter:
                 # RUN line_number which continues execution inline.
                 # The caller is responsible for actually restarting execution.
                 self.runtime.clear_variables()
+                self.runtime.def_table.reset()
                 self.runtime.pc = self.runtime.pc.stop("END")
 
     def execute_common(self, stmt):
@@ -4560,7 +4588,8 @@ class Interpreter:
 
         # Not a builtin, check for user-defined function
         func_def = self.runtime.user_functions.get(expr.name)
-        if not func_def:
+        if not func_def or (func_def.type_suffix or '!') != (expr.type_suffix or '!'):
+            # FNA and FNA% are two names: the function is the one of that type
             raise RuntimeError(f"Undefined function: {expr.name}")
 
         # Evaluate arguments
@@ -4588,6 +4617,18 @@ class Interpreter:
 
         # Evaluate function expression
         result = self.evaluate_expression(func_def.expression)
+
+        # The result has the type of the function (FNA% rounds to an integer, a
+        # $ function must give a string and the others a number); with a DEFtype
+        # statement in the program the type is read from the table of the run
+        fn_type = func_def.type_suffix
+        if fn_type == '$':
+            if not isinstance(result, str):
+                raise TypeError("Type mismatch")
+        elif isinstance(result, str):
+            raise TypeError("Type mismatch")
+        elif fn_type == '%':
+            result = to_int_operand(result)
 
         # Restore parameter values (use debugger_set=True to avoid tracking)
         for param_name, saved_value in saved_vars.items():

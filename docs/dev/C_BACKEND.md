@@ -191,3 +191,12 @@ compiler. `mb25_fmt_num()` has no other dependency.
 
 The backend works around several faults in uc80. See
 [UC80_BUGS_TODO.md](UC80_BUGS_TODO.md), the section about the C backend.
+
+## CLEAR
+
+`CLEAR` sets the variables to 0 or "", deletes the arrays (as `ERASE`),
+empties the GOSUB stack, sends the DATA pointer back, forgets
+`ON ERROR GOTO` and closes the files. The FOR loops are jumps in the C code,
+so `CLEAR` does not end them. `CLEAR` does not reset OPTION BASE, `DEF FN` or
+the DEF types: the types follow the DEFINT, DEFSNG, DEFDBL and DEFSTR
+statements in the text.
