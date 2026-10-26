@@ -230,3 +230,45 @@ def test_js_read_number_error_is_trapped_with_the_data_line(tmp_path):
                     "--compile-js", str(tmp_path / "p.js")], check=True, capture_output=True)
     run = subprocess.run([NODE, str(tmp_path / "p.js")], capture_output=True, text=True, timeout=60)
     assert run.stdout.splitlines()[:2] == [" 2  10 ", " 0 "], run.stdout + run.stderr
+
+
+# A bad item is not consumed: the next READ gets the same item again
+# (measured on the binary for abc, &O8, &O19 and &HFFFFF).
+BAD_ITEM_THEN_STRING = ('10 DATA {item},5\n20 ON ERROR GOTO 100\n30 READ A\n35 READ B$\n'
+                        '36 PRINT "B=";B$\n40 SYSTEM\n100 PRINT ERR;ERL:RESUME NEXT\n')
+
+
+@pytest.mark.parametrize("item", ["abc", "&O8", "&O19", "&HFFFFF"])
+def test_bad_data_item_is_read_again(tmp_path, item):
+    out = run_cli(tmp_path, "RUN\nSYSTEM\n", BAD_ITEM_THEN_STRING.format(item=item))
+    assert f"B={item}\n" in out, out
+
+
+@pytest.mark.skipif(NODE is None, reason="node not installed")
+@pytest.mark.parametrize("item", ["abc", "&O8", "&O19", "&HFFFFF"])
+def test_js_bad_data_item_is_read_again(tmp_path, item):
+    (tmp_path / "p.bas").write_text(BAD_ITEM_THEN_STRING.format(item=item))
+    subprocess.run([sys.executable, str(ROOT / "mbasic"), str(tmp_path / "p.bas"),
+                    "--compile-js", str(tmp_path / "p.js")], check=True, capture_output=True)
+    run = subprocess.run([NODE, str(tmp_path / "p.js")], capture_output=True, text=True, timeout=60)
+    assert f"B={item}\n" in run.stdout, run.stdout + run.stderr
+
+
+# A failing item rewinds the whole READ statement, not only the failing item
+# (measured on the binary).
+MULTI_READ = ('10 DATA 1,2,x,4\n20 ON ERROR GOTO 100\n30 READ A,B,C\n40 READ D\n'
+              '45 PRINT A;B;C;D\n50 SYSTEM\n100 PRINT ERR;ERL:RESUME NEXT\n')
+
+
+def test_failed_read_rewinds_the_whole_statement(tmp_path):
+    out = run_cli(tmp_path, "RUN\nSYSTEM\n", MULTI_READ)
+    assert " 2  10 \n 1  2  0  1 \n" in out, out
+
+
+@pytest.mark.skipif(NODE is None, reason="node not installed")
+def test_js_failed_read_rewinds_the_whole_statement(tmp_path):
+    (tmp_path / "p.bas").write_text(MULTI_READ)
+    subprocess.run([sys.executable, str(ROOT / "mbasic"), str(tmp_path / "p.bas"),
+                    "--compile-js", str(tmp_path / "p.js")], check=True, capture_output=True)
+    run = subprocess.run([NODE, str(tmp_path / "p.js")], capture_output=True, text=True, timeout=60)
+    assert " 2  10 \n 1  2  0  1 \n" in run.stdout, run.stdout + run.stderr

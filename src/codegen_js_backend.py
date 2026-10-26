@@ -2373,7 +2373,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + f'const _data_txt = {self._format_data_texts()};')
             code.append(self.indent() + f'const _data_kind = {json.dumps(self.data_kinds)};  // 0 number, 1 quoted, 2 unquoted')
             code.append(self.indent() + f'const _data_ln = {json.dumps(self.data_lines)};')
-            code.append(self.indent() + 'let _data_ptr = 0;')
+            code.append(self.indent() + 'let _data_ptr = 0, _read_start = 0;  // _read_start: where the running READ began')
             code.append(self.indent() + _DATA_TEXT_TO_NUMBER_JS)
             code.append(self.indent() + 'function _read(to_string) {')
             self.indent_level += 1
@@ -2381,8 +2381,13 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'if (to_string && _data_txt[_data_ptr] !== null) return _data_txt[_data_ptr++];  // DATA text is not crunched')
             code.append(self.indent() + 'if (!to_string && _data_kind[_data_ptr] !== 0) {')
             code.append(self.indent() + '    // READ into a number variable parses the text of the item')
-            code.append(self.indent() + '    const i = _data_ptr++;')
-            code.append(self.indent() + '    return _data_text_to_number(_data[i], _data_kind[i] === 2, _data_ln[i]);')
+            code.append(self.indent() + '    // a bad item rewinds the whole READ statement, like the binary')
+            code.append(self.indent() + '    const i = _data_ptr;')
+            code.append(self.indent() + '    let v;')
+            code.append(self.indent() + '    try { v = _data_text_to_number(_data[i], _data_kind[i] === 2, _data_ln[i]); }')
+            code.append(self.indent() + '    catch (e) { _data_ptr = _read_start; throw e; }')
+            code.append(self.indent() + '    _data_ptr++;')
+            code.append(self.indent() + '    return v;')
             code.append(self.indent() + '}')
             code.append(self.indent() + 'return _data[_data_ptr++];')
             self.indent_level -= 1
@@ -3556,6 +3561,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_read(self, stmt: ReadStatementNode) -> List[str]:
         """Generate READ statement"""
         code = []
+        code.append(self.indent() + '_read_start = _data_ptr;')
         for var in stmt.variables:
             read = f'_read({"true" if var.type_suffix == "$" else ""})'
             if var.type_suffix == '%':

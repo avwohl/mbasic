@@ -2287,6 +2287,7 @@ class Interpreter:
 
     def execute_read(self, stmt):
         """Execute READ statement"""
+        start_pointer = self.runtime.data_pointer   # a failing item rewinds the whole statement
         for var_node in stmt.variables:
             # Read next data value (returns AST node)
             data_node = self.runtime.read_data()
@@ -2301,9 +2302,11 @@ class Interpreter:
                         raise ValueError("data")        # a quoted item
                     value = data_text_to_number(data_node.value)
                 except ValueError as e:
+                    self.runtime.data_pointer = start_pointer   # the statement is read again
                     where = PC.from_line(data_line) if str(e) == "data" and data_line is not None else None
                     raise MBasicError(2, where)
                 except OverflowError:
+                    self.runtime.data_pointer = start_pointer
                     raise MBasicError(6)
             else:
                 value = self.evaluate_expression(data_node)
