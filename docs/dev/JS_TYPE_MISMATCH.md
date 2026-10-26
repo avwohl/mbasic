@@ -41,6 +41,8 @@ A statement that is never reached gives no error.
 - DEF FN: the arguments must match the parameters, and the value of the body
   must match the type of the function name. `DEF FNA$(X$)=1` gives the error
   when `FNA$` is called, not at DEF.
+- OPEN, CLOSE, PRINT #, CLEAR and KILL/NAME: file numbers and sizes must be
+  numbers, file names must be strings.
 - PRINT USING: the format must be a string. A string goes with a string field
   (`!`, `\ \`, `&`) and a number goes with a numeric field.
 
@@ -58,8 +60,16 @@ A statement that is never reached gives no error.
 - `DIM B("a")` stops the compile with "Semantic analysis failed". The
   JavaScript backend needs a constant DIM size at compile time (this is true
   for `DIM B(N)` too). The binary gives `Type mismatch` at run time.
-- `PRINT USING` gives the error before it prints anything. If the second
-  value has the wrong type, the text for the first value is not printed.
+- A mismatch that the compiler finds inside an operand of PRINT USING (for
+  example `"a"*2`) is raised before the statement prints anything. A value of
+  the wrong kind for its field prints the text before it, as the binary does.
+- If one expression has both a Type mismatch and another run-time error
+  (`"a"*CHR$(-1)`), the JavaScript code reports the Type mismatch after the
+  operands, but the binary decides by operator. A program shows the difference only when both
+  errors are present.
+- `KILL 1` and `NAME 1 AS "b"` stop with "_fkill is not defined" or
+  "_fname is not defined". The run-time functions are missing (a separate
+  fault), so the argument check is not reached.
 - `USR("a")` is `Illegal function call` on the binary. The compiler does not
   check the argument of USR.
 - `LSET A$=1` for a variable that `FIELD` did not name stops with
@@ -69,7 +79,10 @@ A statement that is never reached gives no error.
 
 ## C backend
 
-The C backend does not need a change. It already refuses a program with a
+`SWAP A,A$` is refused too, and `PRINT +"a"` and `A$=+"b"` compile (unary
+plus on a string is valid).
+
+The C backend needed only these two changes in this work. It already refuses a program with a
 string mixed with a number at compile time. `--compile-c` prints the line and
 the words "Type mismatch", writes no C file, and exits with status 1. The
 choice is on purpose: the C code has no way to raise a trappable error at

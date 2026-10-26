@@ -535,6 +535,7 @@ function _using_string(v, f) {
     if (f.type === "full") return v;
     return v.length >= f.width ? v.slice(0, f.width) : v.padEnd(f.width, " ");
 }
+let _using_partial = "";
 function _print_using(fmt, values, digits) {
     if (!fmt) _error("Illegal function call");
     const fields = _using_parse(fmt);
@@ -548,11 +549,11 @@ function _print_using(fmt, values, digits) {
             // A string goes with a string field and a number with a numeric field; any other pair is
             // Type mismatch, as on 5.21
             if (f.kind === "string") {
-                if (typeof values[idx] !== "string") _error("Type mismatch");
+                if (typeof values[idx] !== "string") { _using_partial = result; _error("Type mismatch"); }
                 result += _using_string(values[idx], f);
             } else {
                 let v = values[idx];
-                if (typeof v === "string") _error("Type mismatch");
+                if (typeof v === "string") { _using_partial = result; _error("Type mismatch"); }
                 else if (v === true) v = -1; else if (v === false) v = 0;
                 result += _using_number(v, f, digits[idx] === undefined ? 6 : digits[idx]);
             }
@@ -563,7 +564,10 @@ function _print_using(fmt, values, digits) {
     return [result, values.length > 0 && !has_field];
 }
 function _print_using_stmt(f, fmt, values, digits, trailing) {
-    const [text, bad] = _print_using(fmt, values, digits);
+    _using_partial = "";
+    let text, bad;
+    try { [text, bad] = _print_using(fmt, values, digits); }
+    catch (e) { if (_using_partial) _emit(f, _using_partial); _using_partial = ""; throw e; }
     _emit(f, text + (trailing ? "" : "\n"));
     if (bad) _error("Illegal function call");
 }
@@ -2897,13 +2901,13 @@ class JavaScriptBackend(CodeGenBackend):
                     # Overflow, as in MBASIC.
                     value = f'() => {value}'
                 items.append(f'[0, {value}, {self._js_digits(expr)}]')
-        filenum = self._generate_expression(stmt.file_number) if stmt.file_number else 'null'
+        filenum = self._generate_expression_as(stmt.file_number, 'n') if stmt.file_number else 'null'
         sep_js = '[' + ', '.join(json.dumps(x) for x in seps) + ']'
         return [self.indent() + f'_print_list({filenum}, [{", ".join(items)}], {sep_js});']
 
     def _generate_print_using(self, stmt: PrintUsingStatementNode) -> List[str]:
         """Generate PRINT USING statement"""
-        filenum = self._generate_expression(stmt.file_number) if stmt.file_number else 'null'
+        filenum = self._generate_expression_as(stmt.file_number, 'n') if stmt.file_number else 'null'
         format_expr = self._generate_expression_as(stmt.format_string, 's')
         values = ', '.join(self._generate_expression(expr) for expr in stmt.expressions)
         digits = ', '.join(str(self._js_digits(expr)) for expr in stmt.expressions)
@@ -3103,13 +3107,17 @@ class JavaScriptBackend(CodeGenBackend):
                 if suffix is None:
                     # A DEFSTR letter does not reach the parameter; the body's use of it does
                     stack = [d.expression]
+                    seen = set()
                     while stack and suffix is None:
                         node = stack.pop()
+                        if id(node) in seen:
+                            continue
+                        seen.add(id(node))
                         if isinstance(node, VariableNode) and node.name == p.name and node.type_suffix:
                             suffix = node.type_suffix
                         elif isinstance(node, list):
                             stack.extend(node)
-                        elif hasattr(node, '__dict__'):
+                        elif type(node).__module__ == 'src.ast_nodes':
                             stack.extend(node.__dict__.values())
                 kinds.append('s' if suffix == '$' else 'n')
             return kinds
@@ -3459,7 +3467,7 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Check for file I/O
         if stmt.file_number:
-            filenum_expr = self._generate_expression(stmt.file_number)
+            filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
             # Generate input for each variable from file
             for var in stmt.variables:
                 var_key = var.name + (var.type_suffix or '')
@@ -3538,7 +3546,7 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Check for file I/O
         if stmt.file_number:
-            filenum_expr = self._generate_expression(stmt.file_number)
+            filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
             code.append(self.indent() + f'{var_name} = _fline_input({filenum_expr});')
         else:
             # Interactive input
@@ -3558,7 +3566,7 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Determine output function
         if stmt.file_number:
-            filenum_expr = self._generate_expression(stmt.file_number)
+            filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
             print_func = f'_fprint({filenum_expr}, '
         else:
             print_func = '_print('
@@ -3729,13 +3737,13 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_open(self, stmt: OpenStatementNode) -> List[str]:
         """Generate OPEN statement - open file for I/O"""
         code = []
-        filenum_expr = self._generate_expression(stmt.file_number)
-        filename_expr = self._generate_expression(stmt.filename)
+        filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
+        filename_expr = self._generate_expression_as(stmt.filename, 's')
         mode = stmt.mode  # "I", "O", "A", or "R"
 
         # For random files, include record length (default 128 if not specified)
         if stmt.record_length:
-            reclen_expr = self._generate_expression(stmt.record_length)
+            reclen_expr = self._generate_expression_as(stmt.record_length, 'n')
             code.append(self.indent() + f'_fopen({filenum_expr}, {filename_expr}, "{mode}", {reclen_expr});')
         else:
             code.append(self.indent() + f'_fopen({filenum_expr}, {filename_expr}, "{mode}");')
@@ -3750,7 +3758,7 @@ class JavaScriptBackend(CodeGenBackend):
         else:
             # CLOSE #1, #2, ...
             for file_number in stmt.file_numbers:
-                filenum_expr = self._generate_expression(file_number)
+                filenum_expr = self._generate_expression_as(file_number, 'n')
                 code.append(self.indent() + f'_fclose({filenum_expr});')
         return code
 
@@ -3763,15 +3771,15 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_kill(self, stmt: KillStatementNode) -> List[str]:
         """Generate KILL statement - delete file"""
         code = []
-        filename_expr = self._generate_expression(stmt.filename)
+        filename_expr = self._generate_expression_as(stmt.filename, 's')
         code.append(self.indent() + f'_fkill({filename_expr});')
         return code
 
     def _generate_name(self, stmt: NameStatementNode) -> List[str]:
         """Generate NAME statement - rename file"""
         code = []
-        old_filename_expr = self._generate_expression(stmt.old_filename)
-        new_filename_expr = self._generate_expression(stmt.new_filename)
+        old_filename_expr = self._generate_expression_as(stmt.old_filename, 's')
+        new_filename_expr = self._generate_expression_as(stmt.new_filename, 's')
         code.append(self.indent() + f'_fname({old_filename_expr}, {new_filename_expr});')
         return code
 
@@ -3788,7 +3796,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_field(self, stmt: FieldStatementNode) -> List[str]:
         """Generate FIELD statement - define random-access file buffer layout"""
         code = []
-        filenum_expr = self._generate_expression(stmt.file_number)
+        filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
 
         # Build array of field definitions: [[width1, var1], [width2, var2], ...]
         fields_array = []
@@ -3820,7 +3828,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_get(self, stmt: GetStatementNode) -> List[str]:
         """Generate GET statement - read record from random-access file"""
         code = []
-        filenum_expr = self._generate_expression(stmt.file_number)
+        filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
         if stmt.record_number:
             rec_expr = self._generate_expression(stmt.record_number)
             code.append(self.indent() + f'_fget({filenum_expr}, {rec_expr});')
@@ -3831,7 +3839,7 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_put(self, stmt: PutStatementNode) -> List[str]:
         """Generate PUT statement - write record to random-access file"""
         code = []
-        filenum_expr = self._generate_expression(stmt.file_number)
+        filenum_expr = self._generate_expression_as(stmt.file_number, 'n')
         if stmt.record_number:
             rec_expr = self._generate_expression(stmt.record_number)
             code.append(self.indent() + f'_fput({filenum_expr}, {rec_expr});')
@@ -3860,7 +3868,7 @@ class JavaScriptBackend(CodeGenBackend):
         if stmt.delete_range:
             code.append(self.indent() + '// DELETE option not supported in compiled code')
 
-        filename_expr = self._generate_expression(stmt.filename)
+        filename_expr = self._generate_expression_as(stmt.filename, 's')
 
         code.append(self.indent() + '// CHAIN to another program')
         code.append(self.indent() + 'if (typeof window !== "undefined") {')
@@ -4011,6 +4019,10 @@ class JavaScriptBackend(CodeGenBackend):
         since JS handles memory automatically).
         """
         code = []
+        for arg in (stmt.string_space, stmt.memory_top, stmt.stack_space):
+            if arg is not None:
+                # A string where a number is wanted is Type mismatch, as on the binary
+                code.append(self.indent() + self._generate_expression_as(arg, 'n') + ';')
         code.append(self.indent() + '// CLEAR - JavaScript manages memory automatically')
         return code
 

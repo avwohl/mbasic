@@ -53,6 +53,8 @@ ERROR_BODIES = [
     'A=1:A$=A', 'A$=1', 'A="x"', 'A$=-1', 'DEFSTR S:S=1', 'DEFINT I:I="a"',
     'DIM A$(2):A$(1)=1', 'DIM A(2):A(1)="x"', 'X=(1+"a")', 'X$=("a"+"b")+1',
     'PRINT ("a"+"b")*2',
+    # file statements and CLEAR given the wrong kind (binary: Type mismatch in 10)
+    'CLEAR "a"', 'OPEN "O",1,1', 'OPEN "O","a","f"', 'CLOSE "a"', 'PRINT #"a","x"',
     # built-in functions given the wrong kind
     'PRINT LEN(1)', 'PRINT LEFT$(1,1)', 'PRINT RIGHT$(1,1)', 'PRINT LEFT$("a","b")',
     'PRINT CHR$("a")', 'PRINT ABS("a")', 'PRINT VAL(1)', 'PRINT STR$("a")',
@@ -62,7 +64,7 @@ ERROR_BODIES = [
     'PRINT EXP("a")', 'PRINT CVI(1)', 'PRINT MKI$("a")', 'PRINT PEEK("a")',
     'PRINT RND("a")', 'PRINT STRING$("a",65)', 'PRINT VAL("a")+"b"',
     # statements that need a number or a string
-    'IF "a" THEN PRINT 1', 'WHILE "a":WEND', 'FOR I="a" TO 2:NEXT',
+    'IF "a" THEN PRINT 1', 'WHILE "a":WEND', 'FOR I="a" TO 2:NEXT', 'SWAP A,A$',
     'FOR I=1 TO "a":NEXT', 'FOR I=1 TO 2 STEP "a":NEXT', 'A$="x":FOR A$=1 TO 2:NEXT',
     'ON "a" GOTO 10', 'SWAP A,A$', 'A$="a":MID$(A$,1)=1', 'A$="a":MID$(A$,"a")="b"',
     'RANDOMIZE "a"',
@@ -78,6 +80,7 @@ ERROR_BODIES = [
 # a comparison is a number whatever it compares.
 OK_CASES = [
     ('PRINT +"a"', "a\n"),
+    ('CLEAR 100,200:PRINT "ok"', "ok\n"),
     ('PRINT +"a"+"b"', "ab\n"),
     ('PRINT "a"+"b"', "ab\n"),
     ('PRINT "a"<"b"', "-1 \n"),
@@ -110,6 +113,30 @@ def run_js(tmp_path, source):
     assert result.returncode == 0, result.stdout + result.stderr
     run = subprocess.run([NODE, str(output)], capture_output=True, text=True, timeout=10)
     return run.stdout
+
+
+@needs_node
+def test_def_fn_with_untyped_parameters_and_nested_calls(tmp_path):
+    # Measured on the binary: prints " 11  3x". The compiler once walked the AST
+    # through enum and function objects here and never finished.
+    source = ('10 DEF FNA(U,V)=U*V+U-V\n20 DEF FNB(U,V,W)=FNA(U,V)+FNA(V,W)+FNA(W,U)\n'
+              '25 DEF FNC$(U,V)=STR$(U+V)+"x"\n30 PRINT FNB(1,2,3);FNC$(1,2)\n40 SYSTEM\n')
+    assert run_js(tmp_path, source) == " 11  3x\n"
+
+
+# PRINT USING prints what it formatted before the field that does not fit (measured on the binary)
+USING_PARTIAL = [
+    ('PRINT USING "&";"a";1', "a\nType mismatch in 10\n"),
+    ('PRINT USING "#";1;"a"', "1\nType mismatch in 10\n"),
+    ('PRINT USING "!";"a",1', "a\nType mismatch in 10\n"),
+    ('PRINT USING "x#x";"a"', "x\nType mismatch in 10\n"),
+]
+
+
+@needs_node
+@pytest.mark.parametrize("body,expected", USING_PARTIAL, ids=[c[0] for c in USING_PARTIAL])
+def test_print_using_prints_before_the_mismatch(tmp_path, body, expected):
+    assert run_js(tmp_path, f"10 {body}\n20 SYSTEM\n") == expected
 
 
 @needs_node
