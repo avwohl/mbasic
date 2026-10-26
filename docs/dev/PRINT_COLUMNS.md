@@ -92,7 +92,8 @@ A file has a width of 255 and these rules are different:
 * Real MBASIC accepts `WIDTH 0`. This implementation gives an error.
 * The prompt of INPUT does not wrap at the width.
 * `WIDTH LPRINT n` and `WIDTH #n, w` are not parsed, and LPRINT does not
-  exist. This implementation ignores `WIDTH n, device`.
+  exist. `WIDTH n, device` sets the
+  width and then gives Syntax error, as the real binary does.
 * The CLS statement does not clear the screen, so it does not touch the
   column.
 * PRINT USING does not wrap. It updates the column of the screen or file.

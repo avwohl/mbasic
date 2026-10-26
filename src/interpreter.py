@@ -10,7 +10,7 @@ import signal
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Callable, Any, Union
 from src.runtime import Runtime, ProgramString, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
-from src.ast_nodes import StringNode, FunctionCallNode
+from src.ast_nodes import StringNode, FunctionCallNode, arity_type_checks, instr_shape_error
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
 from src.pc import PC
@@ -254,6 +254,7 @@ class InterpreterState:
     # report: END ends the program and clears it.
     error_info: Optional[ErrorInfo] = None
     pending_error: Optional[ErrorInfo] = None
+    pending_error_tail: Optional[list] = None   # clause statements behind the error
 
     # Performance tracking
     statements_executed: int = 0
@@ -734,6 +735,9 @@ class Interpreter:
                     error_code = self._map_exception_to_error_code(e)
                     # ON ERROR GOTO 0 in a handler raises the error the handler
                     # is working on again, and it is reported where it began.
+                    # (pc is the statement RESUME NEXT is running when it
+                    # re-runs the rest of a clause: stmt_pc is the IF.)
+                    pc = getattr(e, 'stmt_pc', None) or pc
                     error_pc = getattr(e, 'error_pc', None) or pc
                     info = ErrorInfo(
                         error_code=error_code,
@@ -749,6 +753,7 @@ class Interpreter:
                         # the error is reported at (READ of a bad DATA item: the DATA line).
                         self.state.pending_error = ErrorInfo(
                             error_code=error_code, pc=pc, error_message=str(e))
+                        self.state.pending_error_tail = getattr(e, 'clause_tail', None)
                         self._invoke_error_handler(error_code, pc, error_pc)
                         # Error handler set npc - apply it and continue execution
                         # (don't use continue here - we need to let normal flow handle NPC)
@@ -1510,7 +1515,7 @@ class Interpreter:
             # Illegal function call.
             raise RuntimeError("Illegal function call")
 
-    def execute_clause_statements(self, statements, resume_pc=None):
+    def execute_clause_statements(self, statements, resume_pc=None, is_else=False):
         """Run the statements of a THEN or ELSE clause.
 
         A clause is not addressable by PC - the statement table holds one entry
@@ -1531,7 +1536,19 @@ class Interpreter:
         The tail is handed to the GOSUB frame instead, and RETURN finishes it.
         """
         for index, clause_stmt in enumerate(statements):
-            self.execute_statement(clause_stmt)
+            try:
+                self.execute_statement(clause_stmt)
+            except Exception as e:
+                # An error ends the statement only: RESUME NEXT goes on with
+                # the statements behind it in the clause (measured on 5.21).
+                # Not when it is the first statement of an ELSE clause: then
+                # RESUME NEXT goes on at the next line.
+                if not hasattr(e, 'clause_tail') and not (is_else and index == 0):
+                    try:
+                        e.clause_tail = statements[index + 1:]
+                    except AttributeError:
+                        pass
+                raise
             if self.runtime.npc is None:
                 continue
             remaining = statements[index + 1:]
@@ -1570,7 +1587,7 @@ class Interpreter:
                 # ELSE line_number
                 self._jump_to(stmt.else_line_number)
             elif stmt.else_statements:
-                self.execute_clause_statements(stmt.else_statements)
+                self.execute_clause_statements(stmt.else_statements, is_else=True)
 
     def _matching_next(self, stmt):
         """The NEXT that closes this FOR, found once and remembered.
@@ -2161,6 +2178,8 @@ class Interpreter:
             raise RuntimeError("No error position to resume from")
 
         error_pc = self.state.pending_error.pc
+        clause_tail = self.state.pending_error_tail
+        self.state.pending_error_tail = None
 
         # Clear error state
         self.state.pending_error = None
@@ -2181,6 +2200,18 @@ class Interpreter:
                 self.runtime.pc = PC.halted()
             else:
                 self.runtime.npc = next_pc
+            if clause_tail:
+                # The error was in a THEN or ELSE clause: the statements
+                # behind it in the clause still run.  An error in one of them
+                # is reported at the IF, not at the RESUME.
+                try:
+                    self.execute_clause_statements(clause_tail)
+                except Exception as e:
+                    try:
+                        e.stmt_pc = error_pc
+                    except AttributeError:
+                        pass
+                    raise
         else:
             # RESUME line_number - jump to specific line
             self._jump_to(stmt.line_number)
@@ -2446,6 +2477,12 @@ class Interpreter:
         - All simple variables are deleted
         - All arrays are erased
         - All open files are closed
+        - ON ERROR GOTO is forgotten, so the next error is fatal, and a handler
+          that is running is over (its RESUME is "RESUME without error"). ERR
+          and ERL keep their values.
+        - The FOR and GOSUB/WHILE stacks are emptied, OPTION BASE may be given
+          again (the base is 0), the DATA pointer goes back to the first item,
+          and the DEF FN functions defined so far are forgotten.
         - COMMON variables list is preserved (for CHAIN compatibility)
         - memory_top and stack_space change the string space (Runtime.set_memory),
           which is what Out of string space is measured against. The number before
@@ -2461,8 +2498,27 @@ class Interpreter:
         # counters - so CLEAR then RND gives .245121 again, measured.
         self.runtime.rnd.reset()
 
-        # Clear all variables
-        self.runtime.clear_variables()
+        # Clear all variables. ERR and ERL are not variables of the program on
+        # the binary: CLEAR leaves them as they are (measured, in a handler).
+        runtime = self.runtime
+        kept = {name: runtime.get_variable_for_debugger(name[:-1], '%')
+                for name in ('err%', 'erl%', 'ers%')}
+        runtime.clear_variables()
+        for name, value in kept.items():
+            runtime.set_variable_raw(name, value)
+
+        # The error handler goes, and a handler that is running is over
+        runtime.error_handler = None
+        runtime.error_handler_is_gosub = False
+        self.state.pending_error = None
+
+        # The stacks, OPTION BASE, the DATA pointer and DEF FN
+        runtime.execution_stack.clear()
+        runtime.for_loop_states.clear()
+        runtime.array_base = 0
+        runtime.option_base_executed = False
+        runtime.data_pointer = 0
+        runtime.user_functions.clear()
 
         # Clear all arrays
         self.runtime.clear_arrays()
@@ -2488,7 +2544,7 @@ class Interpreter:
         #
         # PRESERVED by CLEAR (not cleared):
         #   - runtime.common_vars (list of COMMON variable names - the list itself, not values)
-        #   - runtime.user_functions (DEF FN functions)
+        #   - ERR and ERL
         #
         # NOT PRESERVED (cleared above):
         #   - All variables and arrays
@@ -4033,8 +4089,8 @@ class Interpreter:
         are Illegal function call. A width of 0 is accepted (the binary does
         so); see wrap_text for what it does to PRINT, and tab_target for TAB.
         WIDTH LPRINT n checks the byte and does nothing else: there is no
-        line printer. A form with a device (WIDTH n, device) is accepted and
-        ignored.
+        line printer. WIDTH n, device sets the width and then is a Syntax
+        error, as on the binary; nothing after the ',' runs.
         """
         width = self.evaluate_expression(stmt.width)
         if isinstance(width, str):
@@ -4042,8 +4098,9 @@ class Interpreter:
         width = to_conint(width)
         if stmt.lprint:
             return
-        if stmt.device is None:
-            self.io.width = width
+        self.io.width = width
+        if stmt.bad_device:
+            raise MBasicError(2)
 
     def execute_cont(self, stmt):
         """Execute CONT statement
@@ -4332,6 +4389,25 @@ class Interpreter:
         # First, check if it's a built-in function
         # Strip $ suffix for builtin lookup (CHR$ -> CHR, INPUT$ -> INPUT, etc.)
         func_name = expr.name.rstrip('$')
+        if func_name == 'INSTR' and len(expr.arguments) >= 2:
+            # Which error depends on the types, not only the count.
+            args = [self.evaluate_expression(arg) for arg in expr.arguments]
+            error = instr_shape_error([isinstance(a, str) for a in args])
+            if error is not None:
+                raise MBasicError(error)
+            return self.builtins.INSTR(*args)
+        if expr.arity_error is not None:
+            # Wrong number of arguments: the binary evaluates the ones it
+            # can use, then stops with Syntax error (ABS(1,2), LEFT$(A$)).
+            # An argument of the wrong type is Type mismatch first (see
+            # BUILTIN_ARG_TYPES).
+            wanted = arity_type_checks(expr.name, len(expr.arguments))
+            for i, arg in enumerate(expr.arguments[:expr.arity_error]):
+                value = self.evaluate_expression(arg)
+                if i < len(wanted) and wanted[i] != 'A' and \
+                        isinstance(value, str) != (wanted[i] == 'S'):
+                    raise MBasicError(13)
+            raise MBasicError(2)
         func = getattr(self.builtins, func_name, None)
         if func:
             # It's a builtin function

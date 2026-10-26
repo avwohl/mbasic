@@ -1630,6 +1630,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.indent_level -= 1
         code.append(self.indent() + '}')
         code.append(self.indent() + 'function _cint(n) { return _toInt(n); }')
+        code.append(self.indent() + 'function _arg_type(v, t) { if ((typeof v === "string") !== (t === "S")) _error("Type mismatch"); return v; }')
         for line in JS_LOGICAL_RUNTIME.strip('\n').split('\n'):
             code.append(self.indent() + line if line else '')
         code.append(self.indent() + 'function _toSingle(n) { return (n >= _SINGLE_LIMIT || n <= -_SINGLE_LIMIT) ? _overflow(n < 0, 6) : Math.fround(n); }  // ES6 single-precision')
@@ -1689,8 +1690,18 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'function _chr(n) { return String.fromCharCode(_conint(n)); }')
         code.append(self.indent() + 'function _asc(str) { return String(str).charCodeAt(0) || 0; }')
         code.append(self.indent() + 'function _str(n, d = 6) { const t = _fmt_num(n, d); return n >= 0 ? " " + t : t; }')
-        code.append(self.indent() + 'function _instr(start, str1, str2) {')
+        code.append(self.indent() + 'function _instr(...a) {')
         self.indent_level += 1
+        code.append(self.indent() + '// The error depends on the types (see instr_shape_error in ast_nodes.py)')
+        code.append(self.indent() + 'const s = a.map(v => typeof v === "string");')
+        code.append(self.indent() + 'let e = 0;')
+        code.append(self.indent() + 'if (s.length < 2) e = 2;')
+        code.append(self.indent() + 'else if (s[0]) e = s.length === 2 ? (s[1] ? 0 : 13) : 2;')
+        code.append(self.indent() + 'else if (!s[1]) e = 13;')
+        code.append(self.indent() + 'else if (s.length === 2 || s.length > 3) e = 2;')
+        code.append(self.indent() + 'else if (!s[2]) e = 13;')
+        code.append(self.indent() + 'if (e) _error(e === 13 ? "Type mismatch" : "Syntax error");')
+        code.append(self.indent() + 'let [start, str1, str2] = a;')
         code.append(self.indent() + '// INSTR with optional start position')
         code.append(self.indent() + 'if (str2 === undefined) {')
         self.indent_level += 1
@@ -2877,7 +2888,8 @@ class JavaScriptBackend(CodeGenBackend):
             pass
         elif isinstance(stmt, SyntaxErrorStatementNode):
             # MBASIC stores a line it cannot parse and fails when it runs
-            code.append(self.indent() + '_error("Syntax error");')
+            code.append(self.indent() + ('_error("Missing operand");' if stmt.error_code == 22
+                                         else '_error("Syntax error");'))
         elif isinstance(stmt, PokeStatementNode):
             code.extend(self._generate_poke(stmt))
         elif isinstance(stmt, OutStatementNode):
@@ -3169,6 +3181,14 @@ class JavaScriptBackend(CodeGenBackend):
         func_name = func.name.lower()
         args = [self._generate_expression(arg) for arg in func.arguments]
         args = self._check_argument_kinds(func, args)
+
+        # A built-in with the wrong number of arguments: Syntax error when the
+        # call runs, after the arguments the binary can use (ABS(1,2)).
+        if func.arity_error is not None and not (func_name == 'instr' and len(args) >= 2):
+            wanted = arity_type_checks(func.name, len(args))
+            checked = [f'_arg_type({a}, "{wanted[i]}")' if i < len(wanted) and wanted[i] != 'A' else a
+                       for i, a in enumerate(args[:func.arity_error])]
+            return f'({", ".join(checked + ["_error(\"Syntax error\")"])})'
 
         # Check if it's a DEF FN function (starts with 'fn')
         # User-defined functions from DEF FN
@@ -4035,15 +4055,16 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate WIDTH statement - set the screen line width
 
         PRINT wraps at _width and measures TAB and the comma zones against it.
-        A form with a device (WIDTH n, device) is accepted and ignored, as in
-        the interpreter.
+        WIDTH n, device sets the width and then is a Syntax error, as in the
+        interpreter.
         """
         width = self._generate_expression(stmt.width)
         if getattr(stmt, 'lprint', False):
             return [self.indent() + f'// WIDTH LPRINT {width} - ignored']
-        if stmt.device is not None:
-            return [self.indent() + f'// WIDTH {width}, device - ignored']
-        return [self.indent() + f'_width = _set_width({width});']
+        code = [self.indent() + f'_width = _set_width({width});']
+        if getattr(stmt, 'bad_device', False):
+            code.append(self.indent() + '_error("Syntax error");')
+        return code
 
     def _generate_clear(self, stmt: ClearStatementNode) -> List[str]:
         """Generate CLEAR statement - clear variables and set memory limits (stub)
@@ -4058,6 +4079,32 @@ class JavaScriptBackend(CodeGenBackend):
                 # A string where a number is wanted is Type mismatch, as on the binary
                 code.append(self.indent() + self._generate_expression_as(arg, 'n') + ';')
         code.append(self.indent() + '// CLEAR - JavaScript manages memory automatically')
+        if stmt.string_space is not None or stmt.memory_top is not None or stmt.stack_space is not None:
+            # The arguments are checked as the interpreter does; a CLEAR that
+            # fails leaves the ON ERROR handler in place.  The memory top and
+            # the stack space are not kept, so each CLEAR starts from the
+            # start-up values.
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + 'let _ct = 64766, _cs = 512;')
+            if stmt.string_space is not None:
+                v = self._generate_expression(stmt.string_space)
+                code.append(self.indent() + f'if (_toInt({v}) < 0) _error("Illegal function call");')
+            for var, expr, hi in (('_ct', stmt.memory_top, 65535), ('_cs', stmt.stack_space, 65535)):
+                if expr is None:
+                    continue
+                v = self._generate_expression(expr)
+                code.append(self.indent() + f'{var} = _round_half_away({v});')
+                code.append(self.indent() + f'if ({var} < -32768 || {var} > {hi}) _error("Overflow");')
+                code.append(self.indent() + f'if ({var} === 0) _error("Illegal function call");')
+                code.append(self.indent() + f'{var} = {var} & 0xFFFF;')
+            code.append(self.indent() + 'if (_cs < 82 || 39168 + (_ct - 64766) - (_cs - 512) < 0) _error("Out of memory");')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+        if self.uses_error_handling:
+            # A CLEAR forgets ON ERROR GOTO (the next error is fatal) and ends
+            # a running handler; ERR and ERL keep their values.
+            code.append(self.indent() + '_error_handler = null; _error_handler_is_gosub = false; _in_error_handler = false;')
         return code
 
     def _generate_common(self, stmt: CommonStatementNode) -> List[str]:

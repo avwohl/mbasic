@@ -1202,9 +1202,9 @@ def serialize_statement(stmt):
     elif stmt_type == 'WidthStatementNode':
         if getattr(stmt, 'lprint', False):
             return f"WIDTH LPRINT {serialize_expression(stmt.width)}"
-        if stmt.device is not None:
-            return (f"WIDTH {serialize_expression(stmt.device)},"
-                    f" {serialize_expression(stmt.width)}")
+        if getattr(stmt, 'bad_device', False):
+            device = '' if stmt.device is None else f" {serialize_expression(stmt.device)}"
+            return f"WIDTH {serialize_expression(stmt.width)},{device}"
         return f"WIDTH {serialize_expression(stmt.width)}"
 
     elif stmt_type == 'RandomizeStatementNode':

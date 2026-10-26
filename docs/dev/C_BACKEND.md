@@ -16,6 +16,10 @@ a message. There are two kinds of message:
 - A warning gives advice. `--compile-c` prints each warning and continues.
   `WIDTH`, `CLEAR` with memory sizes, and double precision on uc80 give warnings.
 
+A built-in with the wrong number of arguments (`ABS(1,2)`) and `WIDTH n, device`
+are errors too. The interpreter gives Syntax error for them when the line runs; the C
+backend has no run-time errors, so it stops at compile time.
+
 The backend gives an error for a statement or function that it does not have. It
 also gives an error for a string where a number is needed (`Type mismatch`).
 The error is at compile time on purpose; the JavaScript backend raises it at

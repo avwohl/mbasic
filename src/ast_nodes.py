@@ -1067,14 +1067,19 @@ class WidthStatementNode:
 
     Syntax:
         WIDTH width
-        WIDTH width, device
         WIDTH LPRINT width
+
+    WIDTH width, device is a Syntax error on MBASIC 5.21 (see bad_device).
     """
     width: 'ExpressionNode'
     device: Optional['ExpressionNode']
     line_num: int = 0
     column: int = 0
     lprint: bool = False
+    # True when a ',' follows the width (WIDTH 40,1  WIDTH 30,). The binary sets
+    # the width and then stops with Syntax error, so the statement does both.
+    # `device` holds what came after the ',' when it parsed; it is never run.
+    bad_device: bool = False
 
 
 @dataclass
@@ -1336,12 +1341,18 @@ class FunctionCallNode:
         type_suffix: For a DEF FN call, the suffix it was written with, which
             is what types the result - FNA is single and FNA# is double. The
             name has it stripped for lookup, so it is kept separately.
+        arity_error: None for a call with the right number of arguments. For
+            a built-in called with the wrong number it is how many arguments
+            run before the call stops with Syntax error. MBASIC reads the
+            arguments while it runs the call, so ABS(1,2) fails only when the
+            line runs, and the arguments before the bad one are evaluated.
     """
     name: str
     arguments: List['ExpressionNode']
     line_num: int = 0
     column: int = 0
     type_suffix: str = None
+    arity_error: Optional[int] = None
 
 
 # ============================================================================
@@ -1475,3 +1486,50 @@ class TypeInfo:
             return VarType.STRING
         else:
             raise ValueError(f"Unknown DEF statement token type: {token_type}")
+
+
+# The argument types of the built-ins that take more than one argument: S is a
+# string, N a number, A either. The binary checks the type of an argument at the
+# ',' behind it, so a call with too many arguments is Type mismatch (not Syntax
+# error) when one of the first arguments has the wrong type: LEFT$(1,2,3),
+# LEFT$("A","B",1). Single-argument built-ins check after the
+# ')', so ABS("x",1) is Syntax error. Measured on MBASIC 5.21.
+BUILTIN_ARG_TYPES = {
+    'LEFT': 'SN', 'RIGHT': 'SN', 'MID': 'SNN',
+    'STRING': 'NA', 'INPUT': 'NN',
+}
+
+
+def arity_type_checks(name: str, count: int) -> str:
+    """The types to check, argument by argument, in a call with the wrong argument count."""
+    base = name.upper().rstrip('$')
+    spec = BUILTIN_ARG_TYPES.get(base, '')
+    if count > len(spec):
+        return spec
+    if base == 'STRING' and count == 1:
+        return 'N'      # STRING$("A") is Type mismatch; LEFT$(1) is Syntax error
+    return ''
+
+
+def instr_shape_error(is_string):
+    """The error INSTR gives for its arguments, or None when the call is valid.
+
+    is_string says, argument by argument, whether it is a string. INSTR reads a
+    string first argument as the two-argument form: INSTR("A",1,1) is Syntax
+    error, and only INSTR("A",1) is Type mismatch. A numeric first argument
+    is the start position, and the type of the second argument is checked at
+    the ',' behind it, the third at the ')'. Measured on MBASIC 5.21 for all
+    combinations of numbers and strings with one to four arguments.
+    """
+    count = len(is_string)
+    if count < 2:
+        return 2
+    if is_string[0]:
+        if count == 2:
+            return None if is_string[1] else 13
+        return 2
+    if not is_string[1]:
+        return 13
+    if count == 2 or count > 3:
+        return 2
+    return None if is_string[2] else 13

@@ -15,7 +15,7 @@ type: statement
 
 **Range**: 1 to 255. Another value gives "Illegal function call". Real MBASIC 5.21 also accepts 0.
 
-**Limitations**: The "WIDTH LPRINT" syntax is NOT supported and will cause a parse error. The form `WIDTH n, device` is accepted and ignored. A disk file always has a width of 255.
+**Limitations**: The "WIDTH LPRINT" syntax is NOT supported and will cause a parse error. The form `WIDTH n, device` sets the width and then gives "Syntax error", as MBASIC 5.21 does. A disk file always has a width of 255.
 
 **Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference. The default width of real MBASIC 5.21 is 80 on the console.
 

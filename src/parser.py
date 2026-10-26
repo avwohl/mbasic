@@ -16,6 +16,7 @@ Expression parsing notes:
   (this is specific to these two functions, not a general MBASIC feature)
 """
 
+import re
 from typing import Any, List, Optional, Dict, Set, Tuple
 from src.tokens import Token, TokenType
 from src.ast_nodes import *
@@ -34,6 +35,22 @@ class ParseError(Exception):
         else:
             super().__init__(f"Parse error: {message}")
 
+
+# The number of arguments each built-in takes, as (fewest, most), by the name
+# parse_builtin_function gives the call.  Measured on MBASIC 5.21: any other
+# number is a Syntax error when the call runs.  INKEY$ is (1, 0) because it
+# takes no brackets at all; INKEY$() and RND() are Syntax error too.
+BUILTIN_ARITY = {
+    **{name: (1, 1) for name in (
+        'ABS', 'ATN', 'COS', 'SIN', 'TAN', 'EXP', 'LOG', 'SQR', 'INT', 'FIX',
+        'SGN', 'ASC', 'VAL', 'LEN', 'PEEK', 'INP', 'USR', 'VARPTR', 'EOF',
+        'FRE', 'LOC', 'LOF', 'POS', 'LPOS', 'TAB', 'SPC', 'CHR', 'STR',
+        'SPACE', 'HEX', 'OCT', 'CINT', 'CSNG', 'CDBL', 'CVI', 'CVS', 'CVD',
+        'MKI', 'MKS', 'MKD', 'RND')},
+    'LEFT': (2, 2), 'RIGHT': (2, 2), 'STRING$': (2, 2),
+    'MID': (2, 3), 'INSTR': (2, 3), 'INPUT$': (1, 2),
+    'INKEY': (1, 0),
+}
 
 class Parser:
     """
@@ -338,16 +355,19 @@ class Parser:
 
             pos += 1
 
-    def _syntax_error_statement(self) -> StatementNode:
+    def _syntax_error_statement(self, to_end_of_line: bool = False) -> StatementNode:
         """Take the tokens of one bad statement as a statement that fails when it runs.
 
         The statement ends at the next ':' (or ELSE), as MBASIC finds the end
         of a statement when it skips one: RESUME NEXT after the error goes on
-        with the statement behind the ':'.
+        with the statement behind the ':'.  With to_end_of_line the statement
+        takes the rest of the line, ':' and ELSE included (see
+        _parse_statement_or_defer).
         """
         token = self.current()
         self.position += 1
-        while not self.at_end_of_line() and not self.match(TokenType.COLON, TokenType.ELSE):
+        while not self.at_end_of_line() and (
+                to_end_of_line or not self.match(TokenType.COLON, TokenType.ELSE)):
             self.position += 1
         text = ""
         if token is not None and token.line >= 1 and token.line <= len(self.source_lines):
@@ -377,8 +397,14 @@ class Parser:
             kept = self._print_before_stray_text(start)
             if kept is not None:
                 return kept
-            bad = self._syntax_error_statement()
-            if error_code_for(e) == MISSING_OPERAND:
+            # When the operand that ran out is met as ELSE (A=ELSE  A=1+ELSE) the
+            # binary has read the ELSE already, and RESUME NEXT goes on at the
+            # next line: what follows on the line is skipped. Measured with
+            # A=ELSE:PRINT "x", with IF..THEN A=ELSE ELSE.., and after ELSE.
+            missing = error_code_for(e) == MISSING_OPERAND
+            at_else = missing and re.search(r'expression: else\b', str(e).lower()) is not None
+            bad = self._syntax_error_statement(to_end_of_line=at_else)
+            if missing:
                 bad.error_code = MISSING_OPERAND    # A=  PRINT 1+  DEF USR=
             return bad
 
@@ -581,7 +607,14 @@ class Parser:
 
         # Control flow
         elif token.type == TokenType.IF:
-            return self.parse_if()
+            self._if_depth = getattr(self, '_if_depth', 0) + 1
+            outer_in_else = getattr(self, '_in_else', False)
+            self._in_else = False       # an IF in an ELSE starts with its THEN clause
+            try:
+                return self.parse_if()
+            finally:
+                self._if_depth -= 1
+                self._in_else = outer_in_else
         elif token.type == TokenType.FOR:
             return self.parse_for()
         elif token.type == TokenType.NEXT:
@@ -1307,7 +1340,9 @@ class Parser:
 
         # Parse arguments
         args: List[ExpressionNode] = []
+        trailing_comma = False
         while not self.match(TokenType.RPAREN):
+            trailing_comma = False
             # INPUT$(X[,[#]Y]) - the manual writes the file number with an
             # optional '#', and the help page's own example uses it:
             #     30 PRINT HEX$(ASC(INPUT$(1, #1)));
@@ -1322,16 +1357,30 @@ class Parser:
 
             if self.match(TokenType.COMMA):
                 self.advance()
+                trailing_comma = True
             elif not self.match(TokenType.RPAREN):
                 raise ParseError(f"Expected , or ) in {func_name} function", self.current())
 
         self.expect(TokenType.RPAREN)
 
+        # The binary reads the arguments as the call runs, so a wrong count is
+        # a Syntax error when the line runs, after the arguments up to the
+        # first one it cannot use. ABS(1,2) and LEFT$(A$) both measured; so
+        # were RND() and INKEY$(), where the empty brackets are the error.
+        low, high = BUILTIN_ARITY.get(func_name, (None, None))
+        arity_error = None
+        if low is not None:
+            if len(args) > high:
+                arity_error = high
+            elif len(args) < low or trailing_comma:
+                arity_error = len(args)
+
         return FunctionCallNode(
             name=func_name,
             arguments=args,
             line_num=func_token.line,
-            column=func_token.column
+            column=func_token.column,
+            arity_error=arity_error
         )
 
     def parse_fn_call(self) -> FunctionCallNode:
@@ -2378,16 +2427,21 @@ class Parser:
         """Parse the statements of an ELSE clause: in MBASIC the clause runs to the end of the line,
         so 'ELSE FOR I=1 TO 2:PRINT I:NEXT:PRINT "b"' holds all four statements."""
         statements: List[StatementNode] = []
-        while True:
-            stmt = self._parse_statement_or_defer()
-            if stmt:
-                statements.append(stmt)
-            if self.match(TokenType.COLON):
-                self.advance()
-                if self.at_end_of_line():
-                    break
-                continue
-            break
+        saved_in_else = getattr(self, '_in_else', False)
+        self._in_else = True
+        try:
+            while True:
+                stmt = self._parse_statement_or_defer()
+                if stmt:
+                    statements.append(stmt)
+                if self.match(TokenType.COLON):
+                    self.advance()
+                    if self.at_end_of_line():
+                        break
+                    continue
+                break
+        finally:
+            self._in_else = saved_in_else
         return statements
 
     def parse_if(self) -> IfStatementNode:
@@ -3896,17 +3950,17 @@ class Parser:
         stack_space = None
 
         # CLEAR can have optional arguments: [n] [,[memory_top] [,stack_space]]
-        if not self.at_end_of_line() and not self.match(TokenType.COLON):
+        if not self.at_end_of_line() and not self.match(TokenType.COLON, TokenType.ELSE):
             if not self.match(TokenType.COMMA):
                 string_space = self.parse_expression()
 
             if self.match(TokenType.COMMA):
                 self.advance()
-                if not (self.at_end_of_line() or self.match(TokenType.COLON, TokenType.COMMA)):
+                if not (self.at_end_of_line() or self.match(TokenType.COLON, TokenType.ELSE, TokenType.COMMA)):
                     memory_top = self.parse_expression()
                 if self.match(TokenType.COMMA):
                     self.advance()
-                    if not self.at_end_of_line() and not self.match(TokenType.COLON):
+                    if not self.at_end_of_line() and not self.match(TokenType.COLON, TokenType.ELSE):
                         stack_space = self.parse_expression()
                 if self.match(TokenType.COMMA):
                     # A fourth argument is a Syntax error found before any
@@ -3956,16 +4010,12 @@ class Parser:
     def parse_width(self) -> WidthStatementNode:
         """Parse WIDTH statement.
 
-        Syntax: WIDTH width [, device]
-
-        Parses a WIDTH statement that specifies output width for a device.
-        Both the width and optional device parameters are parsed as expressions.
+        Syntax: WIDTH width  or  WIDTH LPRINT width
 
         The parsed statement contains:
         - width: Column width expression (typically 40 or 80)
-        - device: Optional device expression (e.g., file number like 1, or device name).
-          In MBASIC 5.21, common values are file numbers or omitted for console.
-          The parser accepts any expression; validation occurs at runtime.
+        - bad_device: a ',' follows the width, which MBASIC 5.21 runs as "set
+          the width, then Syntax error".  device is what followed the ','.
         """
         token = self.advance()
 
@@ -3981,16 +4031,37 @@ class Parser:
 
         width = self.parse_expression()
 
+        # WIDTH 40,1 sets the width, then fails with Syntax error (measured on
+        # 5.21). What follows the ',' is never read, so it is not parsed for
+        # errors; it is kept only so the line can be listed again.
         device = None
+        bad_device = False
         if self.match(TokenType.COMMA):
+            bad_device = True
             self.advance()
-            device = self.parse_expression()
+            if not self.at_end_of_line() and not self.match(TokenType.COLON, TokenType.ELSE):
+                try:
+                    device = self.parse_expression()
+                except ParseError:
+                    pass
+            # Outside an IF, or in an ELSE clause, the failing WIDTH takes the
+            # rest of the line, ELSE included (measured on 5.21).  In a THEN
+            # clause the ELSE belongs to the IF.  The error ends the WIDTH
+            # statement only, so a ':' statement behind it still runs after
+            # RESUME NEXT (see execute_clause_statements).
+            in_if = (getattr(self, '_if_depth', 0) > 0
+                     and not getattr(self, '_in_else', False))
+            while not self.at_end_of_line() and not self.match(TokenType.COLON):
+                if in_if and self.match(TokenType.ELSE):
+                    break
+                self.position += 1
 
         return WidthStatementNode(
             width=width,
             device=device,
             line_num=token.line,
-            column=token.column
+            column=token.column,
+            bad_device=bad_device
         )
 
     def parse_poke(self) -> PokeStatementNode:
