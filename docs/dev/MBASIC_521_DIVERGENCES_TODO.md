@@ -155,13 +155,58 @@ The same checks cover these statements:
 A double is taken to single precision before FRCINT rounds it, so
 `2.49999999# AND 3` is 3.
 
-Still open: the JavaScript backend gaps for `STRING$`, `SPACE$`, `LEFT$`,
-`RIGHT$`, `TAB`, `CHR$`, `PEEK` and array subscripts (the issue lists them);
-the arguments of `CLEAR`, `USR`, `LPOS` and `WIDTH 0`; the maximum number of
-files (`CLOSE #4` is `Bad file number` on the binary with the default 3
-files); the two-argument form `MID$(A$,2)=X$`, which the parser rejects; and
-`DIM A(32767)`, which is `Subscript out of range` on the binary (memory) and
-works here.
+Done for the interpreter (#43, second part). Each item was measured on the
+binary:
+
+- `MID$(A$,2)=X$` with no length is accepted. It replaces as much of `A$` as
+  `X$` fills, as the three-argument form does with a length of 255. A start of
+  0 or beyond the end is `Illegal function call`, a number on the right is
+  `Type mismatch`. The JavaScript backend does the same.
+- `CLEAR` already agreed with the binary: the numbers are read as 16-bit
+  values (`CLEAR 70000` and `CLEAR ,70000` are `Overflow`), `CLEAR -1`,
+  `CLEAR 0,0` and `CLEAR ,0` are `Illegal function call`, a string is
+  `Type mismatch`. Tests now cover this.
+- `USR` and `USR0` to `USR9`: the argument is evaluated (`USR(1E40)` prints
+  `Overflow` first), then the call is `Illegal function call`, with or
+  without `DEF USR`: there is no machine code to run. The argument can be of
+  any type (`USR("A")` is `Illegal function call`, not `Type mismatch`).
+- `DEF USR[n]=address` is a statement now (it was a Syntax error). The
+  address is -32768 to 65535 and is not kept: 65536 is `Overflow`, a string is
+  `Type mismatch`. `DEF USR10=1` is a Syntax error, as on the binary.
+- `LPOS(x)` is a function now (it was an array). The argument is any type and
+  is not used. The value is 1, the leftmost column of a printer: `LPRINT` is
+  not implemented, so there is no printer column. `LPOS` with no argument is a
+  Syntax error.
+- `WIDTH 0` is accepted. The width is a byte (`WIDTH 256` is `Illegal function
+  call`, `WIDTH 70000` is `Overflow`) and 0.4 rounds to 0. With width 0 the
+  binary prints a line break before the first character of a line and never
+  wraps again, and `TAB` and `SPC` are `Division by zero` (error 11) because
+  they divide by the width. `WIDTH LPRINT n` is a statement now (it was a Syntax
+  error) and checks the byte only. Test:
+  `tests/regression/integration/test_mid_clear_usr_lpos_width0.py`.
+
+Left out on purpose, with the reason:
+
+- `DIM A(32767)` is `Subscript out of range` on the binary because the array
+  does not fit in its memory. There is no memory model (see
+  `docs/dev/NO_MEMORY_MODEL.md`), so here the array is made.
+- The maximum number of files: with the default `/F:3` the binary says `Bad
+  file number` for `CLOSE #4`. This interpreter allows 15 files on purpose.
+
+Found while measuring, not done:
+
+- A wrong number of arguments to a built-in function (`ABS()`, `POS(1,2)`,
+  `USR()`, `LPOS(1,2)`) is `Illegal function call` here and `Syntax error`
+  on the binary.
+- `WIDTH 40,1` is a Syntax error on the binary (after it has set the
+  width); here the device form is accepted and ignored.
+- A `CLEAR` that succeeds also forgets `ON ERROR GOTO`, so the next error is
+  fatal on the binary. Here the handler stays.
+- `USR10(1)` is a Syntax error on the binary; here it is an array.
+
+The JavaScript backend gaps for `STRING$`, `SPACE$`, `LEFT$`, `RIGHT$`, `TAB`,
+`CHR$`, `PEEK` and array subscripts (the issue lists them) are the open part
+of #43 and are done on the JavaScript branch.
 
 
 ## 2. ON ERROR, and what happens around a handler

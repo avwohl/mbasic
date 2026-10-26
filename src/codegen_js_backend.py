@@ -2345,6 +2345,7 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'return 0;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _lpos(n) { return 1; }  // LPOS: no printer, column 1')
         code.append(self.indent() + 'function _usr(n) {')
         self.indent_level += 1
         code.append(self.indent() + '// USR - Call machine code routine (stub: returns argument)')
@@ -2982,6 +2983,7 @@ class JavaScriptBackend(CodeGenBackend):
             'inp': '_inp',
             'varptr': '_varptr',
             'usr': '_usr',
+            'lpos': '_lpos',
             # Input
             'inkey$': '_inkey',
             'input$': '_input_chars',
@@ -3449,8 +3451,13 @@ class JavaScriptBackend(CodeGenBackend):
         # Generate the variable reference (can be simple variable or array element)
         var_expr = self._generate_expression(stmt.string_var)
         start_expr = self._generate_expression(stmt.start)
-        length_expr = self._generate_expression(stmt.length)
         value_expr = self._generate_expression(stmt.value)
+        if stmt.length is not None:
+            length_expr = self._generate_expression(stmt.length)
+        else:
+            # MID$(A$, 2) = X$ has no length: as much of X$ as the string has room for
+            length_expr = (f'Math.min(String({value_expr}).length, '
+                           f'String({var_expr}).length - ({start_expr}) + 1)')
 
         # MID$ assignment in JavaScript:
         # var = var.substring(0, start-1) + value.substring(0, length) + var.substring(start-1+length)
@@ -3759,6 +3766,8 @@ class JavaScriptBackend(CodeGenBackend):
         the interpreter.
         """
         width = self._generate_expression(stmt.width)
+        if getattr(stmt, 'lprint', False):
+            return [self.indent() + f'// WIDTH LPRINT {width} - ignored']
         if stmt.device is not None:
             return [self.indent() + f'// WIDTH {width}, device - ignored']
         return [self.indent() + f'_width = _set_width({width});']

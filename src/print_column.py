@@ -52,7 +52,10 @@ def wrap_text(col: int, width: int, text: str, whole_item: bool = True):
         out.append('\n')
         col = 0
     for ch in text:
-        if moves_cursor(ch) and col >= width:
+        # The binary tests for equal, not for beyond: a width of 0 (which
+        # WIDTH 0 sets) wraps only at column 0, once, before the first
+        # character of a line.
+        if moves_cursor(ch) and (col >= width if width else col == 0):
             out.append('\n')
             col = 0
         out.append(ch)
@@ -73,6 +76,8 @@ def tab_target(n: int, width: int, infinite: bool = False) -> int:
 
     On a screen of width 255 (infinite) the count is a byte: n modulo 256.
     """
+    if width == 0 and not infinite:
+        raise ZeroDivisionError("Division by zero")    # the binary divides by the width
     if n < 1:
         return 0
     return (n - 1) % (256 if infinite else width)
@@ -80,6 +85,8 @@ def tab_target(n: int, width: int, infinite: bool = False) -> int:
 
 def spc_count(n: int, width: int, infinite: bool = False) -> int:
     """How many spaces SPC(n) prints: n modulo the width (modulo 256 when infinite)."""
+    if width == 0 and not infinite:
+        raise ZeroDivisionError("Division by zero")    # the binary divides by the width
     n = max(n, 0)
     return n % (256 if infinite else width)
 

@@ -188,6 +188,7 @@ class TokenType(Enum):
     LOF = auto()             # LOF
     PEEK = auto()
     POS = auto()
+    LPOS = auto()
     SPC = auto()             # SPC (print spacing function)
     TAB = auto()             # TAB (print tab function)
     USR = auto()
@@ -419,6 +420,7 @@ KEYWORDS = {
     'lof': TokenType.LOF,
     'peek': TokenType.PEEK,
     'pos': TokenType.POS,
+    'lpos': TokenType.LPOS,
     'spc': TokenType.SPC,
     'tab': TokenType.TAB,
     'usr': TokenType.USR,

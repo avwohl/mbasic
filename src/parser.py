@@ -16,6 +16,7 @@ Expression parsing notes:
   (this is specific to these two functions, not a general MBASIC feature)
 """
 
+import re
 from typing import Any, List, Optional, Dict, Set, Tuple
 from src.tokens import Token, TokenType
 from src.ast_nodes import *
@@ -1094,7 +1095,12 @@ class Parser:
 
         # Variables and functions
         elif token.type == TokenType.IDENTIFIER:
-            return self.parse_variable_or_function()
+            if re.fullmatch(r'usr[0-9]', str(token.value)):
+                # USR0..USR9 are the reserved word USR and a digit
+                token.type = TokenType.USR
+            else:
+                return self.parse_variable_or_function()
+            return self.parse_builtin_function()
 
         # Built-in functions (keywords that are also functions)
         elif self.is_builtin_function(token.type):
@@ -1219,7 +1225,7 @@ class Parser:
         builtin_functions = {
             TokenType.ABS, TokenType.ATN, TokenType.COS, TokenType.SIN, TokenType.TAN,
             TokenType.EXP, TokenType.LOG, TokenType.SQR, TokenType.INT, TokenType.FIX,
-            TokenType.RND, TokenType.SGN, TokenType.ASC, TokenType.VAL, TokenType.LEN,
+            TokenType.RND, TokenType.LPOS, TokenType.SGN, TokenType.ASC, TokenType.VAL, TokenType.LEN,
             TokenType.PEEK, TokenType.INP, TokenType.USR, TokenType.VARPTR, TokenType.EOF_FUNC, TokenType.FRE,
             TokenType.LOC, TokenType.LOF, TokenType.POS, TokenType.TAB, TokenType.SPC,
             # String functions
@@ -2886,11 +2892,11 @@ class Parser:
         # Parse start position
         start = self.parse_expression()
 
-        # Expect comma
-        self.expect(TokenType.COMMA)
-
-        # Parse length
-        length = self.parse_expression()
+        # The length is optional: MID$(A$, 2) = X$ replaces up to the end
+        length = None
+        if self.match(TokenType.COMMA):
+            self.advance()
+            length = self.parse_expression()
 
         # Expect closing parenthesis
         self.expect(TokenType.RPAREN)
@@ -2987,6 +2993,22 @@ class Parser:
             DEF FNB = 42  (no parameters)          -> function name "fnb"
         """
         token = self.advance()  # Consume DEF
+
+        # DEF USR[n] = address
+        usr_token = self.current()
+        if usr_token and (usr_token.type == TokenType.USR
+                          or (usr_token.type == TokenType.IDENTIFIER
+                              and re.fullmatch(r'usr[0-9]', str(usr_token.value)))):
+            self.advance()
+            self.expect(TokenType.EQUAL)
+            address = self.parse_expression()
+            digits = str(usr_token.value)[3:]
+            return DefUsrStatementNode(
+                index=int(digits) if digits else 0,
+                address=address,
+                line_num=token.line,
+                column=token.column
+            )
 
         # Next token should be identifier starting with "FN"
         # In MBASIC, "DEF FNR(X)" means function name is "FNR"
@@ -3899,6 +3921,16 @@ class Parser:
           The parser accepts any expression; validation occurs at runtime.
         """
         token = self.advance()
+
+        if self.match(TokenType.LPRINT):
+            self.advance()
+            return WidthStatementNode(
+                width=self.parse_expression(),
+                device=None,
+                line_num=token.line,
+                column=token.column,
+                lprint=True
+            )
 
         width = self.parse_expression()
 

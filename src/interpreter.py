@@ -1225,7 +1225,7 @@ class Interpreter:
         if file_info is not None:
             return file_info.get('width', FILE_WIDTH)
         width = getattr(self.io, 'width', SCREEN_WIDTH)
-        return width if isinstance(width, int) and width > 0 else SCREEN_WIDTH
+        return width if isinstance(width, int) and width >= 0 else SCREEN_WIDTH
 
     def _screen_line_ended(self, kept_text=None):
         """A line typed at the keyboard ends with Enter: the cursor is at column 0.
@@ -2181,6 +2181,15 @@ class Interpreter:
         """
         radix_word(self.evaluate_expression(stmt.address))
         to_conint(self.evaluate_expression(stmt.value))
+
+    def execute_defusr(self, stmt):
+        """DEF USR[n] = address - the address is checked and then dropped.
+
+        Like the address of POKE it is -32768 to 65535: 65536 is Overflow and
+        a string is Type mismatch. A call of USR is Illegal function call
+        whatever the address, as there is no machine code to run.
+        """
+        radix_word(self.evaluate_expression(stmt.address))
 
     def execute_deftype(self, stmt):
         """Execute DEFINT/DEFSNG/DEFDBL/DEFSTR statement (do nothing at runtime)"""
@@ -3877,15 +3886,19 @@ class Interpreter:
         """Execute WIDTH statement - set the screen line width
 
         PRINT wraps at this width and measures TAB and the comma zones against
-        it. The range is 1 to 255; anything else is an Illegal function call.
-        A form with a device (WIDTH n, device) is accepted and ignored.
+        it. The width is a byte, 0 to 255: 40000 is Overflow, and 256 and -1
+        are Illegal function call. A width of 0 is accepted (the binary does
+        so); see wrap_text for what it does to PRINT, and tab_target for TAB.
+        WIDTH LPRINT n checks the byte and does nothing else: there is no
+        line printer. A form with a device (WIDTH n, device) is accepted and
+        ignored.
         """
         width = self.evaluate_expression(stmt.width)
         if isinstance(width, str):
             raise RuntimeError("Type mismatch")
-        width = to_frcint(width)        # 40000 is Overflow; 256 is Illegal function call
-        if width < 1 or width > 255:
-            raise RuntimeError("Illegal function call")
+        width = to_conint(width)
+        if stmt.lprint:
+            return
         if stmt.device is None:
             self.io.width = width
 

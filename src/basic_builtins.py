@@ -1058,14 +1058,25 @@ class BuiltinFunctions:
 
         return size
 
-    def USR(self, x):
+    def USR(self, x, *rest):
         """
-        Call user machine language routine (not implemented).
+        USR[n](x) - call a machine language routine; there is none to call.
 
-        Returns 0 as safe default.
+        The argument is evaluated first (so USR(1E40) is Overflow). The call
+        itself is Illegal function call, which is what the binary says while
+        no DEF USR has set an address, and what is said here for an address
+        too: there is no memory model to hold machine code (see PEEK).
         """
-        # Can't call machine code from Python
-        return 0
+        raise ValueError("Illegal function call")
+
+    def LPOS(self, _dummy):
+        """
+        LPOS(x) - the column of the line printer, 1 for the leftmost.
+
+        The argument can be of any type and is not used. LPRINT has no
+        printer to write to here, so the column is always 1.
+        """
+        return 1
 
     # ========================================================================
     # Special Functions
