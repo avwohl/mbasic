@@ -332,9 +332,11 @@ Found while measuring (#61):
   I:NEXT:PRINT "a"`) runs in the interpreter. The body of such a loop is the
   rest of the part, which has no PC, so the clause executor goes back to the
   statement behind the FOR (`_clause_jump` in `src/interpreter.py`). This also
-  works after a GOSUB in the body and after RESUME NEXT. Not done: a NEXT on a
-  later line for a FOR in a part, and `IF c THEN NEXT ELSE NEXT` in the body
-  (the binary gives `NEXT without FOR` there).
+  works after a GOSUB in the body and after RESUME NEXT. A NEXT on a later
+  line (`10 IF 1 THEN FOR I=1 TO 3:PRINT I` / `20 NEXT`) loops as on the
+  binary: the NEXT runs the rest of the part again (`_execute_next_single`).
+  Not done: `IF c THEN NEXT ELSE NEXT` in the body (the binary gives `NEXT
+  without FOR` there).
 - Done (#61): `INSTR` gives its error from the types, not only the count
   (`instr_shape_error` in `src/ast_nodes.py`, interpreter and JavaScript
   backend). A string first argument is the two-argument form: `INSTR("A",1)`

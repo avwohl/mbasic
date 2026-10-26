@@ -37,6 +37,15 @@ CASES = {
         '70 IF 1 THEN FOR I=1 TO 2:PRINT I:GOSUB 800:NEXT:PRINT "f"\n'
         '90 SYSTEM\n800 PRINT "sub":RETURN\n',
         " 1  1 \n 1  2 \n 2  1 \n 2  2 \na\nb\n 1 \nsub\n 2 \nsub\nf\n"),
+    # the NEXT is on a later line: the NEXT runs the rest of the part again
+    "next_on_later_line": (
+        '10 IF 1 THEN FOR I=1 TO 3:PRINT I\n20 NEXT\n30 PRINT "done"\n'
+        '40 IF 0 THEN PRINT "x" ELSE FOR J=1 TO 2:PRINT J\n'
+        '50 NEXT:PRINT "n"\n'
+        '60 IF 1 THEN FOR K=1 TO 2:PRINT K:GOSUB 800\n70 NEXT\n'
+        '75 IF 1 THEN FOR L=1 TO 0:PRINT L\n76 NEXT\n'
+        '80 PRINT "end"\n90 SYSTEM\n800 PRINT "s":RETURN\n',
+        " 1 \n 2 \n 3 \ndone\n 1 \n 2 \nn\n 1 \ns\n 2 \ns\nend\n"),
     # a wrong argument type to a built-in
     "argument_types": (
         '10 ON ERROR GOTO 90\n20 PRINT LEN(1)\n30 PRINT ASC(5)\n40 PRINT VAL(3)\n'

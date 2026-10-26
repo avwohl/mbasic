@@ -2157,6 +2157,18 @@ class Interpreter:
             for_pc = PC.running_at(return_line, return_stmt)
             next_pc = self.runtime.statement_table.next_pc(for_pc)
             self.runtime.npc = next_pc
+            if clause is not None:
+                # The FOR is in a clause that has ended (its NEXT is on a
+                # later line): the body is the rest of that clause. Run it
+                # now, the way RETURN runs the rest of a clause, and go on
+                # behind the IF as the clause would have.
+                tail = clause_slice(clause[0], clause[1] + 1)
+                if tail:
+                    self.runtime.npc = None
+                    self.execute_clause_statements(
+                        tail, resume_pc=next_pc, restart=True)
+                    if self.runtime.npc is None:
+                        self.runtime.npc = next_pc
             return True  # Loop continues
         else:
             # Loop finished - unbind the variable from this loop
