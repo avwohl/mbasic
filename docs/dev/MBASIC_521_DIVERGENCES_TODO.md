@@ -310,16 +310,41 @@ Left out on purpose, with the reason:
 - The maximum number of files: with the default `/F:3` the binary says `Bad
   file number` for `CLOSE #4`. This interpreter allows 15 files on purpose.
 
-Found while measuring, not done (#61 has the first three items and the
-last item):
+Found while measuring (#61):
 
-- A wrong number of arguments to a built-in function (`ABS()`, `POS(1,2)`,
-  `USR()`, `LPOS(1,2)`) is `Illegal function call` here and `Syntax error`
-  on the binary.
-- `WIDTH 40,1` is a Syntax error on the binary (after it has set the
-  width); here the device form is accepted and ignored.
-- A `CLEAR` that succeeds also forgets `ON ERROR GOTO`, so the next error is
-  fatal on the binary. Here the handler stays.
+- Done (#61): a wrong number of arguments to a built-in (`ABS()`, `ABS(1,2)`,
+  `POS(1,2)`, `USR()`, `LPOS(1,2)`, `LEFT$(A$)`, `INSTR(1)`, `RND()`,
+  `INKEY$()`) is a `Syntax error` (2) when the line runs, as on the binary.
+  The binary reads the arguments as the call runs, so the arguments up to the
+  first unusable one run first: `LEFT$(CVI("A"))` is `Illegal function call`,
+  `LEFT$(A$,1,CVI("A"))` is `Syntax error`. The parser marks the call
+  (`FunctionCallNode.arity_error`, table `BUILTIN_ARITY` in `src/parser.py`);
+  the interpreter and the JavaScript backend raise the error. The C backend
+  stops at compile time (`ABS requires 1 argument`), as it does for every
+  run-time error.
+- Done (#61): `WIDTH 40,1` and `WIDTH 30,` set the width and then give
+  `Syntax error` (`WidthStatementNode.bad_device`). `WIDTH LPRINT 40,1` and
+  `WIDTH #1,40` were already `Syntax error`. The C backend refuses the form.
+- Done (#61): a `CLEAR` that succeeds forgets `ON ERROR GOTO` (the next error
+  is fatal) and ends a running handler (`RESUME` after it is `RESUME without
+  error`). ERR and ERL keep their values. The same `CLEAR` also empties the
+  FOR and GOSUB stacks (`NEXT without FOR`, `RETURN without GOSUB`), sends the
+  DATA pointer back to the first item, forgets the DEF FN functions defined so
+  far (`Undefined user function`) and allows `OPTION BASE` again (the base is 0).
+  A `CLEAR` that fails (`CLEAR ,1` is `Out of memory`) changes nothing, and
+  WIDTH is not changed. The JavaScript backend forgets the handler at `CLEAR`
+  only: its `CLEAR` still does not clear the variables.
+- Done (#61): when the operand that ran out is `ELSE` (`A=ELSE`, `A=1+ELSE`,
+  `PRINT 1+ELSE`, also after `THEN`/`ELSE`), the error is `Missing operand`
+  and `RESUME NEXT` goes on at the next line: the rest of the line is skipped,
+  `:` parts and the `ELSE` branch too. Other missing operands (`A=:PRINT 1`)
+  go on behind the `:`. The JavaScript backend gives `Missing operand` (22)
+  for these now, not `Syntax error`.
+- Not done (#61): `CLEAR` does not reset `DEFINT`, `DEFSTR` and the other
+  DEF types, as the binary does. The variable types are fixed when the
+  program is parsed, so a run-time reset needs a different design.
+- `PRINT #1,"x"` with file 1 not open is `Bad file mode` (54) on the binary
+  and `Bad file number` (52) here. Not fixed; found while measuring CLEAR.
 - A `MID$` statement whose value is the target string, as in
   `MID$(A$,3)=A$`, copies one byte at a time inside the one string on the
   binary (`HEHEH`). The interpreter and the JavaScript backend do the same.
@@ -329,9 +354,6 @@ last item):
   Syntax error, as on the binary; the function form `MID$ (A$,2,2)` allows
   the space. `CLEAR` with more than three arguments is a Syntax error found
   before any argument runs, as on the binary.
-- `A=ELSE` is `Missing operand` (22) as on the binary, but `RESUME NEXT` then
-  runs the `ELSE` and gives a Syntax error; the binary goes on with the next
-  line.
 
 
 ## 2. ON ERROR, and what happens around a handler

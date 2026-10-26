@@ -2444,6 +2444,12 @@ class Interpreter:
         - All simple variables are deleted
         - All arrays are erased
         - All open files are closed
+        - ON ERROR GOTO is forgotten, so the next error is fatal, and a handler
+          that is running is over (its RESUME is "RESUME without error"). ERR
+          and ERL keep their values.
+        - The FOR and GOSUB/WHILE stacks are emptied, OPTION BASE may be given
+          again (the base is 0), the DATA pointer goes back to the first item,
+          and the DEF FN functions defined so far are forgotten.
         - COMMON variables list is preserved (for CHAIN compatibility)
         - memory_top and stack_space change the string space (Runtime.set_memory),
           which is what Out of string space is measured against. The number before
@@ -2459,8 +2465,27 @@ class Interpreter:
         # counters - so CLEAR then RND gives .245121 again, measured.
         self.runtime.rnd.reset()
 
-        # Clear all variables
-        self.runtime.clear_variables()
+        # Clear all variables. ERR and ERL are not variables of the program on
+        # the binary: CLEAR leaves them as they are (measured, in a handler).
+        runtime = self.runtime
+        kept = {name: runtime.get_variable_for_debugger(name[:-1], '%')
+                for name in ('err%', 'erl%', 'ers%')}
+        runtime.clear_variables()
+        for name, value in kept.items():
+            runtime.set_variable_raw(name, value)
+
+        # The error handler goes, and a handler that is running is over
+        runtime.error_handler = None
+        runtime.error_handler_is_gosub = False
+        self.state.pending_error = None
+
+        # The stacks, OPTION BASE, the DATA pointer and DEF FN
+        runtime.execution_stack.clear()
+        runtime.for_loop_states.clear()
+        runtime.array_base = 0
+        runtime.option_base_executed = False
+        runtime.data_pointer = 0
+        runtime.user_functions.clear()
 
         # Clear all arrays
         self.runtime.clear_arrays()
@@ -2486,7 +2511,7 @@ class Interpreter:
         #
         # PRESERVED by CLEAR (not cleared):
         #   - runtime.common_vars (list of COMMON variable names - the list itself, not values)
-        #   - runtime.user_functions (DEF FN functions)
+        #   - ERR and ERL
         #
         # NOT PRESERVED (cleared above):
         #   - All variables and arrays
@@ -4031,8 +4056,8 @@ class Interpreter:
         are Illegal function call. A width of 0 is accepted (the binary does
         so); see wrap_text for what it does to PRINT, and tab_target for TAB.
         WIDTH LPRINT n checks the byte and does nothing else: there is no
-        line printer. A form with a device (WIDTH n, device) is accepted and
-        ignored.
+        line printer. WIDTH n, device sets the width and then is a Syntax
+        error, as on the binary; nothing after the ',' runs.
         """
         width = self.evaluate_expression(stmt.width)
         if isinstance(width, str):
@@ -4040,8 +4065,9 @@ class Interpreter:
         width = to_conint(width)
         if stmt.lprint:
             return
-        if stmt.device is None:
-            self.io.width = width
+        self.io.width = width
+        if stmt.bad_device:
+            raise MBasicError(2)
 
     def execute_cont(self, stmt):
         """Execute CONT statement
@@ -4330,6 +4356,12 @@ class Interpreter:
         # First, check if it's a built-in function
         # Strip $ suffix for builtin lookup (CHR$ -> CHR, INPUT$ -> INPUT, etc.)
         func_name = expr.name.rstrip('$')
+        if expr.arity_error is not None:
+            # Wrong number of arguments: the binary evaluates the ones it
+            # can use, then stops with Syntax error (ABS(1,2), LEFT$(A$)).
+            for arg in expr.arguments[:expr.arity_error]:
+                self.evaluate_expression(arg)
+            raise MBasicError(2)
         func = getattr(self.builtins, func_name, None)
         if func:
             # It's a builtin function

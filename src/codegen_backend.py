@@ -3833,9 +3833,8 @@ class Z88dkCBackend(CodeGenBackend):
         code = []
         width = self._generate_expression(stmt.width)
         code.append(self.indent() + f'/* WIDTH {width} - not implemented (display feature) */')
-        if stmt.device:
-            device = self._generate_expression(stmt.device)
-            code.append(self.indent() + f'/* Device: {device} */')
+        if stmt.bad_device:
+            self._unsupported("WIDTH with a device is a Syntax error on MBASIC 5.21")
         self.warnings.append("WIDTH statement not implemented in compiled code")
         return code
 

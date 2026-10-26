@@ -2837,7 +2837,8 @@ class JavaScriptBackend(CodeGenBackend):
             pass
         elif isinstance(stmt, SyntaxErrorStatementNode):
             # MBASIC stores a line it cannot parse and fails when it runs
-            code.append(self.indent() + '_error("Syntax error");')
+            code.append(self.indent() + ('_error("Missing operand");' if stmt.error_code == 22
+                                         else '_error("Syntax error");'))
         elif isinstance(stmt, PokeStatementNode):
             code.extend(self._generate_poke(stmt))
         elif isinstance(stmt, OutStatementNode):
@@ -3063,6 +3064,11 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate function call"""
         func_name = func.name.lower()
         args = [self._generate_expression(arg) for arg in func.arguments]
+
+        # A built-in with the wrong number of arguments: Syntax error when the
+        # call runs, after the arguments the binary can use (ABS(1,2)).
+        if func.arity_error is not None:
+            return f'({", ".join(args[:func.arity_error] + ["_error(\"Syntax error\")"])})'
 
         # Check if it's a DEF FN function (starts with 'fn')
         # User-defined functions from DEF FN
@@ -3921,15 +3927,16 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate WIDTH statement - set the screen line width
 
         PRINT wraps at _width and measures TAB and the comma zones against it.
-        A form with a device (WIDTH n, device) is accepted and ignored, as in
-        the interpreter.
+        WIDTH n, device sets the width and then is a Syntax error, as in the
+        interpreter.
         """
         width = self._generate_expression(stmt.width)
         if getattr(stmt, 'lprint', False):
             return [self.indent() + f'// WIDTH LPRINT {width} - ignored']
-        if stmt.device is not None:
-            return [self.indent() + f'// WIDTH {width}, device - ignored']
-        return [self.indent() + f'_width = _set_width({width});']
+        code = [self.indent() + f'_width = _set_width({width});']
+        if getattr(stmt, 'bad_device', False):
+            code.append(self.indent() + '_error("Syntax error");')
+        return code
 
     def _generate_clear(self, stmt: ClearStatementNode) -> List[str]:
         """Generate CLEAR statement - clear variables and set memory limits (stub)
@@ -3940,6 +3947,10 @@ class JavaScriptBackend(CodeGenBackend):
         """
         code = []
         code.append(self.indent() + '// CLEAR - JavaScript manages memory automatically')
+        if self.uses_error_handling:
+            # A CLEAR forgets ON ERROR GOTO (the next error is fatal) and ends
+            # a running handler; ERR and ERL keep their values.
+            code.append(self.indent() + '_error_handler = null; _error_handler_is_gosub = false; _in_error_handler = false;')
         return code
 
     def _generate_common(self, stmt: CommonStatementNode) -> List[str]:

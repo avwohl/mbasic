@@ -25,6 +25,19 @@ To set all numeric variables to zero and all string variables to null; and, opti
 
 CLEAR resets all variables to their initial values (0 for numbers, empty for strings) and optionally configures memory usage.
 
+A CLEAR that succeeds also does these things, as MBASIC 5.21 does:
+
+- It removes `ON ERROR GOTO`, so the next error stops the program. A handler
+  that is running ends, and its `RESUME` gives "RESUME without error". `ERR`
+  and `ERL` keep their values.
+- It empties the FOR and GOSUB stacks, sends the DATA pointer back to the first
+  item, forgets the `DEF FN` functions defined so far, and allows `OPTION BASE`
+  again.
+- It closes all files.
+
+**Difference:** `DEFINT`, `DEFSTR` and the other type statements are set when
+the program is read, so `CLEAR` does not reset them here.
+
 ### Parameters
 
 **In MBASIC 5.21 (BASIC-80 release 5.0 and later):**

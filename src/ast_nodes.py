@@ -1066,14 +1066,19 @@ class WidthStatementNode:
 
     Syntax:
         WIDTH width
-        WIDTH width, device
         WIDTH LPRINT width
+
+    WIDTH width, device is a Syntax error on MBASIC 5.21 (see bad_device).
     """
     width: 'ExpressionNode'
     device: Optional['ExpressionNode']
     line_num: int = 0
     column: int = 0
     lprint: bool = False
+    # True when a ',' follows the width (WIDTH 40,1  WIDTH 30,). The binary sets
+    # the width and then stops with Syntax error, so the statement does both.
+    # `device` holds what came after the ',' when it parsed; it is never run.
+    bad_device: bool = False
 
 
 @dataclass
@@ -1335,12 +1340,18 @@ class FunctionCallNode:
         type_suffix: For a DEF FN call, the suffix it was written with, which
             is what types the result - FNA is single and FNA# is double. The
             name has it stripped for lookup, so it is kept separately.
+        arity_error: None for a call with the right number of arguments. For
+            a built-in called with the wrong number it is how many arguments
+            run before the call stops with Syntax error. MBASIC reads the
+            arguments while it runs the call, so ABS(1,2) fails only when the
+            line runs, and the arguments before the bad one are evaluated.
     """
     name: str
     arguments: List['ExpressionNode']
     line_num: int = 0
     column: int = 0
     type_suffix: str = None
+    arity_error: Optional[int] = None
 
 
 # ============================================================================
