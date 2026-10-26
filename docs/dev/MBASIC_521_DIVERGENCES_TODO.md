@@ -215,6 +215,10 @@ Found while measuring, not done:
   binary (`HEHEH`). The interpreter does the same. The JavaScript backend
   copies from the old value (`HEHEL`), which is what the binary gives when
   the value is a separate string (`LEFT$(A$,5)`, `A$+""`, another variable).
+- The `MID$` statement needs `MID$(` with no space. `MID$ (A$,2)=X$` is a
+  Syntax error, as on the binary; the function form `MID$ (A$,2,2)` allows
+  the space. `CLEAR` with more than three arguments is a Syntax error found
+  before any argument runs, as on the binary.
 - `A=ELSE` is `Missing operand` (22) as on the binary, but `RESUME NEXT` then
   runs the `ELSE` and gives a Syntax error; the binary goes on with the next
   line.

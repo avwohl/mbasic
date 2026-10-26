@@ -731,7 +731,11 @@ class Parser:
             is_statement = False
             try:
                 self.advance()  # Skip MID token
-                if self.match(TokenType.LPAREN):
+                lparen = self.current()
+                # The statement needs "MID$(" with no space: MID$ (A$,2)=X$ is a
+                # Syntax error in MBASIC 5.21 (the function form allows the space).
+                if (self.match(TokenType.LPAREN) and lparen.line == token.line
+                        and lparen.column == token.column + len('MID$')):
                     # Scan to find matching RPAREN, tracking nested parentheses
                     paren_depth = 1
                     self.advance()  # Skip opening (
@@ -3881,6 +3885,10 @@ class Parser:
                     self.advance()
                     if not self.at_end_of_line() and not self.match(TokenType.COLON):
                         stack_space = self.parse_expression()
+                if self.match(TokenType.COMMA):
+                    # A fourth argument is a Syntax error found before any
+                    # argument runs (CLEAR 1,2,3,4 gives only error 2).
+                    raise ParseError("CLEAR takes at most three arguments", self.current())
 
         return ClearStatementNode(
             string_space=string_space,

@@ -49,6 +49,14 @@ WIDTH0 = '5 ON ERROR GOTO 100\n10 WIDTH 0\n20 PRINT "ab";TAB(5);"c";\n30 PRINT "
 
 WIDTH0_EXPECTED = '\nab\n\nERR\n\n 11 \n\n 20 \n\nd\n\nERR\n\n 11 \n\n 30 \n\nk\n\nERR\n\n 11 \n\n 40 \n\n\nq\n\nwxyz\n\n 1            \n\n 2 \n\n 4 \n\nA\n\n 2 \nB\nend\n'
 
+# Measured on the binary: CLEAR with a fourth argument is only a Syntax error
+# (the earlier arguments do not run, so no Out of memory first), and the
+# statement MID$ needs "MID$(" with no space (MID$ (A$,2)=X$ is a Syntax error;
+# the function MID$ (A$,2,2) allows the space).
+CLEAR_MID_SPACE = '1 ON ERROR GOTO 900\n10 CLEAR ,1,2,3\n11 ON ERROR GOTO 900:IF F=0 THEN PRINT 10;"ok" ELSE F=0\n20 CLEAR 100,100,100,100\n21 ON ERROR GOTO 900:IF F=0 THEN PRINT 20;"ok" ELSE F=0\n30 CLEAR 1,2,3,\n31 ON ERROR GOTO 900:IF F=0 THEN PRINT 30;"ok" ELSE F=0\n40 CLEAR 1,2,3,4,5\n41 ON ERROR GOTO 900:IF F=0 THEN PRINT 40;"ok" ELSE F=0\n50 CLEAR ,,,5\n51 ON ERROR GOTO 900:IF F=0 THEN PRINT 50;"ok" ELSE F=0\n60 A$="ABCDEFGH":MID$ (A$,2,2)="ZZ":PRINT A$\n61 ON ERROR GOTO 900:IF F=0 THEN PRINT 60;"ok" ELSE F=0\n70 A$="ABCDEFGH":MID$ (A$,2)="ZZ":PRINT A$\n71 ON ERROR GOTO 900:IF F=0 THEN PRINT 70;"ok" ELSE F=0\n80 A$="ABCDEFGH":MID$(A$,2)="ZZ":PRINT A$\n81 ON ERROR GOTO 900:IF F=0 THEN PRINT 80;"ok" ELSE F=0\n90 B$=MID$ (A$,2,2):PRINT B$\n91 ON ERROR GOTO 900:IF F=0 THEN PRINT 90;"ok" ELSE F=0\n99 SYSTEM\n900 PRINT ERL;"E";ERR:F=1:RESUME NEXT\n'
+
+CLEAR_MID_SPACE_EXPECTED = ' 10 E 2 \n 20 E 2 \n 30 E 2 \n 40 E 2 \n 50 E 2 \n 60 E 2 \nABCDEFGH\n 70 E 2 \nABCDEFGH\nAZZDEFGH\n 80 ok\nZZ\n 90 ok\n'
+
 MID_PROGRAM = '''10 A$="HELLO":MID$(A$,2)="XY":PRINT A$
 20 A$="HELLO":MID$(A$,2)="XYZABCD":PRINT A$
 30 DIM B$(2):B$(1)="ABCDEF":MID$(B$(1),3)="12":PRINT B$(1)
@@ -68,6 +76,11 @@ def run_cli(directory, source, commands="RUN\nSYSTEM\n"):
 def test_statement_arguments(tmp_path):
     result = run_cli(tmp_path, STATEMENTS)
     assert STATEMENTS_EXPECTED in result.stdout, result.stdout + result.stderr
+
+
+def test_clear_four_arguments_and_mid_space(tmp_path):
+    result = run_cli(tmp_path, CLEAR_MID_SPACE)
+    assert CLEAR_MID_SPACE_EXPECTED in result.stdout, result.stdout + result.stderr
 
 
 def test_width_zero(tmp_path):
