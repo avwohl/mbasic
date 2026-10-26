@@ -10,7 +10,7 @@ import signal
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Callable, Any, Union
 from src.runtime import Runtime, ProgramString, FREE_MEMORY, HIGHEST_MEMORY, STACK_SPACE, MIN_STACK_SPACE
-from src.ast_nodes import StringNode, FunctionCallNode, arity_type_checks
+from src.ast_nodes import StringNode, FunctionCallNode, arity_type_checks, instr_shape_error
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
 from src.pc import PC
@@ -254,6 +254,7 @@ class InterpreterState:
     # report: END ends the program and clears it.
     error_info: Optional[ErrorInfo] = None
     pending_error: Optional[ErrorInfo] = None
+    pending_error_tail: Optional[list] = None   # clause statements behind the error
 
     # Performance tracking
     statements_executed: int = 0
@@ -734,6 +735,9 @@ class Interpreter:
                     error_code = self._map_exception_to_error_code(e)
                     # ON ERROR GOTO 0 in a handler raises the error the handler
                     # is working on again, and it is reported where it began.
+                    # (pc is the statement RESUME NEXT is running when it
+                    # re-runs the rest of a clause: stmt_pc is the IF.)
+                    pc = getattr(e, 'stmt_pc', None) or pc
                     error_pc = getattr(e, 'error_pc', None) or pc
                     info = ErrorInfo(
                         error_code=error_code,
@@ -749,6 +753,7 @@ class Interpreter:
                         # the error is reported at (READ of a bad DATA item: the DATA line).
                         self.state.pending_error = ErrorInfo(
                             error_code=error_code, pc=pc, error_message=str(e))
+                        self.state.pending_error_tail = getattr(e, 'clause_tail', None)
                         self._invoke_error_handler(error_code, pc, error_pc)
                         # Error handler set npc - apply it and continue execution
                         # (don't use continue here - we need to let normal flow handle NPC)
@@ -1510,7 +1515,7 @@ class Interpreter:
             # Illegal function call.
             raise RuntimeError("Illegal function call")
 
-    def execute_clause_statements(self, statements, resume_pc=None):
+    def execute_clause_statements(self, statements, resume_pc=None, is_else=False):
         """Run the statements of a THEN or ELSE clause.
 
         A clause is not addressable by PC - the statement table holds one entry
@@ -1531,7 +1536,19 @@ class Interpreter:
         The tail is handed to the GOSUB frame instead, and RETURN finishes it.
         """
         for index, clause_stmt in enumerate(statements):
-            self.execute_statement(clause_stmt)
+            try:
+                self.execute_statement(clause_stmt)
+            except Exception as e:
+                # An error ends the statement only: RESUME NEXT goes on with
+                # the statements behind it in the clause (measured on 5.21).
+                # Not when it is the first statement of an ELSE clause: then
+                # RESUME NEXT goes on at the next line.
+                if not hasattr(e, 'clause_tail') and not (is_else and index == 0):
+                    try:
+                        e.clause_tail = statements[index + 1:]
+                    except AttributeError:
+                        pass
+                raise
             if self.runtime.npc is None:
                 continue
             remaining = statements[index + 1:]
@@ -1570,7 +1587,7 @@ class Interpreter:
                 # ELSE line_number
                 self._jump_to(stmt.else_line_number)
             elif stmt.else_statements:
-                self.execute_clause_statements(stmt.else_statements)
+                self.execute_clause_statements(stmt.else_statements, is_else=True)
 
     def _matching_next(self, stmt):
         """The NEXT that closes this FOR, found once and remembered.
@@ -2161,6 +2178,8 @@ class Interpreter:
             raise RuntimeError("No error position to resume from")
 
         error_pc = self.state.pending_error.pc
+        clause_tail = self.state.pending_error_tail
+        self.state.pending_error_tail = None
 
         # Clear error state
         self.state.pending_error = None
@@ -2181,6 +2200,18 @@ class Interpreter:
                 self.runtime.pc = PC.halted()
             else:
                 self.runtime.npc = next_pc
+            if clause_tail:
+                # The error was in a THEN or ELSE clause: the statements
+                # behind it in the clause still run.  An error in one of them
+                # is reported at the IF, not at the RESUME.
+                try:
+                    self.execute_clause_statements(clause_tail)
+                except Exception as e:
+                    try:
+                        e.stmt_pc = error_pc
+                    except AttributeError:
+                        pass
+                    raise
         else:
             # RESUME line_number - jump to specific line
             self._jump_to(stmt.line_number)
@@ -4356,6 +4387,13 @@ class Interpreter:
         # First, check if it's a built-in function
         # Strip $ suffix for builtin lookup (CHR$ -> CHR, INPUT$ -> INPUT, etc.)
         func_name = expr.name.rstrip('$')
+        if func_name == 'INSTR' and len(expr.arguments) >= 2:
+            # Which error depends on the types, not only the count.
+            args = [self.evaluate_expression(arg) for arg in expr.arguments]
+            error = instr_shape_error([isinstance(a, str) for a in args])
+            if error is not None:
+                raise MBasicError(error)
+            return self.builtins.INSTR(*args)
         if expr.arity_error is not None:
             # Wrong number of arguments: the binary evaluates the ones it
             # can use, then stops with Syntax error (ABS(1,2), LEFT$(A$)).

@@ -1491,10 +1491,10 @@ class TypeInfo:
 # string, N a number, A either. The binary checks the type of an argument at the
 # ',' behind it, so a call with too many arguments is Type mismatch (not Syntax
 # error) when one of the first arguments has the wrong type: LEFT$(1,2,3),
-# LEFT$("A","B",1), INSTR(1,2,3,4). Single-argument built-ins check after the
+# LEFT$("A","B",1). Single-argument built-ins check after the
 # ')', so ABS("x",1) is Syntax error. Measured on MBASIC 5.21.
 BUILTIN_ARG_TYPES = {
-    'LEFT': 'SN', 'RIGHT': 'SN', 'MID': 'SNN', 'INSTR': 'NSS',
+    'LEFT': 'SN', 'RIGHT': 'SN', 'MID': 'SNN',
     'STRING': 'NA', 'INPUT': 'NN',
 }
 
@@ -1508,3 +1508,27 @@ def arity_type_checks(name: str, count: int) -> str:
     if base == 'STRING' and count == 1:
         return 'N'      # STRING$("A") is Type mismatch; LEFT$(1) is Syntax error
     return ''
+
+
+def instr_shape_error(is_string):
+    """The error INSTR gives for its arguments, or None when the call is valid.
+
+    is_string says, argument by argument, whether it is a string. INSTR reads a
+    string first argument as the two-argument form: INSTR("A",1,1) is Syntax
+    error, and only INSTR("A",1) is Type mismatch. A numeric first argument
+    is the start position, and the type of the second argument is checked at
+    the ',' behind it, the third at the ')'. Measured on MBASIC 5.21 for all
+    combinations of numbers and strings with one to four arguments.
+    """
+    count = len(is_string)
+    if count < 2:
+        return 2
+    if is_string[0]:
+        if count == 2:
+            return None if is_string[1] else 13
+        return 2
+    if not is_string[1]:
+        return 13
+    if count == 2 or count > 3:
+        return 2
+    return None if is_string[2] else 13

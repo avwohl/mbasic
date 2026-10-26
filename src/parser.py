@@ -608,10 +608,13 @@ class Parser:
         # Control flow
         elif token.type == TokenType.IF:
             self._if_depth = getattr(self, '_if_depth', 0) + 1
+            outer_in_else = getattr(self, '_in_else', False)
+            self._in_else = False       # an IF in an ELSE starts with its THEN clause
             try:
                 return self.parse_if()
             finally:
                 self._if_depth -= 1
+                self._in_else = outer_in_else
         elif token.type == TokenType.FOR:
             return self.parse_for()
         elif token.type == TokenType.NEXT:
@@ -2421,16 +2424,21 @@ class Parser:
         """Parse the statements of an ELSE clause: in MBASIC the clause runs to the end of the line,
         so 'ELSE FOR I=1 TO 2:PRINT I:NEXT:PRINT "b"' holds all four statements."""
         statements: List[StatementNode] = []
-        while True:
-            stmt = self._parse_statement_or_defer()
-            if stmt:
-                statements.append(stmt)
-            if self.match(TokenType.COLON):
-                self.advance()
-                if self.at_end_of_line():
-                    break
-                continue
-            break
+        saved_in_else = getattr(self, '_in_else', False)
+        self._in_else = True
+        try:
+            while True:
+                stmt = self._parse_statement_or_defer()
+                if stmt:
+                    statements.append(stmt)
+                if self.match(TokenType.COLON):
+                    self.advance()
+                    if self.at_end_of_line():
+                        break
+                    continue
+                break
+        finally:
+            self._in_else = saved_in_else
         return statements
 
     def parse_if(self) -> IfStatementNode:
@@ -4023,10 +4031,13 @@ class Parser:
                     device = self.parse_expression()
                 except ParseError:
                     pass
-            # Outside an IF the failing WIDTH takes the rest of the line, ELSE
-            # part included (RESUME NEXT goes on at the next line).  Inside an
-            # IF the ELSE belongs to the IF.
-            in_if = getattr(self, '_if_depth', 0) > 0
+            # Outside an IF, or in an ELSE clause, the failing WIDTH takes the
+            # rest of the line, ELSE included (measured on 5.21).  In a THEN
+            # clause the ELSE belongs to the IF.  The error ends the WIDTH
+            # statement only, so a ':' statement behind it still runs after
+            # RESUME NEXT (see execute_clause_statements).
+            in_if = (getattr(self, '_if_depth', 0) > 0
+                     and not getattr(self, '_in_else', False))
             while not self.at_end_of_line() and not self.match(TokenType.COLON):
                 if in_if and self.match(TokenType.ELSE):
                     break

@@ -1653,8 +1653,18 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'function _chr(n) { return String.fromCharCode(_conint(n)); }')
         code.append(self.indent() + 'function _asc(str) { return String(str).charCodeAt(0) || 0; }')
         code.append(self.indent() + 'function _str(n, d = 6) { const t = _fmt_num(n, d); return n >= 0 ? " " + t : t; }')
-        code.append(self.indent() + 'function _instr(start, str1, str2) {')
+        code.append(self.indent() + 'function _instr(...a) {')
         self.indent_level += 1
+        code.append(self.indent() + '// The error depends on the types (see instr_shape_error in ast_nodes.py)')
+        code.append(self.indent() + 'const s = a.map(v => typeof v === "string");')
+        code.append(self.indent() + 'let e = 0;')
+        code.append(self.indent() + 'if (s.length < 2) e = 2;')
+        code.append(self.indent() + 'else if (s[0]) e = s.length === 2 ? (s[1] ? 0 : 13) : 2;')
+        code.append(self.indent() + 'else if (!s[1]) e = 13;')
+        code.append(self.indent() + 'else if (s.length === 2 || s.length > 3) e = 2;')
+        code.append(self.indent() + 'else if (!s[2]) e = 13;')
+        code.append(self.indent() + 'if (e) _error(e === 13 ? "Type mismatch" : "Syntax error");')
+        code.append(self.indent() + 'let [start, str1, str2] = a;')
         code.append(self.indent() + '// INSTR with optional start position')
         code.append(self.indent() + 'if (str2 === undefined) {')
         self.indent_level += 1
@@ -3068,7 +3078,7 @@ class JavaScriptBackend(CodeGenBackend):
 
         # A built-in with the wrong number of arguments: Syntax error when the
         # call runs, after the arguments the binary can use (ABS(1,2)).
-        if func.arity_error is not None:
+        if func.arity_error is not None and not (func_name == 'instr' and len(args) >= 2):
             wanted = arity_type_checks(func.name, len(args))
             checked = [f'_arg_type({a}, "{wanted[i]}")' if i < len(wanted) and wanted[i] != 'A' else a
                        for i, a in enumerate(args[:func.arity_error])]

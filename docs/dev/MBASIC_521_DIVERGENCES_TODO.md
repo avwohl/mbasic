@@ -323,12 +323,18 @@ Found while measuring (#61):
   stops at compile time (`ABS requires 1 argument`), as it does for every
   run-time error. For the multi-argument built-ins the binary checks the type
   of an argument at the `,` behind it, so a wrong type is `Type mismatch` (13)
-  before the count is a `Syntax error`: `LEFT$(1,2,3)`, `INSTR(1,2,3,4)`,
-  `STRING$("A")`. `ABS("x",1)` and `LEFT$(1)` stay `Syntax error`
+  before the count is a `Syntax error`: `LEFT$(1,2,3)`, `STRING$("A")`. `ABS("x",1)` and `LEFT$(1)` stay `Syntax error`
   (`arity_type_checks` in `src/ast_nodes.py`). Not done: `MID$("A",0,2,3)` is
   `Illegal function call` on the binary (the start is checked first), and
-  `INSTR(1,"A")`, `INSTR("A","B","C")`, `ABS("x")` and `LEN(1)` give other
-  errors here than on the binary (2, 2, 13, 13). They are not count errors.
+  `ABS("x")` and `LEN(1)` give other errors here than on the binary. They are
+  not count errors.
+- Done (#61): `INSTR` gives its error from the types, not only the count
+  (`instr_shape_error` in `src/ast_nodes.py`, interpreter and JavaScript
+  backend). A string first argument is the two-argument form: `INSTR("A",1)`
+  is `Type mismatch` and `INSTR("A",1,1)` is `Syntax error`. A number first
+  argument is the start: `INSTR(1,"A")` and `INSTR(1,"A",1,1)` are `Syntax
+  error`, `INSTR(1,1)` and `INSTR(1,"A",1)` are `Type mismatch`. All 30
+  combinations of 1 and "A" with one to four arguments match the binary.
 - Done (#61): `WIDTH 40,1` and `WIDTH 30,` set the width and then give
   `Syntax error` (`WidthStatementNode.bad_device`). `WIDTH LPRINT 40,1` and
   `WIDTH #1,40` were already `Syntax error`. The C backend refuses the form.
@@ -355,8 +361,16 @@ Found while measuring (#61):
   after `PRINT` or `ON x GOTO` ends the statement without an error on the
   binary and is a `Syntax error` here (older difference).
 - Done (#61): `WIDTH n,x` outside an `IF` takes the rest of the line, `ELSE`
-  part included, so `RESUME NEXT` goes on at the next line. Inside an `IF`
-  the `ELSE` still belongs to the `IF`.
+  part included, so `RESUME NEXT` goes on at the next line. In a `THEN`
+  clause the `ELSE` still belongs to the `IF`; in an `ELSE` clause a second
+  `ELSE` is taken too.
+- Done (#61): an error in a statement of a `THEN` or `ELSE` clause ends only
+  that statement. `RESUME NEXT` goes on with the `:` statements behind it in
+  the clause (`IF 1 THEN X=1/0:PRINT "same"` prints `same`). Exception, as
+  on the binary: when the error is in the first statement of an `ELSE`
+  clause, `RESUME NEXT` goes on at the next line (`execute_clause_statements`,
+  `pending_error_tail`). The JavaScript `RESUME NEXT` works per line and
+  does not do this.
 - Not done (#61): `CLEAR` does not reset `DEFINT`, `DEFSTR` and the other
   DEF types, as the binary does. The variable types are fixed when the
   program is parsed, so a run-time reset needs a different design.

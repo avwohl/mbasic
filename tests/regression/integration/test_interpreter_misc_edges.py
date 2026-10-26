@@ -131,6 +131,22 @@ CASES = {
     "clear_bad_arguments": (
         '10 ON ERROR GOTO 100\n20 CLEAR 1000000\n30 PRINT "a"\n40 CLEAR ,200\n50 PRINT "b"\n60 CLEAR ,,5\n70 PRINT "c"\n80 CLEAR 0,0\n85 PRINT "d"\n90 X=1/0\n95 PRINT "after"\n99 SYSTEM\n100 PRINT "H";ERR;ERL:RESUME NEXT\n',
         'H 6  20 \na\nH 7  40 \nb\nH 7  60 \nc\nH 5  80 \nd\nH 11  90 \nafter\n'),
+    # INSTR: the error depends on the types as well as the count (all 30
+    # combinations of 1 and "A", one to four arguments, measured on 5.21)
+    "instr_shapes": (
+        '10 ON ERROR GOTO 900\n15 E=0\n20 X=INSTR(1)\n21 PRINT 20;E:E=0\n22 X=INSTR("A")\n23 PRINT 22;E:E=0\n24 X=INSTR(1,1)\n25 PRINT 24;E:E=0\n26 X=INSTR(1,"A")\n27 PRINT 26;E:E=0\n28 X=INSTR("A",1)\n29 PRINT 28;E:E=0\n30 X=INSTR("A","A")\n31 PRINT 30;E:E=0\n32 X=INSTR(1,1,1)\n33 PRINT 32;E:E=0\n34 X=INSTR(1,1,"A")\n35 PRINT 34;E:E=0\n36 X=INSTR(1,"A",1)\n37 PRINT 36;E:E=0\n38 X=INSTR(1,"A","A")\n39 PRINT 38;E:E=0\n40 X=INSTR("A",1,1)\n41 PRINT 40;E:E=0\n42 X=INSTR("A",1,"A")\n43 PRINT 42;E:E=0\n44 X=INSTR("A","A",1)\n45 PRINT 44;E:E=0\n46 X=INSTR("A","A","A")\n47 PRINT 46;E:E=0\n48 X=INSTR(1,1,1,1)\n49 PRINT 48;E:E=0\n50 X=INSTR(1,1,1,"A")\n51 PRINT 50;E:E=0\n52 X=INSTR(1,1,"A",1)\n53 PRINT 52;E:E=0\n54 X=INSTR(1,1,"A","A")\n55 PRINT 54;E:E=0\n56 X=INSTR(1,"A",1,1)\n57 PRINT 56;E:E=0\n58 X=INSTR(1,"A",1,"A")\n59 PRINT 58;E:E=0\n60 X=INSTR(1,"A","A",1)\n61 PRINT 60;E:E=0\n62 X=INSTR(1,"A","A","A")\n63 PRINT 62;E:E=0\n64 X=INSTR("A",1,1,1)\n65 PRINT 64;E:E=0\n66 X=INSTR("A",1,1,"A")\n67 PRINT 66;E:E=0\n68 X=INSTR("A",1,"A",1)\n69 PRINT 68;E:E=0\n70 X=INSTR("A",1,"A","A")\n71 PRINT 70;E:E=0\n72 X=INSTR("A","A",1,1)\n73 PRINT 72;E:E=0\n74 X=INSTR("A","A",1,"A")\n75 PRINT 74;E:E=0\n76 X=INSTR("A","A","A",1)\n77 PRINT 76;E:E=0\n78 X=INSTR("A","A","A","A")\n79 PRINT 78;E:E=0\n890 SYSTEM\n900 E=ERR:RESUME NEXT\n',
+        ' 20  2 \n 22  2 \n 24  13 \n 26  2 \n 28  13 \n 30  0 \n 32  13 \n 34  13 \n 36  13 \n 38  0 \n 40  2 \n 42  2 \n 44  2 \n 46  2 \n 48  13 \n 50  13 \n 52  13 \n 54  13 \n 56  2 \n 58  2 \n 60  2 \n 62  2 \n 64  2 \n 66  2 \n 68  2 \n 70  2 \n 72  2 \n 74  2 \n 76  2 \n 78  2 \n'),
+    # RESUME NEXT after an error in a THEN clause goes on with the next ':'
+    # statement of the clause; in the first statement of an ELSE clause it goes
+    # on at the next line (measured on 5.21)
+    "clause_resume_next": (
+        '10 ON ERROR GOTO 100\n20 IF 0 THEN PRINT "t" ELSE PRINT "e1":X=1/0:PRINT "s2"\n25 IF 0 THEN PRINT "t" ELSE X=1/0:PRINT "s3":PRINT "s4"\n30 IF 1 THEN PRINT "a":X=1/0:PRINT "s5" ELSE PRINT "b"\n32 IF 1 THEN X=1/0\n34 PRINT "x":IF 1 THEN X=1/0:PRINT "s6"\n40 PRINT "next"\n50 SYSTEM\n100 PRINT ERR;ERL:RESUME NEXT\n',
+        'e1\n 11  20 \ns2\n 11  25 \na\n 11  30 \ns5\n 11  32 \nx\n 11  34 \ns6\nnext\n'),
+    # WIDTH n,x in a clause ends only the WIDTH statement; in an ELSE clause it
+    # also takes a second ELSE (measured on 5.21)
+    "width_clause": (
+        '10 ON ERROR GOTO 100\n20 IF 1 THEN WIDTH 40,1:PRINT "same"\n30 IF 0 THEN PRINT "t" ELSE WIDTH 40,1 ELSE PRINT "e"\n35 PRINT "n35"\n40 IF 0 THEN PRINT "t" ELSE PRINT "x":WIDTH 40,1:PRINT "tail"\n50 WIDTH 80:SYSTEM\n100 PRINT ERR;ERL:RESUME NEXT\n',
+        ' 2  20 \nsame\n 2  30 \nn35\nx\n 2  40 \ntail\n'),
 }
 
 
@@ -153,7 +169,7 @@ def test_interpreter(tmp_path, name):
 # the JavaScript compiler: arity (this branch), the Missing operand rule, and
 # the handler part of CLEAR. WIDTH 40,1 is a Syntax error there too.
 JS_CASES = ["builtin_arity_js", "width_device", "clear_forgets_handler", "else_operand",
-            "arity_types", "clear_bad_arguments"]
+            "arity_types", "clear_bad_arguments", "instr_shapes"]
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is needed to execute generated JavaScript")
