@@ -1026,14 +1026,34 @@ Each item was measured on the binary. Test:
   JavaScript compiler takes the DEF types of the whole program (`DEFINT X`
   after `X=1.5` also makes the earlier `X` an integer). Both come from the
   design of the typed variables, not from one statement.
-- Not done: a `FOR` enters its `NEXT` on the binary, also when the loop runs.
+- Done: a `FOR` enters its `NEXT` on the binary, also when the loop runs.
   With another name (`FOR I=1 TO 2: PRINT "a": NEXT J`) the error `NEXT without
   FOR` comes at the `FOR`, with the line of the `NEXT`, before the body runs, and
-  `I` keeps its value. After `RESUME NEXT` the line number of the next error is
-  the line of the `NEXT` until a new line starts. A `FOR` whose scan ends at a
-  `NEXT` of an outer loop does the same. The interpreter and the JavaScript
-  backend run the body and give the error at the `NEXT`. The zero-trip `FOR`
-  does enter the `NEXT` in the interpreter.
+  `I` keeps its value. A `FOR` whose scan ends at a `NEXT` of an outer loop does
+  the same. The interpreter and the JavaScript backend do this now. `RESUME`
+  and `RESUME NEXT` make ERL the current line: until a new line starts, an
+  error on the line they go back to is reported at ERL. This also holds after
+  `READ` of a bad `DATA` item, where ERL is the `DATA` line. Test:
+  `tests/regression/integration/test_loop_and_call_error_edges.py`.
 - Not done: a spoilt `FOR` entry also hides the `GOSUB` frames below it on the
   binary (the next `RETURN` is `RETURN without GOSUB`). The loops and the
   `GOSUB` frames are separate here, so only the loops are dropped.
+
+  The cause is in `NEXT` (bimisc.mac): it cuts the stack back to the `FOR`
+  entry it finds before it checks the text pointer, so the `GOSUB` frames
+  above that entry go too. To copy it, the interpreter needs one stack for
+  `FOR` and `GOSUB` entries. That is a large change for an error path, so
+  it waits.
+- Done (random PRINT test against the binary, 2026-10-26): a numeric
+  constant is double when more than 7 digits are typed from the first one
+  that is not 0 (`1000000.0`, `10000000`, `123456.70`); `+` of strings in
+  the JavaScript backend gives `String too long` above 255 characters; the
+  semantic analyzer no longer rewrites `X AND -1`, `X OR 0`, `X XOR 0` and
+  `X * 1#` to `X` (the operators round to 16-bit integers, and `1#` widens
+  the result), and its constant folder rounds the operands of the logical
+  operators and gives up on one out of range; `VAL` gives `Overflow` above
+  1.70141E+38 and 0 below 2^-129. Test:
+  `tests/regression/integration/test_literal_precision_and_rewrites.py`.
+  Still different, by design (MBF arithmetic is not emulated): `100^16`
+  prints 9.99999E+31 on the binary, a single product between 1.70141E+38
+  and 3.4E+38 is Overflow there, and `32768*-32769` prints -1.07377E+09.

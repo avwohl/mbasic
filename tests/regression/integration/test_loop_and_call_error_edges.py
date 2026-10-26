@@ -19,6 +19,13 @@ ERR and ERL and does RESUME NEXT.
   function call (5), not Missing operand (22). The same holds for the MID$
   statement with a fourth argument, and for the MID$ statement cut off by the
   end of the line (MID$(A$,0,  and MID$(A$,1,300).
+- A FOR enters the NEXT its scan ends at. When that NEXT names another
+  variable (FOR I ... NEXT J, or a FOR L whose scan ends at NEXT K), the FOR
+  is NEXT without FOR (1), reported at the line of the NEXT, before the body
+  runs and before the variable is set. RESUME NEXT goes on after the FOR.
+- RESUME and RESUME NEXT make ERL the current line: until a new line starts,
+  an error on the line they go back to is reported at ERL (the line of the
+  NEXT above, the DATA line after READ of a bad item).
 - A NEXT finds its FOR below a WHILE that is still open and discards the
   WHILE entry, so the WEND after the NEXT is WEND without WHILE (30).
   (Interpreter only: the JS semantic analyzer refuses this crossed nesting.)
@@ -73,6 +80,32 @@ CASES = {
     "mid_statement_cut_off_long_count": (
         '10 ON ERROR GOTO 100\n15 A$="abc"\n30 MID$(A$,1,300\n40 PRINT "z":SYSTEM\n' + HANDLER,
         " 5  30 \nz\n"),
+    'for_next_of_another_name': (
+        '10 ON ERROR GOTO 100\n'
+        '20 I=9:FOR I=1 TO 2:PRINT "a":NEXT J\n'
+        '30 PRINT "I=";I\n'
+        '40 FOR K=1 TO 2:FOR L=1 TO 2:PRINT "b";\n'
+        '50 NEXT K:PRINT "c"\n'
+        '60 PRINT "d":X=1/0:PRINT "e"\n'
+        '70 PRINT "f"\n'
+        '80 END\n'
+        '100 PRINT "E";ERR;ERL:RESUME NEXT\n',
+        'E 1  20 \na\nE 1  20 \nI= 9 \nE 26  40 \nE 1  50 \nbE 1  50 \nc\nd\nE 11  60 \ne\nf\n'),
+    'erl_stays_after_resume_from_for': (
+        '10 ON ERROR GOTO 100\n'
+        '20 FOR I=1 TO 2:X=1/0:PRINT "a"\n'
+        '30 NEXT J\n'
+        '40 END\n'
+        '100 PRINT "E";ERR;ERL:RESUME NEXT\n',
+        'E 1  30 \nE 11  30 \na\nE 1  30 \n'),
+    'erl_stays_after_resume_from_data': (
+        '10 ON ERROR GOTO 100\n'
+        '20 READ A:X=1/0:PRINT "a"\n'
+        '25 X=1/0\n'
+        '30 DATA "x"\n'
+        '40 END\n'
+        '100 PRINT "E";ERR;ERL:RESUME NEXT\n',
+        'E 2  30 \nE 11  30 \na\nE 11  25 \n'),
 }
 
 INTERPRETER_ONLY = {

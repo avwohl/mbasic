@@ -344,6 +344,9 @@ class Interpreter:
         self._clause_stack = []         # [statements, index] of running clauses
         self._clause_jump = None        # (statements, index) a NEXT goes back to
         self._clause_for = {}           # loop variable -> (statements, FOR index)
+        # (line, ERL) after a RESUME whose error was reported at another line: the binary's
+        # current line is then ERL until a new line starts, so errors there report ERL
+        self._sticky_erl = None
 
         # I/O handler (defaults to console if not provided)
         if io_handler is None:
@@ -753,6 +756,9 @@ class Interpreter:
                     # re-runs the rest of a clause: stmt_pc is the IF.)
                     pc = getattr(e, 'stmt_pc', None) or pc
                     error_pc = getattr(e, 'error_pc', None) or pc
+                    if (getattr(e, 'error_pc', None) is None and self._sticky_erl is not None
+                            and self._sticky_erl[0] == pc.line_num):
+                        error_pc = PC.running_at(self._sticky_erl[1], pc.stmt_offset)
                     info = ErrorInfo(
                         error_code=error_code,
                         pc=error_pc,
@@ -831,6 +837,9 @@ class Interpreter:
                 # Update PC for next iteration (unless already stopped by END/STOP)
                 if self.runtime.pc.is_running():
                     self.runtime.pc = next_pc
+                if self._sticky_erl is not None and (
+                        not next_pc.is_running() or next_pc.line_num != self._sticky_erl[0]):
+                    self._sticky_erl = None     # a new line starts
 
                 # Yield control periodically
                 if mode == 'run' and statements_in_tick >= max_statements:
@@ -1983,6 +1992,17 @@ class Interpreter:
             stmt, in_clause[0][in_clause[1] + 1:] if in_clause else None)
         next_line, next_stmt, var_index, nested, next_node = target
         site = (self._next_uid(next_node), var_index)
+        # The FOR enters the NEXT its scan ended at, which checks its name there: another
+        # name is NEXT without FOR at the FOR, reported at the line of the NEXT, before
+        # the variable is set (measured: FOR I=1 TO 2:PRINT "a":NEXT J prints no "a")
+        next_vars = getattr(next_node, 'variables', None) or []
+        if var_index < len(next_vars):
+            named = next_vars[var_index]
+            if named.name + (named.type_suffix or "") != var_name:
+                exc = RuntimeError("NEXT without FOR")
+                if next_line is not None:
+                    exc.error_pc = PC.running_at(next_line, next_stmt)
+                raise exc
 
         # Set loop variable to start
         self.runtime.set_variable(
@@ -2391,6 +2411,13 @@ class Interpreter:
             raise RuntimeError("No error position to resume from")
 
         error_pc = self.state.pending_error.pc
+        report_pc = self.state.pending_error.report_pc
+        # RESUME and RESUME NEXT make ERL the current line again (measured): when
+        # the error was reported at another line, later errors on this line report it
+        self._sticky_erl = None
+        if (stmt.line_number in (None, 0, -1) and report_pc is not None
+                and report_pc.line_num != error_pc.line_num):
+            self._sticky_erl = (error_pc.line_num, report_pc.line_num)
         clause_tail = self.state.pending_error_tail
         self.state.pending_error_tail = None
         clause_rerun = self.state.pending_error_rerun

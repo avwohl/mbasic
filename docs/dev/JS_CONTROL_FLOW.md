@@ -154,8 +154,10 @@ to its line). ERL uses the same line.
   `tests/regression/integration/test_next_matches_first.py`.
 * A FOR enters its NEXT on the binary, also when the loop runs. If the name
   on that NEXT is not the name of the FOR, the error comes at the FOR (line
-  of the NEXT, variable unchanged, no loop). The interpreter and the
-  JavaScript run the body first and give the error at the NEXT.
+  of the NEXT, variable unchanged, no loop). The JavaScript does the same
+  (`for_wrong_next`). After `RESUME` or `RESUME NEXT`, an error on the line
+  they go back to is reported at ERL until a new line starts (`_sticky`,
+  cleared at the case label of each line).
 * `CLEAR` sets the variables to 0 or "", deletes the arrays, empties the FOR
   and GOSUB stacks, sends the DATA pointer back, closes the files and forgets
   the DEF FN functions (a program with a `CLEAR` checks each FN call and each

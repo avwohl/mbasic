@@ -501,9 +501,10 @@ def _literal_digits(expr):
     """Digits implied by how a numeric literal was written.
 
     A literal is double if it says so - a '#' suffix or a 'D' exponent -
-    or if it carries more than 7 significant figures. That is why
-    PRINT 1234567 gives 1.23457E+06 but PRINT 12345678 gives 12345678:
-    the first is single, the second is double.
+    or if more than 7 digits are typed from the first one that is not 0.
+    That is why PRINT 1234567 gives 1.23457E+06 but PRINT 12345678 and
+    PRINT 1234567.0 give 12345678 and 1234567: the first is single, the
+    others are double.
     """
     # NumberNode.literal holds the source text where the lexer kept it -
     # see Token.literal_text. Older nodes built elsewhere in the parser
@@ -526,11 +527,17 @@ def literal_precision(literal, value):
     if value == MBF_INFINITY_SINGLE:
         return SINGLE_DIGITS            # what a single literal that overflowed became
 
-    # Otherwise count the significant figures the value carries: seven or
-    # fewer is single, more is double. That is MBASIC's rule applied to
-    # the value rather than to the typed text, which agrees except for a
-    # literal padded with trailing zeros (1000000.0 is eight typed digits
-    # but one significant one).
+    # Otherwise count the typed digits of the mantissa from the first one
+    # that is not 0, trailing zeros included: seven or fewer is single, more
+    # is double (measured: 1000000.0, 10000000 and 123456.70 are double;
+    # 0.1234567, 01234567 and .001234567 are single).
+    mantissa = literal.split('E')[0]
+    if mantissa:
+        typed = ''.join(c for c in mantissa if c.isdigit()).lstrip('0')
+        return DOUBLE_DIGITS if len(typed) > 7 else SINGLE_DIGITS
+
+    # A node built without its source text: count the significant figures
+    # of the value instead.
     try:
         mantissa = repr(float(value)).split('e')[0]
     except (TypeError, ValueError, OverflowError):

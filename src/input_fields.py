@@ -8,6 +8,8 @@ for INPUT #, which differ from the keyboard rules (see read_file_field).
 
 import re
 
+from src.number_format import MBF_INFINITY_DOUBLE
+
 # MBASIC's largest number. Anything beyond it is "Overflow" for single and double alike.
 MAX_FLOAT = 1.7014118346046923e38
 
@@ -193,6 +195,11 @@ def val_text(text):
     value = float(f"{m.group(1)}{m.group(2) or '0'}.{m.group(4) or '0'}e{exponent}")
     if not has_exponent and rest[:1] == '%':
         value = _round_percent(value)
+    # An MBF number stops at 1.70141E+38 (beyond: Overflow) and at 2^-129 (below: 0), measured
+    if abs(value) > MBF_INFINITY_DOUBLE:
+        return float('-inf') if value < 0 else float('inf')
+    if abs(value) < 2.0 ** -129:
+        return 0.0
     return value
 
 

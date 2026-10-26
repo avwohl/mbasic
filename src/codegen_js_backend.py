@@ -203,6 +203,9 @@ function _val(str) {
         v = _round_half_away(v);
         if (v > 32767 || v < -32768) _error("Overflow");
     }
+    // An MBF number stops at 1.70141E+38 (beyond: Overflow) and at 2^-129 (below: 0), measured
+    if (Math.abs(v) > _MAX_DOUBLE) v = v < 0 ? -Infinity : Infinity;
+    else if (Math.abs(v) < 1.4693679385278594e-39) v = 0;
     return v === Infinity || v === -Infinity ? _overflow(v < 0, 16) : v;
 }
 function _int16(n) {
@@ -346,6 +349,12 @@ function _wrap_text(col, width, text, whole) {
         col = _advance(col, ch);
     }
     return out;
+}
+// String + : a string holds at most 255 characters (String too long)
+function _scat(a, b) {
+    const s = a + b;
+    if (s.length > 255) _error("String too long");
+    return s;
 }
 function _set_width(n) {
     n = _frcint(n);  // 40000 is Overflow; 256 is Illegal function call
@@ -980,6 +989,8 @@ class JavaScriptBackend(CodeGenBackend):
         # for_site: FOR -> the number of the place its scan ends at; site_fors: number -> JS names of those FORs
         self.next_site: Dict[Any, int] = {}
         self.for_site: Dict[int, int] = {}
+        self.for_wrong_next: Dict[int, int] = {}  # FOR -> line of the NEXT its scan ends at, when that NEXT names another variable
+        self.sticky_erl = False  # RESUME can leave ERL as the current line (see _generate_resume)
         self.site_fors: Dict[int, List[str]] = {}
         self.for_id: Dict[int, int] = {}
         # WHILE/WEND matching, keyed by id(): while_to_wend: WHILE -> its WEND; wend_to_while: WEND -> its WHILE;
@@ -1065,6 +1076,9 @@ class JavaScriptBackend(CodeGenBackend):
         self._find_varying_rank(program)
         self._match_for_next(program)
         self._scan_for_sites(program)
+        # An error reported at another line than the one that runs: READ of a bad DATA item,
+        # a FOR whose NEXT names another variable
+        self.sticky_erl = self.uses_error_handling and (self.uses_data or bool(self.for_wrong_next))
         self._match_while_wend(program)
         self._plan_lines(program)
 
@@ -1181,7 +1195,10 @@ class JavaScriptBackend(CodeGenBackend):
         self.indent_level -= 1
         code.append(self.indent() + '} catch (e) {')
         self.indent_level += 1
-        code.append(self.indent() + 'if (e && e.basicLine === undefined) e.basicLine = _line_of(_pc);')
+        if self.sticky_erl:
+            code.append(self.indent() + 'if (e && e.basicLine === undefined) e.basicLine = (_sticky !== null && _sticky[0] === _line_of(_pc)) ? _sticky[1] : _line_of(_pc);')
+        else:
+            code.append(self.indent() + 'if (e && e.basicLine === undefined) e.basicLine = _line_of(_pc);')
         if self.uses_error_handling:
             code.append(self.indent() + 'if (e && e.basicCode && _error_handler && !_in_error_handler) { _pc = _trigger_error(e.basicCode, e.basicLine, _pc); continue; }')
         code.append(self.indent() + 'throw e;')
@@ -1308,6 +1325,11 @@ class JavaScriptBackend(CodeGenBackend):
                         if open_fors:
                             for_stmt = open_fors.pop()
                             self.for_site[id(for_stmt)] = site
+                            if k < len(stmt.variables or []):
+                                named = stmt.variables[k]
+                                if (named.name + (named.type_suffix or '') !=
+                                        for_stmt.variable.name + (for_stmt.variable.type_suffix or '')):
+                                    self.for_wrong_next[id(for_stmt)] = line.line_number
                             self.site_fors.setdefault(site, []).append(self._mangle_var_name(
                                 for_stmt.variable.name + (for_stmt.variable.type_suffix or '')))
 
@@ -2653,6 +2675,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'let _error_handler_is_gosub = false;  // True if ON ERROR GOSUB')
             code.append(self.indent() + 'let _error_line = 0;  // Line where error occurred (ERL)')
             code.append(self.indent() + 'let _resume_line = 0;  // Line RESUME goes back to (ERL, except for READ of a bad DATA item)')
+            if self.sticky_erl:
+                code.append(self.indent() + 'let _sticky = null;  // [line, ERL] after a RESUME into a line other than ERL')
             code.append(self.indent() + 'let _error_code = 0;  // Error code (ERR)')
             code.append(self.indent() + 'let _in_error_handler = false;  // Prevent recursive errors')
             code.append(self.indent() + 'const _ERR_MSGS = ' + json.dumps({str(c): m for c, (_, m) in ERROR_CODES.items()}) + ';')
@@ -3049,6 +3073,8 @@ class JavaScriptBackend(CodeGenBackend):
         # Case label for this line
         code.append(self.indent() + f'case {line.line_number}:')
         self.indent_level += 1
+        if self.sticky_erl:
+            code.append(self.indent() + '_sticky = null;  // a new line starts')
 
         reachable = True
         for j, step in enumerate(plan.steps):
@@ -3441,6 +3467,8 @@ class JavaScriptBackend(CodeGenBackend):
                     js_op = '!=='
                 else:
                     js_op = op
+                if op == '+' and expr_kind(expr) == 's':
+                    return f'_scat({left}, {right})'
                 if op in ('+', '-', '*', '/'):
                     digits = numeric_digits(expr)
                     if digits is not None:
@@ -3746,6 +3774,11 @@ class JavaScriptBackend(CodeGenBackend):
         if id(stmt) not in self.for_site:
             # The scan finds no NEXT: the error comes before the variable is set
             code.append(self.indent() + '_error("FOR Without NEXT");')
+        elif id(stmt) in self.for_wrong_next:
+            # The FOR enters its NEXT, which names another variable: NEXT without FOR at the
+            # FOR, reported at the line of the NEXT, before the variable is set (measured)
+            next_line = self.for_wrong_next[id(stmt)]
+            code.append(self.indent() + f'try {{ _error("NEXT without FOR"); }} catch (e) {{ e.basicLine = {next_line}; throw e; }}')
         code.append(self.indent() + f'{var_name} = _start;')
 
         # Check initial condition before entering loop
@@ -4416,6 +4449,10 @@ class JavaScriptBackend(CodeGenBackend):
 
         # ERR reads 0 after RESUME; ERL keeps the line number.
         code.append(self.indent() + '_error_code = 0;')
+        if self.sticky_erl and stmt.line_number in (None, 0, -1):
+            # The binary makes ERL the current line again: until a new line starts, an error
+            # in the line RESUME goes back to is reported at ERL (measured)
+            code.append(self.indent() + '_sticky = _line_of(_resume_line) !== _error_line ? [_line_of(_resume_line), _error_line] : null;')
         if stmt.line_number is None or stmt.line_number == 0:
             # RESUME (or RESUME 0) - return to line that caused error
             if self.yield_checks:

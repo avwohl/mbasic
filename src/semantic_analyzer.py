@@ -21,7 +21,7 @@ import dataclasses
 from dataclasses import dataclass, field
 from enum import Enum
 from src.ast_nodes import *
-from src.number_format import int_divide, int_modulo
+from src.number_format import int_divide, int_modulo, to_int_operand, numeric_digits, INTEGER_DIGITS, DOUBLE_DIGITS
 from src.js_type_check import binary_mismatch, unary_mismatch
 # Explicit re-import of VarType, not left to the wildcard above.
 #
@@ -593,17 +593,12 @@ class ConstantEvaluator:
                     return -1 if left <= right else 0
                 elif op == '>=' or 'GREATER_EQUAL' in str(expr.operator):
                     return -1 if left >= right else 0
-                # Logical operators
-                elif op == 'AND':
-                    return int(left) & int(right)
-                elif op == 'OR':
-                    return int(left) | int(right)
-                elif op == 'XOR':
-                    return int(left) ^ int(right)
-                elif op == 'EQV':
-                    return ~(int(left) ^ int(right))
-                elif op == 'IMP':
-                    return ~int(left) | int(right)
+                # Logical operators: the operands are rounded to 16-bit integers
+                # (2.6 AND 3 is 3), and one out of range is Overflow when it runs
+                elif op in ('AND', 'OR', 'XOR', 'EQV', 'IMP'):
+                    a, b = to_int_operand(left), to_int_operand(right)
+                    return {'AND': a & b, 'OR': a | b, 'XOR': a ^ b,
+                            'EQV': ~(a ^ b), 'IMP': ~a | b}[op]
             except (ZeroDivisionError, ValueError, TypeError, OverflowError):
                 # OverflowError is the 16-bit range check on a \ or MOD
                 # operand. Folding has to give up rather than raise: the error
@@ -631,7 +626,10 @@ class ConstantEvaluator:
             elif op == '+':
                 return operand
             elif op == 'NOT':
-                return ~int(operand)
+                try:
+                    return ~to_int_operand(operand)
+                except OverflowError:
+                    return None     # NOT 40000 is Overflow when it runs
 
         # Try to evaluate function calls (for deterministic math functions and DEF FN)
         if isinstance(expr, FunctionCallNode):
@@ -3405,6 +3403,9 @@ class SemanticAnalyzer:
                 reduction_type = "XOR with self -> 0"
                 savings = "Eliminate XOR, replace with 0"
 
+        if new_expr is not None and not self._reduction_keeps_value(expr, new_expr):
+            return None
+
         # If we found a reduction, record it
         if reduction_type and self.current_line is not None:
             reduced_desc = self._describe_expression(new_expr) if new_expr else original_desc
@@ -3417,6 +3418,29 @@ class SemanticAnalyzer:
             ))
 
         return new_expr
+
+    @staticmethod
+    def _reduction_keeps_value(expr, new_expr) -> bool:
+        """True when a strength reduction computes what MBASIC computes.
+
+        AND, OR, XOR, EQV and IMP round their operands to 16-bit integers, so
+        2.6 AND -1 is 3 and 40000 OR 0 is Overflow: a logical identity holds
+        only for an integer operand. A constant of a wider precision widens
+        the result (A * 1# is double), so an arithmetic identity holds only
+        when the constant is no wider than the operand that stays.
+        """
+        def width(node):
+            digits = numeric_digits(node)
+            return 0 if digits is INTEGER_DIGITS else 2 if digits == DOUBLE_DIGITS else 1
+
+        if expr.operator in (TokenType.AND, TokenType.OR, TokenType.XOR,
+                             TokenType.EQV, TokenType.IMP):
+            return isinstance(new_expr, NumberNode) or width(new_expr) == 0
+        if new_expr is expr.left:
+            return width(expr.right) <= width(expr.left)
+        if new_expr is expr.right:
+            return width(expr.left) <= width(expr.right)
+        return True
 
     def _apply_expression_reassociation(self, expr) -> Optional[Any]:
         """
