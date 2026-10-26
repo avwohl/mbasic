@@ -1940,12 +1940,21 @@ class Parser:
 
             if self.match(TokenType.DELETE):
                 self.advance()
-                # Parse range: start_line-end_line
-                delete_start = self.parse_expression()
+                # Parse range: start_line-end_line. The minus separates the
+                # two numbers; parse_expression would read 100-110 as the
+                # difference -10 and lose the range.
+                if not self.match(TokenType.NUMBER):
+                    raise ParseError("Expected line number after DELETE", self.current())
+                start_token = self.advance()
+                delete_start = NumberNode(value=start_token.value, literal=str(start_token.value),
+                                          line_num=start_token.line, column=start_token.column)
                 if self.match(TokenType.MINUS):
                     self.advance()
-                    delete_end = self.parse_expression()
-                    # Evaluate to get numbers
+                    if not self.match(TokenType.NUMBER):
+                        raise ParseError("Expected line number after '-'", self.current())
+                    end_token = self.advance()
+                    delete_end = NumberNode(value=end_token.value, literal=str(end_token.value),
+                                            line_num=end_token.line, column=end_token.column)
                     delete_range = (delete_start, delete_end)
 
         return ChainStatementNode(

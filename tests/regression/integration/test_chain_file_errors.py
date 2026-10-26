@@ -128,3 +128,52 @@ def test_curses_load_and_merge_return_true_on_a_read_abort(tmp_path):
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+def _run_cli(tmp_path, main_lines, files, commands, timeout=20):
+    for file_name, lines in files.items():
+        (tmp_path / file_name).write_bytes(
+            "".join(line + "\r\n" for line in lines).encode())
+    (tmp_path / "main.bas").write_bytes(
+        "".join(line + "\r\n" for line in main_lines).encode())
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "mbasic"), "--ui", "cli"],
+        input='LOAD "main.bas"\nRUN\n' + commands + "SYSTEM\n", cwd=tmp_path,
+        capture_output=True, text=True, timeout=timeout)
+    return result.stdout
+
+
+def test_aborted_chain_clears_variables_and_blocks_cont(tmp_path):
+    """Measured on the binary: main = 5 A=3 / 10 PRINT "s" / 20 CHAIN "za.bas";
+    RUN, PRINT A, CONT gives s, Direct statement in file, Ok, " 0 ", Ok,
+    Can't continue, Ok."""
+    out = _run_cli(tmp_path, ["5 A=3", '10 PRINT "s"', '20 CHAIN "za.bas"'],
+                   {"za.bas": FILES["za"]}, "PRINT A\nCONT\n")
+    after = out[out.index("Direct statement in file"):]
+    assert " 0 " in after and " 3 " not in after
+    assert "Can't continue" in after
+
+
+def test_chain_start_line(tmp_path):
+    """Measured: CHAIN "g.bas",20 with g = 10 PRINT "G10" / 20 PRINT "G20"
+    prints s, G20 (not G10). A start line the file lacks (25) prints a bare
+    Undefined line number and the file stays loaded."""
+    files = {"g.bas": ['10 PRINT "G10"', '20 PRINT "G20"']}
+    out = _run_cli(tmp_path, ['10 PRINT "s"', '20 CHAIN "g.bas",20'], files, "")
+    assert "G20" in out and "G10" not in out
+    out = _run_cli(tmp_path, ['10 PRINT "s"', '20 CHAIN "g.bas",25'], files, "LIST\n")
+    assert out.count("Undefined line number\n") == 1
+    assert '10 PRINT "G10"' in out
+
+
+def test_chain_merge_with_delete_range(tmp_path):
+    """Measured: main = 10 PRINT "s" / 20 CHAIN MERGE "h.bas",200,DELETE 100-110
+    / 100 PRINT "o100" / 110 PRINT "o110", h = 200 PRINT "G200" / 210 END:
+    prints s, G200 and stops; LIST shows 10, 20, 200, 210."""
+    out = _run_cli(
+        tmp_path,
+        ['10 PRINT "s"', '20 CHAIN MERGE "h.bas",200,DELETE 100-110',
+         '100 PRINT "o100"', '110 PRINT "o110"'],
+        {"h.bas": ['200 PRINT "G200"', "210 END"]}, "LIST\n")
+    assert out.count("\ns\n") == 1 and "G200\n" in out
+    assert listed(out[out.index("G200"):]) == [10, 20, 200, 210]

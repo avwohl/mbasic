@@ -439,6 +439,11 @@ class Interpreter:
 
             # Initialize state
             self.state = InterpreterState(_interpreter=self)
+            # CHAIN with a starting line: begin there instead of at the first line
+            chain_start = getattr(self.runtime, 'chain_start_line', None)
+            if chain_start is not None:
+                self.runtime.chain_start_line = None
+                self.runtime.pc = PC.from_line(chain_start)
             # PC is already set to running state by setup(), no need to set halted flag
             self.state.is_first_line = True
 

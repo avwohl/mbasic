@@ -849,6 +849,13 @@ class InteractiveMode:
         if self.program.read_abort is None:
             return False
         print(self.program.read_abort[1])
+        # MBASIC clears the variables and cannot CONT after the aborted read
+        if self.program_runtime:
+            self.program_runtime.clear_variables()
+            self.program_runtime.clear_arrays()
+            self.program_runtime.for_loop_states.clear()
+            self.program_runtime.execution_stack.clear()
+        self.cont_invalid = True
         return True
 
     def cmd_load(self, filename, from_program=False):
@@ -1009,6 +1016,18 @@ class InteractiveMode:
                                 break
                         # Skip uninitialized variables
 
+            # DELETE range: MBASIC deletes these lines of the old program
+            # before it merges the file (even the CHAIN line itself).
+            if delete_range and merge:
+                start_expr, end_expr = delete_range
+                start_line_del = int(getattr(start_expr, 'value', start_expr))
+                end_line_del = int(getattr(end_expr, 'value', end_expr))
+                for ln in [ln for ln in self.lines.keys()
+                           if start_line_del <= ln <= end_line_del]:
+                    del self.lines[ln]
+                    if ln in self.line_asts:
+                        del self.line_asts[ln]
+
             # Load or merge program with the loader LOAD and MERGE use, so that
             # a bad file line stops the read as in MBASIC: a line over 255
             # bytes, a line with no number, or a bare number of a missing line
@@ -1028,29 +1047,12 @@ class InteractiveMode:
             for _line_num, error in errors:
                 print(error)
 
-            # Handle DELETE range if specified
-            if delete_range and merge:
-                # delete_range is a tuple of (start_expr, end_expr)
-                # We need to evaluate them if they're expressions
-                start_expr, end_expr = delete_range
-                # For now, assume they're NumberNodes - full implementation would evaluate
-                if hasattr(start_expr, 'value'):
-                    start_line_del = int(start_expr.value)
-                else:
-                    start_line_del = int(start_expr)
-
-                if hasattr(end_expr, 'value'):
-                    end_line_del = int(end_expr.value)
-                else:
-                    end_line_del = int(end_expr)
-
-                # Delete lines in range
-                lines_to_delete = [ln for ln in self.lines.keys()
-                                   if start_line_del <= ln <= end_line_del]
-                for ln in lines_to_delete:
-                    del self.lines[ln]
-                    if ln in self.line_asts:
-                        del self.line_asts[ln]
+            # A starting line that the new program does not have is an
+            # error that MBASIC prints bare, after it loaded the program.
+            if start_line is not None and start_line not in self.line_asts:
+                print(format_error_message(UNDEFINED_LINE_NUMBER))
+                self.cont_invalid = True
+                return True
 
             # CHAIN: Reuse existing runtime/interpreter to preserve UI references
             # Clear execution state (GOSUB stack, FOR loops, etc.) but keep variables based on options
@@ -1071,9 +1073,9 @@ class InteractiveMode:
                     # Keep the existing common_vars list
                     pass
 
-                # Set starting line if specified
-                if start_line:
-                    runtime.next_line = start_line
+                # Set starting line if specified (applied by Interpreter.start)
+                if start_line is not None:
+                    runtime.chain_start_line = start_line
 
                 # Raise ChainException to signal run() loop to restart with new program
                 # This avoids recursive run() calls
@@ -1097,9 +1099,9 @@ class InteractiveMode:
                 self.program_runtime = runtime
                 self.program_interpreter = interpreter
 
-                # Set starting line if specified
-                if start_line:
-                    runtime.next_line = start_line
+                # Set starting line if specified (applied by Interpreter.start)
+                if start_line is not None:
+                    runtime.chain_start_line = start_line
 
                 # Run the program (only for first-time from command line)
                 interpreter.run()
