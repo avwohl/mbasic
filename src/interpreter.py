@@ -2958,13 +2958,14 @@ class Interpreter:
 
         # Delegate to interactive mode if available
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            self.interactive_mode.cmd_chain(
+            if self.interactive_mode.cmd_chain(
                 filename,
                 start_line=start_line,
                 merge=stmt.merge,
                 all_flag=stmt.all_flag,
                 delete_range=stmt.delete_range
-            )
+            ):
+                self._stop_after_read_abort()
         else:
             raise RuntimeError("CHAIN not available in this context")
 

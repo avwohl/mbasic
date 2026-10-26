@@ -57,6 +57,18 @@ the same. `RUN "file"` of a file with a bad line stops after the message and
 does not run. The Tk and curses UIs print the same
 message. The web UI loads files through the editor and does not use the loader.
 
+`CHAIN` and `CHAIN MERGE` use the same loader (`cmd_chain` in
+`src/interactive.py`), so they follow the same rules. Measured: after the bad
+line the program stops with the bare message. `CHAIN` leaves the lines read
+before the bad line (an empty program for a bad first line). `CHAIN MERGE`
+keeps the old program and the lines merged before the bad line. Before this,
+`cmd_chain` read the file with its own loop and ignored the bad lines, and
+`CHAIN MERGE` of a bare number of a missing line looped for ever. The curses
+and Tk `cmd_load` and `cmd_merge` now return True after a read abort, so a
+running program stops there too. Tests:
+`tests/regression/integration/test_chain_file_errors.py`. The curses and Tk UIs
+still have no `cmd_chain` (CHAIN in a program there is not supported).
+
 A floating-point overflow is now reported. The binary prints a bare `Overflow`
 (no line number, no `Ok`). It substitutes machine infinity with the sign of the
 true result, and the program goes on. With `ON ERROR` armed it is ERR 6.

@@ -3457,12 +3457,20 @@ class TkBackend(UIBackend):
             self._add_output(message_for(e) + "\n")
             self._set_status("Save error")
 
-    def cmd_load(self, filename: str, from_program: bool = False) -> None:
-        """Execute LOAD command - load from file."""
+    def cmd_load(self, filename: str, from_program: bool = False):
+        """Execute LOAD command - load from file. Returns True when the read
+        was aborted by a bad file line, so that a running program stops."""
         try:
             success, errors = self.program.load_from_file(filename)
             for notice in self.program.take_notices():
                 self._add_output(f"{notice}\n")    # "Overflow" for a literal such as 1E39
+            if self.program.read_abort is not None:
+                # MBASIC stops reading at a bad line and keeps what it read
+                self._add_output(self.program.read_abort[1] + "\n")
+                self._refresh_editor()
+                self._validate_editor_syntax()
+                self._set_status(f"Load stopped: {self.program.read_abort[1]}")
+                return True  # a running program stops (as in the CLI)
             if errors:
                 for line_num, error in errors:
                     # Already prefixed by ProgramManager - see _parse_editor_content.
@@ -3487,18 +3495,26 @@ class TkBackend(UIBackend):
             self._add_output(message_for(e) + "\n")
             self._set_status("Load error")
 
-    def cmd_merge(self, filename: str, quiet: bool = False, from_program: bool = False) -> None:
+    def cmd_merge(self, filename: str, quiet: bool = False, from_program: bool = False):
         """Execute MERGE command - merge file into current program.
 
         MERGE adds or replaces lines from a file without clearing existing lines.
         - Lines with matching line numbers are replaced
         - New line numbers are added
         - Existing lines not in the file are kept
+        Returns True when the read was aborted by a bad file line.
         """
         try:
             success, errors, lines_added, lines_replaced = self.program.merge_from_file(filename)
             for notice in self.program.take_notices():
                 self._add_output(f"{notice}\n")
+            if self.program.read_abort is not None:
+                # The lines merged before the bad line stay, as in MBASIC
+                self._add_output(self.program.read_abort[1] + "\n")
+                self._refresh_editor()
+                self._validate_editor_syntax()
+                self._set_status(f"Merge stopped: {self.program.read_abort[1]}")
+                return True  # a running program stops (as in the CLI)
             if errors:
                 for line_num, error in errors:
                     # Already prefixed by ProgramManager - see _parse_editor_content.
@@ -3510,7 +3526,7 @@ class TkBackend(UIBackend):
                 self._refresh_editor()
                 # Re-validate to show error markers for merged lines
                 self._validate_editor_syntax()
-                if not quiet and self.program.read_abort is None:
+                if not quiet:
                     self._add_output(f"Merged from {filename}\n")
                     self._add_output(
                         f"{lines_added} line(s) added, {lines_replaced} line(s) replaced\n")

@@ -965,6 +965,9 @@ class InteractiveMode:
         - all_flag: Pass all variables to chained program (ALL option)
         - delete_range: Delete line range after merge (DELETE option)
 
+        Returns True when a bad file line aborted the read (see cmd_load); the
+        statement then stops the running program.
+
         Raises ChainException when called during program execution to signal the interpreter's
         run() loop to restart with the new program. This avoids recursive run() calls.
         When called from command line (not during execution), runs the program directly.
@@ -975,9 +978,6 @@ class InteractiveMode:
 
         try:
             filename = _with_default_extension(filename)
-
-            with open(filename, 'r') as f:
-                program_text = f.read()
 
             # Save variables based on CHAIN options:
             # - ALL: passes all variables to the chained program
@@ -1009,44 +1009,24 @@ class InteractiveMode:
                                 break
                         # Skip uninitialized variables
 
-            # Load or merge program
+            # Load or merge program with the loader LOAD and MERGE use, so that
+            # a bad file line stops the read as in MBASIC: a line over 255
+            # bytes, a line with no number, or a bare number of a missing line
+            # prints the bare message and the lines read so far stay.
             if merge:
-                # MERGE mode - keep existing lines
-                for line in program_text.split('\n'):
-                    line = line.strip()
-                    if not line:
-                        continue
-
-                    # Sanitize input: clear parity bits and filter control characters
-                    line, _ = sanitize_and_clear_parity(line)
-
-                    match = re.match(r'^(\d+)(?=.)', line)
-                    if match:
-                        line_num = int(match.group(1))
-                        line_ast = self.parse_single_line(line)
-                        if line_ast:
-                            self.lines[line_num] = line
-                            self.line_asts[line_num] = line_ast
+                success, errors, _added, _replaced = self.program.merge_from_file(filename)
             else:
-                # Normal mode - clear and load
-                self.lines.clear()
-                self.line_asts.clear()
-
-                for line in program_text.split('\n'):
-                    line = line.strip()
-                    if not line:
-                        continue
-
-                    # Sanitize input: clear parity bits and filter control characters
-                    line, _ = sanitize_and_clear_parity(line)
-
-                    match = re.match(r'^(\d+)(?=.)', line)
-                    if match:
-                        line_num = int(match.group(1))
-                        line_ast = self.parse_single_line(line)
-                        if line_ast:
-                            self.lines[line_num] = line
-                            self.line_asts[line_num] = line_ast
+                success, errors = self.program.load_from_file(filename)
+            for notice in self.program.take_notices():
+                print(notice)           # "Overflow", as for LOAD
+            if self.program.read_abort is not None:
+                if self.program_runtime:
+                    for line_num, line_ast in self.program.line_asts.items():
+                        self.program_runtime.statement_table.replace_line(line_num, line_ast)
+                self._report_read_abort(True)
+                return True  # the read was aborted: the program stops
+            for _line_num, error in errors:
+                print(error)
 
             # Handle DELETE range if specified
             if delete_range and merge:
