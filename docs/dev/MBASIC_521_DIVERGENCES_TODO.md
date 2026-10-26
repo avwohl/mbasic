@@ -16,7 +16,7 @@ reproduction on the binary, the cause in our code and a proposed fix. When an
 issue is closed, change its entry here to "Done", or remove the entry.
 
 
-## 1. Errors that are still not detected
+## 1. Errors that were not detected - mostly done
 
 The reporting is right now - `<message> in <line>`, no `?`, program stops - and
 25 provocations match the binary exactly. The conditions that we did not
@@ -32,7 +32,8 @@ Done (GitHub issues 30 to 33, `docs/dev/STRING_SPACE_AND_FILE_ERRORS.md`):
 - Done (#31): `Out of string space` (error 14) when the live strings do not fit
   in the string space. The space is a byte budget (39168 at start-up, as FRE
   reports), not a memory model, so the error comes a little later than on the
-  binary. `CLEAR ,n` and `CLEAR ,,n` change the budget, and `FRE` reports the string space less the live strings.
+  binary. `CLEAR ,n` and `CLEAR ,,n` change the budget, and `FRE` reports the
+  string space less the live strings.
   Only a literal (class `ProgramString`) is free. A result of `LEFT$`, `RIGHT$`,
   `MID$` or `+` counts, also when it equals the whole literal. A `DEF FN` that
   returns a variable or a parameter counts (a copy on the binary); a `DEF FN` with a
@@ -251,7 +252,9 @@ interpreter. The interpreter now checks the second and later dimensions
 against their own bound (`A(2,6)` on `DIM A(5,5)`). `RESUME` with no error
 is `RESUME without error`, and a handler that falls off the end reports `No
 RESUME in <last line>`. `ON ERROR GOTO 0` in a handler reports the line of
-the first error. `ERASE` deletes the array in JavaScript: the next use makes it again with the bounds 0 to 10, as on the binary. A fatal `ERROR n` in a handler, where n has no message, prints `Unprintable error`. `INSTR` gives 0 for
+the first error. `ERASE` deletes the array in JavaScript: the next use makes
+it again with the bounds 0 to 10, as on the binary. A fatal `ERROR n` in a
+handler, where n has no message, prints `Unprintable error`. `INSTR` gives 0 for
 an empty string and for a start beyond the end, also with an empty search
 string (interpreter and JavaScript). `MID$(A$,2,3)=A$` copies byte by byte over
 itself, so `hello` gives `hhhho`. Not done: `ERASE A` followed by `DIM A` is
@@ -348,10 +351,11 @@ and ERL, and RESUME NEXT lands in the right place. The edges do not:
   out of a handler does not end it: the binary leaves the next error
   untrapped, and so do we now.
 - The JavaScript compiler has the same edges (it prints ` in <line>` since
-  #41), with three differences. It does not check `A$=A` at run time. After
-  `ON ERROR GOTO 0` in a handler it names the line inside the handler, where
-  the binary names the line that first failed. It prints `No RESUME` with no
-  ` in <line>`. The C backend refuses programs with `ON ERROR`, so it has no handler edges.
+  #41). After `ON ERROR GOTO 0` in a handler it names the line that first
+  failed, and a handler that runs off the end is `No RESUME in <last line>`,
+  as on the binary. One difference stays: it does not check `A$=A` at run
+  time. The C backend refuses programs with `ON ERROR`, so it has no handler
+  edges.
 - Done: `ON ERROR GOSUB` is a `Syntax error` on the binary, at the prompt and
   (for a stored line) when the line runs, as for any bad statement. The
   interpreter and the JavaScript compiler do the same.

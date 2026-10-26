@@ -2,8 +2,8 @@
 
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
-**Last Updated:** 2026-10-25
-**Total Documents:** 65
+**Last Updated:** 2026-10-26
+**Total Documents:** 66
 
 ## What's Here
 
@@ -72,6 +72,7 @@ port I/O — but they are not required. Read
 ### File I/O
 
 - [Backup Nonversioned Files](BACKUP_NONVERSIONED_FILES.md)
+- [String Space And File Errors](STRING_SPACE_AND_FILE_ERRORS.md)
 
 ### Debugging & Errors
 

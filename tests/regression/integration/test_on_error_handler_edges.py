@@ -14,10 +14,9 @@ cpmemu, tests/HOW_TO_RUN_REAL_MBASIC.md). The binary:
   handler, so the next error is untrapped.
 
 The JavaScript compiler (issue 41) now prints "<message> in <line>" like the
-binary. Two differences remain and are kept in the expected text below: after
-ON ERROR GOTO 0 in a handler (#44) the line is the line inside the handler,
-where the binary names the line that first failed, and "No RESUME" (#37) has
-no " in <line>".
+binary. After ON ERROR GOTO 0 in a handler (#44) it names the line that first
+failed, and a handler that runs off the end (#37) says "No RESUME in <line>",
+as the binary does. It does not check A$=A at run time.
 """
 import shutil
 import subprocess

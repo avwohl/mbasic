@@ -47,7 +47,8 @@ The backend asks `number_format.numeric_digits()`, the function that the interpr
 operands to integers. A rounded operand of `\`, `MOD`, `AND`, `OR`, `XOR`, `EQV`,
 `IMP` or `NOT` outside -32768..32767 stops the program with `Overflow`, and `\` or
 `MOD` by 0 stops it with `Division by zero`. A comparison gives -1 for true.
-`AND`, `OR`, `XOR`, `EQV`, `IMP` and `NOT` work bit by bit on 16-bit integers. `^` with a whole exponent uses
+`AND`, `OR`, `XOR`, `EQV`, `IMP` and `NOT` work bit by bit on 16-bit integers.
+`^` with a whole exponent uses
 repeated multiplication, because the uc80 `pow()` is not exact (`3^8` gave 6560.98).
 
 The formatter builds the exact decimal value of the float in a digit array and then
