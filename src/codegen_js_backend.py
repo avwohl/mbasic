@@ -3893,6 +3893,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'break;')
         elif stmt.line_number == -1:
             # RESUME NEXT (the parser's -1) - continue at next line after error
+            code.append(self.indent() + '{  // block: several RESUME NEXT may share a case scope')
+            self.indent_level += 1
             code.append(self.indent() + 'const _next_line = _next_lines[_resume_line] === undefined ? null : _next_lines[_resume_line];')
             code.append(self.indent() + 'if (_next_line !== null) {')
             self.indent_level += 1
@@ -3901,6 +3903,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '} else {')
             self.indent_level += 1
             code.append(self.indent() + '_pc = null;  // End of program')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append(self.indent() + 'break;')

@@ -56,6 +56,11 @@ CASES = {
     'resume_in_if_body': (
         '10 ON ERROR GOTO 900\n20 K=0:PRINT "a":K=K+1:PRINT "k";K:ERROR 5:PRINT "b";K\n30 IF K<2 THEN K=K+5:PRINT "if";K:ERROR 6:PRINT "z"\n40 PRINT "end":SYSTEM\n900 C=C+1:PRINT "E";ERR;ERL;C:IF C<3 THEN RESUME\n910 RESUME NEXT\n',
         'a\nk 1 \nE 5  20  1 \nE 5  20  2 \nE 5  20  3 \nb 1 \nif 6 \nE 6  30  4 \nz\nend\n'),
+    # Binary (reviewer measurement): two handlers that both end in RESUME NEXT
+    # print a, E2 20, b. Generated JS once redeclared _next_line (SyntaxError).
+    'two_resume_next_handlers': (
+        '10 ON ERROR GOTO 900\n20 PRINT "a":ON ERROR GOTO 0:ON ERROR GOTO 910:ERROR 5:PRINT "b"\n30 SYSTEM\n900 PRINT "E1":RESUME NEXT\n910 PRINT "E2";ERL:RESUME NEXT\n',
+        'a\nE2 20 \nb\n'),
 }
 
 
