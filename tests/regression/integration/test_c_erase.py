@@ -86,6 +86,15 @@ def run_interpreter(tmp_path, source):
     return run_interpreted(tmp_path, "")
 
 
+def test_interpreter_base_1_dim_zero_is_subscript_out_of_range(tmp_path):
+    # Binary: "10 OPTION BASE 1 / 20 A(1)=1 / 30 DIM A(0)" gives Subscript out
+    # of range in 30. The bound check comes before the Duplicate Definition check.
+    out = run_interpreter(
+        tmp_path, '10 OPTION BASE 1\n20 A(1)=1\n30 DIM A(0)\n40 PRINT "x"\n')
+    assert "Subscript out of range in 30" in out
+    assert "Duplicate" not in out
+
+
 @pytest.mark.parametrize("name", sorted(CASES))
 def test_interpreter_matches_binary(tmp_path, name):
     source, expected = CASES[name]

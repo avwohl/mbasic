@@ -562,6 +562,15 @@ Still open, found in the final check of the fixes for #30 to #57:
   - Not done: a second `DIM` of the same array with no `ERASE` between is
     still a compile error in the C backend. The binary stops at run time with
     `Duplicate Definition`. This is a deliberate refusal.
+  - Not done: a `DIM` after `ERASE` with a size that is not a constant
+    (for example `DIM A(R*2)` in a loop) is a compile error in the C backend.
+    The binary and the interpreter accept it. The C storage is static, so
+    the C compiler must know the largest size. This is a limit of the
+    design, as for every `DIM` with a variable size.
+  - Done: the interpreter gives `Subscript out of range` for `DIM A(0)`
+    with `OPTION BASE 1`, also when the array exists. The binary checks the
+    bound before it checks for `Duplicate Definition`. (The C backend
+    refuses such a program at compile time.)
   - Not done: the JavaScript backend does not give `Illegal function call`
     for `ERASE` of an array that does not exist.
 

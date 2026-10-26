@@ -99,7 +99,9 @@ descriptors in the string pool, so element n has the ID of the array plus n.
   more memory. `ERASE` of an array that does not exist is `Illegal function
   call`, `DIM` of an array that exists is `Duplicate Definition`, and a use with
   the wrong number of subscripts is `Subscript out of range`. A second `DIM` of
-  an array that no `ERASE` names is a compile error.
+  an array that no `ERASE` names is a compile error. A `DIM` after `ERASE` must have
+  constant sizes (a size that depends on a variable is a compile error, as for
+  all `DIM` in this backend).
 - A variable and an array can have the same name (`A` and `A(1)`). The C names are
   different: arrays end in `_arr`, and a string array has its own `STR_` macro.
 - The limit is 16383 string descriptors in all (the IDs have 14 bits).
