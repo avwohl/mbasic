@@ -137,6 +137,12 @@ class Z88dkCBackend(CodeGenBackend):
         self.array_ranks: Dict[str, int] = {}
         # Dimension maxima of the arrays a DIM sizes, by key
         self.array_dims: Dict[str, List[int]] = {}
+        # Arrays an ERASE names: their shape is run-time state (see _array_total).
+        # array_shapes holds the maxima of each DIM of such an array and array_sites
+        # the numbers of subscripts its uses have.
+        self.erased_keys: Set[str] = set()
+        self.array_shapes: Dict[str, List[List[int]]] = {}
+        self.array_sites: Dict[str, Set[int]] = {}
         # Keys of the plain (not subscripted) variables the program uses.  BASIC
         # keeps A and A(1) apart, and so do the C names: arrays end in _arr and
         # string arrays have their own STR_ macro.
@@ -871,6 +877,12 @@ class Z88dkCBackend(CodeGenBackend):
                     for letter in n.letters:
                         self.def_suffix[letter.lower()] = suffix_of.get(n.var_type, '!')
 
+        for line in program.lines:
+            for n in self._walk(line.statements):
+                if isinstance(n, EraseStatementNode):
+                    for name in n.array_names:
+                        self.erased_keys.add(self._erase_key(name))
+
         dimmed: Set[str] = set()
         used: Dict[str, int] = {}
         for line in program.lines:
@@ -880,6 +892,7 @@ class Z88dkCBackend(CodeGenBackend):
                     key = self._array_key(n)
                     if n.subscripts:
                         used[key] = max(used.get(key, 0), len(n.subscripts))
+                        self.array_sites.setdefault(key, set()).add(len(n.subscripts))
                     elif n.subscripts is None and key[:-1] not in ('ERR', 'ERL'):
                         self.scalar_keys.add(key)
                 elif isinstance(n, DimStatementNode):
@@ -891,6 +904,9 @@ class Z88dkCBackend(CodeGenBackend):
                         self.array_ranks[name] = len(decl.dimensions)
                         maxima = [self._constant_value(d) for d in decl.dimensions]
                         info = self.symbols.variables.get(name)
+                        if any(m is None for m in maxima) and \
+                                getattr(decl, 'const_dimensions', None) is not None:
+                            maxima = list(decl.const_dimensions)
                         if any(m is None for m in maxima) and info is not None \
                                 and info.dimensions:
                             maxima = list(info.dimensions)
@@ -900,10 +916,31 @@ class Z88dkCBackend(CodeGenBackend):
                             maxima = [10] * len(decl.dimensions)
                         # a size that is not whole is rounded like FRCINT, halves away from zero
                         self.array_dims[name] = [int(m + 0.5) if m >= 0 else -int(-m + 0.5) for m in maxima]
+                        self.array_shapes.setdefault(name, []).append(self.array_dims[name])
         for key, rank in used.items():
             if key not in dimmed:
                 self.array_ranks[key] = rank
+        for key in self.erased_keys:
+            # Its number of subscripts changes with each DIM and use
+            counts = {len(shape) for shape in self.array_shapes.get(key, [])}
+            counts |= self.array_sites.get(key, set())
+            if counts:
+                self.array_ranks[key] = max(counts)
         self.current_line = 0
+
+    def _erase_key(self, name: str) -> str:
+        """Symbol-table style key of an array that ERASE names."""
+        name = name.upper()
+        if name[-1] not in '$%!#':
+            name += self.def_suffix.get(name[0].lower(), '!')
+        return name
+
+    def _ea_name(self, key: str, part: str) -> str:
+        """C name of a piece of run-time state of an erased array: n (elements per
+        subscript), rk (number of subscripts) or st (does the array exist)."""
+        base = ''.join(ch if ch.isalnum() else '_' for ch in key[:-1].lower())
+        kind = {'!': 's', '%': 'i', '#': 'd', '$': 't'}[key[-1]]
+        return f'ea_{base}_{kind}_{part}'
 
     def _array_sizes(self, key: str) -> List[int]:
         """Number of elements along each subscript of an array."""
@@ -915,6 +952,22 @@ class Z88dkCBackend(CodeGenBackend):
         return [max(1, m + 1 - self.array_base) for m in maxima]
 
     def _array_total(self, key: str) -> int:
+        """Number of elements in the storage of an array.
+
+        An array that ERASE names can get any shape its DIMs give it, and the
+        default shape of its uses, so its storage has the size of the largest.
+        """
+        if key in self.erased_keys:
+            base = self.array_base
+            totals = [1]
+            for shape in self.array_shapes.get(key, []):
+                total = 1
+                for m in shape:
+                    total *= max(1, m + 1 - base)
+                totals.append(total)
+            for count in self.array_sites.get(key, set()):
+                totals.append(max(1, 11 - base) ** count)
+            return max(totals)
         total = 1
         for size in self._array_sizes(key):
             total *= size
@@ -929,6 +982,8 @@ class Z88dkCBackend(CodeGenBackend):
         The first subscript varies slowest, as in the interpreter's flattening.
         """
         key = self._array_key(var_node)
+        if key in self.erased_keys:
+            return self._erased_element_index(key, var_node)
         sizes = self._array_sizes(key)
         if len(var_node.subscripts) == 1 and len(sizes) > 1:
             # Already flattened by the semantic analyzer, and already moved
@@ -950,6 +1005,28 @@ class Z88dkCBackend(CodeGenBackend):
             expr = f'mb25_subscript({expr}, {sizes[i]}, {self.array_base or 0})'
             parts.append(f'{expr} * {stride}' if stride > 1 else expr)
         return ' + '.join(parts)
+
+    def _erased_element_index(self, key: str, var_node: Any) -> str:
+        """C expression for the flat index of an element of an array that ERASE names.
+
+        The bounds are run-time state (the n array).  The first subscript creates
+        the array when it does not exist, and each later one multiplies by its
+        own bound, so the calls nest in the order they must run.
+        """
+        count = len(var_node.subscripts)
+        n, rk, st = (self._ea_name(key, p) for p in ('n', 'rk', 'st'))
+        base = self.array_base or 0
+        dflt = max(1, 11 - self.array_base)
+
+        def sub(expr: Any) -> str:
+            value = self._integer_value(expr)
+            return f'({value} - {base})' if base else value
+
+        index = (f'mb25_ea_first(&{st}, &{rk}, {n}, {count}, {dflt}, '
+                 f'{sub(var_node.subscripts[0])}, {base})')
+        for j in range(1, count):
+            index = f'mb25_ea_next({index}, {n}, {j}, {sub(var_node.subscripts[j])}, {base})'
+        return index
 
     def _str_number(self, arg: Any, result_id: str) -> str:
         """C call that stores STR$(arg) in the string result_id."""
@@ -1037,6 +1114,11 @@ class Z88dkCBackend(CodeGenBackend):
         array_clears = []
         for key in sorted(self.array_ranks):
             var_type = self._key_type(key)
+            if key in self.erased_keys:
+                # Run-time shape: does it exist, how many subscripts, elements per subscript
+                arrays.append(f'char {self._ea_name(key, "st")} = 0;')
+                arrays.append(f'int {self._ea_name(key, "rk")} = 0;')
+                arrays.append(f'int {self._ea_name(key, "n")}[{self.array_ranks[key]}];')
             if var_type == VarType.STRING:
                 continue
             c_name = self._mangle_variable_name(key) + '_arr'
@@ -1934,8 +2016,24 @@ class Z88dkCBackend(CodeGenBackend):
         storage exists from the start of main() and is zeroed there; DIM itself
         has nothing left to do.  (The semantic analyzer has already refused a
         DIM whose size is not a constant.)
+
+        An array that ERASE names is different: a DIM gives it a shape at run
+        time, and a DIM of an array that already exists is Duplicate Definition.
         """
-        return []
+        code = []
+        for decl in stmt.arrays:
+            key = self._erase_key(decl.name)
+            if key not in self.erased_keys:
+                continue
+            maxima = getattr(decl, 'const_dimensions', None)
+            if maxima is None:
+                maxima = [self._constant_value(d) for d in decl.dimensions]
+            n, rk, st = (self._ea_name(key, p) for p in ('n', 'rk', 'st'))
+            code.append(self.indent() + f'mb25_ea_dim(&{st}, &{rk}, {len(maxima)});')
+            for j, m in enumerate(maxima):
+                m = int(m + 0.5) if m >= 0 else -int(-m + 0.5)
+                code.append(self.indent() + f'{n}[{j}] = {max(1, m + 1 - self.array_base)};')
+        return code
 
     def _generate_data_array(self) -> List[str]:
         """Generate static DATA array and pointer"""
@@ -3722,30 +3820,29 @@ class Z88dkCBackend(CodeGenBackend):
         return code
 
     def _generate_erase(self, stmt: EraseStatementNode) -> List[str]:
-        """Generate ERASE statement: empty the named arrays.
+        """Generate ERASE statement: the arrays stop existing.
 
-        An interpreted ERASE frees the array so that a later DIM can size it
-        again.  Compiled arrays have a fixed size, so ERASE here clears the
-        elements (0, or the empty string) and a later DIM of the same array
-        changes nothing.  A DIM with another size is refused by the semantic
-        analyzer.
+        The storage of an array is fixed, but its shape is run-time state (see
+        _array_total).  ERASE clears the elements that exist and marks the array
+        as not dimensioned, so the next use dimensions it with 0..10 and a DIM
+        can give it a new shape.  ERASE of an array that does not exist is
+        Illegal function call, as in MBASIC.
         """
         code = []
         for name in stmt.array_names:
-            name = name.upper()
-            keys = [k for k in self.array_ranks
-                    if k == name or (name[-1] not in '$%!#' and k[:-1] == name)]
-            if not keys:
-                self._unsupported(f"ERASE {name}: no such array")
+            key = self._erase_key(name)
+            if key not in self.array_ranks:
+                # Nothing in the program ever dimensions it
+                code.append(self.indent() + 'mb25_fail("Illegal function call");')
                 continue
-            key = keys[0]
-            total = self._array_total(key)
+            n, rk, st = (self._ea_name(key, p) for p in ('n', 'rk', 'st'))
+            erase = f'int _t = mb25_ea_erase(&{st}, &{rk}, {n});'
             if self._key_type(key) == VarType.STRING:
                 base = self._get_string_id(key + '()')
-                code.append(self.indent() + f'{{ int _e; for (_e = 0; _e < {total}; _e++) mb25_string_clear({base} + _e); }}')
+                code.append(self.indent() + f'{{ {erase} int _e; for (_e = 0; _e < _t; _e++) mb25_string_clear({base} + _e); }}')
             else:
                 c_name = self._mangle_variable_name(key) + '_arr'
-                code.append(self.indent() + f'memset({c_name}, 0, sizeof({c_name}));')
+                code.append(self.indent() + f'{{ {erase} memset({c_name}, 0, _t * sizeof({c_name}[0])); }}')
         return code
 
     def _generate_reset(self, stmt: ResetStatementNode) -> List[str]:

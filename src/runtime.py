@@ -1084,12 +1084,15 @@ class Runtime:
         the raw "a" found nothing and quietly did nothing at all. The array
         stayed dimensioned, which only became visible once re-dimensioning
         started reporting Duplicate Definition, as it does on the real binary.
+
+        Returns False when there was no such array (never dimensioned, never
+        used, or already erased); the binary gives Illegal function call then.
         """
         type_suffix = None
         if name and name[-1] in '$%!#':
             name, type_suffix = name[:-1], name[-1]
         full_name, _ = self._resolve_variable_name(name, type_suffix, def_type_map)
-        self._arrays.pop(full_name, None)
+        return self._arrays.pop(full_name, None) is not None
 
     def read_data(self):
         """

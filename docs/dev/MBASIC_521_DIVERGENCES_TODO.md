@@ -260,8 +260,7 @@ it again with the bounds 0 to 10, as on the binary. A fatal `ERROR n` in a
 handler, where n has no message, prints `Unprintable error`. `INSTR` gives 0 for
 an empty string and for a start beyond the end, also with an empty search
 string (interpreter and JavaScript). `MID$(A$,2,3)=A$` copies byte by byte over
-itself, so `hello` gives `hhhho`. Not done: `ERASE A` followed by `DIM A` is
-still a compile error (the array cannot be resized), and the target shared
+itself, so `hello` gives `hhhho`. Not done: the target shared
 through `B$=A$` does not give the byte-by-byte copy.
 
 Done for the interpreter (#43, second part). Each item was measured on the
@@ -548,8 +547,23 @@ Still open, found in the final check of the fixes for #30 to #57:
 - #59: the JavaScript backend gives no `Type mismatch` for a string mixed with
   a number (`"a"<1`, `1+"a"`, `"a"*2`, `A$=A`), and `-"a"` stops the compiler
   with a Python error.
-- #60: in the C backend, `ERASE` keeps the old bounds of the array. On the
-  binary the next use makes the array again with the bounds 0 to 10.
+- Done (#60): in the C backend, `ERASE` deletes the array. The next use
+  makes the array again with the bounds 0 to 10 (1 to 10 with `OPTION BASE
+  1`), and a `DIM` can give the array a new size and a new number of
+  subscripts. Measured on the binary:
+  - `DIM` of an array that exists is `Duplicate Definition`.
+  - `ERASE` of an array that does not exist is `Illegal function call`. This
+    is true for an array never used, and for an array erased already. The
+    interpreter did nothing in these cases. Now it gives the error too.
+  - A use with another number of subscripts than the array has is
+    `Subscript out of range`.
+  - The storage is static, so a loop of `DIM` and `ERASE` does not use more
+    memory. See `docs/dev/C_BACKEND.md`.
+  - Not done: a second `DIM` of the same array with no `ERASE` between is
+    still a compile error in the C backend. The binary stops at run time with
+    `Duplicate Definition`. This is a deliberate refusal.
+  - Not done: the JavaScript backend does not give `Illegal function call`
+    for `ERASE` of an array that does not exist.
 
 
 ## 8. `serialize_expression` and a unary minus - done

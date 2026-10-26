@@ -1084,6 +1084,58 @@ int mb25_subscript(int i, int n, int base) {
     return i;
 }
 
+/* Arrays that an ERASE names.  Their storage is fixed (the largest shape the
+ * program can give them) but their shape is not: st is 0 while the array does
+ * not exist, rk is its number of subscripts and n[] the number of elements
+ * along each one.  A use of an array that does not exist dimensions it with
+ * dflt elements per subscript (0..10, or 1..10 under OPTION BASE 1). */
+
+/* The first subscript of an element: creates the array if needed, checks the
+ * number of subscripts k and the first subscript i. */
+int mb25_ea_first(char *st, int *rk, int *n, int k, int dflt, int i, int base) {
+    int j;
+    if (!*st) {
+        *st = 1;
+        *rk = k;
+        for (j = 0; j < k; j++) {
+            n[j] = dflt;
+        }
+    }
+    if (*rk != k) {
+        mb25_fail("Subscript out of range");
+    }
+    return mb25_subscript(i, n[0], base);
+}
+
+/* The next subscript: acc * n[j] + i, with i checked against n[j]. */
+int mb25_ea_next(int acc, int *n, int j, int i, int base) {
+    return acc * n[j] + mb25_subscript(i, n[j], base);
+}
+
+/* DIM of an array with k subscripts: the caller then fills in n[]. */
+void mb25_ea_dim(char *st, int *rk, int k) {
+    if (*st) {
+        mb25_fail("Duplicate Definition");
+    }
+    *st = 1;
+    *rk = k;
+}
+
+/* ERASE: the array stops existing.  Returns how many elements it had, for
+ * the caller to clear. */
+int mb25_ea_erase(char *st, int *rk, int *n) {
+    int j;
+    int total = 1;
+    if (!*st) {
+        mb25_fail("Illegal function call");
+    }
+    for (j = 0; j < *rk; j++) {
+        total *= n[j];
+    }
+    *st = 0;
+    return total;
+}
+
 /* SWAP two strings: exchange everything in the descriptors except the IDs. */
 void mb25_string_swap(uint16_t a, uint16_t b) {
     mb25_string_t t;
