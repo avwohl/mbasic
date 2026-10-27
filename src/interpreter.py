@@ -143,6 +143,49 @@ class MBasicError(RuntimeError):
         self.error_pc = error_pc
 
 
+class RecordStream:
+    """The record buffer of a random file, read and written as a stream.
+
+    PRINT#, WRITE#, INPUT# and LINE INPUT# on a random file work on the record
+    buffer at a cursor (measured on 5.21): a line ends in CR LF, GET and PUT
+    send the cursor back to the start, and a write or a read past the end of
+    the record is FIELD overflow (a write fills what fits first).
+    """
+
+    def __init__(self, buffer_info, on_change):
+        self.info = buffer_info
+        self.on_change = on_change
+
+    def write(self, text):
+        data = text.replace('\n', '\r\n').encode('latin-1', 'replace')
+        buf = self.info['buffer']
+        cur = self.info.get('cursor', 0)
+        part = data[:max(0, len(buf) - cur)]
+        buf[cur:cur + len(part)] = part
+        self.info['cursor'] = cur + len(part)
+        self.on_change(self.info)
+        if len(part) < len(data):
+            raise MBasicError(50)
+
+    def flush(self):
+        pass
+
+    def read(self, n=1):
+        buf = self.info['buffer']
+        cur = self.info.get('cursor', 0)
+        if cur >= len(buf):
+            raise MBasicError(50)
+        data = bytes(buf[cur:cur + n])
+        self.info['cursor'] = cur + len(data)
+        return data
+
+    def seek(self, offset, whence=0):
+        self.info['cursor'] = (self.info.get('cursor', 0) if whence == 1 else 0) + offset
+
+    def tell(self):
+        return self.info.get('cursor', 0)
+
+
 MAX_FILE_NUMBER = 15      # the binary started with /F:15; with the default /F:3 only 1 to 3 are files
 
 
@@ -1404,9 +1447,9 @@ class Interpreter:
             if file_num not in self.runtime.files:
                 raise self._file_not_open(file_num)
             file_info = self.runtime.files[file_num]
-            if file_info['mode'] not in ['O', 'A']:
+            if file_info['mode'] not in ['O', 'A', 'R']:
                 raise RuntimeError(f"File #{file_num} not open for output")
-            file_handle = file_info['handle']
+            file_handle = self._file_stream(file_num, file_info)
         else:
             file_info = None
             file_handle = None
@@ -1526,9 +1569,9 @@ class Interpreter:
             if file_num not in self.runtime.files:
                 raise self._file_not_open(file_num)
             file_info = self.runtime.files[file_num]
-            if file_info['mode'] not in ['O', 'A']:
+            if file_info['mode'] not in ['O', 'A', 'R']:
                 raise RuntimeError(f"File #{file_num} not open for output")
-            file_handle = file_info['handle']
+            file_handle = self._file_stream(file_num, file_info)
         else:
             file_info = None
             file_handle = None
@@ -3084,9 +3127,9 @@ class Interpreter:
         if file_num not in self.runtime.files:
             raise self._file_not_open(file_num)
         file_info = self.runtime.files[file_num]
-        if file_info['mode'] != 'I':
+        if file_info['mode'] not in ('I', 'R'):
             raise RuntimeError(f"File #{file_num} not open for input")
-        handle = file_info['handle']
+        handle = self._file_stream(file_num, file_info)
 
         def read_byte():
             if file_info['eof']:
@@ -3150,7 +3193,7 @@ class Interpreter:
         Returns: line string or None if EOF
         """
         file_info = self.runtime.files[file_num]
-        file_handle = file_info['handle']
+        file_handle = self._file_stream(file_num, file_info)
 
         if file_info['eof']:
             return None
@@ -3204,7 +3247,7 @@ class Interpreter:
             if file_num not in self.runtime.files:
                 raise self._file_not_open(file_num)
             file_info = self.runtime.files[file_num]
-            if file_info['mode'] != 'I':
+            if file_info['mode'] not in ('I', 'R'):
                 raise RuntimeError(f"File #{file_num} not open for input")
 
             # Read from file (synchronous - files don't need state machine)
@@ -3269,9 +3312,9 @@ class Interpreter:
             if file_num not in self.runtime.files:
                 raise self._file_not_open(file_num)
             file_info = self.runtime.files[file_num]
-            if file_info['mode'] not in ['O', 'A']:
+            if file_info['mode'] not in ['O', 'A', 'R']:
                 raise RuntimeError(f"File #{file_num} not open for output")
-            file_handle = file_info['handle']
+            file_handle = self._file_stream(file_num, file_info)
         else:
             file_info = None
             file_handle = None
@@ -4116,10 +4159,18 @@ class Interpreter:
 
         buffer_info['buffer'] = bytearray(data)
         buffer_info['current_record'] = record_num
+        buffer_info['cursor'] = 0       # PRINT# and INPUT# start at the front again
 
         # The field variables that are still in the record show it; a variable
         # that was given another string since is not bound again (measured)
         self._field_show(buffer_info)
+
+    def _file_stream(self, file_num, file_info):
+        """What PRINT#, WRITE#, INPUT# and LINE INPUT# read and write: the file, or the
+        record buffer of a random file (RecordStream)."""
+        if file_info['mode'] != 'R':
+            return file_info['handle']
+        return RecordStream(self._record_buffer(file_num, file_info), self._field_show)
 
     def _record_buffer(self, file_num, file_info):
         """The record buffer of a random file; GET and PUT work before any FIELD.
@@ -4173,6 +4224,7 @@ class Interpreter:
         # Write buffer to file
         file_handle.write(buffer_info['buffer'])
         file_handle.flush()
+        buffer_info['cursor'] = 0       # PRINT# and INPUT# start at the front again
 
         buffer_info['current_record'] = record_num
 

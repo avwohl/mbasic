@@ -462,12 +462,13 @@ Found while measuring (#61):
   is a byte (Illegal function call, Overflow, Type mismatch, Missing operand,
   as on the binary) and prints no nulls. `NULL=2` and `X=NULL` are Syntax
   errors. Test: `tests/regression/integration/test_null_statement.py`.
-- Not done: a random file (`OPEN "R"`) used with `PRINT #`, `WRITE #`, `INPUT #`
-  or `LINE INPUT #`. The binary writes into and reads from the FIELD buffer
-  with a cursor (`PRINT #3,"HELLO"` puts `HELLO` and CR LF in the buffer, and
-  `FIELD overflow` when the record is full; `INPUT #` on an empty record is
-  `FIELD overflow`). Here those statements are `Bad file mode`. It needs a
-  cursor in the record buffer and its reset rules; no program in `basic/` uses it.
+- Done: a random file (`OPEN "R"`) used with `PRINT #`, `WRITE #`, `INPUT #`
+  or `LINE INPUT #` works on the record buffer at a cursor, as on the binary,
+  in the interpreter and the JavaScript backend. A line ends in CR LF, `GET`
+  and `PUT` send the cursor back to the front, and a write or a read past the
+  end of the record is `FIELD overflow`. The binary starts the buffer with
+  whatever was in that memory; here it starts with blanks. Test:
+  `tests/regression/integration/test_random_file_stream.py`.
 - Done: `LOF` and `LOC` count sectors of 128 bytes, as on the binary, in
   the interpreter and the JavaScript backend. `LOF` is the size of the file at
   the `OPEN`, rounded up. `LOC` of an input file is the sectors read so far:
@@ -979,10 +980,10 @@ Each item was measured on the binary. Test:
   not copied.
 - Not done: the backends allow 15 files, the binary 3 by default (`/F:n`
   raises it; `cpmemu` did not pass the switch on, so the number above 3 was
-  not measured with a bigger limit). `PRINT #n` and `WRITE #n` on a random file
-  work on the binary (they write into the record) and are `Bad file mode`
-  here. Done since: a number with no open file gives the errors of the
-  binary in the interpreter too (`test_file_number_errors.py`), and `GET` and
+  not measured with a bigger limit). Done since: `PRINT #n` and `WRITE #n`
+  on a random file write into the record, as on the binary (see above); a
+  number with no open file gives the errors of the binary in the interpreter
+  too (`test_file_number_errors.py`), and `GET` and
   `PUT` work before `FIELD` (the record buffer is there from `OPEN` on);
   `FIELD` views are done, see "round 2" below.
   `OPEN "A"` is an extension and stays.
