@@ -1073,6 +1073,13 @@ Each item was measured on the binary. Test:
   mismatch` after the start is worked out and before the limit is read, in
   the interpreter and the JavaScript backend. Test:
   `tests/regression/integration/test_loop_and_call_error_edges.py`.
+  `TAB(` and `SPC(` are `PRINT` items only: in any other expression they
+  are a `Syntax error`, and `PRINT TAB(2)+1` is two items. The same random
+  test, run against the C backend, found more, done there: `VAL` skips
+  blanks inside a number, `POS` exists, `RESTORE n` goes to line n, a DATA
+  item `+7` compiles, and `READ A$` of a number item takes the text as it
+  was typed. Tests: `test_function_argument_edges.py`,
+  `test_c_backend_edges.py`.
   Still different, by design (MBF arithmetic is not emulated): `100^16`
   prints 9.99999E+31 on the binary, a single product between 1.70141E+38
   and 3.4E+38 is Overflow there, and `32768*-32769` prints -1.07377E+09.

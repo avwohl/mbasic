@@ -15,7 +15,9 @@ What the measurements show:
 - LEFT$, RIGHT$, MID$, STRING$, SPACE$, CHR$ and INSTR give Illegal function
   call for a count or a code outside 0..255 (a start outside 1..255).  ASC("")
   does too.  INSTR with a start beyond the end gives 0, empty strings included.
-- VAL reads &H and &O numbers as 16-bit words.  HEX$ and OCT$ of a value outside
+- VAL reads &H and &O numbers as 16-bit words, and skips blanks inside a
+  decimal number (VAL(" 1 2") is 12).  POS is the console column.  RESTORE n
+  goes to the first DATA item at or after line n.  HEX$ and OCT$ of a value outside
   -32768..65535 are Overflow.
 - SQR of a negative number, LOG of zero or less, and a negative base with a
   fractional exponent give Illegal function call.
@@ -143,6 +145,12 @@ CASES = [
     ('A%=300:B%=200:C%=A%*B%-50000:PRINT C%', ' 10000 \n'),
     ('A%=32767:B%=32767:C%=A%*B%*A%', 'Overflow in 10\n'),
     ('A%=-30000:B%=-30000:C%=A%+B%+A%+B%', 'Overflow in 10\n'),
+    # VAL skips blanks inside a decimal number; POS; RESTORE to a line
+    ('PRINT VAL(" 1 2");VAL("3 E 2");VAL("1 2.5 x")', ' 12  300  12.5 \n'),
+    ('PRINT "abc";POS(1);"x";POS("a")', 'abc 4 x 8 \n'),
+    ('DATA 1,2:READ A,B:RESTORE 10:READ C:PRINT A;B;C', ' 1  2  1 \n'),
+    # a signed DATA number; READ into a string takes the item as it was typed
+    ('DATA +7,-2,1E3:READ A$,B$,C$:RESTORE:READ D:PRINT A$;B$;C$;D', '+7-21E3 7 \n'),
 ]
 
 

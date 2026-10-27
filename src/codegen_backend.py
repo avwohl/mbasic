@@ -655,11 +655,16 @@ class Z88dkCBackend(CodeGenBackend):
         """Collect all DATA statement values for static initialization"""
         self.data_values = []
         self.data_types = []
+        self.data_texts = []       # the item as it was typed: what READ A$ gives
+        self.data_starts = []      # (line, index of its first DATA item), for RESTORE n
+        self.program_lines = {line_node.line_number for line_node in program.lines}
 
         for line_node in program.lines:
             for stmt in line_node.statements:
                 if isinstance(stmt, DataStatementNode):
+                    self.data_starts.append((line_node.line_number, len(self.data_values)))
                     for value_expr in stmt.values:
+                        self.data_texts.append(self._data_item_text(value_expr))
                         # Evaluate constant expressions
                         if isinstance(value_expr, NumberNode):
                             self.data_values.append(value_expr.value)
@@ -674,10 +679,12 @@ class Z88dkCBackend(CodeGenBackend):
                         elif isinstance(value_expr, StringNode):
                             self.data_values.append(value_expr.value)
                             self.data_types.append('string')
-                        elif isinstance(value_expr, UnaryOpNode) and value_expr.operator == TokenType.MINUS:
-                            # Handle negative numbers
+                        elif isinstance(value_expr, UnaryOpNode) and value_expr.operator in (TokenType.MINUS, TokenType.PLUS):
+                            # A signed number: DATA -2.5, DATA +7
                             if isinstance(value_expr.operand, NumberNode):
-                                val = -value_expr.operand.value
+                                val = value_expr.operand.value
+                                if value_expr.operator == TokenType.MINUS:
+                                    val = -val
                                 self.data_values.append(val)
                                 if isinstance(val, int):
                                     self.data_types.append('int')
@@ -687,6 +694,18 @@ class Z88dkCBackend(CodeGenBackend):
                                 self._unsupported(f"Complex expression in DATA not supported: {type(value_expr.operand).__name__}")
                         else:
                             self._unsupported(f"Complex expression in DATA not supported: {type(value_expr).__name__}")
+
+    @staticmethod
+    def _data_item_text(value_expr) -> str:
+        """The text of a DATA item as typed: READ A$ of DATA +7 gives "+7" (measured)."""
+        if isinstance(value_expr, StringNode):
+            return value_expr.value
+        if isinstance(value_expr, NumberNode):
+            return value_expr.literal if isinstance(value_expr.literal, str) else str(value_expr.value)
+        if isinstance(value_expr, UnaryOpNode) and isinstance(value_expr.operand, NumberNode):
+            sign = '-' if value_expr.operator == TokenType.MINUS else '+'
+            return sign + Z88dkCBackend._data_item_text(value_expr.operand)
+        return ''
 
     def _collect_def_fn(self, program: ProgramNode):
         """Collect all DEF FN functions for generation before main()"""
@@ -2164,6 +2183,15 @@ class Z88dkCBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + '};')
 
+        if any(t != 'string' for t in self.data_types):
+            # READ into a string variable takes the item as it was typed
+            code.append(self.indent() + f'static const char *data_text[{len(self.data_texts)}] = {{')
+            self.indent_level += 1
+            for text in self.data_texts:
+                code.append(self.indent() + f'"{self._escape_string(text)}",')
+            self.indent_level -= 1
+            code.append(self.indent() + '};')
+
         # Generate type array
         code.append(self.indent() + f'static const char data_types[{len(self.data_types)}] = {{')
         self.indent_level += 1
@@ -2222,9 +2250,7 @@ class Z88dkCBackend(CodeGenBackend):
                 else:
                     code.append(self.indent() + '{')
                 if has_numbers:
-                    code.append(self.indent() + '    char _num_str[40];')
-                    code.append(self.indent() + '    mb25_fmt_num(_num_str, data_numeric[data_pointer], 1);')
-                    code.append(self.indent() + f'    mb25_string_alloc_init({str_id}, _num_str);')
+                    code.append(self.indent() + f'    mb25_string_alloc_const({str_id}, data_text[data_pointer]);')
                     code.append(self.indent() + '}')
                 elif not has_strings:
                     code.append(self.indent() + '}')
@@ -2257,12 +2283,14 @@ class Z88dkCBackend(CodeGenBackend):
         if stmt.line_number is None:
             # RESTORE without line number - reset to beginning
             code.append(self.indent() + 'data_pointer = 0;')
+        elif stmt.line_number not in self.program_lines:
+            # RESTORE of a line that is not there is Undefined line number (measured)
+            code.append(self.indent() + 'mb25_fail("Undefined line number");')
         else:
-            # RESTORE with line number - not fully supported in compiled version
-            # For simplicity, just reset to beginning
-            code.append(self.indent() + '/* RESTORE to specific line not supported - resetting to beginning */')
-            code.append(self.indent() + 'data_pointer = 0;')
-            self._unsupported(f"RESTORE to line {stmt.line_number} not supported - resetting to beginning")
+            # The first DATA item at or after the line, worked out now: the line is a constant
+            index = next((i for line, i in self.data_starts if line >= stmt.line_number),
+                         len(self.data_values))
+            code.append(self.indent() + f'data_pointer = {index};  /* RESTORE {stmt.line_number} */')
 
         return code
 
@@ -3397,6 +3425,13 @@ class Z88dkCBackend(CodeGenBackend):
                 if len(expr.arguments) > 2:
                     self._unsupported("USR with multiple arguments not fully supported - only first argument passed")
                 return f'((float (*)(float))(int)({addr}))({arg1})'
+
+        elif func_name == 'POS' and len(expr.arguments) == 1:
+            # The argument is worked out and not used; a string one only for its errors
+            arg = expr.arguments[0]
+            if self._get_expression_type(arg) == VarType.STRING:
+                return 'mb25_pos()'
+            return f'((void)({self._generate_expression(arg)}), mb25_pos())'
 
         else:
             # Other numeric functions not yet implemented

@@ -11,6 +11,9 @@ against the binary found these:
   MID$, the count of LEFT$ and STRING$) gives Illegal function call before a
   later argument can give Type mismatch: MID$("a",-1,"x") and
   STRING$(300,"a"+1) are error 5.
+- TAB( and SPC( are PRINT items, never part of an expression: X=TAB(5),
+  A$="a"+TAB(3) and IF TAB(2) THEN are Syntax error (2), and PRINT TAB(2)+1
+  is TAB(2) followed by the item +1. A string in them is Type mismatch.
 """
 import sys
 from pathlib import Path
@@ -49,6 +52,27 @@ CASES = {
         '90 END\n'
         '100 PRINT "E";ERR;ERL:RESUME NEXT\n',
         'E 5  20 \nE 5  30 \nE 5  40 \nE 13  50 \nE 5  60 \nE 5  70 \nE 5  80 \n'),
+    'tab_spc_only_in_print': (
+        '10 ON ERROR GOTO 100\n'
+        '20 X=TAB(5)\n'
+        '30 X=SPC(5)+1\n'
+        '40 A$="a"+TAB(3)\n'
+        '50 IF TAB(2) THEN PRINT "t"\n'
+        '60 PRINT TAB(2)+1\n'
+        '90 END\n'
+        '100 PRINT "E";ERR;ERL:RESUME NEXT\n',
+        'E 2  20 \nE 2  30 \nE 2  40 \nE 2  50 \n  1 \n'),
+    'tab_spc_of_a_string': (
+        '10 ON ERROR GOTO 100\n'
+        '20 PRINT "<";TAB("A");">"\n'
+        '30 PRINT "<";SPC("abc");">"\n'
+        '40 PRINT "<";TAB("");">"\n'
+        '50 PRINT "<";SPC("");">"\n'
+        '60 X=TAB("A")\n'
+        '70 PRINT "<";TAB("123");">"\n'
+        '90 END\n'
+        '100 PRINT "E";ERR;ERL:RESUME NEXT\n',
+        '<E 13  20 \n<E 13  30 \n<E 13  40 \n<E 13  50 \nE 2  60 \n<E 13  70 \n'),
 }
 
 

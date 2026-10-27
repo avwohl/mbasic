@@ -1167,6 +1167,10 @@ class Parser:
 
         # Built-in functions (keywords that are also functions)
         elif self.is_builtin_function(token.type):
+            if token.type in (TokenType.TAB, TokenType.SPC):
+                # TAB( and SPC( are PRINT items, never part of an expression
+                # (measured: X=TAB(5) and PRINT TAB(2)+1 are not one call)
+                raise ParseError("Syntax error", token)
             return self.parse_builtin_function()
 
         # FN (user-defined function call)
@@ -1613,7 +1617,7 @@ class Parser:
             if after_expression:
                 implied_separators.add(len(separators))
                 separators.append(';')
-            expr = self.parse_expression()
+            expr = self._parse_print_item()
             expressions.append(expr)
             after_expression = True
 
@@ -1634,6 +1638,16 @@ class Parser:
             column=token.column,
             implied_separators=implied_separators
         )
+
+    def _parse_print_item(self):
+        """One item of a PRINT or LPRINT list: TAB(n), SPC(n), or an expression.
+
+        TAB and SPC are items of their own: PRINT TAB(2)+1 is TAB(2) followed by
+        the item +1, as on the binary.
+        """
+        if self.match(TokenType.TAB, TokenType.SPC):
+            return self.parse_builtin_function()
+        return self.parse_expression()
 
     def parse_print_using(self, print_token, file_number) -> PrintUsingStatementNode:
         """Parse PRINT USING statement
@@ -1729,7 +1743,7 @@ class Parser:
                 continue
 
             # Parse expression
-            expr = self.parse_expression()
+            expr = self._parse_print_item()
             expressions.append(expr)
 
         # Add newline if there's no trailing separator

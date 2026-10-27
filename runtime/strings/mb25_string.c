@@ -954,7 +954,17 @@ static double mb25_val_text(const char *s) {
         }
     }
     if (!base) {
-        return mb25_atof(s);
+        /* VAL skips blanks, tabs and line feeds anywhere in a decimal number:
+         * VAL(" 1 2") is 12 and VAL("3 E 2") is 300 (measured) */
+        char packed[256];
+        int k = 0;
+        for (; *s && k < 255; s++) {
+            if (*s != ' ' && *s != '\t' && *s != '\n') {
+                packed[k++] = *s;
+            }
+        }
+        packed[k] = 0;
+        return mb25_atof(packed);
     }
     s += (s[1] == 'H' || s[1] == 'h' || s[1] == 'O' || s[1] == 'o') ? 2 : 1;
     for (;; s++) {
@@ -1425,6 +1435,11 @@ void mb25_set_out(FILE *fp) {
 
 void mb25_set_col(int col) {
     mb25_con_col = col;
+}
+
+/* POS(x): the console column, 1 for the leftmost */
+int mb25_pos(void) {
+    return mb25_con_col + 1;
 }
 
 static int mb25_width(void) {

@@ -243,6 +243,7 @@ void mb25_string_swap(uint16_t a, uint16_t b);
  * single-precision value and 1 for a double. */
 void mb25_set_out(FILE *fp);
 void mb25_set_col(int col);          /* the console column, e.g. 0 after INPUT */
+int mb25_pos(void);                  /* POS(x): the console column, 1-based */
 void mb25_putc(int c);
 void mb25_print_cstr(const char *s);
 void mb25_print_nl(void);
